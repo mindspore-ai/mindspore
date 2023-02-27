@@ -29,6 +29,8 @@ namespace mindspore::opt {
 namespace {
 bool IsGoodCastSplitFusion(const FuncGraphPtr &func_graph, const CNodePtr &split_cnode_2) {
   auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  MS_ASSERT(split_cnode_2 != nullptr);
   auto node_users = manager->node_users();
   auto split_node_users = node_users[split_cnode_2];
   for (auto &node_user : split_node_users) {

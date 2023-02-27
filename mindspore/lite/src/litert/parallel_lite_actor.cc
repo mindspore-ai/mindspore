@@ -91,10 +91,10 @@ int ParallelLiteActor::KernelActorInit() {
     return RET_ERROR;
   }
   size_t max_tensor_index = kernel_->out_tensors().size();
-  MS_ASSERT(
-    std::find_if(results_tensor_index_.begin(), results_tensor_index_.end(), [max_tensor_index](const int index) {
-      return static_cast<size_t>(index) >= max_tensor_index;
-    }) == results_tensor_index_.end());
+  MS_CHECK_TRUE_MSG(std::find_if(results_tensor_index_.begin(), results_tensor_index_.end(),
+                                 [max_tensor_index](const size_t index) { return index >= max_tensor_index; }) ==
+                      results_tensor_index_.end(),
+                    RET_ERROR, "results_tensor_index_ invalid.");
 
   auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   kernel::KernelsArray split_kernels;

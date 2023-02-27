@@ -190,7 +190,7 @@ STATUS GetCastDstDataType(const CNodePtr &cnode, int *perm) {
     MS_LOG(ERROR) << "cast data type is invalid.";
     return lite::RET_ERROR;
   }
-  if (data_info.data_.size() < sizeof(int32_t)) {
+  if (data_info.data_.size() != sizeof(int32_t)) {
     MS_LOG(ERROR) << "Data and datatype of data-info not match.";
     return false;
   }

@@ -991,14 +991,23 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
   // auto new_cast = std::make_shared<mindspore::ops::Cast>();
   ops::Cast cast_node;
   auto new_cast_c = cast_node.GetPrim();
-  MS_CHECK_TRUE_MSG(new_cast_c != nullptr, nullptr, "new_cast_c is nullptr");
+  if (new_cast_c == nullptr) {
+    MS_LOG(ERROR) << "new_cast_c is nullptr";
+    return nullptr;
+  }
   ValueNodePtr value_node = NewValueNode(new_cast_c);
-  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "NewValueNode Failed");
+  if (value_node == nullptr) {
+    MS_LOG(ERROR) << "NewValueNode Failed";
+    return nullptr;
+  }
 
   auto param_node = opt::BuildIntValueParameterNode(graph, static_cast<int32_t>(dst_type), cnode_name + "_type");
 
   auto cast_cnode = graph->NewCNode({value_node});
-  MS_CHECK_TRUE_MSG(cast_cnode != nullptr, nullptr, "new_cnode is nullptr");
+  if (cast_cnode == nullptr) {
+    MS_LOG(ERROR) << "new_cnode is nullptr";
+    return nullptr;
+  }
   cast_cnode->set_fullname_with_scope(cnode_name);
   cast_cnode->set_abstract(abstract);
   auto manager = Manage(graph);

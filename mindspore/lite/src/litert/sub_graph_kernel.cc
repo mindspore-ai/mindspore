@@ -397,13 +397,16 @@ int SubGraphKernel::SubGraphSplitByOperator(KernelsArray *kernels_array) {
       MS_LOG(ERROR) << "graph input node invalid!";
       return RET_ERROR;
     }
-    MS_ASSERT(std::find_if(kernel->in_kernels().begin(), kernel->in_kernels().end(), [kernel](KernelExec *in_kernel) {
-                return !lite::IsContain(in_kernel->out_kernels(), kernel);
-              }) == kernel->in_kernels().end());
-    MS_ASSERT(
-      std::find_if(kernel->out_kernels().begin(), kernel->out_kernels().end(), [kernel](KernelExec *out_kernel) {
-        return !lite::IsContain(out_kernel->in_kernels(), kernel);
-      }) == kernel->out_kernels().end());
+    MS_CHECK_TRUE_MSG(std::find_if(kernel->in_kernels().begin(), kernel->in_kernels().end(),
+                                   [kernel](KernelExec *in_kernel) {
+                                     return !lite::IsContain(in_kernel->out_kernels(), kernel);
+                                   }) == kernel->in_kernels().end(),
+                      RET_ERROR, "Invalid input and output structure of nodes in the graph.");
+    MS_CHECK_TRUE_MSG(std::find_if(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                                   [kernel](KernelExec *out_kernel) {
+                                     return !lite::IsContain(out_kernel->in_kernels(), kernel);
+                                   }) == kernel->out_kernels().end(),
+                      RET_ERROR, "Invalid input and output structure of nodes in the graph.");
     while ((kernel->out_kernels().size() == 1) && (kernel->out_kernels().front()->in_kernels().size() == 1)) {
       kernel = kernel->out_kernels().front();
       size_t i;
