@@ -106,14 +106,9 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
-    if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
-    }
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
 
   if (dec_key.len > 0) {
@@ -167,14 +162,9 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
                     const std::shared_ptr<Context> &model_context, const Key &dec_key,
                     const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
-  std::unique_lock<std::mutex> build_lock(g_build_mutex);
   if (impl_ == nullptr) {
-    std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
-    impl_ = std::make_shared<ModelImpl>();
-    if (impl_ == nullptr) {
-      MS_LOG(ERROR) << "Model implement is null.";
-      return kLiteFileError;
-    }
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
   }
 
   if (dec_key.len > 0) {
