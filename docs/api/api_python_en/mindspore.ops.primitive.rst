@@ -352,7 +352,7 @@ Element-wise Operator
     mindspore.ops.Xdivy
     mindspore.ops.Xlogy
     mindspore.ops.Zeta
-    
+
 
 Reduction Operator
 ^^^^^^^^^^^^^^^^^^
@@ -414,7 +414,6 @@ Linear Algebraic Operator
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
     mindspore.ops.Orgqr
-    mindspore.ops.Qr
     mindspore.ops.Svd
     mindspore.ops.TridiagonalMatMul
 

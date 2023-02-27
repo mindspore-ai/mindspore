@@ -25,6 +25,6 @@ mindspore.ops.addmv
 
     异常：
         - **TypeError** - `mat` 、 `vec` 、 `x` 不是Tensor。
-        - **TypeError** - `mat` 、 `vec` 、 `x` 的数据类型不一致。
+        - **TypeError** - `mat` 、 `vec` 的数据类型不一致。
         - **ValueError** - 如果 `mat` 不是一个二维Tensor。
         - **ValueError** - 如果 `vec` 不是一个一维Tensor。
