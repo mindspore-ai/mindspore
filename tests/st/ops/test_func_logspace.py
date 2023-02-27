@@ -41,7 +41,6 @@ def test_net(mode):
     """
     ms.set_context(mode=mode)
     logspace = Net()
-    output = logspace(Tensor(5, dtype=ms.float32), Tensor(10, dtype=ms.float32), 5)
-    np_out = np.array([1.00000000e+05, 1.77827938e+06, 3.16227760e+07,
-                       5.62341312e+08, 1.00000000e+10])
+    output = logspace(Tensor(1, dtype=ms.float32), Tensor(10, dtype=ms.float32), 10)
+    np_out = np.array([1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06, 1.e+07, 1.e+08, 1.e+09, 1.e+10])
     assert np.allclose(output.asnumpy(), np_out)

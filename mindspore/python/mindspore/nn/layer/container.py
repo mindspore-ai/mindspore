@@ -168,7 +168,12 @@ class SequentialCell(Cell):
         self._is_dynamic_name = []
         if len(args) == 1:
             cells = args[0]
-            if isinstance(cells, list):
+            if isinstance(cells, Cell):
+                cell = cells
+                self.insert_child_to_cell(str(0), cell)
+                cell.update_parameters_name(str(0) + ".")
+                self._is_dynamic_name.append(True)
+            elif isinstance(cells, list):
                 for index, cell in enumerate(cells):
                     self.insert_child_to_cell(str(index), cell)
                     cell.update_parameters_name(str(index) + ".")
@@ -179,7 +184,7 @@ class SequentialCell(Cell):
                     cell.update_parameters_name(name + ".")
                     self._is_dynamic_name.append(False)
             else:
-                raise TypeError(f"For '{self.__class__.__name__}', the 'args[0]' must be list or orderedDict, "
+                raise TypeError(f"For '{self.__class__.__name__}', the 'args[0]' must be Cell, list or orderedDict, "
                                 f"but got {type(cells).__name__}")
         else:
             for index, cell in enumerate(args):
