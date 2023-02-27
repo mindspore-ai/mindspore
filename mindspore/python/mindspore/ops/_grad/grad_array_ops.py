@@ -1136,6 +1136,8 @@ def get_bprop_unsorted_segment_prod(self):
 
     def bprop(x, segment_ids, num_segments, out, dout):
         if x.dtype == mstype.complex64 or x.dtype == mstype.complex128:
+            raise TypeError("For 'UnsortedSegmentProd', complex number is not supported for gradient currently.")
+        if x.dtype == mstype.complex64 or x.dtype == mstype.complex128:
             is_zero = equal(x, F.scalar_to_tensor(0).astype(x.dtype))
         else:
             is_zero = equal(cast(x, mstype.float32), F.scalar_to_tensor(0).astype(np.float32))

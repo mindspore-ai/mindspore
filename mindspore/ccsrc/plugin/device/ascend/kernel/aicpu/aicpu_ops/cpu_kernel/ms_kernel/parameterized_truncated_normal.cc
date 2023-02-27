@@ -236,9 +236,6 @@ uint32_t BatchGenerate(CpuKernelContext &ctx) {
   auto minvals = reinterpret_cast<T_val *>(input_3->GetData());
   auto maxvals = reinterpret_cast<T_val *>(input_4->GetData());
 
-  KERNEL_CHECK_FALSE(*stdevs >= static_cast<T_val>(0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input 'stdevs' can't be nagative.");
-
   // setup seed
   int64_t final_seed = 0;
   auto attr_seed = ctx.GetAttr("seed");
@@ -277,6 +274,9 @@ uint32_t BatchGenerate(CpuKernelContext &ctx) {
   for (int batch = 0; batch < batch_size; batch++) {
     auto maxval = *params[3];
     auto minval = *params[2];
+    auto stdevs_val = *params[1];
+    KERNEL_CHECK_FALSE(stdevs_val >= static_cast<T_val>(0), KERNEL_STATUS_PARAM_INVALID,
+                       "'stdevs' must be greater than 0.")
     KERNEL_CHECK_FALSE((maxval > minval), KERNEL_STATUS_PARAM_INVALID,
                        "Max value must be greater than min value in each batch")
     Generate<T_val>(int64_t(sample_size), *params[0], *params[1], minval, maxval, &output_data, rng);
