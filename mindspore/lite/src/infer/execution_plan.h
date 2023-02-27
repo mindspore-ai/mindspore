@@ -124,6 +124,7 @@ class ExecutionPlan : public std::enable_shared_from_this<ExecutionPlan> {
   /// \return Kernel List
   virtual std::vector<Kernel *> ToKernelList() = 0;
 };
+using ExecutionPlanPtr = std::shared_ptr<ExecutionPlan>;
 }  // namespace mindspore::infer::abstract
 
 #endif  // MINDSPORE_LITE_INFER_EXECUTION_PLAN_H_

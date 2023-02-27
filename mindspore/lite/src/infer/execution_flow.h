@@ -105,6 +105,7 @@ class ExecutionFlow : public std::enable_shared_from_this<ExecutionFlow> {
   /// \return Kernel pointer.
   virtual Kernel *ConstructFusionKernel() = 0;
 };
+using ExecutionFlowPtr = std::shared_ptr<ExecutionFlow>;
 }  // namespace mindspore::infer::abstract
 
 #endif  // MINDSPORE_LITE_INFER_EXECUTION_FLOW_H_

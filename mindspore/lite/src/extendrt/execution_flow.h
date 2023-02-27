@@ -26,11 +26,11 @@ namespace mindspore::infer {
 class ExecutionFlow : public abstract::ExecutionFlow {
  public:
   ExecutionFlow() = default;
-  virtual ~ExecutionFlow();
+  ~ExecutionFlow() override;
 
   std::vector<abstract::Kernel *> GetKernels() override { return kernels_; }
 
-  void SetKernels(std::vector<abstract::Kernel *> kernels) { kernels_ = kernels; }
+  void SetKernels(const std::vector<abstract::Kernel *> &kernels) override { kernels_ = kernels; }
 
   std::vector<abstract::Tensor *> GetInputs() override { return inputs_; }
 
@@ -58,10 +58,12 @@ class ExecutionFlow : public abstract::ExecutionFlow {
   std::vector<abstract::Kernel *> kernels_;
   std::vector<abstract::Tensor *> inputs_;
   std::vector<abstract::Tensor *> outputs_;
+  std::vector<abstract::Tensor *> tensors_;
   std::shared_ptr<abstract::Context> context_;
   abstract::KernelCallBack before_;
   abstract::KernelCallBack after_;
 };
+using ExecutionFlowPtr = std::shared_ptr<ExecutionFlow>;
 }  // namespace mindspore::infer
 
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_EXECUTION_FLOW_H_

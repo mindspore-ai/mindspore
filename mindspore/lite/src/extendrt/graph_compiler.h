@@ -23,45 +23,34 @@
 #include "include/api/model.h"
 #include "include/api/graph.h"
 #include "include/api/status.h"
+#include "include/api/kernel.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
+#include "src/extendrt/graph_scheduler.h"
+
 namespace mindspore {
 namespace infer {
+using GraphId = uint32_t;
 struct CompileOptions {
   int optimize_level_;
 };
-struct CompileResult {
-  GraphId root_;
-  std::vector<GraphId> control_nodes_;
-  std::vector<KernelGraphPtr> graphs_;
-};
-struct KernelInfo {
-  KernelPtr kernel_;
-  bool isSubgraphKernel;
-  std::vector<int64_t> inputs_;
-  std::vector<int64_t> outputs_;
-};
-struct ExcutionPlan {
-  std::vector<KernelInfo> kernels_;
-  std::vector<int64_t> inputs_;
-  std::vector<int64_t> outputs_;
-};
+struct CompileResult {};
+
 class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
  public:
   explicit GraphCompiler(const CompileOptions &opts);
   virtual ~GraphCompiler();
   ExcutionPlan Compile(FuncGraphPtr graph);
+  ExcutionPlan Compile(GraphSegmentPtr segment);
 
  protected:
   ExcutionPlan Schedule(const CompileResult &);
-  GraphId CompileSegment(const GraphSegmentPtr &segment);
+  GraphId CompileSegment(const GraphSegmentPtr segment);
   CompileResult LinkSegment();
 
  protected:
-  GraphPartition graph_partition_;
   GraphScheduler scheduler_;
   CompileOptions options_;
-  mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
 };
 }  // namespace infer
 }  // namespace mindspore

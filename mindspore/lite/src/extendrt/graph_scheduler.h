@@ -25,10 +25,21 @@
 #include "include/api/status.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
+#include "src/litert/kernel_exec.h"
+
 namespace mindspore {
 namespace infer {
 struct ScheduleStrategy {};
 struct GraphCompilerInfo;
+
+struct Tensor {};
+struct ExcutionPlan {
+  std::vector<kernel::KernelExec> kernels_;
+  std::vector<Tensor> tensors_;
+  std::vector<int64_t> inputs_;
+  std::vector<int64_t> outputs_;
+};
+
 class GraphScheduler : public std::enable_shared_from_this<GraphScheduler> {
  public:
   explicit GraphScheduler(const ScheduleStrategy &strategy);

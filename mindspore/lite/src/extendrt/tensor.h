@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "extendrt/graph_compiler.h"
+
+#ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_TENSOR_H_
+#define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_TENSOR_H_
+
+#include "src/infer/tensor.h"
 
 namespace mindspore {
 namespace infer {
-ExcutionPlan GraphCompiler::Compile(FuncGraphPtr func_graph) { return {}; }
-GraphId GraphCompiler::CompileSegment(const GraphSegmentPtr segment) { return -1; }
-CompileResult GraphCompiler::LinkSegment() { return CompileResult(); }
-ExcutionPlan GraphCompiler::Schedule(const CompileResult &compile_result) {
-  return scheduler_.Schedule(compile_result);
-}
+// implemented tensor for extendrt
+using Tensor = abstract::Tensor;
 }  // namespace infer
 }  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_TENSOR_H_

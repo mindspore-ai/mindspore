@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,20 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
 
   std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
+  infer::abstract::ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
+                                            const AnfNodePtrList &outputs) override {
+    return nullptr;
+  }
+
  protected:
   virtual std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &graph);
 
   virtual std::shared_ptr<infer::abstract::ExecutionPlan> Schedule(const std::vector<GraphSegmentPtr> &graph_segments,
-                                                            FuncGraphPtr func_graph);
+                                                                   FuncGraphPtr func_graph);
 
   virtual std::shared_ptr<infer::abstract::ExecutionFlow> Schedule(const GraphSegmentPtr &graph_segment,
-                                                            const std::vector<AnfNodePtr> &inputs,
-                                                            const std::vector<AnfNodePtr> &outputs);
+                                                                   const std::vector<AnfNodePtr> &inputs,
+                                                                   const std::vector<AnfNodePtr> &outputs);
 
  private:
   infer::abstract::Tensor *CreateTensor(AnfNodePtr node);
