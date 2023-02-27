@@ -1305,7 +1305,7 @@ def dropout1d(x, p=0.5, training=True):
     return out
 
 
-def dropout2d(x, p=0.5):
+def dropout2d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math:`NCHW`,
@@ -1324,38 +1324,40 @@ def dropout2d(x, p=0.5):
     `dropout2d` can improve the independence between channel feature maps.
 
     Args:
-        x (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
+        input (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `H` is the feature height, and `W` is the feature width. The data type must be int8,
             int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
+        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: True.
 
     Returns:
-        Tensor, output, with the same shape and data type as `x`.
-
-        Tensor, mask, with the same shape as `x` and the data type is bool.
+        Tensor, output, with the same shape and data type as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not `4D`.
+        ValueError: If `input` shape is not `4D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
-        >>> output, mask = ops.dropout2d(input_x, 0.5)
+        >>> input = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
+        >>> output = ops.dropout2d(input, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
+    if training is False:
+        return input
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
-    return dropout_2d_op(x)
+    out, _ = dropout_2d_op(input)
+    return out
 
 
-def dropout3d(x, p=0.5):
+def dropout3d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor
     with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor
@@ -1370,35 +1372,37 @@ def dropout3d(x, p=0.5):
     `dropout3d` can improve the independence between channel feature maps.
 
     Args:
-        x (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
+        input (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `D` is the feature depth, `H` is the feature height, and `W` is the feature width.
             The data type must be int8, int16, int32, int64, float16, float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
+        training(bool): If `training` is True, applying dropout, otherwise, not applying. Default: True.
 
     Returns:
-        Tensor, output, with the same shape and data type as `x`.
-
-        Tensor, mask, with the same shape as `x` and the data type is bool.
+        Tensor, output, with the same shape and data type as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not 5D.
+        ValueError: If `input` shape is not 5D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
-        >>> output, mask = ops.dropout3d(input_x, 0.5)
+        >>> input = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
+        >>> output = ops.dropout3d(input, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
+    if training is False:
+        return input
     dropout_3d_op = NN_OPS.Dropout3D(1.0 - p)
-    return dropout_3d_op(x)
+    out, _ = dropout_3d_op(input)
+    return out
 
 
 def fast_gelu(x):
