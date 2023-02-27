@@ -882,7 +882,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   }
 
   selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
-  if (select_status == kStatusReducePrecision || kStatusReducePrecision == kStatusRaisePrecision) {
+  if (select_status == kStatusReducePrecision || select_status == kStatusRaisePrecision) {
     MS_LOG(INFO) << PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, select_status);
   }
 
