@@ -22,6 +22,7 @@ from mindspore.ops.primitive import Primitive
 
 
 tuple_setitem = Primitive("tuple_setitem")
+list_setitem = Primitive("list_setitem")
 
 
 @bprop_getters.register(seq.SequenceCount)
@@ -98,15 +99,27 @@ def get_bprop_seq_equal(self):
 
 
 @bprop_getters.register("tuple_setitem")
-@bprop_getters.register("list_setitem")
-def get_bprop_setitem(self):
+def get_bprop_tuple_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""
 
     def bprop(x, idx, value, out, dout):
         d_x = tuple_setitem(dout, idx, 0)
         d_value = dout[idx]
         d_idx = 0
-        return d_x, zeros_like(d_idx), d_value
+        return (d_x, zeros_like(d_idx), d_value)
+
+    return bprop
+
+
+@bprop_getters.register("list_setitem")
+def get_bprop_lsit_setitem(self):
+    """Generate bprop for TupleSetItem and ListSetItem"""
+
+    def bprop(x, idx, value, out, dout):
+        d_x = list_setitem(dout, idx, 0)
+        d_value = dout[idx]
+        d_idx = 0
+        return (d_x, zeros_like(d_idx), d_value)
 
     return bprop
 
@@ -119,7 +132,7 @@ def get_bprop_less(self):
     """Generate bprop for SequenceLessThan and SequenceLessEqual"""
 
     def bprop(x, y, out, dout):
-        return zeros_like(x), zeros_like(y)
+        return (zeros_like(x), zeros_like(y))
 
     return bprop
 
@@ -130,8 +143,12 @@ def get_bprop_mul(self):
 
     def bprop(x, y, out, dout):
         dx = x
-        for i in range(len(x)):
-            dx = tuple_setitem(dx, i, dout[i])
+        if isinstance(x, tuple):
+            for i in range(len(x)):
+                dx = tuple_setitem(dx, i, dout[i])
+        else:
+            for i in range(len(x)):
+                dx = list_setitem(dx, i, dout[i])
         return (dx, zeros_like(y))
 
     return bprop
@@ -144,7 +161,10 @@ def get_bprop_max_min(self):
 
     def bprop(x, out, dout):
         index = seq.SequenceIndex()(x, out)
-        dx = tuple_setitem(zeros_like(x), index, dout)
+        if isinstance(x, tuple):
+            dx = tuple_setitem(zeros_like(x), index, dout)
+        else:
+            dx = list_setitem(zeros_like(x), index, dout)
         return (dx,)
 
     return bprop
