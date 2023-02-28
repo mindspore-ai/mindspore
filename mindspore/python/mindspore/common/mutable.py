@@ -51,7 +51,7 @@ def _check_element_type(value):
             if not _check_element_type(element):
                 return False
         return True
-    return isinstance(value, (Tensor_, int, float)) and not isinstance(value, bool)
+    return isinstance(value, (Tensor, Tensor_, int, float)) and not isinstance(value, bool)
 
 
 def mutable(input_data, dynamic_len=False):

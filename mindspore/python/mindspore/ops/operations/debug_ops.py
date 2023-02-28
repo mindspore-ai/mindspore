@@ -22,6 +22,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 
 
@@ -494,7 +495,7 @@ class Print(Primitive):
         for arg in args:
             if isinstance(arg, Parameter):
                 print(Tensor_.__repr__(arg))
-            elif isinstance(arg, Tensor_):
+            elif isinstance(arg, (Tensor, Tensor_)):
                 print(arg.__repr__())
             else:
                 print(arg)
