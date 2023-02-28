@@ -48,6 +48,14 @@ int RealMakeTupleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (ret != 0) {
     return ret;
   }
+
+  auto input_size = inputs[0]->GetShapeVector();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (!IsSameShape(input_size, inputs[i]->GetShapeVector())) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << " the input size must be equal";
+      return KRET_RESIZE_FAILED;
+    }
+  }
   return KRET_OK;
 }
 
@@ -58,13 +66,15 @@ bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
+  size_t offset = 0;
   for (size_t i = 0; i < inputs.size(); ++i) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     auto input_size = inputs[i]->size;
-    auto cp_ret = memcpy_s(output_addr + i, input_size, input_addr, input_size);
+    auto cp_ret = memcpy_s(output_addr + offset, input_size, input_addr, input_size);
     if (cp_ret != EOK) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
     }
+    offset += (input_size / sizeof(T));
   }
   return true;
 }
@@ -89,6 +99,20 @@ std::vector<std::pair<KernelAttr, RealMakeTupleCpuKernelMod::RealMakeTupleFunc>>
       .AddAllSameAttr(true)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat64),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<double>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
     &RealMakeTupleCpuKernelMod::LaunchKernel<int64_t>}};
 
 std::vector<KernelAttr> RealMakeTupleCpuKernelMod::GetOpSupport() {

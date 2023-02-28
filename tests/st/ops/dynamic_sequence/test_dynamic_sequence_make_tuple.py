@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-
+import numpy as np
 import mindspore.nn as nn
 from mindspore.ops.operations import _sequence_ops as seq
-from mindspore import context
+from mindspore import context, Tensor
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
 from sequence_help import context_prepare
@@ -83,6 +83,30 @@ def test_real_make_tuple_dy():
     res = net(x_0, x_1, x_3)
     assert res == expect
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_real_make_tuple_tensor_dy():
+    """
+    Feature: test real_make_tuple op
+    Description: all inputs are dynamic tensor
+    Expectation: the result match with tuple result
+    """
+    class Net(nn.Cell):
+        def construct(self, *x):
+            make_tuple = (x[0], x[1])
+            return make_tuple
+
+    x_0 = mutable(Tensor([[1, 2], [3, 4]]))
+    x_1 = mutable(Tensor([[0, 1], [2, 3]]))
+    expect = (Tensor([[1, 2], [3, 4]]), Tensor([[0, 1], [2, 3]]))
+    net = Net()
+    res = net(x_0, x_1)
+    for i in range(2):
+        assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
 @pytest.mark.level0
