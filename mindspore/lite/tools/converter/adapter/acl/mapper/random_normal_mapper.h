@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESIZE_MAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESIZE_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RANDOM_NORMAL_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RANDOM_NORMAL_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/resize.h"
+#include "ops/random_normal.h"
 
 namespace mindspore {
 namespace lite {
-using mindspore::ops::kNameResize;
+using mindspore::ops::kNameRandomNormal;
 
-class ResizeMapper : public PrimitiveMapper {
+class RandomNormalMapper : public PrimitiveMapper {
  public:
-  ResizeMapper() : PrimitiveMapper(kNameResize) {}
+  RandomNormalMapper() : PrimitiveMapper(kNameRandomNormal) {}
 
-  ~ResizeMapper() override = default;
+  ~RandomNormalMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
-
- private:
-  STATUS ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &prim);
-  STATUS CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RESIZE_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_RANDOM_NORMAL_MAPPER_H_

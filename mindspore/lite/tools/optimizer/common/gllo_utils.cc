@@ -1386,7 +1386,11 @@ void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_fi
     if (anf_node->cast<CNodePtr>()) {
       return GetCNodeFuncName(anf_node->cast<CNodePtr>());
     } else if (anf_node->cast<ParameterPtr>()) {
-      return "Parameter";
+      if (anf_node->cast<ParameterPtr>()->has_default()) {
+        return "Parameter_Constant";
+      } else {
+        return "Parameter_Variable";
+      }
     } else if (anf_node->cast<ValueNodePtr>()) {
       return "ValueNode";
     }

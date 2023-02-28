@@ -375,7 +375,7 @@ int TensorRTExecutor::ParseOptimizationProfile() {
 int TensorRTExecutor::ParseDumpOptions(const std::map<std::string, std::string> &gpu_context) {
   auto dump_ops_str = ProfileParser::GetOption(gpu_context, lite::kDumpOpsKey, "");
   if (!dump_ops_str.empty()) {
-    dump_ops_ = ProfileParser::Split(dump_ops_str, ";");
+    dump_ops_ = lite::StrSplit(dump_ops_str, ";");
     dump_dir_ = ProfileParser::GetOption(gpu_context, lite::kDumpDirKey, "");
     if (dump_dir_.empty()) {
       dump_dir_ = ".";

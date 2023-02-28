@@ -55,6 +55,7 @@ class AclPassImpl {
 
  private: /* build func graph */
   STATUS BuildGraph(const FuncGraphPtr &func_graph);
+  STATUS SetGraphInputShape(const FuncGraphPtr &func_graph);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
   ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
   STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);

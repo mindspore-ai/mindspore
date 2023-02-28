@@ -43,6 +43,25 @@ int64_t RandomStandardNormal::get_seed2() const {
   return GetValue<int64_t>(value_ptr);
 }
 
+void StandardNormal::Init(const int64_t seed, const int64_t seed2) {
+  this->set_seed(seed);
+  this->set_seed2(seed2);
+}
+
+void StandardNormal::set_seed(int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+void StandardNormal::set_seed2(int64_t seed2) { (void)this->AddAttr(kSeed2, api::MakeValue(seed2)); }
+
+int64_t StandardNormal::get_seed() const {
+  auto value_ptr = GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t StandardNormal::get_seed2() const {
+  auto value_ptr = GetAttr(kSeed2);
+  return GetValue<int64_t>(value_ptr);
+}
+
 namespace {
 abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
