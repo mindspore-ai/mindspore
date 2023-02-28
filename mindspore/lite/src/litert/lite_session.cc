@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include <utility>
+#include <fstream>
 #include "src/litert/pack_weight_manager.h"
 #include "src/litert/runtime_pass.h"
 #include "include/errorcode.h"
@@ -674,6 +675,69 @@ int LiteSession::SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel
   return RET_OK;
 }
 
+int LiteSession::DrawGraph(kernel::SubGraphKernel *graph) {
+  if (graph == nullptr) {
+    return RET_NULL_PTR;
+  }
+  // create and open .dot file
+  std::ofstream dotfile;
+  dotfile.open("./graph.dot", std::ios::out | std::ios::trunc);
+  if (!dotfile.is_open()) {
+    MS_LOG(ERROR) << "create or open dotfile failed.";
+    return RET_ERROR;
+  }
+  // write data to .dot file
+  dotfile << "digraph " << graph->name() << " {\n";
+  for (auto node : graph->nodes()) {
+    std::replace(node->name().begin(), node->name().end(), '/', '-');
+    // first node
+    if (node->in_kernels().empty()) {
+      dotfile << "\tinput->" << node->name();
+      dotfile << "[label=\"";
+      std::vector<int> input_shapes = node->in_tensors().front()->shape();
+      for (auto iter = input_shapes.begin(); iter != input_shapes.end(); iter++) {
+        if (iter == input_shapes.end() - 1) {
+          dotfile << *iter;
+        } else {
+          dotfile << *iter << "*";
+        }
+      }
+      dotfile << "\"]\n";
+      continue;
+    }
+
+    for (size_t i = 0; i < node->in_kernels().size(); ++i) {
+      dotfile << "\t" << node->in_kernels()[i]->name() << "->" << node->name() << "[label=\"";
+      std::vector<int32_t> in_kernel_shapes = node->in_tensors()[i]->shape();
+
+      for (auto iter = in_kernel_shapes.begin(); iter != in_kernel_shapes.end(); iter++) {
+        if (iter == in_kernel_shapes.end() - 1) {
+          dotfile << *iter;
+        } else {
+          dotfile << *iter << "*";
+        }
+      }
+      dotfile << "\"]\n";
+    }
+    // last node
+    if (node->out_kernels().empty()) {
+      dotfile << "\t" << node->name() << "->output";
+      dotfile << "[label=\"";
+      std::vector<int32_t> out_shapes = node->out_tensors().front()->shape();
+      for (auto iter = out_shapes.begin(); iter != out_shapes.end(); iter++) {
+        if (iter == out_shapes.end() - 1) {
+          dotfile << *iter;
+        } else {
+          dotfile << *iter << "*";
+        }
+      }
+      dotfile << "\"]\n";
+    }
+  }
+  dotfile.close();
+  return RET_OK;
+}
+
 int LiteSession::PrepareKernels(const Model *model) {
   // find kernel's in_kernels and out_kernels in every subgraph
   kernel::KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(this->kernels_);
@@ -715,6 +779,15 @@ int LiteSession::PrepareKernels(const Model *model) {
         }
       }
     }
+
+#if (defined DEBUG) && (defined MSLITE_EXPORT_COMPUTE_IR)
+    auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+    ret = DrawGraph(subgraph_kernel);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "graph: " << kernel->name() << " draw failed.";
+    }
+#endif
+
     ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
