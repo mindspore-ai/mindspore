@@ -14,7 +14,7 @@
 #### DataSet
 
 - The TFRecordDataset API can directly read TFRecord files compressed by GZIP or ZLIB.
-- The NumpySliceDataset API can process data of different dimensions at the same time.
+- The NumpySlicesDataset API can process data of different dimensions at the same time.
 - Optimize the structure of error log to display more clear call stack information for debugging.
 - Fixed `mindspore.dataset.config.set_seed` does not take effect for random seeds in distributed training scenarios.
 

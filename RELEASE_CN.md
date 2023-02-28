@@ -14,7 +14,7 @@
 #### DataSet
 
 - TFRecordDataset API支持直接读取通过GZIP或ZLIB压缩后的TFRecord文件。
-- NumpySliceDataset API支持同时处理不同维度的数据。
+- NumpySlicesDataset API支持同时处理不同维度的数据。
 - 优化错误日志信息的结构，展示更清晰的调用栈信息便于调试、定位问题。
 - 修复分布式训练场景下 `mindspore.dataset.config.set_seed` 对随机种子设置不生效的问题。
 
