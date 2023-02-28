@@ -1547,7 +1547,9 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   (void)df_graph_->SetOutputs(graph_outputs_);
 
   IdentityOptimization();
-  NoOpOptimization();
+  if (!training_) {
+    NoOpOptimization();
+  }
 
   compute_sout_ << "}" << endl;
   // For the graph(e.g. eval_subgraph) whose IterNum is 1, donot set NeedIteration flag.
