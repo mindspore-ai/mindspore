@@ -22,6 +22,7 @@
 #include <map>
 #include <thread>
 #include <shared_mutex>
+#include <unordered_map>
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "distributed/recovery/configuration.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -124,6 +125,9 @@ class MetaServerNode : public NodeBase {
 
   // Try to transition the state of cluster to be initialized.
   bool TransitionToInitialized();
+
+  // For each computing graph node, port range should be assigned by meta server node for rpc servers to bind.
+  void AssignPortRange();
 
   // Recover metadata from the configuration if recovery is enabled.
   bool Recovery();
