@@ -93,15 +93,16 @@ class Profiler:
         op_time (bool, optional): (Ascend/GPU) Whether to collect operators performance data. Default value: True.
         profile_communication (bool, optional): (Ascend only) Whether to collect communication performance data in
             a multi devices training,collect when True. Setting this parameter has no effect during single device
-            training. When using this parameter, op_time must be set to True. Default: False.
+            training. When using this parameter, `op_time` must be set to True. Default: False.
         profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when True.
-            When using this parameter, op_time must be set to True. Default: False.
+            When using this parameter, `op_time` must be set to True. Default: False.
         parallel_strategy (bool, optional): (Ascend only) Whether to collect parallel policy performance data.
             Default value: true.
         start_profile (bool, optional): The start_profile parameter controls whether to enable or disable performance
             data collection based on conditions. Default: True.
-        aicore_metrics (int, optional): (Ascend only) Types of AICORE performance data collected. The value must be in
-            [-1, 0, 1, 2, 3, 4, 5], Default: 0, the data items contained in each metric are as follows:
+        aicore_metrics (int, optional): (Ascend only) Types of AICORE performance data collected, when using this
+            parameter, `op_time` must be set to True, and the value must be in [-1, 0, 1, 2, 3, 4, 5], Default: 0, the
+            data items contained in each metric are as follows:
 
             - -1: Does not collect AICORE data.
             - 0: ArithmeticUtilization contains mac_fp16/int8_ratio, vec_fp32/fp16/int32_ratio, vec_misc_ratio etc.
@@ -124,7 +125,7 @@ class Profiler:
         data_process (bool, optional): (Ascend/GPU) Whether to collect data to prepare performance data.
             Default value: True.
         timeline_limit (int, optional): Set the maximum storage size of the timeline file (unit M). When using this
-            parameter, op_time must be set to True. Default value: 500.
+            parameter, `op_time` must be set to True. Default value: 500.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
