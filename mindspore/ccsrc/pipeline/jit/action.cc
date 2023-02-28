@@ -114,12 +114,38 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
 bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
     if (common::AnfAlgo::IsCallNode(node)) {
       return false;
     }
     return common::AnfAlgo::IsDynamicShape(node);
+  });
+}
+
+// Exist ScalarAdd ScalarSub etc OPS which will backoff to CPU
+bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
+    return false;
+  }
+
+  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      MS_LOG(DEBUG) << "Node is not a cnode.";
+      return false;
+    }
+    auto abs = node->abstract();
+    if (abs == nullptr) {
+      MS_LOG(DEBUG) << "Node " << node->fullname_with_scope()
+                    << " has no abstract, Debug String: " << node->DebugString();
+      return false;
+    }
+    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kAnyValue;
   });
 }
 
@@ -1137,6 +1163,13 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
   if (IsDynamicShapeGraph(func_graph)) {
     MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic shape.";
+    set_ctx(false, false, false);
+    return;
+  }
+
+  // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
+  if (IsNeedBackoffGraph(func_graph)) {
+    MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
     set_ctx(false, false, false);
     return;
   }
