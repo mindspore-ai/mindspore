@@ -4252,7 +4252,7 @@ class Tensor(Tensor_):
             Tensor, the same shape and dtype as the input.
 
         Supported Platforms:
-            ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
