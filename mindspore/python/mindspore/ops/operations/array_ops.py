@@ -8003,7 +8003,7 @@ class CountNonZero(Primitive):
     Refer to :func:`mindspore.ops.count_nonzero` for more details.
 
     Supported Platforms:
-         ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], dtype=mindspore.int64)

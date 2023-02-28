@@ -18,4 +18,4 @@ mindspore.ops.count_nonzero
     异常：
         - **TypeError** - 如果 `x` 的数据类型不受支持。
         - **TypeError** - 如果 `dims` 的数据类型不是int。
-        - **ValueError** - 如果 `dims` 中的任何值不在 :math:`[-x_dims, x_dims)` 范围内。
+        - **ValueError** - 如果 `dims` 中的任何值不在 [-x_dims, x_dims) 范围内。
