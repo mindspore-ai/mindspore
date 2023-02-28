@@ -320,6 +320,9 @@ bool UniqueConsecutiveCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
                                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniqueConsecutiveInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniqueConsecutiveOutputsNum, kernel_name_);
+  output_shape_.clear();
+  idx_shape_.clear();
+  count_shape_.clear();
   if (axis_ == kNone) {
     UniqueConsecutiveNone<T1, T2>(inputs, outputs);
   } else {

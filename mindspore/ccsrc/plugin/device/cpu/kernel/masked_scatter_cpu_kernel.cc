@@ -48,26 +48,22 @@ int MaskedScatterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
-  std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> mask_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> updates_shape = inputs.at(kIndex2)->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
-  std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
-  std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(mask_shape_), LongToSize);
-  std::transform(updates_shape.begin(), updates_shape.end(), std::back_inserter(updates_shape_), LongToSize);
-  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  x_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  mask_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  updates_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
   x_numElements_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
   updates_numElements_ = std::accumulate(updates_shape_.begin(), updates_shape_.end(), 1, std::multiplies<size_t>());
   need_broadcast_ = (x_shape_ == mask_shape_) ? false : true;
-  size_t mask_dims = mask_shape.size();
+  size_t mask_dims = mask_shape_.size();
   std::vector<int64_t> x_shape_reverse = x_shape_;
   std::vector<int64_t> mask_shape_reverse = mask_shape_;
   std::reverse(x_shape_reverse.begin(), x_shape_reverse.end());
   std::reverse(mask_shape_reverse.begin(), mask_shape_reverse.end());
   for (size_t i = 0; i < mask_dims; i++) {
     if (mask_shape_reverse[i] != x_shape_reverse[i] && mask_shape_reverse[i] != 1) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of 'mask': " << ShapeVectorToStr(mask_shape)
-                               << " can not be broadcast to the shape of 'x': " << ShapeVectorToStr(x_shape) << ".";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of 'mask': " << ShapeVectorToStr(mask_shape_)
+                               << " can not be broadcast to the shape of 'x': " << ShapeVectorToStr(x_shape_) << ".";
     }
   }
   return ret;

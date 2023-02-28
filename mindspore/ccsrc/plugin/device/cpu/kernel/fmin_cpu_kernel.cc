@@ -63,6 +63,7 @@ int FminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   input_x_shape_ = inputs[0]->GetShapeVector();
   input_y_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
+  output_num_ = 1;
   TypeId input_x_dtype = inputs[0]->GetDtype();
   TypeId input_y_dtype = inputs[1]->GetDtype();
   size_t max_input_shape_size =
