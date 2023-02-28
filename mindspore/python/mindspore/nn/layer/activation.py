@@ -555,9 +555,8 @@ class RReLU(Cell):
         if lower > upper:
             raise ValueError(f"For {self.cls_name}, the value of 'upper' must be greater than 'lower', "
                              f"but got upper: {upper}, lower: {lower}. ")
-
-        self.lower = Tensor(lower)
-        self.upper = Tensor(upper)
+        self.lower = Tensor(lower, dtype=mstype.float32)
+        self.upper = Tensor(upper, dtype=mstype.float32)
         self.sign = P.Sign()
 
     def construct(self, x):
@@ -566,7 +565,7 @@ class RReLU(Cell):
         sign_matrix = self.sign(x)
         negative_filter = sign_matrix.clip(None, 0)
         positive_filter = sign_matrix.clip(0, None)
-        mask = ops.uniform(_size, self.lower.astype(_dtype), self.upper.astype((_dtype)), dtype=_dtype)
+        mask = ops.uniform(_size, self.lower, self.upper).astype(_dtype)
         negative_mask = negative_filter * mask * -1
         total_mask = negative_mask + positive_filter
         out = total_mask * x
