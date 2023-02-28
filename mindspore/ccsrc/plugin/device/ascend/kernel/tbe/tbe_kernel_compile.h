@@ -117,6 +117,7 @@ class TbeKernelCompileManager {
   void PrintCompileResult(const nlohmann::json &json);
   std::string ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node) const;
   void ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *target_status) const;
+  std::string ParseOpPattern(const std::string &json_str) const;
   nlohmann::json TurnStrToJson(const std::string &string) const;
   void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
                       const std::vector<AnfNodePtr> &output_nodes = {});

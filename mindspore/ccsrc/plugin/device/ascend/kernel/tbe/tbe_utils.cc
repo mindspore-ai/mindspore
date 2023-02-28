@@ -491,7 +491,7 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   if (!ParseJson(build_res_str, &build_res_json)) {
     MS_LOG(EXCEPTION) << "Parse build result for " << node->fullname_with_scope() << " error :" << build_res_str;
   }
-  *compile_info = build_res_json.dump();
+  *compile_info = read_new_json.at("compileInfo").dump();
   file.close();
   file.clear();
   MS_LOG(DEBUG) << "Get compile info from json file success.";
