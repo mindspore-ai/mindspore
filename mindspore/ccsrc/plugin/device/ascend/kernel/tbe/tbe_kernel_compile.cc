@@ -295,6 +295,15 @@ void TbeKernelCompileManager::ParseTargetJobStatus(const nlohmann::json &json, T
   }
 }
 
+std::string TbeKernelCompileManager::ParseOpPattern(const std::string &json_str) const {
+  nlohmann::json result;
+  if (!ParseJson(json_str, &result)) {
+    MS_LOG(WARNING) << "Parse op pattern json error. Origin result: " << json_str;
+    return kernel::kPatternOpaque;
+  }
+  return GetJsonValue<std::string>(result, "pattern");
+}
+
 nlohmann::json TbeKernelCompileManager::TurnStrToJson(const std::string &string) const {
   nlohmann::json json;
   if (!ParseJson(string, &json)) {
@@ -372,7 +381,7 @@ void TbeKernelCompileManager::SavePreBuildResult(const std::string &json_name, c
     MS_LOG(WARNING) << "Parse pre-build result error. Origin result: " << pre_build_result;
     return;
   }
-  auto op_pattern = GetJsonValue<std::string>(result, "op_pattern");
+  auto op_pattern = ParseOpPattern(GetJsonValue<std::string>(result, "op_pattern"));
   auto output_data_desc = GetJsonValue<nlohmann::json>(result, "op_params");
   auto core_type = GetJsonValue<nlohmann::json>(result, "core_type");
   // save pre build result
