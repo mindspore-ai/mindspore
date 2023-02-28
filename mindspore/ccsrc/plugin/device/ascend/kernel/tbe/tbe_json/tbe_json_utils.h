@@ -60,6 +60,7 @@ constexpr auto kVTypeFloat32 = "float32";
 constexpr auto kVTypeListInt = "listInt";
 constexpr auto kVTypeInt32 = "Int32";
 constexpr auto kVTypeInt64 = "Int64";
+constexpr auto kVTypeListInt64 = "listInt64";
 constexpr auto kVTypeListUInt64 = "listUInt64";
 constexpr auto kVTypeListFloat = "listFloat";
 constexpr auto kVTypeListListInt = "listListInt";

@@ -48,6 +48,7 @@ static std::unordered_map<std::string, ATTR_DTYPE> type_attr_dtype_map = {
   {kVTypeFloat, ATTR_DTYPE::ATTR_FLOAT32},
   {kVTypeListInt, ATTR_DTYPE::ATTR_LIST_INT32},
   {kVTypeListFloat, ATTR_DTYPE::ATTR_LIST_FLOAT32},
+  {kVTypeListInt64, ATTR_DTYPE::ATTR_LIST_INT64},
   {kVTypeListUInt64, ATTR_DTYPE::ATTR_LIST_UINT64},
   {kVTypeListListInt, ATTR_DTYPE::ATTR_LIST_LIST_INT64}};
 
@@ -181,6 +182,7 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
     case ATTR_DTYPE::ATTR_FLOAT32:
       return ParseAttrFloat(value, attr_obj);
     case ATTR_DTYPE::ATTR_LIST_INT32:
+    case ATTR_DTYPE::ATTR_LIST_INT64:
       return ParseAttrListInt(value, attr_obj);
     case ATTR_DTYPE::ATTR_LIST_FLOAT32:
       return ParseAttrListFloat(value, attr_obj);
@@ -232,7 +234,8 @@ bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nl
     case ATTR_DTYPE::ATTR_FLOAT32:
       (*attr_obj)[kJValue] = std::stof(value);
       break;
-    case ATTR_DTYPE::ATTR_LIST_INT32: {
+    case ATTR_DTYPE::ATTR_LIST_INT32:
+    case ATTR_DTYPE::ATTR_LIST_INT64: {
       std::stringstream string_value(value);
       std::string list_elem;
       std::vector<int64_t> attrs_value;

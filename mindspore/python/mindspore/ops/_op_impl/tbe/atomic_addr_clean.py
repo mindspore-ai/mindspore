@@ -23,7 +23,7 @@ atomic_addr_clean_op_info = TBERegOp("AtomicAddrClean") \
     .compute_cost(10) \
     .kernel_name("atomic_addr_clean") \
     .partial_flag(True) \
-    .attr("automic_add_mem_size", "required", "listInt", "all") \
+    .attr("automic_add_mem_size", "required", "listInt64", "all") \
     .get_op_info()
 
 

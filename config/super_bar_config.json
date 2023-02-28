@@ -449,7 +449,8 @@
     "ScatterNdD ": "Accuracy issues",
     "Trace": "Hadn't adapted tbe implementation",
     "AssignAdd": "Frac_nz in pangu not support",
-    "Range": "not support dynamic shape with tiling failed"
+    "Range": "not support dynamic shape with tiling failed",
+    "AtomicAddrClean": "need to clean addr larger than 2G, int32 is not enough"
   },
   "SkipNodes": [
     "BroadcastTo",
@@ -479,7 +480,8 @@
     "TransData",
     "ScatterNdD",
     "AssignAdd",
-    "Range"
+    "Range",
+    "AtomicAddrClean"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
