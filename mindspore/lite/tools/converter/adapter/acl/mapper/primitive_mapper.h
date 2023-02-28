@@ -42,8 +42,14 @@ class PrimitiveMapper {
 
   STATUS AdjustPoolAttr(int fmk_type, const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
 
-  STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
-                        const std::string &attr_name, size_t flag) const;
+  STATUS AddFloatAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
+                             const std::string &attr_name, bool empty_shape) const;
+
+  STATUS AddIntVecAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
+                              const std::string &attr_name) const;
+
+  STATUS AddIntAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
+                           const std::string &attr_name, bool empty_shape) const;
 
   STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const;
 

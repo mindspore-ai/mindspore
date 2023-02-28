@@ -26,20 +26,8 @@ namespace mindspore {
 namespace lite {
 STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, PrimitiveCPtr prim) {
   MS_ASSERT(prim != nullptr);
-  auto data_type =
-    OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
-  if (data_type == kTypeUnknown) {
-    MS_LOG(ERROR) << "not support onnx data type "
-                  << static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type());
-    return RET_ERROR;
-  }
-  std::vector<int64_t> shape_vector(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end());
-  auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
+  auto tensor_info = OnnxNodeParser::CopyOnnxTensorData(onnx_const_tensor);
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "new a tensor::Tensor failed.";
-    return RET_ERROR;
-  }
-  if (OnnxNodeParser::CopyOnnxTensorData(onnx_const_tensor, tensor_info) != RET_OK) {
     MS_LOG(ERROR) << "get value failed.";
     return RET_ERROR;
   }

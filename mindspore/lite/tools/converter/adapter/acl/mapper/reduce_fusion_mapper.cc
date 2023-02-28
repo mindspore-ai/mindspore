@@ -28,6 +28,7 @@
 #include "ops/reduce_max.h"
 #include "ops/reduce_min.h"
 #include "ops/reduce_all.h"
+#include "ops/lp_norm.h"
 
 namespace mindspore {
 namespace lite {
@@ -47,8 +48,8 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   int64_t mode = GetValue<int64_t>(attr_val);
   PrimitivePtr dst_prim = nullptr;
   if (mode == static_cast<int64_t>(ReduceMode::Reduce_Sum)) {
-    ops::ReduceSum reduce_sum_op;
-    dst_prim = reduce_sum_op.GetPrim();
+    dst_prim = std::make_shared<acl::ReduceSumAcl>();
+    CHECK_NULL_RETURN(dst_prim);
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Mean)) {
     ops::ReduceMean reduce_mean_op;
     dst_prim = reduce_mean_op.GetPrim();
@@ -61,6 +62,17 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_All)) {
     ops::ReduceAll reduce_all;
     dst_prim = reduce_all.GetPrim();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_L2)) {
+    ops::LpNorm lp_norm_op;
+    auto axes_ptr = src_prim->GetAttr(ops::kAxes);
+    if (axes_ptr != nullptr) {
+      auto axes = GetValue<std::vector<int32_t>>(axes_ptr);
+      std::vector<int64_t> axes_vec;
+      std::transform(axes.begin(), axes.end(), std::back_inserter(axes),
+                     [](int32_t x) { return static_cast<int64_t>(x); });
+      lp_norm_op.set_axis(axes_vec);
+    }
+    dst_prim = lp_norm_op.GetPrim();
   } else {
     MS_LOG(ERROR) << "Not support reuce mode " << static_cast<int64_t>(mode);
     return RET_ERROR;
@@ -69,6 +81,9 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   if (mode == static_cast<int64_t>(ReduceMode::Reduce_Mean)) {
+    return lite::RET_OK;
+  }
+  if (mode == static_cast<int64_t>(ReduceMode::Reduce_Sum)) {
     return lite::RET_OK;
   }
   if (AdjustInput(cnode) != RET_OK) {

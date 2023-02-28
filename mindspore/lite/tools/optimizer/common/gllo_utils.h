@@ -109,7 +109,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
                                 const std::string &node_name);
 
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
-                                        const std::string &node_name);
+                                        const std::string &node_name, bool empty_shape = false);
 
 ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
                                       const std::string &node_name);
@@ -118,7 +118,7 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
                                         const std::string &node_name);
 
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
-                                          const std::string &node_name);
+                                          const std::string &node_name, bool empty_shape = false);
 
 ParameterPtr BuildFloatVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<float> &data,
                                         const std::string &node_name);

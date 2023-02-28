@@ -47,8 +47,14 @@ STATUS ClipMapper::Mapper(const CNodePtr &cnode) {
   value_node->set_value(dst_prim);
 
   auto inputs = cnode->inputs();
-  inputs.push_back(min_param);
-  inputs.push_back(max_param);
+  const size_t input_size_with_min = 3;  // prim, data, min
+  const size_t input_size_with_max = 4;  // prim, data, min, max
+  if (inputs.size() < input_size_with_min) {
+    inputs.push_back(min_param);
+  }
+  if (inputs.size() < input_size_with_max) {
+    inputs.push_back(max_param);
+  }
   cnode->set_inputs(inputs);
   return RET_OK;
 }

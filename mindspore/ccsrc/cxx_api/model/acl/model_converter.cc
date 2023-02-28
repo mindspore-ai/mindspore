@@ -173,6 +173,22 @@ Status ModelConverter::SaveModel(const ge::ModelBufferData &model) const {
   return kSuccess;
 }
 
+Buffer ModelConverter::LoadMindIRSingle(const mindspore::FuncGraphPtr &func_graph) {
+  Buffer buffer_ret;
+  auto df_graph = ConvertFuncGraphToAIR(func_graph);
+  if (df_graph == nullptr) {
+    MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
+    return buffer_ret;
+  }
+  std::map<std::string, std::string> init_options;
+  std::map<std::string, std::string> build_options;
+  auto option = options_.lock();
+  if (option != nullptr) {
+    std::tie(init_options, build_options) = option->GenAclOptions();
+  }
+  return BuildAirModel(df_graph, init_options, build_options);
+}
+
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;

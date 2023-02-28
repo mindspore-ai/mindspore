@@ -32,9 +32,6 @@
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr auto kNumFlagOne = 1;
-constexpr auto kNumFlagTwo = 2;
-constexpr auto kNumFlagThree = 3;
 constexpr auto kCommonAttrValueNum = 2;
 constexpr auto kNamePaddingMode = "padding_mode";
 constexpr auto kNameCeilMode = "ceil_mode";
@@ -188,46 +185,68 @@ STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &d
   return lite::RET_OK;
 }
 
-STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                       const PrimitivePtr &dst_prim, const std::string &attr_name, size_t flag) const {
+STATUS PrimitiveMapper::AddFloatAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                            const PrimitivePtr &dst_prim, const std::string &attr_name,
+                                            bool empty_shape) const {
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
   auto attr_val = dst_prim->GetAttr(attr_name);
   if (attr_val == nullptr) {
     MS_LOG(INFO) << "There is no attr: " << attr_name;
     return lite::RET_OK;
   }
-
+  auto param_name = cnode->fullname_with_scope() + "_" + attr_name;
   auto inputs = cnode->inputs();
-  switch (flag) {
-    case (kNumFlagOne): {
-      auto value_data = opt::CastToVec2DInt(attr_val);
-      auto param_node =
-        opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
-      break;
-    }
-    case (kNumFlagTwo): {
-      auto value_data = GetValue<float>(attr_val);
-      auto param_node =
-        opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
-      break;
-    }
-    case (kNumFlagThree): {
-      auto value_data = opt::CastToInt(attr_val);
-      if (value_data.size() < 1) {
-        MS_LOG(ERROR) << "Invalid size: " << value_data.size();
-        return lite::RET_ERROR;
-      }
-      auto param_node =
-        opt::BuildIntValueParameterNode(func_graph, value_data[0], cnode->fullname_with_scope() + "_" + attr_name);
-      inputs.push_back(param_node);
-      break;
-    }
-    default:
-      MS_LOG(ERROR) << "Invalid flag for attr: " << flag;
-      return lite::RET_ERROR;
+  auto value_data = GetValue<float>(attr_val);
+  auto param_node = opt::BuildFloatValueParameterNode(func_graph, value_data, param_name, empty_shape);
+
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "param_node is nullptr.");
+  param_node->set_debug_info(std::make_shared<NodeDebugInfo>(param_name));
+  inputs.push_back(param_node);
+  cnode->set_inputs(inputs);
+  return lite::RET_OK;
+}
+
+STATUS PrimitiveMapper::AddIntVecAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                             const PrimitivePtr &dst_prim, const std::string &attr_name) const {
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
+  auto attr_val = dst_prim->GetAttr(attr_name);
+  if (attr_val == nullptr) {
+    MS_LOG(INFO) << "There is no attr: " << attr_name;
+    return lite::RET_OK;
   }
+  auto param_name = cnode->fullname_with_scope() + "_" + attr_name;
+  auto inputs = cnode->inputs();
+  auto value_data = opt::CastToVec2DInt(attr_val);
+  auto param_node = opt::BuildIntVec2DParameterNode(func_graph, value_data, param_name);
+
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "param_node is nullptr.");
+  param_node->set_debug_info(std::make_shared<NodeDebugInfo>(param_name));
+  inputs.push_back(param_node);
+  cnode->set_inputs(inputs);
+  return lite::RET_OK;
+}
+
+STATUS PrimitiveMapper::AddIntAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                          const PrimitivePtr &dst_prim, const std::string &attr_name,
+                                          bool empty_shape) const {
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
+  auto attr_val = dst_prim->GetAttr(attr_name);
+  if (attr_val == nullptr) {
+    MS_LOG(INFO) << "There is no attr: " << attr_name;
+    return lite::RET_OK;
+  }
+  auto param_name = cnode->fullname_with_scope() + "_" + attr_name;
+  auto inputs = cnode->inputs();
+  auto value_data = opt::CastToInt(attr_val);
+  if (value_data.size() < 1) {
+    MS_LOG(ERROR) << "Invalid size: " << value_data.size();
+    return lite::RET_ERROR;
+  }
+  auto param_node = opt::BuildIntValueParameterNode(func_graph, value_data[0], param_name, empty_shape);
+
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "param_node is nullptr.");
+  param_node->set_debug_info(std::make_shared<NodeDebugInfo>(param_name));
+  inputs.push_back(param_node);
   cnode->set_inputs(inputs);
   return lite::RET_OK;
 }
