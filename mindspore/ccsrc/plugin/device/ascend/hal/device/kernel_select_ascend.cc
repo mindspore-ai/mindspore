@@ -1380,7 +1380,9 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   // The Pynative_mode and task_sink does not support the backoff ability.
   if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op() ||
       graph->is_graph_run_mode()) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first;
+    MS_EXCEPTION(failure_info.second)
+      << failure_info.first
+      << "\n You can try to set env GRAPH_OP_RUN to 1 to enable back off this operator to CPU platform in graph mode.";
   }
   MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
   // Erease  kAttrDynInputSizes before cpu kernel select, since cpu may expand it according to kAttrDynInputSizes
