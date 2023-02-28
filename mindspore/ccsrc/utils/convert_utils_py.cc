@@ -527,6 +527,9 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   if (dynamic_len || dynamic_len_element_abs != nullptr) {
     if (dynamic_len_element_abs == nullptr) {
       MS_LOG(INFO) << "Dynamic length sequence with no specified element abstract convert to empty tuple.";
+      for (size_t i = 0; i < value_size; i++) {
+        ref_tuple[i] = BaseRefToPyData(value_list[i]);
+      }
       return ref_tuple;
     }
     if (dynamic_len_element_abs->isa<abstract::AbstractNone>()) {

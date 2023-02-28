@@ -169,6 +169,10 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
   if (value->isa<ValueTuple>()) {
     auto value_tuple = value->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
+    if (value_tuple->size() == 0) {
+      (void)values->emplace_back(std::make_shared<tensor::Tensor>());
+      return;
+    }
     for (size_t i = 0; i < value_tuple->size(); ++i) {
       ValuePtr element = value_tuple->value()[i];
       MS_EXCEPTION_IF_NULL(element);
@@ -713,6 +717,11 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
+  }
+
+  if (tensor->data_ptr() == nullptr && device_tensor->GetSize() == 0) {
+    MS_LOG(INFO) << "Empty tuple sync";
+    return;
   }
 
   auto host_tensor_size = LongToSize(tensor->data().nbytes());

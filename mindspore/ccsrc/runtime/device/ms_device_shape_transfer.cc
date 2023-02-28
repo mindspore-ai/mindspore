@@ -271,6 +271,15 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     if (node_value->isa<Scalar>()) {
       return {};
     }
+    if (node_value->isa<ValueTuple>()) {
+      const auto &value_tuple = node_value->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(value_tuple);
+      const auto &values = value_tuple->value();
+      if (values.size() == 0) {
+        MS_LOG(INFO) << "Empty tuple for node:" << node->DebugString();
+        return {0};
+      }
+    }
     auto tensor = node_value->cast<tensor::TensorPtr>();
     if (tensor == nullptr) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";

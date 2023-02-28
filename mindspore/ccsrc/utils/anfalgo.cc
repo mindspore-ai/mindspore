@@ -705,6 +705,9 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   if (type_ptr->isa<Tuple>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_ptr);
+    if (tuple_ptr->size() == 0) {
+      return kTypeUnknown;
+    }
     if (tuple_ptr->dynamic_len()) {
       MS_EXCEPTION_IF_NULL(tuple_ptr->dynamic_element_type());
       if (tuple_ptr->dynamic_element_type()->isa<TensorType>()) {
@@ -714,9 +717,6 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
         return element_type->type_id();
       }
       return tuple_ptr->dynamic_element_type()->type_id();
-    }
-    if (tuple_ptr->size() == 0) {
-      return kTypeUnknown;
     }
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
@@ -1961,7 +1961,11 @@ abstract::BaseShapePtr AnfAlgo::GetDynamicSequenceShape(const AnfNodePtr &node, 
     MS_LOG(EXCEPTION) << "Not dynamic abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
   }
   const auto &element_abs = sequence_abs->dynamic_len_element_abs();
-  MS_EXCEPTION_IF_NULL(element_abs);
+  if (element_abs == nullptr) {
+    MS_LOG(INFO) << "No element abs for node:" << node->DebugString() << " index:" << output_idx;
+    ShapeVector empty_shape{0};
+    return std::make_shared<abstract::Shape>(empty_shape);
+  }
   return element_abs->BuildShape();
 }
 }  // namespace common

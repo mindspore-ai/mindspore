@@ -517,7 +517,7 @@ std::vector<ShapeVector> BaseShapeToShapeVector(const abstract::BaseShapePtr &ba
     } else if (element_base_shape->isa<abstract::NoShape>()) {
       return std::vector<ShapeVector>(tuple_shape->size(), {1});
     }
-  } else if (base_shape->isa<abstract::NoShape>()) {
+  } else if (base_shape->isa<abstract::NoShape>() || base_shape->isa<abstract::DynamicSequenceShape>()) {
     return {};
   }
   MS_LOG(WARNING) << "Invalid shape:" << base_shape->ToString();

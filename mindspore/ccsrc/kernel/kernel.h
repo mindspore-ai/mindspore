@@ -430,9 +430,10 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
     return nullptr;
   }
 
+  // When the input is an empty tuple, the input size will be 0.
   if (addr_list[index]->size == 0) {
-    MS_LOG(WARNING) << "The size of device address is zero, address index: " << index
-                    << ", and the length of 'addr_list' is " << addr_list.size();
+    MS_LOG(INFO) << "The size of device address is zero, address index: " << index
+                 << ", and the length of 'addr_list' is " << addr_list.size();
     return nullptr;
   }
   return reinterpret_cast<T *>(addr_list[index]->addr);

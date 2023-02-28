@@ -296,7 +296,10 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       }
       continue;
     }
-
+    if (host_tensor->data_ptr() == nullptr && device_tensor->GetSize() == 0) {
+      MS_LOG(INFO) << "Empty tuple sync";
+      continue;
+    }
     // Sync data from host_tensor to device_tensor.
     if (!device_tensor->SyncHostToDevice(
           trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
