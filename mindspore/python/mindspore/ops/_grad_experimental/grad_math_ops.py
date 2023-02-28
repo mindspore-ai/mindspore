@@ -1844,6 +1844,18 @@ def get_bprop_inplace_index_add(self):
     return bprop
 
 
+@bprop_getters.register(P.Zeta)
+def get_bprop_zeta(self):
+    """Generate bprop for Zeta"""
+    zeta = P.Zeta()
+
+    def bprop(x, q, out, dout):
+        dq = -x * zeta(x + 1, q) * dout
+        return zeros_like(x), dq
+
+    return bprop
+
+
 @_primexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
