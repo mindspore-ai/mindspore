@@ -87,8 +87,8 @@ bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     if (indices_addr[i] >= k) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of output_dim0.";
     }
-    if (segment_ids_addr[i] >= k) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids is out of range of output_dim0.";
+    if (segment_ids_addr[i] >= x_shape_[0]) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids is out of range of grad_dim0.";
     }
   }
   int beginindex = segment_ids_addr[0];

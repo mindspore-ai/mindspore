@@ -39,6 +39,7 @@
 #include "mindapi/base/type_id.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -47,82 +48,30 @@
 namespace mindspore {
 namespace ops {
 namespace {
-template <typename T>
-void GetOutShape(int64_t *shape_m, std::vector<int64_t> *out_shape, const string &name, const int shape_v_0,
-                 tensor::TensorPtr input_shape_tensor) {
-  auto input_shape_ptr = static_cast<T *>(input_shape_tensor->data_c());
-  for (auto i = 0; i < shape_v_0; ++i) {
-    if (input_shape_ptr[i] > 0) {
-      (*out_shape).push_back(input_shape_ptr[i]);
-      (*shape_m) *= static_cast<int64_t>(input_shape_ptr[i]);
-    } else {
-      MS_EXCEPTION(ValueError) << "For '" << name
-                               << "', each dimension of input must be greater than 0, but got input_shape[" << i
-                               << "]: " << input_shape_ptr[i] << ".";
-    }
-  }
-}
-
 abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', input must be a tensor, but got: " << input_args[0]->BuildShape()->ToString() << ".";
-  }
   MS_EXCEPTION_IF_NULL(primitive);
-  const uint32_t kInpuDims = 1;
-  const uint32_t kInpuSizes = 2;
+  const uint32_t kMinShapeDim = 2;
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  auto input_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  auto input_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  auto input_type_id = input_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_type_id);
-  auto input_type_element = input_type_id->element();
-  MS_EXCEPTION_IF_NULL(input_type_element);
-  auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
-  auto shape_v = shape_ptr->shape();
-  if (IsDynamicRank(shape_v)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
-
-  if (shape_v.size() != kInpuDims) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', input tensor must be a 1-D tensor, but got shape size: " << shape_v.size() << ".";
-  }
-  if (shape_v[0] != -1 && shape_v[0] < kInpuSizes) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input tensor must have a least 2 elements, but got "
-                             << shape_v[0] << ".";
-  }
-  if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
-    std::vector<int64_t> out_shape;
-    int64_t shape_m = 1;
-    if (input_type_element->type_id() == kNumberTypeInt32) {
-      GetOutShape<int32_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
-    } else if (input_type_element->type_id() == kNumberTypeInt64) {
-      GetOutShape<int64_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
-    } else if (input_type_element->type_id() == kNumberTypeUInt32) {
-      GetOutShape<uint32_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
-    } else if (input_type_element->type_id() == kNumberTypeUInt64) {
-      GetOutShape<uint64_t>(&shape_m, &out_shape, primitive->name(), shape_v[0], input_shape_tensor);
+  auto shape_v = GetShapeValue(primitive, input_args[0]);
+  if (!IsDynamic(shape_v)) {
+    if (shape_v.size() < kMinShapeDim) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'shape' must be at least 2-dimensional.";
     }
+    if (std::any_of(shape_v.begin(), shape_v.end(), [](int64_t x) { return x <= 0; })) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'shape' can't contain non-positive dim.";
+    }
+    auto shape_m = static_cast<int64_t>(SizeOf(shape_v));
     if (shape_m > max_length) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
                                << ". The shape of output must be reduced or max_length must be increased";
     }
-    return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
+  return std::make_shared<abstract::Shape>(shape_v);
 }
 
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -168,6 +117,7 @@ class MIND_API AGNonDeterministicIntsInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return NonDeterministicIntsInfer(engine, primitive, input_args);
   }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(NonDeterministicInts, prim::kPrimNonDeterministicInts, AGNonDeterministicIntsInfer,

@@ -32,7 +32,7 @@ class ParameterizedTruncatedNormalCpuKernel : public CpuKernel {
 
   // use map for 2 template parameter functions
   void SetMap();
-  std::map<int, std::map<int, std::function<void(CpuKernelContext &)>>> calls_;
+  std::map<int, std::map<int, std::function<uint32_t(CpuKernelContext &)>>> calls_;
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_PARAMETERIZEDTRUNCATEDNORMAL_H_

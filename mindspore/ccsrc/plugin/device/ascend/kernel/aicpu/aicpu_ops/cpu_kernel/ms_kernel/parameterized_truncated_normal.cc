@@ -236,6 +236,9 @@ uint32_t BatchGenerate(CpuKernelContext &ctx) {
   auto minvals = reinterpret_cast<T_val *>(input_3->GetData());
   auto maxvals = reinterpret_cast<T_val *>(input_4->GetData());
 
+  KERNEL_CHECK_FALSE(*stdevs >= static_cast<T_val>(0), KERNEL_STATUS_PARAM_INVALID,
+                     "Input 'stdevs' can't be nagative.");
+
   // setup seed
   int64_t final_seed = 0;
   auto attr_seed = ctx.GetAttr("seed");
@@ -369,10 +372,10 @@ uint32_t ParameterizedTruncatedNormalCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType shape_datatype = ctx.Input(0)->GetDataType();
 
   SetMap();
-  calls_[shape_datatype][val_datatype](ctx);
+  auto ret = calls_[shape_datatype][val_datatype](ctx);
   calls_.clear();
 
-  return KERNEL_STATUS_OK;
+  return ret;
 }
 
 REGISTER_CPU_KERNEL(kParameterizedTruncatedNormal, ParameterizedTruncatedNormalCpuKernel);
