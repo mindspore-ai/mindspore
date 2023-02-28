@@ -36,8 +36,8 @@ mindspore.ops.BCEWithLogitsLoss
         Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
 
     异常：
-        - **TypeError** - 任何输入不是Tensor。
-        - **TypeError** - 任何输入的数据类型既不是float16也不是float32。
+        - **TypeError** - 所有的输入都不是Tensor。
+        - **TypeError** - 所有输入的数据类型既不是float16也不是float32。
         - **TypeError** - `reduction` 的数据类型不是string。
         - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
         - **ValueError** - `reduction` 不为 'none' 、 'mean' 或 'sum' 。

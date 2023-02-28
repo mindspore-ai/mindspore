@@ -44,7 +44,7 @@
 
         .. warning:: 这是一个实验性接口，后续可能删除或修改。
 
-        .. note:: 如果预先调用该接口构建计算图，那么 `Model.train` 会直接执行计算图。预构建计算图目前仅支持GRAPH_MOD模式和Ascend处理器。仅支持数据下沉模式。
+        .. note:: 如果预先调用该接口构建计算图，那么 `Model.train` 会直接执行计算图。预构建计算图目前仅支持GRAPH_MODE模式和Ascend处理器。仅支持数据下沉模式。
 
         参数：
             - **train_dataset** (Dataset) - 一个训练集迭代器。如果定义了 `train_dataset` ，将会构建训练计算图。默认值：None。
@@ -84,7 +84,7 @@
 
         如果 `valid_dataset` 不为None，在训练过程中同时执行推理。
 
-        更多详细信息请参考 `mindspore.train.Model.train` 和 `mindspore.train.Model.eval`。
+        更多详细信息请参考 :func:`mindspore.train.Model.train` 和 :func:`mindspore.train.Model.eval`。
 
         参数：
             - **epoch** (int) - 训练执行轮次。通常每个epoch都会使用全量数据集进行训练。当 `dataset_sink_mode` 设置为True且 `sink_size` 大于零时，则每个epoch训练次数为 `sink_size` 而不是数据集的总步数。如果 `epoch` 与 `initial_epoch` 一起使用，它表示训练的最后一个 `epoch` 是多少。
