@@ -89,7 +89,7 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kAngleOpName,
                                                                mindspore::kArgmaxOpName,
                                                                mindspore::kArgMaxWithValueOpName,
-                                                               mindspore::kArgMinOpName,
+                                                               mindspore::kArgminOpName,
                                                                mindspore::kArgMinWithValueOpName,
                                                                mindspore::KAsinGradOpName,
                                                                mindspore::KAsinhGradOpName,
