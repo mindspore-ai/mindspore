@@ -964,6 +964,11 @@ class Conv2dTranspose(_Conv):
             If `padding` is a tuple of 4 integers, then the top, bottom, left, and right padding
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, and `padding[3]` respectively.
             The value should be greater than or equal to 0. Default: 0.
+        output_padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the output.
+            The data type is an integer or a tuple of two integers. If `output_padding` is an integer,
+            then the bottom and right padding are all equal to `output_padding`. If `output_padding` is a tuple of
+            2 integers, then the bottom and right padding is equal to `output_padding[0]`, `output_padding[1]`
+            respectively. The value should be greater than or equal to 0. Default: 0.
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
             The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
@@ -1011,10 +1016,10 @@ class Conv2dTranspose(_Conv):
             \begin{array}{ll} \\
                 H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
                 + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
-                (\text{kernel_size[0]} - 1) - \text {stride[0]} \\
+                (\text{kernel_size[0]} - 1) - \text {stride[0]} + \text {output_padding[0]} \\
                 W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
                 + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
-                (\text{kernel_size[1]} - 1) - \text {stride[1]} \\
+                (\text{kernel_size[1]} - 1) - \text {stride[1]} + \text {output_padding[1]} \\
             \end{array}
 
     Raises:
@@ -1044,6 +1049,7 @@ class Conv2dTranspose(_Conv):
                  stride=1,
                  pad_mode='same',
                  padding=0,
+                 output_padding=0,
                  dilation=1,
                  group=1,
                  has_bias=False,
@@ -1056,6 +1062,9 @@ class Conv2dTranspose(_Conv):
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 4, 'padding size', self.cls_name)
+        Validator.check_value_type('output_padding', output_padding, (int, tuple), self.cls_name)
+        if isinstance(output_padding, tuple):
+            Validator.check_equal_int(len(output_padding), 2, 'output_padding size', self.cls_name)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
@@ -1080,6 +1089,7 @@ class Conv2dTranspose(_Conv):
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
+        self.output_padding = output_padding
         if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
@@ -1111,7 +1121,29 @@ class Conv2dTranspose(_Conv):
         if self.has_bias:
             return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
                                  self.bias)
-        return self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
+        conv2d_trans_ret = self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
+        if isinstance(self.output_padding, tuple):
+            if self.output_padding[0] < 0 or self.output_padding[0] >= max(self.dilation[0], self.stride[0]):
+                raise ValueError("output_padding[0] must be in range of [0, max(stride_d, dilation_d)).")
+            if self.output_padding[1] < 0 or self.output_padding[1] >= max(self.dilation[1], self.stride[1]):
+                raise ValueError("output_padding[1] must be in range of [0, max(stride_d, dilation_d)).")
+            if not self.is_pad and (self.output_padding[0] > 0 or self.output_padding[1] > 0):
+                raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
+
+            pad = P.Pad(paddings=((0, 0), (0, 0), (0, self.output_padding[0]), (0, self.output_padding[1])))
+            return pad(conv2d_trans_ret)
+
+        if self.output_padding == 0:
+            return conv2d_trans_ret
+
+        if self.output_padding < 0 or self.output_padding >= max(self.dilation[0], self.stride[0]):
+            raise ValueError("output_padding must be in range of [0, max(stride_d, dilation_d)).")
+        if self.output_padding < 0 or self.output_padding >= max(self.dilation[1], self.stride[1]):
+            raise ValueError("output_padding must be in range of [0, max(stride_d, dilation_d)).")
+        if not self.is_pad and self.output_padding > 0:
+            raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
+        pad = P.Pad(paddings=((0, 0), (0, 0), (0, self.output_padding), (0, self.output_padding)))
+        return pad(conv2d_trans_ret)
 
 
 class Conv1dTranspose(_Conv):

@@ -1,7 +1,7 @@
 mindspore.nn.Conv2dTranspose
 ============================
 
-.. py:class:: mindspore.nn.Conv2dTranspose(in_channels, out_channels, kernel_size, stride=1, pad_mode="same", padding=0, dilation=1, group=1, has_bias=False, weight_init="normal", bias_init="zeros")
+.. py:class:: mindspore.nn.Conv2dTranspose(in_channels, out_channels, kernel_size, stride=1, pad_mode="same", padding=0, output_padding=0, dilation=1, group=1, has_bias=False, weight_init="normal", bias_init="zeros")
 
     计算二维转置卷积，可以视为Conv2d对输入求梯度，也称为反卷积（实际不是真正的反卷积）。
 
@@ -21,6 +21,7 @@ mindspore.nn.Conv2dTranspose
           - **pad**：对输入进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union[int, tuple[int]]) - 输入的高度和宽度方向上填充的数量。数据类型为整型或包含四个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有四个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。值应该要大于等于0，默认值：0。
+        - **output_padding** (Union[int, tuple[int]]) - 输入的高度和宽度方向上填充的数量。数据类型为整型或包含两个整数的tuple。如果 `output_padding` 是一个整数，那么下、右的填充都等于 `output_padding` 。如果 `output_padding` 是一个有两个整数的tuple，那么下、右的填充分别等于 `output_padding[0]` 、 `output_padding[1]` 。值应该要大于等于0，默认值：0。
         - **dilation** (Union[int, tuple[int]]) - 二维卷积核膨胀尺寸。数据类型为整型或具有两个整型的tuple。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。高度和宽度方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
         - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值：1.
         - **has_bias** (bool) - Conv2dTranspose层是否添加偏置参数。默认值：False。
@@ -56,9 +57,9 @@ mindspore.nn.Conv2dTranspose
         .. math::
             \begin{array}{ll} \\
                 H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1]) + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
-                (\text{kernel_size[0]} - 1) - \text {stride[0]} \\
+                (\text{kernel_size[0]} - 1) - \text {stride[0]} + \text {output_padding[0]} \\
                 W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3]) + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
-                (\text{kernel_size[1]} - 1) - \text {stride[1]} \\
+                (\text{kernel_size[1]} - 1) - \text {stride[1]} + \text {output_padding[1]} \\
             \end{array}
 
     异常：
