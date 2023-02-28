@@ -33,7 +33,7 @@ void TCPServer::Finalize() {
   }
 }
 
-void TCPServer::SetMessageHandler(const MessageHandler &handler) { tcp_comm_->SetMessageHandler(handler); }
+void TCPServer::SetMessageHandler(const MessageHandler &handler, uint32_t) { tcp_comm_->SetMessageHandler(handler); }
 
 std::string TCPServer::GetIP() const { return ip_; }
 

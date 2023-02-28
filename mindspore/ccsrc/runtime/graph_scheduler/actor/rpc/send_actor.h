@@ -138,6 +138,9 @@ class SendActor : public RpcActor {
 
   // The url of the peer recv actor's server.
   std::string server_url_;
+
+  // The remote function id this client will call.
+  uint32_t remote_func_id_;
 };
 
 using SendActorPtr = std::shared_ptr<SendActor>;

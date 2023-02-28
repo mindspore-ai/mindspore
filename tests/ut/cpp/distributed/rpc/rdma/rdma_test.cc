@@ -169,6 +169,69 @@ TEST_F(RDMATest, TestRDMASendAsync) {
   (void)waitpid(client_pid, &wstatus, WUNTRACED | WCONTINUED);
   (void)waitpid(server_pid, &wstatus, WUNTRACED | WCONTINUED);
 }
+
+/// Feature: RDMA communication.
+/// Description: test server-client mode for RDMAClient and RDMAServer.
+/// Expectation: RDMA client and server successfully send messages to each other.
+TEST_F(RDMATest, TestRDMAServerClient) {
+  std::string url1 = "1.1.8.203:10969";
+  std::string url2 = "1.1.8.203:8118";
+  size_t server_pid = fork();
+  if (server_pid == 0) {
+    std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    ASSERT_TRUE(rdma_server->Initialize(url1));
+    sleep(5);
+
+    std::shared_ptr<RDMAClient> rdma_client = std::make_shared<RDMAClient>();
+    MS_EXCEPTION_IF_NULL(rdma_client);
+    ASSERT_TRUE(rdma_client->Initialize());
+    ASSERT_TRUE(rdma_client->Connect(url2));
+
+    auto msg_handler = [](MessageBase *const msg) {
+      MS_LOG(INFO) << "Receive message from client: " << static_cast<char *>(msg->data);
+      return nullptr;
+    };
+    rdma_server->SetMessageHandler(msg_handler, 10);
+
+    auto message = CreateMessage("Hello server2!");
+    message->func_id_ = 10;
+    rdma_client->SendSync(std::move(message));
+    sleep(1);
+    rdma_server->Finalize();
+    return;
+  }
+
+  size_t client_pid = fork();
+  if (client_pid == 0) {
+    std::shared_ptr<RDMAServer> rdma_server = std::make_shared<RDMAServer>();
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    ASSERT_TRUE(rdma_server->Initialize(url2));
+    sleep(5);
+
+    std::shared_ptr<RDMAClient> rdma_client = std::make_shared<RDMAClient>();
+    MS_EXCEPTION_IF_NULL(rdma_client);
+    ASSERT_TRUE(rdma_client->Initialize());
+    ASSERT_TRUE(rdma_client->Connect(url1));
+
+    auto msg_handler = [](MessageBase *const msg) {
+      MS_LOG(INFO) << "Receive message from client: " << static_cast<char *>(msg->data);
+      return nullptr;
+    };
+    rdma_server->SetMessageHandler(msg_handler, 10);
+
+    auto message = CreateMessage("Hello server1!");
+    message->func_id_ = 10;
+    rdma_client->SendSync(std::move(message));
+    sleep(1);
+    rdma_server->Finalize();
+    return;
+  }
+
+  int wstatus;
+  (void)waitpid(client_pid, &wstatus, WUNTRACED | WCONTINUED);
+  (void)waitpid(server_pid, &wstatus, WUNTRACED | WCONTINUED);
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

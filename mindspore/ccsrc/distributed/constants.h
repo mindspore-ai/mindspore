@@ -105,6 +105,19 @@ constexpr char kEnableRDMA[] = "enable_rdma";
 constexpr char kRDMADevName[] = "rdma_dev";
 constexpr char kRDMAIP[] = "rdma_ip";
 
+constexpr char kDefaultIP[] = "1.1.8.203";
+constexpr char kDefaultIfName[] = "hrn0_2";
+constexpr uint16_t kDefaultPort = 10969;
+
+// The interval of retrying connecting for rpc clients.
+constexpr uint32_t kRetryConnectInterval = 2;
+
+// Time of retrying with increasing port number.
+constexpr uint32_t kMaxRetryPortNum = 10;
+
+// The remote function id which will be increased progressively.
+inline uint32_t kRemoteFuncId = 0;
+
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()))

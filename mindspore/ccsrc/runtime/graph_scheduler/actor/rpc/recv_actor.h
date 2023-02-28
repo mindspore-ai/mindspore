@@ -42,7 +42,8 @@ class RecvActor : public RpcActor {
         is_context_valid_(false),
         recv_data_(nullptr),
         ip_(""),
-        port_(0) {}
+        port_(0),
+        rdma_buf_(nullptr) {}
   ~RecvActor() override;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
@@ -135,6 +136,9 @@ class RecvActor : public RpcActor {
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
+
+  // Data returned by URPC. It should be released by RecvActor.
+  void *rdma_buf_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;

@@ -31,34 +31,38 @@ class BACKEND_EXPORT RDMAServer : public RPCServerBase {
   explicit RDMAServer(bool enable_ssl = false)
       : RPCServerBase(enable_ssl),
         urpc_allocator_(urpc_get_default_allocator_func()),
-        dev_name_(const_cast<char *>(kDefaultIfName)),
-        ip_addr_(const_cast<char *>(kDefaultIP)),
-        port_(kDefaultPort) {}
+        dev_name_(kDefaultIfName),
+        ip_addr_(kDefaultIP),
+        port_(kDefaultPort),
+        func_id_(0) {}
   ~RDMAServer() override = default;
 
   bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) override;
-  bool Initialize(const MemAllocateCallback &allocate_cb = {}) override;
   void Finalize() override;
-  void SetMessageHandler(const MessageHandler &handler) override;
+  void SetMessageHandler(const MessageHandler &handler, uint32_t func_id = 0) override;
 
   std::string GetIP() const override;
   uint32_t GetPort() const override;
 
-  MessageHandler message_handler_;
-  struct urpc_buffer_allocator *urpc_allocator_;
+  struct urpc_buffer_allocator *urpc_allocator() const {
+    return urpc_allocator_;
+  }
+
+  uint32_t func_id() const { return func_id_; }
 
  private:
-  // Initialize urpc configuration according to dev_name_, ip_addr_ and port_.
-  bool InitializeURPC();
-
   // The message callback for urpc. This method will call user-set message handler.
   static void urpc_req_handler(struct urpc_sgl *req, void *arg, struct urpc_sgl *rsp);
   // The callback after this server responding.
   static void urpc_rsp_handler(struct urpc_sgl *rsp, void *arg);
 
-  char *dev_name_;
-  char *ip_addr_;
+  MessageHandler message_handler_;
+  struct urpc_buffer_allocator *urpc_allocator_;
+
+  std::string dev_name_;
+  std::string ip_addr_;
   uint16_t port_;
+  uint32_t func_id_;
 };
 }  // namespace rpc
 }  // namespace distributed

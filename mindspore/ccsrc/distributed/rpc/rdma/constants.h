@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_RPC_RDMA_CONSTANTS_H_
 
 #include <urpc.h>
+#include <map>
 #include <mutex>
 #include <string>
 #include <condition_variable>
@@ -108,16 +109,62 @@ REG_URPC_METHOD(urpc_get_default_allocator, struct urpc_buffer_allocator *)
 constexpr int kURPCSuccess = 0;
 constexpr uint32_t kInterProcessDataHandleID = 0;
 
-constexpr char kDefaultIP[] = "1.1.8.203";
-constexpr char kDefaultIfName[] = "hrn0_2";
-constexpr uint16_t kDefaultPort = 10969;
-
 constexpr uint32_t kServerWorkingThreadNum = 4;
 constexpr uint32_t kClientPollingThreadNum = 4;
 
+// Set URPC buffer to 1GB.
+inline uint32_t kLargeBuffSizes[1] = {1 << 30};
+
+// URPC is glabally unique because for each process it could be only initialized once.
+// We need this flag to judge whether URPC is initialized.
+inline bool kURPCInited = false;
+// Initialize urpc configuration according to dev_name, ip_addr and port.
+inline bool InitializeURPC(const std::string &dev_name, const std::string &ip_addr, uint16_t port) {
+  if (!kURPCInited) {
+    // Init URPC if necessary.
+    struct urpc_config urpc_cfg = {};
+    urpc_cfg.mode = URPC_MODE_SERVER_CLIENT;
+    urpc_cfg.model = URPC_THREAD_MODEL_R2C;
+    urpc_cfg.sfeature = URPC_FEATURE_REQ_DISPATCH;
+    urpc_cfg.cfeature = URPC_FEATURE_REQ_DISPATCH;
+    urpc_cfg.worker_num = kServerWorkingThreadNum;
+    urpc_cfg.polling_num = kClientPollingThreadNum;
+    urpc_cfg.transport.dev_name = const_cast<char *>(dev_name.c_str());
+    urpc_cfg.transport.ip_addr = const_cast<char *>(ip_addr.c_str());
+    urpc_cfg.transport.port = port;
+    urpc_cfg.transport.max_sge = 0;
+    urpc_cfg.allocator = nullptr;
+    if (urpc_init_func(&urpc_cfg) != kURPCSuccess) {
+      MS_LOG(WARNING) << "Failed to call urpc_init. Device name: " << dev_name << ", ip address: " << ip_addr
+                      << ", port: " << port << ". Please refer to URPC log directory: /var/log/umdk/urpc.";
+      return false;
+    } else {
+      MS_LOG(INFO) << "URPC is successfully initialized. Device name: " << dev_name << ", ip address: " << ip_addr
+                   << ", port: " << port;
+      kURPCInited = true;
+    }
+  } else {
+    MS_LOG(INFO)
+      << "This process has already initialized URPC. Please check whether 'URPC is successfully initialized' is "
+         "printed in MindSpore INFO log";
+  }
+  return true;
+}
+
+// The map whose key is the server url, value is the URPC session returned by connecting function.
+// The represents whether this process has already connected to the server.
+// RDMA clients connecting the same server should reuse URPC session.
+inline std::map<std::string, urpc_session_t *> kConnectedSession = {};
+
+// Callback arguments for URPC sending operations.
 struct req_cb_arg {
+  // The flag represents request is successfully received by peer.
   bool rsp_received;
+  // Pointer to URPC sending data which needs to be freed after it's sent.
+  void *data_to_free;
+  // URPC allocator which is used to release data.
   struct urpc_buffer_allocator *allocator;
+  // Variables for synchronizing in async scenario.
   std::mutex *mtx;
   std::condition_variable *cv;
 };

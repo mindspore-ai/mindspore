@@ -40,7 +40,7 @@ class BACKEND_EXPORT RPCServerBase {
   virtual void Finalize() {}
 
   // Set the message processing handler.
-  virtual void SetMessageHandler(const MessageHandler &handler) {}
+  virtual void SetMessageHandler(const MessageHandler &handler, uint32_t func_id = 0) {}
 
   // Return the IP and port bound to this server.
   virtual std::string GetIP() const { return ip_; }

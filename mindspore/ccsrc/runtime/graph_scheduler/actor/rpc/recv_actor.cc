@@ -65,36 +65,61 @@ bool RecvActor::StartServer() {
 
 #ifdef ENABLE_RDMA
   if (common::GetEnv(kEnableRDMA) == "1") {
+    std::string ip = common::GetEnv(kRDMAIP);
+    uint32_t min_port = ClusterContext::instance()->port_range().first;
+    uint32_t max_port = ClusterContext::instance()->port_range().second;
+    uint32_t current_port = min_port;
+    std::string url = ip + ":" + std::to_string(current_port);
+
+    uint32_t retry_num = 0;
     server_ = std::make_unique<RDMAServer>();
+    MS_EXCEPTION_IF_NULL(server_);
+    while (!server_->Initialize(url) && retry_num++ < kMaxRetryPortNum && current_port <= max_port) {
+      ++current_port;
+      MS_LOG(WARNING) << "Failed to initialize RDMAServer with url: " << url
+                      << ". Port number maybe occupied. Retry with increased port number: " << current_port;
+      url = ip + ":" + std::to_string(current_port);
+    }
+    if (!kURPCInited) {
+      MS_LOG(EXCEPTION) << "Failed to initialize RDMAServer.";
+    }
   } else {
     server_ = std::make_unique<TCPServer>();
+    MS_EXCEPTION_IF_NULL(server_);
+    // Set the memory allocating callback using void* message.
+    std::function<void *(size_t size)> allocate_callback =
+      std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
+    if (!server_->Initialize(allocate_callback)) {
+      MS_LOG(EXCEPTION) << "Failed to initialize rpc server for recv actor";
+    }
   }
 #else
   server_ = std::make_unique<TCPServer>();
-#endif
   MS_EXCEPTION_IF_NULL(server_);
-
   // Set the memory allocating callback using void* message.
   std::function<void *(size_t size)> allocate_callback =
     std::bind(&RecvActor::AllocateMessage, this, std::placeholders::_1);
   if (!server_->Initialize(allocate_callback)) {
     MS_LOG(EXCEPTION) << "Failed to initialize rpc server for recv actor";
   }
-  ip_ = server_->GetIP();
-  port_ = server_->GetPort();
-  std::string server_url = ip_ + ":" + std::to_string(port_);
+#endif
 
   // Step 2: Set the message handler of the server.
   SetMessageHandler();
 
+  ip_ = server_->GetIP();
+  port_ = server_->GetPort();
+  std::string server_url = ip_ + ":" + std::to_string(port_);
   // Step 3: Register the server address to route table. The server should not be connected before this step is done.
   for (const auto &inter_process_edge_name : inter_process_edge_names_) {
     MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
+                 << ", remote function id: " << kRemoteFuncId
                  << ", inter-process edge name: " << inter_process_edge_name;
     distributed::cluster::topology::ActorAddress recv_actor_addresss;
     recv_actor_addresss.set_actor_id(inter_process_edge_name);
     recv_actor_addresss.set_ip(ip_);
     recv_actor_addresss.set_port(port_);
+    recv_actor_addresss.set_func_id(kRemoteFuncId);
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
     if (!actor_route_table_proxy_->RegisterRoute(inter_process_edge_name, recv_actor_addresss)) {
       MS_LOG(EXCEPTION) << "Failed to register route for " << inter_process_edge_name << " " << server_url
@@ -136,6 +161,9 @@ void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTe
 
   // We set remote data by the interface of the rpc kernel, because currently there's no remote input for a kernel mod.
   recv_kernel_mod->SetRemoteInput(msg);
+  if (common::GetEnv(kEnableRDMA) == "1") {
+    rdma_buf_ = msg->data;
+  }
 
   if (is_run) {
     Run(context);
@@ -180,6 +208,17 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   if (recv_data_ != nullptr) {
     device_contexts_[0]->device_res_manager_->FreeMemory(recv_data_.get());
   }
+
+#ifdef ENABLE_RDMA
+  // Release data of URPC by caller.
+  if (common::GetEnv(kEnableRDMA) == "1" && rdma_buf_ != nullptr) {
+    auto rdma_server = dynamic_cast<RDMAServer *>(server_.get());
+    MS_EXCEPTION_IF_NULL(rdma_server);
+    auto urpc_alloc = rdma_server->urpc_allocator();
+    MS_EXCEPTION_IF_NULL(urpc_alloc);
+    urpc_alloc->free(rdma_buf_);
+  }
+#endif
 }
 
 void RecvActor::Run(OpContext<DeviceTensor> *const context) {
@@ -394,7 +433,7 @@ MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {
 }
 
 void RecvActor::SetMessageHandler() {
-  server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));
+  server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1), ++kRemoteFuncId);
 }
 }  // namespace runtime
 }  // namespace mindspore

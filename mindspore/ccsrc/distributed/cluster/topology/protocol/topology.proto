@@ -53,6 +53,7 @@ message ActorAddress {
   string actor_id = 1;
   string ip = 2;
   uint32 port = 3;
+  uint32 func_id = 4;
 }
 
 message PortRange {

@@ -29,39 +29,43 @@ bool RDMAClient::Initialize() {
 void RDMAClient::Finalize() {
   if (urpc_session_ != nullptr) {
     urpc_close_func(urpc_session_);
-    urpc_uninit_func();
   }
+  if (kURPCInited) {
+    urpc_uninit_func();
+    kURPCInited = false;
+  }
+  kConnectedSession.clear();
 }
 
-bool RDMAClient::Connect(const std::string &dst_url, size_t retry_count, const MemFreeCallback &free_cb) {
-  std::string ip;
-  uint16_t port;
-  if (!ParseURL(dst_url, &ip, &port)) {
+bool RDMAClient::Connect(const std::string &dst_url, size_t retry_count, const MemFreeCallback &) {
+  if (!ParseURL(dst_url, &ip_addr_, &port_)) {
     MS_LOG(EXCEPTION) << "Failed to parse url " << dst_url;
   }
-  ip_addr_ = const_cast<char *>(ip.c_str());
-  port_ = port;
-
-  // Init URPC after destination is specified.
-  struct urpc_config urpc_cfg = {};
-  urpc_cfg.mode = URPC_MODE_CLIENT;
-  urpc_cfg.cfeature = 0;
-  urpc_cfg.polling_num = kClientPollingThreadNum;
-  urpc_cfg.transport.dev_name = dev_name_;
-  urpc_cfg.transport.ip_addr = ip_addr_;
-  urpc_cfg.transport.port = port_;
-  urpc_cfg.transport.max_sge = 0;
-  urpc_cfg.allocator = nullptr;
-  if (urpc_init_func(&urpc_cfg) != kURPCSuccess) {
-    MS_LOG(EXCEPTION) << "Failed to call urpc_init. Device name: " << dev_name_ << ", ip address: " << ip_addr_
-                      << ", port: " << port_ << ". Please refer to URPC log directory: /var/log/umdk/urpc.";
+  if (!InitializeURPC(dev_name_, ip_addr_, port_)) {
+    return false;
   }
 
-  urpc_session_ = urpc_connect_func(ip_addr_, port_, nullptr);
-  if (urpc_session_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to call urpc_connect to " << ip_addr_ << ":" << port_;
+  // If this process has already connected to this server, there's no need to call urpc_connect.
+  if (kConnectedSession.count(dst_url) != 0) {
+    MS_LOG(INFO) << "This process has already connected to server " << dst_url;
+    urpc_session_ = kConnectedSession[dst_url];
+    return true;
   }
-  return true;
+
+  for (size_t i = 0; i < retry_count; i++) {
+    urpc_session_ = urpc_connect_func(const_cast<char *>(ip_addr_.c_str()), port_, nullptr);
+    if (urpc_session_ == nullptr) {
+      MS_LOG(WARNING) << "Failed to call urpc_connect to " << ip_addr_ << ":" << port_ << ". Retry to reconnect("
+                      << (i + 1) << "/" << retry_count << ")...";
+      sleep(kRetryConnectInterval);
+    } else {
+      kConnectedSession[dst_url] = urpc_session_;
+      MS_LOG(INFO) << "Successfully connect to server " << ip_addr_ << ":" << port_;
+      return true;
+    }
+  }
+  MS_LOG(EXCEPTION) << "Failed to call urpc_connect to " << ip_addr_ << ":" << port_ << " after " << retry_count
+                    << " times. Please check Mindspore info log or URPC log directory: /var/log/umdk/urpc.";
 }
 
 bool RDMAClient::IsConnected(const std::string &dst_url) { return false; }
@@ -80,25 +84,35 @@ bool RDMAClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send
   void *msg_buf = msg->data;
   MS_EXCEPTION_IF_NULL(msg_buf);
 
+  void *urpc_msg_buf = urpc_allocator_->alloc(msg_size);
+  MS_EXCEPTION_IF_NULL(urpc_msg_buf);
+  if (memcpy_s(urpc_msg_buf, msg_size, msg_buf, msg_size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to memcpy_s data to urpc_msg_buf with size " << msg_size;
+  }
   struct urpc_sgl sgl;
-  sgl.sge[0].addr = reinterpret_cast<uintptr_t>(msg_buf);
+  sgl.sge[0].addr = reinterpret_cast<uintptr_t>(urpc_msg_buf);
   sgl.sge[0].length = msg_size;
-  sgl.sge[0].flag = URPC_SGE_FLAG_ZERO_COPY;
+  sgl.sge[0].flag = URPC_SGE_FLAG_RENDEZVOUS | URPC_SGE_FLAG_RESERVE_BUF;
   sgl.sge_num = 1;
 
   struct urpc_send_wr send_wr = {};
-  send_wr.func_id = kInterProcessDataHandleID;
+  send_wr.func_id = msg->func_id_;
   send_wr.send_mode = URPC_SEND_MODE_SYNC;
   send_wr.req = &sgl;
   struct urpc_sgl rsp_sgl = {0};
   send_wr.sync.rsp = &rsp_sgl;
 
+  MS_LOG(DEBUG) << "Start sending message to server with func_id: " << send_wr.func_id;
   if (urpc_send_request_func(urpc_session_, &send_wr, nullptr) < 0) {
     MS_LOG(ERROR) << "Failed to send request for function call: " << send_wr.func_id;
     return false;
   }
-  MS_LOG(INFO) << "Server response message is " << reinterpret_cast<char *>(rsp_sgl.sge[0].addr);
+  auto rsp_data = reinterpret_cast<char *>(rsp_sgl.sge[0].addr);
+  MS_LOG(DEBUG) << "Sending success. Server response message is " << rsp_data;
 
+  // Release URPC memory.
+  urpc_allocator_->free(rsp_data);
+  urpc_allocator_->free(urpc_msg_buf);
   return true;
 }
 
@@ -108,21 +122,27 @@ void RDMAClient::SendAsync(std::unique_ptr<MessageBase> &&msg) {
   void *msg_buf = msg->data;
   MS_EXCEPTION_IF_NULL(msg_buf);
 
+  void *urpc_msg_buf = urpc_allocator_->alloc(msg_size);
+  MS_EXCEPTION_IF_NULL(urpc_msg_buf);
+  if (memcpy_s(urpc_msg_buf, msg_size, msg_buf, msg_size) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to memcpy_s data to urpc_msg_buf with size " << msg_size;
+  }
   struct urpc_sgl sgl;
-  sgl.sge[0].addr = reinterpret_cast<uintptr_t>(msg_buf);
+  sgl.sge[0].addr = reinterpret_cast<uintptr_t>(urpc_msg_buf);
   sgl.sge[0].length = msg_size;
-  sgl.sge[0].flag = URPC_SGE_FLAG_ZERO_COPY;
+  sgl.sge[0].flag = URPC_SGE_FLAG_RENDEZVOUS | URPC_SGE_FLAG_RESERVE_BUF;
   sgl.sge_num = 1;
 
   std::unique_lock<std::mutex> lock(mtx_);
   cb_arg_.rsp_received = false;
+  cb_arg_.data_to_free = urpc_msg_buf;
   cb_arg_.allocator = urpc_allocator_;
   cb_arg_.mtx = &mtx_;
   cb_arg_.cv = &cv_;
   lock.unlock();
 
   struct urpc_send_wr send_wr = {};
-  send_wr.func_id = kInterProcessDataHandleID;
+  send_wr.func_id = msg->func_id_;
   send_wr.send_mode = URPC_SEND_MODE_ASYNC;
   send_wr.req = &sgl;
   send_wr.async.cb.wo_ctx = urpc_rsp_cb;
@@ -148,10 +168,13 @@ void RDMAClient::urpc_rsp_cb(struct urpc_sgl *rsp, int err, void *arg) {
     return;
   }
 
-  MS_LOG(INFO) << "Server response message is " << reinterpret_cast<char *>(rsp->sge[0].addr);
+  auto rsp_data = reinterpret_cast<char *>(rsp->sge[0].addr);
+  MS_LOG(INFO) << "Server response message is " << rsp_data;
   struct req_cb_arg *cb_arg = static_cast<struct req_cb_arg *>(arg);
   std::unique_lock<std::mutex> lock(*(cb_arg->mtx));
   cb_arg->rsp_received = true;
+  cb_arg->allocator->free(rsp_data);
+  cb_arg->allocator->free(cb_arg->data_to_free);
   cb_arg->cv->notify_all();
 }
 }  // namespace rpc
