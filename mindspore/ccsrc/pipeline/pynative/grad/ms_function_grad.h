@@ -52,11 +52,9 @@ class MsFunction {
   // Update device address of value node in grad graph by forward tensors.
   void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::TensorPtr> &total_output_tensors,
                   const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const;
-  void ReplaceWithRealTensorsInGradGraph(const GradExecutor *grad_executor, const ValuePtr &added_out,
-                                         const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                         const FrontendOpRunInfoPtr &op_run_info) const;
-  void UpdateMsFunctionForwardTensors(const GradExecutor *grad_executor, const TopCellInfoPtr &top_cell,
-                                      const string &op_info, const ValuePtr &new_forward_value) const;
+  void ReplaceAddedCnodeActualOutput(const GradExecutor *grad_executor, const ValuePtr &added_out,
+                                     const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                     const FrontendOpRunInfoPtr &op_run_info) const;
   // Make CNode for ms_function forward graph.
   void GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
                         const GradExecutor *grad_executor) const;

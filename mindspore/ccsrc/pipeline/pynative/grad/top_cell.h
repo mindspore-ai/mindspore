@@ -44,7 +44,6 @@ namespace py = pybind11;
 class GradExecutor;
 using OpInfoWithTensorId = mindspore::HashMap<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
-using OpInfoWithMsFuncForwardTensors = mindspore::HashMap<std::string, std::vector<tensor::TensorPtr>>;
 using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<AnfNodePtr>>;
 
 struct GraphInfo {
@@ -124,13 +123,6 @@ class TopCellInfo {
   inline void set_tensor_id_with_tensor_object(const std::string &id, const tensor::TensorPtr &tensor) {
     (void)tensor_id_with_tensor_object_[id].emplace_back(tensor);
   }
-  inline const OpInfoWithMsFuncForwardTensors &op_info_with_ms_func_forward_tensors() const {
-    return op_info_with_ms_func_forward_tensors_;
-  }
-  inline void set_op_info_with_ms_func_forward_tensors(const std::string &op_info,
-                                                       const std::vector<tensor::TensorPtr> &forward_tensors) {
-    op_info_with_ms_func_forward_tensors_[op_info] = forward_tensors;
-  }
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
 
@@ -194,7 +186,6 @@ class TopCellInfo {
   CellIdWithBackwardHookOp cell_backward_hook_op_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
-  OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
   mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
   bool use_dynamic_shape_process_{false};
 };
