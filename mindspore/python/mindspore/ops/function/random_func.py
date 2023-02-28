@@ -692,7 +692,7 @@ def normal(shape, mean, stddev, seed=None):
     if not isinstance(mean, Tensor):
         mean = Tensor(mean)
     if not isinstance(stddev, Tensor):
-        mean = Tensor(stddev)
+        stddev = Tensor(stddev)
     mean_dtype = F.dtype(mean)
     stddev_dtype = F.dtype(stddev)
     const_utils.check_type_valid(mean_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
