@@ -972,8 +972,8 @@ def empty(shape, dtype=mstype.float32):
         >>> import mindspore.numpy as np
         >>> output = np.empty((2, 3))
         >>> print(output)
-        Tensor(shape=[2, 3], dtype=Float32, value=
-        <uninitialized>)
+        [[0. 0. 0.]
+         [0. 0. 0.]]
     """
     return ops.zeros(shape, dtype)
 
@@ -1041,8 +1041,10 @@ def empty_like(prototype, dtype=None, shape=None):
         >>> a = np.ones((4,1,2))
         >>> output = np.empty_like(a)
         >>> print(output)
-        Tensor(shape=[4, 1, 2], dtype=Float32, value=
-        <uninitialized>)
+        [[[0. 0.]]
+         [[0. 0.]]
+         [[0. 0.]]
+         [[0. 0.]]]
     """
     return _x_like(prototype, dtype, shape, empty)
 
