@@ -18,7 +18,7 @@ mindspore.ops.ResizeLinear1D
 
     输入：
         - **x** (Tensor) - ResizeBilinear的输入，三维的Tensor，其shape为 :math:`(batch, channels, width)`。支持以下数据类型：float16、float32、double。
-        - **size** (Union[Tuple[int], List[int], Tensor[int]) - 指定 `x` 宽的新尺寸，仅含一个整数 :math:`(new\_width)` 的Tuple、List或1-D Tensor。
+        - **size** (Union[Tuple[int], List[int], Tensor[int]]) - 指定 `x` 宽的新尺寸，仅含一个整数 :math:`(new\_width)` 的Tuple、List或1-D Tensor。
 
     输出：
         Tensor，调整大小后的Tensor。shape为 :math:`(batch, channels, new\_width)` 的三维Tensor，数据类型和输入是一致的。
