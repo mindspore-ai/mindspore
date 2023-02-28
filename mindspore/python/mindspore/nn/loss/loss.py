@@ -1331,7 +1331,7 @@ class MultiMarginLoss(LossBase):
         ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
