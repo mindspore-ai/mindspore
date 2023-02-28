@@ -29,6 +29,7 @@
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "ir/manager.h"
@@ -1965,13 +1966,13 @@ tensor::TensorPtr GetDependValueByConstTensor(const AnfNodePtr &input_node, cons
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
-  if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "The CNode " << cnode_name << "'s input[" << i << "], must be tensor, but got "
-                             << value->ToString();
+  if (value->isa<tensor::Tensor>()) {
+    return value->cast<tensor::TensorPtr>();
+  } else if (value->isa<Scalar>()) {
+    return ScalarToTensor(value->cast<ScalarPtr>());
   }
-  auto tensor = value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor);
-  return tensor;
+  MS_EXCEPTION(ValueError) << "The CNode " << cnode_name << "'s input[" << i << "], must be tensor or scalar, but got "
+                           << value->ToString();
 }
 
 void SetInputsByConstInputs(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *inputs_tensor_map) {

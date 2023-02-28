@@ -1819,4 +1819,47 @@ void AnfRuntimeAlgorithm::SetDynamicAttrToPrim(const PrimitivePtr &prim) {
   prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
   prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
 }
+
+bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(node);
+  if (!input_node->isa<ValueNode>()) {
+    return false;
+  }
+
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<Scalar>()) {
+    return false;
+  }
+
+  bool need_converted = true;
+  const auto &abs = node->abstract();
+  // Check the output abstract of node whether is scalar.
+  if ((abs != nullptr) && (abs->isa<abstract::AbstractScalar>())) {
+    need_converted = false;
+  }
+  // Check the output abstracts of node whether have scalar.
+  if ((abs != nullptr) && (abs->isa<abstract::AbstractSequence>())) {
+    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len()) {
+      const auto &element_abs = abs_seq->dynamic_len_element_abs();
+      need_converted = (element_abs == nullptr) || (!element_abs->isa<abstract::AbstractScalar>());
+    } else {
+      const auto &elements = abs_seq->elements();
+      need_converted = !std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
+        return (element != nullptr) && element->isa<abstract::AbstractScalar>();
+      });
+    }
+  }
+
+  if (!need_converted) {
+    MS_LOG(INFO) << "The input scalar value node:" << input_node->fullname_with_scope()
+                 << " of cnode:" << node->fullname_with_scope() << " doesn't need convert to tensor.";
+  }
+  return need_converted;
+}
 }  // namespace mindspore::session

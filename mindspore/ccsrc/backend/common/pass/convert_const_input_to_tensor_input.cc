@@ -81,7 +81,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   // the first input is primitive node which is not the real input
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
-    if (IsValueNode<Scalar>(input_node) || IsValueNode<ValueSequence>(input_node)) {
+    if (AnfAlgo::IsScalarConvertToTensor(input_node, cnode) || IsValueNode<ValueSequence>(input_node)) {
       auto tensor_input = CreateTensorInput(kernel_graph, input_node);
       if (tensor_input == nullptr) {
         new_inputs.push_back(input_node);
