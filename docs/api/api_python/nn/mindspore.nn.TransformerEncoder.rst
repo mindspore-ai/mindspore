@@ -8,12 +8,12 @@ mindspore.nn.TransformerEncoder
     参数：
         - **encoder_layer** (Cell) - TransformerEncoderLayer()的实例。
         - **num_layers** (int) - 编码器层数。
-        - **norm** (Cell) - 自定义LayerNorm层（可选）。
+        - **norm** (Cell, 可选) - 自定义LayerNorm层。
 
     输入：
         - **src** (Tensor) - 源序列。
-        - **src_mask** (Tensor) - 源序列的掩码矩阵 (可选)。默认：None。
-        - **src_key_padding_mask** (Tensor) - 源序列Key矩阵的掩码矩阵 (可选)。默认：None。
+        - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。默认值：``None``。
+        - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。默认值：``None``。
 
     输出：
         Tensor。
