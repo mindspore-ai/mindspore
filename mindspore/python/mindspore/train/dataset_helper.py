@@ -396,7 +396,7 @@ class DatasetHelper:
 
     def _reset(self, step, epoch):
         """Reset the dataset to the provided step and epoch."""
-        self.iter._reset(step, epoch)  # pylint: disable=W0212
+        self.iter._reset(step, epoch)  # pylint: disable=protected-access
 
     def get_data_info(self):
         """
@@ -440,7 +440,7 @@ class _DatasetIter:
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
         if hasattr(dataset.__transfer_dataset__, "_reset"):
-            self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=W0212
+            self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=protected-access
 
     def __iter__(self):
         self.index = 0

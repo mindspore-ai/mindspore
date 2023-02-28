@@ -908,24 +908,40 @@ class Profiler:
             MinddataParser.execute(source_path, self._output_path, store_id)
 
         # parse minddata pipeline operator and queue
+        pipeline_parser = None
         try:
             pipeline_parser = MinddataPipelineParser(self._output_path, store_id, self._output_path)
-            logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
-            pipeline_parser.parse()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
 
+        if pipeline_parser:
+            logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
+            try:
+                pipeline_parser.parse()
+            except ProfilerException as err:
+                logger.warning(err.message)
+            finally:
+                pass
+
         # Analyze minddata information
+        md_analyzer = None
         try:
             md_analyzer = MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path)
-            logger.info("Profiling: analyzing the minddata information.")
-            md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
+
+        if md_analyzer:
+            logger.info("Profiling: analyzing the minddata information.")
+            try:
+                md_analyzer.analyze()
+            except ProfilerException as err:
+                logger.warning(err.message)
+            finally:
+                pass
 
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""
