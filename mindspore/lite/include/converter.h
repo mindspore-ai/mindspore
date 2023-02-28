@@ -34,6 +34,7 @@ struct ConverterPara;
 /// \note Converter C++ API doesn't support calling with multi-threads in a single process.
 class MS_API Converter {
  public:
+  Converter();
   inline Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file = "",
                    const std::string &weight_file = "");
   ~Converter() = default;

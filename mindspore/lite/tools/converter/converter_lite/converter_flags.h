@@ -33,7 +33,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitInputOutputDataType();
   int InitFmk();
   int InitTrainModel();
-  int InitConfigParam();
   int InitInTensorShape() const;
   int InitGraphInputFormat();
   int InitEncrypt();

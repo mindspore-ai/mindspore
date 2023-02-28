@@ -22,7 +22,8 @@ namespace mindspore {
 namespace lite {
 // the maps key is [section], and the value_map is {name,value}
 int ParseConfigFile(const std::string &config_file_path,
-                    std::map<std::string, std::map<std::string, std::string>> *maps);
+                    std::map<std::string, std::map<std::string, std::string>> *maps,
+                    std::map<int, std::map<std::string, std::string>> *model_param_infos);
 }  // namespace lite
 }  // namespace mindspore
 

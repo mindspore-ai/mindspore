@@ -29,6 +29,9 @@ struct MicroParam {
   bool enable_micro{false};
   bool support_parallel{false};
   bool debug_mode{false};
+  std::string save_path;
+  std::string project_name;
+  bool is_last_model{false};
 };
 
 class Configurator {

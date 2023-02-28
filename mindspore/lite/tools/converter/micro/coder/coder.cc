@@ -43,13 +43,13 @@ std::shared_ptr<CoderSession> CreateCoderSession() {
   return session;
 }
 }  // namespace
-int Coder::Run(const void *model_buff, size_t size, const std::string model_name) {
+int Coder::Run(const void *model_buff, size_t size, const std::string &model_name, bool end_flag) {
   session_ = CreateCoderSession();
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "new session failed while running!";
     return RET_ERROR;
   }
-  STATUS status = session_->Init(model_buff, size, kModelIndex);
+  STATUS status = session_->Init(model_buff, size, kModelIndex, end_flag);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Init session failed!";
     return RET_ERROR;
@@ -111,7 +111,7 @@ bool Coder::InitPath(const std::string &output_path) {
 
 int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std::string &output_path,
                                      const std::string &codegen_mode, const std::string &device, bool support_parallel,
-                                     bool debug_mode) {
+                                     bool debug_mode, bool end_flag) {
   flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
@@ -136,7 +136,7 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
     MS_LOG(ERROR) << "Codegen init Error";
     return RET_ERROR;
   }
-  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_);
+  status = code_gen.Run(builder.GetBufferPointer(), size, code_gen.model_name_, end_flag);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Codegen Run Error";
     return RET_ERROR;

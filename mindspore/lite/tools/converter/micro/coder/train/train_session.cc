@@ -36,7 +36,7 @@ int CoderTrainSession::Build() {
   return RET_OK;
 }
 
-int CoderTrainSession::Run(const std::string model_name) {
+int CoderTrainSession::Run(const std::string &model_name) {
   MS_LOG(INFO) << "start run op coders";
   int ret = Preprocess();
   MS_CHECK_RET_CODE(ret, "preprocess failed");
@@ -90,7 +90,7 @@ int CoderTrainSession::UpdateCodeBlocksWithFlag() {
   return RET_OK;
 }
 
-int CoderTrainSession::PassArgsToContext(const std::string model_name) {
+int CoderTrainSession::PassArgsToContext(const std::string &model_name) {
   int ret = CoderSession::PassArgsToContext(model_name);
   MS_CHECK_RET_CODE(ret, "PassArgsToContext failed");
   if (Configurator::GetInstance()->debug_mode()) {
