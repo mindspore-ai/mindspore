@@ -1303,17 +1303,6 @@ std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbT
 // RGB2GRAY Transform Operation.
 std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
 
-#ifndef ENABLE_ANDROID
-// RgbaToBgr Transform Operation.
-RGBA2BGR::RGBA2BGR() = default;
-
-std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<RgbaToBgrOperation>(); }
-
-// RgbaToRgb Transform Operation.
-RGBA2RGB::RGBA2RGB() = default;
-
-std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
-
 // Rotate Transform Operation.
 struct Rotate::Data {
   Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
@@ -1350,6 +1339,17 @@ std::shared_ptr<TensorOperation> Rotate::Parse() {
   MS_LOG(ERROR) << "This Rotate API is not supported for " + platform + ", use another Rotate API.";
   return nullptr;
 }
+
+#ifndef ENABLE_ANDROID
+// RgbaToBgr Transform Operation.
+RGBA2BGR::RGBA2BGR() = default;
+
+std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<RgbaToBgrOperation>(); }
+
+// RgbaToRgb Transform Operation.
+RGBA2RGB::RGBA2RGB() = default;
+
+std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
 
 // SlicePatches Transform Operation.
 struct SlicePatches::Data {
