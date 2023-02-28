@@ -652,7 +652,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     object_selected_kernel_attrs = kernel_attrs;
   } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
              !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
-    return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
+    return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
 #else
   object_selected_kernel_attrs = kernel_attrs;

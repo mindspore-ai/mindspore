@@ -646,10 +646,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
 #ifdef ENABLE_TUPLE_UNFOLD
   bool selected = GetSelectKernelObjectTypeResult(kernel_node, kernel_type);
   if (!selected) {
-    std::stringstream ss;
-    ss << "kernel object types are not supported for " << common::AnfAlgo::GetCNodeName(kernel_node)
-       << " on GPU currently.";
-    return {ss.str(), NotSupportError};
+    return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
 #endif
   std::vector<std::string> inputs_format;

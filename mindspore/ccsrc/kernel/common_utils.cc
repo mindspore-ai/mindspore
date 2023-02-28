@@ -1223,7 +1223,7 @@ std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CN
                                kernel_node->fullname_with_scope() + " with inputs (" +
                                GetObjectTypeStr(AnfAlgo::GetAllInputObjectType(kernel_node)) + "), outputs (" +
                                GetObjectTypeStr(AnfAlgo::GetAllOutputObjectType(kernel_node)) + ").";
-  return {warn_str, NotSupportError};
+  return {warn_str, TypeError};
 }
 
 bool IsKernelObjectTypeNotSupportedError(const std::string &error_str) {
