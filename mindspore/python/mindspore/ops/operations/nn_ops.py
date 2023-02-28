@@ -1395,16 +1395,15 @@ class Conv2D(Primitive):
 
 class DataFormatVecPermute(Primitive):
     r"""
-    Permute input tensor from src_format to dst_format.
+    Converts the input tensor from the `src_format` to the `dst_format` by permuting its dimensions.
 
     Args:
-        src_format (str, optional): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
-            Default: 'NHWC'.
-        dst_format (str, optional): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
-            Default: 'NCHW'.
+        src_format (str, optional): the source data format, which can be 'NHWC' and 'NCHW'. Default: 'NHWC'.
+        dst_format (str, optional): the target data format, which can be 'NHWC' and 'NCHW'. Default: 'NCHW'.
 
     Inputs:
-        - **input_x** (Tensor) - A Tensor of shape (4, ) or (4, 2) in source data format. Only supports int32 and int64.
+        - **input_x** (Tensor) - A Tensor of shape :math:`(4, )` or :math:`(4, 2)` in source data format.
+          Supports int32 and int64 datatype.
 
     Outputs:
         Tensor, has the same data type and shape as the `input_x`.
@@ -1413,7 +1412,7 @@ class DataFormatVecPermute(Primitive):
         TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is neither int32 nor int64.
         ValueError: If `src_format` or `dst_format` is not a str in ['NHWC', 'NCHW'].
-        ValueError: If input_x shape is not (4, ) or (4, 2).
+        ValueError: If `input_x` shape is not :math:`(4, )` or :math:`(4, 2).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

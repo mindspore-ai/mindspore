@@ -538,18 +538,17 @@ class _Reduce(PrimitiveWithCheck):
 
 class EuclideanNorm(Primitive):
     """
-    Computes the euclidean norm of elements across dimensions of a tensor.
-    Reduces input along the dimensions given in axis.
+    Calculates the Euclidean norm(aka L2 norm) of a Tensor along the specified axes.
+    The specified `axes` are removed by default.
 
     Args:
-        keep_dims (bool, optional): If true, the reduceed dimensions are retained with length 1.
-                          If false, don't keep these dimensions. Default: False.
+        keep_dims (bool, optional): whether to retain the reduced dimensions. If true, retains them with length 1.
+            If false, these dimensions are removed. Default: False.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. Must be one of the following types :float16, float32, float64, int8, int16,
-          int32, int64, complex64, complex128, uint8, uint16, uint32, uint64. The tensor to reduce.
-        - **axes** (Tensor) - The dimensions to reduce. Must be one of the following types: int32, int64.
-          Must be in the range [-rank(x), rank(x)).
+        - **x** (Tensor) - The input Tensor to reduce. Must be one of the following types:
+          float16, float32, float64, int8, int16, int32, int64, complex64, complex128, uint8, uint16, uint32, uint64.
+        - **axes** (Tensor) - The axes to perform reduction on. Must be one of the following types: int32, int64.
 
     Outputs:
         Tensor, has the same type as the 'x'.

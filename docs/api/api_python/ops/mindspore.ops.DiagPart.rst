@@ -3,7 +3,7 @@ mindspore.ops.DiagPart
 
 .. py:class:: mindspore.ops.DiagPart
 
-    返回输入的对角线部分。
+    提取输入Tensor的对角线元素。
 
     假如 `input_x` 有维度 :math:`[D_1,..., D_k, D_1,..., D_k]`，那么输出是一个秩为k的Tensor，维度为 :math:`[D_1,..., D_k]`，其中：
 
