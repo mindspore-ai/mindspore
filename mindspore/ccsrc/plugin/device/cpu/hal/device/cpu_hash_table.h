@@ -19,8 +19,8 @@
 #include <shared_mutex>
 #include <unordered_map>
 
-#include "runtime/hardware/device_context.h"
 #include "runtime/device/hash_table.h"
+#include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
 
 namespace mindspore {
 namespace device {
@@ -64,6 +64,12 @@ class CPUHashTable : public HashTable<Key, Value> {
   bool Clear() override;
 
  private:
+  // Allocate host memory from dynamic memory pool.
+  void *AllocateMemory(size_t size) const;
+
+  // Free host memory to dynamic memory pool.
+  void FreeMemory(void *ptr) const;
+
   // The key-value style elements stored in this hash table.
   std::unordered_map<Key, Value *> values_;
 
@@ -78,9 +84,6 @@ class CPUHashTable : public HashTable<Key, Value> {
   // The flag records whether the elements of the hash table have changed since the last export, true means that there
   // has been a change.
   bool is_dirty_{true};
-
-  // The device context is used to allocate host side memory from the pool for values in the hash table.
-  DeviceContext *device_ctx_{nullptr};
 };
 }  // namespace cpu
 }  // namespace device
