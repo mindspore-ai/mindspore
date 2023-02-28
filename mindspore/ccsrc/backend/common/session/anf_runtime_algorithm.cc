@@ -662,9 +662,9 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
 
 TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  if (output_idx > AnfAlgo::GetOutputTensorNum(node)) {
+  if (output_idx > AnfAlgo::GetOutputElementNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << AnfAlgo::GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]"
+                      << AnfAlgo::GetOutputElementNum(node) << "#node [ " << node->DebugString() << "]"
                       << trace::DumpSourceLines(node);
   }
   if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
@@ -677,6 +677,12 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
+
+  // If node has only one output and it is Tuple, in build_info, it only has one same dtype, so set output_dix as zero.
+  if (build_info->GetOutputNum() == 1 && build_info->GetOutputKernelObjectType(0) == kernel::KernelObjectType::TUPLE) {
+    output_idx = 0;
+  }
+
   auto dtype = build_info->GetOutputDeviceType(output_idx);
   if (dtype == TypeId::kNumberTypeEnd) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "] has a invalid dtype" << trace::DumpSourceLines(node);
