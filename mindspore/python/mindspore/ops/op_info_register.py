@@ -91,63 +91,6 @@ def op_info_register(op_info):
     return register_decorator
 
 
-def load_super_bar_config(super_bar_config):
-    r"""
-    A decorator which is used to adaptive front-end and back-end operator expression differences.
-
-    Note:
-        'super_bar_config' should represent front-end and back-end operator expression differences by string with json
-        format. The 'super_bar_config' will be loaded to super bar.
-
-    Args:
-        super_bar_config (str or dict):  front-end and back-end operator expression differences.
-
-    Examples:
-        >>> from mindspore.ops.op_info_register import load_super_bar_config
-        >>> super_bar_config =
-        ... {
-        ...    "NodeMap": {
-        ...       "OneHot": "OneHotD",
-        ...       "ReLUV2": "ReluV2"
-        ...     },
-        ...     "NodeAttrMap": {
-        ...       "Conv2D": {
-        ...         "strides": "stride",
-        ...         "pads": "pad_list",
-        ...         "dilations": "dilation"
-        ...       },
-        ...       "MaxPoolWithArgmax": {
-        ...         "ksize": "kernel_size",
-        ...         "padding": "pad_mode"
-        ...       }
-        ...     }
-        ... }
-        >>>
-        >>> @load_super_bar_config(super_bar_config)
-        ... def super_bar():
-        ...    return
-        ...
-
-    Returns:
-        Function, returns a decorator for load super bar config.
-    """
-
-    def load_super_bar_decorator(func):
-        if isinstance(super_bar_config, dict):
-            op_info_real = json.dumps(super_bar_config)
-        validator.check_value_type("op_info", op_info_real, [str])
-        op_lib = Oplib()
-        if not op_lib.load_super_bar_config(op_info_real):
-            raise ValueError('Invalid op info {}:\n'.format(op_info_real))
-
-        def wrapped_function(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapped_function
-
-    return load_super_bar_decorator
-
-
 def custom_info_register(*reg_info):
     r"""
     A decorator which is used to bind the registration information to the `func` parameter of
