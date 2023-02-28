@@ -23,13 +23,14 @@
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "abstract/dshape.h"
+#include "pipeline/jit/resource.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 // Remove the class type from graphs
 bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
-bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
+bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 }  // namespace opt
 }  // namespace mindspore
 

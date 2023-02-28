@@ -134,7 +134,7 @@ bool CleanAfterOptAPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::CleanAfterOptA(func_graph, resource->manager());
+  (void)opt::CleanAfterOptA(func_graph, resource);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -552,14 +552,6 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
-OptPassGroupMap GetItemDictEliminateAfterOptAPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  OptPassGroupMap map({{"mutable_eliminate", opt::OptPassConfig({irpass.mutable_op_eliminate_})},
-                       {"item_dict_eliminate",
-                        opt::OptPassConfig({irpass.dict_get_item_eliminator_, irpass.dict_get_item_const_eliminator_,
-                                            irpass.dict_set_item_eliminator_})}});
-  return map;
-}
-
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &resource) {
@@ -578,8 +570,6 @@ void InitOpt(const ResourcePtr &resource) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", resource, GetAfterRecomputePass(irpass));
-    g_pass_opts["item_dict_eliminate_after_opt_a"] =
-      Optimizer::MakeOptimizer("item_dict_eliminate_after_opt_a", resource, GetItemDictEliminateAfterOptAPass(irpass));
   }
 }
 }  // namespace
@@ -618,9 +608,6 @@ bool OptPassTransformGraphGroup(const ResourcePtr &resource) { return OptPassGro
 bool ControlGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_prepare"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_recompute"); }
-bool ItemDictEliminateAfterOptAGroup(const ResourcePtr &resource) {
-  return OptPassGroup(resource, "item_dict_eliminate_after_opt_a");
-}
 
 bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "renormal"); }
 
@@ -881,7 +868,6 @@ std::vector<PassItem> kVmPasses = {
   {"py_interpret_to_execute", PyInterpretToExecutePass},
   {"simplify_data_structures", SimplifyDataStructuresPass},
   {"opt_a", OptPassAGroup},
-  {"item_dict_eliminate_after_opt_a", ItemDictEliminateAfterOptAGroup},
   {"clean_after_opta", CleanAfterOptAPass},
   {"opt_b", OptPassBGroup},
   {"cconv", CconvPass},
