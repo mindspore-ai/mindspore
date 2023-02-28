@@ -1085,7 +1085,7 @@ def get_bprop_reduce_mean(self):
             dx = div_op(grad, cast(div_shape, dtype(grad)))
         else:
             div_shape = F.shape_mul(shape_x) / F.shape_mul(shape_out)
-            dx = div_op(grad, cast(F.scalar_to_tensor(div_shape, mstype.int32), dtype(grad)))
+            dx = div_op(grad, cast(F.scalar_to_tensor(div_shape), dtype(grad)))
         return dx, zeros_like(axis)
 
     return bprop
