@@ -353,6 +353,7 @@ set(COMMON_SUB_COMP
         utils
         common
         common/debug
+        common/expander
         )
 
 foreach(_comp ${COMMON_SUB_COMP})

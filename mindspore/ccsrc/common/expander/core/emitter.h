@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_EXPANDER_EMITTER_H_
-#define MINDSPORE_CORE_EXPANDER_EMITTER_H_
+#ifndef MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_
+#define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_
 #include <memory>
 #include <vector>
 #include <string>
@@ -26,12 +26,12 @@
 #include "ops/core_ops.h"
 #include "ops/shape_calc.h"
 #include "include/common/utils/utils.h"
-#include "expander/node.h"
-#include "expander/infer.h"
+#include "common/expander/core/node.h"
+#include "common/expander/core/infer.h"
 
 namespace mindspore {
 namespace expander {
-class MS_CORE_API Emitter {
+class COMMON_EXPORT Emitter {
  public:
   Emitter(const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr)
       : func_graph_(func_graph), infer_(infer), scope_(scope) {
@@ -222,11 +222,11 @@ class MS_CORE_API Emitter {
 };
 using EmitterPtr = std::shared_ptr<Emitter>;
 
-MS_CORE_API NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs);
-MS_CORE_API NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
-MS_CORE_API NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
-MS_CORE_API NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
-MS_CORE_API NodePtr operator-(const NodePtr &node);
+COMMON_EXPORT NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs);
+COMMON_EXPORT NodePtr operator-(const NodePtr &lhs, const NodePtr &rhs);
+COMMON_EXPORT NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
+COMMON_EXPORT NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
+COMMON_EXPORT NodePtr operator-(const NodePtr &node);
 }  // namespace expander
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_EXPANDER_EMITTER_H_
+#endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_EMITTER_H_

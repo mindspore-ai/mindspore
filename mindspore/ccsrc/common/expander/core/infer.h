@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_EXPANDER_INFER_H_
-#define MINDSPORE_CORE_EXPANDER_INFER_H_
+#ifndef MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_
+#define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_
 #include <memory>
-#include "expander/node.h"
+#include "common/expander/core/node.h"
 
 namespace mindspore {
 namespace expander {
 /// \brief ExpanderInfer is the adapter for inferring functions that is called in emitter.
-class MS_CORE_API ExpanderInfer {
+class COMMON_EXPORT ExpanderInfer {
  public:
   /// \brief Infer shape and dtype for node
   virtual void Infer(const NodePtr &node) = 0;
@@ -34,7 +34,7 @@ class MS_CORE_API ExpanderInfer {
 using ExpanderInferPtr = std::shared_ptr<ExpanderInfer>;
 
 /// \brief CppInfer calls the InferShapeAndType interface of frontend or backend map.
-class MS_CORE_API CppInfer : public ExpanderInfer {
+class COMMON_EXPORT CppInfer : public ExpanderInfer {
  public:
   void Infer(const NodePtr &node) override { return InferAnfnode(node->get()); }
   AbstractBasePtr GetAbstract(const NodePtr &node) override { return node->get()->abstract(); }
@@ -46,4 +46,4 @@ class MS_CORE_API CppInfer : public ExpanderInfer {
 };
 }  // namespace expander
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_EXPANDER_INFER_H_
+#endif  // MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_

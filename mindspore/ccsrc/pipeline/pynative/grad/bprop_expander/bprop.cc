@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <queue>
 #include <set>
-#include "expander/infer.h"
+#include "common/expander/core/infer.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/python_adapter.h"

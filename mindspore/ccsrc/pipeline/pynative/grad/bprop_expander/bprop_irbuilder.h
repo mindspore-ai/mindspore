@@ -22,8 +22,8 @@
 #include <map>
 #include <functional>
 
-#include "expander/node.h"
-#include "expander/emitter.h"
+#include "common/expander/core/node.h"
+#include "common/expander/core/emitter.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {

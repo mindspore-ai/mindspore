@@ -223,6 +223,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/*.cc"
         "../../../mindspore/ccsrc/common/graph_kernel/*.cc"
+        "../../../mindspore/ccsrc/common/expander/*.cc"
         "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"
