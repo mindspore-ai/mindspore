@@ -11,7 +11,8 @@ mindspore.ops.UniformInt
     其中 :math:`a` 为分布区间的最小值 `minval` ， :math:`b` 为分布区间的最大值 `maxval` 。
 
     .. note::
-        `minval` 中的数值在广播后必须严格小于 `maxval` 。
+        - `minval` 中的数值在广播后必须严格小于 `maxval` 。
+        - 如果 `seed` 和 `seed2` 都没有被赋非零值，则生成一个随机值当做随机种子
 
     参数：
         - **seed** (int) - 随机种子，非负值。默认值：0。

@@ -6417,10 +6417,10 @@ def count_nonzero(x, dims=None):
     Raises:
         TypeError: If the data type of `x` is not supported.
         TypeError: If the data type of `dims` is not int.
-        ValueError: If any of the values of `dims` is not in range :math:`[-x_dims, x_dims)`.
+        ValueError: If any of the values of `dims` is not in range [-x_dims, x_dims).
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], mindspore.int64)
