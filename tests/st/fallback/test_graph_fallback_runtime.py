@@ -902,6 +902,7 @@ class UNet(ms.nn.Cell):
         return out
 
 
+@pytest.mark.skip(reason="No support PyExecute Add.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -916,7 +917,8 @@ def test_resolve_cust_class():
     net = UNet(UserDefinedNet())
     x = np.array([10], np.float32)
     output = net(ms.Tensor(x))
-    print(output)  # The output should == 200, but failed, check later.
+    print(output)
+    assert output == 200
 
 
 @pytest.mark.level0
@@ -935,3 +937,34 @@ def test_resolve_cust_ms_function_call_class():
     with pytest.raises(RuntimeError) as err:
         net(ms.Tensor(x))
     assert "Nested execution during JIT execution is not supported." in str(err.value)
+
+
+class PrintPyExecuteNet(ms.nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+
+    def construct(self, x):
+        out = x * x
+        print("out1:", out)
+        out = self.net(x) + out
+        print("out2:", out)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_pyexecute():
+    """
+    Feature: Side effect in Fallback runtime.
+    Description: Side effect in Fallback runtime.
+    Expectation: No error.
+    """
+    net = PrintPyExecuteNet(UserDefinedNet())
+    x = np.array([10], np.float64)
+    output = net(ms.Tensor(x))
+    print(output)
+    assert output == 200

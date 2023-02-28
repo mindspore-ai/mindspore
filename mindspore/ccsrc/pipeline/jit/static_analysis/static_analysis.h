@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,7 +322,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   // Set the analysis result for orig to the result for new.
   // This sets an entry in anfnode_config_map from orig to new.
-  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
+  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf,
+                              bool need_erase = true);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
   FuncGraphPtr root_func_graph() const { return root_func_graph_; }
