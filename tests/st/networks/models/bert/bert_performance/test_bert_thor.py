@@ -189,7 +189,7 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
     q.put({'loss': loss_list, 'cost': per_step_mseconds})
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
