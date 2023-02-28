@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+
 import mindspore
 from mindspore import Tensor, Parameter
 from mindspore.common import dtype as mstype
@@ -60,22 +61,20 @@ def test_dynamic_loss_scaler(mode):
     Expectation: the `scale_value` can be adjusted correctly.
     """
     context.set_context(mode=mode)
-    status = amp.init_status()
     loss_scaler = amp.DynamicLossScaler(scale_value=2**10, scale_factor=2, scale_window=50)
 
     grads = (Tensor(np.array([0.5, 1.0]), mindspore.float16),
              Tensor(np.array([0.2]), mindspore.float16))
     unscaled_grads = loss_scaler.unscale(grads)
-    grads_finite = amp.all_finite(unscaled_grads, status)
+    grads_finite = amp.all_finite(unscaled_grads)
     loss_scaler.counter = Parameter(Tensor(49, dtype=mstype.int32))
     loss_scaler.adjust(grads_finite)
     assert loss_scaler.scale_value.asnumpy() == np.array(2048.)
 
-    status = amp.init_status()
     grads = (Tensor(np.array([2., 1.0]), mindspore.float16),
              Tensor(np.array([0.2]), mindspore.float16))
     unscaled_grads = loss_scaler.unscale(grads)
-    grads_finite = amp.all_finite(unscaled_grads, status)
+    grads_finite = amp.all_finite(unscaled_grads)
     loss_scaler.scale_value = Parameter(Tensor(2**10, dtype=mstype.float32))
     loss_scaler.adjust(grads_finite)
     assert loss_scaler.scale_value.asnumpy() == np.array(1024.)

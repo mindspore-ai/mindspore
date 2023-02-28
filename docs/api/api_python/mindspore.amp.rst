@@ -35,5 +35,4 @@ mindspore.amp
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.amp.init_status
     mindspore.amp.all_finite

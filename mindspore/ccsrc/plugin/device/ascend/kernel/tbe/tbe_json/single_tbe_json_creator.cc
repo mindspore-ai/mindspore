@@ -58,6 +58,43 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
   return true;
 }
 
+void NpuClearV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
+  if (op_list_json->size() != 2) {
+    MS_LOG(ERROR) << "Op list json's size is not equal to 2, abort post processing.";
+  }
+
+  auto compute_json = (*op_list_json)[1];
+  std::vector<nlohmann::json> empty_vector_json;
+  compute_json[kJInputDesc] = empty_vector_json;
+  compute_json[kJOutputDataDesc] = empty_vector_json;
+  compute_json[kJOutputDesc] = empty_vector_json;
+  op_list_json->clear();
+  (*op_list_json).emplace_back(compute_json);
+  MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
+}
+
+void NpuGetV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
+  if (op_list_json->size() != 2) {
+    MS_LOG(ERROR) << "Op list json's size is not equal to 2, abort post processing.";
+  }
+
+  auto compute_json = (*op_list_json)[1];
+  std::vector<nlohmann::json> empty_vector_json;
+  compute_json[kJInputDesc] = empty_vector_json;
+  op_list_json->clear();
+  (*op_list_json).emplace_back(compute_json);
+  MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
+}
+
+void SingleTbeJsonCreator::OpListPostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
+  auto kernel_name = common::AnfAlgo::GetCNodeName(anf_node);
+  if (kernel_name == kNPUClearFloatStatusV2OpName) {
+    NpuClearV2PostProcessing(anf_node, op_list_json);
+  } else if (kernel_name == kNPUGetFloatStatusV2OpName) {
+    NpuGetV2PostProcessing(anf_node, op_list_json);
+  }
+}
+
 bool SingleTbeJsonCreator::GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_list_json);
@@ -69,6 +106,7 @@ bool SingleTbeJsonCreator::GenOpListJson(const AnfNodePtr &anf_node, std::vector
   }
   GenDataJson(anf_node, compute_json, op_list_json);
   (*op_list_json).push_back(compute_json);
+  OpListPostProcessing(anf_node, op_list_json);
   MS_LOG(DEBUG) << "End.";
   return true;
 }

@@ -12,7 +12,6 @@ mindspore.amp.all_finite
 
     参数：
         - **inputs** (Union(tuple(Tensor), list(Tensor))) - 可迭代的Tensor。
-        - **status** (Tensor) - 溢出检测时所需要的初始状态，仅在Ascend需要。默认值：None。
 
     返回：
         Tensor，布尔类型的标量Tensor。

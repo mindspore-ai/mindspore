@@ -571,15 +571,17 @@ void TbeKernelCompileManager::Query(const std::string &type) {
 std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager::GenKernelMod(
   const std::vector<CNodePtr> &node_list) {
   MS_LOG(INFO) << "Gen kernel mod start!";
-  std::vector<CNodePtr> success_node;
-  std::vector<CNodePtr> failed_node;
+  std::vector<CNodePtr> success_nodes;
+  std::vector<CNodePtr> failed_nodes;
 
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetKernelMod(node) != nullptr) {
-      (void)success_node.emplace_back(node);
+      (void)success_nodes.emplace_back(node);
       continue;  // kernel mod already exist, continue;
     }
+    auto op_name = common::AnfAlgo::GetCNodeName(node);
+
     auto full_name = node->fullname_with_scope();
     if (common::AnfAlgo::HasNodeAttr(kAttrOriFusionName, node)) {
       full_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrOriFusionName);
@@ -592,7 +594,7 @@ std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager:
       kernel_pack = bin_map->SearchInFile(json_name);
       if (kernel_pack == nullptr) {
         MS_LOG(INFO) << "Can not find .json file or the .o file for op:" << json_name << trace::DumpSourceLines(node);
-        (void)failed_node.emplace_back(node);
+        (void)failed_nodes.emplace_back(node);
         continue;
       }
     }
@@ -612,11 +614,17 @@ std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager:
     kernel_mod_ptr->SetInputSizeList(iter->second.input_size_list);
     kernel_mod_ptr->SetOutputSizeList(iter->second.output_size_list);
     kernel_mod_ptr->SetWorkspaceSizeList(kernel_info_json.workspaces);
+    if (op_name == kNPUClearFloatStatusV2OpName || op_name == kNPUGetFloatStatusV2OpName) {
+      constexpr size_t io_byte_size = 32;
+      const std::vector<size_t> size_list = {io_byte_size};
+      kernel_mod_ptr->SetInputSizeList(size_list);
+      kernel_mod_ptr->SetOutputSizeList(size_list);
+    }
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
-    (void)success_node.emplace_back(node);
+    (void)success_nodes.emplace_back(node);
   }
   MS_LOG(INFO) << "Gen kernel mod end!";
-  return std::make_pair(success_node, failed_node);
+  return std::make_pair(success_nodes, failed_nodes);
 }
 
 void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes) {

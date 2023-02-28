@@ -80,15 +80,15 @@ class KernelAdjust {
   KernelAdjust() = default;
   ~KernelAdjust() = default;
 
-  CNodePtr CreateNPUGetFloatStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                   const CNodePtr &npu_alloc_cnode) const;
-  CNodePtr CreateNPUClearStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                const CNodePtr &npu_alloc_cnode) const;
-  CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
+  AnfNodePtr CreateZerosValueNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
+  CNodePtr CreateNPUGetFloatStatusV2(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     const AnfNodePtr &status_value_node) const;
+  CNodePtr CreateNPUClearStatusV2(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                  const AnfNodePtr &status_value_node) const;
   CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                            const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para) const;
-  CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                        const AnfNodePtr &specify_para) const;
+  CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const AnfNodePtr &specify_para,
+                        const AnfNodePtr &data) const;
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,

@@ -289,6 +289,13 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     runtimeargs.push_back(tiling_data_ptr_);
   }
 
+  AddressPtr overflow_address_ptr = GetOverflowAddress();
+  if (overflow_address_ptr != nullptr) {
+    runtimeargs.emplace_back(overflow_address_ptr->addr);
+    MS_LOG(DEBUG) << "Assign overflow memory for node " << node->fullname_with_scope() << ", addr is "
+                  << overflow_address_ptr->addr;
+  }
+
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
   auto node_info = cnode->fullname_with_scope();

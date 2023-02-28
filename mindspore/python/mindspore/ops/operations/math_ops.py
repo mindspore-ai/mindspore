@@ -20,6 +20,7 @@ from __future__ import division
 import numpy as np
 
 from mindspore import context
+from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
@@ -4339,6 +4340,7 @@ class NPUAllocFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUAllocFloatStatus"""
+        logger.warning("The 'NPUAllocFloatStatus' operator will be deprecated in the future. Please don't use it.")
 
 
 class NPUGetFloatStatus(Primitive):
@@ -4408,6 +4410,7 @@ class NPUGetFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUGetFloatStatus"""
+        logger.warning("The 'NPUGetFloatStatus' operator will be deprecated in the future. Please don't use it.")
 
 
 class NPUClearFloatStatus(Primitive):
@@ -4471,6 +4474,173 @@ class NPUClearFloatStatus(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NPUClearFloatStatus"""
+        logger.warning("The 'NPUClearFloatStatus' operator will be deprecated in the future. Please don't use it.")
+
+
+class NPUGetFloatStatusV2(Primitive):
+    """
+    Get the flag for storage overflow status. This flag is located in a register at a
+    fixed address on the `Ascend` device, and overflow information is automatically
+    written to this register.
+    The flag is a one-dimensional Tensor with shape :math:`(8,)` and data type `mindspore.dtype.int32`.
+    If the value of flag is zero, no overflow has occurred, otherwise, overflow.
+    When performing overflow detection on the network, you should first call `NPUClearFloatStatusV2` to
+    reset the register before the detection, and then call `NPUGetFloatStatusV2` to get the register
+    status after the network execution is completed.
+
+    Note:
+        - In order to avoid mis-optimization by the compiler, additional input is added to
+          this operator. The input is defined as a shape of: math:`(8,)` and data type of
+          `mindspore.dtype.int32` Tensor, meaningless.
+        - Since this op lacks contextual dependencies with parameters in the network,
+          :class:`mindspore.ops.Depend` needs to be used to ensure order of execution.
+
+    Inputs:
+        Tensor, an additional input created to avoid compiler optimization, is specified as shape :math:`(8,)`,
+        data type is `mindspore.dtype.int32`, and has no actual meaning.
+        Usually use the output of `NPUClearFloatStatusV2`.
+
+    Outputs:
+        Tensor, shape and data type are the same as input. If all are zero, it means no overflow, otherwise, overflow.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int32.
+        ValueError: If shape of `x` is not equal to :math:`(8,)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import ops, nn, Tensor
+        >>> from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.clear_status = NPUClearFloatStatusV2()
+        ...         self.get_status = NPUGetFloatStatusV2()
+        ...         self.sub = ops.Sub()
+        ...         self.neg = ops.Neg()
+        ...         self.equal = ops.Equal()
+        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
+        ...         self.base = Tensor([0], dtype=ms.int32)
+        ...
+        ...     def construct(self, x):
+        ...         init = Tensor([0]*8, dtype=ms.int32)
+        ...         clear_status = self.clear_status(init)
+        ...         x = ops.depend(x, clear_status)
+        ...         res = self.sub(x, self.neg(x))
+        ...         init = ops.depend(init, res)
+        ...         get_status = self.get_status(init)
+        ...         flag = self.equal(self.base, get_status)
+        ...         overall_finite = self.reduce_all(flag)
+        ...         overflow = not overall_finite
+        ...         return overflow
+        ...
+        >>> value = 65504
+        >>> data = np.full((2, 3), value, dtype=np.float16)
+        >>> x = Tensor(data, dtype=ms.float16)
+        >>> net = Net()
+        >>> res = net(x)
+        >>> print(res)
+        True
+        >>> value = 10
+        >>> data = np.full((2, 3), value, dtype=np.float16)
+        >>> x = Tensor(data, dtype=ms.float16)
+        >>> net = Net()
+        >>> res = net(x)
+        >>> print(res)
+        False
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NPUGetFloatStatusV2"""
+
+
+
+class NPUClearFloatStatusV2(Primitive):
+    """
+    Clear the flag for storage overflow status. This flag is located in a register at a
+    fixed address on the `Ascend` device, and overflow information is automatically
+    written to this register.
+    The flag is a one-dimensional Tensor with shape :math:`(8,)` and data type `mindspore.dtype.int32`.
+    If the value of flag is zero, no overflow has occurred, otherwise, overflow.
+    When performing overflow detection on the network, you should first call `NPUClearFloatStatusV2` to
+    reset the register before the detection, and then call `NPUGetFloatStatusV2` to get the register
+    status after the network execution is completed.
+
+    Note:
+        - In order to avoid mis-optimization by the compiler, additional input and output are added to
+          this operator. The input and output are defined as a shape of: math:`(8,)` and data type of
+          `mindspore.dtype.int32` Tensor, meaningless.
+        - Since this op lacks contextual dependencies with parameters in the network,
+          :class:`mindspore.ops.Depend` needs to be used to ensure order of execution.
+
+    Inputs:
+        Tensor, an additional input created to avoid compiler optimization, is specified as shape :math:`(8,)`,
+        data type is `mindspore.dtype.int32`, and has no actual meaning.
+
+    Outputs:
+        Tensor, shape and data type are the same as input, meaningless.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int32.
+        ValueError: If shape of `x` is not equal to :math:`(8,)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore import ops, nn, Tensor
+        >>> from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.clear_status = NPUClearFloatStatusV2()
+        ...         self.get_status = NPUGetFloatStatusV2()
+        ...         self.sub = ops.Sub()
+        ...         self.neg = ops.Neg()
+        ...         self.equal = ops.Equal()
+        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
+        ...         self.base = Tensor([0], dtype=ms.int32)
+        ...
+        ...     def construct(self, x):
+        ...         init = Tensor([0]*8, dtype=ms.int32)
+        ...         clear_status = self.clear_status(init)
+        ...         x = ops.depend(x, clear_status)
+        ...         res = self.sub(x, self.neg(x))
+        ...         init = ops.depend(init, res)
+        ...         get_status = self.get_status(init)
+        ...         flag = self.equal(self.base, get_status)
+        ...         overall_finite = self.reduce_all(flag)
+        ...         overflow = not overall_finite
+        ...         return overflow
+        ...
+        >>> value = 65504
+        >>> data = np.full((2, 3), value, dtype=np.float16)
+        >>> x = Tensor(data, dtype=ms.float16)
+        >>> net = Net()
+        >>> res = net(x)
+        >>> print(res)
+        True
+        >>> value = 10
+        >>> data = np.full((2, 3), value, dtype=np.float16)
+        >>> x = Tensor(data, dtype=ms.float16)
+        >>> net = Net()
+        >>> res = net(x)
+        >>> print(res)
+        False
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NPUClearFloatStatusV2"""
 
 
 class Cos(Primitive):
