@@ -3,7 +3,7 @@ mindspore.ops.adaptive_avg_pool3d
 
 .. py:function:: mindspore.ops.adaptive_avg_pool3d(input, output_size)
 
-    对由多个平面组成的的输入Tensor，进行三维的自适应平均池化操作。对于任何输入尺寸，指定输出的尺寸都为 :math:`(D, H, W)`，但是输入和输出特征的数目不会变化。
+    对一个多平面输入信号执行三维自适应平均池化。对于任何输入尺寸，指定输出的尺寸都为 :math:`(D, H, W)`，但是输入和输出特征的数目不会变化。
 
     假设输入 `input` 最后三维大小分别为 :math:`(inD, inH, inW)`，则输出的最后三维大小分别为 :math:`(outD, outH, outW)`，运算如下：
 
