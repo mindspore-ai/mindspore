@@ -17,6 +17,8 @@
 #include "unsorted_segment_sum.h"
 
 #include <string>
+#include <functional>
+#include <atomic>
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/eigen_tensor.h"
@@ -65,34 +67,36 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
   int64_t reshapesize = data_size / id_size;
   // Initialized to 0
   memset(output_y, 0, ctx.Output(0)->GetDataSize());
-  if (data_size <= kParallelDataNums) {
-    // calculation process
+  std::atomic<bool> multi_task_success(true);
+  std::function<uint32_t(int64_t, int64_t)> shard_unsorted_segment_sum = [&](int64_t start, int64_t end) -> uint32_t {
     for (int64_t i = 0; i < id_size; i++) {
       if (*(segmentids + i) < *numsegments) {
-        for (int64_t j = 0; j < reshapesize; j++) {
+        for (int64_t j = start; j < end; j++) {
           *(output_y + *(segmentids + i) * reshapesize + j) += *(input_x + i * reshapesize + j);
         }
+      } else {
+        multi_task_success.store(false);
+        KERNEL_LOG_ERROR("segment_ids value should be [0, %d), but got %d", static_cast<int>(*numsegments),
+                         static_cast<int>(*(segmentids + i)));
+        return KERNEL_STATUS_PARAM_INVALID;
       }
     }
+    return KERNEL_STATUS_OK;
+  };
+  if (data_size <= kParallelDataNums) {
+    KERNEL_HANDLE_ERROR(shard_unsorted_segment_sum(0, reshapesize),
+                        "UnsortedSegmentSum fails to be executed in a single thread!");
   } else {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
-    if (max_core_num > reshapesize) {
+    if (max_core_num > reshapesize && reshapesize != 0) {
       max_core_num = reshapesize;
     }
-    // calculation process
-    auto shard_unsorted_segment_sum = [&](int64_t start, int64_t end) {
-      for (int64_t i = 0; i < id_size; i++) {
-        if (*(segmentids + i) < *numsegments) {
-          for (int64_t j = start; j < end; j++) {
-            *(output_y + *(segmentids + i) * reshapesize + j) += *(input_x + i * reshapesize + j);
-          }
-        }
-      }
-    };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, reshapesize, reshapesize / max_core_num, shard_unsorted_segment_sum),
-      "CpuKernelUtils::ParallelFor failed.");
+    CpuKernelUtils::ParallelFor(ctx, reshapesize, reshapesize / max_core_num, shard_unsorted_segment_sum);
+    if (!multi_task_success.load()) {
+      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed.");
+      return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
+    }
   }
   return KERNEL_STATUS_OK;
 }

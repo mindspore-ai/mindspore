@@ -95,7 +95,7 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(CpuKernelContext &ctx) {
 
   // check input's dim
   if (input_shape->GetDims() != 4) {
-    KERNEL_LOG_ERROR("Input's dim is [%lld]", input_shape->GetDims());
+    KERNEL_LOG_ERROR("Input's dim should be 4, but got [%d]", input_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // check input's format
