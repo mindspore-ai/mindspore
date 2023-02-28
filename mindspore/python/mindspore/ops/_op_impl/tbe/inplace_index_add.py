@@ -23,7 +23,6 @@ inplace_index_add_op_info = TBERegOp("InplaceIndexAdd") \
     .compute_cost(10) \
     .kernel_name("inplace_index_add") \
     .partial_flag(True) \
-    .need_check_supported(True) \
     .dynamic_compile_static(True) \
     .dynamic_shape(True) \
     .attr("axis", "required", "int", "all") \
