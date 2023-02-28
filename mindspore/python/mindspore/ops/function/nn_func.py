@@ -1445,13 +1445,11 @@ def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=N
 def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    Applies a 2D fractional max pooling to an input signal.
-    The input is composed of multiple input planes.
-    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
-    the target output size. For any input size, the size of the specified output is H x W. The number
-    of output features is equal to the number of input planes.
+    Applies the 2D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
+    `output_size` or `output_ratio` cannot be used at the same time.
 
-    Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
+    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
@@ -1469,8 +1467,7 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 2)`.
@@ -1546,10 +1543,9 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
 def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    This operator applies a 3D fractional max pooling over an input signal.
-    The input is composed of several input planes.
-    The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
-    by the target output size.The number of output features is equal to the number of input planes.
+    Applies the 3D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
+    `output_size` or `output_ratio` cannot be used at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1573,8 +1569,7 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
             Specifying the size of the output tensor by using a ratio of the input size.
             Data type: float16, float32, double, and value is between (0, 1).
             Default: None.
-        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between (0, 1).
             Supported shape :math:`(N, C, 3)`.
@@ -3404,7 +3399,7 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
 
 def threshold(input_x, thr, value):
     r"""
-    thresholds each element of the input Tensor.
+    Returns each element of `input_x` after thresholding by `thr` as a Tensor.
 
     The formula is defined as follows:
 
@@ -3417,7 +3412,7 @@ def threshold(input_x, thr, value):
 
     Args:
         input_x (Tensor): The input of threshold with data type of float16 or float32.
-        thr (Union[int, float]): The value to threshold at.
+        thr (Union[int, float]): The value of the threshold.
         value (Union[int, float]): The value to replace with when element is less than threshold.
 
     Returns:
@@ -3432,10 +3427,10 @@ def threshold(input_x, thr, value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> inputs = mindspore.Tensor([0.0, 0.2, 0.3], mindspore.float32)
-        >>> outputs = ops.threshold(inputs, 0.1, 20)
+        >>> inputs = mindspore.Tensor([0.0, 2, 3], mindspore.float32)
+        >>> outputs = ops.threshold(inputs, 1, 100)
         >>> print(outputs)
-        [ 20.0     0.2      0.3]
+        [100.   2.   3.]
     """
     _check_is_tensor('input_x', input_x, "threshold")
     _check_value_type("thr", thr, [float, int], "threshold")
@@ -4973,18 +4968,22 @@ def _check_positive_int(arg_value, arg_name=None, prim_name=None):
 
 def pixel_shuffle(x, upscale_factor):
     r"""
-    Applies a pixel_shuffle operation over an input signal composed of several input planes. This is useful for
-    implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
+    Applies the PixelShuffle operation over input `x` which implements sub-pixel convolutions
+    with stride :math:`1/r` . For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the `x` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
 
+    Note:
+        The dimension of input Tensor on Ascend should be less than 7.
+
     Args:
         x (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and the
             length of third to last dimension can be divisible by `upscale_factor` squared.
-        upscale_factor (int):  factor to increase spatial resolution by, and is a positive integer.
+        upscale_factor (int): factor to shuffle the input Tensor, and is a positive integer.
+            `upscale_factor` is the above-mentioned :math:`r`.
 
     Returns:
         - **output** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` .
@@ -5029,7 +5028,7 @@ def pixel_shuffle(x, upscale_factor):
 
 def pixel_unshuffle(x, downscale_factor):
     r"""
-    Applies a pixel_unshuffle operation over an input signal composed of several input planes. For more details, refer
+    Applies the PixelUnshuffle operation over input `x` which is the inverse of PixelShuffle. For more details, refer
     to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
@@ -5039,7 +5038,8 @@ def pixel_unshuffle(x, downscale_factor):
     Args:
         x (Tensor): Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than 2,
             and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
-        downscale_factor (int): factor to decrease spatial resolution by, and is a positive integer.
+        downscale_factor (int): factor to unshuffle the input Tensor, and is a positive integer.
+            `downscale_factor` is the above-mentioned :math:`r`.
 
     Returns:
         - **output** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
@@ -5053,11 +5053,11 @@ def pixel_unshuffle(x, downscale_factor):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = np.arange(12 * 12).reshape((1, 1, 12, 12))
+        >>> input_x = np.arange(8 * 8).reshape((1, 1, 8, 8))
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
-        >>> output = ops.pixel_unshuffle(input_x, 3)
+        >>> output = ops.pixel_unshuffle(input_x, 2)
         >>> print(output.shape)
-        (1, 9, 4, 4)
+        (1, 4, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
     idx = x.shape

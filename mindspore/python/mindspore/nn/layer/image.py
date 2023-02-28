@@ -532,16 +532,20 @@ class CentralCrop(Cell):
 
 class PixelShuffle(Cell):
     r"""
-    Applies a pixelshuffle operation over an input signal composed of several input planes. This is useful for
-    implementiong efficient sub-pixel convolution with a stride of :math:`1/r`. For more details, refer to
+    Applies the PixelShuffle operation over input `x` which implements sub-pixel convolutions
+    with stride :math:`1/r` . For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where r is an upscale factor and * is zero or more batch dimensions.
 
+    Note:
+        The dimension of input Tensor on Ascend should be less than 7.
+
     Args:
-        upscale_factor (int):  factor to increase spatial resolution by, and is a positive integer.
+        upscale_factor (int): factor to shuffle the input, and is a positive integer.
+            `upscale_factor` is the above-mentioned :math:`r`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and
@@ -559,12 +563,12 @@ class PixelShuffle(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = np.arange(3 * 2 * 9 * 4 * 4).reshape((3, 2, 9, 4, 4))
+        >>> input_x = np.arange(3 * 2 * 8 * 4 * 4).reshape((3, 2, 8, 4, 4))
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
-        >>> pixel_shuffle = nn.PixelShuffle(3)
+        >>> pixel_shuffle = nn.PixelShuffle(2)
         >>> output = pixel_shuffle(input_x)
         >>> print(output.shape)
-        (3, 2, 1, 12, 12)
+        (3, 2, 2, 8, 8)
     """
     def __init__(self, upscale_factor):
         super(PixelShuffle, self).__init__()
@@ -576,15 +580,16 @@ class PixelShuffle(Cell):
 
 class PixelUnshuffle(Cell):
     r"""
-    Applies a pixelunshuffle operation over an input signal composed of several input planes. For more details, refer to
-    `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
+    Applies the PixelUnshuffle operation over input `x` which is the inverse of PixelShuffle. For more details, refer
+    to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
     :math:`(*, C \times r^2, H, W)` , where r is a downscale factor and * is zero or more batch dimensions.
 
     Args:
-        downscale_factor (int): factor to decrease spatial resolution by, and is a positive integer.
+        downscale_factor (int): factor to unshuffle the input, and is a positive integer.
+            `downscale_factor` is the above-mentioned :math:`r`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than
@@ -602,12 +607,12 @@ class PixelUnshuffle(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> pixel_unshuffle = nn.PixelUnshuffle(3)
-        >>> input_x = np.arange(12 * 12).reshape((1, 1, 12, 12))
+        >>> pixel_unshuffle = nn.PixelUnshuffle(2)
+        >>> input_x = np.arange(8 * 8).reshape((1, 1, 8, 8))
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = pixel_unshuffle(input_x)
         >>> print(output.shape)
-        (1, 9, 4, 4)
+        (1, 4, 4, 4)
     """
     def __init__(self, downscale_factor):
         super(PixelUnshuffle, self).__init__()

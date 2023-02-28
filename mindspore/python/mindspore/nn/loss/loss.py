@@ -2302,13 +2302,13 @@ class CTCLoss(LossBase):
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ .
 
     Args:
-        blank (int): The blank label. Default: 0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+        blank (int): The blank tag. Default: 0.
+        reduction (str): Implements the reduction method to the output with 'none', 'mean', or 'sum'. Default: 'mean'.
+        zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
 
     Inputs:
-        - **log_probs** (Tensor) - A tensor of shape (T, N, C) or (T, C), where T is input length, N is batch size and
-          C is number of classes (including blank). T, N and C are positive integers.
+        - **log_probs** (Tensor) - A tensor of shape (T, N, C) or (T, C), where T is length of input,
+          N is size of the batch and C is the number of classes. T, N and C are positive integers.
         - **targets** (Tensor) - A tensor of shape (N, S) or (sum( `target_lengths` )), where S is max target length,
           means the target sequences.
         - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the input.
