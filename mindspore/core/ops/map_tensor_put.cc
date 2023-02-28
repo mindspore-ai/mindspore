@@ -72,13 +72,18 @@ AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const Pri
                              << " but got " << value_tensor_dtype->ToString() << ".";
   }
 
+  // Get value tensor shape.
+  auto value_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorPut, input_args, kInputIndex2);
+  if (key_tensor_shape->IsDynamic() || value_tensor_shape->IsDynamic()) {
+    // Return the input AbstractMapTensor.
+    return abs_map_tensor;
+  }
+
   // Concate key shape and value shape as the required value shape.
   ShapeVector shape_vec = key_tensor_shape->shape();
   const auto &value_shape_vec = value_shape->shape();
   (void)shape_vec.insert(shape_vec.end(), value_shape_vec.begin(), value_shape_vec.end());
   auto required_value_shape = std::make_shared<abstract::Shape>(shape_vec);
-  // Get value tensor shape.
-  auto value_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorPut, input_args, kInputIndex2);
   if (!common::IsEqual(required_value_shape, value_tensor_shape)) {
     MS_EXCEPTION(ValueError) << kNameMapTensorPut << " - required value tensor shape "
                              << required_value_shape->ToString() << " but got " << value_tensor_shape->ToString()

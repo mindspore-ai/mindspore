@@ -187,6 +187,32 @@ bool DeviceDenseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTab
   return true;
 }
 
+void DeviceDenseEmbeddingOperation::GetRemoteEmbeddingSliceBound(
+  size_t vocab_size, size_t server_num, std::vector<std::pair<size_t, size_t>> *remote_embedding_slice_bounds) {
+  if (server_num == 0) {
+    MS_LOG(EXCEPTION) << "The number of servers is at least 1, but get 0";
+  }
+  size_t average_slice_size = vocab_size / server_num;
+  std::vector<size_t> remote_embedding_slice_sizes = std::vector<size_t>(server_num, average_slice_size);
+  size_t rest_vocab_size = vocab_size % server_num;
+  for (size_t i = 0; i < rest_vocab_size; i++) {
+    remote_embedding_slice_sizes[i] += 1;
+  }
+
+  size_t begin;
+  size_t end;
+  for (size_t i = 0; i < server_num; i++) {
+    if (i == 0) {
+      begin = 0;
+      end = remote_embedding_slice_sizes[0] - 1;
+    } else {
+      begin = remote_embedding_slice_bounds->at(i - 1).second + 1;
+      end = begin + remote_embedding_slice_sizes[i] - 1;
+    }
+    (void)remote_embedding_slice_bounds->emplace_back(begin, end);
+  }
+}
+
 void DeviceDenseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
   auto graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(graph);

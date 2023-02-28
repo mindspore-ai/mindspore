@@ -68,6 +68,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool, Value
       }
     } else {
       MS_LOG(ERROR) << "The key: " << key << " does not exist in the hash table.";
+      return false;
     }
   }
   return true;

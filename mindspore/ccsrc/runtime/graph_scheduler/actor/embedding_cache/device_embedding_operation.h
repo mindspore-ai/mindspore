@@ -76,6 +76,10 @@ class DeviceEmbeddingOperation {
   // Push non-hotspot embeddings on the device cache to the local host cache.
   virtual bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) = 0;
 
+  // Get the id range of each server's embedding table slice.
+  virtual void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
+                                            std::vector<std::pair<size_t, size_t>> *remote_embedding_slice_bounds) = 0;
+
  protected:
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
   bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);

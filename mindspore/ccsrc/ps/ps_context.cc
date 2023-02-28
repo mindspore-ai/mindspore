@@ -181,12 +181,10 @@ void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_
 #endif
 }
 
-void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
-                                      size_t cache_vocab_size, size_t embedding_size) const {
+void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (enable_distributed_mindrt()) {
-    embedding_cache_table_manager.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size,
-                                                        embedding_size);
+    embedding_cache_table_manager.ReInsertHashTableSize(new_param_name, cur_param_name);
   }
 #endif
 }

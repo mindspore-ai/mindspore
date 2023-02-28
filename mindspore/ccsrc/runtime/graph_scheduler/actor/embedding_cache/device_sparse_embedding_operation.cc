@@ -174,6 +174,20 @@ bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTa
   return true;
 }
 
+void DeviceSparseEmbeddingOperation::GetRemoteEmbeddingSliceBound(
+  size_t vocab_size, size_t server_num, std::vector<std::pair<size_t, size_t>> *remote_embedding_slice_bounds) {
+  if (server_num != 1) {
+    MS_LOG(EXCEPTION)
+      << "Sparse mode does not support multiple servers currently, so server number should be 1, but got: "
+      << server_num;
+  }
+
+  MS_EXCEPTION_IF_NULL(remote_embedding_slice_bounds);
+  // Sparse mode does not support multiple servers currently, so the id does not need to be split, and the id range is
+  // specified from 0 to INTMAX .
+  remote_embedding_slice_bounds->emplace_back(0, INT32_MAX);
+}
+
 void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
   auto graph = std::make_shared<KernelGraph>();
   MS_EXCEPTION_IF_NULL(graph);

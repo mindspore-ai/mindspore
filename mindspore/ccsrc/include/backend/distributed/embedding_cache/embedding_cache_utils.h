@@ -172,8 +172,7 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   // Parameter will modify the name. After modification, you need to re-insert all the dimension information that saves
   // the parameter.
-  void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
-                             size_t cache_vocab_size, size_t embedding_size);
+  void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name);
 
   // Insert the initial value for the accumulation value of embedding's optimizer.
   void InsertAccumuInitInfo(const std::string &param_name, float init_val);

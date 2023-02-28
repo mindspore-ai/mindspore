@@ -154,6 +154,7 @@ void GPUHashTable<Key, Value, Allocator>::FreeMemory(void *ptr) {
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, bool insert_default_value,
                                                Value *outputs, void *stream) {
+  std::unique_lock<std::mutex> lock(mutex_);
   if (!initializer_.empty()) {
     return Find(keys, key_num, insert_default_value, initializer_, outputs, stream);
   }
@@ -229,6 +230,7 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
 
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num, const Value *value, void *stream) {
+  std::unique_lock<std::mutex> lock(mutex_);
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(value);
   MS_ERROR_IF_NULL(stream);
@@ -264,6 +266,7 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num
 
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::Erase(const Key *keys, size_t key_num, void *stream) {
+  std::unique_lock<std::mutex> lock(mutex_);
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(stream);
 
@@ -284,6 +287,7 @@ bool GPUHashTable<Key, Value, Allocator>::Erase(const Key *keys, size_t key_num,
 
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::Clear() {
+  std::unique_lock<std::mutex> lock(mutex_);
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(GPUDeviceManager::GetInstance().default_stream());
   // Need wait all task on stream finish.
   CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(stream), "cudaStreamSynchronize default cuda stream");
@@ -1023,8 +1027,8 @@ bool GPUHashTable<Key, Value, Allocator>::GetIndicesByKeys(const Key *key, size_
     }
 
     *(insert_success_number_) = 0;
-    CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemPrefetchAsync(insert_success_number_, sizeof(CudaAtomicSize), device_id),
-                                     "cudaMemPrefetchAsync");
+    CHECK_CUDA_RET_WITH_RETURN_FALSE(
+      cudaMemPrefetchAsync(insert_success_number_, sizeof(CudaAtomicSize), device_id, stream), "cudaMemPrefetchAsync");
 
     // 2. Get the key number could be handled by current submap.
     size_t item_num = std::min(submap_remaining_capacity, remaining_key_num);
@@ -1084,8 +1088,8 @@ bool GPUHashTable<Key, Value, Allocator>::UpdateSize(size_t key_num, const int *
   MS_EXCEPTION_IF_NULL(insert_success_number_);
   *(insert_success_number_) = 0;
   uint32_t device_id = GET_CTX_DEVICE_ID;
-  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaMemPrefetchAsync(insert_success_number_, sizeof(CudaAtomicSize), device_id),
-                                   "cudaMemPrefetchAsync");
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(
+    cudaMemPrefetchAsync(insert_success_number_, sizeof(CudaAtomicSize), device_id, stream), "cudaMemPrefetchAsync");
 
   const uint32_t block_size = kBlockSize;
   if (IntToUint(GET_THREADS) < block_size) {

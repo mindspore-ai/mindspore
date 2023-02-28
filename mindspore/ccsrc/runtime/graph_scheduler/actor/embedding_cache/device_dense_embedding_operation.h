@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_ACTOR_EMBEDDING_CACHE_DEVICE_DENSE_EMBEDDING_OPERATION_H_
 
 #include <memory>
+#include <vector>
 #include <utility>
 #include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"
 
@@ -42,6 +43,10 @@ class DeviceDenseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Pull missing embeddings on the device cache from the local host.
   bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) override;
+
+  // Get the id range of each server's embedding table slice.
+  void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
+                                    std::vector<std::pair<size_t, size_t>> *remote_embedding_slice_bounds) override;
 
  protected:
   // Build a CNode of embedding cache look up kernel(operator name: 'EmbeddingLookup'), which is used to look up local

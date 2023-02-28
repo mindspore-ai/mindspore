@@ -279,6 +279,9 @@ class GPUHashTable : public HashTable<Key, Value> {
   // The flag records whether the elements of the hash table have changed since the last export, true means that there
   // has been a change.
   bool is_dirty_{true};
+
+  // This mutex is to guarantee the thread-safe for call `Find`, `Insert` and `Erase` functions.
+  std::mutex mutex_;
 };
 }  // namespace gpu
 }  // namespace device

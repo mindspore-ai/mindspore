@@ -142,9 +142,6 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool PushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num, const float *embeddings,
                               size_t embeddings_len);
 
-  // Get the id range of each server's embedding table slice.
-  void GetRemoteEmbeddingSliceBound();
-
   // In a multi-server scenario, the embeddings need to be segmented, and each server saves the embeddings of
   // different feature id ranges. Therefore, when the local side performs the push or pull embeddings operation, the
   // embeddings and ids need to be divided, and then communicate with the corresponding remote: Partition ids by

@@ -404,10 +404,7 @@ class Parameter(Tensor_):
                              "but got {}.".format(type(name_)))
 
         if _is_role_worker() and self.cache_enable:
-            if len(self.shape) != 2:
-                raise RuntimeError("The dims of parameter '{}' must be 2, but got {}."
-                                   .format(self.name, len(self.shape)))
-            _reinsert_hash_table_size(name_, self.param_info.name, self.shape[0], self.shape[1])
+            _reinsert_hash_table_size(name_, self.param_info.name)
         self.param_info.name = name_
 
     @property
