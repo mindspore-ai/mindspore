@@ -30,7 +30,7 @@ namespace mindspore {
 /// \brief Default Infer Session Implementation, using kernelmod, not implemented now.
 class DefaultInferSession : public InferSession {
  public:
-  explicit DefaultInferSession(const std::shared_ptr<Context> &context) { context_ = context; }
+  explicit DefaultInferSession(const std::shared_ptr<Context> &context) : context_(context) {}
   virtual ~DefaultInferSession() = default;
   Status Init(const std::shared_ptr<Context> &context) override;
   Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;

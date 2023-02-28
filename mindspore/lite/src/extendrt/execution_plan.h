@@ -67,13 +67,13 @@ class ExecutionPlan : public abstract::ExecutionPlan {
     input_isolate_map_ = input_isolate_map;
   }
 
-  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetInputMap() { return input_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetInputsMap() { return input_isolate_map_; }
 
   void SetOutputsMap(std::unordered_map<abstract::Tensor *, abstract::Tensor *> *output_isolate_map) {
     output_isolate_map_ = output_isolate_map;
   }
 
-  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetOutputMap() { return output_isolate_map_; }
+  std::unordered_map<abstract::Tensor *, abstract::Tensor *> *GetOutputsMap() { return output_isolate_map_; }
 
   std::vector<abstract::Kernel *> ToKernelList() override;
 

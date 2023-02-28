@@ -35,7 +35,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/single_op_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
-        # ${CMAKE_CURRENT_SOURCE_DIR}/session/default_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/default_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
@@ -52,8 +52,14 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
-        # ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/factory.cc
-        # ${CMAKE_CURRENT_SOURCE_DIR}/graph_runtime/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/default_graph_compiler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_runtime/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_runtime/default_graph_runtime.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_executor/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_executor/mindrt_graph_executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/execution_flow.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
@@ -162,6 +168,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     target_link_libraries(mindspore-extendrt_static mindspore_core mindspore::protobuf)
     add_dependencies(mindspore-extendrt_static msplugin-ge-litert)
     target_link_libraries(mindspore-extendrt_static msplugin-ge-litert)
+
+    add_subdirectory(${LITE_DIR}/src/executor unified_executor)
+
+    add_dependencies(mindspore-extendrt lite-unified-executor)
+    target_link_libraries(mindspore-extendrt lite-unified-executor)
+    target_link_libraries(mindspore-extendrt_static lite-unified-executor)
 
     if(NOT PLATFORM_ARM)
     set(KERNEL_MOD_DEPEND_SRC

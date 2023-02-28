@@ -36,8 +36,12 @@ class DefaultGraphRuntime : public mindspore::infer::abstract::GraphRuntime {
                  infer::abstract::KernelCallBack before = nullptr,
                  infer::abstract::KernelCallBack after = nullptr) override;
 
-  Status Resize(const std::vector<infer::abstract::Tensor *> *inputs,
+  Status Resize(const std::vector<infer::abstract::Tensor *> &inputs,
                 const std::vector<std::vector<int64_t>> &dims) override;
+
+  std::vector<infer::abstract::Tensor *> GetInputs() override;
+
+  std::vector<infer::abstract::Tensor *> GetOutputs() override;
 
  private:
   std::shared_ptr<infer::abstract::Executor> SelectExecutor();

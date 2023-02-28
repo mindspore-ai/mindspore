@@ -37,7 +37,8 @@ class MindRTGraphExecutor : public mindspore::infer::abstract::Executor {
 
   Status Execute() override;
 
-  int Resize(const std::vector<infer::abstract::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int Resize(const std::vector<infer::abstract::Tensor *> &inputs,
+             const std::vector<std::vector<int64_t>> &dims) override;
 
  private:
   std::string name_;

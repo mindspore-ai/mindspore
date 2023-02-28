@@ -42,22 +42,25 @@ ExecutionFlow::~ExecutionFlow() {
 }
 
 abstract::Kernel *ExecutionFlow::ConstructFusionKernel() {
-  auto lite_kernel = new (std::nothrow) mindspore::kernel::LiteKernel(nullptr, inputs_, outputs_, context_);
+  auto lite_kernel = new (std::nothrow) mindspore::kernel::LiteKernel(nullptr, inputs_, outputs_, context_.get());
   if (lite_kernel == nullptr) {
     MS_LOG(ERROR) << "ExecutionFlow::ConstructFusionKernel create lite kernel failed, may be memory is not enough";
     return nullptr;
   }
 
-  std::vector<KernelExec *> input_kernels = mindspore::kernel::KernelExecUtil::SubgraphInputNodes(kernels_);
-  std::vector<KernelExec *> output_kernels = mindspore::kernel::KernelExecUtil::SubgraphOutputNodes(kernels_);
+  std::vector<mindspore::kernel::KernelExec *> input_kernels =
+    mindspore::kernel::KernelExecUtil::SubgraphInputNodes(kernels_);
+  std::vector<mindspore::kernel::KernelExec *> output_kernels =
+    mindspore::kernel::KernelExecUtil::SubgraphOutputNodes(kernels_);
 
   mindspore::kernel::SubGraphKernel *sub_graph_kernel =
-    new CpuFp32SubGraph(input_kernels, output_kernels, kernels_, lite_kernel);
+    new mindspore::kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels_, lite_kernel);
   if (sub_graph_kernel == nullptr) {
     MS_LOG(ERROR) << "ExecutionFlow::ConstructFusionKernel create sub graph kernel failed, may be memory is not enough";
-    delete lite_kernel return nullptr;
+    delete lite_kernel;
+    return nullptr;
   }
-  sub_graph_kernel->set_context(context_);
+  sub_graph_kernel->set_context(context_.get());
   return sub_graph_kernel;
 }
 }  // namespace mindspore::infer

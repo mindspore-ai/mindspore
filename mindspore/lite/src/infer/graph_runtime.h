@@ -56,7 +56,7 @@ class GraphRuntime : public std::enable_shared_from_this<GraphRuntime> {
   /// \param[in] dims, targe dim shape to resize
   ///
   /// \return Status.
-  virtual Status Resize(const std::vector<Tensor *> *inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
+  virtual Status Resize(const std::vector<Tensor *> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
 
   /// \brief Get list of inputs for the model.
   ///
