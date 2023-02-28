@@ -1475,7 +1475,7 @@ class DynamicBroadcastTo(Primitive):
         ValueError: if the target and input shapes are incompatible.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
