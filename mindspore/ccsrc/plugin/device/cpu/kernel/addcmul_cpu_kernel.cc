@@ -151,6 +151,15 @@ bool AddcmulCpuKernelMod::AddcmulCheck(const std::vector<AddressPtr> &inputs, co
     return AddcmulCompute<T, int>(inputs, outputs);
   } else if (dtype_value_ == kNumberTypeInt64) {
     return AddcmulCompute<T, int64_t>(inputs, outputs);
+  } else if (dtype_value_ == kNumberTypeUInt8) {
+    return AddcmulCompute<T, uint8_t>(inputs, outputs);
+  } else if (dtype_value_ == kNumberTypeInt8) {
+    return AddcmulCompute<T, int8_t>(inputs, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'x' should be float16, float32, float64, int8, uint8, int32, int64, "
+                         "but got "
+                      << TypeIdLabel(dtype_value_);
   }
   return true;
 }
