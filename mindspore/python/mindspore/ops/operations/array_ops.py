@@ -7731,7 +7731,7 @@ class HammingWindow(Primitive):
 
 class AffineGrid(Primitive):
     r"""
-    Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
+    Creates a 2D or 3D flow field (sampling grid) based on a batch of affine matrices `theta`.
 
     Refer to :func:`mindspore.ops.affine_grid` for more details.
 

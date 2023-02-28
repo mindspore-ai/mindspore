@@ -3,7 +3,7 @@ mindspore.ops.CholeskySolve
 
 .. py:class:: mindspore.ops.CholeskySolve(upper=False)
 
-    给定Cholesky因子 `u` ，求解具有正定矩阵的线性方程组，结果表示为 `c` 。
+    根据 Cholesky 分解因子 `u` ，计算正定矩阵线性方程组的解。结果表示为 `c` 。
 
     如果 `upper` 是True， `u` 是上三角形矩阵，可以通过下面公式得到 `c` ：
 

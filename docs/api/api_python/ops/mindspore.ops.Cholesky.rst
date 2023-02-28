@@ -5,4 +5,4 @@
 
     计算单个或成批对称正定矩阵的Cholesky分解。
 
-    更多参考详见 :func:`mindspore.ops.cholesky`。
+    更多参考详见 :func:`mindspore.ops.cholesky` 。
