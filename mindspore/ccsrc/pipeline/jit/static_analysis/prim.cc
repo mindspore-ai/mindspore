@@ -1369,7 +1369,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   (void)value_list.emplace_back(owner_node);
   const auto value_tuple_node = fg->NewCNode(value_list);
 
-  const auto getattr_node = fg->NewCNodeInOrder(
+  const auto getattr_node = fg->NewCNode(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
   getattr_node->set_debug_info(cnode->debug_info());
   MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();
@@ -1378,7 +1378,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf);
+  return eng->ForwardConfig(out_conf, fn_conf, false);
 }
 
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
@@ -2807,7 +2807,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
 
     // Build the PyExecute node for raise error.
-    const auto raise_error_node = cur_graph->NewCNodeInOrder(
+    const auto raise_error_node = cur_graph->NewCNode(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     auto none_type = std::make_shared<TypeNone>();
     raise_error_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
@@ -2815,7 +2815,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());
-    return eng->ForwardConfig(out_conf, fn_conf);
+    return eng->ForwardConfig(out_conf, fn_conf, false);
   }
 
  private:
