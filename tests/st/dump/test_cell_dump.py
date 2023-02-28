@@ -114,7 +114,7 @@ def test_ascend_cell_dump():
 
         # make sure 1 ReluGrad dump files are generated with correct name prefix
         relu_grad_file_name = "ReluGrad.Gradients_Default_network-WithLossCell__backbone" \
-                              "-ReluReduceMeanDenseRelu_gradReLU_ReluGrad-op*.*.*.*"
+                              "-ReluReduceMeanDenseRelu_gradReLU-meta_ReluGrad-op*.*.*.*"
         relu_grad_file1 = glob.glob(os.path.join(dump_file_path, relu_grad_file_name))[0]
         assert relu_grad_file1
         del os.environ['MINDSPORE_DUMP_CONFIG']
