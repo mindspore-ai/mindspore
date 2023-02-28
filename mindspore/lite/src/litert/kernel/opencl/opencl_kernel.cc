@@ -48,7 +48,7 @@ int CpuAxis2GpuAxis(size_t ndim, int cpu_axis, int *gpu_axis) {
   }
 
   const auto &axis_map = kCpuAxis2GpuAxisMapTable[ndim - 1];
-  if ((cpu_axis < 0) || (cpu_axis >= axis_map.size())) {
+  if ((cpu_axis < 0) || (static_cast<size_t>(cpu_axis) >= axis_map.size())) {
     MS_LOG(WARNING) << "Input cpu axis: " << cpu_axis << " is out of range [0," << axis_map.size() << "]";
     return RET_ERROR;
   }

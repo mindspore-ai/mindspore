@@ -141,7 +141,7 @@ std::string ConcatOpenCLKernel::GenMainCodeAxis3UnAlign() {
   int temp_index = 0;
   int output_index = 0;
   code << "DTYPE4 result = (DTYPE4)(0);\n";
-  for (int j = 0; j < in_tensors_.size(); j++) {
+  for (size_t j = 0; j < in_tensors_.size(); j++) {
     std::vector<int> in_shape(DIMENSION_4D);
     Broadcast2GpuShape(in_tensors_[j]->shape().data(), in_tensors_[j]->shape().size(), in_shape.data(), DIMENSION_4D,
                        1);
@@ -175,7 +175,7 @@ std::string ConcatOpenCLKernel::GenMainCodeOthers() {
          << "int IH = X - IN * " << out_shape_.s[CLIDX_Y] << ";\n";
   }
 
-  for (int j = 0; j < in_tensors_.size(); j++) {
+  for (size_t j = 0; j < in_tensors_.size(); j++) {
     std::vector<int> in_shape(DIMENSION_4D);
     Broadcast2GpuShape(in_tensors_[j]->shape().data(), in_tensors_[j]->shape().size(), in_shape.data(), DIMENSION_4D,
                        1);
@@ -239,7 +239,7 @@ std::string ConcatOpenCLKernel::GenCode() {
   }
   code << header;
   code << "__kernel void Concat(\n";
-  for (int i = 0; i < in_tensors_.size(); i++) {
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
     code << "__read_only image2d_t input" << i << ",\n";
   }
   code << "__write_only image2d_t output\n) {\n";
