@@ -50,7 +50,6 @@ constexpr auto kFloorDiv = "FloorDiv";
 constexpr auto kMod = "Mod";
 constexpr auto kFloorMod = "FloorMod";
 constexpr auto kSquaredDifference = "SquaredDifference";
-constexpr auto kXlogy = "Xlogy";
 constexpr auto kAtan2 = "Atan2";
 
 template <typename T>
@@ -218,8 +217,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
                                {kFloorDiv, &ArithmeticCpuTypeFunc<T>::FloorDiv},
                                {kAtan2, &ArithmeticCpuTypeFunc<T>::Atan2},
                                {kRealDiv, &ArithmeticCpuTypeFunc<T>::RealDiv},
-                               {kSquaredDifference, &ArithmeticCpuTypeFunc<T>::SquaredDifference},
-                               {kXlogy, &ArithmeticCpuTypeFunc<T>::Xlogy}};
+                               {kSquaredDifference, &ArithmeticCpuTypeFunc<T>::SquaredDifference}};
     } else {
       dtype_desc = "complex data";
       arithmeticMathFuncMap = {{kSquaredDifference, &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
@@ -230,8 +228,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
                                {kMul, &ArithmeticCpuTypeFunc<T>::Mul},
                                {kDivNoNan, &ArithmeticCpuTypeFunc<T>::DivNoNan},
                                {kAddV2, &ArithmeticCpuTypeFunc<T>::AddV2},
-                               {kPow, &ArithmeticCpuTypeFunc<T>::PowComplex},
-                               {kXlogy, &ArithmeticCpuTypeFunc<T>::Xlogy}};
+                               {kPow, &ArithmeticCpuTypeFunc<T>::PowComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', it only supports operators in "
@@ -1221,23 +1218,6 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
-  {kXlogy,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     SpecializeArithFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     SpecializeArithFunc<float16>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex64)
-       .AddInputAttr(kNumberTypeComplex64)
-       .AddOutputAttr(kNumberTypeComplex64),
-     SpecializeArithFunc<complex64>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeComplex128)
-       .AddInputAttr(kNumberTypeComplex128)
-       .AddOutputAttr(kNumberTypeComplex128),
-     SpecializeArithFunc<complex128>}}},
   {kAtan2,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      SpecializeArithFunc<float16>},
@@ -1344,8 +1324,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignSub,
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kSquaredDifference); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xlogy,
-                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kXlogy); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan2,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kAtan2); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AddV2,
