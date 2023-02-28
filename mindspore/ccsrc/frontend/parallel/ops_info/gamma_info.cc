@@ -127,7 +127,7 @@ void GammaInfo::UpdateShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(manager);
   ValuePtr new_shape = MakeValue(input_shape);
   AnfNodePtr val = NewValueNode(new_shape);
-  (void)manager->Replace(cnode->input(1), val);
+  cnode->set_input(kIndex1, val);
 }
 
 void GammaInfo::ReplaceNodeInputOrAttrs() {
