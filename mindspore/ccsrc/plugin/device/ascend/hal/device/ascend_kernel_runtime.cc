@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "kernel/oplib/op_info_utils.h"
+#include "common/plugin/opp_so_manager.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
@@ -70,7 +71,7 @@
 
 #include "profiler/device/profiling.h"
 #include "kernel/common_utils.h"
-#include "plugin/device/ascend/optimizer/platform.h"
+#include "plugin/device/ascend/hal/common/platform_info_util.h"
 #ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
@@ -78,7 +79,6 @@ using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
 using mindspore::kernel::tbe::TbeUtils;
-using mindspore::opt::PlatformInfoInitialization;
 using std::vector;
 
 constexpr uint32_t kTupleTaskId = 0;
@@ -394,10 +394,11 @@ bool AscendKernelRuntime::Init() {
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
-    if (!PlatformInfoInitialization(soc_version)) {
+    if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }
-
+    // for tiling rt2 operator to register
+    ::ge::OppSoManager::GetInstance().LoadOppPackage();
     uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     auto acl_ret = aclrtSetOpWaitTimeout(op_timeout);
     if (acl_ret != ACL_SUCCESS) {
