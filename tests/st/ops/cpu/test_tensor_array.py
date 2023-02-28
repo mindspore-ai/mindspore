@@ -32,6 +32,7 @@ class TensorArrayNet(nn.Cell):
         self.ta.close()
         return v, s
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -49,7 +50,7 @@ def test_tensorarray():
     expect_v = 5
     expect_s = [5]
     assert np.allclose(s.asnumpy(), expect_s)
-    assert np.allclose(v.asnumpy(), expect_v)
+    assert v == expect_v
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     ta = nn.TensorArray(mindspore.int64, ())
@@ -93,6 +94,7 @@ def test_tensorarray():
     assert np.allclose(s.asnumpy(), expect_s)
     ta.close()
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
@@ -110,4 +112,4 @@ def test_static_tensorarray():
     expect_v = 5
     expect_s = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     assert np.allclose(s.asnumpy(), expect_s)
-    assert np.allclose(v.asnumpy(), expect_v)
+    assert v == expect_v
