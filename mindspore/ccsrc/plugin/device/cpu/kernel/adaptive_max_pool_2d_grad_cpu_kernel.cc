@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <atomic>
 #include "plugin/device/cpu/kernel/adaptive_max_pool_2d_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -92,14 +93,28 @@ bool AdaptiveMaxPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
   auto input_argmax = GetDeviceAddress<S>(inputs, kIndex2);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
 
+  std::atomic_int memset_ret{EOK};
+  auto output_int8 = GetDeviceAddress<int8_t>(outputs, kIndex0);
   auto init_task = [&](size_t start, size_t end) {
-    size_t mem_size = (end - start) * sizeof(T);
-    auto ret = memset_s(output + start, mem_size, 0, mem_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+    size_t mem_size = end - start;
+    while (mem_size > 0) {
+      size_t real_mem_size = mem_size;
+      if (real_mem_size > static_cast<size_t>(SECUREC_MEM_MAX_LEN)) {
+        real_mem_size = static_cast<size_t>(SECUREC_MEM_MAX_LEN);
+      }
+      auto ret = memset_s(output_int8 + start, real_mem_size, 0, real_mem_size);
+      if (ret != EOK) {
+        memset_ret = ret;
+        return;
+      }
+      mem_size -= real_mem_size;
+      start += real_mem_size;
     }
   };
-  ParallelLaunchAutoSearch(init_task, LongToSize(output_size_), this, &search_info_);
+  ParallelLaunchAutoSearch(init_task, outputs[kIndex0]->size, this, &search_info_);
+  if (memset_ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << memset_ret;
+  }
 
   auto adaptive_max_pool_2d_grad = [&](int64_t start, int64_t end) {
     for (int64_t n = start; n < end; ++n) {
