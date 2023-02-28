@@ -13,7 +13,7 @@ mindspore.ops.glu
 
     参数：
         - **x** (Tensor) - 被分Tensor，数据类型为number.Number, shape为 :math:`(\ast_1, N, \ast_2)` ，其中 `*` 为任意额外维度。
-        - **axis** (int，可选) - 指定分割轴。数据类型为整型，默认值：-1。
+        - **axis** (int，可选) - 指定分割轴。数据类型为整型，默认值：-1，输入x的最后一维。
 
     返回：
         Tensor，数据类型与输入 `x` 相同，shape为 :math:`(\ast_1, M, \ast_2)`，其中 :math:`M=N/2`

@@ -3,9 +3,8 @@ mindspore.nn.MaxUnpool1d
 
 .. py:class:: mindspore.nn.MaxUnpool1d(kernel_size, stride=None, padding=0)
 
-    `MaxPool1d` 的部分逆过程。 `MaxPool1d` 不是完全可逆的，因为非最大值丢失。
-    `MaxUnpool1d` 以 `MaxPool1d` 的输出为输入，包括最大值的索引。在计算 `MaxPool1d` 部分逆的过程中，非最大值设置为零。
-    支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的个格式为 :math:`(N, C, H_{out})`
+    计算 :class:`mindspore.nn.MaxPool1d` 的逆过程。
+    `MaxUnPool1d` 保留最大值并将所有非最大值置0。支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的格式为 :math:`(N, C, H_{out})`
     或 :math:`(C, H_{out})` ，计算公式如下：
 
     .. math::
