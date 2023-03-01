@@ -17,6 +17,6 @@
 #define MINDSPORE_LITE_EXTENDRT_GRAPH_COMIPLER_TYPE_H_
 
 namespace mindspore {
-enum GraphCompilerType { kDefaultCompiler = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneCompiler };
+enum GraphCompilerType { kDefaultCompiler = 0, kNoneCompiler };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMIPLER_TYPE_H_

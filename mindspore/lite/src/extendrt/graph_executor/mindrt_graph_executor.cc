@@ -15,7 +15,8 @@
  */
 #include "extendrt/graph_executor/mindrt_graph_executor.h"
 
-#include "src/common/log.h"
+#include <algorithm>
+
 #include "extendrt/graph_executor/factory.h"
 #include "litert/mindrt_executor.h"
 #include "extendrt/execution_plan.h"
@@ -34,8 +35,8 @@ MindRTGraphExecutor::MindRTGraphExecutor(const std::string &name,
   if (infer_execution_plan == nullptr) {
     MS_LOG(ERROR) << "MindRTGraphExecutor::MindRTGraphExecutor Not Supported execution plan is passed";
   } else {
-    mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetInputMap(),
-                                                                         infer_execution_plan->GetOutputMap());
+    mindrt_executor_ = std::make_shared<mindspore::lite::MindrtExecutor>(infer_execution_plan->GetInputsMap(),
+                                                                         infer_execution_plan->GetOutputsMap());
   }
 }
 
@@ -48,8 +49,13 @@ Status MindRTGraphExecutor::Prepare() {
     MS_LOG(ERROR) << "FlowExecutor::Prepare execution plan is nullptr";
     return kLiteError;
   }
-  return mindrt_executor_->Prepare(execution_plan_->ToKernelList(), execution_plan_->GetInputs(),
-                                   execution_plan_->GetOutputs(), execution_plan_->GetContext().get());
+  auto ret = mindrt_executor_->Prepare(execution_plan_->ToKernelList(), execution_plan_->GetInputs(),
+                                       execution_plan_->GetOutputs(), execution_plan_->GetContext().get());
+  if (ret != 0) {
+    MS_LOG(ERROR) << "FlowExecutor::Prepare prepare execution plan failed with code " << ret;
+    return kLiteError;
+  }
+  return kSuccess;
 }
 
 Status MindRTGraphExecutor::Execute() {
@@ -61,18 +67,30 @@ Status MindRTGraphExecutor::Execute() {
     MS_LOG(ERROR) << "FlowExecutor::Execute execution plan is nullptr";
     return kLiteError;
   }
-  return mindrt_executor_->Run(execution_plan_->GetInputs(), execution_plan_->GetOutputs(),
-                               execution_plan_->ToKernelList(), execution_plan_->GetKernelBeforeCallBack(),
-                               execution_plan_->GetKernelAfterCallBack());
+  auto ret =
+    mindrt_executor_->Run(execution_plan_->GetInputs(), execution_plan_->GetOutputs(), execution_plan_->ToKernelList(),
+                          execution_plan_->GetKernelBeforeCallBack(), execution_plan_->GetKernelAfterCallBack());
+  if (ret != 0) {
+    MS_LOG(ERROR) << "FlowExecutor::Execute run execution plan failed with code " << ret;
+    return kLiteError;
+  }
+  return kSuccess;
 }
 
 int MindRTGraphExecutor::Resize(const std::vector<infer::abstract::Tensor *> &inputs,
-                                const std::vector<std::vector<int>> &dims) {
+                                const std::vector<std::vector<int64_t>> &dims) {
   if (mindrt_executor_ == nullptr) {
     MS_LOG(ERROR) << "FlowExecutor::Resize executor is nullptr";
     return kLiteError;
   }
-  return mindrt_executor_->Resize(inputs, dims);
+  std::vector<std::vector<int>> dims32;
+  std::transform(dims.begin(), dims.end(), std::back_inserter(dims32), [](std::vector<int64_t> shape) {
+    std::vector<int> shape32;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(shape32),
+                   [](int64_t dim) { return static_cast<int>(dim); });
+    return shape32;
+  });
+  return mindrt_executor_->Resize(inputs, dims32);
 }
 
 static std::shared_ptr<infer::abstract::Executor> MindRTGraphExecutorCreator(

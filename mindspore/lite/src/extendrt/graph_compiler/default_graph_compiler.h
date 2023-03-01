@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <tuple>
 
 #include "infer/graph_compiler.h"
 #include "infer/context.h"
@@ -30,15 +31,15 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
   }
   virtual ~DefaultGraphCompiler() = default;
 
-  std::shared_ptr<abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
+  std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
  protected:
   virtual std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &graph);
 
-  virtual std::shared_ptr<abstract::ExecutionPlan> Schedule(const std::vector<GraphSegmentPtr> &graph_segments,
+  virtual std::shared_ptr<infer::abstract::ExecutionPlan> Schedule(const std::vector<GraphSegmentPtr> &graph_segments,
                                                             FuncGraphPtr func_graph);
 
-  virtual std::shared_ptr<abstract::ExecutionFlow> Schedule(const GraphSegmentPtr &graph_segment,
+  virtual std::shared_ptr<infer::abstract::ExecutionFlow> Schedule(const GraphSegmentPtr &graph_segment,
                                                             const std::vector<AnfNodePtr> &inputs,
                                                             const std::vector<AnfNodePtr> &outputs);
 
@@ -49,11 +50,17 @@ class DefaultGraphCompiler : public mindspore::infer::abstract::GraphCompiler {
   Status GetDTAndShapeFromAbTensor(const abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
 
+  std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
+  AnfNodePtrList GetOutput(const AnfNodePtrList &nodes, const NodeUsersMap &users,
+                           const mindspore::HashSet<AnfNodePtr> &seen);
+  AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNodePtrList *inputs_ptr,
+                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *eqv_ptr);
+
  private:
   mindspore::HashMap<AnfNodePtr, infer::abstract::Tensor *> anf_tensor_map_;
   const std::shared_ptr<Context> &context_;
   std::shared_ptr<mindspore::infer::abstract::Context> inner_context_;
-}
+};
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_DEFAULT_GRAPH_COMPILER_H_

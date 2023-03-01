@@ -48,10 +48,10 @@ class Executor : public std::enable_shared_from_this<Executor> {
   /// \brief Resize Executor Kernels.
   ///
   /// \param[in] inputs, inputs need resize
-  /// \param[in] dim, target shapes for resize inputs
+  /// \param[in] dims, target shapes for resize inputs
   ///
   /// \return Status.
-  virtual int Resize(const std::vector<Tensor *> &inputs, const std::vector<std::vector<int>> &dims) = 0;
+  virtual int Resize(const std::vector<Tensor *> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
 };
 }  // namespace mindspore::infer::abstract
 

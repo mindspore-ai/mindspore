@@ -15,9 +15,8 @@
  */
 #include "extendrt/graph_runtime/default_graph_runtime.h"
 
-#include "extendrt/graph_executor/plan_executor.h"
-#include "src/common/log.h"
 #include "extendrt/graph_runtime/factory.h"
+#include "extendrt/graph_executor/factory.h"
 
 namespace mindspore {
 using ExecutionPlan = mindspore::infer::abstract::ExecutionPlan;
@@ -38,7 +37,7 @@ Status DefaultGraphRuntime::Prepare(std::shared_ptr<ExecutionPlan> execution_pla
   }
 
   MS_LOG(DEBUG) << "DefaultGraphRuntime::Prepare Prepare Execution Plan Begin of Executor " << executor->Name();
-  auto status = executor->Prepare(nullptr);
+  auto status = executor->Prepare();
   if (status != kSuccess) {
     MS_LOG(ERROR) << "DefaultGraphRuntime::Prepare Prepare Execution Plan Failed in Executor " << executor->Name();
     return kLiteError;
@@ -107,7 +106,7 @@ Status DefaultGraphRuntime::Execute(const std::vector<infer::abstract::Tensor *>
   return kSuccess;
 }
 
-Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> *inputs,
+Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
   MS_LOG(INFO) << "DefaultGraphRuntime::Resize Begin";
 
@@ -134,14 +133,31 @@ Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> 
   return kSuccess;
 }
 
+std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetInputs() {
+  if (execution_plan_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    return std::vector<infer::abstract::Tensor *>{};
+  }
+  return execution_plan_->GetInputs();
+}
+
+std::vector<infer::abstract::Tensor *> DefaultGraphRuntime::GetOutputs() {
+  if (execution_plan_ == nullptr) {
+    MS_LOG(ERROR) << "DefaultGraphRuntime::Execute Execution Plan is nullptr.";
+    return std::vector<infer::abstract::Tensor *>{};
+  }
+  return execution_plan_->GetOutputs();
+}
+
 std::shared_ptr<infer::abstract::Executor> DefaultGraphRuntime::SelectExecutor() {
   if (default_executor_ == nullptr) {
-    default_executor_ = std::make_shared<infer::PlanExecutor>("plan-executor");
+    default_executor_ =
+      GraphExecutorRegistry::GetInstance().GetExecutor(kMindRTExecutor, "mindrt-executor", execution_plan_);
   }
   return default_executor_;
 }
 
-static std::shared_ptr<InferSession> DefaultGraphRuntimeCreator() {
+static std::shared_ptr<infer::abstract::GraphRuntime> DefaultGraphRuntimeCreator() {
   auto graph_runtime = std::make_shared<DefaultGraphRuntime>();
   return graph_runtime;
 }

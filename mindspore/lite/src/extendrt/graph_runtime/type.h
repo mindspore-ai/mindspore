@@ -17,6 +17,6 @@
 #define MINDSPORE_LITE_EXTENDRT_GRAPH_RUNTIME_TYPE_H_
 
 namespace mindspore {
-enum GraphRuntimeType { kDefaultRuntime = 0, kSingleOpSession, kLiteInferSession, kDelegateSession, kNoneRuntime };
+enum GraphRuntimeType { kDefaultRuntime = 0, kNoneRuntime };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_RUNTIME_TYPE_H_

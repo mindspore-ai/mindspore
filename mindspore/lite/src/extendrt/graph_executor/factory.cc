@@ -27,11 +27,13 @@ void GraphExecutorRegistry::RegExecutor(const mindspore::GraphExecutorType &type
   graph_executor_map_[type] = creator;
 }
 
-std::shared_ptr<infer::GraphExecutor> GraphExecutorRegistry::GetExecutor(const mindspore::GraphExecutorType &type) {
+std::shared_ptr<infer::abstract::Executor> GraphExecutorRegistry::GetExecutor(
+  const mindspore::GraphExecutorType &type, const std::string &name,
+  std::shared_ptr<infer::abstract::ExecutionPlan> execution_plan) {
   auto it = graph_executor_map_.find(type);
   if (it == graph_executor_map_.end()) {
     return nullptr;
   }
-  return it->second();
+  return it->second(name, execution_plan);
 }
 }  // namespace mindspore
