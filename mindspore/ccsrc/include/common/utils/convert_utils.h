@@ -81,7 +81,7 @@ COMMON_EXPORT void TensorValueToTensor(const ValuePtr &value, std::vector<tensor
 
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
 
-COMMON_EXPORT size_t CountValueNum(const ValueTuplePtr &value_tuple);
+COMMON_EXPORT size_t CountValueNum(const ValueSequencePtr &value_sequence);
 
 COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
 

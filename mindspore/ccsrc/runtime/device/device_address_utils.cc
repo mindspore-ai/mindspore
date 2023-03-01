@@ -186,7 +186,7 @@ void DeviceAddressUtils::CreateDeviceAddressForTensorValue(const DeviceContext *
     std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
 
     device::DeviceAddressPtr address = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
+      nullptr, tensor_size, output_format, output_type_id, tensor->shape());
     MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
     MS_EXCEPTION_IF_NULL(address);
     address->set_from_persistent_mem(true);
