@@ -34,7 +34,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
                       const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training,
-                      const std::vector<std::vector<size_t>> &param_users_ops_index) {
+                      const std::vector<std::vector<size_t>> &shared_tensors_ops, const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(eli_list);
   MS_EXCEPTION_IF_NULL(index_list);
@@ -47,7 +47,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   GenerateEliminatedOperatorStrategyForward(graph, ops, input_tensor_names, index_list, no_stra_op_list);
   GenerateEliminatedOperatorStrategyBackward(ops, input_tensor_names, no_stra_op_list);
   GenerateRemainingOperatorStrategy(graph, ops, input_tensor_names, index_list, no_stra_op_list);
-  ModifyParamSharingOpsStrategy(ops, param_users_ops_index);
+  ModifyParamSharingOpsStrategy(ops, shared_tensors_ops);
 
   for (auto &op : ops) {
     // Set user-defined strategy

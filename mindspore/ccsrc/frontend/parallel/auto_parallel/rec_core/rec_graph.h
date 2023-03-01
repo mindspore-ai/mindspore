@@ -23,11 +23,12 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_tensor.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace parallel {
 enum OperatorType {
-  kRecUnkownType,
+  kRecUnknownType,
   kRecMatMul,
   kRecConvolution,
   kRecPooling,
@@ -64,6 +65,7 @@ struct OperatorRec {
   OperatorType op_type;
   TensorParam arguments[MAX_INPUT_NUM];
   StrategyRec str;
+  std::vector<StrategyRec> strs;
 };
 
 // Define simplified dataflow Graph for partitioning
@@ -75,7 +77,9 @@ class Graph {
     std::vector<size_t> node_in;
     // Nodes that point from this node
     std::vector<size_t> node_out;
+    // Nodes that point to this node via auxliary edges
     std::vector<size_t> node_in_aux;
+
     // Node Type Info: Application or Constant. Defined in enum <InfoType> .
     InfoType info;
     // Operator info. Defined in struct <OperatorRec> .
@@ -84,7 +88,9 @@ class Graph {
     TensorParam tensor_parm;
   };
 
-  std::vector<Graph::NodeType> nodes;  // Nodes of the graph. Pubic.
+  int64_t batch_size;
+
+  std::vector<Graph::NodeType> nodes;  // Nodes of the graph. Public.
 };                                     // Define simplified dataflow Graph for partitioning
 }  // namespace parallel
 }  // namespace mindspore
