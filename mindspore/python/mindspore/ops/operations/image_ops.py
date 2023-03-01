@@ -672,7 +672,7 @@ class ResizeLinear1D(Primitive):
         TypeError: If `coordinate_transformation_mode` is not in the support list.
 
     Supported Platforms:
-        ``GPU`` ``CPU`` `Ascend`
+        ``GPU`` ``CPU`` ``Ascend``
 
     Examples:
         >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)

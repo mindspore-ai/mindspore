@@ -1389,7 +1389,7 @@ class MaxUnpool1d(Cell):
     r"""
     Computes the inverse of :class:`mindspore.nn.MaxPool1d`.
 
-    MaxUnpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    MaxUnpool1d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
@@ -1465,7 +1465,7 @@ class MaxUnpool1d(Cell):
 
 class MaxUnpool2d(Cell):
     r"""
-    Computes the inverse of :class`mindspore.nn.MaxPool2d`.
+    Computes the inverse of :class:`mindspore.nn.MaxPool2d`.
 
     MaxUnpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
@@ -1552,7 +1552,7 @@ class MaxUnpool2d(Cell):
 
 class MaxUnpool3d(Cell):
     r"""
-    Computes the inverse of :class`mindspore.nn.MaxPool3d`.
+    Computes the inverse of :class:`mindspore.nn.MaxPool3d`.
 
     MaxUnpool3d keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`,

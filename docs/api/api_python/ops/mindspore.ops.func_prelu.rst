@@ -13,7 +13,6 @@ mindspore.ops.prelu
     其中 :math:`x_i` 是输入的一个通道的一个元素，`w` 是通道权重。
 
     .. note::
-
         Ascend不支持标量和一维向量格式的输入。
 
     参数：

@@ -8,7 +8,6 @@ mindspore.ops.tile
     通过复制 `multiples` 次 `input_x` 来创建新的Tensor。输出Tensor的第i维度有 `input_x.shape[i] * multiples[i]` 个元素，并且 `input_x` 的值沿第i维度被复制 `multiples[i]` 次。
 
     .. note::
-
         `multiples` 的长度必须大于或等于 `input_x` 的维度。
 
     参数：

@@ -3,4 +3,4 @@ mindspore.Tensor.numpy
 
 .. py:method:: mindspore.Tensor.numpy()
 
-    :func:`mindspore.Tensor.ndim` 的别名。
+    :func:`mindspore.Tensor.asnumpy` 的别名。

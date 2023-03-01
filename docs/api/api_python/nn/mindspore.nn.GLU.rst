@@ -10,7 +10,7 @@ mindspore.nn.GLU
 
 
     其中，:math:`a` 表示输入Tensor的前一半元素，:math:`b` 表示输入Tensor的另一半元素。
-    这里 :math:`\sigma` 为sigmoid函数，:math:`*` 为矩阵的基本乘。
+    这里 :math:`\sigma` 为sigmoid函数，:math:`\otimes` 为矩阵的基本乘。
 
     参数：
         - **axis** (int) - 指定分割轴。数据类型为整型，默认值：-1，输入x的最后一维。

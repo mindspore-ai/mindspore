@@ -51,7 +51,7 @@ class MultiheadAttention(Cell):
     key and value vector with target length, the attention will be performed as the following
 
     .. math::
-            MultiHeadAttention(query, key, vector) = Concat(head_1, \dots, head_h)W^O
+        MultiHeadAttention(query, key, vector) = Concat(head_1, \dots, head_h)W^O
 
     where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
 
@@ -107,7 +107,7 @@ class MultiheadAttention(Cell):
     Outputs:
         Tuple, a tuple contains(`attn_output`, `attn_output_weights`)
 
-        - **attn_output** - Attention outputs. If input is unbatched, the output shape is:math:`(L, E)`, otherwise
+        - **attn_output** - Attention outputs. If input is unbatched, the output shape is :math:`(L, E)`, otherwise
           the output shape is :math:`(L, N, E)` when `batch_first=False` or :math:`(N, L, E)` when
           `batch_first=True`, where :math:`L` is the target sequence length, :math:`N` is the batch size,
           and :math:`E` is the embedding dimension `embed_dim`.
@@ -513,7 +513,7 @@ class TransformerDecoder(Cell):
     Args:
         decoder_layer (Cell): An instance of the TransformerDecoderLayer() class.
         num_layers (int): The number of decoder-layers in the decoder.
-        norm (Cell): The layer normalization module.
+        norm (Cell, optional): The layer normalization module.
 
     Inputs:
         - **tgt** (Tensor): The sequence to the decoder.

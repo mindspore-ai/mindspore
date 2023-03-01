@@ -5092,7 +5092,7 @@ def glu(x, axis=-1):
 
     where :math:`a` is the first half of the input matrices and :math:`b` is the second half.
 
-    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
+    Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
     See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
