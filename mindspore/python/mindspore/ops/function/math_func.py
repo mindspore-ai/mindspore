@@ -212,44 +212,44 @@ def addn(x):
     return addn_(x)
 
 
-def abs(x):
+def abs(input):
     r"""
     Returns absolute value of a tensor element-wise.
 
     .. math::
 
-        out_i = |x_i|
+        out_i = |input_i|
 
     Args:
-        x (Tensor): The input tensor. The shape of tensor is
+        input (Tensor): The input tensor. The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
-        >>> output = ops.abs(x)
+        >>> input = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
+        >>> output = ops.abs(input)
         >>> print(output)
         [1. 1. 0.]
     """
-    return absolute_(x)
+    return absolute_(input)
 
 
-def absolute(x):
+def absolute(input):
     """
     Alias for :func:`mindspore.ops.abs` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return abs(x)
+    return abs(input)
 
 
 def add(x, y):
@@ -2263,45 +2263,45 @@ def asin(x):
     return asin_(x)
 
 
-def acos(x):
+def acos(input):
     r"""
     Computes arccosine of input tensors element-wise.
 
     .. math::
 
-        out_i = cos^{-1}(x_i)
+        out_i = cos^{-1}(input_i)
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape and dtype as `x`.
+        Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-        >>> output = ops.acos(x)
+        >>> input = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+        >>> output = ops.acos(input)
         >>> print(output)
         [0.737726  1.5307857 1.2661036 0.9764105]
     """
-    return acos_(x)
+    return acos_(input)
 
 
-def arccos(x):
+def arccos(input):
     """
     Alias for :func:`mindspore.ops.acos` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return acos(x)
+    return acos(input)
 
 
 def atan(x):
