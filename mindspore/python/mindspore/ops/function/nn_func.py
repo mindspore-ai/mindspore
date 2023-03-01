@@ -3475,7 +3475,7 @@ def leaky_relu(x, alpha=0.2):
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> print(ops.leaky_relu(x, negative_slope=0.2))
+        >>> print(ops.leaky_relu(x, alpha=0.2))
         [[-0.2  4.  -1.6]
          [ 2.  -1.   9. ]]
     """

@@ -129,7 +129,7 @@ class Dropout(Cell):
     Args:
         keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
             E.g. rate=0.9, dropping out 10% of input neurons. Default: 0.5.
-        p (Union(float, int, None)): The dropout rate, greater than or equal to 0 and less than 1.
+        p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
             E.g. rate=0.9, dropping out 90% of input neurons. Default: None.
 
     Inputs:
