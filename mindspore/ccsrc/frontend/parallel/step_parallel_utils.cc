@@ -1350,11 +1350,12 @@ Status ParallelInit() {
     stages.push_back(device_num / split_stage_num);
   }
 
+  bool use_rec = (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming);
   bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
                 (ParallelContext::GetInstance()->sharding_propagation());
-  if ((split_stage_num > 1) && (parallel_mode == kAutoParallel) && !use_sp) {
+  if ((split_stage_num > 1) && (parallel_mode == kAutoParallel) && !(use_sp || use_rec)) {
     MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << kSemiAutoParallel << " or "
-                  << kAutoParallel << " with " << kShardingPropagation;
+                  << kAutoParallel << " with " << kShardingPropagation << " or " << kRecursiveProgramming;
     return FAILED;
   }
 
