@@ -750,4 +750,20 @@ tensor::TensorPtr ConvertStubTensor(const py::handle &obj) {
   auto res = stub->WaitValue()->cast<tensor::TensorPtr>();
   return res;
 }
+
+ValuePtr PyStubNodeCast(const py::handle &obj) {
+  if (!py::isinstance<tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  auto is_stub_tensor = py::hasattr(obj, stub::PY_ATTR_STUB);
+  if (!is_stub_tensor) {
+    return py::cast<tensor::TensorPtr>(obj);
+  }
+  auto stub_node = py::getattr(obj, stub::PY_ATTR_STUB);
+  auto is_stub_tensor_sync = !py::isinstance<stub::StubNode>(stub_node);
+  if (is_stub_tensor_sync) {
+    return py::cast<tensor::TensorPtr>(obj);
+  }
+  return py::getattr(obj, stub::PY_ATTR_STUB).cast<stub::StubNodePtr>();
+}
 }  // namespace mindspore

@@ -211,6 +211,9 @@ enum SyntaxSupportDef : int {
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr,
                  bool forbid_reuse = false);
 
+bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr,
+                     bool forbid_reuse = false);
+
 // Convert python obj to graph.
 FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
                                 const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,

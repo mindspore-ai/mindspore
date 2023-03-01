@@ -19,6 +19,7 @@
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pybind_api/pybind_patch.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/pybind_api/api_register.h"
 #include "frontend/optimizer/ad/grad.h"
@@ -30,6 +31,9 @@
 #include "abstract/utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/python_utils.h"
+#include "frontend/operator/ops_front_infer_function.h"
+#include "backend/operator/ops_backend_infer_function.h"
+#include "include/common/utils/python_fallback_running.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -83,6 +87,25 @@ TypePtr PredictOutTypeByName(const std::string &op_name) {
 }
 }  // namespace
 
+bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const {
+#ifdef ENABLE_TEST
+  return true;
+#else
+  return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) ||
+         op_run_info->op_prim->name() == "Custom" || ScopedFallbackRunning::on() ||
+         op_run_info->op_prim->HasAttr("side_effect_mem") ||
+         (!abstract::GetFrontendPrimitiveInferImpl(op_run_info->op_prim).has_value() &&
+          !abstract::GetBackendPrimitiveInferImpl(op_run_info->op_prim).has_value()) ||
+         MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+#endif
+}
+
+void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
+  op_run_info->async_status.disable_mix_precision =
+    (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
+  op_run_info->async_status.is_ms_function_compiling = forward_executor()->is_ms_function_compiling();
+}
+
 py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   if (args.size() != static_cast<size_t>(AsyncRunOpArgsEnum::PY_ARGS_NUM)) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp";
@@ -91,33 +114,32 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   auto input_args = args[static_cast<size_t>(AsyncRunOpArgsEnum::PY_INPUTS)];
   const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
   auto run_args = py::make_tuple(prim, adapter->name(), input_args);
-  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args);
-  PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
+  FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args, true);
+  StoreAsyncStatus(op_run_info);
+
   // 1. get top_type from Primitive::PredictOutputType
   auto top_type = PredictOutTypeByName(adapter->name());
   // 2. if predict failed(kAnyType), return after infer(half-asynchronous) or run(synchronous mode)
-  if (top_type == kAnyType) {
+  if (top_type == kAnyType || DisablePyTraceAsync(op_run_info)) {
+    // Wait for async task finish
+    forward_executor()->WaitForwardTask();
+    PyNativeAlgo::Common::StubNodeToValue(op_run_info);
+    // RunOp sync
+    PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
     return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
   }
   // 3. create top stub node
   auto node = stub::MakeTopNode(top_type);
   // 4. set abstract and value in asynchronous thread after infer and run
-  stub::StubNodePtr stub = node.second;
-  const auto &abs = op_run_info->base_op_run_info.abstract;
-  bool success = stub->SetAbstract(abs);
-  if (!success) {
-    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is " << top_type
-                            << ", infer type is " << abs->BuildType() << ", the name of operator is ["
-                            << adapter->name()
-                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
-  }
-  stub->SetValue(op_run_info->out_value);
+  op_run_info->stub_output = node.second;
+  PyNativeExecutorTry(forward_executor()->RunOpSAsync, op_run_info);
   // 5. return stub node
   return node.first;
 }
 
 py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args);
+  StoreAsyncStatus(op_run_info);
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
   if (PyGILState_Check() == 0) {
     py::gil_scoped_acquire acquire;
@@ -239,6 +261,12 @@ py::object PyNativeExecutor::GradMsFunction(const py::object &out, const py::arg
 void PyNativeExecutor::SetLazyBuild(bool enable) const { forward_executor()->set_lazy_build(enable); }
 
 bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
+
+void PyNativeExecutor::WorkerJoin() {
+  GilReleaseWithCheck release_gil;
+  forward_executor_->WorkerJoin();
+  grad_executor_->WorkerJoin();
+}
 
 void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const {
   forward_executor()->set_is_ms_function_compiling(is_compiling);

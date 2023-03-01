@@ -54,6 +54,7 @@ py::object CallPythonScript(const py::object &script, const py::tuple &args_kwar
 py::set GetPythonScriptIds(const py::object &script);
 void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name);
 ValuePtr PyDataToValue(const py::object &obj);
+ValuePtr PyDataToStubNode(const py::object &obj);
 void ClearObjectCache();
 }  // namespace data_converter
 

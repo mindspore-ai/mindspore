@@ -909,8 +909,11 @@ void MindRTBackend::BatchBuildCallback() {
     MS_EXCEPTION_IF_NULL(ms_context);
     auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
 
-    CompileSingleOpGraphs(op_executor.GetOpBuildTasks());
-    op_executor.ClearOpBuildTasks();
+    auto build_tasks_in_queue = op_executor.PopOpBuildTasks();
+    CompileSingleOpGraphs(build_tasks_in_queue);
+    for (auto &task : build_tasks_in_queue) {
+      task->SetBuildReady(true);
+    }
 
     ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
     MS_LOG(DEBUG) << "End";
@@ -1145,7 +1148,7 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
     }
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);
     MS_EXCEPTION_IF_NULL(output_tensor);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);
   }
 }

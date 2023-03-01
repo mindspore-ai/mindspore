@@ -38,5 +38,19 @@ class GilScopedLongRunningHook : public ScopedLongRunningHook {
  private:
   std::unique_ptr<py::gil_scoped_release> release_;
 };
+
+class GilReleaseWithCheck {
+ public:
+  GilReleaseWithCheck() {
+    if (PyGILState_Check() != 0) {
+      release_ = std::make_unique<py::gil_scoped_release>();
+    }
+  }
+
+  ~GilReleaseWithCheck() { release_ = nullptr; }
+
+ private:
+  std::unique_ptr<py::gil_scoped_release> release_;
+};
 }  // namespace mindspore
 #endif  // PYBIND_API_GIL_SCOPED_LONG_RUNNING_H_

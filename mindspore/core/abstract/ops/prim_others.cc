@@ -410,14 +410,21 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   // GPU has 2 inputs while tbe has 1 only. Skip CheckArgsSize.
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
-  auto attr = primitive->GetAttr("dst_type");
-  if (attr == nullptr) {
+
+  ValuePtr dst_type;
+  constexpr auto kCastInputSize = 2;
+  if (args_spec_list.size() < kCastInputSize) {
+    dst_type = primitive->GetAttr("dst_type");
+  } else {
     auto type_abs = CheckArg<AbstractType>(op_name, args_spec_list, 1);
-    attr = type_abs->BuildValue();
-    MS_EXCEPTION_IF_NULL(attr);
-    primitive->set_attr("dst_type", attr);
+    dst_type = type_abs->BuildValue();
   }
-  auto input_type = attr->cast<TypePtr>();
+
+  MS_EXCEPTION_IF_NULL(dst_type);
+  if (!dst_type->isa<Type>()) {
+    MS_LOG(EXCEPTION) << "Invalid Cast dst_type " << dst_type->ToString();
+  }
+  auto input_type = dst_type->cast<TypePtr>();
   auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape());
   return ret;
 }

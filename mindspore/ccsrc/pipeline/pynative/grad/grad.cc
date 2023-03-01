@@ -29,6 +29,7 @@
 #include "frontend/optimizer/expander.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace pynative {
@@ -678,6 +679,11 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
   }
   const auto input_args_info = input_args_info_stack_.top();
   MS_EXCEPTION_IF_NULL(input_args_info);
+
+  if (input_args_info->cell_id == top_cell()->cell_id()) {
+    forward()->WaitForwardTask();
+  }
+
   UpdateInputArgsInfo(input_args_info, obj, out, args);
   PopInputArgsInfoStack();
 
@@ -760,6 +766,8 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   if (!input_args_info->has_custom_bprop || input_args_info->custom_bprop_cell_count != 0) {
     return;
   }
+  // There are tasks to DoOpGrad in another thread.
+  forward()->WaitForwardTask();
   MS_LOG(DEBUG) << "Do grad for custom bprop";
   MS_EXCEPTION_IF_NULL(input_args_info->custom_bprop_prim);
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
@@ -905,6 +913,7 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->WaitForwardTask();
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();

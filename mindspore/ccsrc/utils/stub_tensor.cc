@@ -18,6 +18,7 @@
 #include "utils/ms_exception.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace stub {
@@ -113,6 +114,7 @@ void StubNode::SetValue(const ValuePtr &val) {
 }
 
 AbstractBasePtr StubNode::WaitAbstract() {
+  GilReleaseWithCheck gil_release;
   if (abstract_.get() == nullptr) {
     auto top = top_node_;
     if (top) {
@@ -122,6 +124,9 @@ AbstractBasePtr StubNode::WaitAbstract() {
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
       stub_cond_var_.wait(lock, [this, &e] { return abstract_.get() != nullptr || e.HasException(); });
+      if (e.HasException()) {
+        abstract_ = std::make_shared<abstract::AbstractNone>();
+      }
       wait_flag_.store(false);
       e.Finalize();
     }
@@ -130,6 +135,7 @@ AbstractBasePtr StubNode::WaitAbstract() {
 }
 
 ValuePtr StubNode::WaitValue() {
+  GilReleaseWithCheck gil_release;
   if (value_.get() == nullptr) {
     auto top = top_node_;
     if (top) {
@@ -139,6 +145,9 @@ ValuePtr StubNode::WaitValue() {
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
       stub_cond_var_.wait(lock, [this, &e] { return value_.get() != nullptr || e.HasException(); });
+      if (e.HasException()) {
+        value_ = std::make_shared<tensor::Tensor>();
+      }
       wait_flag_.store(false);
       e.Finalize();
     }

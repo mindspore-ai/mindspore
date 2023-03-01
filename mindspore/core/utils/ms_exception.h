@@ -20,6 +20,7 @@
 #include <set>
 #include <mutex>
 #include "utils/ms_utils.h"
+#include "utils/log_adapter.h"
 #include "mindapi/base/macros.h"
 namespace mindspore {
 class ExceptionListener {
@@ -45,6 +46,7 @@ class MS_CORE_API MsException {
     if (exception_ptr_ != nullptr) {
       auto exception_ptr = exception_ptr_;
       exception_ptr_ = nullptr;
+      MS_LOG(DEBUG) << "Find exception and rethrow";
       std::rethrow_exception(exception_ptr);
     }
   }

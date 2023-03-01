@@ -21,6 +21,7 @@ import mindspore.ops.functional as F
 from mindspore import context
 from mindspore import set_seed
 from mindspore.common import dtype as mstype
+from mindspore.common.api import _pynative_executor
 
 from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
     match_all_arrays, run_multi_test, to_tensor
@@ -911,12 +912,16 @@ def test_randn():
 
     with pytest.raises(ValueError):
         mnp.randn(dtype="int32")
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.randn(dtype=mstype.int32)
+        _pynative_executor.sync()
     with pytest.raises(TypeError):
         mnp.randn({1})
+        _pynative_executor.sync()
     with pytest.raises(TypeError):
         mnp.randn(1, 1.2, 2)
+        _pynative_executor.sync()
 
 
 
@@ -943,12 +948,16 @@ def test_rand():
 
     with pytest.raises(ValueError):
         mnp.rand(dtype="int32")
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.rand(dtype=mstype.int32)
+        _pynative_executor.sync()
     with pytest.raises(TypeError):
         mnp.rand({1})
+        _pynative_executor.sync()
     with pytest.raises(TypeError):
         mnp.rand(1, 1.2, 2)
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -974,16 +983,22 @@ def test_randint():
 
     with pytest.raises(TypeError):
         mnp.randint(1.2)
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.randint(0)
+        _pynative_executor.sync()
     with pytest.raises(TypeError):
         mnp.randint(1, 1.2)
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.randint(2, 1)
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.randint(1, dtype="float")
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         mnp.randint(1, dtype=mstype.float32)
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -1016,8 +1031,10 @@ def test_ops_arange():
 
     with pytest.raises(TypeError):
         F.arange([1])
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         F.arange(10, 1)
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -1029,6 +1046,7 @@ def test_ops_arange():
 def test_asarray_exception():
     with pytest.raises(TypeError):
         mnp.asarray({1, 2, 3})
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -1040,6 +1058,7 @@ def test_asarray_exception():
 def test_linspace_exception():
     with pytest.raises(TypeError):
         mnp.linspace(0, 1, num=2.5)
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -1051,6 +1070,7 @@ def test_linspace_exception():
 def test_empty_like_exception():
     with pytest.raises(ValueError):
         mnp.empty_like([[1, 2, 3], [4, 5]])
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1

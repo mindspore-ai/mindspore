@@ -93,13 +93,13 @@ class MatMulInfer : public abstract::OpInferBase {
 
     const size_t SHAPE_SIZE = 2;
     if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
+      MS_EXCEPTION(ValueError) << "MatMul inputs should have the same dimension size and equal to 2.";
     }
     auto x_col = x_shp[(transpose_a ? 0 : 1)];
     auto y_row = y_shp[(transpose_b ? 1 : 0)];
     if (x_col != y_row && x_col >= 0 && y_row >= 0) {
-      MS_LOG(EXCEPTION) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
-                        << ". In MatMul x_col and y_row should be equal.";
+      MS_EXCEPTION(ValueError) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
+                               << ". In MatMul x_col and y_row should be equal.";
     }
 
     ShapeVector ret_shape;

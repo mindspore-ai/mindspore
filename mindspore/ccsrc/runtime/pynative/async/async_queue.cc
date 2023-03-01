@@ -25,8 +25,6 @@
 
 namespace mindspore {
 namespace pynative {
-AsyncQueue::AsyncQueue() { worker_ = std::make_shared<std::thread>(&AsyncQueue::WorkerLoop, this); }
-
 AsyncQueue::~AsyncQueue() { WorkerJoin(); }
 
 void AsyncQueue::WorkerLoop() {
@@ -78,12 +76,22 @@ void AsyncQueue::WorkerLoop() {
 }
 
 void AsyncQueue::Push(const std::shared_ptr<AsyncTask> &task) {
+  if (worker_ == nullptr) {
+    worker_ = std::make_shared<std::thread>(&AsyncQueue::WorkerLoop, this);
+  }
   std::lock_guard<std::mutex> lock(task_mutex_);
   tasks_.push(task);
   task_cond_var_.notify_all();
 }
 
 void AsyncQueue::Wait() {
+  if (worker_ == nullptr) {
+    return;
+  }
+  // Avoid deadlock.
+  if (worker_->get_id() == std::this_thread::get_id()) {
+    return;
+  }
   std::unique_lock<std::mutex> lock(task_mutex_);
   task_cond_var_.wait(lock, [this]() { return tasks_.empty(); });
   MsException::Instance().CheckException();
@@ -118,11 +126,15 @@ void AsyncQueue::Reset() {
     }
     std::queue<std::shared_ptr<AsyncTask>> empty;
     std::swap(tasks_, empty);
+    MS_LOG(DEBUG) << "Reset AsyncQueue";
   }
 }
 
 void AsyncQueue::WorkerJoin() {
   try {
+    if (worker_ == nullptr) {
+      return;
+    }
     // Avoid worker thread join itself which will cause deadlock
     if (worker_->joinable() && worker_->get_id() != std::this_thread::get_id()) {
       {

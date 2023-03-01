@@ -119,6 +119,9 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 
 void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
+  // The compilation task may be in a child thread that has not yet set rt_context,
+  // but the AICPU.so loading needs to use rt_context
+  device_context->device_res_manager_->BindDeviceToCurrentThread(true);
   std::vector<CNodePtr> node_to_build;
   for (const auto &graph : graphs) {
     const auto &nodes = graph->execution_order();

@@ -17,6 +17,7 @@
 #include "pipeline/pynative/forward/do_infer.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "backend/operator/ops_backend_infer_function.h"
 
 namespace mindspore {
 namespace pynative {
@@ -86,8 +87,12 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   auto eval_impl = abstract::GetFrontendPrimitiveInferImpl(prim);
   bool need_call_python_code = false;
   // Charge if the primitive should call the python code, when infer abstract.
-  if (prim->prim_type() == kPrimTypePyCheck || !eval_impl.has_value()) {
-    need_call_python_code = true;
+  if (!eval_impl.has_value()) {
+    eval_impl = abstract::GetBackendPrimitiveInferImpl(prim);
+    if (!eval_impl.has_value()) {
+      MS_LOG(DEBUG) << "Can't found infer function from Frontend and Backend, try to infer with python";
+      need_call_python_code = true;
+    }
   }
   // Only cache the abstract when the primitive should call the python code.
   if (need_call_python_code && GetOutputAbstractByCache(op_run_info)) {
