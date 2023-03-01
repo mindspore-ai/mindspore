@@ -71,7 +71,7 @@ AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const Primit
                                            op_name);
   auto infer_type = BitwiseOrInferType(primitive, input_args);
   auto infer_shape = BitwiseOrInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated
