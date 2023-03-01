@@ -20,8 +20,7 @@ import math
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import context
-from mindspore.log import logging
+from mindspore import context, log as logger
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
@@ -163,7 +162,7 @@ class Dropout(Cell):
         """Initialize Dropout."""
         super(Dropout, self).__init__()
         if p is None:
-            logging.warning("This parameter `keep_prob` will be deprecated, please use `p` instead.")
+            logger.warning("For Dropout, this parameter `keep_prob` will be deprecated, please use `p` instead.")
             Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
             if keep_prob <= 0 or keep_prob > 1:
                 raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range (0, 1], "
@@ -189,7 +188,7 @@ class Dropout(Cell):
 
     def extend_repr(self):
         if self.p is None:
-            logging.warning("This parameter `keep_prob` will be deprecated, please use `p` instead.")
+            logger.warning("For Dropout, this parameter `keep_prob` will be deprecated, please use `p` instead.")
             return f'keep_prob={self.keep_prob}'
         return f'p={self.p}'
 
