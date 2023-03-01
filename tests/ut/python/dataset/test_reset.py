@@ -120,7 +120,7 @@ def run_reset(data, num_epochs: int, failure_point: int):
             expected2.append(d)
             if cur_step + 1 == failure_point:
                 # pylint: disable=W0212
-                ds.engine.datasets._reset_training_dataset(failure_point, failure_point // size)
+                ds.engine.datasets._reset_training_dataset(failure_point, size)
                 failed = True
                 break
             cur_step += 1
@@ -149,12 +149,12 @@ def run_reset_error(data, num_epochs: int, failure_point: int):
     if failure_point > 0:
         with pytest.raises(RuntimeError) as err:
             # pylint: disable=W0212
-            ds.engine.datasets._reset_training_dataset(failure_point, failure_point % dataset_size)
+            ds.engine.datasets._reset_training_dataset(failure_point, dataset_size)
         assert "Cannot reset the pipeline, reset step must be less than dataset_size * num_epochs." in str(err.value)
     else:
         with pytest.raises(RuntimeError) as err:
             # pylint: disable=W0212
-            ds.engine.datasets._reset_training_dataset(failure_point, failure_point % dataset_size)
+            ds.engine.datasets._reset_training_dataset(failure_point, dataset_size)
         assert "Cannot reset the pipeline, reset step must be >= 0." in str(err.value)
 
 
@@ -291,7 +291,7 @@ def test_repeatable_reset_imagenet(sampler, num_parallel_workers, to_pil, batch_
                     break
             if failure:
                 # pylint: disable=W0212
-                ds.engine.datasets._reset_training_dataset(failure_point, failure_point // dataset_size)
+                ds.engine.datasets._reset_training_dataset(failure_point, dataset_size)
                 failure = False
                 for d in expected2_itr:
                     expected2.append(d)
@@ -353,7 +353,8 @@ def test_repeatable_reset_distributed(shard_id, num_parallel_workers, to_pil):
                     failure = True
                     break
             if failure:
-                ds.engine.datasets._reset_training_dataset(failure_point, epoch)  # pylint: disable=W0212
+                # pylint: disable=W0212
+                ds.engine.datasets._reset_training_dataset(failure_point, data.get_dataset_size())
                 failure = False
                 for d in expected2_itr:
                     expected2.append(d)
@@ -401,7 +402,7 @@ def test_reset_shuffle():
                 failure = True
                 break
         if failure:
-            ds.engine.datasets._reset_training_dataset(failure_point, epoch)  # pylint: disable=W0212
+            ds.engine.datasets._reset_training_dataset(failure_point, data1.get_dataset_size())  # pylint: disable=W0212
             failure = False
             for step, d in enumerate(expected2_itr):
                 expected2.append(d)
@@ -454,7 +455,7 @@ def test_reset_sampler(sampler):
                 failure = True
                 break
         if failure:
-            ds.engine.datasets._reset_training_dataset(failure_point, epoch)  # pylint: disable=W0212
+            ds.engine.datasets._reset_training_dataset(failure_point, data1.get_dataset_size())  # pylint: disable=W0212
             failure = False
             for step, d in enumerate(expected2_itr):
                 expected2.append(d)
@@ -505,7 +506,7 @@ def test_reset_batch(fast_recovery):
                 failure = True
                 break
         if failure:
-            ds.engine.datasets._reset_training_dataset(failure_point, epoch)  # pylint: disable=W0212
+            ds.engine.datasets._reset_training_dataset(failure_point, data1.get_dataset_size())  # pylint: disable=W0212
             failure = False
             for step, d in enumerate(itr):
                 expected2.append(d)
@@ -553,7 +554,7 @@ def test_reset_nonmappable():
                     break
             if failure:
                 # pylint: disable=W0212
-                ds.engine.datasets._reset_training_dataset(failure_point, (failure_point//dataset_size))
+                ds.engine.datasets._reset_training_dataset(failure_point, dataset_size)
                 failure = False
                 # let's collect the remaining rows of this epoch
                 if failure_point % dataset_size != 0:

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace dataset {
 PYBIND_REGISTER(TreeConsumer, 0, ([](const py::module *m) {
                   (void)py::class_<TreeConsumer, std::shared_ptr<TreeConsumer>>(*m, "TreeConsumer")
-                    .def("Reset", [](TreeConsumer &self, int64_t step, uint64_t epoch) {
+                    .def("Reset", [](TreeConsumer &self, int64_t step, int64_t epoch) {
                       THROW_IF_ERROR(self.Reset(step, epoch));
                     });
                 }));
