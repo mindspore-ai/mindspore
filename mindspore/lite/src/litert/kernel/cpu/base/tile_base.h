@@ -38,6 +38,7 @@ class TileCPUKernel : public LiteKernel {
  private:
   int RunSimpleTile();
   int FillOneDimTileParam();
+  int DoubleInputScenes();
   bool one_dim_tile_ = false;
   uint8_t *input_addr_ = nullptr;
   uint8_t *output_addr_ = nullptr;
