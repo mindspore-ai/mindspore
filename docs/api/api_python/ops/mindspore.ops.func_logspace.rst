@@ -7,7 +7,7 @@ mindspore.ops.logspace
 
     .. note::
         - 输入 `base` 必须是整数。
-    
+
     .. math::
         \begin{aligned}
         &step = (end - start)/(steps - 1)\\

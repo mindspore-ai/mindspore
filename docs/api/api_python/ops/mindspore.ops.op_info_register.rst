@@ -5,7 +5,7 @@ mindspore.ops.op_info_register
 
     用于注册算子的装饰器。
 
-    .. note:: 
+    .. note::
         'op_info'应通过json格式的字符串表示算子信息。'op_info'将添加到算子库'oplib'中。
 
     参数：

@@ -9,6 +9,6 @@ mindspore.ops.NPUAllocFloatStatus
 
     .. note::
         请参考 :class:`mindspore.ops.NPUGetFloatStatus` 的样例。
-        
+
     输出：
         Tensor，shape为 :math:`(8,)` 。

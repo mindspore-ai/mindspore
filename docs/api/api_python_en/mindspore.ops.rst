@@ -9,7 +9,7 @@ Neural Network Layer Functions
 Neural Network
 ^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -50,7 +50,7 @@ Neural Network
 Loss Functions
 ^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -76,7 +76,7 @@ Loss Functions
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -111,7 +111,7 @@ Activation Functions
 Distance Functions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -123,7 +123,7 @@ Distance Functions
 Sampling Functions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -136,7 +136,7 @@ Sampling Functions
 Image Functions
 ^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -161,7 +161,7 @@ Mathematical Functions
 Element-wise Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -304,7 +304,7 @@ Element-wise Operations
 Reduction Functions
 ^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -336,7 +336,7 @@ Reduction Functions
 Comparison Functions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -373,7 +373,7 @@ Comparison Functions
 Linear Algebraic Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -414,7 +414,7 @@ Linear Algebraic Functions
 Spectral Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -431,7 +431,7 @@ Tensor Operation Functions
 Tensor Creation
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -454,7 +454,7 @@ Tensor Creation
 Randomly Generating Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -478,7 +478,7 @@ Randomly Generating Functions
 Array Operation
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -587,7 +587,7 @@ Array Operation
 Type Cast
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -600,7 +600,7 @@ Type Cast
 Gradient Clipping
 ^^^^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -611,7 +611,7 @@ Gradient Clipping
 Parameter Operation Functions
 -----------------------------
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -635,7 +635,7 @@ Parameter Operation Functions
 Differential Functions
 ----------------------
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -647,7 +647,7 @@ Differential Functions
 Debugging Functions
 -------------------
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -657,7 +657,7 @@ Debugging Functions
 Sparse Functions
 ----------------
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -669,7 +669,7 @@ Sparse Functions
 COO Functions
 ^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -711,7 +711,7 @@ COO Functions
 CSR Functions
 ^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -754,7 +754,7 @@ CSR Functions
 Other Functions
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatnoteautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

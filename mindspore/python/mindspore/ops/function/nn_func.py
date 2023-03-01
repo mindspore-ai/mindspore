@@ -2000,11 +2000,11 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
 
             .. code-block::
 
-              old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
+                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
 
-              old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
+                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-          This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
+            This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.

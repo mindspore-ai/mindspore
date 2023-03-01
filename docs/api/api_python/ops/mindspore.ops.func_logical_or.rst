@@ -14,7 +14,7 @@ mindspore.ops.logical_or
 
     .. note::
         logical_or支持广播。
-   
+
     参数：
         - **x** (Union[Tensor, bool]) - 第一个输入是bool或数据类型可被隐式转换为bool的Tensor。
         - **y** (Union[Tensor, bool]) - 当第一个输入是Tensor的时候，第二个输入是bool或者数据类型可被隐式转换为bool的Tensor。
