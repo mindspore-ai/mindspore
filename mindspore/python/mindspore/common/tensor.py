@@ -2051,7 +2051,58 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def min(self, axis=None, keepdims=False, initial=None, where=True):
         """
-        For details, please refer to :func:`mindspore.ops.min`.
+        Return the minimum of a tensor or minimum along an axis.
+
+        Args:
+            axis (Union[None, int, list, tuple of ints], optional): An axis or
+                axes along which to operate. By default, flattened input is used. If
+                `axis` is a tuple of ints, the minimum is selected over multiple axes,
+                instead of a single axis or all the axes as before. Default: None.
+            keepdims (bool, optional):
+                If True, the axes which are reduced are left in the
+                result as dimensions with size one. With this option, the result will
+                broadcast correctly against the input array. Default: False.
+            initial (scalar, optional):
+                The minimum value of an output element. Must be present to allow
+                computation on empty slice. Default: None.
+            where (bool Tensor, optional):
+                A boolean tensor which is broadcasted to match the dimensions of array,
+                and selects elements to include in the reduction. If non-default value
+                is passed, initial must also be provided. Default: True.
+
+        Returns:
+            Tensor or scalar, minimum of input tensor. If `axis` is None, the result is a scalar
+            value. If `axis` is given, the result is a tensor of dimension ``self.ndim - 1``.
+
+        Raises:
+            TypeError: If arguments have types not specified above.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        See also:
+            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
+
+            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
+
+            :func:`mindspore.Tensor.max`: Return the minimum of a tensor or minimum along an axis.
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.arange(4).reshape((2, 2)).astype('float32'))
+            >>> output = a.min()
+            >>> print(output)
+            0.0
+            >>> output = a.min(axis=0)
+            >>> print(output)
+            [0. 1.]
+            >>> output = a.min(axis=0, initial=9, where=Tensor([False]))
+            >>> print(output)
+            [9. 9.]
+            >>> output = a.min(axis=0, initial=9, where=Tensor([False, True]))
+            >>> print(output)
+            [9. 1.]
         """
         reduce_ = tensor_operator_registry.get("reduce")
         reduce_min = tensor_operator_registry.get("reduce_min")
