@@ -2468,21 +2468,6 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
   }
 }
 
-static void HandleGroupInfo(const FuncGraphPtr &root) {
-  auto group_info = g_device_manager->group_info();
-  auto group_info_save_path = common::GetEnv("GROUP_INFO_FILE");
-  if (!group_info_save_path.empty()) {
-    ParallelContext::GetInstance()->set_group_ckpt_save_file(group_info_save_path);
-  }
-
-  if (StrategyCheckpoint::GetInstance().group_info_save_on()) {
-    RankList comm_group = FindCommonMirrorGroup(root);
-    if (StrategyCheckpoint::GetInstance().SaveGroupInfo(group_info, comm_group) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Save group info failed";
-    }
-  }
-}
-
 static void HandleDataParallel() {
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode == kDataParallel) {
@@ -2792,8 +2777,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   PipelinePostProcess(root, all_nodes);
 
-  HandleGroupInfo(root);
-
+  auto comm_group = FindCommonMirrorGroup(root);
+  StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
   // handle full split parameters in grad accumulation, do not contain optimizer-sharding's parameter
   HandleFullySplitParameters(root);
 

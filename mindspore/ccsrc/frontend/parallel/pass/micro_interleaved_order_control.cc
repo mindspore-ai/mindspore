@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include <memory>
 #include <list>
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <queue>
+#include <unordered_map>
 #include <utility>
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
-namespace opt {
+namespace parallel {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
 const size_t interleaved_size = 2;
@@ -302,5 +303,5 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
   }
   MicroInterleavedOrderControlPipeline(manager, origin_nodes_topological);
 }
-}  // namespace opt
+}  // namespace parallel
 }  // namespace mindspore

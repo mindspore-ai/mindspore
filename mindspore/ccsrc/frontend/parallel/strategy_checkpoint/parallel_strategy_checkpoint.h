@@ -50,6 +50,9 @@ class StrategyCheckpoint {
   bool LoadCheckPointOn() const { return load_checkpoint_on_; }
   bool SaveCheckPointOn() const { return save_checkpoint_on_; }
 
+  void set_common_mirror_group(const RankList &comm_group) { common_mirror_group_ = comm_group; }
+  RankList common_mirror_group() const { return common_mirror_group_; }
+
  private:
   std::string load_file_;
   std::string save_file_;
@@ -63,6 +66,7 @@ class StrategyCheckpoint {
   bool load_format_json_ = true;
   bool save_format_json_ = true;
   StrategyCheckpointInfo strategy_checkpoint_info_;
+  RankList common_mirror_group_;
 };
 }  // namespace parallel
 }  // namespace mindspore
