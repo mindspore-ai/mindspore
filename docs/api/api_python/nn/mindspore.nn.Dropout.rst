@@ -15,7 +15,7 @@ mindspore.nn.Dropout
 
     参数：
         - **keep_prob** (float) - 废弃。输入神经元保留率，数值范围介于(0, 1]之间。例如，`keep_prob` =0.9，删除10%的神经元。默认值：0.5。
-        - **p** (Union(float, int, None)) - 输入神经元丢弃率，数值范围介于[0, 1)之间。例如，`p` =0.9，删除90%的神经元。默认值：None。
+        - **p** (Union[float, int, None]) - 输入神经元丢弃率，数值范围介于[0, 1)之间。例如，`p` =0.9，删除90%的神经元。默认值：None。
 
     输入：
         - **x** (Tensor) - Dropout的输入，任意维度的Tensor。数据类型必须为float16或float32。
