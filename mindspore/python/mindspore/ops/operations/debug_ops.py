@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -475,11 +475,11 @@ class Print(Primitive):
         >>> result = net(x, y)
         Print Tensor x and Tensor y:
         Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1]
+        [[1],
          [1]])
         Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1 1]
-         [1 1]])
+        [[1, 1],
+         [1, 1]])
     """
 
     @prim_attr_register
