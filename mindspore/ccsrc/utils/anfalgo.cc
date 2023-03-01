@@ -1440,38 +1440,11 @@ bool AnfAlgo::IsNodeOutputDynamicShape(const AnfNodePtr &node) {
 
 bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
-  auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
-  for (size_t i = 0; i < input_num; ++i) {
-    auto input_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
-    auto input = input_with_index.first;
-    auto index = input_with_index.second;
+  const auto &inputs = anf_node_ptr->inputs();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    const auto &input = inputs[i];
     MS_EXCEPTION_IF_NULL(input);
-    auto base_shape = input->Shape();
-    if (base_shape == nullptr) {
-      MS_LOG(INFO) << "Invalid shape ptr, node:" << input->fullname_with_scope();
-      continue;
-    }
-    if (base_shape->isa<abstract::Shape>()) {
-      if (base_shape->IsDynamic()) {
-        return true;
-      }
-    } else if (base_shape->isa<abstract::TupleShape>()) {
-      auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
-      MS_EXCEPTION_IF_NULL(tuple_shape);
-
-      if (index >= tuple_shape->size()) {
-        MS_LOG(INFO) << "Node:" << anf_node_ptr->fullname_with_scope() << "Invalid index:" << index
-                     << " and tuple_shape size:" << tuple_shape->size();
-        continue;
-      }
-      auto b_shp = (*tuple_shape)[index];
-      if (!b_shp->isa<abstract::Shape>()) {
-        continue;
-      }
-      if (b_shp->IsDynamic()) {
-        return true;
-      }
-    } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    if (IsNodeOutputDynamicShape(input)) {
       return true;
     }
   }
