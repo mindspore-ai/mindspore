@@ -850,6 +850,7 @@ constexpr auto kUpperBoundOpName = "UpperBound";
 constexpr auto kXlogyOpName = "Xlogy";
 constexpr auto kXdivyOpName = "Xdivy";
 constexpr auto kDynamicBroadcastToOpName = "DynamicBroadcastTo";
+constexpr auto kDynamicBroadcastGradientArgsOpName = "DynamicBroadcastGradientArgs";
 constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
 constexpr auto kSoftMarginLossOpName = "SoftMarginLoss";
