@@ -1423,7 +1423,7 @@ class GLU(Cell):
 
     where :math:`a` is the first half of the input matrices and :math:`b` is the second half.
 
-    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
+    Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
 
     Args:
         axis (int): the axis to split the input. Default: -1, the last axis in `x`.

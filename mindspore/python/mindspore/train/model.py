@@ -1098,7 +1098,8 @@ class Model:
 
         Evaluation process will be performed during training process if `valid_dataset` is provided.
 
-        More details please refer to `mindspore.train.Model.train` and `mindspore.train.Model.eval`.
+        More details please refer to :func:`mindspore.train.Model.train` and
+        :func:`mindspore.train.Model.eval`.
 
         Args:
             epoch (int): Total training epochs. Generally, train network will be trained on complete dataset per epoch.

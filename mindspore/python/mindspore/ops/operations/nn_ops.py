@@ -1412,7 +1412,7 @@ class DataFormatVecPermute(Primitive):
         TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is neither int32 nor int64.
         ValueError: If `src_format` or `dst_format` is not a str in ['NHWC', 'NCHW'].
-        ValueError: If `input_x` shape is not :math:`(4, )` or :math:`(4, 2).
+        ValueError: If `input_x` shape is not :math:`(4, )` or :math:`(4, 2)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

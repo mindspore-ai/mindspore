@@ -22,7 +22,7 @@ __all__ = ['ChannelShuffle']
 class ChannelShuffle(Cell):
     r"""
     Divide the channels of Tensor whose shape is :math:`(*, C , H, W)` into g groups to obtain a Tensor with
-    shape :math:(*, C frac g, g, H, W), and transpose along the corresponding axis of :math:`C`, :math:`frac g` and
+    shape :math:`(*, C frac g, g, H, W)`, and transpose along the corresponding axis of :math:`C`, :math:`frac g` and
     :math:`g` to restore Tensor to the original shape.
 
     Args:

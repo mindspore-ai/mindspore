@@ -603,9 +603,11 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
 
     Args:
         n (Union[Tensor, int]): The input n Tensor with shape: () or (1,) and with data type of int64.
-        seed (int): Random seed. Default: 0. When seed is -1(only negative value), offset is 0, it's determined by time.
-        offset (int): Priority is higher than random seed. Default: 0. It must be non-negative.
-        dtype (mindspore.dtype): The type of output. Its value must be one of the following types: int32, int16, int8,
+        seed (int, optional): Random seed. Default: 0. When seed is -1(only negative value), offset is 0,
+            it's determined by time.
+        offset (int, optional): Priority is higher than random seed. Default: 0. It must be non-negative.
+        dtype (mindspore.dtype, optional): The type of output.
+            Its value must be one of the following types: int32, int16, int8,
             uint8, int64, float64, float32, float16. Default: int64.
 
     Returns:

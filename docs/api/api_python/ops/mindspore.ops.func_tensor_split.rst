@@ -7,7 +7,7 @@ mindspore.ops.tensor_split
 
     参数：
         - **x** (Tensor) - 待分割的Tensor。
-        - **indices_or_sections** (Union[int, tuple(int), list(int)]) -
+        - **indices_or_sections** (Union[int, tuple(int), list(int)]) - 
 
           - 如果 `indices_or_sections` 是整数类型n，输入tensor将分割成n份。
 

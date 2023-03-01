@@ -715,8 +715,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def numpy(self):
         """
-        Refer to `Tensor.asnumpy() \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.asnumpy.html>`_.
+        Alias for :func:`mindspore.Tensor.asnumpy`.
         """
         return self.asnumpy()
 
