@@ -90,6 +90,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/scatter_nd_fusion.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include "plugin/device/ascend/optimizer/format_type/dynamic_rnn_grad_reformat.h"
@@ -377,6 +378,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
+  ir_fusion_pm->AddPass(std::make_shared<ScatterNdFusion>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
@@ -473,6 +475,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
+  ir_fusion_pm->AddPass(std::make_shared<ScatterNdFusion>());
   const auto &pass_creators =
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {

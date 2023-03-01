@@ -23,6 +23,7 @@ scatter_nd_d_op_info = TBERegOp("ScatterNdD") \
     .compute_cost(10) \
     .kernel_name("scatter_nd_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("shape", "optional", "listInt", "all") \
     .input(0, "indices", False, "required", "all") \
     .input(1, "x", False, "required", "all") \
