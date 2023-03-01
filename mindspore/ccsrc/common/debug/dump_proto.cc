@@ -115,7 +115,7 @@ void CheckIfValidType(const TypePtr &type) {
   if (!(type->isa<Number>() || IsKindOfTensorType(type) || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<UndeterminedType>() ||
-        type->isa<SymbolicKeyType>() || type->isa<MonadType>())) {
+        type->isa<SymbolicKeyType>() || type->isa<MonadType>() || type->isa<Dictionary>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
 }
