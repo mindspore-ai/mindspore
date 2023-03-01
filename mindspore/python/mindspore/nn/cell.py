@@ -2243,6 +2243,8 @@ class GraphCell(Cell):
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
+        >>> from mindspore import context
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
