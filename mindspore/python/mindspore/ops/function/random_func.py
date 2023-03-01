@@ -1020,7 +1020,7 @@ def randn_like(x, seed=None, *, dtype=None):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> a = Tensor([[1, 2, 3], [4, 5, 6]])
-        >>> print(ops.randn_like(x, dtype=ms.float32))
+        >>> print(ops.randn_like(a, dtype=ms.float32))
         [[ 0.30639967 -0.42438635 -0.20454668]
          [-0.4287376   1.3054721   0.64747655]]
     """
