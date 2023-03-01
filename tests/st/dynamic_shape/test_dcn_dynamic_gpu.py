@@ -230,6 +230,6 @@ def test_train():
     data_list = gen_data(numeric_columns, sparse_columns, batch_size_list)
     # GRAPH_MODE is temporarily not supported due to some new features that are not completely complete
     set_seed(0)
-    graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.PYNATIVE_MODE)
+    graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.GRAPH_MODE)
     expect_loss = [6.687461, 2928.5852, 8715.267]
     assert np.allclose(graph_loss, expect_loss, 1e-3, 1e-3)
