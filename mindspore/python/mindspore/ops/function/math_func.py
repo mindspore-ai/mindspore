@@ -5244,6 +5244,10 @@ def addmm(x, mat1, mat2, *, beta=1, alpha=1):
          [115. 137. 159.]
          [187. 225. 263.]]
     """
+    if not isinstance(alpha, (int, float)):
+        raise TypeError(f"For 'addmm', parameter 'alpha' must be an int or float, but got {type(alpha)}.")
+    if not isinstance(beta, (int, float)):
+        raise TypeError(f"For 'addmm', parameter 'beta' must be an int or float, but got {type(beta)}.")
     matmul_op = _get_cache_prim(P.MatMul)()
     return beta * x + alpha * (matmul_op(mat1, mat2))
 
