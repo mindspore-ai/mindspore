@@ -324,7 +324,7 @@ def eye(n, m=None, dtype=None):
         [[1. 0.]]
         >>> print(output.dtype)
         Float64
-        >>> output = ops.eye(2, t=mindspore.int32)
+        >>> output = ops.eye(2, dtype=mindspore.int32)
         >>> print(output)
         [[1 0]
          [0 1]]
