@@ -439,7 +439,6 @@ from .nn_func import (
     pixel_shuffle,
     pixel_unshuffle,
     hardshrink,
-    soft_shrink,
     is_floating_point,
     intopk,
     interpolate,
