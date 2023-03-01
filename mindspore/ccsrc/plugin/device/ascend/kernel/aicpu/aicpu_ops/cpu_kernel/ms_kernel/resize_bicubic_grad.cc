@@ -401,7 +401,7 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
 }
 
 template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx) {
+uint32_t ResizeBicubicGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto input0_addr = reinterpret_cast<float *>(ctx.Input(0)->GetData());
   auto output_addr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 

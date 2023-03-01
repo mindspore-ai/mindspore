@@ -22,10 +22,6 @@
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-
-template <typename T>
-uint32_t DoCompute(CpuKernelContext &ctx);
-
 class ResizeBicubicGradCpuKernel : public CpuKernel {
  public:
   ~ResizeBicubicGradCpuKernel() = default;
@@ -33,6 +29,8 @@ class ResizeBicubicGradCpuKernel : public CpuKernel {
 
  private:
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
+  template <typename T>
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
