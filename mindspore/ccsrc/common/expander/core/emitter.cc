@@ -193,46 +193,27 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
       return Emit(prim::kZerosLike, {Tensor(0)});
     }
   }
-  if (node->isa<Parameter>()) {
-    if (node->get()->abstract()->isa<abstract::AbstractNone>()) {
-      return Emit(prim::kZerosLike, {Tensor(0)});
+
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return Emit(prim::kZerosLike, {node});
+  } else if (abs->isa<abstract::AbstractMonad>() || abs->isa<abstract::AbstractType>() ||
+             abs->isa<abstract::AbstractNone>()) {
+    // To prevent return input directly, and return a operator for latter cnode link.
+    return node;
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
+    if (sequence_abs->empty()) {
+      return node;
     }
-    if (node->get()->abstract()->isa<abstract::AbstractTensor>()) {
-      return Emit(prim::kZerosLike, {node});
-    }
-    if (node->get()->abstract()->isa<abstract::AbstractTuple>()) {
-      NodePtrList list;
-      auto abstract_tuple = node->get()->abstract()->cast<abstract::AbstractTuplePtr>();
-      for (auto &e : abstract_tuple->elements()) {
-        if (e->isa<abstract::AbstractTensor>()) {
-          auto shape = e->BuildShape()->cast<abstract::ShapePtr>()->shape();
-          auto type = e->BuildType()->cast<TensorTypePtr>()->element();
-          list.emplace_back(Emit("Zeros", {EmitValue(MakeValue(shape)), EmitValue(type)}));
-        } else if (e->isa<abstract::AbstractScalar>()) {
-          list.emplace_back(Emit(prim::kZerosLike, {Tensor(0, e->BuildType())}));
-        } else {
-          MS_LOG(WARNING) << "ZerosLike got UNKNOWN TYPE: " << e->ToString();
-          list.emplace_back(Emit(prim::kZerosLike, {Tensor(0, e->BuildType())}));
-        }
-      }
-      return MakeTuple(list);
-    }
-    auto v = node->get()->abstract()->BuildValue();
-    if (v->isa<Scalar>() || v->isa<Type>()) {
-      return Emit(prim::kZerosLike, {Tensor(0, v->type())});
-    }
-    if (v->isa<ValueSequence>()) {
-      auto sh = GetValue<std::vector<int64_t>>(v);
-      return Emit(prim::kZerosLike, {Tensor(sh)});
-    }
+    return Emit(prim::kSequenceZerosLike, {node});
+  } else if (abs->isa<abstract::AbstractScalar>()) {
+    return Emit(prim::kZerosLike, {Tensor(0, abs->BuildType())});
   }
-  if (node->get()->abstract()->isa<abstract::AbstractMonad>()) {
-    return Emit(prim::kZerosLike, {Tensor(0)});
-  }
-  if (node->get()->abstract()->isa<abstract::AbstractNone>()) {
-    return Emit(prim::kZerosLike, {Tensor(0)});
-  }
-  return Emit(prim::kZerosLike, {node});
+
+  MS_LOG(EXCEPTION) << "Cannot emit ZerosLike for " << node->get()->ToString() << " with abstract " << abs;
 }
 
 NodePtr Emitter::Fill(double value, const ShapeVector &shape, TypeId data_type) const {
@@ -330,8 +311,8 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
 }
 
 NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
-                               const ops::InferFunc &infer_func, const std::vector<int64_t> &value_depend_indices,
-                               size_t size) const {
+                               const ops::InferFunc &infer_func,
+                               const std::vector<int64_t> &value_depend_indices) const {
   MS_EXCEPTION_IF_NULL(shape_func);
   MS_EXCEPTION_IF_NULL(infer_func);
   if (inputs.empty()) {
@@ -384,8 +365,13 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
                    {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)},
                    {kAttrPrimitiveTarget, MakeValue("CPU")}});
   MS_EXCEPTION_IF_NULL(out);
-  if (size > 1) {
-    for (size_t i = 0; i < size; ++i) {
+  MS_EXCEPTION_IF_NULL(out->get());
+  auto abs = out->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTuple>()) {
+    auto abstract_tuple = abs->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tuple);
+    for (size_t i = 0; i < abstract_tuple->size(); ++i) {
       res.push_back(TupleGetItem(out, i));
     }
   } else {

@@ -90,8 +90,7 @@ bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)}};
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
 }
 

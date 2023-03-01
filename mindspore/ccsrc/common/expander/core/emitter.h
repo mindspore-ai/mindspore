@@ -173,7 +173,7 @@ class COMMON_EXPORT Emitter {
   /// \param[in] size The size of outputs.
   /// \return NodePtrList, the outputs shape list.
   NodePtrList ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func, const ops::InferFunc &infer_func,
-                        const std::vector<int64_t> &value_depend_indices = {}, size_t size = 1) const;
+                        const std::vector<int64_t> &value_depend_indices = {}) const;
 
   using BlockFunc = std::function<NodePtrList(const Emitter *)>;
   /// \brief Generate a conditional block.
