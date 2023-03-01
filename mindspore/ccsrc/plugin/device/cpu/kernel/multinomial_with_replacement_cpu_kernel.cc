@@ -117,8 +117,8 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
                              << numsamples_ << ".";
   }
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto seed_ = reinterpret_cast<int64_t>(inputs[1]->addr);
-  auto offset_ = reinterpret_cast<int64_t>(inputs[2]->addr);
+  auto seed_ = *reinterpret_cast<int64_t *>(inputs[1]->addr);
+  auto offset_ = *reinterpret_cast<int64_t *>(inputs[2]->addr);
   InitMSPhiloxRandom(seed_, offset_);
 
   int64_t num_row_ = 1;

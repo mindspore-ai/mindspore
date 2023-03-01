@@ -780,6 +780,10 @@ REG_BPROP_BUILDER("UnsortedSegmentProd").SetBody(BODYFUNC(ib) {
   MS_EXCEPTION_IF_NULL(x_dtype);
   auto x_dtype_id = x_dtype->type_id();
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'UnsortedSegmentProd', complex number is not supported for gradient currently.";
+    return {nullptr, nullptr, nullptr};
+  }
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     is_zero = ib->Equal(x, ib->Tensor(0, x_dtype));
   } else {
     is_zero = ib->Equal(ib->Cast(x, kFloat32), ib->Tensor(0, kFloat32));

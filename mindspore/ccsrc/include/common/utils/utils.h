@@ -255,6 +255,7 @@ constexpr auto kSparseReshapeOpName = "SparseReshape";
 constexpr auto kSparseSegmentSqrtNGradOpName = "SparseSegmentSqrtNGrad";
 constexpr auto kSparseSegmentSumWithNumSegmentsOpName = "SparseSegmentSumWithNumSegments";
 constexpr auto kSparseSegmentMeanWithNumSegmentsOpName = "SparseSegmentMeanWithNumSegments";
+constexpr auto kSparseSegmentMeanGradOpName = "SparseSegmentMeanGrad";
 constexpr auto kSparseSegmentSqrtNWithNumSegmentsOpName = "SparseSegmentSqrtNWithNumSegments";
 constexpr auto kSspaddmmOpName = "Sspaddmm";
 constexpr auto kCTCGreedyDecoderOpName = "CTCGreedyDecoder";
