@@ -121,6 +121,12 @@ struct FlexArray {
   char contents[];
 };
 
+struct GlobalWorkspace {
+  size_t size;
+  size_t type;
+  bool is_overflow = false;
+};
+
 struct KernelJsonInfo {
   std::string bin_file_name;
   std::string bin_file_suffix;
@@ -130,6 +136,7 @@ struct KernelJsonInfo {
   std::vector<size_t> parameters;
   std::string sha256;
   std::vector<size_t> workspaces;
+  GlobalWorkspace global_workspace;
   bool has_kernel_list = false;
   uint32_t op_para_size;
   KernelJsonInfo() : block_dim(0), op_para_size(0) {}
@@ -159,6 +166,7 @@ class BACKEND_EXPORT KernelPack {
  private:
   bool ReadFromJsonFileHelper(std::ifstream &kernel_bin);
   void ParseKernelJson(const nlohmann::json &js);
+  static void ParseGlogbleWorkSpace(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
   KernelJsonInfo kernel_json_info_;
   FlexArray *json_;
   FlexArray *kernel_;
