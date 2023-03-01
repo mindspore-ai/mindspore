@@ -602,7 +602,7 @@ class Validator:
             prim_name = f"For '{prim_name}', the" if prim_name else "The"
             raise ValueError(f"{prim_name} '{target}' cannot be a directory path.")
         if reg is None:
-            reg = r"^[0-9a-zA-Z\_\-\.\:\/\\]+$"
+            reg = r"^[0-9a-zA-Z@\_\-\.\:\/\\]+$"
         if re.match(reg, target) is None:
             prim_name = f"For '{prim_name}', the" if prim_name else "The"
             raise ValueError("{} '{}' is illegal, it must be match regular '{}'.".format(
