@@ -2000,11 +2000,13 @@ class MaxPool3D(Primitive):
 
 class MaxUnpool2D(Primitive):
     r"""
-    Computes the inverse of MaxPool2D.
+    Calculates the partial inverse of MaxPool2D operation.
 
-    MaxUnpool2D keeps the maximal value and set all position of non-maximal values to zero.
-    Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` , the output is of
-    shape :math:`(N, C, H_{out}, W_{out})` , the operation is as follows:
+    Since MaxPool2D loses non-maximal values, it is not fully invertible.
+    Therefore, MaxUnpool2D takes the output of MaxPool2D, including the indices of
+    the maximal values, and computes a partial inverse where all non-maximal values are set to zero.
+    Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` ,
+    the output is of shape :math:`(N, C, H_{out}, W_{out})` , the operation is as follows:
 
     .. math::
         \begin{array}{ll} \\
@@ -2969,8 +2971,9 @@ class SmoothL1Loss(Primitive):
 
 class MultiMarginLoss(Primitive):
     r"""
-    Creates a criterion that optimizes a multi-class classification hinge loss (margin-based loss)
-    between input and output.
+    Creates a loss function that minimizes the margin-based loss or hinge loss
+    for multi-class classification tasks.
+    The loss is calculated by comparing the input and output of the function.
 
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
@@ -8807,11 +8810,10 @@ class ApplyKerasMomentum(Primitive):
 
 class MultilabelMarginLoss(Primitive):
     r"""
-    MultilabelMarginLoss operation.
-
-    Creates a criterion that optimizes a multi-class multi-classification
-    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
-    and output :math:`y` (which is a 2D `Tensor` of target class indices).
+    Creates a loss criterion that minimizes a margin-based loss for multi-class
+    classification tasks.
+    It takes a 2D mini-batch Tensor :math:`x` as input and a 2D
+    Tensor :math:`y` containing target class indices as output.
 
     Refer to :func:`mindspore.ops.multilabel_margin_loss` for more details.
 
@@ -8975,35 +8977,40 @@ class FractionalMaxPool(Primitive):
     r"""
     Performs fractional max pooling on the input.
 
-    Fractional max pooling is similar to regular max pooling, In regular max pooling, you downsize an
-    input set by taking the maximum value of smaller N x N subsections of the set (often 2x2), and try
-    to reduce the set by a factor of N, where N is an integer. Fractional max pooling, means that the
-    overall reduction ratio N does not have to be an integer.
-    The sizes of the pooling regions are generated randomly but are fairly uniform.
+    Fractional max pooling is similar to regular max pooling, but with the added flexibility of
+    allowing the overall reduction ratio `N` to be a non-integer value. In regular max pooling,
+    an input set is reduced in size by taking the maximum value of  `N x N` (usually 2x2)
+    subsections of the set, with the goal of reducing the set by a factor of `N`, where `N` is an integer.
+
+    In contrast, fractional max pooling uses randomly generated pool sizes that are fairly uniform in size.
 
     .. warning::
         "pooling_ratio", currently only supports row and col dimension and should be >= 1.0, the first
-        and last elements must be 1.0 because we don't allow pooling on batch and channels dimensions.
+        and last elements must be 1.0 because pooling on batch and channels dimensions is not allowed.
 
     Args:
-        pooling_ratio (list(float)): Decide the shape of output, is a list of floats that has length >= 4.
-            Pooling ratio for each dimension of value should be >=0, currently only support for row and col
-            dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
-            channels dimensions.
-        pseudo_random(bool, optional): When set to True, generates the pooling
-            sequence in a pseudo random fashion, otherwise, in a random fashion.
-            Check paper Benjamin Graham, Fractional Max-Pooling for difference between pseudo_random and
-            random. Defaults to False.
-        overlapping(bool, optional): When set to True, it means when pooling,
-            the values at the boundary of adjacent pooling cells are used by both cells.
-            When set to False, the values are not reused. Defaults to False.
-        deterministic(bool, optional): When set to True, a fixed pooling region
-            will be used when iterating over a FractionalMaxPool node in the computation graph. Mainly
-            used in unit test to make FractionalMaxPool deterministic. When set to False,
-            fixed pool regions will not be used. Defaults to False.
-        seed(int, optional): If either seed or seed2 are set to be non-zero, the random number generator is
-            seeded by the given seed. Otherwise, it is seeded by a random seed. Defaults to 0.
-        seed2(int, optional): An second seed to avoid seed collision. Defaults to 0.
+        pooling_ratio (list(float)): Decide the shape of output, is a list of float numbers has length >= 4.
+            Pooling ratio for each dimension of value should not be less than 0, currently only support
+            for row and col dimension.
+        pseudo_random(bool, optional): Generate the pooling sequence either randomly or pseudo-randomly.
+            If the pseudo_random parameter is set to True, the sequence will be generated in a
+            pseudo-random fashion, otherwise it will be generated randomly.
+            Refer to `Fractional Max-Pooling  <https://arxiv.org/pdf/1412.6071>`_
+            by Benjamin Graham to understand the distinction between the two.
+            Default: False.
+        overlapping(bool, optional): When set to True, the values at the boundary of adjacent pooling cells
+            will be shared by both cells during pooling process. When set to False, the values are not reused.
+            Default: False.
+        deterministic(bool, optional): If deterministic is set to True, a fixed pooling region will be used
+            in the computation graph, ensuring that the FractionalMaxPool is deterministic.
+            This is often used in unit tests. When set to False, fixed pool regions will not be used.
+            Default: False.
+        seed(int, optional): If either seed or seed2 are set to a non-zero value, the random number
+            generator will be seeded using the specified seed. If neither seed nor seed2 are set,
+            the generator will be seeded by a random seed.
+            Default: 0.
+        seed2(int, optional): The second seed to avoid seed collision.
+            Default: 0.
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
@@ -9147,11 +9154,10 @@ class FractionalAvgPool(Primitive):
     r"""
     Performs fractional avg pooling on the input.
 
-    Fractional avg pooling is similar to regular avg pooling, In regular avg pooling, you downsize an
-    input set by taking the avgrage value of smaller N x N subsections of the set (often 2x2), and try
-    to reduce the set by a factor of N, where N is an integer. Fractional avg pooling, means that the
-    overall reduction ratio N does not have to be an integer. In each pooling region, a mean operation
-    is performed.
+    Fractional avg pooling is similar to regular avg pooling, but with the added flexibility of
+    allowing the overall reduction ratio `N` to be a non-integer value. In regular avg pooling,
+    an input set is reduced in size by taking the average value of  `N x N` (usually 2x2)
+    subsections of the set, with the goal of reducing the set by a factor of `N`, where `N` is an integer.
 
     .. warning::
         "pooling_ratio", currently only supports row and col dimension and should be >= 1.0, the first
@@ -9162,20 +9168,25 @@ class FractionalAvgPool(Primitive):
             Pooling ratio for each dimension of value should be >=0, currently only support for row and col
             dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
             channels dimensions.
-        pseudo_random(bool, optional): When set to True, generates the pooling
-            sequence in a pseudorandom fashion, otherwise, in a random fashion.
-            Check paper Benjamin Graham, Fractional Max-Pooling for difference between pseudo_random and
-            random. Defaults to False.
-        overlapping(bool, optional): When set to True, it means when pooling,
-            the values at the boundary of adjacent pooling cells are used by both cells.
-            When set to False, the values are not reused. Defaults to False.
-        deterministic(bool, optional): When set to True, a fixed pooling region
-            will be used when iterating over a FractionalAvgPool node in the computation graph. Mainly
-            used in unit test to make FractionalAvgPool deterministic. When set to False,
-            fixed pool regions will not be used. Defaults to False.
-        seed(int, optional): If either seed or seed2 are set to be non-zero, the random number generator
-            is seeded by the given seed. Otherwise, it is seeded by a random seed. Defaults to 0.
-        seed2(int, optional): An second seed to avoid seed collision. Defaults to 0.
+        pseudo_random(bool, optional): Generate the pooling sequence either randomly or pseudo-randomly.
+            If the pseudo_random parameter is set to True, the sequence will be generated in a
+            pseudo-random fashion, otherwise it will be generated randomly.
+            Refer to `Fractional Max-Pooling  <https://arxiv.org/pdf/1412.6071>`_
+            by Benjamin Graham to understand the distinction between the two.
+            Default: False.
+        overlapping(bool, optional): When set to True, the values at the boundary of adjacent pooling cells
+            will be shared by both cells during pooling process. When set to False, the values are not reused.
+            Default: False.
+        deterministic(bool, optional): If deterministic is set to True, a fixed pooling region will be used
+            in the computation graph, ensuring that the FractionalAvgPool is deterministic.
+            This is often used in unit tests. When set to False, fixed pool regions will not be used.
+            Default: False.
+        seed(int, optional): If either seed or seed2 are set to a non-zero value, the random number
+            generator will be seeded using the specified seed. If neither seed nor seed2 are set,
+            the generator will be seeded by a random seed.
+            Default: 0.
+        seed2(int, optional): The second seed to avoid seed collision.
+            Default: 0.
 
     Inputs:
         - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.

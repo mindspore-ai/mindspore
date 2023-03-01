@@ -3,7 +3,7 @@ mindspore.ops.HSVToRGB
 
 .. py:class:: mindspore.ops.HSVToRGB
 
-    将一个或多个图像从HSV转换为RGB。图像的格式应为：NHWC。
+    将一个或多个图像从HSV颜色空间转换为RGB颜色空间，其中每个像素的HSV值转换为其对应的RGB值。此函数仅适用于输入像素值在[0,1]范围内的情况。图像的格式应为：NHWC。
 
     输入：
         - **x** (Tensor) - 输入的图像必须是shape为 :math:`[batch, image\_height, image\_width, channel]` 的四维Tensor。

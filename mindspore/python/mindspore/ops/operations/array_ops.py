@@ -1250,7 +1250,7 @@ class Size(PrimitiveWithInfer):
 
 class MatrixDiagV3(Primitive):
     """
-    Returns a batched diagonal tensor with given batched diagonal values.
+    Constructs a diagonal matrix or a batch of diagonal matrices from a given input Tensor.
 
     Refer to :func:`mindspore.ops.matrix_diag` for more details.
 
@@ -1319,47 +1319,58 @@ class MatrixDiagPartV3(Primitive):
 
 class MatrixSetDiagV3(Primitive):
     r"""
-    Returns a batched matrix tensor with new batched diagonal values.
-    Given x and diagonal, this operation returns a tensor with the same shape and values as x, except for the specified
-    diagonals of the innermost matrices. These will be overwritten by the values in diagonal. Some diagonals are shorter
-    than `max_diag_len` and need to be padded, where `max_diag_len` is the longest diagonal value.
-    The diagonal.shape[-2] must be equal to num_diags calculated by :math:`k[1] - k[0] + 1` .
+    Returns a matrix Tensor with updated diagonal values across batches.
+    It takes an Tensor `x` and `diagonal` as input and returns a Tensor of
+    the same shape and values as `x`. But the specified diagonal values in
+    the innermost matrices will be replaced by the values in the `diagonal`.
+
+    Diagonals shorter than `max_diag_len` need to be padded, where `max_diag_len` is the
+    longest diagonal value.
+    The diagonal.shape[-2] must be equal to num_diags calculated by :math:`k[1] - k[0] + 1`.
     The diagonal.shape[-1] must be
     equal to the longest diagonal value `max_diag_len` calculated
     by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
-    Let x have r + 1 dimensions [I, J, ..., L, M, N].
-    The diagonal tensor has rank r with shape :math:`[I, J, ..., L, max\_diag\_len]`
-    when k is an integer or :math:`k[0] == k[1]` . Otherwise, it has rank r + 1
-    with shape :math:`[I, J, ..., L, num\_diags, max\_diag\_len]` .
+
+    Assume `x` is an n-D Tensor with shape :math:`(d_1, d_2, ..., d_{n-2}, d_{n-1}, d_n)`.
+    If `k` is an integer or :math:`k[0] == k[1]`, `diagonal` is an (n-1)-D Tensor with
+    shape :math:`(d_1, d_2, ..., d_{n-2}, max\_diag\_len)`
+    Otherwise, it has the same rank as `x`
+    with shape :math:`(d_1, d_2, ..., d_{n-2}, num\_diags, max\_diag\_len)`.
 
     Args:
-        align (str, optional): An optional string from: "RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
-            Align is a string specifying how superdiagonals and subdiagonals should be aligned, respectively.
+        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
+            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
             Default: "RIGHT_LEFT".
 
-            - "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left
-              (right-pads the row).
-            - "LEFT_RIGHT" aligns superdiagonals to the left (right-pads the row) and subdiagonals to the right
-              (left-pads the row).
-            - "LEFT_LEFT" aligns superdiagonals to the left (right-pads the row) and subdiagonals to the left
-              (right-pads the row).
-            - "RIGHT_RIGHT" aligns superdiagonals to the right (left-pads the row) and subdiagonals to the right
-              (left-pads the row).
+            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
+              (padding the row on the left), while subdiagonals will be towards the left side
+              (padding the row on the right)
+            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
+              (padding the row on the right), while subdiagonals will be towards the right side
+              (padding the row on the left)
+            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+              the left side(padding the row on the right).
+            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
+              the right side(padding the row on the left).
 
     Inputs:
-        - **x** (Tensor) - Rank r + 1, where r >= 1.
-        - **diagonal** (Tensor) - A Tensor. Have the same dtype as x. Rank r when k is an integer or k[0] == k[1].
-          Otherwise, it has rank r + 1.
-        - **k** (Tensor) - A Tensor of type int32. Diagonal offset(s). Positive value means superdiagonal, 0 refers to
-          the main diagonal, and negative value means subdiagonals. k can be a single integer (for a single diagonal) or
-          a pair of integers specifying the low and high ends of a matrix band. `k[0]` must not be larger than `k[1]` .
-          The value of `k` has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
-          Input k must be const Tensor when taking Graph mode.
+        - **x** (Tensor) - A n-D Tensor, where :math:`n >= 2`.
+        - **diagonal** (Tensor) - A Tensor with the same dtype as `x`. Its rank depends on `k`.
+          If `k` is an integer or :math:`k[0] == k[1]`, its dimension is :math:`n-1`.
+          Otherwise, it has dimension :math:`n`.
+        - **k** (Tensor) - Tensor type int32, used for diagonal offset(s).
+          `k` can either be a single integer, which represents a single diagonal,
+          or a pair of integers that specify the low and high ends of a matrix band.
+          In this case(这里是指什么情况下？), `k[0]` should not be greater than `k[1]`.
+          The value of `k` has restructions, which means that value of `k` must be in range (-x.shape[-2], x.shape[-1]).
+          Input `k` must be const Tensor when taking Graph mode.
+
+          - `k > 0` refers to a superdiagonal.
+          - `k = 0` refers to the main diagonal.
+          - `k < 0` refers to subdiagonals.
 
     Outputs:
-        Tensor. The same type as x.
-        Let x has r+1 dimensions :math:`[I, J, ..., L, M, N]` .
-        The output is a tensor of rank r+1 with dimensions :math:`[I, J, ..., L, M, N]` , the same as input x.
+        Tensor. The same type and shape as `x`.
 
     Raises:
         TypeError: If any input is not Tensor.
@@ -1410,7 +1421,8 @@ class MatrixSetDiagV3(Primitive):
 
 class MatrixBandPart(Primitive):
     r"""
-    Copy a tensor setting everything outside a central band in each innermost matrix to zero.
+    Extracts the central diagonal band of each matrix in a tensor, with all values outside
+    the central band set to zero.
 
     Refer to :func:`mindspore.ops.matrix_band_part` for more details.
 
@@ -3618,7 +3630,7 @@ class DiagPart(PrimitiveWithCheck):
 
 class Mvlgamma(Primitive):
     r"""
-    Computes the multivariate log-gamma function with dimension `p` element-wise.
+    Calculates the multivariate log-gamma function element-wise for a given dimension `p`.
 
     Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
@@ -6560,13 +6572,14 @@ class TensorScatterDiv(_TensorScatterOp):
 
 
 class ListDiff(Primitive):
-    r"""Computes the difference between two lists of numbers.
+    r"""
+    This function calculates the disparity between two numerical lists.
 
-    Given a list `x` and a list `y`, this operation returns a list `out` that
-    represents all values that are in `x` but not in `y`. The returned list `out`
-    is sorted in the same order that the numbers appear in `x` (duplicates are
-    preserved). This operation also returns a list `idx` that represents the
-    position of each `out` element in `x`. In other words:
+    It generates a list of all elements that are present in list `x` but not in list `y`.
+    The output list `out` retains the same order as the original `x` including duplicate elements.
+
+    Additionally, this class outputs a list `idx` that identifies the position of each element
+    in `out` within the original `x`. That is to say:
     :code:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` .
 
     Args:
@@ -7146,9 +7159,10 @@ class RightShift(Primitive):
 
 class LogSpace(Primitive):
     r"""
-    Returns a one-dimensional tensor of size steps whose values are evenly
-    spaced from :math:`base^{start}` to :math:`base^{end}` , inclusive,
-    on a logarithmic scale with base.
+    Generates a 1-D Tensor with a length of steps. The tensor's
+    values are uniformly distributed on a logarithmic scale, ranging from
+    :math:`base^{start}` to :math:`base^{end}`, including both endpoints.
+    The logarithmic scale is based on the specified `base`.
 
     .. math::
         \begin{aligned}
@@ -7304,8 +7318,8 @@ class Tril(Primitive):
 
 class IndexFill(Primitive):
     """
-    Fills the elements under the dim dimension of the input Tensor with the input value
-    by selecting the indices in the order given in index.
+    Fills the specified elements of the input Tensor with a given value,
+    using the indices specified in the input index array.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
 

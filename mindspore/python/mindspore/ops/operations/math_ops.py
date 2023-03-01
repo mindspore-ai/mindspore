@@ -2825,7 +2825,7 @@ class Hypot(Primitive):
 
 class Heaviside(Primitive):
     r"""
-    Computes the Heaviside step function for each element in input.
+    Applies the Heaviside step function for input `x` element-wise.
 
     .. math::
             \text { heaviside }(\text { x, values })=\left\{\begin{array}{ll}
@@ -5493,9 +5493,9 @@ class MatrixInverse(Primitive):
 
 class MatrixPower(Primitive):
     """
-    Computes the n-th power of a batch of square matrices.
-    If n = 0, it returns a batch of identity matrices. If n is negative, it
-    returns the inverse of each matrix (if invertible) raised to the power of abs(n).
+    Calculates the n-th power of a batch of square matrices.
+    When n equals 0, it returns a group of identity matrices. If n is negative,
+    it computes the inverse of each matrix (if possible) raised to the power of abs(n).
 
     Args:
         n (int) : The exponent, a required int.
@@ -5537,7 +5537,7 @@ class MatrixPower(Primitive):
 
 class MatrixDeterminant(Primitive):
     """
-    Computes the determinant of one or more square matrices.
+    Calculates the value of the determinant for one or more square matrices.
 
     Refer to :func:`mindspore.ops.det` for more details.
 
@@ -5561,7 +5561,7 @@ class MatrixDeterminant(Primitive):
 
 class LogMatrixDeterminant(Primitive):
     """
-    Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
+    Calculates the sign and logarithm of the determinant of one or more square matrices.
 
     Refer to :func:`mindspore.ops.slogdet` for more details.
 
@@ -6116,7 +6116,8 @@ class Igammac(Primitive):
 
 class IsClose(Primitive):
     r"""
-    Returns a boolean Tensor where two tensors are element-wise equal within a tolerance.
+    Returns a tensor of Boolean values indicating whether two input tensors
+    are element-wise equal within a given tolerance.
 
     Refer to :func:`mindspore.ops.isclose` for more details.
 

@@ -3,11 +3,11 @@ mindspore.ops.Geqrf
 
 .. py:class:: mindspore.ops.Geqrf
 
-    用于计算QR分解的低级函数。此函数返回两个Tensor（y，tau）。
+    将矩阵分解为正交矩阵 `Q` 和上三角矩阵 `R` 的乘积。该过程称为QR分解： :math:`A = QR` 。
 
-    计算 `x` 的QR分解。 `Q` 和 `R` 矩阵都存储在同一个输出Tensor `y` 中。
-    
-    `R` 的元素存储在对角线及上方。隐式定义矩阵 `Q` 的基本反射器（或户主向量）存储在对角线下方。
+    `Q` 和 `R` 矩阵都存储在同一个输出Tensor `y` 中。 `R` 的元素存储在对角线及上方。隐式定义矩阵 `Q` 的基本反射器（或户主向量）存储在对角线下方。
+
+    此函数返回两个Tensor（ `y`, `tau` ）。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(*, m, n)` ，输入矩阵维度必须为大于等于两维，支持dtype为float32、float64、complex64、complex128。

@@ -5,7 +5,7 @@ mindspore.ops.MaxUnpool2D
 
     MaxPool2D的逆过程。
 
-    MaxUnpool2D在计算过程中，保留最大值位置的元素，并将非最大值位置元素设置为0。
+    由于MaxPool2D会丢失非最大值，因此它不是完全可逆的。MaxUnpool2D将MaxPool2D的输出作为输入，包括最大值的索引，并计算部分逆，其中所有非最大值都被设置为零。
     例如，输入的shape为 :math:`(N, C, H_{in}, W_{in})` ，输出的shape为 :math:`(N, C, H_{out}, W_{out})` ，
     则该操作如下式所示：
 
