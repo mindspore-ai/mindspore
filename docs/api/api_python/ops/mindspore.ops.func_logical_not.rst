@@ -3,7 +3,7 @@ mindspore.ops.logical_not
 
 .. py:function:: mindspore.ops.logical_not(x)
 
-    逐元素计算两个Tensor的逻辑非运算。
+    逐元素计算一个Tensor的逻辑非运算。
 
     .. math::
         out_{i} = \neg x_{i}
