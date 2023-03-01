@@ -34,8 +34,7 @@ typedef struct Conv1x1Stru {
   MatmulExpStru exp_;
 } Conv1x1Stru;
 
-KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                          FormatC format);
+KernelBase *CreateConv1x1(OpParameter *param, int data_type, FormatC format);
 
 #ifdef __cplusplus
 }

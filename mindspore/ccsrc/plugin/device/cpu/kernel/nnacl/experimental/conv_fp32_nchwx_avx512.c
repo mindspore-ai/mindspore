@@ -25,7 +25,6 @@ static const int UNIT_LEN = 512;  // register length
 static const int TILE_ROW;
 int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self) {
   KConv2d *conv = (KConv2d *)self;
-  self->env = GetExecEnv();
 
   int rowIndex = 0;
   TensorC *weight = &(self->in[kWeightIndex]);

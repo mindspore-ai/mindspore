@@ -45,13 +45,13 @@ int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   MS_CHECK_TRUE_RET(aspect_ratios_size <= MAX_SHAPE_SIZE, NNACL_ERR);
   for (int32_t i = 0; i < aspect_ratios_size; i++) {
     float ratio = aspect_ratios[i];
-    if (fabsf(ratio) < EPSILON) {
+    if (fabsf(ratio) < EPSILON_VALUE) {
       return NNACL_ERR;
     }
 
     bool exist = false;
     for (int32_t j = 0; j < different_aspect_ratios_size; j++) {
-      if (fabsf(ratio - different_aspect_ratios[j]) < EPSILON) {
+      if (fabsf(ratio - different_aspect_ratios[j]) < EPSILON_VALUE) {
         exist = true;
         break;
       }

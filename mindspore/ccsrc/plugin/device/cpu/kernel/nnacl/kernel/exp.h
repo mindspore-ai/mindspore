@@ -28,8 +28,7 @@ typedef struct ExpStru {
   KernelBase base;
 } ExpStru;
 
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format);
+KernelBase *CreateExp(OpParameter *param, int data_type, FormatC format);
 
 #ifdef __cplusplus
 }

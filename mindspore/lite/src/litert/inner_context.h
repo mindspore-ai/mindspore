@@ -28,6 +28,7 @@
 #endif
 #include "thread/threadpool.h"
 #include "nnacl/op_base.h"
+#include "nnacl/kernel.h"
 #ifdef ENABLE_ARM
 #include "src/litert/cpu_info.h"
 #endif
@@ -135,6 +136,7 @@ struct MS_API InnerContext {
   InferChecker infer_checker_{InferCheckerOutput};
   // key is the precursor tensor's pointer, value is the group of successors' pointer.
   std::unordered_map<void *, std::set<void *>> link_info_{};
+  const ExecEnv *GetExecEnv() const { return &exec_env_; }
 
  private:
   int IsValid();
@@ -146,6 +148,7 @@ struct MS_API InnerContext {
   std::string runner_id_;
   BindMode bind_mode_{Power_NoBind};
   size_t actor_thread_num_{0};
+  ExecEnv exec_env_;
 };
 
 int ParallelLaunch(const InnerContext *context, const Func &func, Content content, int task_num);
