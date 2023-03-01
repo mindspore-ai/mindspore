@@ -286,18 +286,14 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
     }
     ofs << "  return kMSStatusSuccess;\n";
   } else {
-    ofs << "#define GRAPH_INPUTS_SIZE " << ctx->graph_inputs().size() << "\n";
-    ofs << "#define GRAPH_OUTPUTS_SIZE " << ctx->graph_outputs().size() << "\n";
-    ofs << "#define WEIGHT_BUF_SIZE " << ctx->weight_buffer_size() << "\n";
-    ofs << "MSModelHandle MSModelCreate" << ctx->GetCurModelIndex() << "() {\n";
-    ofs << "  static MicroModel model;\n";
-    ofs << "  model.runtime_buffer = NULL;\n";
-    ofs << "  model.inputs.handle_num = GRAPH_INPUTS_SIZE;\n";
-    ofs << "  model.inputs.handle_list = NULL;\n";
-    ofs << "  model.outputs.handle_num = GRAPH_OUTPUTS_SIZE;\n";
-    ofs << "  model.outputs.handle_list = NULL;\n";
-    ofs << "  model.train_mode = false;\n";
-    ofs << "  return (MSModelHandle)&model;\n";
+    ofs << "MSStatus MSModelCreate" << ctx->GetCurModelIndex() << "(MicroModel *micro_model) {\n";
+    ofs << "  micro_model->runtime_buffer = NULL;\n";
+    ofs << "  micro_model->inputs.handle_num = GRAPH_INPUTS_SIZE;\n";
+    ofs << "  micro_model->inputs.handle_list = NULL;\n";
+    ofs << "  micro_model->outputs.handle_num = GRAPH_OUTPUTS_SIZE;\n";
+    ofs << "  micro_model->outputs.handle_list = NULL;\n";
+    ofs << "  micro_model->train_mode = false;\n";
+    ofs << "  return kMSStatusSuccess;\n";
   }
   ofs << "}\n\n";
 }

@@ -384,6 +384,11 @@ int Generator::CodeMSModelImplement() {
   }
   ofs << "#include \"src/model" << ctx_->GetCurModelIndex() << "/" << net_weight_hfile_ << "\"\n\n";
 
+  if (config_->target() == kCortex_M) {
+    ofs << "#define GRAPH_INPUTS_SIZE " << ctx_->graph_inputs().size() << "\n";
+    ofs << "#define GRAPH_OUTPUTS_SIZE " << ctx_->graph_outputs().size() << "\n";
+    ofs << "#define WEIGHT_BUF_SIZE " << ctx_->weight_buffer_size() << "\n";
+  }
   ofs << "MSStatus MSModelBuild" << ctx_->GetCurModelIndex() << "(MSModelHandle model, const void *model_data,\n"
       << "                       size_t data_size, const MSContextHandle model_context);\n";
   ofs << "MSStatus MSModelPredict" << ctx_->GetCurModelIndex()
@@ -393,8 +398,8 @@ int Generator::CodeMSModelImplement() {
       << "                         const MSKernelCallBackC after);\n";
   ofs << "static MicroModel gModel" << ctx_->GetCurModelIndex() << " = {.runtime_buffer = NULL,\n"
       << "                             .train_mode = false,\n"
-      << "                             .inputs = {0, NULL},\n"
-      << "                             .outputs = {0, NULL},\n"
+      << "                             .inputs = {" << ctx_->graph_inputs().size() << ", NULL},\n"
+      << "                             .outputs = {" << ctx_->graph_outputs().size() << ", NULL},\n"
       << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n"
       << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n"
       << "                             .free_resource = FreeResource" << ctx_->GetCurModelIndex() << "};\n";
