@@ -144,10 +144,10 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
       depended_value->data_sync_directly(input_device_address->at(i));
       return depended_value;
     }
+    MS_LOG(WARNING) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
+                    << node->fullname_with_scope();
   }
 
-  MS_LOG(WARNING) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
-                  << node->fullname_with_scope();
   // Second use the device address of node as fault-tolerant.
   auto output_addr =
     AnfAlgo::GetMutableOutputAddr(input_node_with_index.first, input_node_with_index.second, skip_nop_node);

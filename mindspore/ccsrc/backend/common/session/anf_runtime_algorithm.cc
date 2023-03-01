@@ -1626,15 +1626,27 @@ bool AnfRuntimeAlgorithm::NodeValueIsFuncGraph(const AnfNodePtr &node) {
   return value->isa<FuncGraph>();
 }
 
-bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff() {
+bool AnfRuntimeAlgorithm::IsEnableKernelSelectBackoff(const KernelGraphPtr &graph) {
   static std::string disable_kernel_backoff;
   static bool first_get_backoff_env = true;
   if (first_get_backoff_env) {
     disable_kernel_backoff = common::GetEnv(kDisableKernelBackoff);
     first_get_backoff_env = false;
   }
+  if (disable_kernel_backoff == "1") {
+    MS_LOG(INFO) << "MS_DISABLE_KERNEL_BACKOFF has been set to turn off the kernel backoff ability.";
+    return false;
+  }
 
-  return (disable_kernel_backoff != "1");
+  if (graph == nullptr) {
+    return false;
+  }
+  if (graph->is_from_single_op()) {
+    MS_LOG(INFO) << "The pynative single op does not support the kernel backoff ability for graph:"
+                 << graph->graph_id();
+    return false;
+  }
+  return true;
 }
 
 void AnfRuntimeAlgorithm::SetKernelSelectBackoffInfo(const CNodePtr &node,
@@ -1785,10 +1797,11 @@ abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePt
                         << " node:" << node->DebugString() << "." << trace::DumpSourceLines(node);
     }
     auto b_shp = (*tuple_shape)[output_idx];
-    if (b_shp->isa<abstract::Shape>() || b_shp->isa<abstract::NoShape>()) {
+    if (b_shp->isa<abstract::Shape>() || b_shp->isa<abstract::NoShape>() || b_shp->isa<abstract::TupleShape>() ||
+        b_shp->isa<abstract::DynamicSequenceShape>()) {
       return b_shp;
     } else {
-      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+      MS_LOG(EXCEPTION) << "The output type of node index:" << output_idx
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
                         << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
     }
@@ -1797,7 +1810,7 @@ abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePt
   } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
     return common::AnfAlgo::GetDynamicSequenceShape(node, output_idx);
   }
-  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
+  MS_LOG(EXCEPTION) << "The output type of node should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
 }
 

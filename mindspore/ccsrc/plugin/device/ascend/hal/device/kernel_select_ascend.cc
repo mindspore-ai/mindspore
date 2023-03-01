@@ -1457,7 +1457,7 @@ void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info) {
   // The Pynative_mode and task_sink does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff() || graph == nullptr || graph->is_from_single_op()) {
+  if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
     MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
 

@@ -584,7 +584,7 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     output_types.clear();
     // The real tuple and allsame don't fold the tuple.
     if (kernel_attr.GetAllSame() ||
-        (kernel_attr.GetOutputSize() != 0 && kernel_attr.GetOutputAttr(0).object_type == kObjectTypeTuple)) {
+        (kernel_attr.GetOutputSize() == 1 && kernel_attr.GetOutputAttr(0).object_type == kObjectTypeTuple)) {
       GetOutputDtypesForRealTuple(kernel_node, &output_types);
     } else {
       GetOutputDtypes(kernel_node, &output_types);

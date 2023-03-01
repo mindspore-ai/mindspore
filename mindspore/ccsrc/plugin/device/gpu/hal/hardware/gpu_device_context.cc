@@ -482,7 +482,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
                                const std::pair<std::string, ExceptionType> &failure_info) {
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op()) {
+  if (!AnfAlgo::IsEnableKernelSelectBackoff(graph)) {
     MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
   }
 
