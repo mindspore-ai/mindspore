@@ -15,6 +15,16 @@
  */
 #include <string.h>
 #include <cstdint>
+#include <vector>
+#include "custom_aot_extra.h"
+
+extern "C" std::vector<int64_t> CustomAddInferShape(int *ndims, int64_t **shapes, AotExtra *extra) {
+  const int64_t kDynRankSize = -2;
+  if (shapes[0][0] == kDynRankSize) {
+    return std::vector<int64_t>{shapes[0][0]};
+  }
+  return std::vector<int64_t>{shapes[0][0], shapes[0][1]};
+}
 
 extern "C" int CustomAdd(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream,
                          void *extra) {

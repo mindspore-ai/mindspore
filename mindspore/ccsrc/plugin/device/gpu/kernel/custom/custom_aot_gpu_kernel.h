@@ -216,6 +216,26 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     if (ret != 0) {
       return ret;
     }
+
+    shapes_.clear();
+    shape_list_.clear();
+    ndims_.clear();
+
+    for (size_t i = 0; i < inputs.size(); i++) {
+      auto in_shape = inputs[i]->GetShapeVector();
+      (void)shape_list_.emplace_back(in_shape);
+      ndims_.push_back(SizeToInt(in_shape.size()));
+    }
+
+    for (size_t i = 0; i < outputs.size(); i++) {
+      auto out_shape = outputs[i]->GetShapeVector();
+      (void)shape_list_.emplace_back(out_shape);
+      ndims_.push_back(SizeToInt(out_shape.size()));
+    }
+
+    (void)std::transform(std::begin(shape_list_), std::end(shape_list_), std::back_inserter(shapes_),
+                         [](auto &v) { return &v[0]; });
+
     workspace_size_list_ = attrs_.WorkSpace();
     return static_cast<int>(KRET_OK);
   }
