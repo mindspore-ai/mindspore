@@ -44,12 +44,21 @@ def dyn_case():
     assert out.asnumpy().shape == (2, 3)
 
 
-def vmap_case():
+def cla_fillv2(shape, value):
+    return P.FillV2()(shape, value)
 
-    def cla_fillv2(shape, value):
-        return P.FillV2()(shape, value)
 
+def vmap_tuple_case():
     shape = (2, 2)
+    value = Tensor([1, 2], ms.float32)
+    outputs = vmap(cla_fillv2, in_axes=(None, 0), out_axes=0)(shape, value)
+
+    expect = np.array([[[1, 1], [1, 1]], [[2, 2], [2, 2]]]).astype(np.float32)
+    assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
+
+
+def vmap_tensor_case():
+    shape = Tensor((2, 2), ms.int32)
     value = Tensor([1, 2], ms.float32)
     outputs = vmap(cla_fillv2, in_axes=(None, 0), out_axes=0)(shape, value)
 
@@ -68,7 +77,22 @@ def test_fill_v2_dyn():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     dyn_case()
-    vmap_case()
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     dyn_case()
-    vmap_case()
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_fill_v2_vmap():
+    """
+    Feature: test FillV2 vmap in gpu.
+    Description: inputs is static shape.
+    Expectation: expect correct out result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    vmap_tuple_case()
+    vmap_tensor_case()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    vmap_tuple_case()
+    vmap_tensor_case()
