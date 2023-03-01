@@ -4375,7 +4375,8 @@ def median(x, axis=-1, keepdims=False):
         >>> x = Tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57], [0.36, 0.16, 0.44]]).astype(np.float32))
         >>> y = ops.median(x, axis=0, keepdims=False)
         >>> print(y)
-        (Tensor(shape=[3], dtype=Float32, value=[0.38, 0.16, 0.44]), Tensor(shape=[3], dtype=Int64, value=[1, 2, 2]))
+        (Tensor(shape=[3], dtype=Float32, value= [ 3.79999995e-01,  1.59999996e-01,  4.39999998e-01]),
+        Tensor(shape=[3], dtype=Int64, value= [1, 2, 2]))
     """
     return Median(False, axis, keepdims)(x)
 
