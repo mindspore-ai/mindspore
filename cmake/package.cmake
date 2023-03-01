@@ -184,9 +184,10 @@ if(ENABLE_GPU)
         endif()
     endif()
     install(
-            TARGETS cuda_ops
+            TARGETS cuda_ops LIBRARY
             DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
             COMPONENT mindspore
+            NAMELINK_SKIP
     )
 endif()
 

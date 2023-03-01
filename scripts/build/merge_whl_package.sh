@@ -28,6 +28,7 @@ for whl in "$@"; do
 done
 
 MAX_GPU_VERSION=0
+declare -A GPU_VERSION_MAP
 for ((i=1;i<$counter;i=$i+1))
 do
   echo "Rename $i dirname to mindspore ..."
@@ -50,17 +51,31 @@ do
   fi;
   CUR_GPU_VERSION=`find "./$i/mindspore/lib/plugin" -name 'gpu*' -exec sh -c 'echo ${0##*gpu}' {} \;`
   if [ -n "$CUR_GPU_VERSION" ]; then
+    GPU_VERSION_MAP[$CUR_GPU_VERSION]=$i
+  else
+    rm -rf $i
+  fi;
+done
+
+for key in $(for x in "${!GPU_VERSION_MAP[@]}"; do echo $x; done | sort)
+do
+  i=${GPU_VERSION_MAP[$key]}
+  CUR_GPU_VERSION=$key
+  CUDA_OPS_FILE=`basename ./$i/mindspore/lib/plugin/gpu$CUR_GPU_VERSION/libcuda_ops.so*`
+  if [ "`echo "$CUR_GPU_VERSION > $MAX_GPU_VERSION" | bc`" -eq 1 ]; then
     if [ "`echo "$CUR_GPU_VERSION > $MAX_GPU_VERSION" | bc`" -eq 1 ]; then
       MAX_GPU_VERSION=$CUR_GPU_VERSION
-      if [ ! -d "$BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu" ]; then
-        mkdir -p $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu
-      fi;
-      \cp -rf ./$i/mindspore/lib/plugin/gpu$CUR_GPU_VERSION/libcuda_ops.so $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu
     fi;
-    rm -f $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu$CUR_GPU_VERSION/libcuda_ops.so
+    if [ ! -d "$BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu" ]; then
+      mkdir -p $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu
+    fi;
+    \cp -rf ./$i/mindspore/lib/plugin/gpu$CUR_GPU_VERSION/$CUDA_OPS_FILE \
+      $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu/$CUDA_OPS_FILE
   fi;
+  rm -f $BASE_PACKAGE_UNZIP_DIR/mindspore/lib/plugin/gpu$CUR_GPU_VERSION/libcuda_ops.so*
   rm -rf $i
 done
+
 
 export COMMIT_ID=`cat $BASE_PACKAGE_UNZIP_DIR/mindspore/.commit_id | awk '{print $3}' | sed $'s/\'//g'`
 VERSION=`cat $BASE_PACKAGE_UNZIP_DIR/mindspore/version.py | awk '{print $3}' | sed $'s/\'//g'`
