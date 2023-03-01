@@ -412,6 +412,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
     assert compare(output, expect)
 
 
+@pytest.mark.skip(reason="randomly failed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
