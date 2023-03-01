@@ -206,9 +206,9 @@ class Mlp(nn.Cell):
         self.fc2.matmul.shard(((dp, mp), (1, mp)))
         self.fc2.bias_add.shard(((dp, 1), (1,)))
 
-        self.drop = nn.Dropout(1.0-drop)
+        self.drop = nn.Dropout(p=drop)
         self.drop.dropout.shard(((dp, 1),))
-        self.drop2 = nn.Dropout(1.0-drop)
+        self.drop2 = nn.Dropout(p=drop)
         self.drop2.dropout.shard(((dp, mp),))
 
     def construct(self, x):
@@ -263,14 +263,14 @@ class Attention(nn.Cell):
         self.softmax.softmax.shard(((dp, mp, 1, 1),))
 
         self.batmatmul_trans_b = P.BatchMatMul().shard(((dp, mp, 1, 1), (dp, mp, 1, 1)))
-        self.attn_drop = nn.Dropout(1. - attn_drop)
+        self.attn_drop = nn.Dropout(p=attn_drop)
         self.attn_drop.dropout.shard(((dp, mp, 1, 1),))
 
         self.proj = nn.Dense(hidden_dim, dim, weight_init=TruncatedNormal(0.02)).to_float(mindspore.float16)
         self.proj.matmul.shard(((dp, mp), (1, mp)))
         self.proj.bias_add.shard(((dp, 1), (1,)))
 
-        self.proj_drop = nn.Dropout(1. - proj_drop)
+        self.proj_drop = nn.Dropout(p=proj_drop)
         self.proj_drop.dropout.shard(((dp, 1),))
 
         self.transpose = P.Transpose().shard(((dp, 1, mp, 1),))

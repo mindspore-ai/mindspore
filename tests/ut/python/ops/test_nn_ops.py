@@ -570,7 +570,7 @@ test_cases = [
         'desc_bprop': [[128, 32, 32, 64]],
     }),
     ('DropoutGrad', {
-        'block': DropoutGrad(VirtualNetWithLoss(nn.Dropout())),
+        'block': DropoutGrad(VirtualNetWithLoss(nn.Dropout(p=0.5))),
         'desc_inputs': [[128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 32, 64]],
     }),

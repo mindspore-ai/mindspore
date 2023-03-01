@@ -23,7 +23,6 @@ import mindspore.context as context
 
 from gnngraph_dataset import GraphDataset, GatherNet, CSRReduceSumNet
 
-
 DATASET_PATH = "/home/workspace/mindspore_dataset/cora/cora_mr/cora_v2_with_mask.npz"
 FEAT_DROPOUT = 0.5
 EDGE_DROPOUT = 0.5
@@ -47,7 +46,7 @@ class APPNPConv(ms.nn.Cell):
         super().__init__()
         self.k_ = k
         self.alpha_ = alpha
-        self.edge_drop = ms.nn.Dropout(edge_drop)
+        self.edge_drop = ms.nn.Dropout(p=1.0 - edge_drop)
         self.min_clip = Tensor(1, ms.int32)
         self.max_clip = Tensor(10000000, ms.int32)
         self.gather = GatherNet(indptr_backward, indices_backward)
@@ -86,7 +85,7 @@ class APPNPNet(nn.Cell):
         self.fc0 = nn.Dense(in_feats, hidden_dim, weight_init=XavierUniform())
         self.fc1 = nn.Dense(hidden_dim, n_classes, weight_init=XavierUniform())
         self.act = activation()
-        self.feat_drop = nn.Dropout(feat_dropout)
+        self.feat_drop = nn.Dropout(p=1.0 - feat_dropout)
         self.propagate = APPNPConv(k, alpha, edge_dropout, indptr_backward, indices_backward)
 
     def construct(self, x, in_deg, out_deg, n_nodes, indptr, indices):

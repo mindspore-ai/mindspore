@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=Fa
 
 
 n = Xception(num_classes=1000)
-n.dropout = nn.Dropout(keep_prob=1.0)
+n.dropout = nn.Dropout(p=0.0)
 
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
 optimizer = nn.SGD(n.trainable_params(), learning_rate=0.01, momentum=0.9, dampening=0.0, weight_decay=0.0,

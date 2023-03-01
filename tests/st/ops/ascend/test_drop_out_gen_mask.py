@@ -57,7 +57,7 @@ def test_net():
 class Drop(nn.Cell):
     def __init__(self):
         super(Drop, self).__init__()
-        self.drop = nn.Dropout(1.0 - 0.5)
+        self.drop = nn.Dropout(p=0.5)
 
     def construct(self, out):
         out = self.drop(out)

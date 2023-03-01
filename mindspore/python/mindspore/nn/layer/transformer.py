@@ -277,14 +277,14 @@ class TransformerEncoderLayer(Cell):
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first)
         # feedforward layer
         self.linear1 = _Linear(d_model, dim_feedforward)
-        self.dropout = Dropout(1-dropout)
+        self.dropout = Dropout(p=dropout)
         self.linear2 = _Linear(dim_feedforward, d_model)
 
         self.norm_first = norm_first
         self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps)
         self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps)
-        self.dropout1 = Dropout(1-dropout)
-        self.dropout2 = Dropout(1-dropout)
+        self.dropout1 = Dropout(p=dropout)
+        self.dropout2 = Dropout(p=dropout)
 
         if not isinstance(activation, str) and not isinstance(activation, Cell) \
             and not callable(activation):
@@ -389,16 +389,16 @@ class TransformerDecoderLayer(Cell):
         self.multihead_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first)
         # feedforward layer
         self.linear1 = _Linear(d_model, dim_feedforward)
-        self.dropout = Dropout(1-dropout)
+        self.dropout = Dropout(p=dropout)
         self.linear2 = _Linear(dim_feedforward, d_model)
 
         self.norm_first = norm_first
         self.norm1 = LayerNorm((d_model,), epsilon=layer_norm_eps)
         self.norm2 = LayerNorm((d_model,), epsilon=layer_norm_eps)
         self.norm3 = LayerNorm((d_model,), epsilon=layer_norm_eps)
-        self.dropout1 = Dropout(1-dropout)
-        self.dropout2 = Dropout(1-dropout)
-        self.dropout3 = Dropout(1-dropout)
+        self.dropout1 = Dropout(p=dropout)
+        self.dropout2 = Dropout(p=dropout)
+        self.dropout3 = Dropout(p=dropout)
 
         if not isinstance(activation, str) and not isinstance(activation, Cell) \
             and not callable(activation):

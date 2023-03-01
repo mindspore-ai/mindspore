@@ -3102,7 +3102,7 @@ test_case_nn_ops = [
         'desc_inputs': [[64, 12, 128, 128], Tensor(np.ones(1572864).astype(np.uint8))],
         'desc_bprop': [[64, 12, 128, 128]]}),
     ('Dropout', {
-        'block': nn.Dropout(0.5),
+        'block': nn.Dropout(p=0.5),
         'desc_inputs': [[64, 12, 128, 128]],
         'desc_bprop': [[64, 12, 128, 128]]}),
     ('ReduceMean0', {

@@ -251,7 +251,7 @@ class BertAttentionSoftmax(nn.Cell):
         self.weight = TruncatedNormal(initializer_range)
 
         self.softmax = nn.Softmax()
-        self.dropout = nn.Dropout(1 - attention_probs_dropout_prob)
+        self.dropout = nn.Dropout(p=attention_probs_dropout_prob)
         self.transpose = P.Transpose()
 
         self.value_layer = nn.Dense(self.to_tensor_width,

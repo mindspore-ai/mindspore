@@ -70,7 +70,7 @@ class DNN(nn.Cell):
             dense_layer = nn.Dense(in_channels=self.hidden_units[i], out_channels=self.hidden_units[i + 1],
                                    activation=self.activation, weight_init="heUniform")
             dense_layers.append(dense_layer)
-            drop_layer = nn.Dropout(1.0 - self.dropout_rate)
+            drop_layer = nn.Dropout(p=self.dropout_rate)
             drop_layers.append(drop_layer)
         self.dense_layers = nn.CellList(dense_layers)
         self.drop_layers = nn.CellList(drop_layers)

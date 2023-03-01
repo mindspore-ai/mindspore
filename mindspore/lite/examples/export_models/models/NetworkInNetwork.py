@@ -35,7 +35,7 @@ class NiN(nn.Cell):
             nn.Conv2d(in_channels=160, out_channels=96, kernel_size=1, stride=1, has_bias=True),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same'),
-            nn.Dropout(1.0)
+            nn.Dropout(p=0.0)
         )
         self.block1 = nn.SequentialCell(
             # block 1
@@ -46,7 +46,7 @@ class NiN(nn.Cell):
             nn.Conv2d(in_channels=192, out_channels=192, kernel_size=1, stride=1, has_bias=True),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same'),
-            nn.Dropout(1.0)
+            nn.Dropout(p=0.0)
         )
         self.block2 = nn.SequentialCell(
             # block 2

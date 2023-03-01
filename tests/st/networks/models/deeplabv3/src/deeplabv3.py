@@ -300,7 +300,7 @@ class SingleDeepLabV3(nn.Cell):
                               float(feature_shape[3])]
 
         self.pad = P.Pad(((0, 0), (0, 0), (1, 1), (1, 1)))
-        self.dropout = nn.Dropout(keep_prob=0.9)
+        self.dropout = nn.Dropout(p=0.1)
         self.shape = P.Shape()
         self.decoder_output_stride = decoder_output_stride
         if decoder_output_stride is not None:

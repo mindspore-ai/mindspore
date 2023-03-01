@@ -160,7 +160,7 @@ class _BaseAggregator(nn.Cell):
                                           has_bias=self.has_bias)
         self.dropout_ratio = dropout_ratio
         if self.dropout_ratio is not None:
-            self.dropout = nn.Dropout(keep_prob=self.dropout_ratio)
+            self.dropout = nn.Dropout(p=1.0 - self.dropout_ratio)
         self.dropout_flag = self.dropout_ratio is not None
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
@@ -263,8 +263,8 @@ class AttentionHead(nn.Cell):
         self.in_channel = Validator.check_positive_int(in_channel)
         self.out_channel = Validator.check_positive_int(out_channel)
         self.in_drop_ratio = in_drop_ratio
-        self.in_drop = nn.Dropout(keep_prob=1 - in_drop_ratio)
-        self.in_drop_2 = nn.Dropout(keep_prob=1 - in_drop_ratio)
+        self.in_drop = nn.Dropout(p=in_drop_ratio)
+        self.in_drop_2 = nn.Dropout(p=in_drop_ratio)
         self.feature_transform = GNNFeatureTransform(
             in_channels=self.in_channel,
             out_channels=self.out_channel,
@@ -278,7 +278,7 @@ class AttentionHead(nn.Cell):
             out_channels=1)
         self.softmax = nn.Softmax()
 
-        self.coef_drop = nn.Dropout(keep_prob=1 - coef_drop_ratio)
+        self.coef_drop = nn.Dropout(p=coef_drop_ratio)
         self.batch_matmul = P.BatchMatMul()
         self.bias_add = P.BiasAdd()
         self.bias = Parameter(initializer('zeros', self.out_channel), name='bias')

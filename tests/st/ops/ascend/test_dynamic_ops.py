@@ -144,7 +144,7 @@ class Conv2dNet(nn.Cell):
 class DropoutNet(nn.Cell):
     def __init__(self):
         super(DropoutNet, self).__init__()
-        self.drop = nn.Dropout(0.5)
+        self.drop = nn.Dropout(p=0.5)
         self.relu = ops.ReLU()
 
     def construct(self, x):

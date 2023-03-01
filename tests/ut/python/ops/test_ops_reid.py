@@ -135,7 +135,7 @@ test_case_reid_ops = [
         'desc_inputs': [convert([256], np.float16), convert([256], np.float16)],
         'desc_bprop': [convert([256], np.bool_)]}),
     ('Dropout', {
-        'block': nn.Dropout(),
+        'block': nn.Dropout(p=0.5),
         'desc_inputs': [[1, 512, 7, 7]],
         'desc_bprop': [[1, 512, 7, 7]]}),
     ('MatMul', {

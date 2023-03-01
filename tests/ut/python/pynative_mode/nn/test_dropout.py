@@ -25,14 +25,14 @@ context.set_context(device_target="Ascend")
 
 def test_check_dropout():
     x = Tensor(np.ones([20, 16, 50]), mstype.float32)
-    m = nn.Dropout(0.8)
+    m = nn.Dropout(p=0.2)
     m(x)
 
 
 class Net_Dropout(nn.Cell):
     def __init__(self):
         super(Net_Dropout, self).__init__()
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(p=0.5)
 
     def construct(self, x):
         return self.dropout(x)
