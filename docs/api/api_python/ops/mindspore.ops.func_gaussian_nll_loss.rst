@@ -31,7 +31,7 @@ mindspore.ops.gaussian_nll_loss
         - **TypeError** - `var` 不是Tensor。
         - **TypeError** - `full` 不是bool。
         - **TypeError** - `eps` 不是float。
-        - **ValueError** - `eps` 不是在[0, inf)区间的float。
+        - **ValueError** - `eps` 不是在(0, inf)区间的float。
         - **ValueError** - `reduction` 不是 ``'none'`` 、 ``'mean'`` 或者 ``'sum'`` 。
 
     参考：
