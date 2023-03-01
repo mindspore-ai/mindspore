@@ -1460,8 +1460,12 @@ static std::vector<ActionItem> CommonPipeline() {
   // Resolve the python func
   (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
 
-  auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
-  if (!is_cluster_initialized && !multi_graphs && pipeline::GetJitLevel() != "O0") {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  const bool is_parallel_mode =
+    parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+  if (!is_cluster_initialized && !is_parallel_mode && pipeline::GetJitLevel() != "O0") {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 

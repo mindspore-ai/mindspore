@@ -938,7 +938,7 @@ std::vector<StrategyPtr> MaxPool3DInfo::GenerateOpStrategies(int64_t stage_id) {
     return sp_vector;
   }
 
-  Shapes splittable_input = {{1, 1, 1, 1, 1}};
+  Shapes splittable_input = {{1, 1, 1, 1, 0}};  // the last dim can not be split
   Shapes tmp_inputs_shape = inputs_shape_;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
