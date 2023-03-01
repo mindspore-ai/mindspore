@@ -9445,6 +9445,7 @@ def einsum(equation, *operands):
         >>> x = mindspore.Tensor([1, 2, 3, 4], mindspore.float32)
         >>> y = mindspore.Tensor([1, 2], mindspore.float32)
         >>> output = ops.einsum(x, [..., 1], y, [..., 2], [..., 1, 2])
+        >>> print(output)
         [[1. 2.]
          [2. 4.]
          [3. 6.]
