@@ -1158,7 +1158,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
-def dropout(x, p=0.5, seed0=0, seed1=0):
+def dropout(input, p=0.5):
     """
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
@@ -1166,34 +1166,31 @@ def dropout(x, p=0.5, seed0=0, seed1=0):
     here is opposite to that in `ops.Dropout` and `nn.Dropout`.
 
     Args:
-        x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
+        input (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
-        seed0 (int, optional): seed0 value for random generating. Default: 0.
-        seed1 (int, optional): seed1 value for random generating. Default: 0.
 
     Returns:
-        - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `x`.
+        - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
         - **mask** (Tensor) - Mask for zeroing, bitwise compression and alignment are performed internally.
 
     Raises:
         TypeError: If `p` is not a float.
-        TypeError: If `seed0` or `seed1` is not an int.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output, mask = ops.dropout(x, p=0.5)
-        >>> print(output.shape, mask.shape, mask.dtype)
-        (2, 2) (16,) UInt8
+        >>> input = Tensor(((20, 16), (50, 50)), mindspore.float32)
+        >>> output = ops.dropout(input, p=0.5)
+        >>> print(output.shape)
+        (2, 2)
     """
     keep_prob = 1 - p
-    dropout_ = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)
-    return dropout_(x)
+    out, _ = P.Dropout(keep_prob=keep_prob)(input)
+    return out
 
 
 def celu(x, alpha=1.0):
