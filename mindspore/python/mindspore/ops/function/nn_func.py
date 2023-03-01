@@ -2013,7 +2013,7 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
     Args Support List and Supported Platforms:
 
     +----------------+------+----------------+---------------+------------------+
-    | mode           | dim  | align_corners  | scale_factor  | device           |
+    | mode           | x.dim| align_corners  | scale_factor  | device           |
     +================+======+================+===============+==================+
     | nearest        | 3    | \-             | ×             | Ascend,GPU,CPU   |
     +----------------+------+----------------+---------------+------------------+
@@ -2058,6 +2058,9 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         ValueError: `size` is not empty, `recompute_scale_factor` is not empty.
         ValueError: `scale_factor` is not in the corresponding list of supported values.
         ValueError: `align_corners` is not in the corresponding list of supported values.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
