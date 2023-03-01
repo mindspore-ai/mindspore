@@ -1310,21 +1310,21 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = cnode->func_graph();
 
+  constexpr auto debug_recursive_level = 2;
   const auto &debug_info = trace::GetSourceCodeDebugInfo(out_conf->node()->debug_info());
   const auto &location = debug_info->location();
   if (location == nullptr) {
-    MS_LOG(WARNING) << "Location info is null, node: " << out_conf->node()->DebugString();
+    MS_LOG(WARNING) << "Location info is null, node: " << out_conf->node()->DebugString(debug_recursive_level);
     return nullptr;
   }
   const auto expr = location->expr_src();
   if (expr.empty()) {
-    MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString();
+    MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString(debug_recursive_level);
     return nullptr;
   }
   auto owner_abs = args_abs_list[0];
   auto owner_value = owner_abs->BuildValue();
   auto owner_node = cnode->input(1);
-  constexpr auto debug_recursive_level = 2;
   MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
                 << ", owner_value: " << owner_value->ToString();
   if (owner_value->isa<parse::InterpretedObject>()) {
@@ -1372,7 +1372,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   const auto getattr_node = fg->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_getattr_str), NewValueNode(key_tuple), value_tuple_node});
   getattr_node->set_debug_info(cnode->debug_info());
-  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString();
+  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
 
   fg->ReplaceInOrder(cnode, getattr_node);
   auto eng = out_conf->engine();
@@ -1758,8 +1758,6 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());
-        auto cnode = dyn_cast<CNode>(out_conf->node());
-        MS_EXCEPTION_IF_NULL(cnode);
         if (!IsPyExecuteCNodeData(data_args)) {  // Not check if the data is PyExecute CNode.
           CheckObjAttrValid(data_type, item_name, data_args);
         }
@@ -1913,7 +1911,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
   // Try to search method map, if not found, the data_type should be External type.
   TypePtr data_type = data_args->BuildType();
-  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
+  // Not check if the data is PyExecute CNode, since its Tensor output is pseud.
+  if (!IsPyExecuteCNodeData(data_args) && pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_abs_list, data_conf, out_conf);
   }
   return GetEvaluatedValueForNameSpace(args_abs_list, out_conf);
