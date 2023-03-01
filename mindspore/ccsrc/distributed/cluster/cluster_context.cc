@@ -24,6 +24,7 @@
 #include "distributed/cluster/topology/compute_graph_node.h"
 #include "distributed/cluster/topology/meta_server_node.h"
 #include "distributed/collective/collective_manager.h"
+#include "proto/topology.pb.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "ps/core/comm_util.h"
@@ -190,6 +191,19 @@ bool ClusterContext::BuildCluster() {
   EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(INFO) << "Cluster is successfully initialized.";
+
+  if (node_role_ != kEnvRoleOfScheduler) {
+    auto cgn = std::dynamic_pointer_cast<topology::ComputeGraphNode>(node_base_);
+    MS_EXCEPTION_IF_NULL(cgn);
+    std::string port_range_pb = cgn->GetMetadata(kNodePortRange);
+    topology::NodePortRanges node_port_ranges;
+    (void)node_port_ranges.ParseFromArray(port_range_pb.c_str(), SizeToInt(port_range_pb.size()));
+    auto port_range = node_port_ranges.data().at(node_id);
+    port_range_.first = port_range.min_port();
+    port_range_.second = port_range.max_port();
+    MS_LOG(INFO) << "Port range assigned for this node " << node_id << " is " << port_range_.first << " to "
+                 << port_range_.second;
+  }
   return true;
 }
 

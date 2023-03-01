@@ -228,6 +228,11 @@ if(ENABLE_MPI)
     add_compile_definitions(ENABLE_MPI)
 endif()
 
+if(ENABLE_RDMA)
+    add_compile_definitions(ENABLE_RDMA)
+    include_directories(/usr/include/umdk)
+endif()
+
 ## make protobuf files
 file(GLOB ONNX_PROTO "" ${CMAKE_SOURCE_DIR}/third_party/proto/onnx/onnx.proto)
 message("onnx proto path is :" ${ONNX_PROTO})

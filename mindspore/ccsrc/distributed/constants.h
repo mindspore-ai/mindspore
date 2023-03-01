@@ -87,6 +87,12 @@ const uint16_t kDefaultSchedPort = 6667;
 const uint16_t kMaxPort = 65535;
 constexpr uint32_t kDefaultFinishTimeout = 30;
 
+// For each computing graph node, there is a range for rpc server's port number.
+// Each node has range number 2048, and the port started from 8118.
+constexpr uint32_t kStartPort = 8118;
+constexpr uint32_t kNodePortRangeNum = 4096;
+constexpr char kNodePortRange[] = "node_port_range";
+
 constexpr char kDataSyncSrcOpName[] = "DataSyncSrc";
 constexpr char kDataSyncDstOpName[] = "DataSyncDst";
 constexpr char kControlSrcOpName[] = "ControlSrc";

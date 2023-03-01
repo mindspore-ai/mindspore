@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <utility>
 #include "distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
@@ -80,6 +81,9 @@ class BACKEND_EXPORT ClusterContext {
   void set_cluster_exit_with_exception();
   bool cluster_exit_with_exception() const;
 
+  // Return server range of this node.
+  const std::pair<uint32_t, uint32_t> &port_range() const { return port_range_; }
+
  private:
   ClusterContext();
 
@@ -125,6 +129,8 @@ class BACKEND_EXPORT ClusterContext {
 
   // The actor route table proxy. It only created in abstract nodes because scheduler does not use proxy.
   ActorRouteTableProxyPtr actor_route_table_proxy_;
+
+  std::pair<uint32_t, uint32_t> port_range_;
 };
 }  // namespace cluster
 }  // namespace distributed
