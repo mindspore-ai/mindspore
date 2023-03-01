@@ -259,21 +259,24 @@ std::vector<bool> GradDec2Bin(const int64_t &mask) {
 }
 
 template <typename T>
-void ParseStrideSliceGradMasksST(const CNodePtr &kernel_node, std::vector<T> *begin, std::vector<T> *end,
+void ParseStrideSliceGradMasksST(const BaseOperatorPtr &base_operator, std::vector<T> *begin, std::vector<T> *end,
                                  std::vector<T> *stride, ShapeVector *input_shape, const ShapeVector output_shape,
                                  int shape_dim_output, int slice_len) {
   std::vector<T> &_begin_attr = *begin;
   std::vector<T> &_end_attr = *end;
   std::vector<T> &_stride_attr = *stride;
-  auto begin_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBeginMask);
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  auto begin_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrBeginMask));
   auto begin_mask = GradDec2Bin(begin_mask_int);
-  auto end_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEndMask);
+  auto end_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEndMask));
   auto end_mask = GradDec2Bin(end_mask_int);
-  auto ellipsis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEllipsisMask);
+  auto ellipsis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEllipsisMask));
   auto ellipsis_mask = GradDec2Bin(ellipsis_mask_int);
-  auto new_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrNewAxisMask);
+  auto new_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrNewAxisMask));
   auto new_axis_mask = GradDec2Bin(new_axis_mask_int);
-  auto shrink_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrShrinkAxisMask);
+  auto shrink_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrShrinkAxisMask));
   auto shrink_axis_mask = GradDec2Bin(shrink_axis_mask_int);
   int i = 0;
   int j = 0;
@@ -366,33 +369,54 @@ void FillEmptyDimsSTGrad(std::vector<T> *begin, std::vector<T> *end, std::vector
 }
 }  // namespace
 
-void StridedSliceV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
-  ClearVectors();
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex4);
-  if (input_shape.size() > kStridedSliceV2GradMaxInputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 8D or lower, but got "
-                      << input_shape.size() << "D.";
-  }
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex4);
-  dtype_grad_attr = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num == kStridedSliceV2GradDynamicInputsNum) {  // Dynamic Shape
-    return;
-  }
-  // in the case that begin, end, size, stride are const value.
-  std::vector<int64_t> begin_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
-  (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                       [](const int64_t &value) { return LongToInt(value); });
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  auto strides = prim->GetAttr(STRIDES);
+bool StridedSliceV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  base_operator_ = base_operator;
+  kernel_name_ = base_operator->name();
 
-  std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  std::vector<int64_t> end_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input can not be empty.";
+  }
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+
+  dtype_ = inputs[kIndex4]->GetDtype();
+  dtype_grad_attr = inputs[kIndex1]->GetDtype();
+
+  return true;
+}
+
+int StridedSliceV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  ClearVectors();
+  begin_shape_ = inputs_[kIndex1]->GetShapeVector();
+  end_shape_ = inputs_[kIndex2]->GetShapeVector();
+  stride_shape_ = inputs_[kIndex3]->GetShapeVector();
+  input_shape_ = inputs[kIndex4]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+
+  if (inputs.size() == kStridedSliceV2GradDynamicInputsNum) {  // Dynamic Shape
+    return KRET_OK;
+  }
+
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<int64_t> strides_me = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
+  std::vector<int64_t> end_me = GetValue<std::vector<int64_t>>(prim->GetAttr(END));
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
@@ -405,6 +429,7 @@ void StridedSliceV2GradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   FormatArgs(true);
   ExpandAllMemberDims(kStridedSliceV2GradMaxInputShapeSize);
+  return KRET_OK;
 }
 
 void StridedSliceV2GradCpuKernelMod::ClearVectors() {
@@ -412,8 +437,6 @@ void StridedSliceV2GradCpuKernelMod::ClearVectors() {
   size_.clear();
   strides_.clear();
   end_.clear();
-  input_element_num_.clear();
-  output_element_num_.clear();
   input_shape_.clear();
   output_shape_.clear();
 }
@@ -449,33 +472,24 @@ void StridedSliceV2GradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
 // init for dynamic shape
 template <typename T>
 void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
-  auto cnode = cnode_ptr_.lock();
-  ClearVectors();
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode, 0);
-  std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
-  auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
-  auto begin_ptr = static_cast<T *>(inputs[1]->addr);
-  std::vector<T> begin{begin_ptr, begin_ptr + begin_shape[0]};
-
-  auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex2);
-  auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex3);
-  if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
+  if (begin_shape_.size() != 1 || end_shape_.size() != 1 || stride_shape_.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimensions of 'begin', 'end', 'strides' must be 1, "
                          "but got the dimension of 'begin': "
-                      << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
-                      << ", and the dimension of 'strides': " << stride_shape.size();
+                      << begin_shape_.size() << ", the dimension of 'end': " << end_shape_.size()
+                      << ", and the dimension of 'strides': " << stride_shape_.size();
   }
+  auto begin_ptr = static_cast<T *>(inputs[1]->addr);
+  std::vector<T> begin{begin_ptr, begin_ptr + begin_shape_[0]};
   auto end_ptr = static_cast<T *>(inputs[kIndex2]->addr);
   auto strides_ptr = static_cast<T *>(inputs[kIndex3]->addr);
 
-  std::vector<T> end{end_ptr, end_ptr + end_shape[0]};
-  std::vector<T> strides{strides_ptr, strides_ptr + stride_shape[0]};
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex4);
+  std::vector<T> end{end_ptr, end_ptr + end_shape_[0]};
+  std::vector<T> strides{strides_ptr, strides_ptr + stride_shape_[0]};
   shape_dim_output = SizeToInt(output_shape_.size());
   slice_len = SizeToInt(begin.size());
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
-  ParseStrideSliceGradMasksST<T>(cnode, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
+  ParseStrideSliceGradMasksST<T>(base_operator_, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
                                  slice_len);
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_), [](const T &value) { return value; });
@@ -494,10 +508,6 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Addres
 bool StridedSliceV2GradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input can not be empty.";
-  }
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   bool ret = true;
   if (dtype_ == kNumberTypeInt32) {
     ret = LaunchKernel<int32_t>(inputs, outputs);

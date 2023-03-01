@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
@@ -27,13 +28,15 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kStridedSliceV2 = "StridedSliceV2";
-class StridedSliceV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class StridedSliceV2CpuKernelMod : public NativeCpuKernelMod {
  public:
   StridedSliceV2CpuKernelMod() = default;
   ~StridedSliceV2CpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -44,33 +47,38 @@ class StridedSliceV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
 
   template <typename T>
-  bool StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs);
+  void StridedSliceV2LaunchDynamicType(const std::vector<kernel::AddressPtr> &inputs);
 
   template <typename T>
-  void InitSliceParam(const CNodePtr &kernel_node, std::vector<T> *begin, std::vector<T> *end, std::vector<T> *stride);
+  void InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<T> *begin, std::vector<T> *end,
+                      std::vector<T> *stride);
   bool MatchParallelPattern();
   void InitParallelParam();
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
 
-  bool StridedSliceV2LaunchCal(const std::vector<kernel::AddressPtr> &inputs,
+  void StridedSliceV2LaunchCal(const std::vector<kernel::AddressPtr> &inputs,
                                const std::vector<kernel::AddressPtr> &outputs);
   common::Status RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   common::Status RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
-  void ParseMasks(const CNodePtr &kernel_node);
 
   TypeId dtype_;
-  TypeId dtype_attr;
+  TypeId dtype_attr_;
   int data_size_{4};
   int split_axis_{-1};
   int inner_{1};
   int outer_{1};
   int cal_num_per_thread_{1};
   bool parallel_{false};
+  BaseOperatorPtr base_operator_;
+  size_t inputs_num_;
   size_t shape_dim_input;
   size_t slice_len;
   ParallelStrategy parallel_strategy_{kOnSplitAxis};
   ShapeVector input_shape_;
   ShapeVector output_shape_;
+  ShapeVector begin_shape_;
+  ShapeVector end_shape_;
+  ShapeVector stride_shape_;
   StridedSliceParameter slice_param_;
 };
 }  // namespace kernel

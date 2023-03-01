@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include <map>
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/strided_slice_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -30,7 +30,7 @@ namespace kernel {
 constexpr auto kStridedSliceV2Grad = "StridedSliceV2Grad";
 constexpr auto kUnknown = "Unknown";
 
-class StridedSliceV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class StridedSliceV2GradCpuKernelMod : public NativeCpuKernelMod {
  public:
   StridedSliceV2GradCpuKernelMod() = default;
 
@@ -38,8 +38,10 @@ class StridedSliceV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   ~StridedSliceV2GradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -68,16 +70,18 @@ class StridedSliceV2GradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool CalStridedSliceV2Grad(T *input, T *output);
 
+  BaseOperatorPtr base_operator_;
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
   std::vector<int> size_;
-  ShapeVector input_shape_;
   int shape_dim_output{0};
   int slice_len{0};
-  std::vector<size_t> input_element_num_;
+  ShapeVector input_shape_;
+  ShapeVector begin_shape_;
+  ShapeVector end_shape_;
+  ShapeVector stride_shape_;
   ShapeVector output_shape_;
-  std::vector<size_t> output_element_num_;
   TypeId dtype_{kTypeUnknown};
   TypeId dtype_grad_attr{kTypeUnknown};
   std::string kernel_type_{kUnknown};
