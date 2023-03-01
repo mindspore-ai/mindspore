@@ -903,7 +903,11 @@ def test_randn():
     set_seed(1)
     t1 = mnp.randn(1, 2, 3)
     t2 = mnp.randn(1, 2, 3)
-    assert (t1.asnumpy() == t2.asnumpy()).all()
+    assert onp.array_equal(t1.asnumpy(), t2.asnumpy()) is False
+
+    set_seed(1)
+    t3 = mnp.randn(1, 2, 3)
+    assert (t1.asnumpy() == t3.asnumpy()).all()
 
     with pytest.raises(ValueError):
         mnp.randn(dtype="int32")
@@ -931,7 +935,11 @@ def test_rand():
     set_seed(1)
     t1 = mnp.rand(1, 2, 3)
     t2 = mnp.rand(1, 2, 3)
-    assert (t1.asnumpy() == t2.asnumpy()).all()
+    assert onp.array_equal(t1.asnumpy(), t2.asnumpy()) is False
+
+    set_seed(1)
+    t3 = mnp.rand(1, 2, 3)
+    assert (t1.asnumpy() == t3.asnumpy()).all()
 
     with pytest.raises(ValueError):
         mnp.rand(dtype="int32")
@@ -958,7 +966,11 @@ def test_randint():
     set_seed(1)
     t1 = mnp.randint(1, 5, 3)
     t2 = mnp.randint(1, 5, 3)
-    assert (t1.asnumpy() == t2.asnumpy()).all()
+    assert onp.array_equal(t1.asnumpy(), t2.asnumpy()) is False
+
+    set_seed(1)
+    t3 = mnp.randint(1, 5, 3)
+    assert (t1.asnumpy() == t3.asnumpy()).all()
 
     with pytest.raises(TypeError):
         mnp.randint(1.2)
