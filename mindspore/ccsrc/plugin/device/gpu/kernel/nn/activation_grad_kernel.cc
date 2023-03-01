@@ -26,6 +26,7 @@ constexpr auto kReLU6Grad = "ReLU6Grad";
 constexpr auto kTanhGrad = "TanhGrad";
 constexpr auto kEluGrad = "EluGrad";
 constexpr auto kSigmoidGrad = "SigmoidGrad";
+constexpr auto kSiLUGrad = "SiLUGrad";
 }  // namespace
 
 std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelMod::ActivationGradFunc>>>
@@ -73,7 +74,12 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
          .AddInputAttr(kNumberTypeComplex128)
          .AddInputAttr(kNumberTypeComplex128)
          .AddOutputAttr(kNumberTypeComplex128),
-       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<utils::Complex<double>>}}}};
+       &ActivationGradGpuKernelMod::LaunchSigmoidGrad<utils::Complex<double>>}}},
+    {kSiLUGrad,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &ActivationGradGpuKernelMod::LaunchSiLUGrad<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &ActivationGradGpuKernelMod::LaunchSiLUGrad<half>}}}};
 
 bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
@@ -101,6 +107,7 @@ bool ActivationGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     {kReLU6Grad, CUDNN_ACTIVATION_CLIPPED_RELU},
     {kTanhGrad, CUDNN_ACTIVATION_TANH},
     {kEluGrad, CUDNN_ACTIVATION_ELU},
+    {kSiLUGrad, CUDNN_ACTIVATION_SIGMOID},
     {kSigmoidGrad, CUDNN_ACTIVATION_SIGMOID}};
   auto mode_iter = activation_mode_map.find(kernel_name_);
   if (mode_iter == activation_mode_map.end()) {
@@ -138,7 +145,7 @@ int ActivationGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return KRET_OK;
   }
 
-  if (kernel_name_ == kSigmoidGrad || kernel_name_ == kTanhGrad) {
+  if (kernel_name_ == kSigmoidGrad || kernel_name_ == kTanhGrad || kernel_name_ == kSiLUGrad) {
     auto dtype_size = abstract::TypeIdSize(dtype_);
     if (dtype_size == 0) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the len of dtype is zero!";
@@ -218,6 +225,16 @@ bool ActivationGradGpuKernelMod::LaunchSigmoidGrad(const std::vector<kernel::Add
 }
 
 template <typename T>
+bool ActivationGradGpuKernelMod::LaunchSiLUGrad(const std::vector<kernel::AddressPtr> &inputs,
+                                                const std::vector<kernel::AddressPtr> &outputs) {
+  T *dout = GetDeviceAddress<T>(inputs, kIndex0);
+  T *x = GetDeviceAddress<T>(inputs, kIndex1);
+  T *out = GetDeviceAddress<T>(outputs, kIndex0);
+  SiLUGradOpt(x, dout, out, elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
+}
+
+template <typename T>
 bool ActivationGradGpuKernelMod::LaunchEluRelu(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &outputs) {
   T *dy = GetDeviceAddress<T>(inputs, kIndex0);
@@ -242,5 +259,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, EluGrad,
                                  []() { return std::make_shared<ActivationGradGpuKernelMod>(kEluGrad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, SigmoidGrad,
                                  []() { return std::make_shared<ActivationGradGpuKernelMod>(kSigmoidGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, SiLUGrad,
+                                 []() { return std::make_shared<ActivationGradGpuKernelMod>(kSiLUGrad); });
 }  // namespace kernel
 }  // namespace mindspore

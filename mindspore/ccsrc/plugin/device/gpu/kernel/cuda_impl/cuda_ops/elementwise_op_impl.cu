@@ -813,3 +813,36 @@ template CUDA_LIB_EXPORT void SigmoidGradOpt<Complex<float>>(const Complex<float
 template CUDA_LIB_EXPORT void SigmoidGradOpt<Complex<double>>(const Complex<double> *input, const Complex<double> *dout,
                                                               Complex<double> *output, const size_t count,
                                                               cudaStream_t cuda_stream);
+
+// SiLUGrad
+template <typename T>
+struct SiLUGradFunctor {
+  SiLUGradFunctor() {}
+  __device__ __forceinline__ T operator()(T y, T dout) const {
+    T one_{1};
+    T s = one_ / (one_ + exp(-y));
+    return dout * s * (one_ + y * (one_ - s));
+  }
+};
+
+template <>
+struct SiLUGradFunctor<half> {
+  SiLUGradFunctor() {}
+  __device__ __forceinline__ half operator()(half y, half dout) const {
+    half one_{1};
+    half s = one_ / (one_ + __float2half(exp(__half2float(-y))));
+    return dout * s * (one_ + y * (one_ - s));
+  }
+};
+
+template <typename T>
+void SiLUGradOpt(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SiLUGradFunctor<T> functor;
+  cuda::elementwise::Binary(functor, (uint)(count), output, input, dout, cuda_stream);
+  return;
+}
+
+template CUDA_LIB_EXPORT void SiLUGradOpt<float>(const float *input, const float *dout, float *output,
+                                                 const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void SiLUGradOpt<half>(const half *input, const half *dout, half *output, const size_t count,
+                                                cudaStream_t cuda_stream);
