@@ -135,7 +135,13 @@ void DynamicGRUV2GradFission::AddTLoopNode(const FuncGraphPtr &func_graph, const
     CreateMultipleOutputsOfAnfNode(func_graph, gru_hidden_grad_cnode, kGRUV2HiddenGradCellOutputNum,
                                    &hidden_grad_outputs);
     auto dgate_h = hidden_grad_outputs[hidden_grad_output_index["dgate_h"]];
-    (void)matmul_inputs.emplace_back(dgate_h);
+    auto cast_shape = common::AnfAlgo::GetOutputInferShape(dgate_h, 0);
+    std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+    (void)cast_inputs.emplace_back(dgate_h);
+    auto cast_node = NewCNode(cast_inputs, func_graph);
+    common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {cast_shape}, cast_node.get());
+    common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), cast_node);
+    (void)matmul_inputs.emplace_back(cast_node);
     auto weight_hidden = dynamic_gru_v2_grad_inputs[input_index["weight_hidden"]];
     std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
                                               weight_hidden};
@@ -144,11 +150,19 @@ void DynamicGRUV2GradFission::AddTLoopNode(const FuncGraphPtr &func_graph, const
     ShapeVector reshape_out_shape = {1, common::AnfAlgo::GetOutputInferShape(weight_hidden, 0)[0],
                                      common::AnfAlgo::GetOutputInferShape(weight_hidden, 0)[1]};
     common::AnfAlgo::SetOutputInferTypeAndShape({weight_hidden_dtype}, {reshape_out_shape}, reshape.get());
-    (void)matmul_inputs.emplace_back(reshape);
+
+    auto reshape_cast_shape = common::AnfAlgo::GetOutputInferShape(reshape, 0);
+    std::vector<AnfNodePtr> reshape_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+    (void)reshape_cast_inputs.emplace_back(reshape);
+    auto reshape_cast_node = NewCNode(reshape_cast_inputs, func_graph);
+    common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {reshape_cast_shape}, reshape_cast_node.get());
+    common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), reshape_cast_node);
+    (void)matmul_inputs.emplace_back(reshape_cast_node);
+
     auto matmul_node = NewCNode(matmul_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(matmul_node);
     ShapeVector out_shape = {1, SizeToLong(batch_size), SizeToLong(hidden_size)};
-    common::AnfAlgo::SetOutputInferTypeAndShape({weight_hidden_dtype}, {out_shape}, matmul_node.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {out_shape}, matmul_node.get());
     common::AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), matmul_node);
     common::AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(true), matmul_node);
 
@@ -296,18 +310,31 @@ AnfNodePtr DynamicGRUV2GradFission::AddDwhMatmulNode(const FuncGraphPtr &func_gr
   MS_EXCEPTION_IF_NULL(dgate_h);
   MS_EXCEPTION_IF_NULL(node);
   // BatchMatMul
+  std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  cast_inputs.emplace_back(node);
+  auto cast_node = NewCNode(cast_inputs, func_graph);
+  ShapeVector cast_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {cast_shape}, cast_node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), cast_node);
   std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name()))};
-  (void)matmul_inputs.emplace_back(node);
+  (void)matmul_inputs.emplace_back(cast_node);
+
+  std::vector<AnfNodePtr> dgate_h_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
   if (t_size == 1) {
     std::vector<AnfNodePtr> dgate_h_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dgate_h, kGRUV2HiddenGradCellOutputNum, &dgate_h_outputs);
-    (void)matmul_inputs.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
+    (void)dgate_h_cast_inputs.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
   } else {
-    (void)matmul_inputs.emplace_back(dgate_h);
+    (void)dgate_h_cast_inputs.emplace_back(dgate_h);
   }
+  auto dgate_h_cast_node = NewCNode(dgate_h_cast_inputs, func_graph);
+  ShapeVector dgate_h_cast_shape = common::AnfAlgo::GetOutputInferShape(dgate_h, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {dgate_h_cast_shape}, dgate_h_cast_node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), dgate_h_cast_node);
+  matmul_inputs.emplace_back(dgate_h_cast_node);
   auto batch_matmul = NewCNode(matmul_inputs, func_graph);
   ShapeVector shape = Convert2Long({t_size, hidden_size, kGateNum * hidden_size});
-  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {shape}, batch_matmul.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, batch_matmul.get());
   common::AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(true), batch_matmul);
   common::AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), batch_matmul);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), batch_matmul);
@@ -373,14 +400,30 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDwxBatchMatMul(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node1);
   MS_EXCEPTION_IF_NULL(node2);
-  // BatchMatMul
+
+  std::vector<AnfNodePtr> cast_inputs1 = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  cast_inputs1.emplace_back(node1);
+  auto cast_node1 = NewCNode(cast_inputs1, graph);
+  ShapeVector cast_shape1 = common::AnfAlgo::GetOutputInferShape(node1, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {cast_shape1}, cast_node1.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), cast_node1);
+
+  std::vector<AnfNodePtr> cast_inputs2 = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  cast_inputs2.emplace_back(node2);
+  auto cast_node2 = NewCNode(cast_inputs2, graph);
+  ShapeVector cast_shape2 = common::AnfAlgo::GetOutputInferShape(node2, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {cast_shape2}, cast_node2.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), cast_node2);
+
   std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name())),
-                                           node1, node2};
+                                           cast_node1, cast_node2};
+
+  // BatchMatMul
+
   auto batch_matmul = NewCNode(matmul_inputs, graph);
   MS_EXCEPTION_IF_NULL(batch_matmul);
   auto shape = Convert2Long({t_size, input_size, kGateNum * hidden_size});
-  auto x_dtype = common::AnfAlgo::GetOutputInferDataType(node1, input_index["x"]);
-  common::AnfAlgo::SetOutputInferTypeAndShape({x_dtype}, {shape}, batch_matmul.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, batch_matmul.get());
   common::AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(true), batch_matmul);
   common::AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(false), batch_matmul);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), batch_matmul);
@@ -393,12 +436,30 @@ AnfNodePtr DynamicGRUV2GradFission::CreateDxtBatchMatMul(const FuncGraphPtr &fun
   MS_EXCEPTION_IF_NULL(dgate_concat);
   MS_EXCEPTION_IF_NULL(weight_input);
   MS_EXCEPTION_IF_NULL(dx);
+
+  std::vector<AnfNodePtr> dgate_concat_cast_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  dgate_concat_cast_inputs.emplace_back(dgate_concat);
+  auto dgate_concat_cast = NewCNode(dgate_concat_cast_inputs, func_graph);
+  ShapeVector dgate_concat_cast_shape = common::AnfAlgo::GetOutputInferShape(dgate_concat, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {dgate_concat_cast_shape}, dgate_concat_cast.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), dgate_concat_cast);
+
+  std::vector<AnfNodePtr> weight_input_cast_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  weight_input_cast_inputs.emplace_back(weight_input);
+  auto weight_input_cast = NewCNode(weight_input_cast_inputs, func_graph);
+  ShapeVector weight_input_cast_shape = common::AnfAlgo::GetOutputInferShape(weight_input, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {weight_input_cast_shape}, weight_input_cast.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), weight_input_cast);
+
   std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name())),
-                                           dgate_concat, weight_input};
+                                           dgate_concat_cast, weight_input_cast};
+
   auto batch_matmul = NewCNode(matmul_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(batch_matmul);
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(dx, 0)},
-                                              {common::AnfAlgo::GetOutputInferShape(dx, 0)}, batch_matmul.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {common::AnfAlgo::GetOutputInferShape(dx, 0)},
+                                              batch_matmul.get());
   common::AnfAlgo::SetNodeAttr("transpose_x1", MakeValue(false), batch_matmul);
   common::AnfAlgo::SetNodeAttr("transpose_x2", MakeValue(true), batch_matmul);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), batch_matmul);
