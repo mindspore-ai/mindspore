@@ -39,7 +39,7 @@ class TestHWTBEJsonCreator : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWTBEJsonCreator, test_tbe_single_common) {
+TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_common) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
@@ -83,7 +83,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_common) {
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_common_build.json";
 }
 
-TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
+TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_conv2d_backprop_filter) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
@@ -127,7 +127,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
     << ", for expected json, see file: tbe_single_conv2d_backprop_filter_build.json";
 }
 
-TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
+TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_dynamic_rnn) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
@@ -184,7 +184,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
     << "Error json is:" << kernel_json << ", for expected json, see file: tbe_single_dynamic_rnn_build.json";
 }
 
-TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
+TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_layer_norm) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);

@@ -477,7 +477,7 @@ def test_grad_const_dict_tensor_to_mutable():
     assert compare(output['b'], expect[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_const_dict_tensor_arg_to_mutable():
