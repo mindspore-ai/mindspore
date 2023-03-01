@@ -4066,7 +4066,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         TypeError: If `var` is not a Tensor.
         TypeError: If `full` is not a bool.
         TypeError: If `eps` is not a float.
-        ValueError: If `eps` is not a float within [0, inf).
+        ValueError: If `eps` is not a float within (0, inf).
         ValueError: If `reduction` is not one of ``"none"`` , ``"mean"`` , ``"sum"`` .
 
     Supported Platforms:
