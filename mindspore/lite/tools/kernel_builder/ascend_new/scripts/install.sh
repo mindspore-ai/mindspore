@@ -2,9 +2,9 @@
 vendor_name=mslite
 targetdir=/usr/local/Ascend/opp
 
-sourcedir=$PWD/packages
+script_dir=$(cd "$(dirname ${BASH_SOURCE[0]})"; pwd)
+sourcedir=${script_dir}/packages
 vendordir=vendors/$vendor_name
-
 QUIET="y"
 
 for i in "$@"

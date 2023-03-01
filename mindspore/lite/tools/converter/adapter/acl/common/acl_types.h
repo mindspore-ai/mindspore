@@ -44,6 +44,7 @@ struct AclModelOptionCfg {
   std::string profiling_path;
   std::string dump_path;
   std::string dump_model_name;
+  std::string custom_opp_path;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";

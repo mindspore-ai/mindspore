@@ -51,6 +51,7 @@
 #include "tools/converter/quantizer/full_quant_quantizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/parser/unify_format.h"
+#include "tools/converter/adapter/acl/src/acl_custom_opp_installer.h"
 
 namespace mindspore {
 namespace opt {
@@ -868,6 +869,11 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   auto manager = Manage(func_graph, true);
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
+
+  if (!user_options_cfg_.custom_opp_path.empty()) {
+    // if set custom_opp_path config, first install custom ops to cann
+    AclCustomOppInstaller::InstallCustomOpp(user_options_cfg_.custom_opp_path, "");
+  }
 
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
