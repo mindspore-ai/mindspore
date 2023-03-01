@@ -239,11 +239,11 @@ bool IfAtomicOpNeedFusion(const size_t clean_total_num, const CNodePtr &first_no
   return false;
 }
 
-std::vector<int32_t> GetClearSize(const CNodePtr &pre_node) {
+std::vector<int64_t> GetClearSize(const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(pre_node);
   auto kernel_mod = AnfAlgo::GetKernelMod(pre_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  std::vector<int32_t> clean_size_list;
+  std::vector<int64_t> clean_size_list;
   constexpr size_t kAlignBytes = 32 - 1;
   // clean output
   if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
@@ -251,7 +251,7 @@ std::vector<int32_t> GetClearSize(const CNodePtr &pre_node) {
     auto output_men_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexes) {
       auto clean_item =
-        SizeToInt((output_men_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
+        SizeToLong((output_men_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
       (void)clean_size_list.emplace_back(clean_item);
     }
   }
@@ -261,7 +261,7 @@ std::vector<int32_t> GetClearSize(const CNodePtr &pre_node) {
     auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
     for (const auto &index : workspace_indexes) {
       auto clean_item =
-        SizeToInt((workspace_men_sizes.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
+        SizeToLong((workspace_men_sizes.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
       (void)clean_size_list.emplace_back(clean_item);
     }
   }
@@ -303,7 +303,7 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
 }
 
 void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<AnfNodePtr> &fusion_clear_inputs,
-                          const std::vector<int32_t> &clean_size_list, CleanOpsMap *clean_ops) {
+                          const std::vector<int64_t> &clean_size_list, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(first_clear_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
   auto clear_zero = NewAtomicOp(first_clear_node, fusion_clear_inputs);
@@ -355,7 +355,7 @@ void SpecialAkgOps(const std::string &op_name, const CNodePtr &node, CleanOpsMap
 
 void ProcessAtomicFusion(const std::vector<CNodePtr> &kernels, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(clean_ops);
-  std::vector<int32_t> clean_size_list;
+  std::vector<int64_t> clean_size_list;
   std::vector<AnfNodePtr> fusion_clear_inputs;
   CNodePtr first_node = nullptr;
   for (const auto &anf_node : kernels) {
