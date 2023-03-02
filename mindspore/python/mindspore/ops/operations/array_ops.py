@@ -7950,7 +7950,8 @@ class TopK(Primitive):
             If False, the obtained elements will not be sorted. Default: True.
 
     Inputs:
-        - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32.
+        - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32 on CPU,
+          and float16 or float32 on GPU.
         - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
 
     Outputs:
