@@ -22,7 +22,7 @@ from .common import dtype as mstype
 from . import context
 from . import ops
 from .ops import constexpr
-from .common.api import jit_class
+from .common.api import jit_class, jit
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
@@ -203,6 +203,7 @@ class StaticLossScaler(LossScaler):
             raise ValueError("The argument 'scale_value' must be > 1, but got {}".format(scale_value))
         self.scale_value = Parameter(Tensor(scale_value, dtype=mstype.float32), name="scale_value")
 
+    @jit
     def scale(self, inputs):
         """
         Scaling inputs by `scale_value`.
@@ -215,6 +216,7 @@ class StaticLossScaler(LossScaler):
         """
         return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
 
+    @jit
     def unscale(self, inputs):
         """
         Unscaling inputs by `scale_value`.
@@ -278,6 +280,7 @@ class DynamicLossScaler(LossScaler):
         self.scale_factor = validator.check_positive_int(scale_factor, "scale_factor")
         self.counter = Parameter(Tensor(0, dtype=mstype.int32), name="counter")
 
+    @jit
     def scale(self, inputs):
         """
         Scaling inputs by `scale_value`.
@@ -290,6 +293,7 @@ class DynamicLossScaler(LossScaler):
         """
         return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
 
+    @jit
     def unscale(self, inputs):
         """
         Unscaling inputs by `scale_value`.
@@ -302,6 +306,7 @@ class DynamicLossScaler(LossScaler):
         """
         return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
 
+    @jit
     def adjust(self, grads_finite):
         """
         Adjust the `scale_value` dependent on whether grads are finite.
