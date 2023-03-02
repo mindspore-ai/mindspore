@@ -25,14 +25,42 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 const char kNAttrName[] = "N";
+const mindspore::HashSet<std::string> kAclUnConst = {kScatterNdOpName};
+
+std::map<uint32_t, tensor::TensorPtr> CheckValueDependEdge(
+  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &value_depend_list) {
+  if (value_depend_list.empty()) {
+    return {};
+  }
+  auto depends_list = abstract::GetValueDependArgIndices(node);
+  if (depends_list.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
+    MS_LOG(DEBUG) << "The node " << node->fullname_with_scope() << " has no infer depend.";
+    return {};
+  }
+
+  if (kAclUnConst.count(common::AnfAlgo::GetCNodeName(node)) != 0) {
+    return {};
+  }
+
+  std::map<uint32_t, tensor::TensorPtr> depend_res;
+  for (auto index : depends_list) {
+    auto iter = value_depend_list.find(LongToSize(index));
+    if (iter != value_depend_list.end()) {
+      depend_res.emplace(iter->first, iter->second);
+    }
+  }
+  return depend_res;
+}
 }  // namespace
 
-int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info) {
+int AclKernelMod::UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info,
+                              const std::map<uint32_t, tensor::TensorPtr> &value_depend_list) {
   bool need_cache_input_names = node_op_runtime_info != nullptr && node_op_runtime_info->acl_runtime_info_ != nullptr &&
                                 node_op_runtime_info->acl_runtime_info_->use() &&
                                 !node_op_runtime_info->acl_runtime_info_->is_dynamic_input_size();
@@ -47,6 +75,7 @@ int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeIn
                       << ", input_desc_list_ size: " << input_desc_list_.size();
   }
 
+  const auto &depend_edge = CheckValueDependEdge(node, value_depend_list);
   for (size_t i = 0; i < input_num; ++i) {
     auto index = AclUtils::GetInputKernelIdxByGraphIdx(node, i);
     if (index < 0) {
@@ -76,10 +105,6 @@ int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeIn
       input_format = op_runtime_info->output_format(idx);
     }
 
-    if (IsDynamic(input_shape)) {
-      MS_LOG(ERROR) << "Please check infer op shape before resize, error input index is:" << i;
-      return 1;
-    }
     input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
     if (input_type == kMetaTypeNone) {
       continue;
@@ -103,6 +128,11 @@ int AclKernelMod::UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeIn
     MS_EXCEPTION_IF_NULL(input_desc);
     input_desc->SetName(input_names[index]);
     input_desc_list_[index] = input_desc;
+
+    auto value_iter = depend_edge.find(i);
+    if (value_iter != depend_edge.end()) {
+      const_input_list_[index] = value_iter->second;
+    }
   }
   return 0;
 }
@@ -190,7 +220,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   }
 
   // Update input size list & input desc list
-  auto ret = UpdateInput(node, node_op_runtime_info);
+  auto ret = UpdateInput(cnode, node_op_runtime_info, inputsOnHost);
   if (ret != 0) {
     return ret;
   }
@@ -278,7 +308,8 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   auto op_desc_ptr = std::make_shared<AclOpDesc>(op_type_, node);
   MS_EXCEPTION_IF_NULL(op_desc_ptr);
   op_desc_ptr->AddTensorDesc(input_desc_list_, output_desc_list_);
-  op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_, input_names, output_names);
+  op_desc_ptr->AddDataBuf(inputs, input_size_list_, outputs, output_size_list_, input_names, output_names,
+                          const_input_list_);
   ProcessAttribute(op_desc_ptr, input_names);
   op_desc_ptr->ClearNullTensor();
 
