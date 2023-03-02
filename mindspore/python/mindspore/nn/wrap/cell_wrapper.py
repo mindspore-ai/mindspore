@@ -725,7 +725,7 @@ class ParameterUpdate(Cell):
         - **x** (Tensor) - A tensor whose shape and type are the same with `param`.
 
     Outputs:
-        Tensor, the input `x`.
+        Tensor, the updated value.
 
     Raises:
         KeyError: If parameter with the specified name does not exist.
