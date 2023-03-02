@@ -21,6 +21,7 @@ set(LITE_SRC
         ${MOCK_SRC}
         ${LITE_DIR}/src/common/context_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
+        ${LITE_DIR}/src/common/mmap_utils.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/log.cc

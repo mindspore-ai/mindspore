@@ -60,7 +60,7 @@ class MS_API LiteSession {
   int LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type);
   mindspore::ModelType LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf, size_t *size,
                                        mindspore::ModelType model_type);
-  const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size);
+  const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size, bool use_mmap);
   virtual int Init(const std::shared_ptr<InnerContext> &context);
   virtual void BindThread(bool if_bind);
   virtual int CompileGraph(Model *model);
@@ -160,6 +160,7 @@ class MS_API LiteSession {
   static void FreePackOpWeight(const std::vector<kernel::KernelExec *> &kernels);
   static void MarkSharedWeight(const std::vector<kernel::KernelExec *> &kernels);
   std::string ParseWeightPath();
+  bool IsMmapEnable();
 
  private:
   int PreCheck(Model *model);

@@ -332,6 +332,7 @@ class MS_API LiteModel : public Model {
 
  public:
   std::vector<void *> node_bufs_;
+  bool model_buf_by_mmap_ = false;
 
  protected:
   std::vector<char *> attr_tensor_bufs_;

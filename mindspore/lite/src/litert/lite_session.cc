@@ -31,6 +31,7 @@
 #include "src/common/graph_util.h"
 #include "src/common/tensor_util.h"
 #include "src/common/file_utils.h"
+#include "src/common/mmap_utils.h"
 #include "src/litert/lite_model.h"
 #include "src/litert/weight_decoder.h"
 #include "src/litert/runtime_allocator.h"
@@ -1845,9 +1846,15 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
   return mindspore::ModelType::kMindIR;
 }
 
-const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size) {
+const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size,
+                                               bool use_mmap) {
   size_t buf_size;
-  auto model_buf = lite::ReadFile(file.c_str(), &buf_size);
+  char *model_buf;
+  if (use_mmap) {
+    model_buf = reinterpret_cast<char *>(lite::ReadFileByMmap(file.c_str(), &buf_size));
+  } else {
+    model_buf = lite::ReadFile(file.c_str(), &buf_size);
+  }
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model path is invalid";
     return model_buf;
@@ -1929,7 +1936,8 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
 
 int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, mindspore::ModelType model_type) {
   size_t model_size;
-  auto model_buf = LoadModelByPath(model_path, model_type, &model_size);
+  bool use_mmap = IsMmapEnable();
+  auto model_buf = LoadModelByPath(model_path, model_type, &model_size, use_mmap);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
@@ -1947,13 +1955,20 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     return RET_ERROR;
   }
   if (is_shared_weight_) {
-    delete[] model_buf;
+    if (use_mmap) {
+      lite::UnmapMmapBuffer(const_cast<void *>(static_cast<const void *>(model_buf)), model_size);
+    } else {
+      delete[] model_buf;
+    }
     model_buf = nullptr;
   }
   auto *model = lite::ImportFromBuffer(new_model_buf, model_size, true, model_type, model_path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
+  }
+  if (use_mmap && new_model_buf == model_buf) {
+    reinterpret_cast<lite::LiteModel *>(model)->model_buf_by_mmap_ = true;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
@@ -1965,5 +1980,16 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   }
   set_model(model);
   return RET_OK;
+}
+
+bool lite::LiteSession::IsMmapEnable() {
+#if !defined(_WIN32) && !defined(_WIN64)
+  if (delegate_device_type_ == DT_NPU) {
+    return false;
+  }
+  return true;
+#else
+  return false;
+#endif
 }
 }  // namespace mindspore
