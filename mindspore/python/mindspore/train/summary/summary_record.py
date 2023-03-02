@@ -25,7 +25,9 @@ from collections import defaultdict
 from mindspore import log as logger
 from mindspore.nn import Cell
 from mindspore import context
-from mindspore._c_expression import Tensor, security
+from mindspore._c_expression import security
+from mindspore._c_expression import Tensor as Tensor_
+from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
 from mindspore.common.api import _cell_graph_executor
 from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
@@ -75,7 +77,7 @@ def _record_summary_tensor_data():
         """Checks the tag is valid for summary."""
         if not isinstance(tag, str) or not tag:
             raise ValueError(f'For "{summary_name}", the name must be valid string, but got "{tag}".')
-        if not isinstance(tensor, Tensor):
+        if not isinstance(tensor, (Tensor, Tensor_)):
             raise TypeError(f'For "{summary_name}", the parameter "value" expect to be Tensor, '
                             f'but got {type(tensor).__name__}')
 
@@ -318,7 +320,7 @@ class SummaryRecord:
             if not name or not isinstance(name, str):
                 raise ValueError(f'For "{self.__class__.__name__}", the parameter "name" type should be str, '
                                  f'but got {type(name)}.')
-            if not isinstance(value, Tensor):
+            if not isinstance(value, (Tensor, Tensor_)):
                 raise TypeError(f'For "{self.__class__.__name__}", the parameter "value" expect to be Tensor, '
                                 f'but got {type(value).__name__}')
             np_value = _check_to_numpy(plugin, value)

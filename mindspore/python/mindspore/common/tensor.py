@@ -2814,7 +2814,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.gather_nd`.
         """
         self._init_check()
-        validator.check_value_type('indices', indices, (Tensor_,), 'Tensor.gather_nd')
+        validator.check_value_type('indices', indices, (Tensor, Tensor_,), 'Tensor.gather_nd')
         return tensor_operator_registry.get('gather_nd')(self, indices)
 
     def gather(self, input_indices, axis):
@@ -3125,7 +3125,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.gather_elements`.
         """
         self._init_check()
-        validator.check_value_type('index', index, (Tensor_,), 'Tensor.gather_elements')
+        validator.check_value_type('index', index, (Tensor, Tensor_,), 'Tensor.gather_elements')
         return tensor_operator_registry.get('gather_elements')(self, dim, index)
 
     def nonzero(self):

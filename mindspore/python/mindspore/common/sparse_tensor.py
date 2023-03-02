@@ -801,7 +801,7 @@ class CSRTensor(CSRTensor_):
             [[2.]
             [1.]]
         """
-        validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
+        validator.check_value_type('dense_vector', dense_vector, (Tensor, Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
     def mm(self, matrix: Union[Tensor, CSRTensor]) -> Union[Tensor, CSRTensor]:
@@ -839,7 +839,7 @@ class CSRTensor(CSRTensor_):
         """
         if isinstance(matrix, CSRTensor):
             return tensor_operator_registry.get("csr_mm")(self, matrix)
-        validator.check_value_type('matrix', matrix, (Tensor_,), 'CSRTensor.mm')
+        validator.check_value_type('matrix', matrix, (Tensor, Tensor_,), 'CSRTensor.mm')
         return tensor_operator_registry.get("csr_mm_akg")()(self.indptr, self.indices, self.values,
                                                             self.shape, matrix)
 

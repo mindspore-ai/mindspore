@@ -637,7 +637,7 @@ class Reshape(PrimitiveWithCheck):
         # for shape is not constant
         if shape is None or x is None:
             return None
-        if isinstance(shape, Tensor_):
+        if isinstance(shape, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),
                                                [mstype.int32, mstype.int64], self.name)
             shape = shape.asnumpy().tolist()
@@ -1573,9 +1573,9 @@ class FillV2(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
     def infer_value(self, dims, x):
-        if isinstance(dims, Tensor_):
+        if isinstance(dims, (Tensor, Tensor_)):
             dims = dims.asnumpy()
-        if isinstance(x, Tensor_):
+        if isinstance(x, (Tensor, Tensor_)):
             x = x.asnumpy()
         if dims is not None and None not in dims and x is not None:
             ret = np.full(dims, x)
@@ -3521,7 +3521,7 @@ class StridedSlice(PrimitiveWithInfer):
             }
             return slices, slice_shape[0]
 
-        if isinstance(slice_value, Tensor_):
+        if isinstance(slice_value, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
             slice_value = slice_value.asnumpy().tolist()
         elif not isinstance(slice_value, tuple):

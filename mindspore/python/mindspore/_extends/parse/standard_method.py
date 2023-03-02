@@ -2267,7 +2267,7 @@ def bool_func(*data):
 @constexpr
 def cast_to_int(*data):
     target = data[0]
-    if isinstance(target, Tensor_):
+    if isinstance(target, (Tensor, Tensor_)):
         target = Tensor(target, internal=True)
     if len(data) == 1:
         return int(target)
@@ -2293,7 +2293,7 @@ def int_func(*data):
 
 @constexpr
 def cast_to_float(data):
-    if isinstance(data, Tensor_):
+    if isinstance(data, (Tensor, Tensor_)):
         data = Tensor(data, internal=True)
     return float(data)
 

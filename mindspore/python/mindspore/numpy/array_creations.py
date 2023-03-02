@@ -1569,7 +1569,7 @@ class NdGrid:
         if self.sparse:
             return grids
 
-        if isinstance(grids, Tensor_):
+        if isinstance(grids, (Tensor, Tensor_)):
             return grids
         expanded = []
         for grid in grids:
