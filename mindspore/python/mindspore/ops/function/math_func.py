@@ -1510,7 +1510,7 @@ def inplace_sub(x, v, indices):
         ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
