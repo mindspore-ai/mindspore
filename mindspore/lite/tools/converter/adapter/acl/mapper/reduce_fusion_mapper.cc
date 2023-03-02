@@ -68,7 +68,7 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
     if (axes_ptr != nullptr) {
       auto axes = GetValue<std::vector<int32_t>>(axes_ptr);
       std::vector<int64_t> axes_vec;
-      std::transform(axes.begin(), axes.end(), std::back_inserter(axes),
+      std::transform(axes.begin(), axes.end(), std::back_inserter(axes_vec),
                      [](int32_t x) { return static_cast<int64_t>(x); });
       lp_norm_op.set_axis(axes_vec);
     }
