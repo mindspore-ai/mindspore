@@ -71,6 +71,7 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
 
   {TC_TYPE(schema::PrimitiveType_LayerNormFusion, 0), 507.812f},  // dataNum about 0.5k
   {TC_TYPE(schema::PrimitiveType_OneHot, 0), 136.562f},           // dataNum about 1.5k
+  {TC_TYPE(schema::PrimitiveType_TileFusion, 0), 259.0625f},      // dataNum about 0.8k
 
   {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceAll), 66.5625f},         // dataNum about 3k
   {TC_TYPE(schema::PrimitiveType_ReduceFusion, schema::ReduceMode_ReduceASum), 206.5625f},       // dataNum about 1k
