@@ -49,12 +49,12 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
    * @param[in] `device_address`: The device address of the Embedding Table parameter corresponding to the
    * SparseEmbeddingStorage.
    */
-  void Initialize(const DeviceAddress *device_address) override {}
+  void Initialize(const DeviceAddress *device_address) override;
 
   /**
    * @brief Finalize the EmbeddingStorage, release allocated resource.
    */
-  void Finalize() override {}
+  void Finalize() override;
 
   /**
    * @brief Batch embeddings lookup operation.
@@ -63,7 +63,7 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
    * Access an element of the cache generally affects the location or order of the elements in the cache, depending
    * on different cache strategies.
    */
-  bool Get(const ConstDataWithLen &keys, const DataWithLen &) override { return true; }
+  bool Get(const ConstDataWithLen &keys, const DataWithLen &values) override;
 
   /**
    * @brief Batch embeddings update/insert operation.
@@ -72,9 +72,53 @@ class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, V
    * Update or Insert an element of the cache generally affects the location or order of the elements in the cache,
    * depending on different cache strategies.
    */
-  bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override { return true; }
+  bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override;
 
  private:
+  /**
+   * @brief Query cache to analyse the information of cache hit and miss keys. Access an element of the cache generally
+   * affects the location or order of the elements in the cache, depending on different cache strategies.
+   * @param[in] `keys`: The array records all keys which need to query.
+   * @param[in] `key_num`: The number of keys which need to query.
+   * @param[out] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+   * @param[out] `cache_miss_cnt`: The number of cache miss keys.
+   * @param[out] `cache_hit`: The array records cache hit/miss for each key.
+   * keys.
+   */
+  void QueryCache(const KeyType *keys, size_t key_num, int *cache_miss_offsets, size_t *cache_miss_cnt,
+                  bool *cache_hit) const;
+
+  /**
+   * @brief Reserve space for cache miss keys in the cache, write the evicted element to persistent storage,
+   * and record the new space position in the cache.
+   * @param[in] `reserve_size`: The number of element slots that are expected to be reserved. If the
+   * reserve_size is less than or equal to the number of slots remaining in the cache, the function does nothing.
+   * @return Whether the function was successfully executed.
+   */
+  bool TryEvict(size_t reserve_size);
+
+  /**
+   * @brief Insert the cache miss elements into the cache from persistent storage, and copy them to the output values.
+   * @param[in] `keys`: The array records all origin keys for batch embeddings lookup operation.
+   * @param[in] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+   * @param[in] `cache_miss_cnt`: The number of cache miss keys.
+   * @param[out] `values`: The output embeddings.
+   * @return Whether the function was successfully executed.
+   */
+  bool InsertMissCacheFromStorage(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+                                  ValueType *values);
+
+  /**
+   * @brief Insert the cache miss elements into the cache from host memory.
+   * @param[in] `keys`: The array records all origin keys for batch embeddings update/insert operation.
+   * @param[in] `cache_miss_offsets`: The array records the offset(index) of cache miss key in origin keys array.
+   * @param[in] `cache_miss_cnt`: The number of cache miss keys.
+   * @param[in] `values`: Embeddings corresponding to all keys need to be updated.
+   * @return Whether the function was successfully executed.
+   */
+  bool InsertMissCacheFromMemory(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+                                 const ValueType *values);
+
   // The base pointer to the hash table of the embedding table parameter.
   // All embeddings in host cache is recorded in it.
   HashTable *hash_table_{nullptr};
