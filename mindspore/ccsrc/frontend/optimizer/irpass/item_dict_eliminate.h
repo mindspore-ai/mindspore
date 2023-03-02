@@ -105,6 +105,7 @@ class DictGetitemConstEliminator : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimDictGetItem, {IsVNode, IsVNode})(node);
+    AnfVisitor::Match(prim::kPrimDictGetItem, {IsCNode, IsVNode})(node);
 
     if (real_value_ != nullptr) {
       auto out = NewValueNode(real_value_);
@@ -127,6 +128,16 @@ class DictGetitemConstEliminator : public AnfVisitor {
         real_value_ = key_and_values.second;
         break;
       }
+    }
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    if (!IsPrimitiveCNode(cnode, prim::kPrimMutable)) {
+      return;
+    }
+    auto dict_input = GetValueNode<ValueDictionaryPtr>(cnode->input(1));
+    if (dict_input != nullptr) {
+      dict_ = dict_input;
     }
   }
 
