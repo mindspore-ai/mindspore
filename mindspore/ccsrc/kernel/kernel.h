@@ -412,6 +412,14 @@ inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, c
   *attr_value = res.value();
   return true;
 }
+
+template <typename T>
+inline bool CheckNullInput(const std::vector<T> &input_shape) {
+  // If input_shape.size() == 0, it means a scalar input; If input_shape.size() != 0 and input_shape contains 0,
+  // it means a null input. Just return a null output.
+  return input_shape.size() != 0 && std::any_of(input_shape.begin(), input_shape.end(), [](T i) { return i == 0; });
+}
+#define CHECK_NULL_INPUT(input_shape) mindspore::kernel::CheckNullInput(input_shape)
 }  // namespace kernel
 }  // namespace mindspore
 
