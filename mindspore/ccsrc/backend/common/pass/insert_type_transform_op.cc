@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -385,34 +386,6 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
                << ". Output object types: " << *output_obj_type;
 }
 
-void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node) {
-  MS_EXCEPTION_IF_NULL(tuple_get_item_node);
-  if (!IsPrimitiveCNode(tuple_get_item_node, prim::kPrimTupleGetItem)) {
-    MS_LOG(EXCEPTION) << "Node should be TupleGetItem, but got " << tuple_get_item_node->fullname_with_scope() << ", "
-                      << tuple_get_item_node->DebugString();
-  }
-  auto tuple_input = common::AnfAlgo::GetInputNode(tuple_get_item_node, kIndex0);
-  MS_EXCEPTION_IF_NULL(tuple_input);
-  auto input_abs = tuple_input->abstract();
-  MS_EXCEPTION_IF_NULL(input_abs);
-  if (!input_abs->isa<abstract::AbstractSequence>()) {
-    MS_LOG(EXCEPTION) << "TupleGetItem's first input abstract should be Sequence, but got " << input_abs->ToString();
-  }
-
-  auto seq_abs = input_abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  AbstractBasePtrList seq_element = seq_abs->elements();
-  // This method is used for TupleGetItem to RealTupleGetItem converting, the tuple elements must be scalar for now.
-  for (const auto &ele : seq_element) {
-    if (!ele->isa<abstract::AbstractScalar>() && !ele->isa<abstract::AbstractTensor>()) {
-      MS_LOG(EXCEPTION) << "Element of the tuple should be scalar or tensor, but got " << ele->ToString();
-    }
-  }
-
-  int64_t item_index = GetGetitemIndex(tuple_get_item_node);
-  tuple_get_item_node->set_abstract(seq_element[item_index]);
-}
-
 // A map of kernel object type pairs to processing functions.
 static std::map<ObjectTypePair, ProcessTypeTransformFunc> kTypePairToProcessFunc;
 
@@ -680,8 +653,10 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
     kg->AddValueNodeToGraph(index_input->cast<ValueNodePtr>());
   }
 
-  // Need to update TupleGetItem abstract.
-  UpdateAbsForTupleGetItem(node);
+  auto abs = GenerateAbsByOpInfer(prim::kPrimRealTupleGetItem, {input, index_input});
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for RealTupleGetItem op is " << abs->ToString();
+  node->set_abstract(abs);
 
   // The primitive of user is changed.
   *new_prim = true;

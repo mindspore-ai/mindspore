@@ -109,8 +109,6 @@ std::string GenerateOutputFormatForNewCNode(const CNodePtr &cnode);
 void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<KernelObjectType> *input_obj_type,
                                          std::vector<KernelObjectType> *output_obj_type);
 
-void UpdateAbsForTupleGetItem(const CNodePtr &tuple_get_item_node);
-
 // After kernel selection phase, one kernel's acquired input type may not be the same as the actual input type(the input
 // node's output type). We need this pass to transform these types to valid types.
 class BACKEND_EXPORT InsertTypeTransformOp : public PatternProcessPass {

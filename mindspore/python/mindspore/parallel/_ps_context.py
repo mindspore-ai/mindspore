@@ -40,7 +40,7 @@ def _need_reset_device_target_for_ps(target):
     For Ascend backend, the card can't be occupied by multiple processes in distributed traning,
     so we need to reset the device target for some roles.
     '''
-    is_server = (_get_ps_context("ms_role") in ["MS_PSERVER", "MS_SERVER", "MS_SCHED"])
+    is_server = (os.getenv('MS_ROLE') in ["MS_PSERVER", "MS_SERVER", "MS_SCHED"])
     return is_server and target == "Ascend"
 
 
