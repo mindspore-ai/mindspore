@@ -501,7 +501,10 @@ template <typename T>
 void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
-    MS_LOG(EXCEPTION) << "'Abs' cannot be instantiated.";
+    auto ret_code = memcpy_s(out, size * sizeof(T), in, size * sizeof(T));
+    if (ret_code != EOK) {
+      MS_LOG(EXCEPTION) << "For Abs, Failed to copy data, memcpy_s errorno: " << ret_code;
+    }
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
@@ -750,6 +753,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimTanh->name(), Tanh<T>},
                           {prim::kPrimAtanh->name(), Atanh<T>},
                           {prim::kPrimInv->name(), Inv<T>},
+                          {prim::kPrimAbs->name(), Abs<T>},
                           {prim::kPrimSign->name(), ComplexSign<T>},
                           {prim::kPrimLog->name(), ComplexLog<T>},
                           {prim::kPrimExp->name(), ComplexExp<T>},
@@ -1035,8 +1039,14 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kAbs,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
+   {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kSqrt,

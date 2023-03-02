@@ -75,7 +75,7 @@ class MaximumInfer : public abstract::OpInferBase {
           << type_x->ToString() << ", " << type_y->ToString() << "].";
       }
     }
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
     return type_x;
   }
 };

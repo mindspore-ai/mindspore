@@ -93,9 +93,6 @@ void MaximumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) 
 }
 
 void MaximumCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
-  if (input_x_dtype == kNumberTypeBool && input_y_dtype == kNumberTypeBool) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor types can not be both bool.";
-  }
   // Check if the shape needs to be broadcast
   need_broadcast_ = IsBroadcast();
   if (need_broadcast_) {
@@ -241,6 +238,14 @@ void MaximumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input
 }
 const std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::KernelRunFunc>> &MaximumCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+     &MaximumCpuKernelMod::LaunchKernel<bool>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &MaximumCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &MaximumCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &MaximumCpuKernelMod::LaunchKernel<int16_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &MaximumCpuKernelMod::LaunchKernel<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
@@ -249,6 +254,8 @@ const std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::KernelRunFunc>> &Ma
      &MaximumCpuKernelMod::LaunchKernel<uint32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
      &MaximumCpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &MaximumCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &MaximumCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),

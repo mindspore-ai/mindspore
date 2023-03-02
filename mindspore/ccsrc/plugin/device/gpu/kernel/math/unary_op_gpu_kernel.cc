@@ -442,7 +442,21 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
       {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
        &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>}}},
     {kAbs,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+       &UnaryOpGpuKernelMod::LaunchKernel<bool>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<unsigned char>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+       &UnaryOpGpuKernelMod::LaunchKernel<int16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
@@ -576,7 +590,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
       {kSin, Sin<T>},      {kCos, Cos<T>},     {kACos, ACos<T>},        {kAcosh, Acosh<T>},
       {kAsin, Asin<T>},    {kAsinh, Asinh<T>}, {kSquare, SquareOpt<T>}, {kReciprocal, ReciprocalOpt<T>},
       {kRsqrt, Rsqrt<T>},  {kSign, Sign<T>},   {kAtan, Atan<T>},        {kSinh, Sinh<T>},
-      {kExpm1, Expm1<T>},  {kLog1p, Log1p<T>}};
+      {kExpm1, Expm1<T>},  {kLog1p, Log1p<T>}, {kAbs, Abs<T>}};
     copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
   } else {
     std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {

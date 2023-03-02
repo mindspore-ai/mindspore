@@ -46,6 +46,9 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::OpSupport(); }
+
  private:
   bool IsBroadcast() const;
   size_t Index(const size_t &index, const size_t &dim) const;
