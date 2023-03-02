@@ -123,7 +123,6 @@ function Run_x86_codegen() {
 }
 
 function Run_cortex_m_codegen() {
-    return 0  # to do, CI access control is abnormal, temporarily shielded
     # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig
     local bind_mode thread_num suffix run_result
     rm -rf $1
@@ -230,6 +229,9 @@ function Run_cortex_m_codegen() {
       cd ${stm_demo_file} || exit 1
       [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}/build
       sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-none-cortex-m7/g" Makefile
+      sed -i "42a\gen_output/src/model0/model0.c \\\\" Makefile
+      sed -i "s/net.c/model0\/net0.c/g" Makefile
+      sed -i "s/weight.c/model0\/weight0.c/g" Makefile
       make >> "$4" || return 1
 
       # 2. run benchmark

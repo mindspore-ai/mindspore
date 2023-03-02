@@ -287,11 +287,6 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
     ofs << "  return kMSStatusSuccess;\n";
   } else {
     ofs << "MSStatus MSModelCreate" << ctx->GetCurModelIndex() << "(MicroModel *micro_model) {\n";
-    ofs << "  micro_model->runtime_buffer = NULL;\n";
-    ofs << "  micro_model->inputs.handle_num = GRAPH_INPUTS_SIZE;\n";
-    ofs << "  micro_model->inputs.handle_list = NULL;\n";
-    ofs << "  micro_model->outputs.handle_num = GRAPH_OUTPUTS_SIZE;\n";
-    ofs << "  micro_model->outputs.handle_list = NULL;\n";
     ofs << "  micro_model->train_mode = false;\n";
     ofs << "  return kMSStatusSuccess;\n";
   }
