@@ -134,7 +134,7 @@ Status BatchOp::operator()() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && ENABLE_PYTHON
     if ((num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
       MS_LOG(WARNING) << "Memory consumption is more than " << (GetMemoryUsage() * 100) << "%, "
-                      << "which may cause oom error. Please reduce num_parallel_workers size / "
+                      << "which may cause OOM. Please reduce num_parallel_workers size / "
                       << "optimize 'per_batch_map' function / other python data preprocess function to "
                       << "reduce memory usage.";
     }

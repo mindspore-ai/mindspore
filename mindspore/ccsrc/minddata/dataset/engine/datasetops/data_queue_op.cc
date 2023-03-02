@@ -23,6 +23,7 @@
 
 #include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
+#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 #ifdef WITH_BACKEND
@@ -88,8 +89,29 @@ DataQueueOp::DataQueueOp(const std::string channel_name, DeviceType device_type,
 
 DataQueueOp::~DataQueueOp() {
 #ifdef ENABLE_DUMP_IR
+  // BFS iter execution tree to get send epoch from EpochControl Op
+  std::vector<std::shared_ptr<DatasetOp>> child_node = this->Children();
+  size_t node_index = 0;
+  int32_t num_epochs = 0;
+  while (child_node.size() != 0 && node_index < child_node.size()) {
+    auto node = child_node[node_index];
+    if (node->Name() == kEpochCtrlOp) {
+      EpochCtrlOp *op = dynamic_cast<EpochCtrlOp *>(node.get());
+      if (op != nullptr) {
+        num_epochs = op->NumEpochs();
+        break;
+      }
+    }
+    auto child_child_node = node->Children();
+    if (!child_child_node.empty()) {
+      std::copy(child_child_node.begin(), child_child_node.end(), std::back_inserter(child_node));
+    }
+    ++node_index;
+  }
+
+  // won't print rdr if call stop_send manually or send infinite epoch
   std::string rdr_msg = md_channel_info_->ToString();
-  if (!send_finished_ && !rdr_msg.empty()) {
+  if (!send_finished_ && !rdr_msg.empty() && num_epochs != -1) {
     MS_LOG(WARNING) << rdr_msg;
   }
 #endif
