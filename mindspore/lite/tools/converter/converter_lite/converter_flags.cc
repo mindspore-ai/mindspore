@@ -50,10 +50,13 @@ Flags::Flags() {
   AddFlag(&Flags::saveFP16Str, "fp16",
           "Serialize const tensor in Float16 data type, only effective for const tensor in Float32 data type. on | off",
           "off");
+// Cloud infer do not support trainModel para
+#if !defined(ENABLE_CLOUD_FUSION_INFERENCE) && !defined(ENABLE_CLOUD_INFERENCE)
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
           "true | false",
           "false");
+#endif
   AddFlag(&Flags::dec_key, "decryptKey",
           "The key used to decrypt the file, expressed in hexadecimal characters. Only valid when fmkIn is 'MINDIR'",
           "");
