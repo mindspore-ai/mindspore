@@ -79,26 +79,6 @@ def test_soft_shrink(dtype, data_shape, lambd):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_soft_shrink_tensor_check():
-    """
-    Feature: test_soft_shrink_tensor_check.
-    Description: test cases for tensor func
-    Expectation: raise TypeError.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-    in_np = np.random.rand(10).astype(np.float32)
-    in_tensor = Tensor(in_np)
-
-    benchmark_output = soft_shrink_op_np_bencmark(in_tensor, 0.5)
-    output = in_tensor.soft_shrink()
-
-    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_soft_shrink_functional_check():
     """
     Feature: test_soft_shrink_functional_check.
@@ -110,7 +90,7 @@ def test_soft_shrink_functional_check():
     in_np = np.random.rand(3, 5).astype(np.float32)
     in_tensor = Tensor(in_np)
 
-    output_ms = F.soft_shrink(in_tensor)
+    output_ms = F.softshrink(in_tensor)
     output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
 
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)

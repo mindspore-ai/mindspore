@@ -2136,11 +2136,6 @@ def hypot(x, other):
     return F.hypot(x, other)
 
 
-def soft_shrink(x, lambd=0.5):
-    """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""
-    return F.SoftShrink(lambd)(x)
-
-
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)

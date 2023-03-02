@@ -2340,7 +2340,7 @@ def softmin(x, axis=-1):
     return softmax_(-x)
 
 
-def soft_shrink(x, lambd=0.5):
+def softshrink(x, lambd=0.5):
     r"""
     Applies the SoftShrink function element-wise.
 
@@ -2373,7 +2373,7 @@ def soft_shrink(x, lambd=0.5):
         >>> from mindspore import ops
         >>> import numpy as np
         >>> x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float32)
-        >>> output = ops.soft_shrink(x)
+        >>> output = ops.softshrink(x)
         >>> print(output)
         [[ 0.02979  0.287    0.676  ]
          [ 0.2837   0.1216  -0.6543 ]]
@@ -6107,7 +6107,6 @@ __all__ = [
     'pixel_shuffle',
     'pixel_unshuffle',
     'hardshrink',
-    'soft_shrink',
     'is_floating_point',
     'flip',
     'fliplr',
