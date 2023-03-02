@@ -46,7 +46,7 @@ def test_DeeplabV3_voc2007():
         model_name, utils.rank_table_path)
     ret = os.system(exec_network_shell)
     assert ret == 0
-    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
+    cmd = "ps -ef --columns 1000 | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
     assert ret
 
