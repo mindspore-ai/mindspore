@@ -286,23 +286,25 @@ class VariableUsage(ast.NodeVisitor):
         if not (func_id in list(VariableUsage.intrin_runtime.keys()) +
                 ['max', 'min', 'len', 'kernel', 'ms_kernel']):
             raise ValueError(
-                "In the function {} written in the Hybrid DSL, function call id {} "
-                "not in intrinsics' list".format(self.func_name, func_id))
+                "In the function [{}], function call id [{}] "
+                "not in intrinsics list of the Hybrid DSL. For the full support list, please refer to 'Hybrid DSL' "
+                "at https://www.mindspore.cn.".format(self.func_name, func_id))
         if (self.device == "Ascend" and func_id in list(VariableUsage.intrin_general.keys())) or \
                 (self.device == "CPU" and func_id in VariableUsage.intrin_cpu_not_support):
             raise ValueError(
-                "In the function {} written in the Hybrid DSL, function {} is not available on the "
-                "device {}".format(self.func_name, func_id, self.device))
+                "In the function [{}], function call id [{}] is not available on the "
+                "device {}. For the full support list, please refer to 'Hybrid DSL' "
+                "at https://www.mindspore.cn.".format(self.func_name, func_id, self.device))
         if func_id in list(VariableUsage.intrin_unary_op.keys()) + list(VariableUsage.intrin_general_unary_op.keys()) \
                 and len(node.args) != 1:
             raise TypeError(
-                "In the function {} written in the Hybrid DSL, function {} "
-                "expects one input, but get {}".format(self.func_name, func_id, len(node.args)))
+                "In the function [{}], function [{}] "
+                "expects one input, but get {}.".format(self.func_name, func_id, len(node.args)))
         if func_id in list(VariableUsage.intrin_bin_op.keys()) + list(VariableUsage.intrin_general_bin_op.keys()) + \
                 list(VariableUsage.intrin_buffer.keys()) and len(node.args) != 2:
             raise TypeError(
-                "In the function {} written in the Hybrid DSL, function {} "
-                "expects two inputs, but get {}".format(self.func_name, func_id, len(node.args)))
+                "In the function [{}], function [{}] "
+                "expects two inputs, but get {}.".format(self.func_name, func_id, len(node.args)))
         for elem in node.args:
             self.visit(elem)
 
