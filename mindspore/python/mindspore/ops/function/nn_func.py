@@ -4241,7 +4241,7 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
         ValueError: If value in the `sequence_length` is larger than `max_time`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],

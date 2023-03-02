@@ -6093,6 +6093,8 @@ def lstsq(input, A):
        \min_y & \|y\|_2 & \text{subject to} & xy = a.
        \end{array}
 
+    where `y` is the returned tensor.
+
     Args:
         input (Tensor): The m by n matrix equivalent to `x` in above.
             The input tensor whose data type is float16, float32 or float64.

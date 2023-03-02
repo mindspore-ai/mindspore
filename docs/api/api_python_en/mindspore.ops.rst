@@ -319,6 +319,7 @@ Reduction Functions
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
+    mindspore.ops.cumprod
     mindspore.ops.cumsum
     mindspore.ops.fmax
     mindspore.ops.fmin
@@ -583,7 +584,6 @@ Array Operation
     mindspore.ops.vstack
     mindspore.ops.where
     mindspore.ops.cross
-    mindspore.ops.cumprod
     mindspore.ops.renorm
 
 Type Cast
