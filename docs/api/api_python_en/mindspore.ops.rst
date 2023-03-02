@@ -7,7 +7,7 @@ operators that can be used for constructor function of Cell
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/r1.10/resource/api_updates/ops_api_updates_en.md>`_.
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/r1.10/resource/api_updates/ops_api_updates_en.md>`_ .
 
 Operator Primitives
 -------------------
@@ -348,8 +348,8 @@ Linear Algebraic Operator
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
 
-Tensor Operation Opertor
-------------------------
+Tensor Operation Operator
+--------------------------
 
 Tensor Construction
 ^^^^^^^^^^^^^^^^^^^
