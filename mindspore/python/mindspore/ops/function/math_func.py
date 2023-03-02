@@ -4702,10 +4702,12 @@ def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-o
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = ops.var(input, 1, True, False)
+        >>> import mindspore as ms
+        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
+        >>> output = ms.ops.var(input, 1, 2, True)
         >>> print(output)
-        [1.        6.3333325]
+        [[ 2.5]
+         [54.5]]
     """
     axis = _check_var_std_input(input, ddof, keepdims, axis, "var")
     output = var_mean(input, axis, ddof, keepdims)
@@ -4731,7 +4733,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
-            If ddof is False, will through the biased estimation to calculate the variance and mean.
+            If ddof is False, will through the biased estimation to calculate the variance.
             Default: 0.
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
             If true, keep these reduced dimensions and the length is 1.
@@ -4758,12 +4760,15 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output_var, output_mean = ops.var_mean(input, 1, True, False)
+        >>> import mindspore as ms
+        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
+        >>> output_var, output_mean = ms.ops.var_mean(input, 1, 2, True)
         >>> print(output_var)
-        [1.        6.3333325]
+        [[ 2.5]
+         [54.5]]
         >>> print(output_mean)
-        [2.        1.3333334]
+        [[ 2.5]
+         [-1.5]]
     """
     axis = _check_var_std_input(input, ddof, keepdims, axis, "var_mean")
     if ddof in (0, 1):
@@ -4773,13 +4778,14 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     x_sub = _get_cache_prim(P.Sub)()(input, x_mean)
     x_pow = _get_cache_prim(P.Pow)()(x_sub, 2)
     x_sum = sum(x_pow, axis, keepdims)
+    res_mean = mean(input, axis, keepdims)
     nums = 1
     if axis == ():
         nums = input.size
     else:
         for ax in axis:
             nums *= input.shape[ax]
-    return true_divide(x_sum, nums - ddof), x_mean
+    return true_divide(x_sum, nums - ddof), res_mean
 
 
 def std(input, axis=None, ddof=0, keepdims=False):
@@ -4827,10 +4833,12 @@ def std(input, axis=None, ddof=0, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = ops.std(input, 1, True, False)
+        >>> import mindspore as ms
+        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
+        >>> output = ms.ops.std(input, 1, 2, True)
         >>> print(output)
-        [1.        2.5166113]
+        [[1.5811388]
+         [7.3824115]]
     """
     axis = _check_var_std_input(input, ddof, keepdims, axis, "std")
     output = std_mean(input, axis, ddof, keepdims)
@@ -4856,7 +4864,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
             If ddof is True, will use the Bessel correction unbiased estimation.
-            If ddof is False, will through the biased estimation to calculate the standard deviation and mean.
+            If ddof is False, will through the biased estimation to calculate the standard deviation.
             Default: 0.
         keepdims (bool, optional): Whether the output Tensor has dim retained or not.
             If true, keep these reduced dimensions and the length is 1.
@@ -4883,12 +4891,15 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output_std, output_mean = ops.std_mean(input, 1, True, False)
+        >>> import mindspore as ms
+        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
+        >>> output_std, output_mean = ms.ops.std_mean(input, 1, 2, True)
         >>> print(output_std)
-        [1.        2.5166113]
+        [[1.5811388]
+         [7.3824115]]
         >>> print(output_mean)
-        [2.        1.3333334]
+        [[ 2.5]
+         [-1.5]]
     """
     axis = _check_var_std_input(input, ddof, keepdims, axis, "std_mean")
     if ddof in (0, 1):
@@ -9382,7 +9393,7 @@ def einsum(equation, *operands):
     You can use this operator to perform diagonal, reducesum, transpose, matmul, mul, inner product operations, etc.
 
     Note:
-        The sublist format is alse supported. For example, ops.einsum(op1, sublist1, op2, sublist2, ..., sublist_out).
+        The sublist format is also supported. For example, ops.einsum(op1, sublist1, op2, sublist2, ..., sublist_out).
         In this format, equation can be derived by the sublists which are made up of Python's Ellipsis and list of
         integers in [0, 52). Each operand is followed by a sublist and an output sublist is at the end.
 
