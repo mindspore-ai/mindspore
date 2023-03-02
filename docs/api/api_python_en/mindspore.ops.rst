@@ -393,6 +393,7 @@ Linear Algebraic Functions
     mindspore.ops.inverse
     mindspore.ops.ger
     mindspore.ops.kron
+    mindspore.ops.lstsq
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.matrix_exp

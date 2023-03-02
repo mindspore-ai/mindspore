@@ -22,6 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.common import dtype as mstype
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -94,7 +95,7 @@ def test_argmax_high_dims():
 
 def adaptive_argmax_functional(nptype):
     x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(nptype))
-    output = ops.argmax(x, axis=-1)
+    output = F.argmax(x, dim=-1)
     expected = np.array([1, 0, 0]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -225,12 +226,12 @@ def test_argmax_functional():
     Expectation: the result match with expected result.
     """
     x = Tensor([[1, 3, 2], [4, 6, 5], [7, 9, 8]], mstype.int32)
-    out_dim_none = ops.argmax(x, axis=None, keepdims=False)
-    out_dim_0 = ops.argmax(x, axis=0, keepdims=False)
-    out_dim_1 = ops.argmax(x, axis=1, keepdims=False)
-    out_dim_none_keepdim = ops.argmax(x, axis=None, keepdims=True)
-    out_dim_0_keepdim = ops.argmax(x, axis=0, keepdims=True)
-    out_dim_1_keepdim = ops.argmax(x, axis=1, keepdims=True)
+    out_dim_none = F.argmax(x, dim=None, keepdim=False)
+    out_dim_0 = F.argmax(x, dim=0, keepdim=False)
+    out_dim_1 = F.argmax(x, dim=1, keepdim=False)
+    out_dim_none_keepdim = F.argmax(x, dim=None, keepdim=True)
+    out_dim_0_keepdim = F.argmax(x, dim=0, keepdim=True)
+    out_dim_1_keepdim = F.argmax(x, dim=1, keepdim=True)
 
     assert out_dim_none.asnumpy() == 7
     assert np.all(out_dim_0.asnumpy() == np.array([2, 2, 2]))

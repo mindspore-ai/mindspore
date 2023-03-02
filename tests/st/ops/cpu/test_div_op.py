@@ -94,7 +94,7 @@ def test_div_trunc_tensor_api():
                          [-0.2601, -0.2397, 0.5832, 0.2250],
                          [0.0322, 0.7103, 0.6315, -0.8621]]))
     y = Tensor(np.array([0.6962, -0.4668, -0.2971, -0.6389]))
-    output = x.div(y, 'trunc')
+    output = x.div(y, rounding_mode='trunc')
     expected = np.array([[0., -0., -0., 0.],
                          [1., 1., 0., -0.],
                          [-0., 0., -1., -0.],
@@ -113,7 +113,7 @@ def test_div_floor_tensor_api():
                          [-0.2601, -0.2397, 0.5832, 0.2250],
                          [0.0322, 0.7103, 0.6315, -0.8621]]))
     y = Tensor(np.array([0.6962, -0.4668, -0.2971, -0.6389]))
-    output = x.div(y, 'floor')
+    output = x.div(y, rounding_mode='floor')
     expected = np.array([[0., -1., -1., 0.],
                          [1., 1., 0., -1.],
                          [-1., 0., -2., -1.],
@@ -132,7 +132,7 @@ def test_div_functional_api():
                          [0.1062, 1.4581, 0.7759, -1.2344],
                          [-0.1830, -0.0313, 1.1908, -1.4757]]))
     y = Tensor(np.array([0.8032, 0.2930, -0.8113, -0.2308]))
-    output = F.div(x, y)
+    output = F.div(x, y, rounding_mode=None)
     expected = np.array([[-0.4620, -6.6051, 0.5676, 1.2639],
                          [0.2260, -3.4509, -1.2086, 6.8990],
                          [0.1322, 4.9764, -0.9564, 5.3484],
@@ -151,7 +151,7 @@ def test_div_trunc_functional_api():
                          [-0.2601, -0.2397, 0.5832, 0.2250],
                          [0.0322, 0.7103, 0.6315, -0.8621]]))
     y = Tensor(np.array([0.6962, -0.4668, -0.2971, -0.6389]))
-    output = F.div(x, y, 'trunc')
+    output = F.div(x, y, rounding_mode='trunc')
     expected = np.array([[0., -0., -0., 0.],
                          [1., 1., 0., -0.],
                          [-0., 0., -1., -0.],
@@ -170,7 +170,7 @@ def test_div_floor_functional_api():
                          [-0.2601, -0.2397, 0.5832, 0.2250],
                          [0.0322, 0.7103, 0.6315, -0.8621]]))
     y = Tensor(np.array([0.6962, -0.4668, -0.2971, -0.6389]))
-    output = F.div(x, y, 'floor')
+    output = F.div(x, y, rounding_mode='floor')
     expected = np.array([[0., -1., -1., 0.],
                          [1., 1., 0., -1.],
                          [-1., 0., -2., -1.],

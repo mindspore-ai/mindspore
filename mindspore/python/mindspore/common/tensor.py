@@ -827,7 +827,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.div`.
         """
         self._init_check()
-        return tensor_operator_registry.get('div')(self, value, None)
+        return tensor_operator_registry.get('div')(self, value, rounding_mode=None)
 
     def triu(self, diagonal=0):
         r"""
@@ -3670,19 +3670,19 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('multiply')(self, value)
 
-    def div(self, other, rounding_mode=None):
+    def div(self, value, *, rounding_mode=None):
         r"""
         For details, please refer to :func:`mindspore.ops.div`.
         """
         self._init_check()
-        return tensor_operator_registry.get('div')(self, other, rounding_mode)
+        return tensor_operator_registry.get('div')(self, value, rounding_mode=rounding_mode)
 
     def divide(self, value, *, rounding_mode=None):
         r"""
         Alias for :func:`mindspore.Tensor.div`.
         """
         self._init_check()
-        return tensor_operator_registry.get('div')(self, value, rounding_mode)
+        return tensor_operator_registry.get('div')(self, value, rounding_mode=rounding_mode)
 
     def equal(self, other):
         r"""

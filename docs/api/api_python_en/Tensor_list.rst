@@ -192,6 +192,7 @@
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
+    mindspore.Tensor.matmul
     mindspore.Tensor.matrix_power
     mindspore.Tensor.max
     mindspore.Tensor.maximum
@@ -207,6 +208,7 @@
     mindspore.Tensor.mT
     mindspore.Tensor.mul
     mindspore.Tensor.multiply
+    mindspore.Tensor.mvlgamma
     mindspore.Tensor.nan_to_num
     mindspore.Tensor.nansum
     mindspore.Tensor.narrow
@@ -214,6 +216,7 @@
     mindspore.Tensor.ndim
     mindspore.Tensor.ndimension
     mindspore.Tensor.ne
+    mindspore.Tensor.neg
     mindspore.Tensor.negative
     mindspore.Tensor.nelement
     mindspore.Tensor.new_ones

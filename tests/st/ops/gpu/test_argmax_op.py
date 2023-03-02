@@ -22,6 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.common import dtype as mstype
+from mindspore.ops import functional as F
 
 
 class NetArgmax(nn.Cell):
@@ -100,26 +101,27 @@ def test_argmax_high_dims():
             assert (ms_output.asnumpy() == np_output).all()
 
 
-def adaptive_argmax_functional(nptype):
-    x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(nptype))
-    output = ops.argmax(x, axis=-1)
-    expected = np.array([1, 0, 0]).astype(np.int32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+class ArgmaxFuncNet(nn.Cell):
+    def construct(self, x):
+        return F.argmax(x, dim=-1)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_argmax_float32_functional():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_functional_argmax(mode):
     """
-    Feature: test argmax functional api.
-    Description: test float32 inputs.
+    Feature: Test argmax functional api.
+    Description: Test argmax functional api for Graph and PyNative modes.
     Expectation: the result match with expected result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    adaptive_argmax_functional(np.float32)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    adaptive_argmax_functional(np.float32)
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor([[1, 20, 5], [67, 8, 9], [130, 24, 15]], mstype.float32)
+    net = ArgmaxFuncNet()
+    output = net(x)
+    expect_output = np.array([1, 0, 0]).astype(np.int32)
+    assert np.allclose(output.asnumpy(), expect_output)
 
 
 @pytest.mark.level0
@@ -234,12 +236,12 @@ def test_argmax_functional():
     Expectation: the result match with expected result.
     """
     x = Tensor([[1, 3, 2], [4, 6, 5], [7, 9, 8]], mstype.int32)
-    out_dim_none = ops.argmax(x, axis=None, keepdims=False)
-    out_dim_0 = ops.argmax(x, axis=0, keepdims=False)
-    out_dim_1 = ops.argmax(x, axis=1, keepdims=False)
-    out_dim_none_keepdim = ops.argmax(x, axis=None, keepdims=True)
-    out_dim_0_keepdim = ops.argmax(x, axis=0, keepdims=True)
-    out_dim_1_keepdim = ops.argmax(x, axis=1, keepdims=True)
+    out_dim_none = F.argmax(x, dim=None, keepdim=False)
+    out_dim_0 = F.argmax(x, dim=0, keepdim=False)
+    out_dim_1 = F.argmax(x, dim=1, keepdim=False)
+    out_dim_none_keepdim = F.argmax(x, dim=None, keepdim=True)
+    out_dim_0_keepdim = F.argmax(x, dim=0, keepdim=True)
+    out_dim_1_keepdim = F.argmax(x, dim=1, keepdim=True)
 
     assert out_dim_none.asnumpy() == 7
     assert np.all(out_dim_0.asnumpy() == np.array([2, 2, 2]))
