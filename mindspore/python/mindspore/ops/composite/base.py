@@ -565,17 +565,17 @@ class _Grad(GradOperation_):
                 dynamic_shape_inputs = fn.get_inputs()
             if self.get_by_position:
                 @jit(input_signature=dynamic_shape_inputs)
-                def after_grad(*args, **kwargs):
-                    return grad_(fn, weights, grad_position)(*args, **kwargs)
+                def after_grad(*args):
+                    return grad_(fn, weights, grad_position)(*args)
             else:
                 if self.get_by_list:
                     @jit(input_signature=dynamic_shape_inputs)
-                    def after_grad(*args, **kwargs):
-                        return grad_(fn, weights)(*args, **kwargs)
+                    def after_grad(*args):
+                        return grad_(fn, weights)(*args)
                 else:
                     @jit(input_signature=dynamic_shape_inputs)
-                    def after_grad(*args, **kwargs):
-                        return grad_(fn)(*args, **kwargs)
+                    def after_grad(*args):
+                        return grad_(fn)(*args)
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
