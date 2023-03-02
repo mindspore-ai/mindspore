@@ -648,7 +648,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
 #ifdef ENABLE_TUPLE_UNFOLD
-  if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
+  if (kernel_attrs.empty()) {
+    return KernelNotSupportWarning(kernel_node, false);
+  } else if (kernel_attrs[0].GetSkipCheck()) {
     object_selected_kernel_attrs = kernel_attrs;
   } else if (!kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, true) &&
              !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
