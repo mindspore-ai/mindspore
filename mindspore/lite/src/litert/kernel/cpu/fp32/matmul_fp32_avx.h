@@ -25,7 +25,9 @@ class MatmulFp32AVXCPUKernel : public MatmulFp32BaseCPUKernel {
  public:
   MatmulFp32AVXCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
-      : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {
+    params_->matmul_type_ = kNotImplemented;
+  }
   ~MatmulFp32AVXCPUKernel() = default;
 
   void InitGlobalVariable() override;

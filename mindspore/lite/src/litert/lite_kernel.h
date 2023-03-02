@@ -182,6 +182,8 @@ class MS_API LiteKernel : public Abstractkernel {
   }
   bool ws_allocated_ = false;
 
+  virtual int PreparePackedWeight(const lite::Tensor *tensor) { return mindspore::lite::RET_OK; }
+
  protected:
   virtual int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
                                      int64_t unit_num);

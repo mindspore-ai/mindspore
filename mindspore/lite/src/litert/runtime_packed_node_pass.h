@@ -28,13 +28,13 @@ namespace mindspore {
 namespace lite {
 struct PackInfo {
   bool is_packed_{false};
-  int weight_sums_index_;
+  int weight_sums_index_{-1};
   int b_batch_;
   int deep_;
   int col_;
   int deep_align_;
   int col_align_;
-  bool b_transpose_;
+  bool b_transpose_{false};
   std::string cpu_option_;
 };
 

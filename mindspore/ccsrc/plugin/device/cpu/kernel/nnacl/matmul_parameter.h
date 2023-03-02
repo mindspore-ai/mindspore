@@ -41,6 +41,8 @@ typedef enum MatmulType {
   kMatmulInt8Cpu,
   kMatmulDynamicInt8Cpu,
   kMatmulDynamicSdotInt8Cpu,
+  kMatmulFp32BaseCpu,
+  kMatmulFp32Arm64Cpu,
 } MatmulType;
 
 typedef struct MatMulParameter {

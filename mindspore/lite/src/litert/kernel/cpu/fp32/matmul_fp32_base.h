@@ -39,6 +39,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
                           const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+    params_->matmul_type_ = kMatmulFp32BaseCpu;
   }
   ~MatmulFp32BaseCPUKernel() override;
   int Prepare() override;
@@ -71,6 +72,10 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   virtual int ParallelRunByBatchColRowGEMM(int task_id) const { return RET_ERROR; }
   virtual int ParallelRunByRow1Deep1GEPDOT(int task_id) const { return RET_ERROR; }
   virtual int GetThreadCuttingPolicy();
+
+  const float *GetPackBPtr() const { return matrix_b_.pack_ptr; }
+  const int GetBBatch() const { return b_batch_; }
+  void SetWeightIsPacked(bool weight_is_packed) { this->weight_is_packed_ = weight_is_packed; }
 
  public:
   struct MatrixInfo {
@@ -140,6 +145,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   float *conv1x1_origin_weight_ = nullptr;
   float *conv1x1_origin_bias_ = nullptr;
   bool is_sharing_pack_ = true;
+  bool weight_is_packed_{false};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_BASE_H_

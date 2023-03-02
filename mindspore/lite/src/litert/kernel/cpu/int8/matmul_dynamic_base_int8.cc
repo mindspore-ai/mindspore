@@ -433,4 +433,10 @@ int MatmulDynamicBaseInt8CPUKernel::InitBroadcastParams(const std::vector<int> &
 
   return RET_OK;
 }
+
+int MatmulDynamicBaseInt8CPUKernel::PreparePackedWeight(const lite::Tensor *tensor) {
+  weight_is_packed_ = true;
+  weight_sums_tensor_ = tensor;
+  return RET_OK;
+}
 }  // namespace mindspore::kernel

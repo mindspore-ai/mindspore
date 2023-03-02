@@ -15,7 +15,7 @@
  */
 #include "src/litert/runtime_packed_node_pass.h"
 #include "nnacl/op_base.h"
-#include "src/litert/kernel/cpu/int8/matmul_dynamic_base_int8.h"
+#include "nnacl/matmul_parameter.h"
 
 using RecoveryWeightFunc = void (*)(void *, void *, int, int, bool);
 namespace mindspore {
@@ -75,9 +75,9 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "Custom attr error.";
       return;
     }
-    auto val_offset = schema::CreateMatMulFusion(
-      fbb, std::atoi(attr_map[kTransposeA].c_str()), std::atoi(attr_map[kTransposeB].c_str()),
-      static_cast<schema::ActivationType>(std::atoi(attr_map[kActivationType].c_str())));
+    auto val_offset =
+      schema::CreateMatMulFusion(fbb, std::stoi(attr_map[kTransposeA]), std::stoi(attr_map[kTransposeB]),
+                                 static_cast<schema::ActivationType>(std::stoi(attr_map[kActivationType])));
     auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_MatMulFusion, val_offset.o);
     fbb.Finish(prim_offset);
     void *prim = malloc(fbb.GetSize());
@@ -96,21 +96,23 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
     }
     node->primitive_ = custom_primitive;
     pack_info->is_packed_ = true;
-    pack_info->weight_sums_index_ = node->input_indices_.back();
-    pack_info->b_batch_ = std::atoi(attr_map["b_batch"].c_str());
-    pack_info->col_ = std::atoi(attr_map["col"].c_str());
-    pack_info->deep_ = std::atoi(attr_map["deep"].c_str());
-    pack_info->col_align_ = std::atoi(attr_map["col_align"].c_str());
-    pack_info->deep_align_ = std::atoi(attr_map["deep_align"].c_str());
-    pack_info->b_transpose_ = std::atoi(attr_map[kTransposeB].c_str());
+    pack_info->b_batch_ = std::stoi(attr_map["b_batch"]);
+    pack_info->col_ = std::stoi(attr_map["col"]);
+    pack_info->deep_ = std::stoi(attr_map["deep"]);
+    pack_info->col_align_ = std::stoi(attr_map["col_align"]);
+    pack_info->deep_align_ = std::stoi(attr_map["deep_align"]);
+    pack_info->b_transpose_ = std::stoi(attr_map[kTransposeB]);
     pack_info->cpu_option_ = attr_map["cpu_option"];
     AddNodePackInfo(node->name_, pack_info);
-    node->input_indices_.pop_back();
-    node->node_type_ = schema::PrimitiveType_MatMulFusion;
-  }
+    if (node->quant_type_ == schema::QuantType_QUANT_DYNAMIC) {
+      pack_info->weight_sums_index_ = node->input_indices_.back();
+      node->input_indices_.pop_back();
+      if (!(reinterpret_cast<lite::LiteModel *>(model)->keep_model_buf())) {
+        CopyWeightBiasSumsTensor(tensors);
+      }
+    }
 
-  if (!(reinterpret_cast<lite::LiteModel *>(model)->keep_model_buf())) {
-    CopyWeightBiasSumsTensor(tensors);
+    node->node_type_ = schema::PrimitiveType_MatMulFusion;
   }
 }
 
@@ -180,11 +182,68 @@ void MatmulDynamicSdotInt8Cpu(void *src, void *dst, int row, int col, bool trans
   }
 }
 
+void MatmulFp32BaseCpu(void *src, void *dst, int row, int col, bool transpose) {
+  if (!transpose) {
+    // RowMajor2Row8MajorParallel
+    auto src_r = static_cast<float *>(src);
+    auto dst_r = static_cast<float *>(dst);
+    for (int r = 0; r < row; r++) {
+      float *src_c = src_r + r * col;
+      int c = 0;
+      for (; c < col; c++) {
+        int cd8 = c / C8NUM;
+        int cm8 = c % C8NUM;
+        src_c[c] = dst_r[cd8 * C8NUM * row + r * C8NUM + cm8];
+      }
+    }
+    return;
+  }
+  // RowMajor2Col8MajorParallel
+  auto src_r = static_cast<float *>(src);
+  auto dst_r = static_cast<float *>(dst);
+  int row8 = row / C8NUM * C8NUM;
+  int col_skip = col / C4NUM * C4NUM;
+  int skip_size = C4NUM;
+
+  int ri = 0;
+  for (; ri < row8; ri += C8NUM) {
+    int ci = 0;
+    for (; ci < col_skip; ci += skip_size) {
+      float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C8NUM;
+      for (int tr = 0; tr < C8NUM; tr++) {
+        for (int tc = 0; tc < C4NUM; tc++) {
+          src_c[tr * col + tc] = dst_c[tc * C8NUM + tr];
+        }
+      }
+    }
+    for (; ci < col; ci++) {
+      float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C8NUM;
+      for (int i = 0; i < C8NUM; i++) {
+        src_c[i * col] = dst_c[i];
+      }
+    }
+    src_r += C8NUM * col;
+    dst_r += C8NUM * col;
+  }
+  for (; ri < row; ri++, src_r += col, dst_r++) {
+    for (int i = 0; i < col; i++) {
+      src_r[i] = dst_r[i * C8NUM];
+    }
+  }
+}
+
 RecoveryWeightFunc GetRecoveryWeightFunc(const int quant_type, const TypeId data_type, const int node_type,
                                          const std::string &cpu_option) {
   if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
       quant_type == schema::QuantType_QUANT_DYNAMIC && data_type == kNumberTypeInt8) {
     return MatmulDynamicSdotInt8Cpu;
+  }
+
+  if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
+      data_type == kNumberTypeFloat32) {
+    return MatmulFp32BaseCpu;
   }
   return nullptr;
 }
@@ -200,23 +259,26 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   auto kernel = kernel_exec->kernel();
   MS_CHECK_TRUE_MSG(kernel != nullptr, lite::RET_NULL_PTR, "kernel is nullptr.");
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
-  if (dst_tensor->data_type() != kNumberTypeInt8 || kernel->quant_type() != schema::QuantType_QUANT_DYNAMIC) {
+  if (dst_tensor->data_type() == kNumberTypeFloat32) {
+    if (param->matmul_type_ == kNotImplemented) {
+      return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
+                                  schema::PrimitiveType_MatMulFusion, pack_info);
+    }
+  }
+
+  if (dst_tensor->data_type() == kNumberTypeInt8 && param->matmul_type_ != kMatmulDynamicSdotInt8Cpu &&
+      pack_info->cpu_option_ == kArm64SimdDot) {
     return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
                                 schema::PrimitiveType_MatMulFusion, pack_info);
   }
 
-  if (param->matmul_type_ != kMatmulDynamicSdotInt8Cpu && pack_info->cpu_option_ == kArm64SimdDot) {
-    return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
-                                schema::PrimitiveType_MatMulFusion, pack_info);
-  }
-  auto matmul_kernel = static_cast<kernel::MatmulDynamicBaseInt8CPUKernel *>(kernel);
-  matmul_kernel->SetWeightIsPacked(true);
+  auto lite_kernel = static_cast<kernel::LiteKernel *>(kernel);
+  lite::Tensor *weight_sums = nullptr;
   auto index = static_cast<size_t>(pack_info->weight_sums_index_);
   if (index < tensors.size()) {
-    matmul_kernel->SetWeightSumsTensor(tensors.at(index));
+    weight_sums = tensors.at(index);
   }
-
-  return lite::RET_OK;
+  return lite_kernel->PreparePackedWeight(weight_sums);
 }
 
 int RecoveryPackedWeight(Tensor *weight, const int quant_type, const TypeId data_type, const int node_type,
@@ -239,6 +301,10 @@ int RecoveryPackedWeight(Tensor *weight, const int quant_type, const TypeId data
       current_weight = static_cast<void *>(static_cast<int8_t *>(unpack_data) + i * pack_info->deep_ * pack_info->col_);
       current_b_pack =
         static_cast<void *>(static_cast<int8_t *>(pack_b_ptr) + i * pack_info->col_align_ * pack_info->deep_align_);
+    } else if (weight->data_type() == kNumberTypeFloat32) {
+      current_weight = static_cast<void *>(static_cast<float *>(unpack_data) + i * pack_info->deep_ * pack_info->col_);
+      current_b_pack =
+        static_cast<void *>(static_cast<float *>(pack_b_ptr) + i * pack_info->col_align_ * pack_info->deep_);
     } else {
       free(unpack_data);
       MS_LOG(ERROR) << "unsupported data type.";
