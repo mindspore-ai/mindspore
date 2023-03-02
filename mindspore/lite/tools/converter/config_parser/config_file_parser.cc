@@ -36,6 +36,7 @@ constexpr auto kRegistry = "registry";
 constexpr auto kAclOptionParam = "acl_option_cfg_param";
 constexpr auto kMicroParam = "micro_param";
 constexpr auto kCpuOptionParam = "cpu_option_cfg_param";
+constexpr auto kCustomOppPath = "custom_opp_path";
 }  // namespace
 using ShapeVector = std::vector<int64_t>;
 const int kBatchDim = 0;
@@ -450,7 +451,8 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       {"buffer_optimize", acl_option_cfg_string_.buffer_optimize},
       {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path},
       {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size},
-      {"aoe_mode", acl_option_cfg_string_.aoe_mode}};
+      {"aoe_mode", acl_option_cfg_string_.aoe_mode},
+      {"custom_opp_path", acl_option_cfg_string_.custom_opp_path}};
     return SetMapData(map, parse_map, kAclOptionParam);
   }
   return RET_OK;
