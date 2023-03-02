@@ -88,6 +88,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.glu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
+    mindspore.ops.hardsigmoid
     mindspore.ops.hardswish
     mindspore.ops.hardtanh
     mindspore.ops.leaky_relu
