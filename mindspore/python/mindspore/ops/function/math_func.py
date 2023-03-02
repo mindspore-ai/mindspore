@@ -6243,6 +6243,8 @@ def dstack(inputs):
     for tensor in inputs:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For 'dstack', each elements of 'inputs' must be Tensor, but got {type(tensor)}")
+        if tensor.size == 0:
+            raise TypeError(f"For 'dstack', each elements of 'inputs' can not be empty.")
         if tensor.ndim <= 1:
             tensor = _expand(tensor, 2)
         if tensor.ndim == 2:
