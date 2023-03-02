@@ -29,7 +29,6 @@
 #ifdef GPU_OPENCL
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #endif
-#include "nnacl/kernel.h"
 #include "src/litert/inner_allocator.h"
 #include "experimental/src/exec_env_utils.h"
 #include "src/litert/thread_pool_reuse_manager.h"
@@ -50,11 +49,11 @@ InnerContext::InnerContext() {
 
 void InnerContext::InitExperimentalExecEnv() {
 #ifdef MSLITE_ENABLE_EXPERIMENTAL_KERNEL
-  GetExecEnv()->allocator = this->allocator.get();
-  GetExecEnv()->threadPool = this->thread_pool_;
-  GetExecEnv()->alloc = experimental::DefaultAllocatorMalloc;
-  GetExecEnv()->free = experimental::DefaultAllocatorFree;
-  GetExecEnv()->parallelLaunch = experimental::DefaultThreadPoolParallelLunch;
+  exec_env_.allocator = this->allocator.get();
+  exec_env_.threadPool = this->thread_pool_;
+  exec_env_.alloc = experimental::DefaultAllocatorMalloc;
+  exec_env_.free = experimental::DefaultAllocatorFree;
+  exec_env_.parallelLaunch = experimental::DefaultThreadPoolParallelLunch;
 #endif
 }
 

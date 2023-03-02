@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/litert/kernel/cpu/cpu_kernel.h"
+#include "src/litert/kernel/cpu/nnacl_kernel.h"
 #include "src/tensor.h"
 #include "common/tensor_util.h"
 #include "include/errorcode.h"
@@ -22,7 +22,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
-CPUKernel::~CPUKernel() {
+NnaclKernel::~NnaclKernel() {
   if (in_ != nullptr) {
     free(in_);
     in_ = nullptr;
@@ -40,7 +40,7 @@ CPUKernel::~CPUKernel() {
   }
 }
 
-void CPUKernel::UpdateTensorC() {
+void NnaclKernel::UpdateTensorC() {
   for (size_t i = 0; i < in_size_; i++) {
     Tensor2TensorC(in_tensors_[i], &in_[i]);
   }
@@ -50,7 +50,7 @@ void CPUKernel::UpdateTensorC() {
   return;
 }
 
-int CPUKernel::Prepare() {
+int NnaclKernel::Prepare() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -66,7 +66,7 @@ int CPUKernel::Prepare() {
   return ReSize();
 }
 
-int CPUKernel::ReSize() {
+int NnaclKernel::ReSize() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -76,7 +76,7 @@ int CPUKernel::ReSize() {
   return kernel_->resize(kernel_);
 }
 
-int CPUKernel::Run() {
+int NnaclKernel::Run() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -98,7 +98,9 @@ int CPUKernel::Run() {
   return kernel_->compute(kernel_);
 }
 
-int CPUKernel::InitKernel(const KernelKey &key) {
+int NnaclKernel::InitKernel(const KernelKey &key, const lite::InnerContext *ctx) {
+  CHECK_NULL_RETURN(ctx);
+
   in_size_ = in_tensors_.size();
   if (in_size_ == 0 || in_size_ > MAX_MALLOC_SIZE) {
     return RET_ERROR;
@@ -119,7 +121,8 @@ int CPUKernel::InitKernel(const KernelKey &key) {
 
   UpdateTensorC();
 
-  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type, (FormatC)key.format);
+  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type, (FormatC)key.format,
+                         const_cast<ExecEnv *>(ctx->GetExecEnv()));
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
@@ -127,16 +130,16 @@ int CPUKernel::InitKernel(const KernelKey &key) {
   return RET_OK;
 }
 
-CPUKernel *CPUKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                             const KernelKey &key) {
-  auto *lite_kernel = new (std::nothrow) kernel::CPUKernel(parameter, inputs, outputs, ctx);
+NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                 const KernelKey &key) {
+  auto *lite_kernel = new (std::nothrow) kernel::NnaclKernel(parameter, inputs, outputs, ctx);
   if (lite_kernel == nullptr) {
     MS_LOG(ERROR) << "Create cpu kernel failed:  " << parameter->name_;
     return nullptr;
   }
 
-  auto ret = lite_kernel->InitKernel(key);
+  auto ret = lite_kernel->InitKernel(key, ctx);
   if (ret != RET_OK) {
     MS_LOG(WARNING) << "Init cpu kernel failed:  " << parameter->name_;
     lite_kernel->set_parameter(nullptr);  // Do not free parameter here, free where it was malloced.

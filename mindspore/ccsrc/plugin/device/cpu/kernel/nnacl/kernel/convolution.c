@@ -18,12 +18,12 @@
 #include "nnacl/kernel/convolution_1x1.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
+#include "nnacl/conv_parameter.h"
 
-KernelBase *CreateConvolution(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize,
-                              int data_type, FormatC format) {
-  TensorC weight = in[1];
-  if (GetWidth(&weight) == 1 && GetHeight(&weight) == 1) {
-    return CreateConv1x1(param, in, insize, out, outsize, data_type, format);
+KernelBase *CreateConvolution(OpParameter *param, int data_type, FormatC format) {
+  ConvParameter *conv = (ConvParameter *)param;
+  if (conv->kernel_h_ == 1 && conv->kernel_w_ == 1) {
+    return CreateConv1x1(param, data_type, format);
   }
   return NULL;
 }

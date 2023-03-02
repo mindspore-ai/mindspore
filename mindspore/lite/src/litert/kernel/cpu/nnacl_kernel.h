@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_CPU_KERNEL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_CPU_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_NNACL_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_NNACL_KERNEL_H_
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
@@ -22,19 +22,19 @@
 #include "src/litert/kernel_exec.h"
 
 namespace mindspore::kernel {
-class CPUKernel : public LiteKernel {
+class NnaclKernel : public LiteKernel {
  public:
-  explicit CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  explicit NnaclKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~CPUKernel() override;
+  ~NnaclKernel() override;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
 
  public:
-  int InitKernel(const KernelKey &key);
+  int InitKernel(const KernelKey &key, const lite::InnerContext *ctx);
 
  private:
   void UpdateTensorC();
@@ -47,9 +47,9 @@ class CPUKernel : public LiteKernel {
   size_t out_size_ = 0;
 };
 
-CPUKernel *CPUKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                             const KernelKey &key);
+NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                 const KernelKey &key);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_EXP_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_NNACL_KERNEL_H_

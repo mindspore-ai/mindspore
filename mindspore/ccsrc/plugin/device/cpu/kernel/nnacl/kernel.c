@@ -60,18 +60,20 @@ bool SupportKernelC(int opType, int format, int dataType) {
 }
 
 KernelBase *CreateKernel(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                         FormatC format) {
+                         FormatC format, ExecEnv *env) {
   Init_MSC_VER_kernels();
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][format][REGIST_DT(data_type)];
   if (creator == NULL) {
     return NULL;
   }
-  return creator(param, in, insize, out, outsize, data_type, format);
-}
-
-ExecEnv *GetExecEnv() {
-  static ExecEnv kc;
-  return &kc;
+  KernelBase *kernel_base = creator(param, data_type, format);
+  kernel_base->env = env;
+  kernel_base->param = param;
+  kernel_base->in = in;
+  kernel_base->insize = insize;
+  kernel_base->out = out;
+  kernel_base->outsize = outsize;
+  return kernel_base;
 }
 
 CoreFuncs *GetCoreFuncs(bool use_fp16) {

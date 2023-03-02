@@ -76,18 +76,9 @@ int exp_compute(struct KernelBase *self) {
   return self->env->parallelLaunch(self->env->threadPool, exp_do_compute, self, self->param->thread_num_);
 }
 
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format) {
-  MS_CHECK_TRUE_RET(insize == 1, NULL);
-  MS_CHECK_TRUE_RET(outsize == 1, NULL);
+KernelBase *CreateExp(OpParameter *param, int data_type, FormatC format) {
   ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
   NNACL_CHECK_NULL_RETURN_NULL(exp);
-  exp->base.param = param;
-  exp->base.in = in;
-  exp->base.insize = insize;
-  exp->base.out = out;
-  exp->base.outsize = outsize;
-  exp->base.env = GetExecEnv();
   exp->base.prepare = exp_prepare;
   exp->base.resize = exp_resize;
   exp->base.release = exp_release;
