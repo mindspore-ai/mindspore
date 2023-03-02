@@ -429,6 +429,12 @@ if(NOT MSLITE_ENABLE_COREML)
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/delegate/coreml/stub/coreml_delegate_stub.cc)
 endif()
 
+if(MSVC)
+    set(LITE_SRC ${LITE_SRC}
+    ${EXPRESSION_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/storage.cc)
+endif()
+
 add_subdirectory(litert/kernel/cpu)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})

@@ -444,6 +444,11 @@ endif()
 
 if(MSVC)
   set(MSLITE_ENABLE_CONVERTER off)
+  if(MSLITE_ENABLE_RUNTIME_GLOG)
+    add_definitions(-DNOMINMAX)
+    add_definitions(-DNOGDI)
+    set(MSLITE_DEPS_DIRENT on)
+  endif()
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL cuda)

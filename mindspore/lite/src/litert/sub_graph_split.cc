@@ -100,7 +100,7 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
 
     // 1. check head_node's input is SplitOverlap node
     for (const auto &input : head_node->input_indices_) {
-      if (tensors_.at(input).type_ == CONST) {
+      if (tensors_.at(input).type_ == CONSTANT) {
         continue;
       }
       auto input_node_index = tensors_.at(input).out_nodes_.front();
@@ -112,7 +112,7 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
 
     // 2. check end_node's output is concat node
     for (const auto &output : end_node->output_indices_) {
-      if (tensors_.at(output).type_ == CONST) {
+      if (tensors_.at(output).type_ == CONSTANT) {
         continue;
       }
       auto output_node_index = tensors_.at(output).in_nodes_.front();
@@ -276,7 +276,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       LiteGraph::Node *head_node = model_->graph_.all_nodes_[head_index];
       std::vector<uint32_t> inputs = head_node->input_indices_;
       for (auto input : inputs) {
-        if (tensors_[input].type_ == CONST) {
+        if (tensors_[input].type_ == CONSTANT) {
           continue;
         }
         if (std::find(new_sub_graph->input_indices_.begin(), new_sub_graph->input_indices_.end(), input) !=
@@ -359,8 +359,9 @@ void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
     if (IsPartialNode(node->primitive_, model_->GetSchemaVersion())) {
       continue;
     }
-    int input_count = std::count_if(node->input_indices_.begin(), node->input_indices_.end(),
-                                    [&](uint32_t in_tensor_index) { return tensors_[in_tensor_index].type_ != CONST; });
+    int input_count =
+      std::count_if(node->input_indices_.begin(), node->input_indices_.end(),
+                    [&](uint32_t in_tensor_index) { return tensors_[in_tensor_index].type_ != CONSTANT; });
     if (input_count > 1) {
       multy_in_nodes->push_back(node_index);
     }
@@ -373,7 +374,7 @@ void SearchSubGraph::RemoveConstNode(std::vector<uint32_t> *nodes) {
   while (!stop_search) {
     stop_search = true;
     for (size_t i = 0; i < nodes->size(); i++) {
-      if (tensors_[nodes->at(i)].type_ == CONST) {
+      if (tensors_[nodes->at(i)].type_ == CONSTANT) {
         VectorErase(nodes, nodes->at(i));
         stop_search = false;
         break;
@@ -596,7 +597,7 @@ void SearchSubGraph::InitMiddleSubgraph(const std::vector<uint32_t> *multy_in_no
     LiteGraph::Node *node = node_list_[node_index];
     for (uint32_t input_tensor_index : node->input_indices_) {
       Tensor *tensor = &tensors_[input_tensor_index];
-      if (tensor->type_ == CONST || tensor->type_ == INPUT) continue;
+      if (tensor->type_ == CONSTANT || tensor->type_ == INPUT) continue;
 
       std::vector<uint32_t> input_nodes = tensor->out_nodes_;
       if (input_nodes.empty()) continue;
@@ -662,7 +663,7 @@ void SearchSubGraph::InitSearchTensor() {
     }
     auto category = TensorCategory(*src_tensor);
     if (category == mindspore::lite::Category::CONST_TENSOR || category == mindspore::lite::Category::CONST_SCALAR) {
-      tensors_[i].type_ = CONST;
+      tensors_[i].type_ = CONSTANT;
     }
   }
   std::vector<uint32_t> graph_input = model_->graph_.sub_graphs_[0]->input_indices_;
@@ -867,7 +868,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
     std::vector<Subgraph> node_subs;
     for (uint32_t input_tensor_index : node->input_indices_) {
       Tensor *tensor = &tensors_[input_tensor_index];
-      if (tensor->type_ == CONST) continue;
+      if (tensor->type_ == CONSTANT) continue;
       std::vector<uint32_t> input_nodes = tensor->out_nodes_;
       Subgraph sub;
       sub.ends_.push_back(input_nodes[0]);
@@ -971,7 +972,7 @@ void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
 
   /* remove const node */
   for (int i = static_cast<int>(input.size()) - 1; i >= 0; i--) {
-    if (tensors_[input[i]].type_ == CONST) {
+    if (tensors_[input[i]].type_ == CONSTANT) {
       VectorErase(&input, input[i]);
     }
   }

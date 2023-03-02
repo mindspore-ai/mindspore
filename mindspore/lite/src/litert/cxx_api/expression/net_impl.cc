@@ -87,13 +87,13 @@ NetImpl::NetImpl(std::shared_ptr<Net> p) { pnet_ = p; }
 
 NetImpl::NetImpl(Graph *g) { pnet_ = g->net_data_->net(); }
 
-std::vector<lite::EXPR *> MS_API NetImpl::construct(const std::vector<lite::EXPR *> &inputs) {
+std::vector<lite::EXPR *> NetImpl::construct(const std::vector<lite::EXPR *> &inputs) {
   auto in = Expr::convert(inputs);
   auto out = pnet_->construct(in);
   return Expr::convert(out);
 }
 
-Net *MS_API NetImpl::Connect(std::shared_ptr<Net> net, lite::Net *lnet) {
+Net *NetImpl::Connect(std::shared_ptr<Net> net, lite::Net *lnet) {
   auto impl = GetImpl(net.get());
   if (impl == nullptr) {
     MS_LOG(ERROR) << "missing implementation";
