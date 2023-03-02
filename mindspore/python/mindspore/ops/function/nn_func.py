@@ -5792,10 +5792,19 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
 
 
 def linear(x, w, b):
+    """inner linear"""
     out = ops.matmul(x, w.swapaxes(-1, -2))
     if b is not None:
         out = out + b
     return out
+
+
+def _inner_dropout(x, p, training):
+    """inner dropout"""
+    _dropout = _get_cache_prim(P.Dropout)(1 - p)
+    if p > 0. and training:
+        return _dropout(x)[0]
+    return x
 
 
 def _in_projection(q, k, v, w_q, w_k, w_v, b_q=None, b_k=None, b_v=None):
@@ -5856,8 +5865,7 @@ def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_ca
     if attn_mask is not None:
         attn = attn + attn_mask
     attn = ops.softmax(attn, -1)
-    if dropout_p > 0. and is_training:
-        attn = ops.dropout(attn, dropout_p)
+    attn = _inner_dropout(attn, dropout_p, is_training)
     output = ops.matmul(attn, value)
 
     return (output, attn)

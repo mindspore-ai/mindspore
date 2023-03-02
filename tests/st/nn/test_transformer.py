@@ -116,8 +116,9 @@ def test_transformerencoder_square_input(training, jit):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
-def test_transformerdecoder(jit):
+def test_transformerdecoder(training, jit):
     """
     Feature: TransformerDecoder
     Description: Test shape (batch size, sequence length, embedding dimension)
@@ -127,6 +128,11 @@ def test_transformerdecoder(jit):
     transformer_decoder = TransformerDecoder(decoder_layer, num_layers=6)
     memory = Tensor(np.random.rand(10, 32, 512), ms.float32)
     tgt = Tensor(np.random.rand(20, 32, 512), ms.float32)
+
+    if training:
+        transformer_decoder.set_train()
+    else:
+        transformer_decoder.set_train(False)
 
     def forward(tgt, memory):
         out = transformer_decoder(tgt, memory)
@@ -146,8 +152,9 @@ def test_transformerdecoder(jit):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
-def test_transformer(jit):
+def test_transformer(training, jit):
     """
     Feature: Transformer
     Description: Test shape (batch size, sequence length, embedding dimension)
@@ -156,6 +163,11 @@ def test_transformer(jit):
     transformer_model = Transformer(nhead=16, num_encoder_layers=12)
     src = Tensor(np.random.rand(10, 32, 512), ms.float32)
     tgt = Tensor(np.random.rand(20, 32, 512), ms.float32)
+
+    if training:
+        transformer_model.set_train()
+    else:
+        transformer_model.set_train(False)
 
     def forward(src, tgt):
         out = transformer_model(src, tgt)
