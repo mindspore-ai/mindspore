@@ -307,11 +307,11 @@ class TFRecordToMR:
                     data_list.append(tf_iter.__next__())
                     transform_count += 1
 
-                writer.write_raw_data(data_list)
+                writer.write_raw_data(data_list, True)
                 logger.info("Transformed {} records...".format(transform_count))
             except StopIteration:
                 if data_list:
-                    writer.write_raw_data(data_list)
+                    writer.write_raw_data(data_list, True)
                     logger.info("Transformed {} records...".format(transform_count))
                 break
         return writer.commit()

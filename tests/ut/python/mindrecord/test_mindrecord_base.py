@@ -1350,3 +1350,123 @@ def test_file_writer_schema_len(file_name=None, remove_file=True):
     assert reader.len() == 10
     if remove_file:
         remove_multi_files(file_name, FILES_NUM)
+
+
+def test_file_writer_parallel(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: parallel for writer
+    Expectation: generated mindrecord file
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # single file
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(5):
+        writer.write_raw_data(data, True)
+    writer.commit()
+    reader = FileReader(file_name)
+    assert reader.len() == 50
+    if remove_file:
+        remove_one_file(file_name)
+        remove_one_file(file_name + ".db")
+
+    # write_raw_data with empty
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+    writer = FileWriter(file_name)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    with pytest.raises(RuntimeError):
+        writer.write_raw_data([])
+
+    # multi files
+    # len(data) > FILES_NUM which is parallel size
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(10):
+        writer.write_raw_data(data, True)
+    writer.commit()
+    reader = FileReader([file_name + '0',
+                         file_name + '1',
+                         file_name + '2',
+                         file_name + '3'])
+    assert reader.len() == 100
+    if remove_file:
+        remove_multi_files(file_name, FILES_NUM)
+
+    # len(data) < FILES_NUM which is parallel size
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    for _ in range(2):
+        writer.write_raw_data(data[0:2], True)
+    writer.commit()
+    reader = FileReader([file_name + '0',
+                         file_name + '1',
+                         file_name + '2',
+                         file_name + '3'])
+    assert reader.len() == 4
+    if remove_file:
+        remove_multi_files(file_name, FILES_NUM)
+
+    # write_raw_data(.., True) and write_raw_data(.., False)
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    with pytest.raises(RuntimeError):
+        writer.write_raw_data(data[0:2], True)
+        writer.write_raw_data(data[0:2])
+
+    # without write_raw_data
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.commit()
+    reader = FileReader([file_name + '0',
+                         file_name + '1',
+                         file_name + '2',
+                         file_name + '3'])
+    assert reader.len() == 0
+    if remove_file:
+        remove_multi_files(file_name, FILES_NUM)
+
+    # write_raw_data with empty
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    with pytest.raises(RuntimeError):
+        writer.write_raw_data([], True)
+        writer.commit()

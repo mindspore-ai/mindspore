@@ -38,10 +38,12 @@ class ImageNetToMR:
 
             .. code-block::
 
-              n02119789 0
-              n02100735 1
-              n02110185 2
-              n02096294 3
+              n01440764 0
+              n01443537 1
+              n01484850 2
+              n01491361 3
+              ...
+              n15075141 999
 
         image_dir (str): Image directory contains n02119789, n02100735, n02110185 and n02096294 directory.
         destination (str): MindRecord file path to transform into, ensure that the directory is created in advance and
@@ -108,11 +110,11 @@ class ImageNetToMR:
                 for _ in range(batch_size):
                     data_list.append(imagenet_iter.__next__())
                     transform_count += 1
-                self.writer.write_raw_data(data_list)
+                self.writer.write_raw_data(data_list, True)
                 logger.info("transformed {} record...".format(transform_count))
             except StopIteration:
                 if data_list:
-                    self.writer.write_raw_data(data_list)
+                    self.writer.write_raw_data(data_list, True)
                     logger.info("transformed {} record...".format(transform_count))
                 break
 
