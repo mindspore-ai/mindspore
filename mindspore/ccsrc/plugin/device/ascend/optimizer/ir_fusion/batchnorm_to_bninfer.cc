@@ -106,7 +106,9 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(ms_context);
   auto bn_infer = CreateBNInfer(graph, cnode);
   TransferDependOrUpdateState(cnode, graph, bn_infer);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
     const auto ori_inputs = cnode->inputs();
     if (ori_inputs.size() < kBatchNormInputNum) {
       MS_LOG(EXCEPTION) << "BatchNorm's inputs size is less than 5.";
