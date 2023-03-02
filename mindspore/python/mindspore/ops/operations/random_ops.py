@@ -76,17 +76,18 @@ class NonDeterministicInts(Primitive):
 
 class TruncatedNormal(Primitive):
     """
-    Returns a tensor of the specified shape filled with truncated normal values.
+    Returns a Tensor of the specified shape filled with truncated normal values.
 
-    The generated values follow a normal distribution.
+    The generated values conform to a Gaussian distribution.
 
-    .. warning::
-        The value of `shape` must be greater than zero. The output length can not exceed 1000000.
+    Note:
+        - The value of `shape` must be greater than zero. The output length can not exceed 1000000.
+        - When `seed` or `seed2` is assigned a non-zero value, that value will be used as the seed.
+          Otherwise, a random seed will be used instead.
 
     Args:
-        seed (int, optional): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed.
-        seed2 (int, optional): An optional int. Defaults to 0. A second seed to avoid seed collision.
+        seed (int, optional): Random number seed. Default: 0.
+        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
         dtype (mindspore.dtype, optional): Specified output data type. Must be one of the following types:
             mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
@@ -406,12 +407,13 @@ class ParameterizedTruncatedNormal(Primitive):
     `min` and `max` should be :math:`()` or :math:`(batch\_size, )`.
 
     Note:
-        The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
+        - The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
+        - When `seed` or `seed2` is assigned a non-zero value, that value will be used as the seed.
+          Otherwise, a random seed will be used instead.
 
     Args:
-        seed (int, optional): Random number seed. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: 0.
-        seed2 (int, optional): A second seed to avoid seed collision. Default: 0.
+        seed (int, optional): Random number seed. Default: 0.
+        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:

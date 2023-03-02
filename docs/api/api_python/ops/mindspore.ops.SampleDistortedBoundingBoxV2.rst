@@ -3,14 +3,17 @@ mindspore.ops.SampleDistortedBoundingBoxV2
 
 .. py:class:: mindspore.ops.SampleDistortedBoundingBoxV2(seed=0, seed2=0, aspect_ratio_range=(0.75, 1.33), area_range=(0.05, 1.0), max_attempts=100, use_image_if_no_bounding_boxes=False)
 
-    为图像生成单个随机扭曲的边界框。
+    在图像中创建一个随机扭曲的边界框。
 
-    在图像识别或物品定位中，除了提供真实标签之外，通常还提供边界框注释。用于训练这种系统的常用技术是在保持图像内容的同时随机扭曲图像，即数据增强。
-    此算子根据给定的 `image_size` 、 `bounding_boxes` 和一系列约束输出对象的随机扭曲定位，即边界框。输出以3个Tensor的形式返回，分别是： 
-    `begin` 、 `size` 和 `bboxes` 。前2个Tensor可以直接输入到mindspore.ops.Slice中，以裁剪图像。第三个Tensor即为生成的扭曲边界框。
+    该函数常用于目标定位和图像识别任务。在这样的任务中，除了提供基准标签之外，还提供了边界框注释。通常使用数据增强技术对图像进行随机扭曲，同时保持其内容不变。
+    
+    该函数需要输入 `image_size` 、 `bounding_boxes` 以及一系列限制条件，并基于这些输入输出一个随机扭曲的对象定位框（即边界框）。
+    
+    输出以三个Tensor的形式返回，分别是： 
+    `begin` 、 `size` 和 `bboxes` 。前两个Tensor可以直接输入到 :class:`mindspore.ops.Slice` 中，以裁剪图像。第三个Tensor即为生成的扭曲边界框。
 
     参数：
-        - **seed** (int，可选) - 如果 `seed` 或 `seed2` 设置为非零，则随机数生成器将使用这两个给定的的种子。否则，将使用随机数作为种子。默认值：0。
+        - **seed** (int，可选) - 随机数种子。如果 `seed` 或 `seed2` 设置为非零，则随机数生成器将使用这两个给定的的种子。否则，将使用随机数作为种子。默认值：0。
         - **seed2** (int，可选) - 避免种子冲突的第二个种子。默认值：0。
         - **aspect_ratio_range** (Union[list(float), tuple(float)]，可选) - 指定图像的裁剪区域必须具有宽高比范围。区域宽高比 = area_width / area_height。这个属性应为正。默认值：(0.75, 1.33)。
         - **area_range** (Union[list(float), tuple(float)]，可选) - 图像的裁剪区域必须包含在此范围内提供的图像。此属性的值应该在范围(0.0, 1.0]内。默认值：(0.05, 1.0)。

@@ -7000,6 +7000,8 @@ class Cholesky(Primitive):
 
 class STFT(Primitive):
     """
+    Applies Short-time Fourier transform (STFT) on input signal.
+
     STFT segments the signal into narrow time intervals and takes the Fourier transform
     of each segment to quantify the change of a nonstationary signal’s frequency
     and phase content over time.
@@ -7487,7 +7489,8 @@ class NanToNum(Primitive):
 
 class Orgqr(Primitive):
     r"""
-    Computes the first :math:`N` columns of a product of Householder matrices.
+    Calculates the explicit representation of the orthogonal matrix :math:`Q`
+    returned by :class:`mindspore.ops.Geqrf`.
 
     Refer to :func:`mindspore.ops.orgqr` for more details.
 

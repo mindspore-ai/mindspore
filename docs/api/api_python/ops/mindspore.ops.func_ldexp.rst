@@ -3,13 +3,15 @@ mindspore.ops.ldexp
 
 .. py:function:: mindspore.ops.ldexp(x, other)
 
-    将输入乘以 :math:`2^{other}` 。
+    逐元素将输入Tensor乘以 :math:`2^{other}` 。
+
+    该函数使用两个参数，即尾数 `x` 和指数 `other` ，并将它们的乘积作为浮点数返回：
 
     .. math::
         out_{i} = x_{i} * ( 2_{i} ^{other} )
 
     .. note::
-        通常，该函数可以通过将输入中的尾数乘以 `other` 中的指数的整数2的幂来创建浮点数。
+        该函数通常用于由尾数和幂构造浮点数，或将浮点数按二的幂进行缩放。
 
     参数：
         - **x**  (Tensor) - 输入的一个Tensor。

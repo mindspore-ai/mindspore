@@ -7,7 +7,7 @@ mindspore.ops.FillDiagonal
 
     参数：
         - **fill_value** (float) - `input_x` 对角线的填充值。
-        - **wrap** (bool，可选) - 控制对于一个高矩阵（即矩阵的行数大于列数），对角线元素是否继续延伸到剩余的行。下面的例子说明产生怎样的效果。默认值：False。
+        - **wrap** (bool，可选) - 控制对于一个高矩阵（即矩阵的行数大于列数），对角线元素是否继续延伸到剩余的行。具体效果详见下方代码样例。默认值：False。
 
     输入：
         - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` ，其数据类型必须为：float32、int32或者int64。

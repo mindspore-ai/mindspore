@@ -3,9 +3,11 @@ mindspore.ops.SegmentMax
 
 .. py:class:: mindspore.ops.SegmentMax
 
-    计算Tensor的片段最大值。
+    计算Tensor中每个分段的最大值。
 
-    计算一个Tensor，使得 :math:`output_i=max_j(input\_x_j)` ，其中求和是在j上，满足：:math:`segment\_ids[j] == i` 。如果给定 ID :math:`i` 的分段的和为空，则有 :math:`output[i] = 0` 。
+    具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i=max_j(input\_x_j)` ，其
+    中最大值在满足 :math:`segment\_ids[j] == i` 这个条件的所有的 `j` 对应的元素中取得。
+    如果一个分段中没有元素，则输出Tensor中相应的元素将被设置为零：:math:`output[i] = 0`。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。数据类型为实数且秩不小于1的输入Tensor。

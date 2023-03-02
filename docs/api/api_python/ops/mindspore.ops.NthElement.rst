@@ -4,8 +4,8 @@ mindspore.ops.NthElement
 .. py:class:: mindspore.ops.NthElement(reverse=False)
 
     寻找并返回输入Tensor最后一维第 :math:`n` 小的值。
-    如果输入是Vector(rank为1)，寻找第n小的值并以Scalar Tensor类型输出结果。
-    对于Matrix（rank大于1），计算最后一维每一行（各自可以看作一个Vector）第n小的值。因此，返回值 `values` 的shape满足 `values`.shape = `input`.shape[:-1]。
+    如果输入是1-D Tensor(即Vector)，则找到Vector中第n小的值并将其输出为标量Tensor。
+    对于矩阵或更高维度的输入，分别计算每行中的第n小的值（或沿着最后一个维度的Vector），并输出这些值。因此，返回值 `values` 的shape满足 `values`.shape = `input`.shape[:-1]。
 
     参数：
         - **reverse** (bool，可选) - 可选参数，如果设为True，则寻找第 :math:`n` 大的值，如果设为False，则寻找第n小的值。默认值：False。

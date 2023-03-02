@@ -3,7 +3,7 @@ mindspore.ops.matrix_exp
 
 .. py:function:: mindspore.ops.matrix_exp(x)
 
-    计算方阵的矩阵指数。支持batch维输入。
+    计算单个或一批方阵的矩阵指数。
 
     .. math::
 

@@ -3260,7 +3260,7 @@ def det(x):
 
 def matrix_exp(x):
     r"""
-    Computes the matrix exponential of a square matrix. Supports batched inputs.
+    Computes the exponential of a single or a batch of square matrices.
 
     .. math::
 
@@ -3490,28 +3490,26 @@ def trunc(input):
 
 def ldexp(x, other):
     """
-    Multiplies input by :math:`2^{other}` .
+    Multiplies input Tensor by :math:`2^{other}` element-wise.
+
+    It takes two arguments, a mantissa `x` and an exponent `other`,
+    and returns their product as a floating-point number:
 
     .. math::
 
-        out_{i} = x_{i} * ( 2_{i} ^{other} )
+        out_{i} = x_{i} * ( 2 ^{other_{i}} )
 
     Note:
-        Typically this function can create floating point numbers
-        by multiplying mantissas in input with powers of integer 2
-        from the exponents in `other`.
+        This function is commonly used to construct
+        floating-point numbers from their component parts, or to scale a
+        floating-point number by a power of two.
 
     Args:
-        x (Tensor): The input tensor.
-        other (Tensor): A tensor of exponents, typically integers.
+        x (Tensor): The input Tensor.
+        other (Tensor): A Tensor of integers that represent exponents.
 
     Returns:
-        Tensor, the output tensor.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `other` is not a Tensor.
-        ValueError: If shape of `x` and `other` can not broadcast.
+        Tensor, the output Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4382,10 +4380,13 @@ def median(x, axis=-1, keepdims=False):
 
 def orgqr(x, tau):
     r"""
-    Computes the first :math:`N` columns of a product of
+    Calculates the explicit representation of the orthogonal matrix :math:`Q`
+    returned by :class:`mindspore.ops.Geqrf`.
+
+    Take the case of input without batch dimension as an example,
+    computes the first :math:`N` columns of a product of
     `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_
-    matrices. Take the case of input without batch
-    as an example. Suppose input `x` is a matrix of size :math:`(M, N)` after householder transformation.
+    matrices. Suppose input `x` is a matrix of size :math:`(M, N)` after householder transformation.
     When the diagonal of `x` is set to 1, every colunm of lower triangular in `x` is
     denoted as :math:`w_j` for :math:`j` for
     :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
@@ -5344,13 +5345,13 @@ def adjoint(x):
 
 def addr(x, vec1, vec2, beta=1, alpha=1):
     """
-    Executes the outer-product of `vec1` and `vec2` and adds it to the matrix `x`.
+    Computes the outer product of two vector `vec1` and `vec2`, and adds the resulting matrix to `x`.
 
-    If `vec1` is a vector of size :math:`N` and `vec2` is a vector of size :math:`M`, then `x` must be broadcastable
-    with a matrix of size :math:`(N, M)` and `out` will be a matrix of size :math:`(N, M)`.
+    Given `vec1` and `vec2` of sizes :math:`N` and :math:`M`,
+    `x` must be able to broadcast to a matrix of shape :math:`(N, M)`.
 
-    The optional values `beta` and `alpha` are the scale factors on the outer product between `vec1` and `vec2`
-    and the added matrix `x` respectively. If `beta` is 0, then `x` will be ignored.
+    `beta` and `alpha` are optional scaling factors for the outer product of :math:`vec1` and :math:`vec2`,
+    and the matrix `x` respectively. Setting `beta` to 0 will exclude `x` from the computation.
 
     .. math::
         output = β x + α (vec1 ⊗ vec2)
@@ -5746,10 +5747,10 @@ def _check_input_2d(input_shape, param_name, func_name):
 
 def deg2rad(x):
     """
-    Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
+    Converts angles in degrees to angles in radians element-wise.
 
     Args:
-        x (Tensor[Number]): The input tensor. It must be a positive-definite matrix.
+        x (Tensor[Number]): The input tensor.
             With float16, float32 or float64 data type.
 
     Returns:
@@ -5784,7 +5785,7 @@ def deg2rad(x):
 
 def rad2deg(x):
     """
-    Returns a new tensor with each of the elements of `x` converted from angles in radians to degrees.
+    Converts angles in radians to angles in degrees element-wise.
 
     Args:
         x (Tensor): The input tensor.
@@ -6239,10 +6240,11 @@ def _check_is_int(arg_value, arg_name, cls_name):
 
 def diff(x, n=1, axis=-1, prepend=None, append=None):
     r"""
-    Calculates the n-th discrete difference along the given axis.
+    Computes the n-th discrete difference along a specified axis of a given input `x`.
 
-    The first difference is given by :math:`out[i] = a[i+1] - a[i]` along the given axis,
-    higher differences are calculated by using `diff` iteratively.
+    The first difference is calculated as :math:`out[i] = a[i+1] - a[i]` along the specified `axis`.
+    To compute higher differences, the function is called recursively
+    using the output from the previous iteration as input.
 
     Note:
         Zero-shaped Tensor is not supported, a value error is raised if
@@ -6252,18 +6254,18 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         x (Tensor): Input tensor.
             Full support for signed integers, partial support for floats and complex numbers
         n (int, optional): The number of times values are differenced. If zero,
-            the input is returned as-is. Default: 1. Currently only 1 is supported.
+            the input is returned as-is. Currently only 1 is supported. Default: 1.
         axis (int, optional): The axis along which the difference is taken, default
             is the last axis. Default: -1.
-        prepend (Tensor, optional): Values to prepend or append to a along
+        prepend (Tensor, optional): Values to prepend to `x` along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
-            array in along all other axis. Otherwise the dimension and shape must
+            array along all other axis. Otherwise the dimension and shape must
             match `x` except along `axis`. Default: None.
-        append (Tensor, optional): Values to prepend or append to a along
+        append (Tensor, optional): Values to append to `x` along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
-            array in along all other axis. Otherwise the dimension and shape must
+            array along all other axis. Otherwise the dimension and shape must
             match `x` except along `axis`. Default: None.
 
     Returns:
@@ -6343,8 +6345,8 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
     Examples:
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
         >>> print(output)
-        [[2 3 3]
-         [0 0 1]]
+        [[1 2 2 3 3 3]
+        [0 0 1 0 1 2]]
         >>> print(output.dtype)
         Int64
     """
@@ -8399,7 +8401,7 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
 
 def log2(x):
     r"""
-    Returns a new tensor with the logarithm to the base 2 of the elements of input.
+    Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
 
     .. math::
         y_i = log_2(x_i)
@@ -8615,7 +8617,7 @@ def xdivy(x, y):
 
 def log10(x):
     r"""
-    Returns a new tensor with the logarithm to the base 10 of the elements of input.
+    Returns a new Tensor by taking the base 10 logarithm of the elements in the input Tensor.
 
     .. math::
         y_i = log_{10}(x_i)

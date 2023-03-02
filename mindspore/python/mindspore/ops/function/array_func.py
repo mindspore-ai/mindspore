@@ -5926,8 +5926,8 @@ def _check_unfold_params(param, param_name, param_size):
 
 def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     """
-    Extracts sliding local blocks from a batched input tensor. Format
-    of the input Tensor is (N, C, H, W).
+    Reshapes a tensor of format (N, C, H, W) by extracting sliding local blocks from the input Tensor
+    and concatenating them along a new dimension.
 
     .. warning::
         - Currently, only 4-D input tensors (batched image-like tensors) are supported.
