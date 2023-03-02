@@ -882,25 +882,7 @@ class HSigmoid(Primitive):
     r"""
     Hard sigmoid activation function.
 
-    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard sigmoid is defined as:
-
-    .. math::
-
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
+    Refer to :func:`mindspore.ops.hardsigmoid` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

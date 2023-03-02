@@ -4461,8 +4461,8 @@ def hardsigmoid(input_x):
 
     where :math:`x_i` is an element of the input Tensor.
 
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(*)`, where :math:`*` means any number of
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(*)`, where :math:`*` means any number of
           dimensions, with float16, float32 or float64 data type.
 
     Outputs:
@@ -4473,7 +4473,7 @@ def hardsigmoid(input_x):
         TypeError: If dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)

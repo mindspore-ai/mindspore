@@ -88,6 +88,7 @@ Activation Functions
     mindspore.ops.glu
     mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
+    mindspore.ops.hardsigmoid
     mindspore.ops.hardswish
     mindspore.ops.hardtanh
     mindspore.ops.leaky_relu
