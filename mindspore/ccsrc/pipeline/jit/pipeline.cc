@@ -210,8 +210,8 @@ bool CheckArgValid(const py::handle &arg) {
     return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
   }
 
-  if (py::isinstance<Tensor>(arg)) {
-    auto tensor = py::cast<TensorPtr>(arg);
+  if (py::isinstance<Tensor>(arg) || IsStubTensor(arg)) {
+    auto tensor = IsStubTensor(arg) ? ConvertStubTensor(arg) : py::cast<TensorPtr>(arg);
     if (tensor->data_type() == kNumberTypeBool) {
       MS_LOG(INFO) << "It is not recommended to use a tensor of bool data type as network input, which may cause "
                    << "operator compilation failure. For more details, please refer to the FAQ at "
@@ -1320,8 +1320,8 @@ void GraphExecutorPy::TerminateDebugger() {
 
 std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res,
                                                                            const BaseRef &value) {
-  if (py::isinstance<tensor::Tensor>(res)) {
-    auto res_tensor = res.cast<tensor::TensorPtr>();
+  if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
+    auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(res_tensor);
     if (res_tensor->device_address() != nullptr) {
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(res_tensor->device_address());

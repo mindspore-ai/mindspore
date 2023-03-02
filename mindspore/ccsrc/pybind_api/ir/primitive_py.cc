@@ -52,6 +52,10 @@ void SyncData(const py::object &arg) {
     auto tensor = py::cast<tensor::TensorPtr>(arg);
     tensor->data_sync();
   }
+  if (IsStubTensor(arg)) {
+    auto tensor = ConvertStubTensor(arg);
+    tensor->data_sync();
+  }
 }
 
 void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) {
@@ -307,8 +311,8 @@ void PrimitivePy::CheckHookConsistency(const py::object &grad_out, const py::obj
     }
   }
 
-  if (py::isinstance<tensor::Tensor>(expected_grad_out)) {
-    if (!py::isinstance<tensor::Tensor>(grad_out)) {
+  if (py::isinstance<tensor::Tensor>(expected_grad_out) || IsStubTensor(expected_grad_out)) {
+    if (!py::isinstance<tensor::Tensor>(grad_out) && !IsStubTensor(grad_out)) {
       hook_grad_.clear();
       MS_EXCEPTION(TypeError) << "The output type of:" << py::str(co_name) << " should be a tensor but got "
                               << py::cast<std::string>(grad_out.attr("__class__").attr("__name__")) << ".";

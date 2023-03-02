@@ -125,8 +125,8 @@ class PyExecuteInitializer {
       const auto &output = parse::data_converter::CallPythonScript(py_script, params);
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
       PushPyExecuteOutput(script_str, output);
-      if (py::isinstance<tensor::Tensor>(output)) {
-        const auto &tensor = output.cast<tensor::TensorPtr>();
+      if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
+        const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return abstract::MakeAbstract(infer_shape, tensor->Dtype());
       }

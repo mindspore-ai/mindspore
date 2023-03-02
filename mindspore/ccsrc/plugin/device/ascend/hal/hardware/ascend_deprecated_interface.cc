@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
 #include <algorithm>
+#include "mindspore/ccsrc/include/common/utils/convert_utils_py.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
@@ -66,6 +67,9 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     } else if (py::isinstance<tensor::Tensor>(item.second.attr("data"))) {
       // cast tensor
       tensor = py::cast<std::shared_ptr<tensor::Tensor>>(item.second.attr("data"));
+    } else if (IsStubTensor(item.second.attr("data"))) {
+      // cast stub_tensor
+      tensor = ConvertStubTensor(item.second.attr("data"));
     }
 
     if (tensor == nullptr) {
