@@ -3193,7 +3193,8 @@ check_value_type = constexpr(validator.check_value_type)
 
 def tensor_bool(x):
     """tensor as condition, if is constant, return immediate bool value"""
-    if F.isconstant(x) and check_is_tensor_bool_cond(F.shape(x)):
+    is_cond = check_is_tensor_bool_cond(F.shape(x))
+    if is_cond and F.isconstant(x):
         return const_tensor_to_bool(x)
     return F.cast(x, mstype.bool_)
 
