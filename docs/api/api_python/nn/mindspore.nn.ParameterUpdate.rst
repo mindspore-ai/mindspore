@@ -14,7 +14,7 @@ mindspore.nn.ParameterUpdate
         - **x** (Tensor) - shape和type与 `param` 相同的Tensor。
 
     输出：
-        Tensor，输入 `x`。
+        Tensor，更新后的值。
 
     异常：
         - **KeyError** - 指定名称的参数不存在。
