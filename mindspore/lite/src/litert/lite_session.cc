@@ -603,7 +603,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_;
+  infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_ && (is_infershape_ != RET_OK);
   InitGraphInOutTensorsMap(model);
 
   non_tail_call_kernels_ = scheduler.NonTailCallNodes();
@@ -636,7 +636,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_;
+  infer_along_running_ = infer_along_running_ && (runtime_allocator_ == nullptr);
   if (infer_along_running_) {
     this->context_->set_infer_checker(InferCheckerAll);
   }
