@@ -2342,7 +2342,7 @@ def softmin(x, axis=-1):
 
 def softshrink(x, lambd=0.5):
     r"""
-    Applies the SoftShrink function element-wise.
+    Applies the Softshrink function element-wise.
 
     .. math::
         \text{SoftShrink}(x) =
@@ -6120,6 +6120,7 @@ __all__ = [
     'hardtanh',
     'huber_loss',
     'softsign',
+    'softshrink',
     'selu',
     'silu',
     'softmax',

@@ -101,9 +101,9 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.selu
     mindspore.ops.sigmoid
     mindspore.ops.silu
-    mindspore.ops.soft_shrink
     mindspore.ops.softmax
     mindspore.ops.softmin
+    mindspore.ops.softshrink
     mindspore.ops.softsign
     mindspore.ops.tanh
     mindspore.ops.threshold

@@ -8318,7 +8318,7 @@ class SoftShrink(Primitive):
     r"""
     Applies the SoftShrink function element-wise.
 
-    Refer to :func:`mindspore.ops.soft_shrink` for more details.
+    Refer to :func:`mindspore.ops.softshrink` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
