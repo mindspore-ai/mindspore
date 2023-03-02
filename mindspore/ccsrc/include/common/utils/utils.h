@@ -856,6 +856,8 @@ constexpr auto kCheckValidOpName = "CheckValid";
 constexpr auto kSoftmaxGradFusionOpName = "SoftmaxGradFusion";
 constexpr auto kSoftMarginLossOpName = "SoftMarginLoss";
 constexpr auto kZerosLikeOpName = "ZerosLike";
+constexpr auto kSoftplusOpName = "Softplus";
+constexpr auto kSoftsignOpName = "Softsign";
 
 // Sequence ops
 constexpr auto kScalarToTensorOpName = "ScalarToTensor";
