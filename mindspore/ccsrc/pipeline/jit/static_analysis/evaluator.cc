@@ -142,6 +142,10 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
     current_stack_frame = stack_frames.top();
     if (current_stack_frame->Done()) {
       MS_EXCEPTION_IF_NULL(abstract);
+      if (current_stack_frame->func_graph()->has_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP)) {
+        // Set all fprop outputs as used.
+        SetSequenceElementsUseFlagsRecursively(abstract, true);
+      }
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Leave from func graph, " << current_stack_frame;
       stack_frames.pop();
       if (stack_frames.empty()) {
@@ -206,6 +210,10 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << abstract->ToString();
   }
   MS_EXCEPTION_IF_NULL(abstract);
+  if (fg->has_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP)) {
+    // Set all fprop outputs as used.
+    SetSequenceElementsUseFlagsRecursively(abstract, true);
+  }
   return abstract;
 }
 
