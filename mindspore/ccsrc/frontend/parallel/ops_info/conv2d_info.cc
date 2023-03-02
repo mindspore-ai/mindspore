@@ -1016,8 +1016,14 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape tmp_shape = inputs_shape_[0];
   if (name_.find(CONV2D_INFO) != std::string::npos) {  // conv2d: ((N, C-in, H, W), (C-out, C-in, k1, k2))
     tmp_shape.push_back(inputs_shape_[1][0]);          // the tmp shape is (N, C-in, H, W, C-out)
-  } else {                                             // conv2d-transpose: ((N, C-out, H, W), (C-out, C-in, k1, k2))
-    tmp_shape.push_back(inputs_shape_[1][1]);          // the tmp shape is (N, C-out, H, W, C-in)
+  } else if (name_.find(CONV2D_TRANSPOSE) !=
+             std::string::npos) {              // conv2d-transpose: ((N, C-out, H, W), (C-out, C-in, k1, k2))
+    tmp_shape.push_back(inputs_shape_[1][1]);  // the tmp shape is (N, C-out, H, W, C-in)
+  } else if (name_.find(CONV3D_INFO) != std::string::npos) {  // conv3d
+    tmp_shape.pop_back();
+    tmp_shape.push_back(inputs_shape_[1][0]);
+  } else {
+    MS_LOG(EXCEPTION) << name_ << ": It does not support to generate strategies";
   }
   Shapes tmp_inputs_shape = {tmp_shape};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
