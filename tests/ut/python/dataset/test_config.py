@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import mindspore.dataset.engine.iterators as it
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 import mindspore.dataset.core.config as config
+import mindspore.dataset.debug as debug
 from mindspore import log as logger
 from util import dataset_equal
 
@@ -538,24 +539,34 @@ def test_fast_recovery():
     assert "set_fast_recovery() missing 1 required positional argument: 'fast_recovery'" in str(error_info.value)
 
 
-def test_debug_mode():
+def test_debug_mode_error_case():
     """
-    Feature: Test the debug mode setter/getter function
-    Description: This function only accepts a boolean as input and outputs error otherwise
-    Expectation: TypeError will be raised when input argument is missing or is not a boolean
+    Feature: Test the debug mode setter function
+    Description: This function only accepts a boolean as first input and list as second input, outputs error otherwise
+    Expectation: TypeError will be raised when input argument is missing or is invalid
     """
-    # set_debug_mode will raise TypeError if input is an integer
+    # set_debug_mode will raise TypeError if first input is an integer
     config_error_func(ds.config.set_debug_mode, 0, TypeError, "debug_mode_flag isn't of type boolean.")
-    # set_debug_mode will raise TypeError if input is a string
+    # set_debug_mode will raise TypeError if first input is a string
     config_error_func(ds.config.set_debug_mode, "True", TypeError, "debug_mode_flag isn't of type boolean.")
-    # set_debug_mode will raise TypeError if input is a tuple
+    # set_debug_mode will raise TypeError if first input is a tuple
     config_error_func(ds.config.set_debug_mode, (True,), TypeError, "debug_mode_flag isn't of type boolean.")
-    # set_debug_mode will raise TypeError if input is None
+    # set_debug_mode will raise TypeError if first input is None
     config_error_func(ds.config.set_debug_mode, None, TypeError, "debug_mode_flag isn't of type boolean.")
     # set_debug_mode will raise TypeError if no input is provided
     with pytest.raises(TypeError) as error_info:
         ds.config.set_debug_mode()
     assert "set_debug_mode() missing 1 required positional argument: 'debug_mode_flag'" in str(error_info.value)
+
+    # set_debug_mode will raise TypeError if second input is not valid
+    with pytest.raises(TypeError) as error_info:
+        ds.config.set_debug_mode(True, debug.PrintDataHook())
+    assert "debug_hook_list is not a list" in str(error_info.value)
+    def func():
+        pass
+    with pytest.raises(TypeError) as error_info:
+        ds.config.set_debug_mode(True, [func])
+    assert "All items in debug_hook_list must be of type DebugHook" in str(error_info.value)
 
 
 def test_error_samples_mode():
@@ -608,5 +619,5 @@ if __name__ == '__main__':
     test_multiprocessing_timeout_interval()
     test_config_bool_type_error()
     test_fast_recovery()
-    test_debug_mode()
+    test_debug_mode_error_case()
     test_error_samples_mode()

@@ -31,6 +31,7 @@ import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
 from mindspore.dataset.core.validator_helpers import replace_none, type_check
+from mindspore.dataset.debug import DebugHook, PrintMetaDataHook
 
 __all__ = ['set_sending_batches', 'load', '_init_device_info',
            'set_seed', 'get_seed',
@@ -54,6 +55,7 @@ INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
 
 _config = cde.GlobalContext.config_manager()
+_debug_context = {}
 
 
 def _init_device_info():
@@ -840,7 +842,7 @@ def get_fast_recovery():
     return _config.get_fast_recovery()
 
 
-def set_debug_mode(debug_mode_flag):
+def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     """
     Set the debug_mode flag of the dataset pipeline. When enabled, the dataset pipeline is run synchronously and
     sequentially with a single thread.
@@ -866,18 +868,60 @@ def set_debug_mode(debug_mode_flag):
     Args:
         debug_mode_flag (bool): Whether dataset pipeline debug mode is enabled, which forces the pipeline
             to run synchronously and sequentially.
+        debug_hook_list (list[DebugHook]): a list of debug hook objects to be inserted before and after each
+            transform operation in map operation. Default: None, which means to use `[PrintMetaDataHook]`,
+            which prints shape/size/type of each input/output data of each transformation.
 
     Raises:
         TypeError: If `debug_mode_flag` is not a boolean data type.
+        TypeError: If `debug_hook_list` is not a list type.
+        TypeError: If any item in `debug_hook_list` is not DebugHook type.
 
     Examples:
+        1. Enable dataset pipeline debug mode and use default debug hook.
+        >>> import mindspore.dataset as ds
+        >>> # Print shape and type of input/output data of each transform op in map operator.
         >>> ds.config.set_debug_mode(True)
+
+        2. Enable dataset pipeline debug mode and use pre-defined debug hook provided by MindData.
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.debug as debug
+        >>> ds.config.set_debug_mode(True, debug_hook_list=[debug.PrintDataHook()])
+
+        3. Enable dataset pipeline debug mode and use user-defined debug hook. It must define a
+        class inherited from DebugHook.
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.debug as debug
+        >>> class CustomizedHook(debug.DebugHook):
+        >>>     def __init__(self):
+        >>>         super().__init__()
+        >>>     def compute(self, *args):
+        >>>         # Add your debugging code here.
+        >>>         return args
+        >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
+
+        4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
+        >>> import mindspore.dataset as ds
+        >>> ds.config.set_debug_mode(True)
+        >>> dataset = ds.ImageFolderDataset(...)
+        >>> # the debug hook is added after `Decode` operation.
+        >>> dataset.map([Decode(), CustomizedHook(), CenterCrop()])
     """
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
+    if not debug_hook_list:
+        debug_hook_list = [PrintMetaDataHook()]
+    if not isinstance(debug_hook_list, list):
+        raise TypeError("debug_hook_list is not a list.")
+    for debug_func in debug_hook_list:
+        if not isinstance(debug_func, DebugHook):
+            raise TypeError("All items in debug_hook_list must be of type DebugHook.")
     if debug_mode_flag:
         logger.warning("Dataset pipeline debug mode is enabled. Performance will be impacted because the pipeline"
                        " will be running in a single thread.")
+    if debug_hook_list:
+        _debug_context["debug_hook_list"] = debug_hook_list
+
     _config.set_debug_mode(debug_mode_flag)
 
 
@@ -892,6 +936,17 @@ def get_debug_mode():
         >>> debug_mode = ds.config.get_debug_mode()
     """
     return _config.get_debug_mode()
+
+
+def _get_debug_hook_list():
+    """
+    INTERNAL USE ONLY!
+    Get value of debug_hook_list.
+
+    Returns:
+        list, the debug hook objects to be inserted in map operation to debug inputs/outputs of each transform.
+    """
+    return _debug_context.get("debug_hook_list")
 
 
 class ErrorSamplesMode(IntEnum):

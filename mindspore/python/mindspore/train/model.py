@@ -45,6 +45,7 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
 from mindspore.common.api import _pynative_executor
+from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
 
@@ -1029,6 +1030,7 @@ class Model:
             if not dataset_sink_mode and _cache_enable():
                 raise ValueError("Embedding cache mode should run with 'dataset_sink_mode=True'.")
 
+        self._check_sink_mode_for_ds_debug_mode(dataset_sink_mode)
 
         Validator.check_is_int(sink_size)
         Validator.check_non_negative_int(epoch)
@@ -1063,6 +1065,12 @@ class Model:
         # This is to avoid the timeout when finding the actor route tables in 'train' and 'eval' case(or 'fit').
         if _enable_distributed_mindrt():
             _reset_op_id_with_offset()
+
+    @staticmethod
+    def _check_sink_mode_for_ds_debug_mode(dataset_sink_mode):
+        if get_debug_mode() and dataset_sink_mode:
+            raise ValueError("Dataset sink mode is not supported when dataset pipeline debug mode is on. "
+                             "Please manually turn off sink mode.")
 
     @staticmethod
     def _check_methods_for_custom_callbacks(callbacks, current_mode):

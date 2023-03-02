@@ -21,8 +21,10 @@ import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
+import mindspore.nn as nn
 from mindspore.dataset.vision import Inter
 from mindspore import log as logger
+from mindspore.train import Model
 
 # Need to run all these tests in separate processes since
 # the global configuration setting of debug_mode may impact other tests running in parallel.
@@ -255,9 +257,6 @@ def test_pipeline_debug_mode_generator_pipeline():
     Expectation: Output is equal to the expected output
     """
     logger.info("test_pipeline_debug_mode_generator_pipeline")
-    # Note: set seed to make sure consistent results of Shuffle op. Even in debug mode, seed has
-    # been set internally in IR pre-pass, results are still random (needs further investigation).
-    ds.set_seed(8)
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [2, 3, 4, 5, 6, 7, 8, 9]
@@ -267,6 +266,7 @@ def test_pipeline_debug_mode_generator_pipeline():
     ds1 = ds1.take(7)
 
     # do shuffle followed by batch
+    # Note: Since the internal seed is set in debug mode, the consistency of results after ShuffleOp can be ensured.
     ds1 = ds1.shuffle(5)
     ds1 = ds1.batch(3, drop_remainder=True)
 
@@ -274,7 +274,7 @@ def test_pipeline_debug_mode_generator_pipeline():
     for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
         buf.append(data[0])
     assert len(buf) == 2
-    out_expect = [[[6], [3], [8]], [[4], [7], [2]]]
+    out_expect = [[[5], [4], [2]], [[7], [8], [3]]]
     np.testing.assert_array_equal(buf, out_expect)
 
 
@@ -443,15 +443,13 @@ def test_pipeline_debug_mode_shuffle():
     Expectation: Successful.
     """
     logger.info("test_pipeline_debug_mode_shuffle")
-    # Note: set seed to make sure consistent results of Shuffle op. Even in debug mode, seed has
-    # been set internally in IR pre-pass, results are still random (needs further investigation).
-    ds.set_seed(150)
 
     buffer_size = 5
     data = ds.TextFileDataset(TEXTFILE_DATA, shuffle=False)
+    # Note: Since the internal seed is set in debug mode, the consistency of results after ShuffleOp can be ensured.
     data = data.shuffle(buffer_size=buffer_size)
-    out_expect = ["Good luck to everyone.", "Be happy every day.", "This is a text file.",
-                  "Another file.", "End of file."]
+    out_expect = ["End of file.", "Be happy every day.", "This is a text file.", "Good luck to everyone.",
+                  "Another file."]
     num_rows = 0
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert item["text"] == out_expect[num_rows]
@@ -782,7 +780,7 @@ def test_pipeline_debug_mode_batch_map_get_epoch_batch_num():
 
 def test_pipeline_debug_mode_batch_map_get_epoch_num():
     """
-    Feature: Batch op
+    Feature: Dataset Debug Mode
     Description: Test basic map Batch op with per_batch_map function calling get_epoch_num()
     Expectation: Output is equal to the expected output
     """
@@ -841,6 +839,26 @@ def test_pipeline_debug_mode_batch_map_get_epoch_num():
                      [[0], [-1]], [[-2], [-3]], [[0], [-1]], [[-2], [-3]]])
 
 
+def test_pipeline_debug_mode_dataset_sink_not_support():
+    """
+    Feature: Dataset Debug Mode
+    Description: Test dataset sink mode with debug mode enabled.
+    Expectation: Raise ValueError and give proper log.
+    """
+    dataset = ds.Cifar100Dataset("../data/dataset/testCifar100Data", num_samples=100)
+    def create_model():
+        class Net(nn.Cell):
+            def construct(self, x):
+                return x
+        net = Net()
+        return Model(net)
+    model = create_model()
+    with pytest.raises(ValueError) as error_info:
+        model.train(2, dataset, dataset_sink_mode=True)
+    assert "Dataset sink mode is not supported when dataset pipeline debug mode is on. "\
+           "Please manually turn off sink mode" in str(error_info.value)
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -871,4 +889,5 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_cifar100_per_batch_map_mp()
     test_pipeline_debug_mode_batch_map_get_epoch_batch_num()
     test_pipeline_debug_mode_batch_map_get_epoch_num()
+    test_pipeline_debug_mode_dataset_sink_not_support()
     teardown_function()

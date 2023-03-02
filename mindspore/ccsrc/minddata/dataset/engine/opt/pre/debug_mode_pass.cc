@@ -19,10 +19,12 @@
 #include <string>
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
+#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 
 namespace mindspore {
 namespace dataset {
+constexpr uint32_t kSeedValue = 1;
 bool DebugModePass::DebugPass::RemoveCache(std::shared_ptr<DatasetNode> node) const {
   // remove DatasetNode cache
   bool ret = false;
@@ -51,6 +53,19 @@ Status DebugModePass::DebugPass::Visit(std::shared_ptr<MapNode> node, bool *cons
   return Status::OK();
 }
 
+Status DebugModePass::DebugPass::Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) {
+  // Debug mode requires deterministic result. Replace shuffle_seed in Shuffle node with a fixed internal seed if users
+  // didn't set a global config seed. (Global seed has not been configured by this time. So GlobalContext still returns
+  // the user configured value.)
+  uint32_t seed = GlobalContext::config_manager()->seed();
+  if (seed == std::mt19937::default_seed) {
+    MS_LOG(INFO) << "Replace shuffle_seed of Shuffle node with internal seed: " << std::to_string(kSeedValue) << ".";
+    (void)node->SetShuffleSeed(kSeedValue);
+    *modified = true;
+  }
+  return Status::OK();
+}
+
 Status DebugModePass::DebugPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = RemoveCache(node);
   return Status::OK();
@@ -67,7 +82,6 @@ Status DebugModePass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *cons
   // Debug mode requires the deterministic result. Set seed if users have not done so.
   uint32_t seed = GlobalContext::config_manager()->seed();
   if (seed == std::mt19937::default_seed) {
-    int8_t kSeedValue = 1;
     MS_LOG(WARNING) << "Debug mode is enabled. Set seed to ensure deterministic results. Seed value: "
                     << std::to_string(kSeedValue) << ".";
     GlobalContext::config_manager()->set_seed(kSeedValue);
