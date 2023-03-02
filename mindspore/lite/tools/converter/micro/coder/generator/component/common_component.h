@@ -29,7 +29,9 @@
 namespace mindspore::lite::micro {
 void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
                                   const Configurator &config);
+void CodeCortexCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
+void CodeCortexSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config);
 void CodeMSModelCreateDefault(std::ofstream &ofs);
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);

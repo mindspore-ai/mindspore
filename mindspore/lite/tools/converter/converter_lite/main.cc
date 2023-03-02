@@ -53,6 +53,14 @@ int main(int argc, const char **argv) {
 
     int multi_model_argc = 2;
     if (argc <= multi_model_argc) {
+      if (flags.configFile.empty()) {
+        MS_LOG(ERROR) << "Flag missing. When in single model scenario, fmk/modelFile/outputFile flags are necessary. "
+                         "When in multi model scenario, configFile flag is necessary.";
+        std::cout << "Flag missing. When in single model scenario, fmk/modelFile/outputFile flags are necessary. When "
+                     "in multi model scenario, configFile flag is necessary."
+                  << std::endl;
+        return mindspore::kLiteParamInvalid;
+      }
       mindspore::Converter converter;
       converter.SetConfigFile(flags.configFile);
       auto status = converter.Convert();

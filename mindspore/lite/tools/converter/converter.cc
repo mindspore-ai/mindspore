@@ -479,7 +479,7 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
   auto ret = RET_OK;
   auto parse_map_ret = RET_OK;
   if (!param->config_file.empty()) {
-    ret = config_parser.ParseConfigFile(param->config_file, model_param_infos);
+    ret = config_parser.ParseConfigFile(param->config_file, nullptr);
     parse_map_ret = mindspore::lite::ParseConfigFile(param->config_file, &maps, model_param_infos);
   } else {
     ret = config_parser.ParseConfigParam(&param->config_param);
