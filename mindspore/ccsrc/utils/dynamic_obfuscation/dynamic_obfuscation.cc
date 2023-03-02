@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/dynamic_obfuscation/dynamic_obfuscation.h"
+#include "include/common/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include <cstdlib>
 #include <algorithm>
 #include <map>
 #include <memory>
 #include <functional>
 #include <random>
-#include "utils/dynamic_obfuscation/registry_opaque_predicate.h"
+#include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "utils/info.h"
 #include "include/common/utils/utils.h"
@@ -544,7 +544,7 @@ void DynamicObfuscator::CheckDuplicatedParent(const AnfNodePtr &node) {
   }
 }
 
-bool DynamicObfuscator::IsTarget(std::string &cnode_name) {
+bool DynamicObfuscator::IsTarget(const std::string &cnode_name) {
   if (cnode_name.empty()) {
     MS_LOG(WARNING) << "CNode name is empty.";
     return false;

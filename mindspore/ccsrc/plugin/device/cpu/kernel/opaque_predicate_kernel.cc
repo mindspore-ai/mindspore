@@ -18,7 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
+#include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 
 namespace mindspore {
 namespace kernel {

@@ -26,8 +26,8 @@
 #include "ops/core_ops.h"
 #include "ops/shape_calc.h"
 #include "include/common/utils/utils.h"
-#include "common/expander/core/node.h"
-#include "common/expander/core/infer.h"
+#include "include/common/expander/core/node.h"
+#include "include/common/expander/core/infer.h"
 
 namespace mindspore {
 namespace expander {

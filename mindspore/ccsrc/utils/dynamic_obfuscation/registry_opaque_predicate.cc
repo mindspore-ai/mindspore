@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/utils/dynamic_obfuscation/registry_opaque_predicate.h"
+#include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include <algorithm>
 #include "utils/info.h"
 
