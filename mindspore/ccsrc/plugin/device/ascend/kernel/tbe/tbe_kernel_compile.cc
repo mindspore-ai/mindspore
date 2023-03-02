@@ -515,6 +515,8 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     if (AnfAlgo::GetKernelMod(node) != nullptr) {
       continue;  // kernel mod already exist, continue;
     }
+    auto op_name = common::AnfAlgo::GetCNodeName(node);
+
     auto full_name = node->fullname_with_scope();
     auto json_name = full_name_to_json_name_[full_name];
     auto kernel_pack = tbe::TbeUtils::SearchCache(json_name, false);
@@ -543,6 +545,12 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     kernel_mod_ptr->SetInputSizeList(iter->second.input_size_list);
     kernel_mod_ptr->SetOutputSizeList(iter->second.output_size_list);
     kernel_mod_ptr->SetWorkspaceSizeList(kernel_info_json.workspaces);
+    if (op_name == kNPUClearFloatStatusV2OpName || op_name == kNPUGetFloatStatusV2OpName) {
+      constexpr size_t io_byte_size = 32;
+      const std::vector<size_t> size_list = {io_byte_size};
+      kernel_mod_ptr->SetInputSizeList(size_list);
+      kernel_mod_ptr->SetOutputSizeList(size_list);
+    }
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
   }
   ClearOldTask();

@@ -24,6 +24,17 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kJsonSuffixLength = 5;
+constexpr char kBinFileName[] = "binFileName";
+constexpr char kBinFileSuffix[] = "binFileSuffix";
+constexpr char kBlockDim[] = "blockDim";
+constexpr char kKernelName[] = "kernelName";
+constexpr char kMagic[] = "magic";
+constexpr char kOpParaSize[] = "opParaSize";
+constexpr char kSize[] = "size";
+constexpr char kType[] = "type";
+constexpr char kParameters[] = "parameters";
+constexpr char kWorkspace[] = "workspace";
+constexpr char kGlobalWorkspaceSpecWorkspace[] = "globalworkspace_spec_workspace";
 namespace {
 bool CheckHash(const std::string &json_file, const std::string &bin_file, const nlohmann::json &js) {
   if (js.find("sha256") == js.end()) {
@@ -138,7 +149,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
     return true;
   }
 
-  std::string binfile_suffix = js["binFileSuffix"];
+  std::string binfile_suffix = js[kBinFileSuffix];
   std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + binfile_suffix;
   if (binfile_suffix == ".so") {
     // change "xx/xx.so" -> "xx/libxx.so"
@@ -176,30 +187,56 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   return true;
 }
 
-void KernelPack::ParseKernelJson(const nlohmann::json &js) {
-  kernel_json_info_.bin_file_name = js["binFileName"];
-  kernel_json_info_.bin_file_suffix = js["binFileSuffix"];
-  kernel_json_info_.block_dim = js["blockDim"];
-  kernel_json_info_.kernel_name = js["kernelName"];
-  kernel_json_info_.magic = js["magic"];
-  if (js.contains("opParaSize")) {
-    kernel_json_info_.op_para_size = js["opParaSize"];
+void KernelPack::ParseGlogbleWorkSpace(const std::string &key, const nlohmann::json &js,
+                                       KernelJsonInfo *kernel_json_info) {
+  MS_EXCEPTION_IF_NULL(kernel_json_info);
+  if (js.find(key) == js.end()) {
+    return;
   }
-  if (js.find("parameters") != js.end()) {
-    if (!js.at("parameters").is_array()) {
+  try {
+    auto global_workspace = js.at(key);
+    auto iter_size = global_workspace.find(kSize);
+    if (iter_size != global_workspace.end()) {
+      kernel_json_info->global_workspace.size = global_workspace.at(kSize);
+      kernel_json_info->global_workspace.is_overflow = true;
+    }
+    auto iter_type = global_workspace.find(kType);
+    if (iter_type != global_workspace.end()) {
+      kernel_json_info->global_workspace.type = global_workspace.at(kType);
+      kernel_json_info->global_workspace.is_overflow = true;
+    }
+  } catch (std::exception &e) {
+    MS_LOG(EXCEPTION) << "Parse json value failed, jsong is:" + js.dump() + ", error info: " << e.what();
+  }
+}
+
+void KernelPack::ParseKernelJson(const nlohmann::json &js) {
+  kernel_json_info_.bin_file_name = js[kBinFileName];
+  kernel_json_info_.bin_file_suffix = js[kBinFileSuffix];
+  kernel_json_info_.block_dim = js[kBlockDim];
+  kernel_json_info_.kernel_name = js[kKernelName];
+  kernel_json_info_.magic = js[kMagic];
+  if (js.contains(kOpParaSize)) {
+    kernel_json_info_.op_para_size = js[kOpParaSize];
+  }
+  if (js.find(kParameters) != js.end()) {
+    if (!js.at(kParameters).is_array()) {
       MS_LOG(DEBUG) << "Format error!,parameters should be array.";
     }
-    std::vector<size_t> sizes = js.at("parameters");
+    std::vector<size_t> sizes = js.at(kParameters);
     for (auto size : sizes) {
       kernel_json_info_.parameters.push_back(size);
     }
   }
-  if (js.find("workspace") != js.end()) {
-    auto workspace = js.at("workspace");
-    std::vector<size_t> sizes = workspace.at("size");
+  if (js.find(kWorkspace) != js.end()) {
+    auto workspace = js.at(kWorkspace);
+    std::vector<size_t> sizes = workspace.at(kSize);
     for (auto size : sizes) {
       kernel_json_info_.workspaces.push_back(size);
     }
+  }
+  if (js.find(kGlobalWorkspaceSpecWorkspace) != js.end()) {
+    ParseGlogbleWorkSpace(kGlobalWorkspaceSpecWorkspace, js, &kernel_json_info_);
   }
   kernel_json_info_.sha256 = js["sha256"];
   kernel_json_info_.has_kernel_list = js.find("kernelList") != js.end();

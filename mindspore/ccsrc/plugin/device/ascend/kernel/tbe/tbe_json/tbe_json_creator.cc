@@ -330,7 +330,7 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) const {
       DeleteDescName(&op.at(kJInputDesc));
     }
   }
-  return std::hash<std::string>()(op_lists.dump());
+  return std::hash<std::string>()(op_lists.dump() + tbe_json.at(kJSocInfo).dump());
 }
 
 void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) const {

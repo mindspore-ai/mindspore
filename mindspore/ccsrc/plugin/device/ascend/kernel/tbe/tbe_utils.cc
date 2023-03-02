@@ -164,6 +164,8 @@ nlohmann::json TbeUtils::GenSocInfo() {
   soc_info_json["op_debug_level"] = GetOpDebugLevel();
   soc_info_json["autoTilingMode"] = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
   soc_info_json["deviceId"] = std::to_string(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
+  soc_info_json["status_check"] = "true";
+
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("", common::GetEnv("OP_BANK_PATH"), &config_path)) {
     MS_LOG(EXCEPTION) << "Invalid environment variable 'OP_BANK_PATH', the path is " << common::GetEnv("OP_BANK_PATH")
