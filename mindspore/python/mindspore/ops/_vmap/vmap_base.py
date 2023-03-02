@@ -26,7 +26,7 @@ from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.function import _VmapGeneralPreprocess
-from mindspore.ops.primitive import Primitive
+from mindspore.ops.primitive import Primitive, _PrimitiveC
 from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
 from mindspore.ops._grad.grad_base import BpropRegistry as VmapRuleRegistry
 
@@ -418,6 +418,8 @@ def _vmap_clone_prim(prim):
     """
     Cloning a new primitive object same as `prim`.
     """
+    if isinstance(prim, _PrimitiveC):
+        return _PrimitiveC(prim.name, prim.attrs)
     new_ops = _ops_vmap_clone_prim_dict.get(prim.name, None)
     if new_ops is None:
         raise ValueError("Failed to get the primitive object of {} from `_ops_vmap_clone_prim_dict`. Please register "
