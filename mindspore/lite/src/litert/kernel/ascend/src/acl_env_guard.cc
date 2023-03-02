@@ -23,16 +23,83 @@ namespace acl {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
-AclEnvGuard::AclEnvGuard(std::string_view cfg_file) : errno_(ACL_ERROR_NONE) {
-  errno_ = aclInit(cfg_file.data());
-  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
-    MS_LOG(ERROR) << "Execute aclInit Failed";
-    return;
-  }
-  MS_LOG(INFO) << "Acl init success";
+AclInitAdapter &AclInitAdapter::GetInstance() {
+  static AclInitAdapter instance = {};
+  return instance;
 }
 
-AclEnvGuard::~AclEnvGuard() { (void)aclFinalize(); }
+aclError AclInitAdapter::AclInit(const char *config_file) {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  if (init_flag_) {
+    return ACL_ERROR_NONE;
+  }
+
+  init_flag_ = true;
+  return aclInit(config_file);
+}
+
+aclError AclInitAdapter::AclFinalize() {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  if (!init_flag_) {
+    MS_LOG(INFO) << "Had been acl finalize.";
+    return ACL_ERROR_NONE;
+  }
+
+  MS_LOG(INFO) << "Begine acl finalize.";
+  init_flag_ = false;
+  return aclFinalize();
+}
+
+aclError AclInitAdapter::ForceFinalize() {
+  std::lock_guard<std::mutex> lock(flag_mutex_);
+  MS_LOG(INFO) << "Begine force acl finalize.";
+  init_flag_ = false;
+  return aclFinalize();
+}
+
+AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {
+  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
+    MS_LOG(ERROR) << "Execute aclInit Failed.";
+    return;
+  }
+  MS_LOG(INFO) << "Acl init success.";
+}
+
+AclEnvGuard::AclEnvGuard(std::string_view cfg_file) : errno_(AclInitAdapter::GetInstance().AclInit(cfg_file.data())) {
+  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
+    MS_LOG(ERROR) << "Execute aclInit Failed.";
+    return;
+  }
+  MS_LOG(INFO) << "Acl init success.";
+}
+
+AclEnvGuard::~AclEnvGuard() {
+  errno_ = AclInitAdapter::GetInstance().AclFinalize();
+  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_FINALIZE) {
+    MS_LOG(ERROR) << "Finalize acl failed.";
+  }
+  MS_LOG(INFO) << "Acl finalize success.";
+}
+
+std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv() {
+  std::shared_ptr<AclEnvGuard> acl_env;
+
+  std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
+  acl_env = global_acl_env_;
+  if (acl_env != nullptr) {
+    MS_LOG(INFO) << "Acl has been initialized, skip.";
+  } else {
+    acl_env = std::make_shared<AclEnvGuard>();
+    aclError ret = acl_env->GetErrno();
+    if (ret != ACL_ERROR_NONE && ret != ACL_ERROR_REPEAT_INITIALIZE) {
+      MS_LOG(ERROR) << "Execute aclInit Failed.";
+      return nullptr;
+    }
+    global_acl_env_ = acl_env;
+    MS_LOG(INFO) << "Acl init success.";
+  }
+  return acl_env;
+}
 
 std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   std::shared_ptr<AclEnvGuard> acl_env;
@@ -48,11 +115,11 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
     acl_env = std::make_shared<AclEnvGuard>(cfg_file);
     aclError ret = acl_env->GetErrno();
     if (ret != ACL_ERROR_NONE && ret != ACL_ERROR_REPEAT_INITIALIZE) {
-      MS_LOG(ERROR) << "Execute aclInit Failed";
+      MS_LOG(ERROR) << "Execute aclInit Failed.";
       return nullptr;
     }
     global_acl_env_ = acl_env;
-    MS_LOG(INFO) << "Acl init success";
+    MS_LOG(INFO) << "Acl init success.";
   }
   return acl_env;
 }

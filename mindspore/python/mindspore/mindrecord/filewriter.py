@@ -326,7 +326,7 @@ class FileWriter:
                 # check the status of worker process
                 for i in range(len(self._paths)):
                     if not self._workers[i].is_alive():
-                        raise RuntimeError("Worker process(pid:{}) has stopped. Please check " \
+                        raise RuntimeError("Worker process(pid:{}) has stopped abnormal. Please check " \
                                            "the above log".format(self._workers[i].pid))
                 continue
             return SUCCESS

@@ -22,7 +22,15 @@
 #include <sys/stat.h>
 #include <unordered_map>
 #include <vector>
+#ifndef BUILD_LITE
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
+using AclEnvGuard = mindspore::AclEnvGuard;
+using AclInitAdapter = mindspore::AclInitAdapter;
+#else
+#include "mindspore/lite/src/extendrt/kernel/ascend/model/acl_env_guard.h"
+using AclEnvGuard = mindspore::kernel::acl::AclEnvGuard;
+using AclInitAdapter = mindspore::kernel::acl::AclInitAdapter;
+#endif
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/resouce_info.h"
@@ -57,7 +65,7 @@ class ResourceManager {
   std::vector<int> deviceIds_;
   std::vector<aclrtContext> contexts_;
   std::unordered_map<int, int> deviceIdMap_;  // Map of device to index
-  std::shared_ptr<mindspore::AclEnvGuard> acl_env_;
+  std::shared_ptr<AclEnvGuard> acl_env_;
 };
 
 #endif

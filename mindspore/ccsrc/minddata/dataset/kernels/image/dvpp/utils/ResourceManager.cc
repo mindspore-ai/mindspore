@@ -66,7 +66,7 @@ void ResourceManager::Release() {
   }
 
   // finalize the acl when the process exit
-  ret = mindspore::AclInitAdapter::GetInstance().AclFinalize();
+  ret = AclInitAdapter::GetInstance().AclFinalize();
   if (ret != APP_ERR_OK) {
     MS_LOG(DEBUG) << "Failed to finalize acl, ret = " << ret << ".";
   }
@@ -96,7 +96,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     return APP_ERR_OK;
   }
   APP_ERROR ret = APP_ERR_OK;
-  acl_env_ = mindspore::AclEnvGuard::GetAclEnv();
+  acl_env_ = AclEnvGuard::GetAclEnv();
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Failed to init acl.";
     return APP_ERR_COMM_FAILURE;

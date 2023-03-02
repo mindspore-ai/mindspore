@@ -23,11 +23,28 @@
 
 namespace mindspore::kernel {
 namespace acl {
+class AclInitAdapter {
+ public:
+  static AclInitAdapter &GetInstance();
+  aclError AclInit(const char *config_file);
+  aclError AclFinalize();
+  aclError ForceFinalize();
+
+ private:
+  AclInitAdapter() : init_flag_(false) {}
+  ~AclInitAdapter() = default;
+
+  bool init_flag_;
+  std::mutex flag_mutex_;
+};
+
 class AclEnvGuard {
  public:
+  AclEnvGuard();
   explicit AclEnvGuard(std::string_view cfg_file);
   ~AclEnvGuard();
   aclError GetErrno() const { return errno_; }
+  static std::shared_ptr<AclEnvGuard> GetAclEnv();
   static std::shared_ptr<AclEnvGuard> GetAclEnv(std::string_view cfg_file);
 
  private:
