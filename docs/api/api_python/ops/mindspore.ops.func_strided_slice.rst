@@ -43,7 +43,7 @@ mindspore.ops.strided_slice
       如果 `shrink_axis_mask` 的第i位为1，则第i维被收缩掉，忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
       对于shape为 :math:`(5, 6, 7)` 的Tensor，若 `shrink_axis_mask` 为0b010， 则第一维收缩掉，相当于切片 `x[:, 5, :]` 使得输出shape为 :math:`(5, 7)` 。
 
-    .. note:: 
+    .. note::
         `new_axis_mask` 和 `shrink_axis_mask` 不建议同时使用，可能会产生预料之外的结果。
 
     参数：
