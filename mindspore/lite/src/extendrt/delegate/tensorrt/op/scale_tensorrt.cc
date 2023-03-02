@@ -28,10 +28,6 @@ constexpr int POWER_INDEX = 3;
 
 int ScaleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                              const std::vector<TensorInfo> &out_tensors) {
-  if (!IsShapeKnown()) {
-    MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3 && in_tensors.size() != INPUT_SIZE4) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is: " << in_tensors.size();
     return RET_ERROR;
@@ -114,7 +110,7 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(nvinfer1::ITensor *input, int64_
   } else if (input_weight_shape.size() == 1 && input_weight_shape[0] == total) {
     mode = nvinfer1::ScaleMode::kELEMENTWISE;
   } else {
-    MS_LOG(ERROR) << "ScaleMode create failed: " << op_name_;
+    MS_LOG(WARNING) << "ScaleMode create failed: " << op_name_;
     return mode;
   }
   MS_LOG(DEBUG) << op_name_ << " ScaleMode(UNIFORM 0, CHANNEL 1, ELEMENTWISE 2): " << static_cast<int>(mode);
