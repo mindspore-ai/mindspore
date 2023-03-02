@@ -810,7 +810,9 @@ void DeleteDynamicLen(AnfNode *node) {
     const auto &tuple_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(tuple_abs);
     if (tuple_abs->dynamic_len()) {
-      tuple_abs->set_dynamic_len(false);
+      auto cloned_abstract = tuple_abs->Clone()->cast<abstract::AbstractSequencePtr>();
+      cloned_abstract->set_dynamic_len(false);
+      node->set_abstract(cloned_abstract);
     }
   }
 }

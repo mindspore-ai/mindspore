@@ -477,6 +477,7 @@ std::string AbstractSequence::ToString() const {
     }
     ss << "}";
   }
+  ss << ", dynamic_len:" << dynamic_len_;
   ss << "}";
   return ss.str();
 }

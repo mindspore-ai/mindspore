@@ -165,7 +165,7 @@ void CheckAndConvertToVariableLenSequence(const py::object &obj, AbstractBasePtr
     return;
   }
   if (!abs->isa<abstract::AbstractSequence>()) {
-    MS_EXCEPTION(TypeError) << "For mutable, when the variable_len the True, the first input should be"
+    MS_EXCEPTION(TypeError) << "For mutable, when the dynamic_len the True, the first input should be"
                             << " list or tuple, but got: " << abs->ToString();
   }
   auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
