@@ -159,7 +159,7 @@ class Converter:
             - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
 
         save_type (ModelType, optional): Set the model type needs to be export. Options: ModelType.MINDIR |
-            ModelType.MINDIR_LITE. Default: ModelType.MINDIR_LITE. For details, see
+            ModelType.MINDIR_LITE. Default: None. For details, see
             `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         decrypt_key (str, optional): Set the key used to decrypt the encrypted MindIR file, expressed in hexadecimal
             characters. Only valid when fmk_type is FmkType.MINDIR. Default: "".
@@ -220,7 +220,7 @@ class Converter:
         input_format: Format.NHWC,
         input_data_type: DataType.FLOAT32,
         output_data_type: DataType.FLOAT32,
-        save_type: ModelType.MINDIR_LITE,
+        save_type: None,
         decrypt_key: ,
         decrypt_mode: AES-GCM,
         enable_encryption: False,
@@ -233,7 +233,7 @@ class Converter:
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
                  input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
-                 output_data_type=DataType.FLOAT32, save_type=ModelType.MINDIR_LITE, decrypt_key="",
+                 output_data_type=DataType.FLOAT32, save_type=None, decrypt_key="",
                  decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False,
                  optimize="general", device=""):
         check_isinstance("fmk_type", fmk_type, FmkType)
@@ -246,7 +246,6 @@ class Converter:
         check_isinstance("input_format", input_format, Format)
         check_isinstance("input_data_type", input_data_type, DataType)
         check_isinstance("output_data_type", output_data_type, DataType)
-        check_isinstance("save_type", save_type, ModelType)
         check_isinstance("decrypt_key", decrypt_key, str)
         check_isinstance("decrypt_mode", decrypt_mode, str)
         check_isinstance("enable_encryption", enable_encryption, bool)
@@ -255,6 +254,8 @@ class Converter:
         check_isinstance("train_model", train_model, bool)
         check_isinstance("device", device, str)
         check_isinstance("optimize", optimize, str)
+        if save_type is not None:
+            check_isinstance("save_type", save_type, ModelType)
 
         if not os.path.exists(model_file):
             raise RuntimeError(f"Converter's init failed, model_file does not exist!")
@@ -295,7 +296,7 @@ class Converter:
             self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
         if output_data_type != DataType.FLOAT32:
             self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
-        if save_type != ModelType.MINDIR_LITE:
+        if save_type is not None:
             self._converter.set_save_type(model_type_py_cxx_map.get(save_type))
         if decrypt_key != "":
             self._converter.set_decrypt_key(decrypt_key)
