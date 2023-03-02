@@ -363,22 +363,28 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   // PrintReduceFusion depends on the input expansion of Print, so must be after the operator select.
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
-  pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
-  pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
-  pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
-  pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
-  pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
-  pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
-  pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
-  pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    // Remove node only used by UpdateState, in order to ensure the correct execution sequence in CudnnInplaceAggregate.
-    pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
-    pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+
+  // The fusion operator generates a new primitive and can't be supported in dynamic shape scene.
+  if (!graph->is_dynamic_shape()) {
+    pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
+    pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
+    pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
+    pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
+    pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
+    pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
+    pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
+    pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      // Remove node only used by UpdateState, in order to ensure the correct execution sequence in
+      // CudnnInplaceAggregate.
+      pm->AddPass(std::make_shared<opt::OptimizeUpdateState>());
+      pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+    }
+    pm->AddPass(std::make_shared<opt::ReluV2Pass>());
+    pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
+    pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   }
-  pm->AddPass(std::make_shared<opt::ReluV2Pass>());
-  pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
-  pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
+
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::AdjustDependForParallelOptimizerRecomputeAllGather>());
   pm->AddPass(std::make_shared<opt::AllGatherFusion>());

@@ -38,7 +38,7 @@ const AnfNodePtr DynamicSequenceOpsAdaptation::Process(const FuncGraphPtr &, con
   if (common::AnfAlgo::HasDynamicTupleInput(cnode) || common::AnfAlgo::IsDynamicSequence(cnode)) {
     auto primitive = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr auto kDynamicTupleInputOpNamePrefix = "Tuple";
+    constexpr auto kDynamicTupleInputOpNamePrefix = "Sequence";
     auto new_op_name = kDynamicTupleInputOpNamePrefix + op_name;
     primitive->set_name(new_op_name);
     // reset full scope name

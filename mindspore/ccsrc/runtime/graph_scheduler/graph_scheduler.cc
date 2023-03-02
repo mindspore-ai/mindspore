@@ -2049,7 +2049,10 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
       auto to_kernel_type = FetchKernelTransformType(to_node, graph, graph_compiler_info.origin_parameters_order_,
                                                      graph_compiler_info.strategy_);
       auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_node, graph);
-      MS_EXCEPTION_IF_NULL(to_actor);
+      if (to_actor == nullptr) {
+        MS_LOG(EXCEPTION) << "Fetch no actor for node:" << to_node->fullname_with_scope()
+                          << ", from node:" << from_node->fullname_with_scope();
+      }
 
       AbstractActor *from_actor = nullptr;
       // InternalParameter --> CustomActor.
