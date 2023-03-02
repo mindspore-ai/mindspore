@@ -2978,7 +2978,7 @@ class MultiMarginLoss(Primitive):
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
