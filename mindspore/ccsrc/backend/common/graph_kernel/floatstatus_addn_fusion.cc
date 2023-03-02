@@ -52,7 +52,7 @@ InplaceAssignerInfo SubGraphSignleOutput(const AnfNodePtr &anf_node) {
   InplaceAssignerInfo new_op_info;
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(anf_node);
   auto output = sub_graph->output();
-  if (IsPrimitiveCNode(output, prim::kPrimElemAny)) {
+  if (output->isa<CNode>() && AnfUtils::GetCNodeName(output) == "ElemAny") {
     new_op_info.op_node = output->cast<CNodePtr>();
   }
   return new_op_info;

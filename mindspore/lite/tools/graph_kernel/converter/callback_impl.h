@@ -17,10 +17,12 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_
 #include <string>
+#include <memory>
 #include <vector>
 #include <utility>
 #include "utils/hash_map.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::graphkernel {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
@@ -31,6 +33,9 @@ std::string GetDefaultFormat();
 
 class CallbackImpl : public Callback {
  public:
+  explicit CallbackImpl(const std::shared_ptr<ConverterPara> &param) : converter_param_(param) {}
+  ~CallbackImpl() = default;
+
   ShapeVector GetInputInferShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t i) override;
   ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
@@ -42,15 +47,16 @@ class CallbackImpl : public Callback {
   std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetProcessor(const AnfNodePtr &node) override;
-  std::string GetTargetFromContext() override;
   void SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) override;
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;
   void ResetKernelInfo(const AnfNodePtr &node) override;
 
- protected:
+ private:
+  std::string GetTargetFromContextImpl(bool detail) override;
   void SaveParameterFormat(const AnfNodePtr &node, const std::string &format);
   mindspore::HashMap<AnfNodePtr, std::string> params_format_;
+  std::shared_ptr<ConverterPara> converter_param_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_

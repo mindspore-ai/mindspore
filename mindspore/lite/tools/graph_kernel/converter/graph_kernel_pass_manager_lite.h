@@ -27,13 +27,10 @@ using opt::PassPtr;
 class GraphKernelPassManagerLite : public GraphKernelPassManager {
  public:
   using GraphKernelPassManager::GraphKernelPassManager;
-  void SetDumpIr(bool dump) { dump_ir_ = dump; }
 
  protected:
   void DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const override;
   bool RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const override;
-
-  bool dump_ir_{false};
 };
 using GkPassManagerPtr = std::shared_ptr<GraphKernelPassManagerLite>;
 }  // namespace mindspore::graphkernel

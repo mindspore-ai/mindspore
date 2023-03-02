@@ -83,6 +83,10 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
         value = parameter_node->abstract()->BuildValue();
       }
       if (value != nullptr) {
+        if (!value->isa<tensor::Tensor>()) {
+          primitive->set_attr(input_names_vec[i], value);
+          continue;
+        }
         auto value_vector = CheckAndConvertUtils::CheckTensorIntValue(input_names_vec[i], value, primitive->name());
         auto tensor = value->cast<tensor::TensorPtr>();
         auto tensor_shape = tensor->shape_c();
@@ -108,9 +112,11 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   return true;
 }
 void ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
     return;
   }
+#endif
   auto cnode = dyn_cast<CNode>(node);
   auto primitive = GetCNodePrimitive(cnode);
   if (primitive == nullptr) {

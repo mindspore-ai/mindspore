@@ -24,23 +24,6 @@
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
-class TensorToValueDeco : public ExpanderDecorator {
- public:
-  TensorToValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
-      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
-  ~TensorToValueDeco() = default;
-
-  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
-    return [input_idx](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<TensorToValueDeco>(decorated, input_idx));
-    };
-  }
-  AnfNodePtr Run(const AnfNodePtr &node) override;
-
- protected:
-  HashSet<size_t> input_idx_;
-};
-
 class FixFormatDeco : public ExpanderDecorator {
  public:
   explicit FixFormatDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
