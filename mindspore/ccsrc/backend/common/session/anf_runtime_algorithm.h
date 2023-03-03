@@ -229,6 +229,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // Get output detail shape. These interfaces should take TUPLE output into consideration.
   static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
   static abstract::BaseShapePtr GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx);
+
+  // Check whether the input scalar need converted to tensor.
+  static bool IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

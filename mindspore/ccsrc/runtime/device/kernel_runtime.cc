@@ -1067,18 +1067,29 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
                              value_node.get());
       continue;
     }
-    size_t tensor_size = LongToSize(tensor->data().nbytes());
-    auto node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
-    TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
-    if (output_type_id == kTypeUnknown) {
-      output_type_id = common::AnfAlgo::GetOutputInferDataType(value_node, output_idx);
+
+    DeviceAddressPtr address = nullptr;
+    size_t node_size = 0;
+    if (node_value->isa<Scalar>()) {
+      auto scalar_value = node_value->cast<ScalarPtr>();
+      MS_EXCEPTION_IF_NULL(scalar_value);
+      TypePtr data_type = scalar_value->type();
+      MS_EXCEPTION_IF_NULL(data_type);
+      TypeId type_id = data_type->type_id();
+      node_size = GetTypeByte(TypeIdToType(type_id));
+      address = CreateDeviceAddress(nullptr, node_size, kOpFormat_DEFAULT, type_id, {value_node, output_idx});
+    } else {
+      node_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
+      TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
+      if (output_type_id == kTypeUnknown) {
+        output_type_id = common::AnfAlgo::GetOutputInferDataType(value_node, output_idx);
+      }
+      auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
+      address = CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, {value_node, output_idx});
     }
-    auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
-    DeviceAddressPtr address =
-      CreateDeviceAddress(nullptr, node_size, output_format, output_type_id, {value_node, output_idx});
+    MS_EXCEPTION_IF_NULL(address);
     address->set_host_shape(trans::GetRuntimePaddingShape(value_node, output_idx));
     address->set_from_persistent_mem(true);
-    MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {
       MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << node_size;
@@ -1090,6 +1101,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
       }
     }
     AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
+    size_t tensor_size = LongToSize(tensor->data().nbytes());
     if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
                                    tensor->data_c(), tensor->device_info().host_format_)) {
       MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString()
@@ -1134,7 +1146,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(const session::KernelGraph &grap
     auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
     MS_LOG(DEBUG) << "Malloc memory for " << value_node->fullname_with_scope();
-    if (node_value->isa<Tensor>() || node_value->isa<ValueTuple>()) {
+    if (node_value->isa<Tensor>() || node_value->isa<ValueTuple>() || node_value->isa<Scalar>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
     } else if (node_value->isa<StringImm>()) {
       const bool use_mem_from_memory_pool = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) ||
