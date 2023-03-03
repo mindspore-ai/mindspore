@@ -408,34 +408,6 @@ def test_pipeline_debug_mode_map_random():
     assert index == 4
 
 
-def generator_md_two_cols():
-    """
-    Create a dataset with two columns
-    """
-    for i in range(10):
-        yield (i, i + 1)
-
-
-@pytest.mark.skip(reason="Debug mode bug with map and uneven column numbers.")
-def test_pipeline_debug_mode_generator_map_multi_cols():
-    """
-    Feature: Pipeline debug mode
-    Description: Test GeneratorDataset with multiple columns
-    Expectation: The dataset is processed as expected
-    """
-    data = ds.GeneratorDataset(generator_md_two_cols, ["col1", "col2"])
-    data = data.map(operations=[lambda x: (x - 1, x + 1),
-                                lambda x, y: (x + 1, y - 1)],
-                    input_columns=["col1"],
-                    output_columns=["col2", "col3"])
-
-    cnt = 0
-    for item in data.create_dict_iterator():
-        assert len(item) == 2
-        cnt += 1
-    assert cnt == 10
-
-
 def test_pipeline_debug_mode_shuffle():
     """
     Feature: Pipeline debug mode.
@@ -875,7 +847,6 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_tfrecord_rename_zip()
     test_pipeline_debug_mode_imagefolder_rename_zip()
     test_pipeline_debug_mode_map_random()
-    test_pipeline_debug_mode_generator_map_multi_cols()
     test_pipeline_debug_mode_shuffle()
     test_pipeline_debug_mode_imdb_shuffle()
     test_pipeline_debug_mode_tfrecord_shard()

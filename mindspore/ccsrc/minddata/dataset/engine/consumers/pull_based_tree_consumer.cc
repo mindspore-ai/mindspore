@@ -91,10 +91,16 @@ Status PullBasedIteratorConsumer::GetNextAsOrderedPair(
     }
     // error check, make sure the ids in col_name_id_map are continuous and starts from 0
     for (const auto &col : column_order_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(col.second != invalid_col_id, "column ids are not continuous.");
+      if (col.second == invalid_col_id) {
+        std::string err_msg = "Invalid column id encountered.";
+        err_msg += " Note: It is unsupported and ambiguous to reuse the same column name for an output_column name";
+        err_msg += " if it is an input_column name that will already appear as one of the output columns.";
+        err_msg += " Use unique columns names.";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
     }
   }
-
   vec->reserve(num_cols);
 
   std::transform(column_order_.begin(), column_order_.end(), std::back_inserter(*vec),
