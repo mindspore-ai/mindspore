@@ -177,7 +177,7 @@ def train(batch_size, lr, momentum, epochs, dataset_sink_mode):
     return avg_loss
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
