@@ -17,7 +17,6 @@ mindspore.ops.dropout2d
 
     返回：
         - Tensor，输出，具有与输入 `input` 相同的形状和数据类型。
-        - Tensor，掩码，形状与 `input` 相同，数据类型为bool。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
