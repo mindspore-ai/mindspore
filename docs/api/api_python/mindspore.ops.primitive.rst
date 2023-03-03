@@ -264,7 +264,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Cauchy
     mindspore.ops.Cholesky
     mindspore.ops.CholeskyInverse
-    mindspore.ops.CholeskySolve
     mindspore.ops.CompareAndBitpack
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
@@ -454,6 +453,7 @@ Tensor创建
     mindspore.ops.ParameterizedTruncatedNormal
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
+    mindspore.ops.RandomGamma
     mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace

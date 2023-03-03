@@ -263,7 +263,6 @@ Mathematical Operators
     mindspore.ops.Cauchy
     mindspore.ops.Cholesky
     mindspore.ops.CholeskyInverse
-    mindspore.ops.CholeskySolve
     mindspore.ops.CompareAndBitpack
     mindspore.ops.Complex
     mindspore.ops.ComplexAbs
@@ -453,6 +452,7 @@ Random Generation Operator
     mindspore.ops.ParameterizedTruncatedNormal
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
+    mindspore.ops.RandomGamma
     mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.StandardLaplace
