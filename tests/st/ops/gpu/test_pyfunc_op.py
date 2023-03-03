@@ -134,4 +134,4 @@ def test_pyfunc_scalar():
 
     net = PyFuncGraph(func_single_output, [ms_dtype, ms_dtype], [shape, shape], [ms_dtype], [shape])
     x = net(Tensor(x1), Tensor(x2))
-    assert np.allclose(x[0].asnumpy(), expect)
+    assert x[0] == expect
