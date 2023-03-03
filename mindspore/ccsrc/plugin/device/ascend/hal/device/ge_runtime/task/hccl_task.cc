@@ -18,7 +18,6 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"
 #include "common/opskernel/ops_kernel_info_store.h"
-#include "common/opskernel/ge_task_info.h"
 
 namespace mindspore::ge::model_runner {
 std::map<rtModel_t, std::map<uint32_t, std::vector<std::weak_ptr<HcclTask::StreamGuard>>>>
@@ -47,7 +46,16 @@ HcclTask::HcclTask(const ModelContext &model_context, const std::shared_ptr<Hccl
   }
 }
 
-HcclTask::~HcclTask() {}
+HcclTask::~HcclTask() {
+  if (task_info_ == nullptr) {
+    return;
+  }
+  ::ge::OpsKernelInfoStore *ops_kernel_info_store =
+    static_cast<::ge::OpsKernelInfoStore *>(task_info_->ops_kernel_store());
+  if (ops_kernel_info_store != nullptr) {
+    (void)ops_kernel_info_store->UnloadTask(ge_task_);
+  }
+}
 
 void HcclTask::Distribute() {
   // Ops kernel info store
@@ -67,38 +75,37 @@ void HcclTask::Distribute() {
     workspace_mem_ = task_info_->workspace_addr();
   }
 
-  ::ge::GETaskInfo ge_task;
   static uint32_t task_id = 0;
-  ge_task.id = task_id++;
-  ge_task.type = static_cast<uint16_t>(RT_MODEL_TASK_HCCL);
-  ge_task.stream = stream_;
+  ge_task_.id = task_id++;
+  ge_task_.type = static_cast<uint16_t>(RT_MODEL_TASK_HCCL);
+  ge_task_.stream = stream_;
 
-  ge_task.kernelHcclInfo = std::vector<::ge::GETaskKernelHcclInfo>(1);
-  ge_task.kernelHcclInfo[0].hccl_type = task_info_->hccl_type();
-  ge_task.kernelHcclInfo[0].inputDataAddr = task_info_->input_data_addr();
-  ge_task.kernelHcclInfo[0].outputDataAddr = task_info_->output_data_addr();
-  ge_task.kernelHcclInfo[0].workSpaceAddr = workspace_mem_;
-  ge_task.kernelHcclInfo[0].workSpaceMemSize = static_cast<uint64_t>(task_info_->workspace_size());
-  ge_task.kernelHcclInfo[0].count = task_info_->count();
-  ge_task.kernelHcclInfo[0].dataType = static_cast<int32_t>(task_info_->data_type());
-  ge_task.kernelHcclInfo[0].opType = static_cast<int32_t>(task_info_->op_type());
-  ge_task.kernelHcclInfo[0].rootId = task_info_->root_id();
+  ge_task_.kernelHcclInfo = std::vector<::ge::GETaskKernelHcclInfo>(1);
+  ge_task_.kernelHcclInfo[0].hccl_type = task_info_->hccl_type();
+  ge_task_.kernelHcclInfo[0].inputDataAddr = task_info_->input_data_addr();
+  ge_task_.kernelHcclInfo[0].outputDataAddr = task_info_->output_data_addr();
+  ge_task_.kernelHcclInfo[0].workSpaceAddr = workspace_mem_;
+  ge_task_.kernelHcclInfo[0].workSpaceMemSize = static_cast<uint64_t>(task_info_->workspace_size());
+  ge_task_.kernelHcclInfo[0].count = task_info_->count();
+  ge_task_.kernelHcclInfo[0].dataType = static_cast<int32_t>(task_info_->data_type());
+  ge_task_.kernelHcclInfo[0].opType = static_cast<int32_t>(task_info_->op_type());
+  ge_task_.kernelHcclInfo[0].rootId = task_info_->root_id();
   if (!task_info_->global_workspace_addr().empty()) {
-    ge_task.kernelHcclInfo[0].global_workspace_addr = task_info_->global_workspace_addr();
+    ge_task_.kernelHcclInfo[0].global_workspace_addr = task_info_->global_workspace_addr();
   }
 
   std::vector<rtStream_t> secondary_stream_list;
   std::transform(secondary_stream_list_.begin(), secondary_stream_list_.end(),
                  std::back_inserter(secondary_stream_list),
                  [](const std::shared_ptr<StreamGuard> &stream) -> rtStream_t { return stream->GetStream(); });
-  ge_task.kernelHcclInfo[0].hcclStreamList = secondary_stream_list;
+  ge_task_.kernelHcclInfo[0].hcclStreamList = secondary_stream_list;
 
-  ge_task.privateDef = private_def;
-  ge_task.privateDefLen = private_def_len;
-  ge_task.opsKernelStorePtr = ops_kernel_store;
+  ge_task_.privateDef = private_def;
+  ge_task_.privateDefLen = private_def_len;
+  ge_task_.opsKernelStorePtr = ops_kernel_store;
 
   MS_LOG(INFO) << "Begin to call function LoadTask in hccl. " << task_info_->op_name();
-  auto result = ops_kernel_info_store->LoadTask(ge_task);
+  auto result = ops_kernel_info_store->LoadTask(ge_task_);
   // tagHcclResult::HCCL_SUCCESS is 0
   if (result != 0) {
     MS_LOG(EXCEPTION) << "davinci_model : load task fail, return ret: " << result;
