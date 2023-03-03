@@ -264,7 +264,6 @@ mindspore.Tensor
     mindspore.Tensor.sinc
     mindspore.Tensor.size
     mindspore.Tensor.slogdet
-    mindspore.Tensor.soft_shrink
     mindspore.Tensor.split
     mindspore.Tensor.sqrt
     mindspore.Tensor.square

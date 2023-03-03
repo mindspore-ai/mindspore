@@ -458,6 +458,7 @@ from .nn_func import (
     selu,
     softmax,
     softmin,
+    softshrink,
     pdist,
     pad,
     prelu,
