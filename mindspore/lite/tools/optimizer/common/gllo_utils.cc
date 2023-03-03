@@ -72,50 +72,52 @@ int DeduceDimConvertion(schema::Format src_format, schema::Format dst_format, st
   return lite::RET_OK;
 }
 
-template <typename T>
-void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape, const std::vector<int> &perm,
-                   const T *const weight_data, std::vector<T> *buf) {
-  MS_ASSERT(weight_data != nullptr && buf != nullptr);
-  MS_ASSERT(origin_shape.size() == cur_shape.size() && cur_shape.size() == perm.size());
-  int count = 1;
-  for (const auto &dat : origin_shape) {
-    if (INT_MUL_OVERFLOW(count, static_cast<int>(dat))) {
-      return;
-    }
-    count *= static_cast<int>(dat);
+template <class T>
+void TransposeDim4(const ShapeVector &input_shape, const ShapeVector &output_shape, const std::vector<int> &perm,
+                   const T *const in_data, T *out_data) {
+  auto num_axes = input_shape.size();
+  std::vector<int64_t> strides;
+  std::vector<int64_t> out_strides;
+  strides.resize(num_axes);
+  out_strides.resize(num_axes);
+  strides[num_axes - 1] = 1LL;
+  out_strides[num_axes - 1] = 1LL;
+  for (size_t i = num_axes - 1; i >= 1; i--) {
+    strides[i - 1] = input_shape[i] * strides[i];
+    out_strides[i - 1] = output_shape[i] * out_strides[i];
   }
-  ShapeVector post_multiply(cur_shape.size());
-  std::unordered_map<int, int> dim_map;
-  for (int i = static_cast<int>(cur_shape.size()) - 1; i >= 0; --i) {
-    if (i == static_cast<int>(cur_shape.size() - 1)) {
-      post_multiply[i] = 1;
-    } else {
-      post_multiply[i] = cur_shape[i + 1] * post_multiply[i + 1];
-    }
-    dim_map[perm[i]] = i;
-  }
-  std::unordered_map<int, int> position_map;
-  for (int i = 0; i < count; ++i) {
-    int temp = i;
-    for (int j = static_cast<int>(origin_shape.size()) - 1; j >= 0; --j) {
-      MS_ASSERT(origin_shape[j] > 0);
-      position_map[j] = temp % origin_shape[j];
-      temp /= origin_shape[j];
-    }
-    int64_t new_pos = 0;
-    for (const auto &pair_y : position_map) {
-      if (INT_MUL_OVERFLOW(post_multiply[dim_map[pair_y.first]], pair_y.second)) {
-        MS_LOG(ERROR) << "int multiply overflow";
-        return;
-      }
-      if (INT_ADD_OVERFLOW(new_pos, post_multiply[dim_map[pair_y.first]] * pair_y.second)) {
-        MS_LOG(ERROR) << "int add overflow";
-        return;
-      }
-      new_pos += post_multiply[dim_map[pair_y.first]] * pair_y.second;
-    }
+  const auto stride0 = strides[perm[kIndex0]];
+  const auto stride1 = strides[perm[kIndex1]];
+  const auto stride2 = strides[perm[kIndex2]];
+  const auto stride3 = strides[perm[kIndex3]];
+  const auto out_stride0 = out_strides[kIndex0];
+  const auto out_stride1 = out_strides[kIndex1];
+  const auto out_stride2 = out_strides[kIndex2];
+  const auto output0 = output_shape[kIndex0];
+  const auto output1 = output_shape[kIndex1];
+  const auto output2 = output_shape[kIndex2];
+  const auto output3 = output_shape[kIndex3];
 
-    buf->at(new_pos) = weight_data[i];
+  int64_t out_beg_i = 0;
+  int64_t beg_i = 0;
+  for (int64_t i = 0; i < output0; ++i) {
+    int64_t out_beg_ij = out_beg_i;
+    int64_t beg_ij = beg_i;
+    for (int64_t j = 0; j < output1; ++j) {
+      int64_t out_beg_ijk = out_beg_ij;
+      int64_t beg_ijk = beg_ij;
+      for (int64_t k = 0; k < output2; ++k) {
+        for (int64_t m = 0; m < output3; ++m) {
+          out_data[out_beg_ijk + m] = in_data[beg_ijk + m * stride3];
+        }
+        out_beg_ijk += out_stride2;
+        beg_ijk += stride2;
+      }
+      out_beg_ij += out_stride1;
+      beg_ij += stride1;
+    }
+    out_beg_i += out_stride0;
+    beg_i += stride0;
   }
 }
 
@@ -161,7 +163,7 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, schema::Format src_forma
   void *originWeightData = tensor->data_c();
   MS_CHECK_TRUE_RET(originWeightData != nullptr, RET_ERROR);
   T *weightData = static_cast<T *>(originWeightData);
-  TransposeData<T>(origin_shape, new_shape, perm, weightData, &buf);
+  TransposeDim4<T>(origin_shape, new_shape, perm, weightData, buf.data());
   if (memcpy_s(tensor->data_c(), tensor->Size(), buf.data(), count * sizeof(T)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     return RET_ERROR;
