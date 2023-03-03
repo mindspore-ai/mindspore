@@ -16,6 +16,9 @@ mindspore.Tensor
     输出：
         Tensor。
 
+    ..note::
+        `input_data` 的默认值None只作为一个占位符，并不意味着可以创建一个NoneType的Tensor。
+
 .. mscnautosummary::
     :toctree: Tensor
     :nosignatures:
