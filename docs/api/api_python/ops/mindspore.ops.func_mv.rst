@@ -16,4 +16,4 @@ mindspore.ops.mv
 
     异常：
         - **TypeError** - `mat` 或 `vec` 不是Tensor。
-        - **ValueError** - `mat` 不是2维Tensor或 `vec` 不是1维Tensor。
+        - **ValueError** - `mat` 不是二维Tensor或 `vec` 不是一维Tensor。

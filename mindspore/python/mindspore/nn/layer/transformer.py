@@ -511,7 +511,7 @@ class TransformerDecoder(Cell):
     attention, cross attention and feedforward layer.
 
     Args:
-        decoder_layer (Cell): An instance of the TransformerDecoderLayer() class.
+        decoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerDecoderLayer` class.
         num_layers (int): The number of decoder-layers in the decoder.
         norm (Cell, optional): The layer normalization module.
 
