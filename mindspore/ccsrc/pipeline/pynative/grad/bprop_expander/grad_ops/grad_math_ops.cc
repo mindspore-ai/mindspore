@@ -1693,23 +1693,15 @@ REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   bool reverse = GetValue<bool>(ib->GetAttr("reverse"));
   NodePtr dtype_min = nullptr;
-  auto fp64_flag = false;
   if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat16) {
     dtype_min = ib->Tensor(-65500e+0, kFloat16);
   } else {
     if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat32) {
       dtype_min = ib->Tensor(-3.4028235e+38, kFloat32);
     } else {
-      if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat64) {
-        dout = ib->Cast(dout, kFloat32);
-        x = ib->Cast(x, kFloat32);
-        out = ib->Cast(out, kFloat32);
-        dtype_min = ib->Tensor(-3.4028235e+38, kFloat32);
-        fp64_flag = true;
-      }
+      dtype_min = ib->Tensor(-1.7976931348623157e+308, kFloat64);
     }
   }
-  dtype_min = ib->Emit("BroadcastTo", {dtype_min}, {{"shape", MakeValue(ib->GetShape(dout))}});
   auto log_grad_positive = ib->Select(ib->Greater(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Log(dout), dtype_min);
   auto log_grad_negative =
     ib->Select(ib->Less(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Log(ib->Neg(dout)), dtype_min);
@@ -1721,11 +1713,6 @@ REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
     ib->Exp(ib->Add((ib->Emit("CumulativeLogsumexp", {ib->Sub(log_grad_negative, out), axis},
                               {{"exclusive", ib->GetAttr("exclusive")}, {"reverse", MakeValue(!reverse)}})),
                     x));
-  if (fp64_flag) {
-    output_pos = ib->Cast(output_pos, kFloat64);
-    output_neg = ib->Cast(output_neg, kFloat64);
-    x = ib->Cast(x, kFloat64);
-  }
   return {ib->Sub(output_pos, output_neg), ib->ZerosLike(x)};
 });
 

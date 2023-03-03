@@ -25,7 +25,7 @@ from mindspore.ops.functional import broadcast_gradient_args
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations.math_ops import Trace, Bernoulli, Renorm
-from mindspore import nn, ops, Tensor
+from mindspore import nn, Tensor
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import Polar
 from mindspore.ops.operations.math_ops import ComplexAbs
@@ -468,19 +468,6 @@ def get_brop_cumulative_logsumexp(self):
     less_op = P.Less()
     neg_op = P.Neg()
 
-    def where_v2(condition, x=None, y=None):
-        return_all = None
-        if x is None and y is None:
-            return_all = mnp.where(condition, x, y)
-        elif x is not None and y is not None:
-            shape_ = x.shape
-            input_y = np.resize(y, shape_)
-            input_y = Tensor(input_y).astype(x.dtype)
-            return_all = ops.select(condition, x, input_y)
-        else:
-            raise ValueError("x and y must both be non-None or both be None.")
-        return return_all
-
     def bprop(x, axis, out, dout):
         dtype_min = 0
         if x.dtype == mstype.float16:
@@ -489,8 +476,8 @@ def get_brop_cumulative_logsumexp(self):
             dtype_min = -3.4028235e+38
         elif x.dtype == mstype.float64:
             dtype_min = -1.7976931348623157e+308
-        log_grad_positive = where_v2(greater_op(dout, 0), log_op(dout), dtype_min)
-        log_grad_negative = where_v2(less_op(dout, 0), log_op(neg_op(dout)), dtype_min)
+        log_grad_positive = mnp.where(greater_op(dout, 0), log_op(dout), dtype_min)
+        log_grad_negative = mnp.where(less_op(dout, 0), log_op(neg_op(dout)), dtype_min)
         output_pos = exp_op(cumulative_op(log_grad_positive - out, axis) + x)
         output_neg = exp_op(cumulative_op(log_grad_negative - out, axis) + x)
         return (output_pos - output_neg, zeros_like(x))
