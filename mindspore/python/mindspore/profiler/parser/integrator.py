@@ -37,9 +37,8 @@ class Integrator:
     _file_name_aicore_detail_time = 'output_op_compute_time_{}.txt'
     _file_name_aicpu_time = 'output_data_preprocess_aicpu_{}.txt'
     _file_name_framework = 'framework_raw_{}.csv'
-    _header_aicore_type = ['op_type', 'execution_time', 'execution_frequency',
-                           'percent']
-    _header_aicore_detail = ['full_op_name', 'execution_time']
+    _header_aicore_type = ['op_type', 'total_time', 'execution_frequency', 'percent']
+    _header_aicore_detail = ['full_op_name', 'execution_time', 'execution_frequency']
     _header_aicpu = ['serial_number', 'op_type', 'total_time', 'dispatch_time',
                      'execution_time', 'run_start', 'run_end']
 
@@ -141,16 +140,16 @@ class Integrator:
                 op_name_type_cache[row[3]] = row[5]
 
         op_type_time_cache = {}
-        for full_op_name, op_time in self._op_time_cache.items():
+        for full_op_name, op_info in self._op_time_cache.items():
+            self._total_time += op_info[0] * op_info[1]
             op_type = op_name_type_cache.get(full_op_name)
             op_type_time = op_type_time_cache.get(op_type)
             if not op_type_time:
-                op_type_time = [op_time, 1]
+                op_type_time = [op_info[0] * op_info[1], op_info[1]]
                 op_type_time_cache[op_type] = op_type_time
             else:
-                op_type_time[0] += op_time
-                op_type_time[1] += 1
-
+                op_type_time[0] += op_info[0] * op_info[1]
+                op_type_time[1] += op_info[1]
         op_type_file_name = 'aicore_intermediate_' + self._device_id + '_type.csv'
         op_type_file_path = os.path.join(self._profiling_dir, op_type_file_name)
         with open(op_type_file_path, 'w') as type_file:
@@ -201,8 +200,8 @@ class Integrator:
                     if op_infos[0] == 'total':
                         self._total_time = Decimal(op_infos[2])
                         continue
-                    self._op_time_cache[op_infos[0]] = Decimal(op_infos[1])
-                    csv_writer.writerow([op_infos[0], op_infos[1]])
+                    self._op_time_cache[op_infos[0]] = [Decimal(op_infos[1]), int(op_infos[3])]
+                    csv_writer.writerow([op_infos[0], op_infos[1], op_infos[3]])
 
     def _parse_aicpu_time(self):
         """Parse the parsed AICPU operator time file."""

@@ -36,7 +36,7 @@ class OPComputeTimeParser:
     """
 
     _dst_file_title = 'title:op compute time'
-    _dst_file_column_title = 'op_name       compute_time(ms) stream_id'
+    _dst_file_column_title = 'op_name       compute_time(ms) stream_id execution_times'
     _dst_file_column_title += '\n------------  ---------------  ---------'
 
     def __init__(self, hwts_output_file, output_filename, op_task_info,
@@ -77,8 +77,7 @@ class OPComputeTimeParser:
             op_duration_str = str(item.duration / factor)
             if op_name in op_name_time_dict.keys():
                 op_name_time_dict[op_name] += op_duration
-                if item.task_id == op_name_task_dict[op_name]:
-                    op_name_count_dict[op_name] += 1
+                op_name_count_dict[op_name] += 1
                 op_name_start_time[op_name].append(
                     (op_start_time_str, op_duration_str)
                 )
@@ -120,7 +119,7 @@ class OPComputeTimeParser:
                     raise ValueError("The number of operations can not be 0.")
                 avg_time = time / op_name_count_dict.get(op_name)
                 total_time += avg_time
-                result_data += ("%s %s  %s\n" % (op_name, str(avg_time), stream_id))
+                result_data += ("%s %s %s %s\n" % (op_name, str(avg_time), stream_id, op_name_count_dict.get(op_name)))
         result_data += ("total op  %s 0" % (str(total_time)))
 
         timeline_data = []

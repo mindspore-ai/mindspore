@@ -8,11 +8,11 @@ mindspore.Profiler
     参数：
         - **output_path** (str, 可选) - 表示输出数据的路径。默认值："./data"。
         - **op_time** (bool, 可选) -（Ascend/GPU）表示是否收集算子性能数据，默认值：True。
-        - **profile_communication** (bool, 可选) -（仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。使用此参数时，op_time必须设置成True。默认值：False。
-        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。使用此参数时，op_time必须设置成True。默认值：False。
+        - **profile_communication** (bool, 可选) -（仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。使用此参数时， `op_time` 必须设置成True。默认值：False。
+        - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。使用此参数时， `op_time` 必须设置成True。默认值：False。
         - **parallel_strategy** (bool, 可选) -（仅限Ascend）表示是否收集并行策略性能数据， 默认值：True。
         - **start_profile** (bool, 可选) - 该参数控制是否在Profiler初始化的时候开启数据采集。默认值：True。
-        - **aicore_metrics** (int, 可选) -（仅限Ascend）收集的AICORE性能数据类型。值必须包含在[-1, 0, 1, 2, 3, 4, 5]，默认值：0，每种类型包含的数据项如下：
+        - **aicore_metrics** (int, 可选) -（仅限Ascend）收集的AICORE性能数据类型，使用此参数时， `op_time` 必须设置成True，且值必须包含在[-1, 0, 1, 2, 3, 4, 5]，默认值：0，每种类型包含的数据项如下：
 
           - -1: 不收集任何AICORE数据。
           - 0: ArithmeticUtilization，包含mac_fp16/int8_ratio、vec_fp32/fp16/int32_ratio、vec_misc_ratio等。
@@ -29,7 +29,7 @@ mindspore.Profiler
           - False: 异步方式，算子耗时为从CPU发送到GPU的耗时。这种方式能减少因增加Profiler对训练时间的影响。
 
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值：True。
-        - **timeline_limit** (int, 可选) - 设置限制timeline文件存储上限大小（单位M），使用此参数时，op_time必须设置成True。默认值：500。
+        - **timeline_limit** (int, 可选) - 设置限制timeline文件存储上限大小（单位M），使用此参数时， `op_time` 必须设置成True。默认值：500。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
