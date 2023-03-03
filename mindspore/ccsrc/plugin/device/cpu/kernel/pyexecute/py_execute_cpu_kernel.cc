@@ -26,6 +26,7 @@
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
@@ -305,6 +306,8 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
     if (py::isinstance<tensor::Tensor>(output)) {
       TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    } else if (IsStubTensor(output)) {
+      TensorToRawMemory(ConvertStubTensor(output), outputs[0]);
     }
     AttachPyOutputData(output);
     return true;
@@ -326,6 +329,8 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(DEBUG) << "Python output type: " << output_type << ", output: " << output;
     if (py::isinstance<tensor::Tensor>(output)) {
       TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    } else if (IsStubTensor(output)) {
+      TensorToRawMemory(ConvertStubTensor(output), outputs[0]);
     }
     AttachPyOutputData(output);
   } catch (const py::error_already_set &e) {

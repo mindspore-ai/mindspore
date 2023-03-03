@@ -379,6 +379,9 @@ ValuePtr ConvertSlice(const py::object &obj) {
     if (py::isinstance<Tensor>(py_attr)) {
       return py::cast<TensorPtr>(py_attr);
     }
+    if (IsStubTensor(py_attr)) {
+      return ConvertStubTensor(py_attr);
+    }
     MS_LOG(EXCEPTION) << "Attribute '" << attr << "' of " << py::str(obj)
                       << " should be int or Tensor with Int type but got " << py::str(py_attr);
   };
