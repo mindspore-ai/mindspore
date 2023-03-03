@@ -1991,10 +1991,10 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([[0, 3], [5, 5], [7, 0]]).T
+        >>> x = ms.Tensor([[0., 3.], [5., 5.], [7., 0.]]).T
         >>> print(x)
-        [[0 5 7]
-         [3 5 0]]
+        [[0. 5. 7.]
+         [3. 5. 0.]]
         >>> print(ops.cov(x))
         [[13.        -3.5      ]
          [-3.5        6.3333335]]

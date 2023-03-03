@@ -262,6 +262,7 @@ mindspore.Tensor
     mindspore.Tensor.signbit
     mindspore.Tensor.sin
     mindspore.Tensor.sinc
+    mindspore.Tensor.sinh
     mindspore.Tensor.size
     mindspore.Tensor.slogdet
     mindspore.Tensor.split
@@ -294,6 +295,7 @@ mindspore.Tensor
     mindspore.Tensor.tril
     mindspore.Tensor.triu
     mindspore.Tensor.true_divide
+    mindspore.Tensor.trunc
     mindspore.Tensor.unbind
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive

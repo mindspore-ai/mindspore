@@ -4183,23 +4183,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def sinh(self):
         r"""
-        Computes hyperbolic sine of the input element-wise.
-
-        .. math::
-
-            out_i = \sinh(x_i)
-
-        Returns:
-            Tensor, has the same shape as input tensor.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-            >>> output = x.sinh()
-            >>> print(output)
-            [0.6604918 0.28367308 0.44337422 0.6604918]
+        For details, please refer to :func:`mindspore.ops.sinh`.
         """
         self._init_check()
         return tensor_operator_registry.get('sinh')(self)
@@ -4250,19 +4234,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def trunc(self):
         r"""
-        Returns a new tensor with the truncated integer values of the elements of input.
-
-        Returns:
-            Tensor, the same shape and dtype as the input.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]),mindspore.float32)
-            >>> output = x.trunc()
-            >>> print(output)
-            [3. 0. 0. -3.]
+        For details, please refer to :func:`mindspore.ops.trunc`.
         """
         self._init_check()
         return tensor_operator_registry.get('trunc')(self)
