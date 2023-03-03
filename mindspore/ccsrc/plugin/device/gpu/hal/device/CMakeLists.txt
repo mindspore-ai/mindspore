@@ -5,8 +5,8 @@ endif()
 
 list(APPEND DEVICE_SRC_LIST "ps/gpu_ps_cache.cc")
 if(ENABLE_GPU)
-    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/common/mem_reuse/mem_reuse.cc)
-    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/common/mem_reuse/mem_swap_manager.cc)
+    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/mem_reuse/mem_reuse.cc)
+    list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/mem_reuse/mem_swap_manager.cc)
     list(APPEND DEVICE_SRC_LIST ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/data_queue/data_queue.h)
     file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
     list(REMOVE_ITEM DEVICE_SRC_LIST

@@ -24,7 +24,7 @@
 #include <unordered_map>
 
 #include "ops/core_ops.h"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "utils/anf_utils.h"
 #include "src/common/ops/anf_utils.h"
 #include "src/common/primitive_t_utils.h"

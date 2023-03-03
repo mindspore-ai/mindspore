@@ -20,7 +20,7 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "common/graph_kernel/core/graph_kernel_pass_manager.h"
+#include "backend/common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 namespace mindspore::graphkernel {
 using opt::PassPtr;

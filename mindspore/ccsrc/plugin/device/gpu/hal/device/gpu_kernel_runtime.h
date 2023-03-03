@@ -29,8 +29,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "common/mem_reuse/mem_swap_manager.h"
-#include "common/mem_reuse/mem_reuse.h"
+#include "backend/common/mem_reuse/mem_swap_manager.h"
+#include "backend/common/mem_reuse/mem_reuse.h"
 
 namespace mindspore {
 namespace device {

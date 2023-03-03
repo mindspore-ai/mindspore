@@ -21,7 +21,7 @@
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_mod.h"
 #include "utils/ms_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore {
 namespace kernel {

@@ -20,7 +20,7 @@
 #include <vector>
 #include "backend/common/optimizer/pass.h"
 #include "ir/func_graph.h"
-#include "common/graph_kernel/core/graph_builder.h"
+#include "backend/common/graph_kernel/core/graph_builder.h"
 
 namespace mindspore::graphkernel {
 /**

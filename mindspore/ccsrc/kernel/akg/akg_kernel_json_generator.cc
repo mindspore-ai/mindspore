@@ -23,10 +23,10 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/oplib.h"
-#include "common/graph_kernel/core/graph_builder.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_builder.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttr;

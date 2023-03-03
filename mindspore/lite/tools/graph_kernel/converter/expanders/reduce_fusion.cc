@@ -17,7 +17,7 @@
 #include <memory>
 #include <numeric>
 
-#include "common/graph_kernel/expanders/op_desc_registry.h"
+#include "backend/common/graph_kernel/expanders/op_desc_registry.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
 

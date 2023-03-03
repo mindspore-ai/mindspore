@@ -53,8 +53,8 @@
 #include "utils/info.h"
 #include "utils/log_adapter.h"
 #include "utils/trace_info.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
-#include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 
 namespace mindspore {
 namespace kernel {

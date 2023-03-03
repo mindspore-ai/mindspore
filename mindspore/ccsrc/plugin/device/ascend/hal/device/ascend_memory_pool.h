@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_POOL_H_
 
 #include <memory>
-#include "common/mem_reuse/mem_dynamic_allocator.h"
+#include "backend/common/mem_reuse/mem_dynamic_allocator.h"
 
 namespace mindspore {
 namespace device {

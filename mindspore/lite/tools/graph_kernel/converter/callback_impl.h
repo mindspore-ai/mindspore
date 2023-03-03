@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #include "utils/hash_map.h"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;

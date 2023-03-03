@@ -18,7 +18,7 @@
 #include <memory>
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "kernel/common_utils.h"
-#include "common/graph_kernel/adapter/fake_abstract_shape.h"
+#include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_ir_dump.h"

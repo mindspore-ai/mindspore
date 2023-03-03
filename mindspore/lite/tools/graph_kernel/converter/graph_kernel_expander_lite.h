@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "common/graph_kernel/core/graph_kernel_expander.h"
+#include "backend/common/graph_kernel/core/graph_kernel_expander.h"
 #include "ir/func_graph.h"
 #include "utils/hash_set.h"
 

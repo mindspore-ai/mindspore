@@ -25,7 +25,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "common/graph_kernel/adapter/expander.h"
+#include "backend/common/graph_kernel/adapter/expander.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_ir_dump.h"

@@ -23,12 +23,12 @@
 #include <string>
 #include <unordered_set>
 
-#include "common/graph_kernel/model/node.h"
-#include "common/graph_kernel/model/op_node.h"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "common/graph_kernel/core/graph_builder.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/model/node.h"
+#include "backend/common/graph_kernel/model/op_node.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_builder.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/anf_utils.h"
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "utils/ms_context.h"

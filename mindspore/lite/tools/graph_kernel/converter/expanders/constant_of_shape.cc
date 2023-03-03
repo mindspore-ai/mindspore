@@ -16,7 +16,7 @@
 
 #include <memory>
 
-#include "common/graph_kernel/expanders/op_desc_registry.h"
+#include "backend/common/graph_kernel/expanders/op_desc_registry.h"
 
 namespace mindspore::graphkernel::expanders {
 class ConstantOfShape : public OpDesc {

@@ -21,7 +21,7 @@
 
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"

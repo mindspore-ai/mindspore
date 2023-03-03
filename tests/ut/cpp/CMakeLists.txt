@@ -222,7 +222,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/rt_kernel_info.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/*.cc"
-        "../../../mindspore/ccsrc/common/graph_kernel/*.cc"
+        "../../../mindspore/ccsrc/backend/common/graph_kernel/*.cc"
         "../../../mindspore/ccsrc/common/expander/*.cc"
         "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
@@ -349,7 +349,7 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_ps_obj>
         $<TARGET_OBJECTS:_mindspore_distributed_obj>
         $<TARGET_OBJECTS:_mindspore_kernel_obj>
-        $<TARGET_OBJECTS:_mindspore_common_mem_reuse_obj>
+        $<TARGET_OBJECTS:_mindspore_backend_common_mem_reuse_obj>
         $<TARGET_OBJECTS:_mindspore_backend_common_optimizer_obj>
         $<TARGET_OBJECTS:_mindspore_backend_common_pass_obj>
         $<TARGET_OBJECTS:_mindspore_backend_common_session_obj>

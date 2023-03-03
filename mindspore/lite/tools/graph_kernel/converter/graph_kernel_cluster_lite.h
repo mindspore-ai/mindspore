@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/core/graph_kernel_cluster.h"
+#include "backend/common/graph_kernel/core/graph_kernel_cluster.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {

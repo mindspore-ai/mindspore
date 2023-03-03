@@ -132,7 +132,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/common/debug/anf_ir_dump.cc
         ${CCSRC_DIR}/common/debug/common.cc
         ${CCSRC_DIR}/common/debug/env_config_parser.cc
-        ${CCSRC_DIR}/common/mem_reuse/mem_dynamic_allocator.cc
+        ${CCSRC_DIR}/backend/common/mem_reuse/mem_dynamic_allocator.cc
         ${CCSRC_DIR}/common/thread_pool.cc
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc

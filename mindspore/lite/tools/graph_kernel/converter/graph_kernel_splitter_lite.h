@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_SPLITTER_LITE_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_SPLITTER_LITE_H_
 #include <string>
-#include "common/graph_kernel/core/split_schemer.h"
-#include "common/graph_kernel/core/graph_kernel_splitter.h"
+#include "backend/common/graph_kernel/core/split_schemer.h"
+#include "backend/common/graph_kernel/core/graph_kernel_splitter.h"
 
 namespace mindspore::graphkernel {
 class GraphKernelSplitterWithTuning : public GraphKernelSplitter {

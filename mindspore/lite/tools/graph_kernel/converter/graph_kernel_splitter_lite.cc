@@ -17,12 +17,13 @@
 #include <map>
 #include <memory>
 #include <cstdio>
+#include <vector>
 #include "utils/system/env.h"
 #include "utils/file_utils.h"
 #include "utils/anf_utils.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
-#include "common/graph_kernel/core/tuning_splitter.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/core/tuning_splitter.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "tools/graph_kernel/converter/akg/akg_build.h"
 
 namespace mindspore::graphkernel {

@@ -17,9 +17,10 @@
 #include "tools/graph_kernel/converter/preprocess_weight.h"
 #include <utility>
 #include <vector>
+#include <string>
 #include "utils/anf_utils.h"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 constexpr size_t kConv2dDataIndex = 1;

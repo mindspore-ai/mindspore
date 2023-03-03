@@ -20,7 +20,7 @@
 
 #include "backend/common/optimizer/optimizer.h"
 #include "include/common/utils/config_manager.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/ge/lamb_fission.h"

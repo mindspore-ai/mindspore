@@ -390,12 +390,12 @@ set(BACKEND_SUB_COMP
         ps
         distributed
         kernel
-        common/mem_reuse
+        backend/common/mem_reuse
         backend/common/optimizer
         backend/common/pass
         backend/common/session
         backend/common/somas
-        common/graph_kernel
+        backend/common/graph_kernel
         backend/graph_compiler
         backend/operator
         runtime/collective

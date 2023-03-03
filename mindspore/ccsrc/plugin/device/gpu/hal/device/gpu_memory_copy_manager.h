@@ -20,7 +20,7 @@
 #include <memory>
 #include <queue>
 #include <utility>
-#include "common/mem_reuse/mem_copy_manager.h"
+#include "backend/common/mem_reuse/mem_copy_manager.h"
 #include "runtime/device/device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "kernel/kernel.h"

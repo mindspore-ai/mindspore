@@ -47,7 +47,7 @@
 #include "plugin/device/gpu/optimizer/relu_v2_pass.h"
 #include "plugin/device/gpu/optimizer/add_relu_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/add_relu_grad_v2_fusion.h"
-#include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "plugin/device/gpu/optimizer/concat_outputs_for_all_gather.h"
 #include "backend/common/pass/getitem_tuple.h"

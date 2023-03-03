@@ -35,7 +35,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/hal/hardware/optimizer.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 #include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
@@ -60,8 +60,8 @@
 #endif
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "common/graph_kernel/adapter/expander.h"
-#include "common/graph_kernel/value_graph_binder.h"
+#include "backend/common/graph_kernel/adapter/expander.h"
+#include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {

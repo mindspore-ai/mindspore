@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_CPU_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_CPU_H_
 
-#include "common/graph_kernel/split_model/split_model_factory.h"
+#include "backend/common/graph_kernel/split_model/split_model_factory.h"
 namespace mindspore::graphkernel::inner {
 class SplitModelCpu : public SplitModel {
  public:
