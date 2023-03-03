@@ -18,6 +18,7 @@ from __future__ import division
 
 import itertools
 import numbers
+import hashlib
 
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -36,11 +37,20 @@ from mindspore.communication import management
 from mindspore.common import dtype as mstype
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.nn.cell import Cell
+from mindspore import log as logger
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
            'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']
 
-SYNC_BN_GROUP_NAME = ""
+
+SYNCBN_GROUP_DICT = None
+
+
+def _syncbatchnorm_group_dict():
+    global SYNCBN_GROUP_DICT
+    if SYNCBN_GROUP_DICT is None:
+        SYNCBN_GROUP_DICT = dict()
+    return SYNCBN_GROUP_DICT
 
 
 class _BatchNorm(Cell):
@@ -97,18 +107,20 @@ class _BatchNorm(Cell):
                                                              self.cls_name)
         self.process_groups = process_groups
         self.is_global = False
+        self.group_name = None
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        global SYNC_BN_GROUP_NAME
+
         # for GlobalBatchNorm
         if self.group_device_num != 1:
+            self.is_global = True
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
             self.device_list = [i for i in range(0, self.rank_size)]
             self.rank_list = self.list_group(self.device_list, self.group_device_num)
-            self.rank_list_idx = len(self.rank_list)
             self._create_global_groups()
         # for SyncBatchNorm
         if self.process_groups != 0:
+            self.is_global = True
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
             if self.process_groups is not None:
@@ -116,16 +128,11 @@ class _BatchNorm(Cell):
                 self._check_rank_ids(self.process_groups, self.rank_size)
                 self._create_sync_groups()
             elif self.rank_size > 1:
-                self.is_global = True
                 self.group_device_num = self.rank_size
-                self.device_list = [i for i in range(0, self.rank_size)]
                 if context.get_context("device_target") == "Ascend":
-                    if SYNC_BN_GROUP_NAME == "":
-                        SYNC_BN_GROUP_NAME = "sync_bn_group0"
-                        management.create_group(SYNC_BN_GROUP_NAME, self.device_list)
+                    self.group_name = "hccl_world_group"
                 elif context.get_context("device_target") == "GPU":
-                    if SYNC_BN_GROUP_NAME == "":
-                        SYNC_BN_GROUP_NAME = "nccl_world_group"
+                    self.group_name = "nccl_world_group"
 
         self.shape = P.Shape()
         self.reduce_mean = P.ReduceMean(keep_dims=True)
@@ -149,7 +156,7 @@ class _BatchNorm(Cell):
         if self.is_global:
             self.bn_train = inner.SyncBatchNorm(epsilon=self.eps,
                                                 momentum=self.momentum,
-                                                group=SYNC_BN_GROUP_NAME,
+                                                group=self.group_name,
                                                 device_num=self.group_device_num)
 
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
@@ -226,25 +233,34 @@ class _BatchNorm(Cell):
                                  f"but got {process_groups}.")
             seen.add(rid)
 
+    def _create_groups(self, process_groups):
+        """ create groups by process groups. """
+        for sub_group in process_groups:
+            validator.check_isinstance("sub group", sub_group, list)
+            self.group_device_num = len(sub_group)
+            if self.rank_id in sub_group and self.group_device_num > 1:
+                rank_list_name = '_'.join('%s' % id for id in sub_group)
+                group_dict = _syncbatchnorm_group_dict()
+                if rank_list_name not in group_dict:
+                    md5 = hashlib.md5()
+                    md5.update(rank_list_name.encode('utf-8'))
+                    hash_name = md5.hexdigest()
+                    self.group_name = str(self.group_device_num) + '_' + hash_name
+                    group_dict[rank_list_name] = self.group_name
+                    management.create_group(self.group_name, sub_group)
+                    logger.info("create group for sync batchnorm, the rank list is {}, the group name is {}".format(
+                        rank_list_name, self.group_name))
+                else:
+                    self.group_name = group_dict[rank_list_name]
+                    logger.info("the group for {} already exists, no need to create".format(rank_list_name))
+
     def _create_global_groups(self):
-        for i in range(self.rank_list_idx):
-            if self.rank_id in self.rank_list[i]:
-                self.is_global = True
-                global SYNC_BN_GROUP_NAME
-                if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
-                    management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
+        """ create global groups. """
+        self._create_groups(self.rank_list)
 
     def _create_sync_groups(self):
-        for i in range(len(self.process_groups)):
-            validator.check_isinstance("process_groups[%d]" % i, self.process_groups[i], list)
-            self.group_device_num = len(self.process_groups[i])
-            if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
-                self.is_global = True
-                global SYNC_BN_GROUP_NAME
-                if SYNC_BN_GROUP_NAME == "":
-                    SYNC_BN_GROUP_NAME = "sync_bn_group%d" % i
-                    management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
+        """ create sync groups. """
+        self._create_groups(self.process_groups)
 
 
 @constexpr
@@ -753,7 +769,7 @@ class SyncBatchNorm(_BatchNorm):
           [[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]]]
     """
-
+    @cell_attr_register(attrs=['num_features', 'process_groups'])
     def __init__(self,
                  num_features,
                  eps=1e-5,
