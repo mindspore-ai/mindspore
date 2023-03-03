@@ -64,11 +64,16 @@ bool AddNDynShapeJoin(ShapeVector *shape1, const ShapeVector *shape2) {
 }
 
 abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the input data type must be list or tuple of tensors.But got:"
+                            << input_args[0]->ToString();
+  }
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1,
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
   auto shape_0 = elements[0]->BuildShape();
@@ -91,21 +96,25 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     }
     // Join input[i] with input[0]
     if (!AddNDynShapeJoin(&output_shape, &shape_vec)) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input shape must be same, but got shape of input["
-                               << i << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString()
-                               << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', input shape must be same, but got shape of input[" << i
+                               << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString() << ".";
     }
   }
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
-TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
+TypePtr AddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', the input data type must be list or tuple of tensors.But got:"
+                            << input_args[0]->ToString();
+  }
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
-                                           prim->name());
+                                           prim_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("element_0", elements[0]->BuildType());
   for (size_t i = 0; i < elements.size(); ++i) {

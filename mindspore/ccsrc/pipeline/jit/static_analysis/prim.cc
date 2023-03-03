@@ -1885,7 +1885,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
 
   constexpr auto max_args_size = 3;
-  if (args_abs_list.size() == max_args_size) {
+  if (!support_fallback_runtime && args_abs_list.size() == max_args_size) {
     constexpr size_t default_index = 2;
     auto default_args = args_abs_list[default_index];
     if (default_args->isa<abstract::AbstractScalar>()) {

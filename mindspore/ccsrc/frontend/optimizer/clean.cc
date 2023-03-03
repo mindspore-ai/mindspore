@@ -33,6 +33,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/anf.h"
 #include "ir/value.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "utils/hash_map.h"
 #include "utils/anf_utils.h"
@@ -1059,10 +1060,19 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return make_dict_node;
   }
 
+  AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) {
+    // Convert InterpretedObject value node to PyExecute CNode.
+    return ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
+  }
+
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (value->isa<ValueDictionary>() && support_fallback_runtime) {
-      return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
+    if (support_fallback_runtime) {
+      if (value->isa<ValueDictionary>()) {
+        return RebuildValueDict(value_node, value->cast<ValueDictionaryPtr>());
+      } else if (value->isa<parse::InterpretedObject>()) {
+        return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
+      }
     }
     bool need_convert = false;
     auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);

@@ -656,13 +656,10 @@ def test_getattr_numpy_array():
     @jit
     def foo():
         x = np.array([1, 2, 3, 4])
+        # Should work as: return x.shape[0]
         return getattr(x, "shape")[0]
 
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
-    with pytest.raises(TypeError) as err:
-        foo()  # Not throw error any more, should move to ST.
-    assert "Do not support to get attribute" in str(err.value)
-    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
+    foo()
 
 
 def test_getattr_numpy_array_2():
@@ -677,9 +674,7 @@ def test_getattr_numpy_array_2():
         x = 1
         return getattr(x, "shape", np.array([0, 1, 2, 3, 4]))
 
-    with pytest.raises(TypeError) as err:
-        foo()
-    assert "For 'getattr', the third input 'default' can not" in str(err.value)
+    foo()
 
 
 def test_getattr_for_fg_object():
