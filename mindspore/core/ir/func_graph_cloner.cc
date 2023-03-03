@@ -270,6 +270,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr
   target_func_graph->set_stub(func_graph->stub());
   target_func_graph->set_switch_input(func_graph->switch_input());
   target_func_graph->set_switch_layer_input(func_graph->switch_layer_input());
+  target_func_graph->set_python_obj(func_graph->python_obj());
 }
 
 void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
