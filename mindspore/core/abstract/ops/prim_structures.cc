@@ -190,15 +190,13 @@ AbstractBasePtr InferImplListSetItem(const AnalysisEnginePtr &, const PrimitiveP
 
 AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a dict and a scalar whose value is a string.
   const std::string op_name = primitive->name();
   // dict[key] mean the size of args_spec_list is 2.
-  // dict.get('key', default=None) mean the size of args_spec_list is 3.
+  // dict.get('key', default_value=None) mean the size of args_spec_list is 2 too, the key will check in dict_get.
   constexpr int subscript_args_size = 2;
-  constexpr int dict_get_arg_size = 3;
-  if (args_spec_list.size() != subscript_args_size && args_spec_list.size() != dict_get_arg_size) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', the number of input should be " << subscript_args_size << " or "
-                      << dict_get_arg_size << ", but got " << args_spec_list.size();
+  if (args_spec_list.size() != subscript_args_size) {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', the number of input should be " << subscript_args_size
+                      << ", but got " << args_spec_list.size();
   }
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
@@ -214,13 +212,9 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
                          [key_str](const AbstractAttribute &item) { return item.first == key_str; });
   if (it == dict_elems.end()) {
     // For dict[key], if key is not exist, will raise a KeyError exception.
-    if (args_spec_list.size() == subscript_args_size) {
-      MS_EXCEPTION(KeyError) << "The key " << key_str
-                             << " does not exist in the dict:" << args_spec_list[0]->ToString();
-    }
-    // For dict.get('key', default=None), if key is not exist, will return the default value.
-    constexpr int default_value_index = 2;
-    return args_spec_list[default_value_index];
+    // For dict.get('key', default=None), if key is not exist, will return the default value during dict_get.
+    MS_EXCEPTION(KeyError) << "The key " << key_value->ToString()
+                           << " does not exist in the dict:" << args_spec_list[0]->BuildValue()->ToString();
   }
   return it->second;
 }
