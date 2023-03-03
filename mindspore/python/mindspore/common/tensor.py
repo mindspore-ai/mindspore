@@ -104,6 +104,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     Outputs:
         Tensor.
 
+    Note:
+        The default value None of `input_data` works as a placeholder, it does not mean that we can create a NoneType
+        Tensor.
+
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
