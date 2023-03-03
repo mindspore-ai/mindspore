@@ -1103,8 +1103,8 @@ bool IrExportBuilder::SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir
   } else if (value->isa<UInt>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
-    auto uint_value = value->cast<FloatPtr>();
-    auto data_type = GetMindirDataBitsFloatType(uint_value->nbits());
+    auto uint_value = value->cast<UIntPtr>();
+    auto data_type = GetMindirDataBitsUIntType(uint_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;
     }

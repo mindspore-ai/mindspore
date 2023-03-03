@@ -179,6 +179,9 @@ class Cell(Cell_):
         self.__dict__ = dict_
         self._attr_synced = False
 
+    def __bool__(self):
+        return True
+
     @property
     def _cell_tag(self):
         # `<class 'xxxxxxx'>` to `xxxxxxx`
