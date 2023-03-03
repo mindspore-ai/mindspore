@@ -593,7 +593,6 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
   return result;
 }
 
-#ifdef ENABLE_TUPLE_UNFOLD
 bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType kernel_type) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   // Only the kernel nodes that register kernel attr can support the backoff.
@@ -631,7 +630,6 @@ bool GetSelectKernelObjectTypeResult(const CNodePtr &kernel_node, KernelType ker
   kernel::SetKernelObjectTypeWithSelectedAttr(kernel_node, object_selected_kernel_attrs[0]);
   return true;
 }
-#endif
 
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -643,12 +641,10 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   }
   auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-#ifdef ENABLE_TUPLE_UNFOLD
   bool selected = GetSelectKernelObjectTypeResult(kernel_node, kernel_type);
   if (!selected) {
     return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
-#endif
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -659,21 +655,17 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
 
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-#ifdef ENABLE_TUPLE_UNFOLD
   auto output_kernel_object_types = builder->Build()->GetAllOutputKernelObjectTypes();
   if (output_kernel_object_types.size() == 1 && output_kernel_object_types[0] == kernel::KernelObjectType::TUPLE) {
     outputs_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node, 0)};
     outputs_format = {kOpFormat_DEFAULT};
   } else {
-#endif
     size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       outputs_format.emplace_back(kOpFormat_DEFAULT);
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
     }
-#ifdef ENABLE_TUPLE_UNFOLD
   }
-#endif
   std::string origin_data_format = kOpFormat_DEFAULT;
   if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
     UpdateKernelFormatInfo(kernel_node, inputs_type, &inputs_format, &outputs_format, &origin_data_format);
@@ -683,12 +675,10 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   builder->SetInputsDeviceType(inputs_type);
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
-#ifdef ENABLE_TUPLE_UNFOLD
   kernel::UnfoldKernelBuildInfo(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
     kernel::SetDynamicInputSizeAttr(kernel_node);
   }
-#endif
   MS_LOG(INFO) << kernel_node->fullname_with_scope() << " kernel attr info: "
                << kernel::FetchPrintInfoByKernelAttr(kernel::GetKernelAttrFromBuildInfo(builder->Build()));
 

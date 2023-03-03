@@ -139,7 +139,6 @@ tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
   return nullptr;
 }
 
-#ifdef ENABLE_TUPLE_UNFOLD
 size_t GetOutputTensorNumByKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->kernel_info());
@@ -149,7 +148,6 @@ size_t GetOutputTensorNumByKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(build_info);
   return build_info->GetAllOutputDeviceTypes().size();
 }
-#endif
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -196,7 +194,6 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
 }
 
 size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
-#ifdef ENABLE_TUPLE_UNFOLD
   MS_EXCEPTION_IF_NULL(node);
   size_t res;
   TypePtr type = node->Type();
@@ -225,13 +222,9 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
     res = 1;
   }
   return res;
-#else
-  return AnfUtils::GetOutputTensorNum(node);
-#endif
 }
 
 size_t AnfRuntimeAlgorithm::GetOutputNumWithoutKernelInfo(const AnfNodePtr &node) {
-#ifdef ENABLE_TUPLE_UNFOLD
   MS_EXCEPTION_IF_NULL(node);
   const auto &kernel_info = node->kernel_info();
   if (kernel_info != nullptr) {
@@ -261,9 +254,6 @@ size_t AnfRuntimeAlgorithm::GetOutputNumWithoutKernelInfo(const AnfNodePtr &node
     res = 1;
   }
   return res;
-#else
-  return AnfUtils::GetOutputTensorNum(node);
-#endif
 }
 
 namespace {

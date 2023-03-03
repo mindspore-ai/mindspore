@@ -82,13 +82,11 @@ void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_ty
   }
 }
 
-#ifdef ENABLE_TUPLE_UNFOLD
 // Real tuple isn't expanded.
 void GetOutputDtypesForRealTuple(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);
   (void)output_types->emplace_back(dtype);
 }
-#endif
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
   size_t output_num = AnfAlgo::GetOutputElementNum(kernel_node);
@@ -544,7 +542,6 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
   bool input_matched = false;
   for (auto kernel_attr : kernel_attrs) {
     output_types.clear();
-#ifdef ENABLE_TUPLE_UNFOLD
     // The real tuple and allsame don't fold the tuple.
     if (kernel_attr.GetAllSame() ||
         (kernel_attr.GetOutputSize() != 0 && kernel_attr.GetOutputAttr(0).object_type == kObjectTypeTuple)) {
@@ -552,9 +549,6 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     } else {
       GetOutputDtypes(kernel_node, &output_types);
     }
-#else
-    GetOutputDtypes(kernel_node, &output_types);
-#endif
     MS_LOG(DEBUG) << "Select kernel for op: " << kernel_node->fullname_with_scope() << ", input types:" << input_types
                   << ", output types:" << output_types;
 
@@ -647,7 +641,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   // First select the kernel object types.
   std::vector<kernel::KernelAttr> object_selected_kernel_attrs;
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
-#ifdef ENABLE_TUPLE_UNFOLD
   if (kernel_attrs.empty()) {
     return KernelNotSupportWarning(kernel_node, false);
   } else if (kernel_attrs[0].GetSkipCheck()) {
@@ -656,9 +649,6 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
              !kernel::SelectKernelByObjectType(kernel_node, kernel_attrs, &object_selected_kernel_attrs, false)) {
     return kernel::KernelObjectTypeNotSupportWarning(kernel_node);
   }
-#else
-  object_selected_kernel_attrs = kernel_attrs;
-#endif
 
   // Second select the matched kernel attr.
   kernel::KernelAttr selected_kernel_attr;

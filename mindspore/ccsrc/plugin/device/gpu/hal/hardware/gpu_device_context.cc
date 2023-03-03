@@ -356,9 +356,7 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   // Graph optimization relevant to device data format
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-#ifdef ENABLE_TUPLE_UNFOLD
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
-#endif
   // ReplaceAddNFusion depends on the input expansion of AddN, so must be after the operator select.
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   // PrintReduceFusion depends on the input expansion of Print, so must be after the operator select.
