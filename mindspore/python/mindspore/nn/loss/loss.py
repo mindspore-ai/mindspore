@@ -2357,7 +2357,7 @@ class CTCLoss(LossBase):
         >>> ctc_loss = CTCLoss(blank=0, reduction='none', zero_infinity=False)
         >>> loss = ctc_loss(ms_input, target, input_lengths, target_lengths)
         >>> print(loss)
-        [-25.794968]
+        -25.794968
     """
 
     def __init__(self, blank=0, reduction='mean', zero_infinity=False):
