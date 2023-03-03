@@ -109,11 +109,12 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
         >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
         >>> y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
         >>> output = ops.clip_by_value([x,y], min_value, max_value)
-        >>> print(output)
-        [[[ 5. 20.  5.  7.]
-          [ 5. 11.  6. 20.]],
-         [[ 5. 20.  5.  7.]
-          [ 5. 11.  6. 20.]]]
+        >>> for out in output:
+        ...     print(out)
+        [[ 5. 20.  5.  7.]
+         [ 5. 11.  6. 20.]]
+        [[ 5. 20.  5.  7.]
+         [ 5. 11.  6. 20.]]
     """
     def _clip_by_value(clip_min, clip_max, x):
         if not isinstance(x, Tensor):
@@ -211,11 +212,12 @@ def clamp(x, min=None, max=None):
         >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
         >>> y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
         >>> output = ops.clamp([x,y], min_value, max_value)
-        >>> print(output)
-        [[[ 5. 20.  5.  7.]
-          [ 5. 11.  6. 20.]],
-         [[ 5. 20.  5.  7.]
-          [ 5. 11.  6. 20.]]]
+        >>> for out in output:
+        ...     print(out)
+        [[ 5. 20.  5.  7.]
+         [ 5. 11.  6. 20.]]
+        [[ 5. 20.  5.  7.]
+         [ 5. 11.  6. 20.]]
     """
     return clip_by_value(x, min, max)
 
