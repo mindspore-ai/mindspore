@@ -37,7 +37,8 @@ constexpr size_t ARGS_REMAP_LEN = 2;
 /**
  * @brief infotable contain func_stub\blockdim\kernel file buffer
  */
-AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {
+AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack, const AnfNodePtr &anf_node_ptr)
+    : AscendKernelMod(anf_node_ptr), kernel_pack_(kernel_pack) {
   if (kernel_pack != nullptr) {
     auto kernel_json_info = kernel_pack->kernel_json_info();
     kernel_name_ = kernel_json_info.kernel_name;
