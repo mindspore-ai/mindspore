@@ -27,13 +27,13 @@ mindspore.ops.Adam
 
     输入：
         - **var** (Parameter) - 需更新的权重。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型可以是float16或float32。
-        - **m** (Parameter) - 更新公式中的第一个动量矩阵，shape和数据类型应与 `var` 相同。
-        - **v** (Parameter) - 更新公式中的第二个动量矩阵，shape和数据类型应与 `var` 相同。均方梯度的数据类型也应与 `var` 相同。
-        - **beta1_power** (float) - 在更新公式中的 :math:`beta_1^t(\beta_1^{t})` ，数据类型值应与 `var` 相同。
-        - **beta2_power** (float) - 在更新公式中的 :math:`beta_2^t(\beta_2^{t})` ，数据类型值应与 `var` 相同。
-        - **lr** (float) - 在更新公式中的 :math:`l` 。其论文建议取值为 :math:`10^{-8}` ，数据类型应与 `var` 相同。
-        - **beta1** (float) - 第一个动量矩阵的指数衰减率，数据类型值应与 `var` 相同。论文建议取值为 :math:`0.9` 。
-        - **beta2** (float) - 第二个动量矩阵的指数衰减率，数据类型值应与 `var` 相同。论文建议取值为 :math:`0.999` 。
+        - **m** (Parameter) - 更新公式中的第一个动量矩阵，shape应与 `var` 相同。
+        - **v** (Parameter) - 更新公式中的第二个动量矩阵，shape应与 `var` 相同。
+        - **beta1_power** (float) - 在更新公式中的 :math:`beta_1^t(\beta_1^{t})` 。
+        - **beta2_power** (float) - 在更新公式中的 :math:`beta_2^t(\beta_2^{t})` 。
+        - **lr** (float) - 在更新公式中的 :math:`l` 。其论文建议取值为 :math:`10^{-8}`。
+        - **beta1** (float) - 第一个动量矩阵的指数衰减率。论文建议取值为 :math:`0.9` 。
+        - **beta2** (float) - 第二个动量矩阵的指数衰减率。论文建议取值为 :math:`0.999` 。
         - **epsilon** (float) - 添加到分母中的值，以提高数值稳定性。
         - **gradient** (Tensor) - :math:`g` 表示梯度，shape和数据类型与 `var` 相同。
 

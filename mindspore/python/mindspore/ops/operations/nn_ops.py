@@ -4584,19 +4584,16 @@ class Adam(Primitive):
         - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
           any number of additional dimensions. The data type can be float16 or float32.
         - **m** (Parameter) - The 1st moment vector in the updating formula,
-          the shape and data type value should be the same as `var`.
+          the shape should be the same as `var`.
         - **v** (Parameter) - the 2nd moment vector in the updating formula,
-          the shape and data type value should be the same as `var`. Mean square gradients with the same type as `var`.
-        - **beta1_power** (float) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
-          the data type value should be the same as `var`.
-        - **beta2_power** (float) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
-          the data type value should be the same as `var`.
-        - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
-          the data type value should be the same as `var`.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.9`.
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.999`.
+          the shape should be the same as `var`.
+        - **beta1_power** (float) - :math:`beta_1^t(\beta_1^{t})` in the updating formula.
+        - **beta2_power** (float) - :math:`beta_2^t(\beta_2^{t})` in the updating formula.
+        - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
+          The paper suggested value is :math:`0.9`.
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
+          The paper suggested value is :math:`0.999`.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
 
