@@ -104,8 +104,6 @@ class EmbeddingLookup(nn.Cell):
         self.array_mul = ops.MatMul()
         self.reshape = ops.Reshape()
         self.shape = ops.Shape()
-        if is_graph_mode:
-            self.shape = ops.TensorShape()
 
     def construct(self, input_ids):
         """Get a embeddings lookup table with a fixed dictionary and size."""
@@ -119,8 +117,6 @@ class EmbeddingLookup(nn.Cell):
             output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
 
         out_shape = input_shape + (self.embedding_size,)
-        if self.is_graph_mode:
-            out_shape = (self.batch_size, -1, self.embedding_size)
         output = self.reshape(output_for_reshape, out_shape)
         return output, self.embedding_table.value()
 
@@ -179,8 +175,6 @@ class EmbeddingPostprocessor(nn.Cell):
         self.position_embedding_table = Tensor(position_encoding(max_position_embeddings, embedding_size),
                                                ms.float32)
         self.shape = ops.Shape()
-        if is_graph_mode:
-            self.shape = ops.TensorShape()
 
     def construct(self, word_embeddings):
         """Postprocessors apply positional embeddings to word embeddings."""
@@ -354,19 +348,12 @@ class MultiheadAttention(nn.Cell):
 
     def construct(self, from_tensor, to_tensor, seq_length, enc_seq_length, attention_mask=None):
         """Apply multihead attention."""
-        from_seq_length = seq_length
-        to_seq_length = enc_seq_length
-        shape_from = (self.batch_size, from_seq_length, self.num_attention_heads, self.size_per_head)
-        shape_to = (self.batch_size, to_seq_length, self.num_attention_heads, self.size_per_head)
-        if self.is_graph_mode:
-            shape_from = (self.batch_size, -1, self.num_attention_heads, self.size_per_head)
-            shape_to = (self.batch_size, -1, self.num_attention_heads, self.size_per_head)
+        shape_from = (self.batch_size, -1, self.num_attention_heads, self.size_per_head)
+        shape_to = (self.batch_size, -1, self.num_attention_heads, self.size_per_head)
         if self.do_return_2d_tensor:
-            shape_return = (self.batch_size * from_seq_length, self.num_attention_heads * self.size_per_head)
-            if self.is_graph_mode:
-                shape_return = (-1, self.num_attention_heads * self.size_per_head)
+            shape_return = (-1, self.num_attention_heads * self.size_per_head)
         else:
-            shape_return = (self.batch_size, from_seq_length, self.num_attention_heads * self.size_per_head)
+            shape_return = (self.batch_size, -1, self.num_attention_heads * self.size_per_head)
 
         # reshape 2d/3d input tensors to 2d
         from_tensor_2d = self.reshape(from_tensor, self.shape_from_2d)
@@ -651,8 +638,6 @@ class TransformerEncoder(nn.Cell):
     def construct(self, input_tensor, attention_mask, seq_length):
         """Apply encoder."""
         out_shape = (self.batch_size, seq_length, self.hidden_size)
-        if self.is_graph_mode:
-            out_shape = (self.batch_size, -1, self.hidden_size)
         prev_output = self.reshape(input_tensor, self.shape)
 
         for layer_module in self.layers:
@@ -801,8 +786,6 @@ class TransformerDecoder(nn.Cell):
     def construct(self, input_tensor, attention_mask, enc_states, enc_attention_mask, seq_length, enc_seq_length):
         """Apply decoder."""
         out_shape = (self.batch_size, seq_length, self.hidden_size)
-        if self.is_graph_mode:
-            out_shape = (self.batch_size, -1, self.hidden_size)
         prev_output = self.reshape(input_tensor, self.shape)
 
         for layer_module in self.layers:
@@ -827,8 +810,6 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
         self.cast = ops.Cast()
         self.reshape = ops.Reshape()
         self.shape = ops.Shape()
-        if is_graph_mode:
-            self.shape = ops.TensorShape()
         self.batch_matmul = ops.BatchMatMul()
         self.expand_dims = ops.ExpandDims()
         self.is_graph_mode = is_graph_mode
@@ -840,12 +821,8 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
         shape_left = input_shape + (1,)
 
         input_mask = self.cast(input_mask, ms.float32)
-        if self.is_graph_mode:
-            mask_left = self.expand_dims(input_mask, 2)
-            mask_right = self.expand_dims(input_mask, 1)
-        else:
-            mask_left = self.reshape(input_mask, shape_left)
-            mask_right = self.reshape(input_mask, shape_right)
+        mask_left = self.reshape(input_mask, shape_left)
+        mask_right = self.reshape(input_mask, shape_right)
         attention_mask = self.batch_matmul(mask_left, mask_right)
 
         return attention_mask
@@ -886,8 +863,6 @@ class PredLogProbs(nn.Cell):
                   seq_length):
         """Get log probs."""
         shape_flat_sequence_tensor = (self.batch_size * seq_length, self.width)
-        if self.is_graph_mode:
-            shape_flat_sequence_tensor = (-1, self.width)
 
         input_tensor = self.reshape(input_tensor, shape_flat_sequence_tensor)
         input_tensor = self.cast(input_tensor, self.compute_type)
@@ -995,8 +970,6 @@ class TransformerModel(nn.Cell):
         self.expand = ops.ExpandDims()
         self.multiply = ops.Mul()
         self.shape = ops.Shape()
-        if self.is_graph_mode:
-            self.shape = ops.TensorShape()
         self.tril = array_op.Tril()
         self.dynamic_broadcast_to = inner_op.DynamicBroadcastTo()
         self.ones_like = array_op.OnesLike()
@@ -1022,9 +995,8 @@ class TransformerModel(nn.Cell):
 
         if self.is_graph_mode:
             ones_inner = self.ones_like(source_ids[0, :])
-            seq_length = self.shape(ones_inner)
-            broadcast_shape = self.concatenate([seq_length, seq_length])
-            ones = self.dynamic_broadcast_to(ones_inner, broadcast_shape)
+            seq_length = self.shape(ones_inner)[0]
+            ones = self.dynamic_broadcast_to(ones_inner, (seq_length, seq_length))
             future_mask = self.tril(ones)
         else:
             future_mask = convert_np_to_tensor_encoder(seq_length)

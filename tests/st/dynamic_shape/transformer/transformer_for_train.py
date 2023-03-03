@@ -87,8 +87,6 @@ class TransformerTrainingLoss(nn.Cell):
     def construct(self, prediction_scores, label_ids, label_weights, seq_length):
         """Defines the computation performed."""
         flat_shape = (self.batch_size * seq_length,)
-        if self.is_graph_mode:
-            flat_shape = (-1,)
         label_ids = self.reshape(label_ids, flat_shape)
         label_weights = self.cast(self.reshape(label_weights, flat_shape), ms.float32)
         one_hot_labels = self.onehot(self.cast(label_ids, ms.int32), self.cast(self.vocab_size, ms.int32),
@@ -120,8 +118,6 @@ class TransformerNetworkWithLoss(nn.Cell):
         self.loss = TransformerTrainingLoss(is_graph_mode)
         self.cast = ops.Cast()
         self.shape = ops.Shape()
-        if is_graph_mode:
-            self.shape = ops.TensorShape()
 
     def construct(self,
                   source_ids,
