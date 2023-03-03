@@ -3184,51 +3184,51 @@ def bessel_y1(x):
     return bessel_y1_(x)
 
 
-def linspace(start, stop, num):
+def linspace(start, end, steps):
     r"""
-    Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
-    `stop`), and the length of the output Tensor is `num`.
+    Returns a Tensor whose value is `steps` evenly spaced in the interval `start` and `end` (including `start` and
+    `end`), and the length of the output Tensor is `steps`.
 
     .. math::
         \begin{aligned}
-        &step = (stop - start)/(num - 1)\\
-        &output = [start, start+step, start+2*step, ... , stop]
+        &step = (end - start)/(steps - 1)\\
+        &output = [start, start+step, start+2*step, ... , end]
         \end{aligned}
 
     Args:
         start (Union[Tensor, int, float]): Start value of interval. The tensor data type must be float32 or float64
             and with shape of 0-D.
-        stop (Union[Tensor, int, float]): Last value of interval. The tensor data type must be float32 or float64
+        end (Union[Tensor, int, float]): Last value of interval. The tensor data type must be float32 or float64
             and with shape of 0-D.
-        num (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and stop.
+        steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
             Must be positive int number or 0D int32/int64 Tensor.
 
     Returns:
-        Tensor, has the same dtype as `start`, and the shape of :math:`(num)`.
+        Tensor, has the same dtype as `start`, and the shape of :math:`(steps)`.
 
     Raises:
-        TypeError: If `start` or `stop` is not a Tensor.
-        TypeError: If dtype of `start` or dtype of `stop` is not float32 or float64.
-        ValueError: If shape of `start` or shape of `stop` is not 0-D.
-        TypeError: If `num` is not int or 0D int32/int64 Tensor.
-        ValueError: If `num` is not positive int number.
+        TypeError: If `start` or `end` is not a Tensor.
+        TypeError: If dtype of `start` or dtype of `end` is not float32 or float64.
+        ValueError: If shape of `start` or shape of `end` is not 0-D.
+        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
+        ValueError: If `steps` is not positive int number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(1, mindspore.float32)
-        >>> stop = Tensor(10, mindspore.float32)
-        >>> num = 5
-        >>> output = ops.linspace(start, stop, num)
+        >>> end = Tensor(10, mindspore.float32)
+        >>> steps = 5
+        >>> output = ops.linspace(start, end, steps)
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
     """
     if not isinstance(start, Tensor):
         start = Tensor(start, mstype.float32)
-    if not isinstance(stop, Tensor):
-        stop = Tensor(stop, mstype.float32)
-    return linspace_(start, stop, num)
+    if not isinstance(end, Tensor):
+        end = Tensor(end, mstype.float32)
+    return linspace_(start, end, steps)
 
 
 def det(x):
