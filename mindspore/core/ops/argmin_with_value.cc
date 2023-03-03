@@ -39,6 +39,7 @@
 #include "mindapi/ir/value.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -116,16 +117,8 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
 TuplePtr ArgMinWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  std::set<TypePtr> valid_types;
   TypePtr input_x_type = input_args[0]->BuildType();
-  auto context = MsContext::GetInstance();
-  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  if (is_gpu) {
-    valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
-  } else {
-    valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});
 }

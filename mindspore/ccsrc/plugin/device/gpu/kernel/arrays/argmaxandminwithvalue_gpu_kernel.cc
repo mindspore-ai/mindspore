@@ -20,6 +20,22 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   ArgMaxWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+  ArgMaxAndMinWithValueGpuKernelMod, int8_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMaxWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  ArgMaxAndMinWithValueGpuKernelMod, int64_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMaxWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+  ArgMaxAndMinWithValueGpuKernelMod, uint8_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMaxWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+  ArgMaxAndMinWithValueGpuKernelMod, uint64_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMaxWithValue,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
   ArgMaxAndMinWithValueGpuKernelMod, int16_t, int)
 MS_REG_GPU_KERNEL_TWO(
@@ -47,6 +63,22 @@ MS_REG_GPU_KERNEL_TWO(
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
   ArgMaxAndMinWithValueGpuKernelMod, half, int)
 
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+  ArgMaxAndMinWithValueGpuKernelMod, int8_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  ArgMaxAndMinWithValueGpuKernelMod, int64_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+  ArgMaxAndMinWithValueGpuKernelMod, uint8_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  ArgMinWithValue,
+  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+  ArgMaxAndMinWithValueGpuKernelMod, uint64_t, int)
 MS_REG_GPU_KERNEL_TWO(
   ArgMinWithValue,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
