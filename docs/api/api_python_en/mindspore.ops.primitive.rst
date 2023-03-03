@@ -41,7 +41,7 @@ Neural Network Layer Operators
 Neural Network
 ^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -91,7 +91,7 @@ Neural Network
 Loss Function
 ^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -116,7 +116,7 @@ Loss Function
 Activation Function
 ^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -144,7 +144,7 @@ Activation Function
 Optimizer
 ^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -179,7 +179,7 @@ Optimizer
 Distance Function
 ^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -191,7 +191,7 @@ Distance Function
 Sampling Operator
 ^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -203,7 +203,7 @@ Sampling Operator
 Image Processing
 ^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -234,7 +234,7 @@ Image Processing
 Text Processing
 ^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -244,7 +244,7 @@ Text Processing
 Mathematical Operators
 ------------------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -273,7 +273,7 @@ Mathematical Operators
 Element-wise Operator
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -356,7 +356,7 @@ Element-wise Operator
 Reduction Operator
 ^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -378,7 +378,7 @@ Reduction Operator
 Comparison Operator
 ^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -402,7 +402,7 @@ Comparison Operator
 Linear Algebraic Operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -422,7 +422,7 @@ Tensor Operation Operator
 Tensor Construction
 ^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -440,7 +440,7 @@ Tensor Construction
 Random Generation Operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -464,7 +464,7 @@ Random Generation Operator
 Array Operation
 ^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -606,7 +606,7 @@ Array Operation
 Type Conversion
 ^^^^^^^^^^^^^^^
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -618,7 +618,7 @@ Type Conversion
 Parameter Operation Operator
 ----------------------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -641,7 +641,7 @@ Parameter Operation Operator
 Data Operation Operator
 -----------------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -657,7 +657,7 @@ the Ascend devices, users need to prepare the rank table, set rank_id and device
 For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
 <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_.
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -673,7 +673,7 @@ For the GPU device, users need to prepare the host file and mpi, please see the 
 Debugging Operator
 ------------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -691,7 +691,7 @@ Debugging Operator
 Sparse Operator
 ---------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -703,7 +703,7 @@ Sparse Operator
 Frame Operators
 ---------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -735,7 +735,7 @@ Operator Information Registration
 Customizing Operator
 --------------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -745,7 +745,7 @@ Customizing Operator
 Spectral Operator
 -----------------
 
-.. msplatnoteautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

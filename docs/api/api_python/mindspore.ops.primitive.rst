@@ -41,7 +41,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 神经网络
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -91,7 +91,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 损失函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -116,7 +116,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 激活函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -144,7 +144,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 优化器
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -179,7 +179,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 距离函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -191,7 +191,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 采样算子
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -204,7 +204,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 图像处理
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -235,7 +235,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 文本处理
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -245,7 +245,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 数学运算算子
 ------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -274,7 +274,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 逐元素运算
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -357,7 +357,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 Reduction算子
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -379,7 +379,7 @@ Reduction算子
 比较算子
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -403,7 +403,7 @@ Reduction算子
 线性代数算子
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -423,7 +423,7 @@ Tensor操作算子
 Tensor创建
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -441,7 +441,7 @@ Tensor创建
 随机生成算子
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -465,7 +465,7 @@ Tensor创建
 Array操作
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -607,7 +607,7 @@ Array操作
 类型转换
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -619,7 +619,7 @@ Array操作
 Parameter操作算子
 --------------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -642,7 +642,7 @@ Parameter操作算子
 数据操作算子
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -660,7 +660,7 @@ Parameter操作算子
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -676,7 +676,7 @@ Parameter操作算子
 调试算子
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -694,7 +694,7 @@ Parameter操作算子
 稀疏算子
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -706,7 +706,7 @@ Parameter操作算子
 框架算子
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -738,7 +738,7 @@ Parameter操作算子
 自定义算子
 -------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -748,7 +748,7 @@ Parameter操作算子
 光谱算子
 ----------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
