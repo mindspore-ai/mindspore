@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 void *ReadFileByMmap(const std::string &file, size_t *size) {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(MS_COMPILE_IOS)
   auto real_path = RealPath(file.c_str());
   auto fd = open(real_path.c_str(), O_RDONLY);
   if (fd == -1) {

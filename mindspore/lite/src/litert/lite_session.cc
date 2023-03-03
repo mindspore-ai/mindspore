@@ -1983,7 +1983,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
 }
 
 bool lite::LiteSession::IsMmapEnable() {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(MS_COMPILE_IOS)
   if (delegate_device_type_ == DT_NPU) {
     return false;
   }
