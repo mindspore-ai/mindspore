@@ -557,6 +557,11 @@ void AscendDeviceInfo::SetOutputType(enum DataType output_type) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
   }
+  if ((output_type != DataType::kNumberTypeFloat16) && (output_type != DataType::kNumberTypeFloat32) &&
+      (output_type != DataType::kNumberTypeUInt8) && (output_type != DataType::kTypeUnknown)) {
+    MS_LOG(WARNING) << "Unsupported or invalid output_type, using default type";
+    return;
+  }
   data_->params[kModelOptionAscendOutputType] = output_type;
 }
 
