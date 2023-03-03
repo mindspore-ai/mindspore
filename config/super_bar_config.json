@@ -483,7 +483,8 @@
     "ScatterNdD",
     "AssignAdd",
     "Range",
-    "AtomicAddrClean"
+    "AtomicAddrClean",
+    "Assign"
   ],
   "FallbackOps": {
     "DeformableOffsets": [
