@@ -450,7 +450,17 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
         }
         (void)vec.emplace_back(abs);
       }
-      return std::make_shared<abstract::AbstractTuple>(vec);
+      auto tuple_abs = std::make_shared<abstract::AbstractTuple>(vec);
+      if (attr_proto.has_tuple_info()) {
+        auto tuple_info = attr_proto.tuple_info();
+        tuple_abs->set_dynamic_len(tuple_info.is_dyn_len());
+        if (tuple_info.has_tuple_elem_item()) {
+          auto elem_proto = tuple_info.tuple_elem_item();
+          auto elem_abs = GetNodeAbstractFromAttrProtoWithType(elem_proto);
+          tuple_abs->set_dynamic_len_element_abs(elem_abs);
+        }
+      }
+      return tuple_abs;
     }
     case mind_ir::AttributeProto_AttributeType_UMONAD: {
       return kUMonad->ToAbstract();
