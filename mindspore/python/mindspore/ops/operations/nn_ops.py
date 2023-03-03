@@ -4637,14 +4637,14 @@ class Adam(Primitive):
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T),
-        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T),
-        sig.make_sig('lr', dtype=sig.sig_dtype.T),
-        sig.make_sig('beta1', dtype=sig.sig_dtype.T),
-        sig.make_sig('beta2', dtype=sig.sig_dtype.T),
-        sig.make_sig('epsilon', dtype=sig.sig_dtype.T1),
+        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T1),
+        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T2),
+        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T3),
+        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T4),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T5),
+        sig.make_sig('beta1', dtype=sig.sig_dtype.T6),
+        sig.make_sig('beta2', dtype=sig.sig_dtype.T7),
+        sig.make_sig('epsilon', dtype=sig.sig_dtype.T8),
         sig.make_sig('gradient', dtype=sig.sig_dtype.T)
     )
 
