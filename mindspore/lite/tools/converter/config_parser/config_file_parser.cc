@@ -252,11 +252,15 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
 
   it = ascend_map.find("output_type");
   if (it != ascend_map.end()) {
-    int32_t val;
-    if (mindspore::lite::ConvertIntNum(it->second, &val)) {
-      param->aclModelOptionCfgParam.output_type = static_cast<mindspore::DataType>(val);
+    auto dtype_str = it->second;
+    if (dtype_str == "FP16") {
+      param->aclModelOptionCfgParam.output_type = DataType::kNumberTypeFloat16;
+    } else if (dtype_str == "FP32") {
+      param->aclModelOptionCfgParam.output_type = DataType::kNumberTypeFloat32;
+    } else if (dtype_str == "UINT8") {
+      param->aclModelOptionCfgParam.output_type = DataType::kNumberTypeUInt8;
     } else {
-      MS_LOG(ERROR) << "Convert output_type failed";
+      MS_LOG(WARNING) << "Unsupported or invalid output_type, using default type";
     }
   }
   SetDynParams(param, ascend_map);
