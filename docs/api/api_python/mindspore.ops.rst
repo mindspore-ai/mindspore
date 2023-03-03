@@ -9,7 +9,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 神经网络
 ^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -50,7 +50,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 损失函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -76,7 +76,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 激活函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -112,7 +112,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 距离函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -124,7 +124,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 采样函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -137,7 +137,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 图像函数
 ^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -162,7 +162,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 逐元素运算
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -305,7 +305,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 Reduction函数
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -337,7 +337,7 @@ Reduction函数
 比较函数
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -374,7 +374,7 @@ Reduction函数
 线性代数函数
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -416,7 +416,7 @@ Reduction函数
 谱函数
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -433,7 +433,7 @@ Tensor操作函数
 Tensor创建
 ^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -456,7 +456,7 @@ Tensor创建
 随机生成函数
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -481,7 +481,7 @@ Tensor创建
 Array操作
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -590,7 +590,7 @@ Array操作
 类型转换
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -603,7 +603,7 @@ Array操作
 梯度剪裁
 ^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -614,7 +614,7 @@ Array操作
 Parameter操作函数
 --------------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -638,7 +638,7 @@ Parameter操作函数
 微分函数
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -650,7 +650,7 @@ Parameter操作函数
 调试函数
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -660,7 +660,7 @@ Parameter操作函数
 稀疏函数
 ----------------
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -672,7 +672,7 @@ Parameter操作函数
 COO函数
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -714,7 +714,7 @@ COO函数
 CSR函数
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -757,7 +757,7 @@ CSR函数
 Other函数
 ^^^^^^^^^^^^^^^^
 
-.. mscnplatnoteautosummary::
+.. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
