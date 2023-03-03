@@ -50,7 +50,7 @@ void StackActor::Init() {
     MS_EXCEPTION_IF_NULL(formal_parameter.first);
     const auto &abstract = formal_parameter.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    const auto &real_abstract = FetchAbstractByIndex(abstract, formal_parameter.second);
+    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, formal_parameter.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
     if (real_abstract->isa<abstract::AbstractFunction>()) {
       total_partials_num++;

@@ -115,8 +115,6 @@ bool IsCooNode(const AnfNodePtr &node);
 KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraph *const graph);
 // Get all the real input of the frontend node, skip the virtual node like maketuple, tuplegetitem.
 std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node);
-// Fetch the sub abstract from the top abstract by the index.
-abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 // Fetch the real input of tuple get item node.
 KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 // Check if the partial node is valid.

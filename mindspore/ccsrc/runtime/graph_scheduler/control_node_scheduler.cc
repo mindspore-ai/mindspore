@@ -535,7 +535,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 
         const auto &abstract = parameter.first->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
-        const auto &real_abstract = FetchAbstractByIndex(abstract, parameter.second);
+        const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, parameter.second);
         MS_EXCEPTION_IF_NULL(real_abstract);
         if (real_abstract->isa<abstract::AbstractFunction>()) {
           input_parameter_partials_num++;
@@ -772,7 +772,7 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
     size_t from_index = stack_actor->FetchNodePosition(formal_parameter);
     const auto &abstract = from_node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    const auto &real_abstract = FetchAbstractByIndex(abstract, formal_parameter.second);
+    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, formal_parameter.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
 
     // Link arrow according to abstract.
@@ -912,7 +912,7 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
 
   auto abstract = parameter->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
-  auto dst_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
+  auto dst_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, from_node_with_index.second);
   MS_EXCEPTION_IF_NULL(dst_abstract);
   if (dst_abstract->isa<abstract::AbstractFunction>()) {
     SchedulerHelper::AddPartialArrow(from_actor, to_actor, from_actor->FetchNodePosition(from_node_with_index),
@@ -937,7 +937,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
     // Link arrow from exit actor to control actor.
     const auto &abstract = call_node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    const auto &real_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
+    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, from_node_with_index.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
 
     const auto &func_graphs = parser->FetchFuncGraphbyCallNode(from_node);
