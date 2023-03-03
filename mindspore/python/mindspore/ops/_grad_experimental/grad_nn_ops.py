@@ -61,6 +61,7 @@ from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations._grad_ops import ReluGrad
 from mindspore.ops.operations.image_ops import ResizeLinear1D
 from mindspore.ops.operations.nn_ops import MaxPool3DWithArgmax
+from mindspore.ops.operations.nn_ops import MaxPoolWithArgmaxV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
@@ -520,6 +521,24 @@ def get_bprop_maxpool3dwithargmax(self):
 
     def bprop(x, out, dout):
         dx = maxpool3dwithargmax_grad(x, dout[0], out[1])
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(MaxPoolWithArgmaxV2)
+def get_bprop_maxpoolwithargmaxv2(self):
+    """Grad definition for `MaxPoolWithArgmaxV2` operation."""
+    maxpoolwithargmaxv2_grad = G.MaxPoolGradWithArgmaxV2(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pads=self.pads,
+        dilation=self.dilation,
+        ceil_mode=self.ceil_mode,
+        argmax_type=self.argmax_type)
+
+    def bprop(x, out, dout):
+        dx = maxpoolwithargmaxv2_grad(x, dout[0], out[1])
         return (dx,)
 
     return bprop

@@ -75,6 +75,7 @@ constexpr const char kNameAvgPoolGrad[] = "AvgPoolGrad";
 constexpr const char kNameAvgPoolGradD[] = "AvgPoolGradD";
 constexpr const char kNameAvgPoolGradGe[] = "AvgPoolGradGe";
 constexpr const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
+constexpr const char kNameMaxPoolGradWithArgmaxV2[] = "MaxPoolGradWithArgmaxV2";
 constexpr const char kNameApplyMomentum[] = "ApplyMomentum";
 constexpr const char kNameDropoutDoMask[] = "DropoutDoMask";
 constexpr const char kNameDropOutDoMaskV3[] = "DropOutDoMaskV3";

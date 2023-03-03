@@ -119,6 +119,12 @@
       "ksize": "kernel_size",
       "padding": "pad_mode"
     },
+    "MaxPoolWithArgmaxV2": {
+      "ksize": "kernel_size"
+    },
+    "MaxPoolGradWithArgmaxV2": {
+      "ksize": "kernel_size"
+    },
     "BiasAddGrad": {
       "data_format": "format"
     },

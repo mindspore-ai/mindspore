@@ -104,7 +104,7 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   op_info->set_async(obj.at(kAsyncFlag));
   op_info->set_bin_file(obj.at(kBinfile));
   op_info->set_compute(obj.at(kComputeCost));
-  op_info->set_kernel(obj.at(kKernel));
+  op_info->set_op_interface(obj.at(kKernel));
   op_info->set_partial(obj.at(kPartialFlag));
   op_info->set_need_check_supported(obj.at(kNeedCheckSupport));
   if (obj.find(kDynamincRankSupport) != obj.end()) {
