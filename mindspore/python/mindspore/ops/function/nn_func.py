@@ -4467,7 +4467,7 @@ def hardsigmoid(input_x):
         input_x (Tensor): Tensor of shape :math:`(*)`, where :math:`*` means any number of
           dimensions, with float16, float32 or float64 data type.
 
-    Outputs:
+    Returns:
         A Tensor whose dtype and shape are the same as `input_x`.
 
     Raises:
@@ -4479,7 +4479,7 @@ def hardsigmoid(input_x):
 
     Examples:
         >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)
-        >>> output = F.hardsigmoid(x)
+        >>> output = ops.hardsigmoid(x)
         >>> print(output)
         [0.  0.5 1. ]
     """

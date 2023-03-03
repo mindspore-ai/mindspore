@@ -6,7 +6,7 @@ mindspore.nn.TransformerDecoder
     Transformer的解码器。多层 `TransformerDecoderLayer` 的堆叠，包括Self Attention层、MultiheadAttention层和FeedForward层。
 
     参数：
-        - **decoder_layer** (Cell) - TransformerDecoderLayer()的实例。
+        - **decoder_layer** (Cell) - :class:`mindspore.nn.TransformerDecoderLayer` 的实例。
         - **num_layers** (int) - 解码器层数。
         - **norm** (Cell, 可选) - 自定义LayerNorm层。
 

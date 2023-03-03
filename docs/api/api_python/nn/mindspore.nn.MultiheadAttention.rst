@@ -18,7 +18,7 @@ mindspore.nn.MultiheadAttention
         - **dropout** (float) - 应用到输入 `attn_output_weights` 上的随机丢弃比例. 默认值： ``0.0``。
         - **has_bias** (bool) - 是否给输入、输出投射层添加偏置。默认值： ``True``。
         - **add_bias_kv** (bool) - 是否给key、value序列的0维添加偏置。默认值： ``False``。
-        - **add_zero_attn** (bool) - 是否给key、value序列的1维添加0。默认值： ``False``。
+        - **add_zero_attn** (bool) - 是否给key、value序列的一维添加0。默认值： ``False``。
         - **kdim** (int) - key的总特征数。默认值： ``None`` （即 `kdim=embed_dim`）。
         - **vdim** (int) - value的总特征数。默认值：``None`` （即 `vdim=embed_dim`）。
         - **batch_first** (bool) - 如果为 ``True``，则输入输出Tensor的shape为 (batch, seq, feature)，否则shape为(seq, batch, feature)。 默认值： ``False`` 。

@@ -5276,17 +5276,18 @@ def tensor_split(x, indices_or_sections, axis=0):
         x (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]):
 
-          - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
+            - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-            - If :math:`x.size(axis)` can be divisible by n, sub-sections will have equal size
-              :math:`x.size(axis) / n` .
-            - If :math:`x.size(axis)` is not divisible by n, the first :math:`x.size(axis) % n` sections
-              will have size :math:`x.size(axis) // n + 1` , and the rest will have size :math:`x.size(axis) // n` .
+              - If :math:`x.size(axis)` can be divisible by n, sub-sections will have equal size
+                :math:`x.size(axis) / n` .
+              - If :math:`x.size(axis)` is not divisible by n, the first :math:`x.size(axis) % n` sections
+                will have size :math:`x.size(axis) // n + 1` , and the rest will have size :math:`x.size(axis) // n` .
 
-          - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
-            indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
-            and :math:`axis=0` , the input tensor will be split into sections :math:`x[:1]` , :math:`x[1:4]` ,
-            and :math:`x[4:]` .
+            - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
+              indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
+              and :math:`axis=0` , the input tensor will be split into sections :math:`x[:1]` , :math:`x[1:4]` ,
+              and :math:`x[4:]` .
+
         axis (int): The axis along which to split. Default: 0.
 
     Returns:
