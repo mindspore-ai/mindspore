@@ -10,8 +10,9 @@ mindspore.ops.ResizeLinear1D
     使用通用resize功能请参考 :func:`mindspore.ops.interpolate`。
 
     .. warning::
-        实验特性，接口可能发生变化。
-        目前，昇腾平台仅支持输入 `size` 为Tuple或List的场景。
+        - 实验特性，接口可能发生变化。
+        - 目前，昇腾平台仅支持输入 `size` 为Tuple或List的场景。
+        - 同时，昇腾平台上未支持属性coordinate_transformation_mode为asymmetric的情景。
 
     参数：
         - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners"，还可选"half_pixel"和"asymmetric"。

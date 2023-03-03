@@ -649,8 +649,9 @@ class ResizeLinear1D(Primitive):
     For general resize, refer to :func:`mindspore.ops.interpolate` for more details.
 
     .. warning::
-        This is an experimental feature and is subjected to change.
-        Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
+        - This is an experimental feature and is subjected to change.
+        - Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
+        - And the attr `coordinate_transformation_mode` should not be 'asymmetric' in Ascend platform.
 
     Args:
         coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
@@ -672,13 +673,13 @@ class ResizeLinear1D(Primitive):
         TypeError: If `coordinate_transformation_mode` is not in the support list.
 
     Supported Platforms:
-        ``GPU`` ``CPU`` ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
         >>> size = Tensor([6], mindspore.int32)
         >>> resize_linear_1d = ops.ResizeLinear1D(coordinate_transformation_mode="align_corners")
-        >>> output = resize_linear_1d(x=input, size=size)
+        >>> output = resize_linear_1d(x, size)
         >>> print(output)
         [[[1. 1.4 1.8 2.2 2.6 3.]
           [4. 4.4 4.8 5.2 5.6 6.]]]
