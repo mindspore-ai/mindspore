@@ -130,9 +130,23 @@ AnfNodePtr CreateReplacedOutputNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(origin_output);
   MS_EXCEPTION_IF_NULL(origin_output->abstract());
   if (origin_output->abstract()->isa<abstract::AbstractTuple>()) {
+    auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(origin_output, kIndex0);
+    auto real_output = kernel_with_index.first;
+    if (!IsPrimitiveCNode(real_output, prim::kPrimMakeTuple)) {
+      MS_LOG(EXCEPTION) << "Tuple output is not a MakeTuple node: " << real_output->DebugString();
+    }
     AnfNodePtrList tuple_inputs;
     auto tuple_elements = origin_output->abstract()->cast<abstract::AbstractTuplePtr>()->elements();
-    for (const auto &element : tuple_elements) {
+    for (size_t i = kIndex0; i < tuple_elements.size(); i++) {
+      // If tuple input is a ValueNode, use it as new tuple's input.
+      const auto tuple_input = real_output->cast<CNodePtr>()->input(i + kSizeOne);
+      if (tuple_input->isa<Parameter>() || tuple_input->isa<ValueNode>()) {
+        MS_LOG(INFO) << "Use " << tuple_input->DebugString() << " as replaced output.";
+        tuple_inputs.emplace_back(tuple_input);
+        continue;
+      }
+
+      const auto &element = tuple_elements[i];
       MS_EXCEPTION_IF_NULL(element);
       auto tensor_abstract = element->cast<abstract::AbstractTensorPtr>();
       if (!tensor_abstract) {
