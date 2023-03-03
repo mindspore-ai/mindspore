@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "mindspore/core/utils/anf_utils.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -57,6 +58,33 @@ const std::map<std::string, std::vector<std::string>> op2attrs = {
   {prim::kPrimBatchMatMul->name(), {kTransposeA, kTransposeB}}};
 }  // namespace
 
+ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
+  if (primc == nullptr || primc->isa<PrimitivePy>()) {
+    return nullptr;
+  }
+  if (abstract::GetFrontendPrimitiveInferImpl(primc).has_value()) {
+    return nullptr;
+  }
+  if (primc->isa<prim::DoSignaturePrimitive>()) {
+    return nullptr;
+  }
+  parallel::OperatorAttrs attrs;
+  const auto iter = op2attrs.find(primc->name());
+  if (iter != op2attrs.end()) {
+    for (auto &attr : iter->second) {
+      if (primc->HasAttr(attr)) {
+        (void)attrs.emplace_back(std::pair{attr, primc->GetAttr(attr)});
+      } else {
+        MS_LOG(WARNING) << primc->name() << " op do not have attr: " << attr;
+        return nullptr;
+      }
+    }
+  }
+  auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
+  (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primc->attrs());
+  return new_prim;
+}
+
 class PrimpyConverter {
  public:
   bool Run(const FuncGraphPtr &graph) {
@@ -76,29 +104,7 @@ class PrimpyConverter {
         continue;
       }
       auto primitive = GetCNodePrimitive(node);
-      if (primitive == nullptr || primitive->isa<PrimitivePy>()) {
-        continue;
-      }
-      if (abstract::GetFrontendPrimitiveInferImpl(primitive).has_value()) {
-        continue;
-      }
-      if (primitive->isa<prim::DoSignaturePrimitive>()) {
-        continue;
-      }
-      parallel::OperatorAttrs attrs;
-      const auto iter = op2attrs.find(primitive->name());
-      if (iter != op2attrs.end()) {
-        for (auto &attr : iter->second) {
-          if (primitive->HasAttr(attr)) {
-            (void)attrs.emplace_back(std::pair{attr, primitive->GetAttr(attr)});
-          } else {
-            MS_LOG(WARNING) << primitive->name() << " op do not have attr: " << attr;
-            return false;
-          }
-        }
-      }
-      auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "");
-      (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primitive->attrs());
+      auto new_prim = ConvertPrimToPrimPy(primitive);
       AnfNodePtrList inputs = {NewValueNode(new_prim)};
       auto cnode = dyn_cast_ptr<CNode>(node);
       (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
@@ -111,6 +117,7 @@ class PrimpyConverter {
  private:
   std::set<FuncGraphPtr> visited_graphs_;
 };
+
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
   PrimpyConverter c;
   return c.Run(graph);

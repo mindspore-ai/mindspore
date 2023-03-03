@@ -18,46 +18,29 @@
 #include "frontend/operator/graph_bprop/ops_utils.h"
 #include "include/common/utils/utils.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace graph_bprop {
-FuncGraphPtr BpropExpanderMetaFuncGraph::BpropExpanderFunc(const AbstractBasePtrList &args_spec_list) {
-  int64_t list_size = SizeToLong(args_spec_list.size());
-  auto fg = std::make_shared<FuncGraph>();
-  std::vector<AnfNodePtr> grads;
-  grads.push_back(NewValueNode(primal_));
-  for (int64_t i = 0; i < list_size - kTwo; ++i) {
-    auto abs_i = args_spec_list[i];
-    auto x = fg->add_parameter();
-    x->set_abstract(args_spec_list[i]);
-    x->abstract()->set_value(args_spec_list[i]->BuildValue());
-    (void)grads.emplace_back(x);
-  }
-  auto out = fg->add_parameter();
-  out->set_abstract(args_spec_list[list_size - kTwo]);
-  (void)grads.emplace_back(out);
-  auto dout = fg->add_parameter();
-  dout->set_abstract(args_spec_list[list_size - kOne]);
-  (void)grads.emplace_back(dout);
-  auto newcnode = fg->NewCNode(grads);
-  expander::bprop::BpropExpanderInGraphMode be;
-  FuncGraphPtr bprop_fg = nullptr;
-  if (be.Run(newcnode)) {
-    bprop_fg = be.GetGraph();
-    (void)mindspore::opt::ConvertPrimToPrimPy(bprop_fg);
-  } else {
-    MS_LOG(EXCEPTION) << "Expander failed. Prim is: " << primal_->name();
-  }
-  return bprop_fg;
-}
-
 FuncGraphPtr BpropExpanderMetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrList &input_abs) {
-  return BpropExpanderFunc(input_abs);
+  auto fg = NewGraph(input_abs);
+  try {
+    if (!expander::bprop::ExpandBpropInGraphMode(handle_, primal_, fg)) {
+      return nullptr;
+    }
+  } catch (const py::type_error &ex) {
+    MS_EXCEPTION(TypeError) << "Bprop \"" << primal_->name() << "\" encounter a problem: [" << ex.what() << "]";
+  } catch (const py::value_error &ex) {
+    MS_EXCEPTION(ValueError) << "Bprop \"" << primal_->name() << "\" encounter a problem: [" << ex.what() << "]";
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Bprop \"" << primal_->name() << "\" encounter a problem: [" << e.what() << "]";
+  }
+  return fg;
 }
 
-FuncGraphPtr GetExpandBprop(const PrimitivePtr &primal, const size_t &forward_inputs_size) {
+FuncGraphPtr GetExpandBprop(const BpropHandle *handle, const PrimitivePtr &primal, size_t forward_inputs_size) {
   auto fg = std::make_shared<FuncGraph>();
-  auto meta_graph = std::make_shared<BpropExpanderMetaFuncGraph>(primal);
+  auto meta_graph = std::make_shared<BpropExpanderMetaFuncGraph>(primal, handle);
   std::vector<AnfNodePtr> inputs{NewValueNode(meta_graph)};
   for (size_t i = 0; i < forward_inputs_size; ++i) {
     (void)inputs.emplace_back(fg->add_parameter());
