@@ -209,7 +209,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) const {
     return node;
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
-    if (sequence_abs->empty()) {
+    if (!sequence_abs->dynamic_len() && sequence_abs->empty()) {
       return node;
     }
     return Emit(prim::kSequenceZerosLike, {node});
