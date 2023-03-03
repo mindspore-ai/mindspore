@@ -53,7 +53,7 @@ class OperatorPopulateRegistry {
     MS_CHECK_TRUE_RET(base_operator != nullptr, nullptr);
     auto iter = op_parameters_.find(base_operator->name());
     if (iter == op_parameters_.end()) {
-      MS_LOG(ERROR) << "Unsupported op in creator " << base_operator->name();
+      MS_LOG(DEBUG) << "Unsupported op in creator " << base_operator->name();
       return nullptr;
     }
     if (base_operator->GetPrim() == nullptr) {

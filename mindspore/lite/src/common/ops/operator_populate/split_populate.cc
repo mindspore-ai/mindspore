@@ -68,7 +68,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
   mindspore::ValuePtr attr_size_splits = base_operator->GetPrim()->GetAttr(kSizeSplits);
   if (attr_size_splits == nullptr) {
     MS_LOG(ERROR) << "The attr(" << kSizeSplits << ") of operator(" << base_operator->name() << ") not exist";
-    DestroySplitSizes(param);
+    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
     free(param);
     return nullptr;
   }
@@ -87,7 +87,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
   mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kAxis);
   if (attr == nullptr) {
     MS_LOG(ERROR) << "The attr(" << kAxis << ") of operator(" << base_operator->name() << ") not exist";
-    DestroySplitSizes(param);
+    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
     free(param);
     return nullptr;
   }

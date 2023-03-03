@@ -64,6 +64,7 @@ bool IsSameDtype(const Tensor *input_1, const Tensor *input_2);
 bool IsUnKnownDtype(const Tensor *input);
 bool IsSameShape(const Tensor *input_1, const Tensor *input_2);
 int MallocTensorData(Tensor *tensor);
+int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16);
 }  // namespace lite
 }  // namespace mindspore
 

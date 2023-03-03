@@ -26,10 +26,13 @@
 namespace mindspore::kernel {
 class LiteKernelMod : public LiteKernel {
  public:
-  explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod,
-                         kernel::BaseOperatorPtr base_operator, std::vector<lite::Tensor *> in_tensors,
+  explicit LiteKernelMod(std::shared_ptr<mindspore::kernel::KernelMod> kernel_mod, const CNodePtr &cnode,
+                         const kernel::BaseOperatorPtr &base_operator, std::vector<lite::Tensor *> in_tensors,
                          std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx)
-      : LiteKernel(nullptr, in_tensors, out_tensors, ctx), kernel_mod_(kernel_mod), base_operator_(base_operator) {}
+      : LiteKernel(nullptr, in_tensors, out_tensors, ctx),
+        kernel_mod_(kernel_mod),
+        cnode_(cnode),
+        base_operator_(base_operator) {}
   ~LiteKernelMod() override = default;
 
   int Prepare() override;
@@ -38,10 +41,12 @@ class LiteKernelMod : public LiteKernel {
 
  private:
   KernelModPtr kernel_mod_;
+  CNodePtr cnode_;
   BaseOperatorPtr base_operator_;
 };
 
-kernel::KernelExec *FindKernelMod(BaseOperatorPtr base_operator, std::vector<lite::Tensor *> in_tensors,
-                                  std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx);
+kernel::KernelExec *FindKernelMod(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
+                                  const std::vector<lite::Tensor *> &in_tensors,
+                                  const std::vector<lite::Tensor *> &out_tensors, const lite::InnerContext *ctx);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_LITERT_LITE_KERNEL_MOD_H_

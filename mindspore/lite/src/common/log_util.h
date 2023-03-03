@@ -36,6 +36,14 @@
     }                                         \
   } while (0)
 
+#define MSLITE_CHECK_PTR_RETURN(ptr, errcode)                     \
+  do {                                                            \
+    if ((ptr) == nullptr) {                                       \
+      MS_LOG(ERROR) << ": The pointer [" << #ptr << "] is null."; \
+      return errcode;                                             \
+    }                                                             \
+  } while (0)
+
 #ifndef ENABLE_HIGH_PERFORMANCE
 #define CHECK_NULL_RETURN(ptr)                       \
   do {                                               \

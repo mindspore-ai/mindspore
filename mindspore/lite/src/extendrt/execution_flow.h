@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_EXECUTION_FLOW_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_EXECUTION_FLOW_H_
 
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -53,6 +54,8 @@ class ExecutionFlow : public abstract::ExecutionFlow {
   void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
 
   abstract::Kernel *ConstructFusionKernel() override;
+
+  std::string Dump() const;
 
  private:
   std::vector<abstract::Kernel *> kernels_;

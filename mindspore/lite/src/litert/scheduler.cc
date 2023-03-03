@@ -68,64 +68,6 @@ constexpr int kMainSubGraphIndex = 0;
 
 namespace {
 // support_fp16: current device and package support float16
-int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
-  MS_ASSERT(tensor != nullptr);
-  MS_ASSERT(tensor->IsConst());
-  MS_ASSERT(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeFloat16);
-  MS_ASSERT(dst_data_type == kNumberTypeFloat32 || dst_data_type == kNumberTypeFloat16);
-  if (tensor->data_type() == dst_data_type) {
-    return RET_OK;
-  }
-  auto origin_own_data = tensor->own_data();
-  auto origin_dt = tensor->data_type();
-  auto origin_data = tensor->data();
-  MS_CHECK_TRUE_RET(origin_data != nullptr, RET_ERROR);
-  tensor->set_data(nullptr);
-  tensor->set_data_type(dst_data_type);
-  auto ret = tensor->MallocData();
-  if (RET_OK != ret) {
-    MS_LOG(ERROR) << "malloc data failed";
-    // reset tensor
-    tensor->set_data(origin_data);
-    tensor->set_data_type(origin_dt);
-    tensor->set_own_data(origin_own_data);
-    return ret;
-  }
-  auto new_tensor_data = tensor->data();
-  MS_ASSERT(new_tensor_data != nullptr);
-  if (dst_data_type == kNumberTypeFloat32) {
-    bool replace = false;
-    void *data = lite::PackWeightManager::GetInstance()->ReplaceFp16Data(origin_data, tensor->Size(), &replace);
-    if (replace) {
-      if (data == nullptr) {
-        MS_LOG(ERROR) << "replace fp16 data failed.";
-        return RET_ERROR;
-      }
-      if (tensor->allocator() == nullptr) {
-        free(new_tensor_data);
-      } else {
-        tensor->allocator()->Free(new_tensor_data);
-      }
-      tensor->set_data(data);
-      tensor->set_own_data(false);
-    } else {
-      data = new_tensor_data;
-    }
-    Float16ToFloat32_fp16_handler(origin_data, data, tensor->ElementsNum(), support_fp16);
-  } else {  // dst_data_type == kNumberTypeFloat16
-    Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
-  }
-  if (origin_own_data) {
-    if (tensor->allocator() == nullptr) {
-      free(origin_data);
-    } else {
-      tensor->allocator()->Free(origin_data);
-    }
-  }
-  return RET_OK;
-}
-
-// support_fp16: current device and package support float16
 int CastKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const kernel::KernelExec *kernel,
                      bool support_fp16) {
   MS_ASSERT(kernel != nullptr);
