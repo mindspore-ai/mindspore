@@ -391,6 +391,16 @@ std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) 
   }
   return msTensors;
 }
+
+bool is_param_scalar(const size_t &param_shape_size, const size_t &input_shape_size) {
+  if (param_shape_size == 1 && input_shape_size == 0) {
+    return true;
+  }
+  if (param_shape_size == 0 && input_shape_size == 1) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
 
 BaseRef SessionBasic::CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
@@ -558,7 +568,7 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
             continue;
           }
           // Input is scalar. param shape will be [1], input shape will be []
-          if (param_shape.size() == 1 && input_shape.empty()) {
+          if (is_param_scalar(param_shape.size(), input_shape.size())) {
             parameter_index->emplace(param, index++);
             continue;
           }
