@@ -543,7 +543,7 @@ class AvgPool3d(Cell):
         ValueError: If length of shape of `x` is not equal to 5.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
