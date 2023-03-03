@@ -17,6 +17,7 @@ Testing RandomCrop op in DE
 """
 import numpy as np
 import pytest
+from PIL import Image
 
 import mindspore.dataset.transforms as ops
 import mindspore.dataset.vision as vision
@@ -550,6 +551,18 @@ def test_random_crop_09():
     assert error_msg in str(error_info.value)
 
 
+def test_random_crop_10():
+    """
+    Feature: RandomCrop
+    Description: Test Py RandomCrop with grayscale/binary image
+    Expectation: The dataset is processed as expected
+    """
+    path = "../data/dataset/apple.jpg"
+    image_list = [Image.open(path), Image.open(path).convert('1'), Image.open(path).convert('L')]
+    for image in image_list:
+        _ = vision.RandomCrop((28))(image)
+
+
 def test_random_crop_comp(plot=False):
     """
     Feature: RandomCrop op
@@ -667,6 +680,7 @@ if __name__ == "__main__":
     test_random_crop_07_py()
     test_random_crop_08_py()
     test_random_crop_09()
+    test_random_crop_10()
     test_random_crop_op_c(True)
     test_random_crop_op_py(True)
     test_random_crop_comp(True)

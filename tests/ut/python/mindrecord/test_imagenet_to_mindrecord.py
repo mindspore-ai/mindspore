@@ -67,7 +67,10 @@ def test_imagenet_to_mindrecord(fixture_file):
     for i in range(PARTITION_NUMBER):
         assert os.path.exists(file_name + str(i))
         assert os.path.exists(file_name + str(i) + ".db")
-    read(file_name + "0")
+    read([file_name + "0",
+          file_name + "1",
+          file_name + "2",
+          file_name + "3"])
 
 def test_imagenet_to_mindrecord_default_partition_number(fixture_file):
     """
