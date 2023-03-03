@@ -52,6 +52,9 @@ const AnfNodePtr TransOpFormatRefine::Process(const FuncGraphPtr &func_graph, co
       common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(kOpFormat_NCDHW), node);
     }
   }
+  if (op_name == kCastOpName) {
+    common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(AnfAlgo::GetOutputDeviceDataType(node, 0)), node);
+  }
   return node;
 }
 }  // namespace opt
