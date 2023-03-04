@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 
 #include "pybind11/pybind11.h"
 #include "pybind_api/pybind_patch.h"
@@ -36,9 +37,34 @@
 #include "mindspore/ccsrc/pybind_api/ir/tensor_py.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "mindspore/ccsrc/backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
 
 namespace py = pybind11;
 namespace mindspore {
+namespace abstract {
+using PyObjectWrapperPtr = std::shared_ptr<parse::PyObjectWrapper>;
+namespace pyexecute_user_data_catcher {
+std::pair<bool, ValuePtr> PyExecuteUserDataCatcher(const AbstractBasePtr &element_abs) {
+  MS_EXCEPTION_IF_NULL(element_abs);
+  if (element_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
+    const auto &data = element_abs->user_data<kernel::PyExecuteOutputUserData>();
+    MS_EXCEPTION_IF_NULL(data);
+    auto python_obj = std::make_shared<parse::PyObjectWrapper>(data->obj, "graph python obj");
+    return {true, python_obj};
+  }
+  return {false, nullptr};
+}
+
+struct PyExecuteUserDataCatcherRegister {
+  PyExecuteUserDataCatcherRegister() noexcept {
+    abstract::AbstractBase::set_pyexecute_user_data_catcher(
+      [](const AbstractBasePtr &element_abs) { return PyExecuteUserDataCatcher(element_abs); });
+  }
+  ~PyExecuteUserDataCatcherRegister() {}
+} pyexecute_user_data_catcher_register;
+}  // namespace pyexecute_user_data_catcher
+}  // namespace abstract
+
 static py::object CallPythonGetGlobalParams() {
   constexpr auto python_mod_parse = "mindspore._extends.parse";  // The same as PYTHON_MOD_PARSE_MODULE[]
   py::module mod = python_adapter::GetPyModule(python_mod_parse);
@@ -64,15 +90,6 @@ class PyExecuteInitializer {
     const auto &keys_tuple_abs = input_args[1];
     const auto &keys_tuple = keys_tuple_abs->BuildValue();
     const auto &keys = dyn_cast<ValueSequence>(keys_tuple);
-    // Process PyExecute("None", (), (), io)
-    // Since the backend converts the empty tuple into an empty tensor(not keep ValueSequence),
-    // so special handling of None is required.
-    if (script->ToString() == "None") {
-      const auto &output = py::none();
-      PushPyExecuteOutput(script, output);
-      const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
-      return abstract::MakeAbstract(infer_shape, kFloat64);
-    }
     if (keys == nullptr) {
       MS_LOG(DEBUG) << "The keys is not tuple value, but got " << keys_tuple->ToString();
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
@@ -90,19 +107,24 @@ class PyExecuteInitializer {
       const auto &infer_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
       return abstract::MakeAbstract(infer_shape, kFloat64);
     }
-    MS_LOG(DEBUG) << "script: " << script->ToString() << ", keys_tuple: " << keys_tuple->ToString()
+    MS_LOG(DEBUG) << "The script is: " << script->ToString() << ", keys_tuple: " << keys_tuple->ToString()
                   << ", values_tuple: " << values_tuple->ToString();
-
+    if (keys->size() != values->size()) {
+      MS_LOG(EXCEPTION) << "The length of keys(" << keys->size() << ") is not equal of the length of values("
+                        << values->size() << ").";
+    }
     py::gil_scoped_acquire gil_acquire;
     py::dict local_dict;
+
     for (size_t i = 0; i < keys->size(); ++i) {
       const auto &key = (*keys)[i];
       const auto &key_str = dyn_cast<StringImm>(key);
       MS_EXCEPTION_IF_NULL(key_str);
       const auto &value = (*values)[i];
-      MS_LOG(DEBUG) << "input[" << i << "], value : " << value;
+      MS_LOG(DEBUG) << "input[" << i << "], value : " << value->ToString();
       const auto &tuple_abs = values_tuple_abs->cast<abstract::AbstractSequencePtr>();
       const auto &value_abs = (*tuple_abs)[i];
+
       if (value_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         const auto &output_data = value_abs->user_data<kernel::PyExecuteOutputUserData>();
         auto obj = output_data->obj;

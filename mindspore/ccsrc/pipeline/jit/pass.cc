@@ -30,7 +30,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/cse_pass.h"
-#include "frontend/optimizer/clean.h"
+#include "frontend/optimizer/fallback_rewriter.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/optimizer/auto_monad_eliminate.h"

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -752,12 +752,25 @@ AbstractBasePtrList AbstractSequence::ElementsPartialBroaden() const {
   return element_list;
 }
 
+std::pair<bool, ValuePtr> GetValueFromUserData(const AbstractBasePtr &element_abs) {
+  MS_EXCEPTION_IF_NULL(element_abs);
+  if (abstract::AbstractBase::pyexecute_user_data_catcher()) {
+    return abstract::AbstractBase::pyexecute_user_data_catcher()(element_abs);
+  }
+  return {false, nullptr};
+}
+
 template <typename T>
 ValuePtr AbstractSequence::ElementsBuildValue() const {
   std::vector<ValuePtr> element_value_list;
   for (const auto &element : elements_) {
     MS_EXCEPTION_IF_NULL(element);
-    ValuePtr element_value = element->BuildValue();
+    auto [has_user_data, element_value] = GetValueFromUserData(element);
+    if (has_user_data && element_value != nullptr) {
+      element_value_list.push_back(element_value);
+      continue;
+    }
+    element_value = element->BuildValue();
     MS_EXCEPTION_IF_NULL(element_value);
     if (element_value->isa<AnyValue>()) {
       return kAnyValue;

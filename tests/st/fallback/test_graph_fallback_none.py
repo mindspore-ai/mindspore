@@ -356,7 +356,6 @@ def test_none_is_output_of_function_with_side_effect():
     assert res == 4
 
 
-@pytest.mark.skip(reason="No support None in dict return.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -373,11 +372,34 @@ def test_none_is_input_of_dict_return():
     def foo():
         x = {'a': 'a', 'b': 'b'}
         y = x.get('a')
-        z = dict(y=y, v=False, w=None)
+        z = dict(y=y, u=9, v=False, w=None)
         return z
 
     out = foo()
-    assert out == {'y': 'a', 'v': False, 'w': None}
+    assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_nested_input_of_dict_return():
+    """
+    Feature: Support None.
+    Description: Support None is input of dict, and the dict is return.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        x = {'a': 'a', 'b': 'b'}
+        y = x.get('a')
+        z = dict(y=y, u=9, v=False, w=(None, None), q=[1, (2, None), None])
+        return z
+
+    out = foo()
+    assert out == {'y': 'a', 'u': 9, 'v': False, 'w': (None, None), 'q': (1, (2, None), None)}
 
 
 @pytest.mark.level0

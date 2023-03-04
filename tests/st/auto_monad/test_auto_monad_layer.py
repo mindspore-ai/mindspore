@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
-from tqdm import tqdm
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -80,7 +79,7 @@ def test_auto_monad_layer():
     train_net.set_train()
     gen_samples = dict()
     num_epoch = 21
-    for epoch in tqdm(range(num_epoch)):
+    for epoch in range(num_epoch):
         loss = []
         for _, (batch,) in enumerate(dataloader):
             batch = Tensor(batch, dtype=ms.float32)

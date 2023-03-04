@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/cast_eliminate.h"
 #include "frontend/optimizer/irpass/get_grad_eliminate.h"
-#include "frontend/optimizer/irpass/convert.h"
+#include "frontend/optimizer/irpass/print_converter.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
 #include "frontend/optimizer/irpass/meta_fg_var_prepare.h"
 #include "frontend/optimizer/irpass/inline.h"

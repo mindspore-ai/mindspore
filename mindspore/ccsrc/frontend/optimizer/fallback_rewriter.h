@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_FALLBACK_REWRITRER_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_FALLBACK_REWRITRER_H_
 
 #include "ir/anf.h"
 #include "frontend/operator/ops.h"
@@ -34,4 +34,4 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resou
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_FALLBACK_REWRITRER_H_
