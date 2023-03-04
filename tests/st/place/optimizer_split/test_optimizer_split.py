@@ -54,7 +54,7 @@ net_need_split_opt_map = {
 def run_dist():
     init()
     net = net_name_map.get(net_name)(dist=True)
-    opt = get_optimizer(net, net_need_split_opt_map.get(net_name))
+    opt = get_optimizer(net, dist=net_need_split_opt_map.get(net_name))
     criterion = get_loss()
     model = Model(net, criterion, opt, metrics={"Accuracy": Accuracy()})
 

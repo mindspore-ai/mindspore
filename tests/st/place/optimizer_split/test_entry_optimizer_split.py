@@ -30,9 +30,10 @@ def test_split_ref_without_optim():
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./worker*/worker*.log")
+        os.system(f"grep -E 'ERROR|Error' -C 15 ./worker*/worker*.log")
+        os.system(f"cat ./worker*/worker*.log | grep acc")
         os.system(f"echo '\n**************** Scheduler Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./sched/sched.log")
+        os.system(f"grep -E 'ERROR|Error' -C 15 ./sched/sched.log")
     assert return_code == 0
 
 
@@ -50,7 +51,8 @@ def test_split_optim():
     )
     if return_code != 0:
         os.system(f"echo '\n**************** Worker Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./worker*/worker*.log")
+        os.system(f"grep -E 'ERROR|Error' -C 15 ./worker*/worker*.log")
+        os.system(f"cat ./worker*/worker*.log | grep acc")
         os.system(f"echo '\n**************** Scheduler Log ****************'")
-        os.system(f"grep -E 'ERROR|Error|error' -C 15 ./sched/sched.log")
+        os.system(f"grep -E 'ERROR|Error' -C 15 ./sched/sched.log")
     assert return_code == 0
