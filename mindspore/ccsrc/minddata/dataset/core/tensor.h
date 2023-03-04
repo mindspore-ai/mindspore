@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,12 @@ class DATASET_API Tensor {
   /// \param[out] out Created tensor
   /// \return Status Code
   static Status CreateFromNpArray(const py::array &arr, TensorPtr *out);
+
+  /// Helper function to create a tensor from a Python dictionary object
+  /// \param[in] obj pybind11 wrapper for Python dictionary object
+  /// \param[out] out Created Tensor
+  /// \return Status
+  static Status CreateFromPythonObject(py::object obj, TensorPtr *out);
 #endif
 
 #ifndef ENABLE_ANDROID
@@ -552,6 +558,12 @@ class DATASET_API Tensor {
   }
 
   static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
+
+  /// Returns the Python dictionary stored in the tensor
+  /// \param[out] data this data is the location of Python data (pybind11 wrapper)
+  /// \return Status code
+  Status GetDataAsPythonObject(py::dict *data);
+
 #endif
 
   Status SetYuvShape(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
@@ -836,6 +848,11 @@ class DATASET_API Tensor {
 
   /// shape for interpretation of YUV image
   std::vector<uint32_t> yuv_shape_;
+
+#ifdef ENABLE_PYTHON
+  /// Store python dictionary wrapper
+  py::object python_dict_;
+#endif
 
  private:
   friend class DETensor;

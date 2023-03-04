@@ -234,6 +234,46 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
           std::to_string(col) + ", expected type for this column is:" + type1 + ", got type:" + type2);
       }
     }
+#ifdef ENABLE_PYTHON
+  } else if (first_type.IsPython()) {
+    // handle python dictionary columns differently:
+    // each column of new batch will be a python dictionary where each key stores
+    // all values of corresponding rows in a python list.
+    {
+      // Acquire Python GIL
+      py::gil_scoped_acquire gil_acquire;
+
+      py::dict new_dict;
+      size_t num_keys = 0;
+      for (size_t j = 0; j < batch_size; j++) {
+        std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(col);  // row j, column col
+        py::dict old_dict;
+        RETURN_IF_NOT_OK(old_tensor->GetDataAsPythonObject(&old_dict));
+        if (j == 0) {
+          num_keys = py::len(old_dict);
+          for (auto key_val : old_dict) {
+            py::list li;
+            li.append(key_val.second);
+            new_dict[key_val.first] = li;
+          }
+
+        } else {
+          CHECK_FAIL_RETURN_UNEXPECTED(
+            num_keys == py::len(old_dict),
+            "Failed to create a batch since number of key/value pairs in dictionaries do not match. First row: " +
+              std::to_string(num_keys) + ", current row: " + std::to_string(py::len(new_dict)));
+          for (auto key_val : old_dict) {
+            CHECK_FAIL_RETURN_UNEXPECTED(new_dict.contains(key_val.first),
+                                         "Python dictionary keys do not match when creating a batch: " +
+                                           key_val.first.cast<std::string>() + " was not found in previous rows.");
+            py::list li = new_dict[key_val.first];
+            li.append(key_val.second);
+          }
+        }
+      }
+      RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(new_dict, &new_tensor));
+    }
+#endif
   } else {  // handle string column differently
     std::vector<std::string> strings;
     for (dsize_t j = 0; j < batch_size; j++) {
@@ -419,14 +459,20 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
     try {
       // Prepare batch map call back parameters
       py::tuple input_args(input->size() + 1);
-      for (size_t i = 0; i < input->size(); i++) {
-        std::vector<py::array> np_batch;
-        for (std::shared_ptr<Tensor> t : input->at(i)) {
-          py::array np_array;
-          RETURN_IF_NOT_OK(t->GetDataAsNumpy(&np_array));
-          np_batch.push_back(std::move(np_array));
+      for (size_t i = 0; i < input->size(); i++) {  // iterate over columns
+        std::vector<py::object> column_batch;
+        for (std::shared_ptr<Tensor> t : input->at(i)) {  // iterate over rows
+          if (t->type().IsPython()) {
+            py::dict new_data;
+            RETURN_IF_NOT_OK(t->GetDataAsPythonObject(&new_data));
+            column_batch.push_back(new_data);
+          } else {
+            py::array np_array;
+            RETURN_IF_NOT_OK(t->GetDataAsNumpy(&np_array));
+            column_batch.push_back(std::move(np_array));
+          }
         }
-        input_args[i] = np_batch;
+        input_args[i] = column_batch;
       }
       input_args[input->size()] = info;
       // Invoke batch map func
@@ -441,32 +487,45 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
                                    "should be " +
                                      std::to_string(out_col_names_.size()) +
                                      " , but got: " + std::to_string(ret_tuple.size()));
-      bool all_array = true;
+      bool all_array_or_dict = true;
       for (size_t i = 0; i < ret_tuple.size(); i++) {
-        if (!py::isinstance<py::array>(ret_tuple[i])) {
-          all_array = false;
+        if (!py::isinstance<py::array>(ret_tuple[i]) && !py::isinstance<py::dict>(ret_tuple[i])) {
+          all_array_or_dict = false;
           break;
         }
       }
-      *concat_batch = all_array;
+      *concat_batch = all_array_or_dict;
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorRow output_batch;
-        // If user returns a type that is neither a list nor an array, issue a error msg.
-        if (!py::isinstance<py::list>(ret_tuple[i])) {
+        // If user returns a type that is neither a list nor a Python dictionary, issue a error msg.
+        if (!py::isinstance<py::list>(ret_tuple[i]) && !py::isinstance<py::dict>(ret_tuple[i])) {
           MS_LOG(INFO) << "column: " << out_col_names_[i]
-                       << " returned by per_batch_map is not a list, this could lead to conversion failure.";
+                       << " returned by per_batch_map is not a list nor a Python dict, "
+                       << "this could lead to conversion failure.";
         }
 
         if (*concat_batch) {
-          std::shared_ptr<Tensor> out;
           // If concat batch rows, the batch map function result should be in 1 row.
-          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(ret_tuple[i]), &out));
+          std::shared_ptr<Tensor> out;
+          if (py::isinstance<py::dict>(ret_tuple[i])) {
+            RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(py::cast<py::object>(ret_tuple[i]), &out));
+          } else {
+            RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(ret_tuple[i]), &out));
+          }
           output_batch.push_back(std::move(out));
         } else {
+          CHECK_FAIL_RETURN_UNEXPECTED(
+            !py::isinstance<py::dict>(ret_tuple[i]),
+            "Failed to convert rows: mismatched types returned from per_batch_map function. If different types are "
+            "returned, all of them should be convertible to Python lists. Got: Python dict");
           py::list output_list = py::cast<py::list>(ret_tuple[i]);
           for (size_t j = 0; j < output_list.size(); j++) {
             std::shared_ptr<Tensor> out;
-            RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));
+            if (py::isinstance<py::dict>(output_list[j])) {
+              RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(py::cast<py::object>(output_list[j]), &out));
+            } else {
+              RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));
+            }
             output_batch.push_back(std::move(out));
           }
         }

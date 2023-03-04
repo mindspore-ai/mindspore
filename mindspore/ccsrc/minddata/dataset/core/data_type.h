@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ class DataType {
     DE_FLOAT64,
     DE_STRING,
     DE_BYTES,
+    DE_PYTHON,
     NUM_OF_TYPES
   };
 
@@ -80,7 +81,8 @@ class DataType {
     {"float32", 4, "float32", py::format_descriptor<float>::format(), CV_32F},           // DE_FLOAT32
     {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
     {"string", 0, "str", "U", kCVInvalidType},                                           // DE_STRING
-    {"bytes", 0, "bytes", "S", kCVInvalidType}                                           // DE_BYTES
+    {"bytes", 0, "bytes", "S", kCVInvalidType},                                          // DE_BYTES
+    {"python", 0, "object", "O", kCVInvalidType}                                         // DE_PYTHON
   };
 #else
 #if !defined(ENABLE_ANDROID) || defined(ENABLE_CLOUD_FUSION_INFERENCE)
@@ -241,6 +243,8 @@ class DataType {
   bool IsNumeric() const { return IsInt() || IsFloat() || IsBool(); }
 
   bool IsString() const { return type_ == DataType::DE_STRING || type_ == DataType::DE_BYTES; }
+
+  bool IsPython() const { return type_ == DataType::DE_PYTHON; }
 
   Type value() const { return type_; }
 

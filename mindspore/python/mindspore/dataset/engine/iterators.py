@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Built-in iterators.
-"""
+"""Built-in iterators"""
 from abc import abstractmethod
+from copy import deepcopy
+import collections.abc
 import json
 import os
 import signal
@@ -183,12 +184,36 @@ class Iterator:
         """
         self._iterator.Reset(step, epoch)
 
+    def __convert_python_to_tensor(self, obj):
+        """
+        Attempts to recursively convert a python object to tensor(s).
+
+        Args:
+            obj (any): the python object to be converted
+        """
+        if isinstance(obj, (np.ndarray, int, float, bool, str)):
+            if self._do_copy:
+                return Tensor(np.asarray(obj))
+            return Tensor.from_numpy(np.asarray(obj))
+        if isinstance(obj, dict):
+            return {key: self.__convert_python_to_tensor(val) for key, val in obj.items()}
+        if isinstance(obj, collections.abc.Iterable):
+            return [self.__convert_python_to_tensor(item) for item in obj]
+        # if we can't convert it to Tensor, return the object as is
+        if self._do_copy:
+            return deepcopy(obj)
+        return obj
+
     def _transform_md_to_output(self, t):
         if self._output_numpy:
+            if t.type().is_python():
+                return t.as_python()
             return t.as_array()
         return self._transform_md_to_tensor(t)
 
     def _transform_md_to_tensor(self, t):
+        if t.type().is_python():
+            return self.__convert_python_to_tensor(t.as_python())
         array = t.as_array()
         if self._do_copy:
             return Tensor(array)

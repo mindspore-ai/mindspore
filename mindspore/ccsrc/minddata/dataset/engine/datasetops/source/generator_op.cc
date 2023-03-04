@@ -99,7 +99,7 @@ Status GeneratorOp::Init() {
 Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) {
   if (!py::isinstance<py::tuple>(py_data)) {
     RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException,
-                        "Invalid python function, the 'source' of 'GeneratorDataset' should return a tuple of NumPy "
+                        "Invalid Python function, the 'source' of 'GeneratorDataset' should return a tuple of NumPy "
                         "arrays, but got " +
                           std::string(py_data.get_type().str()));
   }
@@ -108,7 +108,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
   if (py_row.size() != column_names_.size()) {
     RETURN_STATUS_ERROR(
       StatusCode::kMDPyFuncException,
-      "Invalid python function, the 'source' of 'GeneratorDataset' should return same number of NumPy arrays as "
+      "Invalid Python function, the 'source' of 'GeneratorDataset' should return same number of NumPy arrays as "
       "specified in column_names, the size of column_names is:" +
         std::to_string(column_names_.size()) +
         " and number of returned NumPy array is:" + std::to_string(py_row.size()));
@@ -116,18 +116,23 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
   // Iterate over two containers simultaneously for memory copy
   for (int i = 0; i < py_row.size(); ++i) {
     py::object ret_py_ele = py_row[i];
-    if (!py::isinstance<py::array>(ret_py_ele)) {
-      RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException,
-                          "Invalid python function, 'GeneratorDataset' should return a tuple of NumPy arrays, "
-                          "but got " +
-                            std::string(ret_py_ele.get_type().str()));
+    if (!py::isinstance<py::array>(ret_py_ele) && !py::isinstance<py::dict>(ret_py_ele)) {
+      RETURN_STATUS_ERROR(
+        StatusCode::kMDPyFuncException,
+        "Invalid Python function, 'GeneratorDataset' should return a tuple of NumPy arrays or dictionaries, "
+        "but got " +
+          std::string(ret_py_ele.get_type().str()));
     }
     std::shared_ptr<Tensor> tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
+    if (py::isinstance<py::dict>(ret_py_ele)) {
+      RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(ret_py_ele.cast<py::dict>(), &tensor));
+    } else {
+      RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
+    }
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
       RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException,
-                          "Invalid python function, type of returned data in 'GeneratorDataset' should be same with "
+                          "Invalid Python function, type of returned data in 'GeneratorDataset' should be same with "
                           "specified column_types, but the type of returned data: " +
                             std::string(ret_py_ele.get_type().str()) +
                             ", specified column type: " + column_types_[i].ToString());

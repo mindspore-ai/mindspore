@@ -129,11 +129,8 @@ def _fill_worker_indices(workers, indices, idx):
 
 def _convert_row(row):
     """
-    Convert Op return value to numpy
+    Convert Op return value to numpy, or keep as a dict (if already a dict)
     """
-    if isinstance(row, dict):
-        raise TypeError("Input data is expected to be " \
-                        "int, float, str, bytes, numpy.ndarray, Tensor or list/tuple of them, but got dict.")
 
     # convert single item to np.array
     prim_type = (int, float, str, bytes, np.ndarray, Tensor)
@@ -147,6 +144,9 @@ def _convert_row(row):
                                 "int or float or str, but got {}.".format(item.dtype))
         return tuple([item])
 
+    if isinstance(row, dict):
+        return tuple([row])
+
     value = []
     # convert each item to np.array
     idx = 0
@@ -155,8 +155,7 @@ def _convert_row(row):
         if isinstance(x, Tensor):      # mindspore.Tensor
             value.append(x.asnumpy())
         elif isinstance(x, dict):
-            raise TypeError("The {}th item of input data is expected to be " \
-                            "int, float, str, bytes, numpy.ndarray, Tensor, but got dict.".format(idx))
+            value.append(x)
         else:
             item = np.array(x, copy=False)
             if item.dtype == 'object':
