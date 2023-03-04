@@ -151,8 +151,10 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   CheckParams();
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;
+  bool index_mismatch = 0;
 
-  auto task = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size](const size_t start, const size_t end) {
+  auto task = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size, &index_mismatch](const size_t start,
+                                                                                                const size_t end) {
     for (size_t i = start; i < end; ++i) {
       // calc idx_y in y.shape[axis]
       const size_t y_axis_idx = (i / inner_size_) % y_axis_size_;
@@ -164,12 +166,16 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
         const size_t x_inner_idx = i % inner_size_;
         const size_t x_idx = x_outer_idx * x_axis_inner_size + x_axis_idx * inner_size_ + x_inner_idx;
         x[x_idx] += y[i];
+      } else {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << input_shapes_
+                      << ".";
+        index_mismatch = 1;
       }
     }
   };
 
-  auto task_block = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size](const size_t start,
-                                                                                     const size_t end) {
+  auto task_block = [this, &x, &y, &indices, &x_axis_inner_size, &y_axis_inner_size, &index_mismatch](
+                      const size_t start, const size_t end) {
     for (size_t i = start; i < end; ++i) {
       const size_t y_outer_idx = i / y_axis_size_;
       const size_t y_axis_idx = i - y_outer_idx * y_axis_size_;
@@ -180,6 +186,10 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
         for (size_t j = 0; j < inner_size_; ++j) {
           x[x_idx + j] += y[y_idx + j];
         }
+      } else {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << input_shapes_
+                      << ".";
+        index_mismatch = 1;
       }
     }
   };
@@ -196,6 +206,10 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
     ParallelLaunch(task_block, y_nums_ / inner_size_, block_size / inner_size_, this);
   } else {
     ParallelLaunch(task, y_nums_, block_size, this);
+  }
+
+  if (index_mismatch) {
+    return false;
   }
 
   return true;

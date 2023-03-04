@@ -90,6 +90,7 @@ int IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   for (auto sh : x_shape_) {
     x_size_ *= LongToSize(sh);
   }
+  workspace_size_list_ = {sizeof(int)};
   return KRET_OK;
 }
 
@@ -138,7 +139,7 @@ bool IndexAddGpuKernelMod::CheckParams() {
 }
 
 template <typename T>
-bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
@@ -150,8 +151,20 @@ bool IndexAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   auto *index = reinterpret_cast<int *>(inputs[kIndex1]->addr);
   auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  int *device_flag = GetDeviceAddress<int>(workspace, 0);
+  cudaMemsetAsync(device_flag, 0, sizeof(int), cuda_stream);
+  int host_index_mismatch = 0;
 
-  CalIndexAdd(x, index, y, outer_size_, y_axis_size_, x_axis_size_, inner_size_, use_lock_, cuda_stream);
+  CalIndexAdd(x, index, y, outer_size_, y_axis_size_, x_axis_size_, inner_size_, use_lock_, device_flag, cuda_stream);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&host_index_mismatch, device_flag, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
+    "cudaMemcpyAsync output failed");
+  if (host_index_mismatch) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << input_shapes_
+                  << ".";
+    return false;
+  }
+
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&output[0], &x[0], x_size_, cudaMemcpyDeviceToDevice, cuda_stream),
                                      "cudaMemcpyAsync output failed");
   return true;
