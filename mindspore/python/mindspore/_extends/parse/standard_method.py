@@ -1851,7 +1851,11 @@ def bool_func(*data):
             return data != 0
         const_utils.raise_value_error("The truth value of an array with several elements is ambiguous.")
     if not F.isconstant(data):
-        return len(data) != 0
+        if hasattr(data, "__bool__"):
+            return data.__bool__()
+        if hasattr(data, "__len__"):
+            return len(data) != 0
+        return True
     return cast_to_bool(data)
 
 
