@@ -67,50 +67,6 @@ def test_and_int_tensor_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_and_multi_int_tensor():
-    """
-    Feature: graph and syntax
-    Description: Test and syntax in graph mode.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        x = Tensor([0, 1])
-        y = Tensor([1, 2])
-        print(x and y)
-        return x and y
-
-    with pytest.raises(ValueError) as error_info:
-        foo()
-    assert "can be converted to bool, but" in str(error_info.value)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_and_multi_int_tensor_2():
-    """
-    Feature: graph and syntax
-    Description: Test and syntax in graph mode.
-    Expectation: No exception.
-    """
-    @jit
-    def foo(x, y):
-        print(x and y)
-        return x and y
-
-    with pytest.raises(ValueError) as error_info:
-        foo(Tensor([0, 1]), Tensor([1, 2]))
-    assert "can be converted to bool, but" in str(error_info.value)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_and_bool_tensor():
     """
     Feature: graph and syntax

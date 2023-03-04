@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, jit, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -163,3 +163,37 @@ def test_bitwise_operator_error_too_large_number():
     net = Net()
     with pytest.raises(RuntimeError):
         net(x, y)
+
+
+def test_and_multi_int_tensor():
+    """
+    Feature: graph and syntax
+    Description: Test and syntax in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = Tensor([0, 1])
+        y = Tensor([1, 2])
+        print(x and y)
+        return x and y
+
+    with pytest.raises(ValueError) as error_info:
+        foo()
+    assert "can be converted to bool, but" in str(error_info.value)
+
+
+def test_and_multi_int_tensor_2():
+    """
+    Feature: graph and syntax
+    Description: Test and syntax in graph mode.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y):
+        print(x and y)
+        return x and y
+
+    with pytest.raises(ValueError) as error_info:
+        foo(Tensor([0, 1]), Tensor([1, 2]))
+    assert "can be converted to bool, but" in str(error_info.value)
