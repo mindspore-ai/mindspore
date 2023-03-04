@@ -140,6 +140,7 @@ class IrExportBuilder {
   bool SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetAttributeProto(const AnfNodePtr &node, mind_ir::NodeProto *const node_proto);
+  bool ExportTuple(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto);
   bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
@@ -906,18 +907,36 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   return type_name;
 }
 
+bool IrExportBuilder::ExportTuple(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto) {
+  attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TUPLE);
+  auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
+
+  auto tuple_info_proto = attr_proto->mutable_tuple_info();
+  tuple_info_proto->set_is_dyn_len(tuple_abs->dynamic_len());
+
+  auto elem_abs = tuple_abs->dynamic_len_element_abs();
+  if (elem_abs != nullptr) {
+    mind_ir::AttributeProto *tuple_elem_proto = tuple_info_proto->mutable_tuple_elem_item();
+    if (!SetAbstractToNodeProto(elem_abs, tuple_elem_proto)) {
+      return false;
+    }
+  }
+
+  const auto &elems = tuple_abs->elements();
+  for (const auto &item : elems) {
+    mind_ir::AttributeProto *attr_values = attr_proto->add_values();
+    if (!SetAbstractToNodeProto(item, attr_values)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto) {
   auto type = abs->BuildType();
   auto shape = abs->BuildShape();
   if (type->isa<Tuple>()) {
-    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TUPLE);
-    auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
-    for (size_t i = 0; i < tuple_abs->size(); i++) {
-      mind_ir::AttributeProto *attr_values = attr_proto->add_values();
-      if (!SetAbstractToNodeProto((*tuple_abs)[i], attr_values)) {
-        return false;
-      }
-    }
+    return ExportTuple(abs, attr_proto);
   } else if (type->isa<TensorType>() && shape->isa<abstract::Shape>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
