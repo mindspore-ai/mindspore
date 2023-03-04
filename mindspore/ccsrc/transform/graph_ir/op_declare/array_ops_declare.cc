@@ -141,4 +141,10 @@ INPUT_MAP(Unsqueeze) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unsqueeze) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Unsqueeze) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Unsqueeze, kNameUnsqueeze, ADPT_DESC(Unsqueeze))
+
+// Where
+INPUT_MAP(SelectV2) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(then)}, {3, INPUT_DESC(else)}};
+ATTR_MAP(SelectV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SelectV2) = {{0, OUTPUT_DESC(result)}};
+REG_ADPT_DESC(SelectV2, kNameWhere, ADPT_DESC(SelectV2))
 }  // namespace mindspore::transform

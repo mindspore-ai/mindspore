@@ -97,6 +97,7 @@ class ConverterInnerContext {
 
   void UpdateGraphInputTensorShape(const std::string &tensor_name, const std::vector<int64_t> &shape) {
     graph_input_tensor_shape_map_[tensor_name] = shape;
+    MS_LOG(INFO) << "Update shape of input " << tensor_name << " to " << shape;
   }
   std::vector<int64_t> GetGraphInputTensorShape(const std::string &tensor_name) const {
     if (graph_input_tensor_shape_map_.find(tensor_name) == graph_input_tensor_shape_map_.end()) {

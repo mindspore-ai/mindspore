@@ -257,6 +257,14 @@
     }                                                                                \
   } while (0)
 
+#define MS_CHECK_EQ(value1, value2, errcode)                                         \
+  do {                                                                               \
+    if ((value1) != (value2)) {                                                      \
+      MS_LOG(ERROR) << "check eq fail, value1: " << value1 << " value2: " << value2; \
+      return errcode;                                                                \
+    }                                                                                \
+  } while (0)
+
 #define MS_CHECK_PTR_IF_NULL(ptr)                                \
   do {                                                           \
     if ((ptr) == nullptr) {                                      \
@@ -520,8 +528,10 @@ enum PrimType {
   PrimType_GatherD = 210,
   PrimType_GroupNormFusion = 211,
   PrimType_Log1p = 212,
+  PrimType_Triu = 213,
+  PrimType_Tril = 214,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Log1p + 1,
+  PrimType_MAX = PrimType_Tril + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

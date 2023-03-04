@@ -41,11 +41,12 @@ STATUS ArgMaxFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   auto dst_prim = std::make_shared<acl::ArgMaxV2>();
   CHECK_NULL_RETURN(dst_prim);
+  dst_prim->AddAttr("output_type", TypeIdToType(kNumberTypeInt32));
   dst_prim->SetAttrs(src_prim->attrs());
   // convert attr to parameter node
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
-  int status = AddAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, kNumFlagThree);
+  int status = AddIntAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, true);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "Add axis constant value to input failed.";
     return lite::RET_ERROR;

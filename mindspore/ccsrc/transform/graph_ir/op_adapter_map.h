@@ -380,6 +380,7 @@ constexpr const char kNameStringUpper[] = "StringUpper";
 constexpr const char kNameStringLength[] = "StringLength";
 constexpr const char kNameDecodeImage[] = "DecodeImage";
 constexpr const char kNameDecodeBase64[] = "DecodeBase64";
+constexpr const char kNameWhere[] = "Where";
 
 class OpAdapterDesc;
 

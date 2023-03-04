@@ -230,6 +230,8 @@ union PrimitiveType {
     GatherD,
     GroupNormFusion,
     Log1p,
+    Triu,
+    Tril,
 }
 
 table Abs {
@@ -1290,4 +1292,10 @@ table GroupNormFusion {
 }
 
 table Log1p {
+}
+
+table Triu {
+}
+
+table Tril {
 }

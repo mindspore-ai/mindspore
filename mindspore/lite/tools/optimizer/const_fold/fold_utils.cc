@@ -253,7 +253,7 @@ int ConstFoldProcessor::DoConstantFold(const FuncGraphPtr &func_graph, const CNo
   }
   auto kernel_exec = GetKernelExec(input_tensors, &output_tensors, cnode, context_.get(), ms_context_.get());
   if (kernel_exec == nullptr) {
-    MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
+    MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr, node " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   for (auto output_tensor : output_tensors) {

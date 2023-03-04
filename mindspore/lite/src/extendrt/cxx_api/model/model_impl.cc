@@ -90,9 +90,16 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   const void *model_buff = model_data;
   size_t model_size = data_size;
   auto mindir_path = GetConfig(kConfigModelFileSection, kConfigMindIRPathKey);
-  if (mindir_path == "") {
+  std::string weight_path = "./";
+  std::string base_path = "";
+  if (!mindir_path.empty()) {
+    base_path = mindir_path;
+  } else {
     // user does not set mindir_path, convert from model_path
-    mindir_path = model_path.substr(0, model_path.rfind("/"));
+    base_path = model_path;
+  }
+  if (base_path.find("/") != std::string::npos) {
+    weight_path = base_path.substr(0, base_path.rfind("/"));
   }
   SetMsContext();
   session_ = InferSession::CreateSession(model_context, config_info_);
@@ -110,7 +117,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_data, size_t data_size, Mo
   }
   graph_ = std::make_shared<Graph>();
   ret = mindspore::infer::Serialization::Load(model_buff, model_size, model_type, graph_.get(), Key{}, kDecModeAesGcm,
-                                              mindir_path);
+                                              weight_path);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Serialization::Load model failed.";
     return ret;

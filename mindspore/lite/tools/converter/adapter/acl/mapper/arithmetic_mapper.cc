@@ -96,10 +96,21 @@ STATUS SubFusionMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
+STATUS ExpFusionMapper::Mapper(const CNodePtr &cnode) {
+  ops::Exp op_add;
+  auto dst_prim = op_add.GetPrim();
+  if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
+    MS_LOG(ERROR) << "ExpFusion mapper failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 REGISTER_PRIMITIVE_MAPPER(kNameAddFusion, AddFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameDivFusion, DivFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameMulFusion, MulFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNamePowFusion, PowFusionMapper)
 REGISTER_PRIMITIVE_MAPPER(kNameSubFusion, SubFusionMapper)
+REGISTER_PRIMITIVE_MAPPER(kNameExpFusion, ExpFusionMapper)
 }  // namespace lite
 }  // namespace mindspore

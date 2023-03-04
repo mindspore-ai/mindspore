@@ -25,6 +25,7 @@
 #include "runtime/device/device_address.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "extendrt/utils/tensor_default_impl.h"
+#include "mindspore/core/utils/ms_utils_secure.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -64,9 +65,10 @@ class Buffer::Impl {
       return false;
     }
 
-    auto ret = memcpy_s(MutableData(), DataSize(), data, data_len);
+    auto ret = common::huge_memcpy(reinterpret_cast<uint8_t *>(MutableData()), DataSize(),
+                                   reinterpret_cast<const uint8_t *>(data), data_len);
     if (ret != 0) {
-      MS_LOG(ERROR) << "Set data memcpy_s failed, ret = " << ret;
+      MS_LOG(ERROR) << "Set data huge_memcpy failed, ret = " << ret;
       return false;
     }
     return true;

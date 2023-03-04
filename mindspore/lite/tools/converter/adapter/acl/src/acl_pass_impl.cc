@@ -37,6 +37,7 @@
 #include "src/common/log_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
+#include "mindspore/core/utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace opt {
@@ -231,7 +232,7 @@ STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "Deparser cnode: " << name;
       auto status = mapper->Mapper(cnode);
       if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "Deparser primitive failed.";
+        MS_LOG(ERROR) << "Deparser primitive failed, cnode " << name;
         return lite::RET_ERROR;
       }
     }
@@ -268,7 +269,7 @@ STATUS AclPassImpl::MapperForOrgMindIR(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "Deparser cnode: " << name;
       auto status = mapper->Mapper(cnode);
       if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "Deparser primitive failed.";
+        MS_LOG(ERROR) << "Deparser primitive failed, cnode " << name;
         return lite::RET_ERROR;
       }
     }
@@ -305,7 +306,11 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
   // call interface of cloud
   ModelConverter model_converter;
   model_converter.set_options(options_);
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+  *om_data = model_converter.LoadMindIRSingle(func_graph);
+#else
   *om_data = model_converter.LoadMindIR(func_graph);
+#endif
   if (om_data->Data() == nullptr || om_data->DataSize() == 0) {
     MS_LOG(ERROR) << "Model converter load mindir failed.";
     return lite::RET_ERROR;
@@ -411,7 +416,8 @@ ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, cons
                   << om_data.DataSize();
     return nullptr;
   }
-  if (memcpy_s(tensor_data, param_value->Size(), om_data.Data(), om_data.DataSize()) != EOK) {
+  if (common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor_data), param_value->Size(),
+                          reinterpret_cast<const uint8_t *>(om_data.Data()), om_data.DataSize()) != EOK) {
     MS_LOG(ERROR) << "Memcpy om data failed.";
     return nullptr;
   }

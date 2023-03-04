@@ -20,6 +20,7 @@
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "ops/array_ops.h"
+#include "ops/selection_ops.h"
 
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Shape)
@@ -78,5 +79,8 @@ DECLARE_OP_USE_OUTPUT(NonZeroWithValueShape)
 
 DECLARE_OP_ADAPTER(Unsqueeze)
 DECLARE_OP_USE_OUTPUT(Unsqueeze)
+
+DECLARE_OP_ADAPTER(SelectV2)
+DECLARE_OP_USE_OUTPUT(SelectV2)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

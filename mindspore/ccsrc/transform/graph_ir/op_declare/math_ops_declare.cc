@@ -113,4 +113,13 @@ INPUT_MAP(IsNan) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(IsNan) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IsNan) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IsNan, kNameIsNan, ADPT_DESC(IsNan))
+
+// LpNorm
+INPUT_MAP(LpNorm) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LpNorm) = {{"p", ATTR_DESC(p, AnyTraits<int64_t>())},
+                    {"axis", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())},
+                    {"keep_dims", ATTR_DESC(keepdim, AnyTraits<bool>())},
+                    {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(LpNorm) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LpNorm, prim::kPrimLpNorm->name(), ADPT_DESC(LpNorm))
 }  // namespace mindspore::transform

@@ -49,6 +49,24 @@ static inline int Fp32Relu6@SIMD_INSTRUCTION@(int index, const float *src, int l
     return index;
 }
 
+static inline int Fp32Clip@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float min, float max) {
+    SIMD_F32 min_val = SIMD_MOV_F32(min);
+    SIMD_F32 max_val = SIMD_MOV_F32(max);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_CLAMP_F32(SIMD_LD_F32(src + index), min_val, max_val));
+    }
+    return index;
+}
+
+static inline int Int32Clip@SIMD_INSTRUCTION@(int index, const int *src, int length, int *dst, int min, int max) {
+    SIMD_EPI32 min_val = SIMD_MOV_EPI32(min);
+    SIMD_EPI32 max_val = SIMD_MOV_EPI32(max);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_EPI32(dst + index, SIMD_CLAMP_EPI32(SIMD_LD_EPI32(src + index), min_val, max_val));
+    }
+    return index;
+}
+
 static inline int LRelu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float alpha) {
     SIMD_F32 alpha_data = SIMD_MOV_F32(alpha);
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {

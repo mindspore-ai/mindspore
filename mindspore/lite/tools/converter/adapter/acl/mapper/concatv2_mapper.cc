@@ -26,7 +26,6 @@ const auto kNameConcatV2 = "ConcatV2";
 
 namespace {
 constexpr auto kNameInputNums = "N";
-constexpr auto kNumFlagThree = 3;
 constexpr int64_t kInputMinNum = 2;
 }  // namespace
 
@@ -50,7 +49,7 @@ STATUS ConcatV2Mapper::Mapper(const CNodePtr &cnode) {
 
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
-  auto status = AddAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, kNumFlagThree);
+  auto status = AddIntAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, false);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "Add constant value to input failed.";
     return lite::RET_ERROR;

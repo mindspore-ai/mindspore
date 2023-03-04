@@ -33,6 +33,7 @@ class MS_API ModelConverter {
   ~ModelConverter() = default;
 
   Buffer LoadMindIR(const FuncGraphPtr &func_graph);
+  Buffer LoadMindIRSingle(const FuncGraphPtr &func_graph);
 
   void set_options(const std::weak_ptr<AclModelOptions> &options) { options_ = options; }
 

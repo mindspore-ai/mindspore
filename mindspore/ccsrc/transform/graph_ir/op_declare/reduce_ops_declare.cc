@@ -68,6 +68,12 @@ ATTR_MAP(ReduceSumD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceSumD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceSumD, prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD))
 
+// ReduceSumD
+INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceSum, "ReduceSumAcl", ADPT_DESC(ReduceSum))
+
 // ReduceProdD
 INPUT_MAP(ReduceProdD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(ReduceProdD) = {

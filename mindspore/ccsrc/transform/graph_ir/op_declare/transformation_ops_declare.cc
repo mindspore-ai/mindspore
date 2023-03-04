@@ -21,7 +21,7 @@
 namespace mindspore::transform {
 // Flatten
 INPUT_MAP(Flatten) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Flatten) = EMPTY_ATTR_MAP;
+ATTR_MAP(Flatten) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Flatten) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Flatten, prim::kPrimFlatten->name(), ADPT_DESC(Flatten))
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
+#include "nnacl/clip_parameter.h"
 using mindspore::schema::PrimitiveType_Clip;
 
 namespace mindspore {
@@ -21,15 +22,22 @@ namespace lite {
 OpParameter *PopulateClipParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Clip();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
 
-  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  auto *param = reinterpret_cast<ClipParameter *>(malloc(sizeof(ClipParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ClipParameter failed.";
     return nullptr;
   }
-  (void)memset(param, 0, sizeof(OpParameter));
+  (void)memset(param, 0, sizeof(ClipParameter));
 
-  param->type_ = primitive->value_type();
+  param->op_parameter_.type_ = primitive->value_type();
+  param->min_val_ = value->min();
+  param->max_val_ = value->max();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR)
