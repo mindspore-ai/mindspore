@@ -23,6 +23,13 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
