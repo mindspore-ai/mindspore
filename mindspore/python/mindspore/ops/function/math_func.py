@@ -252,36 +252,37 @@ def absolute(input):
     return abs(input)
 
 
-def add(x, y):
+def add(input, other):
     r"""
-    Adds two input tensors element-wise.
+    Adds other value to input Tensor.
 
     .. math::
 
-        out_{i} = x_{i} + y_{i}
+        out_{i} = input_{i} + other_{i}
 
     .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make
+        the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Returns:
-        Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
+        Tensor, the shape is the same as the one of the input `input` , `other` after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
+        TypeError: If `input` and `other` is not one of the following: Tensor, number.Number, bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -304,7 +305,7 @@ def add(x, y):
         >>> print(output.dtype)
         Float32
     """
-    return tensor_add(x, y)
+    return _get_cache_prim(P.Add)()(input, other)
 
 
 def addcdiv(input_data, x1, x2, value):
