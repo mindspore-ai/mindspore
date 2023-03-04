@@ -61,13 +61,15 @@ bool SendActor::ConnectServer() {
 
     // If route is successfully looked up, peer_actor_address is not empty.
     server_url_ = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
+    remote_func_id_ = peer_actor_address.func_id();
     auto free_callback = std::bind(&SendActor::FreeMessage, this, std::placeholders::_1);
     size_t retry_count = 60;
     if (!client_->Connect(server_url_, retry_count, free_callback)) {
       MS_LOG(EXCEPTION) << "Failed to connect to server of actor " << peer_actor_id << ", server_url: " << server_url_;
     }
 
-    MS_LOG(INFO) << "Successfully connect to server " << server_url_ << ", inter-process edge name: " << peer_actor_id;
+    MS_LOG(INFO) << "Successfully connect to server " << server_url_ << ", remote function id: " << remote_func_id_
+                 << ", inter-process edge name: " << peer_actor_id;
     peer_actor_urls_[peer_actor_id] = server_url_;
   }
 
@@ -128,6 +130,7 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->to = AID("", server_url);
+  message->func_id_ = remote_func_id_;
 
   // To reach optimal performance, we use workspace memory as the data sent to the remote. So the size must be
   // strictly checked to avoid illegal memory access.

@@ -32,9 +32,10 @@ class BACKEND_EXPORT RDMAClient : public RPCClientBase {
  public:
   explicit RDMAClient(bool enable_ssl = false)
       : RPCClientBase(enable_ssl),
-        dev_name_(const_cast<char *>(kDefaultIfName)),
-        ip_addr_(const_cast<char *>(kDefaultIP)),
+        dev_name_(kDefaultIfName),
+        ip_addr_(kDefaultIP),
         port_(kDefaultPort),
+        func_id_(0),
         urpc_allocator_(urpc_get_default_allocator_func()),
         urpc_session_(nullptr) {}
   ~RDMAClient() override = default;
@@ -59,9 +60,10 @@ class BACKEND_EXPORT RDMAClient : public RPCClientBase {
   static void urpc_rsp_cb(struct urpc_sgl *rsp, int err, void *arg);
 
  private:
-  char *dev_name_;
-  char *ip_addr_;
+  std::string dev_name_;
+  std::string ip_addr_;
   uint16_t port_;
+  uint32_t func_id_;
 
   struct urpc_buffer_allocator *urpc_allocator_;
   urpc_session_t *urpc_session_;
@@ -70,6 +72,8 @@ class BACKEND_EXPORT RDMAClient : public RPCClientBase {
   std::mutex mtx_;
   std::condition_variable cv_;
 
+  // Callback arguments when request is successfully received by peer.
+  // It's used in async scenario to do releasing and synchronizing operations.
   struct req_cb_arg cb_arg_;
 };
 }  // namespace rpc

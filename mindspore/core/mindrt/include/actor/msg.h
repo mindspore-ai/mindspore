@@ -36,20 +36,20 @@ class MessageBase {
     KTERMINATE,
   };
 
-  explicit MessageBase(Type eType = Type::KMSG) : from(), name(), data(nullptr), size(0), type(eType) {}
+  explicit MessageBase(Type eType = Type::KMSG) : from(), name(), data(nullptr), size(0), type(eType), func_id_(0) {}
 
   explicit MessageBase(const std::string &sName, Type eType = Type::KMSG)
-      : from(), name(sName), data(nullptr), size(0), type(eType) {}
+      : from(), name(sName), data(nullptr), size(0), type(eType), func_id_(0) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(), body(), data(nullptr), size(0), type(eType) {}
+      : from(aFrom), to(aTo), name(), body(), data(nullptr), size(0), type(eType), func_id_(0) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, const std::string &sName, Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(sName), body(), data(nullptr), size(0), type(eType) {}
+      : from(aFrom), to(aTo), name(sName), body(), data(nullptr), size(0), type(eType), func_id_(0) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, const std::string &sName, std::string &&sBody,
                        Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(sName), body(std::move(sBody)), data(nullptr), size(0), type(eType) {}
+      : from(aFrom), to(aTo), name(sName), body(std::move(sBody)), data(nullptr), size(0), type(eType), func_id_(0) {}
 
   virtual ~MessageBase() {}
 
@@ -85,6 +85,9 @@ class MessageBase {
   size_t size;
 
   Type type;
+
+  // The id of remote function to call.
+  uint32_t func_id_;
 };
 }  // namespace mindspore
 

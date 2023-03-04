@@ -43,7 +43,7 @@ class BACKEND_EXPORT TCPServer : public RPCServerBase {
   void Finalize() override;
 
   // Set the message processing handler.
-  void SetMessageHandler(const MessageHandler &handler) override;
+  void SetMessageHandler(const MessageHandler &handler, uint32_t func_id = 0) override;
 
   // Return the IP and port binded by this server.
   std::string GetIP() const override;

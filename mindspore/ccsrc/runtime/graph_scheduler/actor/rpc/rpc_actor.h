@@ -35,6 +35,11 @@
 
 namespace mindspore {
 namespace runtime {
+using distributed::kEnableRDMA;
+using distributed::kMaxRetryPortNum;
+using distributed::kRDMADevName;
+using distributed::kRDMAIP;
+using distributed::kRemoteFuncId;
 using distributed::cluster::ActorRouteTableProxy;
 using distributed::cluster::ActorRouteTableProxyPtr;
 using distributed::cluster::ClusterContext;
@@ -45,6 +50,7 @@ using distributed::rpc::TCPClient;
 using distributed::rpc::TCPServer;
 using mindspore::device::KernelInfo;
 #ifdef ENABLE_RDMA
+using distributed::rpc::kURPCInited;
 using distributed::rpc::RDMAClient;
 using distributed::rpc::RDMAServer;
 #endif
