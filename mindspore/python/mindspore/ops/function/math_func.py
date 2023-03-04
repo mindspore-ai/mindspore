@@ -3999,7 +3999,7 @@ def isnan(x):
     return isnan_(x)
 
 
-def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
+def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=True):
     """
     Returns a new Tensor with boolean elements representing if each element of `x1`
     is “close” to the corresponding element of `x2`. Closeness is defined as:
