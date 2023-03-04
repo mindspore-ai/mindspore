@@ -765,7 +765,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
     py::gil_scoped_release release;
     for (const auto &kernel : graph->execution_order()) {
-      MS_LOG(INFO) << "Split and run op " << kernel->fullname_with_scope();
+      MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
@@ -1071,7 +1071,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
 void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
-  MS_LOG(INFO) << "Run Op " << op_run_info->base_op_run_info.op_name;
+  MS_LOG(DEBUG) << "Run Op " << op_run_info->base_op_run_info.op_name;
   // Get the device context.
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
