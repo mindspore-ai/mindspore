@@ -215,7 +215,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
     // for GPU, nodes are dumped in graph_id directory.
-    if (IsDeviceTargetGPU() || debugger->GetAscendKernelByKernelFlag()) {
+    if (IsDeviceTargetGPU()) {
       debugger->DumpSingleNode(cnode, graph_id);
     } else {
       // for Ascend, node are dumped in root_graph_id directory.

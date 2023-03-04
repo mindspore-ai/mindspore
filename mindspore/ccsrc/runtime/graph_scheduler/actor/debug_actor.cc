@@ -24,7 +24,6 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include "debug/data_dump/e2e_dump.h"
-#include "debug/data_dump/overflow_dumper.h"
 #include "utils/ms_context.h"
 #endif
 #ifdef ENABLE_DEBUGGER
@@ -80,18 +79,9 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #endif
   } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
 #ifdef ENABLE_DEBUGGER
-#ifndef ENABLE_SECURITY
-    auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-    graph_id_sets_.insert(kernel_graph->graph_id());
-    if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-      auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-      kernel_dumper->Init();
-      kernel_dumper->OpDebugRegisterForStream(cnode);
-      kernel_dumper->OpLoadDumpInfo(cnode);
-    }
-#endif
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       debugger->InsertExecutedGraph(kernel_graph);
       debugger->SetAscendKernelByKernelFlag(true);
       bool read_data = CheckReadData(cnode);
@@ -186,7 +176,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
         return kernel->fullname_with_scope().find("InitDataSetQueue") != std::string::npos;
       });
     }
-    if (!is_data_map_ && !graphs[0]->is_graph_run_mode()) {
+    if (!is_data_map_) {
       auto kCurLoopCountName = "current_loop_count";
       for (size_t i = 0; i < graphs.size(); i++) {
         const auto &graph_ = graphs[i];
@@ -200,7 +190,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
         }
         auto tensor = device_loop_control_tensors.at(kCurLoopCountName);
         MS_EXCEPTION_IF_NULL(tensor);
-        auto *cur_val = static_cast<int32_t *>(tensor->data_c());
+        auto *cur_val = static_cast<int64_t *>(tensor->data_c());
         MS_EXCEPTION_IF_NULL(cur_val);
         *cur_val = current_step;
         tensor->set_sync_status(kNeedSyncHostToDevice);
@@ -234,21 +224,6 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     CPUE2eDump::DumpParametersData();
     CPUE2eDump::DumpConstantsData();
   }
-#endif
-
-#ifdef ENABLE_DEBUGGER
-#ifndef ENABLE_SECURITY
-  if (DumpJsonParser::GetInstance().async_dump_enabled() && DumpJsonParser::GetInstance().op_debug_mode() > 0 &&
-      Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
-    uint32_t rank_id = Debugger::GetRankID();
-    std::set<uint32_t>::iterator graph_id_iter;
-    for (graph_id_iter = graph_id_sets_.begin(); graph_id_iter != graph_id_sets_.end(); ++graph_id_iter) {
-      auto graph_id = *graph_id_iter;
-      DeleteNoOverflowFile(rank_id, graph_id);
-    }
-    graph_id_sets_.clear();
-  }
-#endif
 #endif
 
 #ifdef ENABLE_DEBUGGER

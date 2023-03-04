@@ -72,6 +72,7 @@ class KernelDumper : public debug::OverflowDumper {
   static std::map<rtStream_t, std::unique_ptr<OpDebugTask>> op_debug_tasks;
   static std::map<uint32_t, bool> is_data_map;
   static std::map<std::string, std::string> stream_task_graphs;
+  static std::mutex dumper_mutex_;
 
   string dump_path_;
   string net_name_;
@@ -79,7 +80,6 @@ class KernelDumper : public debug::OverflowDumper {
 
  private:
   // Support multi-thread.
-  static std::mutex debug_register_mutex_;
   bool load_flag_;
   uint32_t graph_id_;
   uint32_t task_id_{0U};
@@ -91,7 +91,6 @@ class KernelDumper : public debug::OverflowDumper {
   void *dev_load_mem_ = nullptr;
   void *proto_dev_mem_ = nullptr;
   void *proto_size_dev_mem_ = nullptr;
-  std::mutex register_mutex_;
   std::string overflow_dump_filename = "debug_files";
   void *p2p_debug_addr_ = nullptr;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info, const CNodePtr &kernel);
