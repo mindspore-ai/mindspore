@@ -72,6 +72,7 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
     auto value = input_args[kInputIndex2]->BuildValue();
     if (!IsValueKnown(value)) {
       num_segments_v = abstract::Shape::kShapeDimAny;
+      return num_segments_v;
     }
     auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
     auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
