@@ -27,7 +27,8 @@ from mindspore import log as logger
 from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
-    ListClear_, ListReverse_, ListExtend_, ListCount_
+    ListClear_, ListReverse_, ListExtend_, ListCount_, DictClear_, DictHasKey_, DictUpdate_, \
+    DictFromKeys_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import ms_function, _pynative_executor, _wrap_func
 from mindspore.ops.primitive import Primitive
@@ -1087,6 +1088,82 @@ class _ListCount(ListCount_):
 
 
 _count = _ListCount("count")
+
+
+class _DictClear(DictClear_):
+    """
+    A metafuncgraph class that clear the dict.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictClear."""
+        DictClear_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_dict_clear = _DictClear("clear")
+
+
+class _DictHasKey(DictHasKey_):
+    """
+    A metafuncgraph class that Check if key is in dict.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictHasKey."""
+        DictHasKey_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_haskey = _DictHasKey("has_key")
+
+
+class _DictUpdate(DictUpdate_):
+    """
+    A metafuncgraph class that append another dict to the end of the dict.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictUpdate."""
+        DictUpdate_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_update = _DictUpdate("update")
+
+
+class _DictFromKeys(DictFromKeys_):
+    """
+    A metafuncgraph class that creates a new dict from the given sequence and value.
+
+    Args:
+        name (str): The name of the metafuncgraph object.
+    """
+
+    def __init__(self, name):
+        """Initialize _DictFromKeys."""
+        DictFromKeys_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_fromkeys = _DictFromKeys("fromkeys")
 
 
 class _Tail(Tail_):

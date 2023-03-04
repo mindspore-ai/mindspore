@@ -146,15 +146,19 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeDictionary,
      {
-       {"__len__", prim::kPrimDictLen},          // P.dict_len
-       {"__getitem__", prim::kPrimDictGetItem},  // P.dict_getitem
-       {"__setitem__", prim::kPrimDictSetItem},  // P.dict_setitem,
-       {"__ms_iter__", prim::kPrimDictGetKeys},  // P.dict_getkeys,
-       {"keys", prim::kPrimDictGetKeys},         // P.dict_getkeys,
-       {"values", prim::kPrimDictGetValues},     // P.dict_getvalues,
-       {"items", prim::kPrimDictItems},          // P.dict_items
-       {"__bool__", std::string("dict_bool")},   // C.dict_bool
-       {"get", std::string("dict_get")}          // C.dict_get
+       {"__len__", prim::kPrimDictLen},            // P.dict_len
+       {"__getitem__", prim::kPrimDictGetItem},    // P.dict_getitem
+       {"__setitem__", prim::kPrimDictSetItem},    // P.dict_setitem,
+       {"__ms_iter__", prim::kPrimDictGetKeys},    // P.dict_getkeys,
+       {"keys", prim::kPrimDictGetKeys},           // P.dict_getkeys,
+       {"values", prim::kPrimDictGetValues},       // P.dict_getvalues,
+       {"items", prim::kPrimDictItems},            // P.dict_items
+       {"__bool__", std::string("dict_bool")},     // C.dict_bool
+       {"get", std::string("dict_get")},           // C.dict_get
+       {"has_key", std::string("dict_haskey")},    // C.dict_haskey
+       {"clear", std::string("dict_clear")},       // C.dict_clear
+       {"update", std::string("dict_update")},     // C.dict_update
+       {"fromkeys", std::string("dict_fromkeys")}  // C.dict_fromkeys
      }},
     {kObjectTypeTensorType,
      {
