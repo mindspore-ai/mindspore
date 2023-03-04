@@ -20,10 +20,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
 
-weight = Tensor(np.ones([2, 2]))
-in_channels = 3
-out_channels = 64
-
 
 class Net(nn.Cell):
     """ Net definition """
@@ -133,6 +129,7 @@ class NetConv2dTranspose(nn.Cell):
                  stride=1,
                  pad_mode="same",
                  padding=0,
+                 output_padding=0,
                  dilation=1,
                  group=1,
                  has_bias=False,
@@ -145,6 +142,7 @@ class NetConv2dTranspose(nn.Cell):
                                        stride,
                                        pad_mode,
                                        padding,
+                                       output_padding,
                                        dilation,
                                        group,
                                        has_bias,
@@ -201,4 +199,15 @@ def test_compile_transpose_dilation_2():
 def test_compile_transpose_dilation_2_pad_mode_pad():
     net = NetConv2dTranspose(3, 64, 4, stride=2, dilation=2, pad_mode='pad', weight_init='normal')
     input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
+    net(input_data)
+
+
+def test_compile_outputpadding():
+    """
+    Feature: output_padding
+    Description: compile with attributer output_padding
+    Expectation: no error
+    """
+    net = NetConv2dTranspose(1, 1, 3, stride=2, pad_mode='pad', output_padding=1)
+    input_data = Tensor(np.ones([1, 1, 3, 3], dtype=np.float32))
     net(input_data)
