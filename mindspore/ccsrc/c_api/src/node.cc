@@ -15,6 +15,7 @@
  */
 
 #include "c_api/include/node.h"
+#include "c_api/include/attribute.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
@@ -25,10 +26,13 @@
 #include "ir/scope.h"
 #include "ir/func_graph_cloner.h"
 #include "backend/common/optimizer/helper.h"
+#include "kernel/oplib/oplib.h"
+#include "kernel/oplib/opinfo.h"
 
 constexpr size_t firstInIdx = 1;
 constexpr size_t secondInIdx = 2;
 constexpr size_t switchInputNum = 3;
+static const size_t maxMallocSize = GetMaxMallocSize();
 
 STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_names, AttrHandle attrs[],
                 size_t attr_num) {
@@ -40,7 +44,7 @@ STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_name
     }
     auto value = GetSrcPtr<ValuePtr>(res_mgr, attrs[i]);
     if (value == nullptr) {
-      MS_LOG(ERROR) << "Get source pointer failed.";
+      MS_LOG(ERROR) << "Get attribute's source pointer failed, attribute index: " << i;
       return RET_NULL_PTR;
     }
     std::string name(attr_names[i]);
@@ -187,6 +191,10 @@ CNodePtr BuildSwitchStructure(ResMgrHandle res_mgr, GraphHandle graph, NodeHandl
   MS_EXCEPTION_IF_NULL(switch_input);
   MS_EXCEPTION_IF_CHECK_FAIL(input_num == switchInputNum, "Switch's input number must be 3!");
   NodeHandle switch_op = MSNewOp(res_mgr, graph, "Switch", switch_input, input_num, NULL, NULL, 0);
+  if (switch_op == nullptr) {
+    MS_LOG(ERROR) << "Get Switch op failed!";
+    return nullptr;
+  }
   auto src_switch = GetSrcPtr<CNodePtr>(res_mgr, switch_op);
   MS_EXCEPTION_IF_NULL(src_switch);
   auto fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
@@ -402,6 +410,203 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
   }
 }
 
+BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
+  auto build_shape_func = [](int64_t **out_shapes, size_t *out_dims, size_t out_num) -> BaseShapePtr {
+    BaseShapePtr infer_shape;
+    if (out_num == 1) {
+      int64_t *shape = out_shapes[0];
+      ShapeVector shape_vec(shape, shape + out_dims[0]);
+      infer_shape = std::make_shared<Shape>(shape_vec);
+    } else {
+      std::vector<BaseShapePtr> output_list;
+      for (size_t i = 0; i < out_num; i++) {
+        int64_t *shape = out_shapes[i];
+        ShapeVector shape_vec(shape, shape + out_dims[i]);
+        auto each_shape = std::make_shared<Shape>(shape_vec);
+        output_list.push_back(each_shape);
+      }
+      infer_shape = std::make_shared<TupleShape>(output_list);
+    }
+    return infer_shape;
+  };
+  if (info.output_shapes != nullptr) {
+    if (info.output_dims == nullptr) {
+      MS_LOG(ERROR) << "Output dims must be given if output shapes are specified!";
+      return nullptr;
+    }
+    BaseShapePtr infer_shape = build_shape_func(info.output_shapes, info.output_dims, info.output_num);
+    return infer_shape;
+  } else if (info.shape_infer_func != nullptr) {
+    size_t input_num = info.input_num;
+    size_t output_num = info.output_num;
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num * sizeof(size_t) > maxMallocSize, nullptr,
+                                 "The input_num is too large for memory allocation.");
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num * sizeof(size_t) > maxMallocSize, nullptr,
+                                 "The output_num is too large for memory allocation.");
+    auto *out_dims_arr = new size_t[output_num];
+    auto **out_shapes_arr = new int64_t *[output_num];
+    for (size_t i = 0; i < output_num; i++) {
+      out_shapes_arr[i] = new int64_t[MAX_DIMS];
+    }
+    auto *in_dims_arr = new size_t[input_num];
+    auto **in_shapes_arr = new int64_t *[input_num];
+    for (size_t i = 0; i < input_num; i++) {
+      auto in_shape = input_args[i]->BuildShape();
+      MS_EXCEPTION_IF_NULL(in_shape);
+      auto in_shape_ptr = in_shape->cast<ShapePtr>();
+      MS_EXCEPTION_IF_NULL(in_shape_ptr);
+      auto in_shape_vec = in_shape_ptr->shape();
+      auto in_shape_dim = in_shape_vec.size();
+      in_dims_arr[i] = in_shape_dim;
+      in_shapes_arr[i] = new int64_t[in_shape_dim];
+      for (size_t j = 0; j < in_shape_dim; j++) {
+        in_shapes_arr[i][j] = in_shape_vec[j];
+      }
+    }
+    auto ret = info.shape_infer_func(in_shapes_arr, in_dims_arr, input_num, out_shapes_arr, out_dims_arr, output_num);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to call the shape infer function of custom op!";
+      return nullptr;
+    }
+    BaseShapePtr infer_shape = build_shape_func(out_shapes_arr, out_dims_arr, output_num);
+    for (size_t i = 0; i < input_num; i++) {
+      delete[] in_shapes_arr[i];
+    }
+    delete[] in_shapes_arr;
+    delete[] in_dims_arr;
+    for (size_t i = 0; i < output_num; i++) {
+      delete[] out_shapes_arr[i];
+    }
+    delete[] out_shapes_arr;
+    delete[] out_dims_arr;
+    return infer_shape;
+  } else {
+    MS_LOG(ERROR) << "Either output shape or output shape infer function must be specified!";
+    return nullptr;
+  }
+}
+
+TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBasePtr> &input_args) {
+  auto build_type_func = [](const DataTypeC *out_dtypes, size_t out_num) -> TypePtr {
+    TypePtr infer_type;
+    if (out_num == 1) {
+      DataTypeC dtype = out_dtypes[0];
+      auto cxx_type = mindspore::TypeId(dtype);
+      infer_type = mindspore::TypeIdToType(cxx_type);
+    } else {
+      std::vector<TypePtr> type_list;
+      for (size_t i = 0; i < out_num; i++) {
+        DataTypeC dtype = out_dtypes[i];
+        auto cxx_type = mindspore::TypeId(dtype);
+        auto type_val = mindspore::TypeIdToType(cxx_type);
+        type_list.push_back(type_val);
+      }
+      infer_type = std::make_shared<mindspore::Tuple>(type_list);
+    }
+    return infer_type;
+  };
+  if (info.output_dtypes != nullptr) {
+    TypePtr infer_dtype = build_type_func(info.output_dtypes, info.output_num);
+    return infer_dtype;
+  } else if (info.shape_infer_func != nullptr) {
+    size_t input_num = info.input_num;
+    size_t output_num = info.output_num;
+    auto *in_dtypes_arr = new DataTypeC[input_num];
+    auto *out_dtypes_arr = new DataTypeC[output_num];
+    for (size_t i = 0; i < input_num; i++) {
+      auto in_type = input_args[i]->BuildType();
+      MS_EXCEPTION_IF_NULL(in_type);
+      auto real_type = in_type;
+      if (in_type->isa<TensorTypeImpl>()) {
+        auto tensor_type = in_type->cast<TensorTypePtr>();
+        real_type = tensor_type->element();
+      }
+      auto in_type_id = (enum DataTypeC)(real_type->type_id());
+      in_dtypes_arr[i] = in_type_id;
+    }
+    STATUS ret = info.dtype_infer_func(in_dtypes_arr, input_num, out_dtypes_arr, output_num);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to call the dtype infer function of custom op!";
+      return nullptr;
+    }
+    TypePtr infer_dtype = build_type_func(out_dtypes_arr, output_num);
+    delete[] in_dtypes_arr;
+    delete[] out_dtypes_arr;
+    return infer_dtype;
+  } else {
+    MS_LOG(ERROR) << "Either output dtype or output dtype infer function must be specified!";
+    return nullptr;
+  }
+}
+
+NodeHandle MSNewCustomOp(ResMgrHandle res_mgr, GraphHandle graph, Handle const inputs[], size_t input_num,
+                         CustomOpInfo info) {
+  if (res_mgr == nullptr || graph == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
+    return nullptr;
+  }
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(input_num != info.input_num, nullptr,
+                               "Input node number is not matched with the input number specified in custom op info.");
+  auto ret = CheckCustomOpInfo(info);
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(ret != RET_OK, nullptr, "Invalid custom op info.");
+  try {
+    auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
+    auto org_infer = res_mgr_ptr->GetInfer();
+    res_mgr_ptr->SetInfer(false);
+    NodeHandle custom_op =
+      MSNewOp(res_mgr, graph, "Custom", inputs, info.input_num, info.attr_name, info.attr_value, info.attr_num);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(custom_op == nullptr, nullptr, "Create Custom op failed!");
+    res_mgr_ptr->SetInfer(org_infer);
+    // Supplement necessary attributes
+    ret = MSOpSetAttrString(res_mgr, custom_op, mindspore::kAttrFuncType, info.func_type);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(ret != RET_OK, nullptr, "Custom op set func type attribute failed.");
+    ret = MSOpSetAttrString(res_mgr, custom_op, mindspore::kAttrFuncName, info.func_name);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(ret != RET_OK, nullptr, "Custom op set func name attribute failed.");
+    // Build json object
+    nlohmann::json json_obj = ConvertOpInfoToJson(info);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(json_obj.empty(), nullptr, "Failed to convert op info to json.");
+    // Create op info and set info map
+    auto op_name = json_obj.at(mindspore::kernel::kOpName).get<std::string>();
+    auto imply_type = json_obj.at(mindspore::kernel::kImplyType).get<std::string>();
+    std::string func_name = info.func_name;
+    std::string target_name = info.target;
+    auto iter = mindspore::kernel::kImplyTypeStrToEnumMap.find(imply_type);
+    if (iter == mindspore::kernel::kImplyTypeStrToEnumMap.end()) {
+      MS_LOG(ERROR) << "Not support imply_type: " << imply_type;
+      return nullptr;
+    }
+    auto op_info = mindspore::kernel::OpLib::DecodeOpInfo(json_obj, iter->second, "");
+    if (op_info == nullptr) {
+      MS_LOG(ERROR) << "Decode op info failed: func_name: " << func_name << " imply_type " << imply_type;
+      return nullptr;
+    }
+    op_info->set_processor(imply_type);
+    auto key = op_name + imply_type;
+    auto &op_infos = mindspore::kernel::OpLib::GetOpInfoMap();
+    (void)op_infos[iter->second].insert(std::pair<std::string, mindspore::kernel::OpInfoPtr>(key, op_info));
+    // Infer shape and type
+    mindspore::AbstractBasePtrList abs_list{};
+    for (size_t i = 0; i < input_num; ++i) {
+      auto in_node = GetSrcPtr<AnfNodePtr>(res_mgr, inputs[i]);
+      MS_EXCEPTION_IF_NULL(in_node);
+      abs_list.push_back(in_node->abstract());
+    }
+    auto infer_shape = CustomOpInferShape(info, abs_list);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(infer_shape == nullptr, nullptr, "Custom op infer shape failed!");
+    auto infer_type = CustomOpInferType(info, abs_list);
+    MS_ERROR_IF_TRUE_W_RET_N_LOG(infer_type == nullptr, nullptr, "Custom op infer type failed!");
+    AbstractBasePtr custom_abs = mindspore::abstract::MakeAbstract(infer_shape, infer_type);
+    MS_EXCEPTION_IF_NULL(custom_abs);
+    auto src_op = GetSrcPtr<CNodePtr>(res_mgr, custom_op);
+    MS_EXCEPTION_IF_NULL(src_op);
+    src_op->set_abstract(custom_abs);
+    return custom_op;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Get custom op failed. Error info: " << e.what();
+    return nullptr;
+  }
+}
+
 NodeHandle MSOpGetInput(ResMgrHandle res_mgr, ConstNodeHandle op, size_t i) {
   if (res_mgr == nullptr || op == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] is nullptr.";
@@ -502,7 +707,7 @@ NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph, ConstGraph
   return GetRawPtr(res_mgr, cnode);
 }
 
-NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, TypeId type, const int64_t shape[],
+NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, DataTypeC type, const int64_t shape[],
                             size_t shape_size) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
@@ -523,8 +728,8 @@ NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, TypeId type
   return GetRawPtr(res_mgr, param);
 }
 
-NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, TypeId type, const int64_t shape[],
-                               size_t shape_size, size_t data_len) {
+NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
+                               const int64_t shape[], size_t shape_size, size_t data_len) {
   if (res_mgr == nullptr || graph == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [data] or [shape] is nullptr.";
     return nullptr;
@@ -614,8 +819,8 @@ void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle node) {
   }
 }
 
-NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, TypeId type, const int64_t shape[], size_t shape_size,
-                               size_t data_len) {
+NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
+                               size_t shape_size, size_t data_len) {
   if (res_mgr == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [data] or [shape] is nullptr.";
     return nullptr;
@@ -772,7 +977,7 @@ NodeHandle MSNewTupleConstantInt64(ResMgrHandle res_mgr, const int64_t vec[], si
   return GetRawPtr(res_mgr, value_node);
 }
 
-NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, TypeId type) {
+NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type) {
   MS_LOG(INFO) << "New Type Value: " << type;
   if (res_mgr == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
@@ -1013,16 +1218,16 @@ STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHandle node, 
   }
 }
 
-TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
+DataTypeC MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error) {
   MS_LOG(INFO) << "Get Type Constant Value!";
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
   if (res_mgr == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] is nullptr.";
     *error = RET_NULL_PTR;
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
   try {
     auto node_impl = GetSrcPtr<ValueNodePtr>(res_mgr, node);
@@ -1030,13 +1235,13 @@ TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS
     auto val = node_impl->value();
     MS_EXCEPTION_IF_NULL(val);
     auto val_type = val->cast<TypePtr>();
-    auto ret_val = static_cast<TypeId>(val_type->type_id());
+    auto ret_val = static_cast<DataTypeC>(val_type->type_id());
     *error = RET_OK;
     return ret_val;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Get Type Constant value failed. Error info: " << e.what();
     *error = RET_ERROR;
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
 }
 

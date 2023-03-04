@@ -38,9 +38,9 @@ TEST_F(TestCApiTensor, test_new_tensor) {
   ASSERT_TRUE(res_mgr != nullptr);
   float data_value[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   int64_t data_shape[] = {1, 1, 3, 3};
-  TensorHandle tensor_false = MSNewTensor(res_mgr, NULL, kNumberTypeFloat32, data_shape, 4, 9 * sizeof(float));
+  TensorHandle tensor_false = MSNewTensor(res_mgr, NULL, MS_FLOAT32, data_shape, 4, 9 * sizeof(float));
   ASSERT_TRUE(tensor_false == nullptr);
-  TensorHandle tensor = MSNewTensor(res_mgr, data_value, kNumberTypeFloat32, data_shape, 4, 9 * sizeof(float));
+  TensorHandle tensor = MSNewTensor(res_mgr, data_value, MS_FLOAT32, data_shape, 4, 9 * sizeof(float));
   ASSERT_TRUE(tensor != nullptr);
   size_t ele_num = MSTensorGetElementNum(res_mgr, tensor, &ret);
   ASSERT_EQ(ret, RET_OK);
@@ -54,11 +54,11 @@ TEST_F(TestCApiTensor, test_new_tensor) {
   ASSERT_EQ(res[0], 0);
   ASSERT_EQ(res[4], 4);
   ASSERT_EQ(res[8], 8);
-  ret = MSTensorSetDataType(res_mgr, tensor, kNumberTypeInt32);
+  ret = MSTensorSetDataType(res_mgr, tensor, MS_INT32);
   ASSERT_EQ(ret, RET_OK);
-  TypeId type = MSTensorGetDataType(res_mgr, tensor, &ret);
+  DataTypeC type = MSTensorGetDataType(res_mgr, tensor, &ret);
   ASSERT_EQ(ret, RET_OK);
-  ASSERT_EQ(type, kNumberTypeInt32);
+  ASSERT_EQ(type, MS_INT32);
   int64_t new_shape[] = {2, 3, 4, 5};
   ret = MSTensorSetShape(res_mgr, tensor, new_shape, 4);
   ASSERT_EQ(ret, RET_OK);
@@ -81,13 +81,13 @@ TEST_F(TestCApiTensor, test_new_tensor_with_src_type) {
   ASSERT_TRUE(res_mgr != nullptr);
   float data_value[] = {0, 1, 2, 3};
   int64_t data_shape[] = {1, 1, 2, 2};
-  TensorHandle tensor_false = MSNewTensorWithSrcType(res_mgr, data_value, NULL, 4, kNumberTypeInt32, kNumberTypeFloat32);
+  TensorHandle tensor_false = MSNewTensorWithSrcType(res_mgr, data_value, NULL, 4, MS_INT32, MS_FLOAT32);
   ASSERT_TRUE(tensor_false == nullptr);
-  TensorHandle tensor = MSNewTensorWithSrcType(res_mgr, data_value, data_shape, 4, kNumberTypeInt32, kNumberTypeFloat32);
+  TensorHandle tensor = MSNewTensorWithSrcType(res_mgr, data_value, data_shape, 4, MS_INT32, MS_FLOAT32);
   ASSERT_TRUE(tensor != nullptr);
-  TypeId type = MSTensorGetDataType(res_mgr, tensor, &ret);
+  DataTypeC type = MSTensorGetDataType(res_mgr, tensor, &ret);
   ASSERT_EQ(ret, RET_OK);
-  ASSERT_EQ(type, kNumberTypeInt32);
+  ASSERT_EQ(type, MS_INT32);
   MSResourceManagerDestroy(res_mgr);
 }
 }

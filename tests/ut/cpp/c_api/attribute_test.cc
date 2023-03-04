@@ -44,7 +44,7 @@ TEST_F(TestCApiAttr, test_attr) {
   AttrHandle attr1 = MSNewAttrInt64(res_mgr, 1);
   ASSERT_TRUE(attr1 != nullptr);
   int64_t attr2_raw[] = {2, 2};
-  AttrHandle attr2 = MSOpNewAttrs(res_mgr, attr2_raw, 2, kNumberTypeInt64);
+  AttrHandle attr2 = MSNewAttrArray(res_mgr, attr2_raw, 2, MS_INT64);
   ASSERT_TRUE(attr2 != nullptr);
   char name1[] = "attr1";
   char name2[] = "attr2";
@@ -52,7 +52,7 @@ TEST_F(TestCApiAttr, test_attr) {
   AttrHandle attrs[] = {attr1, attr2};
   size_t attr_num = 2;
 
-  NodeHandle x = MSNewPlaceholder(res_mgr, fg, kNumberTypeInt32, NULL, 0);
+  NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
   NodeHandle y = MSNewScalarConstantInt32(res_mgr, 2);
   ASSERT_TRUE(y != nullptr);
@@ -76,7 +76,7 @@ TEST_F(TestCApiAttr, test_attr) {
   ASSERT_EQ(attr1_retrived, 2);
   values[0] = 1;
   values[1] = 1;
-  ret = MSOpSetAttrArray(res_mgr, op_add, "attr2", values, 2, kNumberTypeInt64);
+  ret = MSOpSetAttrArray(res_mgr, op_add, "attr2", values, 2, MS_INT64);
   ASSERT_EQ(ret, RET_OK);
   ret = MSOpGetAttrArrayInt64(res_mgr, op_add, "attr2", values, 2);
   ASSERT_EQ(ret, RET_OK);

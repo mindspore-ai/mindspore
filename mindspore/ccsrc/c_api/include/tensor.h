@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_FUNC_TENSOR_H_
-#define MINDSPORE_CCSRC_C_API_IR_FUNC_TENSOR_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_FUNC_TENSOR_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_FUNC_TENSOR_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -39,7 +39,7 @@ extern "C" {
 /// \param[in] data_len The length of data in bytes.
 ///
 /// \return The pointer of the created tensor instance.
-MIND_C_API TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, TypeId type, const int64_t shape[],
+MIND_C_API TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
                                     size_t shape_size, size_t data_len);
 
 /// \brief Create a tensor with path to a space-sperated txt file.
@@ -51,8 +51,8 @@ MIND_C_API TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, TypeId typ
 /// \param[in] path path to the file.
 ///
 /// \return The pointer of the created tensor instance.
-MIND_C_API TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, const int64_t shape[], size_t shape_size,
-                                            const char *path);
+MIND_C_API TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, DataTypeC type, const int64_t shape[],
+                                            size_t shape_size, const char *path);
 
 /// \brief Create a tensor with input data buffer and given source data type.
 ///
@@ -65,7 +65,7 @@ MIND_C_API TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, c
 ///
 /// \return The pointer of the created tensor instance.
 MIND_C_API TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int64_t shape[],
-                                               size_t shape_size, TypeId tensor_type, TypeId src_type);
+                                               size_t shape_size, DataTypeC tensor_type, DataTypeC src_type);
 
 /// \brief Get the raw pointer of tensor data.
 ///
@@ -82,7 +82,7 @@ MIND_C_API void *MSTensorGetData(ResMgrHandle res_mgr, ConstTensorHandle tensor)
 /// \param[in] type The data type to be set.
 ///
 /// \return Error code that indicate whether the functions executed successfully.
-MIND_C_API STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, TypeId type);
+MIND_C_API STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, DataTypeC type);
 
 /// \brief Get tensor data type.
 ///
@@ -90,7 +90,7 @@ MIND_C_API STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor,
 /// \param[in] tensor The pointer of the tensor instance.
 ///
 /// \return The data type of tensor.
-MIND_C_API TypeId MSTensorGetDataType(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error);
+MIND_C_API DataTypeC MSTensorGetDataType(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error);
 
 /// \brief Get the byte size of tensor data.
 ///
@@ -142,4 +142,4 @@ MIND_C_API STATUS MSTensorGetShape(ResMgrHandle res_mgr, ConstTensorHandle tenso
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_FUNC_TENSOR_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_FUNC_TENSOR_H_

@@ -36,11 +36,11 @@ class BACKEND_EXPORT OpLib {
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type,
                                         bool is_dynamic_shape = false);
   static std::map<mindspore::kernel::OpImplyType, std::map<std::string, std::shared_ptr<OpInfo>>> &GetOpInfoMap();
+  static std::shared_ptr<OpInfo> DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type,
+                                              const std::string &impl_path);
 
  private:
   static bool RegOpFromLocalInfo();
-  static std::shared_ptr<OpInfo> DecodeOpInfo(const nlohmann::json &obj, const OpImplyType &imply_type,
-                                              const std::string &impl_path);
   static bool DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
                          const std::shared_ptr<OpInfo> &op_info);
   static bool DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,

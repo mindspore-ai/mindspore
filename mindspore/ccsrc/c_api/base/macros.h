@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_C_API_BASE_MACROS_H_
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
-#ifdef BUILDING_CORE_DLL
+#ifdef BUILDING_C_API_DLL
 #define MIND_C_API __declspec(dllexport)
 #else
 #define MIND_C_API __declspec(dllimport)
@@ -26,5 +26,7 @@
 #else
 #define MIND_C_API __attribute__((visibility("default")))
 #endif
+
+#define MAX_DIMS 8
 
 #endif  // MINDSPORE_CCSRC_C_API_BASE_MACROS_H_

@@ -39,7 +39,7 @@ TEST_F(TestCApiNode, test_op_node) {
   ASSERT_TRUE(res_mgr != nullptr);
   GraphHandle fg = MSFuncGraphCreate(res_mgr);
   ASSERT_TRUE(fg != nullptr);
-  NodeHandle x = MSNewPlaceholder(res_mgr, fg, kNumberTypeInt32, NULL, 0);
+  NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
   NodeHandle y = MSNewScalarConstantInt32(res_mgr, 3);
   ASSERT_TRUE(y != nullptr);
@@ -83,9 +83,9 @@ TEST_F(TestCApiNode, test_normal_nodes) {
   // test Tensor Variable
   int64_t a_shape[] = {1, 2};
   float a_data[] = {1.2, 3.4};
-  NodeHandle a1 = MSNewTensorVariable(res_mgr, fg, a_data, kNumberTypeFloat32, a_shape, 2, 2 * sizeof(float));
+  NodeHandle a1 = MSNewTensorVariable(res_mgr, fg, a_data, MS_FLOAT32, a_shape, 2, 2 * sizeof(float));
   ASSERT_TRUE(a1 != nullptr);
-  TensorHandle tensor1 = MSNewTensor(res_mgr, a_data, kNumberTypeFloat32, a_shape, 2, 2 * sizeof(float));
+  TensorHandle tensor1 = MSNewTensor(res_mgr, a_data, MS_FLOAT32, a_shape, 2, 2 * sizeof(float));
   ASSERT_TRUE(tensor1 != nullptr);
   NodeHandle a2 = MSNewTensorVariableFromTensor(res_mgr, fg, tensor1);
   ASSERT_TRUE(a2 != nullptr);
@@ -105,9 +105,9 @@ TEST_F(TestCApiNode, test_normal_nodes) {
   // test Tensor Constant
   int64_t b_shape[] = {1, 2};
   int b_data[] = {4, 3};
-  NodeHandle b1 = MSNewTensorConstant(res_mgr, b_data, kNumberTypeInt32, b_shape, 2, 2 * sizeof(int));
+  NodeHandle b1 = MSNewTensorConstant(res_mgr, b_data, MS_INT32, b_shape, 2, 2 * sizeof(int));
   ASSERT_TRUE(b1 != nullptr);
-  TensorHandle tensor2 = MSNewTensor(res_mgr, b_data, kNumberTypeInt32, b_shape, 2, 2 * sizeof(int));
+  TensorHandle tensor2 = MSNewTensor(res_mgr, b_data, MS_INT32, b_shape, 2, 2 * sizeof(int));
   ASSERT_TRUE(tensor2 != nullptr);
   NodeHandle b2 = MSNewTensorConstantFromTensor(res_mgr, tensor2);
   ASSERT_TRUE(b2 != nullptr);
@@ -157,11 +157,11 @@ TEST_F(TestCApiNode, test_normal_nodes) {
   ASSERT_EQ(ret, RET_OK);
   ASSERT_EQ(vec_get[0], vec[0]);
   ASSERT_EQ(vec_get[1], vec[1]);
-  NodeHandle x6 = MSNewTypeConstant(res_mgr, kNumberTypeInt32);
+  NodeHandle x6 = MSNewTypeConstant(res_mgr, MS_INT32);
   ASSERT_TRUE(x6 != nullptr);
-  TypeId value_6 = MSTypeConstantGetValue(res_mgr, x6, &ret);
+  DataTypeC value_6 = MSTypeConstantGetValue(res_mgr, x6, &ret);
   ASSERT_EQ(ret, RET_OK);
-  ASSERT_EQ(value_6, kNumberTypeInt32);
+  ASSERT_EQ(value_6, MS_INT32);
   MSResourceManagerDestroy(res_mgr);
 }
 }

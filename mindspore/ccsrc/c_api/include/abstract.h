@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_ABSTRACT_H_
-#define MINDSPORE_CCSRC_C_API_IR_ABSTRACT_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_ABSTRACT_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_ABSTRACT_H_
 
 #include <stdlib.h>
 #include "c_api/base/macros.h"
@@ -46,7 +46,7 @@ MIND_C_API STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, Co
 /// \param[in] shape_size The size of the shape array, i.e., the dimension of node output.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId type, const int64_t shape[],
+MIND_C_API STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, DataTypeC type, const int64_t shape[],
                                 size_t shape_size);
 
 /// \brief Get multiple Abstract to the node. Usually used in the case that the node has multiple outputs.
@@ -58,10 +58,10 @@ MIND_C_API STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId ty
 /// \param[in] shape_sizes The array contains the size of all shape, i.e., the dimension of all node output.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSSetMultiAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId type, const int64_t **shapes,
+MIND_C_API STATUS MSSetMultiAbstract(ResMgrHandle res_mgr, NodeHandle node, DataTypeC type, const int64_t **shapes,
                                      const size_t shape_sizes[], size_t abs_num);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_ABSTRACT_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_ABSTRACT_H_

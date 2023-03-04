@@ -39,7 +39,7 @@ TEST_F(TestCApiGraph, test_multi_output_graph) {
   ASSERT_TRUE(res_mgr != nullptr);
   GraphHandle fg = MSFuncGraphCreate(res_mgr);
   ASSERT_TRUE(fg != nullptr);
-  NodeHandle x = MSNewPlaceholder(res_mgr, fg, kNumberTypeInt32, NULL, 0);
+  NodeHandle x = MSNewPlaceholder(res_mgr, fg, MS_INT32, NULL, 0);
   ASSERT_TRUE(x != nullptr);
   NodeHandle y = MSNewScalarConstantInt32(res_mgr, 2);
   ASSERT_TRUE(y != nullptr);

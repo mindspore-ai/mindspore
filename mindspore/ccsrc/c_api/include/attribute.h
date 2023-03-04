@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_ATTRIBUTE_H_
-#define MINDSPORE_CCSRC_C_API_IR_ATTRIBUTE_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_ATTRIBUTE_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_ATTRIBUTE_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -76,7 +76,7 @@ MIND_C_API STATUS MSOpSetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, co
 /// \param[in] value The input value of the attribute.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, TypeId value);
+MIND_C_API STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value);
 
 /// \brief Set the attribute of the target node with the given name and value.
 ///
@@ -87,7 +87,7 @@ MIND_C_API STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const cha
 /// \param[in] vec_size number of elements in the array.
 ///
 /// \return Error code indicates whether the function executed successfully.
-MIND_C_API STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, TypeId value[],
+MIND_C_API STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value[],
                                        size_t vec_size);
 
 /// \brief Set the attribute of the target node with the given name and value.
@@ -97,12 +97,12 @@ MIND_C_API STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, cons
 /// \param[in] attr_name  The attribute name associates with the node.
 /// \param[in] value The input value array of the attribute.
 /// \param[in] vec_size number of elements in the array.
-/// \param[in] dataType Data type id. Currently support kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32,
+/// \param[in] data_type Data type id. Currently support kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat32,
 /// kNumberTypeBool.
 ///
 /// \return Error code indicates whether the function executed successfully.
 MIND_C_API STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, void *value,
-                                   size_t vec_size, TypeId dataType);
+                                   size_t vec_size, DataTypeC data_type);
 
 /// \brief Set the attribute of the target node with the given name and value as ValueList.
 ///
@@ -178,11 +178,11 @@ MIND_C_API AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v);
 /// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
 /// \param[in] value Given array.
 /// \param[in] vec_size Given array size.
-/// \param[in] dataType Datatype of the array.
+/// \param[in] data_type Datatype of the array.
 ///
 /// \return Attribute value handle
-MIND_C_API AttrHandle MSOpNewAttrs(ResMgrHandle res_mgr, void *value, size_t vec_size, TypeId data_type);
+MIND_C_API AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, DataTypeC data_type);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_ATTRIBUTE_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_ATTRIBUTE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_GRAPH_H_
-#define MINDSPORE_CCSRC_C_API_IR_GRAPH_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_GRAPH_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_GRAPH_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -150,4 +150,4 @@ MIND_C_API STATUS MSFuncGraphRun(ResMgrHandle res_mgr, GraphHandle graph, Tensor
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_GRAPH_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_GRAPH_H_

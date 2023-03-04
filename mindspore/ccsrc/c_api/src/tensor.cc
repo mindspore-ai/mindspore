@@ -36,10 +36,9 @@ void GetDataByFile(std::vector<T> data, const char *path, size_t *elem_size) {
   }
   fin.close();
   *elem_size = data.size() * sizeof(T);
-  return;
 }
 
-TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, TypeId type, const int64_t shape[], size_t shape_size,
+TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[], size_t shape_size,
                          size_t data_len) {
   if (res_mgr == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [data] or [shape] is nullptr.";
@@ -56,7 +55,7 @@ TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, TypeId type, const in
   return GetRawPtr(res_mgr, tensor);
 }
 
-TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, const int64_t shape[], size_t shape_size,
+TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, DataTypeC type, const int64_t shape[], size_t shape_size,
                                  const char *path) {
   if (res_mgr == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [shape] is nullptr.";
@@ -67,26 +66,26 @@ TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, const int64_
   try {
     size_t data_len;
     switch (type) {
-      case TypeId::kNumberTypeInt32: {
+      case MS_INT32: {
         std::vector<int32_t> data;
         (void)GetDataByFile<int32_t>(data, path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case TypeId::kNumberTypeInt64: {
+      case MS_INT64: {
         std::vector<int64_t> data;
         (void)GetDataByFile<int64_t>(data, path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case TypeId::kNumberTypeFloat32: {
+      case MS_FLOAT32: {
         std::vector<float> data;
         (void)GetDataByFile<float>(data, path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
       default:
-        MS_LOG(ERROR) << "Unrecognized datatype w/ TypeId: " << type << std::endl;
+        MS_LOG(ERROR) << "Unrecognized datatype w/ DataTypeC ID: " << type << std::endl;
         return nullptr;
     }
   } catch (const std::exception &e) {
@@ -97,7 +96,7 @@ TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, TypeId type, const int64_
 }
 
 TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int64_t shape[], size_t shape_size,
-                                    TypeId tensor_type, TypeId src_type) {
+                                    DataTypeC tensor_type, DataTypeC src_type) {
   if (res_mgr == nullptr || data == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [data] or [shape] is nullptr.";
     return nullptr;
@@ -126,7 +125,7 @@ void *MSTensorGetData(ResMgrHandle res_mgr, ConstTensorHandle tensor) {
   return src_tensor->data_c();
 }
 
-STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, TypeId type) {
+STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, DataTypeC type) {
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";
     return RET_ERROR;
@@ -140,24 +139,24 @@ STATUS MSTensorSetDataType(ResMgrHandle res_mgr, TensorHandle tensor, TypeId typ
   return RET_OK;
 }
 
-TypeId MSTensorGetDataType(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
+DataTypeC MSTensorGetDataType(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {
   if (error == nullptr) {
     MS_LOG(ERROR) << "Input status flag [error] is nullptr.";
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";
     *error = RET_NULL_PTR;
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
   auto src_tensor = GetSrcPtr<TensorPtr>(res_mgr, tensor);
   if (src_tensor == nullptr) {
     MS_LOG(ERROR) << "Get source pointer failed.";
     *error = RET_NULL_PTR;
-    return (enum TypeId)0;
+    return MS_INVALID_TYPE;
   }
   *error = RET_OK;
-  return (enum TypeId)(src_tensor->data_type_c());
+  return (enum DataTypeC)(src_tensor->data_type_c());
 }
 
 size_t MSTensorGetDataSize(ResMgrHandle res_mgr, ConstTensorHandle tensor, STATUS *error) {

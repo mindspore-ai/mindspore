@@ -24,6 +24,10 @@ else()
     target_link_libraries(mindspore_c_api PRIVATE ${PYTHON_LIBRARIES})
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_compile_definitions(BUILDING_C_API_DLL)
+endif()
+
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_c_api PRIVATE ${SECUREC_LIBRARY} mindspore_backend mindspore_core
             mindspore_common proto_input mindspore::protobuf)

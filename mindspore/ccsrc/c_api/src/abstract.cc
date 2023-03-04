@@ -40,7 +40,7 @@ STATUS MSAssignAbstract(ResMgrHandle res_mgr, NodeHandle cur_node, ConstNodeHand
   return RET_OK;
 }
 
-STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId type, const int64_t shape[], size_t shape_size) {
+STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, DataTypeC type, const int64_t shape[], size_t shape_size) {
   if (res_mgr == nullptr || node == nullptr || shape == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [shape] are nullptr.";
     return RET_NULL_PTR;
@@ -56,7 +56,7 @@ STATUS MSSetAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId type, const i
   return RET_OK;
 }
 
-STATUS MSSetMultiAbstract(ResMgrHandle res_mgr, NodeHandle node, TypeId type, const int64_t **shapes,
+STATUS MSSetMultiAbstract(ResMgrHandle res_mgr, NodeHandle node, DataTypeC type, const int64_t **shapes,
                           const size_t shape_sizes[], size_t abs_num) {
   if (res_mgr == nullptr || node == nullptr || shapes == nullptr || shape_sizes == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [node] or [shapes] or [shape_sizes] are nullptr.";
