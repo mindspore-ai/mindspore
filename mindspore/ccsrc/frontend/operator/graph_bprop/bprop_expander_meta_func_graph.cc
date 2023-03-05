@@ -262,6 +262,11 @@ void RegNNBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(AdaptiveAvgPool3D);
   REGISTER_EXPANDER_BPROP_IMPL(FractionalAvgPool);
   REGISTER_EXPANDER_BPROP_IMPL(PSROIPooling);
+  REGISTER_EXPANDER_BPROP_IMPL(BiasAddGrad);
+  REGISTER_EXPANDER_BPROP_IMPL(MaxPoolGrad);
+  REGISTER_EXPANDER_BPROP_IMPL(TopK);
+  REGISTER_EXPANDER_BPROP_IMPL(BCEWithLogitsLoss);
+  REGISTER_EXPANDER_BPROP_IMPL(KLDivLoss);
 }
 
 void RegArrayBpropExpanderOps1() {
@@ -321,7 +326,9 @@ void RegArrayBpropExpanderOps2() {}
 void RegClipBpropExpanderOps() {}
 void RegCommBpropExpanderOps() {}
 void RegInnerBpropExpanderOps() {}
-void RegOtherBpropExpanderOps() {}
+
+void RegOtherBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(Assign); }
+
 void RegQuantBpropExpanderOps() {}
 void RegSparseBpropExpanderOps() {}
 

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_set>
 #include <functional>
 
 #include "include/common/expander/core/node.h"
@@ -56,12 +57,39 @@ class BpropIRBuilder : public Emitter {
 
   // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
+  NodePtr Shape(const NodePtr &node, bool tensor = false) const {
+    auto shape = GetShape(node);
+    if (tensor) {
+      return IsDynamic(shape) ? Emit("TensorShape", {node}) : Tensor(shape);
+    } else {
+      return IsDynamic(shape) ? Emit("Shape", {node}) : Value<ShapeVector>(shape);
+    }
+  }
+
   // For node that has multiple outputs
   std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }
   TypePtr GetDtype(const NodePtr &node) const { return node->dtype(); }
   TypeId GetDtypeId(const NodePtr &node) const { return GetDtype(node)->type_id(); }
   ValuePtr GetAttr(const NodePtr &node, const std::string &attr) const;
   int64_t GetSize(const NodePtr &node) const;
+  NodePtr DynSize(const NodePtr &node, const TypePtr &type) const { return Cast(DynSize(node), type); }
+  NodePtr DynSize(const NodePtr &node, TypeId type_id) const { return Cast(DynSize(node), type_id); }
+  NodePtr DynSize(const NodePtr &node) const {
+    auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+      auto shape = inputs.at(0);
+      int64_t size = 1;
+      for (auto &i : shape) {
+        size *= i;
+      }
+      return {{size}};
+    };
+    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {1}; };
+    return ShapeCalc({node}, shape_func, infer_func, {})[0];
+  }
+  NodePtr Range(const NodePtr &limit) const { return Range(Tensor(0, kInt64), limit, Tensor(1, kInt64)); }
+  NodePtr Range(const NodePtr &start, const NodePtr &limit, const NodePtr &delta, int64_t max_len = 1000000) const {
+    return Emit("Range", {start, limit, delta}, {{"maxlen", MakeValue(max_len)}});
+  }
 
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;
