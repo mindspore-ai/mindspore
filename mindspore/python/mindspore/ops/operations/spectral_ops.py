@@ -26,7 +26,7 @@ class BartlettWindow(Primitive):
     Refer to :func:`mindspore.ops.bartlett_window` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> window_length = Tensor(5, mstype.int32)

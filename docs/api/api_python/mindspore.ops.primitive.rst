@@ -527,7 +527,6 @@ Array操作
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
-    mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDeterminant
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
@@ -699,7 +698,6 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.SparseTensorDenseAdd
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 

@@ -526,7 +526,6 @@ Array Operation
     mindspore.ops.LuUnpack
     mindspore.ops.MaskedFill
     mindspore.ops.MaskedSelect
-    mindspore.ops.MatrixBandPart
     mindspore.ops.MatrixDeterminant
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
@@ -696,7 +695,6 @@ Sparse Operator
     :nosignatures:
     :template: classtemplate.rst
     
-    mindspore.ops.SparseTensorDenseAdd
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
