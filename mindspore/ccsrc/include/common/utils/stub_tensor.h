@@ -46,6 +46,7 @@ class COMMON_EXPORT StubNode : public Value {
 
   virtual bool SetAbstract(const AbstractBasePtr &abs);
   virtual void SetValue(const ValuePtr &val);
+  void SetException(const std::exception_ptr &e_ptr);
 
   AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
@@ -60,6 +61,7 @@ class COMMON_EXPORT StubNode : public Value {
   ValuePtr value_;
   std::atomic<bool> wait_flag_{false};
   StubNodePtr top_node_;
+  std::exception_ptr e_ptr_{};
 };
 
 class TensorNode : public StubNode {

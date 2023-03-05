@@ -66,9 +66,17 @@ void AsyncQueue::WorkerLoop() {
       MS_LOG(ERROR) << "Run task failed, error msg:" << e.what();
       {
         std::unique_lock<std::mutex> lock(task_mutex_);
-        std::queue<std::shared_ptr<AsyncTask>> empty;
-        std::swap(tasks_, empty);
+
         MsException::Instance().SetException();
+        // MsException is unreliable because it gets modified everywhere.
+        auto e_ptr = std::current_exception();
+        task->SetException(e_ptr);
+        while (!tasks_.empty()) {
+          auto &t = tasks_.front();
+          t->SetException(e_ptr);
+          tasks_.pop();
+        }
+
         task_cond_var_.notify_all();
       }
     }
@@ -110,8 +118,13 @@ void AsyncQueue::Clear() {
     }
     std::queue<std::shared_ptr<AsyncTask>> empty;
     std::swap(tasks_, empty);
-    auto task = std::make_shared<WaitTask>();
-    tasks_.push(task);
+
+    // Avoid to push task after WorkerJoin.
+    if (worker_ != nullptr && worker_->joinable()) {
+      auto task = std::make_shared<WaitTask>();
+      tasks_.push(task);
+    }
+
     task_cond_var_.notify_all();
   }
   // There is still one task in progress

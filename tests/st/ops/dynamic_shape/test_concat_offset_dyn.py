@@ -40,7 +40,12 @@ def run_case(run_mode):
     net = ConcatOffsetNet(1)
     net.set_inputs(x0_dyn, x1_dyn)
     output = net(x0, x1)
-    assert np.allclose(expect, output.asnumpy())
+    if run_mode == context.GRAPH_MODE:
+        assert np.allclose(expect, output.asnumpy())
+    else:
+        # In PyNative, set_inputs will be ignored. Static shape for ConcatOffset
+        # infer output is not a tensor, get constant value output.
+        assert np.allclose(expect, output)
 
 
 @pytest.mark.level0

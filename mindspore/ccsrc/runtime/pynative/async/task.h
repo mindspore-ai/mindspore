@@ -26,6 +26,7 @@ class AsyncTask {
   explicit AsyncTask(TaskType task_type) : task_type_(task_type) {}
   virtual ~AsyncTask() = default;
   virtual void Run() = 0;
+  virtual void SetException(const std::exception_ptr &e) {}
 
   TaskType task_type() const { return task_type_; }
 
