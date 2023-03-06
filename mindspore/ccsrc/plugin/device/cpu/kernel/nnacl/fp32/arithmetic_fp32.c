@@ -188,18 +188,8 @@ int ElementOptFloorDivInt(const int *in0, const int *in1, int *out, int size, co
 
 int ElementLogicalAnd(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_NEON
-  float32x4_t vtrue = vdupq_n_f32(1);
-  float32x4_t vfalse = vdupq_n_f32(0);
-  uint32x4_t mask = vmovq_n_u32(((uint32_t)(1u << 31) - 1));
-  uint32x4_t zeros = vdupq_n_u32(0);
-  for (; index <= size - 4; index += C4NUM) {
-    uint32x4_t vin0 = vandq_u32(vreinterpretq_u32_f32(vld1q_f32(in0 + index)), mask);
-    uint32x4_t vin1 = vandq_u32(vreinterpretq_u32_f32(vld1q_f32(in1 + index)), mask);
-    float32x4_t vout = vbslq_f32(vceqq_u32(vandq_u32(vin0, vin1), zeros), vfalse, vtrue);
-    vst1q_f32(out + index, vout);
-  }
-#endif
+
+  SIMD_RUN_NO_SCALAR(ElementLogicalAnd, index, in0, in1, out, size);
   for (; index < size; index++) {
     out[index] = (float)((bool)(in0[index]) & (bool)(in1[index]));
   }
@@ -208,6 +198,7 @@ int ElementLogicalAnd(const float *in0, const float *in1, float *out, int size) 
 
 int ElementOptLogicalAnd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
   int index = 0;
+  SIMD_RUN_NO_SCALAR(ElementOptLogicalAnd, index, in0, in1, out, size, param);
   if (param->in_elements_num0_ == 1) {
     for (; index < size; index++) {
       out[index] = (float)((bool)(in0[0]) & (bool)(in1[index]));

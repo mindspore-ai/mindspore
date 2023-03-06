@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// clang-format off
 #ifndef MINDSPORE_NNACL_ARITHMETIC_@SIMD_INSTRUCTION@_H_
 #define MINDSPORE_NNACL_ARITHMETIC_@SIMD_INSTRUCTION@_H_
 
@@ -247,6 +247,36 @@ static inline size_t AssignSubOpt@SIMD_INSTRUCTION@(int index, float *in0, const
     SIMD_F32 out_tmp = SIMD_SUB_F32(in0_tmp, in1_tmp);
     SIMD_ST_F32(in0 + index, out_tmp);
   }
+  return index;
+}
+
+int ElementLogicalAnd@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, float *out, int size) {
+  for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 in0_tmp = SIMD_LD_F32(in0 + index);
+    SIMD_F32 in1_tmp = SIMD_LD_F32(in1 + index);
+    SIMD_F32 out_tmp = SIMD_AND_F32(SIMD_GETSIGN_F32(in0_tmp), SIMD_GETSIGN_F32(in1_tmp));
+    SIMD_ST_F32(out + index, out_tmp);
+  }
+  return index;
+}
+
+int ElementOptLogicalAnd@SIMD_INSTRUCTION@(int index, const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    SIMD_F32 in0_tmp = SIMD_MOV_F32(*in0);
+    for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 in1_tmp = SIMD_LD_F32(in1 + index);
+      SIMD_F32 out_tmp = SIMD_AND_F32(SIMD_GETSIGN_F32(in0_tmp), SIMD_GETSIGN_F32(in1_tmp));
+      SIMD_ST_F32(out + index, out_tmp);
+    }
+  } else {
+    SIMD_F32 in1_tmp = SIMD_MOV_F32(*in1);
+    for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+      SIMD_F32 in0_tmp = SIMD_LD_F32(in0 + index);
+      SIMD_F32 out_tmp = SIMD_AND_F32(SIMD_GETSIGN_F32(in0_tmp), SIMD_GETSIGN_F32(in1_tmp));
+      SIMD_ST_F32(out + index, out_tmp);
+    }
+  }
+
   return index;
 }
 
