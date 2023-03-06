@@ -40,7 +40,12 @@ STATUS TopKFusionMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto topk_prim = ops::GetOperator<ops::TopKFusion>(cnode->input(0));
-  dst_prim->AddAttr("largest", MakeValue<bool>(topk_prim->get_largest() != 0));
+  auto largest_attr = topk_prim->GetAttr("largest");
+  if (largest_attr != nullptr) {
+    dst_prim->AddAttr("largest", MakeValue<bool>(topk_prim->get_largest() != 0));
+  } else {
+    MS_LOG(INFO) << "Current model does not have largest attr value";
+  }
 
   auto inputs = cnode->inputs();
   if (inputs.size() != kInputNumThree && inputs.size() != kInputNumTwo) {
