@@ -335,64 +335,61 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
 }
 
 namespace {
-FuncGraphPtr GetFuncGraphFromAbs(const abstract::AbstractBasePtr &abs, const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
+FuncGraphPtr GetFuncGraphFromAbs(const abstract::AbstractBasePtr &abs, const AnfNodePtr &call_node) {
+  MS_EXCEPTION_IF_NULL(call_node);
   if (abs == nullptr) {
-    MS_LOG(ERROR) << "Null abstract, current node: " << anf_node->DebugString();
+    MS_LOG(ERROR) << "Null abstract, current node: " << call_node->DebugString();
     return nullptr;
   }
   if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
     auto abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
     MS_EXCEPTION_IF_NULL(abs_func_graph);
     if (!abs_func_graph->specialized()) {
-      MS_LOG(INFO) << "Unspecilized func graph abstract: " << abs_func_graph->ToString()
-                   << ", node: " << anf_node->DebugString();
+      MS_LOG(INFO) << "Unspecialized func graph abstract: " << abs_func_graph->ToString()
+                   << ", node: " << call_node->DebugString();
     }
     return abs_func_graph->func_graph();
   }
-
   if (abs->isa<abstract::PartialAbstractClosure>()) {
     auto abs_partial_closure = abs->cast<abstract::PartialAbstractClosurePtr>();
     MS_EXCEPTION_IF_NULL(abs_partial_closure);
     auto abs_func = abs_partial_closure->fn();
-    return GetFuncGraphFromAbs(abs_func, anf_node);
+    return GetFuncGraphFromAbs(abs_func, call_node);
   }
-  if (abs->isa<abstract::MetaFuncGraphAbstractClosure>()) {
-    if (!IsValueNode<FuncGraph>(anf_node)) {
-      MS_LOG(EXCEPTION) << "Got unexpected MetaFuncGraphAbstractClosure: " << abs->ToString()
-                        << ", anf node: " << anf_node->DebugString();
-    }
-    return GetValueNode<FuncGraphPtr>(anf_node);
-  }
-  MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", node: " << anf_node->DebugString();
+  MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", call node: " << call_node->DebugString();
   return nullptr;
 }
 }  // namespace
 
-std::vector<FuncGraphPtr> GetFuncGraphsFromAbs(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (IsValueNode<FuncGraph>(anf_node)) {
-    return {GetValueNode<FuncGraphPtr>(anf_node)};
+std::vector<FuncGraphPtr> GetFuncGraphsFromCallNode(const CNodePtr &call_node) {
+  MS_EXCEPTION_IF_NULL(call_node);
+  auto func_node = call_node->input(0);
+  if (IsPrimitiveCNode(func_node, prim::kPrimPartial)) {
+    func_node = func_node->cast<CNodePtr>()->input(1);
   }
-  auto abs = anf_node->abstract();
+  if (IsValueNode<FuncGraph>(func_node)) {
+    return {GetValueNode<FuncGraphPtr>(func_node)};
+  }
+  auto abs = func_node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   if (abs == nullptr) {
-    MS_LOG(ERROR) << "Null abstract, current node: " << anf_node->DebugString();
+    MS_LOG(ERROR) << "Null abstract, current call node: " << call_node->DebugString();
     return {};
   }
   if (!abs->isa<abstract::AbstractFunction>()) {
-    MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", anf_node: " << anf_node->DebugString();
+    MS_LOG(ERROR) << "Unexpected abs: " << abs->ToString() << ", call_node: " << call_node->DebugString();
     return {};
   }
   auto abs_func = abs->cast<abstract::AbstractFunctionPtr>();
   MS_EXCEPTION_IF_NULL(abs_func);
   std::vector<FuncGraphPtr> func_graphs;
   if (abs->isa<abstract::AbstractFuncUnion>()) {
-    auto visit_func = [&func_graphs, &anf_node](const abstract::AbstractFuncAtomPtr &poss) {
-      (void)func_graphs.emplace_back(GetFuncGraphFromAbs(poss, anf_node));
+    auto visit_func = [&func_graphs, &call_node](const abstract::AbstractFuncAtomPtr &poss) {
+      (void)func_graphs.emplace_back(GetFuncGraphFromAbs(poss, call_node));
     };
     abs_func->Visit(visit_func);
   } else {
-    (void)func_graphs.emplace_back(GetFuncGraphFromAbs(abs_func, anf_node));
+    (void)func_graphs.emplace_back(GetFuncGraphFromAbs(abs_func, call_node));
   }
   bool exist_null_fg =
     std::any_of(func_graphs.cbegin(), func_graphs.cend(), [](const FuncGraphPtr &fg) { return fg == nullptr; });

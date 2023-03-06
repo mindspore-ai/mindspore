@@ -1041,7 +1041,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
       auto input0 = cnode->input(0);
       if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
           IsValueNode<FuncGraph>(input0)) {
-        auto func_graphs = abstract::GetFuncGraphsFromAbs(input0);
+        auto func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
         auto graph_has_function_output = [](const FuncGraphPtr &fg) {
           return HasAbstractFunction(fg->output()->abstract());
         };

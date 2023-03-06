@@ -1954,7 +1954,7 @@ void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &
 
     const auto &cnode = control_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &func_graphs = abstract::GetFuncGraphsFromAbs(cnode->input(0));
+    const auto &func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
     if (func_graphs.empty()) {
       MS_LOG(EXCEPTION) << "Get func graphs from abstract failed.";
     }
