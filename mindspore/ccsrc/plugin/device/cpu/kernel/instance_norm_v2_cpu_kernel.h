@@ -18,6 +18,7 @@
 
 #include <set>
 #include <vector>
+#include <map>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
@@ -25,13 +26,15 @@
 
 namespace mindspore {
 namespace kernel {
-class InstanceNormV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class InstanceNormV2CpuKernelMod : public NativeCpuKernelMod {
  public:
   InstanceNormV2CpuKernelMod() = default;
   ~InstanceNormV2CpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -65,7 +68,7 @@ class InstanceNormV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int64_t> x_shape_4d_;
   std::vector<int64_t> batch_channels_2d_;
   bool input_x_is_4d_ = true;
-  int64_t instance_num = 0;
+  int64_t instance_num_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore

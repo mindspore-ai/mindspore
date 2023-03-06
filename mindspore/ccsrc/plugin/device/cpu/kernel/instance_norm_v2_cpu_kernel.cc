@@ -87,8 +87,8 @@ void InstanceNormV2CpuKernelMod::CollectStatsKernel(const kernel::AddressPtr &x,
 template <typename T, template <typename S> class VarTransform>
 void InstanceNormV2CpuKernelMod::UpdateStatsTemplate(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  std::vector<float> _var_sum(instance_num, float_init_zero);
-  std::vector<float> _mean_(instance_num, float_init_zero);
+  std::vector<float> _var_sum(instance_num_, float_init_zero);
+  std::vector<float> _mean_(instance_num_, float_init_zero);
   CollectStatsKernel<T>(inputs[kIndex0], _mean_.data(), _var_sum.data());
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
   MS_EXCEPTION_IF_ZERO("image_size", image_size);
@@ -116,7 +116,7 @@ void InstanceNormV2CpuKernelMod::UpdateStatsTemplate(const std::vector<kernel::A
                                                                              static_cast<double>(running_var_vec(idx)));
     }
   };
-  CPUKernelUtils::ParallelFor(loop_momentum, instance_num, static_cast<float>(kGrainSize));
+  CPUKernelUtils::ParallelFor(loop_momentum, instance_num_, static_cast<float>(kGrainSize));
 }
 
 void InstanceNormV2CpuKernelMod::CollectLinearAndConstant(const typename TTypes<float>::Vec &gamma,
@@ -142,7 +142,7 @@ void InstanceNormV2CpuKernelMod::CollectLinearAndConstant(const typename TTypes<
       _beta_[idx] = beta(idx) - mean * _alpha_[idx];
     }
   };
-  CPUKernelUtils::ParallelFor(loop_instance, instance_num, static_cast<float>(kGrainSize));
+  CPUKernelUtils::ParallelFor(loop_instance, instance_num_, static_cast<float>(kGrainSize));
 }
 
 template <typename T>
@@ -151,8 +151,8 @@ void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::Addres
   const int64_t batch = x_shape_4d_[kIndex0];
   const int64_t channel = x_shape_4d_[kIndex3];
   const int64_t image_size = x_shape_4d_[kIndex1] * x_shape_4d_[kIndex2];
-  std::vector<float> _alpha_(instance_num, float_init_zero);
-  std::vector<float> _beta_(instance_num, float_init_zero);
+  std::vector<float> _alpha_(instance_num_, float_init_zero);
+  std::vector<float> _beta_(instance_num_, float_init_zero);
   std::vector<int64_t> batch_channels_1d_ = {batch_channels_2d_.front() * batch_channels_2d_.back()};
   auto gamma = EigenTensor(batch_channels_1d_, inputs[kIndex1]->addr).vec<float>();
   auto beta = EigenTensor(batch_channels_1d_, inputs[kIndex2]->addr).vec<float>();
@@ -183,19 +183,26 @@ void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::Addres
   CPUKernelUtils::ParallelFor(loop_transform, batch, block_size);
 }
 
-void InstanceNormV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  in_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, kIndex0);
-  std::vector<int64_t> x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
-  std::vector<int64_t> batch_channels_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
-  if (x_shape_.size() != kDim4 && x_shape_.size() != kDim5) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be 4D or 5D, but got "
-                             << x_shape_.size() << "D.";
+bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2InputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2OutputNum, kernel_name_);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match.first) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
   }
-  is_training_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kAttrIsTraining);
-  momentum_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kAttrMomentum);
-  epsilon_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kAttrEpsilon);
+
+  in_type_ = inputs[kIndex0]->GetDtype();
+  is_training_ = GetValue<bool>(prim->GetAttr(kAttrIsTraining));
+  momentum_ = GetValue<float>(prim->GetAttr(kAttrMomentum));
+  epsilon_ = GetValue<float>(prim->GetAttr(kAttrEpsilon));
   if (momentum_ > momentum_max || momentum_ < momentum_min) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "momentum value should be in [0, 1], but get momentum = " << momentum_ << ".";
@@ -204,27 +211,44 @@ void InstanceNormV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "epsilon value should be in [0, 1), but get epsilon = " << epsilon_ << ".";
   }
-  input_x_is_4d_ = (x_shape_.size() == kDim4);
+
+  return true;
+}
+
+int InstanceNormV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+
+  std::vector<int64_t> x_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> batch_channels = inputs[kIndex1]->GetShapeVector();
+
+  if (x_shape.size() != kDim4 && x_shape.size() != kDim5) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'x' should be 4D or 5D, but got "
+                             << x_shape.size() << "D.";
+  }
+  input_x_is_4d_ = (x_shape.size() == kDim4);
   // Format NCHW could be considered as a situation of format NC1HWC0 when C0 = 1.
   if (input_x_is_4d_) {
     // extern (N, C, H, W) to (N, C, H, W, 1)
-    x_shape_.push_back(SizeToLong(kDim1));
+    x_shape.push_back(SizeToLong(kDim1));
     // extern (N, C, 1, 1) to (N, C1=C, 1, 1, C0=1)
-    batch_channels_.push_back(SizeToLong(kDim1));
+    batch_channels.push_back(SizeToLong(kDim1));
   }
   // consider (N, C1, H, W, C0) as (N*C1, H, W, C0), similar to (N, H, W, C)
-  x_shape_4d_ = {x_shape_[kIndex0] * x_shape_[kIndex1], x_shape_[kIndex2], x_shape_[kIndex3], x_shape_[kIndex4]};
+  x_shape_4d_ = {x_shape[kIndex0] * x_shape[kIndex1], x_shape[kIndex2], x_shape[kIndex3], x_shape[kIndex4]};
   // consider (N, C1, 1, 1 C0) as (N*C1, 1, 1, C0), similar to (N, 1, 1, C)
-  batch_channels_2d_ = {batch_channels_[kIndex0] * batch_channels_[kIndex1], batch_channels_[kIndex4]};
-  instance_num = CPUKernelUtils::CalcElementNum(batch_channels_2d_);
+  batch_channels_2d_ = {batch_channels[kIndex0] * batch_channels[kIndex1], batch_channels[kIndex4]};
+  instance_num_ = CPUKernelUtils::CalcElementNum(batch_channels_2d_);
+
+  return KRET_OK;
 }
 
 bool InstanceNormV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2InputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2OutputNum, kernel_name_);
-
   bool res = false;
   switch (in_type_) {
     case kNumberTypeFloat16:

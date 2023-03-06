@@ -49,6 +49,7 @@ bool RaggedTensorToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   row_partition_types_ = GetValue<std::vector<std::string>>(base_operator->GetAttr("row_partition_types"));
+  ragged_rank_ = GetRaggedRank(row_partition_types_);
   shape_dtype_ = inputs[kShapeInputIndex]->GetDtype();
   values_dtype_ = inputs[kValueInputIndex]->GetDtype();
   size_t output_num = outputs.size();
@@ -66,9 +67,15 @@ int RaggedTensorToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   values_shape_ = inputs[kValueInputIndex]->GetShapeVector();
   default_values_shape_ = inputs[kDefaultValueInputIndex]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
+  if (ragged_rank_ + values_shape_.size() != output_shape_.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
+                      << output_shape_.size() << ", but got row partition size: " << ragged_rank_
+                      << ", 'values' rank: " << values_shape_.size();
+  }
   row_partition_shape_list_.clear();
-  for (int i = 0; i < SizeToLong(row_partition_types_.size()); ++i) {
-    row_partition_shape_list_.push_back(inputs[kFirstPartitionInputIndex + i]->GetShapeVector());
+  for (int i = 0; i < ragged_rank_; ++i) {
+    row_partition_shape_list_.emplace_back(inputs[kFirstPartitionInputIndex + i]->GetShapeVector());
   }
   return KRET_OK;
 }
@@ -123,16 +130,9 @@ bool RaggedTensorToTensorCpuKernelMod::Launch(const std::vector<kernel::AddressP
 template <typename TYPE1, typename TYPE2>
 void RaggedTensorToTensorCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  int ragged_rank_ = GetRaggedRank(row_partition_types_);
   TYPE1 first_dimension;
   GetFirstDimension<TYPE1>(inputs, &first_dimension);
   std::vector<TYPE1> output_size;
-  if (ragged_rank_ + values_shape_.size() != output_shape_.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
-                      << output_shape_.size() << ", but got row partition size: " << ragged_rank_
-                      << ", 'values' rank: " << values_shape_.size();
-  }
   output_size.reserve(output_shape_.size());
   for (unsigned int dim = 0; dim < output_shape_.size(); dim++) {
     output_size.push_back(output_shape_[dim]);
