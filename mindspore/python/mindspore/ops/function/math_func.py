@@ -4424,7 +4424,7 @@ def orgqr(x, tau):
         ValueError: If rank(x) != 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
@@ -4502,7 +4502,7 @@ def heaviside(x, values):
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-5., 1., 0., 2., 0.]))
@@ -8565,7 +8565,7 @@ def roll(x, shifts, dims=None):
         TypeError: If `dims` is not an int, a tuple or a list.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -9886,7 +9886,7 @@ def isinf(input):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)

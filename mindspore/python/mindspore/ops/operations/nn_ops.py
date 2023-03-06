@@ -151,7 +151,7 @@ class AdaptiveAvgPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -2457,7 +2457,7 @@ class MaxPool3DWithArgmax(Primitive):
         ValueError: If `argmax_type` is not mindspore.int64 or mindspore.int32.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
@@ -9413,7 +9413,7 @@ class TripletMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> loss = ops.TripletMarginLoss()

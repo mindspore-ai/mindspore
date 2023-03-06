@@ -278,7 +278,7 @@ class MaxPool3d(Cell):
         ValueError: If `padding` is less than 0.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms

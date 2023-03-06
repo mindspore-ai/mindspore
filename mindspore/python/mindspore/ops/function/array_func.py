@@ -1289,7 +1289,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
             `sorted_sequence` and `values` are different.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
@@ -4178,7 +4178,7 @@ def affine_grid(theta, output_size, align_corners=False):
         ValueError: If the output_size[0] is not equal to the shape[0] of theta.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -4405,7 +4405,7 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -4455,7 +4455,7 @@ def index_fill(x, axis, index, value):
         RuntimeError: If the values of `index` are out the range of `[-x.shape[axis], x.shape[axis]-1]`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -5114,7 +5114,7 @@ def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
         ValueError: If the rank of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
@@ -6158,7 +6158,7 @@ def mvlgamma(input, p):
         ValueError: If not all elements of `input` are greater than :math:`(p - 1) / 2`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)

@@ -1519,12 +1519,12 @@ class CosineEmbeddingLoss(LossBase):
 
 class MultilabelMarginLoss(LossBase):
     r"""
-    MultilabelMarginLoss operation.
+    Creates a loss criterion that minimizes a margin-based loss for multi-class
+    classification tasks.
+    It takes a 2D mini-batch Tensor :math:`x` as input and a 2D
+    Tensor :math:`y` containing target class indices as output.
 
-    Creates a criterion that optimizes a multi-class multi-classification
-    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
-    and output :math:`y` (which is a 2D `Tensor` of target class indices).
-    For each sample in the mini-batch:
+    Each sample in the mini-batch, the loss is computed as follows:
 
     .. math::
         \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
@@ -1532,17 +1532,18 @@ class MultilabelMarginLoss(LossBase):
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
     :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
     :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
-    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
+    and for all :math:`i` and :math:`j`, :math:`i` does not equal to :math:`y[j]`.
 
-    :math:`y` and :math:`x` must have the same size.
+    Furthermore, both :math:`y` and :math:`x` should have identical sizes.
 
-    The criterion only considers a contiguous block of non-negative targets that
-    starts at the front.
-
-    This allows for different samples to have variable amounts of target classes.
+    .. note::
+        For this operator, only a contiguous sequence of non-negative targets that starts at
+        the beginning is taken into consideration, which means that different samples can have different
+        number of target classes.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
+            Default: "mean".
 
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
@@ -1553,7 +1554,6 @@ class MultilabelMarginLoss(LossBase):
     Outputs:
         - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
           is :math:`(N)`. Otherwise, a scalar value will be returned.
-
 
     Raises:
         TypeError: If `x` or `target` is not a Tensor.
