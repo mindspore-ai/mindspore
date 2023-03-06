@@ -38,6 +38,11 @@ int AscendKernelPlugin::Register() {
   Dl_info dl_info;
   dladdr(reinterpret_cast<void *>(this), &dl_info);
   std::string cur_so_path = dl_info.dli_fname;
+  auto converter_pos = cur_so_path.find("libmindspore_converter.so");
+  if (converter_pos != std::string::npos) {
+    MS_LOG(INFO) << "libmindspore_converter.so does not need to register";
+    return lite::RET_OK;
+  }
   auto pos = cur_so_path.find("libmindspore-lite.so");
   if (pos == std::string::npos) {
     MS_LOG(DEBUG) << "Could not find libmindspore-lite so, cur so path: " << cur_so_path;
