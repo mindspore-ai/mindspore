@@ -166,7 +166,7 @@ void BatchParallelInfo::ReplaceNodeInputOrAttrs() {
 
     ValuePtr replace_shape = MakeValue(replace_shape_);
     AnfNodePtr val = NewValueNode(replace_shape);
-    (void)manager->Replace(cnode->input(1), val);
+    cnode->set_input(kIndex1, val);
   }
 }
 

@@ -1342,7 +1342,7 @@ void Conv2DBackpropInputInfo::UpdateOutShape() {
 
   ValuePtr out_shape = MakeValue(out_slice_shape_);
   AnfNodePtr val = NewValueNode(out_shape);
-  (void)manager->Replace(cnode->input(3), val);
+  cnode->set_input(kIndex3, val);
   MS_LOG(INFO) << name_ << ": Update the output shape " << out_slice_shape_;
 }
 
