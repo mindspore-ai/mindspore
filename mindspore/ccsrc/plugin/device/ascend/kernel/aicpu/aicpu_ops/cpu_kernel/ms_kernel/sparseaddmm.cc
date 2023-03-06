@@ -215,7 +215,7 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
     for (int64_t i = 0; i < indices_one; i++) {
       int64_t row = temp_indices[i * indices_two + 0];
       int64_t col = temp_indices[i * indices_two + 1];
-      sparse(row, col) = *(values + i);
+      sparse(row, col) += *(values + i);
     }
   } else {
     uint32_t minCoreNum = 1;
@@ -224,7 +224,7 @@ uint32_t SparseAddmmCpuKernel::SparseAddmmCompute(CpuKernelContext &ctx) {
       for (size_t i = start; i < end; i++) {
         int64_t row = temp_indices[i * indices_two + 0];
         int64_t col = temp_indices[i * indices_two + 1];
-        sparse(row, col) = *(values + i);
+        sparse(row, col) += *(values + i);
       }
     };
     CpuKernelUtils::ParallelFor(ctx, indices_one, indices_one / maxCoreNum, shardSparse);
