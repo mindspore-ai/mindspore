@@ -106,10 +106,10 @@ __all__ = ["Caltech101Dataset",        # Vision
            "GeneratorDataset",         # User Defined
            "NumpySlicesDataset",       # User Defined
            "PaddedDataset",            # User Defined
-           "GraphData",                # Graph Data
+           "GraphData",                # Graph
            "Graph",                    # Graph
-           "InMemoryGraphDataset",     # InMemoryGraphDataset
-           "ArgoverseDataset",         # ArgoverseDataset
+           "InMemoryGraphDataset",     # Graph
+           "ArgoverseDataset",         # Graph
            "DistributedSampler",       # Sampler
            "RandomSampler",            # Sampler
            "SequentialSampler",        # Sampler

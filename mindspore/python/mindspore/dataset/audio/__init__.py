@@ -66,8 +66,8 @@ from mindspore.dataset.audio import transforms
 from mindspore.dataset.audio import utils
 from mindspore.dataset.audio.transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, \
     BandpassBiquad, BandrejectBiquad, BassBiquad, Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, \
-    DCShift, DeemphBiquad, DetectPitchFrequency, Dither, EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, \
-    GriffinLim, HighpassBiquad, InverseMelScale, InverseSpectrogram, LFCC, LFilter, LowpassBiquad, Magphase, \
+    DCShift, DeemphBiquad, DetectPitchFrequency, Dither, EqualizerBiquad, Fade, Filtfilt, Flanger, FrequencyMasking, \
+    Gain, GriffinLim, HighpassBiquad, InverseMelScale, InverseSpectrogram, LFCC, LFilter, LowpassBiquad, Magphase, \
     MaskAlongAxis, MaskAlongAxisIID, MelScale, MelSpectrogram, MFCC, MuLawDecoding, MuLawEncoding, Overdrive, \
     Phaser, PhaseVocoder, PitchShift, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, \
     TimeMasking, TimeStretch, TrebleBiquad, Vad, Vol

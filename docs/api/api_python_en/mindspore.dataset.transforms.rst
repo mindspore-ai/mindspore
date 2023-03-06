@@ -51,7 +51,13 @@ Transforms
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.dataset.vision.AdjustBrightness
+    mindspore.dataset.vision.AdjustContrast
     mindspore.dataset.vision.AdjustGamma
+    mindspore.dataset.vision.AdjustHue
+    mindspore.dataset.vision.AdjustSaturation
+    mindspore.dataset.vision.AdjustSharpness
+    mindspore.dataset.vision.Affine
     mindspore.dataset.vision.AutoAugment
     mindspore.dataset.vision.AutoContrast
     mindspore.dataset.vision.BoundingBoxAugment
@@ -62,6 +68,7 @@ Transforms
     mindspore.dataset.vision.CutOut
     mindspore.dataset.vision.Decode
     mindspore.dataset.vision.Equalize
+    mindspore.dataset.vision.Erase
     mindspore.dataset.vision.FiveCrop
     mindspore.dataset.vision.GaussianBlur
     mindspore.dataset.vision.Grayscale
@@ -76,6 +83,9 @@ Transforms
     mindspore.dataset.vision.NormalizePad
     mindspore.dataset.vision.Pad
     mindspore.dataset.vision.PadToSize
+    mindspore.dataset.vision.Perspective
+    mindspore.dataset.vision.Posterize
+    mindspore.dataset.vision.RandAugment
     mindspore.dataset.vision.RandomAdjustSharpness
     mindspore.dataset.vision.RandomAffine
     mindspore.dataset.vision.RandomAutoContrast
@@ -105,15 +115,18 @@ Transforms
     mindspore.dataset.vision.RandomVerticalFlipWithBBox
     mindspore.dataset.vision.Rescale
     mindspore.dataset.vision.Resize
+    mindspore.dataset.vision.ResizedCrop
     mindspore.dataset.vision.ResizeWithBBox
     mindspore.dataset.vision.RgbToHsv
     mindspore.dataset.vision.Rotate
     mindspore.dataset.vision.SlicePatches
+    mindspore.dataset.vision.Solarize
     mindspore.dataset.vision.TenCrop
     mindspore.dataset.vision.ToNumpy
     mindspore.dataset.vision.ToPIL
     mindspore.dataset.vision.ToTensor
     mindspore.dataset.vision.ToType
+    mindspore.dataset.vision.TrivialAugmentWide
     mindspore.dataset.vision.UniformAugment
     mindspore.dataset.vision.VerticalFlip
 
@@ -232,6 +245,7 @@ Transforms
     mindspore.dataset.audio.Dither
     mindspore.dataset.audio.EqualizerBiquad
     mindspore.dataset.audio.Fade
+    mindspore.dataset.audio.Filtfilt
     mindspore.dataset.audio.Flanger
     mindspore.dataset.audio.FrequencyMasking
     mindspore.dataset.audio.Gain
@@ -287,4 +301,5 @@ Utilities
     mindspore.dataset.audio.ScaleType
     mindspore.dataset.audio.WindowType
     mindspore.dataset.audio.create_dct
+    mindspore.dataset.audio.linear_fbanks
     mindspore.dataset.audio.melscale_fbanks

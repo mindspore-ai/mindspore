@@ -26,9 +26,13 @@ Vision
     mindspore.dataset.Flowers102Dataset
     mindspore.dataset.Food101Dataset
     mindspore.dataset.ImageFolderDataset
+    mindspore.dataset.KITTIDataset
     mindspore.dataset.KMnistDataset
+    mindspore.dataset.LFWDataset
+    mindspore.dataset.LSUNDataset
     mindspore.dataset.ManifestDataset
     mindspore.dataset.MnistDataset
+    mindspore.dataset.OmniglotDataset
     mindspore.dataset.PhotoTourDataset
     mindspore.dataset.Places365Dataset
     mindspore.dataset.QMnistDataset
@@ -55,14 +59,15 @@ Text
     mindspore.dataset.AmazonReviewDataset
     mindspore.dataset.CLUEDataset
     mindspore.dataset.CoNLL2000Dataset
-    mindspore.dataset.CSVDataset
     mindspore.dataset.DBpediaDataset
     mindspore.dataset.EnWik9Dataset
     mindspore.dataset.IMDBDataset
     mindspore.dataset.IWSLT2016Dataset
     mindspore.dataset.IWSLT2017Dataset
+    mindspore.dataset.Multi30kDataset
     mindspore.dataset.PennTreebankDataset
     mindspore.dataset.SogouNewsDataset
+    mindspore.dataset.SQuADDataset
     mindspore.dataset.SST2Dataset
     mindspore.dataset.TextFileDataset
     mindspore.dataset.UDPOSDataset
@@ -78,6 +83,9 @@ Audio
     :nosignatures:
     :template: classtemplate_dataset.rst
 
+    mindspore.dataset.CMUArcticDataset
+    mindspore.dataset.GTZANDataset
+    mindspore.dataset.LibriTTSDataset
     mindspore.dataset.LJSpeechDataset
     mindspore.dataset.SpeechCommandsDataset
     mindspore.dataset.TedliumDataset
