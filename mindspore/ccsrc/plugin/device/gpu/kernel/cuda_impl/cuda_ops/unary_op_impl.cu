@@ -444,6 +444,13 @@ __global__ void AbsKernel(const half *input, half *output, const size_t count) {
   return;
 }
 template <>
+__global__ void AbsKernel(const bool *input, bool *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
 __global__ void AbsKernel(const uint8_t *input, uint8_t *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = input[i];
@@ -1423,6 +1430,8 @@ template CUDA_LIB_EXPORT void Sign<uint64_t>(const uint64_t *input, uint64_t *ou
                                              cudaStream_t cuda_stream);
 
 // complex64
+template CUDA_LIB_EXPORT void Abs<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Real<float>(const Complex<float> *input, float *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<float>(const Complex<float> *input, float *output, const size_t count,
@@ -1461,6 +1470,8 @@ template CUDA_LIB_EXPORT void Log1p<Complex<float>>(const Complex<float> *input,
                                                     const size_t count, cudaStream_t cuda_stream);
 
 // complex128
+template CUDA_LIB_EXPORT void Abs<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Real<double>(const Complex<double> *input, double *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<double>(const Complex<double> *input, double *output, const size_t count,

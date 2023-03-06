@@ -51,7 +51,7 @@ TypePtr LessEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_bool, prim->name());
   return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
