@@ -32,6 +32,7 @@ using PrimitiveImpl = mindspore::Primitive;
 using TensorImpl = mindspore::tensor::Tensor;
 using ScalarImpl = mindspore::Scalar;
 using TypeImpl = mindspore::Type;
+using TensorTypeImpl = mindspore::TensorType;
 using AbstractBaseImpl = mindspore::abstract::AbstractBase;
 using AbstractTensorImpl = mindspore::abstract::AbstractTensor;
 using AbstractScalarImpl = mindspore::abstract::AbstractScalar;
@@ -51,6 +52,7 @@ using Float32ImmImpl = mindspore::FP32Imm;
 using BasePtr = mindspore::BasePtr;
 using ValuePtr = mindspore::ValuePtr;
 using TypePtr = mindspore::TypePtr;
+using TensorTypePtr = mindspore::TensorTypePtr;
 using ScalarPtr = mindspore::ScalarPtr;
 using Int32ImmPtr = mindspore::Int32ImmPtr;
 using Int64ImmPtr = mindspore::Int64ImmPtr;
@@ -69,5 +71,9 @@ using FuncGraphPtr = mindspore::FuncGraphPtr;
 using FuncGraphManagerPtr = std::shared_ptr<mindspore::FuncGraphManager>;
 
 using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
+using BaseShapePtr = mindspore::abstract::BaseShapePtr;
+using Shape = mindspore::abstract::Shape;
+using ShapePtr = mindspore::abstract::ShapePtr;
+using TupleShape = mindspore::abstract::TupleShape;
 
 #endif  // MINDSPORE_CCSRC_C_API_SRC_COMMON_H_

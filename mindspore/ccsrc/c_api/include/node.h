@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_NODE_H_
-#define MINDSPORE_CCSRC_C_API_IR_NODE_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_NODE_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_NODE_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -29,6 +29,32 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// \brief The struct to describe custom op's basic info. For output_dtypes and dtype_infer_func, only one of them need
+/// to be specified. For output_shapes and shape_infer_func, only one of them need to be specified as well, and
+/// output_dims must be given if output_shapes is specified.
+typedef struct CustomOpInfo {
+  char *func_name;
+  char *func_type;
+  char *target;
+  char **input_name;
+  size_t input_num;
+  char **output_name;
+  size_t output_num;
+  char **attr_name;
+  AttrHandle *attr_value;
+  size_t attr_num;
+  DTypeFormat **dtype_formats;
+  size_t dtype_formats_num;
+  int64_t **output_shapes;
+  size_t *output_dims;
+  DataTypeC *output_dtypes;
+  STATUS(*dtype_infer_func)
+  (const DataTypeC *input_types, size_t input_num, DataTypeC *output_types, size_t output_num);
+  STATUS(*shape_infer_func)
+  (int64_t **input_shapes, const size_t *input_dims, size_t input_num, int64_t **output_shapes, size_t *output_dims,
+   size_t output_num);
+} CustomOpInfo;
 
 /// \brief Create a new Operator node.
 ///
@@ -89,6 +115,18 @@ MIND_C_API NodeHandle MSNewSwitch(ResMgrHandle res_mgr, GraphHandle graph, Handl
 MIND_C_API NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, GraphHandle body_graph,
                                  GraphHandle after_graph);
 
+/// \brief Create a custom operator.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] graph The given function graph pointer handle.
+/// \param[in] inputs An array of operator's input nodes.
+/// \param[in] input_num The number of nodes in the array.
+/// \param[in] info An CustomOpInfo struct which describes the information of custom operator.
+///
+/// \return The created custom operator node.
+MIND_C_API NodeHandle MSNewCustomOp(ResMgrHandle res_mgr, GraphHandle graph, Handle const inputs[], size_t input_num,
+                                    CustomOpInfo info);
+
 /// \brief Get specified input node of Operator.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
@@ -138,7 +176,7 @@ MIND_C_API NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph,
 /// \param[in] shape_size The size of shape, i.e., the dimension of the Placeholder.
 ///
 /// \return The created Placeholder node handle.
-MIND_C_API NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, TypeId type, const int64_t shape[],
+MIND_C_API NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, DataTypeC type, const int64_t shape[],
                                        size_t shape_size);
 
 /// \brief Create a Variable node of tensor, which contains variable tensor data.
@@ -152,7 +190,7 @@ MIND_C_API NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, 
 /// \param[in] data_len The length of data.
 ///
 /// \return The created Variable node handle.
-MIND_C_API NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, TypeId type,
+MIND_C_API NodeHandle MSNewTensorVariable(ResMgrHandle res_mgr, GraphHandle graph, void *data, DataTypeC type,
                                           const int64_t shape[], size_t shape_size, size_t data_len);
 
 /// \brief Create a Variable node from a Tensor instance with data.
@@ -191,7 +229,7 @@ MIND_C_API void *MSTensorVariableGetData(ResMgrHandle res_mgr, ConstNodeHandle n
 /// \param[in] data_len The length of data.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, TypeId type, const int64_t shape[],
+MIND_C_API NodeHandle MSNewTensorConstant(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[],
                                           size_t shape_size, size_t data_len);
 
 /// \brief Create a Constant node from a Tensor instance with data.
@@ -274,7 +312,7 @@ MIND_C_API NodeHandle MSNewStringConstant(ResMgrHandle res_mgr, const char *str)
 /// \param[in] str The type.
 ///
 /// \return The created Constant node handle.
-MIND_C_API NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, TypeId type);
+MIND_C_API NodeHandle MSNewTypeConstant(ResMgrHandle res_mgr, DataTypeC type);
 
 /// \brief Get value from the int32 scalar Constant node.
 ///
@@ -348,7 +386,7 @@ MIND_C_API STATUS MSTupleConstantGetValueInt64(ResMgrHandle res_mgr, ConstNodeHa
 /// \param[in] error Records error code that indicate whether the functions executed successfully.
 ///
 /// \return The obtained type value.
-MIND_C_API TypeId MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
+MIND_C_API DataTypeC MSTypeConstantGetValue(ResMgrHandle res_mgr, ConstNodeHandle node, STATUS *error);
 
 /// \brief Set Operator node name.
 ///
@@ -372,4 +410,4 @@ MIND_C_API STATUS MSNodeGetName(ResMgrHandle res_mgr, ConstNodeHandle node, char
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_NODE_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_NODE_H_

@@ -19,6 +19,7 @@
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "ir/tensor.h"
+#include "c_api/src/utils.h"
 
 PrimitivePtr GetOpPrim(ResMgrHandle res_mgr, ConstNodeHandle node) {
   auto src_node = GetSrcPtr<CNodePtr>(res_mgr, node);
@@ -101,7 +102,7 @@ STATUS MSOpSetScalarAttrInt64(ResMgrHandle res_mgr, NodeHandle op, const char *a
   return RET_OK;
 }
 
-STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, TypeId value) {
+STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value) {
   if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
     return RET_NULL_PTR;
@@ -116,7 +117,7 @@ STATUS MSOpSetAttrType(ResMgrHandle res_mgr, NodeHandle op, const char *attr_nam
   return RET_OK;
 }
 
-STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, TypeId value[],
+STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, DataTypeC value[],
                             size_t vec_size) {
   if (res_mgr == nullptr || op == nullptr || attr_name == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] is nullptr.";
@@ -138,7 +139,7 @@ STATUS MSOpSetAttrTypeArray(ResMgrHandle res_mgr, NodeHandle op, const char *att
 }
 
 STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_name, void *value, size_t vec_size,
-                        TypeId dataType) {
+                        DataTypeC data_type) {
   if (res_mgr == nullptr || op == nullptr || attr_name == nullptr || value == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] or [attr_name] or [value_vec] is nullptr.";
     return RET_NULL_PTR;
@@ -149,29 +150,29 @@ STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_na
     return RET_NULL_PTR;
   }
 
-  switch (dataType) {
-    case TypeId::kNumberTypeBool: {
+  switch (data_type) {
+    case MS_BOOL: {
       std::vector<bool> vec_value(reinterpret_cast<bool *>(value), reinterpret_cast<bool *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
-    case TypeId::kNumberTypeInt32: {
+    case MS_INT32: {
       std::vector<int32_t> vec_value(reinterpret_cast<int32_t *>(value), reinterpret_cast<int32_t *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
-    case TypeId::kNumberTypeInt64: {
+    case MS_INT64: {
       std::vector<int64_t> vec_value(reinterpret_cast<int64_t *>(value), reinterpret_cast<int64_t *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
-    case TypeId::kNumberTypeFloat32: {
+    case MS_FLOAT32: {
       std::vector<float> vec_value(reinterpret_cast<float *>(value), reinterpret_cast<float *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
     default:
-      MS_LOG(ERROR) << "Unrecognized datatype w/ TypeId: " << dataType << " , Attribute name: " << attr_name
+      MS_LOG(ERROR) << "Unrecognized datatype w/ DataTypeC ID: " << data_type << " , Attribute name: " << attr_name
                     << std::endl;
       return RET_ERROR;
   }
@@ -297,37 +298,36 @@ AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v) {
   return GetRawPtr(res_mgr, value);
 }
 
-AttrHandle MSOpNewAttrs(ResMgrHandle res_mgr, void *value, size_t vec_size, TypeId data_type) {
+AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, DataTypeC data_type) {
   if (res_mgr == nullptr || value == nullptr) {
-    MS_LOG(ERROR) << "Input Handle [res_mgr] or [value_vec] is nullptr.";
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [value] is nullptr.";
     return nullptr;
   }
-  mindspore::ValuePtr value_node;
-
+  mindspore::ValuePtr value_ptr;
   switch (data_type) {
-    case TypeId::kNumberTypeBool: {
+    case MS_BOOL: {
       std::vector<bool> vec_value(reinterpret_cast<bool *>(value), reinterpret_cast<bool *>(value) + vec_size);
-      value_node = mindspore::MakeValue(vec_value);
+      value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
-    case TypeId::kNumberTypeInt32: {
+    case MS_INT32: {
       std::vector<int32_t> vec_value(reinterpret_cast<int32_t *>(value), reinterpret_cast<int32_t *>(value) + vec_size);
-      value_node = mindspore::MakeValue(vec_value);
+      value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
-    case TypeId::kNumberTypeInt64: {
+    case MS_INT64: {
       std::vector<int64_t> vec_value(reinterpret_cast<int64_t *>(value), reinterpret_cast<int64_t *>(value) + vec_size);
-      value_node = mindspore::MakeValue(vec_value);
+      value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
-    case TypeId::kNumberTypeFloat32: {
+    case MS_FLOAT32: {
       std::vector<float> vec_value(reinterpret_cast<float *>(value), reinterpret_cast<float *>(value) + vec_size);
-      value_node = mindspore::MakeValue(vec_value);
+      value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
     default:
-      MS_LOG(ERROR) << "Unrecognized datatype w/ TypeId: " << data_type << std::endl;
+      MS_LOG(ERROR) << "Unrecognized datatype w/ DataTypeC ID: " << data_type << std::endl;
       return nullptr;
   }
-  return GetRawPtr(res_mgr, value_node);
+  return GetRawPtr(res_mgr, value_ptr);
 }

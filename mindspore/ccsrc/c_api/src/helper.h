@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_HELPER_H_
-#define MINDSPORE_CCSRC_C_API_HELPER_H_
+#ifndef MINDSPORE_CCSRC_C_API_SRC_HELPER_H_
+#define MINDSPORE_CCSRC_C_API_SRC_HELPER_H_
 
 #include <memory>
 #include "base/base.h"
@@ -36,4 +36,4 @@ T GetSrcPtr(ResMgrHandle res_mgr, ConstHandle raw_ptr) {
   auto res_ptr = base_ptr->cast<T>();
   return res_ptr;
 }
-#endif  // MINDSPORE_CCSRC_C_API_HELPER_H_
+#endif  // MINDSPORE_CCSRC_C_API_SRC_HELPER_H_

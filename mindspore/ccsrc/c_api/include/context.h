@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_C_API_IR_CONTEXT_H_
-#define MINDSPORE_CCSRC_C_API_IR_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_C_API_INCLUDE_CONTEXT_H_
+#define MINDSPORE_CCSRC_C_API_INCLUDE_CONTEXT_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -88,4 +88,4 @@ MIND_C_API bool MSGetInfer(ResMgrHandle res_mgr);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_CCSRC_C_API_IR_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_C_API_INCLUDE_CONTEXT_H_

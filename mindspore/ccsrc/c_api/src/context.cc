@@ -32,7 +32,6 @@ void MSResourceManagerDestroy(ResMgrHandle res_mgr) {
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
   delete res_mgr_ptr;
   res_mgr_ptr = nullptr;
-  return;
 }
 
 void MSSetEagerMode(bool eager_mode) {
@@ -40,7 +39,6 @@ void MSSetEagerMode(bool eager_mode) {
   MS_LOG(WARNING) << "Set Execution mode: " << mode;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mode);
-  return;
 }
 
 STATUS MSSetBackendPolicy(const char *policy) {
@@ -53,7 +51,6 @@ void MSSetDeviceTarget(const char *device) {
   MS_LOG(WARNING) << "Set Device Target: " << device;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<std::string>(mindspore::MS_CTX_DEVICE_TARGET, device);
-  return;
 }
 
 STATUS MSGetDeviceTarget(char str_buf[], size_t str_len) {
@@ -75,28 +72,24 @@ void MSSetDeviceId(uint32_t deviceId) {
   MS_LOG(WARNING) << "Set Device ID: " << deviceId;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<std::uint32_t>(mindspore::MS_CTX_DEVICE_ID, deviceId);
-  return;
 }
 
 void MSSetGraphsSaveMode(int save_mode) {
   MS_LOG(DEBUG) << "Set Graphs Save Mode: " << save_mode;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<int>(mindspore::MS_CTX_SAVE_GRAPHS_FLAG, save_mode);
-  return;
 }
 
 void MSSetGraphsSavePath(const char *save_path) {
   MS_LOG(DEBUG) << "Set Graphs Save Path: " << save_path;
   auto context = mindspore::MsContext::GetInstance();
   context->set_param<std::string>(mindspore::MS_CTX_SAVE_GRAPHS_PATH, save_path);
-  return;
 }
 
 void MSSetInfer(ResMgrHandle res_mgr, bool infer) {
   MS_LOG(DEBUG) << "Set Infer Graph: " << infer;
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
   res_mgr_ptr->SetInfer(infer);
-  return;
 }
 
 bool MSGetInfer(ResMgrHandle res_mgr) {
