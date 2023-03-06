@@ -117,7 +117,7 @@ ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
   CoordinateTransformationMode coordinate_transformation_mode) {
   const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}, {ASYMMETRIC, AsymmetricFunc<T>()}};
+    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -140,8 +140,6 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     coordinate_transformation_mode_ = ALIGN_CORNERS;
   } else if (coordinate_transformation_mode == "half_pixel") {
     coordinate_transformation_mode_ = HALF_PIXEL;
-  } else if (coordinate_transformation_mode == "asymmetric") {
-    coordinate_transformation_mode_ = ASYMMETRIC;
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
                   << " not support now.";

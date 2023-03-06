@@ -83,7 +83,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Padding
     mindspore.ops.PadV3
     mindspore.ops.ResizeBilinear
-    mindspore.ops.ResizeLinear1D
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.UpsampleNearest3D
     mindspore.ops.UpsampleTrilinear3D

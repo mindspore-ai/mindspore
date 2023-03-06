@@ -44,8 +44,6 @@ bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
   } else if (coordinate_transformation_mode == "half_pixel") {
     mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
-  } else if (coordinate_transformation_mode == "asymmetric") {
-    mode_ = ResizeLinearCoordinateTransformationMode::ASYMMETRIC;
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
                   << " not support now.";
