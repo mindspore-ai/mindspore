@@ -1265,13 +1265,18 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     op = CreateAllGatherOp(group);
   }
   CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
-  std::string opt_shard_mirror_group;
+  bool is_with_mirror = false;
   auto param_ptr = node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(param_ptr);
   if (param_ptr->user_data<TensorLayout>()) {
-    opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+    auto opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+    is_with_mirror = !opt_shard_mirror_group.empty();
+    if (!is_with_mirror) {
+      auto mirror_group = mirror_group_list(param_ptr->user_data<TensorLayout>());
+      is_with_mirror = !mirror_group.empty();
+    }
   }
-  bool is_with_mirror = !opt_shard_mirror_group.empty();
+
   if (!is_shared_param && cast_node) {
     allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE, param_name, root);
     MS_LOG(INFO) << "Parallel optimizer is applied before Cast for " << param_name;

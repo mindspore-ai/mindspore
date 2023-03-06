@@ -111,7 +111,7 @@ StrategyPtr GenerateStandAloneStrategy(const Shapes &inputs_shape);
 StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim);
 bool IsInsertVirtualOutput(const FuncGraphPtr &root);
 TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
-
+Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
 }  // namespace parallel
