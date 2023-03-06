@@ -80,15 +80,20 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
         max = *reinterpret_cast<float *>(max_tensor_info->data_c());
       }
     }
+    bool is_relu6 = min == 0 && max == kValueThreshold6;
+    bool is_relu = lite::FloatCompare(min) && lite::FloatCompare(max, FLT_MAX);
+    if (only_relu_ && !(is_relu6 || is_relu)) {
+      return false;
+    }
     auto manager = graph->manager();
     MS_ASSERT(manager != nullptr);
     auto primitive_c = std::make_shared<mindspore::ops::Activation>();
     MS_CHECK_TRUE_MSG(primitive_c != nullptr, false, "primitive_c is nullptr");
     primitive_c->Init(0, min, max, mindspore::HARD_TANH);
-    if (min == 0 && max == kValueThreshold6) {
+    if (is_relu6) {
       primitive_c->set_activation_type(mindspore::RELU6);
     }
-    if (lite::FloatCompare(min) && lite::FloatCompare(max, FLT_MAX)) {
+    if (is_relu) {
       primitive_c->set_activation_type(mindspore::RELU);
     }
     auto primitive = primitive_c->GetPrim();

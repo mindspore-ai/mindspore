@@ -48,6 +48,7 @@
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
+#include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "tools/converter/quantizer/full_quant_quantizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/parser/unify_format.h"
@@ -768,6 +769,8 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
   auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
   std::vector<opt::PassPtr> fusions{
+    std::make_shared<opt::ClipConvertActivationPass>(true),
+    std::make_shared<opt::BatchNormToScaleFusion>(),
     std::make_shared<opt::ConvBiasaddFusion>(),
     std::make_shared<opt::ConvBatchNormFusion>(param_->fmk_type),
     std::make_shared<opt::ConvScaleFusion>(param_->fmk_type),
