@@ -284,7 +284,12 @@ class OpenCLKernel : public LiteKernel {
   int PreProcess() override;
   int ReSize() override;
   int Run() override { return RET_ERROR; }
-  int PostProcess() override { return RET_OK; }
+  int PostProcess() override {
+    if (is_oversize_kernel_) {
+      return FreeInWorkTensor();
+    }
+    return RET_OK;
+  }
 
   bool MallocDataDone();
   std::string OpenCLKernelHeader();
@@ -336,6 +341,7 @@ class OpenCLKernel : public LiteKernel {
   cl::Event event_;
   void *restore_quant_data_{nullptr};
   bool dequant_flag_{false};
+  bool is_oversize_kernel_{false};
 
  private:
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap_;
