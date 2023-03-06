@@ -145,6 +145,7 @@ class ShapeFusionPass {
   int ConvertToShapeFusion(LiteGraph::Node *node);
   int FusePostNodes(LiteGraph::Node *node, size_t subgraph_index);
   Tensor *BuildTensorFromShapeFusionMatrix(const ShapeFusionMatrix &shape_fusion_matrix);
+  bool CheckArithmetic(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node, uint32_t input_idx);
   bool CheckCanFused(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node, uint32_t input_idx,
                      size_t subgraph_index);
   int DoFuse(LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node, std::vector<uint32_t> *input_indices,
@@ -159,6 +160,7 @@ class ShapeFusionPass {
   std::map<uint32_t, ShapeFusionMatrix> shape_fusion_matrices_;
   std::vector<lite::Tensor *> shape_fusion_outputs_;
   std::vector<void *> datas_;
+  int is_div_ = 0;
 #endif
   InnerContext *context_ = nullptr;
   LiteModel *lite_model_ = nullptr;
