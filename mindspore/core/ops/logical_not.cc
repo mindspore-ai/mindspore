@@ -40,7 +40,8 @@ TypePtr LogicalNotInferType(const PrimitivePtr &prim, const std::vector<Abstract
   auto op_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, common_valid_types_with_complex_and_bool, op_name);
+  std::set<TypePtr> local_bool = {kBool};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_dtype, local_bool, op_name);
   return kBool;
 }
 }  // namespace

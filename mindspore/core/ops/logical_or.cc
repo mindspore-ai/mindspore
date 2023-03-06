@@ -35,13 +35,20 @@ abstract::ShapePtr LogicalOrInferShape(const PrimitivePtr &primitive, const std:
 }
 
 TypePtr LogicalOrInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  std::map<std::string, TypePtr> types;
-  auto infer_dtype = input_args[0]->BuildType();
-  const std::set<TypePtr> valid_types = {kBool};
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return infer_dtype;
+  auto x_dtype = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_dtype);
+  auto y_dtype = input_args[1]->BuildType();
+  MS_EXCEPTION_IF_NULL(y_dtype);
+  const std::basic_string<char> kBool = "Tensor[Bool]";
+  std::ostringstream buffer;
+  buffer << "For primitive[LogicalOr], the input argument[x, y, ] must be a type of {Tensor[Bool], }, but got ";
+  if (x_dtype->ToString() != kBool) {
+    MS_EXCEPTION(TypeError) << buffer.str() << x_dtype->ToString() << ".";
+  }
+  if (y_dtype->ToString() != kBool) {
+    MS_EXCEPTION(TypeError) << buffer.str() << y_dtype->ToString() << ".";
+  }
+  return x_dtype;
 }
 }  // namespace
 
