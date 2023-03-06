@@ -964,6 +964,8 @@ def pad(img, padding, fill_value, padding_mode):
             image = ImageOps.expand(img, border=(left, top, right, bottom), fill=fill_value)
             image.putpalette(palette)
             return image
+        if isinstance(fill_value, tuple) and (img.mode == 'L' or img.mode == '1'):
+            fill_value = (fill_value[0],)
         return ImageOps.expand(img, border=(left, top, right, bottom), fill=fill_value)
 
     if img.mode == 'P':
