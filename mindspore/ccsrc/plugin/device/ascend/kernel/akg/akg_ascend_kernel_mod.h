@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class AkgKernelMod : public AscendKernelMod {
  public:
-  explicit AkgKernelMod(const KernelPackPtr &kernel_pack);
+  explicit AkgKernelMod(const KernelPackPtr &kernel_pack, const AnfNodePtr &anf_node_ptr);
   ~AkgKernelMod() final {}
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
