@@ -151,7 +151,6 @@ from .matmul_ds import _matmul_ds_tbe
 from .matmul_v2 import _matmul_v2_tbe
 from .sub import _sub_tbe
 from .sub_ds import _sub_ds_tbe
-from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_ds import _scatter_nd_ds_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
 from .scatter_nd_add import _scatter_nd_add_tbe

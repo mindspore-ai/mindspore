@@ -24,6 +24,7 @@ scatter_nd_ds_op_info = TBERegOp("ScatterNd") \
     .kernel_name("scatter_nd") \
     .partial_flag(True) \
     .dynamic_shape(True) \
+    .dynamic_compile_static(True) \
     .input(0, "indices", False, "required", "all") \
     .input(1, "x", False, "required", "all") \
     .input(2, "shape", False, "required", "all") \

@@ -343,6 +343,7 @@ constexpr auto kRsqrtGradOpName = "RsqrtGrad";
 constexpr auto kRsqrtOpName = "Rsqrt";
 constexpr auto kScatterAddOpName = "ScatterAdd";
 constexpr auto kScatterNdOpName = "ScatterNd";
+constexpr auto kScatterNdDOpName = "ScatterNdD";
 constexpr auto kScatterNdUpdateOpName = "ScatterNdUpdate";
 constexpr auto kScatterUpdateOpName = "ScatterUpdate";
 constexpr auto kSegmentMaxOpName = "SegmentMax";
