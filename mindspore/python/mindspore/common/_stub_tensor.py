@@ -53,8 +53,6 @@ class StubTensor:
     def __init__(self, stub):
         self.stub = stub
         self.tensor = None
-        self.stub_shape = None
-        self.stub_dtype = None
 
     __str__ = _stub_method(Tensor.__str__)
     __setitem__ = _stub_method(Tensor.__setitem__)
@@ -77,7 +75,7 @@ class StubTensor:
     def shape(self):
         """shape stub."""
         if self.stub:
-            if self.stub_shape is None:
+            if not hasattr(self, "stub_shape"):
                 self.stub_shape = self.stub.get_shape()
             return self.stub_shape
         return self.tensor.shape
@@ -86,7 +84,7 @@ class StubTensor:
     def dtype(self):
         """dtype stub."""
         if self.stub:
-            if self.stub_dtype is None:
+            if not hasattr(self, "stub_dtype"):
                 self.stub_dtype = self.stub.get_dtype()
             return self.stub_dtype
         return self.tensor.dtype
