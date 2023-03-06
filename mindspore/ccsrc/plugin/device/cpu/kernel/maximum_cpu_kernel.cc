@@ -111,7 +111,7 @@ bool MaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void MaximumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *output) {
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
@@ -184,55 +184,67 @@ void MaximumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1,
                                                const size_t r1, const size_t r2, const size_t r3, const size_t r4,
                                                const size_t r5, const size_t r6, const size_t d0, const size_t d1,
                                                const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                               const size_t d6, const T *input_x, const T *input_y, T *output) const {
+                                               const size_t d6, const T *input_x, const T *input_y, T *output) {
   if (d0 == 0 || d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0 || d5 == 0 || d6 == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must not be 0";
   }
-  for (size_t pos = 0; pos < output_num_; pos++) {
-    size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    size_t k = pos / (d3 * d4 * d5 * d6) % d2;
-    size_t l = pos / (d4 * d5 * d6) % d3;
-    size_t m = pos / (d5 * d6) % d4;
-    size_t n = pos / d6 % d5;
-    size_t o = pos % d6;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t pos = start; pos < end; pos++) {
+      size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+      size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
+      size_t k = pos / (d3 * d4 * d5 * d6) % d2;
+      size_t l = pos / (d4 * d5 * d6) % d3;
+      size_t m = pos / (d5 * d6) % d4;
+      size_t n = pos / d6 % d5;
+      size_t o = pos % d6;
 
-    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-    l_index += Index(l, l3) * l4 * l5 * l6;
-    l_index += Index(m, l4) * l5 * l6;
-    l_index += Index(n, l5) * l6;
-    l_index += Index(o, l6);
-    size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-    r_index += Index(l, r3) * r4 * r5 * r6;
-    r_index += Index(m, r4) * r5 * r6;
-    r_index += Index(n, r5) * r6;
-    r_index += Index(o, r6);
-    output[pos] = MaximumFunc(input_x[l_index], input_y[r_index]);
-  }
+      size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
+      l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
+      l_index += Index(k, l2) * l3 * l4 * l5 * l6;
+      l_index += Index(l, l3) * l4 * l5 * l6;
+      l_index += Index(m, l4) * l5 * l6;
+      l_index += Index(n, l5) * l6;
+      l_index += Index(o, l6);
+      size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
+      r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
+      r_index += Index(k, r2) * r3 * r4 * r5 * r6;
+      r_index += Index(l, r3) * r4 * r5 * r6;
+      r_index += Index(m, r4) * r5 * r6;
+      r_index += Index(n, r5) * r6;
+      r_index += Index(o, r6);
+      output[pos] = MaximumFunc(input_x[l_index], input_y[r_index]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void MaximumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) {
   if (input_x_shape_.size() == 0) {
-    for (size_t i = 0; i < output_num_; ++i) {
-      output[i] = MaximumFunc(input_x[0], input_y[i]);
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = 0; i < output_num_; ++i) {
+        output[i] = MaximumFunc(input_x[0], input_y[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
   } else {
-    for (size_t i = 0; i < output_num_; ++i) {
-      output[i] = MaximumFunc(input_x[i], input_y[0]);
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        output[i] = MaximumFunc(input_x[i], input_y[0]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
   }
 }
 
 template <typename T>
-void MaximumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
-  for (size_t i = 0; i < output_num_; ++i) {
-    output[i] = MaximumFunc(input_x[i], input_y[i]);
-  }
+void MaximumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      output[i] = MaximumFunc(input_x[i], input_y[i]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
 }
 const std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::KernelRunFunc>> &MaximumCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, MaximumCpuKernelMod::KernelRunFunc>> func_list = {
