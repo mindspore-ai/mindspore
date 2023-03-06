@@ -463,7 +463,6 @@ def test_none_is_input_of_tuple_return_2():
     assert out_me_graph == out_me_pynative
 
 
-@pytest.mark.skip(reason="No support print side effect.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
