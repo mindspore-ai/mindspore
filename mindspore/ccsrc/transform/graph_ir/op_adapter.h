@@ -228,8 +228,7 @@ class OpAdapter : public BaseOpAdapter {
 
   std::string getOpType() override {
     if (op_type_.empty()) {
-      auto op = std::make_unique<OpType>();
-      op_type_ = op->GetOpType();
+      op_type_ = getOp()->GetOpType();
     }
     return op_type_;
   }
@@ -242,7 +241,7 @@ class OpAdapter : public BaseOpAdapter {
   const mindspore::HashMap<int, DynOutputDesc> &getDynOutputMap() override { return dyn_output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
   std::map<std::string, ValuePtr> GetNormalOpAttrList(const AnfNodePtr &node) override {
-    return impl_->GetNormalOpAttrList(std::make_shared<::ge::Operator>(op_type_), node);
+    return impl_->GetNormalOpAttrList(getOp(), node);
   }
   bool IsDynInputOp(uint64_t index) override { return dyn_input_map_.find(index) != dyn_input_map_.end(); }
   bool IsDyOutputOp(uint64_t index) override { return dyn_output_map_.find(index) != dyn_output_map_.end(); }
@@ -516,6 +515,13 @@ class OpAdapter : public BaseOpAdapter {
     return output_size;
   }
 
+  OperatorPtr getOp() {
+    if (op_ == nullptr) {
+      op_ = std::make_shared<OpType>();
+    }
+    return op_;
+  }
+
   static const mindspore::HashMap<int, InputDesc> input_map_;
   static const mindspore::HashMap<int, DynInputDesc> dyn_input_map_;
   // note: To keep the outputs in order, the 'output_map_' and 'cus_output_map_' must be std::map instead of Hashmap.
@@ -534,6 +540,8 @@ class OpAdapter : public BaseOpAdapter {
   mindspore::HashMap<std::string, int> name_counts_;
   const std::shared_ptr<OpAdapterImpl> impl_;
   std::string op_type_;
+  // cache the Operator to avoid memory leak caused by 'std::make_shared<OpType>()'
+  OperatorPtr op_{nullptr};
 };
 
 template <typename T>
