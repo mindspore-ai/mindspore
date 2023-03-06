@@ -33,7 +33,7 @@ def test_list_pop_1():
         return x, y
 
     res_x, res_y = list_pop()
-    assert np.all(res_x == (1, 2, 3))
+    assert np.all(res_x == [1, 2, 3])
     assert res_y == 4
 
 
@@ -50,7 +50,7 @@ def test_list_pop_2():
         return x, y
 
     res_x, res_y = list_pop()
-    assert np.all(res_x == (1, 2, 4))
+    assert np.all(res_x == [1, 2, 4])
     assert res_y == 3
 
 
@@ -67,7 +67,7 @@ def test_list_pop_3():
         return x, y
 
     res_x, res_y = list_pop()
-    assert np.all(res_x == (1, 3, 4))
+    assert np.all(res_x == [1, 3, 4])
     assert res_y == 2
 
 
@@ -140,8 +140,8 @@ def test_list_pop_7():
         return x1, x2, y1 + y2
 
     res_x1, res_x2, res_y = list_pop()
-    assert np.all(res_x1 == (1, 3, 4))
-    assert np.all(res_x2 == (5, 6, 8))
+    assert np.all(res_x1 == [1, 3, 4])
+    assert np.all(res_x2 == [5, 6, 8])
     assert res_y == 9
 
 
@@ -158,7 +158,7 @@ def test_list_pop_8():
         return x, y
 
     res_x, res_y = list_pop(2)
-    assert res_x == (Tensor([1]), Tensor([2]))
+    assert res_x == [Tensor([1]), Tensor([2])]
     assert res_y == Tensor([3])
 
 
@@ -175,7 +175,7 @@ def test_list_pop_9():
 
     input_x = [Tensor([1]), Tensor([2]), Tensor([3])]
     res_x, res_y = list_pop(input_x, 2)
-    assert res_x == (Tensor([1]), Tensor([2]))
+    assert res_x == [Tensor([1]), Tensor([2])]
     assert res_y == Tensor([3])
 
 

@@ -37,7 +37,7 @@ def test_fallback_list_with_input_constant_tensor():
         x.append(Tensor([4]))
         return x
     out = foo()
-    assert isinstance(out, tuple)
+    assert isinstance(out, list)
     assert len(out) == 4
     assert isinstance(out[0], Tensor)
     assert out[0].asnumpy() == 1
@@ -66,7 +66,7 @@ def test_fallback_list_with_input_constant_tensor_2():
         x.append(Tensor([5, 6]))
         return x
     out = foo()
-    assert isinstance(out, tuple)
+    assert isinstance(out, list)
     assert len(out) == 3
     assert isinstance(out[0], Tensor)
     assert np.allclose(out[0].asnumpy(), np.array([1, 2]))
@@ -139,7 +139,7 @@ def test_fallback_tuple_with_input_constant_tensor_2():
         x = list(Tensor([[1, 2], [3, 4]]))
         return x
     out = foo()
-    assert isinstance(out, tuple)
+    assert isinstance(out, list)
     assert len(out) == 2
     assert isinstance(out[0], Tensor)
     assert np.allclose(out[0].asnumpy(), np.array([1, 2]))

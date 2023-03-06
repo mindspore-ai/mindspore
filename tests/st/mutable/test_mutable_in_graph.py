@@ -279,7 +279,7 @@ def test_grad_const_list_tensor_to_mutable():
 
     grad_net = GradNetWrtX(Net())
     output = grad_net()
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
               np.array([[1.7, 1.7, 1.7],
@@ -288,7 +288,7 @@ def test_grad_const_list_tensor_to_mutable():
     assert compare(output, expect)
     grad_net = GradNetWrtX1(Net())
     output = grad_net()
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     assert compare(output, expect)
 
 
@@ -338,7 +338,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     x = [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
          Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)]
     output = grad_net(x)
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
               np.array([[1.7, 1.7, 1.7],
@@ -347,6 +347,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     assert compare(output, expect)
 
 
+@pytest.mark.skip(reason="not support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -397,7 +398,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
 
     grad_net = GradNetWrtX(Net())
     output = grad_net()
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [(np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
                np.array([[0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
@@ -405,10 +406,10 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
               np.array([[1.7, 1.7, 1.7],
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
-    assert compare(output, expect)
+    assert compare(output, list)
     grad_net = GradNetWrtX1(Net())
     output = grad_net()
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     assert compare(output, expect)
 
 

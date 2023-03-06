@@ -576,7 +576,7 @@ def test_list_double_slice():
     class NetInner(Cell):
         def construct(self, a, b, start1, stop1, step1, start2, stop2, step2):
             a[start1:stop1:step1][start2: stop2: step2] = b
-            return tuple(a)
+            return a
 
     net = NetInner()
     a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -728,7 +728,7 @@ def test_list_slice_negetive_step():
         a = [1, 2, 3, 4, 5]
         b = [11, 22, 33, 44, 55]
         a[-1:-4:-1] = b[-1:-4:-1]
-        return tuple(a)
+        return a
 
     x = py_func()
     y = ms_func()
@@ -771,6 +771,6 @@ def test_list_slice_only_with_step():
         a = [1, 2, 3, 4]
         b = [11, 22]
         a[::2] = b
-        return tuple(a)
+        return a
 
     assert ms_func() == py_func()

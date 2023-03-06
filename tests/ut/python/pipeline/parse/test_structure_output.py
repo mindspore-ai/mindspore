@@ -66,7 +66,7 @@ def test_output_const_list():
             return ret
 
     net = Net()
-    assert net() == (1, 2, 3)
+    assert net() == [1, 2, 3]
 
 
 def test_output_const_int():

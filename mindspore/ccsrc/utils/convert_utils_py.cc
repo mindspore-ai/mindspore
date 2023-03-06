@@ -502,6 +502,49 @@ py::object VectorToPyData(const Any &value) {
   }
   return ret;
 }
+template <typename T>
+py::object AbstractSequenceToPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
+  auto value_size = value_list.size();
+  auto ret = T(value_size);
+  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  bool dynamic_len = seq_abs->dynamic_len();
+  auto dynamic_len_element_abs = seq_abs->dynamic_len_element_abs();
+  if (dynamic_len || dynamic_len_element_abs != nullptr) {
+    if (dynamic_len_element_abs == nullptr) {
+      MS_LOG(INFO) << "Dynamic length sequence with no specified element abstract convert to empty tuple.";
+      for (size_t i = 0; i < value_size; i++) {
+        ret[i] = BaseRefToPyData(value_list[i]);
+      }
+      return ret;
+    }
+    if (dynamic_len_element_abs->isa<abstract::AbstractNone>()) {
+      MS_LOG(INFO) << "Dynamic length sequence with element None convert to empty sequence.";
+      return ret;
+    }
+    for (size_t i = 0; i < value_size; ++i) {
+      ret[i] = BaseRefToPyData(value_list[i], dynamic_len_element_abs);
+    }
+    return ret;
+  }
+  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+  // If FALLBACK_RUNTIME is not enable
+  // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
+  size_t ref_idx = 0;
+  for (size_t i = 0; i < seq_abs->size(); i++) {
+    auto elem_abs = seq_abs->elements()[i];
+    if (elem_abs->isa<abstract::AbstractNone>() && !support_fallback_runtime) {
+      continue;
+    }
+    ret[ref_idx] = BaseRefToPyData(value_list[ref_idx], elem_abs);
+    ref_idx++;
+  }
+  if (ref_idx != value_size) {
+    MS_LOG(EXCEPTION) << "The size of elements (excluding None) should be equal to " << value_size << ", but got "
+                      << ref_idx;
+  }
+  return ret;
+}
 
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
   py::object ret;
@@ -516,55 +559,16 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   }
 
   // Current VectorRef reflects a COOTensor type
-  MS_LOG(DEBUG) << "abs: " << abs->ToString();
   if (abs->isa<abstract::AbstractCSRTensor>()) {
     return MakeCSRTensor(value_list);
   }
   if (abs->isa<abstract::AbstractCOOTensor>()) {
     return MakeCOOTensor(value_list);
   }
-  if (!abs->isa<abstract::AbstractSequence>()) {
-    return VectorRefToPyData(value_list, nullptr);
+  if (abs->isa<abstract::AbstractList>()) {
+    return AbstractSequenceToPyData<py::list>(value_list, abs);
   }
-  auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq_abs);
-  bool dynamic_len = seq_abs->dynamic_len();
-  auto dynamic_len_element_abs = seq_abs->dynamic_len_element_abs();
-  if (dynamic_len || dynamic_len_element_abs != nullptr) {
-    if (dynamic_len_element_abs == nullptr) {
-      MS_LOG(INFO) << "Dynamic length sequence with no specified element abstract convert to empty tuple.";
-      for (size_t i = 0; i < value_size; i++) {
-        ref_tuple[i] = BaseRefToPyData(value_list[i]);
-      }
-      return ref_tuple;
-    }
-    if (dynamic_len_element_abs->isa<abstract::AbstractNone>()) {
-      MS_LOG(INFO) << "Dynamic length sequence with element None convert to empty tuple.";
-      return ref_tuple;
-    }
-    for (size_t i = 0; i < value_size; ++i) {
-      ref_tuple[i] = BaseRefToPyData(value_list[i], dynamic_len_element_abs);
-    }
-    return ref_tuple;
-  }
-  static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-  // If FALLBACK_RUNTIME is not enable
-  // The size of seq_abs may be larger than the size of value_list, because the backend will eliminate None.
-  size_t ref_idx = 0;
-  for (size_t i = 0; i < seq_abs->size(); i++) {
-    auto elem_abs = seq_abs->elements()[i];
-    if (elem_abs->isa<abstract::AbstractNone>() && !support_fallback_runtime) {
-      continue;
-    }
-    ref_tuple[ref_idx] = BaseRefToPyData(value_list[ref_idx], elem_abs);
-    ref_idx++;
-  }
-  if (ref_idx != value_size) {
-    MS_LOG(EXCEPTION) << "The size of elements (excluding None) should be equal to " << value_size << ", but got "
-                      << ref_idx;
-  }
-  ret = ref_tuple;
-  return ret;
+  return AbstractSequenceToPyData<py::tuple>(value_list, abs);
 }
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,

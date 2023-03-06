@@ -35,8 +35,8 @@ def test_fallback_list_with_input_tuple():
         x.append(4)
         return x
     out = foo()
-    assert isinstance(out, tuple)
-    assert operator.eq(out, (1, 2, 3, 4))
+    assert isinstance(out, list)
+    assert operator.eq(out, [1, 2, 3, 4])
 
 
 def test_fallback_list_with_input_list():
@@ -51,8 +51,8 @@ def test_fallback_list_with_input_list():
         x.append(4)
         return x
     out = foo()
-    assert isinstance(out, tuple)
-    assert operator.eq(out, (1, 2, 3, 4))
+    assert isinstance(out, list)
+    assert operator.eq(out, [1, 2, 3, 4])
 
 
 def test_fallback_list_with_input_dict():
@@ -67,8 +67,8 @@ def test_fallback_list_with_input_dict():
         x.append('d')
         return x
     out = foo()
-    assert isinstance(out, tuple)
-    assert operator.eq(out, ('a', 'b', 'c', 'd'))
+    assert isinstance(out, list)
+    assert operator.eq(out, ['a', 'b', 'c', 'd'])
 
 
 def test_fallback_list_with_input_numpy_array():

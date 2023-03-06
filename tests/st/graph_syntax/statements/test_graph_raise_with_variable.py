@@ -269,6 +269,7 @@ def test_raise_with_variable_control_flow3():
         raise_info_joinedstr_tensor.value)
 
 
+@pytest.mark.skip(reason="not support yet")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

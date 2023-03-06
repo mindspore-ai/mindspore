@@ -40,6 +40,21 @@ bool ConvertListToTuple::Run(const FuncGraphPtr &graph) {
                    << ",debug name:" << node->DebugString();
     }
   }
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (auto node : graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(node);
+    // Convert unused list parameter to tuple.
+    if (manager->node_users().find(node) != manager->node_users().end()) {
+      continue;
+    }
+    auto new_abs = ConvertSequenceAbsToTupleAbs(node->abstract());
+    if (new_abs != nullptr) {
+      node->set_abstract(new_abs);
+      MS_LOG(INFO) << "Convert sequence abstract to tuple abstract for op:" << node->fullname_with_scope()
+                   << ",debug name:" << node->DebugString();
+    }
+  }
   return true;
 }
 

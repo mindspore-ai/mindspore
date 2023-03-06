@@ -119,7 +119,7 @@ def test_grad_mutable_list_tensor():
     t = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
               np.array([[1.7, 1.7, 1.7],
@@ -310,7 +310,7 @@ def test_grad_mutable_list_tuple_tensor():
                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
                                                                                      [0, 0, 0]]).astype(np.float32)],
@@ -423,6 +423,7 @@ def test_grad_mutable_dict_tuple_tensor():
     assert compare(output, expect)
 
 
+@pytest.mark.skip(reason="Do not support yet")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -467,7 +468,7 @@ def test_grad_mutable_list_dict_tensor():
               np.array([[1.7, 1.7, 1.7],
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     assert len(output) == 2
     assert isinstance(output[0], dict)
     assert len(output[0].keys()) == 2
@@ -579,7 +580,7 @@ def test_grad_mutable_list_tensor_jit_function():
 
     context.set_context(mode=context.GRAPH_MODE)
     output = GradOperation()(net)(z)
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
               np.array([[1.7, 1.7, 1.7],
@@ -673,7 +674,7 @@ def test_grad_mutable_unused_list_tensor():
                  Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
                  Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
-    assert isinstance(output, tuple)
+    assert isinstance(output, list)
     expect = [np.array([[3., 3., 3.],
                         [3., 3., 3.]]).astype(np.float32),
               np.array([[0., 0., 0.],

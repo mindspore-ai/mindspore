@@ -137,7 +137,7 @@ def test_fallback_reversed():
     def foo():
         x = reversed([1, 2, 3])
         return list(x)
-    assert foo() == (3, 2, 1)
+    assert foo() == [3, 2, 1]
 
 
 def test_fallback_set():

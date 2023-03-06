@@ -614,63 +614,6 @@ class CleanAfterOptARewriter : public BaseRewriter {
 
  protected:
   // From:
-  //   MakeList(arg1, arg2, ...)
-  // To:
-  //   MakeTuple(arg1, arg2, ...)
-  AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    std::vector<AnfNodePtr> inputs;
-    inputs.reserve(node->size());
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    // Inputs of node should be [make_list, item1, item2, ...], so offset by 1 to get items;
-    (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-    return node->func_graph()->NewCNode(std::move(inputs));
-  }
-
-  // From:
-  //   list_getitem(list, key)
-  // To:
-  //   TupleGetItem(list, key)
-  AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    // Inputs should be [list_getitem, list, item]
-    constexpr size_t expect_input_size = 3;
-    CheckInputsSize(node, expect_input_size);
-    constexpr size_t data_index = 1;
-    constexpr size_t cons_index = 2;
-    const auto &inputs = node->inputs();
-    auto &data = inputs[data_index];
-    auto &key = inputs[cons_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, key});
-  }
-
-  // From:
-  //   ListSetItem(list, index, item)
-  // To:
-  //   TupleSetItem(list, index, item)
-  AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    // Inputs should be [list_setitem, list, index, item]
-    const size_t expect_inputs_size = 4;
-    CheckInputsSize(node, expect_inputs_size);
-
-    const size_t data_index = 1;
-    const size_t cons_index = 2;
-    const size_t value_index = 3;
-    const auto &inputs = node->inputs();
-    auto &data = inputs[data_index];
-    auto &key = inputs[cons_index];
-    auto &value = inputs[value_index];
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, key, value});
-  }
-
-  // From:
   //   MakeSparseTensor(indices, values, dense_shape)
   // To:
   //   MakeTuple(indices, values, dense_shape)
@@ -922,9 +865,6 @@ class CleanAfterOptARewriter : public BaseRewriter {
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
   using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
-    {prim::kPrimMakeList, &ThisClass::ConvertMakeListToMakeTuple},
-    {prim::kPrimListGetItem, &ThisClass::ConvertListGetItemToTupleGetItem},
-    {prim::kPrimListSetItem, &ThisClass::ConvertListSetItemToTupleSetItem},
     // SparseProcess: 1.MakeSparse->MakeTuple 2.SparseGetAttr->TupleGetItem
     {prim::kPrimMakeRowTensor, &ThisClass::ConvertMakeSparseToMakeTuple},
     {prim::kPrimRowTensorGetIndices, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
@@ -994,39 +934,18 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert) {
-    MS_EXCEPTION_IF_NULL(need_convert);
-    MS_EXCEPTION_IF_NULL(value);
-    if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
-    }
-
-    if (value->isa<ValueSequence>()) {
-      std::vector<ValuePtr> elements;
-      auto value_seq = value->cast<ValueSequencePtr>();
-      (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
-                           [&](const ValuePtr &value) -> ValuePtr {
-                             bool is_convert = false;
-                             auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
-                             *need_convert |= is_convert;
-                             return convert_value;
-                           });
-      *need_convert |= value->isa<ValueList>();
-      if (*need_convert) {
-        return std::make_shared<ValueTuple>(elements);
-      }
-    }
-
-    return value;
-  }
-
   AnfNodePtr ProcessValueSequence(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<ValueSequence>()) {
       auto value_seq = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(value_seq);
       auto values = value_seq->value();
-      std::vector<AnfNodePtr> value_seq_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      std::vector<AnfNodePtr> value_seq_inputs;
+      if (value_seq->isa<ValueList>()) {
+        (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
+      } else {
+        (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+      }
       for (auto inner_value : values) {
         auto inner_value_seq = ProcessValueSequence(inner_value);
         (void)value_seq_inputs.emplace_back(inner_value_seq);
@@ -1091,59 +1010,13 @@ class CleanAfterOptARewriter : public BaseRewriter {
         return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
       }
     }
-    bool need_convert = false;
-    auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
-    if (need_convert) {
-      return std::make_shared<ValueNode>(convert_value);
-    }
     return nullptr;
   }
 
-  // AbstractSequence, AbstractRowTensor --> AbstractTuple.
+  // AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
-    }
-    // AbstractList --> AbstractTuple.
-    auto abs_seq = abs->cast<AbstractSequencePtr>();
-    if (abs_seq != nullptr) {
-      // Dynamic length sequence do not convert.
-      if (abs_seq->dynamic_len() && abs_seq->isa<AbstractList>()) {
-        auto converted_abs_tuple = std::make_shared<AbstractTuple>(abs_seq->elements(), abs_seq->sequence_nodes());
-        converted_abs_tuple->set_dynamic_len(true);
-        converted_abs_tuple->set_dynamic_len_element_abs(abs_seq->dynamic_len_element_abs());
-        return converted_abs_tuple;
-      }
-      const auto &seq_elements = abs_seq->elements();
-      // First we check if elements should be converted,
-      // changed_elements maps old element to new element.
-      mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
-      for (const auto &element : seq_elements) {
-        auto new_element = ConvertToAbstractTuple(element, depth + 1);
-        if (new_element != nullptr) {
-          (void)changed_elements.emplace(element, new_element);
-        }
-      }
-      if (changed_elements.empty()) {
-        if (abs->isa<AbstractTuple>()) {
-          // If no elements changed and it is an AbstractTuple, do not convert.
-          return nullptr;
-        }
-        // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
-        return std::make_shared<AbstractTuple>(seq_elements);
-      }
-      // Always make new AbstractTuple when elements changed.
-      std::vector<AbstractBasePtr> elements;
-      elements.reserve(seq_elements.size());
-      for (const auto &element : seq_elements) {
-        auto iter = changed_elements.find(element);
-        if (iter != changed_elements.end()) {
-          (void)elements.emplace_back(iter->second);
-        } else {
-          (void)elements.emplace_back(element);
-        }
-      }
-      return std::make_shared<AbstractTuple>(std::move(elements));
     }
     // AbstractRowTensor --> AbstractTuple.
     auto abs_row_tensor = abs->cast<std::shared_ptr<AbstractRowTensor>>();

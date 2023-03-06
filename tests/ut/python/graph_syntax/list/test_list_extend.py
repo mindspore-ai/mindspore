@@ -33,7 +33,7 @@ def test_list_extend_1():
         x.extend(y)
         return x
     out = list_net_1()
-    assert np.all(out == (1, 2, 3, 4, 5, 6, 7))
+    assert np.all(out == [1, 2, 3, 4, 5, 6, 7])
 
 
 def test_list_extend_2():
@@ -52,7 +52,7 @@ def test_list_extend_2():
         x.extend(z)
         return x
     out = list_net_2()
-    assert np.all(out == (1, 2, 3, 4, ('bb', '2', 3), 20))
+    assert np.all(out == [1, 2, 3, 4, ('bb', '2', 3), 20])
 
 
 def test_list_extend_3():
@@ -73,8 +73,8 @@ def test_list_extend_3():
         x.extend(z)
         return x
     out = list_net_3()
-    assert np.all(out == (1, 2, 3, 4, ('bb', '2', 3), 'Bob', 'a', ('Michael', 'Bob', '2'), \
-        20, 4, Tensor(1), (1, 2), Tensor(1)))
+    assert np.all(out == [1, 2, 3, 4, ('bb', '2', 3), 'Bob', 'a', ('Michael', 'Bob', '2'), \
+        20, 4, Tensor(1), (1, 2), Tensor(1)])
 
 
 def test_list_extend_4():
@@ -90,7 +90,7 @@ def test_list_extend_4():
         x.extend(y)
         return x
     out = list_net_4()
-    assert np.all(out == ())
+    assert np.all(out == [])
 
 
 def test_list_extend_tuple():
@@ -107,4 +107,4 @@ def test_list_extend_tuple():
         return x
 
     out = func()
-    assert np.all(out == (1, 2, 3, 4, 5, 6, 7))
+    assert np.all(out == [1, 2, 3, 4, 5, 6, 7])

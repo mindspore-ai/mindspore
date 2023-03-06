@@ -41,4 +41,4 @@ class NetWork(Cell):
 list1 = [1, 2, 3]
 net1 = NetWork()
 result = net1(list1)
-assert result == (1, 3)
+assert result == [1, 3]
