@@ -71,3 +71,7 @@ endif()
 if(MSLITE_DEPS_OPENSSL)
     include(${TOP_DIR}/cmake/external_libs/openssl.cmake)
 endif()
+
+if(MSLITE_DEPS_DIRENT)
+    include(${TOP_DIR}/cmake/external_libs/dirent.cmake)
+endif()

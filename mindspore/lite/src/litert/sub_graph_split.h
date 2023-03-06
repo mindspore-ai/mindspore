@@ -40,7 +40,7 @@ constexpr int kMinSubgraphCost = 50;
 constexpr double kDefaultGpu = 0.5;
 class SearchSubGraph {
  public:
-  enum TensorType { NORMAL, CONST, INPUT };
+  enum TensorType { NORMAL, CONSTANT, INPUT };
 
   struct Tensor {
     std::vector<uint32_t> in_nodes_; /* used current tensor as input */

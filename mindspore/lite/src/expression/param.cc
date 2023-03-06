@@ -36,7 +36,7 @@ int Param::Fill(Mode mode) {
       constexpr float scale = 0.01;
       std::normal_distribution<float> n{0, 1};
       std::generate_n(data.begin(), size_, [&]() { return n(engine); });
-      (void)std::transform(data.begin(), data.end(), data.begin(), [](float x) { return x * scale; });
+      (void)std::transform(data.begin(), data.end(), data.begin(), [=](float x) { return x * scale; });
       break;
     }
     case UNIFORM: {
