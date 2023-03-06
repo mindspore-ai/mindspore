@@ -127,8 +127,8 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
   auto shape_vector = shape->shape();
   auto shape_base_vector = shape_base->shape();
   if (shape_vector.size() != shape_base_vector.size()) {
-    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
-                      << " are not consistent with second arg shape " << shape_base->ToString();
+    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape_base->ToString()
+                      << " are not consistent with second arg shape " << shape->ToString();
   }
 
   for (size_t i = 0; i < shape_vector.size(); i++) {
@@ -136,8 +136,8 @@ void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base,
       continue;
     }
     if (shape_vector[i] != shape_base_vector[i]) {
-      MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
-                        << " are not consistent with second arg shape " << shape_base->ToString();
+      MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape_base->ToString()
+                        << " are not consistent with second arg shape " << shape->ToString();
     }
   }
   return;
