@@ -269,7 +269,7 @@ def test_print_validate_tuple():
 
 
 @security_off_wrap
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -287,10 +287,8 @@ def test_print_validate():
         print("np_sum: ", np_sum)
         return np_sum
 
-    with pytest.raises(RuntimeError) as err:
-        res = print_func()
-        print("res: ", res)
-    assert "Should not use Python object in runtime" in str(err.value)
+    res = print_func()
+    assert (res == [2, 4, 6, 8, 10]).all()
 
 
 @security_off_wrap
