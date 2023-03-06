@@ -20,7 +20,7 @@ import math
 import numbers
 import numpy as np
 
-from mindspore.communication.management import get_rank, get_group_size
+from mindspore.communication.management import get_group_size
 from mindspore.common._utils import is_shape_unknown, is_stub_tensor
 from mindspore.common.seed import get_seed
 from mindspore import context
@@ -2280,9 +2280,9 @@ class Tensor(Tensor_):
                 self._np_seed = np.random.get_state()[1][0]
                 self.need_set_seed = (slice_index is not None)
                 self._global_seed = global_seed
-                self._device_num = 1
+                self._seed_offset = 1
                 if self.need_set_seed:
-                    self._device_num = get_group_size()
+                    self._seed_offset = get_group_size() * 2
 
             def __enter__(self):
                 if self.need_set_seed:
@@ -2293,7 +2293,7 @@ class Tensor(Tensor_):
                     else:
                         np.random.seed(slice_index + Tensor.delta_seed)
                         self.init.seed = slice_index + Tensor.delta_seed
-                        Tensor.delta_seed += self._device_num
+                        Tensor.delta_seed += self._seed_offset
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:
@@ -2302,10 +2302,6 @@ class Tensor(Tensor_):
 
         with seed_context(self.init):
             self.init(data)
-        if opt_shard_group:
-            rank = get_rank(opt_shard_group)
-            size = get_group_size(opt_shard_group)
-            data = np.split(data, size)[rank]
         self.init = None
 
         # At embedding cache scenes. When size of tensor is out of range, we store data to persistent storage

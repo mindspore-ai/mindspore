@@ -710,7 +710,7 @@ class Parameter(Tensor_):
                 raise TypeError("The argument 'layout' should be tuple, but got {}.".format(type(layout)))
             if len(layout) < 6:
                 raise ValueError("The length of 'layout' must be larger than 5, but got {}.".format(len(layout)))
-            slice_index = int(_get_slice_index(layout[0], layout[1]))
+            slice_index = int(_get_slice_index(layout[0], layout[1], layout[5]))
             init_data_args += (slice_index, layout[2], layout[5])
         return init_data_args
 

@@ -1500,7 +1500,8 @@ static std::vector<ActionItem> CommonPipeline() {
   auto parallel_mode = parallel_context->parallel_mode();
   const bool is_parallel_mode =
     parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-  if (!is_cluster_initialized && !is_parallel_mode && pipeline::GetJitLevel() != "O0") {
+  static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
+  if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && pipeline::GetJitLevel() != "O0") {
     (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
   }
 

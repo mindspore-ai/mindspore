@@ -567,7 +567,7 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   ValuePtr cond = MakeValue(condition);
   common::AnfAlgo::SetNodeAttr(kAttrSwitchCondition, cond, stream_switch_app);
   // set attr:data_type
-  int data_type = static_cast<int>(RT_SWITCH_INT64);
+  int data_type = static_cast<int>(RT_SWITCH_INT32);
   ValuePtr dt = MakeValue(data_type);
   common::AnfAlgo::SetNodeAttr(kAttrDataType, dt, stream_switch_app);
   // set distinction label and graph id
