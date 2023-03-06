@@ -360,7 +360,7 @@ std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const B
     // Handle multiple input case.
     auto real_output_abs = real_output->abstract();
     MS_EXCEPTION_IF_NULL(real_output_abs);
-    if (real_output_abs->isa<AbstractTuple>() && ContainPyExecuteOutputData(real_output)) {
+    if (real_output_abs->isa<abstract::AbstractSequence>() && ContainPyExecuteOutputData(real_output)) {
       MS_LOG(DEBUG) << "Contains PyExecute output data.";
       if (!utils::isa<VectorRef>(value)) {
         MS_LOG(EXCEPTION) << "When the output is tuple, value should be vector ref.";
