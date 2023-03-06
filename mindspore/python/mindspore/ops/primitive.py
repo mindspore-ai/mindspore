@@ -874,7 +874,7 @@ def _primexpr(fn=None, get_instance=True, name=None, reuse_result=True):
     return deco
 
 
-_RUN_OP_ASYNC = False
+_RUN_OP_ASYNC = True
 
 
 def _run_op(obj, op_name, args):
