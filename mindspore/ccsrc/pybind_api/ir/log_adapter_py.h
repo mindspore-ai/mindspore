@@ -98,9 +98,6 @@ class PyExceptionInitializer {
     if (exception_type == RuntimeWarning) {
       throw py::runtime_warning(str);
     }
-    if (exception_type == RuntimeError) {
-      throw std::runtime_error(str);
-    }
     py::pybind11_fail(str);
   }
 };
