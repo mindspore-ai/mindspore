@@ -165,6 +165,7 @@ void RegMathBpropExpanderOps3() {
   REGISTER_EXPANDER_BPROP_IMPL(AddV2);
   REGISTER_EXPANDER_BPROP_IMPL(Addcdiv);
   REGISTER_EXPANDER_BPROP_IMPL(Addcmul);
+  REGISTER_EXPANDER_BPROP_IMPL(BatchMatMul);
 }
 
 void RegNNBpropExpanderOps1() {

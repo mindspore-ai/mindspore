@@ -369,7 +369,6 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
                    {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)},
                    {kAttrPrimitiveTarget, MakeValue("CPU")}});
   MS_EXCEPTION_IF_NULL(out);
-  MS_EXCEPTION_IF_NULL(out->get());
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTuple>()) {
