@@ -22,9 +22,14 @@
 namespace mindspore::opt {
 class ClipConvertActivationPass : public Pass {
  public:
-  ClipConvertActivationPass() : Pass("clip_convert_activation_pass") {}
+  explicit ClipConvertActivationPass(bool only_relu = false) : Pass("clip_convert_activation_pass") {
+    only_relu_ = only_relu;
+  }
   ~ClipConvertActivationPass() override = default;
   bool Run(const FuncGraphPtr &graph) override;
+
+ private:
+  bool only_relu_ = false;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CLIP_CONVERT_ACTIVATION_PASS_H_

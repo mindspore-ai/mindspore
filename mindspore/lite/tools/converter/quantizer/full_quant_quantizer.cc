@@ -514,7 +514,7 @@ void FullQuantQuantizer::InitAscendConfig() {
   init_param_.activation_symmetric_ = false;
   init_param_.weight_channel_symmetric_ = true;
   init_param_.weight_layer_symmetric_ = false;
-  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
+  support_int8_ops_ = {prim::kPrimConv2DFusion};
   per_channel_ops_ = {prim::kPrimConv2DFusion};
 }
 
