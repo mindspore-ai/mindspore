@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/fused_batch_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/layer_norm_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/unsorted_segment_sum_replace_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/gather_v2_ds_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bce_with_logits_loss_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
@@ -262,6 +263,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
+  ir_fusion_pm->AddPass(std::make_shared<UnsortedSegmentSumReplaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());

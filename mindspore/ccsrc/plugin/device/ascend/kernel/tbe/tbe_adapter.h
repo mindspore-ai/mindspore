@@ -64,6 +64,7 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"IndexAdd", "InplaceIndexAdd"},
                                                           {"InplaceUpdateV2", "InplaceUpdate"},
                                                           {"CumSum", "Cumsum"},
+                                                          {"UnsortedSegmentSumD", "UnsortedSegmentSum"},
                                                           {"KLDivLossGrad", "KlDivLossGrad"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
