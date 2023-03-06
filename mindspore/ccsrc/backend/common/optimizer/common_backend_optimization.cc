@@ -55,14 +55,9 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
-#ifdef ENABLE_TUPLE_UNFOLD
-  MS_LOG(INFO) << "Enable tuple unfold.";
   if (graph->has_flag(kAttrMutableKernel) || graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   }
-#else
-  common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
-#endif
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
   return common_pm;

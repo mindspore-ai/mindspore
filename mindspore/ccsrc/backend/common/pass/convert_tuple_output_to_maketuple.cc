@@ -49,25 +49,18 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   return make_tuple;
 }
 
-#ifdef ENABLE_TUPLE_UNFOLD
 bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   const auto &outputs =
     common::AnfAlgo::GetAllOutputIndexByReturnTypes(func_graph->output(), {prim::kPrimTupleGetItem});
   return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) { return output.first == node; }) !=
          outputs.end();
 }
-#endif
 
 bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
-#ifdef ENABLE_TUPLE_UNFOLD
   MS_EXCEPTION_IF_NULL(input);
   return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
           !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
           (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)));
-#else
-  return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
-          !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall));
-#endif
 }
 }  // namespace
 

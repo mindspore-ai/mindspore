@@ -236,9 +236,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-#ifdef ENABLE_TUPLE_UNFOLD
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
-#endif
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));

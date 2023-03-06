@@ -76,8 +76,6 @@ if(ENABLE_ASAN)
     endif()
 endif()
 
-add_compile_definitions(ENABLE_TUPLE_UNFOLD)
-
 if(DEBUG_MODE)
     set(CMAKE_BUILD_TYPE "Debug")
     add_compile_definitions(MEM_REUSE_DEBUG)
