@@ -33,7 +33,7 @@
 
 namespace mindspore {
 namespace device {
-class BACKEND_EXPORT AscendDataQueueDynamic : public DataQueue {
+class AscendDataQueueDynamic : public DataQueue {
  public:
   explicit AscendDataQueueDynamic(const std::string &channel_name, const size_t capacity);
   ~AscendDataQueueDynamic() override = default;

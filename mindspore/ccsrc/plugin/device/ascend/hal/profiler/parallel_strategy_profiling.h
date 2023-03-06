@@ -31,10 +31,10 @@ namespace profiler {
 namespace ascend {
 class ParallelStrategy {
  public:
-  BACKEND_EXPORT static std::shared_ptr<ParallelStrategy> &GetInstance();
+  static std::shared_ptr<ParallelStrategy> &GetInstance();
   ParallelStrategy() = default;
   ~ParallelStrategy() {}
-  BACKEND_EXPORT void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
+  void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
   void SaveParallelStrategyToFile();
   std::string GetParallelStrategyForReport();
 
