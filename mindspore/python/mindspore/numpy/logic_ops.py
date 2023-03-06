@@ -490,6 +490,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=True):
         >>> print(np.isclose(a, b, equal_nan=True))
         [ True  True False False  True  True]
     """
+    a, b = _to_tensor(a, b)
     is_close = P.IsClose(rtol=rtol, atol=atol, equal_nan=equal_nan)
     return is_close(a, b)
 
