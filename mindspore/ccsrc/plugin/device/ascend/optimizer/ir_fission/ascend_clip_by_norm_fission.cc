@@ -103,6 +103,7 @@ AnfNodePtr AscendClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func
   std::vector<int64_t> axis;
   if (axis_value->isa<ValueSequence>()) {
     axis = GetValue<std::vector<int64_t>>(axis_value);
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), reduce_sum);
     if (axis.empty()) {  // reduce_sum for all dimensions
       for (size_t i = 0; i < dim; ++i) {
         (void)axis.emplace_back(i);
@@ -110,11 +111,11 @@ AnfNodePtr AscendClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func
     }
   } else if (axis_value->isa<Int64Imm>()) {
     (void)axis.emplace_back(GetValue<int64_t>(axis_value));
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), reduce_sum);
   } else {
     MS_EXCEPTION(TypeError) << "For `" << prim::kPrimClipByNorm->name()
                             << "`, the type of attribute `axis` is invalid.";
   }
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), reduce_sum);
   // Set abstract to `reduce_sum` op
   int64_t ddim = SizeToLong(dim);
   ShapeVector reduce_sum_output_shape = shape_vec;

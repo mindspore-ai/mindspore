@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,6 @@ namespace opt {
 namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
 constexpr size_t kAllToAllInputIdx = 1;
-
-inline int64_t NormalizeDim(const ShapeVector &shape, int64_t dim) {
-  return dim < 0 ? SizeToLong(shape.size()) + dim : dim;
-}
 
 void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -75,8 +71,8 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(split_v);
   auto dtype = common::AnfAlgo::GetOutputInferDataType(all_to_all_input, 0);
   auto shape = common::AnfAlgo::GetOutputInferShape(all_to_all_input, 0);
-  split_dim = NormalizeDim(shape, split_dim);
-  if (SizeToLong(shape.size()) <= split_dim) {
+  auto shape_size = SizeToLong(shape.size());
+  if (split_dim >= shape_size || split_dim < -shape_size) {
     MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }
@@ -163,8 +159,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
   auto single_shape = common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
-  concat_dim = NormalizeDim(single_shape, concat_dim);
-  if (LongToSize(concat_dim) >= single_shape.size()) {
+  auto shape_size = SizeToLong(single_shape.size());
+  if (concat_dim >= shape_size || concat_dim < -shape_size) {
     MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }

@@ -154,3 +154,20 @@ def test_dynamic_axis_reduce(data_type):
     dyn_axis_case(data_type)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     dyn_axis_case(data_type)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.float32])
+def test_dynamic_axis_reduce_ascend(data_type):
+    """
+    Feature: Reduce DynamicShape.
+    Description: Test case of dynamic shape for reduce operator with dynamic axis in Ascend.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    dyn_axis_case(data_type)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    dyn_axis_case(data_type)
