@@ -23,10 +23,11 @@
 namespace mindspore {
 namespace opt {
 namespace {
-const auto kV = "V";
+const auto kA = "A";
+const auto kVs = "Vs";
 const auto kMBroadcastTo = "m_broadcast_to";
 const auto kRBroadcastTo = "r_broadcast_to";
-AnfNodePtr BuildDynamicBroadcastTo(const PatternMap &m, const AnfNodePtr &) {
+AnfNodePtr BuildBroadcastTo(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMBroadcastTo);
   MS_EXCEPTION_IF_NULL(node);
   auto broadcast_to_op_name = prim::kPrimBroadcastTo->name();
@@ -37,6 +38,8 @@ AnfNodePtr BuildDynamicBroadcastTo(const PatternMap &m, const AnfNodePtr &) {
   CNodePtr broadcast_to_node =
     opt::NewCNode({NewValueNode(std::make_shared<Primitive>(broadcast_to_op_name)), input_x}, func_graph, {node});
   MS_EXCEPTION_IF_NULL(broadcast_to_node);
+  MS_EXCEPTION_IF_NULL(node->abstract());
+  MS_EXCEPTION_IF_NULL(node->abstract()->BuildShape());
   broadcast_to_node->set_abstract(node->abstract());
   auto shape_ptr = node->abstract()->BuildShape()->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr);
@@ -55,11 +58,11 @@ bool ConvertDynamicBroadcastTo::CheckMatchedDAG(const PatternMap &, const FuncGr
 }
 
 void ConvertDynamicBroadcastTo::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kV).AddCNode(kMBroadcastTo, {prim::kPrimDynamicBroadcastTo, kV});
+  (*src_pattern).AddVar(kA).AddSeqVar(kVs).AddCNode(kMBroadcastTo, {prim::kPrimDynamicBroadcastTo, kA, kVs});
 }
 
 void ConvertDynamicBroadcastTo::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimDynamicBroadcastTo, kV}, BuildDynamicBroadcastTo);
+  (*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimBroadcastTo, kA}, BuildBroadcastTo);
 }
 }  // namespace opt
 }  // namespace mindspore
