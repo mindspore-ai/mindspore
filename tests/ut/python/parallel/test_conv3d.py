@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -144,3 +144,19 @@ def test_conv3d_valid_mode_output_shape_cannot_div_by_strategy():
               strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net, _x3, _b)
+
+
+def test_conv3d_pad_mode_unet_3d_auto_rank0():
+    """
+    Feature: test pad mode unet 3d
+    Description: sharding propagation
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
+                                      search_mode="sharding_propagation")
+    strategy2 = ((1, 1, 2, 4, 1),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="pad", stride=2, pad=1, strategy2=strategy2)
+    phase = compile_net(net, _x4, _b)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_attrs('NeighborExchangeV2-0', {'send_lens': '[0, 1, 0, 1]'})
+    assert validator.check_node_attrs('NeighborExchangeV2-0', {'recv_lens': '[0, 0, 0, 0]'})
