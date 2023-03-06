@@ -670,31 +670,31 @@ def _compute_shapes(start, axis, num, endpoint):
     return bounds_shape, iota_shape, div
 
 
-def linspace(start, end, steps=50, endpoint=True, retstep=False, dtype=None, axis=0):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
     """
     Returns evenly spaced values within a given interval.
 
     Args:
         start (Union[int, list(int), tuple(int), tensor]): The starting value of the sequence.
-        end (Union[int, list(int), tuple(int), tensor]): The end value of the sequence,
+        stop (Union[int, list(int), tuple(int), tensor]): The end value of the sequence,
             unless `endpoint` is set to False. In that case, the sequence consists
-            of all but the last of `steps + 1` evenly spaced samples, so that `end`
+            of all but the last of `num + 1` evenly spaced samples, so that `stop`
             is excluded.  Note that the step size changes when `endpoint` is False.
-        steps (int, optional): Number of samples to generate. Default is 50.
-        endpoint (bool, optional): If True, `end` is the last sample. Otherwise, it is
+        num (int, optional): Number of samples to generate. Default is 50.
+        endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
             not included. Default is True.
         retstep (bool, optional): If True, return (`samples`, `step`), where `step` is
             the spacing between samples.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype,
             If `dtype` is None, infer the data type from other input arguments. Default is None.
         axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or end are array-like.  By default, the samples will
+            only if start or stop are array-like.  By default, the samples will
             be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
             Default is 0.
 
     Returns:
-        Tensor, with `steps` equally spaced samples in the closed interval
-        :math:`[start, end]` or the half-open interval :math:`[start, end)`
+        Tensor, with `num` equally spaced samples in the closed interval
+        :math:`[start, stop]` or the half-open interval :math:`[start, stop)`
         (depending on whether `endpoint` is True or False).
 
         Step, the size of spacing between samples, only returned if `retstep` is True.
@@ -711,18 +711,18 @@ def linspace(start, end, steps=50, endpoint=True, retstep=False, dtype=None, axi
         [0. 1. 2. 3. 4. 5.]
     """
     # This implementation was inspired by jax.numpy.linspace and numpy.linspace
-    start, end, steps, endpoint, dtype = _type_checking_for_xspace(start, end, steps, endpoint, dtype)
+    start, stop, num, endpoint, dtype = _type_checking_for_xspace(start, stop, num, endpoint, dtype)
     axis = _canonicalize_axis(axis, start.ndim + 1)
     if not isinstance(retstep, bool):
         _raise_type_error("retstep should be an boolean, but got ", retstep)
-    bounds_shape, iota_shape, div = _compute_shapes(start, axis, steps, endpoint)
+    bounds_shape, iota_shape, div = _compute_shapes(start, axis, num, endpoint)
     out = None
     delta = None
-    if steps > 1:
-        delta = (end - start) / div
+    if num > 1:
+        delta = (stop - start) / div
         # This is similar to how numpy and jax compute linspace
         start_expand = reshape(start, bounds_shape)
-        incremental_expand = reshape(_iota(mstype.float32, steps), iota_shape)
+        incremental_expand = reshape(_iota(mstype.float32, num), iota_shape)
         delta_expand = reshape(delta, bounds_shape)
         start_expand, incremental_expand, delta_expand = broadcast_arrays(
             start_expand, incremental_expand, delta_expand)
@@ -730,13 +730,13 @@ def linspace(start, end, steps=50, endpoint=True, retstep=False, dtype=None, axi
         # recover endpoint
         if endpoint:
             out = moveaxis(out, axis, 0)
-            out[-1] = end
+            out[-1] = stop
             out = moveaxis(out, 0, axis)
-    elif steps == 1:
-        delta = nan if endpoint else end - start
+    elif num == 1:
+        delta = nan if endpoint else stop - start
         out = reshape(start, bounds_shape)
-    else:  # steps == 0
-        _raise_value_error("cannot support Tensor with steps=0.")
+    else:  # num == 0
+        _raise_value_error("cannot support Tensor with num=0.")
     if retstep:
         return out.astype(dtype), delta
     return out.astype(dtype)
@@ -2440,10 +2440,10 @@ def _pad_linear(arr, pad_width, end_values):
         pad_before = ()
         pad_after = ()
         if pad_width[i][0] > 0:
-            pad_before = (linspace(end_values[i][0], left_value, steps=pad_width[i][0],
+            pad_before = (linspace(end_values[i][0], left_value, num=pad_width[i][0],
                                    endpoint=False, dtype=dtype, axis=i).squeeze(i + 1),)
         if pad_width[i][1] > 0:
-            pad_after = linspace(right_value, end_values[i][1], steps=pad_width[i][1] + 1,
+            pad_after = linspace(right_value, end_values[i][1], num=pad_width[i][1] + 1,
                                  endpoint=True, dtype=dtype, axis=i).squeeze(i + 1)
             pad_after = (_slice_along_axis(pad_after, i, 1, pad_width[i][1] + 1),)
         tensor_with_pad = pad_before + (arr,) + pad_after
