@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                       kGatherDGradV2OpName,
                                                       kConcatOffsetOpName,
                                                       kSequenceAddOpName,
+                                                      kSequenceAddNOpName,
                                                       kSequenceAddOffsetOpName,
                                                       kSliceGradOpName,
                                                       kRandomShuffleOpName,
