@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #include <set>
-#include "common/expander/core/node.h"
+#include "include/common/expander/core/node.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 
 namespace mindspore::expander::bprop {

@@ -46,7 +46,7 @@ class COMMON_EXPORT DynamicObfuscator {
   CNodePtr RandomSeedModeControl(const FuncGraphPtr func_graph);
   CNodePtr CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node);
 
-  bool IsTarget(std::string &cnode_name);
+  bool IsTarget(const std::string &cnode_name);
   void UpdateDict(const AnfNodePtr &node, const bool isParent);
   void CheckDuplicatedParent(const AnfNodePtr &node);
   CNodePtr CheckInputNodes(const CNodePtr &node);

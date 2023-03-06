@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_
 #define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_
 #include <memory>
-#include "common/expander/core/node.h"
+#include "include/common/expander/core/node.h"
 
 namespace mindspore {
 namespace expander {
