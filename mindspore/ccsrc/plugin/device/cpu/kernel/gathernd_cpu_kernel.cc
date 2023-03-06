@@ -113,31 +113,29 @@ bool GatherNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 
   size_t num = output_dim0 * output_dim1;
 
-  auto task = [&](size_t start, size_t end) {
-    for (size_t write_index = start; write_index < end; write_index++) {
-      size_t i = write_index / output_dim1 % output_dim0;
-      size_t j = write_index % output_dim1;
+  for (size_t write_index = 0; write_index < num; write_index++) {
+    size_t i = write_index / output_dim1 % output_dim0;
+    size_t j = write_index % output_dim1;
 
-      int read_index = 0;
-      for (size_t k = 0; k < indices_dim1; k++) {
-        size_t ind = indices_dim1 * i + k;
-        int indices_i = indices_addr[ind];
-        if (indices_i >= input_shapes_[k] || indices_i < 0) {
-          std::vector<S> error_indice(indices_dim1);
-          auto ret = memcpy(error_indice.data(), indices_addr + indices_dim1 * i, sizeof(S) * indices_dim1);
-          if (ret != EOK) {
-            MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no:" << ret;
-          }
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the indices[" << i << "]: " << error_indice
-                            << ", does not index into input_shape: " << input_shapes_ << ".";
+    int read_index = 0;
+    for (size_t k = 0; k < indices_dim1; k++) {
+      size_t ind = indices_dim1 * i + k;
+      int indices_i = indices_addr[ind];
+      if (indices_i >= input_shapes_[k] || indices_i < 0) {
+        std::vector<S> error_indice(indices_dim1);
+        auto ret = memcpy_s(error_indice.data(), sizeof(S) * indices_dim1, indices_addr + indices_dim1 * i,
+                            sizeof(S) * indices_dim1);
+        if (ret != EOK) {
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed, Error no: " << ret;
         }
-        read_index += indices_i * batch_indices_[k];
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the indices[" << i << "]: " << error_indice
+                          << ", does not index into input_shape: " << input_shapes_ << ".";
       }
-      read_index += SizeToInt(j);
-      output_addr[write_index] = input_addr[read_index];
+      read_index += indices_i * batch_indices_[k];
     }
-  };
-  ParallelLaunchAutoSearch(task, num, this, &parallel_search_info_);
+    read_index += SizeToInt(j);
+    output_addr[write_index] = input_addr[read_index];
+  }
   return true;
 }
 
