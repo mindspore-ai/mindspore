@@ -70,14 +70,29 @@ const std::vector<std::pair<KernelAttr, ShapeCpuKernelMod::KernelRunFunc>> &Shap
      &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
      &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-     &ShapeCpuKernelMod::LaunchKernel}};
+     &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+     &ShapeCpuKernelMod::LaunchKernel},
+  };
   return func_list;
 }
 
