@@ -62,17 +62,17 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
                             const size_t l5, const size_t l6, const size_t r0, const size_t r1, const size_t r2,
                             const size_t r3, const size_t r4, const size_t r5, const size_t r6, const size_t d0,
                             const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const size_t d6, const T *input_x, const T *input_y, T *output) const;
+                            const size_t d6, const T *input_x, const T *input_y, T *output);
   template <typename T>
   T MaximumFunc(const T &lhs, const T &rhs) const {
     return lhs > rhs ? lhs : rhs;
   }
   template <typename T>
-  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output);
   template <typename T>
-  void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
+  void BroadcastArith(const T *input_x, const T *input_y, T *output);
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);

@@ -300,8 +300,14 @@ void Cos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
 template <typename T>
 void Erf(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(erf(static_cast<double>(in[i])));
+    if constexpr (std::is_same_v<T, float16>) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = static_cast<T>(erf(static_cast<float>(in[i])));
+      }
+    } else {
+      for (size_t i = start; i < end; i++) {
+        out[i] = static_cast<T>(erf(in[i]));
+      }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);

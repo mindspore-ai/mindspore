@@ -51,7 +51,7 @@ class MirrorPadCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs) const;
+                    const std::vector<kernel::AddressPtr> &outputs);
 
  private:
   int64_t mode_{0};

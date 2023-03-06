@@ -101,7 +101,7 @@ void MinimumCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 
 template <typename T>
 bool MinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) const {
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumOutputsNum, kernel_name_);
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
@@ -112,7 +112,7 @@ bool MinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void MinimumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *output) {
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
@@ -181,56 +181,68 @@ void MinimumCpuKernelMod::BroadcastArithKernel(const int64_t l0, const int64_t l
                                                const int64_t r1, const int64_t r2, const int64_t r3, const int64_t r4,
                                                const int64_t r5, const int64_t r6, const int64_t d0, const int64_t d1,
                                                const int64_t d2, const int64_t d3, const int64_t d4, const int64_t d5,
-                                               const int64_t d6, const T *input_x, const T *input_y, T *output) const {
+                                               const int64_t d6, const T *input_x, const T *input_y, T *output) {
   if (d0 == 0 || d1 == 0 || d2 == 0 || d3 == 0 || d4 == 0 || d5 == 0 || d6 == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must not be 0";
   }
-  for (size_t pos = 0; pos < output_num_; pos++) {
-    auto pos_signed = SizeToLong(pos);
-    int64_t i = pos_signed / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    int64_t j = pos_signed / (d2 * d3 * d4 * d5 * d6) % d1;
-    int64_t k = pos_signed / (d3 * d4 * d5 * d6) % d2;
-    int64_t l = pos_signed / (d4 * d5 * d6) % d3;
-    int64_t m = pos_signed / (d5 * d6) % d4;
-    int64_t n = pos_signed / d6 % d5;
-    int64_t o = pos_signed % d6;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t pos = start; pos < end; pos++) {
+      auto pos_signed = SizeToLong(pos);
+      int64_t i = pos_signed / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+      int64_t j = pos_signed / (d2 * d3 * d4 * d5 * d6) % d1;
+      int64_t k = pos_signed / (d3 * d4 * d5 * d6) % d2;
+      int64_t l = pos_signed / (d4 * d5 * d6) % d3;
+      int64_t m = pos_signed / (d5 * d6) % d4;
+      int64_t n = pos_signed / d6 % d5;
+      int64_t o = pos_signed % d6;
 
-    int64_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-    l_index += Index(l, l3) * l4 * l5 * l6;
-    l_index += Index(m, l4) * l5 * l6;
-    l_index += Index(n, l5) * l6;
-    l_index += Index(o, l6);
-    int64_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-    r_index += Index(l, r3) * r4 * r5 * r6;
-    r_index += Index(m, r4) * r5 * r6;
-    r_index += Index(n, r5) * r6;
-    r_index += Index(o, r6);
-    output[pos] = MinimumFunc(input_x[LongToSize(l_index)], input_y[LongToSize(r_index)]);
-  }
+      size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
+      l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
+      l_index += Index(k, l2) * l3 * l4 * l5 * l6;
+      l_index += Index(l, l3) * l4 * l5 * l6;
+      l_index += Index(m, l4) * l5 * l6;
+      l_index += Index(n, l5) * l6;
+      l_index += Index(o, l6);
+      size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
+      r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
+      r_index += Index(k, r2) * r3 * r4 * r5 * r6;
+      r_index += Index(l, r3) * r4 * r5 * r6;
+      r_index += Index(m, r4) * r5 * r6;
+      r_index += Index(n, r5) * r6;
+      r_index += Index(o, r6);
+      output[pos] = MinimumFunc(input_x[l_index], input_y[r_index]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
 }
 
 template <typename T>
-void MinimumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) {
   if (input_x_shape_.size() == 0) {
-    for (size_t i = 0; i < output_num_; ++i) {
-      output[i] = MinimumFunc(input_x[0], input_y[i]);
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        output[i] = MinimumFunc(input_x[0], input_y[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
   } else {
-    for (size_t i = 0; i < output_num_; ++i) {
-      output[i] = MinimumFunc(input_x[i], input_y[0]);
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; ++i) {
+        output[i] = MinimumFunc(input_x[i], input_y[0]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
   }
 }
 
 template <typename T>
-void MinimumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
-  for (size_t i = 0; i < output_num_; ++i) {
-    output[i] = MinimumFunc(input_x[i], input_y[i]);
-  }
+void MinimumCpuKernelMod::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      output[i] = MinimumFunc(input_x[i], input_y[i]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_num_, this, &parallel_search_info_);
 }
 
 std::vector<std::pair<KernelAttr, MinimumCpuKernelMod::MinimumLaunchFunc>> MinimumCpuKernelMod::func_list_ = {

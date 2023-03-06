@@ -56,7 +56,7 @@ void verify_padding_range(const std::string &mode, int64_t out_size, const std::
     }
   } else if (mode == "REFLECT") {
     if (padding_attr.first >= out_size || padding_attr.second >= out_size) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be no greater  than the dimension size: ["
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings must be less than the dimension size: ["
                                << padding_attr.first << "], [" << padding_attr.second << "] not less than [" << out_size
                                << "]";
     }
@@ -147,28 +147,12 @@ std::string MirrorPadGrad::get_mode() const {
 MIND_API_OPERATOR_IMPL(MirrorPadGrad, BaseOperator);
 AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
+  constexpr int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MirrorPadGradInferType(primitive, input_args);
   auto infer_shape = MirrorPadGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-
-// AG means auto generated
-class MIND_API AGMirrorPadGradInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return MirrorPadGradInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MirrorPadGradInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return MirrorPadGradInfer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(MirrorPadGrad, prim::kPrimMirrorPadGrad, AGMirrorPadGradInfer, false);
+REGISTER_PRIMITIVE_EVAL_IMPL(MirrorPadGrad, prim::kPrimMirrorPadGrad, MirrorPadGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
