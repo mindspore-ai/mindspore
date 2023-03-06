@@ -3736,11 +3736,11 @@ def acosh(x):
     return F.acosh(x)
 
 
-def add(x, y):
+def add(input, other):
     r"""
     Computes the element-wise addition of input tensors.
     """
-    return F.add(x, y)
+    return F.add(input, other)
 
 
 def addr(x, vec1, vec2, beta=1, alpha=1):

@@ -810,13 +810,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('addcmul')()(self, x1, x2, value)
 
-    def add(self, y):
+    def add(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.add`.
         """
-
         self._init_check()
-        return tensor_operator_registry.get('add')()(self, y)
+        return tensor_operator_registry.get('add')()(self, other)
 
     def subtract(self, other, *, alpha=1):
         r"""
