@@ -213,8 +213,6 @@ from .tril import _tril_aicpu
 from .linspace import _lin_space_aicpu
 from .triu import _triu_aicpu
 from .zeta import _zeta_aicpu
-from .bias_add import _bias_add_aicpu
-from .bias_add_grad import _bias_add_grad_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu
 from .grid_sampler_2d_grad import _grid_sampler_2d_grad_aicpu
 from .sparse_segment_mean_grad import _sparse_segment_mean_grad_aicpu

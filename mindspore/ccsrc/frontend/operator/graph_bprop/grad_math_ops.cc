@@ -109,7 +109,6 @@ FuncGraphPtr LogicalOrBprop(const PrimitivePtr &primal, const AbstractBasePtrLis
 }
 
 void RegMathOps() {
-  REGISTER_PRIMITIVE_BPROP_IMPL(MatMul, MatMulBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(Sub, SubBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(Add, AddBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(AssignAdd, AssignAddBprop);

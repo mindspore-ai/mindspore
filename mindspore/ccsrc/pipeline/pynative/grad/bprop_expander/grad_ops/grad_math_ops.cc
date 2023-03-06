@@ -75,6 +75,15 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto tb = ib->GetAttr<bool>("transpose_b");
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
+
+  auto x_type = ib->GetDtype(x);
+  auto w_type = ib->GetDtype(w);
+  if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
+      (*w_type) == (*kComplex128)) {
+    x = ib->Emit("Conj", {x});
+    w = ib->Emit("Conj", {w});
+  }
+
   auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
