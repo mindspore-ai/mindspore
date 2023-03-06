@@ -102,7 +102,7 @@ void FtrlUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
     .AddVar(kOptL1)
     .AddVar(kOptL2)
     .AddVar(kOptLrPower)
-    .AddVar(kOptU)
+    .AddSeqVar(kOptU)
     .AddCNode(kMOptimizer, {prim::kPrimApplyFtrl, kOptVar, kOptAccum, kOptLinear, kOptGrad, kOptLr, kOptL1, kOptL2,
                             kOptLrPower, kOptU});
 }
@@ -124,7 +124,7 @@ void MomentumUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
     .AddVar(kOptLr)
     .AddVar(kOptGrad)
     .AddVar(kMomentum)
-    .AddVar(kOptU)
+    .AddSeqVar(kOptU)
     .AddCNode(kMOptimizer, {prim::kPrimApplyMomentum, kOptVar, kOptAccum, kOptLr, kOptGrad, kMomentum, kOptU});
 }
 
@@ -164,7 +164,7 @@ void CenteredRMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
     .AddVar(kRho)
     .AddVar(kMomentum)
     .AddVar(kEpsilon)
-    .AddVar(kOptU)
+    .AddSeqVar(kOptU)
     .AddCNode(kMOptimizer, {prim::kPrimApplyCenteredRMSProp, kOptVar, kMg, kMs, kMom, kOptGrad, kOptLr, kRho, kMomentum,
                             kEpsilon, kOptU});
 }
