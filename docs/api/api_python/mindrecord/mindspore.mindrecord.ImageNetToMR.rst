@@ -15,7 +15,7 @@
               ...
               n15075141 999
 
-        - **image_dir** (str) - ImageNet数据集的目录路径，目录中包含类似n02119789、n02100735、n02110185和n02096294的子目录。
+        - **image_dir** (str) - ImageNet数据集的目录路径，目录中包含类似n01440764、n01443537、n01484850和n15075141的子目录。
         - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
         - **partition_number** (int，可选) - 生成MindRecord的文件个数。默认值：1。
 
