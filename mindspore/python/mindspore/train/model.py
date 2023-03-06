@@ -396,13 +396,12 @@ class Model:
     def _get_metrics(self):
         """Get metrics local values."""
         metrics = dict()
-        # Embedding cache server as a storage service, no need to execute eval, just give fake metrics.
-        is_embedding_cache_server = _is_role_pserver() and _cache_enable()
+        # There's no need for server to execute eval, just give fake metrics.
         for key, value in self._metric_fns.items():
-            if not is_embedding_cache_server:
+            if not _is_role_pserver():
                 metrics[key] = value.eval()
             else:
-                metrics[key] = 0
+                metrics[key] = 1
         return metrics
 
     def _get_scaling_sens(self):
