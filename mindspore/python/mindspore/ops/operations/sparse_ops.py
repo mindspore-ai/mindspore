@@ -2482,11 +2482,12 @@ class DenseToSparseSetOperation(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
         >>> x1 = Tensor([[1, 2], [3, 0], [1, 5]], dtype=ms.int64)
         >>> x2_indices = Tensor([[0, 1], [0, 2], [1, 2]], dtype=ms.int64)
         >>> x2_values = Tensor([5, 1, 7],dtype=ms.int64)
         >>> x2_shape = Tensor([3, 3], dtype=ms.int64)
-        >>> dense_to_sparse_set_operation = ops.DenseToSparseSetOperation(set_operation='intersection')
+        >>> dense_to_sparse_set_operation = DenseToSparseSetOperation(set_operation='intersection')
         >>> out = dense_to_sparse_set_operation(x1, x2_indices, x2_values, x2_shape)
         >>> print(out)
         (Tensor(shape=[1, 2], dtype=Int64, value=

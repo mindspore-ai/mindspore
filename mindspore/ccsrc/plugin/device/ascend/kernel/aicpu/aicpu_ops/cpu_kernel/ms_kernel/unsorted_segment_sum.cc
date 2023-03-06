@@ -42,13 +42,6 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
                      DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu]",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
   int64_t data_size = ctx.Input(0)->NumElements();
   int64_t id_size = ctx.Input(1)->NumElements();
 
