@@ -18,7 +18,7 @@ mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspo
 mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc:mindspore::device::gpu::GPUKernelRuntime::LaunchKernelDynamic
 mindspore/mindspore/ccsrc/pipeline/jit/init.cc:PYBIND11_MODULE
 mindspore/mindspore/ccsrc/pipeline/jit/parse/resolve.cc:mindspore::parse::ResolveObjectToNode
-mindspore/mindspore/ccsrc/utils/python_utils.cc:mindspore::HandleExceptionRethrow
+mindspore/mindspore/ccsrc/include/common/utils/python_utils.h:mindspore::HandleExceptionRethrow
 mindspore/mindspore/ccsrc/pipeline/jit/static_analysis/prim.cc:mindspore::abstract::ConvertAbstractToPython
 mindspore/mindspore/ccsrc/pybind_api/ir/log_adapter_py.h:mindspore::PyExceptionInitializer::HandleExceptionPy
 mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/unary_op_gpu_kernel.h:mindspore::kernel::UnaryOpGpuKernel::Launch
