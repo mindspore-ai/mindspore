@@ -316,7 +316,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   }
   ofs << "# 1.This file shows the parsed IR info when graph evaluating failed to help find the problem.\n";
   ofs << "# 2.You can search the last `------------------------>` to the node which is inferred failed.\n";
-  ofs << "# 3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.dat to get more instructions.\n";
+  ofs << "# 3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.\n";
   ofs << "# ===============================================================================\n\n";
 
   if (engine_ == nullptr) {
@@ -370,7 +370,7 @@ std::string GetEvalFailDatPath() {
   } else {
     path = ".";
   }
-  path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.dat";
+  path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.ir";
   // Support "../" in path.
   auto realpath = Common::CreatePrefixPath(path, true);
   if (!realpath.has_value()) {
@@ -392,8 +392,8 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   auto ret = OutputAnalyzedGraphWithType(file_name);
   if (ret) {
     oss << " (See file '" << file_name
-        << "' for more details. Get instructions about `analyze_fail.dat` at "
-           "https://www.mindspore.cn/search?inputValue=analyze_fail.dat)";
+        << "' for more details. Get instructions about `analyze_fail.ir` at "
+           "https://www.mindspore.cn/search?inputValue=analyze_fail.ir)";
   }
 #endif
   oss << ":\n";
