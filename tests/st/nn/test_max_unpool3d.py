@@ -26,7 +26,7 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.max_unpool3d = nn.MaxUnpool3d(kernel_size, stride, padding)
 
-    def construct(self, x, indices, output_size=()):
+    def construct(self, x, indices, output_size=None):
         return self.max_unpool3d(x, indices, output_size)
 
 
