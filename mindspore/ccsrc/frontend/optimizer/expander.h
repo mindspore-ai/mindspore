@@ -17,7 +17,8 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_EXPANDER_H
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_EXPANDER_H
 
-#include "mindspore/core/base/base.h"
+#include "ir/anf.h"
+
 namespace mindspore {
 namespace opt {
 /**
@@ -25,6 +26,7 @@ namespace opt {
  */
 AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node);
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph);
+ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_EXPANDER_H

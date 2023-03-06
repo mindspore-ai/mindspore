@@ -33,18 +33,18 @@ class BpropExpander {
   BpropExpander() {}
   BpropExpander(CNodePtrList *outputs, UserType *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
-  virtual bool Run(const CNodePtr &cnode);
+  bool Run(const CNodePtr &cnode);
   const std::vector<size_t> &GetUnusedInputs(const CNodePtr &cnode) const;
 
  protected:
   bool RunBprop(const CNodePtr &cnode);
-  virtual void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
-  virtual std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode);
+  void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
+  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode);
   const BpropHandle *GetBpropHandle(const std::string &name) const {
     return BpropIRBuilderFactory::Instance().GetBuilder(name);
   }
-  virtual void PostProcess() const;
-  virtual void DumpResult(const std::string &name) const;
+  void PostProcess() const;
+  void DumpResult(const std::string &name) const;
   NodePtrList input_nodes_;
   // outputs_ must be CNodePtrList, but output_nodes_ may not necessary. output_nodes_ are used to
   // create bprop func_graph in graph_mode.
@@ -53,20 +53,7 @@ class BpropExpander {
   UserType *users_{nullptr};
 };
 
-class BpropExpanderInGraphMode : public BpropExpander {
- public:
-  BpropExpanderInGraphMode() {}
-  ~BpropExpanderInGraphMode() = default;
-  bool Run(const CNodePtr &cnode) override;
-  FuncGraphPtr GetGraph() { return fg_; }
-
- protected:
-  FuncGraphPtr fg_{nullptr};
-  void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) override;
-  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode) override;
-  void PostProcess() const override;
-  void DumpResult(const std::string &name) const override;
-};
+bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph);
 
 #ifdef _MSC_VER
 class WinBpropRegister {

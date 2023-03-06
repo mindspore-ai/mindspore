@@ -21,7 +21,7 @@
 #include "include/common/expander/core/infer.h"
 #include "utils/anf_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "include/common/utils/python_adapter.h"
+#include "frontend/optimizer/expander.h"
 
 namespace mindspore {
 namespace expander {
@@ -218,38 +218,6 @@ void BpropExpander::DumpResult(const std::string &name) const {
   }
 }
 
-bool BpropExpanderInGraphMode::Run(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
-  bool ret = true;
-  if (outputs_ != nullptr) {
-    outputs_->clear();
-  }
-  auto node_name = AnfUtils::GetCNodeName(cnode);
-  try {
-    ret = RunBprop(cnode);
-  } catch (const py::type_error &ex) {
-    MS_EXCEPTION(TypeError) << "Bprop \"" << node_name << "\" encounter a problem: [" << ex.what() << "]";
-  } catch (const py::value_error &ex) {
-    MS_EXCEPTION(ValueError) << "Bprop \"" << node_name << "\" encounter a problem: [" << ex.what() << "]";
-  } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
-  }
-  MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
-  return ret;
-}
-
-void BpropExpanderInGraphMode::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
-  input_nodes_.reserve(cnode->size());
-
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
-                       [ir_builder, this](const AnfNodePtr &no) {
-                         auto p = this->fg_->add_parameter();
-                         p->set_abstract(no->abstract());
-                         return std::make_shared<Node>(p, ir_builder);
-                       });
-}
-
 class LazyInfer : public CppInfer {
  public:
   void Infer(const NodePtr &node) override { return; }
@@ -276,43 +244,84 @@ class LazyInfer : public CppInfer {
   }
 };
 
-std::unique_ptr<BpropIRBuilder> BpropExpanderInGraphMode::CreateIRBuilder(const std::string &name,
-                                                                          const CNodePtr &cnode) {
-  fg_ = std::make_shared<FuncGraph>();
-  ExpanderInferPtr infer;
-  // default use LazyInfer in graph mode.
+class GraphModeBuilder : public BpropIRBuilder {
+ public:
+  GraphModeBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
+      : BpropIRBuilder(name, func_graph, infer) {}
+
+  NodePtrList Build(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle) {
+    auto outputs = Run(inputs, attrs, handle);
+    auto mt = this->MakeTuple(outputs)->get();
+    func_graph_->set_output(mt);
+    if (has_ctrl_flow_) {
+      // clear all abstract, to let the specializer re-infer the subgraph of controlflow graphs.
+      auto todos = TopoSort(func_graph_->get_return(), SuccDeeperSimple, AlwaysInclude);
+      for (auto &no : todos) {
+        no->set_abstract(nullptr);
+        if (IsValueNode<FuncGraph>(no)) {
+          auto fg = GetValueNode<FuncGraphPtr>(no);
+          for (auto &p : fg->parameters()) {
+            p->set_abstract(nullptr);
+          }
+        }
+      }
+    }
+    return outputs;
+  }
+
+ private:
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs, const DAttr &attrs) const {
+    if (prim->name() == "Switch") {
+      has_ctrl_flow_ = true;
+    }
+    auto primpy = opt::ConvertPrimToPrimPy(prim);
+    AnfNodePtrList cnode_inputs = {NewValueNode(primpy ? primpy : prim)};
+    cnode_inputs.reserve(inputs.size() + 1);
+    (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
+      MS_EXCEPTION_IF_NULL(no);
+      return no->get();
+    });
+    auto cnode = func_graph_->NewCNode(cnode_inputs);
+    if (scope_ != nullptr) {
+      cnode->set_scope(scope_);
+    }
+    auto node = NewNode(cnode->cast<AnfNodePtr>());
+    infer_->Infer(node);
+    return node;
+  }
+
+  mutable bool has_ctrl_flow_{false};
+};
+
+bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph) {
   static bool use_imm_infer = (common::GetEnv("MS_DEV_BPROP_IMM_INFER") == "on");
+  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
+  auto name = prim->name();
+  if (handle == nullptr) {
+    MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
+    return false;
+  }
+  ExpanderInferPtr infer;
   if (use_imm_infer) {
     infer = std::make_shared<CppInfer>();
   } else {
     infer = std::make_shared<LazyInfer>();
   }
-  return std::make_unique<BpropIRBuilder>(name, fg_, infer);
-}
-
-void BpropExpanderInGraphMode::PostProcess() const {
-  auto mt = output_nodes_[0]->emitter()->MakeTuple(output_nodes_)->get();
-  fg_->set_output(mt);
-
-  // clear all abstract, to let the specializer re-infer the subgraph of controlflow graphs.
-  auto todos = TopoSort(fg_->get_return(), SuccDeeperSimple, AlwaysInclude);
-  for (auto &no : todos) {
-    no->set_abstract(nullptr);
-    if (IsValueNode<FuncGraph>(no)) {
-      auto fg = GetValueNode<FuncGraphPtr>(no);
-      for (auto &p : fg->parameters()) {
-        p->set_abstract(nullptr);
-      }
-    }
+  GraphModeBuilder ir_builder(name, graph, infer);
+  auto &parameters = graph->parameters();
+  NodePtrList inputs;
+  inputs.reserve(parameters.size());
+  (void)std::transform(parameters.cbegin(), parameters.cend(), std::back_inserter(inputs),
+                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
+  auto outputs = ir_builder.Build(inputs, prim->attrs(), *handle);
+  if (outputs.empty()) {
+    MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
+    return false;
   }
-}
-
-void BpropExpanderInGraphMode::DumpResult(const std::string &name) const {
-  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
-  if (!dump_result) {
-    return;
+  if (dump_result) {
+    DumpIR("bprop/bprop_expander_" + name + ".ir", graph, true);
   }
-  DumpIR("bprop/bprop_expander_" + name + ".ir", fg_, true);
+  return true;
 }
 
 #ifdef _MSC_VER

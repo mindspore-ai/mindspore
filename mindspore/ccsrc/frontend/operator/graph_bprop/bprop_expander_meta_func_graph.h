@@ -28,22 +28,28 @@
 
 namespace mindspore {
 namespace graph_bprop {
-constexpr int64_t kTwo = 2;
-constexpr int64_t kOne = 1;
+using BpropHandle = expander::bprop::BpropHandle;
+
 class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
  public:
-  explicit BpropExpanderMetaFuncGraph(const PrimitivePtr &primal) : BpropMetaFuncGraph(primal->name(), primal) {}
+  explicit BpropExpanderMetaFuncGraph(const PrimitivePtr &primal, const BpropHandle *handle)
+      : BpropMetaFuncGraph(primal->name(), primal), handle_(handle) {}
   ~BpropExpanderMetaFuncGraph() override = default;
   MS_DECLARE_PARENT(BpropExpanderMetaFuncGraph, BpropMetaFuncGraph);
-  FuncGraphPtr BpropExpanderFunc(const AbstractBasePtrList &args_spec_list);
   FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &input_abs) override;
+
+ private:
+  const BpropHandle *handle_;
 };
 
-FuncGraphPtr GetExpandBprop(const PrimitivePtr &primal, const size_t &forward_inputs_size);
+FuncGraphPtr GetExpandBprop(const BpropHandle *handle, const PrimitivePtr &primal, size_t forward_inputs_size);
 
-#define STR(s) #s
-#define REGISTER_EXPANDER_BPROP_IMPL(name) \
-  static auto helper_expand_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(STR(name), GetExpandBprop);
+#define REGISTER_EXPANDER_BPROP_IMPL(name)                                                            \
+  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(                        \
+    STR(name), [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {     \
+      static auto *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(STR(name)); \
+      return GetExpandBprop(handle, primal, forward_inputs_size);                                     \
+    })
 
 void RegBpropExpanderOps();
 }  // namespace graph_bprop

@@ -70,7 +70,11 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
       }
     }
   }
-  AnfNodePtrList cnode_inputs = {NewValueNode(primc)};
+  return EmitOp(primc, inputs, attrs);
+}
+
+NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs, const DAttr &attrs) const {
+  AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
   cnode_inputs.reserve(inputs.size() + 1);
   (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
     MS_EXCEPTION_IF_NULL(no);

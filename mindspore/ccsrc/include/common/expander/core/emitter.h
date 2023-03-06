@@ -45,7 +45,7 @@ class COMMON_EXPORT Emitter {
   /// \brief Emit a ValueNode
   NodePtr EmitValue(const ValuePtr &value) const;
 
-  NodePtr MakeTuple(const NodePtrList &inputs) const { return Emit(prim::kMakeTuple, inputs); }
+  NodePtr MakeTuple(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeTuple, inputs, {}); }
   NodePtr MakeList(const NodePtrList &inputs) const { return Emit("make_list", inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
     return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
@@ -199,6 +199,7 @@ class COMMON_EXPORT Emitter {
   NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) const;
 
  protected:
+  virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs, const DAttr &attrs) const;
   NodePtr NewNode(const AnfNodePtr &anfnode) const { return std::make_shared<Node>(anfnode, this); }
   NodePtr CmpOpWithCast(const std::string &op, const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) const {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
