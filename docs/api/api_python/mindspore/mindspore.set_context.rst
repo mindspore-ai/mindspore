@@ -181,8 +181,8 @@ mindspore.set_context
             - force_lowerprecision: 当算子支持float16或者bfloat16，又支持float32，直接选择float16或者bfloat16.
             - allow_fp32_to_bf16: 当算子不支持float32数据类型时，直接降低精度到bfloat16.
             - allow_fp32_to_lowprecision: 当算子不支持float32数据类型时，直接降低精度到float16或者bfloat16.
-            - allow_mix_precision_fp16: 自动混合精度，正对全网算子，按照内置的优化策略，自动将部分算子的精度降低到float16.
-            - allow_mix_precision_bf16: 自动混合精度，正对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16.
+            - allow_mix_precision_fp16: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到float16.
+            - allow_mix_precision_bf16: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16.
 
           - **jit_compile** (bool): 表示是否选择在线编译。默认值：True。当设置为False时，优先选择系统中已经编译好的算子二进制文件，提升编译性能。
 
