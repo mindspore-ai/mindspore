@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/arrays/gatherv2_gpu_kernel.h"
 #include <memory>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "mindspore/core/ops/gather.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,6 +26,12 @@ bool GatherV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  if (kernel_name_ == ops::kNameGather) {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Gather>(base_operator);
+    MS_EXCEPTION_IF_NULL(kernel_ptr);
+    batch_dims_ = kernel_ptr->get_batch_dims();
+  }
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -56,6 +63,9 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   output_shapes_ = outputs[kIndexZero]->GetShapeVector();
   if (IsDynamic(input_shapes_) || IsDynamic(indices_shapes_) || IsDynamic(output_shapes_)) {
     return KRET_UNKNOWN_SHAPE;
+  }
+  if (batch_dims_ < 0) {
+    batch_dims_ += SizeToLong(input_shapes_.size());
   }
   is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name_, "input") ||
                    CHECK_SHAPE_NULL(indices_shapes_, kernel_name_, "indices") ||
@@ -100,7 +110,7 @@ bool GatherV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(indices_addr);
-  GatherV2(input_addr, indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
+  GatherV2(input_addr, indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], dims_[kIndex3],
            LongToSize(input_dim1), reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }

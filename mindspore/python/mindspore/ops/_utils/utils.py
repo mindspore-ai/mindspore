@@ -127,12 +127,12 @@ def get_1d_shape(in_shape):
 
 
 @_primexpr
-def generate_shape_index(out_shape, indices_shape, axis):
+def generate_shape_index(out_shape, indices_shape, axis, batch_dims=0):
     out_rank = len(out_shape)
     ind_rank = len(indices_shape)
     if axis < 0:
         axis += out_rank - ind_rank + 1
-    perm_part1 = tuple(range(axis, axis + ind_rank))
+    perm_part1 = tuple(range(axis, axis + ind_rank - batch_dims))
     index = tuple(range(out_rank))
-    perm = perm_part1 + index[:axis] + index[axis + ind_rank:]
+    perm = index[:batch_dims] + perm_part1 + index[batch_dims:axis] + index[axis + ind_rank - batch_dims:]
     return perm

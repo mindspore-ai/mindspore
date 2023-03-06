@@ -81,21 +81,27 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     if (axis_ < 0) {
       axis_ = axis_ + SizeToInt(input_shapes_.size());
     }
-    int64_t dim_before_axis = 1;
-    for (size_t i = 0; i < std::min(IntToSize(axis_), output_shapes_.size()); i++) {
-      dim_before_axis *= output_shapes_[i];
+    size_t batch_size = 1;
+    size_t batch_dims = LongToSize(batch_dims_);
+    for (size_t i = 0; i < batch_dims; i++) {
+      batch_size *= LongToSize(input_shapes_[i]);
     }
-    int64_t dim_of_indices = 1;
-    for (size_t i = 0; i < indices_shapes_.size(); i++) {
-      dim_of_indices *= indices_shapes_[i];
+    size_t dim_before_axis = 1;
+    for (size_t i = batch_dims; i < std::min(IntToSize(axis_), output_shapes_.size()); i++) {
+      dim_before_axis *= LongToSize(output_shapes_[i]);
     }
-    int64_t dim_after_indices = 1;
-    for (size_t i = IntToSize(axis_) + indices_shapes_.size(); i < output_shapes_.size(); i++) {
-      dim_after_indices *= output_shapes_[i];
+    size_t dim_of_indices = 1;
+    for (size_t i = batch_dims; i < indices_shapes_.size(); i++) {
+      dim_of_indices *= LongToSize(indices_shapes_[i]);
     }
-    dims_[kIndex0] = dim_before_axis;
-    dims_[kIndex1] = dim_of_indices;
-    dims_[kIndex2] = dim_after_indices;
+    size_t dim_after_indices = 1;
+    for (size_t i = IntToSize(axis_) + 1; i < input_shapes_.size(); i++) {
+      dim_after_indices *= LongToSize(input_shapes_[i]);
+    }
+    dims_[kIndex0] = batch_size;
+    dims_[kIndex1] = dim_before_axis;
+    dims_[kIndex2] = dim_of_indices;
+    dims_[kIndex3] = dim_after_indices;
     return;
   }
 
@@ -108,8 +114,9 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> input_shapes_;
   std::vector<int64_t> indices_shapes_;
   std::vector<int64_t> output_shapes_;
-  int64_t dims_[kIndex3] = {};
+  size_t dims_[kIndex4] = {};
   int64_t axis_ = 0;
+  int64_t batch_dims_{0};
   bool is_null_input_ = false;
   size_t input_type_size_ = 0;
   size_t indices_type_size_ = 0;

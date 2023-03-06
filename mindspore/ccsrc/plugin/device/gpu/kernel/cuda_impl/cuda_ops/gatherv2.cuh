@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHERV2_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T, typename S>
-CUDA_LIB_EXPORT void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
-                              size_t output_dim2, size_t input_dim1, cudaStream_t stream);
+CUDA_LIB_EXPORT void GatherV2(T *input, S *indices, T *output, size_t batch_size, size_t output_dim0,
+                              size_t output_dim1, size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 
 template <typename T, typename S>
 __global__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,

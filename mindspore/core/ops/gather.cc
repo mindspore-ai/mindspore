@@ -45,6 +45,56 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kBatchDims = "batch_dims";
+
+void Gather::set_batch_dims(int64_t batch_dims) { (void)this->AddAttr(kBatchDims, api::MakeValue(batch_dims)); }
+
+int64_t Gather::get_batch_dims() const { return GetValue<int64_t>(GetAttr(kBatchDims)); }
+
+void CheckBatchDims(int64_t batch_dims, int64_t axis_val, const ShapeVector &params_shp, const ShapeVector &indices_shp,
+                    const std::string &op_name) {
+  int64_t params_rank = static_cast<int64_t>(params_shp.size());
+  int64_t indices_rank = static_cast<int64_t>(indices_shp.size());
+  if (batch_dims < -indices_rank || batch_dims > indices_rank) {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', batch_dims must be in [" << -indices_rank << ", " << indices_rank
+                      << "], but got batch_dims: " << batch_dims;
+  }
+  if (batch_dims < 0) {
+    batch_dims += indices_rank;
+  }
+  if (batch_dims > params_rank) {
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', batch_dims must be less than params's rank, but got batch_dims: " << batch_dims
+                      << ", oarams's rank: " << params_rank;
+  }
+  if (axis_val < batch_dims) {
+    MS_LOG(EXCEPTION) << "For '" << op_name
+                      << "', batch_dims must be less than or equal to axis, but got batch_dims: " << batch_dims
+                      << ", axis: " << axis_val;
+  }
+  for (size_t i = 0; i < LongToSize(batch_dims); i++) {
+    if (params_shp[i] != indices_shp[i]) {
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', params.shape[" << i << "], should be equal to indices.shape[" << i
+                        << "], but got param.shape: " << params_shp << ", indices.shape: " << indices_shp;
+    }
+  }
+}
+
+ShapeVector CalcuateGatherWithBatchDimsOutputShape(int64_t batch_dims, int64_t axis_val, const ShapeVector &ind_vec,
+                                                   const ShapeVector &params_vec) {
+  ShapeVector out_vec;
+  for (size_t i = 0; i < LongToSize(axis_val); i++) {
+    out_vec.push_back(params_vec[i]);
+  }
+  for (size_t i = LongToSize(batch_dims); i < ind_vec.size(); i++) {
+    out_vec.push_back(ind_vec[i]);
+  }
+  for (size_t i = LongToSize(axis_val) + 1; i < params_vec.size(); i++) {
+    out_vec.push_back(params_vec[i]);
+  }
+  return out_vec;
+}
+
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
@@ -108,6 +158,13 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   if (axis_val < 0) {
     axis_val += params_rank;
   }
+  if (op_name == kNameGather) {
+    int64_t batch_dims = GetValue<int64_t>(primitive->GetAttr(kBatchDims));
+    CheckBatchDims(batch_dims, axis_val, params_shp, indices_shp, op_name);
+    out_shape = CalcuateGatherWithBatchDimsOutputShape(batch_dims, axis_val, indices_shp, params_shp);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   auto calc_shape = [axis_val](const ShapeVector &ind_vec, const ShapeVector &params_vec) -> ShapeVector {
     ShapeVector out_vec;
     (void)std::copy(params_vec.begin(), params_vec.begin() + axis_val, std::back_inserter(out_vec));
@@ -142,9 +199,11 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  if (!primitive->HasAttr(kBatchDims)) {
+    (void)primitive->AddAttr("batch_dims", MakeValue(static_cast<int64_t>(0)));  // Add temporarily for ascend.
+  }
   auto infer_type = GatherInferType(primitive, input_args);
   auto infer_shape = GatherInferShape(primitive, input_args);
-  (void)primitive->AddAttr("batch_dims", MakeValue(static_cast<int64_t>(0)));  // Add temporarily for gatherv2 on ascend
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

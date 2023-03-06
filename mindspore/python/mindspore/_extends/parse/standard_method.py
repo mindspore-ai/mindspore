@@ -3606,12 +3606,12 @@ def gather_nd(input_x, indices):
     return F.gather_nd(input_x, indices)
 
 
-def gather(input_x, input_indices, axis):
+def gather(input_x, input_indices, axis, batch_dims=0):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
     Refer to :func:`mindspore.ops.gather` for more detail.
     """
-    return F.gather(input_x, input_indices, axis)
+    return F.gather(input_x, input_indices, axis, batch_dims)
 
 
 def split(x, split_size_or_sections, axis=0):
