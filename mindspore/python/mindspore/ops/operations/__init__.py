@@ -67,8 +67,8 @@ from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerA
                         FusedAdaFactorWithGlobalNorm)
 from .linalg_ops import (Svd, Geqrf)
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
-                       BitwiseAnd, BitwiseOr, Ger,
-                       BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub, InplaceUpdate,
+                       BitwiseAnd, BitwiseOr, Ger, BitwiseXor, Inv, Invert, ApproximateEqual,
+                       InplaceAdd, InplaceSub, InplaceUpdate, InplaceUpdateV2,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd, Cdist, ReduceAny,
                        Cos, Cross, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod,
                        Ceil, Acosh, Greater, GreaterEqual, Lerp, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,
@@ -470,6 +470,7 @@ __all__ = [
     "DataFormatDimMap",
     "ApproximateEqual",
     "InplaceUpdate",
+    "InplaceUpdateV2",
     "InTopK",
     "UniformCandidateSampler",
     "LogUniformCandidateSampler",
