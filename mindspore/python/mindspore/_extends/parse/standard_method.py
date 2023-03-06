@@ -68,7 +68,7 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
 nan_tensor = Tensor(float('nan'), dtype=mstype.float32)
 
 
-def mean(x, axis=(), keep_dims=False):
+def mean(x, axis=None, keep_dims=False):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension.
 
@@ -102,14 +102,14 @@ def ndimension(x):
     return len(x.shape)
 
 
-def prod(x, axis=(), keep_dims=False):
+def prod(x, axis=None, keep_dims=False):
     """
     Reduces a dimension of a tensor by product all elements in the dimension.
 
     Args:
         x (Tensor): Input Tensor.
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
-            when axis is None or empty tuple, reduce all dimensions. Default: ().
+            when axis is None or empty tuple, reduce all dimensions. Default: None.
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
     Returns:

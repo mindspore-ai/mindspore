@@ -1423,7 +1423,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('log2')(self)
 
-    def mean(self, axis=(), keep_dims=False):
+    def mean(self, axis=None, keep_dims=False):
         """
         For details, please refer to :func:`mindspore.ops.mean`.
         """
@@ -1437,8 +1437,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.amin`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
         return tensor_operator_registry.get('amin')(self, axis, keep_dims)
 
     def reverse(self, axis):
@@ -1453,8 +1451,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.amax`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
         return tensor_operator_registry.get('amax')(self, axis, keep_dims)
 
     def reverse_sequence(self, seq_lengths, seq_dim=0, batch_dim=0):
@@ -1464,7 +1460,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get("reverse_sequence")(seq_dim, batch_dim)(self, seq_lengths)
 
-    def prod(self, axis=(), keep_dims=False):
+    def prod(self, axis=None, keep_dims=False):
         """
         For details, please refer to :func:`mindspore.ops.prod`.
         """

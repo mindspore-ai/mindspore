@@ -7132,7 +7132,7 @@ def amax(input, axis=None, keep_dims=False):
     return _get_cache_prim(P.ReduceMax)(keep_dims)(input, axis)
 
 
-def mean(x, axis=(), keep_dims=False):
+def mean(x, axis=None, keep_dims=False):
     r"""
     Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
     And reduce a dimension of `x` along the specified `axis`. `keep_dims`
@@ -7141,7 +7141,7 @@ def mean(x, axis=(), keep_dims=False):
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
@@ -7149,7 +7149,7 @@ def mean(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is None, and `keep_dims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is False,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
@@ -7206,11 +7206,12 @@ def mean(x, axis=(), keep_dims=False):
           [ 8.]
           [10.]]]
     """
-
+    if axis is None:
+        axis = ()
     return _get_cache_prim(P.ReduceMean)(keep_dims)(x, axis)
 
 
-def prod(x, axis=(), keep_dims=False):
+def prod(x, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
@@ -7219,7 +7220,7 @@ def prod(x, axis=(), keep_dims=False):
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
@@ -7227,7 +7228,7 @@ def prod(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is (), and `keep_dims` is False,
+        - If `axis` is None, and `keep_dims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is False,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
@@ -7283,6 +7284,8 @@ def prod(x, axis=(), keep_dims=False):
           [2.62144e+05]
           [5.31441e+05]]]
     """
+    if axis is None:
+        axis = ()
     return _get_cache_prim(P.ReduceProd)(keep_dims)(x, axis)
 
 
