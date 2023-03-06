@@ -23,6 +23,7 @@
 #include <vector>
 #include <mutex>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
+#include "common/opskernel/ge_task_info.h"
 
 namespace mindspore::ge::model_runner {
 class HcclTask : public TaskRepeater<HcclTaskInfo> {
@@ -52,6 +53,8 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
   // map<key: model pointer, value: map<key: primary stream id, value: vector<secondary stream pointer>>>
   static std::map<rtModel_t, std::map<uint32_t, std::vector<std::weak_ptr<StreamGuard>>>> model_stream_mapping_;
   static std::mutex model_stream_mapping_mutex_;
+
+  ::ge::GETaskInfo ge_task_;
 };
 
 class HcclTask::StreamGuard {
