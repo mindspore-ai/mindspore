@@ -888,48 +888,54 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     return output
 
 
-def ones_like(input_x):
+def ones_like(input, *, dtype=None):
     """
     Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
 
     Args:
-        input_x (Tensor): Tensor of any dimension.
+        input (Tensor): Tensor of any dimension.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is None,
+            the dtype of the input tensor will be used. Default: None.
 
     Returns:
-        Tensor, has the same shape and type as `input_x` but filled with ones.
+        Tensor, has the same shape as `input` but filled with ones.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> output = ops.ones_like(input_x)
+        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+        >>> output = ops.ones_like(x)
         >>> print(output)
         [[1 1]
          [1 1]]
     """
     ones_like_op = P.OnesLike()
-    output = ones_like_op(input_x)
+    output = ones_like_op(input)
+    _dtype = input.dtype if dtype is None else dtype
+    output = cast_(output, _dtype)
     return output
 
 
-def zeros(shape, dtype=None):  # pylint: disable=redefined-outer-name
+def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     r"""
-    Creates a tensor filled with 0  with shape described by `shape` and fills it with value 0 in type of `dtype`.
+    Creates a tensor filled with 0 with shape described by `shape` and fills it with value 0 in type of `dtype`.
 
     Args:
-        shape (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
+        size (Union[tuple[int], int]): The specified shape of output tensor. Only constant positive int is allowed.
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is None,
             mindspore.float32 will be used. Default: None.
 
     Returns:
-        Tensor, has the same dtype and shape as input.
+        Tensor, has the same dtype and size as input.
 
     Raises:
-        TypeError: If `shape` is neither a tuple of int nor an int.
+        TypeError: If `size` is neither a tuple of int nor an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -943,27 +949,27 @@ def zeros(shape, dtype=None):  # pylint: disable=redefined-outer-name
     zero_op = P.FillV2()
     _dtype = mstype.float32 if dtype is None else dtype
     value = Tensor(0, _dtype)
-    if isinstance(shape, int):
-        shape = tuple([shape])
-    shape_tensor = shape
-    if isinstance(shape, (list, tuple)) and not shape:
-        shape_tensor = Tensor(shape, dtype=mstype.int64)
+    if isinstance(size, int):
+        size = tuple([size])
+    shape_tensor = size
+    if isinstance(size, (list, tuple)) and not size:
+        shape_tensor = Tensor(size, dtype=mstype.int64)
     elif not isinstance(shape, Tensor):
-        shape_tensor = Tensor(shape)
+        shape_tensor = Tensor(size)
     if shape_tensor.ndim == 0 and shape_tensor.size == 1:
         shape_tensor = shape_tensor.reshape(1)
     output = zero_op(shape_tensor, value)
     return output
 
 
-def zeros_like(x, *, dtype=None):
+def zeros_like(input, *, dtype=None):
     r"""
     Creates a tensor filled with 0, with the same size as x, and the given dtype.
 
-    If `dtype = None`, the tensor will have the same dtype as input `x`.
+    If `dtype = None`, the tensor will have the same dtype as input `input`.
 
     Args:
-        x (Tensor): Tensor of any dimension.
+        input (Tensor): Tensor of any dimension.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified dtype of the output tensor. If `dtype` is None,
@@ -982,9 +988,9 @@ def zeros_like(x, *, dtype=None):
         [[0. 0.]
          [0. 0.]]
     """
-    _dtype = x.dtype if dtype is None else dtype
+    _dtype = input.dtype if dtype is None else dtype
     zeros_like_op = P.ZerosLike()
-    output = zeros_like_op(x)
+    output = zeros_like_op(input)
     output = cast_(output, _dtype)
     return output
 

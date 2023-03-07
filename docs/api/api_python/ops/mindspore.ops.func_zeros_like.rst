@@ -1,15 +1,15 @@
 mindspore.ops.zeros_like
 =========================
 
-.. py:function:: mindspore.ops.zeros_like(x, *, dtype=None)
+.. py:function:: mindspore.ops.zeros_like(input, *, dtype=None)
 
-    创建一个填满0的Tensor，shape由 `x` 决定，dtype由 `dtype` 决定。
+    创建一个填满0的Tensor，shape由 `input` 决定，dtype由 `dtype` 决定。
 
     参数：
-        - **x** (Tensor) - 用来描述所创建的Tensor的shape 。
+        - **input** (Tensor) - 用来描述所创建的Tensor的shape 。
 
     关键字参数：
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 用来描述所创建的Tensor的 `dtype`。如果为None，那么将会使用 `x` 的dtype。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 用来描述所创建的Tensor的 `dtype`。如果为None，那么将会使用 `input` 的dtype。默认值：None。
 
     返回：
         Tensor，dtype和shape由入参决定。
