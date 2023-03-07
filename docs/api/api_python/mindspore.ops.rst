@@ -319,6 +319,7 @@ Reduction函数
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
+    mindspore.ops.cumprod
     mindspore.ops.cumsum
     mindspore.ops.fmax
     mindspore.ops.fmin
@@ -583,7 +584,6 @@ Array操作
     mindspore.ops.vstack
     mindspore.ops.where
     mindspore.ops.cross
-    mindspore.ops.cumprod
     mindspore.ops.renorm
 
 类型转换

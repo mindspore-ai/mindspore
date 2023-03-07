@@ -190,6 +190,7 @@
     mindspore.Tensor.logit
     mindspore.Tensor.logsumexp
     mindspore.Tensor.long
+    mindspore.Tensor.lstsq
     mindspore.Tensor.lt
     mindspore.Tensor.masked_fill
     mindspore.Tensor.masked_select
