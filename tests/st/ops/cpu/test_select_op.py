@@ -22,6 +22,9 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops as ops
 from mindspore.ops import operations as P
+from mindspore.common.api import jit
+from mindspore.ops import functional as F
+from mindspore import dtype as mstype
 
 
 class Net(nn.Cell):
@@ -87,7 +90,6 @@ def test_select_int32():
     assert np.all(-diff < error)
 
 
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -107,6 +109,25 @@ def test_functional_select_scalar():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_functional_select_broadcast():
+    """
+    Feature: Test functional select operator support broadcast input.
+    Description: Operator select's support broadcast input.
+    Expectation: Assert result.
+    """
+    cond = Tensor(np.random.rand(1, 65, 54, 12, 5, 2), dtype=mstype.bool_)
+    x = Tensor(np.random.rand(5, 5, 65, 1, 12, 5, 2).astype(np.float32))
+    y = Tensor(np.random.rand(65, 54, 1, 5, 2).astype(np.float32))
+    @jit
+    def foo(a, b, c):
+        return F.select(a, b, c)
+    ret = foo(cond, x, y)
+    assert ret.shape == (5, 5, 65, 54, 12, 5, 2)
 
 
 @pytest.mark.level0
