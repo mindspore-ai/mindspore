@@ -194,8 +194,9 @@ bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); 
 void PyNativeExecutor::set_grad_flag(bool flag) const { grad_executor()->set_grad_flag(flag); }
 
 py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
-                                             const py::object &grad_hash_id, const py::args &args) const {
-  return grad_executor()->CheckAlreadyRun(grad, obj, grad_hash_id, args);
+                                             const py::object &weights, const py::object &grad_hash_id,
+                                             const py::args &args) const {
+  return grad_executor()->CheckAlreadyRun(grad, obj, weights, grad_hash_id, args);
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {

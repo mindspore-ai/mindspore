@@ -1165,7 +1165,8 @@ void GradExecutor::SetGradOrder(const std::string &obj_id) {
 }
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
-                                         const py::object &grad_hash_id, const py::args &args) {
+                                         const py::object &weights, const py::object &grad_hash_id,
+                                         const py::args &args) {
   const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
 
   // Check current cell grad order and erase it if in current top cell list
@@ -1175,9 +1176,19 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   if (!py::isinstance<py::none>(grad_hash_id)) {
     grad_hash_id_str = std::string(py::str(grad_hash_id));
   }
+
+  std::string weights_obj_id{"_"};
+  if (!py::isinstance<py::none>(weights)) {
+    const auto &weights_tuple = weights.cast<py::tuple>();
+    for (size_t i = 0; i < weights_tuple.size(); ++i) {
+      const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
+      weights_obj_id += PyNativeAlgo::Common::GetIdByValue(v);
+    }
+  }
+
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
                     std::to_string(static_cast<int>(grad->get_by_list_)) +
-                    std::to_string(static_cast<int>(grad->sens_param_)) + grad_hash_id_str;
+                    std::to_string(static_cast<int>(grad->sens_param_)) + grad_hash_id_str + weights_obj_id;
 
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
