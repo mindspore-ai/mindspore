@@ -375,6 +375,7 @@ class KernelExec {
  protected:
   std::shared_ptr<Kernel> kernel_ = nullptr;
   KernelKey desc_;
+  std::string op_type_{};  // merge op_type_ and desc_.type into type-wrapper while redesign infer-kernel
   // tensor will free in ~lite_session()
   std::vector<KernelExec *> in_kernels_;
   std::vector<KernelExec *> out_kernels_;

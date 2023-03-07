@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "infer/execution_plan.h"
+#include "infer/execution_flow.h"
 
 namespace mindspore::infer::abstract {
 class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
@@ -30,7 +31,10 @@ class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
   /// \param[in] graph FuncGraph need to compile.
   ///
   /// \return ExecutionPlan pointer.
-  virtual std::shared_ptr<ExecutionPlan> Compile(FuncGraphPtr graph) = 0;
+  virtual ExecutionPlanPtr Compile(FuncGraphPtr graph) = 0;
+
+  virtual ExecutionFlowPtr Compile(const GraphSegmentPtr &segment, const AnfNodePtrList &inputs,
+                                   const AnfNodePtrList &outputs) = 0;
 };
 }  // namespace mindspore::infer::abstract
 

@@ -15,27 +15,9 @@
  */
 #include "extendrt/graph_scheduler.h"
 #include "extendrt/graph_compiler.h"
-ExcutionPlan GraphCompiler::Schedule(const CompileResult &compile_result) {
-  ExcutionPlan execplan;
-  for (auto subgraph_ : compile_result.graphs_) {
-    if (KernelGraphUtils::Instance()->IsControlNode(subgraph_)) {
-      // generate control kernel
-      CNode &node = subgraph_->nodes[0];
-      KernelInfo kernelInfo;
-      kernelInfo.kernel_ = CreateControlKernel(node);
-      execplan.emplace_back(kernelInfo);
-    } else if (KernelGraphUtils::Instance()->IsSingleNode(subgraph_)) {
-      // generate kernel
-      KernelInfo kernelInfo;
-      CNode &node = subgraph_->nodes[0];
-      kernelInfo.kernel_ = CreateKernel(node);
-      execplan.emplace_back(kernelInfo);
-    } else if (KernelGraphUtils::Instance()->IsDAG(subgraph_)) {
-      // generate subgraph kernel
-      KernelInfo kernelInfo;
-      kernelInfo.kernel_ = CreateSubgraphKernel(subgraph_);
-      execplan.emplace_back(kernelInfo);
-    }
-  }
-  return execplan;
-}
+
+namespace mindspore {
+namespace infer {
+ExcutionPlan GraphScheduler::Schedule(const CompileResult &compile_result) { return {}; }
+}  // namespace infer
+}  // namespace mindspore

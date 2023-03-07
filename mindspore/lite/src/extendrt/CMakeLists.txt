@@ -60,6 +60,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_executor/mindrt_graph_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_flow.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_compiler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/anfnode_tensor_adapter.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
@@ -140,9 +145,10 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/utils/signal_util.cc
         ${CORE_DIR}/utils/status.cc
         )
+
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
 
-    add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC})
+    add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
@@ -260,6 +266,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         add_dependencies(cloud_infer_test mindspore-extendrt)
         target_link_libraries(cloud_infer_test mindspore-extendrt)
     endif()
+    add_executable(unify-cpu-infer graph_compiler/main.cc)
+    add_dependencies(unify-cpu-infer mindspore-extendrt)
+    target_link_libraries(unify-cpu-infer mindspore-extendrt)
 else()
     set(MSLITE_EXTEND_RUNTIME_SRC ${MODEL_LOADER_FRAMEWORK_SRC})
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
@@ -269,4 +278,3 @@ else()
 endif()
 
 set_target_properties(mindspore-extendrt PROPERTIES OUTPUT_NAME "mindspore-lite")
-

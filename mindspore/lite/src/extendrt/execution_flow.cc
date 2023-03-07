@@ -16,28 +16,19 @@
 
 #include <vector>
 
-#include "extendrt/execution_flow.h"
+#include "src/extendrt/execution_flow.h"
 
-#include "litert/lite_kernel.h"
-#include "litert/kernel_exec_util.h"
-#include "litert/sub_graph_kernel.h"
+#include "src/extendrt/tensor.h"
+#include "src/litert/kernel_exec_util.h"
+#include "src/litert/sub_graph_kernel.h"
 
 namespace mindspore::infer {
 ExecutionFlow::~ExecutionFlow() {
-  for (auto tensor : inputs_) {
-    if (tensor != nullptr) {
-      delete tensor;
-    }
-  }
-  for (auto tensor : outputs_) {
-    if (tensor != nullptr) {
-      delete tensor;
-    }
+  for (auto tensor : tensors_) {
+    delete tensor;
   }
   for (auto kernel : kernels_) {
-    if (kernel != nullptr) {
-      delete kernel;
-    }
+    delete kernel;
   }
 }
 
