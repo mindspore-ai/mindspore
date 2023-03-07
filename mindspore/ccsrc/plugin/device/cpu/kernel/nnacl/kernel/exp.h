@@ -24,11 +24,7 @@
 extern "C" {
 #endif
 
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
-
-KernelBase *CreateExp(OpParameter *param, int data_type, FormatC format);
+KernelBase *CreateExp(OpParameter *param, int data_type);
 
 #ifdef __cplusplus
 }

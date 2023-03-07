@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-KernelBase *CreateGatherD(OpParameter *param, int data_type, FormatC format);
+KernelBase *CreateGatherD(OpParameter *param, int data_type);
 
 #ifdef __cplusplus
 }

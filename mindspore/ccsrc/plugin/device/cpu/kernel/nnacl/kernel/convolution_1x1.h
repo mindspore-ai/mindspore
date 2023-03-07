@@ -20,7 +20,6 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/kernel/matmul_optimize.h"
-#include "nnacl/kernel/matmul_experimental.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,11 +29,9 @@ typedef struct Conv1x1Stru {
   KernelBase base;
   uint8_t *bias_;
   uint8_t *weight_;
-  MatmulOptStru opt_;
-  MatmulExpStru exp_;
 } Conv1x1Stru;
 
-KernelBase *CreateConv1x1(OpParameter *param, int data_type, FormatC format);
+KernelBase *CreateConv1x1(OpParameter *param, int data_type);
 
 #ifdef __cplusplus
 }

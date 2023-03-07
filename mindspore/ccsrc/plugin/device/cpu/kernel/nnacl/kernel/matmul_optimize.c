@@ -16,7 +16,4 @@
 
 #include "nnacl/kernel/matmul_optimize.h"
 
-void MatmulOpt_prepare(MatmulOptStru *matmul) {
-  matmul->base->funcs->OptMatmulTile(&matmul->row_tile, &matmul->col_tile);
-  return;
-}
+void MatmulOpt_prepare(MatmulOptStru *matmul) { return; }

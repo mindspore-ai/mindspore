@@ -19,7 +19,6 @@
 
 #include "nnacl/kernel.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/experimental/ms_core.h"
 
 #ifdef __cplusplus
 extern "C" {

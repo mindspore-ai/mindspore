@@ -31,6 +31,10 @@ int TransposeFp32Data(void *src_data, void *dst_data, const FormatC src_format, 
     PackNC4HW4ToNCHWFp32(src_data, dst_data, batch, plane, channel);
   } else if (src_format == Format_NC4HW4 && dst_format == Format_NHWC) {
     PackNC4HW4ToNHWCFp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NHWC && dst_format == Format_NCHW) {
+    PackNHWCToNCHWFp32(src_data, dst_data, batch, plane, channel, 0, 1);
+  } else if (src_format == Format_NCHW && dst_format == Format_NHWC) {
+    PackNCHWToNHWCFp32(src_data, dst_data, batch, plane, channel, 0, 1);
   } else {
     return NNACL_ERR;
   }

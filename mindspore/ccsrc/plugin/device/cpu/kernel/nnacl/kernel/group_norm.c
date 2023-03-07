@@ -32,14 +32,14 @@ typedef struct GroupNormStru {
 static int groupnorm_resize(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
-  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
+  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  if (self->insize < kInputSize2 || self->outsize < 1) {
+  if (self->in_size_ < kInputSize2 || self->out_size_ < 1) {
     return NNACL_ERR;
   }
   groupnorm_release(self);
 
-  TensorC *in0 = &(self->in[0]);
+  TensorC *in0 = &(self->in_[0]);
   if (in0->shape_size_ < C1NUM) {
     return NNACL_ERR;
   }
@@ -56,7 +56,7 @@ static int groupnorm_resize(struct KernelBase *self) {
 static int groupnorm_prepare(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
-  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
+  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
 
   if ((param->num_groups_ < 0) || (param->channel_ % param->num_groups_)) {
@@ -76,7 +76,7 @@ static int groupnorm_prepare(struct KernelBase *self) {
 static int groupnorm_release(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm);
-  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
+  GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
 
   if (param->mean_ != NULL) {
@@ -97,16 +97,16 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
   }
 
   GroupNormStru *groupnorm_stru = (GroupNormStru *)param;
-  GroupNormParameter *groupnorm_param = (GroupNormParameter *)groupnorm_stru->base.param;
+  GroupNormParameter *groupnorm_param = (GroupNormParameter *)groupnorm_stru->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param);
 
-  const void *input_data = groupnorm_stru->base.in[0].data_;
+  const void *input_data = groupnorm_stru->base.in_[0].data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
-  const void *scale_data = groupnorm_stru->base.in[C1NUM].data_;
+  const void *scale_data = groupnorm_stru->base.in_[C1NUM].data_;
   NNACL_CHECK_NULL_RETURN_ERR(scale_data);
-  const void *offset_data = groupnorm_stru->base.in[C2NUM].data_;
+  const void *offset_data = groupnorm_stru->base.in_[C2NUM].data_;
   NNACL_CHECK_NULL_RETURN_ERR(offset_data);
-  void *output_data = groupnorm_stru->base.out[0].data_;
+  void *output_data = groupnorm_stru->base.out_[0].data_;
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
 
   NNACL_CHECK_NULL_RETURN_ERR(groupnorm_param->mean_);
@@ -119,10 +119,10 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
 }
 
 static int groupnorm_compute(struct KernelBase *self) {
-  return self->env->parallelLaunch(self->env->threadPool, groupnorm_do_compute, self, self->param->thread_num_);
+  return self->env_->parallel_launch(self->env_->thread_pool_, groupnorm_do_compute, self, self->param_->thread_num_);
 }
 
-KernelBase *CreateGroupNorm(OpParameter *param, int data_type, FormatC format) {
+KernelBase *CreateGroupNorm(OpParameter *param, int data_type) {
   GroupNormStru *groupnorm = (GroupNormStru *)malloc(sizeof(GroupNormStru));
   if (groupnorm == NULL) {
     return NULL;
@@ -136,4 +136,4 @@ KernelBase *CreateGroupNorm(OpParameter *param, int data_type, FormatC format) {
   return (void *)groupnorm;
 }
 
-REG_KERNEL_CREATOR(PrimType_GroupNormFusion, Format_NCHW, kNumberTypeFloat32, CreateGroupNorm);
+REG_KERNEL_CREATOR(PrimType_GroupNormFusion, kNumberTypeFloat32, CreateGroupNorm);

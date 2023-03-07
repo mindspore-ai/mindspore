@@ -27,21 +27,21 @@ typedef struct GatherDStru {
 int gather_d_prepare(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
-  GatherParameter *param = (GatherParameter *)gather_d->base.param;
+  GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  if (self->insize < kInputSize2 || self->outsize < 1) {
+  if (self->in_size_ < kInputSize2 || self->out_size_ < 1) {
     return NNACL_ERR;
   }
-  param->axis_ = ((int *)(self->in[1].data_))[0];
+  param->axis_ = ((int *)(gather_d->base.in_[1].data_))[0];
   return NNACL_OK;
 }
 
 int gather_d_resize(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
-  GatherParameter *param = (GatherParameter *)gather_d->base.param;
+  GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  int input_rank = self->in[0].shape_size_;
+  int input_rank = gather_d->base.in_[0].shape_size_;
   if (param->axis_ >= input_rank || param->axis_ < -input_rank) {
     return NNACL_PARAM_INVALID;
   }
@@ -56,16 +56,16 @@ int gather_d_release(struct KernelBase *self) { return NNACL_OK; }
 int gather_d_compute(struct KernelBase *self) {
   GatherDStru *gather_d_stru = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d_stru);
-  GatherParameter *param = (GatherParameter *)gather_d_stru->base.param;
+  GatherParameter *param = (GatherParameter *)gather_d_stru->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
 
-  TensorC *input = &(gather_d_stru->base.in[0]);
+  TensorC *input = &(gather_d_stru->base.in_[0]);
   NNACL_CHECK_NULL_RETURN_ERR(input);
-  TensorC *output = &(gather_d_stru->base.out[0]);
+  TensorC *output = &(gather_d_stru->base.out_[0]);
   NNACL_CHECK_NULL_RETURN_ERR(output);
   const void *input_data = input->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
-  const void *index_data = gather_d_stru->base.in[2].data_;
+  const void *index_data = gather_d_stru->base.in_[2].data_;
   NNACL_CHECK_NULL_RETURN_ERR(index_data);
   void *output_data = output->data_;
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
@@ -80,7 +80,7 @@ int gather_d_compute(struct KernelBase *self) {
   }
 
   TypeIdC input_dtype = input->data_type_;
-  TypeIdC index_dtype = gather_d_stru->base.in[2].data_type_;
+  TypeIdC index_dtype = gather_d_stru->base.in_[2].data_type_;
   int status = NNACL_ERR;
   if (index_dtype == kNumberTypeInt32) {
     if (input_dtype == kNumberTypeFloat32) {
@@ -112,7 +112,7 @@ int gather_d_compute(struct KernelBase *self) {
   return status;
 }
 
-KernelBase *CreateGatherD(OpParameter *param, int data_type, FormatC format) {
+KernelBase *CreateGatherD(OpParameter *param, int data_type) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
   NNACL_CHECK_NULL_RETURN_NULL(gather_d);
   gather_d->base.prepare = gather_d_prepare;
@@ -122,6 +122,6 @@ KernelBase *CreateGatherD(OpParameter *param, int data_type, FormatC format) {
   return (KernelBase *)gather_d;
 }
 
-REG_KERNEL_CREATOR(PrimType_GatherD, Format_NHWC, kNumberTypeFloat32, CreateGatherD);
-REG_KERNEL_CREATOR(PrimType_GatherD, Format_NHWC, kNumberTypeInt32, CreateGatherD);
-REG_KERNEL_CREATOR(PrimType_GatherD, Format_NHWC, kNumberTypeFloat16, CreateGatherD);
+REG_KERNEL_CREATOR(PrimType_GatherD, kNumberTypeFloat32, CreateGatherD);
+REG_KERNEL_CREATOR(PrimType_GatherD, kNumberTypeInt32, CreateGatherD);
+REG_KERNEL_CREATOR(PrimType_GatherD, kNumberTypeFloat16, CreateGatherD);

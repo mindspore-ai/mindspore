@@ -17,17 +17,15 @@
 #include "nnacl/kernel.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
-#include "nnacl/experimental/ms_core.h"
 #ifdef _MSC_VER
-#include "nnacl/experimental/conv.h"
 #include "nnacl/kernel/exp.h"
 #endif
 
-static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][Format_MAX][16];
-#define REGIST_DT(DT) (DT - kNumberTypeBegin - 1)
+static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
+#define REGIST_DT(DataType) (DataType - kNumberTypeBegin - 1)
 
-void RegKernelCreator(int opType, int format, int dataType, KernelCreator creator) {
-  g_kernelCreatorRegistry[opType][format][REGIST_DT(dataType)] = creator;
+void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
+  g_kernelCreatorRegistry[opType][REGIST_DT(dataType)] = creator;
 }
 
 void Init_MSC_VER_kernels(void) {
@@ -36,92 +34,41 @@ void Init_MSC_VER_kernels(void) {
    * register here first time */
   static bool inited = false;
   if (inited == false) {
-    g_kernelCreatorRegistry[PrimType_Conv2DFusion][Format_NC4HW4][REGIST_DT(kNumberTypeFloat32)] = CreateConv;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NHWC][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NHWC][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NCHW][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NCHW][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NC4HW4][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
-    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NC8HW8][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
     inited = true;
   }
 #endif
   return;
 }
 
-bool SupportKernelC(int opType, int format, int dataType) {
+bool SupportKernelC(int opType, int dataType) {
   Init_MSC_VER_kernels();
   const int length = 16;
   if (REGIST_DT(dataType) < 0 || REGIST_DT(dataType) >= length) {
     return false;
   }
-  KernelCreator creator = g_kernelCreatorRegistry[opType][format][REGIST_DT(dataType)];
+  KernelCreator creator = g_kernelCreatorRegistry[opType][REGIST_DT(dataType)];
   return creator != NULL;
 }
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                         FormatC format, ExecEnv *env) {
+int NnaclKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
+
+KernelBase *CreateKernel(OpParameter *param, TensorC *ins, size_t in_size, TensorC *outs, size_t out_size,
+                         int data_type, ExecEnv *env) {
   Init_MSC_VER_kernels();
-  KernelCreator creator = g_kernelCreatorRegistry[param->type_][format][REGIST_DT(data_type)];
+  KernelCreator creator = g_kernelCreatorRegistry[param->type_][REGIST_DT(data_type)];
   if (creator == NULL) {
     return NULL;
   }
-  KernelBase *kernel_base = creator(param, data_type, format);
-  kernel_base->env = env;
-  kernel_base->param = param;
-  kernel_base->in = in;
-  kernel_base->insize = insize;
-  kernel_base->out = out;
-  kernel_base->outsize = outsize;
+  KernelBase *kernel_base = creator(param, data_type);
+  kernel_base->infershape = NnaclKernelInferShape;
+  kernel_base->env_ = env;
+  kernel_base->param_ = param;
+  kernel_base->thread_nr_ = param->thread_num_;
+  kernel_base->in_ = ins;
+  kernel_base->in_size_ = in_size;
+  kernel_base->out_ = outs;
+  kernel_base->out_size_ = out_size;
   return kernel_base;
-}
-
-CoreFuncs *GetCoreFuncs(bool use_fp16) {
-  static CoreFuncs core;
-  InitCore(&core);
-
-#ifdef ENABLE_AVX512
-  static CoreFuncs core_avx512;
-  InitCore(&core_avx512);
-  InitSseCore(&core_avx512);
-  InitAvxCore(&core_avx512);
-  InitAvx512Core(&core_avx512);
-  return &core_avx512;
-#endif
-
-#ifdef ENABLE_AVX
-  static CoreFuncs core_avx;
-  InitCore(&core_avx);
-  InitSseCore(&core_avx);
-  InitAvxCore(&core_avx);
-  return &core_avx;
-#endif
-
-#ifdef ENABLE_SSE
-  static CoreFuncs core_sse;
-  InitCore(&core_sse);
-  InitSseCore(&core_sse);
-  return &core_sse;
-#endif
-
-#ifdef ENABLE_ARM32
-  static CoreFuncs core_arm32;
-  InitCore(&core_arm32);
-  InitArm32Core(&core_arm32);
-  return &core_arm32;
-#endif
-
-#ifdef ENABLE_ARM64
-  static CoreFuncs core_fp32;
-  InitCore(&core_fp32);
-  InitFp32Core(&core_fp32);
-  static CoreFuncs core_fp16;
-  InitCore(&core_fp16);
-#ifdef ENABLE_FP16
-  InitFp16Core(&core_fp16);
-#endif
-  return use_fp16 ? &core_fp16 : &core_fp32;
-#endif
-
-  return &core;
 }

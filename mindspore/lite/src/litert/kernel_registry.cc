@@ -164,7 +164,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   if (kernel_creator != nullptr) {
     return true;
   }
-  return SupportKernelC(key.type, NHWC, key.data_type);
+  return SupportKernelC(key.type, key.data_type);
 }
 
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,

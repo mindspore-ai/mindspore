@@ -40,6 +40,18 @@ NnaclKernel::~NnaclKernel() {
   }
 }
 
+void NnaclKernel::UpdateTensorData() {
+  for (size_t i = 0; i < in_size_; i++) {
+    in_[i].data_ = in_tensors().at(i)->data();
+    in_[i].data_type_ = in_tensors_[i]->data_type();
+  }
+  for (size_t i = 0; i < out_size_; i++) {
+    out_[i].data_ = out_tensors().at(i)->data();
+    out_[i].data_type_ = out_tensors_[i]->data_type();
+  }
+  return;
+}
+
 void NnaclKernel::UpdateTensorC() {
   for (size_t i = 0; i < in_size_; i++) {
     Tensor2TensorC(in_tensors_[i], &in_[i]);
@@ -80,22 +92,15 @@ int NnaclKernel::Run() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
-
-  for (size_t i = 0; i < in_size_; i++) {
-    if (in_tensors_[i]->IsConst() == false) {
-      kernel_->in[i].data_ = in_tensors_[i]->data();
-      kernel_->in[i].data_type_ = in_tensors_[i]->data_type();
-    }
-  }
-
-  for (size_t i = 0; i < out_size_; i++) {
-    if (out_tensors_[i]->IsConst() == false) {
-      kernel_->out[i].data_ = out_tensors_[i]->data();
-      kernel_->out[i].data_type_ = out_tensors_[i]->data_type();
-    }
-  }
-
+  UpdateTensorData();
   return kernel_->compute(kernel_);
+}
+
+int NnaclKernel::InferShape() {
+  if (kernel_ == nullptr) {
+    return RET_ERROR;
+  }
+  return kernel_->infershape(kernel_);
 }
 
 int NnaclKernel::InitKernel(const KernelKey &key, const lite::InnerContext *ctx) {
@@ -121,12 +126,11 @@ int NnaclKernel::InitKernel(const KernelKey &key, const lite::InnerContext *ctx)
 
   UpdateTensorC();
 
-  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type, (FormatC)key.format,
+  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type,
                          const_cast<ExecEnv *>(ctx->GetExecEnv()));
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
-
   return RET_OK;
 }
 
