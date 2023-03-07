@@ -283,5 +283,9 @@ void ParallelContext::set_pipeline_micro_size(const size_t pipeline_micro_size) 
 
 void ParallelContext::set_do_transform(const bool do_transform) { do_transform_ = do_transform; }
 
+void ParallelContext::set_stra_file_only_trainable_params(const bool stra_file_only_trainable_params) {
+  stra_file_only_trainable_params_ = stra_file_only_trainable_params;
+}
+
 void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 }  // namespace mindspore::parallel

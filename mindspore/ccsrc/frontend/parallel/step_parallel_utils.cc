@@ -1287,6 +1287,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
                     << MAX_RECURSIVE_DEPTH;
     return {};
   }
+  bool only_trainable_params = ParallelContext::GetInstance()->stra_file_only_trainable_params();
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   ParameterMap param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
@@ -1294,7 +1295,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
     auto input = node_inputs[LongToSize(i)];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
-      if (input_parameter->has_default()) {
+      if (input_parameter->has_default() && (!only_trainable_params || ParameterRequireGrad(input_parameter))) {
         (void)param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
       }
     } else if (input->isa<CNode>()) {

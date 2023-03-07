@@ -521,7 +521,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
-                 parallel_optimizer_config=dict, comm_fusion=dict)
+                 parallel_optimizer_config=dict, comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, only data parallel supported on CPU.
@@ -549,6 +549,7 @@ def set_auto_parallel_context(**kwargs):
     enable_alltoall              grad_accumulation_step
                \                 auto_parallel_search_mode
                \                 comm_fusion
+               \                 strategy_ckpt_config
     ===========================  ===========================
 
     Args:
@@ -587,8 +588,10 @@ def set_auto_parallel_context(**kwargs):
                      data_parallel mode, all parameters are broadcast except for the parameter whose attribute
                      layerwise_parallel is True. Hybrid_parallel, semi_auto_parallel and auto_parallel mode, the
                      segmented parameters do not participate in broadcasting. Default: False.
-        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
-        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
+        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The interface is not to be
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
+        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The interface is not to be
+                       recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
                        should be set as True. Default: False. The interface is not to be recommended currently,
                        it is better using 'dataset_strategy' to replace it.
@@ -653,6 +656,24 @@ def set_auto_parallel_context(**kwargs):
 
                         - reducescatter: If communication fusion type is `reducescatter`. The `mode` contains: `auto`
                           and `size`. Config is same as `allgather`.
+
+        strategy_ckpt_config (dict): A dict contains the configurations for setting the parallel strategy file. This
+                        interface contains the functions of interface `strategy_ckpt_load_file` and
+                        `strategy_ckpt_save_file`, it is recommonded to use this interface to replace those two
+                        interfaces.
+                        It contains following configurations:
+
+                        - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
+                          `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in protobufer
+                          format.
+                          Default: ''
+
+                        - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
+                          `.json`, the file is saved in JSON format. Otherwise, the file is saved in protobufer format.
+                          Default: ''
+
+                        - only_trainable_params: Only save/load the strategy information for trainable parameters.
+                          Default: True.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
