@@ -107,7 +107,9 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
       return RET_ERROR;
     }
     if (section == "model_param") {
-      (*model_param_infos)[model_index][key] = value;
+      if (model_param_infos != nullptr) {
+        (*model_param_infos)[model_index][key] = value;
+      }
     } else {
       (*maps)[section][key] = value;
     }

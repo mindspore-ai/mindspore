@@ -47,6 +47,8 @@ typedef struct {
   MSTensorHandleArray outputs;
   ModelBuild build;
   ModelPredict predict;
+  ModelSetWorkspace set_work_space;
+  ModelCalcWorkspaceSize calc_work_space;
   FreeResource free_resource;
 )RAW";
 
@@ -302,15 +304,9 @@ int Generator::CodeCommonModelFile() {
   CodeMSModelBuildState(hofs);
   CodeMSModelPredictState(hofs);
   CodeFreeResourceState(hofs);
-  if (config_->target() == kCortex_M) {
-    hofs << set_workspace_state;
-    hofs << calc_workspace_state;
-  }
+  hofs << set_workspace_state;
+  hofs << calc_workspace_state;
   hofs << micro_model_define_source;
-  if (config_->target() == kCortex_M) {
-    hofs << "  ModelSetWorkspace set_work_space;\n"
-         << "  ModelCalcWorkspaceSize calc_work_space;\n";
-  }
   hofs << "} MicroModel;\n";
   hofs << "#endif // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_MODEL_H_\n\n";
 
@@ -332,9 +328,9 @@ int Generator::CodeCommonModelFile() {
   }
   if (config_->target() != kCortex_M) {
     cofs << "#include \"src/allocator.h\"\n";
-    CodeMSModelCalcWorkspaceSize(cofs, ctx_, *config_);
-    CodeMSModelSetWorkspace(cofs, ctx_, *config_);
   }
+  CodeMSModelCalcWorkspaceSize(cofs, ctx_, *config_);
+  CodeMSModelSetWorkspace(cofs, ctx_, *config_);
   CodeMSModelCreateDefault(cofs);
   CodeMSModelBuildCommon(cofs, *config_);
   cofs << model_runtime_other_source;
@@ -396,20 +392,31 @@ int Generator::CodeMSModelImplement() {
       << "                         MSTensorHandleArray *output,\n"
       << "                         const MSKernelCallBackC before,\n"
       << "                         const MSKernelCallBackC after);\n";
+  ofs << "void MSModelSetWorkspace" << ctx_->GetCurModelIndex()
+      << "(MSModelHandle model, void *workspace, size_t workspace_size);\n";
+  ofs << "size_t MSModelCalcWorkspaceSize" << ctx_->GetCurModelIndex() << "(MSModelHandle model);\n";
   ofs << "static MicroModel gModel" << ctx_->GetCurModelIndex() << " = {.runtime_buffer = NULL,\n"
       << "                             .train_mode = false,\n"
       << "                             .inputs = {" << ctx_->graph_inputs().size() << ", NULL},\n"
       << "                             .outputs = {" << ctx_->graph_outputs().size() << ", NULL},\n"
       << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n"
-      << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n"
-      << "                             .free_resource = FreeResource" << ctx_->GetCurModelIndex() << "};\n";
+      << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n";
+  if (config_->target() == kCortex_M) {
+    ofs << "                             .set_work_space = MSModelSetWorkspace" << ctx_->GetCurModelIndex() << ",\n"
+        << "                             .calc_work_space = MSModelCalcWorkspaceSize" << ctx_->GetCurModelIndex()
+        << ",\n";
+  } else {
+    ofs << "                             .set_work_space = NULL,\n"
+        << "                             .calc_work_space = NULL,\n";
+  }
+  ofs << "                             .free_resource = FreeResource" << ctx_->GetCurModelIndex() << "};\n";
   ofs << "MSModelHandle model" << ctx_->GetCurModelIndex() << " = &gModel" << ctx_->GetCurModelIndex() << ";\n\n";
 
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), *config_);
   if (config_->target() == kCortex_M) {
-    CodeMSModelCalcWorkspaceSize(ofs, ctx_, *config_);
-    CodeMSModelSetWorkspace(ofs, ctx_, *config_);
+    CodeCortexCalcWorkspaceSize(ofs, ctx_);
+    CodeCortexSetWorkspace(ofs, ctx_);
   }
   if (config_->code_mode() == CodeMode::Train) {
     CodeMSModelRunStep(ofs, ctx_);
@@ -490,7 +497,7 @@ void Generator::CodeCommonNetC(std::ofstream &ofs) {
     ofs << "#include \"" << kThreadWrapper << "\"\n\n";
   }
   if (config_->debug_mode()) {
-    ofs << "#include \"" << kDebugUtils << "\"\n";
+    ofs << "#include \"src/" << kDebugUtils << "\"\n";
   }
   CodeGlobalCodeBlocks(ofs, ctx_);
   CodeInputImplement(ofs, ctx_);
