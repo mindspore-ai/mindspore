@@ -17,6 +17,8 @@ import os
 import numpy as np
 import pytest
 import mindspore.nn as nn
+import mindspore.ops.composite as C
+from mindspore import ops
 from mindspore import Tensor, context, Parameter, jit
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
@@ -782,3 +784,39 @@ def test_grad_mutable_single_element_dict_tensor():
     assert isinstance(output[1], dict)
     assert len(output[1].keys()) == 1
     assert compare(output[1]['a'], expect[1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_mutable_dynamic_len_sequence():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient for dynamic length sequence.
+    Expectation: Get the correct gradients.
+    """
+    class GradCell(nn.Cell):
+        def __init__(self, network, get_all=False, get_by_list=False, sens_param=False):
+            super().__init__()
+            self.network = network
+            self.grad = C.GradOperation(get_all, get_by_list, sens_param)
+
+        def construct(self, *inputs):
+            grads = self.grad(self.network)(*inputs)
+            return grads
+
+    class Net(nn.Cell):
+        def construct(self, input1, input2):
+            x = (input1, input2)
+            x = mutable(x, True)
+            output = ops.conv2d(x[0], x[1], pad_mode="pad", padding=(2, 2, 3, 3))
+            return output
+
+    context.set_context(mode=context.GRAPH_MODE)
+    input_np_x = np.random.randn(10, 32, 32, 32).astype(np.float32)
+    net = Net()
+    out_me = net(Tensor(input_np_x), Tensor(input_np_x))
+    print(out_me)
+    grad_net = GradCell(net)
+    grad_output = grad_net(Tensor(input_np_x), Tensor(input_np_x))
+    print(grad_output)

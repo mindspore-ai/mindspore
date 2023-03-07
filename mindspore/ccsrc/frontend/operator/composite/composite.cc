@@ -659,6 +659,56 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   return fg;
 }
 
+FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t min_input_size = 1;
+  constexpr size_t max_input_size = 2;
+  int64_t input_size = SizeToLong(args_spec_list.size());
+  if (input_size != min_input_size && input_size != max_input_size) {
+    MS_LOG(EXCEPTION) << "The number of input to mutable must be " << min_input_size << " or " << max_input_size
+                      << ", but got: " << input_size;
+  }
+  std::ostringstream ss;
+  // ▶mutable_
+  ss << "\u25B8mutable_" << input_size;
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  fg->debug_info()->set_name(ss.str());
+
+  std::vector<AnfNodePtr> params;
+  params.push_back(NewValueNode(prim::kPrimMutable));
+  for (int64_t i = 0; i < input_size; ++i) {
+    params.push_back(fg->add_parameter());
+  }
+
+  // Make fprop first result, mutable's forward result.
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
+
+  // Make fprop second result, mutable's backward function.
+  FuncGraphPtr bprop = std::make_shared<FuncGraph>();
+
+  ss.str(std::string());
+  ss.clear();
+  // ◀mutable_
+  ss << "\u25C2mutable_" << input_size;
+  bprop->debug_info()->set_name(ss.str());
+  AnfNodePtr dout = bprop->add_parameter();
+
+  std::vector<AnfNodePtr> grads;
+  grads.push_back(NewValueNode(prim::kPrimMakeTuple));
+  grads.push_back(NewEnviron(bprop));
+  grads.push_back(dout);
+  if (input_size == max_input_size) {
+    grads.push_back(bprop->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), params[2]}));
+  }
+
+  bprop->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  bprop->set_output(bprop->NewCNodeInOrder(grads));
+
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(bprop)}));
+  (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMutable));
+  return fg;
+}
+
 namespace {
 bool IsTupleAllTensor(const AbstractTuplePtr &tuple_arg) {
   MS_EXCEPTION_IF_NULL(tuple_arg);
