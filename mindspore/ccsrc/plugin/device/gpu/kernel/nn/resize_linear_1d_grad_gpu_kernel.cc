@@ -74,16 +74,17 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   grad_output_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  batch_ = LongToSize(grad_output_shape_[kIndex0]);
-  channel_ = LongToSize(grad_output_shape_[kIndex1]);
+  batch_ = grad_output_shape_[kIndex0];
+  channel_ = grad_output_shape_[kIndex1];
   out_width_ = grad_output_shape_[kIndex2];
   grad_input_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   in_width_ = grad_input_shape_[kIndex2];
+  size_t work_space_size = SizeOf(grad_input_shape_);
+  workspace_size_list_.push_back(work_space_size * sizeof(float));
 
   if (grad_output_shape_.size() != kResizeInputDims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dimension of 'input_x' should be greater than or equal to 1, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'grad_output' should be 3, but got "
                   << grad_output_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
   }
@@ -102,13 +103,17 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   T *grad_input = GetDeviceAddress<T>(outputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_input, false);
 
+  float *grad_work = GetDeviceAddress<float>(workspace, kIndex0);
+  MS_ERROR_IF_NULL_W_RET_VAL(grad_work, false);
+
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(grad_input, 0, outputs.at(kIndex0)->size),
-                                    "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset");
+                                    "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_input.");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(grad_work, 0, workspace.at(kIndex0)->size),
+                                    "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_work.");
 
-  int64_t output_size = batch_ * channel_ * out_width_;
-  ResizeLinear1DGrad(mode_, output_size, in_width_, out_width_, grad_output, grad_input, device_id_,
+  ResizeLinear1DGrad(mode_, batch_, channel_, in_width_, out_width_, grad_output, grad_input, grad_work, device_id_,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
-
+  cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 
