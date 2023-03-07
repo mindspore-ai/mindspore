@@ -60,6 +60,13 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
       IsDynamicRank(translation_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
+  // support dynamic shape
+  if (IsDynamicShape(images_shape) || IsDynamicShape(size_shape) || IsDynamicShape(scale_shape) ||
+      IsDynamicShape(translation_shape)) {
+    return std::make_shared<abstract::Shape>(
+      ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                   abstract::Shape::kShapeDimAny}));
+  }
 
   const int64_t kShapeSize = 1;
   const int64_t kElementsNumber = 2;
