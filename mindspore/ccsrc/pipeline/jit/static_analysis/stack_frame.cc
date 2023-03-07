@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +199,13 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
     node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
   } else {
     node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+    MS_EXCEPTION_IF_NULL(node_eval_result);
+    if (engine->check_isolated_side_effect() && node_eval_result->has_isolated_side_effect()) {
+      const auto &cnode = current_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->set_has_isolated_side_effect_node(true);
+      current_context_->func_graph()->set_has_isolated_side_effect_node(true);
+    }
   }
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
                 << (node_eval_result->abstract() ? node_eval_result->abstract()->ToString() : "Abstract null");

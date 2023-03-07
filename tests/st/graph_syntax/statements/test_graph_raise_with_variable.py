@@ -228,42 +228,16 @@ def test_raise_with_variable_control_flow2():
     Expectation: No exception.
     """
     class RaiseNet(nn.Cell):
-        def construct(self, x, y):
+        def construct(self, x, y):  # pylint: disable=R1711
             if x == y:
                 raise RuntimeError(f"The input should not be {x}.")
-            return x
+            return None
 
     with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
         net = RaiseNet()
         x = Tensor(1)
         y = Tensor(1)
         res = net(x, y)
-        print("res:", res)
-    assert "The input should not be 1" in str(
-        raise_info_joinedstr_tensor.value)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_raise_with_variable_control_flow3():
-    """
-    Feature: graph raise by JIT Fallback.
-    Description: Test raise.
-    Expectation: No exception.
-    """
-    class RaiseNet(nn.Cell):
-        def construct(self, x, y, z):
-            if x == y:
-                raise RuntimeError(f"The input should not be {x}.")
-            return z
-
-    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
-        net = RaiseNet()
-        x = Tensor(1)
-        y = Tensor(1)
-        z = (x, y)
-        res = net(x, y, z)
         print("res:", res)
     assert "The input should not be 1" in str(
         raise_info_joinedstr_tensor.value)

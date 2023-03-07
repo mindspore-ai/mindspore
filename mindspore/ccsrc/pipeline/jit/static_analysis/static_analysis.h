@@ -59,16 +59,23 @@ using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 // the class to save evaluated result: abstract value and modified attribute
 class EvalResult : public Base {
  public:
-  EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr) : abstract_(abs), attribute_(attr) {}
+  EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr)
+      : abstract_(abs), attribute_(attr), has_isolated_side_effect_(false) {}
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
   const AbstractBasePtr &abstract() const { return abstract_; }
   const AttrValueMapPtr &attribute() const { return attribute_; }
+  bool has_isolated_side_effect() const { return has_isolated_side_effect_; }
+  void set_has_isolated_side_effect(bool has_isolated_side_effect) {
+    has_isolated_side_effect_ = has_isolated_side_effect;
+  }
 
  private:
   AbstractBasePtr abstract_;
   // Attribute related to PrimEvaluator;
   AttrValueMapPtr attribute_;
+
+  bool has_isolated_side_effect_;
 };
 using EvalResultPtr = std::shared_ptr<EvalResult>;
 

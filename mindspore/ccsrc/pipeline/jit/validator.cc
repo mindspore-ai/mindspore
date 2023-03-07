@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,24 +101,6 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
   return false;
 }
 
-bool CheckIfRaise(const AnfNodePtr &node) {
-  if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-    auto cnode = node->cast<CNodePtr>();
-    auto inputs = cnode->inputs();
-    auto first = inputs[1];
-    auto script_node = first->cast<ValueNodePtr>();
-    if (script_node->value()->isa<StringImm>()) {
-      auto script = GetValueNode<StringImmPtr>(script_node)->value();
-      std::string raise_script = "raise_func";
-      auto idx = script.find(raise_script);
-      if (idx != string::npos) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 void ValidateAbstract(const AnfNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(DEBUG) << "Node to validate is invalid";
@@ -140,11 +122,6 @@ void ValidateAbstract(const AnfNodePtr &node) {
     // NOTICE: validate dead code?
     MS_LOG(DEBUG) << "AbstractError in the graph: " << abstract->ToString();
     return;
-  }
-  if (CheckIfRaise(node)) {
-    ShapeVector shp{abstract::Shape::kShapeRankAny};
-    auto abs = std::make_shared<abstract::AbstractTensor>(kFloat64, std::make_shared<abstract::Shape>(shp));
-    node->set_abstract(abs);
   }
   bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||
                            abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||

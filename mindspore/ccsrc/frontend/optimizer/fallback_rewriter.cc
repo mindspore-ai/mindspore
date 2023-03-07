@@ -612,6 +612,25 @@ class CleanAfterOptARewriter : public BaseRewriter {
       : BaseRewriter(root_graph, manager) {}
   ~CleanAfterOptARewriter() override = default;
 
+  void UpdateAbstracts() {
+    const auto &nodes = manager_->all_nodes();
+    for (const auto &node : nodes) {
+      const auto &abs = node->abstract();
+      if (abs == nullptr) {
+        continue;
+      }
+      // Set flag for convert AbstractNone(PyExecute) to AbstractTensor in next renormalize.
+      if (IsPrimitiveCNode(node, prim::kPrimPyExecute) && abs->isa<abstract::AbstractNone>()) {
+        constexpr auto data_type = "__py_execute_no_return_type__";
+        if (node->has_user_data(data_type)) {
+          auto type = std::make_shared<TypeAnything>();
+          node->set_user_data<Type>(data_type, type);
+          set_need_renormalized(true);
+        }
+      }
+    }
+  }
+
  protected:
   // From:
   //   MakeSparseTensor(indices, values, dense_shape)
@@ -897,6 +916,13 @@ class CleanAfterOptARewriter : public BaseRewriter {
     AnfNodePtr none_execute_node =
       func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, none_tuple_node, none_tuple_node});
     MS_LOG(DEBUG) << "none_execute_node:" << none_execute_node->DebugString();
+
+    // Keep AbstractNone for PyExecute, because the control flow join problem.
+    auto none_type = std::make_shared<TypeNone>();
+    none_execute_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
+    AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
+    res->set_value(kAnyValue);
+    none_execute_node->set_abstract(res);
     return none_execute_node;
   }
 
@@ -1051,6 +1077,7 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resou
   CleanAfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
   // Renormalize for new PyExecute node.
+  rewriter.UpdateAbstracts();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
     std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
