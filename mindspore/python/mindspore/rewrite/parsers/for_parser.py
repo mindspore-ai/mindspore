@@ -63,7 +63,7 @@ class ForParser(Parser):
             logger.warning(
                 f"For MindSpore Rewrtie, illegal iteration condition for For node, it must start with{EVAL_WHITE_LIST}")
             return
-        if iter_code.startswith("self"):
+        if "self" in iter_code:
             iter_code = iter_code.replace("self", "stree.get_origin_network()")
         try:
             iter_obj = eval(iter_code)
@@ -89,13 +89,13 @@ class ForParser(Parser):
             stree.get_ast_root().body.remove(node)
             return
         if isinstance(iter_obj, range):
-            logger.warning("For MindSpore Rewrtie, range not support.")
+            logger.warning("For MindSpore Rewrite, range not support.")
         elif isinstance(iter_obj, zip):
-            logger.warning("For MindSpore Rewrtie, zip not support.")
+            logger.warning("For MindSpore Rewrite, zip not support.")
         elif isinstance(iter_obj, enumerate):
-            logger.warning("For MindSpore Rewrtie, enumerate not support.")
+            logger.warning("For MindSpore Rewrite, enumerate not support.")
         else:
-            logger.warning("For MindSpore Rewrtie, not supported type: ", type(iter_obj))
+            logger.warning(f"For MindSpore Rewrite, not supported type: {type(iter_obj).__name__}")
         stree.try_append_python_node(node, node)
         return
 
