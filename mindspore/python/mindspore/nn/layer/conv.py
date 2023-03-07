@@ -968,7 +968,8 @@ class Conv2dTranspose(_Conv):
             The data type is an integer or a tuple of two integers. If `output_padding` is an integer,
             then the bottom and right padding are all equal to `output_padding`. If `output_padding` is a tuple of
             2 integers, then the bottom and right padding is equal to `output_padding[0]`, `output_padding[1]`
-            respectively. The value should be greater than or equal to 0. Default: 0.
+            respectively. If `output_padding` is not equal to 0, `pad_mode` must be `pad`.
+            The value should be in range of `[0, max(stride, dilation))` . Default: 0.
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
             The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
@@ -1124,9 +1125,9 @@ class Conv2dTranspose(_Conv):
         conv2d_trans_ret = self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
         if isinstance(self.output_padding, tuple):
             if self.output_padding[0] < 0 or self.output_padding[0] >= max(self.dilation[0], self.stride[0]):
-                raise ValueError("output_padding[0] must be in range of [0, max(stride_d, dilation_d)).")
+                raise ValueError("output_padding[0] must be in range of [0, max(stride_h, dilation_h)).")
             if self.output_padding[1] < 0 or self.output_padding[1] >= max(self.dilation[1], self.stride[1]):
-                raise ValueError("output_padding[1] must be in range of [0, max(stride_d, dilation_d)).")
+                raise ValueError("output_padding[1] must be in range of [0, max(stride_w, dilation_w)).")
             if not self.is_pad and (self.output_padding[0] > 0 or self.output_padding[1] > 0):
                 raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
 
@@ -1137,9 +1138,9 @@ class Conv2dTranspose(_Conv):
             return conv2d_trans_ret
 
         if self.output_padding < 0 or self.output_padding >= max(self.dilation[0], self.stride[0]):
-            raise ValueError("output_padding must be in range of [0, max(stride_d, dilation_d)).")
+            raise ValueError("output_padding must be in range of [0, max(stride_h, dilation_h)).")
         if self.output_padding < 0 or self.output_padding >= max(self.dilation[1], self.stride[1]):
-            raise ValueError("output_padding must be in range of [0, max(stride_d, dilation_d)).")
+            raise ValueError("output_padding must be in range of [0, max(stride_w, dilation_w)).")
         if not self.is_pad and self.output_padding > 0:
             raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
         pad = P.Pad(paddings=((0, 0), (0, 0), (0, self.output_padding), (0, self.output_padding)))
