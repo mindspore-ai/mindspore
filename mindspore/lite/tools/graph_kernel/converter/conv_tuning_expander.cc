@@ -21,9 +21,9 @@
 #include <vector>
 
 #include "nlohmann/json.hpp"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/akg/akg_build.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"

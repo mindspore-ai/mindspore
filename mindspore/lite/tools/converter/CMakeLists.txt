@@ -57,11 +57,11 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
             ${TOOLS_DIR}/graph_kernel/common/*.cc
             ${TOOLS_DIR}/graph_kernel/converter/*.cc
-            ${CCSRC_DIR}/common/graph_kernel/core/*.cc
-            ${CCSRC_DIR}/common/graph_kernel/expanders/*.cc
-            ${CCSRC_DIR}/common/graph_kernel/model/*.cc
-            ${CCSRC_DIR}/common/graph_kernel/split_model/*.cc
-            ${CCSRC_DIR}/common/graph_kernel/graph_kernel_flags.cc
+            ${CCSRC_DIR}/backend/common/graph_kernel/core/*.cc
+            ${CCSRC_DIR}/backend/common/graph_kernel/expanders/*.cc
+            ${CCSRC_DIR}/backend/common/graph_kernel/model/*.cc
+            ${CCSRC_DIR}/backend/common/graph_kernel/split_model/*.cc
+            ${CCSRC_DIR}/backend/common/graph_kernel/graph_kernel_flags.cc
             ${CCSRC_DIR}/kernel/akg/akg_kernel_json_generator.cc
             )
     set(CCSRC_SRC

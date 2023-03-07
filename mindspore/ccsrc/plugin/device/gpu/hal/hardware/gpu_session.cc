@@ -53,7 +53,7 @@
 #ifdef ENABLE_GPU_INFER
 #include "plugin/device/gpu/optimizer/trt_pass/graph_converter.h"
 #endif
-#include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "plugin/device/gpu/optimizer/concat_outputs_for_all_gather.h"
 #include "backend/common/pass/getitem_tuple.h"
@@ -82,7 +82,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/config_manager.h"
 #include "utils/ms_context.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
 #include "abstract/utils.h"
 #include "kernel/graph_kernel_info.h"

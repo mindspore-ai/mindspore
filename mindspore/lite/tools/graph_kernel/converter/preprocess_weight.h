@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_PREPROCESS_WEIGHT_H_
 #include <memory>
 
-#include "common/graph_kernel/core/graph_kernel_expander.h"
+#include "backend/common/graph_kernel/core/graph_kernel_expander.h"
 
 namespace mindspore::graphkernel {
 class SubstituteConv2D : public ExpanderDecorator {

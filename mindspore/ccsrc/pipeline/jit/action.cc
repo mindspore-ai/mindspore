@@ -53,7 +53,7 @@
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/scheduler.h"
 #include "distributed/cluster/cluster_context.h"

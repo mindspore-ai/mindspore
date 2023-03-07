@@ -19,7 +19,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
-#include "common/mem_reuse/kernel_refcount.h"
+#include "backend/common/mem_reuse/kernel_refcount.h"
 #include "runtime/device/kernel_info.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "frontend/operator/ops.h"
@@ -28,7 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "pipeline/jit/resource.h"
-#include "common/mem_reuse/mem_reuse.h"
+#include "backend/common/mem_reuse/mem_reuse.h"
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"

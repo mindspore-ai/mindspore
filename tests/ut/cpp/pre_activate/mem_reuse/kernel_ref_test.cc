@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 
-#include "common/mem_reuse/kernel_refcount.h"
+#include "backend/common/mem_reuse/kernel_refcount.h"
 
 #include "include/common/utils/utils.h"
 #include "common/common_test.h"

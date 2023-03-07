@@ -25,7 +25,7 @@
 #include <utility>
 #include <algorithm>
 
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"

@@ -19,14 +19,14 @@
 #include <string>
 #include <memory>
 #include "ir/func_graph.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/graph_optimizer.h"
 
-#include "common/graph_kernel/core/arithmetic_simplify.h"
-#include "common/graph_kernel/core/eliminate_redundant_output.h"
-#include "common/graph_kernel/core/shape_ops_splitter.h"
-#include "common/graph_kernel/core/update_state_formatter.h"
-#include "common/graph_kernel/core/transform_op_optimizer.h"
+#include "backend/common/graph_kernel/core/arithmetic_simplify.h"
+#include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
+#include "backend/common/graph_kernel/core/shape_ops_splitter.h"
+#include "backend/common/graph_kernel/core/update_state_formatter.h"
+#include "backend/common/graph_kernel/core/transform_op_optimizer.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
 #include "tools/graph_kernel/converter/conv_tuning_expander.h"

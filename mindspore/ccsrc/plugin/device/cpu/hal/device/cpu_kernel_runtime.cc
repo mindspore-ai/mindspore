@@ -38,7 +38,7 @@
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include "include/common/debug/env_config_parser.h"
 #ifdef MEM_REUSE_DEBUG
-#include "common/mem_reuse/mem_reuse_checker.h"
+#include "backend/common/mem_reuse/mem_reuse_checker.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"

@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
-#include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 // register the callback object

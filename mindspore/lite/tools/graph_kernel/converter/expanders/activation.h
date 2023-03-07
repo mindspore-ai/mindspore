@@ -19,7 +19,7 @@
 #include <memory>
 #include <set>
 
-#include "common/graph_kernel/expanders/utils.h"
+#include "backend/common/graph_kernel/expanders/utils.h"
 
 namespace mindspore::graphkernel::expanders {
 class CheckActivationType : public Validator {

@@ -40,7 +40,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_runtime_info.h"
@@ -51,7 +51,7 @@
 #include "debug/debugger/debugger_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #endif
-#include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "plugin/device/ascend/hal/hardware/ascend_auto_monad.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"

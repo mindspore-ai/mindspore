@@ -30,7 +30,7 @@
 #include <iostream>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
