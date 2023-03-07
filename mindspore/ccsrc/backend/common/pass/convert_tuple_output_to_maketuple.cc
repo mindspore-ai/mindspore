@@ -60,7 +60,8 @@ bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
   MS_EXCEPTION_IF_NULL(input);
   return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
           !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
-          (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)));
+          (input->isa<Parameter>() || input->isa<ValueNode>() || IsKerenlGraphOutput(func_graph, input)) &&
+          (!common::AnfAlgo::IsDynamicSequence(input)));
 }
 }  // namespace
 
@@ -85,11 +86,6 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
     }
   }
   if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
-    return nullptr;
-  }
-
-  // Dynamic sequence does not need to be converted.
-  if (common::AnfAlgo::IsDynamicSequence(cnode)) {
     return nullptr;
   }
 
