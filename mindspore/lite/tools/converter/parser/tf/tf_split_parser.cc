@@ -74,12 +74,14 @@ PrimitiveCPtr TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
     auto size = size_splits_tensor.tensor_content().size() / sizeof(int32_t);
 
     std::vector<int32_t> size_splits_int32;
-    size_splits_int32.resize(size);
-    auto ret = memcpy_s(size_splits_int32.data(), size * sizeof(int32_t), size_splits_tensor.tensor_content().data(),
-                        size * sizeof(int32_t));
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed";
-      return nullptr;
+    if (size > 0) {
+      size_splits_int32.resize(size);
+      auto ret = memcpy_s(size_splits_int32.data(), size * sizeof(int32_t), size_splits_tensor.tensor_content().data(),
+                          size * sizeof(int32_t));
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memcpy_s failed";
+        return nullptr;
+      }
     }
     std::vector<int64_t> size_splits;
     std::transform(size_splits_int32.begin(), size_splits_int32.end(), std::back_inserter(size_splits),
