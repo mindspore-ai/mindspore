@@ -36,6 +36,7 @@ mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool1d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:pad
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:cov
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
+mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
