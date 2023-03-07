@@ -31,7 +31,7 @@ namespace pynative {
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  AsyncQueue();
+  AsyncQueue() = default;
   ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -56,10 +56,11 @@ class BACKEND_EXPORT AsyncQueue {
   void WorkerLoop();
 
   std::queue<std::shared_ptr<AsyncTask>> tasks_;
-  std::shared_ptr<std::thread> worker_;
+  std::shared_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;
   std::condition_variable task_cond_var_;
 };
+using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 }  // namespace pynative
 }  // namespace mindspore
 

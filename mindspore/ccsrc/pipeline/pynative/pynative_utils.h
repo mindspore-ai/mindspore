@@ -51,19 +51,22 @@ struct Common {
   static ValuePtr CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs);
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
+  static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
 };
 
 // Parser python
 struct PyParser {
   static std::string GetIdByPyObj(const py::object &obj);
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
-  static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs);
+  static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
+                                      bool stub = false);
 };
 
 // Data convert
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
-  static ValuePtr PyObjToValue(const py::object &obj);
+  static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
+  static ValuePtr PyObjToStubNode(const py::object &obj);
   static ValuePtr BaseRefToValue(const BaseRef &value);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref);
   static void FlattenTupleArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);

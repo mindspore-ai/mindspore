@@ -27,6 +27,7 @@
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
+#include "runtime/pynative/async/async_queue.h"
 
 namespace mindspore {
 namespace pynative {
@@ -48,8 +49,17 @@ class ForwardExecutor {
   std::function<void(const FrontendOpRunInfoPtr &)> RunOpS = [this](auto &&PH1) {
     RunOpForward(std::forward<decltype(PH1)>(PH1));
   };
+
+  std::function<void(const FrontendOpRunInfoPtr &)> RunOpSAsync = [this](auto &&PH1) {
+    RunOpForwardAsync(std::forward<decltype(PH1)>(PH1));
+  };
+
   void RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
-  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args) const;
+  void RunOpForwardAsync(const FrontendOpRunInfoPtr &op_run_info);
+  void RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_info);
+  // If sub is true, this function will not convert StubTensor to Tensor.
+  // Used to reduce the overhead of StubTensor WaitValue.
+  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args, bool stub = false) const;
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void ClearNodeAbsMap() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -76,7 +86,12 @@ class ForwardExecutor {
   inline void set_is_ms_function_compiling(bool is_ms_function_compiling) {
     is_ms_function_compiling_ = is_ms_function_compiling;
   }
+  bool is_ms_function_compiling() const { return is_ms_function_compiling_; }
   std::string device_target() const;
+
+  void WorkerJoin() { forward_queue_->WorkerJoin(); }
+  void WaitForwardTask();
+  bool IsVmOp(const std::string &op_name) const;
 
  private:
   GradExecutorPtr grad() const;
@@ -110,7 +125,8 @@ class ForwardExecutor {
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   bool enable_async_ = false;
-  mutable std::vector<PrimitivePyPtr> op_run_prim_py_list_;
+  mutable std::vector<PrimitivePtr> op_run_prim_py_list_;
+  AsyncQueuePtr forward_queue_;
 };
 }  // namespace pynative
 }  // namespace mindspore

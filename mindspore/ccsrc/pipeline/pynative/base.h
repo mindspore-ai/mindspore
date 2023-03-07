@@ -29,6 +29,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/parse.h"
 #include "abstract/abstract_value.h"
+#include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
 namespace pynative {
@@ -53,6 +54,11 @@ struct BaseOpRunInfo {
   AbstractBasePtr abstract;
 };
 
+struct AsyncStatus {
+  bool disable_mix_precision{false};
+  bool is_ms_function_compiling{false};
+};
+
 struct FrontendOpRunInfo {
   BaseOpRunInfo base_op_run_info;
   bool run_in_vm = false;
@@ -62,13 +68,16 @@ struct FrontendOpRunInfo {
   int mix_type{0};
   size_t op_index = 0;
   size_t input_size = 0;
-  PrimitivePyPtr op_prim{nullptr};
+  PrimitivePtr op_prim{nullptr};
   ValuePtr out_value{nullptr};
   std::string op_info;
   std::string out_value_id;
   std::vector<AbstractBasePtr> input_abs;
   std::vector<ValuePtr> input_value;
   std::vector<std::string> input_value_id;
+  stub::StubNodePtr stub_output;
+  std::vector<Signature> signatures;
+  AsyncStatus async_status;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 

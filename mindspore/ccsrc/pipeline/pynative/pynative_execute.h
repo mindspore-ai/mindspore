@@ -52,6 +52,8 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
     return forward_executor_;
   }
 
+  bool DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const;
+  void StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const;
   py::object RunOpAsync(const py::args &args) const;
   py::object RealRunOp(const py::args &args) const;
   py::object CallConstantFolding(const py::args &args) const;
@@ -75,7 +77,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void Sync() const;
   void SetLazyBuild(bool enable) const;
   bool IsFirstCell() const;
-  void WorkerJoin() { grad_executor_->WorkerJoin(); }
+  void WorkerJoin();
   void SetMsFunctionCompileStatus(bool is_compiling, const std::string &phase) const;
 
  private:

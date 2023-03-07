@@ -22,6 +22,7 @@ import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.common.api import _pynative_executor
 
 DEVICE_TARGET = "CPU"
 CTX_MODE = ms.context.GRAPH_MODE
@@ -518,6 +519,7 @@ def test_ps_roi_pooling_grad_input_args_num():
             ms.Tensor([1.0], dtype=ms.float32),
             ms.Tensor([1.0], dtype=ms.float32)
         )
+        _pynative_executor.sync()
     except ValueError:
         return
     else:
@@ -547,6 +549,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported():
             ms.Tensor([1.0], dtype=ms.float64),
             ms.Tensor([1.0], dtype=ms.float64)
         )
+        _pynative_executor.sync()
     except TypeError:
         return
     else:
@@ -576,6 +579,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported2():
             1.0,
             ms.Tensor([1.0], dtype=ms.float32)
         )
+        _pynative_executor.sync()
     except TypeError:
         return
     else:
@@ -605,6 +609,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported3():
             ms.Tensor([1.0], dtype=ms.float64),
             1.0
         )
+        _pynative_executor.sync()
     except TypeError:
         return
     else:

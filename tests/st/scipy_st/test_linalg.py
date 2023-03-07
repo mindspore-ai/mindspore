@@ -240,8 +240,10 @@ def test_inv(data_type, shape):
     onp.random.seed(0)
     x = create_full_rank_matrix(shape, data_type)
 
-    ms_res = msp.linalg.inv(Tensor(x))
+    # onp.linalg.inv calls sched_yeild() but still holds GIL.
+    # A deadlock can occur if executed after msp.linalg.inv.
     scipy_res = onp.linalg.inv(x)
+    ms_res = msp.linalg.inv(Tensor(x))
     match_array(ms_res.asnumpy(), scipy_res, error=3)
 
 

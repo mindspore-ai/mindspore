@@ -20,6 +20,7 @@ from mindspore import nn
 from mindspore.ops.function import random_func as R
 from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore.common.api import _pynative_executor
 
 
 @pytest.mark.level0
@@ -64,6 +65,7 @@ def test_poisson_function_shape_type_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False
@@ -83,6 +85,7 @@ def test_poisson_function_shape_dim_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except ValueError:
         return
     assert False
@@ -102,6 +105,7 @@ def test_poisson_function_shape_dtype_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False
@@ -121,6 +125,7 @@ def test_poisson_function_shape_value_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except ValueError:
         return
     assert False
@@ -140,6 +145,7 @@ def test_poisson_function_rate_type_error():
     rate = [0.5]
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False
@@ -159,6 +165,7 @@ def test_poisson_function_rate_dtype_error():
     rate = Tensor(np.array([0.5]), ms.dtype.bool_)
     try:
         R.random_poisson(shape, rate, seed=1)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False
@@ -178,6 +185,7 @@ def test_poisson_function_seed_type_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=0.5)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False
@@ -197,6 +205,7 @@ def test_poisson_function_out_dtype_error():
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
         R.random_poisson(shape, rate, seed=1, dtype=ms.dtype.bool_)
+        _pynative_executor.sync()
     except TypeError:
         return
     assert False

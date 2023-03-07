@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include "pipeline/pynative/pynative_utils.h"
+#include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
 namespace pynative {
@@ -89,15 +90,16 @@ const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   if (cast_prim_ == nullptr) {
+    py::gil_scoped_acquire gil;
     const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
     const auto &adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
     MS_EXCEPTION_IF_NULL(adapter);
     cast_prim_ = adapter->attached_primitive();
     if (cast_prim_ == nullptr) {
       cast_prim_ = std::make_shared<PrimitivePy>(cast_prim, adapter);
-      adapter->set_attached_primitive(cast_prim_);
+      adapter->set_attached_primitive(cast_prim_->cast<PrimitivePyPtr>());
     }
-    if (!cast_prim_->HasPyObj()) {
+    if (!cast_prim_->cast<PrimitivePyPtr>()->HasPyObj()) {
       MS_LOG(EXCEPTION) << "Pyobj is empty";
     }
   }
@@ -222,12 +224,11 @@ const std::string &CastOperation::TypeIdToMsTypeStr(const TypeId &type_id) const
   return type_name->second;
 }
 
-bool CastOperation::GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType> *dtypes) const {
-  MS_EXCEPTION_IF_NULL(prim);
+bool CastOperation::GetSignatureType(const std::vector<Signature> &signatures,
+                                     std::vector<SignatureEnumDType> *dtypes) const {
   MS_EXCEPTION_IF_NULL(dtypes);
-  const auto &signature = prim->signatures();
   bool has_sig_dtype = false;
-  (void)std::transform(signature.begin(), signature.end(), std::back_inserter(*dtypes),
+  (void)std::transform(signatures.begin(), signatures.end(), std::back_inserter(*dtypes),
                        [&has_sig_dtype](const Signature &sig) {
                          auto dtype = sig.dtype;
                          if (dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
@@ -335,7 +336,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                                     const std::vector<SignatureEnumDType> &dtypes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
-  const auto &signature = op_run_info->op_prim->signatures();
+  const auto &signature = op_run_info->signatures;
   auto &input_args = op_run_info->input_value;
   size_t input_args_size = input_args.size();
   for (size_t i = 0; i < input_args_size; ++i) {
@@ -388,14 +389,13 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
 
 void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &forward_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
-  if (forward_executor->IsFirstCell() || forward_executor->CellNotSetMixedPrecision(op_run_info)) {
+  if (op_run_info->async_status.disable_mix_precision) {
     // Pure function running, mix precision cast is disable, or cell not set mix precision
     MS_LOG(DEBUG) << "No mix precision for " << op_run_info->base_op_run_info.op_name;
     return;
   }
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
-  const auto &signature = op_run_info->op_prim->signatures();
+  const auto &signature = op_run_info->signatures;
   for (size_t i = 0; i < op_run_info->input_size; i++) {
     const auto &v = op_run_info->input_value[i];
     auto sig = SignatureEnumRW::kRWDefault;
@@ -437,13 +437,13 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
   const auto &it = implicit_cast_map_.find(prim->name());
   if (it == implicit_cast_map_.end()) {
     std::vector<SignatureEnumDType> dtypes;
-    bool has_dtype_sig = GetSignatureType(prim, &dtypes);
+    bool has_dtype_sig = GetSignatureType(op_run_info->signatures, &dtypes);
     if (!has_dtype_sig) {
       PrimSignature sig_value{has_dtype_sig, {}, {}};
       implicit_cast_map_[prim->name()] = sig_value;
       return;
     }
-    const auto &signature = prim->signatures();
+    const auto &signature = op_run_info->signatures;
     auto sig_size = signature.size();
     // Ignore monad signature
     for (const auto &sig : signature) {

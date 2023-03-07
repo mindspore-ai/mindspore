@@ -39,7 +39,7 @@ class CastOperation {
                   const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
                   mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type) const;
   const std::string &TypeIdToMsTypeStr(const TypeId &type_id) const;
-  bool GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType> *dtypes) const;
+  bool GetSignatureType(const std::vector<Signature> &signatures, std::vector<SignatureEnumDType> *dtypes) const;
   void GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
                     mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) const;
   void SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -56,7 +56,7 @@ class CastOperation {
   void SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info);
 
  private:
-  PrimitivePyPtr cast_prim_{nullptr};
+  PrimitivePtr cast_prim_{nullptr};
   ImplicitCastCache implicit_cast_map_;
 };
 using CastOperationPtr = std::shared_ptr<CastOperation>;

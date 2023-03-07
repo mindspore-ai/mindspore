@@ -639,6 +639,14 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
   };
   return data_converters;
 }
+
+static const std::vector<DataConverterPtr> &GetStubDataConverters() {
+  // Convert data by python object type.
+  static const std::vector<DataConverterPtr> data_converters{
+    std::make_shared<ByTypeDataConverter<Tensor>>(PyStubNodeCast),
+  };
+  return data_converters;
+}
 }  // namespace
 
 bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype, bool forbid_reuse) {
@@ -662,6 +670,24 @@ bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, cons
   }
   *data = converted;
   return converted != nullptr;
+}
+
+bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype,
+                     bool forbid_reuse) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "The value pointer should not be null.";
+    return false;
+  }
+  ValuePtr converted = nullptr;
+  const auto &converters = GetStubDataConverters();
+  for (auto &converter : converters) {
+    if (converter->Matched(obj)) {
+      converted = converter->ConvertPyObject(obj, use_signature, dtype);
+      *data = converted;
+      return converted != nullptr;
+    }
+  }
+  return ConvertData(obj, data, use_signature, dtype, forbid_reuse);
 }
 
 // Convert data to graph
@@ -832,6 +858,13 @@ ValuePtr PyDataToValue(const py::object &obj) {
   py::object to_convert = obj;
   ValuePtr value = nullptr;
   (void)ConvertData(to_convert, &value);
+  return value;
+}
+
+ValuePtr PyDataToStubNode(const py::object &obj) {
+  py::object to_convert = obj;
+  ValuePtr value = nullptr;
+  (void)ConvertStubData(to_convert, &value);
   return value;
 }
 

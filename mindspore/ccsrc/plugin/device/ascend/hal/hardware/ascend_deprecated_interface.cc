@@ -48,6 +48,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
+std::mutex g_tsd_mutex;
 void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *const tensors) {
   for (auto item : dict) {
     if ((!py::isinstance<py::str>(item.first))) {
@@ -221,6 +222,7 @@ void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &
 }
 
 bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
+  std::unique_lock<std::mutex> lock(g_tsd_mutex);
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   if (ms_context_ptr->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
     return true;
@@ -273,6 +275,7 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
 }
 
 bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
+  std::unique_lock<std::mutex> lock(g_tsd_mutex);
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_LOG(INFO) << "Start to close tsd, ref = " << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF);
   if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
@@ -301,6 +304,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
 }
 
 bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms_context_ptr) {
+  std::unique_lock<std::mutex> lock(g_tsd_mutex);
   if (ms_context_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "nullptr";
   }

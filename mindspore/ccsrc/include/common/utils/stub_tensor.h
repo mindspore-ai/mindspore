@@ -89,6 +89,7 @@ class SequenceNode : public StubNode {
  private:
   std::vector<StubNodePtr> elements_;
 };
+using SequenceNodePtr = std::shared_ptr<SequenceNode>;
 
 COMMON_EXPORT std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type);
 COMMON_EXPORT void RegStubNodes(const py::module *m);

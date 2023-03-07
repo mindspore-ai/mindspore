@@ -44,6 +44,8 @@ class BACKEND_EXPORT OpExecutor {
     ~ExecuteGuard() { OpExecutor::GetInstance().executing_ = false; }
   };
 
+  void RegisterForwardCallback(const std::function<void()> &callback);
+
   // Register build callback function
   void Register(const std::function<void()> &callback);
 
@@ -62,6 +64,8 @@ class BACKEND_EXPORT OpExecutor {
   // Clear the build tasks when batch build finished.
   void ClearOpBuildTasks();
 
+  std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> PopOpBuildTasks();
+
   // When an exception occurs, the state needs to be reset.
   // Because we may sometimes have to ignore the exception and continue to run other tasks
   void Reset();
@@ -72,6 +76,8 @@ class BACKEND_EXPORT OpExecutor {
 
   // Wait for all OpRunTasks to finish executing.
   void Wait();
+
+  void WaitAll();
 
   // Thread join before the process exit.
   void WorkerJoin();
@@ -93,6 +99,8 @@ class BACKEND_EXPORT OpExecutor {
   std::function<void()> batch_build_callback_{nullptr};
   inline static size_t kMaxQueueSize = 20;
   bool executing_{false};
+  std::mutex build_mutex_;
+  std::function<void()> forward_callback_{nullptr};
 };
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_EXECUTOR_H_

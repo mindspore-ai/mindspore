@@ -23,6 +23,7 @@ from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops.function.math_func import approximate_equal
+from mindspore.common.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 X = np.random.rand(3, 3).astype(np.float32)
@@ -101,6 +102,7 @@ def test_approxmiate_equal_different_shape():
         x1 = np.random.rand(8, 6, 5, 4, 3, 2, 1).astype(np.float32)
         x2 = np.random.rand(7, 6, 5, 4, 3, 2, 1).astype(np.float32)
         approx_equal.change_xy(Tensor(x1), Tensor(x2))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -137,6 +139,7 @@ def test_approxmiate_equal_max_rank():
         x2 = np.random.rand(2, 2, 2, 2, 2, 2, 2, 2, 2,
                             2, 2, 2).astype(np.float32)
         approx_equal.change_xy(Tensor(x1), Tensor(x2))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0

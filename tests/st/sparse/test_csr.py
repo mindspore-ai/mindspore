@@ -311,9 +311,10 @@ def test_batch_csr_ops():
         sparse2 = csr_tensor / dense_tensor
         return sparse1, sparse2
 
-    res_reducesum = test_ops_pynative_reducesum()
+    # TODO(PyTrace): PyTrace Async bug.
     test_ops_graph_reducesum = jit(test_ops_pynative_reducesum)
     graph_res_reducesum = test_ops_graph_reducesum()
+    res_reducesum = test_ops_pynative_reducesum()
     expect1 = np.array([[2., 1., 3.]], dtype=np.float32)
     expect2 = np.array([[2., 1., 3.]], dtype=np.float32)
     assert np.allclose(res_reducesum[0].asnumpy(), expect1)
@@ -321,9 +322,10 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_reducesum[0].asnumpy(), expect1)
     assert np.allclose(graph_res_reducesum[2].asnumpy(), expect2)
 
-    res_elemwise = test_ops_pynative_sparse_elemwise()
+    # TODO(PyTrace): PyTrace Async bug.
     test_ops_graph_elemwise = jit(test_ops_pynative_sparse_elemwise)
     graph_res_elemwise = test_ops_graph_elemwise()
+    res_elemwise = test_ops_pynative_sparse_elemwise()
     expect3 = np.array([[2., 1., 3.], [4., 2., 6.]], dtype=np.float32)
     expect4 = np.array([[2., 1., 3.], [1., 0.5, 1.5]], dtype=np.float32)
     assert np.allclose(res_elemwise[0].values.asnumpy(), expect3)
@@ -377,8 +379,9 @@ def test_csr_ops():
     test_ops_graph_dense = jit(test_ops_pynative_dense)
     test_ops_graph_sparse = jit(test_ops_pynative_sparse)
 
-    pynative_res_dense = test_ops_pynative_dense()
+    # TODO(PyTrace): PyTrace async bug.
     graph_res_dense = test_ops_graph_dense()
+    pynative_res_dense = test_ops_pynative_dense()
     expect1 = np.array([[2.], [1.]], dtype=np.float32)
     expect2 = np.array([[2.], [1.]], dtype=np.float32)
     expect3 = np.array([[2., 4.], [1., 2.]], dtype=np.float32)
@@ -389,8 +392,9 @@ def test_csr_ops():
     assert np.allclose(graph_res_dense[1].asnumpy(), expect2)
     assert np.allclose(graph_res_dense[2].asnumpy(), expect3)
 
-    pynative_res_sparse = test_ops_pynative_sparse()
+    # TODO(PyTrace): PyTrace async bug.
     graph_res_sparse = test_ops_graph_sparse()
+    pynative_res_sparse = test_ops_pynative_sparse()
     expect3 = np.array([2., 1.], dtype=np.float32)
     assert np.allclose(pynative_res_sparse[0].values.asnumpy(), expect3)
     assert np.allclose(pynative_res_sparse[1].values.asnumpy(), expect3)

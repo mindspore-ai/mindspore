@@ -15,6 +15,7 @@
  */
 
 #include "runtime/pynative/op_executor.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore::runtime {
 OpExecutor &OpExecutor::GetInstance() {
@@ -26,6 +27,8 @@ OpExecutor::OpExecutor() = default;
 
 OpExecutor::~OpExecutor() = default;
 
+void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) { forward_callback_ = callback; }
+
 void OpExecutor::Register(const std::function<void()> &callback) { batch_build_callback_ = callback; }
 
 void OpExecutor::Reset() {
@@ -36,6 +39,7 @@ void OpExecutor::Reset() {
 
 void OpExecutor::ClearResources() {
   MS_LOG(DEBUG) << "Start clear tasks";
+  std::unique_lock<std::mutex> lock(build_mutex_);
   // Set the build task failed, and no need to run op_run_tasks.
   for (auto &build_task : op_build_tasks_) {
     build_task->SetBuildReady(false);
@@ -60,17 +64,20 @@ void OpExecutor::WaitForRun() {
 }
 
 void OpExecutor::Wait() {
-  if (PyGILState_Check() != 0) {
-    py::gil_scoped_release gil;
-    WaitForBuild();
-    WaitForRun();
-  } else {
-    WaitForBuild();
-    WaitForRun();
-  }
+  GilReleaseWithCheck gil_release;
+  WaitForBuild();
+  WaitForRun();
+}
+
+void OpExecutor::WaitAll() {
+  GilReleaseWithCheck gil_release;
+  forward_callback_();
+  WaitForBuild();
+  WaitForRun();
 }
 
 void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::BackendOpBuildTask> &op_build_task) {
+  std::unique_lock<std::mutex> lock(build_mutex_);
   op_build_tasks_.push_back(op_build_task);
 }
 
@@ -80,6 +87,7 @@ void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::BackendOpRunTask>
 }
 
 void OpExecutor::ClearOpBuildTasks() {
+  std::unique_lock<std::mutex> lock(build_mutex_);
   for (auto &task : op_build_tasks_) {
     task->SetBuildReady(true);
   }
@@ -87,11 +95,24 @@ void OpExecutor::ClearOpBuildTasks() {
   MS_LOG(DEBUG) << "Clear build task";
 }
 
-bool OpExecutor::BuildQueueEmpty() { return op_build_tasks_.empty(); }
+std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> OpExecutor::PopOpBuildTasks() {
+  std::unique_lock<std::mutex> lock(build_mutex_);
+  auto build_tasks = op_build_tasks_;
+  op_build_tasks_.clear();
+  return build_tasks;
+}
+
+bool OpExecutor::BuildQueueEmpty() {
+  std::unique_lock<std::mutex> lock(build_mutex_);
+  return op_build_tasks_.empty();
+}
 
 bool OpExecutor::RunQueueEmpty() { return async_queue_.Empty(); }
 
-bool OpExecutor::BuildQueueFull() { return op_build_tasks_.size() > kMaxQueueSize; }
+bool OpExecutor::BuildQueueFull() {
+  std::unique_lock<std::mutex> lock(build_mutex_);
+  return op_build_tasks_.size() > kMaxQueueSize;
+}
 
 bool OpExecutor::ActorInQueue(GraphId graph_id) {
   auto iter = actor_in_queue_.find(graph_id);

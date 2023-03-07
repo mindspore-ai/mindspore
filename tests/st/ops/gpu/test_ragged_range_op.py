@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.nn import Cell
 from mindspore import Tensor
+from mindspore.common.api import _pynative_executor
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
@@ -211,6 +212,7 @@ def test_ragged_range_neither_0d_nor_1d():
                         Tensor([8], mstype.int32))
         _ = raggedrange(Tensor([1], mstype.int32), Tensor([1], mstype.int32),
                         Tensor([[1], [2]], mstype.int32))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -227,6 +229,7 @@ def test_ragged_range_invalid_arg_zero_delta():
     with pytest.raises(ValueError):
         _ = raggedrange(Tensor(1, mstype.int32), Tensor(10, mstype.int32),
                         Tensor(0, mstype.int32))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -245,6 +248,7 @@ def test_ragged_range_shapes_mismatch():
                         Tensor([2, 5], mstype.int32))
         _ = raggedrange(Tensor(1, mstype.int32), Tensor([1, 2], mstype.int32),
                         Tensor([2, 5], mstype.int32))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -264,6 +268,7 @@ def test_ragged_range_not_tensor():
         _ = raggedrange(Tensor(1, mstype.int32), 1,
                         Tensor(2, mstype.int32))
         _ = raggedrange(Tensor(1, mstype.int32), Tensor(5, mstype.int32), 2)
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -282,6 +287,7 @@ def test_ragged_range_not_the_same_type():
                         Tensor(10, mstype.int32))
         _ = raggedrange(Tensor(1, mstype.float64), Tensor(3, mstype.int32),
                         Tensor(10, mstype.int64))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -296,3 +302,4 @@ def test_ragged_range_tsplits_invalid_type():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     with pytest.raises(TypeError):
         _ = RaggedRange(Tsplits=mstype.float32)
+        _pynative_executor.sync()

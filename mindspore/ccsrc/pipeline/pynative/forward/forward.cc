@@ -19,10 +19,12 @@
 #include <algorithm>
 #include <vector>
 #include "pipeline/pynative/pynative_utils.h"
-#include "include/common/utils/scoped_long_running.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
+#include "pipeline/pynative/forward/forward_task.h"
+#include "include/common/utils/stub_tensor.h"
 #include "runtime/pynative/op_executor.h"
 
 namespace mindspore {
@@ -144,6 +146,17 @@ std::string ForwardExecutor::device_target() const {
   return ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
+void ForwardExecutor::WaitForwardTask() {
+  GilReleaseWithCheck gil_release;
+  if (forward_queue_ != nullptr) {
+    forward_queue_->Wait();
+  }
+}
+
+bool ForwardExecutor::IsVmOp(const std::string &op_name) const {
+  return kVmOperators.find(op_name) != kVmOperators.end();
+}
+
 GradExecutorPtr ForwardExecutor::grad() const {
   auto grad_executor = grad_executor_.lock();
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -158,6 +171,55 @@ void ForwardExecutor::Init() {
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
   init_ = true;
+  forward_queue_ = std::make_shared<AsyncQueue>();
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { forward_queue_->Wait(); });
+}
+
+void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
+  PyNativeAlgo::Common::StubNodeToValue(op_run_info);
+  // 1.Set cast for inputs
+  SetCastForInputs(op_run_info);
+  // 2.Infer output abstract
+  InferOutputAbstract(op_run_info);
+  // Update stub node abstract
+  const auto &abs = op_run_info->base_op_run_info.abstract;
+  auto success = op_run_info->stub_output->SetAbstract(abs);
+  if (!success) {
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, infer type is " << abs->BuildType()
+                            << ", the name of operator is [" << op_run_info->base_op_run_info.op_name
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
+
+  // 3.Run op with selected backend
+  if (!op_run_info->output_get_by_infer_value) {
+    GetOutput(op_run_info);
+  }
+
+  op_run_info->stub_output->SetValue(op_run_info->out_value);
+
+  if (!op_run_info->grad_flag) {
+    MS_LOG(DEBUG) << "Grad flag is false";
+    return;
+  }
+
+  // Const value no need do op grad
+  if (op_run_info->output_get_by_infer_value) {
+    return;
+  }
+  // 4. Do op grad and record op info
+  // If ms function is compile, op info will not be find in second training step
+  if (!op_run_info->async_status.is_ms_function_compiling && grad()->custom_bprop_cell_count() <= 0) {
+    grad()->ProcessOpGradInfo(op_run_info);
+  }
+}
+
+void ForwardExecutor::RunOpForwardAsync(const FrontendOpRunInfoPtr &op_run_info) {
+  Init();
+  auto forward_task = std::make_shared<ForwardTask>(
+    [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpForwardAsyncImpl(op_run_info); }, op_run_info);
+  forward_queue_->Push(forward_task);
 }
 
 void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
@@ -183,12 +245,12 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
 
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
-  if (!is_ms_function_compiling_ && grad()->custom_bprop_cell_count() <= 0) {
+  if (!op_run_info->async_status.is_ms_function_compiling && grad()->custom_bprop_cell_count() <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
 }
 
-FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) const {
+FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bool stub) const {
   if (args.size() != static_cast<size_t>(RunOpArgsEnum::PY_ARGS_NUM)) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
@@ -203,7 +265,8 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args) co
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
   op_run_info->base_op_run_info.lazy_build = lazy_build_;
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
-  PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)]);
+  PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
+                                                  stub);
   (void)op_run_prim_py_list_.emplace_back(op_run_info->op_prim);
   return op_run_info;
 }
@@ -270,7 +333,7 @@ ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_
   auto backend_policy = GetBackendPolicy(device_target());
   if (backend_policy == kMsBackendVmOnly) {
 #ifndef ENABLE_TEST
-    if (kVmOperators.find(op_run_info->base_op_run_info.op_name) != kVmOperators.end()) {
+    if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
       result = RunOpInVM(op_run_info);
     } else {
       result = RunOpInMs(op_run_info);
@@ -287,7 +350,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   op_run_info->run_in_vm = true;
-  if (kVmOperators.find(op_run_info->base_op_run_info.op_name) != kVmOperators.end()) {
+  if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       bool input_is_tensor = op_run_info->input_value[i]->isa<tensor::Tensor>();
@@ -298,7 +361,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         new_tensor->set_device_address(tensor->device_address());
         new_tensor->set_sync_status(tensor->sync_status());
-        new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
+        new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
         result[i] = new_tensor;
       } else {
         result[i] = op_run_info->input_value[i];
@@ -314,7 +377,10 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     vm_op_inputs[i] = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->input_value[i]);
   }
-  auto result = op_run_info->op_prim->RunPyComputeFunction(vm_op_inputs);
+  if (!utils::isa<PrimitivePy>(op_run_info->op_prim)) {
+    MS_LOG(EXCEPTION) << "Not a PrimitivePy, " << op_run_info->op_prim->ToString();
+  }
+  auto result = utils::cast<PrimitivePyPtr>(op_run_info->op_prim)->RunPyComputeFunction(vm_op_inputs);
   if (py::isinstance<py::none>(result)) {
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
@@ -346,11 +412,8 @@ bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_ru
 }
 
 void ForwardExecutor::ExecuteLazyTask() {
-  mindspore::ScopedLongRunning long_running;
-  for (const auto &item : mindrt_backends_) {
-    MS_EXCEPTION_IF_NULL(item.second);
-    item.second->WaitTaskFinish();
-  }
+  GilReleaseWithCheck gil_release;
+  runtime::OpExecutor::GetInstance().WaitAll();
 }
 
 void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const {
@@ -389,6 +452,10 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
   // Do some finishing work before end graph
   if (IsFirstCell()) {
+    if (forward_queue_ != nullptr) {
+      GilReleaseWithCheck gil_release;
+      forward_queue_->Wait();
+    }
     // Finish lazy task
     ExecuteLazyTask();
     if (!grad()->grad_flag()) {
@@ -425,12 +492,15 @@ void ForwardExecutor::Sync() {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->SyncStream();
   }
-  op_run_prim_py_list_.clear();
+  {
+    py::gil_scoped_acquire acquire;
+    op_run_prim_py_list_.clear();
+  }
 }
 
 ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info) {
   if (!ScopedFallbackRunning::on()) {
-    mindspore::ScopedLongRunning long_running;
+    GilReleaseWithCheck gil_relase;
     return RunOpInMsInner(op_run_info);
   }
   return RunOpInMsInner(op_run_info);
@@ -451,6 +521,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   GetSingleOpGraphInfo(op_run_info, cur_target);
   auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
     op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_prim), true, false);
+
 #if defined(__APPLE__)
   backend_op_run_info->base_op_run_info.lazy_build = false;
 #endif
@@ -477,6 +548,7 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
 
 void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
+  forward_queue_->Reset();
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->ClearOpExecutorResource();

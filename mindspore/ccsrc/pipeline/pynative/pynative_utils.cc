@@ -25,6 +25,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "include/common/utils/stub_tensor.h"
 
 namespace mindspore {
 namespace pynative {
@@ -45,10 +46,11 @@ ValuePtr GetInputStructural(const ValuePtr &input) {
 void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->op_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim));
-  MS_EXCEPTION_IF_NULL(op_run_info->op_prim->adapter());
-  if (op_run_info->op_prim->adapter()->attached_primitive() == nullptr) {
-    op_run_info->op_prim->adapter()->set_attached_primitive(op_run_info->op_prim);
+  auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));
+  op_run_info->op_prim = new_prim;
+  MS_EXCEPTION_IF_NULL(new_prim->adapter());
+  if (new_prim->adapter()->attached_primitive() == nullptr) {
+    new_prim->adapter()->set_attached_primitive(new_prim);
   }
 }
 
@@ -312,6 +314,36 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
   PyNativeAlgo::Common::DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
 }
 
+ValuePtr StubNodeToValueInner(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (utils::isa<stub::StubNode>(v)) {
+    auto stub = utils::cast<stub::StubNodePtr>(v);
+    return stub->WaitValue();
+  } else if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    ValuePtrList value_list;
+    std::transform(values.begin(), values.end(), std::back_inserter(value_list),
+                   [](const ValuePtr &value) { return StubNodeToValueInner(value); });
+    if (utils::isa<ValueTuple>(v)) {
+      return std::make_shared<ValueTuple>(value_list);
+    } else if (utils::isa<ValueList>(v)) {
+      return std::make_shared<ValueList>(value_list);
+    } else {
+      MS_LOG(EXCEPTION) << "Not support ValueSequence " << v->ToString();
+    }
+  } else {
+    return v;
+  }
+}
+
+void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  for (size_t i = 0; i < op_run_info->input_size; i++) {
+    op_run_info->input_value[i] = StubNodeToValueInner(op_run_info->input_value[i]);
+  }
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();
@@ -360,25 +392,43 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
   op_run_info->op_prim = prim;
+  op_run_info->signatures = prim->signatures();
 }
 
-void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs) {
+void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs, bool stub) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
   op_run_info->input_value.resize(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_value[i] = PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i]);
+    op_run_info->input_value[i] = PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i], stub);
   }
 }
 
 py::object DataConvert::ValueToPyObj(const ValuePtr &v) { return ValueToPyData(v); }
 
-ValuePtr DataConvert::PyObjToValue(const py::object &obj) {
+ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   // In PyNative mode, AdapterTensor is treated as ms.Tensor.
   if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR) && py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>()) {
     py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
   }
-  ValuePtr converted_ret = parse::data_converter::PyDataToValue(obj);
+  ValuePtr converted_ret;
+  if (stub) {
+    converted_ret = parse::data_converter::PyDataToStubNode(obj);
+  } else {
+    converted_ret = parse::data_converter::PyDataToValue(obj);
+  }
+  if (converted_ret == nullptr) {
+    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
+  }
+  return converted_ret;
+}
+
+ValuePtr DataConvert::PyObjToStubNode(const py::object &obj) {
+  // In PyNative mode, AdapterTensor is treated as ms.Tensor.
+  if (py::hasattr(obj, PYTHON_ADAPTER_TENSOR) && py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>()) {
+    py::setattr(obj, PYTHON_ADAPTER_TENSOR, py::bool_(false));
+  }
+  ValuePtr converted_ret = parse::data_converter::PyDataToStubNode(obj);
   if (converted_ret == nullptr) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
   }

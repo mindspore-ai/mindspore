@@ -1869,7 +1869,6 @@ void MemoryRecycle() {
   trace::ClearTraceStack();
   pynative::autograd::ClearPyNativeAutoGradStaticRes();
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
-  pynative::PyNativeExecutor::GetInstance()->WorkerJoin();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
@@ -1879,6 +1878,7 @@ void MemoryRecycle() {
 void BindDeviceCtx() { device::DeviceContextManager::GetInstance().BindDeviceCtx(); }
 
 void ClearResPart1() {
+  pynative::PyNativeExecutor::GetInstance()->WorkerJoin();
   runtime::OpExecutor::GetInstance().WorkerJoin();
   // When the python process exits, the kernels on the device may not have finished executing.
   device::KernelRuntimeManager::Instance().WaitTaskFinishOnDevice();
@@ -2011,6 +2011,11 @@ void ClearSingleton() {
 
 void ClearResAtexit() {
   MS_LOG(INFO) << "Pipeline clear all resource";
+  try {
+    MsException::Instance().CheckException();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Check exception before process exit: " << e.what();
+  }
   ClearResPart1();
   ClearResPart2();
   ClearResPart3();
