@@ -7400,7 +7400,7 @@ class SegmentMax(Primitive):
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=max_j(input\_x_j)`
     in which the maximum value is obtained from all elements corresponding
-    to :math:j that meets :math:`segment\_ids[j] == i`.
+    to :math:`j` that meets :math:`segment\_ids[j] == i`.
     If a segment contains no elements for a given segment :math:`i`,
     then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
@@ -7453,7 +7453,7 @@ class SegmentMin(Primitive):
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=min_j(input\_x_j)`
     in which the minimum value is obtained from all elements corresponding
-    to :math:j that meets :math:`segment\_ids[j] == i`.
+    to :math:`j` that meets :math:`segment\_ids[j] == i`.
     If a segment contains no elements for a given segment :math:`i`,
     then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
@@ -7506,7 +7506,7 @@ class SegmentSum(Primitive):
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i = \sum_j input\_x_j`
     in which the cumulative sum is obtained from all elements corresponding
-    to :math:j that meets :math:`segment\_ids[j] == i`.
+    to :math:`j` that meets :math:`segment\_ids[j] == i`.
     If a segment contains no elements for a given segment :math:`i`,
     then the corresponding element in the output Tensor is set to 0: :math:`output[i] = 0`.
 
@@ -7788,7 +7788,7 @@ class SegmentMean(Primitive):
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i=mean_j(input\_x_j)`
     in which the mean value is obtained from all elements corresponding
-    to :math:j that meets :math:`segment\_ids[j] == i`.
+    to :math:`j` that meets :math:`segment\_ids[j] == i`.
     If a segment contains no elements for a given segment :math:`i`,
     then the corresponding element in the output Tensor is set to zero: :math:`output[i] = 0`.
 
@@ -7845,7 +7845,7 @@ class SegmentProd(Primitive):
 
     Specifically, it generates a new Tensor `output` such that :math:`output_i = \prod_j input\_x_j`
     in which the cumulative product is obtained from all elements corresponding
-    to :math:j that meets :math:`segment\_ids[j] == i`.
+    to :math:`j` that meets :math:`segment\_ids[j] == i`.
     If a segment contains no elements for a given segment :math:`i`,
     then the corresponding element in the output Tensor is set to 1: :math:`output[i] = 1`.
 
