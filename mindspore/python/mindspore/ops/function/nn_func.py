@@ -2914,7 +2914,7 @@ def prelu(x, weight):
         ValueError: If the `weight` is not a 1-D Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
@@ -3854,7 +3854,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         ValueError: If `padding` is less than 0.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
@@ -5251,7 +5251,7 @@ def multilabel_margin_loss(inputs, target, reduction='mean'):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
        >>> inputs = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)

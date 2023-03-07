@@ -1222,7 +1222,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         TypeError: If `seed` is neither an int nor an optional.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
