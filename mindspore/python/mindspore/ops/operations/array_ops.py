@@ -334,7 +334,6 @@ class Cast(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
 
     def check_elim(self, x, dtype):
-        """Cast Infer Value in Pynative Mode"""
         if isinstance(x, (Tensor, numbers.Number, Parameter)):
             if isinstance(x, Parameter):
                 data = x.data
@@ -349,7 +348,6 @@ class Cast(PrimitiveWithCheck):
         return (False, None)
 
     def infer_value(self, x, dst_type):
-        """Cast Infer Value"""
         if x is None:
             return None
         src_type = mstype.get_py_obj_dtype(x)

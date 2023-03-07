@@ -20,4 +20,7 @@
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const T *input, const size_t bound_, const size_t outerSize_,
                                          const size_t innerSize_, S *index, T *output, cudaStream_t cuda_stream);
+template <typename S>
+CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const half *input, const size_t bound_, const size_t outerSize_,
+                                         const size_t innerSize_, S *index, half *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GENERAL_REDUCTION_IMPL_CUH_

@@ -44,11 +44,7 @@ inline __device__ void ConditionAssign(bool is_assign, T *x, const T &y) {
 
 template <typename T, typename S>
 __global__ void ThreadReduction(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input,
-                                T *output, S *output_index, bool fp16_flag, T init_K) {
-  if (fp16_flag) {
-    init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
-  }
-
+                                T *output, S *output_index, T init_K) {
   const S init_V = static_cast<S>(-1);
 
   for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < outer_size * inner_size;
@@ -75,10 +71,7 @@ __global__ void ThreadReduction(bool small, size_t outer_size, size_t bound, siz
 
 template <typename T, typename S>
 __global__ void WarpReduction(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input, T *output,
-                              S *output_index, bool fp16_flag, T init_K) {
-  if (fp16_flag) {
-    init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
-  }
+                              S *output_index, T init_K) {
   const S init_V = static_cast<S>(-1);
 
   for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kWarpSize * outer_size * inner_size;
@@ -123,12 +116,9 @@ __global__ void WarpReduction(bool small, size_t outer_size, size_t bound, size_
 
 template <typename T, typename S>
 __global__ void Warp4Reduction(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input,
-                               T *output, S *output_index, bool fp16_flag, T init_K) {
+                               T *output, S *output_index, T init_K) {
   __shared__ T shared_K[kNumWarps];
   __shared__ S shared_V[kNumWarps];
-  if (fp16_flag) {
-    init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
-  }
   const S init_V = static_cast<S>(-1);
 
   for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kGroupSize * outer_size * inner_size;
@@ -212,12 +202,9 @@ __global__ void Warp4Reduction(bool small, size_t outer_size, size_t bound, size
 
 template <typename T, typename S>
 __global__ void BlockReduction(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input,
-                               T *output, S *output_index, bool fp16_flag, T init_K) {
+                               T *output, S *output_index, T init_K) {
   __shared__ T shared_K[kNumWarps];
   __shared__ S shared_V[kNumWarps];
-  if (fp16_flag) {
-    init_K = small ? __int2half_rd(65504) : __int2half_rd(-65504);
-  }
   const S init_V = static_cast<S>(-1);
 
   for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < kBlockSize * outer_size * inner_size;
@@ -295,37 +282,52 @@ __global__ void BlockReduction(bool small, size_t outer_size, size_t bound, size
 }
 
 template <typename T, typename S>
-void GeneralReduction(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input, T *output,
-                      S *output_index, cudaStream_t stream) {
+void GeneralReductionImpl(bool small, size_t outer_size, size_t bound, size_t inner_size, const T *input, T *output,
+                      S *output_index, T init_K, cudaStream_t stream) {
   int block_num_limit = outer_size * inner_size;
-  bool fp16_flag = false;
-  if (std::is_same<T, half>::value) {
-    fp16_flag = true;
-  }
-  T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
-
   if (bound <= kMaxThreadLoop) {
-    ThreadReduction<T, S><<<GET_BLOCKS(block_num_limit), kBlockSize, 0, stream>>>(
-      small, outer_size, bound, inner_size, input, output, output_index, fp16_flag, init_K);
+    ThreadReduction<T, S><<<GET_BLOCKS(block_num_limit * kBlockSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
   } else if (bound <= kMaxWarpLoop) {
-    WarpReduction<T, S><<<GET_BLOCKS(block_num_limit * kWarpSize), kBlockSize, 0, stream>>>(
-      small, outer_size, bound, inner_size, input, output, output_index, fp16_flag, init_K);
+    WarpReduction<T, S><<<GET_BLOCKS(block_num_limit * kBlockSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
   } else if (bound <= kMaxGroupLoop) {
-    Warp4Reduction<T, S><<<GET_BLOCKS(block_num_limit * kGroupSize), kBlockSize, 0, stream>>>(
-      small, outer_size, bound, inner_size, input, output, output_index, fp16_flag, init_K);
+    Warp4Reduction<T, S><<<GET_BLOCKS(block_num_limit * kBlockSize), kBlockSize, 0, stream>>>(
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
   } else {
     BlockReduction<T, S><<<GET_BLOCKS(block_num_limit * kBlockSize), kBlockSize, 0, stream>>>(
-      small, outer_size, bound, inner_size, input, output, output_index, fp16_flag, init_K);
+      small, outer_size, bound, inner_size, input, output, output_index, init_K);
   }
 }
 
 template <typename T, typename S>
-void CalGeneralReduction(bool small, const T *input, const size_t bound, const size_t outerSize, const size_t innerSize,
-                         S *index, T *output, cudaStream_t cuda_stream) {
-  GeneralReduction(small, outerSize, bound, innerSize, input, output, index, cuda_stream);
+void CalGeneralReduction(bool small, const T *input, const size_t bound, const size_t outerSize,
+                         const size_t innerSize, S *output_index, T *output, cudaStream_t stream) {
+  T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
+  GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
   return;
 }
 
+template <typename S>
+void CalGeneralReduction(bool small, const half *input, const size_t bound, const size_t outerSize,
+                        const size_t innerSize, S *output_index, half *output, cudaStream_t stream) {
+  half init_K = small ? static_cast<half>(65504) : static_cast<half>(-65504);
+  GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
+  return;
+}
+
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int8_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int64_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint8_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  uint8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint64_t *input, const size_t bound_,
+                                                  const size_t outerSize_, const size_t innerSize_, int *index,
+                                                  uint64_t *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int16_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   int16_t *output, cudaStream_t cuda_stream);

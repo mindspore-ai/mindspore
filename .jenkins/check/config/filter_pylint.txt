@@ -22,6 +22,7 @@
 "mindspore/mindspore/python/mindspore/ops/operations"                                                                    "super-init-not-called"
 "mindspore/mindspore/python/mindspore/ops/operations/_quant_ops.py"                                                      "unused-import"
 "mindspore/mindspore/python/mindspore/ops/operations/nn_ops.py"                                                          "redefined-builtin"
+"mindspore/mindspore/python/mindspore/ops/operations/array_ops.py"                                                       "missing-docstring"
 "mindspore/mindspore/python/mindspore/ops/operations/_inner_ops.py"                                                      "dangerous-default-value"
 "mindspore/mindspore/python/mindspore/ops/operations/_thor_ops.py"                                                       "dangerous-default-value"
 "mindspore/mindspore/python/mindspore/ops/operations/_thor_ops.py"                                                       "redefined-outer-name"

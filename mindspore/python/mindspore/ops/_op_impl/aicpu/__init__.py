@@ -100,6 +100,8 @@ from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .rsqrt import _rsqrt_aicpu
 from .sqrt import _sqrt_aicpu
 from .sqrt_grad import _sqrt_grad_aicpu
+from .masked_fill import _masked_fill_aicpu
+from .sort import _sort_aicpu
 from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .unstack import _unstack_aicpu
