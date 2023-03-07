@@ -3170,12 +3170,12 @@ def gather(input_params, input_indices, axis, batch_dims=0):
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
     .. note::
-         1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result is undefined
-            out of range.
+        1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result is undefined
+           out of range.
 
-         2. The data type of input_params cannot be
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-            platform currently.
+        2. The data type of input_params cannot be
+           `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+           platform currently.
 
     Args:
         input_params (Tensor): The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
