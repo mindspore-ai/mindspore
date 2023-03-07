@@ -81,4 +81,4 @@ def test_sin_onnx():
     sess = ort.InferenceSession(onnx_model.SerializeToString())
     input_name = sess.get_inputs()[0].name
     result = sess.run([], {input_name: np_array})
-    assert np.allclose(list(ms_output)[0].asnumpy(), result[0])
+    assert np.allclose(ms_output.asnumpy(), result[0])
