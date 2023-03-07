@@ -52,7 +52,7 @@ class PackedNodePass {
     return this->node_pack_info_map_[node_name];
   }
   void Run(Model *model, const std::vector<Tensor *> &tensors);
-  void CopyWeightBiasSumsTensor(const std::vector<Tensor *> &tensors);
+  void CopyWeightBiasSumsTensor(Tensor *tensor);
 
  protected:
   void AddNodePackInfo(const std::string &node_name, PackInfo *pack_info) {

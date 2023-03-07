@@ -108,7 +108,13 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
       pack_info->weight_sums_index_ = node->input_indices_.back();
       node->input_indices_.pop_back();
       if (!(reinterpret_cast<lite::LiteModel *>(model)->keep_model_buf())) {
-        CopyWeightBiasSumsTensor(tensors);
+        auto index = static_cast<size_t>(pack_info->weight_sums_index_);
+        if (index > tensors.size()) {
+          MS_LOG(ERROR) << "weight sums tensor index is error.";
+          return;
+        }
+        auto tensor = tensors[index];
+        CopyWeightBiasSumsTensor(tensor);
       }
     }
 
@@ -116,37 +122,30 @@ void PackedNodePass::Run(Model *model, const std::vector<Tensor *> &tensors) {
   }
 }
 
-void PackedNodePass::CopyWeightBiasSumsTensor(const std::vector<Tensor *> &tensors) {
-  for (auto &pack_info : node_pack_info_map_) {
-    auto index = static_cast<size_t>(pack_info.second->weight_sums_index_);
-    if (index > tensors.size()) {
+void PackedNodePass::CopyWeightBiasSumsTensor(Tensor *tensor) {
+  if (!tensor->IsConst() && tensor->data() != nullptr) {
+    return;
+  }
+  if (!tensor->IsConst() || tensor->own_data()) {
+    return;
+  }
+  if (tensor->data_type() == kObjectTypeTensorType) {
+    MS_ASSERT(tensor->data() == nullptr);
+  } else {
+    auto copy_tensor = Tensor::CopyTensor(*tensor, true);
+    if (copy_tensor == nullptr) {
+      MS_LOG(ERROR) << "Copy tensor failed";
       return;
     }
-    auto tensor = tensors[index];
-    if (!tensor->IsConst() && tensor->data() != nullptr) {
-      return;
-    }
-    if (!tensor->IsConst() || tensor->own_data()) {
-      continue;
-    }
-    if (tensor->data_type() == kObjectTypeTensorType) {
-      MS_ASSERT(tensor->data() == nullptr);
-    } else {
-      auto copy_tensor = Tensor::CopyTensor(*tensor, true);
-      if (copy_tensor == nullptr) {
-        MS_LOG(ERROR) << "Copy tensor failed";
-        return;
-      }
-      tensor->FreeData();
-      tensor->set_data(copy_tensor->data());
-      tensor->set_own_data(true);
-      copy_tensor->set_data(nullptr);
-      delete copy_tensor;
-    }
+    tensor->FreeData();
+    tensor->set_data(copy_tensor->data());
+    tensor->set_own_data(true);
+    copy_tensor->set_data(nullptr);
+    delete copy_tensor;
   }
 }
 
-void MatmulDynamicSdotInt8Cpu(void *src, void *dst, int row, int col, bool transpose) {
+void MatmulDynamicSdotInt8Unpack(void *src, void *dst, int row, int col, bool transpose) {
   auto src_int8 = static_cast<int8_t *>(src);
   auto dst_int8 = static_cast<int8_t *>(dst);
   if (!transpose) {
@@ -182,7 +181,7 @@ void MatmulDynamicSdotInt8Cpu(void *src, void *dst, int row, int col, bool trans
   }
 }
 
-void MatmulFp32BaseCpu(void *src, void *dst, int row, int col, bool transpose) {
+void MatmulFp32BaseUnpack(void *src, void *dst, int row, int col, bool transpose) {
   if (!transpose) {
     // RowMajor2Row8MajorParallel
     auto src_r = static_cast<float *>(src);
@@ -238,12 +237,12 @@ RecoveryWeightFunc GetRecoveryWeightFunc(const int quant_type, const TypeId data
                                          const std::string &cpu_option) {
   if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
       quant_type == schema::QuantType_QUANT_DYNAMIC && data_type == kNumberTypeInt8) {
-    return MatmulDynamicSdotInt8Cpu;
+    return MatmulDynamicSdotInt8Unpack;
   }
 
   if (cpu_option == kArm64SimdDot && node_type == schema::PrimitiveType_MatMulFusion &&
       data_type == kNumberTypeFloat32) {
-    return MatmulFp32BaseCpu;
+    return MatmulFp32BaseUnpack;
   }
   return nullptr;
 }
