@@ -9,7 +9,7 @@
     参数：
         - **input** (Tensor) - 输入Tensor。
         - **other** (Tensor) - 另一个Tensor，数据类型和shape必须和 `input` 一致，并且他们的 `dim` 维度的长度应该为3。
-        - **dim** (int) - 沿着此维进行叉积操作。默认值：None。
+        - **dim** (int) - 沿着此维进行叉积操作。如果 `dim` 为None，则使用大小为3的第一个维度。默认值：None。
 
     返回：
         Tensor，数据类型与 `input` 相同。
