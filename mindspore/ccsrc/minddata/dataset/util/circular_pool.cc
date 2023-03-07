@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
     while (cirIt.has_next()) {
       auto it = cirIt.Next();
       Arena *ba = it->get();
+      RETURN_UNEXPECTED_IF_NULL(ba);
       if (ba->get_max_size() < n) {
         RETURN_STATUS_OOM("Out of memory.");
       }
