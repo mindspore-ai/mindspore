@@ -8,7 +8,7 @@ mindspore.ops.ldexp
     该函数使用两个参数，即尾数 `x` 和指数 `other` ，并将它们的乘积作为浮点数返回：
 
     .. math::
-        out_{i} = x_{i} * ( 2_{i} ^{other} )
+        out_{i} = x_{i} * ( 2 ^{other_{i}} )
 
     .. note::
         该函数通常用于由尾数和幂构造浮点数，或将浮点数按二的幂进行缩放。

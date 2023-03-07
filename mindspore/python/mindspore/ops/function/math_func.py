@@ -3518,6 +3518,11 @@ def ldexp(x, other):
     Returns:
         Tensor, the output Tensor.
 
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `other` is not a Tensor.
+        ValueError: If shape of `x` and `other` can not broadcast.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

@@ -2358,7 +2358,7 @@ def softshrink(x, lambd=0.5):
 
     Args:
         x (Tensor): The input of soft shrink with data type of float16 or float32.
-        lambd(float): The :math:`\lambda` must be no less than zero. Default: 0.5.
+        lambd (float): The :math:`\lambda` must be no less than zero. Default: 0.5.
 
     Returns:
         Tensor, has the same shape and data type as `x`.
