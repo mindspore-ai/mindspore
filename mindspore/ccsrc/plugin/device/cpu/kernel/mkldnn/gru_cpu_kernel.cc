@@ -18,7 +18,7 @@
 #include <string>
 #include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "mindspore/core/ops/gru_v2.h"
 namespace mindspore {
 namespace kernel {

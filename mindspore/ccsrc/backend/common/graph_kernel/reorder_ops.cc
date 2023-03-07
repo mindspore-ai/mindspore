@@ -22,7 +22,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"

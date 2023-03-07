@@ -24,7 +24,7 @@
 #include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "frontend/optimizer/optimizer.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"

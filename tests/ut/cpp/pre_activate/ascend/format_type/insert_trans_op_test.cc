@@ -19,8 +19,8 @@
 #include "common/py_func_graph_fetcher.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
 #include "utils/ms_context.h"
 
 #define private public

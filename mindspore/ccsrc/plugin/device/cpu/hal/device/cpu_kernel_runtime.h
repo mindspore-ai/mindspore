@@ -22,9 +22,9 @@
 #include <map>
 #include <set>
 #include "runtime/device/kernel_runtime.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/any.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"

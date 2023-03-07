@@ -22,14 +22,14 @@
 #include <map>
 #include <utility>
 #include <unordered_set>
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "ir/tensor.h"
 #include "include/common/utils/convert_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
-#include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
 #include "utils/ms_context.h"

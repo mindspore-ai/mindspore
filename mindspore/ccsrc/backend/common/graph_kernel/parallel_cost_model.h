@@ -25,11 +25,11 @@
 #include <vector>
 
 #include "base/base.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/graph_kernel/parallel_cost_model.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/python_adapter.h"
 #include "utils/ms_context.h"
 

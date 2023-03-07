@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 

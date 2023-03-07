@@ -20,7 +20,7 @@
 #include <map>
 #include <vector>
 #include "backend/common/session/session_basic.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "plugin/device/cpu/hal/device/cpu_kernel_runtime.h"
 #include "backend/common/session/session_factory.h"
 namespace mindspore {

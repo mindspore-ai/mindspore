@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "abstract/utils.h"
 #include "runtime/device/memory_manager.h"

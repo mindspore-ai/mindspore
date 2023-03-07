@@ -25,7 +25,7 @@
 #include "runtime/context.h"
 #include "include/common/utils/utils.h"
 #include "utils/file_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

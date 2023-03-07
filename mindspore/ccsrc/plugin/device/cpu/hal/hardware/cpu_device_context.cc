@@ -49,7 +49,7 @@
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/graph_kernel/adapter/expander.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #if defined(__linux__) && defined(WITH_BACKEND)

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/value_graph_binder.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
 namespace mindspore::graphkernel {
 bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);

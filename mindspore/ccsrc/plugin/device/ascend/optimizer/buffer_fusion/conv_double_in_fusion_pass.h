@@ -21,9 +21,9 @@
 #include "ir/anf.h"
 #include "backend/common/optimizer/pass.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "kernel/kernel.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {

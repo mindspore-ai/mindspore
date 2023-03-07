@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/device/dump/data_dumper.h"
-
+#include <utility>
 #include <map>
 #include <memory>
 #include <string>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/convert_utils_base.h"
 #include "runtime/dev.h"

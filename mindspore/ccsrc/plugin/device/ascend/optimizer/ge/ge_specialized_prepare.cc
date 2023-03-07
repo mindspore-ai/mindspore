@@ -20,7 +20,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

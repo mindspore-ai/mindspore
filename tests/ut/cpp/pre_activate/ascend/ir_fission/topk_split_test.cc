@@ -16,11 +16,11 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 #define private public

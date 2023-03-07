@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/concat_fission.h"
 #include <memory>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 

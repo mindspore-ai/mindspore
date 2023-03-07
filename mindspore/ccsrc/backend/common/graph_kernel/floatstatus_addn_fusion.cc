@@ -20,7 +20,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_set>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"

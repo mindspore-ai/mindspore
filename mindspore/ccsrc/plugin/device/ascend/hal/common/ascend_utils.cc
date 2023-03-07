@@ -20,7 +20,7 @@
 #include <map>
 #include "common/util/error_manager/error_manager.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"

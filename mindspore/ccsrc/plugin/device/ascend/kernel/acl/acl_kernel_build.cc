@@ -20,7 +20,7 @@
 #include "ir/dtype.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_utils.h"
 

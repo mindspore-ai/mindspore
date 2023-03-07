@@ -22,7 +22,7 @@
 
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"

@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 
 using DeviceAddress = mindspore::device::DeviceAddress;
 

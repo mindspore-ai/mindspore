@@ -19,9 +19,9 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/cpu/hal/device/cpu_simple_mem_plan.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"

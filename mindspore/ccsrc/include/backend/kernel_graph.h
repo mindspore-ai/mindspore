@@ -31,7 +31,8 @@
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "include/common/utils/contract.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/device_type.h"
+#include "include/backend/kernel_info.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

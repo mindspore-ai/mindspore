@@ -15,7 +15,7 @@
  */
 #include <cstdlib>
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"

@@ -33,7 +33,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/dynamic_tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "common/util/error_manager/error_manager.h"

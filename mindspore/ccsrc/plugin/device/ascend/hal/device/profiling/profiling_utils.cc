@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"

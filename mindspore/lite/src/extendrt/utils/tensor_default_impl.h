@@ -26,7 +26,7 @@
 
 #include "include/api/types.h"
 #include "ir/tensor.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "common/utils.h"
 #include "common/mutable_tensor_impl.h"
 

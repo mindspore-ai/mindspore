@@ -25,7 +25,7 @@
 
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "src/extendrt/utils/kernel_build_utils.h"

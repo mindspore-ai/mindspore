@@ -27,7 +27,7 @@
 #include "kernel/kernel.h"
 #include "kernel/kernel_fusion.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace kernel {

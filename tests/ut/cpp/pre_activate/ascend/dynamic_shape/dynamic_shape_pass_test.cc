@@ -15,7 +15,7 @@
  */
 #include <string>
 #include "utils/ms_context.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"

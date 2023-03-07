@@ -24,8 +24,8 @@
 #include "external/acl/acl_rt.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 

@@ -15,7 +15,7 @@
  */
 
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 

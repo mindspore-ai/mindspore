@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include "include/backend/visible.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {

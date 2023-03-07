@@ -22,7 +22,7 @@
 #include <string>
 #include "base/base.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"

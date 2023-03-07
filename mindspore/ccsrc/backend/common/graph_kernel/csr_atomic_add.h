@@ -21,7 +21,7 @@
 #include <tuple>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/graph_kernel/add_atomic_clean.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore::graphkernel {
 // Insert atomic clean node for reduce sum if any csr op is found in the graph.

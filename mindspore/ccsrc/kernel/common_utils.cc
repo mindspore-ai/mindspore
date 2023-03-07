@@ -27,7 +27,7 @@
 #include <tuple>
 #include <cmath>
 #include "nlohmann/json.hpp"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/file_utils.h"

@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/data/dataset_utils.h"
 #include <algorithm>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

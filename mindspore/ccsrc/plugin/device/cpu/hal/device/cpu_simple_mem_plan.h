@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_CPU_SIMPLE_MEM_PLAN_H_
 
 #include <vector>
-#include "backend/common/session/kernel_graph.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace device {

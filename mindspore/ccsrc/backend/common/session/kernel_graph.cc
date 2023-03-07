@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include <algorithm>
 #include <queue>
 #include <set>
@@ -23,9 +23,9 @@
 #include "ir/param_info.h"
 #include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "kernel/kernel_build_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "kernel/common_utils.h"

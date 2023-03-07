@@ -19,7 +19,7 @@
 #include <memory>
 #include "ir/scalar.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {

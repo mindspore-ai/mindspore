@@ -20,7 +20,7 @@
 #include <vector>
 #include <set>
 #include <memory>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/optimizer/graph_optimizer.h"
 
 namespace mindspore {

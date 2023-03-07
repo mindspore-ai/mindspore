@@ -33,7 +33,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

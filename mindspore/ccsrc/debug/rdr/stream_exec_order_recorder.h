@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 #include "nlohmann/json.hpp"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/rdr/base_recorder.h"
 

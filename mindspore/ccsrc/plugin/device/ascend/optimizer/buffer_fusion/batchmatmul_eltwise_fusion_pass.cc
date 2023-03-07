@@ -17,7 +17,7 @@
 #include <set>
 #include <string>
 #include "kernel/kernel_fusion.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"

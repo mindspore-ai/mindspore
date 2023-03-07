@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 #include "backend/common/session/session_basic.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_factory.h"
 using KernelGraph = mindspore::session::KernelGraph;
 

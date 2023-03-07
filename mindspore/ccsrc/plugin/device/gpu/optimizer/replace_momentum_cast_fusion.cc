@@ -15,7 +15,7 @@
  */
 #include "plugin/device/gpu/optimizer/replace_momentum_cast_fusion.h"
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"

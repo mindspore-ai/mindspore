@@ -28,7 +28,7 @@
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/graph_kernel_info.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "kernel/common_utils.h"
 #include "ops/core_ops.h"
 #include "utils/ms_context.h"

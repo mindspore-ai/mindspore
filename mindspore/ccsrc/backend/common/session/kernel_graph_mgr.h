@@ -22,11 +22,11 @@
 #include <map>
 #include <set>
 #include "utils/hash_map.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "utils/ms_context.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"

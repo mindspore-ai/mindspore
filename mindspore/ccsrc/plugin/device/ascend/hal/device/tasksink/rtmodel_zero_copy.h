@@ -22,8 +22,8 @@
 #include <string>
 #include <vector>
 #include "ir/anf.h"
-#include "runtime/device/device_address.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/device_address.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace device {

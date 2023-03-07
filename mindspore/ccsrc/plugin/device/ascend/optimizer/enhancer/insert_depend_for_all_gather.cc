@@ -17,7 +17,7 @@
 #include <map>
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather.h"
 #include "include/common/utils/utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

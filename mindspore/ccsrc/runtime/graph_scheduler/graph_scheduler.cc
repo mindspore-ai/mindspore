@@ -28,7 +28,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/anf_utils.h"

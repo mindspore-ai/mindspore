@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_with_decay_rule.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

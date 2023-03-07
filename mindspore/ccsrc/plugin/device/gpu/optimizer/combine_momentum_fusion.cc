@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/optimizer/combine_momentum_fusion.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"

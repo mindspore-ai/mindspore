@@ -19,7 +19,7 @@
 #include <memory>
 #include <algorithm>
 #include "plugin/device/ascend/kernel/rts/rt_kernel.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

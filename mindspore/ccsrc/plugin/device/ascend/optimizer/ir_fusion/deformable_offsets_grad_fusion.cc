@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_grad_fusion.h"
 #include <memory>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/common/utils/anfalgo.h"
 

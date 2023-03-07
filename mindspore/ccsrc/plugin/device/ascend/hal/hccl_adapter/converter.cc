@@ -22,7 +22,7 @@
 #include "graph/compute_graph.h"
 #include "graph/debug/ge_attr_define.h"
 #undef google
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"

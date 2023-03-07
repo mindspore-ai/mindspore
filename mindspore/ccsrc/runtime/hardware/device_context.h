@@ -21,13 +21,13 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "runtime/hardware/device_type.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_type.h"
+#include "include/backend/device_address.h"
 #include "runtime/device/gsm/swap_manager.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "runtime/collective/collective_comm_lib_loader.h"
-#include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "runtime/hardware/deprecated_interface.h"

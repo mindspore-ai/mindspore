@@ -27,7 +27,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "kernel/oplib/super_bar.h"
 #include "kernel/kernel_fusion.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 // Note: This file is mainly used to adapt the ME front-end operator description and
 //       the TBE back-end operator implementation difference

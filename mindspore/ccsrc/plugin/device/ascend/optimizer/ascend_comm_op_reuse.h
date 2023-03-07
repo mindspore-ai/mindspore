@@ -23,7 +23,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {

@@ -26,7 +26,7 @@
 #include "ir/manager.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/common_utils.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "backend/common/graph_kernel/decrease_transfer_precision.h"
 
 namespace mindspore::graphkernel {

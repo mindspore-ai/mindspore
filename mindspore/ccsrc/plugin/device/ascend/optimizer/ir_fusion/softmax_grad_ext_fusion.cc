@@ -15,7 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_grad_ext_fusion.h"
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"

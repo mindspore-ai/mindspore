@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/session/kernel_graph.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/dump_utils.h"
 #ifdef ENABLE_DEBUGGER

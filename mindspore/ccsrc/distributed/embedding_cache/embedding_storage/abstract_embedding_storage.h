@@ -18,7 +18,7 @@
 #define aMINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_ABSTRACT_EMBEDDING_STORAGE_H_
 
 #include "distributed/persistent/storage/storage.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

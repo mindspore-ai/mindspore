@@ -20,7 +20,7 @@
 #include <utility>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace device {

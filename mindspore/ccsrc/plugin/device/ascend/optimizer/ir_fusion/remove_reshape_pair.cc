@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/remove_reshape_pair.h"
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 

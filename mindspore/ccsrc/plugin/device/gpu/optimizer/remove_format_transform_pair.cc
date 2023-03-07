@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/optimizer/remove_format_transform_pair.h"
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"

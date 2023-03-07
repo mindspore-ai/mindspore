@@ -28,7 +28,7 @@
 #include "proto/tensor_shape.pb.h"
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"

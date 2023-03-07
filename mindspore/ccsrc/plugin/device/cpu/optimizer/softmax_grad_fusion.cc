@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"

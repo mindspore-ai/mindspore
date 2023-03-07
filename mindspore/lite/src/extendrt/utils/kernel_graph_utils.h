@@ -23,7 +23,7 @@
 #include <map>
 #include <string>
 
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/api/visible.h"
 
 namespace mindspore {

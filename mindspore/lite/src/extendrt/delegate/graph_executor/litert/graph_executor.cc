@@ -31,7 +31,7 @@
 
 #include "tools/common/meta_graph_serializer.h"
 #include "extendrt/utils/tensor_utils.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "src/common/helper/external_tensor/memory_helper.h"
 #include "src/litert/kernel_exec.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"

@@ -21,7 +21,7 @@
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "proto/op_mapping_info.pb.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"

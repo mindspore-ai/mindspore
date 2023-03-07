@@ -26,7 +26,7 @@
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/device/memory_offload_strategy.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace runtime {

@@ -28,7 +28,7 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/common/utils/utils.h"

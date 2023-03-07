@@ -31,7 +31,7 @@
 #include "core/base/base.h"
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/lite_graph_executor.h"
-#include "ccsrc/backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 
 namespace mindspore::lite {

@@ -18,7 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_
 
 #include <vector>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore::pynative {

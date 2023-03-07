@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/mindir/ascend_vm_op_adapter.h"
 
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
 
 namespace mindspore::opt {

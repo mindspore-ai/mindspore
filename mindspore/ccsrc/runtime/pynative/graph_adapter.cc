@@ -23,7 +23,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"

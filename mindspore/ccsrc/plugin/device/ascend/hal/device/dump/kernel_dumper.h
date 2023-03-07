@@ -24,7 +24,7 @@
 #include <functional>
 #include "runtime/dev.h"
 #include "runtime/mem.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "aicpu/common/aicpu_task_struct.h"
 #include "debug/data_dump/overflow_dumper.h"

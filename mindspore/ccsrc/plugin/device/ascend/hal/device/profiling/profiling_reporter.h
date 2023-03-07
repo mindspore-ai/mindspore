@@ -24,12 +24,12 @@
 #include <tuple>
 
 #include "utils/log_adapter.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "toolchain/prof_common.h"
 #include "toolchain/prof_reporter.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
 
 namespace mindspore {

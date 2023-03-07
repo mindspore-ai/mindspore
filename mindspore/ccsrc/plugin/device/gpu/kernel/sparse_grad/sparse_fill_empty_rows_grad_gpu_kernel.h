@@ -31,7 +31,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_fill_empty_rows_grad_impl.cuh"
 constexpr size_t kInputsNum = 2;
 constexpr size_t kOutputsNum = 2;

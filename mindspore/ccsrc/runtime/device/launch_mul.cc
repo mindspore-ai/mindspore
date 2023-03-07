@@ -17,7 +17,7 @@
 #include "runtime/device/launch_mul.h"
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 

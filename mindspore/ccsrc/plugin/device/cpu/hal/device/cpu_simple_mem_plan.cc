@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/hal/device/cpu_simple_mem_plan.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include <set>
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace device {

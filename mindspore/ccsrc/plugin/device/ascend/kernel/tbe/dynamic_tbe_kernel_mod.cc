@@ -21,7 +21,7 @@
 #include <utility>
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/common/optimizer/helper.h"

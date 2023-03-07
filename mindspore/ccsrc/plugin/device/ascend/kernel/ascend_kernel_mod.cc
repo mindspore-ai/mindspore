@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 namespace mindspore {

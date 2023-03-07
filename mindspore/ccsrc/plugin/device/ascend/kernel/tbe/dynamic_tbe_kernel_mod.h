@@ -23,7 +23,7 @@
 #include <map>
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "ir/tensor.h"
 #include "register/op_tiling.h"
 namespace mindspore {

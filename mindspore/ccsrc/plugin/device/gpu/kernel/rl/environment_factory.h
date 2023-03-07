@@ -24,7 +24,7 @@
 #include <map>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

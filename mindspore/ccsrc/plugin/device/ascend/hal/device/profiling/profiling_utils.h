@@ -22,7 +22,7 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/contract.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 

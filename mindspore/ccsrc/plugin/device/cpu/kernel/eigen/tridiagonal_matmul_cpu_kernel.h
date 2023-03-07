@@ -19,7 +19,7 @@
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.h"
+#include "mindspore/ccsrc/include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {
