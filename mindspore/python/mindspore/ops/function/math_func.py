@@ -8411,12 +8411,12 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
     return y
 
 
-def log2(x):
+def log2(input):
     r"""
     Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
 
     .. math::
-        y_i = log_2(x_i)
+        y_i = log_2(input_i)
 
     .. warning::
         If the input value of operator log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -8427,15 +8427,15 @@ def log2(x):
         input Tensor on the CPU or GPU should be less than 8.
 
     Args:
-        x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+        input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
-            or float32 on Ascend.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32 or float64 on CPU and GPU, if dtype of `input`
+            is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8449,9 +8449,9 @@ def log2(x):
 
     dtype_op = _get_cache_prim(P.DType)()
 
-    x_dtype = dtype_op(x)
+    x_dtype = dtype_op(input)
     denominator = log_(_make_tensor(2, x_dtype))
-    frac_log = log_(x)
+    frac_log = log_(input)
     output = frac_log / denominator
     return output
 
@@ -8627,12 +8627,12 @@ def xdivy(x, y):
     return xdivy_(x, y)
 
 
-def log10(x):
+def log10(input):
     r"""
     Returns a new Tensor by taking the base 10 logarithm of the elements in the input Tensor.
 
     .. math::
-        y_i = log_{10}(x_i)
+        y_i = log_{10}(input_i)
 
     .. warning::
         If the input value of operator log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -8643,15 +8643,15 @@ def log10(x):
         input Tensor on the CPU or GPU should be less than 8.
 
     Args:
-        x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+        input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
-            or float32 on Ascend.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32 or float64 on CPU and GPU, if dtype of `input`
+            is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8665,9 +8665,9 @@ def log10(x):
 
     dtype_op = P.DType()
 
-    x_dtype = dtype_op(x)
+    x_dtype = dtype_op(input)
     denominator = log_(_make_tensor(10, x_dtype))
-    frac_log = log_(x)
+    frac_log = log_(input)
     output = frac_log / denominator
     return output
 
