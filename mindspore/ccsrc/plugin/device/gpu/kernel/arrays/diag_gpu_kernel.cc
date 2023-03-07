@@ -110,6 +110,10 @@ int DiagGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   for (size_t i = LongToSize(batch_rank_); i < input_shape.size(); ++i) {
     input_size_ *= LongToSize(input_shape[i]);
   }
+  if (input_size_ == 0) {
+    MS_LOG(ERROR) << kernel_name_ << "input size should should be larger than 0, but got: " << input_size_;
+    return KRET_RESIZE_FAILED;
+  }
 
   // Get the output size of each batch.
   auto output = outputs.at(kIndex0);
