@@ -26,9 +26,9 @@ CUDA_LIB_EXPORT void ResizeLinear1D(const enum ResizeLinearCoordinateTransformat
                                     const uint32_t device_id, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
-                                        const int64_t output_size, const int64_t in_width, const int64_t out_width,
-                                        const T *grad_output, T *grad_input, const uint32_t device_id,
+CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t batch,
+                                        const int64_t channel, const int64_t in_width, const int64_t out_width,
+                                        const T *grad_output, T *grad_input, float *grad_work, const uint32_t device_id,
                                         cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_LINEAR_1D_CUH_
