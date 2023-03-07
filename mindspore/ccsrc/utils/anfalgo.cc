@@ -751,6 +751,23 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
 
 TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (IsCallNode(node)) {
+    if (node->abstract() == nullptr) {
+      MS_LOG(EXCEPTION) << "Empty abstract of call node:" << node->DebugString();
+    }
+    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), output_idx);
+    MS_EXCEPTION_IF_NULL(abs);
+    const auto &type = abs->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->isa<TensorType>()) {
+      const auto &tensor_type = type->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      const auto &element = tensor_type->element();
+      return element->type_id();
+    } else {
+      return type->type_id();
+    }
+  }
   return GetOutputInferDataType(node->Type(), output_idx);
 }
 
@@ -1948,6 +1965,30 @@ abstract::BaseShapePtr AnfAlgo::GetDynamicSequenceShape(const AnfNodePtr &node, 
     return std::make_shared<abstract::Shape>(empty_shape);
   }
   return element_abs->BuildShape();
+}
+
+abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (!abstract->isa<abstract::AbstractSequence>() || abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+    if (index != 0) {
+      MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
+    }
+    return abstract;
+  }
+
+  auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abstract);
+  const auto &sub_abstracts = tuple_abstract->elements();
+  size_t real_index = index;
+  for (const auto &sub_abstract : sub_abstracts) {
+    size_t tmp_index = common::AnfAlgo::GetOutputNumByAbstract(sub_abstract);
+    if (real_index >= tmp_index) {
+      real_index -= tmp_index;
+      continue;
+    }
+    return FetchAbstractByIndex(sub_abstract, real_index);
+  }
+  MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
 }
 }  // namespace common
 }  // namespace mindspore

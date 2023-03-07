@@ -298,6 +298,8 @@ class COMMON_EXPORT AnfAlgo {
 
   // Get the element shape of dynamic sequence shape.
   static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
+  // Fetch the sub abstract from the top abstract by the index.
+  static abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 };
 }  // namespace common
 }  // namespace mindspore

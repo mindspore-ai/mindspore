@@ -15,6 +15,7 @@
  */
 
 #include <unordered_map>
+#include <functional>
 #include <map>
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -319,7 +320,7 @@ TypeId FetchTypeIdByNode(const AnfNodePtr &node, size_t index) {
   TypeId type_id = kTypeUnknown;
   if (node->isa<ValueNode>() && node->abstract() != nullptr) {
     // For valuenode, fetch type from abstract.
-    const auto &abs = FetchAbstractByIndex(node->abstract(), index);
+    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
     MS_EXCEPTION_IF_NULL(abs);
     const auto &type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(type);
@@ -341,7 +342,7 @@ size_t FetchOutputSizeByNode(const AnfNodePtr &node, size_t index, TypeId type_i
   MS_EXCEPTION_IF_NULL(node);
   size_t size = GetTypeByte(TypeIdToType(type_id));
   if (node->isa<ValueNode>() && node->abstract() != nullptr) {
-    const auto &abs = FetchAbstractByIndex(node->abstract(), index);
+    const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
     MS_EXCEPTION_IF_NULL(abs);
     const auto &shape_ptr = abs->BuildShape();
     MS_EXCEPTION_IF_NULL(shape_ptr);
@@ -736,30 +737,6 @@ std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
     (void)results.insert(results.end(), sub_results.begin(), sub_results.end());
   }
   return results;
-}
-
-abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index) {
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (!abstract->isa<abstract::AbstractSequence>() || abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
-    if (index != 0) {
-      MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
-    }
-    return abstract;
-  }
-
-  auto tuple_abstract = abstract->cast<abstract::AbstractSequencePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_abstract);
-  const auto &sub_abstracts = tuple_abstract->elements();
-  size_t real_index = index;
-  for (const auto &sub_abstract : sub_abstracts) {
-    size_t tmp_index = common::AnfAlgo::GetOutputNumByAbstract(sub_abstract);
-    if (real_index >= tmp_index) {
-      real_index -= tmp_index;
-      continue;
-    }
-    return FetchAbstractByIndex(sub_abstract, real_index);
-  }
-  MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
 }
 
 bool IsPartialInput(const AnfNodePtr &node) {
@@ -2262,7 +2239,7 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
     // Skip the function input.
     const auto &abstract = backend_to_front.second.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    const auto &real_abstract = FetchAbstractByIndex(abstract, backend_to_front.second.second);
+    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, backend_to_front.second.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
     if (real_abstract->isa<abstract::AbstractFunction>()) {
       continue;
