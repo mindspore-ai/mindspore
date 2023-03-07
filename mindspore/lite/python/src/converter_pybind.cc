@@ -22,7 +22,7 @@ namespace mindspore::lite {
 namespace py = pybind11;
 
 void ConverterPyBind(const py::module &m) {
-  py::enum_<converter::FmkType>(m, "FmkType")
+  (void)py::enum_<converter::FmkType>(m, "FmkType")
     .value("kFmkTypeTf", converter::FmkType::kFmkTypeTf)
     .value("kFmkTypeCaffe", converter::FmkType::kFmkTypeCaffe)
     .value("kFmkTypeOnnx", converter::FmkType::kFmkTypeOnnx)
@@ -30,7 +30,7 @@ void ConverterPyBind(const py::module &m) {
     .value("kFmkTypeTflite", converter::FmkType::kFmkTypeTflite)
     .value("kFmkTypePytorch", converter::FmkType::kFmkTypePytorch);
 
-  py::class_<Converter, std::shared_ptr<Converter>>(m, "ConverterBind")
+  (void)py::class_<Converter, std::shared_ptr<Converter>>(m, "ConverterBind")
     .def(py::init<>())
     .def("set_config_file", py::overload_cast<const std::string &>(&Converter::SetConfigFile))
     .def("get_config_file", &Converter::GetConfigFile)

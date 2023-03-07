@@ -8,10 +8,6 @@ mindspore_lite
     :toctree: mindspore_lite
 
     mindspore_lite.Context
-    mindspore_lite.DeviceInfo
-    mindspore_lite.CPUDeviceInfo
-    mindspore_lite.GPUDeviceInfo
-    mindspore_lite.AscendDeviceInfo
 
 转换
 --------
@@ -30,7 +26,6 @@ mindspore_lite
 
     mindspore_lite.ModelType
     mindspore_lite.Model
-    mindspore_lite.RunnerConfig
     mindspore_lite.ModelParallelRunner
 
 张量

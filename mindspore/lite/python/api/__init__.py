@@ -18,9 +18,9 @@ MindSpore Lite Python API.
 from __future__ import absolute_import
 
 from mindspore_lite.version import __version__
-from mindspore_lite.context import Context, DeviceInfo, CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo
+from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
-from mindspore_lite.model import ModelType, Model, RunnerConfig, ModelParallelRunner
+from mindspore_lite.model import ModelType, Model, ModelParallelRunner
 from mindspore_lite.tensor import DataType, Format, Tensor
 
 __all__ = []
