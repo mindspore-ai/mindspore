@@ -211,4 +211,11 @@ bool IsOneOfServerFormatC04(const std::string &format) {
   static const std::set<std::string> kServerFormatC04List = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
   return kServerFormatC04List.find(format) != kServerFormatC04List.end();
 }
+
+bool IsOneOfDynRankNeedPadShape(const std::string &format) {
+  const std::set<std::string> kOpFormats = {kOpFormat_NC1HWC0,      kOpFormat_NDC1HWC0,      kOpFormat_FRAC_Z,
+                                            kOpFormat_NDC1HWC0,     kOpFormat_C1HWNCoC0,     kOpFormat_NC1HWC0_C04,
+                                            kOpFormat_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_C04, kOpFormat_NCDHW};
+  return kOpFormats.find(format) != kOpFormats.end();
+}
 }  // namespace mindspore

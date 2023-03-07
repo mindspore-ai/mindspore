@@ -1028,6 +1028,9 @@ constexpr auto kAttrKsizes = "ksizes";
 constexpr auto kAttrIsKernelDynamicImpl = "is_kernel_dynamic_impl";
 constexpr auto kAttrIsKernelDynamicShape = "is_kernel_dynamic_shape";
 constexpr auto kAttrIsDynamicShape = "is_dynamic_shape";
+constexpr auto kAttrIsDynamicRank = "is_dynamic_rank";
+constexpr auto kAttrInputIsDynamicRank = "input_is_dynamic_rank";
+constexpr auto kAttrOutputIsDynamicRank = "output_is_dynamic_rank";
 constexpr auto kAttrInputIsDynamicShape = "input_is_dynamic_shape";
 constexpr auto kAttrOutputIsDynamicShape = "output_is_dynamic_shape";
 constexpr auto kAttrPynativeNextOpName = "next_op";
@@ -1318,6 +1321,7 @@ COMMON_EXPORT bool IsOneOfComputeDepend(const std::string &name);
 COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
+COMMON_EXPORT bool IsOneOfDynRankNeedPadShape(const std::string &format);
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

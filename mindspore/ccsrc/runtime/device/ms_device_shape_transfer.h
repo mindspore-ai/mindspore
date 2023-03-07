@@ -39,6 +39,7 @@
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/visible.h"
+#include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
 namespace trans {
@@ -329,7 +330,7 @@ BACKEND_EXPORT ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t
 /**
  *  If need padding
  * */
-BACKEND_EXPORT bool IsNeedPadding(const std::string &format, size_t shape_size);
+BACKEND_EXPORT bool IsNeedPadding(const std::string &format, const ShapeVector &shape);
 
 /**
  * Padding shape to 5D by default mode
@@ -442,16 +443,21 @@ std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &form
     MS_LOG(DEBUG) << "Start padding shape for node: [" << node->fullname_with_scope() << "], format: " << format
                   << ", detail info: " << node->DebugString();
   }
-  std::vector<T> host_shape;
+
   if (IsOneOf3DFormat(format)) {
     if (shape.size() >= kDim5) {
       return shape;
     }
-    host_shape = PaddingShapeTo5d(shape, pad_index);
-  } else {
-    host_shape = PaddingShapeTo4d(shape, pad_index);
+    if (shape.size() == 1 && shape[0] == abstract::Shape::kShapeRankAny) {
+      return {-1, -1, -1, -1, -1};
+    }
+    return PaddingShapeTo5d(shape, pad_index);
   }
-  return host_shape;
+
+  if (shape.size() == 1 && shape[0] == abstract::Shape::kShapeRankAny) {
+    return {-1, -1, -1, -1};
+  }
+  return PaddingShapeTo4d(shape, pad_index);
 }
 
 /**

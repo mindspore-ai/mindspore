@@ -244,6 +244,7 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   // element's shape
   BaseShapePtr element_shape_{nullptr};
 };
+using DynamicSequenceShapePtr = std::shared_ptr<DynamicSequenceShape>;
 GVAR_DEF(std::shared_ptr<DynamicSequenceShape>, kDynamicSequenceShape, std::make_shared<DynamicSequenceShape>());
 
 /// \brief SequequeShape defines base class of multiple-shape classes.

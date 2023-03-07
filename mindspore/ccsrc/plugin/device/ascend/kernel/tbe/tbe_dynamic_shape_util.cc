@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <set>
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
@@ -93,8 +94,36 @@ inline void GetRangeByShape(const AnfNodePtr &anf_node, const ShapeVector &shape
   }
 }
 
+ShapeVector TbeDynamicShapeUtil::UpdateShape(const AnfNodePtr &node, const std::string &format,
+                                             const ShapeVector &shape, size_t index, bool is_input,
+                                             bool *is_change_nd) {
+  MS_EXCEPTION_IF_NULL(node);
+  const std::set<std::string> op_names = {kTransDataOpName};
+  if (!node->isa<CNode>() || op_names.find(common::AnfAlgo::GetCNodeName(node)) == op_names.end()) {
+    return shape;
+  }
+  std::string sp_format = format;
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  if (kernel_info->select_kernel_build_info() != nullptr) {
+    auto in_format = AnfAlgo::GetInputFormat(node, 0);
+    auto out_format = AnfAlgo::GetOutputFormat(node, 0);
+    sp_format = IsOneOfHWSpecialFormat(in_format) ? in_format : out_format;
+  }
+
+  const auto &pad_idx =
+    is_input ? AnfAlgo::GetInputReshapeType(node, index) : AnfAlgo::GetOutputReshapeType(node, index);
+  if (format == kOpFormat_NCHW && shape.size() < kDim4 && IsOneOfDynRankNeedPadShape(sp_format)) {
+    if (is_change_nd) {
+      *is_change_nd = true;
+    }
+    return trans::PaddingShape(shape, sp_format, pad_idx);
+  }
+  return shape;
+}
+
 RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index,
-                                                    const std::string &def_format, const TypeId &type) {
+                                                    const std::string &def_format, const std::string &ori_format,
+                                                    const TypeId &type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -110,13 +139,17 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
   auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
   MS_EXCEPTION_IF_NULL(prev_node.first);
   auto shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
+  if (anf_node->isa<CNode>()) {
+    shape = UpdateShape(anf_node, ori_format, shape, index, true);
+  }
   GetRangeByShape(anf_node, shape, &ret);
 
   return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }
 
 RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index,
-                                                     const std::string &def_format, const TypeId &type) {
+                                                     const std::string &def_format, const std::string &ori_format,
+                                                     const TypeId &type) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -130,6 +163,9 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
   RangePair ret;
 
   auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, index);
+  if (anf_node->isa<CNode>()) {
+    shape = UpdateShape(anf_node, ori_format, shape, index, false);
+  }
   GetRangeByShape(anf_node, shape, &ret);
 
   return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
