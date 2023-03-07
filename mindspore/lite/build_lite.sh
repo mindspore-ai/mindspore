@@ -400,6 +400,13 @@ build_lite() {
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DCMAKE_OHOS_NDK=${OHOS_NDK} -DOHOS_ARCH=arm64-v8a -DOHOS_STL=c++_static -DTOOLCHAIN_NAME=${TOOLCHAIN_NAME}"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=off"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=on -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off"
+      elif [[ "${AOS_SDK}" ]]; then
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=full"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTARGET_AOS_ARM=on"
+        if [[ "${TOOLCHAIN_NAME}" == "gcc" ]]; then
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=gcc"
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off"
+        fi
       else
         if [[ "${machine}" == "aarch64" ]]; then
           # CPU : Linux-aarch64
@@ -821,7 +828,7 @@ fi
 
 INSTALL_PREFIX=${BASEPATH}/output/tmp
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
-if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
+if [[ "${MSLITE_ENABLE_ACL}" == "on" ]] || [[ "${AOS_SDK}" ]]; then
     update_submodule
 fi
 

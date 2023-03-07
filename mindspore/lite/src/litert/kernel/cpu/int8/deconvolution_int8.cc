@@ -124,7 +124,7 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = true;
   matmul_func_ = MatMulInt8_16x4;
 #ifdef ENABLE_ARM64
-#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64)
+#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
   if (mindspore::lite::IsSupportSDot()) {
     support_optimize_ = true;
     matmul_func_ = MatMulR4Int8_optimize_handler;
@@ -132,7 +132,7 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
 #endif
     support_optimize_ = false;
     matmul_func_ = MatMulR4Int8Neon64;
-#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64)
+#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
   }
 #endif
 #endif

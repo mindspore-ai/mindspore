@@ -50,15 +50,26 @@ if(APPLE)
             SHA256 ${SHA256}
             CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
 else()
-    mindspore_add_pkg(flatbuffers
-            VER 2.0.0
-            LIBS flatbuffers
-            EXE flatc
-            URL ${REQ_URL}
-            SHA256 ${SHA256}
-            DIR ${FLATBUFFER_DIR}
-            CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
-            -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release)
+    if(TARGET_AOS_ARM)
+        mindspore_add_pkg(flatbuffers
+                VER 2.0.0
+                LIBS flatbuffers
+                EXE flatc
+                URL ${REQ_URL}
+                SHA256 ${SHA256}
+                CMAKE_OPTION -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+                -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release)
+    else()
+        mindspore_add_pkg(flatbuffers
+                VER 2.0.0
+                LIBS flatbuffers
+                EXE flatc
+                URL ${REQ_URL}
+                SHA256 ${SHA256}
+                DIR ${FLATBUFFER_DIR}
+                CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
+                -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release)
+    endif()
 endif()
 
 include_directories(${flatbuffers_INC})

@@ -35,7 +35,7 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 #endif
 
 #if defined(ENABLE_ARM64)
-#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64)
+#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
   if (mindspore::lite::IsSupportSDot()) {
     matmul_func_ = MatMulRInt8_optimize_handler;
     support_optimize_ = true;
@@ -43,7 +43,7 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 #endif
     tile_num_ = 4;
     support_optimize_ = false;
-#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64)
+#if !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && !defined(MACHINE_LINUX_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
   }
 #endif
 #endif
