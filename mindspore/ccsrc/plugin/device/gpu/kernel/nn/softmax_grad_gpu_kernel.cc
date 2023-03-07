@@ -23,7 +23,6 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
-constexpr size_t SUPPORT_SIZE = 2;
 
 bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
@@ -55,10 +54,6 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   ResetResource();
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   shape_size_ = input_shape.size();
-  if (shape_size_ != SUPPORT_SIZE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be equal to 2, but got "
-                      << shape_size_;
-  }
   if (kernel_name_ == "LogSoftmaxGrad") {
     algo_ = CUDNN_SOFTMAX_LOG;
     auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
@@ -106,7 +101,7 @@ bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   const float alpha = 1;
   const float beta = 0;
 
-  if (axis_ == 1) {
+  if (axis_ == static_cast<int>(input_shape_.size()) - 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSoftmaxBackward(cudnn_handle_, algo_, mode_, &alpha, y_desc_, y_addr,
                                                              y_desc_, dy_addr, &beta, y_desc_, dx_addr),
                                         kernel_name_ + "cudnnSoftmaxBackward failed");
