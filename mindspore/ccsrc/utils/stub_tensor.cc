@@ -43,6 +43,10 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
       node->SetElement(i, elem);
     }
     return node;
+  } else if (type == kAnyType) {
+    return std::make_shared<AnyTypeNode>();
+  } else if (type == kTypeNone) {
+    return std::make_shared<NoneTypeNode>();
   } else {
     if (!type->isa<TensorType>()) {
       MS_LOG(WARNING) << "stub tensor is create for type: " << type->ToString();
@@ -56,7 +60,7 @@ py::object MakeOutput(StubNodePtr node) {
   if (node->isa<TensorNode>()) {
     auto tensor = node->cast<std::shared_ptr<TensorNode>>();
     return py::cast(tensor);
-  } else {
+  } else if (node->isa<SequenceNode>()) {
     auto seq = node->cast<std::shared_ptr<SequenceNode>>();
     MS_EXCEPTION_IF_NULL(seq);
     auto &elements = seq->Elements();
@@ -68,6 +72,12 @@ py::object MakeOutput(StubNodePtr node) {
       out[i] = MakeOutput(elements[i]);
     }
     return out;
+  } else if (node->isa<AnyTypeNode>()) {
+    auto tensor = node->cast<std::shared_ptr<AnyTypeNode>>();
+    return py::cast(tensor);
+  } else {
+    auto tensor = node->cast<std::shared_ptr<NoneTypeNode>>();
+    return py::cast(tensor);
   }
 }
 
@@ -241,6 +251,28 @@ void SequenceNode::SetValue(const ValuePtr &val) {
   StubNode::SetValue(val);
 }
 
+bool AnyTypeNode::SetAbstract(const AbstractBasePtr &abs) {
+  real_node_ = MakeStubNode(abs->BuildType());
+  auto flag = real_node_->SetAbstract(abs);
+  (void)StubNode::SetAbstract(abs);
+  return flag;
+}
+
+void AnyTypeNode::SetValue(const ValuePtr &val) {
+  real_node_->SetValue(val);
+  StubNode::SetValue(val);
+}
+
+py::object AnyTypeNode::GetRealNode() {
+  WaitAbstract();
+  return py::cast(real_node_);
+}
+
+py::object NoneTypeNode::GetRealValue() {
+  auto val = WaitValue();
+  return ValueToPyData(val);
+}
+
 std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type) {
   auto top = MakeStubNode(type);
   auto ret = MakeOutput(top);
@@ -255,6 +287,10 @@ void RegStubNodes(const py::module *m) {
     .def("get_dtype", &TensorNode::GetDtype, "get output dtype of async stub.");
   (void)py::class_<SequenceNode, StubNode, std::shared_ptr<SequenceNode>>(*m, "SequenceNode")
     .def("get_elements", &SequenceNode::GetElements, "get the elements of async stub_seq.");
+  (void)py::class_<AnyTypeNode, StubNode, std::shared_ptr<AnyTypeNode>>(*m, "AnyTypeNode")
+    .def("get_real_node", &AnyTypeNode::GetRealNode, "get the real StubNode");
+  (void)py::class_<NoneTypeNode, StubNode, std::shared_ptr<NoneTypeNode>>(*m, "NoneTypeNode")
+    .def("get_real_value", &NoneTypeNode::GetRealValue, "get the real value");
 }
 }  // namespace stub
 }  // namespace mindspore

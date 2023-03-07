@@ -91,6 +91,25 @@ class SequenceNode : public StubNode {
 };
 using SequenceNodePtr = std::shared_ptr<SequenceNode>;
 
+class AnyTypeNode : public StubNode {
+ public:
+  AnyTypeNode() = default;
+  MS_DECLARE_PARENT(AnyTypeNode, StubNode);
+  bool SetAbstract(const AbstractBasePtr &abs) override;
+  void SetValue(const ValuePtr &val) override;
+  py::object GetRealNode();
+
+ private:
+  StubNodePtr real_node_;
+};
+
+class NoneTypeNode : public StubNode {
+ public:
+  NoneTypeNode() = default;
+  MS_DECLARE_PARENT(NoneTypeNode, StubNode);
+  py::object GetRealValue();
+};
+
 COMMON_EXPORT std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type);
 COMMON_EXPORT void RegStubNodes(const py::module *m);
 }  // namespace stub
