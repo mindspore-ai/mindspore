@@ -199,7 +199,6 @@ def test_scalar_in_list():
     assert out == [1, 2, 3, 4]
 
 
-@pytest.mark.skip(reason="No support by now.")
 def test_scalar_in_dict():
     """
     Feature: Return scalar.
@@ -216,7 +215,6 @@ def test_scalar_in_dict():
     assert isinstance(out.get('y'), int)
 
 
-@pytest.mark.skip(reason="No support by now.")
 def test_scalar_in_dict_with_int_value():
     """
     Feature: Return scalar.
@@ -232,7 +230,6 @@ def test_scalar_in_dict_with_int_value():
     assert out == {'x': 1, 'y': 2}
 
 
-@pytest.mark.skip(reason="No support by now.")
 def test_scalar_in_dict_with_tuple_value():
     """
     Feature: Return scalar.
@@ -248,7 +245,6 @@ def test_scalar_in_dict_with_tuple_value():
     assert out == {'x': (1, 2), 'y': (3, 4)}
 
 
-@pytest.mark.skip(reason="No support by now.")
 def test_scalar_in_dict_with_empty_tuple():
     """
     Feature: Return scalar.
