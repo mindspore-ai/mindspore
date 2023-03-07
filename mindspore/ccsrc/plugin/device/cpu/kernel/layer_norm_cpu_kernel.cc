@@ -37,6 +37,11 @@ bool LayerNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNorm>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast ops::LayerNorm failed!";
+  }
+  eps_ = kernel_ptr->get_epsilon();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
