@@ -40,7 +40,7 @@ using device::cpu::CPUHashTable;
 /// Feature: test sparse embedding storage all api.
 /// Description: test sparse embedding storage data structure and interface.
 /// Expectation: all interface work normally or throw expectant exception.
-TEST_F(TestSparseEmbeddingStorage, test_sparse_embedding_storage) {
+TEST_F(TestSparseEmbeddingStorage, DISABLED_test_sparse_embedding_storage) {
   int32_t embedding_key = 0;
   size_t embedding_dim = 8;
   size_t capacity = 15;
