@@ -3158,7 +3158,7 @@ def const_tensor_to_bool(x):
         f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {x.shape}")
 
 
-@constexpr
+@_primexpr
 def check_view_shape(x):
     """Check view function input shape"""
     if not x:
@@ -3167,10 +3167,6 @@ def check_view_shape(x):
         if len(x) != 1:
             raise ValueError(f"Only one tuple is needed, but got {x}")
         x = x[0]
-    if x is None:
-        x = -2
-    if isinstance(x, (tuple, list)):
-        x = tuple([-1 if i is None else i for i in x])
     return x
 
 
