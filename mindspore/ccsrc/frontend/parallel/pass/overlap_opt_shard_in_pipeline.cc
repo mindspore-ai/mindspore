@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/overlap_opt_shard_in_pipeline.h"
+#include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include <memory>
 #include <vector>
 #include <list>
@@ -29,7 +29,7 @@
 #include "include/common/utils/comm_manager.h"
 
 namespace mindspore {
-namespace opt {
+namespace parallel {
 namespace {
 inline bool is_allgather_comm_ops(const AnfNodePtr &node) {
   static const std::vector<PrimitivePtr> kAllGatherOpsPrim = {prim::kPrimMicroStepAllGather,
@@ -131,5 +131,5 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
     manager->SetEdge(recv_user, recv_user_index, depend_node);
   }
 }
-}  // namespace opt
+}  // namespace parallel
 }  // namespace mindspore

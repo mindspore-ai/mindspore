@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_MICRO_INTERLEAVED_ORDER_CONTROL_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_MICRO_INTERLEAVED_ORDER_CONTROL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_MICRO_INTERLEAVED_ORDER_CONTROL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_MICRO_INTERLEAVED_ORDER_CONTROL_H_
 
 #include "ir/anf.h"
 
 namespace mindspore {
-namespace opt {
+namespace parallel {
 // Micro interleaved nodes order control.
 void MicroInterleavedOrderControl(const FuncGraphPtr &graph);
-}  // namespace opt
+}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_MICRO_INTERLEAVED_ORDER_CONTROL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_MICRO_INTERLEAVED_ORDER_CONTROL_H_

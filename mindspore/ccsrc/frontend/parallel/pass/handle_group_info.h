@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OVERLAP_OPT_SHARD_IN_PIPELINE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OVERLAP_OPT_SHARD_IN_PIPELINE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
 
 #include "ir/anf.h"
 
 namespace mindspore {
-namespace opt {
-// Automatically insert duplicated recomputed nodes.
-void OverlapOptShardInPipeline(const FuncGraphPtr &graph);
-}  // namespace opt
+namespace parallel {
+// Handle hccl group info.
+void HandleGroupInfo(const FuncGraphPtr &graph);
+}  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_OVERLAP_OPT_SHARD_IN_PIPELINE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
