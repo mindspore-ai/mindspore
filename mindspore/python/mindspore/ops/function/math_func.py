@@ -10198,16 +10198,16 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
     return transpose_op(output, perm)
 
 
-def sum(x, dim=None, keepdim=False, *, dtype=None):
+def sum(input, dim=None, keepdim=False, *, dtype=None):
     """
     Calculate sum of Tensor elements over a given dim.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
         dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
             If None, sum all the elements of the input tensor.
             If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-            Must be in the range :math:`[-x.ndim, x.ndim)` . Default: None.
+            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: None.
         keepdim (bool): Whether the output tensor has dim retained or not.
             If True, keep these reduced dimensions and the length is 1.
             If False, don't keep these dimensions. Default: False.
@@ -10216,12 +10216,12 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
         dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: None.
 
     Returns:
-       A Tensor, sum of elements over a given dim in `x`.
+       A Tensor, sum of elements over a given dim in `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
-        ValueError: If `dim` is not in the range :math:`[-x.ndim, x.ndim)` .
+        ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
         TypeError: If `keepdim` is not a bool.
 
     Supported Platforms:
@@ -10251,8 +10251,8 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
          [48.]
          [54.]]]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError("For 'sum', 'x' must be Tensor.")
+    if not isinstance(input, Tensor):
+        raise TypeError("For 'sum', 'input' must be Tensor.")
     if dim is not None:
         if not isinstance(dim, (int, tuple, list)):
             raise TypeError("For 'sum', 'dim' must be int, tuple(int), list(int) or None.")
@@ -10261,9 +10261,9 @@ def sum(x, dim=None, keepdim=False, *, dtype=None):
 
     reduce_sum = P.ReduceSum(keep_dims=keepdim)
     if dim is not None:
-        out = reduce_sum(x, dim)
+        out = reduce_sum(input, dim)
     else:
-        out = reduce_sum(x)
+        out = reduce_sum(input)
     if dtype is not None:
         out = out.astype(dtype)
     return out

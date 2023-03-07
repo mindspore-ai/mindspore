@@ -3187,12 +3187,12 @@ def sort(input_x, axis=-1, descending=False):
     return _sort(input_x)
 
 
-def argsort(input_x, axis=-1, descending=False):
+def argsort(input, axis=-1, descending=False):
     r"""
     Sorts the input tensor along the given dimension in specified order and return the sorted indices.
 
     Args:
-        input_x(Tensor): The input tensor to sort.
+        input(Tensor): The input tensor to sort.
         axis (int): The axis to sort along. Default: -1, means the last axis
         descending (bool): The sort order. If `descending` is True then the elements
             are sorted in descending order by value. Otherwise sort in descending order. Default: False.
@@ -3209,7 +3209,7 @@ def argsort(input_x, axis=-1, descending=False):
         >>> print(sort)
     """
     _sort = _get_cache_prim(P.Sort)(axis, descending)
-    _, arg_sort = _sort(input_x)
+    _, arg_sort = _sort(input)
     return arg_sort
 
 
@@ -5081,17 +5081,17 @@ def _split_sub_tensors(x, split_size_or_sections, axis):
     return sub_tensors
 
 
-def split(x, split_size_or_sections, axis=0):
+def split(tensor, split_size_or_sections, axis=0):
     """
     Splits the Tensor into chunks along the given axis.
 
     Args:
-        x (Tensor): A Tensor to be divided.
+        tensor (Tensor): A Tensor to be divided.
         split_size_or_sections (Union[int, tuple(int), list(int)]):
-            If `split_size_or_sections` is an int type, `x` will be split into equally sized chunks, each chunk with
-            size `split_size_or_sections`. Last chunk will be smaller than `split_size_or_sections` if `x.shape[axis]`
-            is not divisible by `split_size_or_sections`.
-            If `split_size_or_sections` is a list type, then `x` will be split into len(split_size_or_sections)
+            If `split_size_or_sections` is an int type, `tensor` will be split into equally sized chunks,
+            each chunk with size `split_size_or_sections`. Last chunk will be smaller than `split_size_or_sections`
+            if `tensor.shape[axis]` is not divisible by `split_size_or_sections`.
+            If `split_size_or_sections` is a list type, then `tensor` will be split into len(split_size_or_sections)
             chunks with sizes `split_size_or_sections` along the given `axis`.
         axis (int): The axis along which to split. Default: 0.
 
@@ -5099,9 +5099,9 @@ def split(x, split_size_or_sections, axis=0):
         A tuple of sub-tensors.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `tensor` is not Tensor.
         TypeError: If argument `axis` is not Tensor.
-        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)` .
+        ValueError: If argument `axis` is out of range of :math:`[-tensor.ndim, tensor.ndim)` .
         TypeError: If each element in 'split_size_or_sections' is not integer.
         TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
         ValueError: The sum of 'split_size_or_sections' is not equal to x.shape[axis].
@@ -5117,15 +5117,15 @@ def split(x, split_size_or_sections, axis=0):
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+    if not isinstance(tensor, Tensor):
+        raise TypeError(f'expect `tensor` is a Tensor, but got {type(tensor)}')
     if type(axis) is not int:
         raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
-    axis = _canonicalize_axis(axis, x.ndim)
+    axis = _canonicalize_axis(axis, tensor.ndim)
 
     if type(split_size_or_sections) is int:
         if split_size_or_sections > 0:
-            res = _split_int(x, split_size_or_sections, axis)
+            res = _split_int(tensor, split_size_or_sections, axis)
         else:
             raise ValueError(f"For split, the value of 'split_size_or_sections' must be more than zero, "
                              f"but got {split_size_or_sections}.")
@@ -5137,10 +5137,10 @@ def split(x, split_size_or_sections, axis=0):
                 raise TypeError(f"Each element in 'split_size_or_sections' should be non-negative, "
                                 f"but got {split_size_or_sections}.")
 
-        if sum(split_size_or_sections) != x.shape[axis]:
-            raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {x.shape[axis]}, "
+        if sum(split_size_or_sections) != tensor.shape[axis]:
+            raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {tensor.shape[axis]}, "
                              f"but got {sum(split_size_or_sections)}.")
-        res = _split_sub_tensors(x, split_size_or_sections, axis)
+        res = _split_sub_tensors(tensor, split_size_or_sections, axis)
     else:
         raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(split_size_or_sections)}")
@@ -5323,25 +5323,26 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
     return res
 
 
-def tensor_split(x, indices_or_sections, axis=0):
+def tensor_split(input, indices_or_sections, axis=0):
     r"""
     Splits a tensor into multiple sub-tensors along the given axis.
 
     Args:
-        x (Tensor): A Tensor to be divided.
+        input (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]):
 
             - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-              - If :math:`x.size(axis)` can be divisible by n, sub-sections will have equal size
-                :math:`x.size(axis) / n` .
-              - If :math:`x.size(axis)` is not divisible by n, the first :math:`x.size(axis) % n` sections
-                will have size :math:`x.size(axis) // n + 1` , and the rest will have size :math:`x.size(axis) // n` .
+              - If :math:`input.size(axis)` can be divisible by n, sub-sections will have equal size
+                :math:`input.size(axis) / n` .
+              - If :math:`input.size(axis)` is not divisible by n, the first :math:`input.size(axis) % n` sections
+                will have size :math:`x.size(axis) // n + 1` , and the rest will have
+                size :math:`input.size(axis) // n` .
 
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
-              and :math:`axis=0` , the input tensor will be split into sections :math:`x[:1]` , :math:`x[1:4]` ,
-              and :math:`x[4:]` .
+              and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,
+              :math:`input[1:4]` , and :math:`input[4:]` .
 
         axis (int): The axis along which to split. Default: 0.
 
@@ -5349,9 +5350,9 @@ def tensor_split(x, indices_or_sections, axis=0):
         A tuple of sub-tensors.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `input` is not Tensor.
         TypeError: If argument `axis` is not int.
-        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)` .
+        ValueError: If argument `axis` is out of range of :math:`[-input.ndim, input.ndim)` .
         TypeError: If each element in 'indices_or_sections' is not integer.
         TypeError: If argument `indices_or_sections` is not int, tuple(int) or list(int).
 
@@ -5366,15 +5367,15 @@ def tensor_split(x, indices_or_sections, axis=0):
         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
+    if not isinstance(input, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(input)}')
 
     if type(axis) is not int:
         raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
-    axis = _canonicalize_axis(axis, x.ndim)
+    handle_axis = _canonicalize_axis(axis, input.ndim)
     if type(indices_or_sections) is int:
         if indices_or_sections > 0:
-            res = _tensor_split_sub_int(x, indices_or_sections, axis)
+            res = _tensor_split_sub_int(input, indices_or_sections, handle_axis)
         else:
             raise ValueError(f"For tensor_split, the value of 'indices_or_sections' must be more than zero "
                              f"but got {indices_or_sections}")
@@ -5382,7 +5383,7 @@ def tensor_split(x, indices_or_sections, axis=0):
         for item in indices_or_sections:
             if type(item) is not int:
                 raise TypeError(f"Each element in 'indices_or_sections' should be integer, but got {type(item)}.")
-        res = _tensor_split_sub_tensors(x, indices_or_sections, axis)
+        res = _tensor_split_sub_tensors(input, indices_or_sections, handle_axis)
     else:
         raise TypeError(f"Type of Argument `indices_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(indices_or_sections)}")
@@ -5390,13 +5391,13 @@ def tensor_split(x, indices_or_sections, axis=0):
     return res
 
 
-def vsplit(x, indices_or_sections):
+def vsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors vertically.
     It is equivalent to `ops.tensor_split` with :math:`axis=0` .
 
     Args:
-        x (Tensor): A Tensor to be divided.
+        input (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
 
     Returns:
@@ -5413,20 +5414,20 @@ def vsplit(x, indices_or_sections):
          Tensor(shape=[1, 3], dtype=Float32, value=[[ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]]),
          Tensor(shape=[1, 3], dtype=Float32, value=[[ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
-    if x.ndim < 1:
-        raise ValueError(f'vsplit expect `x` is a Tensor with at least 1 dimension, but got {x.ndim}')
-    return tensor_split(x, indices_or_sections, 0)
+    if not isinstance(input, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(input)}')
+    if input.ndim < 1:
+        raise ValueError(f'vsplit expect `x` is a Tensor with at least 1 dimension, but got {input.ndim}')
+    return tensor_split(input, indices_or_sections, 0)
 
 
-def hsplit(x, indices_or_sections):
+def hsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors horizontally.
     It is equivalent to `ops.tensor_split` with :math:`axis=1` .
 
     Args:
-        x (Tensor): A Tensor to be divided.
+        input (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
 
     Returns:
@@ -5443,21 +5444,21 @@ def hsplit(x, indices_or_sections):
          Tensor(shape=[2, 1], dtype=Float32, value=[[ 1.00000000e+00], [ 4.00000000e+00]]),
          Tensor(shape=[2, 1], dtype=Float32, value=[[ 2.00000000e+00], [ 5.00000000e+00]]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
-    if x.ndim < 2:
-        raise ValueError(f'hsplit expect `x` is a Tensor with at least 2 dimension, but got {x.ndim}')
+    if not isinstance(input, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(input)}')
+    if input.ndim < 2:
+        raise ValueError(f'hsplit expect `x` is a Tensor with at least 2 dimension, but got {input.ndim}')
 
-    return tensor_split(x, indices_or_sections, 1)
+    return tensor_split(input, indices_or_sections, 1)
 
 
-def dsplit(x, indices_or_sections):
+def dsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors along the 3rd axis.
     It is equivalent to `ops.tensor_split` with :math:`axis=2` .
 
     Args:
-        x (Tensor): A Tensor to be divided.
+        input (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]): See argument in :func:`mindspore.ops.tensor_split`.
 
     Returns:
@@ -5474,12 +5475,12 @@ def dsplit(x, indices_or_sections):
          Tensor(shape=[1, 2, 1], dtype=Float32, value=[[[ 1.00000000e+00], [ 4.00000000e+00]]]),
          Tensor(shape=[1, 2, 1], dtype=Float32, value=[[[ 2.00000000e+00], [ 5.00000000e+00]]]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'expect `x` is a Tensor, but got {type(x)}')
-    if x.ndim < 3:
-        raise ValueError(f'dsplit expect `x` is a Tensor with at least 3 dimension, but got {x.ndim}')
+    if not isinstance(input, Tensor):
+        raise TypeError(f'expect `x` is a Tensor, but got {type(input)}')
+    if input.ndim < 3:
+        raise ValueError(f'dsplit expect `x` is a Tensor with at least 3 dimension, but got {input.ndim}')
 
-    return tensor_split(x, indices_or_sections, 2)
+    return tensor_split(input, indices_or_sections, 2)
 
 
 def max(x, axis=0, keep_dims=False):
