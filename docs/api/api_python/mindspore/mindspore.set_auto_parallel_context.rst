@@ -22,6 +22,7 @@ mindspore.set_auto_parallel_context
     enable_parallel_optimizer  dataset_strategy
     enable_alltoall            pipeline_stages
     \                          grad_accumulation_step
+    \                          strategy_ckpt_config
     =========================  =========================
 
     参数：
@@ -65,6 +66,12 @@ mindspore.set_auto_parallel_context
           - allreduce：进行AllReduce算子的通信融合。"mode"包含："auto"、"size"和"index"。在"auto"模式下，融合的是梯度变量的大小，默认值阈值为"64"MB，"config"对应的值为None。在"size"模式下，需要用户在config的字典中指定梯度大小阈值，这个值必须大于"0"MB。在"mode"为"index"时，它与"all_reduce_fusion_config"相同，用户需要给"config"传入一个列表，里面每个值表示梯度的索引。
           - allgather：进行AllGather算子的通信融合。"mode"包含："auto"、"size"。"auto" 和 "size"模式的配置方式与AllReduce相同。
           - reducescatter：进行ReduceScatter算子的通信融合。"mode"包含："auto"、"size"。"auto" 和 "size"模式的配置方式与AllReduce相同。
+
+        - **strategy_ckpt_config** (dict) - 用于设置并行策略文件的配置。包含`strategy_ckpt_load_file`和`strategy_ckpt_save_file`两个参数的功能，建议使用此参数替换这两个参数。它包含以下配置：
+
+          - load_file(str)：加载并行切分策略的路径。如果文件扩展名为`.json`，文件以json格式加载。否则，文件以ProtoBuf格式加载。默认值：""。
+          - save_file(str)：保存并行切分策略的路径。如果文件扩展名为`.json`，文件以json格式保存。否则，文件以ProtoBuf格式保存。默认值：""。
+          - only_trainable_params(bool)：仅保存/加载可训练参数的策略信息。默认值：True。
 
     异常：
         - **ValueError** - 输入key不是自动并行上下文中的属性。
