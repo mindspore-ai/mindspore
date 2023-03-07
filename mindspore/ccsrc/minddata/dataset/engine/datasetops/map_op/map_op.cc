@@ -526,11 +526,21 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
     }
     i_row = std::move(o_row);
   }
-  // assign transformed tensor back to the original
-  for (size_t i = 0; i < to_process_indices_.size(); i++) {
-    new_row[to_process_indices_[i]] = i_row.at(i);
+  if (in_columns_.size() == out_columns_.size()) {
+    // assign transformed tensor back to the original
+    for (size_t i = 0; i < to_process_indices_.size(); i++) {
+      new_row[to_process_indices_[i]] = i_row.at(i);
+    }
+    (*row) = std::move(new_row);
+  } else {
+    // Append the data in the new row that we did not use to the end of i_row.
+    for (size_t i = 0; i < new_row.size(); i++) {
+      if (keep_input_columns_[i]) {
+        i_row.push_back(std::move(new_row[i]));
+      }
+    }
+    (*row) = std::move(i_row);
   }
-  (*row) = std::move(new_row);
   return Status::OK();
 }
 }  // namespace dataset
