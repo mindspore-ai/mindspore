@@ -83,6 +83,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"BatchNormGradWithAddAndActivation", kTupleTensor4},
                                                        {"BatchNormGradGrad", kTupleTensor3},
                                                        {"BiasDropoutAdd", kTupleTensor2},
+                                                       {"Broadcast", kTuple},
                                                        {"CSRSparseMatrixToSparseTensor", kTupleTensor3},
                                                        {"CTCGreedyDecoder", kTupleTensor4},
                                                        {"CTCLoss", kTupleTensor2},
