@@ -412,7 +412,7 @@ def where(condition, x, y):
         output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Union[Bool Tensor, bool, scalar]): If True, yield `x`, otherwise yield `y`.
+        condition (Tensor[Bool]): If True, yield `x`, otherwise yield `y`.
         x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
         y (Union[Tensor, Scalar]): When `condition` is Fasle, values to select from.
 
@@ -420,7 +420,9 @@ def where(condition, x, y):
         Tensor, elements are selected from `x` and `y`.
 
     Raises:
-        ValueError: If `condition` can not be broadcast to the shape of `x`.
+        TypeError: If `condition` is not a Tensor.
+        TypeError: If both `x` and `y` are scalars.
+        ValueError: If `condition`, `x` and `y` can not broadcast to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -434,16 +436,24 @@ def where(condition, x, y):
         [[0. 1.]
          [2. 1.]]
     """
-    not_op = P.LogicalNot()
-    x_mask = cast_(condition, mstype.bool_)
-    y_mask = not_op(x_mask)
-    if x_mask.all():
-        output = x
-    elif not x_mask.any():
-        output = y
-    else:
-        output = x * x_mask + y * y_mask
-    return output
+    if not isinstance(condition, Tensor):
+        raise TypeError(f"For 'where', 'condition' must be a Tensor, but got {type(condition)}.")
+    if isinstance(x, (int, float)):
+        if not isinstance(y, Tensor):
+            raise TypeError(f"For 'where', at least one of 'x' and 'y' should be Tensor, \
+            but got x:{type(x)}, y:{type(y)}.")
+        x = cast_(x, y.dtype)
+    elif isinstance(y, (int, float)):
+        if not isinstance(x, Tensor):
+            raise TypeError(f"For 'where', at least one of 'x' and 'y' should be Tensor, \
+            but got x:{type(x)}, y:{type(y)}.")
+        y = cast_(y, x.dtype)
+    output_shape = _calc_broadcast_shape(x.shape, y.shape, condition.shape)
+    condition = broadcast_to(condition, output_shape)
+    x = broadcast_to(x, output_shape)
+    y = broadcast_to(y, output_shape)
+    _select = P.Select()
+    return _select(condition, x, y)
 
 
 def reverse(x, axis):
