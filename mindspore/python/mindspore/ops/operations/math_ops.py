@@ -1838,7 +1838,7 @@ class InplaceUpdateV2(Primitive):
         TypeError: If `indices` is a tuple and its element is not an int.
 
     Supported Platforms:
-        ``Ascend` ``GPU```
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = (0, 1)
