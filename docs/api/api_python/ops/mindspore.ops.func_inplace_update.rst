@@ -11,11 +11,11 @@ mindspore.ops.inplace_update
     参数：
         - **x** (Tensor) - 待更新的Tensor。
         - **v** (Tensor) - 更新的值。
-        - **indices** (Union[int, tuple], Tensor) - 待更新值在原Tensor中的索引。
+        - **indices** (Union[int, tuple, Tensor]) - 待更新值在原Tensor中的索引。
 
     返回：
         Tensor，更新后的Tensor。
 
     异常：
-        - **TypeError** - `indices` 不是int或tuple。
-        - **TypeError** - `indices` 是元组，但是其中的元素不是int。
+        - **TypeError** - `indices` 不是int或tuple或Tensor。
+        - **TypeError** - `indices` 是tuple或Tensor，但是其中的元素不是int。

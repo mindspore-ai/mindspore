@@ -512,6 +512,7 @@ Array Operation
     mindspore.ops.InplaceAdd
     mindspore.ops.InplaceSub
     mindspore.ops.InplaceUpdate
+    mindspore.ops.InplaceUpdateV2
     mindspore.ops.InvertPermutation
     mindspore.ops.IsClose
     mindspore.ops.Lcm

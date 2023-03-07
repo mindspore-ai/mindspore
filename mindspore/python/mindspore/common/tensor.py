@@ -1964,7 +1964,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.inplace_update`.
         """
         self._init_check()
-        return tensor_operator_registry.get('inplace_update')(indices)(self, v)
+        return tensor_operator_registry.get('inplace_update')()(self, indices, v)
 
     def copy(self):
         """
