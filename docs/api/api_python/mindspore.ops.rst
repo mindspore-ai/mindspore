@@ -59,6 +59,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.cosine_embedding_loss
     mindspore.ops.cross_entropy
+    mindspore.ops.ctc_loss
     mindspore.ops.gaussian_nll_loss
     mindspore.ops.hinge_embedding_loss
     mindspore.ops.huber_loss

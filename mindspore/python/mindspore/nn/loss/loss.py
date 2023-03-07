@@ -2302,7 +2302,7 @@ class CTCLoss(LossBase):
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ .
 
     Args:
-        blank (int): The blank tag. Default: 0.
+        blank (int): The blank label. Default: 0.
         reduction (str): Implements the reduction method to the output with 'none', 'mean', or 'sum'. Default: 'mean'.
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
 

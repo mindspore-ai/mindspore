@@ -3974,26 +3974,27 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         input_lengths (Union(Tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the input.
         target_lengths (Union(Tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the target.
         blank (int): The blank label. Default: 0.
-        reduction (string): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
+        reduction (string): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+        zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
 
     Returns:
-        neg_log_likelihood (Tensor), A loss value with shape (N), which is differentiable with respect to
+        neg_log_likelihood (Tensor), A loss value with shape :math:`(N)` , which is differentiable with respect to
         each input node.
 
-        log_alpha (Tensor), The probability of possible trace of input to target with shape (N, T, 2 * S + 1).
+        log_alpha (Tensor), The probability of possible trace of input to target with shape :math:`(N, T, 2 * S + 1)` .
 
     Raises:
-        TypeError: If `zero_infinity` is not a bool, reduction is not string.
-        TypeError: If the dtype of `log_probs` or `grad_out` is not float or double.
+        TypeError: If `zero_infinity` is not a bool, `reduction` is not string.
+        TypeError: If the dtype of `log_probs` is not float or double.
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
         ValueError: If the rank of `log_probs` is not 3.
         ValueError: If the rank of `targets` is not 2.
-        ValueError: If the shape of `input_lengths` does not match {batch_size|N}.
-        ValueError: If the shape of `target_lengths` does not match {batch_size|N}.
-        TypeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
-        ValueError: If the value of `blank` is not in range [0, num_labels|C).
-        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
+        ValueError: If the shape of `input_lengths` does not match N. N is batch size of `log_probs` .
+        ValueError: If the shape of `target_lengths` does not match N. N is batch size of `log_probs` .
+        TypeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
+        ValueError: If the value of `blank` is not in range [0, num_labels|C). C is number of classes of `log_probs` .
+        RuntimeError: If any value of `input_lengths` is larger than T. T is the length of `log_probs`.
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
