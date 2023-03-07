@@ -92,14 +92,13 @@ void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   if (cast_prim_ == nullptr) {
     py::gil_scoped_acquire gil;
     const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
-    const auto &adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
-    MS_EXCEPTION_IF_NULL(adapter);
-    cast_prim_ = adapter->attached_primitive();
-    if (cast_prim_ == nullptr) {
-      cast_prim_ = std::make_shared<PrimitivePy>(cast_prim, adapter);
-      adapter->set_attached_primitive(cast_prim_->cast<PrimitivePyPtr>());
-    }
-    if (!cast_prim_->cast<PrimitivePyPtr>()->HasPyObj()) {
+    const auto &py_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
+    MS_EXCEPTION_IF_NULL(py_adapter);
+    const auto adapter = std::make_shared<PrimitivePyAdapter>(*py_adapter);
+    cast_prim_ = std::make_shared<PrimitivePy>(cast_prim, adapter);
+    const auto py_cast_prim = cast_prim_->cast<PrimitivePyPtr>();
+    adapter->set_attached_primitive(py_cast_prim);
+    if (!py_cast_prim->HasPyObj()) {
       MS_LOG(EXCEPTION) << "Pyobj is empty";
     }
   }
