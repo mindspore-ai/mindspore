@@ -41,6 +41,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
+from mindspore._checkparam import is_stub_tensor
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE
@@ -797,6 +798,22 @@ def is_third_party_module(value):
     return False
 
 
+def _convert_stub_tensor(data):
+    """Convert stub tensor output to tensor"""
+    if is_stub_tensor(data):
+        return data.stub_sync()
+    if isinstance(data, tuple):
+        return tuple(_convert_stub_tensor(x) for x in data)
+    if isinstance(data, list):
+        # Keep the list object not change.
+        for i in range(len(data)):
+            data[i] = _convert_stub_tensor(data[i])
+        return data
+    if isinstance(data, dict):
+        return dict((_convert_stub_tensor(key), _convert_stub_tensor(value)) for key, value in data.items())
+    return data
+
+
 def eval_script(exp_str, params):
     """Evaluate a python expression."""
     if not isinstance(params, tuple):
@@ -811,6 +828,7 @@ def eval_script(exp_str, params):
     try:
         local_params = _convert_python_data(local_params)
         res = eval(exp_str, global_params, local_params)
+        res = _convert_stub_tensor(res)
         logger.debug(f"eval res: '{res}'")
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \

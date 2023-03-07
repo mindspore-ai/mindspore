@@ -38,6 +38,7 @@
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "mindspore/ccsrc/backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -70,6 +71,26 @@ static py::object CallPythonGetGlobalParams() {
   py::module mod = python_adapter::GetPyModule(python_mod_parse);
   constexpr auto python_get_dict = "get_global_params";
   return python_adapter::CallPyModFn(mod, python_get_dict);
+}
+
+bool ContainStubTensor(const py::object &obj) {
+  if (py::isinstance<py::list>(obj)) {
+    auto list_obj = py::cast<py::list>(obj);
+    return std::any_of(list_obj.begin(), list_obj.end(),
+                       [](const auto &e) { return ContainStubTensor(py::cast<py::object>(e)); });
+  }
+  if (py::isinstance<py::tuple>(obj)) {
+    auto tuple_obj = py::cast<py::tuple>(obj);
+    return std::any_of(tuple_obj.begin(), tuple_obj.end(),
+                       [](const auto &e) { return ContainStubTensor(py::cast<py::object>(e)); });
+  }
+  if (py::isinstance<py::dict>(obj)) {
+    auto dict_obj = py::cast<py::dict>(obj);
+    return std::any_of(dict_obj.begin(), dict_obj.end(), [](const auto &e) {
+      return ContainStubTensor(py::cast<py::object>(e.first)) || ContainStubTensor(py::cast<py::object>(e.second));
+    });
+  }
+  return IsStubTensor(obj);
 }
 
 class PyExecuteInitializer {
@@ -145,6 +166,9 @@ class PyExecuteInitializer {
     try {
       mindspore::ScopedFallbackRunning fallback_running;
       const auto &output = parse::data_converter::CallPythonScript(py_script, params);
+      if (ContainStubTensor(output)) {
+        MS_EXCEPTION(TypeError) << "PyExecute node output can not contain stub tensor.";
+      }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
       PushPyExecuteOutput(script_str, output);
       if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {

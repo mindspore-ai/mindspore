@@ -945,3 +945,95 @@ def test_print_pyexecute():
     output = net(ms.Tensor(x))
     print(output)
     assert output == 200
+
+
+class OuterNet(ms.nn.Cell):
+    def __init__(self, net):
+        super().__init__()
+        self.net = net
+
+    def construct(self, x):
+        out = self.net(x)
+        return out
+
+
+class UserDefinedTupleNet:
+    def __init__(self):
+        self.value = 10
+
+    def __call__(self, x):
+        return self.value * x, 100
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_stub_tensor():
+    """
+    Feature: Fallback runtime.
+    Description: The output of pyexecute is not allow to have stub tensor.
+    Expectation: No error.
+    """
+    net = OuterNet(UserDefinedTupleNet())
+    x = np.array([10], np.float64)
+    output = net(ms.Tensor(x))
+    assert isinstance(output, tuple)
+    assert len(output) == 2
+    assert output[0] == 100
+    assert output[1] == 100
+
+
+class UserDefinedListNet:
+    def __init__(self):
+        self.value = 10
+
+    def __call__(self, x):
+        return [self.value * x, 100]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_stub_tensor_2():
+    """
+    Feature: Fallback runtime.
+    Description: The output of pyexecute is not allow to have stub tensor.
+    Expectation: No error.
+    """
+    net = OuterNet(UserDefinedListNet())
+    x = np.array([10], np.float64)
+    output = net(ms.Tensor(x))
+    assert isinstance(output, list)
+    assert len(output) == 2
+    assert output[0] == 100
+    assert output[1] == 100
+
+
+class UserDefinedDictNet:
+    def __init__(self):
+        self.value = 10
+
+    def __call__(self, x):
+        return {"100": self.value * x}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_stub_tensor_3():
+    """
+    Feature: Fallback runtime.
+    Description: The output of pyexecute is not allow to have stub tensor.
+    Expectation: No error.
+    """
+    net = OuterNet(UserDefinedDictNet())
+    x = np.array([10], np.float64)
+    output = net(ms.Tensor(x))
+    assert isinstance(output, dict)
+    assert output["100"] == 100
