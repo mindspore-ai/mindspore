@@ -73,7 +73,7 @@ std::vector<TaskInfoPtr> LabelSwitchKernel::GenTask(const std::vector<AddressPtr
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernelInfo(const CNodePtr &) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> label_switch_build_info{};
   std::vector<string> input_format{kOpFormat_DEFAULT};
-  std::vector<TypeId> input_type{kNumberTypeUInt64};
+  std::vector<TypeId> input_type{kNumberTypeInt32};
   if (input_format.size() != input_type.size()) {
     MS_LOG(EXCEPTION) << "Invalid param num, input_format size " << input_format.size() << " input_type size "
                       << input_type.size();
