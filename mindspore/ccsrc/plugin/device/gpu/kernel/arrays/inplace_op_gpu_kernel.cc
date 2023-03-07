@@ -23,8 +23,6 @@ static std::unordered_map<std::string, int> op_type_map = {
   {"InplaceUpdate", INPLACE_OP_TYPE_UPDATE}, {"InplaceAdd", INPLACE_OP_TYPE_ADD}, {"InplaceSub", INPLACE_OP_TYPE_SUB}};
 bool InplaceOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
-  //   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::InplaceUpdate>(base_operator);
-  //   kernel_name_ = kernel_ptr_->name();
   kernel_name_ = base_operator->name();
   auto iter = op_type_map.find(kernel_name_);
   if (iter == op_type_map.end()) {
