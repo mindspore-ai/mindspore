@@ -1863,7 +1863,11 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
   char *lite_buf = nullptr;
   auto buf_model_type = LoadModelByBuff(model_buf, buf_size, &lite_buf, size, model_type);
   if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
-    delete[] model_buf;
+    if (use_mmap) {
+      lite::UnmapMmapBuffer(const_cast<void *>(static_cast<const void *>(model_buf)), buf_size);
+    } else {
+      delete[] model_buf;
+    }
     model_buf = nullptr;
     return nullptr;
   }
