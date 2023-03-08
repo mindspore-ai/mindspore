@@ -47,8 +47,12 @@ class SvdCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  bool LaunchKernelFloat(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                         const std::vector<AddressPtr> &outputs);
+
+  template <typename T>
+  bool LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs);
 
   using SvdFunc = std::function<bool(SvdCpuKernelMod *, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;

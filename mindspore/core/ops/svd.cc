@@ -97,7 +97,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
 TypePtr SvdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(infer_type);
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("a", infer_type, valid_types, prim->name());
 
   std::vector<TypePtr> type_tuple = {type, type, type};
