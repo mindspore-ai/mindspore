@@ -44,6 +44,7 @@ bool InplaceOpV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(inputs[0]->GetDtype());
+  indices_size_ = abstract::TypeIdSize(inputs[1]->GetDtype());
   return true;
 }
 
@@ -68,13 +69,14 @@ int InplaceOpV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   for (size_t i = 1; i < input_shape_x.size(); ++i) {
     band_size_ *= input_shape_x[i];
   }
+  first_dimension_ = input_shape_x[kIndex0];
   input_elements_x = std::accumulate(input_shape_x.begin(), input_shape_x.end(), 1, std::multiplies<int64_t>());
   input_elements_v = std::accumulate(input_shape_v.begin(), input_shape_v.end(), 1, std::multiplies<int64_t>());
   size_t input_size_x = input_elements_x * unit_size_;
-  size_t indices_size = input_shape_indices.size() * sizeof(int32_t);
+  size_t indices_size = (input_shape_indices.empty() ? kSizeOne : input_shape_indices[kIndex0]) * indices_size_;
   size_t input_size_v = input_elements_v * unit_size_;
   input_size_list_.push_back(input_size_x);
-  input_size_list_.push_back(IntToSize(indices_size));
+  input_size_list_.push_back(indices_size);
   input_size_list_.push_back(input_size_v);
   output_size_list_.push_back(input_size_x);
   if (kernel_name_ == ops::kNameInplaceUpdateV2) {
@@ -93,17 +95,17 @@ void InplaceOpV2GpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-template <typename T>
+template <typename T, typename S>
 bool InplaceOpV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &workspace,
                                            const std::vector<AddressPtr> &outputs) {
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
-  int32_t *input_indices = GetDeviceAddress<int32_t>(inputs, kIndex1);
+  S *input_indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *input_v = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  int32_t *indices_key_ptr = nullptr;
+  S *indices_key_ptr = nullptr;
   if (kernel_name_ == ops::kNameInplaceUpdateV2) {
-    indices_key_ptr = GetDeviceAddress<int32_t>(workspace, kIndex0);
+    indices_key_ptr = GetDeviceAddress<S>(workspace, kIndex0);
   }
   auto cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
 
@@ -111,8 +113,8 @@ bool InplaceOpV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input_x, input_elements_x * unit_size_, cudaMemcpyDeviceToDevice, cuda_stream),
     "cudaMemcpyAsync output 'output' from 'input_x' failed.");
-  CalInplaceOp(input_elements_v, input_v, output, input_indices, indices_key_ptr, band_size_, device_id_, kernel_type_,
-               cuda_stream);
+  CalInplaceOp(input_elements_v, input_v, output, input_indices, indices_key_ptr, first_dimension_, band_size_,
+               device_id_, kernel_type_, cuda_stream);
   return true;
 }
 
@@ -122,25 +124,49 @@ std::vector<std::pair<KernelAttr, InplaceOpV2GpuKernelMod::InplaceOpFunc>> Inpla
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
-   &InplaceOpV2GpuKernelMod::LaunchKernel<half>},
+   &InplaceOpV2GpuKernelMod::LaunchKernel<half, int>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
-   &InplaceOpV2GpuKernelMod::LaunchKernel<float>},
+   &InplaceOpV2GpuKernelMod::LaunchKernel<float, int>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),
-   &InplaceOpV2GpuKernelMod::LaunchKernel<double>},
+   &InplaceOpV2GpuKernelMod::LaunchKernel<double, int>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
-   &InplaceOpV2GpuKernelMod::LaunchKernel<int>}};
+   &InplaceOpV2GpuKernelMod::LaunchKernel<int, int>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &InplaceOpV2GpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &InplaceOpV2GpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &InplaceOpV2GpuKernelMod::LaunchKernel<double, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   &InplaceOpV2GpuKernelMod::LaunchKernel<int, int64_t>}};
 
 std::vector<KernelAttr> InplaceOpV2GpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

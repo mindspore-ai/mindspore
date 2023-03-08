@@ -71,6 +71,7 @@ class InplaceOpGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> indices_;
   int kernel_type_{-1};
   size_t unit_size_{1};
+  int64_t first_dimension_{0};
   size_t input_elements_x;
   size_t input_elements_v;
   int64_t band_size_;
