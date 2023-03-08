@@ -918,6 +918,7 @@ constexpr auto kAttrOriginFormat = "origin_format";
 constexpr auto kAttrReshapeType = "reshape_type";
 constexpr auto kAttrAxis = "axis";
 constexpr auto kAttrAxes = "axes";
+constexpr auto kAttrBatchDims = "batch_dims";
 constexpr auto kAttrKeepDims = "keep_dims";
 constexpr auto kTransposeA = "transpose_a";
 constexpr auto kTransposeB = "transpose_b";

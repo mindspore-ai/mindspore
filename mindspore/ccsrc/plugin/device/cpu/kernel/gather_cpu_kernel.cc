@@ -69,7 +69,7 @@ int GatherCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return KRET_UNKNOWN_SHAPE;
   }
   if (batch_dims_ < 0) {
-    batch_dims_ += SizeToLong(input_shapes_.size());
+    batch_dims_ += SizeToLong(indices_shape_.size());
   }
   is_null_input_ = input_shape_.empty() || indices_shape_.empty() || output_shape_.empty();
   if (is_null_input_) {

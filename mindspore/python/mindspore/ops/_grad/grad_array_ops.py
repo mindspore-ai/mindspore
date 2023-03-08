@@ -490,7 +490,6 @@ def calculate_batch_gather(values, indices, x_shape, axis, batch_dims):
 @bprop_getters.register(P.GatherV2)
 def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
-    batch_dims = self.batch_dims
 
     def _dyn_bprop_gather_v2(x, indices, axis, dout):
         """dyn shape bprop for GatherV2"""
@@ -498,6 +497,9 @@ def get_bprop_gather_v2(self):
         x_shp = dyn_shape_op(x)
         ind_shp = dyn_shape_op(indices)
         out_shp = dyn_shape_op(dout)
+        batch_dims = self.batch_dims
+        if batch_dims < 0:
+            batch_dims += F.reshape(dyn_shape_op(ind_shp), ())
 
         if F.rank(dout) == 0:
             dout = P.ExpandDims()(dout, -1)
@@ -535,6 +537,9 @@ def get_bprop_gather_v2(self):
         x_shp = shape_op(x)
         out_shp = shape_op(dout)
         ind_shp = shape_op(indices)
+        batch_dims = self.batch_dims
+        if batch_dims < 0:
+            batch_dims += len(ind_shp)
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
         perm_1 = generate_shape_index(out_shp, ind_shp, axis, batch_dims)
         values_transpose = transpose(dout, perm_1)

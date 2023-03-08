@@ -74,14 +74,17 @@ void CheckBatchDims(int64_t batch_dims, int64_t axis_val, const ShapeVector &par
   }
   for (size_t i = 0; i < LongToSize(batch_dims); i++) {
     if (params_shp[i] != indices_shp[i]) {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', params.shape[" << i << "], should be equal to indices.shape[" << i
-                        << "], but got param.shape: " << params_shp << ", indices.shape: " << indices_shp;
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', params.shape[" << i << "] should be equal to indices.shape[" << i
+                        << "] but got param.shape: " << params_shp << ", indices.shape: " << indices_shp;
     }
   }
 }
 
 ShapeVector CalcuateGatherWithBatchDimsOutputShape(int64_t batch_dims, int64_t axis_val, const ShapeVector &ind_vec,
                                                    const ShapeVector &params_vec) {
+  if (batch_dims < 0) {
+    batch_dims += SizeToLong(ind_vec.size());
+  }
   ShapeVector out_vec;
   for (size_t i = 0; i < LongToSize(axis_val); i++) {
     out_vec.push_back(params_vec[i]);
