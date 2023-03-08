@@ -648,17 +648,21 @@ def ravel(x):
     return reshape(x, (-1,))
 
 
-def flatten(x, order='C'):
+def flatten(x, order='C', *, start_dim=0, end_dim=-1):
     r"""
-    Return a copy of the tensor collapsed into one dimension.
+    Flatten a tensor along dimensions from `start_dim` to `start_dim`.
 
     Args:
-        order (str, optional): Can choose between 'C' and 'F'. 'C' means to
-            flatten in row-major (C-style) order. 'F' means to flatten in column-major
-            (Fortran-style) order. Only 'C' and 'F' are supported. Default: 'C'.
+        x (Tensor): Input tensor.
+        order (str, optional): Only 'C' and 'F' are supported. 'C' means to flatten in row-major (C-style) order.
+            'F' means to flatten in column-major (Fortran-style) order. Default: 'C'.
+
+    Keyword Args:
+        start_dim (int, optional): The first dimension to flatten. Default: 0.
+        end_dim (int, optional): The last dimension to flatten. Default: -1.
 
     Returns:
-        Tensor, has the same data type as input.
+        Tensor. If `x` is a 0-dimensional, a 1-dimensional Tensor will be returned.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -666,6 +670,9 @@ def flatten(x, order='C'):
     Raises:
         TypeError: If `order` is not string type.
         ValueError: If `order` is string type, but not 'C' or 'F'.
+        TypeError: If `start_dim` or `end_dim` is not int.
+        ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+        ValueError: If `start_dim` or `end_dim` is not in range of [-x.dim, x.dim-1].
 
     Examples:
         >>> import numpy as np
@@ -675,13 +682,7 @@ def flatten(x, order='C'):
         >>> print(output.shape)
         (24,)
     """
-    order = check_flatten_order_const(order)
-    if order == 'C':
-        return F.reshape(x, (-1,))
-
-    perm = F.make_range(0, F.rank(x))
-    new_order = F.tuple_reversed(perm)
-    return F.reshape(F.transpose(x, new_order), (-1,))
+    return F.flatten(x, order, start_dim=start_dim, end_dim=end_dim)
 
 
 def scatter(self, axis, index, src):
@@ -3140,7 +3141,6 @@ def check_view_shape(x):
 
 check_astype_dtype_const = constexpr(validator.check_astype_dtype)
 check_transpose_axis_const = constexpr(validator.check_transpose_axis)
-check_flatten_order_const = constexpr(validator.check_flatten_order)
 max_ = constexpr(validator.max_)
 min_ = constexpr(validator.min_)
 expanded_shape = validator.expanded_shape
