@@ -1900,6 +1900,7 @@ class VisionBaseDataset(Dataset):
         raise NotImplementedError("Dataset has to implement parse method.")
 
 
+# pylint: disable=abstract-method
 class TextBaseDataset(Dataset):
     """
     Abstract class to represent a text source dataset which produces content to the data pipeline.
@@ -1918,6 +1919,10 @@ class TextBaseDataset(Dataset):
 
         Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
         which contains top_k most frequent words (if top_k is specified).
+
+        Note:
+            mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0
+            and will be removed in a future version. Use mindspore.dataset.text.Vocab.from_dataset instead.
 
         Args:
             columns(Union[str, list[str]]): Column names to get words from.
@@ -1950,6 +1955,67 @@ class TextBaseDataset(Dataset):
             ...                               special_first=True)
 
         """
+        raise NotImplementedError("mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0 "
+                                  "and will be removed in a future version. "
+                                  "Use mindspore.dataset.text.Vocab.from_dataset instead.")
+
+    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
+        """
+        Function to create a SentencePieceVocab from source dataset.
+        Desired source dataset is a text type dataset.
+
+        Note:
+            mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0
+            and will be removed in a future version. Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.
+
+        Args:
+            columns(list[str]): Column names to get words from.
+            vocab_size(int): Vocabulary size.
+            character_coverage(float): Percentage of characters covered by the model, must be between
+                0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
+                Japanese or Chinese character sets, and 1.0 for other languages with small character sets
+                like English or Latin.
+            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
+                The input sentence must be pretokenized when using word type.
+            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
+
+        Returns:
+            SentencePieceVocab, vocab built from the dataset.
+
+        Examples:
+            >>> from mindspore.dataset.text import SentencePieceModel
+            >>>
+            >>> # You can construct any text dataset as source, take TextFileDataset as example.
+            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+        """
+        raise NotImplementedError("mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0 "
+                                  "and will be removed in a future version. "
+                                  "Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.")
+
+    def _build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
+        """
+        Function to create a Vocab from source dataset.
+        Desired source dataset is a text type dataset.
+
+        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+        which contains top_k most frequent words (if top_k is specified).
+
+        Args:
+            columns(Union[str, list[str]]): Column names to get words from.
+            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+                range will be stored.
+                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+                can be set to default, which corresponds to 0/total_words separately.
+            top_k(int): Number of words to be built into vocab. top_k most frequent words are
+                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
+            special_tokens(list[str]): A list of strings, each one is a special token.
+            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
+                is specified and special_first is set to default, special_tokens will be prepended.
+
+        Returns:
+            Vocab, vocab built from the dataset.
+        """
         vocab = cde.Vocab()
         columns = replace_none(columns, [])
         if not isinstance(columns, list):
@@ -1981,7 +2047,7 @@ class TextBaseDataset(Dataset):
 
         return vocab
 
-    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
+    def _build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
         """
         Function to create a SentencePieceVocab from source dataset.
         Desired source dataset is a text type dataset.
@@ -1999,13 +2065,6 @@ class TextBaseDataset(Dataset):
 
         Returns:
             SentencePieceVocab, vocab built from the dataset.
-
-        Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
-            >>>
-            >>> # You can construct any text dataset as source, take TextFileDataset as example.
-            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
-            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
         """
         if not isinstance(model_type, SentencePieceModel):
             raise TypeError("Argument model_type with value {0} is not of type SentencePieceModel, but got {1}." \

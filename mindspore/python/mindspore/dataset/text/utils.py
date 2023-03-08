@@ -246,9 +246,10 @@ class SentencePieceVocab:
         """
 
         sentence_piece_vocab = cls()
-        sentence_piece_vocab.c_sentence_piece_vocab = dataset.build_sentencepiece_vocab(col_names, vocab_size,
-                                                                                        character_coverage,
-                                                                                        model_type, params)
+        # pylint: disable=protected-access
+        sentence_piece_vocab.c_sentence_piece_vocab = dataset._build_sentencepiece_vocab(col_names, vocab_size,
+                                                                                         character_coverage,
+                                                                                         model_type, params)
         return sentence_piece_vocab
 
     @classmethod
@@ -428,7 +429,8 @@ class Vocab:
         """
 
         vocab = cls()
-        vocab.c_vocab = dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
+        # pylint: disable=protected-access
+        vocab.c_vocab = dataset._build_vocab(columns, freq_range, top_k, special_tokens, special_first)
         return vocab
 
     @classmethod
