@@ -56,20 +56,15 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   if (input_args.size() < 1) {
     MS_LOG(ERROR) << "Invalid input size " << input_args.size();
   }
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>() &&
-      !input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "The input of Stack must be list or tuple of tensors.";
-  }
-  auto elements =
-    input_args[0]->isa<abstract::AbstractTensor>()
-      ? input_args
-      : (input_args[0]->isa<abstract::AbstractTuple>() ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                                                       : input_args[0]->cast<abstract::AbstractListPtr>()->elements());
-  const int64_t kOneNum = 1;
-  (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
+  (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
 
   bool has_rank_valid_shape = false;
@@ -108,7 +103,7 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   std::vector<int64_t> infer_shape = input_shape;
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
   CheckAndConvertUtils::CheckInRange<int64_t>("Stack axis", axis_temp, kIncludeBoth,
-                                              {-SizeToLong(element_rank) - kOneNum, SizeToLong(element_rank)},
+                                              {-SizeToLong(element_rank) - 1, SizeToLong(element_rank)},
                                               primitive->name());
   auto axis = axis_temp < 0 ? static_cast<size_t>(axis_temp) + element_rank + 1 : LongToSize(axis_temp);
   (void)infer_shape.insert(infer_shape.begin() + axis, elements.size());
@@ -116,17 +111,15 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
 }
 
 TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>() &&
-      !input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "The input of Stack must be list or tuple of tensors.";
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
-  auto elements =
-    input_args[0]->isa<abstract::AbstractTensor>()
-      ? input_args
-      : (input_args[0]->isa<abstract::AbstractTuple>() ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                                                       : input_args[0]->cast<abstract::AbstractListPtr>()->elements());
-  const int64_t kOneNum = 1;
-  (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
+  (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
   primitive->AddAttr("num", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
