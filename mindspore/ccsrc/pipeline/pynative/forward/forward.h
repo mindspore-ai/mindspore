@@ -42,7 +42,8 @@ class ForwardExecutor {
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
-        enable_async_(std::getenv("ENABLE_ASYNC")) {}
+        enable_async_(std::getenv("ENABLE_ASYNC")),
+        forward_queue_(std::make_shared<AsyncQueue>()) {}
   ~ForwardExecutor() = default;
 
   void Init();

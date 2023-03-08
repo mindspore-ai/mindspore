@@ -91,11 +91,10 @@ bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_in
 #ifdef ENABLE_TEST
   return true;
 #else
-  return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) ||
-         op_run_info->op_prim->name() == "Custom" || ScopedFallbackRunning::on() ||
-         op_run_info->op_prim->HasAttr("side_effect_mem") ||
-         (!abstract::GetFrontendPrimitiveInferImpl(op_run_info->op_prim).has_value() &&
-          !abstract::GetBackendPrimitiveInferImpl(op_run_info->op_prim).has_value()) ||
+  const auto &op_prim = op_run_info->op_prim;
+  return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) || op_prim->name() == "Custom" ||
+         ScopedFallbackRunning::on() || op_prim->HasAttr("side_effect_mem") ||
+         (op_prim->prim_type() == kPrimTypePyCheck || !abstract::GetFrontendPrimitiveInferImpl(op_prim).has_value()) ||
          MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 #endif
 }

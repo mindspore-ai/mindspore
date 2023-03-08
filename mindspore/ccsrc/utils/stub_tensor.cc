@@ -70,30 +70,6 @@ py::object MakeOutput(StubNodePtr node) {
     return out;
   }
 }
-
-class StubException : public ExceptionListener {
- public:
-  StubException() {
-    MsException::Instance().SetExceptionListener(this);
-    MsException::Instance().CheckException();
-  }
-  ~StubException() = default;
-
-  void Finalize() {
-    MsException::Instance().SetExceptionListener(nullptr);
-    MsException::Instance().CheckException();
-  }
-  bool HasException() const { return has_exception_; }
-
-  void OnException() override {
-    has_exception_ = true;
-    std::unique_lock<std::mutex> lock(stub_mutex_);
-    stub_cond_var_.notify_all();
-  }
-
- private:
-  bool has_exception_{false};
-};
 }  // namespace
 
 bool StubNode::SetAbstract(const AbstractBasePtr &abs) {
@@ -113,6 +89,14 @@ void StubNode::SetValue(const ValuePtr &val) {
   }
 }
 
+void StubNode::SetException(const std::exception_ptr &e_ptr) {
+  e_ptr_ = e_ptr;
+  if (wait_flag_.load()) {
+    std::unique_lock<std::mutex> lock(stub_mutex_);
+    stub_cond_var_.notify_all();
+  }
+}
+
 AbstractBasePtr StubNode::WaitAbstract() {
   GilReleaseWithCheck gil_release;
   if (abstract_.get() == nullptr) {
@@ -120,15 +104,15 @@ AbstractBasePtr StubNode::WaitAbstract() {
     if (top) {
       top->WaitAbstract();
     } else {
-      StubException e;
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this, &e] { return abstract_.get() != nullptr || e.HasException(); });
-      if (e.HasException()) {
-        abstract_ = std::make_shared<abstract::AbstractNone>();
-      }
+      stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
       wait_flag_.store(false);
-      e.Finalize();
+      if (e_ptr_ != nullptr) {
+        // Need to clear exception in the instance.
+        MsException::Instance().CheckException();
+        std::rethrow_exception(e_ptr_);
+      }
     }
   }
   return abstract_;
@@ -141,15 +125,15 @@ ValuePtr StubNode::WaitValue() {
     if (top) {
       top->WaitValue();
     } else {
-      StubException e;
       wait_flag_.store(true);
       std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this, &e] { return value_.get() != nullptr || e.HasException(); });
-      if (e.HasException()) {
-        value_ = std::make_shared<tensor::Tensor>();
-      }
+      stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr || e_ptr_ != nullptr; });
       wait_flag_.store(false);
-      e.Finalize();
+      if (e_ptr_ != nullptr) {
+        // Need to clear exception in the instance.
+        MsException::Instance().CheckException();
+        std::rethrow_exception(e_ptr_);
+      }
     }
   }
   return value_;

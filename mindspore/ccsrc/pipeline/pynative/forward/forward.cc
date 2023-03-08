@@ -171,7 +171,6 @@ void ForwardExecutor::Init() {
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
   init_ = true;
-  forward_queue_ = std::make_shared<AsyncQueue>();
   runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() { forward_queue_->Wait(); });
 }
 
@@ -548,7 +547,10 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
 
 void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
-  forward_queue_->Reset();
+  {
+    GilReleaseWithCheck gil_release;
+    forward_queue_->Clear();
+  }
   for (const auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->ClearOpExecutorResource();
