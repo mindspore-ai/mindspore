@@ -833,10 +833,8 @@ std::pair<AbstractBasePtr, int> RectifyAbstractFromStructuralAttr(const ValuePtr
   }
 }
 
-AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const PrimitivePtr &prim,
+AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tuple_structural,
                                                             const AbstractBasePtrList &input_abstract) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto tuple_structural = prim->GetAttr(kAttrTupleInputStructural);
   if (tuple_structural == nullptr) {
     return input_abstract;
   }
@@ -857,6 +855,61 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const PrimitivePtr &
   }
 
   return rectifyed_abs_list;
+}
+
+AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
+                                                    const AbstractBasePtrList &input_abstract) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto dyn_input_list = prim->GetAttr(kAttrDynInputSizes);
+  if (dyn_input_list == nullptr) {
+    return input_abstract;
+  }
+  AbstractBasePtrList rectifyed_abs_list;
+  const int kNotDynamicFlag = -1;
+  auto dynamic_input_index = GetValue<std::vector<int64_t>>(dyn_input_list);
+  size_t input_index = 0;
+  for (auto item : dynamic_input_index) {
+    if (item == kNotDynamicFlag) {
+      if (input_index >= input_abstract.size()) {
+        if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
+          MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
+                          << " is out of range in input abstract " << input_abstract.size();
+          continue;
+        }
+        MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
+                          << " is out of range in input abstract " << input_abstract.size();
+      }
+      (void)rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
+    } else {
+      if (item < 0) {
+        MS_LOG(EXCEPTION) << "The dynamic input size check error the index should be -1 or positive number but got "
+                          << item;
+      }
+      AbstractBasePtrList dynamic_inputs_abs;
+      for (auto index = item; index > 0; --index) {
+        if (input_index >= input_abstract.size()) {
+          if ((prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name())) {
+            MS_LOG(WARNING) << "For primitive \'PyExecute\', index " << input_index
+                            << " is out of range in input abstract " << input_abstract.size();
+            continue;
+          }
+          MS_LOG(EXCEPTION) << "For primitive \'" << prim->name() << "\', index " << input_index
+                            << " is out of range in input abstract " << input_abstract.size();
+        }
+        (void)dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
+      }
+      (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(dynamic_inputs_abs));
+    }
+  }
+  return rectifyed_abs_list;
+}
+
+AbstractBasePtrList RectifyAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &input_abstract) {
+  auto input_structural = prim->GetAttr(kAttrTupleInputStructural);
+  if (input_structural != nullptr) {
+    return RectifyAbstractFromTupleInputStructural(input_structural, input_abstract);
+  }
+  return RectifyAbstractFromDynamicInput(prim, input_abstract);
 }
 }  // namespace
 
@@ -1046,7 +1099,7 @@ void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spe
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-shape implement for backend!");
-    auto infer_spec_list = RectifyAbstractFromTupleInputStructural(prim_clone, args_spec_list);
+    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
     if (common::AnfAlgo::IsDynamicSequence(cnode)) {
       out_abs = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
     } else {
@@ -1087,7 +1140,7 @@ AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim, const AbstractBas
   if (found.has_value()) {
     auto infer = found.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    auto infer_spec_list = RectifyAbstractFromTupleInputStructural(prim_clone, args_spec_list);
+    auto infer_spec_list = RectifyAbstract(prim_clone, args_spec_list);
     auto ret = infer.InferShapeAndType(nullptr, prim_clone, infer_spec_list);
     if (prim_clone != prim) {
       *prim = *prim_clone;

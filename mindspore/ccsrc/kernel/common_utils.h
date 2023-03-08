@@ -457,7 +457,7 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 KernelObjectType StringToKernelObjectType(const std::string &object_type);
 BACKEND_EXPORT void UnfoldKernelBuildInfo(const CNodePtr &kernel_node);
-BACKEND_EXPORT std::tuple<ValuePtr, int64_t, bool> CalOutputTupleSize(const AnfNodePtr &node);
+BACKEND_EXPORT int64_t CalOutputTupleSize(const AnfNodePtr &node);
 BACKEND_EXPORT void SetDynamicInputSizeAttr(const CNodePtr &cnode);
 BACKEND_EXPORT bool IsDynamicParamKernel(const std::string &op_name);
 BACKEND_EXPORT std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node);

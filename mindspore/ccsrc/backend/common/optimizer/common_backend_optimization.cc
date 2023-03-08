@@ -20,6 +20,7 @@
 #include "backend/common/pass/convert_list_to_tuple.h"
 #include "backend/common/pass/eliminate_func_data_type.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
+#include "backend/common/pass/add_input_structural_for_py_execute.h"
 #include "backend/common/pass/custom_op_const_input_to_attr.h"
 #include "backend/common/pass/custom_op_reg_info_to_attr.h"
 #include "backend/common/pass/convert_tuple_output_to_maketuple.h"
@@ -60,6 +61,7 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   }
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   common_pm->AddPass(std::make_shared<AddDropoutAttrs>());
+  common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
   return common_pm;
 }
 
