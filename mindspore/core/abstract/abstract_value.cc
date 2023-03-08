@@ -683,7 +683,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence() {
       if (first_element_type_id != cur_element_type_id) {
         MS_EXCEPTION(ValueError) << "In graph mode, the element type of dynamic length array must be the same."
                                  << "The element type do not match, can not convert to dynamic length sequence. "
-                                 << "The first element type is: " << TypeIdToString(first_element_type_id) << "The "
+                                 << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The "
                                  << i << "th element type is: " << TypeIdToString(cur_element_type_id);
       }
       auto cur_element_shape = cur_element->BuildShape();
@@ -691,7 +691,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence() {
       if (*first_element_shape != *cur_element_shape) {
         MS_EXCEPTION(ValueError) << "In graph mode, the element shape of dynamic length array must be the same."
                                  << "The element shape do not match, can not convert to dynamic length sequence. "
-                                 << "The first element shape is: " << first_element_shape->ToString() << "The " << i
+                                 << "The 0th element shape is: " << first_element_shape->ToString() << ". The " << i
                                  << "th element shape is: " << cur_element_shape->ToString();
       }
     }
