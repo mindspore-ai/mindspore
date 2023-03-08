@@ -666,7 +666,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
       // if graph output is a weight and doesn't link to any cnode, it's data type will be unknown
       if (output_type_id == kTypeUnknown) {
-        MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
+        MS_LOG(INFO) << "It is not suggested to use a lonely weight parameter as the output of graph";
         continue;
       }
       DeviceAddressPtr device_address = GetInternalDeviceAddress(graph, item);
