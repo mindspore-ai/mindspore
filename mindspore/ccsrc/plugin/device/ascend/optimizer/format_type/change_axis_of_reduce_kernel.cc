@@ -167,18 +167,15 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   if (AnfAlgo::GetOpPattern(node) != kernel::kReducePattern) {
     return nullptr;
   }
-  NormalizeReduceAttrAxis(node->cast<CNodePtr>());
-  auto convert_map = kReduceConvertMap.find(AnfAlgo::GetInputFormat(node, 0));
-  if (convert_map == kReduceConvertMap.end()) {
-    if (common::AnfAlgo::IsDynamicShape(node)) {
-      DynamicAttrUpdate(node);
-    }
-    return nullptr;
-  }
-  convert_map->second(node->cast<CNodePtr>());
   if (common::AnfAlgo::IsDynamicShape(node)) {
     DynamicAttrUpdate(node);
   }
+  auto convert_map = kReduceConvertMap.find(AnfAlgo::GetInputFormat(node, 0));
+  if (convert_map == kReduceConvertMap.end()) {
+    return nullptr;
+  }
+  NormalizeReduceAttrAxis(node->cast<CNodePtr>());
+  convert_map->second(node->cast<CNodePtr>());
   return nullptr;
 }
 }  // namespace mindspore::opt
