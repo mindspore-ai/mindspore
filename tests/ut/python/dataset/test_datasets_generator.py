@@ -13,8 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-import numpy as np
+import time
+
 import pytest
+import numpy as np
 
 import mindspore
 import mindspore.common.dtype as mstype
@@ -2138,6 +2140,30 @@ def test_generator_with_single_numpy_with_yield():
     assert count == 20
 
 
+@pytest.mark.skip(reason="only for testing stuck scenario")
+def test_generator_traceback():
+    """
+    Feature: GeneratorDataset
+    Description: Generator is too slow then main process will log the stack of the stuck process
+    Expectation: The stuck locality can be logged
+    """
+    class SlowDataset:
+        def __init__(self):
+            self.data = np.random.randint(0, 255, (100, 28, 28, 3), dtype=np.uint8)
+
+        def __getitem__(self, index):
+            if index % 10 == 0:
+                time.sleep(600)
+            return self.data[index]
+
+        def __len__(self):
+            return len(self.data)
+
+    dataset = ds.GeneratorDataset(SlowDataset(), column_names=["image"], num_parallel_workers=8)
+    for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        pass
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2159,13 +2185,13 @@ if __name__ == "__main__":
     test_generator_17()
     test_generator_18()
     test_generator_19()
+    test_generator_20()
     test_generator_error_1()
     test_generator_error_2()
-    test_generator_error_3()
     test_generator_error_4()
     test_generator_sequential_sampler()
-    test_generator_distributed_sampler()
     test_generator_random_sampler()
+    test_generator_distributed_sampler()
     test_generator_num_samples()
     test_generator_num_samples_underflow()
     test_generator_schema()
@@ -2186,6 +2212,9 @@ if __name__ == "__main__":
     test_generator_single_input_4()
     test_generator_single_input_5()
     test_generator_single_input_6()
+    test_generator_with_seed_5489_when_dist()
+    test_generator_with_set_seed_when_dist()
     test_generator_with_single_numpy()
     test_generator_with_single_numpy_with_next()
     test_generator_with_single_numpy_with_yield()
+    test_generator_traceback()

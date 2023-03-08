@@ -30,6 +30,7 @@ import multiprocessing
 from multiprocessing.util import Finalize
 import queue
 from functools import partial
+import subprocess
 import threading
 import weakref
 import platform
@@ -265,6 +266,14 @@ class SamplerFn:
                                        "output data is too large. You can also set the timeout interval by "
                                        "ds.config.set_multiprocessing_interval to adjust the output frequency of this "
                                        "log.")
+                        pid = self.workers[i % self.num_worker].pid
+                        logger.warning("Generator subprocess ID {} is stuck.".format(pid))
+                        install_status, _ = subprocess.getstatusoutput("py-spy --version")
+                        if install_status == 0:
+                            stack = subprocess.getoutput("py-spy dump -p {} -l -s".format(pid))
+                            logger.warning("Generator subprocess stack:\n{}".format(stack))
+                        else:
+                            logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
 
                 result = self.workers[i % self.num_worker].get()
                 if isinstance(result, ExceptionHandler):
