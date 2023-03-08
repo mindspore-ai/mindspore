@@ -1,7 +1,7 @@
 mindspore.ops.broadcast_to
 ==========================
 
-.. py:function:: mindspore.ops.broadcast_to(x, shape)
+.. py:function:: mindspore.ops.broadcast_to(input, shape)
 
     将输入shape广播到目标shape。输入shape维度必须小于等于目标shape维度，设输入shape为 :math:`(x_1, x_2, ..., x_m)`，目标shape为 :math:`(*, y_1, y_2, ..., y_m)`，其中 :math:`*` 为任意额外的维度。广播规则如下：
 
@@ -24,11 +24,11 @@ mindspore.ops.broadcast_to
     - 如果额外的 :math:`*` 维中含有-1，说明此时该-1对应一个不存在的维度，不支持广播。比如说目标shape为 :math:`(3, -1, 4, 1, 5, 9)` ，输入shape为 :math:`(1, 5, 9)` ，此时不进行增维处理，而是直接报错。
 
     参数：
-        - **x** (Tensor) - 第一个输入，任意维度的Tensor，数据类型为float16、float32、int32、int8、uint8、bool。
+        - **input** (Tensor) - 第一个输入，任意维度的Tensor，数据类型为float16、float32、int32、int8、uint8、bool。
         - **shape** (tuple) - 第二个输入，指定广播到目标 `shape`。
 
     返回：
-        Tensor，shape与目标 `shape` 相同，数据类型与 `x` 相同。
+        Tensor，shape与目标 `shape` 相同，数据类型与 `input` 相同。
 
     异常：
         - **TypeError** - `shape` 不是tuple。
