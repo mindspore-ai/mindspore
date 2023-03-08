@@ -82,6 +82,11 @@ class TransposeInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
+
+    auto for_format_change_value = primitive->GetAttr(kAttrForFormatChange);
+    if (for_format_change_value != nullptr && GetValue<bool>(for_format_change_value)) {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
     ShapeVector p_value;
     if (x_shape[0] == 0) {
       MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
