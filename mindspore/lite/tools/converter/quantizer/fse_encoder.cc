@@ -33,8 +33,10 @@ namespace {
 constexpr size_t kFseTableExtendSize = 3u;
 constexpr size_t kFreqTableExtendSize = 2u;
 constexpr size_t kAlignSize = 8u;
+constexpr size_t kAlignHalfSize = 4u;
 constexpr float kUpRoundOffSet = 0.5f;
 constexpr size_t kMaxModelBufferSize = 1024u * 1024 * 1024 * 2;  // 2G
+constexpr size_t PARALLEL_MIN_SIZE = 10000;
 }  // namespace
 
 int FSEEncoder::FSECreateStatesForEncoding(const uint32_t *frequency, size_t frequency_count, size_t table_log,
@@ -96,7 +98,7 @@ int FSEEncoder::FSECreateStatesForEncoding(const uint32_t *frequency, size_t fre
 }
 
 int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
-                         mindspore::TensorCompressionType compress_type) {
+                         mindspore::TensorCompressionType compress_type, int max_segments) {
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
   CHECK_NULL_RETURN(tensor_info);
   FSEQuant fse_quant;
@@ -128,8 +130,15 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
     free(fse_quant.symbol_table);
     return ret;
   }
-  ret = FSEEncode(&bs, fse_quant.symbol_table, fse_quant.symbol_table_count, fse_quant.frequency, fse_quant.size,
-                  table_log);
+  size_t num_chunk_ends = (fse_quant.symbol_table_count > PARALLEL_MIN_SIZE) ? max_segments : 1;
+  fse_quant.chunk_ends = static_cast<ChunkEndData *>(malloc(num_chunk_ends * sizeof(ChunkEndData)));
+  if (fse_quant.chunk_ends == nullptr) {
+    MS_LOG(ERROR) << "malloc memory failed.";
+    return RET_ERROR;
+  }
+  fse_quant.num_chunk_ends = num_chunk_ends;
+  ret = FSEEncode(&bs, fse_quant.symbol_table, fse_quant.symbol_table_count, fse_quant.frequency, num_chunk_ends,
+                  fse_quant.chunk_ends, fse_quant.size, table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FSE Encode failed.";
     free(fse_quant.symbol_table);
@@ -148,16 +157,19 @@ int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::Q
   return RET_OK;
 }
 
-uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state,
-                                                const uint32_t *delta_bit_count, const int16_t *delta_state,
-                                                const uint16_t *coding_table) {
-  MS_ASSERT(bs != nullptr);
-  MS_ASSERT(delta_bit_count != nullptr);
-  MS_ASSERT(delta_state != nullptr);
-  MS_ASSERT(coding_table != nullptr);
+uint8_t FSEEncoder::NumOfBits(uint16_t sym, uint16_t state, const uint32_t *delta_bit_count) {
   // It is to determine the number of bits to flush.
   // This is basically one of 2 values, n or n+1, depending on state crossing a threshold.
+  MS_ASSERT(delta_bit_count != nullptr);
   uint8_t bits_out = (state + delta_bit_count[sym]) >> k16Bit;
+  return bits_out;
+}
+
+uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, uint8_t bits_out,
+                                                const int16_t *delta_state, const uint16_t *coding_table) {
+  MS_ASSERT(bs != nullptr);
+  MS_ASSERT(delta_state != nullptr);
+  MS_ASSERT(coding_table != nullptr);
   bs->Push(state, bits_out);
   // subrangeID = state >> nbBitsOut
   return coding_table[(state >> bits_out) + delta_state[sym]];
@@ -227,7 +239,8 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, size_t *table_log) {
 }
 
 int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, size_t data_count, const uint32_t *frequency,
-                          size_t frequency_count, size_t table_log) {
+                          const size_t num_chunk_ends, ChunkEndData *chunk_ends, size_t frequency_count,
+                          size_t table_log) {
   CHECK_NULL_RETURN(bs);
   CHECK_NULL_RETURN(data);
   CHECK_NULL_RETURN(frequency);
@@ -250,12 +263,23 @@ int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, size_t data_co
   uint16_t state = table_size;
   // The results of the 1st symbol encoding is not flushed to the bitstream,
   // It is just to get a valid 1 st state.
-  state = FSEEncodeSymbolGetNewState(bs, data[0], state, delta_number_bits.data(), delta_find_state.data(),
-                                     coding_table.data());
+  uint8_t num_of_bits = NumOfBits(data[0], state, delta_number_bits.data());
+  state = FSEEncodeSymbolGetNewState(bs, data[0], state, num_of_bits, delta_find_state.data(), coding_table.data());
   bs->Empty();
+  size_t idx = 0;
+  if (num_chunk_ends <= 0) {
+    MS_LOG(ERROR) << "num_chunk_ends is invalid.";
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < data_count; i++) {
-    state = FSEEncodeSymbolGetNewState(bs, data[i], state, delta_number_bits.data(), delta_find_state.data(),
-                                       coding_table.data());
+    num_of_bits = NumOfBits(data[i], state, delta_number_bits.data());
+    state = FSEEncodeSymbolGetNewState(bs, data[i], state, num_of_bits, delta_find_state.data(), coding_table.data());
+    if ((i == data_count * (idx + 1) / num_chunk_ends - 1) && (chunk_ends != nullptr) && (idx < num_chunk_ends)) {
+      chunk_ends[idx].bs_position = bs->GetCurrChunkIndex();
+      chunk_ends[idx].state = state - table_size;
+      chunk_ends[idx].bit_count = bs->GetCurrBitCount();
+      idx++;
+    }
   }
   bs->Push(state - table_size, table_log);
   return ret;
@@ -270,45 +294,25 @@ int FSEEncoder::SerializingToBuffer(const FSEBitStream *bs, const FSEQuant &fse_
   size_t offset = 0;
   *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)fse_quant.size;
   offset += sizeof(uint16_t);
-  if (offset + sizeof(uint16_t) > max_size) {
-    MS_LOG(ERROR) << " offset over max size"
-                  << " offset:" << offset << " max_size:" << max_size;
-    return RET_ERROR;
-  }
+  CHECK_LARGE_RETURN(offset + sizeof(uint16_t), max_size);
   *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)table_log;
   offset += sizeof(uint16_t);
   int chunksc = bs->GetCurrChunkIndex() + sizeof(uint16_t);
-  if (offset + sizeof(uint32_t) > max_size) {
-    MS_LOG(ERROR) << " offset over max size"
-                  << " offset:" << offset << " max_size:" << max_size;
-    return RET_ERROR;
-  }
+  CHECK_LARGE_RETURN(offset + sizeof(uint32_t), max_size);
   *(reinterpret_cast<uint32_t *>(&out8[offset])) = (uint32_t)chunksc;
   offset += sizeof(uint32_t);
   for (size_t j = 0; j < fse_quant.size; j++) {
-    if (offset + sizeof(uint32_t) > max_size) {
-      MS_LOG(ERROR) << " offset over max size"
-                    << " offset:" << offset << " max_size:" << max_size;
-      return RET_ERROR;
-    }
+    CHECK_LARGE_RETURN(offset + sizeof(uint32_t), max_size);
     *(reinterpret_cast<uint32_t *>(&out8[offset])) = (uint32_t)fse_quant.frequency[j];
     offset += sizeof(uint32_t);
   }
   while (offset % kAlignSize != 0) {
-    if (offset + sizeof(uint16_t) > max_size) {
-      MS_LOG(ERROR) << " offset over max size"
-                    << " offset:" << offset << " max_size:" << max_size;
-      return RET_ERROR;
-    }
+    CHECK_LARGE_RETURN(offset + sizeof(uint16_t), max_size);
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)0;
     offset += sizeof(uint16_t);
   }
   for (size_t j = 0; j < fse_quant.size; j++) {
-    if (offset + sizeof(float) > max_size) {
-      MS_LOG(ERROR) << " offset over max size"
-                    << " offset:" << offset << " max_size:" << max_size;
-      return RET_ERROR;
-    }
+    CHECK_LARGE_RETURN(offset + sizeof(float), max_size);
     if (compress_type == mindspore::kFSE || compress_type == mindspore::kFSEInfer) {
       *(reinterpret_cast<float *>(&out8[offset])) = fse_quant.centroids_float[j];
     } else {
@@ -317,40 +321,40 @@ int FSEEncoder::SerializingToBuffer(const FSEBitStream *bs, const FSEQuant &fse_
     offset += sizeof(float);
   }
   while (offset % kAlignSize != 0) {
-    if (offset + sizeof(uint16_t) > max_size) {
-      MS_LOG(ERROR) << " offset over max size"
-                    << " offset:" << offset << " max_size:" << max_size;
-      return RET_ERROR;
-    }
+    CHECK_LARGE_RETURN(offset + sizeof(uint16_t), max_size);
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)0;
     offset += sizeof(uint16_t);
   }
   for (int j = 0; j < bs->GetCurrChunkIndex() + 1; j++) {
-    if (offset + sizeof(uint64_t) > max_size) {
-      MS_LOG(ERROR) << " offset over max size"
-                    << " offset:" << offset << " max_size:" << max_size;
-      return RET_ERROR;
-    }
+    CHECK_LARGE_RETURN(offset + sizeof(uint64_t), max_size);
     *(reinterpret_cast<uint64_t *>(&out8[offset])) = bs->GetChunks()[j];
     offset += sizeof(uint64_t);
   }
-  if (offset + sizeof(uint64_t) > max_size) {
-    MS_LOG(ERROR) << " offset over max size"
-                  << " offset:" << offset << " max_size:" << max_size;
-    return RET_ERROR;
-  }
+  CHECK_LARGE_RETURN(offset + sizeof(uint64_t), max_size);
   *(reinterpret_cast<uint64_t *>(&out8[offset])) = bs->GetCurrChunk();
   offset += sizeof(uint64_t);
-  if (offset + sizeof(uint8_t) > max_size) {
-    MS_LOG(ERROR) << " offset over max size"
-                  << " offset:" << offset << " max_size:" << max_size;
-    return RET_ERROR;
-  }
+  CHECK_LARGE_RETURN(offset + sizeof(uint8_t), max_size);
   *(reinterpret_cast<uint8_t *>(&out8[offset])) = bs->GetCurrBitCount();
   offset += sizeof(uint8_t);
   if (offset > max_size) {
     MS_LOG(ERROR) << " too many symbol.";
     return RET_ERROR;
+  }
+  if ((compress_type == mindspore::kFSEInfer) && (fse_quant.num_chunk_ends > 0)) {
+    while (offset % kAlignHalfSize != 0) {
+      CHECK_LARGE_RETURN(offset + sizeof(uint8_t), max_size);
+      *(reinterpret_cast<uint8_t *>(&out8[offset])) = (uint8_t)0;
+      offset += sizeof(uint8_t);
+    }
+    CHECK_LARGE_RETURN(offset + sizeof(uint32_t), max_size);
+    *(reinterpret_cast<uint32_t *>(&out8[offset])) = (uint32_t)fse_quant.num_chunk_ends;
+    offset += sizeof(uint32_t);
+
+    for (size_t j = 0; j < fse_quant.num_chunk_ends; j++) {
+      CHECK_LARGE_RETURN(offset + sizeof(uint64_t), max_size);
+      *(reinterpret_cast<uint64_t *>(&out8[offset])) = fse_quant.chunk_ends[j].ToUint64();
+      offset += sizeof(uint64_t);
+    }
   }
   *out_size = offset;
   return RET_OK;

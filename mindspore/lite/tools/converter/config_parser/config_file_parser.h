@@ -59,6 +59,8 @@ struct MixedBitWeightQuantString {
 struct WeightQuantString {
   std::string dequant_strategy;
   std::string update_mindir;
+  std::string max_segments;  // Define how many segments to use for parallel FSE
+                             // It's recommended to use the max number of cores of your device
 };
 
 struct FullQuantString {

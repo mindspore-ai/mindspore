@@ -26,6 +26,7 @@ namespace mindspore::lite::quant {
 namespace {
 constexpr size_t kTableExtend = 3;
 constexpr size_t kAlignOffset = 7;
+constexpr size_t kThreeBytes = 3;
 }  // namespace
 int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int symbol_frequency_count,
                                            size_t table_log, uint16_t *new_state_baseline, uint8_t *bit_count,
@@ -140,6 +141,23 @@ int FSEDecoder::DecodeBuffer(int8_t *buffer, size_t data_size, FSEBuffer *fse_bu
   }
   // 8bit for CurrBitCount
   fse_buffer->curr_bit_count = *(reinterpret_cast<uint8_t *>(buffer + i));
+  i += sizeof(uint8_t);
+
+  if (i < data_size) {                   // There is more data after what was extracted
+    i += kThreeBytes * sizeof(uint8_t);  // Align to 32 bit for ChunkEndsCount
+    if (i > data_size) {
+      MS_LOG(ERROR) << " index:" << i << " is over total size:" << data_size;
+      return RET_ERROR;
+    }
+    uint32_t chunk_ends_count = *(reinterpret_cast<uint32_t *>(buffer + i));
+    if ((i + sizeof(uint32_t) + chunk_ends_count * sizeof(uint64_t)) > data_size) {
+      MS_LOG(ERROR) << " index:" << i << " is over total size:" << data_size;
+      return RET_ERROR;
+    }
+    fse_buffer->chunk_ends_count = chunk_ends_count;
+    i += sizeof(uint32_t);
+    fse_buffer->chunk_ends = reinterpret_cast<uint64_t *>(buffer + i);
+  }
   return RET_OK;
 }
 

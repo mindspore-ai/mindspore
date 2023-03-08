@@ -159,6 +159,7 @@
 #include "nnacl/infer/unstack_infer.h"
 #include "nnacl/infer/where_infer.h"
 #include "nnacl/infer/isfinite_infer.h"
+#include "nnacl/infer/fse_decoder_infer.h"
 
 InferShape g_infer_func[PrimType_MAX] = {0};
 InferShape g_inner_op_infer_func[PrimType_InnerOpMax - PrimType_InnerOpMin] = {0};
@@ -406,7 +407,7 @@ void RegAllInferFunc5() {
 #ifndef RUNTIME_PASS_CLIP
   g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;
   g_inner_op_infer_func[PrimType_Inner_EncoderLayer - PrimType_InnerOpMin] = EncoderLayerInferShape;
-
+  g_inner_op_infer_func[PrimType_Inner_FseDecode - PrimType_InnerOpMin] = FseDecoderInferShape;
 #endif
   g_inner_op_infer_func[PrimType_Inner_ToFormat - PrimType_InnerOpMin] = NULL;
 }
