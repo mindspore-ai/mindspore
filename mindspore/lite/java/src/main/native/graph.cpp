@@ -26,8 +26,15 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Graph_loadModel(JNIEnv *en
     MS_LOG(ERROR) << "Model new failed";
     return jlong(nullptr);
   }
+  if (ms_file == nullptr) {
+    MS_LOG(ERROR) << "ms_file from java is nullptr.";
+    delete graph;
+    return jlong(nullptr);
+  }
+  auto c_ms_file = env->GetStringUTFChars(ms_file, JNI_FALSE);
   auto status =
-    mindspore::Serialization::Load(env->GetStringUTFChars(ms_file, JNI_FALSE), mindspore::ModelType::kMindIR, graph);
+    mindspore::Serialization::Load(c_ms_file, mindspore::ModelType::kMindIR, graph);
+  env->ReleaseStringUTFChars(ms_file, c_ms_file);
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Load graph from file failed";
     delete graph;

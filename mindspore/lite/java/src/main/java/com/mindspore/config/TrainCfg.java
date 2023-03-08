@@ -16,6 +16,11 @@
 
 package com.mindspore.config;
 
+/**
+ * TrainCfg Class
+ *
+ * @since v1.0
+ */
 public class TrainCfg {
     static {
         try {

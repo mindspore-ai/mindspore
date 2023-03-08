@@ -37,9 +37,8 @@ public class Version {
         LOGGER.info("Version init load ...");
         try {
             NativeLibrary.load();
-        } catch (Exception e) {
+        } catch (UnsatisfiedLinkError e) {
             LOGGER.severe("Failed to load MindSporLite native library.");
-            throw e;
         }
     }
 

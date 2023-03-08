@@ -22,7 +22,13 @@ package com.mindspore.config;
  * @since v1.0
  */
 public class CpuBindMode {
+
+    // bind mind cpu
     public static final int MID_CPU = 2;
+
+    // bind high cpu
     public static final int HIGHER_CPU = 1;
+
+    // no bind
     public static final int NO_BIND = 0;
 }

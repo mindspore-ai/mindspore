@@ -18,6 +18,11 @@ package com.mindspore;
 
 import com.mindspore.config.MindsporeLite;
 
+/**
+ * Graph Class
+ *
+ * @since v1.0
+ */
 public class Graph {
     static {
         MindsporeLite.init();

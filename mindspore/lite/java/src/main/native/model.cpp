@@ -111,14 +111,17 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv 
     return false;
   }
   context.reset(c_context_ptr);
-  auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
   mindspore::Status status;
   if (key_str != NULL) {
-    jchar *key_array = env->GetCharArrayElements(key_str, NULL);
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
     char *dec_key_data = new (std::nothrow) char[key_len];
     if (dec_key_data == nullptr) {
       MS_LOG(ERROR) << "Dec key new failed";
+      return false;
+    }
+    jchar *key_array = env->GetCharArrayElements(key_str, NULL);
+    if (key_array == nullptr) {
+      MS_LOG(ERROR) << "key_array is nullptr.";
       return false;
     }
     for (size_t i = 0; i < key_len; i++) {
@@ -126,8 +129,16 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv 
     }
     env->ReleaseCharArrayElements(key_str, key_array, JNI_ABORT);
     mindspore::Key dec_key{dec_key_data, key_len};
+    if (cropto_lib_path == nullptr || dec_mod == nullptr) {
+      MS_LOG(ERROR) << "cropto_lib_path or dec_mod from java is nullptr.";
+      return jlong(nullptr);
+    }
+    auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
     auto c_cropto_lib_path = env->GetStringUTFChars(cropto_lib_path, JNI_FALSE);
     status = lite_model_ptr->Build(model_buf, buffer_len, c_model_type, context, dec_key, c_dec_mod, c_cropto_lib_path);
+    env->ReleaseStringUTFChars(cropto_lib_path, c_cropto_lib_path);
+    env->ReleaseStringUTFChars(dec_mod, c_dec_mod);
+    delete[] dec_key_data;
   } else {
     status = lite_model_ptr->Build(model_buf, buffer_len, c_model_type, context);
   }
@@ -167,26 +178,43 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
     return false;
   }
   context.reset(c_context_ptr);
-  auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
   mindspore::Status status;
   if (key_str != NULL) {
-    jchar *key_array = env->GetCharArrayElements(key_str, NULL);
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
     char *dec_key_data = new (std::nothrow) char[key_len];
     if (dec_key_data == nullptr) {
       MS_LOG(ERROR) << "Dec key new failed";
+      env->ReleaseStringUTFChars(model_path, c_model_path);
       return false;
+    }
+
+    jchar *key_array = env->GetCharArrayElements(key_str, NULL);
+    if (key_array == nullptr) {
+      MS_LOG(ERROR) << "GetCharArrayElements failed.";
+      env->ReleaseStringUTFChars(model_path, c_model_path);
+      return jlong(nullptr);
     }
     for (size_t i = 0; i < key_len; i++) {
       dec_key_data[i] = key_array[i];
     }
     env->ReleaseCharArrayElements(key_str, key_array, JNI_ABORT);
     mindspore::Key dec_key{dec_key_data, key_len};
+
+    if (dec_mod == nullptr || cropto_lib_path == nullptr) {
+      MS_LOG(ERROR) << "dec_mod, cropto_lib_path from java is nullptr.";
+      env->ReleaseStringUTFChars(model_path, c_model_path);
+      return jlong(nullptr);
+    }
+    auto c_dec_mod = env->GetStringUTFChars(dec_mod, JNI_FALSE);
     auto c_cropto_lib_path = env->GetStringUTFChars(cropto_lib_path, JNI_FALSE);
     status = lite_model_ptr->Build(c_model_path, c_model_type, context, dec_key, c_dec_mod, c_cropto_lib_path);
+    env->ReleaseStringUTFChars(dec_mod, c_dec_mod);
+    env->ReleaseStringUTFChars(cropto_lib_path, c_cropto_lib_path);
+    delete[] dec_key_data;
   } else {
     status = lite_model_ptr->Build(c_model_path, c_model_type, context);
   }
+  env->ReleaseStringUTFChars(model_path, c_model_path);
   if (status != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
     return false;
@@ -205,6 +233,8 @@ jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_in
   auto *pointer = reinterpret_cast<mindspore::Model *>(model_ptr);
   if (pointer == nullptr) {
     MS_LOG(ERROR) << "Model pointer from java is nullptr";
+    env->DeleteLocalRef(array_list);
+    env->DeleteLocalRef(long_object);
     return ret;
   }
   std::vector<mindspore::MSTensor> tensors;
@@ -221,7 +251,10 @@ jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_in
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+    env->DeleteLocalRef(tensor_addr);
   }
+  env->DeleteLocalRef(array_list);
+  env->DeleteLocalRef(long_object);
   return ret;
 }
 
@@ -233,11 +266,17 @@ jlong GetTensorByInOutName(JNIEnv *env, jlong model_ptr, jstring tensor_name, bo
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
   mindspore::MSTensor tensor;
-  if (is_input) {
-    tensor = lite_model_ptr->GetInputByTensorName(env->GetStringUTFChars(tensor_name, JNI_FALSE));
-  } else {
-    tensor = lite_model_ptr->GetOutputByTensorName(env->GetStringUTFChars(tensor_name, JNI_FALSE));
+  if (tensor_name == nullptr) {
+    MS_LOG(ERROR) << "tensor_name from java is nullptr.";
+    return jlong(nullptr);
   }
+  auto c_tensor_name = env->GetStringUTFChars(tensor_name, JNI_FALSE);
+  if (is_input) {
+    tensor = lite_model_ptr->GetInputByTensorName(c_tensor_name);
+  } else {
+    tensor = lite_model_ptr->GetOutputByTensorName(c_tensor_name);
+  }
+  env->ReleaseStringUTFChars(tensor_name, c_tensor_name);
   if (tensor.impl() == nullptr) {
     return jlong(nullptr);
   }
@@ -283,8 +322,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputTensorNam
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
   auto output_names = lite_model_ptr->GetOutputTensorNames();
   for (const auto &output_name : output_names) {
-    env->CallBooleanMethod(ret, array_list_add, env->NewStringUTF(output_name.c_str()));
+    auto output_name_jstring = env->NewStringUTF(output_name.c_str());
+    env->CallBooleanMethod(ret, array_list_add, output_name_jstring);
+    env->DeleteLocalRef(output_name_jstring);
   }
+  env->DeleteLocalRef(array_list);
   return ret;
 }
 
@@ -303,7 +345,13 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
     return ret;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
-  auto tensors = lite_model_ptr->GetOutputsByNodeName(env->GetStringUTFChars(node_name, JNI_FALSE));
+  if (node_name == nullptr) {
+    MS_LOG(ERROR) << "node_name from java is nullptr";
+    return ret;
+  }
+  auto c_node_name = env->GetStringUTFChars(node_name, JNI_FALSE);
+  auto tensors = lite_model_ptr->GetOutputsByNodeName(c_node_name);
+  env->ReleaseStringUTFChars(node_name, c_node_name);
   for (auto &tensor : tensors) {
     auto tensor_ptr = std::make_unique<mindspore::MSTensor>(tensor);
     if (tensor_ptr == nullptr) {
@@ -312,7 +360,10 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_getOutputsByNodeNa
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+    env->DeleteLocalRef(tensor_addr);
   }
+  env->DeleteLocalRef(array_list);
+  env->DeleteLocalRef(long_object);
   return ret;
 }
 
@@ -351,18 +402,24 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_runStep(JNIEnv *e
 }
 
 std::vector<mindspore::MSTensor> convertArrayToVector(JNIEnv *env, jlongArray inputs) {
+  std::vector<mindspore::MSTensor> c_inputs;
+  if (inputs == nullptr) {
+    MS_LOG(ERROR) << "inputs from java is nullptr";
+    return c_inputs;
+  }
   auto input_size = static_cast<int>(env->GetArrayLength(inputs));
   jlong *input_data = env->GetLongArrayElements(inputs, nullptr);
-  std::vector<mindspore::MSTensor> c_inputs;
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
       MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+      env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
       return c_inputs;
     }
     auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(tensor_pointer);
     c_inputs.push_back(*ms_tensor_ptr);
   }
+  env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
   return c_inputs;
 }
 
@@ -389,14 +446,22 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
     return (jboolean) false;
   }
   auto *lite_model_ptr = static_cast<mindspore::Model *>(pointer);
-
+  if (inputs == nullptr || dims == nullptr) {
+    MS_LOG(ERROR) << "inputs or dims from java is nullptr";
+    return (jboolean) false;
+  }
   auto input_size = static_cast<int>(env->GetArrayLength(inputs));
   jlong *input_data = env->GetLongArrayElements(inputs, nullptr);
+  if (input_data == nullptr) {
+    MS_LOG(ERROR) << "input_data is nullptr";
+    return (jboolean) false;
+  }
   std::vector<mindspore::MSTensor> c_inputs;
   for (int i = 0; i < input_size; i++) {
     auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
     if (tensor_pointer == nullptr) {
       MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+      env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
       return (jboolean) false;
     }
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
@@ -405,8 +470,19 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
   auto tensor_size = static_cast<int>(env->GetArrayLength(dims));
   for (int i = 0; i < tensor_size; i++) {
     auto array = static_cast<jintArray>(env->GetObjectArrayElement(dims, i));
+    if (array == nullptr) {
+      MS_LOG(ERROR) << "Tensor pointer from java is nullptr";
+      env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
+      return (jboolean) false;
+    }
     auto dim_size = static_cast<int>(env->GetArrayLength(array));
     jint *dim_data = env->GetIntArrayElements(array, nullptr);
+    if (dim_data == nullptr) {
+      MS_LOG(ERROR) << "dim_data is nullptr";
+      env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
+      env->DeleteLocalRef(array);
+      return (jboolean) false;
+    }
     std::vector<int64_t> tensor_dims(dim_size);
     for (int j = 0; j < dim_size; j++) {
       tensor_dims[j] = dim_data[j];
@@ -416,16 +492,17 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_resize(JNIEnv *en
     env->DeleteLocalRef(array);
   }
   auto ret = lite_model_ptr->Resize(c_inputs, c_dims);
+  env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
   return (jboolean)(ret.IsOk());
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_Model_loadConfig(JNIEnv *env, jobject thiz, jstring model_ptr,
                                                                           jstring config_path) {
-  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
-  if (model_pointer == nullptr) {
-    MS_LOG(ERROR) << "Model pointer from java is nullptr";
+  if (model_ptr == nullptr || config_path == nullptr) {
+    MS_LOG(ERROR) << "input params from java is nullptr";
     return (jboolean) false;
   }
+  auto *model_pointer = reinterpret_cast<void *>(model_ptr);
   auto *lite_model_ptr = static_cast<mindspore::Model *>(model_pointer);
   const char *c_config_path = env->GetStringUTFChars(config_path, nullptr);
   std::string str_config_path(c_config_path, env->GetStringLength(config_path));
