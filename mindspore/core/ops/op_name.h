@@ -149,6 +149,7 @@ constexpr auto kNeginf = "neginf";
 constexpr auto kNesterov = "nesterov";
 constexpr auto kNewAxisMask = "new_axis_mask";
 constexpr auto kNgramSize = "ngram_size";
+constexpr auto kEodTokenId = "eod_token_id";
 constexpr auto kNGram = "ngram";
 constexpr auto kNmsThresh = "nms_thresh";
 constexpr auto kNormRegion = "norm_region";
