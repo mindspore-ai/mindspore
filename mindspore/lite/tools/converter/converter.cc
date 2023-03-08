@@ -267,9 +267,13 @@ std::shared_ptr<ConverterPara> CreateConvertParam(const std::map<std::string, st
     {"inputDataFormat", InitModelInputDataFormat},
     {"infer", InitModelInfer},
     {"NoFusion", InitModelNoFusion}};
+  if (model_params.find("fmk") == model_params.end() || model_params.find("modelFile") == model_params.end()) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: fmk and modelFile must be set in [model_param].";
+    return nullptr;
+  }
   for (auto &pair : model_params) {
     if (parse_funcs.find(pair.first) == parse_funcs.end()) {
-      MS_LOG(ERROR) << pair.first << "is not a valid flag";
+      MS_LOG(ERROR) << "In multi-model scenario, " << pair.first << " is not supported";
       return nullptr;
     }
     if (parse_funcs[pair.first](pair.second, parm) != RET_OK) {
