@@ -49,6 +49,9 @@ class PadV3GradCpuKernel : public CpuKernel {
   int64_t pad_l;
   int64_t pad_t;
   int64_t pad_f;
+  int64_t pad_r;
+  int64_t pad_d;
+  int64_t pad_b;
   int64_t parallelSliceNum;
   int64_t num_elem;
   int64_t input_dim;
@@ -69,13 +72,11 @@ class PadV3GradCpuKernel : public CpuKernel {
   template <typename T>
   uint32_t PadV3GradCompute1(T *input, T *output, int64_t p);
 
-  int64_t IndexCaculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start, int64_t i_start);
+  int64_t IndexCaculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t output_value, int64_t o_start,
+                        int64_t i_start);
 
   template <typename T>
-  uint32_t PadV3ReadPaddingsAndSetOutputShape1(CpuKernelContext &ctx);
-
-  template <typename T>
-  uint32_t PadV3ReadPaddingsAndSetOutputShape2(CpuKernelContext &ctx);
+  uint32_t PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

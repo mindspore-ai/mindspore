@@ -36,6 +36,9 @@ const int64_t k1DNum = 2;
 constexpr int64_t kpad_l = 0;
 constexpr int64_t kpad_t = 2;
 constexpr int64_t kpad_f = 4;
+constexpr int64_t kpad_r = 1;
+constexpr int64_t kpad_d = 3;
+constexpr int64_t kpad_b = 5;
 constexpr int64_t kwidth = 1;
 constexpr int64_t kheight = 2;
 constexpr int64_t kchannel = 3;
@@ -49,15 +52,14 @@ constexpr int64_t k4Num = 4;
 const std::vector<std::string> mode_list = {"reflect", "edge"};
 using float16 = Eigen::half;
 
-#define PAD_V3_GRAD_READ_PADDINGS(DTYPE, TYPE, CTX)                    \
-  case (DTYPE): {                                                      \
-    uint32_t result1 = PadV3ReadPaddingsAndSetOutputShape1<TYPE>(CTX); \
-    uint32_t result2 = PadV3ReadPaddingsAndSetOutputShape2<TYPE>(CTX); \
-    if (result1 != KERNEL_STATUS_OK || result2 != KERNEL_STATUS_OK) {  \
-      KERNEL_LOG_ERROR("PadV3Grad kernel compute failed.");            \
-      return result1 && result2;                                       \
-    }                                                                  \
-    break;                                                             \
+#define PAD_V3_GRAD_READ_PADDINGS(DTYPE, TYPE, CTX)                  \
+  case (DTYPE): {                                                    \
+    uint32_t result = PadV3ReadPaddingsAndSetOutputShape<TYPE>(CTX); \
+    if (result != KERNEL_STATUS_OK) {                                \
+      KERNEL_LOG_ERROR("PadV3Grad kernel compute failed.");          \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
 #define PAD_V3_GRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)          \
@@ -130,53 +132,25 @@ uint32_t PadV3GradCpuKernel::PadV3GradCheck(CpuKernelContext &ctx) {
                      DTypeStr(ctx.Input(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-
-  const std::vector<int64_t> paddings_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE(
-    paddings_shape.size() == 1 && (paddings_shape[0] == k3DNum + k4Num || paddings_shape[0] == k2DNum + k4Num ||
-                                   paddings_shape[0] == k1DNum + k4Num || paddings_shape[0] == 1),
-    KERNEL_STATUS_PARAM_INVALID, "Paddings shape is not supported");
-  KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() >= kInput1Dim, KERNEL_STATUS_PARAM_INVALID,
-                     "Dims of tensor x should be greater than or equal to 3");
-  KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= kInput3Dim, KERNEL_STATUS_PARAM_INVALID,
-                     "Only 3D, 4D, 5D padding with non-constant padding are "
-                     "supported for now");
-
-  const int64_t input_dim = ctx.Input(0)->GetTensorShape()->GetDims();
-  const int64_t num_elem = ctx.Input(1)->NumElements();
-  KERNEL_CHECK_FALSE(num_elem % k2Num == 0 || num_elem == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "Padding length must be divisible by 2");
-
-  if (input_dim == kInput1Dim) {
-    KERNEL_CHECK_FALSE(num_elem == k1DNum + k4Num || num_elem == 1, KERNEL_STATUS_PARAM_INVALID,
-                       "3D tensors expect 6 values for padding");
-  } else if (input_dim == kInput2Dim) {
-    KERNEL_CHECK_FALSE(num_elem == k2DNum + k4Num || num_elem == 1, KERNEL_STATUS_PARAM_INVALID,
-                       "4D tensors expect 8 values for padding");
-  } else if (input_dim == kInput3Dim) {
-    KERNEL_CHECK_FALSE(num_elem == k3DNum + k4Num || num_elem == 1, KERNEL_STATUS_PARAM_INVALID,
-                       "5D tensors expect 10 values for padding");
-  }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape1(CpuKernelContext &ctx) {
+uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext &ctx) {
   num_elem = ctx.Input(1)->NumElements();
   input_dim = ctx.Input(0)->GetTensorShape()->GetDims();
   const std::vector<int64_t> input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto paddings_ptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
-  paddings = std::vector<int64_t>(input_dim * k2Num, 0);
+  paddings = std::vector<int64_t>(k3DNum, 0);
 
-  for (int64_t i = 0; i < num_elem; i += k2Num) {
-    paddings[i] = static_cast<int64_t>(paddings_ptr[num_elem - i - k2Num]);
-    paddings[i + 1] = static_cast<int64_t>(paddings_ptr[num_elem - i - 1]);
-  }
-  num_elem = num_elem - k4Num;
   if (num_elem == 1) {
     num_elem = k2Num * (input_dim - k2Num);
-    for (int64_t i = 0; i < k2Num * (input_dim - k2Num); ++i) {
+    for (int64_t i = 0; i < num_elem; ++i) {
       paddings[i] = static_cast<int64_t>(paddings_ptr[0]);
+    }
+  } else {
+    for (int64_t i = 0; i < num_elem; ++i) {
+      paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
     }
   }
 
@@ -201,38 +175,8 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape1(CpuKernelContex
   return KERNEL_STATUS_OK;
 }
 
-template <typename T>
-uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape2(CpuKernelContext &ctx) {
-  std::vector<int64_t> output_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  output_shape.end()[-kwidth] -= (paddings[kpad_l] + paddings[kpad_l + 1]);
-  output_shape.end()[-kheight] -= (paddings[kpad_t] + paddings[kpad_t + 1]);
-  output_shape.end()[-kchannel] -= (paddings[kpad_f] + paddings[kpad_f + 1]);
-
-  KERNEL_CHECK_FALSE(
-    output_shape.end()[-kwidth] > 0 && output_shape.end()[-kheight] > 0 && output_shape.end()[-kchannel] > 0,
-    KERNEL_STATUS_PARAM_INVALID, "output_shape number must be greater than 0");
-
-  if (output_shape != ctx.Output(0)->GetTensorShape()->GetDimSizes()) {
-    ctx.Output(0)->GetTensorShape()->SetDimSizes(output_shape);
-    KERNEL_LOG_DEBUG("Set output tensor shape success, num elements:[%llu]",
-                     static_cast<uint64_t>(ctx.Output(0)->NumElements()));
-  } else {
-    KERNEL_LOG_DEBUG("Output tensor is a const tensor, num elements:[%llu]",
-                     static_cast<uint64_t>(ctx.Output(0)->NumElements()));
-  }
-  const std::string padding_contiguous_str = padding_contiguous ? std::string("True") : std::string("False");
-  KERNEL_LOG_DEBUG(
-    "PadV3GradCpuKernel[%s], x: size[%llu] dtype[%s], "
-    "paddings: size[%llu] dtype[%s], y: size[%llu] dtype[%s], mode: [%s], "
-    "padding_contiguous: [%s].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
-    ctx.Input(1)->GetDataSize(), DTypeStr(ctx.Input(1)->GetDataType()).c_str(), ctx.Output(0)->GetDataSize(),
-    DTypeStr(ctx.Output(0)->GetDataType()).c_str(), mode.c_str(), padding_contiguous_str.c_str());
-  return KERNEL_STATUS_OK;
-}
-
-int64_t PadV3GradCpuKernel::IndexCaculate(int64_t pad_value, int64_t now, int64_t output_value, int64_t o_start,
-                                          int64_t i_start) {
+int64_t PadV3GradCpuKernel::IndexCaculate(int64_t pad_value, int64_t pad_end, int64_t now, int64_t output_value,
+                                          int64_t o_start, int64_t i_start) {
   int64_t ip = 0;
   if (now < pad_value) {
     if (mode == "reflect") {
@@ -273,7 +217,7 @@ template <typename T>
 uint32_t PadV3GradCpuKernel::PadV3GradCompute1D(T *input, T *output, int64_t p) {
   int ip_x;
   for (int j = 0; j < input_w; j++) {
-    ip_x = IndexCaculate(pad_l, j, output_w, o_start_x, i_start_x);
+    ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
     T *src_p = input + p * input_w + j;
     T *dest_p = output + p * output_w + ip_x;
     *dest_p += *src_p;
@@ -285,8 +229,8 @@ template <typename T>
 uint32_t PadV3GradCpuKernel::PadV3GradCompute2D(T *input, T *output, int64_t p, int64_t i) {
   int ip_x, ip_y;
   for (int j = 0; j < input_w; j++) {
-    ip_x = IndexCaculate(pad_l, j, output_w, o_start_x, i_start_x);
-    ip_y = IndexCaculate(pad_t, i, output_h, o_start_y, i_start_y);
+    ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
+    ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
     T *src_p = input + p * input_w * input_h + i * input_w + j;
     T *dest_p = output + p * output_w * output_h + ip_y * output_w + ip_x;
     *dest_p += *src_p;
@@ -299,9 +243,9 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute3D(T *input, T *output, int64_t p, 
   int ip_x, ip_y, ip_z;
   for (int i = 0; i < input_h; i++) {
     for (int j = 0; j < input_w; j++) {
-      ip_x = IndexCaculate(pad_l, j, output_w, o_start_x, i_start_x);
-      ip_y = IndexCaculate(pad_t, i, output_h, o_start_y, i_start_y);
-      ip_z = IndexCaculate(pad_f, z, output_c, o_start_z, i_start_z);
+      ip_x = IndexCaculate(pad_l, pad_r, j, output_w, o_start_x, i_start_x);
+      ip_y = IndexCaculate(pad_t, pad_d, i, output_h, o_start_y, i_start_y);
+      ip_z = IndexCaculate(pad_f, pad_b, z, output_c, o_start_z, i_start_z);
       T *src_p = input + p * input_w * input_h * input_c + z * input_w * input_h + i * input_w + j;
       T *dest_p = output + p * output_w * output_h * output_c + ip_z * output_w * output_h + ip_y * output_w + ip_x;
       *dest_p += *src_p;
@@ -333,6 +277,9 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute(CpuKernelContext &ctx) {
   pad_l = paddings[kpad_l];
   pad_t = paddings[kpad_t];
   pad_f = paddings[kpad_f];
+  pad_r = paddings[kpad_r];
+  pad_d = paddings[kpad_d];
+  pad_b = paddings[kpad_b];
 
   int64_t output_num_ = 1;
   for (int64_t i = 0; i < input_dim; i++) {
