@@ -999,41 +999,41 @@ def zeros_like(input, *, dtype=None):
     return output
 
 
-def tile(input_x, multiples):
+def tile(input, reps):
     r"""
-    Replicates an input tensor with given multiples times.
+    Replicates an input tensor with given reps times.
 
-    Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
-    output tensor has `input_x.shape[i] * multiples[i]` elements, and the values of `input_x`
-    are replicated `multiples[i]` times along the i'th dimension.
+    Creates a new tensor by replicating `input` `reps` times. The i'th dimension of
+    output tensor has `input.shape[i] * reps[i]` elements, and the values of `input`
+    are replicated `reps[i]` times along the i'th dimension.
 
     Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
+        The length of `reps` must be greater or equal to the length of dimension in `input`.
 
     Args:
-        input_x (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
             :math:`(x_1, x_2, ..., x_S)` .
 
-        multiples (tuple[int]): The parameter that specifies the number of replications,
+        reps (tuple[int]): The parameter that specifies the number of replications,
             the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+            The length of `reps` cannot be smaller than the length of the shape of `input`.
             Only constant value is allowed.
 
     Returns:
-        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
-        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
+        Tensor, has the same data type as the `input`. Suppose the length of `reps` is `d`,
+        the dimension of `input` is `input.dim`, and the shape of `input` is :math:`(x_1, x_2, ..., x_S)`.
 
-        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
+        - If `input.dim = d`, then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
-        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
-          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+        - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
+          lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
           :math:`(1*y_1, ..., x_S*y_R)`.
 
     Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input_x`.
+        TypeError: If `reps` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `reps` are not all greater than 0.
+        ValueError: If the length of `reps` are smaller than the length of dimension in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1063,7 +1063,7 @@ def tile(input_x, multiples):
           [1. 2. 1. 2.]
           [3. 4. 3. 4.]]]
     """
-    return tile_(input_x, multiples)
+    return tile_(input, reps)
 
 
 def range(start, end, step):
@@ -2019,9 +2019,9 @@ def slice(input_x, begin, size):
     return tensor_slice(input_x, begin, size)
 
 
-def concat(input_x, axis=0):
+def concat(tensors, axis=0):
     """Alias for :func:`mindspore.ops.cat()`"""
-    return cat(input_x, axis)
+    return cat(tensors, axis)
 
 
 def stack(tensors, axis=0):
@@ -2251,7 +2251,7 @@ def squeeze(input, axis=None):
     return squeeze_(input)
 
 
-def transpose(input_x, input_perm):
+def transpose(input, input_perm):
     """
     Permutes the dimensions of the input tensor according to input permutation.
 
@@ -2296,7 +2296,7 @@ def transpose(input_x, input_perm):
           [ 8. 11.]
           [ 9. 12.]]]
     """
-    return transpose_(input_x, input_perm)
+    return transpose_(input, input_perm)
 
 
 def scatter_mul(input_x, indices, updates):
@@ -3374,7 +3374,7 @@ def gather_d(x, dim, index):
     return gather_d_(x, dim, index)
 
 
-def gather_elements(x, dim, index):
+def gather_elements(input, dim, index):
     """
     Gathers elements along an axis specified by dim.
 
@@ -3388,25 +3388,26 @@ def gather_elements(x, dim, index):
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `x` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
-    If `dim` = i, `x` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
+    `input` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
+    If `dim` = i, `input` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
     the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
     where `y`>=1 and the output will have the same shape with `index`.
 
     Args:
-        x (Tensor): The input tensor.
-        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-x.ndim, x.ndim).
+        input (Tensor): The input tensor.
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-input.ndim,
+            input.ndim).
         index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-x.shape(dim), x.shape(dim)).
+            int32, int64. The value range of each index element is [-input.shape(dim), input.shape(dim)).
 
     Returns:
         Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`,
-        and has the same data type with `x`.
+        and has the same data type with `input`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
-        ValueError: If length of shape of `x` is not equal to length of shape of `index`.
-        ValueError: If the size of the dimension except `dim` is not equal between `x` and `index`.
+        ValueError: If length of shape of `input` is not equal to length of shape of `index`.
+        ValueError: If the size of the dimension except `dim` is not equal between `input` and `index`.
         ValueError: If the value of `dim` is not in the expected range.
 
     Supported Platforms:
@@ -3424,7 +3425,7 @@ def gather_elements(x, dim, index):
         [[1 1]
          [4 3]]
     """
-    return gather_d_(x, dim, index)
+    return gather_d_(input, dim, index)
 
 
 def gather_nd(input_x, indices):
@@ -3928,18 +3929,18 @@ def batch_to_space_nd(input_x, block_shape, crops):
     return _batch_to_space_nd(input_x)
 
 
-def nonzero(x):
+def nonzero(input):
     """
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is int, float or bool.
+        input (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is int, float or bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
     Raises:
-        TypeError: If `x` is not Tensor.
+        TypeError: If `input` is not Tensor.
         ValueError: If dim of `x` equals to 0.
 
     Supported Platforms:
@@ -3956,7 +3957,7 @@ def nonzero(x):
         [[0 0 0]
          [0 1 0]]
     """
-    return nonzero_(x)
+    return nonzero_(input)
 
 
 def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
@@ -4899,20 +4900,20 @@ def tuple_to_array(input_x):
     return tuple_to_array_(input_x)
 
 
-def masked_select(x, mask):
+def masked_select(input, mask):
     """
     Returns a new 1-D Tensor which indexes the `x` tensor according to the boolean `mask`.
     The shapes of the `mask` tensor and the `x` tensor don't need to match, but they must be broadcastable.
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         mask (Tensor[bool]): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Returns:
-        A 1-D Tensor, with the same type as `x`.
+        A 1-D Tensor, with the same type as `input`.
 
     Raises:
-        TypeError: If `x` or `mask` is not a Tensor.
+        TypeError: If `input` or `mask` is not a Tensor.
         TypeError: If dtype of `mask` is not bool.
 
     Supported Platforms:
@@ -5734,13 +5735,13 @@ def aminmax(input, *, axis=0, keepdims=False):
     return output0, output1
 
 
-def narrow(inputs, axis, start, length):
+def narrow(input, axis, start, length):
     """
     Returns a narrowed tensor from input tensor, and
     the dimension axis is input from start to start + length.
 
     Args:
-        inputs (Tensor): the tensor to narrow.
+        input (Tensor): the tensor to narrow.
         axis (int): the axis along which to narrow.
         start (int): the starting dimension.
         length (int): the distance to the ending dimension.
@@ -5771,15 +5772,15 @@ def narrow(inputs, axis, start, length):
          [ 5 6]
          [ 8 9]]
     """
-    validator.check_axis_in_range(axis, inputs.ndim)
-    validator.check_int_range(start, 0, inputs.shape[axis], Rel.INC_LEFT)
-    validator.check_int_range(length, 1, inputs.shape[axis] - start, Rel.INC_BOTH)
+    validator.check_axis_in_range(axis, input.ndim)
+    validator.check_int_range(start, 0, input.shape[axis], Rel.INC_LEFT)
+    validator.check_int_range(length, 1, input.shape[axis] - start, Rel.INC_BOTH)
 
-    begins = [0] * inputs.ndim
+    begins = [0] * input.ndim
     begins[axis] = start
-    sizes = [i for i in inputs.shape]
+    sizes = [i for i in input.shape]
     sizes[axis] = length
-    return P.Slice()(inputs, begins, sizes)
+    return P.Slice()(input, begins, sizes)
 
 
 def unsorted_segment_sum(input_x, segment_ids, num_segments):
@@ -6292,19 +6293,19 @@ def mvlgamma(input, p):
     return mvlgamma_op(input)
 
 
-def argwhere(x):
+def argwhere(input):
     """
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+        input (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
     Raises:
-        TypeError: If `x` is not Tensor.
-        ValueError: If dim of `x` equals to 0.
+        TypeError: If `input` is not Tensor.
+        ValueError: If dim of `input` equals to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6319,24 +6320,24 @@ def argwhere(x):
         [[0 0 0]
          [0 1 0]]
     """
-    return nonzero_(x)
+    return nonzero_(input)
 
 
-def column_stack(x):
+def column_stack(tensors):
     """
     Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
     like ops.hstack.
 
     Args:
-        x (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
+        tensors (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
             of them must have the same shape except the axis to be concatenated.
 
     Returns:
         2-D Tensor, formed by stacking the given tensors.
 
     Raises:
-        TypeError: If `x` is not Tensor, list or tuple.
-        ValueError: If `x` is empty.
+        TypeError: If `tensors` is not Tensor, list or tuple.
+        ValueError: If `tensors` is empty.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6351,12 +6352,12 @@ def column_stack(x):
          [1 2]
          [1 2]]
     """
-    if not isinstance(x, (list, tuple)):
-        raise TypeError(f"For column_stack, the input must be list or tuple or tensor, but got {type(x)}.")
+    if not isinstance(tensors, (list, tuple)):
+        raise TypeError(f"For column_stack, the input must be list or tuple or tensor, but got {type(tensors)}.")
 
     trans_x = ()
     _expand_dims = _get_cache_prim(P.ExpandDims)()
-    for tensor in x:
+    for tensor in tensors:
         if tensor.ndim < 1:
             tensor = _expand_dims(tensor, 0)
         if tensor.ndim == 1:
@@ -6368,14 +6369,14 @@ def column_stack(x):
     return _concat(trans_x)
 
 
-def hstack(x):
+def hstack(tensors):
     """
     Stacks tensors in sequence horizontally.
     This is equivalent to concatenation along the second axis, except for 1-D tensors
     where it concatenates along the first axis.
 
     Args:
-        x (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
+        tensors (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
             tensors must have the same shape along all but the second axis, except
             1-D tensors which can be any length.
 
@@ -6383,8 +6384,8 @@ def hstack(x):
         Stacked Tensor, formed by stacking the given tensors.
 
     Raises:
-        TypeError: If `x` is not Tensor, list or tuple.
-        ValueError: If `x` is empty.
+        TypeError: If `tensors` is not Tensor, list or tuple.
+        ValueError: If `tensors` is empty.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6397,11 +6398,11 @@ def hstack(x):
         >>> print(output)
         [1. 1. 1. 2. 2. 2.]
     """
-    if not isinstance(x, (list, tuple)):
-        raise TypeError(f"For hstack, the input must be list or tuple, but got {type(x)}.")
+    if not isinstance(tensors, (list, tuple)):
+        raise TypeError(f"For hstack, the input must be list or tuple, but got {type(tensors)}.")
 
     tuple_of_tensor = ()
-    for tensor in x:
+    for tensor in tensors:
         if tensor.ndim < 1:
             tensor = expand_dims_(tensor, 0)
         tuple_of_tensor += (tensor,)
