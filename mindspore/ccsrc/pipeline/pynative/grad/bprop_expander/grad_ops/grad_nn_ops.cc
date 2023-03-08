@@ -934,43 +934,101 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_shape = ib->GetShape(x);
-  auto x_batch = x_shape[0];
-  auto x_depth = x_shape[1];
-  auto x_row = x_shape[2];
-  auto x_col = x_shape[3];
-  auto x_indices_num = (x_row * x_col) + 1;
-  auto x_idx = ib->Tensor(Range(1, x_indices_num), kFloat32);
-  x_idx = ib->Reshape(x_idx, {1, 1, x_row, x_col});
-  auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
-                                       {{"ksizes", ib->GetAttr("ksizes")},
-                                        {"strides", ib->GetAttr("strides")},
-                                        {"rates", ib->GetAttr("rates")},
-                                        {"padding", ib->GetAttr("padding")}}),
-                              kInt32);
-  x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
   auto out_shape = ib->GetShape(out);
-  auto out_row = out_shape[2];
-  auto out_col = out_shape[3];
-  auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
-  auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
-  out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
-  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
-                             {{"axis", MakeValue<int64_t>(-1)}});
-  idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
-  std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
-  std::vector<int64_t> ones(out_indices_num, 1);
-  auto sp_tensor =
-    ib->Emit("ScatterNd", {idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
-  sp_tensor = ib->Emit(
-    "Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}), ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
-  auto grad = ib->Transpose(dout, {0, 2, 3, 1});
-  grad = ib->Reshape(grad, {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth});
-  grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
-  grad = ib->Reshape(grad, {-1, x_batch * x_depth});
-  auto jac = ib->MatMul(sp_tensor, grad, false, false);
-  auto dx = ib->Reshape(jac, {x_row, x_col, x_batch, x_depth});
-  dx = ib->Transpose(dx, {2, 3, 0, 1});
-  return {dx};
+  if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
+    auto shape_func = [ksizes_row, ksizes_col](const ShapeArray &inputs) -> ShapeArray {
+      auto x_shape = inputs.at(0);
+      auto x_batch = x_shape[0];
+      auto x_depth = x_shape[1];
+      auto x_row = x_shape[2];
+      auto x_col = x_shape[3];
+      auto x_indices_num = (x_row * x_col) + 1;
+      auto out_shape = inputs.at(1);
+      auto out_row = out_shape[2];
+      auto out_col = out_shape[3];
+      auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
+      return {{x_indices_num},
+              {1, 1, x_row, x_col},
+              {out_indices_num},
+              {1, out_row, out_col, ksizes_row * ksizes_col},
+              {x_indices_num, out_indices_num},
+              {x_indices_num - 1, out_indices_num},
+              {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth},
+              {-1, x_batch * x_depth},
+              {x_row, x_col, x_batch, x_depth}};
+    };
+
+    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+      return {1, 4, 1, 4, 2, 2, 6, 2, 4};
+    };
+
+    auto res = ib->ShapeCalc({x, out}, shape_func, infer_func, {});
+    auto x_idx = ib->Cast(ib->Range(ib->Tensor(1, kInt64), res[0], ib->Tensor(1, kInt64)), kFloat32);
+    x_idx = ib->Reshape(x_idx, res[1]);
+    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
+                                         {{"ksizes", ib->GetAttr("ksizes")},
+                                          {"strides", ib->GetAttr("strides")},
+                                          {"rates", ib->GetAttr("rates")},
+                                          {"padding", ib->GetAttr("padding")}}),
+                                kInt32);
+    x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
+    auto out_idx = ib->Cast(ib->Range(res[2]), kInt32);
+    out_idx = ib->Reshape(out_idx, res[3]);
+    auto idx_tensor =
+      ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
+               {{"axis", MakeValue<int64_t>(-1)}});
+    idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
+    auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
+    auto sp_tensor = ib->Emit("ScatterNd", {idx_tensor, ones, res[4]});
+    sp_tensor = ib->Emit("Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}), res[5]});
+    auto grad = ib->Transpose(dout, {0, 2, 3, 1});
+    grad = ib->Reshape(grad, res[6]);
+    grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
+    grad = ib->Reshape(grad, res[7]);
+    auto jac = ib->MatMul(sp_tensor, grad, false, false);
+    auto dx = ib->Reshape(jac, res[8]);
+    dx = ib->Transpose(dx, {2, 3, 0, 1});
+    return {dx};
+
+  } else {
+    auto x_batch = x_shape[0];
+    auto x_depth = x_shape[1];
+    auto x_row = x_shape[2];
+    auto x_col = x_shape[3];
+    auto x_indices_num = (x_row * x_col) + 1;
+    auto x_idx = ib->Tensor(Range(1, x_indices_num), kFloat32);
+    x_idx = ib->Reshape(x_idx, {1, 1, x_row, x_col});
+    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
+                                         {{"ksizes", ib->GetAttr("ksizes")},
+                                          {"strides", ib->GetAttr("strides")},
+                                          {"rates", ib->GetAttr("rates")},
+                                          {"padding", ib->GetAttr("padding")}}),
+                                kInt32);
+    x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
+    auto out_row = out_shape[2];
+    auto out_col = out_shape[3];
+    auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
+    auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
+    out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
+    auto idx_tensor =
+      ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
+               {{"axis", MakeValue<int64_t>(-1)}});
+    idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
+    std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
+    std::vector<int64_t> ones(out_indices_num, 1);
+    auto sp_tensor =
+      ib->Emit("ScatterNd", {idx_tensor, ib->Tensor(ones, ib->GetDtype(dout)), ib->Value<ShapeVector>(sp_shape)});
+    sp_tensor = ib->Emit("Slice", {sp_tensor, ib->Value<ShapeVector>({1, 0}),
+                                   ib->Value<ShapeVector>({x_indices_num - 1, out_indices_num})});
+    auto grad = ib->Transpose(dout, {0, 2, 3, 1});
+    grad = ib->Reshape(grad, {x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth});
+    grad = ib->Transpose(grad, {1, 2, 3, 4, 0, 5});
+    grad = ib->Reshape(grad, {-1, x_batch * x_depth});
+    auto jac = ib->MatMul(sp_tensor, grad, false, false);
+    auto dx = ib->Reshape(jac, {x_row, x_col, x_batch, x_depth});
+    dx = ib->Transpose(dx, {2, 3, 0, 1});
+    return {dx};
+  }
 });
 
 REG_BPROP_BUILDER("HSwish").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
@@ -1632,7 +1690,7 @@ REG_BPROP_BUILDER("PSROIPooling").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib)
 REG_BPROP_BUILDER("AvgPoolV1").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto orig_input_shape = ib->Shape(x);
+  auto orig_input_shape = ib->Shape(x, true);
   auto dx = ib->Emit("AvgPoolGradV1", {orig_input_shape, dout},
                      {
                        {"kernel_size", ib->GetAttr("kernel_size")},
@@ -1706,7 +1764,6 @@ REG_BPROP_BUILDER("FractionalMaxPoolWithFixedKsize").SetUnusedInputs({i1}).SetBo
 });
 
 REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  MS_LOG(WARNING) << "Bprop Expander under testing: " << ib->name();
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {x, dout});

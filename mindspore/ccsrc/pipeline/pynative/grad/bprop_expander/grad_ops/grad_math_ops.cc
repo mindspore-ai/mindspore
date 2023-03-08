@@ -42,12 +42,32 @@ NodePtrList AddnGradFunc(const BpropIRBuilder *ib) {
   return {ib->MakeTuple(result)};
 }
 
-NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
+NodePtrList IgammaBpropExpanderDyn(const BpropIRBuilder *ib) {
   auto a = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+  auto sa = ib->Shape(a);
+  auto sx = ib->Shape(x);
+  auto rax = ib->DynamicBroadcastGradientArgs(sa, sx);
+  auto ra = ib->TupleGetItem(rax, 0);
+  auto rx = ib->TupleGetItem(rax, 1);
+  auto partial_a = ib->Emit("IgammaGradA", {a, x});
+  auto lgamma = LGamma(ib, a);
+  auto partial_x = ib->Exp(
+    ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
+  auto r1 = ib->Reshape(SumGradReduceAxisWithCast(ib, ib->Mul(partial_a, dout), ra), sa);
+  auto r2 = ib->Reshape(SumGradReduceAxisWithCast(ib, ib->Mul(partial_x, dout), rx), sx);
+  return {r1, r2};
+}
+
+NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
   auto sa = ib->GetShape(a);
   auto sx = ib->GetShape(x);
+  if (IsDynamic(sa) || IsDynamic(sx)) {
+    return IgammaBpropExpanderDyn(ib);
+  }
   auto rax = BroadcastGradientArgs(sa, sx);
   auto ra = rax[0];
   auto rx = rax[1];
@@ -55,6 +75,7 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
   auto lgamma = LGamma(ib, a);
   auto partial_x = ib->Exp(
     ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
+  auto dout = ib->GetInput(kIndex3);
   NodePtr r1, r2;
   if (ra.size()) {
     r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
@@ -347,8 +368,8 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
     MS_EXCEPTION(TypeError) << "For 'Pow', gradient not support for complex type currently.";
   }
   auto bc_dx = ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
-  x = ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))),
-                 ib->Fill(1.0, ib->GetShape(x), ib->GetDtype(x)->type_id()), x);
+  x =
+    ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))), ib->Fill(1.0, ib->Shape(x), ib->GetDtype(x)->type_id()), x);
   auto bc_dpower = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
@@ -401,20 +422,9 @@ REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->GetShape(x);
-  auto y_shape = ib->GetShape(y);
-  auto dx = ib->MulNoNan(dout, y);
-  auto dy = ib->MulNoNan(x, dout);
-  std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgs(x_shape, y_shape);
-  auto broadcast_x = bc_axis[0];
-  auto broadcast_y = bc_axis[1];
-  if (!broadcast_x.empty()) {
-    dx = ib->Reshape(ib->ReduceSum(dx, broadcast_x), x_shape);
-  }
-  if (!broadcast_y.empty()) {
-    dy = ib->Reshape(ib->ReduceSum(dy, broadcast_y), y_shape);
-  }
-  return {dx, dy};
+  auto bc_x = ib->Mul(dout, y);
+  auto bc_y = ib->Mul(x, dout);
+  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
 });
 
 REG_BPROP_BUILDER("BesselI0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
@@ -597,16 +607,24 @@ REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
   auto input_y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dout_shape = ib->GetShape(dout);
-  auto dout_dim = dout_shape.size();
-  ShapeVector perm;
-  for (uint64_t i = 0; i < dout_dim - 2; ++i) {
-    perm.push_back(i);
-  }
-  perm.push_back(dout_dim - 1);
-  perm.push_back(dout_dim - 2);
-  auto dout_transpose = ib->Transpose(dout, perm);
-  auto out_transpose = ib->Transpose(out, perm);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto dout_shape = inputs.at(0);
+    auto dout_dim = dout_shape.size();
+    ShapeVector perm;
+    for (uint64_t i = 0; i < dout_dim - 2; ++i) {
+      perm.push_back(i);
+    }
+    perm.push_back(dout_dim - 1);
+    perm.push_back(dout_dim - 2);
+    return {perm};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto dout_shape = inputs.at(0);
+    return {IsDynamicRank(dout_shape) ? -1 : static_cast<int64_t>(dout_shape.size())};
+  };
+  auto res = ib->ShapeCalc({dout}, shape_func, infer_func, {})[0];
+  auto dout_transpose = ib->Transpose(dout, res);
+  auto out_transpose = ib->Transpose(out, res);
   auto dx = ib->Emit("CdistGrad", {dout, input_x, input_y, out}, {{"p", ib->GetAttr("p")}});
   auto dy = ib->Emit("CdistGrad", {dout_transpose, input_y, input_x, out_transpose}, {{"p", ib->GetAttr("p")}});
   return {dx, dy};
@@ -914,8 +932,8 @@ REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Trace").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto shape = ib->GetShape(x);
-  auto dx = ib->Emit("TraceGrad", {dout, ib->Tensor(shape, kInt64)});
+  auto shape = ib->Shape(x, true);
+  auto dx = ib->Emit("TraceGrad", {dout, shape});
   return {dx};
 });
 
@@ -945,25 +963,60 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto input_shape = ib->GetShape(x);
-  auto output_shape_kept_dims = ReduceShape(input_shape, GetIntList(axis));
-  dout = ib->Reshape(dout, output_shape_kept_dims);
-  auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
-  auto grad = ib->Tile(dout, tile_scaling);
-  auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetIntList(axis));
-  auto permuted = ib->Transpose(x, perm);
-  auto permuted_shape = ib->GetShape(permuted);
-  auto reshaped = ib->Reshape(permuted, pack_shape);
+  NodePtr output_shape_kept_dims_p;
+  NodePtr tile_scaling_p;
+  NodePtr pack_shape_p;
+  NodePtr perm_p;
+  NodePtr invert_perm_p;
+  if (IsDynamic(input_shape)) {
+    auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+      auto input_shape = inputs.at(0);
+      auto axis = inputs.at(1);
+      auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+      auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+      auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
+      return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
+    };
+    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+      if (!invalid_indices.empty()) {
+        return {-1, -1, 2, -1, -1};
+      }
+      auto size = SizeToLong(inputs.at(0).size());
+      return {size, size, 2, size, size};
+    };
+    auto res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+    output_shape_kept_dims_p = res[0];
+    tile_scaling_p = res[1];
+    pack_shape_p = res[2];
+    perm_p = res[3];
+    invert_perm_p = res[4];
+  } else {
+    auto output_shape_kept_dims = ReduceShape(input_shape, GetIntList(axis));
+    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+    auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetIntList(axis));
+    auto invert_perm = InvertPermutation(perm);
+    output_shape_kept_dims_p = ib->Value(output_shape_kept_dims);
+    tile_scaling_p = ib->Value(tile_scaling);
+    pack_shape_p = ib->Value(pack_shape);
+    perm_p = ib->Value(perm);
+    invert_perm_p = ib->Value(invert_perm);
+  }
+  dout = ib->Reshape(dout, output_shape_kept_dims_p);
+  auto grad = ib->Tile(dout, tile_scaling_p);
+  auto permuted = ib->Transpose(x, perm_p);
+  auto permuted_shape = ib->Shape(permuted);
+  auto reshaped = ib->Reshape(permuted, pack_shape_p);
   auto left = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                        {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(false)}});
   auto right = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
-  auto out = ib->Mul(ib->Transpose(y, InvertPermutation(perm)), grad);
+  auto out = ib->Mul(ib->Transpose(y, invert_perm_p), grad);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
   } else {
-    auto dx = ib->Reshape(out, input_shape);
+    auto dx = ib->Reshape(out, ib->Shape(x));
     return {dx, ib->ZerosLike(axis)};
   }
 });
@@ -977,7 +1030,7 @@ REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMax', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
     return {dx, ib->ZerosLike(axis)};
   }
 });
@@ -991,38 +1044,36 @@ REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMin', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, GetIntList(axis), out, dout);
+    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
     return {dx, ib->ZerosLike(axis)};
   }
 });
 
 REG_BPROP_BUILDER("ReduceMean").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
+  }
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto grad = SumGrad(ib, x, axis, dout);
-  auto shape_x = ib->GetShape(x);
-  auto shape_out = ib->GetShape(out);
-  auto getSize = [](const ShapeVector shape) {
-    int64_t size = 1;
-    for (auto &i : shape) {
-      size *= i;
-    }
-    return size;
-  };
-  auto shape_out_sz = getSize(shape_out);
-  if (shape_out_sz == 0) {
-    MS_EXCEPTION(ValueError) << "out shape size can not be 0";
-  }
-  auto div_shape = getSize(shape_x) / shape_out_sz;
-  auto x_dtype_id = ib->GetDtypeId(x);
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceMean', gradient not support for complex type currently.";
+  NodePtr div_shape_node;
+  if (IsDynamic(ib->GetShape(x)) || IsDynamic(ib->GetShape(out))) {
+    auto shape_out_sz = ib->DynSize(out, kFloat32);
+    auto div_shape = ib->DynSize(x, kFloat32) / shape_out_sz;
+    div_shape_node = ib->Cast(div_shape, ib->GetDtype(grad));
   } else {
-    auto dx = ib->RealDiv(grad, ib->Tensor(div_shape, ib->GetDtype(grad)));
-    return {dx, ib->ZerosLike(axis)};
+    auto shape_out_sz = ib->GetSize(out);
+    if (shape_out_sz == 0) {
+      MS_EXCEPTION(ValueError) << "out shape size can not be 0";
+    }
+    auto div_shape = ib->GetSize(x) / shape_out_sz;
+    div_shape_node = ib->Tensor(div_shape, ib->GetDtype(grad));
   }
+  auto dx = ib->RealDiv(grad, div_shape_node);
+  return {dx, ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("ArgMaxWithValue").SetBody(BODYFUNC(ib) {
@@ -1070,7 +1121,7 @@ REG_BPROP_BUILDER("Betainc").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto input_b = ib->GetInput(kIndex1);
   auto input_x = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto sx = ib->GetShape(input_x);
+  auto sx = ib->Shape(input_x);
   auto log_beta = (LGamma(ib, input_a) + LGamma(ib, input_b)) - LGamma(ib, ib->Add(input_a, input_b));
   auto partial_x = ib->Exp(ib->Sub(
     (ib->Add(
@@ -1085,10 +1136,18 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto new_shape = ib->GetShape(ib->TupleGetItem(out, 1));
-  new_shape.push_back(1);
-  new_shape.push_back(1);
-  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), new_shape);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto new_shape = inputs.at(0);
+    new_shape.push_back(1);
+    new_shape.push_back(1);
+    return {new_shape};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 2};
+  };
+  auto res = ib->ShapeCalc({ib->TupleGetItem(out, 1)}, shape_func, infer_func, {})[0];
+  auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1098,10 +1157,18 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto new_shape = ib->GetShape(out);
-  new_shape.push_back(1);
-  new_shape.push_back(1);
-  auto multipliers = ib->Reshape(ib->Mul(dout, out), new_shape);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto new_shape = inputs.at(0);
+    new_shape.push_back(1);
+    new_shape.push_back(1);
+    return {new_shape};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 2};
+  };
+  auto res = ib->ShapeCalc({out}, shape_func, infer_func, {})[0];
+  auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
 });
@@ -1177,11 +1244,29 @@ REG_BPROP_BUILDER("MatrixSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto shape_x = ib->GetShape(x);
-  auto x_len = static_cast<int64_t>(shape_x.size());
-  auto input_perm = Range(x_len);
-  input_perm[x_len - 2] = x_len - 1;
-  input_perm[x_len - 1] = x_len - 2;
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto shape_x = inputs.at(0);
+    auto x_len = static_cast<int64_t>(shape_x.size());
+    auto input_perm = Range(x_len);
+    input_perm[x_len - 2] = x_len - 1;
+    input_perm[x_len - 1] = x_len - 2;
+    auto n = shape_x[x_len - 1];
+    ShapeVector begins(x_len, 0);
+    begins[x_len - 1] = n;
+    auto sizes = shape_x;
+    sizes[x_len - 1] = n;
+    sizes[x_len - 2] = n;
+    return {input_perm, begins, sizes};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto shape_x = inputs.at(0);
+    auto rank = IsDynamicRank(shape_x) ? -1 : static_cast<int64_t>(shape_x.size());
+    return {rank, rank, rank};
+  };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  auto input_perm = res[0];
+  auto begins = res[1];
+  auto sizes = res[2];
   auto x_transpose = ib->Transpose(x, input_perm);
   auto zero_matrix = ib->ZerosLike(x);
   zero_matrix = ib->Cast(zero_matrix, ib->GetDtype(dout));
@@ -1191,13 +1276,7 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto meta_grad =
     ib->Emit("Concat", {ib->MakeTuple({meta_grad_up, meta_grad_down})}, {{"axis", MakeValue<int64_t>(-2)}});
   meta_grad = ib->Emit("MatrixExp", {meta_grad});
-  auto n = shape_x[x_len - 1];
-  ShapeVector begins(x_len, 0);
-  begins[x_len - 1] = n;
-  auto sizes = shape_x;
-  sizes[x_len - 1] = n;
-  sizes[x_len - 2] = n;
-  return {ib->Emit("Slice", {meta_grad, ib->EmitValue(MakeValue(begins)), ib->EmitValue(MakeValue(sizes))})};
+  return {ib->Emit("Slice", {meta_grad, begins, sizes})};
 });
 
 REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -1298,9 +1377,9 @@ REG_BPROP_BUILDER("NextAfter").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   if (dout_type->type_id() == kNumberTypeFloat64) {
     dout = ib->Cast(dout, kFloat32);
   }
-  auto s_x1 = ib->GetShape(x1);
+  auto s_x1 = ib->Shape(x1);
   auto partial_x1 = ib->Fill(1.0, s_x1, x1_type->type_id());
-  auto s_x2 = ib->GetShape(x2);
+  auto s_x2 = ib->Shape(x2);
   auto partial_x2 = ib->ZerosLike(x2);
   auto dx1 = ib->Reshape(ib->Mul(partial_x1, dout), s_x1);
   auto dx2 = ib->Reshape(ib->Mul(partial_x2, dout), s_x2);
@@ -1577,7 +1656,7 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
     auto input_scaled = ib->Mul(ib->Pow(input_x_abs, ib->Tensor(p - 2, ib->GetDtype(input_x_abs))), input_x);
     auto scale_v = ib->RealDiv(dout, ib->Pow(out, ib->Tensor(p - 1, ib->GetDtype(out))));
     auto equal_zero = ib->Equal(input_scaled, ib->Tensor(0, ib->GetDtype(input_scaled)));
-    return {ib->Select(equal_zero, ib->Fill(0.0, ib->GetShape(input_scaled), ib->GetDtype(input_scaled)->type_id()),
+    return {ib->Select(equal_zero, ib->Fill(0.0, ib->Shape(input_scaled), ib->GetDtype(input_scaled)->type_id()),
                        ib->Mul(input_scaled, scale_v))};
   }
 });
@@ -1687,6 +1766,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
+  // this dsl has pression error
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
@@ -1694,12 +1774,12 @@ REG_BPROP_BUILDER("CumulativeLogsumexp").SetBody(BODYFUNC(ib) {
   bool reverse = GetValue<bool>(ib->GetAttr("reverse"));
   NodePtr dtype_min = nullptr;
   if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat16) {
-    dtype_min = ib->Tensor(-65500e+0, kFloat16);
+    dtype_min = ib->Fill(-65500e+0, ib->Shape(dout), TypeId::kNumberTypeFloat16);
   } else {
     if ((ib->GetDtype(x))->type_id() == TypeId::kNumberTypeFloat32) {
-      dtype_min = ib->Tensor(-3.4028235e+38, kFloat32);
+      dtype_min = ib->Fill(-3.4028235e+38, ib->Shape(dout), TypeId::kNumberTypeFloat32);
     } else {
-      dtype_min = ib->Tensor(-1.7976931348623157e+308, kFloat64);
+      dtype_min = ib->Fill(-1.7976931348623157e+308, ib->Shape(dout), TypeId::kNumberTypeFloat64);
     }
   }
   auto log_grad_positive = ib->Select(ib->Greater(dout, ib->Tensor(0, ib->GetDtype(dout))), ib->Log(dout), dtype_min);

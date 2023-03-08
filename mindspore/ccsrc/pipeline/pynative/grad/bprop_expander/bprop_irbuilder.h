@@ -65,6 +65,9 @@ class BpropIRBuilder : public Emitter {
       return IsDynamic(shape) ? Emit("Shape", {node}) : Value<ShapeVector>(shape);
     }
   }
+  NodePtr DynamicBroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1) const {
+    return Emit("DynamicBroadcastGradientArgs", {s0, s1});
+  }
 
   // For node that has multiple outputs
   std::vector<ShapeVector> GetShapes(const NodePtr &node) const { return node->shapes(); }
