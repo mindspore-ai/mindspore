@@ -277,6 +277,7 @@ int OpenCLKernel::PreProcess() {
     }
     output->ResetRefCount();
   }
+  is_oversize_kernel_ = ocl_runtime_->GetAllocator()->IsOverSize();
   return RET_OK;
 }
 

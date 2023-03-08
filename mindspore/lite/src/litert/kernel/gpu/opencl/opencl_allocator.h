@@ -83,6 +83,7 @@ class OpenCLAllocator : public mindspore::Allocator {
     }
     return ptr;
   }
+  bool IsOverSize() { return is_oversize_; }
 
  private:
   void Lock();
@@ -117,6 +118,7 @@ class OpenCLAllocator : public mindspore::Allocator {
   // 6 is empirical value
   int shift_factor_ = 6;
   bool lock_flag_ = true;
+  bool is_oversize_{false};
 };
 }  // namespace mindspore::lite::opencl
 
