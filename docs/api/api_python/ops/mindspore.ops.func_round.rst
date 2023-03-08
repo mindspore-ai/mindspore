@@ -1,18 +1,18 @@
 mindspore.ops.round
 ====================
 
-.. py:function:: mindspore.ops.round(x)
+.. py:function:: mindspore.ops.round(input)
 
     对输入数据进行四舍五入到最接近的整数数值。
 
     .. math::
-        out_i \approx x_i
+        out_i \approx input_i
 
     参数：
-        - **x** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
-        Tensor，shape和数据类型与输入 `x` 相同。
+        Tensor，shape和数据类型与输入 `input` 相同。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。

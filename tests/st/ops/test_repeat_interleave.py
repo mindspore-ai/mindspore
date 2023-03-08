@@ -22,7 +22,7 @@ from mindspore import Tensor
 
 class RepeatInterleave(nn.Cell):
     def construct(self, x):
-        return ops.repeat_interleave(x, repeats=2, dim=0)
+        return ops.repeat_interleave(x, repeats=2, axis=0)
 
 
 @pytest.mark.level0

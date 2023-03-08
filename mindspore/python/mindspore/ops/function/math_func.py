@@ -558,33 +558,33 @@ def argmin(x, axis=None, keepdims=False):
 neg_tensor = P.Neg()
 
 
-def neg(x):
+def neg(input):
     """
     Returns a tensor with negative values of the input tensor element-wise.
 
     .. math::
 
-        out_{i} = - x_{i}
+        out_{i} = - input_{i}
 
     Args:
-        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape and dtype as input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
-        >>> output = ops.neg(x)
+        >>> input = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+        >>> output = ops.neg(input)
         >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
     """
-    return neg_tensor(x)
+    return neg_tensor(input)
 
 
 def negative(x):
@@ -717,7 +717,7 @@ def ceil(x):
     return tensor_ceil(x)
 
 
-def round(x):
+def round(input):
     r"""
     Returns half to even of a tensor element-wise.
 
@@ -726,47 +726,48 @@ def round(x):
         out_i \approx x_i
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
-        Tensor, has the same shape and type as the `x`.
+        Tensor, has the same shape and type as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-        >>> output = ops.round(x)
+        >>> input = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
+        >>> output = ops.round(input)
         >>> print(output)
         [ 1.  2.  2.  2. -4.]
     """
-    return tensor_round_(x)
+    return tensor_round_(input)
 
 
-def sub(x, y):
+def sub(input, other):
     r"""
     Subtracts the second input tensor from the first input tensor element-wise.
 
     .. math::
 
-        out_{i} = x_{i} - y_{i}
+        out_{i} = input_{i} - other_{i}
 
     .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+            consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -775,19 +776,19 @@ def sub(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+        TypeError: If `input` and `other` are not number.Number or bool or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([4, 5, 6]), mindspore.int32)
-        >>> output = ops.sub(x, y)
+        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> other = Tensor(np.array([4, 5, 6]), mindspore.int32)
+        >>> output = ops.sub(input, other)
         >>> print(output)
         [-3 -3 -3]
     """
-    return tensor_sub(x, y)
+    return tensor_sub(input, other)
 
 
 def subtract(x, other, *, alpha=1):
@@ -1530,23 +1531,23 @@ def inplace_sub(x, v, indices):
     return inplace_sub_inner(x, v)
 
 
-def logical_not(x):
+def logical_not(input):
     """
     Computes the "logical NOT" of a tensor element-wise.
 
     .. math::
 
-        out_{i} = \\neg x_{i}
+        out_{i} = \\neg input_{i}
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
             :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
 
     Returns:
-        Tensor, the shape is the same as the `x`, and the dtype is bool.
+        Tensor, the shape is the same as the `input`, and the dtype is bool.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1557,16 +1558,16 @@ def logical_not(x):
         >>> print(output)
         [False  True False]
     """
-    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
-        x = x.astype(mstype.bool_)
-    return logical_not_(x)
+    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
+        input = input.astype(mstype.bool_)
+    return logical_not_(input)
 
 
-def logical_or(x, y):
+def logical_or(input, others):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `others` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them must be bool.
@@ -1575,22 +1576,22 @@ def logical_or(x, y):
 
     .. math::
 
-        out_{i} = x_{i} \\vee y_{i}
+        out_{i} = input_{i} \\vee others_{i}
 
     Note:
         LogicalOr supports broadcasting.
 
     Args:
-        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
+        input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
             converted to bool.
-        y (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+        others (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
             a tensor whose data type can be implicitly converted to bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `others` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1602,18 +1603,18 @@ def logical_or(x, y):
         >>> print(output)
         [ True  True  True]
     """
-    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
-        x = x.astype(mstype.bool_)
-    if isinstance(y, Tensor) and y.dtype != mstype.bool_:
-        y = y.astype(mstype.bool_)
-    return logical_or_(x, y)
+    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
+        input = input.astype(mstype.bool_)
+    if isinstance(others, Tensor) and others.dtype != mstype.bool_:
+        others = others.astype(mstype.bool_)
+    return logical_or_(input, others)
 
 
-def logical_and(x, y):
+def logical_and(input, other):
     r"""
     Computes the "logical AND" of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them must be bool.
@@ -1622,22 +1623,22 @@ def logical_and(x, y):
 
     .. math::
 
-        out_{i} = x_{i} \wedge y_{i}
+        out_{i} = input_{i} \wedge other_{i}
 
     Note:
         LogicalAnd supports broadcasting.
 
     Args:
-        x (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
+        input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
             converted to bool.
-        y (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+        other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
             a tensor whose data type can be implicitly converted to bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1649,31 +1650,32 @@ def logical_and(x, y):
         >>> print(output)
         [ True False False]
     """
-    if isinstance(x, Tensor) and x.dtype != mstype.bool_:
-        x = x.astype(mstype.bool_)
-    if isinstance(y, Tensor) and y.dtype != mstype.bool_:
-        y = y.astype(mstype.bool_)
-    return logical_and_(x, y)
+    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
+        input = input.astype(mstype.bool_)
+    if isinstance(other, Tensor) and other.dtype != mstype.bool_:
+        other = other.astype(mstype.bool_)
+    return logical_and_(input, other)
 
 
-def sign(x):
+def sign(input):
     r"""
     Returns an element-wise indication of the sign of a number.
 
     .. math::
         \text{out}_{i} = \begin{cases}
-                        0 & |\text{x}_i| == 0 \\
-                        \frac{{\text{x}_i}}{|{\text{x}_i}|} & \text{otherwise}
-                        \end{cases}
+                          -1 & \text{input} < 0 \\
+                           0 & \text{input} = 0 \\
+                           1 & \text{input} > 0
+                         \end{cases}
 
     Args:
-        x (Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
 
     Returns:
-        Tensor, the sign of x.
+        Tensor, the sign of input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1681,31 +1683,31 @@ def sign(x):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([[-1, 0, 2, 4, 6], [2, 3, 5, -6, 0]])
-        >>> output = ops.sign(x)
+        >>> input = ms.Tensor([[-1, 0, 2, 4, 6], [2, 3, 5, -6, 0]])
+        >>> output = ops.sign(input)
         >>> print(output)
         [[-1  0  1  1  1]
          [ 1  1  1 -1  0]]
-        >>> x = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
-        >>> output = ops.sign(x)
+        >>> input = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
+        >>> output = ops.sign(input)
         >>> print(output)
         [[-1.  0.  1.  1.  0.]
          [ 1.  1. -1. -1.  0.]]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For sign, the input must be a Tensor, but got {type(x)}")
-    return _get_cache_prim(ops.Sign)()(x)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For sign, the input must be a Tensor, but got {type(input)}")
+    return _get_cache_prim(ops.Sign)()(input)
 
 
-def signbit(x):
+def signbit(input):
     r"""
     Returns element-wise True where signbit is set (less than zero).
 
     Args:
-        x (Tensor): The input value.
+        input (Tensor): The input value.
 
     Returns:
-        Tensor, the signbit of x.
+        Tensor, the signbit of input.
 
     Raises:
         TypeError: If input is not a Tensor.
@@ -1716,18 +1718,18 @@ def signbit(x):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([0.3, 1.2, 0., -2.5])
-        >>> output = ops.signbit(x)
+        >>> input = ms.Tensor([0.3, 1.2, 0., -2.5])
+        >>> output = ops.signbit(input)
         >>> print(output)
         [False False False  True]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For signbit, the input must be a Tensor, but got {type(x)}")
-    res = ops.less(x, 0)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For signbit, the input must be a Tensor, but got {type(input)}")
+    res = ops.less(input, 0)
     return res
 
 
-def sgn(x):
+def sgn(input):
     r"""
     Extension of :func:`mindspore.ops.sign` in complex domain.
     For real number input, this function is the same as :func:`mindspore.ops.sign`.
@@ -1735,15 +1737,15 @@ def sgn(x):
 
     .. math::
         \text{out}_{i} = \begin{cases}
-                        0 & |\text{x}_i| == 0 \\
-                        \frac{{\text{x}_i}}{|{\text{x}_i}|} & \text{otherwise}
+                        0 & |\text{input}_i| == 0 \\
+                        \frac{{\text{input}_i}}{|{\text{input}_i}|} & \text{otherwise}
                         \end{cases}
 
     Args:
-        x (Tensor): The input value.
+        input (Tensor): The input value.
 
     Returns:
-        Tensor, the sgn of x.
+        Tensor, the sgn of input.
 
     Raises:
         TypeError: If input is not a Tensor.
@@ -1754,22 +1756,22 @@ def sgn(x):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([[3 + 4j, 7 - 24j, 0, 6 + 8j, 8], [15 + 20j, 7 - 24j, 0, 3 + 4j, 20]], dtype=ms.complex64)
-        >>> output = ops.sgn(x)
+        >>> input = ms.Tensor([[3 + 4j, 7 - 24j, 0, 6 + 8j, 8], [15 + 20j, 7 - 24j, 0, 3 + 4j, 20]], dtype=ms.complex64)
+        >>> output = ops.sgn(input)
         >>> print(output)
         [[0.6 +0.8j  0.28-0.96j 0.  +0.j   0.6 +0.8j  1.  +0.j  ]
          [0.6 +0.8j  0.28-0.96j 0.  +0.j   0.6 +0.8j  1.  +0.j  ]]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For sgn, the input must be a Tensor, but got {type(x)}")
-    if not ops.is_complex(x):
-        return ops.sign(x)
-    modulus = ops.ComplexAbs()(x)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For sgn, the input must be a Tensor, but got {type(input)}")
+    if not ops.is_complex(input):
+        return ops.sign(input)
+    modulus = ops.ComplexAbs()(input)
     zeros_mask = modulus.equal(0)
     non_zero_modulus = ops.masked_fill(modulus, zeros_mask, 1)
     zeros_modulus = ops.zeros_like(non_zero_modulus)
     complex_modulus = ops.Complex()(non_zero_modulus, zeros_modulus)
-    res = x / complex_modulus
+    res = input / complex_modulus
     return res
 
 
@@ -1933,12 +1935,12 @@ def _get_default_div_type(param):
     return param.astype(mstype.float32)
 
 
-def cov(x, *, correction=1, fweights=None, aweights=None):
+def cov(input, *, correction=1, fweights=None, aweights=None):
     r"""
-    Given the input `x` and weights, returns the covariance matrix (the square matrix of the covariance of each pair of
-    variables) of x, where the input row is the variable and the column is the observation value.
+    Given the input and weights, returns the covariance matrix (the square matrix of the covariance of each pair of
+    variables) of input, where the input row is the variable and the column is the observation value.
 
-    The diagonal contains each variable and its own covariance. If x is a scalar or 1D vector of a single variable,
+    The diagonal contains each variable and its own covariance. If input is a scalar or 1D vector of a single variable,
     its variance will be returned.
 
     The unbiased sample covariance of the variables :math:`a` and :math:`b` is given by the following formula:
@@ -1965,7 +1967,7 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         Currently, complex number is not supported.
 
     Args:
-        x (Tensor): A 2D matrix, or a scalar or 1D vector of a single variable
+        input (Tensor): A 2D matrix, or a scalar or 1D vector of a single variable
 
     Keyword Args:
         correction (int, optional): The difference between sample size and sample degrees of freedom.
@@ -1973,15 +1975,15 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
             even if both `fweights` and `aweights` are specified. `correction = 0`
             will return the simple average. Default: 1.
         fweights (Tensor, optional): Scalar or one-dimensional Tensor containing integer frequency weight, indicating
-            the number of repetition of each observation vector. Its numel must equal the number of columns of `x`.
+            the number of repetition of each observation vector. Its numel must equal the number of columns of `input`.
             Ignored if `None`. Default: None.
         aweights (Tensor, optional): A scalar or 1D Tensor containing float observation weights represents
             the importance of each observation vector. The higher the importance, the greater the corresponding value.
-            Its numel must equal the number of columns of `x`. Must have floating point dtype. Ignored if `None`.
+            Its numel must equal the number of columns of `input`. Must have floating point dtype. Ignored if `None`.
             Default: None.
 
     Returns:
-        Tensor, The covariance matrix Tensor of `x`.
+        Tensor, The covariance matrix Tensor of `input`.
 
     Raises:
         ValueError: If the dimensions of input is greater than 2.
@@ -2015,13 +2017,13 @@ def cov(x, *, correction=1, fweights=None, aweights=None):
         [[10.146146 -3.47241 ]
          [-3.47241   4.716825]]
     """
-    if x.ndim > 2:
-        raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {x.ndim} dimensions.")
-    if x.dtype == mstype.bool_:
+    if input.ndim > 2:
+        raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {input.ndim} dimensions.")
+    if input.dtype == mstype.bool_:
         raise TypeError(f"For cov, the input dtype can not be bool.")
 
     # View input tensor as 2D
-    input_x = x.view((1, -1)) if x.ndim < 2 else x
+    input_x = input.view((1, -1)) if input.ndim < 2 else input
     num_observations = input_x.shape[1]
     if fweights is not None:
         _check_cov_weights(fweights, "fweights", num_observations, mstype.int_type, "an integer")
@@ -2089,59 +2091,59 @@ def t(x):
     return x
 
 
-def tan(x):
+def tan(input):
     r"""
-    Computes tangent of `x` element-wise.
+    Computes tangent of `input` element-wise.
 
     .. math::
 
-        out_i = tan(x_i)
+        out_i = tan(input_i)
 
     Args:
-        x (Tensor): The input Tensor, valid for any dimensions.
+        input (Tensor): The input Tensor, valid for any dimensions.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
-        >>> output = ops.tan(x)
+        >>> input = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
+        >>> output = ops.tan(input)
         >>> print(output)
         [-1.5574081 0. 1.5574081]
     """
-    return tan_(x)
+    return tan_(input)
 
 
-def xlogy(x, y):
+def xlogy(input, other):
     r"""
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
-    Returns zero when `x` is zero.
+    Returns zero when `input` is zero.
 
     .. math::
 
-        out_i = x_{i}\ln{y_{i}}
+        out_i = input_{i}\ln{other_{i}}
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
     .. warning::
-        - On Ascend, the data type of `x` and `y` must be float16 or float32.
+        - On Ascend, the data type of `input` and `other` must be float16 or float32.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input is a number.Number or
+        other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -2150,24 +2152,25 @@ def xlogy(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
-        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128].
-        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+        TypeError: If `input` and `other` is not a number.Number or a bool or a Tensor.
+        TypeError: If dtype of `input` and `other` is not in [float16, float32, float64, complex64, complex128].
+        ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
-        >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
-        >>> output = ops.xlogy(x, y)
+        >>> input = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+        >>> other = Tensor(np.array([2, 2, 2]), mindspore.float32)
+        >>> output = ops.xlogy(input, other)
         >>> print(output)
         [-3.465736   0.        2.7725887]
     """
-    if isinstance(x, Tensor) and isinstance(y, Tensor) and x.dtype == mstype.bool_ and y.dtype == mstype.bool_:
-        x = x.astype(mstype.float32)
-        y = y.astype(mstype.float32)
-    return xlogy_(x, y)
+    if isinstance(input, Tensor) and isinstance(other, Tensor) and input.dtype == mstype.bool_ \
+            and other.dtype == mstype.bool_:
+        input = input.astype(mstype.float32)
+        other = other.astype(mstype.float32)
+    return xlogy_(input, other)
 
 
 def arccosh(x):
@@ -2343,33 +2346,33 @@ def atan(x):
     return atan_(x)
 
 
-def sinh(x):
+def sinh(input):
     r"""
     Computes hyperbolic sine of the input element-wise.
 
     .. math::
 
-        out_i = \sinh(x_i)
+        out_i = \sinh(input_i)
 
     Args:
-        x (Tensor): The input tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sinh(x)
+        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = ops.sinh(input)
         >>> print(output)
         [0.6604918  0.28367308 0.44337422 0.6604918 ]
     """
-    return sinh_(x)
+    return sinh_(input)
 
 
 def cosh(x):
@@ -2466,24 +2469,24 @@ def asinh(x):
     return asinh_(x)
 
 
-def arcsinh(x):
+def arcsinh(input):
     r"""
     Alias for :func:`mindspore.ops.asinh`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return asinh(x)
+    return asinh(input)
 
 
-def arctanh(x):
+def arctanh(input):
     r"""
     Alias for :func:`mindspore.ops.atanh`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return atanh(x)
+    return atanh(input)
 
 
 def acosh(x):
@@ -3540,10 +3543,10 @@ def ldexp(x, other):
     return out
 
 
-def logit(x, eps=None):
+def logit(input, eps=None):
     r"""
-    Calculate the logit of a tensor element-wise. When eps is not None, element in `x` is clamped to [eps, 1-eps].
-    When eps is None, input `x` is not clamped.
+    Calculate the logit of a tensor element-wise. When eps is not None, element in `input` is clamped to [eps, 1-eps].
+    When eps is None, input `input` is not clamped.
 
     .. math::
         \begin{align}
@@ -3557,16 +3560,16 @@ def logit(x, eps=None):
         \end{align}
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
         eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.
 
     Returns:
-        Tensor, with the same shape and dtype as the `x`.
+        Tensor, with the same shape and dtype as the `input`.
 
     Raises:
         TypeError: If `eps` is not a float.
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3580,7 +3583,7 @@ def logit(x, eps=None):
     if eps is None:
         eps = -1.0
     logit_ = _get_cache_prim(Logit)(eps)
-    return logit_(x)
+    return logit_(input)
 
 
 #####################################
@@ -4116,36 +4119,37 @@ def is_complex(x):
     return x.dtype in mstype.complex_type
 
 
-def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
+def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
     """
-    Replace the `NaN`, positive infinity and negative infinity values in 'x' with the
+    Replace the `NaN`, positive infinity and negative infinity values in 'input' with the
     specified values, `nan`, `posinf`, and `neginf` respectively.
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
+        input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
+            With float32 or float16 data type.
         nan (float): The replace value of 'NaN'. Default value is 0.0.
         posinf (float): the value to replace positive infinity values with. Default: None,
-            replacing positive infinity with the maximum value supported by the data type of `x`.
+            replacing positive infinity with the maximum value supported by the data type of `input`.
         neginf (float): the value to replace negative infinity values with. Default: None,
-            replacing negative infinity with the minimum value supported by the data type of `x`.
+            replacing negative infinity with the minimum value supported by the data type of `input`.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 5.0]), mindspore.float32)
-        >>> output = ops.nan_to_num(x, 1.0, 2.0, 3.0)
+        >>> input = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 5.0]), mindspore.float32)
+        >>> output = ops.nan_to_num(input, 1.0, 2.0, 3.0)
         >>> print(output)
         [1.  2.  3.  5.0]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
+    if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("the input x must be Tensor!")
     if nan is not None:
         if not isinstance(nan, float):
@@ -4156,20 +4160,20 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
         if not isinstance(posinf, float):
             raise TypeError("the parameter posinf's dtype must be float.")
     else:
-        if x.dtype == mstype.float16:
+        if input.dtype == mstype.float16:
             posinf = (float)(np.finfo(np.float16).max)
-        elif x.dtype == mstype.float32:
+        elif input.dtype == mstype.float32:
             posinf = (float)(np.finfo(np.float32).max)
     if neginf is not None:
         if not isinstance(neginf, float):
             raise TypeError("the parameter neginf's dtype must be float.")
     else:
-        if x.dtype == mstype.float16:
+        if input.dtype == mstype.float16:
             neginf = (float)(np.finfo(np.float16).min)
-        elif x.dtype == mstype.float32:
+        elif input.dtype == mstype.float32:
             neginf = (float)(np.finfo(np.float32).min)
     _nan_to_num = _get_cache_prim(NanToNum)(nan=nan, posinf=posinf, neginf=neginf)
-    return _nan_to_num(x)
+    return _nan_to_num(input)
 
 
 def fmax(x1, x2):
@@ -4915,19 +4919,19 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
     return _get_cache_prim(P.Pow)()(output[0], 0.5), output[1]
 
 
-def real(x):
+def real(input):
     r"""
     Returns a Tensor that is the real part of the input.
     If input is real, it is returned unchanged.
 
     Args:
-        x (Tensor): The input tensor to compute to.
+        input (Tensor): The input tensor to compute to.
 
     Returns:
-        Tensor, the shape is the same as the `x`.
+        Tensor, the shape is the same as the `input`.
 
     Raises:
-       TypeError: If `x` is not a Tensor.
+       TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -4936,15 +4940,15 @@ def real(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.asarray(np.complex(1.3+0.4j)), ms.complex64)
-        >>> output = ops.real(x)
+        >>> input = ms.Tensor(np.asarray(np.complex(1.3+0.4j)), ms.complex64)
+        >>> output = ops.real(input)
         >>> print(output)
         1.3
     """
-    return _get_cache_prim(ops.Real)()(x)
+    return _get_cache_prim(ops.Real)()(input)
 
 
-def reciprocal(x):
+def reciprocal(input):
     r"""
     Returns reciprocal of a tensor element-wise.
 
@@ -4953,14 +4957,14 @@ def reciprocal(x):
         out_{i} =  \frac{1}{x_{i}}
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4969,19 +4973,19 @@ def reciprocal(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
-        >>> output = ops.reciprocal(x)
+        >>> input = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
+        >>> output = ops.reciprocal(input)
         >>> print(output)
         [1.   0.5  0.25]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For reciprocal, the input must be a Tensor, but got {type(x)}.")
-    if not is_complex(x) and not ops.is_floating_point(x):
-        x = ops.cast(x, mstype.float32)
-    return _get_cache_prim(ops.Reciprocal)()(x)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For reciprocal, the input must be a Tensor, but got {type(input)}.")
+    if not is_complex(input) and not ops.is_floating_point(input):
+        input = ops.cast(input, mstype.float32)
+    return _get_cache_prim(ops.Reciprocal)()(input)
 
 
-def rsqrt(x):
+def rsqrt(input):
     r"""
     Computes reciprocal of square root of input tensor element-wise.
 
@@ -4990,14 +4994,14 @@ def rsqrt(x):
         out_{i} =  \frac{1}{\sqrt{x_{i}}}
 
     Args:
-        x (Tensor): The input of rsqrt. Its rank must be in [0, 7] inclusive and
+        input (Tensor): The input of rsqrt. Its rank must be in [0, 7] inclusive and
             each element must be a non-negative number, if an element is negative, the calculation result is nan.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5005,12 +5009,12 @@ def rsqrt(x):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
-        >>> output = ops.rsqrt(x)
+        >>> input = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
+        >>> output = ops.rsqrt(input)
         >>> print(output)
         [       nan 1.8349396  0.80530024        nan]
     """
-    return _get_cache_prim(ops.Rsqrt)()(x)
+    return _get_cache_prim(ops.Rsqrt)()(input)
 
 
 def sqrt(x):
@@ -5041,33 +5045,33 @@ def sqrt(x):
     return sqrt_(x)
 
 
-def square(x):
+def square(input):
     """
     Returns square of a tensor element-wise.
 
     .. math::
 
-        out_{i} = (x_{i})^2
+        out_{i} = (input_{i})^2
 
     Args:
-        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> output = ops.square(x)
+        >>> input = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> output = ops.square(input)
         >>> print(output)
         [1. 4. 9.]
     """
-    return square_(x)
+    return square_(input)
 
 
 def outer(x1, x2):
@@ -8544,12 +8548,12 @@ def rot90(x, k, dims):
     return out
 
 
-def roll(x, shifts, dims=None):
+def roll(input, shifts, dims=None):
     """
     Rolls the elements of a tensor along an axis.
 
     Args:
-        x (Tensor): Input tensor.
+        input (Tensor): Input tensor.
         shifts (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
             positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
             in the opposite direction.
@@ -8558,7 +8562,7 @@ def roll(x, shifts, dims=None):
             original shape.
 
     Returns:
-        Tensor, has the same shape and type as `x`.
+        Tensor, has the same shape and type as `input`.
 
     Raises:
         TypeError: If `shifts` is not an int, a tuple or a list.
@@ -8577,11 +8581,11 @@ def roll(x, shifts, dims=None):
         >>> print(output)
         [3. 4. 0. 1. 2.]
     """
-    _shape = x.shape
+    _shape = input.shape
     if dims is None:
-        flatten_x = x.reshape(-1)
+        flatten_x = input.reshape(-1)
         return Roll(shifts, 0)(flatten_x).reshape(_shape)
-    return Roll(shifts, dims)(x)
+    return Roll(shifts, dims)(input)
 
 
 def xdivy(x, y):

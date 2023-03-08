@@ -1,11 +1,11 @@
 mindspore.ops.cov
 ==================
 
-.. py:function:: mindspore.ops.cov(x, *, correction=1, fweights=None, aweights=None)
+.. py:function:: mindspore.ops.cov(input, *, correction=1, fweights=None, aweights=None)
 
-    给定输入 `x` 和权重，返回输入 `x` 的协方差矩阵(每对变量的协方差的方阵)，其中输入行是变量，列是观察值。
+    给定输入 `input` 和权重，返回输入 `input` 的协方差矩阵(每对变量的协方差的方阵)，其中输入行是变量，列是观察值。
 
-    对角线包含每个变量及其自身的协方差。如果 `x` 是单个变量的标量或一维向量，则将返回其方差。
+    对角线包含每个变量及其自身的协方差。如果 `input` 是单个变量的标量或一维向量，则将返回其方差。
 
     变量 :math:`a` 和 :math:`b` 的无偏样本协方差由下式给出：
 
@@ -28,21 +28,21 @@ mindspore.ops.cov
         当前暂不支持复数。
 
     参数：
-        - **x** (Tensor) - 一个二维矩阵，或单个变量的标量或一维向量。
+        - **input** (Tensor) - 一个二维矩阵，或单个变量的标量或一维向量。
 
     关键字参数：
         - **correction** (int，可选) - 样本量和样本自由度之间的差异，默认为Bessel校正 `correction = 1`，即使指定了 `fweights` 和 `aweights` 的情况下它也会返回无偏估计。`correction = 0` 将返回简单平均值。默认值：1。
-        - **fweights** (Tensor, 可选) - 包含整数频率权重的标量或一维Tensor，表示每一个观测向量的重复次数。它的numel必须等于输入 `x` 的列数。若为None则忽略。默认值：None。
-        - **aweights** (Tensor, 可选) - 包含浮点观测权重的标量或一维Tensor，表示每一个观测向量的重要性，重要性越高对应值越大。它的numel必须等于输入 `x` 的列数。若为None则忽略。默认值：None。
+        - **fweights** (Tensor, 可选) - 包含整数频率权重的标量或一维Tensor，表示每一个观测向量的重复次数。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值：None。
+        - **aweights** (Tensor, 可选) - 包含浮点观测权重的标量或一维Tensor，表示每一个观测向量的重要性，重要性越高对应值越大。它的numel必须等于输入 `input` 的列数。若为None则忽略。默认值：None。
 
     返回：
-        Tensor，输入 `x` 的协方差矩阵。
+        Tensor，输入 `input` 的协方差矩阵。
 
     异常：
         - **ValueError** - 如果输入的维度大于2。
         - **ValueError** - 如果 `fweights` 的维度大于1。
-        - **ValueError** - 如果 `fweights` 的numel不等于输入 `x` 的列数。
-        - **ValueError** - 如果 `aweights` 的numel不等于输入 `x` 的列数。
+        - **ValueError** - 如果 `fweights` 的numel不等于输入 `input` 的列数。
+        - **ValueError** - 如果 `aweights` 的numel不等于输入 `input` 的列数。
         - **ValueError** - 如果 `aweights` 的维度大于1。
         - **TypeError** - 如果输入的类型为bool类型。
         - **TypeError** - 如果 `fweights` 的类型不为int。

@@ -1812,14 +1812,14 @@ def _check_input_tensor(arg_name, *tensors):
     return True
 
 
-def flip(x, dims):
+def flip(input, dims):
     """
     Reverses the order of elements in a tensor along the given axis.
 
     The shape of the tensor is preserved, but the elements are reordered.
 
     Args:
-        x (Tensor): Input tensor.
+        input (Tensor): Input tensor.
         dims (Union[list[int], tuple[int]]): Axis or axes along which to flip over.
             Flipping is performed on all of the axes specified in the tuple,
             If `dims` is a tuple of integers contains negative, it counts from the last to the first axis.
@@ -1839,24 +1839,24 @@ def flip(x, dims):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
-        >>> output = ops.flip(x, (0, 2))
+        >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
+        >>> output = ops.flip(input, (0, 2))
         >>> print(output)
         [[[6 5]
           [8 7]]
          [[2 1]
           [4 3]]]
     """
-    res = _get_cache_prim(ops.ReverseV2)(axis=dims)(x)
+    res = _get_cache_prim(ops.ReverseV2)(axis=dims)(input)
     return res
 
 
-def flipud(x):
+def flipud(input):
     """
     Flips the elements of each column in the up/down direction, while preserving the rows of the input tensor.
 
     Args:
-        x (Tensor): Input array.
+        input (Tensor): Input array.
 
     Returns:
         Tensor.
@@ -1871,23 +1871,23 @@ def flipud(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
-        >>> output = ops.flipud(x)
+        >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
+        >>> output = ops.flipud(input)
         >>> print(output)
         [[[5 6]
           [7 8]]
          [[1 2]
           [3 4]]]
     """
-    return flip(x, (0,))
+    return flip(input, (0,))
 
 
-def fliplr(x):
+def fliplr(input):
     """
     Flips the elements of each row in the left/right direction, while preserving the columns of the input tensor.
 
     Args:
-        x (Tensor): Input tensor.
+        input (Tensor): Input tensor.
 
     Returns:
         Tensor.
@@ -1902,27 +1902,27 @@ def fliplr(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
-        >>> output = ops.fliplr(x)
+        >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
+        >>> output = ops.fliplr(input)
         >>> print(output)
         [[[3 4]
           [1 2]]
          [[7 8]
           [5 6]]]
     """
-    return flip(x, (1,))
+    return flip(input, (1,))
 
 
-def is_floating_point(x):
+def is_floating_point(input):
     """
-    Judge whether the data type of `x` is a floating point data type i.e., one of mindspore.flot64, mindspore.float32,
-    mindspore.float16.
+    Judge whether the data type of `input` is a floating point data type i.e., one of mindspore.flot64,
+    mindspore.float32, mindspore.float16.
 
     Args:
-        x (Tensor): The input Tensor.
+        input (Tensor): The input Tensor.
 
     Returns:
-        Bool. If the dtype of `x` is a floating point data type, return True. Otherwise, return False.
+        Bool. If the dtype of `input` is a floating point data type, return True. Otherwise, return False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1940,7 +1940,7 @@ def is_floating_point(x):
         >>> print(output2)
         False
     """
-    return x.dtype in [mstype.float32, mstype.float16, mstype.float64]
+    return input.dtype in [mstype.float32, mstype.float16, mstype.float64]
 
 
 def hardswish(x):
@@ -2460,36 +2460,36 @@ def selu(input_x):
     return selu_(input_x)
 
 
-def sigmoid(input_x):
+def sigmoid(input):
     r"""
     Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
     .. math::
 
-        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}
+        \text{sigmoid}(input_i) = \frac{1}{1 + \exp(-input_i)}
 
-    where :math:`x_i` is an element of the input_x.
+    where :math:`x_i` is an element of the input.
 
     Args:
-        input_x (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
+        input (Tensor): Tensor of any dimension, the data type is float16, float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor, with the same type and shape as the input_x.
+        Tensor, with the same type and shape as the input.
 
     Raises:
-        TypeError: If dtype of `input_x` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.sigmoid(input_x)
+        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.sigmoid(input)
         >>> print(output)
         [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
     """
-    return sigmoid_(input_x)
+    return sigmoid_(input)
 
 
 def logsigmoid(x):
@@ -5701,20 +5701,20 @@ def mse_loss(input_x, target, reduction='mean'):
     return _get_cache_prim(P.Cast)()(x, input_dtype)
 
 
-def msort(x):
+def msort(input):
     r"""
     Sorts the elements in Tensor in ascending order of value along its first dimension.
 
     ops.msort(t) is equivalent to ops.Sort(axis=0)(t)[0]. See also :class:`mindspore.ops.Sort()`.
 
     Args:
-        x (Tensor): The input to sort, with float16 or float32 data type.
+        input (Tensor): The input to sort, with float16 or float32 data type.
 
     Returns:
         A tensor whose values are the sorted values, with the same shape and data type as input.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5723,14 +5723,14 @@ def msort(x):
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> x = ms.Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
-        >>> output = ops.msort(x)
+        >>> input = ms.Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
+        >>> output = ops.msort(input)
         >>> print(output)
         [[4. 2. 1.]
          [5. 6. 3.]
          [8. 9. 7.]]
     """
-    return ops.Sort(axis=0)(x)[0]
+    return ops.Sort(axis=0)(input)[0]
 
 
 def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, swap=False, reduction='mean'):

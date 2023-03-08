@@ -1,18 +1,18 @@
 mindspore.ops.neg
 ===================
 
-.. py:function:: mindspore.ops.neg(x)
+.. py:function:: mindspore.ops.neg(input)
 
-    计算输入x的相反数并返回。
+    计算输入input的相反数并返回。
 
     .. math::
-        out_{i} = - x_{i}
+        out_{i} = - input_{i}
 
     参数：
-        - **x** (Tensor) - Neg的输入Tensor，其秩应在[0, 7]范围内，数据类型为数值型。
+        - **input** (Tensor) - Neg的输入Tensor，其秩应在[0, 7]范围内，数据类型为数值型。
 
     返回：
         Tensor，shape和数据类型与输入相同。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。

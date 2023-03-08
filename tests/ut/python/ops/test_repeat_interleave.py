@@ -22,7 +22,7 @@ from mindspore.common.api import _cell_graph_executor
 
 class RepeatInterleave(nn.Cell):
     def construct(self, x):
-        return ops.repeat_interleave(x, repeats=2, dim=0)
+        return ops.repeat_interleave(x, repeats=2, axis=0)
 
 
 def test_repeat_interleave():
