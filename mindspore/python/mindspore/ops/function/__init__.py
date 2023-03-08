@@ -408,6 +408,8 @@ from .math_func import (
     quantile,
     tril_indices,
     triu_indices,
+    nextafter,
+    trace
 )
 from .nn_func import (
     adaptive_avg_pool1d,
@@ -499,7 +501,8 @@ from .nn_func import (
 )
 from .linalg_func import (
     svd,
-    pinv
+    pinv,
+    qr
 )
 from .sparse_func import (
     coalesce,

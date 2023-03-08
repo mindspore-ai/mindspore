@@ -29,7 +29,7 @@ from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
 
-__all__ = ['svd', 'pinv']
+__all__ = ['svd', 'pinv', 'qr']
 
 
 def svd(a, full_matrices=False, compute_uv=True):
@@ -194,6 +194,54 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         s_pseudoinv = ops.select(condition, reciprocal_s_before, zero)
         output = ops.matmul(u * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
     return output
+
+
+def qr(input, mode='reduced'):
+    """
+    Returns the QR decomposition of one or more matrices.
+    If `mode` is 'reduced'(the default), compute the P columns of Q where P is minimum of the 2 innermost dimensions of
+    input. If `mode` is 'complete', compute full-sized Q and R.
+
+
+    Args:
+        - **input** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
+          types: float16, float32, float64, complex64, complex128.
+          Define the shape of input as (..., m, n), p as the minimum values of m and n.
+        - **mode** (str, optional) - Whether compute reduce-sized QR decomposition. Default: 'reduced'.
+
+
+    Returns:
+        - **Q** (Tensor) - The orthonormal matrices of input.
+          If `some` is false, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
+          The dtype of `Q` is same as `input`.
+        - **R** (Tensor) - The upper triangular matrices of input.
+          If `some` is false, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
+          The dtype of `R` is same as `input`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `mode` is neither 'reduced' nor 'complete'.
+        ValueError: If the dimension of `input` is less than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), mstype.float32)
+        >>> Q, R = ops.qr(input)
+        >>> print(Q)
+        [[-0.912871    0.16366126  0.37400758]
+         [-0.18257418 -0.9830709  -0.01544376]
+         [ 0.36514837 -0.08238228  0.92729706]]
+        >>> print(R)
+        [[ -21.908903  -14.788506  -1.6431675]
+        [    0.       -271.9031    92.25824  ]
+        [    0.          0.       -25.665514 ]]
+    """
+    if mode not in ('reduced', 'complete'):
+        raise TypeError(f"For qr, the arg mode must be 'reduced' or 'complete', but got {mode}.")
+    qr_ = _get_cache_prim(P.Qr)(mode == 'complete')
+    return qr_(input)
 
 
 def _compare_eigh(x):

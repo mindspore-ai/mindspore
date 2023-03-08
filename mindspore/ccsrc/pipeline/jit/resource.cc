@@ -175,6 +175,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"bincount", std::string("bincount")},                              // bincount
        {"chunk", std::string("chunk")},                                    // chunk
        {"slogdet", std::string("slogdet")},                                // slogdet
+       {"trace", std::string("trace")},                                    // trace
        {"tril", std::string("tril")},                                      // tril
        {"__add__", std::string("add")},                                    // C.add
        {"__sub__", std::string("sub")},                                    // C.sub
@@ -468,6 +469,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"argwhere", std::string("argwhere")},                              // argwhere()
        {"moveaxis", std::string("moveaxis")},                              // moveaxis()
        {"movedim", std::string("movedim")},                                // movedim()
+       {"nextafter", std::string("nextafter")},                            // nextafter()
+       {"qr", std::string("qr")},                                          // qr()
      }},
     {kObjectTypeRowTensorType,
      {
