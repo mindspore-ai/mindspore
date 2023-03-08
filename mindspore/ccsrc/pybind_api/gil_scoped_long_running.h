@@ -42,7 +42,7 @@ class GilScopedLongRunningHook : public ScopedLongRunningHook {
 class GilReleaseWithCheck {
  public:
   GilReleaseWithCheck() {
-    if (PyGILState_Check() != 0) {
+    if (Py_IsInitialized() != 0 && PyGILState_Check() != 0) {
       release_ = std::make_unique<py::gil_scoped_release>();
     }
   }
