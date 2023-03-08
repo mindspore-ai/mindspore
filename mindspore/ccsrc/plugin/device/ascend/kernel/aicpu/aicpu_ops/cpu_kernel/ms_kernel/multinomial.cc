@@ -33,6 +33,8 @@ using namespace std;
 
 namespace {
 const char *kMultinomial = "Multinomial";
+const auto kRankOne = 1;
+const auto kRankTwo = 2;
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
 constexpr int64_t kParallelDataNums = 40 * 1024;
@@ -41,16 +43,16 @@ using RNG_Engine = std::mt19937;
 
 // override isfinite for half
 bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
-
 }  // namespace
 
 namespace aicpu {
-
 template <typename T_in, typename T_out>
 uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&input_count, Tensor *&input_state, Tensor *&output,
                   CpuKernelContext &ctx) {
-  int64_t num_classes = input_0->GetTensorShape()->GetDimSize(1);
-  int64_t batch_size = input_0->GetTensorShape()->GetDimSize(0);
+  const auto &input_shape = input_0->GetTensorShape();
+  const auto input_rank = input_shape->GetDims();
+  int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
+  int64_t num_classes = input_shape->GetDimSize(input_rank - 1);
   int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
   // count the execution times of the op
   uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
@@ -85,7 +87,6 @@ uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&input_count, Tens
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
   auto output_data = reinterpret_cast<T_out *>(output->GetData());
   auto total_num = output->NumElements();
-
   if (total_num < kParallelDataNums) {
     auto cur_out = output_data;
 
@@ -198,15 +199,16 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
                      "Input[1] data type must DT_INT32, but got data type[%s].", DTypeStr(input1_datatype).c_str());
 
   // check input dimension
-  KERNEL_CHECK_FALSE((input_0->GetTensorShape()->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[0] should be a matrix, but got rank [%d].", input_0->GetTensorShape()->GetDims());
+  const auto rank_0 = input_0->GetTensorShape()->GetDims();
+  KERNEL_CHECK_FALSE((rank_0 == kRankOne || rank_0 == kRankTwo), KERNEL_STATUS_PARAM_INVALID,
+                     "Rank of input[0] should be 1 or 2, but got rank [%d].", input_0->GetTensorShape()->GetDims());
   // scalar input is converted to rank-zero tensor in the dynamic input scenario.
   // rank-zero tensor from ms has a dim of 1, so limit input1 dim so that it's smaller than 1.
   KERNEL_CHECK_FALSE((input_1->GetTensorShape()->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "Input[1] should be a scalar, but got rank [%d].", input_1->GetTensorShape()->GetDims());
 
   // check num_classes positive
-  auto num_classes = input_0->GetTensorShape()->GetDimSize(1);  // int64_t
+  auto num_classes = input_0->GetTensorShape()->GetDimSize(rank_0 - 1);  // int64_t
   KERNEL_CHECK_FALSE((num_classes > 0), KERNEL_STATUS_PARAM_INVALID, "num_classes should be positive, but got [%d].",
                      num_classes);
 
