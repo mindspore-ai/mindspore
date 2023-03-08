@@ -795,20 +795,19 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         Tensor_._flush_from_cache(self)
 
-    def addcdiv(self, x1, x2, value):
+    def addcdiv(self, tensor1, tensor2, value=1):
         r"""
         For details, please refer to :func:`mindspore.ops.addcdiv`.
         """
         self._init_check()
-        return tensor_operator_registry.get('addcdiv')()(self, x1, x2, value)
+        return tensor_operator_registry.get('addcdiv')()(self, tensor1, tensor2, value)
 
-    def addcmul(self, x1, x2, value):
+    def addcmul(self, tensor1, tensor2, value=1):
         r"""
         For details, please refer to :func:`mindspore.ops.addcmul`.
         """
-
         self._init_check()
-        return tensor_operator_registry.get('addcmul')()(self, x1, x2, value)
+        return tensor_operator_registry.get('addcmul')()(self, tensor1, tensor2, value)
 
     def add(self, other):
         r"""

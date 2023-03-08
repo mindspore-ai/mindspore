@@ -57,8 +57,6 @@ _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _mean_keepdims = P.ReduceMean(True)
 _csr_mm = _csr_ops.CSRMM()
-_addcdiv = P.Addcdiv()
-_addcmul = P.Addcmul()
 
 itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
                 mstype.float16: 2, mstype.int16: 2, mstype.uint16: 2,
@@ -129,38 +127,38 @@ def prod(x, axis=None, keep_dims=False):
     return F.prod(x, axis, keep_dims)
 
 
-def addcdiv(input_data, x1, x2, value):
+def addcdiv(input, tensor1, tensor2, value=1):
     """
-    Performs the element-wise division of tensor x1 by tensor x2,
+    Performs the element-wise division of tensor tensor1 by tensor tensor2,
     multiply the result by the scalar value and add it to input_data.
 
     Args:
-        input_data (Tensor): The tensor to be added.
-        x1 (Tensor): The numerator tensor.
-        x2 (Tensor): The denominator tensor.
-        value (Tensor): The multiplier for tensor x1/x2.
+        input (Tensor): The tensor to be added.
+        tensor1 (Tensor): The numerator tensor.
+        tensor1 (Tensor): The denominator tensor.
+        value (Union[Tensor, Number]): The multiplier for tensor1/tensor2. Default: 1.
 
     Returns:
-        Tensor, has the same shape and dtype as x1/x2.
+        Tensor, has the same shape and dtype as tensor1 / tensor2.
     """
-    return _addcdiv(input_data, x1, x2, value)
+    return F.addcdiv(input, tensor1, tensor2, value)
 
 
-def addcmul(input_data, x1, x2, value):
+def addcmul(input, tensor1, tensor2, value=1):
     """
-    Performs the element-wise product of tensor x1 and tensor x2,
+    Performs the element-wise product of tensor tensor1 and tensor tensor2,
     multiply the result by the scalar value and add it to input_data.
 
     Args:
-        input_data (Tensor): The tensor to be added.
-        x1 (Tensor): The tensor to be multiplied.
-        x2 (Tensor): The tensor to be multiplied.
-        value (Tensor): The multiplier for tensor x1*x2.
+        input (Tensor): The tensor to be added.
+        tensor1 (Tensor): The tensor to be multiplied.
+        tensor2 (Tensor): The tensor to be multiplied.
+        value (Union[Tensor, Number]): The multiplier for tensor1*tensor2. Default: 1.
 
     Returns:
-        Tensor, has the same shape and dtype as x1*x2.
+        Tensor, has the same shape and dtype as tensor1 * tensor2.
     """
-    return _addcmul(input_data, x1, x2, value)
+    return F.addcmul(input, tensor1, tensor2, value)
 
 
 def all_(x, axis=(), keep_dims=False):

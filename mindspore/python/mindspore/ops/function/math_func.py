@@ -308,28 +308,28 @@ def add(input, other):
     return _get_cache_prim(P.Add)()(input, other)
 
 
-def addcdiv(input_data, x1, x2, value):
+def addcdiv(input, tensor1, tensor2, value=1):
     r"""
-    Performs the element-wise division of tensor x1 by tensor x2,
+    Performs the element-wise division of tensor tensor1 by tensor tensor2,
     multiply the result by the scalar value and add it to input_data.
 
     .. math::
-        y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
+        y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
 
     Args:
-        input_data (Tensor): The tensor to be added.
-        x1 (Tensor): The numerator tensor.
-        x2 (Tensor): The denominator tensor.
-        value (Tensor): The multiplier for tensor x1/x2.
+        input (Tensor): The tensor to be added.
+        tensor1 (Tensor): The numerator tensor.
+        tensor2 (Tensor): The denominator tensor.
+        value (Union[Tensor, Number]): The multiplier for tensor1/tensor2. Default: 1.
 
     Returns:
-        Tensor, has the same shape and dtype as x1/x2.
+        Tensor, has the same shape and dtype as tensor1/tensor2.
 
     Raises:
-        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
-        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
-        ValueError: If `value` could not be broadcast to tensors with shapes of `x1/x2`.
-        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
+        TypeError: If dtype of `tensor1`, `tensor2`, `input` is not tensor.
+        ValueError: If `tensor1` could not be broadcast to a tensor with shape of `tensor2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `tensor1/tensor2`.
+        ValueError: If `input` could not be broadcast to tensors with shapes of `value*(tensor1/tensor2)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -343,34 +343,34 @@ def addcdiv(input_data, x1, x2, value):
         >>> print(y)
         [1.25      1.6666667 2.5       5.       ]
     """
-    return _get_cache_prim(P.Addcdiv)()(input_data, x1, x2, value)
+    return _get_cache_prim(P.Addcdiv)()(input, tensor1, tensor2, Tensor(value))
 
 
-def addcmul(input_data, x1, x2, value):
+def addcmul(input, tensor1, tensor2, value=1):
     r"""
-    Performs the element-wise product of tensor x1 and tensor x2,
+    Performs the element-wise product of tensor tensor1 and tensor tensor2,
     multiply the result by the scalar value and add it to input_data.
 
     .. math::
-        output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
+        output[i] = input[i] + value[i] * (tensor1[i] * tensor2[i])
 
     Args:
-        input_data (Tensor): The tensor to be added.
-        x1 (Tensor): The tensor to be multiplied.
-        x2 (Tensor): The tensor to be multiplied.
-        value (Tensor): The multiplier for tensor x1*x2.
+        input (Tensor): The tensor to be added.
+        tensor1 (Tensor): The tensor to be multiplied.
+        tensor2 (Tensor): The tensor to be multiplied.
+        value (Union[Tensor, Number]): The multiplier for tensor1*tensor2. Default: 1.
 
     Returns:
         Tensor, has the same shape and dtype as x1*x2.
 
     Raises:
-        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
-        TypeError: If dtype of `input_data` is not one of: float32, float16, int32.
-        TypeError: If dtype of `x1` or `x2` is not one of: float32, float16, int32.
+        TypeError: If dtype of `tensor1`, `tensor2`, `input` is not Tensor.
+        TypeError: If dtype of `input` is not one of: float32, float16, int32.
+        TypeError: If dtype of `tensor1` or `tensor2` is not one of: float32, float16, int32.
         TypeError: If dtype of `value` is not one of: float32, float16, int32.
-        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
-        ValueError: If `value` could not be broadcast to tensors with shapes of `x1` * `x2`.
-        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
+        ValueError: If `tensor1` could not be broadcast to a tensor with shape of `tensor2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `tensor1` * `tensor2`.
+        ValueError: If `input` could not be broadcast to tensors with shapes of `value*(tensor1*tensor2)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -386,7 +386,7 @@ def addcmul(input_data, x1, x2, value):
          [ 3.  5.  7.]
          [ 4.  7. 10.]]
     """
-    return _get_cache_prim(P.Addcmul)()(input_data, x1, x2, value)
+    return _get_cache_prim(P.Addcmul)()(input, tensor1, tensor2, Tensor(value))
 
 
 def angle(x):
