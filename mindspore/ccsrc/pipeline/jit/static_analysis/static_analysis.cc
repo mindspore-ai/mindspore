@@ -44,7 +44,9 @@ std::atomic<size_t> function_call_depth;
 std::atomic<size_t> stack_frame_depth;
 
 void ResetFunctionCallDepth() { function_call_depth = 0; }
+
 void IncreaseFunctionCallDepth() { ++function_call_depth; }
+
 void DecreaseFunctionCallDepth() {
   if (function_call_depth == 0) {
     MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
@@ -55,31 +57,19 @@ void DecreaseFunctionCallDepth() {
 size_t FunctionCallDepth() { return function_call_depth; }
 
 void ResetStackFrameDepth() { stack_frame_depth = 0; }
+
 void IncreaseStackFrameDepth() { ++stack_frame_depth; }
+
 void DecreaseStackFrameDepth() {
   if (stack_frame_depth == 0) {
     MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
   }
   stack_frame_depth--;
 }
+
 size_t StackFrameDepth() { return stack_frame_depth; }
 
 namespace {
-bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<AbstractFunction>()) {
-    return true;
-  }
-  if (abstract->isa<AbstractSequence>()) {
-    auto elements = abstract->cast_ptr<AbstractSequence>()->elements();
-    if (std::any_of(elements.begin(), elements.end(),
-                    [](const AbstractBasePtr &item) { return NeedWaitForBranches(item); })) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList args_conf_list, AnfNodeConfigPtr out_conf,
                    std::string thread_id, AsyncAbstractPtr async_result_branch, AsyncAbstractPtr async_result_main,
                    AsyncInferTaskPtr async_task, trace::TraceGraphEvalStack graph_evals,
@@ -100,11 +90,11 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     // Acquire GIL for eval to callback python.
     EvalResultPtr result;
     {
-      MS_LOG(DEBUG) << std::this_thread::get_id() << " begin.";
+      MS_LOG(DEBUG) << eval->ToString() << "_" << AnalysisSchedule::thread_id() << " begin.";
       py::gil_scoped_acquire py_guard;
       result = eval->Run(engine, args_conf_list, out_conf);
     }
-    MS_LOG(DEBUG) << std::this_thread::get_id() << " end.";
+    MS_LOG(DEBUG) << eval->ToString() << "_" << AnalysisSchedule::thread_id() << " end.";
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->abstract());
 
@@ -112,6 +102,7 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     AnalysisResultCacheMgr::GetInstance().CheckSwitchValueJoinable(out_conf, result->abstract());
     // Broaden the result of switch(c,t,f)()
     auto broaden_abstract = result->abstract()->Broaden();
+
     // Notify the thread of waiting for branch value and the main thread to continue.
     async_result_branch->set_result(broaden_abstract);
     async_result_main->set_result(broaden_abstract);
@@ -119,7 +110,8 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
                   << " asyncResult address = " << async_result_branch.get()
                   << " value = " << async_result_branch->TryGetResult()->ToString();
   } catch (const std::exception &ex) {
-    MS_LOG(INFO) << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString() << " threw exception.";
+    MS_LOG(INFO) << GetInferThread() << "Eval node: " << out_conf->node()->ToString() << "  " << eval->ToString()
+                 << " threw exception: " << ex.what();
     AnalysisSchedule::GetInstance().HandleException(ex);
   }
   trace::ClearTraceStack();
@@ -179,17 +171,34 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
   std::size_t len = branch_async_abstract_list.size();
 
   for (size_t i = 0; i < len; ++i) {
-    auto result = branch_async_abstract_list[i]->TryGetResult();
+    AbstractBasePtr result;
+    if (enable_waiting_branch_eval()) {
+      result = branch_async_abstract_list[i]->GetResult();
+    } else {
+      result = branch_async_abstract_list[i]->TryGetResult();
+    }
+
     if (result) {
-      out_specs->push_back(result);
+      if (result->isa<AsyncAbstractFuncAtom>()) {
+        branch_async_abstract_list[i]->ClearPossibleResult();
+        pending_async_abstract_list.push_back(branch_async_abstract_list[i]);
+        MS_LOG(DEBUG) << "Pending add: " << branch_async_abstract_list[i].get() << "_"
+                      << branch_async_abstract_list[i]->ToString();
+      } else {
+        out_specs->push_back(result);
+      }
     } else {
       pending_async_abstract_list.push_back(branch_async_abstract_list[i]);
+      MS_LOG(DEBUG) << "Pending add: " << branch_async_abstract_list[i].get() << "_"
+                    << branch_async_abstract_list[i]->ToString();
     }
   }
+
   if (first_result->isa<AbstractFunction>()) {
     for (std::size_t j = 0; j < pending_async_abstract_list.size(); ++j) {
       auto async_func = AsyncAbstractFuncAtom::MakeShared(pending_async_abstract_list[j], std::vector<size_t>{0});
       out_specs->push_back(async_func);
+      MS_LOG(DEBUG) << "out_specs add: " << async_func.get() << "_" << async_func->ToString();
     }
   } else if (first_result->isa<AbstractSequence>()) {
     const auto &new_first_result =
@@ -203,7 +212,6 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
     MS_LOG(DEBUG) << GetInferThread() << " wait for normal async result";
   }
 }
-
 void CheckInterpretedObject(const AbstractBasePtr &abs) {
   static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
   static const auto use_fallback = (support_fallback != "0");
@@ -936,6 +944,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstr
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   MS_EXCEPTION_IF_NULL(func);
   MS_LOG(DEBUG) << "GetEvaluatorFor: " << func->ToString() << " tracking_id: " << func->tracking_id();
+
   if (func->isa<PrimitiveAbstractClosure>()) {
     return _GetEvaluatorFor(std::static_pointer_cast<PrimitiveAbstractClosure>(func));
   }
@@ -963,6 +972,7 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   if (func->isa<PartialAbstractClosure>()) {
     return _GetEvaluatorFor(std::static_pointer_cast<PartialAbstractClosure>(func));
   }
+
   MS_LOG(EXCEPTION) << "Cannot GetEvaluator from " << func->type_name();
 }
 
@@ -1161,7 +1171,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   // Release GIL for C++
-  MS_LOG(DEBUG) << std::this_thread::get_id() << " begin.";
+  MS_LOG(DEBUG) << out_conf->func_graph()->ToString() << "_" << std::this_thread::get_id() << " begin.";
   py::gil_scoped_release infer_gil_release;
 
   // Only one thread to run
@@ -1187,7 +1197,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     static std::atomic<int> id_count{0};
     std::string thread_id = AnalysisSchedule::thread_id() + "." + std::to_string(id_count.fetch_add(1));
     MS_EXCEPTION_IF_NULL(evaluator);
-    AsyncAbstractPtr async_result_branch = std::make_shared<AsyncAbstract>();
+    AsyncAbstractPtr async_result_branch = std::make_shared<AsyncAbstract>(async_result_main);
     // Control the order to run.
     AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
     control_run_order->set_result(std::make_shared<AbstractScalar>(1));
@@ -1216,11 +1226,19 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   AbstractBasePtrList out_specs;
   size_t len = evaluators.size();
   if (NeedWaitForBranches(first_result)) {
+    MS_LOG(DEBUG) << GetInferThread() << " BuildPossibleSpecs.";
     BuildPossibleSpecs(first_result, async_result_branches, &out_specs);
   } else {
     for (size_t i = 0; i < len; ++i) {
-      // Not wait to get the result of branch.
-      auto result = async_result_branches[i]->TryGetResult();
+      AbstractBasePtr result;
+      if (enable_waiting_branch_eval()) {
+        // wait to get the result of branch.
+        result = async_result_branches[i]->GetResult();
+      } else {
+        // Not wait to get the result of branch.
+        result = async_result_branches[i]->TryGetResult();
+      }
+
       if (result) {
         MS_LOG(DEBUG) << "#" << i << ": " << GetInferThread() << " async get " << evaluators[i]->ToString()
                       << ", result: " << result->ToString() << ", args: " << args_conf_list;
@@ -1228,13 +1246,13 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
       }
     }
   }
-
-  MS_LOG(DEBUG) << std::this_thread::get_id() << " finish.";
+  MS_LOG(DEBUG) << GetInferThread() << " finish.";
   const auto &processed_result = ProcessEvalResults(out_specs, out_conf->node());
   if (processed_result != nullptr) {
     // This is the final switch()() value.
     AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, processed_result->abstract());
   }
+  MS_LOG(DEBUG) << GetInferThread() << "join finish.";
   return processed_result;
 }
 
