@@ -74,7 +74,7 @@ class KernelAdjust {
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
   void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
-                               int32_t value) const;
+                               int64_t value) const;
 
  private:
   KernelAdjust() = default;
@@ -170,7 +170,7 @@ class KernelAdjust {
                                              const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              std::vector<AnfNodePtr> *dynamic_loss_scale_param_list) const;
-  std::shared_ptr<Tensor> CreateTensor(int32_t initial_value) const;
+  std::shared_ptr<Tensor> CreateTensor(int64_t initial_value) const;
   std::shared_ptr<Parameter> CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              const string parameter_name) const;
 };
