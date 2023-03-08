@@ -512,7 +512,8 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
 bool InsertTypeTransformOp::IsInputUpdated(const AnfNodePtr &origin_input, const AnfNodePtrList &new_input_list) const {
   MS_EXCEPTION_IF_NULL(origin_input);
   if (new_input_list.empty()) {
-    MS_LOG(EXCEPTION) << "The new input list size should be at least 1, but got 0.";
+    MS_LOG(INFO) << "The new input list size should be at least 1, but got 0.";
+    return false;
   }
 
   if (new_input_list.size() == kSizeOne && new_input_list[kIndex0] == origin_input) {
