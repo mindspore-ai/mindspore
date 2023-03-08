@@ -36,6 +36,13 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
   auto x = input_args[0]->BuildShape();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto input_rank = SizeToLong(input_shape.size());
+
+  if (IsDynamicRank(input_shape)) {
+    auto unknow_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
+  }
+
   CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, kNumber, prim_name);
   int64_t last_shape_input = input_shape[input_rank - 1];
   int64_t last_second__shape_input = input_shape[input_rank - 2];

@@ -78,6 +78,7 @@ class RaggedTensorToTensorCpuKernelMod : public NativeCpuKernelMod {
   template <typename TYPE1>
   void GetFirstDimension(const std::vector<kernel::AddressPtr> &inputs, TYPE1 *first_dim);
 
+  int64_t ragged_rank_;
   TypeId shape_dtype_{kTypeUnknown};
   TypeId values_dtype_{kTypeUnknown};
   std::vector<int64_t> values_shape_;

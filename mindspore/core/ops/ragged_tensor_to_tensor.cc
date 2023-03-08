@@ -52,7 +52,7 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
 
   if (IsDynamic(shape_shape) || IsDynamicRank(values_shape) || IsDynamicRank(default_value_shape) ||
       IsDynamicRank(tensor0_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::Shape>(output_shape);
   }
 
   CheckAndConvertUtils::CheckInteger("dimension of 'shape'", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
