@@ -1008,8 +1008,6 @@ class _AutoParallelContext:
             TypeError: When the value is not bool.
         """
         self.check_context_handle()
-        if not self.get_enable_all_reduce_fusion():
-            return
         if not isinstance(openstate, bool):
             raise TypeError("For 'comm_fusion', the 'openstate' must be bool, but got the type : {}.".format(
                 type(openstate)))

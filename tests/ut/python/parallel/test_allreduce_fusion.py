@@ -279,6 +279,18 @@ def test_fusion_invalid_value_failed():
         comm_fusion_dict = {"allreduce": {"mode": "size", "config": "30.12"}}
         context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
 
+
+def test_openstate_invalid_value_failed():
+    """
+    Feature: test_openstate with invalid value
+    Description: test_openstate with invalid value
+    Expectation: throw TypeError
+    """
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"openstate": "True"}
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
+
+
 def test_enable_invalid_value_failed():
     """
     Feature: enable_all_reduce_fusion with invalid value
@@ -325,4 +337,33 @@ def test_allreduce_fusion_auto_with_openstate():
                    'backbone2.fc2.weight': 1,
                    'backbone2.fc1.weight': 1,
                    'backbone1.fc1.weight': 1}
+    assert allreduce_fusion_dict == expect_dict
+
+
+def test_allreduce_fusion_with_openstate_reset():
+    """
+    Feature: test_allreduce_fusion in auto mode with openstate and reset
+    Description: allreduce fusion in auto mode with openstate and reset
+    Expectation: success
+    """
+    comm_fusion_dict = {"openstate": False, "allreduce": {"mode": "auto", "config": None}}
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
+    net = SimpleDMLNet(DenseNet1(has_bias=False, activation=None), DenseNet2(has_bias=False, activation=None))
+    allreduce_fusion_dict = train_common(net)
+    expect_dict = {'backbone2.fc8.weight': 1,
+                   'backbone2.fc7.weight': 1,
+                   'backbone2.fc6.weight': 1,
+                   'backbone1.fc4.weight': 1,
+                   'backbone1.fc3.weight': 1,
+                   'backbone1.fc2.weight': 1,
+                   'backbone2.fc5.weight': 1,
+                   'backbone2.fc4.weight': 1,
+                   'backbone2.fc3.weight': 1,
+                   'backbone2.fc2.weight': 1,
+                   'backbone2.fc1.weight': 1,
+                   'backbone1.fc1.weight': 1}
+    assert allreduce_fusion_dict != expect_dict
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    allreduce_fusion_dict = train_common(net)
     assert allreduce_fusion_dict == expect_dict
