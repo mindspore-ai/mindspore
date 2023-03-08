@@ -27,6 +27,7 @@ from mindspore.common import Tensor
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -460,6 +461,9 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
         self.loss_scaling_manager = None
+        self.base0 = Tensor(0, mstype.int32)
+        self.reduce_all = P.ReduceAll(keep_dims=False)
+        self.equal = P.Equal()
 
         if self.auto_boost.boost_config.get("loss_scale_group", False):
             self.enable_enhanced_amp = True
@@ -535,12 +539,13 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             bool, overflow value.
             float, update ratio.
         """
-        flag_sum = self.reduce_sum(param, (0,))
+        flag_sum = self.equal(self.base0, param)
         if self.reducer_flag:
             flag_reduce = self.allreduce(flag_sum)
-            overflow = self.less_equal(self.base, flag_reduce)
+            overflow = not self.reduce_all(flag_reduce)
         else:
-            overflow = self.less_equal(self.base, flag_sum)
+            overflow = not self.reduce_all(flag_sum)
+
         if overflow:
             update_ratio = self.reduce_ratio
         else:
@@ -609,13 +614,11 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             The second value is the same as the input of `compute_input`, but contains some information about the
             execution order.
         """
-        status = False
+        status = Tensor([0] * 8, mstype.int32)
         if not self.gpu_target:
-            # init overflow buffer
-            status = P.NPUAllocFloatStatus()()
             status = F.depend(status, pre_cond)
             # clear overflow buffer
-            clear_status = P.NPUClearFloatStatus()(status)
+            clear_status = NPUClearFloatStatusV2()(status)
             compute_input = F.depend(compute_input, clear_status)
         return status, compute_input
 
@@ -636,22 +639,36 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         """
         if not self.gpu_target:
             status = F.depend(status, compute_output)
-            get_status = P.NPUGetFloatStatus()(status)
-            status = F.depend(status, get_status)
-            # sum overflow buffer elements, 0:not overflow , >0:overflow
-            flag_sum = self.reduce_sum(status, (0,))
+            get_status = NPUGetFloatStatusV2()(status)
+
+            if self.is_distributed:
+                # sum overflow flag over devices
+                flag_reduce = self.allreduce(get_status)
+                # get_status not equal to [0]*8 means overflow
+                flag = self.equal(self.base0, flag_reduce)
+                status = F.depend(status, flag)
+                clear_status = NPUClearFloatStatusV2()(status)
+                flag = F.depend(flag, clear_status)
+                overall_finite = self.reduce_all(flag)
+            else:
+                status = F.depend(status, get_status)
+                clear_status = NPUClearFloatStatusV2()(status)
+                get_status = F.depend(get_status, clear_status)
+                flag = self.equal(self.base0, get_status)
+                overall_finite = self.reduce_all(flag)
+            overflow = not overall_finite
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), compute_output)
             flag_sum = P.AddN()(flag_sum)
             # convert flag_sum to scalar
             flag_sum = P.Reshape()(flag_sum, (()))
 
-        if self.is_distributed:
-            # sum overflow flag over devices
-            flag_reduce = self.allreduce(flag_sum)
-            overflow = self.less_equal(self.base, flag_reduce)
-        else:
-            overflow = self.less_equal(self.base, flag_sum)
+            if self.is_distributed:
+                # sum overflow flag over devices
+                flag_reduce = self.allreduce(flag_sum)
+                overflow = self.less_equal(self.base, flag_reduce)
+            else:
+                overflow = self.less_equal(self.base, flag_sum)
         return overflow
 
     def _process_loss_scale(self, overflow):
@@ -688,7 +705,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         self.optimizer_loss_scale = [self.parent.count(x) for x in parent_set]
         self.reduce_ratio = Tensor(1.0 / (2 ** 0.5), mstype.float32)
         self.growth_ratio = Tensor(2 ** (1.0 / 1000.0), mstype.float32)
-        self.overflow_status_list = ParameterTuple(Parameter(Tensor(np.zeros(shape=[8]), mstype.float32),
+        self.overflow_status_list = ParameterTuple(Parameter(Tensor(np.zeros(shape=[8]), mstype.int32),
                                                              name='mix_layer_status_{}'.format(x), requires_grad=False)
                                                    for x in range(loss_scale_number))
         self.loss_scaling_manager.set_loss_scale_status(loss_scale_number, self.loss_scaling_manager.get_loss_scale())

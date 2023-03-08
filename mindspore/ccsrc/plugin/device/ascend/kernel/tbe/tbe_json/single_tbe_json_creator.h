@@ -29,6 +29,7 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
 
  protected:
   bool GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);
+  void OpListPostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);
   void GenDataJson(const AnfNodePtr &anf_node, const nlohmann::json &compute_json,
                    std::vector<nlohmann::json> *op_list_json) const;
   virtual void GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc);

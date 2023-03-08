@@ -39,7 +39,7 @@ class AscendMemAdapter {
 
   uint8_t *MallocStaticDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocDynamicDevMem(size_t size, const std::string &tag = "");
-  uint8_t *MallocOverflowMem(const CNodePtr &kernel);
+  uint8_t *MallocOverflowMem();
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
 

@@ -42,6 +42,10 @@ class TbeKernelMod : public AscendKernelMod {
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
   std::vector<size_t> GenParameters() override;
+  AddressPtr GetOverflowAddress();
+  void GetRealIOAddress(const AnfNodePtr &cnode, const std::vector<AddressPtr> &inputs,
+                        const std::vector<AddressPtr> &outputs, std::vector<AddressPtr> *real_inputs,
+                        std::vector<AddressPtr> *real_outputs) const;
 
  protected:
   KernelPackPtr kernel_pack_;

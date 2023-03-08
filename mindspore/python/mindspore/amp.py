@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 from __future__ import absolute_import
 
 from abc import ABC, abstractmethod
-
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
 from ._checkparam import Validator as validator
 from .common import dtype as mstype
 from . import context
@@ -58,34 +59,7 @@ def _overflow(inputs):
     return 1 - status.all()
 
 
-def init_status():
-    r"""
-    Returns a Tensor indicating initialized status for overflow detection.
-
-    Note:
-        Only Ascend need status to capture overflow status, you can also call
-        this function on GPU or CPU, but the return value is useless.
-
-    Returns:
-        Tensor, has the shape of `(8,)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> status = amp.init_status()
-    """
-    if _ascend_target():
-        status = ops.NPUAllocFloatStatus()()
-        clear_status = ops.NPUClearFloatStatus()(status)
-        status = ops.depend(status, clear_status)
-    else:
-        status = Tensor([0, 0, 0, 0, 0, 0, 0, 0], mstype.float32)
-
-    return status
-
-
-def all_finite(inputs, status=None):
+def all_finite(inputs):
     r"""
     Returns a scalar Tensor indicating whether the inputs are finite.
 
@@ -98,8 +72,6 @@ def all_finite(inputs, status=None):
 
     Args:
         inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
-        status (Tensor): the status Tensor for overflow detection, only required on
-            Ascend. Default: None.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -112,13 +84,13 @@ def all_finite(inputs, status=None):
         >>> output = amp.all_finite(x)
     """
     if _ascend_target():
-        if status is None:
-            raise ValueError("The status must be initialized on Ascend, but get 'None'.")
+        status = Tensor([0] * 8, mstype.int32)
         status = ops.depend(status, inputs)
-        get_status = ops.NPUGetFloatStatus()(status)
+        get_status = _get_cache_prim(NPUGetFloatStatusV2)()(status)
         status = ops.depend(status, get_status)
-        status_finite = status.sum() == 0
-        _ = ops.NPUClearFloatStatus()(status)
+        clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
+        get_status = ops.depend(get_status, clear_status)
+        status_finite = get_status.equal(Tensor(0, mstype.int32)).all()
         return status_finite
     outputs = _hypermap(_partial(_overflow), inputs)
     flag_sum = ops.addn(outputs).reshape(())
@@ -329,5 +301,5 @@ class DynamicLossScaler(LossScaler):
 __all__ = [
     "DynamicLossScaleManager", "LossScaleManager", "FixedLossScaleManager",
     "build_train_network", "DynamicLossScaler", "StaticLossScaler", "LossScaler",
-    "auto_mixed_precision", "init_status", "all_finite"
+    "auto_mixed_precision", "all_finite"
 ]
