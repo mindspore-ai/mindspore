@@ -503,10 +503,10 @@ def _cal_padding(padding, cls_name, nd):
             padding = (0, 0) * (3 - nd) + padding * nd * 2
         else:
             if nd == 1:
-                raise ValueError(f"For {cls_name}, the padding must be a int or tuple contains one int, "
-                                 f"but got tuple with length:{len(padding)}.")
-            raise ValueError(f"For {cls_name}, the padding must be a int or tuple contains 1 or {nd} int, "
-                             f"but got tuple with length:{len(padding)}.")
+                raise ValueError(f"For {cls_name}, the padding must be a int or tuple/list contains one int, "
+                                 f"but got tuple/list with length:{len(padding)}.")
+            raise ValueError(f"For {cls_name}, the padding must be a int or tuple/list contains 1 or {nd} int, "
+                             f"but got tuple/list with length:{len(padding)}.")
     return padding
 
 
@@ -712,7 +712,8 @@ class AvgPool2d(_PoolNd):
                  data_format="NCHW"):
         """Initialize AvgPool2d."""
         super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
-        if pad_mode == 'pad' or padding != 0 or ceil_mode or not count_include_pad or divisor_override is not None:
+        if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad \
+                or divisor_override is not None:
             if self.format == "NHWC":
                 raise ValueError(f"For '{self.cls_name}, the 'NHWC' format are not support when 'padding' is not 0 "
                                  f"or 'ceil_mode' is not False or 'count_include_pad' is not True "
@@ -837,7 +838,7 @@ class AvgPool1d(_PoolNd):
         super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         validator.check_int(self.kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
         validator.check_int(self.stride, 1, Rel.GE, "stride", self.cls_name)
-        if pad_mode == 'pad' or padding != 0 or ceil_mode or not count_include_pad:
+        if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad:
             padding = _cal_padding(padding, self.cls_name, 1)
             self.is_expand_3d = True
             kernel_size = (1, 1, self.kernel_size)
