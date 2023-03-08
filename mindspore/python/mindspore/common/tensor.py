@@ -2069,7 +2069,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
                 computation on empty slice. Default: None.
-            where (bool Tensor, optional):
+            where (Tensor[bool], optional):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
                 is passed, initial must also be provided. Default: True.

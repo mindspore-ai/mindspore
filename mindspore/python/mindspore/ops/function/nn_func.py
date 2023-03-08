@@ -5141,7 +5141,7 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
 
-    where : math: `i\in \{0,⋯,x.size(0)−1\} \space and \space i \ne y`
+    where :math:`i\in \{0,⋯,x.size(0)−1\} \space and \space i \ne y`
 
     Args:
         inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
