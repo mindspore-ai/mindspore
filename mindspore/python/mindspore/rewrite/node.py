@@ -222,6 +222,33 @@ class Node:
         return cls(NodeType.Output, ast_node, None, ScopedValue.create_naming_value("return"), real_return_values, {},
                    name, None)
 
+
+    @classmethod
+    def create_mathops_node(cls, ast_node: ast.AST, targets: [ScopedValue],
+                            op_type: ScopedValue, args: [ScopedValue],
+                            ops: {str: list}, name: str = ""):
+        """
+        Class method of Node. Instantiate an instance of node whose type is `MathOps` .
+        A mathops node is used to represent a node with mathematical operations, such as
+        `y = a + b` , `y = not a` , `y = 0 < a < 1`, `y = a or b` , etc.
+
+        Args:
+            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast. The type of
+                node is ast.Assign, and the type of ast_node.value is one of ast.BinOp, ast.UnaryOp, ast.BoolOp and
+                ast.Compare.
+            targets (list[ScopedValue]): Targets of mathematical operations. A list of instance of `ScopedValue`.
+                See detail in docstring of Node class.
+            op_type (ScopedValue): The type of ast_node.value saved by string. A ScopedValue with NamingValue type.
+            args (list[ScopedValue]): Values participating in the mathematical operations. All values are saved
+                sequentially in the list.
+            ops (dict[str:ScopedValue]): Operators participating in the mathematical operations. All operators are
+            saved sequentially in the dict, and keys are numbers in string format, such as {'0':'add', '1':'sub'}.
+            name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
+                Name of node also used as field name in network class. The format of mathops node name
+                is 'AstNodeName_AstOpName_n'.
+        """
+        return cls(NodeType.MathOps, ast_node, targets, op_type, args, ops, name, None)
+
     @staticmethod
     def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
                        func: Union[ScopedValue, str], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None,
@@ -624,7 +651,8 @@ class Node:
         """
         self._targets = targets
         if self._node_type in (NodeType.CallCell, NodeType.CallMethod, NodeType.CallPrimitive,
-                               NodeType.Tree, NodeType.CallFunction, NodeType.CellContainer):
+                               NodeType.Tree, NodeType.CallFunction, NodeType.CellContainer,
+                               NodeType.MathOps):
             self._sync_assign_targets_to_ast()
 
     def get_func(self) -> ScopedValue:
@@ -1133,14 +1161,50 @@ class Node:
             raise RuntimeError("Unsupported return value type: ", return_value_ast)
         ast.fix_missing_locations(return_ast)
 
+    def _sync_mathops_node_args_to_ast(self):
+        """
+        Sync values from self._normalized_args to the ast node for mathematical operations.
+        """
+        if self._ast_node is None:
+            return
+        if not isinstance(self._ast_node, ast.Assign):
+            raise TypeError(f"type of node should be ast.Assign, but got {type(self._ast_node)}")
+        mathops_node = self._ast_node.value
+        if isinstance(mathops_node, ast.BinOp):
+            left = mathops_node.left
+            right = mathops_node.right
+            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), left)
+            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[1]), right)
+        elif isinstance(mathops_node, ast.UnaryOp):
+            operand = mathops_node.operand
+            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), operand)
+        elif isinstance(mathops_node, ast.BoolOp):
+            values = mathops_node.values
+            for arg_index in range(self._args_num):
+                arg_value = self._normalized_args.get(self._normalized_args_keys[arg_index])
+                AstModifier.update_arg_value(arg_value, values[arg_index])
+        elif isinstance(mathops_node, ast.Compare):
+            left = mathops_node.left
+            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[0]), left)
+            comparators = mathops_node.comparators
+            for arg_index in range(1, self._args_num):
+                arg_value = self._normalized_args.get(self._normalized_args_keys[arg_index])
+                AstModifier.update_arg_value(arg_value, comparators[arg_index - 1])
+        else:
+            raise TypeError("The type of 'mathops_node' must be one of (ast.BinOp, ast.UnaryOp, "
+                            "ast.BoolOp, ast.Compare), but got ", type(mathops_node))
+
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
-        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree, NodeType.CellContainer):
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree,\
+                               NodeType.CellContainer, NodeType.CallFunction):
             self._sync_call_cell_args_to_ast()
         elif self._node_type == NodeType.Output:
             self._sync_return_node_to_ast()
         elif self._node_type == NodeType.CallMethod:
             self._sync_call_method_args_to_ast()
+        elif self._node_type == NodeType.MathOps:
+            self._sync_mathops_node_args_to_ast()
 
 
 class TreeNode(Node):
