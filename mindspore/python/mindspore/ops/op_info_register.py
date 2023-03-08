@@ -1331,3 +1331,5 @@ class DataType:
 
     C64_Default = ("complex64", "DefaultFormat")
     C128_Default = ("complex128", "DefaultFormat")
+    C64_Default_Tuple = ("complex64", "DefaultFormat", "tuple")
+    C128_Default_Tuple = ("complex128", "DefaultFormat", "tuple")

@@ -423,3 +423,4 @@ from .sparse_to_dense_v2 import _sparse_to_dense_v2_aicpu
 from .bernoulli import _bernoulli_aicpu
 from .glu_grad import _glu_grad_aicpu
 from .sspaddmm import _sspaddmm_aicpu
+from .sequence_addn import _sequence_addn_aicpu

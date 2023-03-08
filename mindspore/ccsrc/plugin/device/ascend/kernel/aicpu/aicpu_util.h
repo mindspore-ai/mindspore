@@ -107,6 +107,7 @@ constexpr auto kKLDivLoss = "KLDivLoss";
 constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kSequenceAdd = "SequenceAdd";
+constexpr auto kSequenceAddN = "SequenceAddN";
 constexpr auto kSequenceAddOffset = "SequenceAddOffset";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossEntropyWithLogitsV2";
@@ -297,6 +298,7 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kGatherDGradV2,
                                               kConcatOffset,
                                               kSequenceAdd,
+                                              kSequenceAddN,
                                               kSequenceAddOffset,
                                               kSliceGrad,
                                               kRandomShuffle,
