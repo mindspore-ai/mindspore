@@ -368,7 +368,7 @@ def test_pyfunc_exception():
             pass
         assert "Pyfunc Throw" in str(info.value)
 
-@pytest.mark.skip(reason="random failure")
+
 def test_pyfunc_exception_multiprocess():
     """
     Feature: PyFunc in Map op
@@ -391,11 +391,11 @@ def test_pyfunc_exception_multiprocess():
                           num_parallel_workers=4, python_multiprocessing=True)
         for _ in data1:
             pass
-        assert "MP Pyfunc Throw" in str(info.value)
+    assert "Exception thrown from user defined Python function in dataset" in str(info.value)
 
     ds.config.set_enable_shared_mem(mem_original)
 
-@pytest.mark.skip(reason="random failure")
+
 def test_func_with_yield_manifest_dataset_01():
     """
     Feature: PyFunc in Map op
@@ -405,7 +405,7 @@ def test_func_with_yield_manifest_dataset_01():
 
     def pass_func(_):
         for i in range(10):
-            yield (np.array([i]),)
+            yield (np.array([i], dtype=np.int32),)
 
     # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
     # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
@@ -416,11 +416,10 @@ def test_func_with_yield_manifest_dataset_01():
     data = data.map(operations=pass_func, input_columns=["image"], num_parallel_workers=1, python_multiprocessing=True,
                     max_rowsize=1)
     num_iter = 0
-    try:
+    with pytest.raises(RuntimeError) as info:
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    except RuntimeError as e:
-        assert " Cannot pickle <class 'generator'> object, please verify pyfunc return with numpy array" in str(e)
+    assert " Cannot pickle <class 'generator'> object, please verify pyfunc return with numpy array" in str(info.value)
 
 
 def test_func_mixed_with_ops():

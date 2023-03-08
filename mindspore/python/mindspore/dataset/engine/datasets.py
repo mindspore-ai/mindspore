@@ -1900,7 +1900,6 @@ class VisionBaseDataset(Dataset):
         raise NotImplementedError("Dataset has to implement parse method.")
 
 
-# pylint: disable=abstract-method
 class TextBaseDataset(Dataset):
     """
     Abstract class to represent a text source dataset which produces content to the data pipeline.
@@ -1955,9 +1954,9 @@ class TextBaseDataset(Dataset):
             ...                               special_first=True)
 
         """
-        raise NotImplementedError("mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0 "
-                                  "and will be removed in a future version. "
-                                  "Use mindspore.dataset.text.Vocab.from_dataset instead.")
+        warnings.warn("mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0 "
+                      "and will be removed in a future version. "
+                      "Use mindspore.dataset.text.Vocab.from_dataset instead.", DeprecationWarning)
 
     def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
         """
@@ -1989,9 +1988,9 @@ class TextBaseDataset(Dataset):
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
         """
-        raise NotImplementedError("mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0 "
-                                  "and will be removed in a future version. "
-                                  "Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.")
+        warnings.warn("mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0 "
+                      "and will be removed in a future version. "
+                      "Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.", DeprecationWarning)
 
     def _build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
         """

@@ -326,7 +326,7 @@ class FileWriter:
                 # check the status of worker process
                 for i in range(len(self._paths)):
                     if not self._workers[i].is_alive():
-                        raise RuntimeError("Worker process(pid:{}) has stopped abnormal. Please check " \
+                        raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
                                            "the above log".format(self._workers[i].pid))
                 continue
             return SUCCESS
@@ -478,7 +478,7 @@ class FileWriter:
                     time.sleep(1)
                     continue
                 elif self._workers[index].exitcode != 0:
-                    raise RuntimeError("Worker process(pid:{}) has stopped abnormal. Please check " \
+                    raise RuntimeError("Worker process(pid:{}) has stopped abnormally. Please check " \
                                        "the above log".format(self._workers[index].pid))
                 break
 
