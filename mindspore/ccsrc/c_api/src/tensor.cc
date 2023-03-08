@@ -22,13 +22,14 @@
 #include "ir/dtype.h"
 
 template <typename T>
-void GetDataByFile(std::vector<T> data, const char *path, size_t *elem_size) {
+std::vector<T> GetDataByFile(const char *path, size_t *elem_size) {
   std::string fileName(path);
   MS_LOG(INFO) << "Reading File: " << fileName << std::endl;
   std::ifstream fin(fileName, std::ios::in);
+  std::vector<T> data;
   if (!fin.is_open()) {
     MS_LOG(ERROR) << "Open file failed, File path: %s  " << fileName << std::endl;
-    return;
+    return data;
   }
   T t;
   while (fin >> t) {
@@ -36,6 +37,7 @@ void GetDataByFile(std::vector<T> data, const char *path, size_t *elem_size) {
   }
   fin.close();
   *elem_size = data.size() * sizeof(T);
+  return data;
 }
 
 TensorHandle MSNewTensor(ResMgrHandle res_mgr, void *data, DataTypeC type, const int64_t shape[], size_t shape_size,
@@ -65,22 +67,19 @@ TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, DataTypeC type, const int
   ShapeVector shape_vec(shape, shape + shape_size);
   try {
     size_t data_len;
-    switch (type) {
-      case MS_INT32: {
-        std::vector<int32_t> data;
-        (void)GetDataByFile<int32_t>(data, path, &data_len);
+    switch (mindspore::TypeId(type)) {
+      case mindspore::TypeId::kNumberTypeInt32: {
+        std::vector<int32_t> data = GetDataByFile<int32_t>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case MS_INT64: {
-        std::vector<int64_t> data;
-        (void)GetDataByFile<int64_t>(data, path, &data_len);
+      case mindspore::TypeId::kNumberTypeInt64: {
+        std::vector<int64_t> data = GetDataByFile<int64_t>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }
-      case MS_FLOAT32: {
-        std::vector<float> data;
-        (void)GetDataByFile<float>(data, path, &data_len);
+      case mindspore::TypeId::kNumberTypeFloat32: {
+        std::vector<float> data = GetDataByFile<float>(path, &data_len);
         tensor = std::make_shared<TensorImpl>(mindspore::TypeId(type), shape_vec, data.data(), data_len);
         break;
       }

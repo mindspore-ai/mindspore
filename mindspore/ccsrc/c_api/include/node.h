@@ -155,6 +155,26 @@ MIND_C_API size_t MSOpGetInputsNum(ResMgrHandle res_mgr, ConstNodeHandle op, STA
 /// \return Error code that indicate whether the functions executed successfully.
 MIND_C_API STATUS MSOpGetInputs(ResMgrHandle res_mgr, ConstNodeHandle op, NodeHandle inputs[], size_t input_num);
 
+/// \brief Get dimension value of the infer shape from the given operator.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] op The Operator.
+/// \param[in] ret A pointer to the Error code that indicates whether the functions executed successfully.
+///
+/// \return Dimension Value.
+MIND_C_API size_t MSOpGetOutputDimension(ResMgrHandle res_mgr, ConstNodeHandle op, size_t output_index, STATUS *ret);
+
+/// \brief Get shape vector of the infer shape from the given operator.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] op The Operator.
+/// \param[in] shape_ret The provided array for shape value storage.
+/// \param[in] dim Dimenesion of shape, which also indicates the numbers of elements in the shape vector.
+///
+/// \return Error code that indicates whether the functions executed successfully.
+MIND_C_API STATUS MSOpGetOutputShape(ResMgrHandle res_mgr, ConstNodeHandle op, int64_t shape_ret[], size_t dim,
+                                     size_t output_index);
+
 /// \brief Create a subgraph node.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.

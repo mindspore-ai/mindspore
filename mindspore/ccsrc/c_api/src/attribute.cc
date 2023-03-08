@@ -298,11 +298,32 @@ AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v) {
   return GetRawPtr(res_mgr, value);
 }
 
-AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, DataTypeC data_type) {
-  if (res_mgr == nullptr || value == nullptr) {
-    MS_LOG(ERROR) << "Input Handle [res_mgr] or [value] is nullptr.";
+AttrHandle MSNewAttrStrings(ResMgrHandle res_mgr, const char *strs[], size_t vec_len) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
     return nullptr;
   }
+  std::vector<std::string> converted_strs;
+  for (size_t i = 0; i < vec_len; i++) {
+    std::string converted_ele(strs[i]);
+    converted_strs.push_back(converted_ele);
+  }
+  auto value = mindspore::MakeValue(converted_strs);
+  return GetRawPtr(res_mgr, value);
+}
+
+AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, DataTypeC data_type) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
+    return nullptr;
+  }
+
+  // Allow empty attrbute value
+  if (value == nullptr && vec_size != 0) {
+    MS_LOG(ERROR) << "Input Handle [value] is nullptr.";
+    return nullptr;
+  }
+
   mindspore::ValuePtr value_ptr;
   switch (data_type) {
     case MS_BOOL: {

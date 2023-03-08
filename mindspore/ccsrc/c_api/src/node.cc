@@ -676,6 +676,42 @@ STATUS MSOpGetInputs(ResMgrHandle res_mgr, ConstNodeHandle op, NodeHandle inputs
   return RET_OK;
 }
 
+size_t MSOpGetOutputDimension(ResMgrHandle res_mgr, ConstNodeHandle op, size_t output_index, STATUS *ret) {
+  if (res_mgr == nullptr || op == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] is nullptr.";
+    *ret = RET_NULL_PTR;
+    return 0;
+  }
+  try {
+    auto src_cnode = GetSrcPtr<CNodePtr>(res_mgr, op);
+    MS_EXCEPTION_IF_NULL(src_cnode);
+    std::vector<int64_t> shape = mindspore::common::AnfAlgo::GetOutputInferShape(src_cnode, output_index);
+    return shape.size();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Get Shape from OP/CNode failed. Error info: " << e.what();
+    *ret = RET_ERROR;
+    return 0;
+  }
+}
+
+STATUS MSOpGetOutputShape(ResMgrHandle res_mgr, ConstNodeHandle op, int64_t shape_ret[], size_t dim,
+                          size_t output_index) {
+  if (res_mgr == nullptr || op == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [op] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  try {
+    auto src_cnode = GetSrcPtr<CNodePtr>(res_mgr, op);
+    MS_EXCEPTION_IF_NULL(src_cnode);
+    std::vector<int64_t> shape = mindspore::common::AnfAlgo::GetOutputInferShape(src_cnode, output_index);
+    std::copy(shape.begin(), shape.end(), shape_ret);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Get Shape from OP/CNode failed. Error info: " << e.what();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph, ConstGraphHandle sub_graph, Handle const inputs[],
                              size_t input_num) {
   if (res_mgr == nullptr || graph == nullptr || sub_graph == nullptr) {

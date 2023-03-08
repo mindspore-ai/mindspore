@@ -173,6 +173,15 @@ MIND_C_API AttrHandle MSNewAttrFloat32(ResMgrHandle res_mgr, const float v);
 /// \return Attribute value handle.
 MIND_C_API AttrHandle MSNewAttrBool(ResMgrHandle res_mgr, const bool v);
 
+/// \brief Create new vector of Strings attribute value.
+///
+/// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
+/// \param[in] strs Given value.
+/// \param[in] vec_len Length of the string vector.
+///
+/// \return Attribute value handle.
+MIND_C_API AttrHandle MSNewAttrStrings(ResMgrHandle res_mgr, const char *strs[], size_t vec_len);
+
 /// \brief Create new attribute value with array.
 ///
 /// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
