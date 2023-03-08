@@ -45,10 +45,12 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
+using KernelBuildInfoBuilderPtr = std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder>;
 constexpr int kWeightUnInitScore = 1;
 constexpr int kWeightInitScore = 2;
 constexpr int kFeatureMapBaseScore = 10;
 constexpr auto kPriChoosenFormat = "pri_format";
+constexpr auto kOriSelectFormat = "ori_select_format";
 enum MatchCountPriority : size_t {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
   MATCH_DTYPE_COUNT = MATCH_COUNT_PRIORITY_BEGIN,
@@ -511,6 +513,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
     MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
     return;
   }
+  common::AnfAlgo::SetNodeAttr(kOriSelectFormat, MakeValue(AnfAlgo::GetInputFormat(kernel_node, 0)), kernel_node);
   auto format = iter->second[next_index];
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(kernel_node));
@@ -1087,8 +1090,11 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
   }
 }
 
-void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node,
-                                   const std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> &builder) {
+void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node, const KernelBuildInfoBuilderPtr &builder) {
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kHighPrecisionOp.count(op_name) == 0) {
+    return;
+  }
   auto input_dtypes = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   auto output_dtypes = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   auto has_fp32 = std::any_of(output_dtypes.begin(), output_dtypes.end(),
@@ -1107,6 +1113,27 @@ void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node,
     MS_LOG(INFO) << "Update data type for " << kernel_node->fullname_with_scope() << " from " << input_dtypes << " to "
                  << new_input_types;
   }
+}
+
+void RestoreCastOpFormat(const CNodePtr &kernel_node, const KernelBuildInfoBuilderPtr &builder) {
+  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name() ||
+      !common::AnfAlgo::HasNodeAttr(kOriSelectFormat, kernel_node)) {
+    return;
+  }
+  auto ori_format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kOriSelectFormat);
+  builder->SetInputsFormat({ori_format});
+  builder->SetOutputsFormat({ori_format});
+  MS_LOG(INFO) << "Restore the format of Cast op: " << kernel_node->fullname_with_scope() << " to " << ori_format;
+  common::AnfAlgo::EraseNodeAttr(kOriSelectFormat, kernel_node);
+}
+
+void UpdateOutputForBNTrainingUpdateOp(const CNodePtr &kernel_node, const KernelBuildInfoBuilderPtr &builder) {
+  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimBNTrainingUpdate->name()) {
+    return;
+  }
+  builder->SetOutputFormat(kOpFormat_NCHW, 0);
+  MS_LOG(INFO) << "Set the first output's format of BNTrainingUpdate op: " << kernel_node->fullname_with_scope()
+               << " to " << kOpFormat_NCHW;
 }
 
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
@@ -1144,10 +1171,12 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "SUCCESS SET ACL KERNEL FOR" << kernel_node->DebugString();
 
   // For high precision op
-  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kHighPrecisionOp.count(op_name) != 0) {
-    UpdateInputForHighPrecisionOp(kernel_node, new_builder);
-  }
+  UpdateInputForHighPrecisionOp(kernel_node, new_builder);
+  // Restore the device format of cast op to original value if it has been modified according to conv2d
+  RestoreCastOpFormat(kernel_node, new_builder);
+  // The reshape type of first output of BNTrainingUpdate is NCH
+  // Set the first output's format of BNTrainingUpdate to NCHW to avoid discontinuity between device shapes
+  UpdateOutputForBNTrainingUpdateOp(kernel_node, new_builder);
 
   AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), kernel_node.get());
 }

@@ -256,6 +256,11 @@ void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
   if (has_non_acl_kernel || need_change_format) {
     // Insert Cast and TransData.
     opt::RunOpAscendBackendOptimization(graph);
+    // Set dynamic attr again for inserted ops, like reshape
+    nodes = graph->execution_order();
+    for (auto &node : nodes) {
+      AnfAlgo::SetDynamicAttrToPrim(common::AnfAlgo::GetCNodePrimitive(node));
+    }
   } else {
     // Only insert Cast.
     opt::AscendMixPrecision(graph);
