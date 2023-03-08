@@ -250,7 +250,7 @@ class DfGraphConvertor {
   void SetDynamicInputHandleByMultiInput(const OpAdapterPtr &adpt, const CNodePtr &node,
                                          const CNodePtr &from_node_input);
   void SetNodeControlInput(const AnfNodePtr &node, const AnfNodePtr &input);
-  void SetGraphOutputs();
+  void SetGraphOutputs(bool is_main_graph = false);
   std::vector<OutHandler> GetInputHandles(const AnfNodePtr &node, const AnfNodePtr &input);
 
   // Identity Optimization
