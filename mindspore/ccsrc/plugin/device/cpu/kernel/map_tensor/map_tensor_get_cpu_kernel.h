@@ -62,6 +62,13 @@ class MapTensorGetCpuKernelMod : public MapTensorCpuKernelMod {
   static std::vector<std::pair<KernelAttr, MapTensorGetLaunchFunc>> map_tensor_get_func_list_;
   MapTensorGetLaunchFunc kernel_launch_func_;
   bool insert_default_value_{true};
+
+  // This flag indicates whether the embedding storage capability is enabled, which supports hot data caching and
+  // persistent storage of non-hotspot data for hash table, which is generally used in very large hash table
+  // scenarios.
+  bool enable_embedding_storage_{false};
+  // The global unique parameter key of hash table, used to get the embedding storage instance.
+  int32_t parameter_key_{-1};
 };
 }  // namespace kernel
 }  // namespace mindspore

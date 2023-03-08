@@ -9,5 +9,6 @@ mindspore_add_pkg(cucollections
         PATCHES ${TOP_DIR}/third_party/patch/cucollections/0001-refine-bitwise-compare.patch
         PATCHES ${TOP_DIR}/third_party/patch/cucollections/0002-add-get-api-of-dynamic_map.patch
         PATCHES ${TOP_DIR}/third_party/patch/cucollections/0003-add-erase-and-export-api.patch
+        PATCHES ${TOP_DIR}/third_party/patch/cucollections/0004-bugfix-for-reserve-find-insert-and-erase-api.patch
         )
 include_directories(${cucollections_INC})

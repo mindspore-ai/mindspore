@@ -20,6 +20,7 @@
 #include <cuco/dynamic_map.cuh>
 #include <random>
 #include <algorithm>
+#include <unordered_set>
 
 #include "plugin/device/gpu/hal/device/gpu_hash_table_kernel.cuh"
 #include "utils/log_adapter.h"
@@ -183,13 +184,16 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
                            "Update hash table size failed.");
 
   // 2. Insert default value according to initializer, initializer can be 'normal', 'zeros' or 'ones'.
-  RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
-                           "Insert default value for miss keys failed.");
+  if (insert_default_value) {
+    RETURN_IF_FALSE_WITH_LOG(InsertDefaultValueByInitializer(key_num, initializer, indices, cuda_stream),
+                             "Insert default value for miss keys failed.");
+  }
 
   // 3. Get all values by indices in blocks.
   size_t total_size = value_dim_ * key_num;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, outputs);
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
   FreeMemory(indices);
   return true;
 }
@@ -216,14 +220,17 @@ bool GPUHashTable<Key, Value, Allocator>::Find(const Key *keys, size_t key_num, 
                            "Update hash table size failed.");
 
   // 2. Insert default value into map by specific value.
-  InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
-    value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, default_value,
-    idle_flags_ptr_, blocks_ptr_);
+  if (insert_default_value) {
+    InsertDefaultValue<<<GET_BLOCKS(key_num), GET_THREADS, 0, cuda_stream>>>(
+      value_dim_, key_num, indices, elements_per_block_, lookup_cnts_ptr_, permit_threshold_, default_value,
+      idle_flags_ptr_, blocks_ptr_);
+  }
 
   // 3. Get all values by indices in blocks.
   size_t total_size = value_dim_ * key_num;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, outputs);
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
   FreeMemory(indices);
   return true;
 }
@@ -258,6 +265,7 @@ bool GPUHashTable<Key, Value, Allocator>::Insert(const Key *keys, size_t key_num
     value_dim_, total_insert_size, indices, value, elements_per_block_, lookup_cnts_ptr_, permit_threshold_,
     global_timestamp_, update_timestamps_ptr_, statuses_ptr_, idle_flags_ptr_, blocks_ptr_);
 
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
   is_dirty_ = true;
   FreeMemory(indices);
 
@@ -294,8 +302,9 @@ bool GPUHashTable<Key, Value, Allocator>::Clear() {
 
   size_ = 0;
   // 1. Reset cuda dynamic map.
+  Allocator alloc = char_alloc_;
   cuda_dynamic_map_ = std::make_unique<CudaDynamicMap<Key, int32_t, Allocator>>(
-    static_cast<Key>(-1), -1, static_cast<Key>(-2), Allocator(), stream);
+    static_cast<Key>(kEmptyKey), kEmptyValue, static_cast<Key>(kErasedKey), alloc, stream);
 
   CudaAtomicSize host_init_atomic_size_t(0);
   CudaAtomicInt host_init_atomic_int(0);
@@ -474,6 +483,7 @@ bool GPUHashTable<Key, Value, Allocator>::ResetAllBlockRecorders(cudaStream_t cu
     cudaMemcpyAsync(update_timestamps_ptr_, update_timestamps_.data(), cur_blocks_num * sizeof(size_t *),
                     cudaMemcpyHostToDevice, cuda_stream),
     "cudaMemcpyAsync");
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
   return true;
 }
 
@@ -498,6 +508,7 @@ void GPUHashTable<Key, Value, Allocator>::FreeAllBlockRecorders() {
 
 template <typename Key, typename Value, typename Allocator>
 bool GPUHashTable<Key, Value, Allocator>::GetKeysAndValues(Key *keys, Value *values, void *stream) {
+  std::unique_lock<std::mutex> lock(mutex_);
   MS_ERROR_IF_NULL(keys);
   MS_ERROR_IF_NULL(values);
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
@@ -515,6 +526,7 @@ bool GPUHashTable<Key, Value, Allocator>::GetKeysAndValues(Key *keys, Value *val
   size_t total_size = value_dim_ * size_;
   GetValues<<<GET_BLOCKS(total_size), GET_THREADS, 0, cuda_stream>>>(value_dim_, total_size, indices,
                                                                      elements_per_block_, blocks_ptr_, values);
+  CHECK_CUDA_RET_WITH_RETURN_FALSE(cudaStreamSynchronize(cuda_stream), "cudaStreamSynchronize");
   FreeMemory(indices);
   return true;
 }
@@ -661,12 +673,11 @@ bool GPUHashTable<Key, Value, Allocator>::EraseElements(const Key *keys, size_t 
   }
   erased_slot_ = new_erased_slot;
 
-  AddErasedSlots<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(key_num, kEmptyValue, indices, erased_counter_,
-                                                                  erased_slot_);
+  AddErasedSlots<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(key_num, indices, erased_counter_, erased_slot_);
 
   // 2. Update idle status for erased slot.
-  EraseElementsByIndices<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(key_num, elements_per_block_, kEmptyValue,
-                                                                          indices, idle_flags_ptr_, statuses_ptr_);
+  EraseElementsByIndices<<<GET_BLOCKS(key_num), GET_THREADS, 0, stream>>>(key_num, elements_per_block_, indices,
+                                                                          idle_flags_ptr_, statuses_ptr_);
 
   // 3. Erase all keys in dynamic map.
   MS_ERROR_IF_NULL(cuda_dynamic_map_);
@@ -678,6 +689,9 @@ bool GPUHashTable<Key, Value, Allocator>::EraseElements(const Key *keys, size_t 
   // 4. Update size.
   // Note: The erased keys should be exist in hash map.
   size_ -= (size_before_erase - size_after_erase);
+  if (size_before_erase - size_after_erase != key_num) {
+    MS_LOG(EXCEPTION) << "Erase element from dynamic map failed.";
+  }
 
   // 5. Record erased keys.
   size_t old_erased_keys_num = erased_keys_.size();
@@ -711,6 +725,9 @@ bool GPUHashTable<Key, Value, Allocator>::Import(const DataLenPair &input_data) 
 
   size_t keys_len = input_keys.second;
   size_t values_len = input_values.second;
+  if (keys_len == 0) {
+    return true;
+  }
 
   // 2. Allocate temp buffer to keys and values.
   Key *device_keys = nullptr;
@@ -1016,6 +1033,9 @@ bool GPUHashTable<Key, Value, Allocator>::GetIndicesByKeys(const Key *key, size_
   MS_ERROR_IF_NULL(insert_success_number_);
 
   while (remaining_key_num > 0) {
+    if (submap_idx >= dynamic_map.get_submaps().size()) {
+      MS_LOG(EXCEPTION) << "There is no enough space in dynamic map.";
+    }
     auto &submap_ptr = dynamic_map.get_submaps()[submap_idx];
     MS_ERROR_IF_NULL(submap_ptr);
     // 1. Get reamaining capacity in current submap, max load faltor and min insert size need to be considered.

@@ -27,47 +27,78 @@ class GPUAllocator {
  public:
   using value_type = T;
 
-  GPUAllocator() = default;
+  GPUAllocator() : use_memory_pool_(true) {}
+  explicit GPUAllocator(bool use_memory_pool) : use_memory_pool_(use_memory_pool) {}
   ~GPUAllocator() = default;
 
   template <typename U>
-  GPUAllocator(const GPUAllocator<U> &other) {}
+  GPUAllocator(const GPUAllocator<U> &other) {
+    this->use_memory_pool_ = other.use_memory_pool_;
+  }
 
   template <typename U>
   GPUAllocator &operator=(const GPUAllocator<U> &other) {
+    this->use_memory_pool_ = other.use_memory_pool_;
     return *this;
   }
 
   template <typename U>
-  GPUAllocator(GPUAllocator<U> &&other) {}
+  GPUAllocator(GPUAllocator<U> &&other) {
+    this->use_memory_pool_ = other.use_memory_pool_;
+  }
 
   template <typename U>
   GPUAllocator &operator=(GPUAllocator<U> &&other) {
+    this->use_memory_pool_ = other.use_memory_pool_;
     return *this;
   }
 
-  // Allocate GPU memory from dynamic memory pool.
+  // Allocate GPU memory.
   // The name of the allocate function cannot be changed and is used to call std::allocator_traits::allocate.
   value_type *allocate(std::size_t n) {
-    auto ptr = GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(value_type) * n);
+    if (use_memory_pool_) {
+      auto ptr = GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(value_type) * n);
+      MS_EXCEPTION_IF_NULL(ptr);
+      return reinterpret_cast<value_type *>(ptr);
+    }
+
+    static std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    void *ptr = nullptr;
+    auto ret = cudaMalloc(reinterpret_cast<void **>(&ptr), sizeof(value_type) * n);
+    if (ret != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Call cudaMalloc failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    }
+    MS_EXCEPTION_IF_NULL(ptr);
     return reinterpret_cast<value_type *>(ptr);
   }
 
   // Free GPU memory.
   // The name of the deallocate function cannot be changed and is used to call std::allocator_traits::deallocate.
   void deallocate(value_type *ptr, std::size_t) {
-    GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(ptr));
+    if (use_memory_pool_) {
+      GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr);
+      return;
+    }
+
+    auto ret = cudaFree(ptr);
+    if (ret != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "Call cudaFree failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    }
   }
+
+  // Whether use gpu memory pool to allocate/deallocate memory.
+  bool use_memory_pool_;
 };
 
 template <typename T, typename U>
-bool operator==(GPUAllocator<T> const &, GPUAllocator<U> const &) noexcept {
-  return true;
+bool operator==(GPUAllocator<T> const &lhs, GPUAllocator<U> const &rhs) noexcept {
+  return lhs.use_memory_pool_ == rhs.use_memory_pool_;
 }
 
 template <typename T, typename U>
 bool operator!=(GPUAllocator<T> const &lhs, GPUAllocator<U> const &rhs) noexcept {
-  return false;
+  return lhs.use_memory_pool_ != rhs.use_memory_pool_;
 }
 }  // namespace gpu
 }  // namespace device
