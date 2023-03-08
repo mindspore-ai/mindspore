@@ -79,7 +79,7 @@ TypePtr PredictOutTypeByName(const std::string &op_name) {
   }
   static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
   if (operator_fns.find(op_name) == operator_fns.end()) {
-    return ops_map[op_name] = kAnyType;
+    return ops_map[op_name] = kTypeNone;
   }
   const auto pre_iter = out_type_prediction.find(op_name);
   auto type = pre_iter == out_type_prediction.end() ? kTensorType : pre_iter->second;
@@ -118,8 +118,8 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
 
   // 1. get top_type from Primitive::PredictOutputType
   auto top_type = PredictOutTypeByName(adapter->name());
-  // 2. if predict failed(kAnyType), return after infer(half-asynchronous) or run(synchronous mode)
-  if (top_type == kAnyType || DisablePyTraceAsync(op_run_info)) {
+  // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)
+  if (DisablePyTraceAsync(op_run_info)) {
     // Wait for async task finish
     forward_executor()->WaitForwardTask();
     PyNativeAlgo::Common::StubNodeToValue(op_run_info);

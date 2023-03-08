@@ -22,6 +22,8 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import nn_ops as G
+from mindspore.common.api import _pynative_executor
+
 
 DEVICE_TARGET = "GPU"
 CTX_MODE = ms.context.GRAPH_MODE
@@ -387,6 +389,7 @@ def test_ps_roi_pooling_input_args_num():
             ms.Tensor(rois, dtype=ms.float32),
             ms.Tensor(features, dtype=ms.float32)
         )
+        _pynative_executor.sync()
     except TypeError:
         return
     else:

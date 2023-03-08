@@ -18,7 +18,7 @@ import inspect
 from functools import reduce
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import type_size_in_bytes
-from mindspore._c_expression import TensorNode, SequenceNode
+from mindspore._c_expression import TensorNode, SequenceNode, NoneTypeNode, AnyTypeNode
 from mindspore.common.api import _convert_python_data
 
 
@@ -163,6 +163,7 @@ _init_stub_tensor_api()
 
 
 def _convert_stub(stub):
+    "convert stub to StubNode or Value"
     if isinstance(stub, TensorNode):
         return StubTensor(stub)
     if isinstance(stub, tuple):
@@ -170,4 +171,10 @@ def _convert_stub(stub):
     if isinstance(stub, SequenceNode):
         elements = stub.get_elements()
         return tuple(_convert_stub(e) for e in elements)
+    if isinstance(stub, NoneTypeNode):
+        val = stub.get_real_value()
+        return _convert_python_data(val)
+    if isinstance(stub, AnyTypeNode):
+        val = stub.get_real_node()
+        return _convert_stub(val)
     return _convert_python_data(stub)
