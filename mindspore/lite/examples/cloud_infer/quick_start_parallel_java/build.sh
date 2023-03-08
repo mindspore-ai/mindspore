@@ -36,10 +36,8 @@ if [ ! -e ${BASEPATH}/build/${MINDSPORE_FILE} ]; then
 fi
 tar xzvf ${BASEPATH}/build/${MINDSPORE_FILE} -C ${BASEPATH}/build/
 
-# copy shared libraries to lib and add to LD_LIBRARY_PATH
+# copy shared libraries to lib
 cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/runtime/lib/ ${BASEPATH}/lib/runtime/
-cp -r ${BASEPATH}/build/${MINDSPORE_FILE_NAME}/tools/converter/lib/ ${BASEPATH}/lib/tools/converter/
-export LD_LIBRARY_PATH=${BASEPATH}/lib/runtime/lib:${BASEPATH}/lib/tools/converter/lib:$LD_LIBRARY_PATH
 cd ${BASEPATH}/ || exit
 
 mvn package

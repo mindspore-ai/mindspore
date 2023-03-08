@@ -152,6 +152,10 @@ build_lite_jni_and_jar() {
     if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGCODECS}`" ]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGCODECS} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libopencv_imgcodecs.so
     fi
+    LIB_DNNL="libdnnl.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/dnnl/${LIB_DNNL}`" ]; then
+      cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/dnnl/${LIB_DNNL} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libdnnl.so
+    fi
 
     if [[ "X$is_train" = "Xon" ]]; then
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/

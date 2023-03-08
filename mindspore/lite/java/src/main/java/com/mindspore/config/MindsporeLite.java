@@ -3,19 +3,7 @@ package com.mindspore.config;
 import java.util.logging.Logger;
 
 public final class MindsporeLite {
-    private static final Object lock = new Object();
-    private static Logger LOGGER = GetLogger();
-
-    public static Logger GetLogger() {
-        if (LOGGER == null) {
-            synchronized (lock) {
-                if (LOGGER == null) {
-                    LOGGER = Logger.getLogger(MindsporeLite.class.toString());
-                }
-            }
-        }
-        return LOGGER;
-    }
+    private static final Logger LOGGER = Logger.getLogger(MindsporeLite.class.toString());
 
     /**
      * Init function.

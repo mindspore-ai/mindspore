@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 public class NativeLibrary {
-    private static final Logger LOGGER = MindsporeLite.GetLogger();
+    private static final Logger LOGGER = Logger.getLogger(NativeLibrary.class.toString());
 
     private static final String GLOG_LIBNAME = "mindspore_glog";
     private static final String MINDSPORE_CORE_LIBNAME = "mindspore_core";
@@ -19,6 +19,8 @@ public class NativeLibrary {
     private static final String MINDSPORE_LITE_LIBNAME = "mindspore-lite";
     private static final String MSPLUGIN_GE_LITERT_LIBNAME = "msplugin-ge-litert";
     private static final String RUNTIME_CONVERT_PLUGIN_LIBNAME = "runtime_convert_plugin";
+    private static final String DNNL_LIBNAME = "dnnl";
+    private static final String LITE_UNIFIED_EXECUTOR_LIBNAME = "lite-unified-executor";
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
     private static final String MINDSPORE_LITE_TRAIN_LIBNAME = "mindspore-lite-train";
     private static final String MINDSPORE_LITE_TRAIN_JNI_LIBNAME = "mindspore-lite-train-jni";
@@ -60,6 +62,8 @@ public class NativeLibrary {
         loadLib(makeResourceName("lib" + MINDSPORE_CORE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MSLITE_CONVERTER_PLUGIN_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_CONVERTER_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + DNNL_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + LITE_UNIFIED_EXECUTOR_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
     }

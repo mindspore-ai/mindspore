@@ -318,7 +318,7 @@ set(MSLITE_GE_LITERT_SRC
     ${LITE_DIR}/src/extendrt/delegate/graph_executor/litert/litert_plugin_impl.cc
     )
 
-set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})
+#set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})
 
 add_library(unified_runtime_lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(unified_runtime_lite_src_mid fbs_src)

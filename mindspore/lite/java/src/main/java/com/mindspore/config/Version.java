@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class Version {
-    private static final Logger LOGGER = MindsporeLite.GetLogger();
+    private static final Logger LOGGER = Logger.getLogger(Version.class.toString());
     static {
         LOGGER.info("Version init ...");
         init();
