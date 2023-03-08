@@ -335,12 +335,12 @@ class Conv3DInfer : public abstract::OpInferBase {
       pad_list->clear();
       (void)pad_list->insert(pad_list->begin(), pad_list_size, 0);
     } else if (pad_mode == PadMode::SAME) {
-      int64_t pad_head = abstract::Shape::kShapeDimAny;
-      int64_t pad_tail = abstract::Shape::kShapeDimAny;
-      int64_t pad_top = abstract::Shape::kShapeDimAny;
-      int64_t pad_bottom = abstract::Shape::kShapeDimAny;
-      int64_t pad_left = abstract::Shape::kShapeDimAny;
-      int64_t pad_right = abstract::Shape::kShapeDimAny;
+      int64_t pad_head = 0;
+      int64_t pad_tail = 0;
+      int64_t pad_top = 0;
+      int64_t pad_bottom = 0;
+      int64_t pad_left = 0;
+      int64_t pad_right = 0;
 
       const int64_t kNumber2 = 2;
       if (x_d != abstract::Shape::kShapeDimAny) {
