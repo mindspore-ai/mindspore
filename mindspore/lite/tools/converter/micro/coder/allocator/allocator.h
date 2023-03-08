@@ -141,6 +141,8 @@ class MemoryAllocator {
   size_t total_buffer_size() const { return tensors_size_ + workspace_size_; }
   void enable_is_next() { is_next_ = true; }
   void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type, const std::string &tensor_name = "");
+  void MarkSharedWeight(const Tensor *src, void *pack_weight);
+  void *GetSharedWeightAddr(const Tensor *src);
 
  private:
   int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
@@ -164,6 +166,7 @@ class MemoryAllocator {
   std::map<Tensor *, std::string> origin_weights_addr_;
   std::map<Tensor *, std::string> malloc_weights_addr_;
   std::map<Tensor *, std::string> tensors_addr_;
+  std::map<const Tensor *, void *> shared_pack_weights_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_ALLOCATOR_H_

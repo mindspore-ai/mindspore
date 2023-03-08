@@ -60,6 +60,8 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   bool de_quant_flag_{false};
 
  private:
+  bool a_packed_{false};
+  bool b_packed_{false};
   int col_tile_{0};
   int row_tile_{0};
   int thread_stride_{0};

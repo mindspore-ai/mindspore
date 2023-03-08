@@ -85,8 +85,14 @@ int MatMulFP32BaseCoder::InitBufferA() {
   }
   a_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float));
   if (params_->a_const_) {
-    a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
-                                                               input_tensors_.at(0)->tensor_name() + "_online_pack"));
+    a_pack_ptr_ = reinterpret_cast<float *>(allocator_->GetSharedWeightAddr(input_tensors_.at(0)));
+    if (a_pack_ptr_ == nullptr) {
+      a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
+                                                                 input_tensors_.at(0)->tensor_name() + "_online_pack"));
+      allocator_->MarkSharedWeight(input_tensors_.at(0), a_pack_ptr_);
+    } else {
+      a_packed_ = true;
+    }
   } else {
     a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, a_pack_ptr_size_, kWorkspace));
   }
@@ -100,8 +106,14 @@ int MatMulFP32BaseCoder::InitBufferB() {
   }
   b_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float));
   if (params_->b_const_) {
-    b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
-                                                               input_tensors_.at(1)->tensor_name() + "_online_pack"));
+    b_pack_ptr_ = reinterpret_cast<float *>(allocator_->GetSharedWeightAddr(input_tensors_.at(1)));
+    if (b_pack_ptr_ == nullptr) {
+      b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight,
+                                                                 input_tensors_.at(1)->tensor_name() + "_online_pack"));
+      allocator_->MarkSharedWeight(input_tensors_.at(1), b_pack_ptr_);
+    } else {
+      b_packed_ = true;
+    }
   } else {
     b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, b_pack_ptr_size_, kWorkspace));
   }
@@ -164,6 +176,7 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
               "MatmulFp32OptRow8.S",
               "MatmulFp32OptRow12.S",
               "MatVecMulFp32.S",
+              "MatVecMulPackFp32.S",
             });
   }
   if (de_quant_flag_) {
@@ -188,7 +201,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   if (support_parallel_) {
     code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
   }
-  init_code.CodeStruct("mat_mul_parameter", *params_);
   // do bias packing to init
   if (input_tensors_.size() == DIMENSION_3D) {
     init_code.CodeBufferOffsetExpression(bias_ptr_, context->weight_name(), context->weight_offset_name(),
@@ -213,38 +225,43 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   std::string a_pack_str = allocator_->GetRuntimeAddr(a_pack_ptr_);
   std::string b_pack_str = allocator_->GetRuntimeAddr(b_pack_ptr_);
   // do const value packing to init
-  if (!params_->a_const_) {
-    code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
-    if (params_->b_const_) {
-      init_code.CodeBufferOffsetExpression(b_pack_ptr_, context->weight_name(), context->weight_offset_name(),
-                                           context->weight_size_name(), b_pack_ptr_size_);
-      w_buf_size += b_pack_ptr_size_;
-    }
-    std::string b_src_str = b_str;
-    if (de_quant_flag_) {
-      // reuse to b_pack_str
-      b_src_str = Dequant::GetInstance()->de_quant_buffer_str();
-      std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(filter_tensor_, b_str);
-      init_code << de_quant_function;
-    }
-    // b_pack_str has been memset, no need to memset
-    init_code.CodeFunction("InitMatrixB", b_src_str, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+  if ((params_->a_const_ && !a_packed_) || (params_->b_const_ && !b_packed_)) {
+    init_code.CodeStruct("mat_mul_parameter", *params_);
   }
-  if (!params_->b_const_) {
-    if (params_->a_const_) {
+  if (params_->a_const_) {
+    if (!a_packed_) {
       init_code.CodeBufferOffsetExpression(a_pack_ptr_, context->weight_name(), context->weight_offset_name(),
                                            context->weight_size_name(), a_pack_ptr_size_);
       w_buf_size += a_pack_ptr_size_;
+      std::string a_src_str = a_str;
+      if (de_quant_flag_) {
+        // reuse to a_pack_str
+        a_src_str = Dequant::GetInstance()->de_quant_buffer_str();
+        std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(input_tensor_, a_str);
+        init_code << de_quant_function;
+      }
+      // a_pack_str has been memset, no need to memset
+      init_code.CodeFunction("InitMatrixA", a_src_str, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
     }
-    std::string a_src_str = a_str;
-    if (de_quant_flag_) {
-      // reuse to a_pack_str
-      a_src_str = Dequant::GetInstance()->de_quant_buffer_str();
-      std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(input_tensor_, a_str);
-      init_code << de_quant_function;
+  } else {
+    code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+  }
+  if (params_->b_const_) {
+    if (!b_packed_) {
+      init_code.CodeBufferOffsetExpression(b_pack_ptr_, context->weight_name(), context->weight_offset_name(),
+                                           context->weight_size_name(), b_pack_ptr_size_);
+      w_buf_size += b_pack_ptr_size_;
+      std::string b_src_str = b_str;
+      if (de_quant_flag_) {
+        // reuse to b_pack_str
+        b_src_str = Dequant::GetInstance()->de_quant_buffer_str();
+        std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(filter_tensor_, b_str);
+        init_code << de_quant_function;
+      }
+      // b_pack_str has been memset, no need to memset
+      init_code.CodeFunction("InitMatrixB", b_src_str, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
     }
-    // a_pack_str has been memset, no need to memset
-    init_code.CodeFunction("InitMatrixA", a_src_str, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+  } else {
     code.CodeFunction("InitMatrixB", filter_tensor_, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
   int current_stride_oc = thread_stride_ * col_tile_;

@@ -169,4 +169,12 @@ int MemoryAllocator::Assign(const std::vector<Tensor *> &inputs,
   RecordOriginWeightsAddr(nodes);
   return AssignTensors(nodes);
 }
+
+void MemoryAllocator::MarkSharedWeight(const Tensor *src, void *pack_weight) {
+  shared_pack_weights_[src] = pack_weight;
+}
+
+void *MemoryAllocator::GetSharedWeightAddr(const Tensor *src) {
+  return shared_pack_weights_.find(src) == shared_pack_weights_.end() ? nullptr : shared_pack_weights_[src];
+}
 }  // namespace mindspore::lite::micro
