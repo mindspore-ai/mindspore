@@ -31,7 +31,12 @@
 #include "ops/floor_mod.h"
 #include "ops/squared_difference.h"
 #include "ops/mod.h"
+#include "ops/add.h"
+#include "ops/fusion/add_fusion.h"
 
+using mindspore::ops::kActivationType;
+using mindspore::ops::kNameAdd;
+using mindspore::ops::kNameAddFusion;
 using mindspore::ops::kNameEqual;
 using mindspore::ops::kNameFloorDiv;
 using mindspore::ops::kNameFloorMod;
@@ -48,57 +53,66 @@ using mindspore::ops::kNameNotEqual;
 using mindspore::ops::kNameRealDiv;
 using mindspore::ops::kNameSquaredDifference;
 
+using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_Equal;
+using mindspore::schema::PrimitiveType_FloorDiv;
+using mindspore::schema::PrimitiveType_FloorMod;
+using mindspore::schema::PrimitiveType_Greater;
+using mindspore::schema::PrimitiveType_GreaterEqual;
+using mindspore::schema::PrimitiveType_Less;
+using mindspore::schema::PrimitiveType_LessEqual;
+using mindspore::schema::PrimitiveType_LogicalAnd;
+using mindspore::schema::PrimitiveType_LogicalOr;
+using mindspore::schema::PrimitiveType_Maximum;
+using mindspore::schema::PrimitiveType_Minimum;
+using mindspore::schema::PrimitiveType_Mod;
+using mindspore::schema::PrimitiveType_NotEqual;
+using mindspore::schema::PrimitiveType_RealDiv;
+using mindspore::schema::PrimitiveType_SquaredDifference;
+
 namespace mindspore {
 namespace lite {
-ArithmeticParameter *PopulateArithmeticCommonOpPara(const BaseOperatorPtr &base_operator) {
-  if (base_operator == nullptr) {
-    MS_LOG(ERROR) << "base_operator is nullptr";
-    return nullptr;
-  }
-  auto *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+OpParameter *PopulateArithmeticCommonOpPara(const BaseOperatorPtr &base_operator) {
+  auto param = reinterpret_cast<ArithmeticParameter *>(PopulateOpParameter<ArithmeticParameter>());
   if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
+    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(ArithmeticParameter));
-  auto name = base_operator->name();
-
-  auto iter = kOpNameWithPrimitiveType.find(name);
-  if (iter == kOpNameWithPrimitiveType.end()) {
-    MS_LOG(ERROR) << "Can not find ParameterPtrGen : " << name;
-    return nullptr;
-  }
-
-  param->op_parameter_.type_ = iter->second;
   param->broadcasting_ = false;
   param->ndim_ = 0;
   param->activation_type_ = 0;
-  return param;
+  return reinterpret_cast<OpParameter *>(param);
 }
 
-OpParameter *PopulateArithmeticOp(const BaseOperatorPtr &base_operator) {
-  ArithmeticParameter *param = PopulateArithmeticCommonOpPara(base_operator);
+OpParameter *PopulateAddOpParameter(const BaseOperatorPtr &base_operator) {
+  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(PopulateArithmeticCommonOpPara(base_operator));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
+    MS_LOG(ERROR) << "PopulateArithmeticCommonOpPara failed.";
     return nullptr;
+  }
+  mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kActivationType);
+  if (attr != nullptr) {
+    param->activation_type_ = ActivationType(GetValue<int64_t>(attr));
   }
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_OPERATOR_POPULATE(kNameRealDiv, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameLogicalAnd, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameLogicalOr, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameEqual, PopulateArithmeticOp);
-REG_OPERATOR_POPULATE(kNameNotEqual, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameLess, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameLessEqual, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameGreater, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameGreaterEqual, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameMaximum, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameMinimum, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameFloorDiv, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameFloorMod, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameMod, PopulateArithmeticOp)
-REG_OPERATOR_POPULATE(kNameSquaredDifference, PopulateArithmeticOp)
+REG_OPERATOR_POPULATE(kNameAdd, PrimitiveType_AddFusion, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameAddFusion, PrimitiveType_AddFusion, PopulateAddOpParameter)
+REG_OPERATOR_POPULATE(kNameRealDiv, PrimitiveType_RealDiv, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameLogicalAnd, PrimitiveType_LogicalAnd, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameLogicalOr, PrimitiveType_LogicalOr, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameEqual, PrimitiveType_Equal, PopulateArithmeticCommonOpPara);
+REG_OPERATOR_POPULATE(kNameNotEqual, PrimitiveType_NotEqual, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameLess, PrimitiveType_Less, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameLessEqual, PrimitiveType_LessEqual, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameGreater, PrimitiveType_Greater, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameGreaterEqual, PrimitiveType_GreaterEqual, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameMaximum, PrimitiveType_Maximum, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameMinimum, PrimitiveType_Minimum, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameFloorDiv, PrimitiveType_FloorDiv, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameFloorMod, PrimitiveType_FloorMod, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameMod, PrimitiveType_Mod, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameSquaredDifference, PrimitiveType_SquaredDifference, PopulateArithmeticCommonOpPara)
 }  // namespace lite
 }  // namespace mindspore
