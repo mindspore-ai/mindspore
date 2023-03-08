@@ -25,7 +25,7 @@
 
 // This pass will split `ClipByNorm` op to smaller ops, such as `square`, `sqrt`, `reducesum` to achieve same function
 namespace mindspore::opt {
-class BACKEND_EXPORT AscendClipByNormFission : public PatternProcessPass {
+class AscendClipByNormFission : public PatternProcessPass {
  public:
   explicit AscendClipByNormFission(bool multigraph = true)
       : PatternProcessPass("ascend_clip_by_norm_fission", multigraph) {}

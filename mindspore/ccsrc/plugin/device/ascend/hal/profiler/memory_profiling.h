@@ -108,8 +108,8 @@ class MemoryProfiling {
     return instance;
   }
 
-  BACKEND_EXPORT std::shared_ptr<GraphMemory> AddGraphMemoryNode(uint32_t graph_id);
-  BACKEND_EXPORT std::shared_ptr<GraphMemory> GetGraphMemoryNode(uint32_t graph_id) const;
+  std::shared_ptr<GraphMemory> AddGraphMemoryNode(uint32_t graph_id);
+  std::shared_ptr<GraphMemory> GetGraphMemoryNode(uint32_t graph_id) const;
   void SetDeviceMemSize(uint64_t size) { device_mem_size_ = size; }
   bool MemoryToPB();
   void SaveMemoryProfiling();
