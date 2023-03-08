@@ -22,9 +22,9 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
 

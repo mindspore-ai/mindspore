@@ -16,6 +16,7 @@
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
 #include <string>
 #include <memory>
+#include <map>
 #include "kernel/kernel.h"
 #ifndef _MSC_VER
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
@@ -23,7 +24,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
 #include "frontend/operator/ops.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"

@@ -26,8 +26,8 @@
 #include "utils/trace_base.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace infer {

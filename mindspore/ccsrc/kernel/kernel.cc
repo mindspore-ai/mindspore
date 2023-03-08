@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <numeric>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;

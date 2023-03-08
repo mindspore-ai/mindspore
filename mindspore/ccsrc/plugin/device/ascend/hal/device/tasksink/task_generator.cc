@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 
 #include <runtime/rt.h>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/task_stream.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"

@@ -30,7 +30,7 @@
 #include "kernel/kernel.h"
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"

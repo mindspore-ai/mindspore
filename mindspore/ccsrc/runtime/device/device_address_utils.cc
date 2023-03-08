@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"

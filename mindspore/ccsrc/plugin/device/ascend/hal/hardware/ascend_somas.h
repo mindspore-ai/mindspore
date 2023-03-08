@@ -23,7 +23,7 @@
 #include <utility>
 #include <memory>
 #include "backend/common/somas/somas.h"
-#include "runtime/hardware/device_type.h"
+#include "include/backend/device_type.h"
 
 namespace mindspore {
 namespace device {

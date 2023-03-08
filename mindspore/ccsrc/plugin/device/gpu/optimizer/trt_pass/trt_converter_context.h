@@ -26,7 +26,7 @@
 #include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/optimizer/trt_pass/layer_input.h"
 

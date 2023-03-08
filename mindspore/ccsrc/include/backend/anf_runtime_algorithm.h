@@ -30,13 +30,13 @@
 #include "base/base.h"
 #include "ir/primitive.h"
 #include "ir/kernel_info_dev.h"
-#include "runtime/device/device_address.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/contract.h"
 #include "utils/anf_utils.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/common/utils/contract.h"
+#include "include/backend/device_address.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/kernel_info.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

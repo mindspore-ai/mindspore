@@ -20,7 +20,7 @@
 #include <functional>
 #include "runtime/device/gsm/swap_strategy.h"
 #include "runtime/device/gsm/mem_usage_analyzer.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace device {

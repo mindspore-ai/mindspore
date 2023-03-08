@@ -22,7 +22,7 @@
 #include <vector>
 #include "utils/hash_set.h"
 #include "kernel/kernel_build_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 

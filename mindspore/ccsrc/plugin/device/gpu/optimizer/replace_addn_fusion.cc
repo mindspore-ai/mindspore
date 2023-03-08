@@ -19,7 +19,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

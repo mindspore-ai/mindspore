@@ -22,7 +22,7 @@
 #endif
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/kernel.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"

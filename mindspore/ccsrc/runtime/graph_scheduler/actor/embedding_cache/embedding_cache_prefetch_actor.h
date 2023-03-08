@@ -27,7 +27,7 @@
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "ir/anf.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "distributed/cluster/cluster_context.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/rpc/tcp/tcp_server.h"

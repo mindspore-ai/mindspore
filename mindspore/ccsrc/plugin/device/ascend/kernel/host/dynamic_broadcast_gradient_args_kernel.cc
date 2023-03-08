@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/host/dynamic_broadcast_gradient_args_kernel.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"

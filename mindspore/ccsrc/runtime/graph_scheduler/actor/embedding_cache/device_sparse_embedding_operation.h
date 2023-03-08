@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 #include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace runtime {

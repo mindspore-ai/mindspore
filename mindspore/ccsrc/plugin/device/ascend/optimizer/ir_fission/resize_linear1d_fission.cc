@@ -18,7 +18,7 @@
 #include <vector>
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/helper.h"
 #include "include/common/utils/utils.h"
 

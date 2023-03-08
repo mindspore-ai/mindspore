@@ -28,7 +28,7 @@
 #include <regex>
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/common/session/session_basic.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"

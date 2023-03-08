@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 using std::vector;

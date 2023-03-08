@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "include/common/debug/anf_ir_dump.h"

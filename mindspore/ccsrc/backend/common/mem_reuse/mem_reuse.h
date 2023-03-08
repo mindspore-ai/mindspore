@@ -21,9 +21,9 @@
 #include <vector>
 #include "utils/hash_map.h"
 #include "backend/common/mem_reuse/kernel_refcount.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "utils/ms_context.h"
 namespace mindspore {
 namespace memreuse {

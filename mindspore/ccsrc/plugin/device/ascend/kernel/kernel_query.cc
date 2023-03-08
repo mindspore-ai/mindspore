@@ -24,7 +24,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 #include "plugin/device/ascend/kernel/akg/akg_kernel_metadata.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/ms_context.h"

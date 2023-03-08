@@ -17,7 +17,7 @@
 #include <iostream>
 #include "pipeline/pynative/pynative_utils.h"
 #include "ir/tensor.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace pynative {

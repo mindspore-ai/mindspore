@@ -15,9 +15,9 @@
  */
 
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "ir/func_graph.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/kernel_query.h"

@@ -24,7 +24,7 @@
 #include <map>
 #include "mindspore/core/base/base.h"
 #include "include/api/status.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "src/common/helper/infer_helpers.h"
 namespace mindspore {
 struct ModelBufPair {

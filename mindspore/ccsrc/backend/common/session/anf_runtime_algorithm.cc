@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 #include <memory>
 #include <algorithm>
@@ -27,8 +27,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_dump_utils.h"
-#include "runtime/device/kernel_info.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/device_address.h"
 #include "backend/common/optimizer/helper.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"

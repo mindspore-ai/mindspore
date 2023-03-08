@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace aicpu {
 namespace dump {

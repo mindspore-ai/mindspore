@@ -22,7 +22,7 @@
 #include "utils/file_utils.h"
 #include "common/utils.h"
 #include "mindspore/core/ir/tensor.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "extendrt/utils/tensor_default_impl.h"
 #include "mindspore/core/utils/ms_utils_secure.h"

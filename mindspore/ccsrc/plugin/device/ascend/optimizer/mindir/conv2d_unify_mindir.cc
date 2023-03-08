@@ -27,9 +27,9 @@
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

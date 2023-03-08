@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

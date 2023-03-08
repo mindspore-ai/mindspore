@@ -32,7 +32,7 @@
 #include "kernel/kernel.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "kernel/common_utils.h"
 

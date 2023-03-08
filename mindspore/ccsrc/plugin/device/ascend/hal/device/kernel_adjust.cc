@@ -24,7 +24,7 @@
 #include <queue>
 #include <set>
 
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "runtime/device/ms_device_shape_transfer.h"

@@ -27,7 +27,7 @@
 #include "kernel/kernel_build_info.h"
 #include "kernel/oplib/opinfo.h"
 #include "kernel/oplib/oplib.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/kernel/custom/custom_aot_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"

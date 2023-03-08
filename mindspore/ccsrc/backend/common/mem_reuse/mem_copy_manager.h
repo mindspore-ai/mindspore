@@ -23,8 +23,9 @@
 #include <queue>
 #include <memory>
 #include <utility>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
+#include "include/backend/device_address.h"
 
 using HostAddress = mindspore::kernel::Address;
 namespace mindspore {

@@ -23,7 +23,7 @@
 #include "pybind11/pybind11.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/data_queue/blocking_queue.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 
 namespace py = pybind11;
 

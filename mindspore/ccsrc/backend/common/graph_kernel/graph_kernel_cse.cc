@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/reshape_reduce_for_cse.h"

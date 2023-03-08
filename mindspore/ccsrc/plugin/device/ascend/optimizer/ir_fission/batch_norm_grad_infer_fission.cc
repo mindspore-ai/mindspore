@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include <vector>
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 

@@ -27,7 +27,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "acl/acl_rt.h"

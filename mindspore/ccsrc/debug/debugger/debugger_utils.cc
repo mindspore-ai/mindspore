@@ -22,7 +22,7 @@
 #include "include/common/debug/anf_dump_utils.h"
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
 #include "debug/data_dump/e2e_dump.h"

@@ -25,7 +25,7 @@
 #include <memory>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

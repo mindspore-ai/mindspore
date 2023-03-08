@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/mul_addn_fusion.h"
 #include <vector>
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"

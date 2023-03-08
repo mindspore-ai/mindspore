@@ -18,9 +18,9 @@
 #include <memory>
 #include <vector>
 
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"

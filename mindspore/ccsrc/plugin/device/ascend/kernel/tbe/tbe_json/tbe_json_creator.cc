@@ -20,7 +20,7 @@
 #include <utility>
 #include <algorithm>
 #include "common/util/platform_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"

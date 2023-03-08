@@ -28,10 +28,9 @@
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
-#include "include/common/utils/utils.h"
-#include "runtime/hardware/device_type.h"
-#include "runtime/device/hash_table.h"
 #include "utils/check_convert_utils.h"
+#include "include/common/utils/utils.h"
+#include "include/backend/device_type.h"
 
 namespace mindspore {
 namespace device {

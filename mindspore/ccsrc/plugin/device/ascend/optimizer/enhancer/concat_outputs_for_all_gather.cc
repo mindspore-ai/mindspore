@@ -18,7 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore::opt {

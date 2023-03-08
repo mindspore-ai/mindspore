@@ -26,7 +26,7 @@
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/optimizer/trt_pass/trt_op_factory.h"
 #include "backend/graph_compiler/segment_runner.h"

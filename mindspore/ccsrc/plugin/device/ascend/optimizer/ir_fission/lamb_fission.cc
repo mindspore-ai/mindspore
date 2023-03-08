@@ -20,7 +20,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "backend/common/optimizer/optimizer.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

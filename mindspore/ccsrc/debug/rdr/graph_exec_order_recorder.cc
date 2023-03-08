@@ -18,7 +18,7 @@
 #include <utility>
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "mindspore/core/utils/file_utils.h"

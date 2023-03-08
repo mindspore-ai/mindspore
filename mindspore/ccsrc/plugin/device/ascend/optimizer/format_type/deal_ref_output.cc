@@ -20,9 +20,9 @@
 #include <memory>
 #include <string>
 #include "kernel/oplib/oplib.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {

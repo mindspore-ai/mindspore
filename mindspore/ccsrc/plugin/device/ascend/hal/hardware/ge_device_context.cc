@@ -28,7 +28,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "abstract/abstract_value.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"

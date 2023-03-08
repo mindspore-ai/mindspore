@@ -17,8 +17,8 @@
 #include "common/common_test.h"
 #include "frontend/operator/ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
-#include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 

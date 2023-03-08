@@ -25,15 +25,15 @@ namespace mindspore {
 namespace device {
 enum class RunMode { kUnknown, kKernelMode, kGraphMode };
 enum class DeviceType { kUnknown, kCPU, kAscend, kGPU };
-static const std::map<DeviceType, std::string> device_type_to_name_map = {{DeviceType::kUnknown, "Unknown"},
-                                                                          {DeviceType::kAscend, "Ascend"},
-                                                                          {DeviceType::kCPU, "CPU"},
-                                                                          {DeviceType::kGPU, "GPU"}};
+const std::map<DeviceType, std::string> device_type_to_name_map = {{DeviceType::kUnknown, "Unknown"},
+                                                                   {DeviceType::kAscend, "Ascend"},
+                                                                   {DeviceType::kCPU, "CPU"},
+                                                                   {DeviceType::kGPU, "GPU"}};
 
-static const std::map<std::string, DeviceType> device_name_to_type_map = {{"Unknown", DeviceType::kUnknown},
-                                                                          {"Ascend", DeviceType::kAscend},
-                                                                          {"CPU", DeviceType::kCPU},
-                                                                          {"GPU", DeviceType::kGPU}};
+const std::map<std::string, DeviceType> device_name_to_type_map = {{"Unknown", DeviceType::kUnknown},
+                                                                   {"Ascend", DeviceType::kAscend},
+                                                                   {"CPU", DeviceType::kCPU},
+                                                                   {"GPU", DeviceType::kGPU}};
 
 BACKEND_EXPORT std::string GetDeviceNameByType(const DeviceType &type);
 BACKEND_EXPORT DeviceType GetDeviceTypeByName(const std::string &name);

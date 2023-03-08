@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/eigen/sparse_matrix_nnz_cpu_kernel.h"
 #include <algorithm>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 

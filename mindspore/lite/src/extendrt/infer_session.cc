@@ -22,7 +22,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "extendrt/utils/kernel_graph_utils.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/delegate/plugin/tensorrt_executor_plugin.h"

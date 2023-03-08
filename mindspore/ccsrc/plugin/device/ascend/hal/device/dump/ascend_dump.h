@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <map>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/session/session_basic.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger.h"

@@ -18,7 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_
 
 #include <vector>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore::runtime {

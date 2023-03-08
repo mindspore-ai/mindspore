@@ -30,7 +30,7 @@
 #include "runtime/base.h"
 #include "runtime/rt_model.h"
 #include "runtime/stream.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/contract.h"
 
 namespace mindspore {

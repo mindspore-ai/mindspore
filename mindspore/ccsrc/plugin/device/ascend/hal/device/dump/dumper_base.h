@@ -21,7 +21,7 @@
 #include "ir/anf.h"
 #include "include/common/utils/contract.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "acl/acl_rt.h"
 #include "runtime/rt_model.h"
 #include "proto/op_mapping_info.pb.h"

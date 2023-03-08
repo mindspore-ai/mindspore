@@ -23,7 +23,7 @@
 #include "include/api/context.h"
 #include "include/api/status.h"
 #include "include/transform/graph_ir/utils.h"
-#include "runtime/hardware/device_type.h"
+#include "include/backend/device_type.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {

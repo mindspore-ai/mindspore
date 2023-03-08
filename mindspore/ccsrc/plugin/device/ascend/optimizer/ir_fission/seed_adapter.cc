@@ -22,10 +22,10 @@
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 
 namespace mindspore::opt {

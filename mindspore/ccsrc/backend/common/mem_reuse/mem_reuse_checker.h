@@ -22,7 +22,7 @@
 #include <memory>
 #include <functional>
 #include "mindspore/core/ir/anf.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/mem_reuse/mem_reuse.h"
 #include "kernel/common_utils.h"

@@ -28,7 +28,7 @@
 #include "profiler/device/profiling.h"
 #include "profiler/device/data_saver.h"
 #include "actor/actormgr.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace profiler {

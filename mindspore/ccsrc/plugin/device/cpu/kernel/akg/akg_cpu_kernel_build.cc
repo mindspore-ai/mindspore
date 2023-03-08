@@ -19,7 +19,7 @@
 #include <string>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {

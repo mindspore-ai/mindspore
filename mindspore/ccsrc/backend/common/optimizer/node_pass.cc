@@ -25,7 +25,7 @@
 #include "ir/manager.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

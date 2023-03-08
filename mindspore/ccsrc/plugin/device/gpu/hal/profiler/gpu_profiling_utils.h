@@ -23,7 +23,7 @@
 #include <set>
 #include <unordered_map>
 
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace profiler {

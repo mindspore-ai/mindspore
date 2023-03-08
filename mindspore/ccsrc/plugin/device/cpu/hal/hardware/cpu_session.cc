@@ -22,7 +22,7 @@
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
 #include "runtime/device/kernel_runtime.h"

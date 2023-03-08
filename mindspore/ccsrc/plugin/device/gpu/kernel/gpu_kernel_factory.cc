@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 #include "utils/ms_utils.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "kernel/common_utils.h"
 

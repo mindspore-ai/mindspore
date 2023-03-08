@@ -20,9 +20,9 @@
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/ms_context.h"
 

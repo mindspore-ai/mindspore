@@ -22,7 +22,7 @@
 #include "include/common/utils/comm_manager.h"
 #include "backend/common/optimizer/helper.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

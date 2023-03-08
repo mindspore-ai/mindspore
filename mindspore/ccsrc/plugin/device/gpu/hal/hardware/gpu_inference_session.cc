@@ -19,7 +19,7 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "runtime/device/kernel_runtime.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"

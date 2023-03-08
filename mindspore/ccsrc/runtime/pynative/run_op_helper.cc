@@ -21,7 +21,7 @@
 #include <memory>
 #include <algorithm>
 #include "utils/log_adapter.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"

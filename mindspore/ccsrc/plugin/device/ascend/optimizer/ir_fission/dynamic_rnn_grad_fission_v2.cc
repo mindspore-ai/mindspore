@@ -18,8 +18,8 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"

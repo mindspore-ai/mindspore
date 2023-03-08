@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_copy_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

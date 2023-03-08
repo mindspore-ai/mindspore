@@ -29,7 +29,7 @@
 #include "kernel/kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "ir/anf.h"

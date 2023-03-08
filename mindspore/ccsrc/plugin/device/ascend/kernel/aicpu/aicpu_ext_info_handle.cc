@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 #include <algorithm>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 

@@ -19,7 +19,7 @@
 #include "include/common/utils/scoped_long_running.h"
 #include "include/api/context.h"
 #include "include/api/status.h"
-#include "runtime/hardware/device_type.h"
+#include "include/backend/device_type.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "external/ge/ge_api.h"

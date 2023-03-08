@@ -16,8 +16,8 @@
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include <vector>
 #include <memory>
-#include "runtime/device/kernel_info.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
 

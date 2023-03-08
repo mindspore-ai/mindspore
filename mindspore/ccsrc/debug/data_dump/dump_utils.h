@@ -22,8 +22,8 @@
 #include <string>
 #include <memory>
 
-#include "backend/common/session/kernel_graph.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/kernel_graph.h"
+#include "include/backend/device_address.h"
 
 using DeviceTensor = mindspore::device::DeviceAddress;
 using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;

@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 

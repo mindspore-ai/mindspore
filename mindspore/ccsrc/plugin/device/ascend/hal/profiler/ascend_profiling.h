@@ -20,7 +20,7 @@
 #include <map>
 #include "profiler/device/profiling.h"
 #include "acl/acl_prof.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
 
 namespace mindspore {

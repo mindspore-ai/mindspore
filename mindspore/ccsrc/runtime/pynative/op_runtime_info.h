@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include "runtime/device/device_address.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/device_address.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore::runtime {
 class AclRuntimeInfo {

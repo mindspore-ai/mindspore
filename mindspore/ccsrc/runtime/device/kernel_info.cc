@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/device/kernel_info.h"
+#include "include/backend/kernel_info.h"
 #include <utility>
 
 namespace mindspore {

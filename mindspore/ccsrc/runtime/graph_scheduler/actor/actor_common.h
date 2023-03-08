@@ -27,10 +27,10 @@
 #include <memory>
 #include "utils/hash_map.h"
 #include "mindrt/include/actor/op_actor.h"
-#include "runtime/device/device_address.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/device_address.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
 #include "runtime/device/ms_device_shape_transfer.h"

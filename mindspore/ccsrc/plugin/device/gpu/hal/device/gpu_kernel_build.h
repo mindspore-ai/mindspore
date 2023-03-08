@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <memory>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 namespace mindspore {
 namespace device {
 namespace gpu {

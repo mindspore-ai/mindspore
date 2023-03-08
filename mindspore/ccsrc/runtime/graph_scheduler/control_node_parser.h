@@ -28,7 +28,7 @@
 #include <algorithm>
 #include "utils/hash_map.h"
 #include "runtime/hardware/device_context.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace runtime {

@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 

@@ -22,7 +22,7 @@
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 

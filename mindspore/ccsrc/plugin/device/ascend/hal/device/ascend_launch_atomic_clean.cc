@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_launch_atomic_clean.h"
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_ir_dump.h"
 

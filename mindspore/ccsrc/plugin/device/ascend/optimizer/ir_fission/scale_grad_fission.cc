@@ -20,6 +20,7 @@
 #include <cmath>
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "include/backend/kernel_info.h"
 
 namespace mindspore {
 namespace opt {

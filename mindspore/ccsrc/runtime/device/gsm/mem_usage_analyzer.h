@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "runtime/device/gsm/swap_strategy.h"
 namespace mindspore {
 namespace device {

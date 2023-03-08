@@ -23,11 +23,11 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "runtime/device/device_address.h"
+#include "include/backend/device_address.h"
 #include "include/backend/visible.h"
 
 using debugger::Chunk;

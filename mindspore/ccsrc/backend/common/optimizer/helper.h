@@ -23,9 +23,10 @@
 #include <set>
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "utils/ms_utils.h"
 #include "backend/common/optimizer/pattern_engine.h"
+#include "kernel/kernel_build_info.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {

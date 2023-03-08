@@ -23,7 +23,7 @@
 #include <set>
 #include "utils/hash_map.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
-#include "backend/common/session/kernel_graph.h"
+#include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"
 
