@@ -21,7 +21,7 @@ mindspore.nn.Conv2dTranspose
           - **pad**：对输入进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union[int, tuple[int]]) - 输入的高度和宽度方向上填充的数量。数据类型为整型或包含四个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有四个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。值应该要大于等于0，默认值：0。
-        - **output_padding** (Union[int, tuple[int]]) - 输入的高度和宽度方向上填充的数量。数据类型为整型或包含两个整数的tuple。如果 `output_padding` 是一个整数，那么下、右的填充都等于 `output_padding` 。如果 `output_padding` 是一个有两个整数的tuple，那么下、右的填充分别等于 `output_padding[0]` 、 `output_padding[1]` 。值应该要大于等于0，默认值：0。
+        - **output_padding** (Union[int, tuple[int]]) - 输出的高度和宽度方向上填充的数量。数据类型为整型或包含两个整数的tuple。如果 `output_padding` 是一个整数，那么下、右的填充都等于 `output_padding` 。如果 `output_padding` 是一个有两个整数的tuple，那么下、右的填充分别等于 `output_padding[0]` 、 `output_padding[1]` 。如果 `output_padding` 不为0， `pad_mode` 必须为 `pad` 。 `output_padding` 取值范围为 `[0, max(stride, dilation))` ，默认值：0。
         - **dilation** (Union[int, tuple[int]]) - 二维卷积核膨胀尺寸。数据类型为整型或具有两个整型的tuple。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。高度和宽度方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
         - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值：1.
         - **has_bias** (bool) - Conv2dTranspose层是否添加偏置参数。默认值：False。
