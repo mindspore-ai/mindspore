@@ -10,8 +10,8 @@ mindspore.ops.ctc_loss
     参数：
         - **log_probs** (Tensor) - 输入Tensor，shape :math:`(T, N, C)` 。其中T表示输入长度，N表示批次大小，C是分类数，包含空白。
         - **targets** (Tensor) - 目标Tensor，shape :math:`(N, S)` 。其中S表示最大目标长度。
-        - **input_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示输入长度。
-        - **target_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示目标长度。
+        - **input_lengths** (Union(tuple, Tensor)) - shape为N的Tensor或tuple。表示输入长度。
+        - **target_lengths** (Union(tuple, Tensor)) - shape为N的Tensor或tuple。表示目标长度。
         - **blank** (int) - 空白标签。默认值：0。
         - **reduction** (str) - 对输出应用归约方法。可选值为"none"、"mean"或"sum"。默认值："mean"。
         - **zero_infinity** (bool) - 是否设置无限损失和相关梯度为零。默认值：False。

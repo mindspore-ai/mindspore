@@ -653,7 +653,7 @@ class AvgPool2d(_PoolNd):
             - pad: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number of
               zeros. If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int], list[int]]): Specifies the padding value of the pooling operation. Default: 0.
+        padding (Union(int, tuple[int], list[int])): Specifies the padding value of the pooling operation. Default: 0.
             `padding` can only be an integer or a tuple/list containing one or two integers. If `padding` is an integer
             or a tuple/list containing one integer, it will be padded `padding` times in the four directions of the
             input. If `padding` is a tuple/list containing two integers, it will be padded `padding[0]` times in the
@@ -666,7 +666,7 @@ class AvgPool2d(_PoolNd):
             Default: 'NCHW'.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`C_{in},H_{in},W_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in},H_{in},W_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out},H_{out},W_{out})`.
@@ -770,9 +770,6 @@ class AvgPool1d(_PoolNd):
     .. math::
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)
-
-    Note:
-        pad_mode for training only supports "same" and "valid".
 
     Args:
         kernel_size (int): The size of kernel window used to take the average value, Default: 1.

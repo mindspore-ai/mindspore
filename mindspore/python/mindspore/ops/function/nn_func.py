@@ -3964,10 +3964,10 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         log_probs (Tensor): A tensor of shape (T, N, C), where T is input length, N is batch size and C is
             number of classes (including blank).
         targets (Tensor): A tensor of shape (N, S), where S is max target length, means the target sequences.
-        input_lengths (Union(Tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the input.
-        target_lengths (Union(Tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the target.
+        input_lengths (Union(tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the input.
+        target_lengths (Union(tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the target.
         blank (int): The blank label. Default: 0.
-        reduction (string): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
+        reduction (str): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
             Default: 'mean'.
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
 

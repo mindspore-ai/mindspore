@@ -1100,10 +1100,10 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
     A source dataset that reads and parses Multi30k dataset.
 
     The generated dataset has two columns :py:obj:`[text, translation]` .
-    The tensor of column :py:obj:'text' is of the string type.
-    The tensor of column :py:obj:'translation' is of the string type.
+    The tensor of column :py:obj:`text` is of the string type.
+    The tensor of column :py:obj:`translation` is of the string type.
 
-      Args:
+    Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include 'train', 'test, 'valid' or 'all'. Default: 'all'.
         language_pair (str, optional): Acceptable language_pair include ['en', 'de'], ['de', 'en'].
@@ -1384,12 +1384,12 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
     A source dataset that reads and parses SQuAD 1.1 and SQuAD 2.0 datasets.
 
     The generated dataset with different versions and usages has the same output columns:
-        :py:obj:`[context, question, text, answer_start]` .
+    :py:obj:`[context, question, text, answer_start]` .
     The tensor of column :py:obj:`context` is of the string type.
     The tensor of column :py:obj:`question` is of the string type.
     The tensor of column :py:obj:`text` is the answer in the context of the string type.
     The tensor of column :py:obj:`answer_start` is the start index of answer in context,
-        which is of the uint32 type.
+    which is of the uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
