@@ -68,7 +68,7 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
   mindspore::ValuePtr attr_size_splits = base_operator->GetPrim()->GetAttr(kSizeSplits);
   if (attr_size_splits == nullptr) {
     MS_LOG(ERROR) << "The attr(" << kSizeSplits << ") of operator(" << base_operator->name() << ") not exist";
-    DestroySplitSizes(param);
+    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
     free(param);
     return nullptr;
   }
@@ -84,14 +84,21 @@ OpParameter *PopulateSplitOpParameter(const BaseOperatorPtr &base_operator) {
     param->split_count_ = 0;
   }
 
-  mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kAxis);
-  if (attr == nullptr) {
+  mindspore::ValuePtr attr_axis = base_operator->GetPrim()->GetAttr(kAxis);
+  if (attr_axis == nullptr) {
     MS_LOG(ERROR) << "The attr(" << kAxis << ") of operator(" << base_operator->name() << ") not exist";
-    DestroySplitSizes(param);
+    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
     free(param);
     return nullptr;
   }
-  param->split_dim_ = GetValue<int64_t>(attr);
+  auto axis = GetValue<int64_t>(attr_axis);
+  if (axis > std::numeric_limits<int>::max()) {
+    MS_LOG(ERROR) << "The value of axis is not correct";
+    DestroySplitSizes(reinterpret_cast<OpParameter *>(param));
+    free(param);
+    return nullptr;
+  }
+  param->split_dim_ = static_cast<int>(axis);
   return reinterpret_cast<OpParameter *>(param);
 }
 
