@@ -22,20 +22,20 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t input_num = 1;
+constexpr int64_t kSizeInputNum = 1;
 }  // namespace
 class SizeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSizeInputNum, primitive->name());
     return abstract::kNoShape;
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSizeInputNum, primitive->name());
     TypePtr res = kInt64;
     return res;
   }
@@ -43,7 +43,7 @@ class SizeInfer : public abstract::OpInferBase {
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSizeInputNum, prim_name);
     auto input_type = input_args[0]->BuildType();
     MS_EXCEPTION_IF_NULL(input_type);
     if (!input_type->isa<TensorType>()) {
