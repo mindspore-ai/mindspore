@@ -1126,7 +1126,7 @@ class Node:
                     elt.id = scoped_value.value
                 elif isinstance(elt, ast.Attribute) and isinstance(elt.value, ast.Name):
                     elt.value.id = scoped_value.scope
-                    elt.value = scoped_value.value
+                    elt.attr = scoped_value.value
                 else:
                     raise RuntimeError("Only support constant or symbol in tuple now")
         else:
