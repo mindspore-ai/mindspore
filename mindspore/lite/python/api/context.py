@@ -15,8 +15,9 @@
 """
 Context API.
 """
-from ._checkparam import check_isinstance, check_list_of_element
-from .lib import _c_lite_wrapper
+from __future__ import absolute_import
+from mindspore_lite._checkparam import check_isinstance, check_list_of_element
+from mindspore_lite.lib import _c_lite_wrapper
 
 __all__ = ['Context', 'DeviceInfo', 'CPUDeviceInfo', 'GPUDeviceInfo', 'AscendDeviceInfo']
 

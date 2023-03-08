@@ -15,14 +15,15 @@
 """
 Converter API.
 """
-
+from __future__ import absolute_import
 import os
 from enum import Enum
 
-from ._checkparam import check_isinstance, check_input_shape, check_config_info
-from .lib import _c_lite_wrapper
-from .tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, format_cxx_py_map
-from .model import ModelType, model_type_py_cxx_map, model_type_cxx_py_map
+from mindspore_lite._checkparam import check_isinstance, check_input_shape, check_config_info
+from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite.tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, \
+    format_cxx_py_map
+from mindspore_lite.model import ModelType, model_type_py_cxx_map, model_type_cxx_py_map
 
 __all__ = ['FmkType', 'Converter']
 

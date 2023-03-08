@@ -15,13 +15,14 @@
 """
 Model API.
 """
+from __future__ import absolute_import
 import os
 from enum import Enum
 
-from ._checkparam import check_isinstance
-from .context import Context
-from .lib import _c_lite_wrapper
-from .tensor import Tensor
+from mindspore_lite._checkparam import check_isinstance
+from mindspore_lite.context import Context
+from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite.tensor import Tensor
 
 __all__ = ['ModelType', 'Model', 'RunnerConfig', 'ModelParallelRunner']
 
