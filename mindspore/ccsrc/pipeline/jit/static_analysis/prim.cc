@@ -2064,12 +2064,16 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
 
   // when return value should be none
-  if (current_interpret_node->has_user_data("__py_execute_no_return_type__")) {
-    AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-    res->set_value(kAnyValue);
-    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-    return infer_result;
+  constexpr auto data_type = "__py_execute_no_return_type__";
+  if (current_interpret_node->has_user_data(data_type)) {
+    auto type = current_interpret_node->user_data<Type>(data_type);
+    if (type->isa<TypeNone>()) {
+      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
+      res->set_value(kAnyValue);
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
+    }
   }
   TypePtr type = kFloat64;
   if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
@@ -2811,6 +2815,14 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto none_type = std::make_shared<TypeNone>();
     raise_error_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
     cur_graph->ReplaceInOrder(node, raise_error_node);
+
+    // Set isolated side effect flag for raise node.
+    const auto &manager = cur_graph->manager();
+    manager->Replace(node, raise_error_node);
+    raise_error_node->set_has_isolated_side_effect_node(true);
+    cur_graph->set_has_isolated_side_effect_node(true);
+    MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
+
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());

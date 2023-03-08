@@ -695,6 +695,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     if (contains_isolated_side_effect) {
       cnode->set_has_isolated_side_effect_node(true);
       conf->func_graph()->set_has_isolated_side_effect_node(true);
+      eval_result->set_has_isolated_side_effect(true);
     }
   }
   return eval_result;

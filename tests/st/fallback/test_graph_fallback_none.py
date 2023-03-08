@@ -167,7 +167,6 @@ def test_none_is_default_value_of_parameter():
     assert res1 is None
 
 
-@pytest.mark.skip(reason="No support print x side effect.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -191,7 +190,7 @@ def test_none_is_default_value_of_parameter_2():
     x = [1, 2]
     y = [3, 4]
     res2 = foo(x, y)
-    assert res2 == (3, 4)
+    assert res2 == [3, 4]
 
 
 @pytest.mark.level0
@@ -488,3 +487,66 @@ def test_none_is_return_of_sub_graph_control_flow():
     data = Tensor(np.ones([2, 3]), dtype=ms.float32)
     out = net(data)
     assert (out.asnumpy() == data).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_is_return_of_sub_graph_control_flow_raise():
+    """
+    Feature: Support None.
+    Description: Support None is the return of sub_graph in control flow. And Raise node is in sub_graph.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def inner_func(self, x):  # pylint: disable=R1711
+            if x == 2:
+                raise ValueError("The input should not be ", x)
+            return None
+
+        def construct(self, x):
+            self.inner_func(x)
+            return x
+
+    net = RaiseNet()
+    res = net(Tensor(1))
+    print("res:", res)
+    assert res.asnumpy() == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_is_return_raise():
+    """
+    Feature: Support None.
+    Description: Support None is the return of sub_graph in control flow. And Raise node is in sub_graph.
+    Expectation: No exception.
+    """
+    def check_test(shp):  # pylint: disable=R1711
+        if shp[0] > 5:
+            raise ValueError('raise value error.')
+        return None
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.one = Tensor(1, dtype=ms.float32)
+
+        def construct(self, x):
+            shp = x.shape
+            check_test(shp)
+            return x
+
+    with pytest.raises(ValueError, match="raise value error."):
+        np_data = np.random.randint(6, size=(6,))
+        data = Tensor(np_data, dtype=ms.float32)
+        dyn_tensor = Tensor(shape=[None], dtype=ms.float32)
+        net = Net()
+        net.set_inputs(dyn_tensor)
+        out = net(data)
+        assert out == data

@@ -225,12 +225,19 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
         static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
         if (enable_eliminate_unused_element) {
           const auto &cnode = node->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(cnode);
           const auto &maybe_func = engine->GetCNodeOperatorAbstract(cnode, context, fg);
           if (maybe_func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
               maybe_func->isa<abstract::FuncGraphAbstractClosure>()) {
             const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
             SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, fg, cnode, abs_func_graph, context);
           }
+        }
+        if (engine->check_isolated_side_effect() && node_eval_result->has_isolated_side_effect()) {
+          const auto &cnode = node->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(cnode);
+          cnode->set_has_isolated_side_effect_node(true);
+          fg->set_has_isolated_side_effect_node(true);
         }
         MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config";
       } else {
