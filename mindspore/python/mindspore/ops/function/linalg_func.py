@@ -29,7 +29,7 @@ from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
 
-__all__ = ['eig', 'geqrf', 'svd', 'pinv']
+__all__ = ['eig', 'geqrf', 'svd', 'pinv', 'qr']
 
 
 def eig(A):

@@ -267,6 +267,7 @@ Element-wise Operations
     mindspore.ops.nanquantile
     mindspore.ops.neg
     mindspore.ops.negative
+    mindspore.ops.nextafter
     mindspore.ops.polar
     mindspore.ops.polygamma
     mindspore.ops.positive

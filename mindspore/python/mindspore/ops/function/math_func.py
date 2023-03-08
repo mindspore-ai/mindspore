@@ -2822,6 +2822,51 @@ def bitwise_right_shift(input, other):
     return rs(input, other)
 
 
+def nextafter(input, other):
+    """
+    Returns the next representable floating-point value after `input` towards `other` element-wise.
+
+    Say there are two float32 numbers :math:`a`, :math:`b`, and let the
+    representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
+    then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
+    the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
+
+    .. math::
+
+        out_{i} =  nextafter({input_{i}, other_{i}})
+
+    Args:
+        - **input** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+
+        - **other** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+
+    Returns:
+        Tensor, has the same shape and data type as `input`.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is a Tensor.
+        TypeError: If the dtype of `input` and `other` is not one of: float32, float64.
+        TypeError: If the dtypes of `input` and `other` are not same.
+        ValueError: If `input`'s shape is not the same as `other`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_ = Tensor(np.asarray([0.0]), mindspore.float32)
+        >>> other_ = Tensor(np.asarray([0.1]), mindspore.float32)
+        >>> output_ = ops.nextafter(input_, other_)
+        >>> print(output)
+        [1.e-45]
+    """
+    nextafter_ = _get_cache_prim(P.NextAfter)()
+    return nextafter_(input, other)
+
+
 def inv(x):
     r"""
     Computes Reciprocal of input tensor element-wise.
@@ -3386,6 +3431,36 @@ def slogdet(input):
         [2.80336046e+00    3.04452229e+00]
     """
     return _get_cache_prim(P.LogMatrixDeterminant)()(input)
+
+
+def trace(input):
+    """
+    Returns a new tensor that is the sum of the input trace.
+
+    Note:
+        Input must be matrix, and complex number is not supported at present.
+
+    Args:
+        - **input** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
+
+    Returns:
+        Tensor, with the same data type as input `input`, and size equals to 1.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        ValueError: If the dimension of `input` is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]]), mindspore.float32)
+        >>> output = ops.trace(input)
+        >>> print(output)
+        42.
+    """
+    trace_ = _get_cache_prim(P.Trace)()
+    return trace_(input)
 
 
 def truncate_div(x, y):
@@ -10608,6 +10683,7 @@ __all__ = [
     'hann_window',
     'log2',
     'slogdet',
+    'trace',
     'xlogy',
     'log10',
     'log1p',
@@ -10656,7 +10732,7 @@ __all__ = [
     'polygamma',
     'quantile',
     'tril_indices',
-    'triu_indices',
-    'histc'
+    'histc',
+    'nextafter'
 ]
 __all__.sort()

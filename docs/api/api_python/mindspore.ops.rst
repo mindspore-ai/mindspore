@@ -267,6 +267,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.nanquantile
     mindspore.ops.neg
     mindspore.ops.negative
+    mindspore.ops.nextafter
     mindspore.ops.polar
     mindspore.ops.polygamma
     mindspore.ops.positive
