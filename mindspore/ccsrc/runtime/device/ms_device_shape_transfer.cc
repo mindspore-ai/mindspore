@@ -248,7 +248,7 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
 }
 
 bool IsNeedPadding(const std::string &format, const ShapeVector &shape) {
-  if (shape.size() == 0) {
+  if (shape.empty()) {
     return false;
   }
   if (IsDynamicRank(shape) && !IsOneOfDynRankNeedPadShape(format)) {

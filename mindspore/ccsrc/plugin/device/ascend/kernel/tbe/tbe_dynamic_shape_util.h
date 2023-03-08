@@ -33,7 +33,7 @@ class TbeDynamicShapeUtil {
   TbeDynamicShapeUtil() = default;
   ~TbeDynamicShapeUtil() = default;
   static ShapeVector UpdateShape(const AnfNodePtr &node, const std::string &format, const ShapeVector &shape,
-                                 size_t index, bool is_input, bool *is_change_nd = nullptr);
+                                 size_t index, bool is_input);
   static bool GetDynamicShapeAttr(const CNodePtr &cnode);
   static bool GetDynamicShapeAttr(const AnfNodePtr &anf_node);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, const AnfNodePtr &anf_node);
