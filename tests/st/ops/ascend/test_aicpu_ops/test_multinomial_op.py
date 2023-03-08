@@ -37,7 +37,24 @@ class Net(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_multinomial_net():
+def test_multinomial_1d():
+    """
+    Feature: test Multinomial op.
+    Description: test Multinomial op.
+    Expectation: success.
+    """
+    x = Tensor(np.array([0, 10, 0]).astype(np.float32))
+    net = Net(1)
+    out = net(x)
+    expect_result = np.array([1]).astype(np.int32)
+    np.array_equal(expect_result, out.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multinomial_2d():
     """
     Feature: test Multinomial op.
     Description: test Multinomial op.
@@ -53,3 +70,35 @@ def test_multinomial_net():
     expect_result1 = np.array([[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2]]).astype(np.int32)
     np.array_equal(expect_result0, out0.asnumpy())
     np.array_equal(expect_result1, out1.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multinomial_0d():
+    """
+    Feature: test Multinomial op.
+    Description: test Multinomial op.
+    Expectation: success.
+    """
+    with pytest.raises(ValueError):
+        x = Tensor(1)
+        net = Net(1)
+        net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multinomial_3d():
+    """
+    Feature: test Multinomial op.
+    Description: test Multinomial op.
+    Expectation: success.
+    """
+    with pytest.raises(ValueError):
+        x = Tensor(np.array([[[2, 0], [0, 9]]]).astype(np.float32))
+        net = Net(1)
+        net(x)
