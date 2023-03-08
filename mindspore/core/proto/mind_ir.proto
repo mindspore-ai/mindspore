@@ -222,4 +222,5 @@ message PrimitiveProto {
   optional string name = 1;
   optional string op_type = 2;
   repeated AttributeProto attribute = 3;
+  optional string instance_name = 4;
 }
