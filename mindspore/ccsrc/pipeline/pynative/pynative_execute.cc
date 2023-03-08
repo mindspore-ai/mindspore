@@ -114,8 +114,8 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
   auto run_args = py::make_tuple(prim, adapter->name(), input_args);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args, true);
-  StoreAsyncStatus(op_run_info);
 
+  StoreAsyncStatus(op_run_info);
   // 1. get top_type from Primitive::PredictOutputType
   auto top_type = PredictOutTypeByName(adapter->name());
   // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)
@@ -129,6 +129,8 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   }
   // 3. create top stub node
   auto node = stub::MakeTopNode(top_type);
+  // The task in the AsyncQueue may need to acquire gil.
+  GilReleaseWithCheck release_gil;
   // 4. set abstract and value in asynchronous thread after infer and run
   op_run_info->stub_output = node.second;
   PyNativeExecutorTry(forward_executor()->RunOpSAsync, op_run_info);
