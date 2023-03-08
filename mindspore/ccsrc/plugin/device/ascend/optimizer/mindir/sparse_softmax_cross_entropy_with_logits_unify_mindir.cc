@@ -272,9 +272,6 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   if (std::all_of(multiple_value.begin(), multiple_value.end(), [](int64_t value) { return value == 1; })) {
     return nullptr;
   }
-  auto multiples = MakeValue(multiple_value);
-  auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
-  MS_EXCEPTION_IF_NULL(multiples_node);
 
   auto tile_primitive = std::make_shared<Primitive>(kTileOpName);
   std::vector<std::string> input_names = {"x", "multiples"};
@@ -284,11 +281,28 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
 
   std::vector<AnfNodePtr> tile_inputs;
   if (is_convert_const_to_attr) {
-    tile_inputs = {NewValueNode(tile_primitive), mul_node->input(2)};
+    tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2)};
   } else {
-    auto kernel_graph = graph->cast<KernelGraphPtr>();
-    kernel_graph->AddValueNodeToGraph(multiples_node);
-    tile_inputs = {NewValueNode(tile_primitive), mul_node->input(2), multiples_node};
+    if (std::any_of(multiple_value.begin(), multiple_value.end(), [](int64_t value) { return value < 0; })) {
+      std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("DynamicShape")),
+                                                      sparse_softmax_node->input(kIndex2)};
+      auto shape_node = pass.NewCNode(dynamic_shape_inputs, graph);
+      MS_EXCEPTION_IF_NULL(shape_node);
+      ShapeVector tensor_shp({static_cast<int64_t>(multiple_value.size())});
+      auto dynamic_shape_abstract =
+        std::make_shared<abstract::AbstractTensor>(kInt64, std::make_shared<abstract::Shape>(tensor_shp));
+      MS_EXCEPTION_IF_NULL(dynamic_shape_abstract);
+      shape_node->set_abstract(dynamic_shape_abstract);
+      tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), shape_node};
+    } else {
+      auto multiples = MakeValue(multiple_value);
+      auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
+      MS_EXCEPTION_IF_NULL(multiples_node);
+      auto kernel_graph = graph->cast<KernelGraphPtr>();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      kernel_graph->AddValueNodeToGraph(multiples_node);
+      tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), multiples_node};
+    }
   }
 
   auto tile_node = pass.NewCNode(tile_inputs, graph);
@@ -298,7 +312,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
                                                {AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1UL)},
                                                tile_node.get());
   if (is_convert_const_to_attr) {
-    common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
+    common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiple_value), tile_node);
   }
   // feature map set
   std::vector<size_t> feature_map_input_indexs;
