@@ -64,9 +64,6 @@ class ScatterNdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
   size_t block_size_{1};
   size_t indices_dim_0_{0};
   size_t indices_dim_1_{0};
-
-  // memory in device
-  bool memcpy_flag_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
