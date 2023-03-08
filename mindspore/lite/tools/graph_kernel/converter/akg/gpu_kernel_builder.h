@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_GPU_KERNEL_BUILDER_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_GPU_KERNEL_BUILDER_H_
 #include <string>
+#include <vector>
 #include <map>
 #include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
 
@@ -25,6 +26,7 @@ class GpuKernelBuilder : public AkgKernelBuilder {
  public:
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) override;
   AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) override;
+  std::vector<std::string> ReadThreadBlockFromJson(const std::string &dir_name);
 
  private:
   std::string dir_path_;

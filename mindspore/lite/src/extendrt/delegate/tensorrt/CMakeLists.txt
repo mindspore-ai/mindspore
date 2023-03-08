@@ -95,6 +95,15 @@ target_link_libraries(
     libnvinfer
 )
 
+if(MSLITE_DEPS_AKG_TENSORRT)
+    add_library(libcuda SHARED IMPORTED)
+    set_target_properties(libcuda PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/stubs/libcuda.so)
+    target_link_libraries(
+        tensorrt_plugin
+        libcuda
+    )
+endif()
+
 add_subdirectory(cuda_impl)
 
 target_link_libraries(tensorrt_plugin cuda_kernel_mid gpu_distribution_collective)
