@@ -3,23 +3,20 @@ mindspore.ops.multi_margin_loss
 
 .. py:function:: mindspore.ops.multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mean')
 
-    用于优化多类分类问题的铰链损失。
+    用于优化多类分类问题的合页损失。
 
-    创建一个标准，用于优化输入 :math:`x` （一个2D小批量Tensor）
-    和输出 :math:`y` （一个目标类索引的1DTensor :math:`0 \leq y \leq \text{x.size}(1)-1`）
-    之间的多类分类铰链损失（基于边距的损失）：
-    对于每个小批量样本，1D输入的损失 :math:`x` 和标量输出 :math:`y` 是：
+    优化输入和输出之间的多级分类合页损耗（基于边缘损失）。
+
+    对于每个小批量样本，1D输入 :math:`x` 和标量输出 :math:`y` 的损失为：
 
     .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
+        \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
 
-    其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
-    并且 :math:`i \neq y`。
-    或者，通过向构造函数传递一个1D输入 `weight` 的Tensor来对类赋予不同的权重。
+    其中 :math:`i\in \{0,⋯,x.size(0)−1\}` 并且 :math:`i \ne y`。
 
     参数：
-        - **inputs** (Tensor) - 输入，shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。
-        - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。
+        - **inputs** (Tensor) - 输入，shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。即上述公式中的 :math:`x` 。
+        - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。即上述公式中的 :math:`y` 。
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值：1。
         - **margin** (int, 可选) - 改变对偶距离的参数。默认值：1。
         - **weight** (Tensor, 可选) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。默认值：None。
@@ -30,7 +27,7 @@ mindspore.ops.multi_margin_loss
           - 'sum'：输出的总和。
 
     返回：
-        - **outputs** - (Tensor)，当 `reduction` 为"none"时，shape为 :math:`(N,)`。否则，为标量。类型与 `inputs` 相同。
+        - **outputs** - 当 `reduction` 为"none"时，类型为Tensor，shape和 `target` 相同。否则，为标量。
 
     异常：
         - **TypeError** - `p` 或者 `target` 数据类型不是int。

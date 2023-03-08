@@ -3,10 +3,10 @@ mindspore.ops.multilabel_margin_loss
 
 .. py:function:: mindspore.ops.multilabel_margin_loss(inputs, target, reduction='mean')
 
-    用于优化多标签分类问题的铰链损失。
+    用于优化多标签分类问题的合页损失。
 
     创建一个标准，用于优化输入 :math:`x` （一个2D小批量Tensor）
-    和输出 :math:`y` （一个目标类别索引的2DTensor）之间的多标签分类铰链损失（基于边距的损失）：
+    和输出 :math:`y` （一个目标类别索引的2DTensor）之间的多标签分类合页损失（基于边距的损失）：
     对于每个小批量样本：
 
     .. math::

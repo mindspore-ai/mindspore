@@ -5133,25 +5133,22 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
     r"""
     Hinge loss for optimizing a multi-class classification.
 
-    Creates a criterion that optimizes a multi-class classification hinge
-    loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
-    output :math:`y` (which is a 1D tensor of target class indices,
-    :math:`0 \leq y \leq \text{x.size}(1)-1`):
-    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
-    output :math:`y` is:
+    Optimizes a multi-class classification hinge
+    loss (margin-based loss) between input and
+    output.
+
+    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar output :math:`y` is:
 
     .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
+        \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
 
-    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
-    and :math:`i \neq y`.
-    Optionally, you can give non-equal weighting on the classes by passing
-    a 1D input `weight` tensor into the constructor.
+    where : math: `i\in \{0,⋯,x.size(0)−1\} \space and \space i \ne y`
 
     Args:
         inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+            It is :math:`x` in the above formula.
         target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-            value of target should be non-negative, less than C.
+            value of target should be non-negative, less than C. It is :math:`y` in the above formula.
         p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
         margin (int, optional): A parameter to change pairwise distance. Default: 1.
         weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
@@ -5164,8 +5161,8 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
             - 'sum': the output will be summed.
 
     Returns:
-        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
-        Otherwise, it is a scalar. Has the same data type with `inputs`.
+        Tensor. If `reduction` is 'none', returns a Tensor with the same shape as `target`.
+        Otherwise, it is a scalar.
 
     Raises:
         TypeError: If dtype of `p` or `target` is not int.
