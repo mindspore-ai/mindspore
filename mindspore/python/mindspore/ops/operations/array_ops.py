@@ -15,7 +15,6 @@
 
 """Operators for array."""
 import copy
-import functools
 import itertools
 import numbers
 
@@ -1197,7 +1196,7 @@ class Rank(Primitive):
         return len(x.shape)
 
 
-class Size(PrimitiveWithInfer):
+class Size(Primitive):
     r"""
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
     Tensor.
@@ -1218,19 +1217,6 @@ class Size(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Size"""
-
-    def __infer__(self, x):
-        size = 1
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        shp = x['shape']
-        if not shp:
-            size = 0
-        else:
-            size = functools.reduce(lambda x, y: x * y, x['shape'])
-        out = {'shape': None,
-               'dtype': mstype.int64,
-               'value': size}
-        return out
 
 
 class MatrixDiagV3(Primitive):
