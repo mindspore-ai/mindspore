@@ -252,10 +252,7 @@ class Dropout1d(Cell):
         self.prob = p
 
     def construct(self, x):
-        if not self.training:
-            return x
-
-        if self.prob == 0:
+        if not self.training or self.prob == 0:
             return x
 
         out = F.dropout1d(x, self.prob)
@@ -299,10 +296,7 @@ class Dropout2d(Cell):
         self.dropout2d = P.Dropout2D(self.keep_prob)
 
     def construct(self, x):
-        if not self.training:
-            return x
-
-        if self.keep_prob == 1:
+        if not self.training or self.keep_prob == 1:
             return x
 
         out, _ = self.dropout2d(x)
@@ -350,10 +344,7 @@ class Dropout3d(Cell):
         self.dropout3d = P.Dropout3D(self.keep_prob)
 
     def construct(self, x):
-        if not self.training:
-            return x
-
-        if self.keep_prob == 1:
+        if not self.training or self.keep_prob == 1:
             return x
 
         out, _ = self.dropout3d(x)

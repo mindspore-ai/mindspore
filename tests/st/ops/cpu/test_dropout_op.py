@@ -125,12 +125,10 @@ def test_op1():
     Expectation: No exception.
     """
     x = Tensor(np.arange(0, 12).reshape(3, 4).astype(np.float16))
-    output1, mask1 = ops.dropout(x, p=0.5, seed0=1, seed1=100)
-    output2, mask2 = ops.dropout(x, p=0.5, seed0=1, seed1=100)
+    output1 = ops.dropout(x, p=0.5)
+    output2 = ops.dropout(x, p=0.5)
 
-    assert mask1.shape == mask2.shape
     assert np.allclose(output1.asnumpy(), output2.asnumpy())
-    assert np.allclose(mask1.asnumpy(), mask2.asnumpy())
 
 
 @pytest.mark.level0
