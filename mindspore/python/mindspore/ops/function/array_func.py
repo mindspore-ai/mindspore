@@ -6013,7 +6013,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         ValueError: If `padding` value is less than zero.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
