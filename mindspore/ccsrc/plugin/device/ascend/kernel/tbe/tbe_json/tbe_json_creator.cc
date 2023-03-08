@@ -487,6 +487,7 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   (*output_desc)[kJFormat] = format;
   (*output_desc)[kJOriFormat] = def_format;
   (*output_desc)[kJOriShape] = ori_shape;
+  shape = tbe::TbeDynamicShapeUtil::UpdateShape(anf_node, (*output_desc)[kJOriFormat], shape, node_out_idx, false);
   (*output_desc)[kJShape] = shape;
   (*output_desc)[kJName] = output_desc_name;
   // !! Note: output_index, only node's output use it

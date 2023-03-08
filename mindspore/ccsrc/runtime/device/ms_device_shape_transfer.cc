@@ -247,13 +247,16 @@ void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5
   }
 }
 
-bool IsNeedPadding(const std::string &format, size_t shape_size) {
-  if (shape_size == 0) {
+bool IsNeedPadding(const std::string &format, const ShapeVector &shape) {
+  if (shape.size() == 0) {
+    return false;
+  }
+  if (IsDynamicRank(shape) && !IsOneOfDynRankNeedPadShape(format)) {
     return false;
   }
   if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW || IsOneOfNoPaddingFormat(format)) {
     return false;
-  } else if (shape_size < kDim4) {
+  } else if (shape.size() < kDim4) {
     return true;
   }
   return false;
@@ -288,7 +291,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     host_shape = common::AnfAlgo::GetOutputInferShape(node, index);
   }
   auto format = AnfAlgo::GetOutputFormat(node, index);
-  if (IsNeedPadding(format, host_shape.size())) {
+  if (IsNeedPadding(format, host_shape)) {
     host_shape = PaddingShape(host_shape, format, AnfAlgo::GetOutputReshapeType(node, index), node);
   }
   return host_shape;

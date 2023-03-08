@@ -1382,6 +1382,93 @@ bool AnfAlgo::HasDynamicShapeFlag(const PrimitivePtr &prim) {
   return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape);
 }
 
+bool IsNodeDynamicRank(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto in_dyn_rank = AnfAlgo::IsNodeInputDynamicRank(cnode);
+  auto out_dyn_rank = AnfAlgo::IsNodeOutputDynamicRank(cnode);
+  if (in_dyn_rank && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicRank, cnode)) {
+    AnfAlgo::SetNodeAttrSafely(kAttrInputIsDynamicRank, MakeValue(true), cnode);
+    MS_LOG(DEBUG) << "Set input dynamic rank attr for node:" << cnode->fullname_with_scope();
+  }
+  if (out_dyn_rank && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicRank, cnode)) {
+    AnfAlgo::SetNodeAttrSafely(kAttrOutputIsDynamicRank, MakeValue(true), cnode);
+    MS_LOG(DEBUG) << "Set output dynamic rank attr for node:" << cnode->fullname_with_scope();
+  }
+  return in_dyn_rank || out_dyn_rank;
+}
+
+bool AnfAlgo::IsDynamicRankNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<Parameter>()) {
+    return IsOutputAnchorDynamicRank(node, 0);
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if ((!HasNodeAttr(kAttrInputIsDynamicRank, cnode)) && (!HasNodeAttr(kAttrOutputIsDynamicRank, cnode))) {
+    auto ret = IsNodeDynamicRank(node);
+    MS_LOG(DEBUG) << "The Node:" << node->fullname_with_scope() << " is dynamic rank: [" << ret << "]";
+    return ret;
+  }
+  return GetBooleanAttr(node, kAttrInputIsDynamicRank) || GetBooleanAttr(node, kAttrOutputIsDynamicRank) ||
+         GetBooleanAttr(node, kAttrIsDynamicRank);
+}
+
+bool AnfAlgo::IsInputAnchorDynamicRank(const AnfNodePtr &node, size_t idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Only cnode has inputs, node: " << node->fullname_with_scope();
+  }
+  const auto &in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, idx);
+  if (mindspore::IsDynamicRank(in_shape)) {
+    return true;
+  }
+  return false;
+}
+
+bool AnfAlgo::IsOutputAnchorDynamicRank(const AnfNodePtr &node, size_t idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &out_shape = common::AnfAlgo::GetOutputInferShape(node, idx);
+  if (mindspore::IsDynamicRank(out_shape)) {
+    return true;
+  }
+  return false;
+}
+
+bool AnfAlgo::IsNodeInputDynamicRank(const CNodePtr &anf_node_ptr) {
+  MS_EXCEPTION_IF_NULL(anf_node_ptr);
+  const auto &inputs = anf_node_ptr->inputs();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    const auto &input = inputs[i];
+    MS_EXCEPTION_IF_NULL(input);
+    if (IsNodeOutputDynamicRank(input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AnfAlgo::IsNodeOutputDynamicRank(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
+    return false;
+  }
+  if (base_shape->isa<abstract::DynamicSequenceShape>()) {
+    auto b_ptr = base_shape->cast<abstract::DynamicSequenceShapePtr>();
+    if (b_ptr->IsDimUnknown()) {
+      return true;
+    }
+  }
+  return base_shape->IsDimUnknown();
+}
+
 bool AnfAlgo::IsDynamicShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {

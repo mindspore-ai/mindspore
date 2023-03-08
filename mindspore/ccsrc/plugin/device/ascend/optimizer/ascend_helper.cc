@@ -36,6 +36,23 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
+struct CreateNodeArgs {
+  FuncGraphPtr func_graph{nullptr};
+  AnfNodePtr node{nullptr};
+  AnfNodePtr input_node{nullptr};
+  AnfNodePtr orig_node{nullptr};
+  KernelSelectPtr kernel_select{nullptr};
+  std::string trans_opname;
+  std::string input_format;
+  std::string dst_format;
+  std::string spec_format;
+  std::string reshape_type;
+  TypeId type_id;
+  ShapeVector out_shape;
+  bool is_dynamic_shape;
+  bool need_padding;
+};
+
 std::string GetTransOpName(const std::string &spec_format) {
   std::string trans_opname = (spec_format == kOpFormat_FRACTAL_ZN_RNN || spec_format == kOpFormat_ND_RNN_BIAS)
                                ? prim::kPrimTransDataRNN->name()
@@ -81,6 +98,61 @@ CNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp
   MS_EXCEPTION_IF_NULL(kernel_select);
   kernel_select->SelectKernel(reshape);
   return reshape;
+}
+
+AnfNodePtr CreateTransDataWithOutReshape(const CreateNodeArgs &args) {
+  // don't need padding insert TransData only
+  auto trans_data = NewTransOpNode(args.func_graph, args.input_node, args.orig_node, args.kernel_select,
+                                   args.need_padding, args.trans_opname);
+  RefreshKernelBuildInfo(args.kernel_select, args.input_format, args.dst_format, trans_data, args.reshape_type,
+                         args.type_id);
+  return trans_data;
+}
+
+AnfNodePtr CreateTransDataWithReshape(const CreateNodeArgs &args) {
+  AnfNodePtr trans_node = nullptr;
+  CNodePtr trans_data = nullptr;
+  if (!args.need_padding) {
+    // don't need padding insert transdata only
+    trans_data = NewTransOpNode(args.func_graph, args.input_node, args.orig_node, args.kernel_select, args.need_padding,
+                                args.trans_opname);
+    trans_node = trans_data;
+    RefreshKernelBuildInfo(args.kernel_select, args.input_format, args.dst_format, trans_data, args.reshape_type,
+                           args.type_id);
+  } else if (args.spec_format == args.dst_format) {
+    // if need padding & default to special format
+    // ori_shape -> reshape[padding shape] -> transdata[device shape]
+    auto padding_shape = trans::PaddingShape(args.out_shape, args.dst_format, args.reshape_type, args.node);
+    std::vector<int> padding_axis;
+    if (std::count(padding_shape.begin(), padding_shape.end(), -1) > 1) {
+      padding_axis = trans::StringToAxisVector(args.out_shape, args.dst_format, args.reshape_type, args.node);
+    }
+    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(padding_shape);
+    auto reshape_node = CreateReshapeNode(args.func_graph, args.input_node, args.orig_node, args.kernel_select,
+                                          pad_shape_ptr, args.is_dynamic_shape, padding_axis);
+    trans_data = NewTransOpNode(args.func_graph, reshape_node, args.orig_node, args.kernel_select, args.need_padding,
+                                args.trans_opname);
+    trans_node = trans_data;
+    trans_data->set_abstract(args.input_node->abstract());
+    RefreshKernelBuildInfo(args.kernel_select, args.input_format, args.dst_format, trans_data, args.reshape_type,
+                           args.type_id);
+  } else {
+    // if need padding & special to default format
+    // device shape -> transdata[padding shape] -> reshape[ori_shape]
+    trans_data = NewTransOpNode(args.func_graph, args.input_node, args.orig_node, args.kernel_select, args.need_padding,
+                                args.trans_opname);
+    RefreshKernelBuildInfo(args.kernel_select, args.input_format, args.dst_format, trans_data, args.reshape_type,
+                           args.type_id);
+    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(args.out_shape);
+    std::vector<int> padding_axis;
+    if (std::count(args.out_shape.begin(), args.out_shape.end(), -1) > 1) {
+      padding_axis = trans::StringToAxisVector(args.out_shape, args.dst_format, args.reshape_type, args.node);
+    }
+    auto reshape_node = CreateReshapeNode(args.func_graph, trans_data, args.orig_node, args.kernel_select,
+                                          pad_shape_ptr, args.is_dynamic_shape, padding_axis);
+    trans_node = reshape_node;
+  }
+  return trans_node;
 }
 
 void ReFreshInferShape(const AnfNodePtr &trans_node, const AnfNodePtr &node) {
@@ -136,6 +208,9 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
   MS_EXCEPTION_IF_NULL(node_with_index.first);
   auto real_input = node_with_index.first;
   if (real_input->isa<ValueNode>() || real_input->isa<Parameter>()) {
+    MS_LOG(DEBUG)
+      << "ValueNode or Parameter has no inputs, try to insert for ValueNode or Parameter at out anchor, node: "
+      << node->fullname_with_scope();
     input_node = InsertTransOpForOutput(func_graph, input_node, input_node, kernel_select);
     MS_EXCEPTION_IF_NULL(input_node);
     common::AnfAlgo::SetNodeInput(node, input_node, index);
@@ -143,8 +218,8 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
   ShapeVector origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   std::string dest_format = AnfAlgo::GetInputFormat(node, index);
   if (NeedInsertTransData(origin_shape, dest_format)) {
-    MS_LOG(DEBUG) << node->DebugString() << "Insert transdata " << AnfAlgo::GetInputFormat(node, index)
-                  << " To DefaultFormat , index: " << index;
+    MS_LOG(DEBUG) << "Need insert TransData change format from [" << dest_format
+                  << "] to [DefaultFormat], input index:" << index << ", node: " << node->fullname_with_scope();
     auto transdata = AddTransOpNodeToGraph(func_graph, node, kernel_select, index, true);
     if (real_input->isa<Parameter>()) {
       SetGroupAttr(real_input->cast<ParameterPtr>(), input_node, transdata, dest_format);
@@ -165,7 +240,8 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
                       << node->DebugString() << trace::DumpSourceLines(node);
   }
   if (NeedInsertTransData(origin_shape, output_format)) {
-    MS_LOG(DEBUG) << "Inserted transdata " << output_format << " to default , index :0";
+    MS_LOG(DEBUG) << "Inserted TransData change format from [" << output_format
+                  << "] to [DefaultFormat], single output index :0";
     return AddTransOpNodeToGraph(func_graph, node, kernel_select, 0, false);
   }
   return node;
@@ -243,61 +319,32 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
   auto out_shape_ptr = input_node_out_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(out_shape_ptr);
   ShapeVector out_shape = out_shape_ptr->shape();
-
+  auto is_dyn_rank = out_shape_ptr->IsDimUnknown();
   auto is_dynamic_shape = out_shape_ptr->IsDynamic();
 
-  bool need_padding = trans::IsNeedPadding(spec_format, out_shape.size());
+  bool need_padding = trans::IsNeedPadding(spec_format, out_shape);
   std::string trans_opname = GetTransOpName(spec_format);
   bool is_insert_output = node == input_node;
   auto orig_node = GetOriginNode(is_insert_output, node);
-
-  AnfNodePtr trans_node = nullptr;
-  CNodePtr trans_data = nullptr;
-  if (!need_padding) {
-    // don't need padding insert transdata only
-    trans_data = NewTransOpNode(func_graph, input_node, orig_node, kernel_select, need_padding, trans_opname);
-    trans_node = trans_data;
-    RefreshKernelBuildInfo(kernel_select, input_format, dst_format, trans_data, reshape_type, type_id);
-  } else if (spec_format == dst_format) {
-    // if need padding & default to special format
-    // ori_shape -> reshape[padding shape] -> transdata[device shape]
-
-    auto padding_shape = trans::PaddingShape(out_shape, dst_format, reshape_type, node);
-    std::vector<int> padding_axis;
-    if (std::count(padding_shape.begin(), padding_shape.end(), -1) > 1) {
-      padding_axis = trans::StringToAxisVector(out_shape, dst_format, reshape_type, node);
-    }
-    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(padding_shape);
-    auto reshape_node = CreateReshapeNode(func_graph, input_node, orig_node, kernel_select, pad_shape_ptr,
-                                          is_dynamic_shape, padding_axis);
-    trans_data = NewTransOpNode(func_graph, reshape_node, orig_node, kernel_select, need_padding, trans_opname);
-    trans_node = trans_data;
-    trans_data->set_abstract(input_node->abstract());
-    RefreshKernelBuildInfo(kernel_select, input_format, dst_format, trans_data, reshape_type, type_id);
+  AnfNodePtr trans_data = nullptr;
+  CreateNodeArgs args = {func_graph,   node,         input_node,       orig_node,   kernel_select,
+                         trans_opname, input_format, dst_format,       spec_format, reshape_type,
+                         type_id,      out_shape,    is_dynamic_shape, need_padding};
+  if (is_dyn_rank) {
+    trans_data = CreateTransDataWithOutReshape(args);
   } else {
-    // if need padding & special to default format
-    // device shape -> transdata[padding shape] -> reshape[ori_shape]
-    trans_data = NewTransOpNode(func_graph, input_node, orig_node, kernel_select, need_padding, trans_opname);
-    RefreshKernelBuildInfo(kernel_select, input_format, dst_format, trans_data, reshape_type, type_id);
-    abstract::ShapePtr pad_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
-    std::vector<int> padding_axis;
-    if (std::count(out_shape.begin(), out_shape.end(), -1) > 1) {
-      padding_axis = trans::StringToAxisVector(out_shape, dst_format, reshape_type, node);
-    }
-    auto reshape_node = CreateReshapeNode(func_graph, trans_data, orig_node, kernel_select, pad_shape_ptr,
-                                          is_dynamic_shape, padding_axis);
-
-    trans_node = reshape_node;
+    trans_data = CreateTransDataWithReshape(args);
   }
+
   if (spec_format == kOpFormat_FRAC_Z && groups != 1 &&
       !common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, trans_data->cast<CNodePtr>())) {
     common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), trans_data);
     common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), trans_data);
   }
   if (is_insert_output) {
-    ReFreshInferShape(trans_node, node);
+    ReFreshInferShape(trans_data, node);
   }
-  return trans_node;
+  return trans_data;
 }
 
 void RefreshKernelBuildInfo(const KernelSelectPtr &kernel_select, const std::string &input_format,
@@ -368,15 +415,17 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   auto out_shape_base = AnfAlgo::GetOutputDetailShape(input, 0);
   MS_EXCEPTION_IF_NULL(out_shape_base);
   ShapeVector out_shape;
+  bool is_dyn_rank = false;
   bool is_dynamic_shape = false;
   if (out_shape_base->isa<abstract::Shape>()) {
     auto out_shape_ptr = out_shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(out_shape_ptr);
     out_shape = out_shape_ptr->shape();
     is_dynamic_shape = out_shape_ptr->IsDynamic();
+    is_dyn_rank = out_shape_ptr->IsDimUnknown();
   }
 
-  if (need_padding) {
+  if (need_padding && !is_dyn_rank) {
     // if need padding we should set the transdata node's shape to the padding shape
     auto padding_axis = AnfAlgo::GetOutputReshapeType(input, 0);
 
@@ -495,6 +544,7 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   size_t in_num = common::AnfAlgo::GetInputNum(cnode);  // include monads.
+  MS_LOG(DEBUG) << "Try to insert TransData at input anchor for node: " << cnode->fullname_with_scope();
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
     // Monad inputs keep unchanged from GetTransInputNodePtr().
     AnfNodePtr input_node = GetTransInputNodePtr(func_graph, cnode, input_index, kernel_select);

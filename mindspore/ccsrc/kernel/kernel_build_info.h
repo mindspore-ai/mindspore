@@ -118,6 +118,8 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   void SetOutputFormat(const std::string &format, size_t index);
 
+  void SetInputFormat(const std::string &format, size_t index);
+
   void SetOutputDeviceType(const TypeId &output_device_type, size_t index);
 
   void SetInputsFormat(const std::vector<std::string> &inputs_format);

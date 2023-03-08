@@ -221,10 +221,12 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
     infer_shape = trans::PaddingShape(infer_shape, format, AnfAlgo::GetInputReshapeType(anf_node, real_input_index));
     (*input_desc)[kJCValue] = infer_shape[1];
   }
+  shape = tbe::TbeDynamicShapeUtil::UpdateShape(anf_node, (*input_desc)[kJOriFormat], shape, real_input_index, true);
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
-  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
+  (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format,
+                                                                          (*input_desc)[kJOriFormat], d_type);
   GenInputConstValue(anf_node, real_input_index, input_desc);
 }
 
@@ -236,8 +238,8 @@ void SingleTbeJsonCreator::GenOutputDescJson(const AnfNodePtr &anf_node, size_t 
   auto type_str = GetJsonValue<std::string>(*output_desc, kJDtype);
   auto d_type = tbe::DtypeToTypeId(type_str);
   (*output_desc)[kJValid] = true;
-  (*output_desc)[kJRange] =
-    tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(anf_node, node_out_idx, (*output_desc)[kJFormat], d_type);
+  (*output_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetOutputDynamicRange(
+    anf_node, node_out_idx, (*output_desc)[kJFormat], (*output_desc)[kJOriFormat], d_type);
 }
 
 bool SingleTbeJsonCreator::AssignInputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &inputs_desc,
@@ -398,6 +400,7 @@ void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_o
   (*output_desc)[kJFormat] = format;
   (*output_desc)[kJOriFormat] = def_format;
   (*output_desc)[kJOriShape] = ori_shape;
+  shape = tbe::TbeDynamicShapeUtil::UpdateShape(anf_node, (*output_desc)[kJOriFormat], shape, node_out_idx, false);
   (*output_desc)[kJShape] = shape;
   (*output_desc)[kJOutputIndex] = desc_output_idx;
 }
@@ -422,13 +425,15 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   if (common::AnfAlgo::GetCNodeName(anf_node) == kMaxPool3DGradGradDOpName) {
     (*input_desc)[kJOriFormat] = kOpFormat_NDHWC;
   }
+  shape = tbe::TbeDynamicShapeUtil::UpdateShape(anf_node, (*input_desc)[kJOriFormat], shape, real_input_index, true);
   (*input_desc)[kJShape] = shape;
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
   auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, real_input_index);
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   if (!input_node_with_index.first->isa<ValueNode>()) {
-    (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format, d_type);
+    (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format,
+                                                                            (*input_desc)[kJOriFormat], d_type);
   }
 }
 bool SelectTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,

@@ -178,9 +178,18 @@ void KernelBuildInfo::SetInputsDeviceType(const std::vector<TypeId> &inputs_devi
 
 void KernelBuildInfo::SetOutputFormat(const std::string &format, size_t index) {
   if (index >= outputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << index << "] is exceed the number of output";
+    MS_LOG(EXCEPTION) << "The index [" << index
+                      << "] is exceed the length of output formats list, total size:" << outputs_format_.size();
   }
   outputs_format_[index] = format;
+}
+
+void KernelBuildInfo::SetInputFormat(const std::string &format, size_t index) {
+  if (index >= inputs_format_.size()) {
+    MS_LOG(EXCEPTION) << "The index [" << index
+                      << "] is exceed the length of input formats list, total size:" << inputs_format_.size();
+  }
+  inputs_format_[index] = format;
 }
 
 void KernelBuildInfo::SetOutputsFormat(const std::vector<std::string> &outputs_format) {

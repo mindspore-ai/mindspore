@@ -183,6 +183,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   bool is_init = false;
   bool need_change_nd = false;
   bool is_5d_input = false;
+  bool is_dyn_rank = common::AnfAlgo::IsDynamicRankNode(cnode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t index = 0; index < input_num; ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
@@ -194,7 +195,11 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
     if (priority_matched_format != pre_output_format && pre_output_format != kOpFormat_DEFAULT) {
       priority_matched_format = kOpFormat_DEFAULT;
     }
-    auto input_shape_size = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index).size();
+    const auto &prev_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+    if (IsDynamicRank(prev_shape)) {
+      is_dyn_rank = true;
+    }
+    auto input_shape_size = prev_shape.size();
     if (input_shape_size == k5dSize) {
       is_5d_input = true;
     }
@@ -205,6 +210,9 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   }
   if (is_5d_input && priority_matched_format != kOpFormat_FRAC_NZ) {
     priority_matched_format = kOpFormat_NDC1HWC0;
+  }
+  if (is_dyn_rank) {
+    priority_matched_format = kOpFormat_ND;
   }
   common::AnfAlgo::SetNodeAttr(kPriChoosenFormat, MakeValue(priority_matched_format), cnode);
   return priority_matched_format;

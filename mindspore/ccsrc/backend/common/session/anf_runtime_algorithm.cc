@@ -551,7 +551,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const 
   }
 
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (trans::IsNeedPadding(format, infer_shape.size())) {
+  if (trans::IsNeedPadding(format, infer_shape)) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx), node);
   }
   auto dtype = GetOutputDeviceDataType(node, output_idx);
@@ -570,7 +570,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, si
   }
 
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (trans::IsNeedPadding(format, infer_shape.size())) {
+  if (trans::IsNeedPadding(format, infer_shape)) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx), node);
   }
   auto dtype = GetOutputDeviceDataType(node, output_idx);
@@ -591,7 +591,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const A
   }
 
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (trans::IsNeedPadding(format, infer_shape.size())) {
+  if (trans::IsNeedPadding(format, infer_shape)) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx), node);
   }
   auto dtype = GetInputDeviceDataType(node, input_idx);
@@ -605,7 +605,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &
     return infer_shape;
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (trans::IsNeedPadding(format, infer_shape.size())) {
+  if (trans::IsNeedPadding(format, infer_shape)) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx), node);
   }
   auto dtype = GetInputDeviceDataType(node, input_idx);

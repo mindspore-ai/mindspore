@@ -83,7 +83,7 @@ std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, size_
     return infer_shape;
   }
 
-  if (trans::IsNeedPadding(format, infer_shape.size())) {
+  if (trans::IsNeedPadding(format, infer_shape)) {
     auto reshape_type =
       is_output ? AnfAlgo::GetOutputReshapeType(node, index) : AnfAlgo::GetInputReshapeType(node, index);
     infer_shape = trans::PaddingShape(infer_shape, format, reshape_type, node);
