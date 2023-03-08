@@ -34,8 +34,6 @@ class MIND_API Rank : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Rank for the inputs.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RANK_H_

@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import operator
 
 from mindspore.common import dtype as mstype
-from mindspore.common import Tensor
+from mindspore.common import Tensor, mutable
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -1108,14 +1108,17 @@ def roll(a, shift, axis=None):
     return a
 
 
-@constexpr
+@_primexpr
 def _get_moved_perm(ndim, source, destination):
     """
     Helper function for moveaxis, returns permutation after moving axes
     from source to destination.
     """
     dest_sorted_idx = [i for i, _ in sorted(enumerate(destination), key=operator.itemgetter(1))]
-    axes_orig = [i for i in range(ndim) if i not in source]
+    axes_orig = mutable([], True)
+    for i in range(ndim):
+        if i not in source:
+            axes_orig = axes_orig + [i]
 
     k = 0
     m = 0
