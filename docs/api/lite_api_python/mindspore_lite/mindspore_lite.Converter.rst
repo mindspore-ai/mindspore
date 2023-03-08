@@ -1,7 +1,7 @@
 mindspore_lite.Converter
 ========================
 
-.. py:class:: mindspore_lite.Converter(fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32, output_data_type=DataType.FLOAT32, save_type=ModelType.MINDIR_LITE, decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False, optimize="general", device="")
+.. py:class:: mindspore_lite.Converter(fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32, output_data_type=DataType.FLOAT32, save_type=None, decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False, optimize="general", device="")
 
     构造 `Converter` 的类。使用场景是：1. 将第三方模型转换生成MindSpore模型或MindSpore Lite模型；2. 将MindSpore模型转换生成MindSpore Lite模型。
 

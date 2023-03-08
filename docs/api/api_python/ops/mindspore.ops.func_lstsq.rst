@@ -5,14 +5,14 @@ mindspore.ops.lstsq
 
     计算满秩矩阵 `x` :math:`(m \times n)` 与满秩矩阵 `a` :math:`(m \times k)` 的最小二乘问题或最小范数问题的解。
 
-    若 :math:`m \geq n` ， `Lstsq` 解决最小二乘问题：
+    若 :math:`m \geq n` ， `lstsq` 解决最小二乘问题：
 
     .. math::
        \begin{array}{ll}
        \min_y & \|xy-a\|_2.
        \end{array}
 
-    若 :math:`m < n` ， `Lstsq` 解决最小范数问题：
+    若 :math:`m < n` ， `lstsq` 解决最小范数问题：
 
     .. math::
        \begin{array}{llll}

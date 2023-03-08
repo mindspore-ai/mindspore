@@ -27,7 +27,7 @@ mindspore.nn.AvgPool2d
         - **data_format** (str) - 输入数据格式可为'NHWC'或'NCHW'。默认值：'NCHW'。
 
     输入：
-        - **x** (Tensor) - 输入数据的shape为 :math:`(N,C_{in},H_{in},W_{in})` 或 :math:`C_{in},H_{in},W_{in})` 的Tensor。
+        - **x** (Tensor) - 输入数据的shape为 :math:`(N,C_{in},H_{in},W_{in})` 或 :math:`(C_{in},H_{in},W_{in})` 的Tensor。
 
     输出：
         输出数据的shape为 :math:`(N,C_{out},H_{out},W_{out})` 或 :math:`(C_{out},H_{out},W_{out})` 的Tensor。
