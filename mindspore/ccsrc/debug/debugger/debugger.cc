@@ -513,7 +513,12 @@ void Debugger::DumpParamsAndConstAndHistory() {
   for (auto kernel_graph = executed_graph_ptr_set_.cbegin(); kernel_graph != executed_graph_ptr_set_.cend();
        ++kernel_graph) {
     // Dump graph run hisotry for each graph.
-    E2eDump::DumpRunIter(*kernel_graph, GetRankID());
+    if (Debugger::GetInstance()->GetAscendKernelByKernelFlag() &&
+        (*kernel_graph)->graph_id() != (*kernel_graph)->root_graph_id()) {
+      MS_LOG(INFO) << "current graph graph_id = " << (*kernel_graph)->graph_id() << " is not root graph.";
+    } else {
+      E2eDump::DumpRunIter(*kernel_graph, GetRankID());
+    }
   }
   if (!cur_root_graph_checked) {
     visited_root_graph_ids_.push_back(cur_root_graph_id_);

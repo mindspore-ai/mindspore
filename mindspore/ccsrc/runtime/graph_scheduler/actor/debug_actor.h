@@ -55,7 +55,7 @@ class DebugActor : public ActorBase {
 
   // The debug on step end.
   void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);
-  static inline uint32_t current_step{0};
+  static inline uint64_t current_step{0};
 
  private:
   // class members
@@ -63,7 +63,6 @@ class DebugActor : public ActorBase {
 
   // Support multi-thread.
   std::mutex debug_mutex_;
-  std::set<uint32_t> graph_id_sets_;
 };
 
 }  // namespace runtime

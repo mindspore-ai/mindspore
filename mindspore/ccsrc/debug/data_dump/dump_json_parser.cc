@@ -88,9 +88,6 @@ bool DumpJsonParser::IsDumpEnabled() {
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(EXCEPTION) << "Dump is disabled in PyNative mode. Please set mode to GRAPH_MODE in context.";
-  }
   return true;
 }
 

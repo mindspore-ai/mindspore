@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include <algorithm>
+#include <utility>
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -44,7 +45,7 @@ static constexpr uint64_t kOpDebugMemorySize = 2048;
 const size_t kDebugP2pSize = 8UL;
 }  // namespace
 DUMPER_REG(kAscendDevice, KernelDumper);
-std::mutex KernelDumper::debug_register_mutex_;
+std::mutex KernelDumper::dumper_mutex_;
 std::map<rtStream_t, std::unique_ptr<OpDebugTask>> KernelDumper::op_debug_tasks;
 std::map<uint32_t, bool> KernelDumper::is_data_map;
 std::map<std::string, std::string> KernelDumper::stream_task_graphs;
@@ -80,9 +81,17 @@ KernelDumper::~KernelDumper() {
 }
 
 void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
-  std::lock_guard<std::mutex> lock(debug_register_mutex_);
-  aicpu::dump::OpMappingInfo dump_info;
-  SetOpMappingInfo(NOT_NULL(&dump_info), kernel);
+  auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
+  if (stream == nullptr) {
+    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  }
+  if (DumpJsonParser::GetInstance().op_debug_mode() > 0) {
+    auto rt_ret = rtStreamSynchronize(stream);
+    dumper_mutex_.unlock();
+    if (rt_ret != ACL_ERROR_RT_AICORE_OVER_FLOW) {
+      return;
+    }
+  }
 
   if (!KernelNeedDump(kernel)) {
     return;
@@ -91,10 +100,9 @@ void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
     MS_LOG(WARNING) << "[KernelDumper] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
     return;
   }
-  auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
-  if (stream == nullptr) {
-    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-  }
+  aicpu::dump::OpMappingInfo dump_info;
+  SetOpMappingInfo(NOT_NULL(&dump_info), kernel);
+
   DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
   aicpu::dump::Task task;
   ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
@@ -105,7 +113,7 @@ void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
   graph_id_ = AnfAlgo::GetGraphId(kernel.get());
   std::string stream_task_id = std::to_string(stream_id_) + std::to_string(task_id_);
   KernelDumper::stream_task_graphs.emplace(stream_task_id, kernel->fullname_with_scope());
-  MS_LOG(INFO) << "[DataDump] Get runtime info graph_id:" << graph_id_ << " stream_id:" << stream_id_
+  MS_LOG(INFO) << "[KernelDumper] Get runtime info graph_id:" << graph_id_ << " stream_id:" << stream_id_
                << " task_id:" << task_id_ << " fullname:" << kernel->fullname_with_scope();
 }
 
@@ -114,12 +122,12 @@ void KernelDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_i
   dump_info->set_dump_path(dump_path_);
   dump_info->set_model_name(net_name_);
   dump_info->set_dump_step(iteration_);
-  auto graph_id = AnfAlgo::GetGraphId(kernel.get());
-  dump_info->set_model_id(graph_id);
-  dump_info->set_flag(kAicpuLoadFlag);
-
   FuncGraphPtr f_graph = kernel->func_graph();
   auto kernel_graph_ = f_graph->cast<KernelGraphPtr>();
+  auto root_graph_id = kernel_graph_->root_graph_id();
+  dump_info->set_model_id(root_graph_id);
+  dump_info->set_flag(kAicpuLoadFlag);
+
   auto input_ctrl_tensors = kernel_graph_->device_loop_control_tensors();
   if (input_ctrl_tensors.size() > 0) {
     auto kCurLoopCountName = "current_loop_count";
@@ -225,7 +233,6 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtCpuKernelLaunch Failed, rt_ret = " << rt_ret;
     return;
   }
-  rtStreamSynchronize(stream_);
 }
 
 void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) {
@@ -375,7 +382,6 @@ void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
 }
 
 void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
-  std::lock_guard<std::mutex> lock(register_mutex_);
   uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
   auto iter = kOverflowModeStr.find(op_debug_mode);
   if (iter == kOverflowModeStr.end()) {
@@ -384,6 +390,7 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
   if (op_debug_mode == kNoOverflow) {
     return;
   }
+  dumper_mutex_.lock();
   auto stream = AscendStreamMng::GetInstance().GetStream(AnfAlgo::GetStreamId(kernel));
   if (stream == nullptr) {
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
@@ -391,6 +398,8 @@ void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {
   if (KernelDumper::op_debug_tasks.find(stream) != KernelDumper::op_debug_tasks.end()) {
     return;
   } else {
+    std::string stream_id = std::to_string(AnfAlgo::GetStreamId(kernel));
+    KernelDumper::stream_task_graphs.emplace(stream_id, "KernelDumper");
     auto graph_id = AnfAlgo::GetGraphId(kernel.get());
     if (KernelDumper::is_data_map.find(graph_id) != KernelDumper::is_data_map.end()) {
       return;

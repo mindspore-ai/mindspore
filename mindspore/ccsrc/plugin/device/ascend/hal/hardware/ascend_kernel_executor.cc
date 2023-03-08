@@ -43,6 +43,7 @@
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
+#include "debug/data_dump/overflow_dumper.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -370,7 +371,13 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_EXCEPTION_IF_NULL(stream);
-
+#ifdef ENABLE_DEBUGGER
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
+    register_dumper->Init();
+    register_dumper->OpDebugRegisterForStream(kernel);
+  }
+#endif
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);
   if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     auto iter = node_atomics_persistent_cache_.find(kernel);
@@ -399,6 +406,12 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
       return false;
     }
   }
+#ifdef ENABLE_DEBUGGER
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
+    kernel_dumper->OpLoadDumpInfo(kernel);
+  }
+#endif
 #ifndef ENABLE_SECURITY
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
