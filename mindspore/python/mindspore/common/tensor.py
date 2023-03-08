@@ -4187,12 +4187,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('sinh')(self)
 
-    def sort(self, dim=-1, descending=False):
+    def sort(self, axis=-1, descending=False):
         r"""
         For details, please refer to :func:`mindspore.ops.sort`.
         """
         self._init_check()
-        return tensor_operator_registry.get('sort')(self, axis=dim, descending=descending)
+        return tensor_operator_registry.get('sort')(self, axis=axis, descending=descending)
 
     def argsort(self, axis=-1, descending=False):
         """

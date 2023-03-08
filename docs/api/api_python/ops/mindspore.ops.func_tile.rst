@@ -11,7 +11,7 @@ mindspore.ops.tile
         `multiples` 的长度必须大于或等于 `input_x` 的维度。
 
     参数：
-        - **input_x** (Tensor) - 1-D或更高维的Tensor，shape为 :math:`(x_1, x_2, ..., x_S)` 。
+        - **input_x** (Tensor) - 1-D或更高维的Tensor。
         - **multiples** (tuple[int]) - 指定复制次数的参数，参数类型为tuple，数据类型为整数。如 :math:`(y_1, y_2, ..., y_S)` 。 `multiples` 的长度不能小于 `input_x` 的维度。只支持常量值。
 
     返回：

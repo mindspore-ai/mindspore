@@ -397,7 +397,7 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     return F.multinomial(input, num_samples, replacement, seed)
 
 
-def tile(x, reps):
+def tile(x, multiples):
     r"""
     Replicates an input tensor with given multiples times.
 
@@ -1896,13 +1896,13 @@ def std(x, axis=None, ddof=0, keepdims=False):
     return F.tensor_pow(x_var, 0.5)
 
 
-def gather_elements(x, dim, index):
+def gather_elements(input, dim, index):
     r"""
     Gathers elements along an axis specified by dim.
 
     Refer to :func:`mindspore.ops.gather_elements` for more detail.
     """
-    return F.gather_elements(x, dim, index)
+    return F.gather_elements(input, dim, index)
 
 
 def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
@@ -2710,12 +2710,12 @@ def col2im(*inputs):
     return F.col2im(*inputs)
 
 
-def narrow(x, axis, start, length):
+def narrow(input, axis, start, length):
     """
     Returns a narrowed tensor from input tensor.
     The dimension axis is input from start to start + length.
     """
-    return F.narrow(x, axis, start, length)
+    return F.narrow(input, axis, start, length)
 
 
 def to_csr(x):
@@ -2975,11 +2975,11 @@ def negative(input):
     return F.neg(input)
 
 
-def nonzero(x):
+def nonzero(input):
     """
     Return a Tensor of the positions of all non-zero values.
     """
-    return F.nonzero(x)
+    return F.nonzero(input)
 
 
 def new_zeros(x, size, *, dtype=None):
@@ -3012,11 +3012,11 @@ def diagflat(input, offset=0):
     return F.diagflat(input, offset)
 
 
-def masked_select(x, mask):
+def masked_select(input, mask):
     """
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
     """
-    return F.masked_select(x, mask)
+    return F.masked_select(input, mask)
 
 
 def inplace_update(x, v, indices):
@@ -4176,11 +4176,11 @@ def sinh(input):
     return F.sinh(input)
 
 
-def sort(input, dim=-1, descending=False):
+def sort(input, axis=-1, descending=False):
     r"""
     Sorts the elements of the input tensor along a given dimension in ascending order by value.
     """
-    return F.sort(input, axis=dim, descending=descending)
+    return F.sort(input, axis=axis, descending=descending)
 
 
 def argsort(input, axis=-1, descending=False):
@@ -4224,25 +4224,25 @@ def frac(x):
     return F.frac(x)
 
 
-def argwhere(x):
+def argwhere(input):
     r"""
     For details, please refer to :func:`mindspore.ops.argwhere`.
     """
-    return F.argwhere(x)
+    return F.argwhere(input)
 
 
-def moveaxis(x, source, destination):
+def moveaxis(input, source, destination):
     r"""
     For details, please refer to :func:`mindspore.ops.moveaxis`.
     """
-    return F.moveaxis(x, source, destination)
+    return F.moveaxis(input, source, destination)
 
 
-def movedim(x, source, destination):
+def movedim(input, source, destination):
     r"""
     For details, please refer to :func:`mindspore.ops.movedim`.
     """
-    return F.movedim(x, source, destination)
+    return F.movedim(input, source, destination)
 
 
 def nextafter(input, other):
