@@ -24,6 +24,7 @@
 #include "ops/real_tuple_getitem.h"
 #include "abstract/param_validator.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -69,7 +70,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
     auto ret = elements[0];
     MS_EXCEPTION_IF_NULL(ret);
-    return ret->Broaden();
+    return abstract::AbstractBroaden(ret);
   }
   // For constant index, return input[index] of sequence.
   if (!index_value->isa<Int64Imm>()) {

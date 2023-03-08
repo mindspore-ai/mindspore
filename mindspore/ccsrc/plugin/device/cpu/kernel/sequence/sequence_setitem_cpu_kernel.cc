@@ -81,7 +81,7 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   }
 
   if (idx < -len || idx >= len) {
-    MS_EXCEPTION(ValueError) << "idx is out of range: " << -len << " < idx <= " << len << ", but got " << idx << ".";
+    MS_EXCEPTION(ValueError) << "idx is out of range: " << -len << " <= idx < " << len << ", but got " << idx << ".";
   }
   if (idx < 0) {
     idx += len;

@@ -60,10 +60,13 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index = GetDeviceAddress<int64_t>(inputs, 1);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-
-  if (*index >= static_cast<int64_t>(tuple_shape_[0])) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' index = " << *index
-                      << " must be smaller the input_tuple_size = " << tuple_shape_[0];
+  auto len = static_cast<int64_t>(tuple_shape_[0]);
+  if (*index >= len || *index < -len) {
+    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " < =index < " << len << ", but got " << *index
+                             << ".";
+  }
+  if (*index < 0) {
+    *index += len;
   }
   if (tuple_shape_.size() == 1 || tuple_shape_[1] == 0) {
     *output_addr = input_addr[*index];
