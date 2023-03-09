@@ -9,37 +9,7 @@ mindspore_lite.Converter
     .. note::
         请先构造Converter类，再通过执行Converter.converter()方法生成模型。
 
-        加解密功能仅在编译时设置为 `MSLITE_ENABLE_MODEL_ENCRYPTION=on` 时生效，并且仅支持Linux x86平台。其中密钥为十六进制表示的字符串，如encrypt_key设置为"30313233343536373839414243444546"，对应的十六进制表示为 `(b)0123456789ABCDEF` ，Linux平台用户可以使用 `xxd` 工具对字节表示的密钥进行十六进制表达转换。需要注意的是，加解密算法在1.7版本进行了更新，导致新版的python接口不支持对1.6及其之前版本的MindSpore Lite加密导出的模型进行转换。
-
-    .. py:method:: weight_fp16
-        :property:
-
-        获取模型是否保存为Floa16数据类型。
-
-    .. py:method:: input_shape
-        :property:
-
-        获取模型输入的维度。
-
-    .. py:method:: input_format
-        :property:
-
-        获取模型的输入format。
-
-    .. py:method:: input_data_type
-        :property:
-
-        获取量化模型输入Tensor的数据类型。
-
-    .. py:method:: output_data_type
-        :property:
-
-        获取量化模型输出tensor的data type。
-
-    .. py:method:: save_type
-        :property:
-
-        获取导出模型文件的类型。
+        加解密功能仅在编译时设置为 `MSLITE_ENABLE_MODEL_ENCRYPTION=on` 时生效，并且仅支持Linux x86平台。其中密钥为十六进制表示的字符串，如encrypt_key设置为"30313233343536373839414243444546"，对应的十六进制表示为 `(b)0123456789ABCDEF` ，Linux平台用户可以使用 `xxd` 工具对字节表示的密钥进行十六进制表达转换。需要注意的是，加解密算法在1.7版本进行了更新，导致新版的Python接口不支持对1.6及其之前版本的MindSpore Lite加密导出的模型进行转换。
 
     .. py:method:: decrypt_key
         :property:
@@ -50,6 +20,11 @@ mindspore_lite.Converter
         :property:
 
         获取加载密文MindIR的模式。
+
+    .. py:method:: device
+        :property:
+
+        设置转换模型时的目标设备。
 
     .. py:method:: enable_encryption
         :property:
@@ -66,10 +41,20 @@ mindspore_lite.Converter
 
         Converter后是否进行预推理。
 
-    .. py:method:: train_model
+    .. py:method:: input_data_type
         :property:
 
-        模型是否将在设备上进行训练。
+        获取量化模型输入Tensor的数据类型。
+
+    .. py:method:: input_format
+        :property:
+
+        获取模型的输入format。
+
+    .. py:method:: input_shape
+        :property:
+
+        获取模型输入的维度。
 
     .. py:method:: optimize
         :property:
@@ -84,10 +69,25 @@ mindspore_lite.Converter
               - 不需要经过离线转换，直接进行推理执行。
               - 使用离线转换，CPU/GPU后端设置optimize为"general"，NPU后端设置optimize为"ascend_oriented"，在离线阶段完成相关优化，减少推理执行的初始化时间。
 
-    .. py:method:: device
+    .. py:method:: output_data_type
         :property:
 
-        设置转换模型时的目标设备。
+        获取量化模型输出tensor的data type。
+
+    .. py:method:: save_type
+        :property:
+
+        获取导出模型文件的类型。
+
+    .. py:method:: train_model
+        :property:
+
+        模型是否将在设备上进行训练。
+
+    .. py:method:: weight_fp16
+        :property:
+
+        获取模型是否保存为Floa16数据类型。
 
     .. py:method:: converter(fmk_type, model_file, output_file="", weight_file="", config_file="")
 

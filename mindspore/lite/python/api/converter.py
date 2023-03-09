@@ -78,7 +78,7 @@ class Converter:
         hexadecimal. For example, if encrypt_key is set as "30313233343637383939414243444546", the corresponding
         hexadecimal expression is '(b)0123456789ABCDEF' . Linux platform users can use the' xxd 'tool to convert the
         key expressed in bytes into hexadecimal expressions. It should be noted that the encryption and decryption
-        algorithm has been updated in version 1.7, resulting in the new python interface does not support the conversion
+        algorithm has been updated in version 1.7, resulting in the new Python interface does not support the conversion
         of MindSpore Lite's encryption exported models in version 1.6 and earlier.
 
     Examples:
@@ -160,7 +160,7 @@ class Converter:
 
     @property
     def weight_fp16(self):
-        """Get whether the model will be saved as the Float16 data type."""
+        """Get the status whether the model will be saved as the Float16 data type."""
         return self._converter.get_weight_fp16()
 
     @weight_fp16.setter
@@ -223,16 +223,16 @@ class Converter:
 
     @property
     def input_format(self):
-        """Get the input format of exported model."""
+        """Get the input format of model."""
         return format_cxx_py_map.get(self._converter.get_input_format())
 
     @input_format.setter
     def input_format(self, input_format):
         """
-        Set the input format of exported model.
+        Set the input format of model.
 
         Args:
-            input_format (Format): Set the input format of exported model. Only Valid for 4-dimensional input.The
+            input_format (Format): Set the input format of model. Only Valid for 4-dimensional input.The
                 following 2 input formats are supported: Format.NCHW | Format.NHWC. For details,
                 see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
 
@@ -380,7 +380,7 @@ class Converter:
 
     @property
     def enable_encryption(self):
-        """Get whether to encrypt the model when exporting."""
+        """Get the status whether to encrypt the model when exporting."""
         return self._converter.get_enable_encryption()
 
     @enable_encryption.setter
@@ -420,7 +420,7 @@ class Converter:
 
     @property
     def infer(self):
-        """Get whether to do pre-inference after Converter."""
+        """Get the status whether to do pre-inference after Converter."""
         return self._converter.get_infer()
 
     @infer.setter
@@ -439,7 +439,7 @@ class Converter:
 
     @property
     def train_model(self):
-        """Get whether the model is going to be trained on device."""
+        """Get the status whether the model is going to be trained on device."""
         if not hasattr(_c_lite_wrapper, "GetTrainModel"):
             raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
         return self._converter.get_train_model()
@@ -465,7 +465,7 @@ class Converter:
 
     @property
     def optimize(self):
-        """Get whether avoid fusion optimization."""
+        """Get the status whether avoid fusion optimization."""
         return self._converter.get_no_fusion()
 
     @optimize.setter
@@ -476,8 +476,8 @@ class Converter:
         Note:
             optimize is used to set the mode of optimization during the offline conversion. If this parameter is set to
             "none", no relevant graph optimization operations will be performed during the offline conversion phase of
-            the model, and the relevant graph optimization operations will be done during the execution of the inference
-            phase. The advantage of this parameter is that the converted model can be deployed directly to any
+            the model, and the relevant graph optimization operations will be performed during the execution of the
+            inference phase. The advantage of this parameter is that the converted model can be deployed directly to any
             CPU/GPU/Ascend hardware backend since it is not optimized in a specific way, while the disadvantage is that
             the initialization time of the model increases during inference execution. If this parameter is set to
             "general", general optimization will be performed, such as constant folding and operator fusion (the
