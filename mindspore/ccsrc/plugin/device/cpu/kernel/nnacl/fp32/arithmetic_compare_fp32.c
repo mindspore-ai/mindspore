@@ -16,6 +16,21 @@
 
 #include "nnacl/fp32/arithmetic_compare_fp32.h"
 
+inline bool EqualFp32(float x, float y);
+inline bool NotEqualFp32(float x, float y);
+inline bool LessFp32(float x, float y);
+inline bool LessEqualFp32(float x, float y);
+inline bool GreaterFp32(float x, float y);
+inline bool GreaterEqualFp32(float x, float y);
+
+inline bool EqualInt32(int x, int y);
+inline bool NotEqualInt32(int x, int y);
+inline bool NotEqualInt64(int64_t x, int64_t y);
+inline bool LessInt32(int x, int y);
+inline bool LessEqualInt32(int x, int y);
+inline bool GreaterInt32(int x, int y);
+inline bool GreaterEqualInt32(int x, int y);
+
 bool EqualFp32(float x, float y) { return x == y; }
 bool NotEqualFp32(float x, float y) { return x != y; }
 bool LessFp32(float x, float y) { return x < y; }
