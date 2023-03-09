@@ -133,6 +133,15 @@ class ConverterInnerContext {
   void SetTargetDevice(const std::string &target_device) { target_device_ = target_device; }
   std::string GetTargetDevice() const { return target_device_; }
 
+  void Free() {
+    graph_input_data_type_map_.clear();
+    graph_output_data_type_map_.clear();
+    graph_input_tensor_shape_map_.clear();
+    graph_output_tensor_names_.clear();
+    external_used_config_infos_.clear();
+    target_device_ = "";
+  }
+
  private:
   ConverterInnerContext() {
     (void)external_used_config_infos_.emplace(mindspore::converter::KCommonQuantParam,

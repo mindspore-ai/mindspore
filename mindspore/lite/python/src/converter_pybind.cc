@@ -31,7 +31,7 @@ void ConverterPyBind(const py::module &m) {
     .value("kFmkTypePytorch", converter::FmkType::kFmkTypePytorch);
 
   py::class_<Converter, std::shared_ptr<Converter>>(m, "ConverterBind")
-    .def(py::init<converter::FmkType, const std::string &, const std::string &, const std::string &>())
+    .def(py::init<>())
     .def("set_config_file", py::overload_cast<const std::string &>(&Converter::SetConfigFile))
     .def("get_config_file", &Converter::GetConfigFile)
     .def("set_config_info",
@@ -60,12 +60,16 @@ void ConverterPyBind(const py::module &m) {
     .def("get_encrypt_key", &Converter::GetEncryptKey)
     .def("set_infer", &Converter::SetInfer)
     .def("get_infer", &Converter::GetInfer)
+#if !defined(ENABLE_CLOUD_FUSION_INFERENCE) && !defined(ENABLE_CLOUD_INFERENCE)
     .def("set_train_model", &Converter::SetTrainModel)
     .def("get_train_model", &Converter::GetTrainModel)
+#endif
     .def("set_no_fusion", &Converter::SetNoFusion)
     .def("get_no_fusion", &Converter::GetNoFusion)
     .def("set_device", py::overload_cast<const std::string &>(&Converter::SetDevice))
     .def("get_device", &Converter::GetDevice)
-    .def("converter", py::overload_cast<>(&Converter::Convert));
+    .def("converter",
+         py::overload_cast<converter::FmkType, const std::string &, const std::string &, const std::string &>(
+           &Converter::Convert));
 }
 }  // namespace mindspore::lite

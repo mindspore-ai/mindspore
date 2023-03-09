@@ -63,7 +63,11 @@ struct ConverterPara {
   std::string decrypt_mode = "AES-GCM";
   std::string encrypt_key;
   std::string encrypt_mode = "AES-GCM";  // inner
+#ifdef ENABLE_OPENSSL
+  bool enable_encryption = true;
+#else
   bool enable_encryption = false;
+#endif
   bool pre_infer = false;
   bool train_model = false;
   bool no_fusion = false;
