@@ -1,13 +1,17 @@
-reviewers:
+approvers:
 - zh_qh
-- hwhewei
-- xychow
 - ginfung
 - chenfei52
-- zhangzhaoju
+
+reviewers:
 - lanzhineng
 - lianliguang
 - Margaret_wangrui
 - irmo
 - huangbingjian
 - liangzhibo
+- Liangcan-Li
+- ligan15
+
+options:
+    no_parent_owners: true

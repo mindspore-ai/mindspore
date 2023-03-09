@@ -1,6 +1,17 @@
 approvers:
 - zh_qh
-- hwhewei
 - ginfung
 - chenfei52
 
+reviewers:
+- lanzhineng
+- lianliguang
+- Margaret_wangrui
+- irmo
+- huangbingjian
+- liangzhibo
+- Liangcan-Li
+- ligan15
+
+options:
+    no_parent_owners: true
