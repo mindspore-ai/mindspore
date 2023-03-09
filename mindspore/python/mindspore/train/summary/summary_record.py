@@ -30,7 +30,8 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
 from mindspore.common.api import _cell_graph_executor
-from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
+from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type, \
+    check_summary_param
 from mindspore.train.summary._summary_adapter import get_event_file_name, package_graph_event
 from mindspore.train.summary._writer_pool import WriterPool
 from mindspore.train.summary.enums import PluginEnum
@@ -72,20 +73,9 @@ def _get_summary_tensor_data():
 
 def _record_summary_tensor_data():
     """Record summary tensor data."""
-
-    def check_summary_param(summary_name, tag, tensor):
-        """Checks the tag is valid for summary."""
-        if not isinstance(tag, str) or not tag:
-            raise ValueError(f'For "{summary_name}", the name must be valid string, but got "{tag}".')
-        if not isinstance(tensor, (Tensor, Tensor_)):
-            raise TypeError(f'For "{summary_name}", the parameter "value" expect to be Tensor, '
-                            f'but got {type(tensor).__name__}')
-
     summary_list = list()
     for data in debug_ops.SUMMARY_TENSOR_CACHE:
         check_summary_param(data[0], data[1], data[2])
-        plugin = data[0].split('Summary')[0].lower()
-        _check_to_numpy(plugin, data[2], prim=True)
         if data[0] == "TensorSummary":
             summary_op_name = data[1] + "[:Tensor]"
         elif data[0] == "ScalarSummary":

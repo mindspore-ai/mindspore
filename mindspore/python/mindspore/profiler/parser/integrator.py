@@ -140,8 +140,9 @@ class Integrator:
                 op_name_type_cache[row[3]] = row[5]
 
         op_type_time_cache = {}
+        total_time = 0
         for full_op_name, op_info in self._op_time_cache.items():
-            self._total_time += op_info[0] * op_info[1]
+            total_time += op_info[0] * op_info[1]
             op_type = op_name_type_cache.get(full_op_name)
             op_type_time = op_type_time_cache.get(op_type)
             if not op_type_time:
@@ -159,7 +160,7 @@ class Integrator:
             for op_type, op_type_time_info in op_type_time_cache.items():
                 type_info = [
                     op_type, op_type_time_info[0], op_type_time_info[1],
-                    round((op_type_time_info[0] / self._total_time) * 100, 2)
+                    round((op_type_time_info[0] / total_time) * 100, 2)
                 ]
                 csv_writer.writerow(type_info)
 

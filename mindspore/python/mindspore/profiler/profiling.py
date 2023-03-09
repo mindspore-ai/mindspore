@@ -1355,7 +1355,7 @@ class Profiler:
         if not env_run_config.get("start"):
             for param in params:
                 if param not in DeviceSupportParam.__getattr__(f'{self._device_target}'.upper()).value:
-                    logger.warning("%s is an invalid param which don't work.", param)
+                    logger.warning("%s is an invalid param which doesn't work.", param)
                     kwargs.pop(param)
                 elif not self._op_time and kwargs.get(param) and param not in ALWAYS_VALID_PARAM:
                     logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")

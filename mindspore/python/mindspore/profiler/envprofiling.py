@@ -17,7 +17,7 @@ import json
 import os
 import time
 from mindspore.profiler import Profiler
-from mindspore.profiler.profiling import AICORE_METRICS_DICT, DeviceSupportParam
+from mindspore.profiler.profiling import AICORE_METRICS_DICT, DeviceSupportParam, ALWAYS_VALID_PARAM
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.integrator import DeviceTarget
 
@@ -36,13 +36,18 @@ def get_profiling_options():
 def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e7):
     """Parse platform support parameters."""
     device_target = context.get_context("device_target").upper()
+    op_time = final_options.get("op_time")
     support_list = DeviceSupportParam.__getattr__(f'{device_target}').value
     support_dict = final_options.copy()
     for param in list(set(origin_options) | set(final_options)):
         if param not in support_list and param in list(origin_options.keys()):
-            logger.warning(f"[Profiler]'{param}' is an invalid param which don't work.")
+            logger.warning(f"[Profiler]'{param}' is an invalid param which doesn't work.")
+        if param in support_list:
+            if not op_time and origin_options.get(param) and param not in ALWAYS_VALID_PARAM:
+                logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")
         if param not in support_list and final_options.get(param):
             support_dict.pop(param)
+
     simple_options = {
         "start_time": int(time.time() * factor_s_to_us),
         "file_output_path": "",

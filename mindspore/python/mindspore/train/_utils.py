@@ -20,6 +20,7 @@ from collections.abc import Iterable
 import numpy as np
 
 from mindspore.common.tensor import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore import log as logger
@@ -30,6 +31,7 @@ from mindspore.train.checkpoint_pb2 import Checkpoint
 from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strategy
 from mindspore.train.lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 from mindspore.parallel._parallel_serialization import _make_dir
+from mindspore.ops.operations import debug_ops
 
 
 def _convert_type(types):
@@ -144,7 +146,7 @@ def _check_to_numpy(plugin, tensor, prim=None):
         if np_value.size == 1:
             return np_value
         raise ValueError(
-            f'For "{summary_name}", the v rank must be less than or equal to 1, but got {np_value.size}.')
+            f'For "{summary_name}", the v rank must be less than or equal to 1, but got {len(np_value)}.')
     if plugin == 'image':
         if np_value.ndim == 4:
             return np_value
@@ -152,8 +154,26 @@ def _check_to_numpy(plugin, tensor, prim=None):
     if plugin in ('tensor', 'histogram'):
         if np_value.ndim > 0:
             return np_value
-        raise ValueError(f'For "{summary_name}", The tensor should not be empty.')
+        raise ValueError(f'For "{summary_name}", The value should not be empty.')
     return np_value
+
+
+def check_summary_param(summary_name, tag, tensor):
+    """Checks the tag is valid for summary."""
+    plugin = summary_name.split('Summary')[0].lower()
+    try:
+        if not isinstance(tag, str) or not tag:
+            raise TypeError(f'For "{summary_name}", the name must be valid string, but got "{tag}".')
+        if not isinstance(tensor, (Tensor, Tensor_)):
+            raise TypeError(f'For "{summary_name}", the parameter "value" expect to be Tensor, '
+                            f'but got {type(tensor).__name__}')
+        _check_to_numpy(plugin, tensor, prim=True)
+    except TypeError as err:
+        raise TypeError(err)
+    except ValueError as err:
+        raise ValueError(err)
+    finally:
+        debug_ops.SUMMARY_TENSOR_CACHE = []
 
 
 def _check_lineage_value(plugin, value):
