@@ -83,7 +83,6 @@ Neural Network
     mindspore.ops.Padding
     mindspore.ops.PadV3
     mindspore.ops.ResizeBilinear
-    mindspore.ops.ResizeLinear1D
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.UpsampleNearest3D
     mindspore.ops.UpsampleTrilinear3D

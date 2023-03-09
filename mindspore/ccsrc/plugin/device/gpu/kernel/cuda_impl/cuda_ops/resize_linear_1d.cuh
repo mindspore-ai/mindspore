@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_LINEAR_1D_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-enum ResizeLinearCoordinateTransformationMode { ALIGN_CORNERS = 0, HALF_PIXEL = 1, ASYMMETRIC = 2, INVALID_MODE = 255 };
+enum ResizeLinearCoordinateTransformationMode { ALIGN_CORNERS = 0, HALF_PIXEL = 1, INVALID_MODE = 255 };
 
 template <typename T>
 CUDA_LIB_EXPORT void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,

@@ -651,11 +651,10 @@ class ResizeLinear1D(Primitive):
     .. warning::
         - This is an experimental feature and is subjected to change.
         - Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
-        - And the attr `coordinate_transformation_mode` should not be 'asymmetric' in Ascend platform.
 
     Args:
         coordinate_transformation_mode (str): Default is 'align_corners'. Describes how to transform the coordinate
-            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.
 
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
@@ -677,7 +676,7 @@ class ResizeLinear1D(Primitive):
 
     Examples:
         >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
-        >>> size = Tensor([6], mindspore.int32)
+        >>> size = (6,)
         >>> resize_linear_1d = ops.ResizeLinear1D(coordinate_transformation_mode="align_corners")
         >>> output = resize_linear_1d(x, size)
         >>> print(output)
@@ -691,7 +690,7 @@ class ResizeLinear1D(Primitive):
         self.init_prim_io_names(inputs=["x", "sizes"], outputs=["output"])
         validator.check_value_type(
             "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
-        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel", "asymmetric"],
+        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel"],
                                "coordinate_transformation_mode", self.name)
 
 

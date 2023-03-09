@@ -1891,7 +1891,7 @@ class ResizeLinear1DGrad(Primitive):
 
     Args:
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
-            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel'.
     """
 
     @prim_attr_register
@@ -1901,7 +1901,7 @@ class ResizeLinear1DGrad(Primitive):
             inputs=['grads', 'input_x'], outputs=['y'])
         validator.check_value_type(
             "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
-        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel", "asymmetric"],
+        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel"],
                                "coordinate_transformation_mode", self.name)
 
 

@@ -24,12 +24,6 @@ struct AlignCornersFunc {
   }
 };
 
-struct AsymmetricFunc {
-  __device__ void operator()(const double &new_x, const int &old_length, const int &new_length, double *old_x) const {
-    *old_x = new_length != 0 ? new_x * old_length / new_length : 0;
-  }
-};
-
 struct HalfPixelFunc {
   __device__ void operator()(const double &new_x, const int &old_length, const int &new_length, double *old_x) const {
     *old_x = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
@@ -106,9 +100,6 @@ void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, co
     case HALF_PIXEL:
       return ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, HalfPixelFunc());
-    case ASYMMETRIC:
-      return ResizeLinear1DKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-        output_size, in_width, out_width, input, output, AsymmetricFunc());
     default:
       break;
   }
@@ -125,9 +116,6 @@ void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, co
     case HALF_PIXEL:
       return ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, input, output, HalfPixelFunc());
-    case ASYMMETRIC:
-      return ResizeLinear1DKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-        output_size, in_width, out_width, input, output, AsymmetricFunc());
     default:
       break;
   }
@@ -187,9 +175,6 @@ void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode
     case HALF_PIXEL:
       return ResizeLinear1DGradKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, grad_output, grad_input, HalfPixelFunc());
-    case ASYMMETRIC:
-      return ResizeLinear1DGradKernel<T><<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-        output_size, in_width, out_width, grad_output, grad_input, AsymmetricFunc());
     default:
       break;
   }
@@ -206,9 +191,6 @@ void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode
     case HALF_PIXEL:
       return ResizeLinear1DGradKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
         output_size, in_width, out_width, grad_output, grad_input, HalfPixelFunc());
-    case ASYMMETRIC:
-      return ResizeLinear1DGradKernel<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(
-        output_size, in_width, out_width, grad_output, grad_input, AsymmetricFunc());
     default:
       break;
   }
