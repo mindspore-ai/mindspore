@@ -21,11 +21,13 @@
 
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kReduceInputNum = 2;
+constexpr size_t kXInputIndex = 1;
 constexpr size_t kAxisInputIndex = 2;
 constexpr auto r_reduce = "r_reduce";
 constexpr auto m_reduce = "m_reduce";
@@ -65,6 +67,13 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
   return false;
 }
 
+bool ReduceAxisUpdate::IsInputScalar(const AnfNodePtr &x_node) const {
+  auto x_shape_ptr = x_node->Shape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  ShapeVector x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  return x_shape.empty();
+}
+
 bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Reduce node is " << node->DebugString() << ".";
@@ -85,12 +94,15 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
   }
 
   const auto &inputs = cnode->inputs();
+  const AnfNodePtr &input_x = inputs[kXInputIndex];
   const AnfNodePtr &input_axis = inputs[kAxisInputIndex];
+  MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_axis);
+  MS_LOG(INFO) << "X input is " << input_x->DebugString() << ".";
   MS_LOG(INFO) << "Axis input is " << input_axis->DebugString() << ".";
 
   auto axis_value_node = input_axis->cast<ValueNodePtr>();
-  if (axis_value_node == nullptr || !IsAxisEmpty(axis_value_node)) {
+  if (axis_value_node == nullptr || (!IsAxisEmpty(axis_value_node) && !IsInputScalar(input_x))) {
     MS_LOG(INFO) << "Axis input of node " << node->fullname_with_scope() << " is not value node or axis is not empty.";
     return false;
   } else {
