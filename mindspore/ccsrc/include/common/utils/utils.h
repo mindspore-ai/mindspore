@@ -421,6 +421,8 @@ constexpr auto kUnsortedSegmentMaxOpName = "UnsortedSegmentMax";
 constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentSumOpName = "UnsortedSegmentSum";
+// temporary Op UnsortedSegmentSumD for corner case, will be removed in later version
+constexpr auto kUnsortedSegmentSumDOpName = "UnsortedSegmentSumD";
 constexpr auto kUpdateCacheOpName = "UpdateCache";
 constexpr auto kUpdateStateOpName = "UpdateState";
 

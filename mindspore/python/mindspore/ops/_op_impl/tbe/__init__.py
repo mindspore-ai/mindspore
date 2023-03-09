@@ -268,6 +268,7 @@ from .truncate_div_ds import _truncate_div_ds_tbe
 from .truncate_mod import _truncate_mod_tbe
 from .truncate_mod_ds import _truncate_mod_ds_tbe
 from .unsorted_segment_sum import _unsorted_segment_sum_tbe
+from .unsorted_segment_sum_d import _unsorted_segment_sum_d_tbe
 from .unsorted_segment_sum_ds import _unsorted_segment_sum_ds_tbe
 from .unsorted_segment_prod import _unsorted_segment_prod_tbe
 from .unsorted_segment_prod_ds import _unsorted_segment_prod_ds_tbe
