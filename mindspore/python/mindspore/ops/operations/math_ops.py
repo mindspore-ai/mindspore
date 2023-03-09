@@ -1851,7 +1851,7 @@ class InplaceUpdateV2(Primitive):
 
 class InplaceUpdate(Primitive):
     r"""
-    The InplaceUpdate interface is deprecated, please use the :class:`mindspore.ops.InplaceUpdateV2` instead.
+    The InplaceUpdate interface is deprecated. Please use the :class:`mindspore.ops.InplaceUpdateV2` instead.
 
     Supported Platforms:
         Deprecated

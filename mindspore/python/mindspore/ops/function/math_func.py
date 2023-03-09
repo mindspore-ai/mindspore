@@ -1352,18 +1352,18 @@ def i0(x):
 
 def inplace_update(x, v, indices):
     """
-    Updates specified rows with values in `v`.
+    Updates specified values in `x` to `v` according to `indices`.
 
     Note:
-            `indices` refers to the left-most dimension.
+        `indices` can only be indexed along the highest dimension.
 
     Args:
-        indices (Union[int, tuple, Tensor]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple or tensor, whose value is in [0, the first dimension size of x).
         x (Tensor): A tensor which to be inplace updated. It can be one of the following data types:
             float32, float16 and int32.
         v (Tensor): A tensor with the same type as `x` and the same dimension size as `x` except
             the first dimension, which must be the same as the size of `indices`.
+        indices (Union[int, tuple, Tensor]): Determines which rows of `x` to update with `v`.
+            It is an int or tuple or tensor, whose value is in [0, the highest dimension of `x`).
 
     Returns:
         Tensor, with the same type and shape as the input `x`.
