@@ -211,7 +211,7 @@ bool Context::GetMultiModalHW() const {
   return data_->float_mode;
 }
 
-std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() const {
+std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
   static std::vector<std::shared_ptr<DeviceInfoContext>> empty{};
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
