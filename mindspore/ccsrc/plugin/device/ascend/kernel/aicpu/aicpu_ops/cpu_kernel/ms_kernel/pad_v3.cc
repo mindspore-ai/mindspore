@@ -473,8 +473,6 @@ uint32_t PadV3CpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   input_dims = ctx.Input(0)->GetTensorShape()->GetDims();
   const std::vector<int64_t> paddings_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   paddings_num = ctx.Input(1)->NumElements();
-  KERNEL_CHECK_FALSE(paddings_shape.size() == 1 && paddings_num == input_dims * kNum2, KERNEL_STATUS_PARAM_INVALID,
-                     "Paddings shape is not supported");
   return KERNEL_STATUS_OK;
 }
 
@@ -482,12 +480,8 @@ template <typename T>
 uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
   auto paddings_ptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   paddings = std::vector<int64_t>(input_dims * kNum2, 0);
-  for (int64_t i = 0; i < paddings_num; i += kNum2) {
-    paddings[i] = static_cast<int64_t>(paddings_ptr[paddings_num - i - kNum2]);
-    paddings[i + 1] = static_cast<int64_t>(paddings_ptr[paddings_num - i - 1]);
-  }
-  if (mode == "edge" || mode == "reflect" || (mode == "constant" && paddings_contiguous == false)) {
-    paddings_num = paddings_num - kNum4;
+  for (int64_t i = 0; i < paddings_num; ++i) {
+    paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
   }
   if (paddings_contiguous == false) {
     std::vector<int64_t> tmp = paddings;
@@ -500,31 +494,10 @@ uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
     }
   }
   input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  output_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
+  output_shape = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   parallelSliceNum = 1;
   for (int64_t i = 0; i < input_dims - paddings_num / kNum2; ++i) {
     parallelSliceNum *= input_shape[i];
-  }
-  for (int64_t i = 0; i < paddings_num / kNum2; ++i) {
-    output_shape.end()[-(i + 1)] += (paddings[i * kNum2] + paddings[i * kNum2 + 1]);
-    KERNEL_CHECK_FALSE(output_shape.end()[-(i + 1)] > 0, KERNEL_STATUS_PARAM_INVALID,
-                       "output_shape number must be greater than 0");
-    KERNEL_CHECK_FALSE(input_shape.end()[-(i + 1)] >= std::max(-paddings[i * kNum2], -paddings[i * kNum2 + 1]),
-                       KERNEL_STATUS_PARAM_INVALID,
-                       "Padding size should be less than the corresponding input dimension");
-    if (mode == "reflect") {
-      KERNEL_CHECK_FALSE(input_shape.end()[-(i + 1)] > std::max(paddings[i * kNum2], paddings[i * kNum2 + 1]),
-                         KERNEL_STATUS_PARAM_INVALID,
-                         "Padding size should be less than the corresponding input dimension");
-    }
-  }
-  if (output_shape != ctx.Output(0)->GetTensorShape()->GetDimSizes()) {
-    ctx.Output(0)->GetTensorShape()->SetDimSizes(output_shape);
-    KERNEL_LOG_DEBUG("Set output tensor shape success, num elements:[%llu]",
-                     static_cast<uint64_t>(ctx.Output(0)->NumElements()));
-  } else {
-    KERNEL_LOG_DEBUG("Output tensor is a const tensor, num elements:[%llu]",
-                     static_cast<uint64_t>(ctx.Output(0)->NumElements()));
   }
   return KERNEL_STATUS_OK;
 }
