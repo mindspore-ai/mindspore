@@ -38,6 +38,7 @@ const int kTwoNum = 2;
 const int kThreeNum = 3;
 const int kFourNum = 4;
 const int kFiveNum = 5;
+const int kSixNum = 6;
 const int64_t kOneNumLong = 1;
 const float weight_for_mul = 0.5;
 enum OpMergeMode {
@@ -49,6 +50,7 @@ enum OpMergeMode {
   OP_MERGE_MAXPOOL_WITH_ARGMAX = 5,  // indicate `MindSpore MaxPoolWithArgmax(x)[0]` --> `ONNX MaxPool`
   OP_MERGE_LAYER_NORM = 6,           // indicate `MindSpore LayerNorm(x)[0]` --> `ONNX MeanVarianceNormalization`
   OP_MERGE_CONV2D_TRANSPOSE = 7,     // indicate `MindSpore ConvTranspose + BiasAdd` --> `ONNX ConvTranspose`
+  OP_MERGE_DYNAMIC_GRU_V2 = 8,       // indicate `MindSpore DynamicGRUV2(...)[0]` --> `ONNX GRU`
 };
 
 struct OpMergedInfo {
@@ -238,7 +240,7 @@ uint32_t Fp32ToFp16(float value) {
   uint32_t fp32_bits;
   auto ret = memcpy_s(reinterpret_cast<std::byte *>(&fp32_bits), sizeof(fp32_bits),
                       reinterpret_cast<std::byte *>(&value), sizeof(value));
-  if (ret != 0) {
+  if (ret != EOK) {
     MS_LOG(ERROR) << "Set data memcpy_s failed, ret = " << ret;
   }
 
@@ -378,6 +380,18 @@ void AddSplitOp(const std::string &input, const std::vector<std::string> &output
   for (int64_t n : split) {
     split_attr_proto->add_ints(n);
   }
+}
+
+void AddExpandOp(const std::string &input, const std::string &output, const std::vector<int64_t> &shape,
+                 onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *expand_node_proto = graph_proto->add_node();
+  expand_node_proto->set_op_type("Expand");
+  expand_node_proto->set_name(output + "_Expand");
+  expand_node_proto->add_input(input);
+  auto shape_name = output + "_expand_shape_initializer";
+  AddInt64Tensor1DInitializer(shape_name, shape, graph_proto);
+  expand_node_proto->add_input(shape_name);
+  expand_node_proto->add_output(output);
 }
 
 void AddReshapeOp(const std::string &input, const std::string &output, const std::vector<int64_t> &shape,
@@ -545,11 +559,26 @@ void ClipPointsComponent(const std::string &points, const std::string &clipped, 
   AddClipOp(res_to_clip_name, clipped, 0.0f, max, type, graph_proto);
 }
 
+// check AnfNode data type is float or not.
+bool IsFloatDataType(const AnfNodePtr &node) {
+  auto dtype = node->Type();
+  auto elem_type = dyn_cast<TensorType>(dtype)->element()->type_id();
+  switch (elem_type) {
+    case (kNumberTypeFloat):
+    case (kNumberTypeFloat16):
+    case (kNumberTypeFloat32):
+    case (kNumberTypeFloat64):
+      return True;
+    default:
+      return False;
+  }
+}
+
 namespace while_loop_export {
 namespace {
-const char CONTROL_PATTERN[] = "\u21B5";     // ↵
-const char LOOP_BODY_PATTERN[] = "\u21BB";   // ↻
-const char AFTER_LOOP_PATTERN[] = "\u2193";  // ↓
+const char CONTROL_PATTERN[] = "\u21B5";
+const char LOOP_BODY_PATTERN[] = "\u21BB";
+const char AFTER_LOOP_PATTERN[] = "\u2193";
 
 const size_t LOOP_BODY_INPUT = 2;
 const size_t AFTER_LOOP_INPUT = 3;
@@ -877,12 +906,16 @@ class OpNameInfo {
 #define OPERATOR_ONNX_CONVERT_DEFINE(name, onnx_name, impl) \
   OpNameInfo GetOpOnnxConvertInfo_##name() { return impl.set_op_type(#name).set_onnx_type(#onnx_name); }
 
+OPERATOR_ONNX_CONVERT_DEFINE(Mod, Mod, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Add, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Mul, Mul, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Pow, Pow, OpNameInfo())
 
 OPERATOR_ONNX_CONVERT_DEFINE(ReLU, Relu, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sigmoid, Sigmoid, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Sin, Sin, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Round, Round, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Div, Div, OpNameInfo())
 
 OPERATOR_ONNX_CONVERT_DEFINE(Flatten, Flatten, OpNameInfo())
 
@@ -912,6 +945,11 @@ OPERATOR_ONNX_CONVERT_DEFINE(
     .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<kTwoNum>)
     .Attr("output_padding", "output_padding", onnx::AttributeProto_AttributeType_INTS,
           SetAttrTupleValueToProto<kTwoNum>))
+
+OPERATOR_ONNX_CONVERT_DEFINE(DepthToSpace, DepthToSpace,
+                             OpNameInfo().Attr("block_size", "blocksize", onnx::AttributeProto_AttributeType_INT,
+                                               SetAttrValueToProto<Int64Imm>))
+
 OPERATOR_ONNX_CONVERT_DEFINE(BiasAdd, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(MatMul, Gemm,
                              OpNameInfo()
@@ -951,6 +989,13 @@ OPERATOR_ONNX_CONVERT_DEFINE(
     .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>))
 
 OPERATOR_ONNX_CONVERT_DEFINE(
+  MaxPool3D, MaxPool,
+  OpNameInfo()
+    .Attr("kernel_size", "kernel_shape", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>)
+    .Attr("pad_mode", "auto_pad", onnx::AttributeProto_AttributeType_STRING, SetPoolingPadMode)
+    .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>))
+
+OPERATOR_ONNX_CONVERT_DEFINE(
   MaxPoolWithArgmax, MaxPool,
   OpNameInfo()
     .Attr("kernel_size", "kernel_shape", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>)
@@ -968,6 +1013,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Gather, Gather, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(MakeTuple, SequenceConstruct, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(RealDiv, Div, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Sub, Sub, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Neg, Neg, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Maximum, Max,
                              OpNameInfo()
                                .CastInput(0, onnx::TensorProto_DataType_INT32, onnx::TensorProto_DataType_FLOAT)
@@ -1007,6 +1053,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Select, Where, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Log, Log, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Greater, Greater, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(LogicalAnd, And, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(LogicalOr, Or, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(ReverseSequence, ReverseSequence,
                              OpNameInfo()
                                .Attr("seq_dim", "time_axis", onnx::AttributeProto_AttributeType_INT,
@@ -1018,10 +1065,14 @@ OPERATOR_ONNX_CONVERT_DEFINE(Less, Less, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(TensorScatterUpdate, ScatterND,
                              OpNameInfo().CastInput(1, onnx::TensorProto_DataType_INT32,
                                                     onnx::TensorProto_DataType_INT64))
+OPERATOR_ONNX_CONVERT_DEFINE(Cos, Cos, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Atan2, Atan2, OpNameInfo())
 
 #define OP_CONVERT_FUNCTION_NAME(name) GetOpOnnxConvertInfo_##name
 
 void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
+  fn(OP_CONVERT_FUNCTION_NAME(Mod)());
+  fn(OP_CONVERT_FUNCTION_NAME(DepthToSpace)());
   fn(OP_CONVERT_FUNCTION_NAME(Add)());
   fn(OP_CONVERT_FUNCTION_NAME(Mul)());
   fn(OP_CONVERT_FUNCTION_NAME(Pow)());
@@ -1033,6 +1084,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Argmax)());
   fn(OP_CONVERT_FUNCTION_NAME(Flatten)());
   fn(OP_CONVERT_FUNCTION_NAME(MaxPool)());
+  fn(OP_CONVERT_FUNCTION_NAME(MaxPool3D)());
   fn(OP_CONVERT_FUNCTION_NAME(MaxPoolWithArgmax)());
   fn(OP_CONVERT_FUNCTION_NAME(AvgPool)());
 
@@ -1042,6 +1094,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(RealDiv)());
   fn(OP_CONVERT_FUNCTION_NAME(BiasAdd)());
   fn(OP_CONVERT_FUNCTION_NAME(Sub)());
+  fn(OP_CONVERT_FUNCTION_NAME(Neg)());
   fn(OP_CONVERT_FUNCTION_NAME(Maximum)());
   fn(OP_CONVERT_FUNCTION_NAME(Minimum)());
   fn(OP_CONVERT_FUNCTION_NAME(Exp)());
@@ -1063,8 +1116,15 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(Less)());
   fn(OP_CONVERT_FUNCTION_NAME(Greater)());
   fn(OP_CONVERT_FUNCTION_NAME(LogicalAnd)());
+  fn(OP_CONVERT_FUNCTION_NAME(LogicalOr)());
   fn(OP_CONVERT_FUNCTION_NAME(ReverseSequence)());
   fn(OP_CONVERT_FUNCTION_NAME(TensorScatterUpdate)());
+
+  fn(OP_CONVERT_FUNCTION_NAME(Sin)());
+  fn(OP_CONVERT_FUNCTION_NAME(Cos)());
+  fn(OP_CONVERT_FUNCTION_NAME(Atan2)());
+  fn(OP_CONVERT_FUNCTION_NAME(Round)());
+  fn(OP_CONVERT_FUNCTION_NAME(Div)());
 }
 
 class OpConvertRegistry {
@@ -1117,6 +1177,8 @@ class OnnxExporter {
                     mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
   void MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                          mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
+  void IgnoreMakeTuple(const AnfNodePtr &node, mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const;
+
   void ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, std::string> *node_map_ptr,
                    onnx::GraphProto *graph_proto);
 
@@ -1129,6 +1191,8 @@ class OnnxExporter {
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimReduce(const FuncGraphPtr &func_graph, const CNodePtr &node,
                         std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimReduceAnyOrAll(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1142,10 +1206,16 @@ class OnnxExporter {
                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimExpandDims(const FuncGraphPtr &func_graph, const CNodePtr &node,
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimGatherD(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                         std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimPad(const FuncGraphPtr &func_graph, const CNodePtr &node,
                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimBatchMatMul(const FuncGraphPtr &func_graph, const CNodePtr &node,
                              std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimBroadcastTo(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimAddN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimGeLU(const FuncGraphPtr &func_graph, const CNodePtr &node,
                       std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimConcat(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1180,7 +1250,11 @@ class OnnxExporter {
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimOnesLike(const FuncGraphPtr &func_graph, const CNodePtr &node,
                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimScatterNd(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimArgMaxWithValue(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimArgMinWithValue(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimOneHot(const FuncGraphPtr &func_graph, const CNodePtr &node,
                         std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
@@ -1191,8 +1265,12 @@ class OnnxExporter {
                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimGreaterEqual(const FuncGraphPtr &func_graph, const CNodePtr &node,
                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimLessEqual(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &node,
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto);
   void ExportPrimLSTM(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                       onnx::GraphProto *graph_proto);
   void ExportPrimReverseV2(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1201,6 +1279,16 @@ class OnnxExporter {
                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimStack(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
                        onnx::GraphProto *graph_proto);
+  void ExportPrimAtan2(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                       onnx::GraphProto *graph_proto);
+  void ExportPrimFloorDiv(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                          onnx::GraphProto *graph_proto);
+  void ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                          onnx::GraphProto *graph_proto);
+  void ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                      onnx::GraphProto *graph_proto);
+  void ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
+                        onnx::GraphProto *graph_proto);
   void ExportMergeConv(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1213,7 +1301,8 @@ class OnnxExporter {
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
-
+  void ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr &node,
+                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto);
   void ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &return_arg,
                     std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   std::string GetNodeInputName(const AnfNodePtr &node, std::map<AnfNodePtr, std::string> *node_map_ptr,
@@ -1423,6 +1512,7 @@ struct MergeRule {
 
 void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                      mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
+  MS_EXCEPTION_IF_NULL(op_merged_infos_ptr);
   auto &op_merged_infos = *op_merged_infos_ptr;
   const auto ignore = [&op_merged_infos](const AnfNodePtr &node) {
     op_merged_infos[node].mode = OP_MERGE_IGNORE;
@@ -1438,6 +1528,7 @@ void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNode
     {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, OP_MERGE_BATCH_NORM},
     {prim::kPrimTupleGetItem, prim::kPrimMaxPoolWithArgmax, OP_MERGE_MAXPOOL_WITH_ARGMAX},
     {prim::kPrimTupleGetItem, prim::kPrimLayerNorm, OP_MERGE_LAYER_NORM},
+    {prim::kPrimTupleGetItem, prim::kPrimDynamicGRUV2, OP_MERGE_DYNAMIC_GRU_V2},
   };
 
   auto rule = std::find_if(first_input_merge_rules.begin(), first_input_merge_rules.end(), [&cnode](const auto &rule) {
@@ -1464,14 +1555,36 @@ void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNode
     }
   } else if (cnode == func_graph->get_return()) {
     auto first_input = GetRealInput(cnode->input(1));  // Unpack Depend
-    if (IsPrimitiveCNode(first_input, prim::kPrimMakeTuple)) {
-      // Ignore MakeTuple output node to avoid exporting it to SequenceConstruct
-      // and handle multiple outputs in ExportOutput
-      ignore(first_input);
-    }
+    // Ignore MakeTuple output node to avoid exporting it to SequenceConstruct
+    // and handle multiple outputs in ExportOutput
+    IgnoreMakeTuple(first_input, op_merged_infos_ptr);
   } else if (cnode->IsApply(prim::kPrimConcat) && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
     // Ignore MakeTuple to handle it in ExportPrimConcat
     ignore(cnode->input(1));
+  }
+}
+
+void OnnxExporter::IgnoreMakeTuple(const AnfNodePtr &node,
+                                   mindspore::HashMap<AnfNodePtr, OpMergedInfo> *op_merged_infos_ptr) const {
+  MS_EXCEPTION_IF_NULL(op_merged_infos_ptr);
+  auto &op_merged_infos = *op_merged_infos_ptr;
+  const auto ignore = [&op_merged_infos](const AnfNodePtr &node) {
+    op_merged_infos[node].mode = OP_MERGE_IGNORE;
+    op_merged_infos[node].referred_count -= 1;
+  };
+  if (node == nullptr) {
+    return;
+  }
+
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    ignore(node);
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode != nullptr) {
+      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        auto real_input = GetRealInput(cnode->input(i));
+        IgnoreMakeTuple(real_input, op_merged_infos_ptr);
+      }
+    }
   }
 }
 
@@ -1492,8 +1605,8 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
     if (!node->isa<CNode>()) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
 
+    auto cnode = node->cast<CNodePtr>();
     auto iter = op_merged_infos.find(cnode);
     // the node is not referenced by any other nodes, skip it
     if (iter == op_merged_infos.end()) {
@@ -1526,6 +1639,9 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
         break;
       case OP_MERGE_CONV2D_TRANSPOSE:
         ExportMergeConv2DTranspose(func_graph, cnode, node_map_ptr, graph_proto);
+        break;
+      case OP_MERGE_DYNAMIC_GRU_V2:
+        ExportMergeDynamicGRUV2(func_graph, cnode, node_map_ptr, graph_proto);
         break;
       default:
         ExportCNode(func_graph, cnode, node_map_ptr, graph_proto);
@@ -1579,6 +1695,8 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
     name = "ReduceSum";
   } else if (node->IsApply(prim::kPrimReduceMean)) {
     name = "ReduceMean";
+  } else if (node->IsApply(prim::kPrimReduceMax)) {
+    name = "ReduceMax";
   } else {
     MS_LOG(EXCEPTION) << "Unsupported reduce op: " << node->ToString();
   }
@@ -1604,6 +1722,75 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
   }
 
   AddReduceOp(name, input_data, node_name, axes, keep_dims, graph_proto);
+}
+
+void OnnxExporter::ExportPrimReduceAnyOrAll(const FuncGraphPtr &, const CNodePtr &node,
+                                            std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                            onnx::GraphProto *const graph_proto) {
+  auto input_data_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_axis = node->input(kTwoNum);
+  auto keep_dims = GetOpAttribute<bool>(node, "keep_dims");
+  auto reduce_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  std::string target_node_name = "";
+  if (node->IsApply(prim::kPrimReduceAny)) {
+    target_node_name = "ReduceSum";
+  } else if (node->IsApply(prim::kPrimReduceAll)) {
+    target_node_name = "ReduceMin";
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported reduce op: " << node->ToString();
+  }
+
+  std::string cast_name = GenerateUniqueName();  // Insert cast op
+  onnx::NodeProto *cast_proto = graph_proto->add_node();
+  cast_proto->add_input(input_data_name);
+  cast_proto->add_output(cast_name);
+  cast_proto->set_op_type(prim::kPrimCast->name());
+  onnx::AttributeProto *attr_proto = cast_proto->add_attribute();
+  attr_proto->set_name("to");
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr_proto->set_i(GetOnnxDataType(TypeId::kNumberTypeFloat32));
+
+  std::vector<int64_t> axes;
+  if (input_axis->isa<ValueNode>()) {
+    auto axis_value = dyn_cast<ValueNode>(input_axis)->value();
+    if (axis_value->isa<Int32Imm>()) {
+      auto int_ptr = dyn_cast<Int32Imm>(axis_value);
+      axes.push_back(int_ptr->value());
+    } else if (axis_value->isa<Int64Imm>()) {
+      auto int_ptr = dyn_cast<Int64Imm>(axis_value);
+      axes.push_back(int_ptr->value());
+    } else if (axis_value->isa<ValueTuple>()) {
+      auto tuple_ptr = dyn_cast<ValueTuple>(axis_value);
+      axes = GetValue<std::vector<int64_t>>(tuple_ptr);
+      if (axes.empty()) {
+        const auto &x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
+        for (size_t i = 0; i < x_shape.size(); ++i) {
+          axes.push_back(static_cast<int64_t>(i));
+        }
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Cannot convert value " << axis_value->ToString() << " of type "
+                        << axis_value->type()->ToString() << " for \"axes\" attribute of " << target_node_name;
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Need to insert op convert variable from tuple to attributes for " << target_node_name;
+  }
+
+  std::string greater_name = GenerateUniqueName();
+  onnx::TensorProto *zero_initializer_proto = graph_proto->add_initializer();
+  auto zero_input_name = greater_name + "_zero";
+  zero_initializer_proto->set_name(zero_input_name);
+  zero_initializer_proto->set_data_type(GetOnnxDataType(kNumberTypeFloat32));
+  zero_initializer_proto->add_float_data(0);
+
+  AddReduceOp(target_node_name, cast_name, greater_name, axes, keep_dims, graph_proto);
+
+  onnx::NodeProto *greater_node_proto = graph_proto->add_node();  // Insert greater op
+  greater_node_proto->add_input(greater_name);
+  greater_node_proto->add_input(zero_input_name);
+  greater_node_proto->add_output(reduce_name);
+  greater_node_proto->set_op_type(prim::kPrimGreater->name());
 }
 
 void OnnxExporter::ExportPrimTranspose(const FuncGraphPtr &, const CNodePtr &node,
@@ -1872,6 +2059,25 @@ void OnnxExporter::ExportPrimExpandDims(const FuncGraphPtr &, const CNodePtr &no
   node_proto->add_input(name_shape);
 }
 
+// MindSpore GatherD -> ONNX GatherElements
+void OnnxExporter::ExportPrimGatherD(const FuncGraphPtr &, const CNodePtr &node,
+                                     std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                     onnx::GraphProto *const graph_proto) {
+  auto input_x = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto axis = GetInt64Value(node->input(kTwoNum));
+  auto input_indices = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_op_type("GatherElements");
+  node_proto->add_output(node_name);
+  node_proto->add_input(input_x);
+  node_proto->add_input(input_indices);
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_name("axis");
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr_proto->set_i(static_cast<::google::protobuf::int64>(axis));
+}
+
 // MindSpore Pad -> ONNX Pad
 void OnnxExporter::ExportPrimPad(const FuncGraphPtr &, const CNodePtr &node,
                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
@@ -1971,6 +2177,72 @@ void OnnxExporter::ExportPrimBatchMatMul(const FuncGraphPtr &, const CNodePtr &n
   } else {
     node_proto->add_input(input_y);
   }
+}
+
+// MindSpore BroadcastTo -> ONNX Expand
+void OnnxExporter::ExportPrimBroadcastTo(const FuncGraphPtr &, const CNodePtr &node,
+                                         std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                         onnx::GraphProto *const graph_proto) {
+  auto input_x = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape());
+  auto name = prim::kPrimBroadcastTo->name();
+
+  auto shape_ptr = GetOpAttributePtr<ValueSequeue>(node, "shape");
+  auto shape_vec = GetValue<std::vector<int64_t>>(shape_ptr);
+  size_t n_shape = shape_vec.size();
+
+  std::vector<int64_t> new_shape;
+  for (size_t i = 0; i < n_shape; i++) {
+    if (shape_vec[i] == -kOneNum) {
+      size_t ids = i + x_shape->shape().size() - n_shape;
+      new_shape.push_back(x_shape->shape()[ids]);
+    } else {
+      new_shape.push_back(shape_vec[i]);
+    }
+  }
+
+  auto new_shape_value = MakeValue<std::vector<int64_t>>(new_shape);
+  auto shape = NewValueNode(new_shape_value)->cast<AnfNodePtr>();
+  std::string name_shape;
+
+  if (shape->isa<ValueNode>()) {
+    name_shape = RegisterNodeWithUniqueName(shape, node_map_ptr);
+    onnx::NodeProto *node_proto = graph_proto->add_node();
+    node_proto->add_output(name_shape);
+    node_proto->set_op_type("Constant");
+    onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+    attr_proto->set_name("value");
+    attr_proto->set_type(onnx::AttributeProto_AttributeType_TENSOR);
+    ConvertTupleToTensor(dyn_cast<ValueNode>(shape)->value(), attr_proto->mutable_t());
+  } else {
+    name_shape = GetNodeInputName(shape, node_map_ptr, graph_proto);
+    MS_LOG(EXCEPTION) << "Need to insert op convert variable from tuple to tensor for " << name;
+  }
+
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_op_type("Expand");
+  node_proto->add_output(node_name);
+  node_proto->add_input(input_x);
+  node_proto->add_input(name_shape);
+}
+
+// MindSpore AddN -> ONNX Add
+void OnnxExporter::ExportPrimAddN(const FuncGraphPtr &, const CNodePtr &node,
+                                  std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                  onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto input_node = node->input(kOneNum)->cast<CNodePtr>();
+  auto last_input_name = GetNodeInputName(input_node->input(kOneNum), node_map_ptr, graph_proto);
+  for (size_t i = kTwoNum; i < input_node->inputs().size() - 1; ++i) {
+    auto input_name = GetNodeInputName(input_node->input(i), node_map_ptr, graph_proto);
+    auto tmp_end_name = node_name + "ADD_" + std::to_string(i);
+    AddOp("Add", {last_input_name, input_name}, {tmp_end_name}, graph_proto);
+    last_input_name = tmp_end_name;
+  }
+  auto input_end_name = GetNodeInputName(input_node->input(input_node->inputs().size() - 1), node_map_ptr, graph_proto);
+  AddOp("Add", {last_input_name, input_end_name}, {node_name}, graph_proto);
 }
 
 // MindSpore GeLU -> ONNX 0.5 * X * (1.0 + tanh((sqrt(2/pi) * (x + 0.044715 * pow(x, 3)))))
@@ -2292,7 +2564,6 @@ void OnnxExporter::ExportPrimTupleGetItem(const FuncGraphPtr &, const CNodePtr &
                                           std::map<AnfNodePtr, std::string> *node_map_ptr,
                                           onnx::GraphProto *const graph_proto) {
   auto index = GetInt64Value(node->input(kTwoNum));
-
   auto input_node_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
   auto input_name = MakeOutputName(input_node_name, index);
 
@@ -2668,6 +2939,50 @@ void OnnxExporter::ExportPrimOnesLike(const FuncGraphPtr &, const CNodePtr &node
   }
 }
 
+void OnnxExporter::ExportPrimScatterNd(const FuncGraphPtr &, const CNodePtr &node,
+                                       std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                       onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_indices_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_update_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto input_shape_name = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto node_zero_tensor_name = node_name + "_zero";
+  auto dtype = node->input(kTwoNum)->Type();
+  auto elem_type = dyn_cast<TensorType>(dtype)->element()->type_id();
+
+  onnx::TensorProto *zero_proto = AddConstantOfShapeOp(input_shape_name, node_zero_tensor_name, graph_proto);
+  switch (elem_type) {
+    case kNumberTypeInt32:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_INT32);
+      zero_proto->add_int32_data(0);
+      break;
+    case kNumberTypeInt64:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_INT64);
+      zero_proto->add_int64_data(0);
+      break;
+    case kNumberTypeFloat32:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_FLOAT);
+      zero_proto->add_float_data(0.0f);
+      break;
+    case kNumberTypeFloat64:
+      zero_proto->set_data_type(onnx::TensorProto_DataType_DOUBLE);
+      zero_proto->add_double_data(0.0);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unsupported dtype: " << elem_type;
+  }
+  auto int64_indices_name = input_indices_name + "_int64";
+  AddCastOp(input_indices_name, int64_indices_name, onnx::TensorProto_DataType_INT64, graph_proto);
+
+  // Create ScatterND node
+  onnx::NodeProto *scatternd_proto = graph_proto->add_node();
+  scatternd_proto->set_op_type("ScatterND");
+  scatternd_proto->add_input(node_zero_tensor_name);
+  scatternd_proto->add_input(int64_indices_name);
+  scatternd_proto->add_input(input_update_name);
+  scatternd_proto->add_output(node_name);
+}
+
 void OnnxExporter::ExportPrimArgMaxWithValue(const FuncGraphPtr &, const CNodePtr &node,
                                              std::map<AnfNodePtr, std::string> *node_map_ptr,
                                              onnx::GraphProto *const graph_proto) {
@@ -2696,6 +3011,36 @@ void OnnxExporter::ExportPrimArgMaxWithValue(const FuncGraphPtr &, const CNodePt
 
   auto max_output_name = MakeOutputName(node_name, kOneNum);
   AddReduceOp("ReduceMax", input_x_name, max_output_name, {axis}, keep_dims, graph_proto);
+}
+
+void OnnxExporter::ExportPrimArgMinWithValue(const FuncGraphPtr &, const CNodePtr &node,
+                                             std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                             onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto axis = GetOpAttribute<int64_t>(node, "axis");
+  auto keep_dims = GetOpAttribute<bool>(node, "keep_dims");
+
+  auto indices_output_name = MakeOutputName(node_name, kZeroNum);
+  auto indices_cast_name = indices_output_name + "_cast";
+
+  onnx::NodeProto *argmax_proto = graph_proto->add_node();
+  argmax_proto->set_op_type("ArgMin");
+  argmax_proto->add_input(input_x_name);
+  argmax_proto->add_output(indices_cast_name);
+  onnx::AttributeProto *argmax_axis_attr_proto = argmax_proto->add_attribute();
+  argmax_axis_attr_proto->set_name("axis");
+  argmax_axis_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  argmax_axis_attr_proto->set_i(axis);
+  onnx::AttributeProto *argmax_keepdims_attr_proto = argmax_proto->add_attribute();
+  argmax_keepdims_attr_proto->set_name("keepdims");
+  argmax_keepdims_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  argmax_keepdims_attr_proto->set_i(keep_dims);
+
+  AddCastOp(indices_cast_name, indices_output_name, onnx::TensorProto_DataType_INT32, graph_proto);
+
+  auto max_output_name = MakeOutputName(node_name, kOneNum);
+  AddReduceOp("ReduceMin", input_x_name, max_output_name, {axis}, keep_dims, graph_proto);
 }
 
 void OnnxExporter::ExportPrimOneHot(const FuncGraphPtr &, const CNodePtr &node,
@@ -2814,6 +3159,19 @@ void OnnxExporter::ExportPrimGreaterEqual(const FuncGraphPtr &, const CNodePtr &
   AddOp("Not", {less_name}, {node_name}, graph_proto);
 }
 
+void OnnxExporter::ExportPrimLessEqual(const FuncGraphPtr &, const CNodePtr &node,
+                                       std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                       onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto greater_name = node_name + "greater";
+
+  AddOp("Greater", {input_x_name, input_y_name}, {greater_name}, graph_proto);
+  AddOp("Not", {greater_name}, {node_name}, graph_proto);
+}
+
 void OnnxExporter::ExportPrimSqueeze(const FuncGraphPtr &, const CNodePtr &node,
                                      std::map<AnfNodePtr, std::string> *node_map_ptr,
                                      onnx::GraphProto *const graph_proto) {
@@ -2852,6 +3210,147 @@ void MakeLSTMWeight(const std::string &input, const std::string &output, const s
              {hidden_size, hidden_size, hidden_size, hidden_size}, 1, graph_proto);
 
   AddConcatOp({split_i_name, split_o_name, split_f_name, split_c_name}, output, 1, graph_proto);
+}
+
+void MakeLSTMWeight2(const std::string &input, const std::string &output, const std::vector<int64_t> &output_shape,
+                     onnx::GraphProto *graph_proto) {
+  auto reshaped_name = output + "__split";
+  AddReshapeOp(input, reshaped_name, output_shape, graph_proto);
+
+  auto split_i_name = output + "__concat_i";
+  auto split_o_name = output + "__concat_o";
+  auto split_f_name = output + "__concat_f";
+  auto split_c_name = output + "__concat_c";
+  int64_t hidden_size = output_shape[kOneNum] / kFourNum;
+  AddSplitOp(reshaped_name, {split_i_name, split_c_name, split_f_name, split_o_name},
+             {hidden_size, hidden_size, hidden_size, hidden_size}, 1, graph_proto);
+
+  AddConcatOp({split_i_name, split_o_name, split_f_name, split_c_name}, output, 1, graph_proto);
+}
+
+void OnnxExporter::ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                        std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                        onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto x_input_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto weight_input_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto bias_input_name = GetNodeInputName(node->input(kThreeNum), node_map_ptr, graph_proto);
+  auto init_h_input_name = GetNodeInputName(node->input(kFiveNum), node_map_ptr, graph_proto);
+  auto init_c_input_name = GetNodeInputName(node->input(kSixNum), node_map_ptr, graph_proto);
+
+  auto hidden_size = GetOpAttribute<int64_t>(node, "hidden_size");
+  auto direction_input = GetOpAttribute<std::string>(node, "direction");
+  auto x_input_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
+  auto seq_len = x_input_shape[0];
+  auto batch_size = x_input_shape[1];
+  auto num_dir = direction_input == "UNIDIRECTIONAL" ? 1 : 2;
+  auto input_size = x_input_shape[kTwoNum];
+
+  auto onnx_input_weights_name = node_name + "_onnx_input_weights";
+  auto onnx_hidden_weights_name = node_name + "_onnx_hidden_weights";
+  auto onnx_bias_name = node_name + "_onnx_bias";
+
+  const int num_gates = 4;
+  auto gate_size = num_gates * hidden_size;
+
+  auto weight_input_name_reshape = weight_input_name + "_reshape";
+  AddReshapeOp(weight_input_name, weight_input_name_reshape, {(input_size * gate_size) + (hidden_size * gate_size)},
+               graph_proto);
+
+  auto input_weights_name = node_name + "_input_weights";
+  auto hidden_weights_name = node_name + "_hidden_weights";
+  std::vector<int64_t> split_sizes = {input_size * gate_size, hidden_size * gate_size};
+  std::vector<std::string> split_outputs = {input_weights_name, hidden_weights_name};
+
+  AddSplitOp(weight_input_name_reshape, split_outputs, split_sizes, 0, graph_proto);
+
+  auto input_weights_name_reshape = input_weights_name + "_reshape";
+  auto hidden_weights_name_reshape = hidden_weights_name + "_reshape";
+  AddReshapeOp(input_weights_name, input_weights_name_reshape, {num_dir, input_size, gate_size}, graph_proto);
+  AddReshapeOp(hidden_weights_name, hidden_weights_name_reshape, {num_dir, hidden_size, gate_size}, graph_proto);
+
+  // Transpose input_weights_name
+  onnx::NodeProto *transpose_node_proto_1 = graph_proto->add_node();
+  auto input_weights_name_reshape_transposed = input_weights_name_reshape + "_transposed";
+  transpose_node_proto_1->set_name(input_weights_name_reshape_transposed);
+  transpose_node_proto_1->set_op_type("Transpose");
+  transpose_node_proto_1->add_input(input_weights_name_reshape);
+  transpose_node_proto_1->add_output(input_weights_name_reshape_transposed);
+
+  onnx::AttributeProto *perm_proto_1 = transpose_node_proto_1->add_attribute();
+  perm_proto_1->set_name("perm");
+  perm_proto_1->set_type(onnx::AttributeProto_AttributeType_INTS);
+  perm_proto_1->add_ints(kZeroNum);
+  perm_proto_1->add_ints(kTwoNum);
+  perm_proto_1->add_ints(kOneNum);
+
+  // Transpose  hidden_weights_name
+  onnx::NodeProto *transpose_node_proto_2 = graph_proto->add_node();
+  auto hidden_weights_name_reshape_transposed = hidden_weights_name_reshape + "_transposed";
+  transpose_node_proto_2->set_name(hidden_weights_name_reshape_transposed);
+  transpose_node_proto_2->set_op_type("Transpose");
+  transpose_node_proto_2->add_input(hidden_weights_name_reshape);
+  transpose_node_proto_2->add_output(hidden_weights_name_reshape_transposed);
+
+  onnx::AttributeProto *perm_proto_2 = transpose_node_proto_2->add_attribute();
+  perm_proto_2->set_name("perm");
+  perm_proto_2->set_type(onnx::AttributeProto_AttributeType_INTS);
+  perm_proto_2->add_ints(kZeroNum);
+  perm_proto_2->add_ints(kTwoNum);
+  perm_proto_2->add_ints(kOneNum);
+
+  MakeLSTMWeight2(input_weights_name_reshape_transposed, onnx_input_weights_name, {num_dir, gate_size, input_size},
+                  graph_proto);
+  MakeLSTMWeight2(hidden_weights_name_reshape_transposed, onnx_hidden_weights_name, {num_dir, gate_size, hidden_size},
+                  graph_proto);
+
+  auto bias_input_name_reshape = bias_input_name + "_reshape";
+  AddReshapeOp(bias_input_name, bias_input_name_reshape, {num_dir, gate_size}, graph_proto);
+
+  auto bias_output_name = node_name + "_bias_output_name";
+  MakeLSTMWeight2(bias_input_name_reshape, bias_output_name, {num_dir, gate_size}, graph_proto);
+
+  auto bias_concat = bias_output_name + "_concat";
+  std::vector<std::string> concat_inputs = {bias_output_name, bias_output_name};
+  AddConcatOp(concat_inputs, bias_concat, 1, graph_proto);
+
+  auto div_second_operand_name = node_name + "_div_second_operand";
+  const float div_second_operand = 2.0;
+  AddFloatScalarInitializer(div_second_operand_name, div_second_operand, onnx::TensorProto_DataType_FLOAT16,
+                            graph_proto);
+
+  AddOp("Div", {bias_concat, div_second_operand_name}, {onnx_bias_name}, graph_proto);
+
+  // Create LSTM node
+  onnx::NodeProto *lstm_node_proto = graph_proto->add_node();
+  lstm_node_proto->set_op_type("LSTM");
+  lstm_node_proto->add_input(x_input_name);
+  lstm_node_proto->add_input(onnx_input_weights_name);
+  lstm_node_proto->add_input(onnx_hidden_weights_name);
+  lstm_node_proto->add_input(onnx_bias_name);
+  lstm_node_proto->add_input("");
+  lstm_node_proto->add_input(init_h_input_name);
+  lstm_node_proto->add_input(init_c_input_name);
+
+  auto Y_output_name = node_name + "_Y";
+  auto Y_h_output_name = node_name + "_Y_h";
+  auto Y_c_output_name = node_name + "_Y_c";
+  lstm_node_proto->add_output(Y_output_name);
+  lstm_node_proto->add_output(Y_h_output_name);
+  lstm_node_proto->add_output(Y_c_output_name);
+
+  onnx::AttributeProto *hidden_size_proto = lstm_node_proto->add_attribute();
+  hidden_size_proto->set_name("hidden_size");
+  hidden_size_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  hidden_size_proto->set_i(hidden_size);
+
+  auto output_name_Y = MakeOutputName(node_name, kZeroNum);
+  auto output_name_Y_h = MakeOutputName(node_name, kOneNum);
+  auto output_name_Y_c = MakeOutputName(node_name, kTwoNum);
+  AddReshapeOp(Y_output_name, output_name_Y, {seq_len, batch_size, num_dir * hidden_size}, graph_proto);
+  AddExpandOp(Y_h_output_name, output_name_Y_h, {seq_len, batch_size, hidden_size}, graph_proto);
+  AddExpandOp(Y_c_output_name, output_name_Y_c, {seq_len, batch_size, hidden_size}, graph_proto);
 }
 
 void ExportLSTMWeights(const CNodePtr &node, const std::string &node_name, const std::string &weights_name,
@@ -3117,6 +3616,240 @@ void OnnxExporter::ExportPrimStack(const FuncGraphPtr &, const CNodePtr &node,
   new_axis_proto->set_i(true);
 }
 
+void OnnxExporter::ExportPrimAtan2(const FuncGraphPtr &, const CNodePtr &node,
+                                   std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_node1_anf = node->input(kOneNum);
+  auto input_node2_anf = node->input(kTwoNum);
+  auto input_node1 = GetNodeInputName(input_node1_anf, node_map_ptr, graph_proto);
+  auto input_node2 = GetNodeInputName(input_node2_anf, node_map_ptr, graph_proto);
+  auto atan_node = "Atan2_" + node_name + "_atan";
+  auto div_node = "Atan2_" + node_name + "_div";
+  auto less_node = "Atan2_" + node_name + "_less";
+  auto zero_value = "Atan2_" + node_name + "_zero";
+  auto neg_pi_value = "Atan2_" + node_name + "_pi";
+  auto minimal_value = "Atan2_" + node_name + "_minimal_val";
+  auto sign_node = "Atan2_" + node_name + "_sign";
+  auto mul_node = "Atan2_" + node_name + "_mul";
+  auto less_where_node1 = "Atan2_" + node_name + "_less_then_else1";
+  auto add_node = "Atan2_" + node_name + "_add1";
+  if (!(IsFloatDataType(input_node1_anf) && IsFloatDataType(input_node2_anf))) {
+    auto input_node1_cast = node_name + "_div_cast_fp32_1";
+    auto input_node2_cast = node_name + "_div_cast_fp32_2";
+    AddCastOp(input_node1, input_node1_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    AddCastOp(input_node2, input_node2_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    input_node1 = input_node1_cast;
+    input_node2 = input_node2_cast;
+  }
+  AddFloatScalarInitializer(minimal_value, 1e-10, onnx::TensorProto_DataType_FLOAT,
+                            graph_proto);  // minimal_value, avoid division by zero
+  AddOp("Add", {input_node2, minimal_value}, {add_node}, graph_proto);
+  AddOp("Div", {input_node1, add_node}, {div_node}, graph_proto);
+  AddOp("Atan", {div_node}, {atan_node}, graph_proto);
+  AddFloatScalarInitializer(zero_value, 0, onnx::TensorProto_DataType_FLOAT, graph_proto);
+  AddOp("Less", {input_node2, zero_value}, {less_node}, graph_proto);
+  AddFloatScalarInitializer(neg_pi_value, -acos(-1), onnx::TensorProto_DataType_FLOAT, graph_proto);  // -PI
+  AddOp("Sign", {atan_node}, {sign_node}, graph_proto);
+  AddOp("Mul", {neg_pi_value, sign_node}, {mul_node}, graph_proto);
+  AddOp("Where", {less_node, mul_node, zero_value}, {less_where_node1}, graph_proto);
+  AddOp("Add", {less_where_node1, atan_node}, {node_name}, graph_proto);
+}
+
+void OnnxExporter::ExportPrimFloorDiv(const FuncGraphPtr &, const CNodePtr &node,
+                                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto out_name = node_name;
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto onnx_type = GetOutputType(node->input(kOneNum));
+  bool is_float = onnx_type == onnx::TensorProto_DataType_FLOAT;
+
+  if (!is_float) {
+    auto input_x_name_cast = input_x_name + "_cast";
+    auto input_y_name_cast = input_y_name + "_cast";
+    AddCastOp(input_x_name, input_x_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    AddCastOp(input_y_name, input_y_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    input_x_name = input_x_name_cast;
+    input_y_name = input_y_name_cast;
+    node_name = node_name + "_floor";
+  }
+
+  auto div_name = node_name + "_div";
+  AddOp("Div", {input_x_name, input_y_name}, {div_name}, graph_proto);
+  AddOp("Floor", {div_name}, {node_name}, graph_proto);
+
+  if (!is_float) {
+    AddCastOp(node_name, out_name, onnx_type, graph_proto);
+  }
+}
+
+void OnnxExporter::ExportPrimFloorMod(const FuncGraphPtr &, const CNodePtr &node,
+                                      std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto out_name = node_name;
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto onnx_type = GetOutputType(node->input(kOneNum));
+  bool is_float = onnx_type == onnx::TensorProto_DataType_FLOAT;
+
+  if (!is_float) {
+    auto input_x_name_cast = input_x_name + "_cast";
+    auto input_y_name_cast = input_y_name + "_cast";
+    AddCastOp(input_x_name, input_x_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    AddCastOp(input_y_name, input_y_name_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    input_x_name = input_x_name_cast;
+    input_y_name = input_y_name_cast;
+    node_name = node_name + "_sub";
+  }
+
+  auto div_name = node_name + "_div";
+  auto mul_name = node_name + "_mul";
+  auto floor_name = node_name + "_floor";
+  AddOp("Div", {input_x_name, input_y_name}, {div_name}, graph_proto);
+  AddOp("Floor", {div_name}, {floor_name}, graph_proto);
+  AddOp("Mul", {floor_name, input_y_name}, {mul_name}, graph_proto);
+  AddOp("Sub", {input_x_name, mul_name}, {node_name}, graph_proto);
+
+  if (!is_float) {
+    AddCastOp(node_name, out_name, onnx_type, graph_proto);
+  }
+}
+
+void OnnxExporter::ExportPrimSort(const FuncGraphPtr &, const CNodePtr &node,
+                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+
+  auto x_input = node->input(kOneNum);
+  auto x_input_name = GetNodeInputName(x_input, node_map_ptr, graph_proto);
+  auto x_input_shape = dyn_cast<abstract::Shape>(x_input->Shape())->shape();
+
+  auto axis_attr = GetOpAttribute<int64_t>(node, "axis");
+  auto descending_attr = GetOpAttribute<bool>(node, "descending");
+
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_name(node_name + "TopK");
+  node_proto->set_op_type("TopK");
+  node_proto->add_input(x_input_name);
+
+  onnx::TensorProto *k_initializer_proto = graph_proto->add_initializer();
+  auto k_input_name = "k";
+  k_initializer_proto->set_name(k_input_name);
+  k_initializer_proto->add_dims(static_cast<int64_t>(1));
+  k_initializer_proto->set_data_type(GetOnnxDataType(kNumberTypeInt64));
+  int64_t k_index = axis_attr;
+  if (axis_attr < 0) {
+    k_index += SizeToLong(x_input_shape.size());
+  }
+  if (k_index > SizeToLong(x_input_shape.size()) - 1 || k_index < 0) {
+    MS_LOG(EXCEPTION) << "Invalid axis value: " << axis_attr;
+  }
+  int64_t k_value = x_input_shape[k_index];
+  k_initializer_proto->add_int64_data(k_value);
+  node_proto->add_input(k_input_name);
+
+  node_proto->add_output(MakeOutputName(node_name, kZeroNum));
+  auto indices_output_name = MakeOutputName(node_name, kOneNum);
+  auto indices_cast_name = indices_output_name + "_cast";
+  node_proto->add_output(indices_cast_name);
+  AddCastOp(indices_cast_name, indices_output_name, onnx::TensorProto_DataType_INT32, graph_proto);
+
+  onnx::AttributeProto *axis_attr_proto = node_proto->add_attribute();
+  axis_attr_proto->set_name("axis");
+  axis_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  axis_attr_proto->set_i(axis_attr);
+
+  onnx::AttributeProto *largest_attr_proto = node_proto->add_attribute();
+  largest_attr_proto->set_name("largest");
+  largest_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  if (descending_attr) {
+    largest_attr_proto->set_i(kOneNum);
+  } else {
+    largest_attr_proto->set_i(kZeroNum);
+  }
+
+  onnx::AttributeProto *sorted_attr_proto = node_proto->add_attribute();
+  sorted_attr_proto->set_name("sorted");
+  sorted_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  sorted_attr_proto->set_i(1);
+}
+
+void OnnxExporter::ExportPrimCustom(const FuncGraphPtr &, const CNodePtr &node,
+                                    std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  node_proto->set_name("Custom_" + node_name);
+  mindspore::HashSet<size_t> input_attrs;
+
+  constexpr auto kAttrInputNames = "input_names";
+  constexpr auto kAttrAttrNames = "attr_names";
+  constexpr auto kAttrOutputNames = "output_names";
+  auto input_names_vec = GetOpAttribute<std::vector<std::string>>(node, kAttrInputNames);
+  auto primitive = GetPrimitive(node);
+  auto attr_names = primitive->GetAttr(kAttrAttrNames);
+  if (attr_names != nullptr) {
+    auto attr_names_vec = GetValue<std::vector<std::string>>(attr_names);
+    if (input_names_vec.size() >= attr_names_vec.size()) {
+      size_t offset = input_names_vec.size() - attr_names_vec.size();
+      for (size_t i = offset; i < input_names_vec.size(); ++i) {
+        if (input_names_vec[i] != attr_names_vec[i - offset]) {
+          MS_LOG(EXCEPTION) << primitive->name() << " found mismatching attr name " << input_names_vec[i]
+                            << "in input_names and " << attr_names_vec[i - offset] << " in attr_names";
+        }
+        (void)input_attrs.insert(i);
+      }
+    }
+  }
+
+  auto inputs = node->inputs();
+  std::vector<AnfNodePtr> real_inputs;
+
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto attr_value = value_node->value();
+      if (attr_value->isa<StringImm>()) {
+        auto str_attr = GetValue<std::string>(attr_value);
+        onnx::AttributeProto *str_proto = node_proto->add_attribute();
+        str_proto->set_name(input_names_vec[i]);
+        str_proto->set_type(onnx::AttributeProto_AttributeType_STRING);
+        str_proto->set_s(str_attr);
+      } else if (attr_value->isa<IntegerImm>()) {
+        int64_t int64_attr = attr_value->cast<Int64ImmPtr>()->value();
+        onnx::AttributeProto *int64_proto = node_proto->add_attribute();
+        int64_proto->set_name(input_names_vec[i]);
+        int64_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+        int64_proto->set_i(int64_attr);
+      } else if (attr_value->isa<FloatImm>()) {
+        int64_t fp32_attr = attr_value->cast<FP32ImmPtr>()->value();
+        onnx::AttributeProto *fp32_proto = node_proto->add_attribute();
+        fp32_proto->set_name(input_names_vec[i]);
+        fp32_proto->set_type(onnx::AttributeProto_AttributeType_FLOAT);
+        fp32_proto->set_i(fp32_attr);
+      } else {
+        MS_LOG(EXCEPTION) << "Unsupported attr input type: " << attr_value->ToString();
+      }
+    } else {
+      real_inputs.push_back(inputs[i + 1]);
+    }
+  }
+
+  for (size_t idx = 0; idx < real_inputs.size(); idx++) {
+    auto input_name = GetNodeInputName(real_inputs[idx], node_map_ptr, graph_proto);
+    node_proto->add_input(input_name);
+  }
+
+  node_proto->add_output(node_name);
+  auto output_names_vec = GetOpAttribute<std::vector<std::string>>(node, kAttrOutputNames);
+  for (size_t idx = 0; idx < output_names_vec.size(); idx++) {
+    auto indices_name = MakeOutputName(node_name, idx);
+    node_proto->add_output(indices_name);
+  }
+  node_proto->set_op_type(GetOpAttribute<std::string>(node, "reg_op_name"));
+}
+
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
                                std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   using ExportFunc = std::function<void(OnnxExporter *, const FuncGraphPtr &, const CNodePtr &,
@@ -3125,6 +3858,9 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimReshape, &OnnxExporter::ExportPrimReshape},
     {prim::kPrimReduceMean, &OnnxExporter::ExportPrimReduce},
     {prim::kPrimReduceSum, &OnnxExporter::ExportPrimReduce},
+    {prim::kPrimReduceMax, &OnnxExporter::ExportPrimReduce},
+    {prim::kPrimReduceAny, &OnnxExporter::ExportPrimReduceAnyOrAll},
+    {prim::kPrimReduceAll, &OnnxExporter::ExportPrimReduceAnyOrAll},
     {prim::kPrimTranspose, &OnnxExporter::ExportPrimTranspose},
     {prim::kPrimStridedSlice, &OnnxExporter::ExportPrimStridedSlice},
     {prim::kPrimResizeNearestNeighbor, &OnnxExporter::ExportPrimResizeNearestNeighbor},
@@ -3145,19 +3881,31 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimROIAlign, &OnnxExporter::ExportPrimROIAlign},
     {prim::kPrimSlice, &OnnxExporter::ExportPrimSlice},
     {prim::kPrimOnesLike, &OnnxExporter::ExportPrimOnesLike},
+    {prim::kPrimScatterNd, &OnnxExporter::ExportPrimScatterNd},
     {prim::kPrimArgMaxWithValue, &OnnxExporter::ExportPrimArgMaxWithValue},
+    {prim::kPrimArgMinWithValue, &OnnxExporter::ExportPrimArgMinWithValue},
     {prim::kPrimOneHot, &OnnxExporter::ExportPrimOneHot},
     {prim::kPrimConv2DTranspose, &OnnxExporter::ExportPrimConv2DTranspose},
     {prim::kPrimGreaterEqual, &OnnxExporter::ExportPrimGreaterEqual},
+    {prim::kPrimLessEqual, &OnnxExporter::ExportPrimLessEqual},
     {prim::kPrimSqueeze, &OnnxExporter::ExportPrimSqueeze},
     {prim::kPrimExpandDims, &OnnxExporter::ExportPrimExpandDims},
+    {prim::kPrimGatherD, &OnnxExporter::ExportPrimGatherD},
     {prim::kPrimPad, &OnnxExporter::ExportPrimPad},
     {prim::kPrimBatchMatMul, &OnnxExporter::ExportPrimBatchMatMul},
+    {prim::kPrimBroadcastTo, &OnnxExporter::ExportPrimBroadcastTo},
+    {prim::kPrimAddN, &OnnxExporter::ExportPrimAddN},
     {prim::kPrimGeLU, &OnnxExporter::ExportPrimGeLU},
     {prim::kPrimLstm, &OnnxExporter::ExportPrimLSTM},
     {prim::kPrimReverseV2, &OnnxExporter::ExportPrimReverseV2},
     {prim::kPrimTensorCopySlices, &OnnxExporter::ExportPrimTensorCopySlices},
+    {prim::kPrimDynamicRNN, &OnnxExporter::ExportPrimDynamicRNN},
     {prim::kPrimStack, &OnnxExporter::ExportPrimStack},
+    {prim::kPrimAtan2, &OnnxExporter::ExportPrimAtan2},
+    {prim::kPrimFloorDiv, &OnnxExporter::ExportPrimFloorDiv},
+    {prim::kPrimFloorMod, &OnnxExporter::ExportPrimFloorMod},
+    {prim::kPrimSort, &OnnxExporter::ExportPrimSort},
+    {prim::kPrimCustom, &OnnxExporter::ExportPrimCustom},
   };
 
   auto iter = std::find_if(export_table.begin(), export_table.end(),
@@ -3544,6 +4292,213 @@ void OnnxExporter::ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodeP
   PrimConv2DTransposeExportHelper(conv_node, node, node_map_ptr, graph_proto);
 }
 
+void AddTransposeOp(const std::string &input, const std::string &output, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Transpose";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+}
+
+void AddUnsqueezeOp(const std::string &input, const std::string &output, int64_t axis, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Unsqueeze";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INTS);
+  attr_proto->set_name("axes");
+  attr_proto->add_ints(axis);
+}
+
+void AddSqueezeOp(const std::string &input, const std::string &output, int64_t axis, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "Squeeze";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(output + op_type);
+  node_proto->add_input(input);
+  node_proto->add_output(output);
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INTS);
+  attr_proto->set_name("axes");
+  attr_proto->add_ints(axis);
+}
+
+void AddGRUOp(const std::vector<std::string> &inputs, const std::vector<std::string> &outputs, int64_t hidden_size,
+              int64_t linear_before_reset, onnx::GraphProto *graph_proto) {
+  onnx::NodeProto *node_proto = graph_proto->add_node();
+  std::string op_type = "GRU";
+  node_proto->set_op_type(op_type);
+  node_proto->set_name(outputs[0] + op_type);
+
+  for (const auto &in : inputs) {
+    node_proto->add_input(in);
+  }
+
+  for (const auto &out : outputs) {
+    node_proto->add_output(out);
+  }
+
+  onnx::AttributeProto *attr_proto = node_proto->add_attribute();
+  attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr_proto->set_name("linear_before_reset");
+  attr_proto->set_i(linear_before_reset);
+
+  onnx::AttributeProto *attr2_proto = node_proto->add_attribute();
+  attr2_proto->set_type(onnx::AttributeProto_AttributeType_INT);
+  attr2_proto->set_name("hidden_size");
+  attr2_proto->set_i(hidden_size);
+}
+
+void UnsqueezeInputOfGRU(std::string *in_name, const std::string &node_name, const std::string &suffix, int64_t axis,
+                         onnx::GraphProto *graph_proto) {
+  auto out_name = node_name + suffix;
+  AddUnsqueezeOp(*in_name, out_name, 0, graph_proto);
+  *in_name = out_name;
+}
+
+void GruRzh2Zrh(std::string *in_name, const std::string &node_name, const std::string &mid_name,
+                std::vector<std::string> tmp_out_names, const std::vector<int64_t> &hidden_sizes, int64_t axis,
+                onnx::GraphProto *graph_proto) {
+  const int kConcatNum = 6;
+  const int kIndexBiasHiddenR = 3;
+  const int kIndexBiasHiddenZ = 4;
+  auto out_name = node_name + mid_name + "_zrh";
+
+  AddSplitOp(*in_name, tmp_out_names, hidden_sizes, 0, graph_proto);
+  swap(tmp_out_names[0], tmp_out_names[1]);
+  if (tmp_out_names.size() == kConcatNum) {
+    swap(tmp_out_names[kIndexBiasHiddenR], tmp_out_names[kIndexBiasHiddenZ]);
+  }
+  AddConcatOp(tmp_out_names, out_name, 0, graph_proto);
+  *in_name = out_name;
+}
+
+/*
+  Mapping between the inputs of MindSpore DynamicGRUV2 and ONNX GRU operator.
+  +----------------------------------------------------------+----------------------------------------------+
+  |                          ONNX                            |                  MindSpore                   |
+  +==========================================================+==============================================+
+  | X: [seq_length, batch_size, input_size]                  | x: (num_step, batch_size, input_size)        |
+  +----------------------------------------------------------+----------------------------------------------+
+  | W: [num_directions, 3*hidden_size, input_size]           | weight_input: (input_size, 3*hidden_size)    |
+  +----------------------------------------------------------+----------------------------------------------+
+  | R: [num_directions, 3*hidden_size, hidden_size]          | weight_hidden: (hidden_size, 3*hidden_size)  |
+  +----------------------------------------------------------+----------------------------------------------+
+  |                                                          | bias_input:  (3*hidden_size)                 |
+  + B: [num_directiBBons, 6*hidden_size]                     +----------------------------------------------+
+  |                                                          | bias_hidden: (3*hidden_size)                 |
+  +----------------------------------------------------------+----------------------------------------------+
+  | sequence_lens: [batch_size]                              | seq_length: (hidden_size)                    |
+  +----------------------------------------------------------+----------------------------------------------+
+  | initial_h: [num_directions, batch_size, hidden_size]     | init_h: (batch_size, hidden_size)            |
+  +----------------------------------------------------------+----------------------------------------------+
+  | Y:[seq_length, num_directions, batch_size, hidden_size]  | y: (num_step, batch_size, hidden_size)       |
+  +----------------------------------------------------------+----------------------------------------------+
+*/
+void OnnxExporter::ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr &node,
+                                           std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                           onnx::GraphProto *const graph_proto) {
+  const int kInX = 1;
+  const int kInWeightInput = 2;
+  const int kInWeightHidden = 3;
+  const int kInBiasInput = 4;
+  const int kInBiasHidden = 5;
+  // The 6th input 'seq_length' now only support None, so it's not used.
+  const int kInInitH = 7;
+
+  const int kWeightHiddenDim = 2;
+  const int kNumberOfGates = 3;
+  const std::string kDefaultDir = "UNIDIRECTIONAL";
+  const std::string kDefaultAct = "tanh";
+  const std::vector<std::string> kGateOrderSupported{"rzh", "zrh"};
+
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto gru_node = dyn_cast<CNode>(node->input(1));
+
+  /* Get Attributes */
+  auto direction = GetOpAttribute<std::string>(gru_node, "direction");
+  auto activation = GetOpAttribute<std::string>(gru_node, "activation");
+  auto gate_order = GetOpAttribute<std::string>(gru_node, "gate_order");
+  auto reset_after = GetOpAttribute<bool>(gru_node, "reset_after");
+
+  int64_t linear_before_reset = reset_after ? 1 : 0;
+
+  if (direction != kDefaultDir) {
+    MS_LOG(EXCEPTION) << "'direction': " << direction << " is not in supported values[" << kDefaultDir << "]";
+  }
+  if (activation != kDefaultAct) {
+    MS_LOG(EXCEPTION) << "'activation': " << activation << " is not in supported values[" << kDefaultAct << "]";
+  }
+  if (gate_order != kGateOrderSupported[0] && gate_order != kGateOrderSupported[1]) {
+    std::string supported;
+    for (const auto &order : gate_order) {
+      supported += order;
+      supported += ", ";
+    }
+    MS_LOG(EXCEPTION) << "'gate_order': " << gate_order << " is not in supported values[" << supported << "]";
+  }
+
+  auto x = GetNodeInputName(gru_node->input(kInX), node_map_ptr, graph_proto);
+  auto weight_input = GetNodeInputName(gru_node->input(kInWeightInput), node_map_ptr, graph_proto);
+  auto weight_hidden = GetNodeInputName(gru_node->input(kInWeightHidden), node_map_ptr, graph_proto);
+  auto bias_input = GetNodeInputName(gru_node->input(kInBiasInput), node_map_ptr, graph_proto);
+  auto bias_hidden = GetNodeInputName(gru_node->input(kInBiasHidden), node_map_ptr, graph_proto);
+  auto init_h = GetNodeInputName(gru_node->input(kInInitH), node_map_ptr, graph_proto);
+
+  auto weight_hidden_shape = dyn_cast<abstract::Shape>(gru_node->input(kInWeightHidden)->Shape())->shape();
+  if (weight_hidden_shape.size() != kWeightHiddenDim) {
+    MS_LOG(EXCEPTION) << "The dim of input weight_hidden must be " << kWeightHiddenDim << ".";
+  }
+  int64_t hidden_size = weight_hidden_shape[1] / kNumberOfGates;
+
+  auto trans_w_i = node_name + "_trans_w_i";
+  AddTransposeOp(weight_input, trans_w_i, graph_proto);
+  weight_input = trans_w_i;
+
+  auto trans_w_h = node_name + "_trans_w_h";
+  AddTransposeOp(weight_hidden, trans_w_h, graph_proto);
+  weight_hidden = trans_w_h;
+
+  auto bias_i_h = node_name + "_bias_i_h";
+  AddConcatOp({bias_input, bias_hidden}, bias_i_h, 0, graph_proto);
+
+  // ONNX GRU only support "zrh"
+  if (gate_order == "rzh") {
+    MS_LOG(INFO) << "change gate order 'rzh' to 'zrh'.";
+    std::vector<int64_t> hidden_sizes(kNumberOfGates, hidden_size);
+    GruRzh2Zrh(&weight_input, node_name, "w_i", {node_name + "_w_i_r", node_name + "_w_i_z", node_name + "_w_i_h"},
+               hidden_sizes, 0, graph_proto);
+    GruRzh2Zrh(&weight_hidden, node_name, "w_h", {node_name + "_w_h_r", node_name + "_w_h_z", node_name + "_w_h_h"},
+               hidden_sizes, 0, graph_proto);
+
+    std::vector<int64_t> bias_hidden_sizes(kNumberOfGates + kNumberOfGates, hidden_size);
+    GruRzh2Zrh(&bias_i_h, node_name, "bias",
+               {node_name + "_b_i_r", node_name + "_b_i_z", node_name + "_b_i_h", node_name + "_b_h_r",
+                node_name + "_b_h_z", node_name + "_b_h_h"},
+               bias_hidden_sizes, 0, graph_proto);
+  }
+
+  std::vector<std::string *> input_names = {&weight_input, &weight_hidden, &bias_i_h, &init_h};
+  std::vector<std::string> suffixes = {"_unsqueeze_w_i", "_unsqueeze_w_h", "_unsqueeze_bias", "_unsqueeze_init_h"};
+  for (size_t i = 0; i < input_names.size(); i++) {
+    UnsqueezeInputOfGRU(input_names[i], node_name, suffixes[i], 0, graph_proto);
+  }
+
+  auto y = node_name + "_Y";
+  // 'seq_length' input of DynamicGRUV2 is None, so pass "" to ONNX GRU.
+  std::string sequence_lens = "";
+  AddGRUOp({x, weight_input, weight_hidden, bias_i_h, sequence_lens, init_h}, {y}, hidden_size, linear_before_reset,
+           graph_proto);
+
+  AddSqueezeOp(y, node_name, 1, graph_proto);
+}
+
 /*
   Kinds of return values:
   1) A single Tensor
@@ -3562,17 +4517,14 @@ void OnnxExporter::ExportMergeConv2DTranspose(const FuncGraphPtr &, const CNodeP
                 return self.x, self.x
 
  */
-void OnnxExporter::ExportOutput(const FuncGraphPtr &, const AnfNodePtr &return_arg,
+void OnnxExporter::ExportOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &return_arg,
                                 std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   AnfNodePtr arg = GetRealInput(return_arg);
   if (IsPrimitiveCNode(arg, prim::kPrimMakeTuple)) {
     auto arg_cnode = dyn_cast<CNode>(arg);
     for (size_t i = 1; i < arg_cnode->inputs().size(); ++i) {
       const auto &output = arg_cnode->input(i);
-      auto output_name = GetNodeInputName(output, node_map_ptr, graph_proto);
-      onnx::ValueInfoProto *output_proto = graph_proto->add_output();
-      output_proto->set_name(output_name);
-      SetValueInfoType(output, output_proto);
+      ExportOutput(func_graph, output, node_map_ptr, graph_proto);
     }
   } else if (arg->isa<ValueNode>() && arg->cast<ValueNodePtr>()->value()->isa<ValueTuple>()) {
     // Several outputs, all constants

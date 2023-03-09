@@ -889,22 +889,29 @@ class Custom(ops.PrimitiveWithInfer):
             return
         tensor_inputs = reg_info.get("inputs", [])
         attr = reg_info.get("attr", [])
+        tensor_outputs = reg_info.get("outputs", [])
         if not isinstance(tensor_inputs, (list, tuple)):
             tensor_inputs = [tensor_inputs]
         if not isinstance(attr, (list, tuple)):
             attr = [attr]
+        if not isinstance(tensor_outputs, (list, tuple)):
+            tensor_outputs = [tensor_outputs]
         # input_names include tensor input names and attr input names
         input_names = []
         # attr_names only includes attr input names
         attr_names = []
+        output_names = []
         for item in tensor_inputs:
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
+        for item in tensor_outputs:
+            if isinstance(item, dict) and item.get("name") is not None:
+                output_names.append(item["name"])
         for item in attr:
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
                 attr_names.append(item["name"])
-        cur_attr = {"input_names": input_names, "attr_names": attr_names}
+        cur_attr = {"input_names": input_names, "attr_names": attr_names, "output_names": output_names}
         # If func does not have attr, save current attr.
         # Else, check if current attr is same as previous saved one.
         prev_attr_names = attr_names
@@ -964,10 +971,13 @@ class Custom(ops.PrimitiveWithInfer):
         if isinstance(func_attr, dict):
             input_names = func_attr.get("input_names")
             attr_names = func_attr.get("attr_names")
+            output_names = func_attr.get("output_names")
             if input_names:
                 self.add_prim_attr("input_names", input_names)
             if attr_names:
                 self.add_prim_attr("attr_names", attr_names)
+            if output_names:
+                self.add_prim_attr("output_names", output_names)
         self._add_prim_target()
         if callable(self.func) and callable(self.out_shape):
             if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == "autodiff":
