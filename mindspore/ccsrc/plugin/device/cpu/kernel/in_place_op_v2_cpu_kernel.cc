@@ -39,7 +39,7 @@ struct NoCheckUpdate {
     x[x_idx] = Op()(v[v_idx]);
   }
 };
-template <typename T>
+template <typename T, typename S>
 class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
  public:
   InplaceOpV2CpuTypeFunc() = default;
@@ -51,7 +51,7 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     kernel_name_ = base_operator->GetPrim()->name();
 
     static std::unordered_map<std::string, TypeComputeFuncV2> inplaceOpV2FuncMap = {
-      {prim::kPrimInplaceUpdateV2->name(), &InplaceOpV2CpuTypeFunc<T>::InplaceOpV2<NoCheckUpdate<Update>>},
+      {prim::kPrimInplaceUpdateV2->name(), &InplaceOpV2CpuTypeFunc<T, S>::InplaceOpV2<NoCheckUpdate<Update>>},
     };
     if (inplaceOpV2FuncMap.find(kernel_name_) == inplaceOpV2FuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'InplaceOpV2', only supports operators in "
@@ -71,14 +71,12 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
     auto indice_shape = inputs[kIndex1]->GetShapeVector();
     auto v_shape = inputs[kIndex2]->GetShapeVector();
-    MS_LOG(ERROR) << "For 'InplaceOpV2', the shape size of value:" << v_shape.size()
-                  << " and indices:" << indice_shape.size() << " must not be 0.";
-    if (indice_shape.empty() || v_shape.empty()) {
-      MS_LOG(ERROR) << "For 'InplaceOpV2', the shape size of value:" << v_shape.size()
-                    << " and indices:" << indice_shape.size() << " must not be 0.";
+    if (v_shape.empty()) {
+      MS_LOG(ERROR) << "For 'InplaceOpV2', the shape size of value:" << v_shape.size() << " must not be 0.";
       return KRET_RESIZE_FAILED;
     }
-    if (v_shape[0] != indice_shape[0]) {
+    const auto &indices_num = (indice_shape.empty() ? 1 : indice_shape[0]);
+    if (indices_num != v_shape[0]) {
       MS_LOG(ERROR) << "For 'InplaceOpV2', the size of indices must equal to input_v's shape[0].";
       return KRET_RESIZE_FAILED;
     }
@@ -124,9 +122,9 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     }
 
     std::vector<int64_t> indices;
-    const auto *indice_ptr = reinterpret_cast<int *>(inputs[kIndex1]->addr);
+    const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
     MS_EXCEPTION_IF_NULL(indice_ptr);
-    for (size_t i = 0; i < inputs[kIndex1]->size / sizeof(int); ++i) {
+    for (size_t i = 0; i < inputs[kIndex1]->size / sizeof(S); ++i) {
       indices.emplace_back(IntToLong(indice_ptr[i]));
     }
 
@@ -144,25 +142,28 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
   TypeComputeFuncV2 compute_func_{nullptr};
 };
 
-template <typename T>
+template <typename T, typename S>
 std::shared_ptr<CpuKernelFunc> InplaceOpV2CpuFunc() {
-  return std::make_shared<InplaceOpV2CpuTypeFunc<T>>();
+  return std::make_shared<InplaceOpV2CpuTypeFunc<T, S>>();
 }
 using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 using OpFuncList = std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>;
 
-#define DTYPE_REGISTER(INPUT_X, INPUT_INDICES, INPUT_V, OUTPUT, T)                                              \
+#define DTYPE_REGISTER(INPUT_X, INPUT_INDICES, INPUT_V, OUTPUT, T, S)                                           \
   {                                                                                                             \
     KernelAttr().AddInputAttr(INPUT_X).AddInputAttr(INPUT_INDICES).AddInputAttr(INPUT_V).AddOutputAttr(OUTPUT), \
-      InplaceOpV2CpuFunc<T>                                                                                     \
+      InplaceOpV2CpuFunc<T, S>                                                                                  \
   }
 
 static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
   {ops::kNameInplaceUpdateV2,
    {
-     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
-     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float),
-     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, float16),
+     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
+     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float, int32_t),
+     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, float16, int32_t),
+     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int64_t),
+     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float, int64_t),
+     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, float16, int64_t),
    }},
 };
 }  // namespace
