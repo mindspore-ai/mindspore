@@ -228,6 +228,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
                                {kMul, &ArithmeticCpuTypeFunc<T>::Mul},
                                {kDivNoNan, &ArithmeticCpuTypeFunc<T>::DivNoNan},
                                {kAddV2, &ArithmeticCpuTypeFunc<T>::AddV2},
+                               {kAdd, &ArithmeticCpuTypeFunc<T>::Add},
                                {kPow, &ArithmeticCpuTypeFunc<T>::PowComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
