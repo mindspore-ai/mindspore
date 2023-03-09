@@ -130,6 +130,7 @@ mindspore.Tensor
     mindspore.Tensor.gather_nd
     mindspore.Tensor.ge
     mindspore.Tensor.ger
+    mindspore.Tensor.geqrf
     mindspore.Tensor.greater
     mindspore.Tensor.greater_equal
     mindspore.Tensor.gt
@@ -138,6 +139,7 @@ mindspore.Tensor
     mindspore.Tensor.hardshrink
     mindspore.Tensor.has_init
     mindspore.Tensor.heaviside
+    mindspore.Tensor.histc
     mindspore.Tensor.hsplit
     mindspore.Tensor.hypot
     mindspore.Tensor.i0

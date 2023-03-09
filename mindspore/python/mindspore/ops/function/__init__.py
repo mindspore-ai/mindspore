@@ -408,6 +408,7 @@ from .math_func import (
     quantile,
     tril_indices,
     triu_indices,
+    histc
 )
 from .nn_func import (
     adaptive_avg_pool1d,
@@ -499,6 +500,8 @@ from .nn_func import (
     hardsigmoid,
 )
 from .linalg_func import (
+    eig,
+    geqrf,
     svd,
     pinv
 )
