@@ -22,6 +22,8 @@
 #include "src/litert/kernel/cpu/int8/matmul_dynamic_base_int8.h"
 #include "mindspore/core/ops/op_name.h"
 #include "src/litert/kernel/cpu/fp32/matmul_fp32.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_kernel.h"
+#include "nnacl/kernel/matmul_base.h"
 
 namespace mindspore {
 namespace {
@@ -62,7 +64,7 @@ int AddWeightSumsToInputs(const mindspore::kernel::MatmulDynamicBaseInt8CPUKerne
 int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::unique_ptr<schema::CNodeT> &cnode,
                                 const std::unique_ptr<mindspore::schema::TensorT> &b_input,
                                 const std::string &cpu_option) {
-  auto lite_kernel = PackDataWrapper::GetInstance().GetPackedKernel(cnode->name);
+  auto *lite_kernel = PackDataWrapper::GetInstance().GetPackedKernel(cnode->name);
   if (lite_kernel == nullptr) {
     MS_LOG(ERROR) << "Get Packed Kernel error.";
     return RET_ERROR;
@@ -95,6 +97,18 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
   int b_batch;
   const void *pack_b_ptr = nullptr;
   size_t pack_b_size;
+  auto data_type = lite_kernel->out_tensors().front()->data_type();
+  auto kernel_base = (reinterpret_cast<const mindspore::nnacl::NnaclKernel *>(lite_kernel))->Kernel();
+
+  if (data_type == kNumberTypeFloat32) {
+    const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
+    if (matmul->matmul_type_ == kMatmulFp32BaseCpu || matmul->matmul_type_ == kMatmulFp32Arm64Cpu) {
+      b_batch = matmul->b_batch_;
+      pack_b_size = b_batch * matmul->col_align_ * matmul->deep_ * sizeof(float);
+      pack_b_ptr = matmul->matrix_b_.pack_ptr_;
+    }
+  }
+
   if (matmul_param->matmul_type_ == kMatmulDynamicSdotInt8Cpu) {
     // replace packed data
     auto matmul_kernel = reinterpret_cast<const mindspore::kernel::MatmulDynamicBaseInt8CPUKernel *>(lite_kernel);
@@ -108,12 +122,6 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
       MS_LOG(ERROR) << "add weight sums to inputs error.";
       return ret;
     }
-  } else if (matmul_param->matmul_type_ == kMatmulFp32BaseCpu || matmul_param->matmul_type_ == kMatmulFp32Arm64Cpu) {
-    auto matmul_kernel = reinterpret_cast<const mindspore::kernel::MatmulCPUKernel *>(lite_kernel);
-    auto matmul_kernel_base = matmul_kernel->GetMatmulBase();
-    b_batch = matmul_kernel_base->GetBBatch();
-    pack_b_size = b_batch * matmul_param->col_align_ * matmul_param->deep_ * sizeof(float);
-    pack_b_ptr = reinterpret_cast<const void *>(matmul_kernel_base->GetPackBPtr());
   }
 
   if (pack_b_ptr == nullptr) {

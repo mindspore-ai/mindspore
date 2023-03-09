@@ -16,6 +16,8 @@
 #include "src/litert/runtime_packed_node_pass.h"
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
+#include "nnacl/nnacl_kernel.h"
+#include "nnacl/kernel/matmul_base.h"
 
 using RecoveryWeightFunc = void (*)(void *, void *, int, int, bool);
 namespace mindspore {
@@ -258,8 +260,10 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   auto kernel = kernel_exec->kernel();
   MS_CHECK_TRUE_MSG(kernel != nullptr, lite::RET_NULL_PTR, "kernel is nullptr.");
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
+  const KernelBase *kernel_base = reinterpret_cast<const nnacl::NnaclKernel *>(kernel_exec->kernel())->Kernel();
   if (dst_tensor->data_type() == kNumberTypeFloat32) {
-    if (param->matmul_type_ == kNotImplemented) {
+    const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
+    if (matmul->matmul_type_ == kNotImplemented) {
       return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
                                   schema::PrimitiveType_MatMulFusion, pack_info);
     }

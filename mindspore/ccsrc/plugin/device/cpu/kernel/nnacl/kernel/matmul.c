@@ -96,8 +96,12 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   }
   matmul->batch_ = out_batch;
 
-  memset(matmul->a_offset_, 0, MAX_BATCH_SIZE * sizeof(int));
-  memset(matmul->b_offset_, 0, MAX_BATCH_SIZE * sizeof(int));
+  MatmulFp32Base_FreeBatchOffset(matmul);
+  int ret = MatmulFP32Base_MallocBatchOffset(matmul);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
   for (int i = 0; i < matmul->batch_; ++i) {
     int delta = i;
     int a_offset = 0;
@@ -149,12 +153,18 @@ int matmul_resize(KernelBase *self) {
   return matmul_f32_resize(self);
 }
 
+int matmul_release(KernelBase *self) {
+  MatmulFp32Base_FreeBatchOffset((MatmulFp32Struct *)self);
+  return matmul_f32_release(self);
+}
+
 KernelBase *CreateMatmul(OpParameter *param, int data_type) {
   KernelBase *kernel = NULL;
   if (data_type == kNumberTypeFloat32) {
     kernel = CreateMatmulFp32();
     kernel->prepare = matmul_prepare;
     kernel->resize = matmul_resize;
+    kernel->release = matmul_release;
   }
   return kernel;
 }
