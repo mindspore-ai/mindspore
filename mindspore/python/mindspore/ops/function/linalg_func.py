@@ -29,7 +29,82 @@ from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
 
-__all__ = ['svd', 'pinv', 'qr']
+__all__ = ['eig', 'geqrf', 'svd', 'pinv', 'qr']
+
+
+def eig(A):
+    """
+    Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
+
+    Args:
+        A (Tensor) - Square matrices of shape :math:`(*, N, N)`,
+          with float32, float64, complex64 or complex128 data type.
+
+    Returns:
+        eigen_values (Tensor) - Shape :math:`(*, N)`. eigenvalues of
+          the corresponding matrix. The eigenvalues may not have an order.
+        eigen_vectors (Tensor) - Shape :math:`(*, N, N)`,columns of eigen vectors represent
+        normalized (unit length) eigenvectors of corresponding eigenvalues.
+
+    Raises:
+        TypeError: If dtype of `A` is not one of: float64, float32, complex64 or complex128.
+        TypeError: If `A` is not a Tensor.
+        ValueError: If `A` is not a square(batch squares).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
+        >>> u, v = eig(input_x)
+        >>> print(u)
+        [1.+0.j 2.+0.j]
+        >>> print(v)
+        [[1.+0.j 0.+0.j]
+         [0.+0.j 1.+0.j]]
+    """
+    return _get_cache_prim(P.Eig)(compute_v=True)(A)
+
+
+def geqrf(input):
+    r"""
+    Decomposes a matrix into the product of an orthogonal matrix `Q` and an upper triangular matrix `R`.
+    The process is called QR decomposition: :math:`A = QR`.
+
+    Both `Q` and `R` matrices are stored in the same output tensor `y`.
+    The elements of `R` are stored on and above the diagonal, whereas elementary reflectors
+    (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
+
+    This function returns two tensors (`y`, `tau`).
+
+
+     Args:
+        input (Tensor) - Tensor of shape :math:`(*, m, n)`, input must be a matrix greater than or equal to 2D,
+          with dtype of float32, float64, complex64, complex128.
+
+    Returns:
+        y (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
+        tau (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of `input` is neither float32, float64, complex64, complex128.
+        ValueError: If `input` dimension is less than 2
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
+        >>> y, tau = geqrf(input_x)
+        >>> print(y)
+        [[ 2.236068   1.7888544]
+         [-0.236068   1.3416407]]
+        >>> print(tau)
+        [1.8944271 0.       ]
+    """
+    geqrf_ops = _get_cache_prim(P.Geqrf)()
+    return geqrf_ops(input)
 
 
 def svd(a, full_matrices=False, compute_uv=True):
