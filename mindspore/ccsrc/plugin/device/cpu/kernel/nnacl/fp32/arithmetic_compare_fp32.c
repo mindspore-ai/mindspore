@@ -16,20 +16,20 @@
 
 #include "nnacl/fp32/arithmetic_compare_fp32.h"
 
-inline bool EqualFp32(float x, float y) { return x == y; }
-inline bool NotEqualFp32(float x, float y) { return x != y; }
-inline bool LessFp32(float x, float y) { return x < y; }
-inline bool LessEqualFp32(float x, float y) { return x <= y; }
-inline bool GreaterFp32(float x, float y) { return x > y; }
-inline bool GreaterEqualFp32(float x, float y) { return x >= y; }
+bool EqualFp32(float x, float y) { return x == y; }
+bool NotEqualFp32(float x, float y) { return x != y; }
+bool LessFp32(float x, float y) { return x < y; }
+bool LessEqualFp32(float x, float y) { return x <= y; }
+bool GreaterFp32(float x, float y) { return x > y; }
+bool GreaterEqualFp32(float x, float y) { return x >= y; }
 
-inline bool EqualInt32(int x, int y) { return x == y; }
-inline bool NotEqualInt32(int x, int y) { return x != y; }
-inline bool NotEqualInt64(int64_t x, int64_t y) { return x != y; }
-inline bool LessInt32(int x, int y) { return x < y; }
-inline bool LessEqualInt32(int x, int y) { return x <= y; }
-inline bool GreaterInt32(int x, int y) { return x > y; }
-inline bool GreaterEqualInt32(int x, int y) { return x >= y; }
+bool EqualInt32(int x, int y) { return x == y; }
+bool NotEqualInt32(int x, int y) { return x != y; }
+bool NotEqualInt64(int64_t x, int64_t y) { return x != y; }
+bool LessInt32(int x, int y) { return x < y; }
+bool LessEqualInt32(int x, int y) { return x <= y; }
+bool GreaterInt32(int x, int y) { return x > y; }
+bool GreaterEqualInt32(int x, int y) { return x >= y; }
 
 #define ELEMENT_COMPARE(input0, input1, output, element_size, compare_func) \
   do {                                                                      \
