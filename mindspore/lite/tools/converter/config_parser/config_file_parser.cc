@@ -492,7 +492,12 @@ int ConfigFileParser::ParseCpuOptionCfgString(const std::map<std::string, std::m
     const auto &map = maps.at(kCpuOptionParam);
     std::map<std::string, std::string &> parse_map{{"architecture", cpu_option_cfg_string_.architecture},
                                                    {"instruction", cpu_option_cfg_string_.instruction}};
-    return SetMapData(map, parse_map, kCpuOptionParam);
+    auto ret = SetMapData(map, parse_map, kCpuOptionParam);
+    if (cpu_option_cfg_string_.architecture.empty() || cpu_option_cfg_string_.instruction.empty()) {
+      MS_LOG(WARNING) << "[cpu_option_cfg_param] set incompletely, the model won't do optimize for cpu, please "
+                         "check the parameter architecture and instruction are correct.";
+    }
+    return ret;
   }
   return RET_OK;
 }
