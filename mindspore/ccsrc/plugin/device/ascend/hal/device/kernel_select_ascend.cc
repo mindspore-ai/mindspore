@@ -1371,12 +1371,16 @@ void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info) {
   // The Pynative_mode and task_sink does not support the backoff ability.
-  if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op() ||
-      graph->is_graph_run_mode()) {
-    MS_EXCEPTION(failure_info.second)
-      << failure_info.first
-      << "\n You can try to set env GRAPH_OP_RUN to 1 to enable back off this operator to CPU platform in graph mode.";
+  if (!AnfAlgo::IsEnableKernelSelectBackoff() || graph == nullptr || graph->is_from_single_op()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first;
   }
+
+  if (graph->is_graph_run_mode()) {
+    MS_EXCEPTION(failure_info.second) << failure_info.first
+                                      << "\nThe operator is not supported in task sink mode. You can try to export "
+                                         "environment variable GRAPH_OP_RUN to 1 to execute this operator.";
+  }
+
   MS_LOG(INFO) << "Try to use backoff CPU kernel, node:" << node->fullname_with_scope();
   // Erease  kAttrDynInputSizes before cpu kernel select, since cpu may expand it according to kAttrDynInputSizes
   // and make wrong choose, for example, the TupleToTensor op
