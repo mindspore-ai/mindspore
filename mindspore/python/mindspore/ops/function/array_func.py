@@ -2043,17 +2043,17 @@ def unstack(input_x, axis=0):
     return _unstack(input_x)
 
 
-def unbind(x, dim=0):
+def unbind(input, dim=0):
     r"""
     Removes a tensor dimension in specified axis.
 
     Unstacks a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
 
-    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+    Given a tensor of shape :math:`(input_1, input_2, ..., input_R)`. If :math:`0 \le axis`,
+    the shape of tensor in output is :math:`(input_1, input_2, ..., input_{axis}, input_{axis+2}, ..., input_R)`.
 
     Args:
-        x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape is :math:`(input_1, input_2, ..., input_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
         dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
 
@@ -2074,7 +2074,7 @@ def unbind(x, dim=0):
         Tensor(shape=[3], dtype=Int64, value=[7, 8, 9]))
     """
     _unstack = _get_cache_prim(P.Unstack)(dim)
-    return _unstack(x)
+    return _unstack(input)
 
 
 def expand_dims(input_x, axis):
@@ -2112,27 +2112,27 @@ def expand_dims(input_x, axis):
     return expand_dims_(input_x, axis)
 
 
-def unsqueeze(input_x, dim):
+def unsqueeze(input, dim):
     """
-    Adds an additional dimension to `input_x` at the given dim.
+    Adds an additional dimension to `input` at the given dim.
 
     Note:
         If the specified dim is a negative number, the index is counted
         backward from the end and starts at 1.
 
     Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         dim (int): Specifies the dimension index at which to expand
-            the shape of `input_x`. The value of `dim` must be in the range
-            `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
+            the shape of `input`. The value of `dim` must be in the range
+            `[-input.ndim-1, input.ndim]`. Only constant value is allowed.
 
     Returns:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `dim` is 0. It has the same data type as `input_x`.
+        value of `dim` is 0. It has the same data type as `input`.
 
     Raises:
         TypeError: If `dim` is not an int.
-        ValueError: If `dim` is not in the valid range :math:`[-input_x.ndim-1, input_x.ndim]`.
+        ValueError: If `dim` is not in the valid range :math:`[-input.ndim-1, input.ndim]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2144,7 +2144,7 @@ def unsqueeze(input_x, dim):
         [[[2. 2.]
           [2. 2.]]]
     """
-    return expand_dims_(input_x, dim)
+    return expand_dims_(input, dim)
 
 
 def squeeze(input_x, axis=()):

@@ -738,37 +738,9 @@ def squeeze(x, axis=None):
     return F.reshape(x, new_shape)
 
 
-def unbind(x, dim=0):
-    r"""
-    Removes a tensor dimension in specified axis.
-
-    Unstacks a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
-
-    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
-
-    Args:
-        x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
-            A tensor to be unstacked and the rank of the tensor must be greater than 0.
-        dim (int): Dimension along which to unpack. Negative values wrap around. The range is [-R, R). Default: 0.
-
-    Returns:
-        A tuple of tensors, the shape of each objects is the same.
-
-    Raises:
-        ValueError: If axis is out of the range [-R, R).
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
-        >>> output = x.unbind()
-        >>> print(output)
-        (Tensor(shape=[3], dtype=Int64, value=[1, 2, 3]), Tensor(shape=[3], dtype=Int64, value=[4, 5, 6]),
-        Tensor(shape=[3], dtype=Int64, value=[7, 8, 9]))
-    """
-    return P.Unstack(axis=dim)(x)
+def unbind(input, dim=0):
+    """For details, please refer to :func:`mindspore.ops.unbind`."""
+    return P.Unstack(axis=dim)(input)
 
 
 def argmax(x, axis=None, keepdims=False):
@@ -1126,18 +1098,18 @@ def log(x):
     return F.log(x)
 
 
-def log10(x):
+def log10(input):
     """
     Calculate the base-10 logarithm of Tensor.
     """
-    return F.log10(x)
+    return F.log10(input)
 
 
-def log2(x):
+def log2(input):
     """
     Calculate the base-2 logarithm of Tensor.
     """
-    return F.log2(x)
+    return F.log2(input)
 
 
 def logaddexp(x, other):
@@ -2691,11 +2663,9 @@ def expand_dims(x, axis):
     return P.ExpandDims()(x, axis)
 
 
-def unsqueeze(x, dim):
-    """
-    Insert a dimension of shape 1 at the specified axis of Tensor.
-    """
-    return P.ExpandDims()(x, dim)
+def unsqueeze(input, dim):
+    """For details, please refer to :func:`mindspore.ops.unsqueeze`."""
+    return P.ExpandDims()(input, dim)
 
 
 def masked_fill(x, mask, value):
