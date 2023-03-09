@@ -4189,37 +4189,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def sort(self, dim=-1, descending=False):
         r"""
-        Sorts the elements of the input tensor along a given dimension in ascending order by value.
-
-        Args:
-            dim (int, optional): The dimension to sort along. Default: -1.
-            descending (bool, optional): Controls the sorting order. If descending is True, then the elements
-                are sorted in descending order by value. Default: False.
-
-        Returns:
-            y1 (Tensor): A tensor whose values are the sorted values, with the same shape and dtype as input.
-            y2 (Tensor): The indices of the elements in the original input tensor. Tensor dtype is int32.
-
-        Raises:
-            TypeError: If dtype of `dim` is not int.
-            TypeError: If dtype of `descending` is not bool.
-            TypeError: If dtype of input tensor is neither float16 nor float32.
-            ValueError: If `dim` is not in range of [-len(x.shape), len(x.shape)).
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-            >>> output = x.sort()
-            >>> print(output)
-            (Tensor(shape=[3, 3], dtype=Float16, value=
-            [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
-             [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
-             [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
-            [[2, 1, 0],
-             [2, 0, 1],
-             [0, 1, 2]]))
+        For details, please refer to :func:`mindspore.ops.sort`.
         """
         self._init_check()
         return tensor_operator_registry.get('sort')(self, axis=dim, descending=descending)

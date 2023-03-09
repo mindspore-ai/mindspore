@@ -269,6 +269,7 @@ mindspore.Tensor
     mindspore.Tensor.sinh
     mindspore.Tensor.size
     mindspore.Tensor.slogdet
+    mindspore.Tensor.sort
     mindspore.Tensor.split
     mindspore.Tensor.sqrt
     mindspore.Tensor.square
