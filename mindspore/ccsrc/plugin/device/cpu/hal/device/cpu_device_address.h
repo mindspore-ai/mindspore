@@ -55,7 +55,6 @@ class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
 
   DeviceType GetDeviceType() const override { return DeviceType::kCPU; }
 
- protected:
   void DoClearDeviceMemory();
 };
 }  // namespace cpu

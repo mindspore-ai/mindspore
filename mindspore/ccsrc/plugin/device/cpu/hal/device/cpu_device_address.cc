@@ -80,11 +80,9 @@ void CPUDeviceAddress::DoClearDeviceMemory() {
   if (from_mem_pool_) {
     CPUMemoryPool::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
-  } else {
-    if (deleter_) {
-      deleter_(static_cast<uint8_t *>(ptr_));
-      ptr_ = nullptr;
-    }
+  } else if (deleter_ && ptr_ != nullptr) {
+    deleter_(static_cast<uint8_t *>(ptr_));
+    ptr_ = nullptr;
   }
 }
 
