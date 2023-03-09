@@ -451,7 +451,7 @@ class Im2Col(Primitive):
         >>> im2col = ops.Im2Col(ksizes=3, strides=1, dilations=1)
         >>> y = im2col(x)
         >>> print(y.shape)
-        (4, 36, 30, 30)
+        (4, 4, 9, 900)
     """
 
     @prim_attr_register
@@ -484,7 +484,7 @@ class Im2Col(Primitive):
         validator.check_positive_int_sequence(self.dilations, "dilations", self.name)
         if self.padding_mode == "CALCULATED":
             validator.check("pads size", len(self.pads), "", [1, 2, 4], Rel.IN, self.name)
-            validator.check_non_negative_int_sequence(self.pads, "pads", self.pads)
+            validator.check_non_negative_int_sequence(self.pads, "pads", self.name)
 
         self.add_prim_attr('ksizes', self.ksizes)
         self.add_prim_attr('strides', self.strides)

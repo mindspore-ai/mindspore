@@ -54,4 +54,4 @@ def test_im2col():
     x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float16)
     im2col = Im2ColNet(ksizes)
     outputs = im2col(Tensor(x))
-    assert outputs.shape == (4, 36, 30, 30)
+    assert outputs.shape == (4, 4, 9, 900)

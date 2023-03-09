@@ -76,29 +76,35 @@ std::vector<int64_t> Im2Col::get_pads() const {
 
 namespace {
 abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   constexpr size_t size_2 = 2;
   constexpr size_t size_4 = 4;
-
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamic(in_shape)) {
-    return std::make_shared<abstract::Shape>(in_shape);
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{size_4, abstract::Shape::kShapeDimAny});
   }
+
   (void)CheckAndConvertUtils::CheckInteger("dimension of input x", SizeToLong(in_shape.size()), kEqual,
                                            SizeToLong(size_4), op_name);
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("spatial size of input", in_shape, op_name);
+
   auto ksizes_ptr = primitive->GetAttr(kKsizes);
   MS_EXCEPTION_IF_NULL(ksizes_ptr);
   auto ksizes = GetValue<std::vector<int64_t>>(ksizes_ptr);
+
   auto strides_ptr = primitive->GetAttr(kStrides);
   MS_EXCEPTION_IF_NULL(strides_ptr);
   auto strides = GetValue<std::vector<int64_t>>(strides_ptr);
+
   auto dilations_ptr = primitive->GetAttr(kDilations);
   MS_EXCEPTION_IF_NULL(dilations_ptr);
   auto dilations = GetValue<std::vector<int64_t>>(dilations_ptr);
+
   auto padding_mode_ptr = primitive->GetAttr(kPaddingMode);
   MS_EXCEPTION_IF_NULL(padding_mode_ptr);
   auto padding_mode = GetValue<string>(padding_mode_ptr);
+
   auto pads_ptr = primitive->GetAttr(kPads);
   MS_EXCEPTION_IF_NULL(pads_ptr);
   auto pads = GetValue<std::vector<int64_t>>(pads_ptr);
@@ -138,7 +144,7 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
 
   int64_t effective_filter_h = (filter_h - 1) * dilation_h + 1;
   int64_t effective_filter_w = (filter_w - 1) * dilation_w + 1;
-  int64_t out_h{0}, out_w{0}, out_c{0};
+  int64_t out_h{0}, out_w{0}, total_block{0}, kernel_product{0};
   int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
   if (padding_mode == "VALID") {
     out_h = (in_h - effective_filter_h + stride_h) / stride_h;
@@ -166,18 +172,20 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION(ValueError) << "For Im2Col, the padding_mode only support VALID, SAME and CALCULATED, but get "
                              << padding_mode << ".";
   }
-  out_c = in_c * filter_h * filter_w;
+
+  kernel_product = filter_h * filter_w;
+  total_block = out_h * out_w;
   if (out_h < 1 || out_w < 1) {
     MS_EXCEPTION(ValueError) << "For Im2Col, given input with spatial size (" << in_n << ", " << in_c << ", " << in_h
                              << ", " << in_w << "), ksizes=(" << filter_h << ", " << filter_w << "), dilation=("
                              << dilation_h << ", " << dilation_w << "), padding_mode=" << padding_mode << ", pads=("
                              << pad_h_top << ", " << pad_h_bottom << ", " << pad_w_before << ", " << pad_w_after
-                             << "), calculated shape of output as (" << in_h << ", " << out_c << ", " << out_h << ", "
-                             << out_w << "), which is too small (non-positive).";
+                             << "), calculated shape of output as (" << in_h << ", " << in_c << ", " << kernel_product
+                             << ", " << total_block << "), which is too small (non-positive).";
   }
+
   // current only support NCHW
-  std::vector<int64_t> out_dim = {in_n, out_c, out_h, out_w};
-  ShapeVector out_shape = out_dim;
+  std::vector<int64_t> out_shape = {in_n, in_c, kernel_product, total_block};
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

@@ -35,10 +35,7 @@ class Im2colCpuKernel : public CpuKernel {
   template <typename T>
   uint32_t Im2colCompute(CpuKernelContext &ctx);
   template <typename T>
-  void InnerCompute(
-    int64_t batch_idx, int64_t c_col,
-    Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> x_4d,
-    Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d);
+  void InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr);
   uint32_t Im2colParamCheck(CpuKernelContext &ctx);
 
   std::vector<int64_t> ksizes;
@@ -50,11 +47,13 @@ class Im2colCpuKernel : public CpuKernel {
   const std::vector<std::string> padding_modes = {"SAME", "VALID", "CALCULATED"};
 
   bool is_NCHW;
+  int64_t input_channel;
   int64_t input_height;
   int64_t input_width;
   int64_t out_height;
   int64_t out_width;
-  int64_t out_channel;
+  int64_t out_plane;
+  int64_t total_block;
   int64_t kernel_height;
   int64_t kernel_width;
   int64_t stride_height;

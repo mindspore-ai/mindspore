@@ -42,6 +42,6 @@ def test_tensor_unfold(mode):
     x = Tensor(np.ones((4, 4, 32, 32)), mstype.float32)
     net = UnfoldTensorNet()
     output = net(x)
-    expected_shape = (4, 36, 30, 30)
+    expected_shape = (4, 4, 9, 900)
     assert output.dtype == x.dtype
     assert output.shape == expected_shape

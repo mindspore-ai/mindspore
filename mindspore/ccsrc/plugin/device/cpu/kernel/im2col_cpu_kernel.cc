@@ -26,6 +26,29 @@ namespace {
 constexpr size_t kIm2ColInputsNum = 1;
 constexpr size_t kIm2ColOutputsNum = 1;
 constexpr int64_t kInt64Number2 = 2;
+
+template <typename T>
+inline T data_index_init(const T *offset) {
+  return *offset;
+}
+
+template <typename T, typename... Args>
+inline T data_index_init(const T *offset, T *x, const T *X, Args &&... args) {
+  auto off = data_index_init(offset, std::forward<Args>(args)...);
+  *x = off % *X;
+  return off / *X;
+}
+
+inline bool data_index_step() { return true; }
+
+template <typename T, typename... Args>
+inline bool data_index_step(T *x, const T *X, Args &&... args) {
+  if (data_index_step(std::forward<Args>(args)...)) {
+    *x = ((*x + 1) == *X) ? 0 : (*x + 1);
+    return *x == 0;
+  }
+  return false;
+}
 }  // namespace
 
 bool Im2ColCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -83,20 +106,13 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto x = GetDeviceAddress<T>(inputs, kIndex0);
   auto y = GetDeviceAddress<T>(outputs, kIndex0);
 
-  const size_t size = outputs[kIndex0]->size;
-  auto ret = memset_s(static_cast<void *>(y), size, 0, size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
-  }
-
   int64_t batch_size = x_shape_[kIndex0];
   int64_t x_channel = x_shape_[kIndex1];
   int64_t x_height = x_shape_[kIndex2];
   int64_t x_width = x_shape_[kIndex3];
 
-  int64_t y_channel = y_shape_[kIndex1];
-  int64_t y_height = y_shape_[kIndex2];
-  int64_t y_width = y_shape_[kIndex3];
+  int64_t y_out_plane = y_shape_[kIndex1] * y_shape_[kIndex2];
+  int64_t total_block = y_shape_[kIndex3];
 
   int64_t kernel_height = ksizes_.front();
   MS_EXCEPTION_IF_ZERO("kernel_height", kernel_height);
@@ -111,44 +127,71 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   int64_t dilation_width = dilations_.back();
   MS_EXCEPTION_IF_ZERO("dilation_width", dilation_width);
 
-  // pad distance
-  int64_t pad_height = 0;
-  int64_t pad_width = 0;
-  if (padding_mode_ == "CALCULATED") {
-    if (!pads_.empty() && pads_.size() <= kDim2) {
-      pad_height = pads_.front();
-      pad_width = pads_.back();
-    } else if (!pads_.empty() && pads_.size() == kDim4) {
-      pad_height = pads_[kIndex0];
-      pad_width = pads_[kIndex2];
-    }
+  int64_t pad_height = 0, pad_width = 0;
+  int64_t y_height{0}, y_width{0};
+  if (padding_mode_ == "VALID") {
+    int64_t effective_filter_h = (kernel_height - 1) * dilation_height + 1;
+    int64_t effective_filter_w = (kernel_width - 1) * dilation_width + 1;
+    y_height = (x_height - effective_filter_h + stride_height) / stride_height;
+    y_width = (x_width - effective_filter_w + stride_width) / stride_width;
   } else if (padding_mode_ == "SAME") {
     pad_height = (kernel_height - 1) / kInt64Number2;
     pad_width = (kernel_width - 1) / kInt64Number2;
-  }  // else VALID no padding
-
-  int64_t inner_size_y = y_channel * y_height * y_width;
-  int64_t inner_size_x = x_channel * x_height * x_width;
-  auto task = [&](size_t begin, size_t end) {
-    for (size_t i = begin; i < end; ++i) {
-      int64_t batch_idx = i / y_channel, c_col = i % y_channel;
-      int64_t w_offset = c_col % kernel_width;
-      int64_t h_offset = (c_col / kernel_width) % kernel_height;
-      int64_t c_im = c_col / kernel_height / kernel_width;
-      for (int64_t h_col = 0; h_col < y_height; ++h_col) {
-        int64_t h_im = h_col * stride_height - pad_height + h_offset * dilation_height;
-        for (int64_t w_col = 0; w_col < y_width; ++w_col) {
-          int64_t w_im = w_col * stride_width - pad_width + w_offset * dilation_width;
-          y[batch_idx * inner_size_y + (c_col * y_height + h_col) * y_width + w_col] =
-            (h_im >= 0 && w_im >= 0 && h_im < x_height && w_im < x_width)
-              ? x[batch_idx * inner_size_x + (c_im * x_height + h_im) * x_width + w_im]
-              : static_cast<T>(0);
-        }
-      }
+    y_height = (x_height + stride_height - 1) / stride_height;
+    y_width = (x_width + stride_width - 1) / stride_width;
+  } else if (padding_mode_ == "CALCULATED") {
+    int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
+    if (!pads_.empty() && pads_.size() <= kDim2) {
+      pad_height = pad_h_top = pad_h_bottom = pads_.front();
+      pad_width = pad_w_before = pad_w_after = pads_.back();
+    } else if (!pads_.empty() && pads_.size() == kDim4) {
+      pad_height = pad_h_top = pads_[kIndex0];
+      pad_h_bottom = pads_[kIndex1];
+      pad_width = pad_w_before = pads_[kIndex2];
+      pad_w_after = pads_[kIndex3];
+    } else {
+      MS_EXCEPTION(ValueError) << "For 'Im2Col', the size of pads_ must be 1, 2 or 4, but get " << pads_.size()
+                               << "elements in pads_.";
     }
-  };
-  const size_t parallel_num = static_cast<size_t>(batch_size * y_channel);
-  ParallelLaunchAutoSearch(task, parallel_num, this, &parallel_search_info_);
+    y_height = (x_height + pad_h_top + pad_h_bottom - (dilation_height * (kernel_height - 1) + 1)) / stride_height + 1;
+    y_width = (x_width + pad_w_before + pad_w_after - (dilation_width * (kernel_width - 1) + 1)) / stride_width + 1;
+  }
+
+  if (total_block != y_height * y_width) {
+    MS_EXCEPTION(ValueError) << "For 'Im2Col', the output shape's last dim must be equal to y_height * y_width"
+                             << "but got total_block = " << total_block << ", [y_height, y_width] = [" << y_height
+                             << ", " << y_width << "].";
+  }
+  int64_t inner_size_y = y_out_plane * total_block;
+  int64_t inner_size_x = x_channel * x_height * x_width;
+
+  const float block_size = 1.0;
+  for (int64_t batch = 0; batch < batch_size; ++batch) {
+    auto task = [&](int64_t begin, int64_t end) {
+      int64_t c_in{0}, h_offset{0}, w_offset{0};
+      data_index_init<int64_t>(&begin, &c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
+
+      for (int64_t c_out = begin; c_out < end; ++c_out) {
+        for (int64_t h_out = 0; h_out < y_height; ++h_out) {
+          int64_t h_in = h_out * stride_height - pad_height + h_offset * dilation_height;
+          for (int64_t w_out = 0; w_out < y_width; ++w_out) {
+            int64_t w_in = w_out * stride_width - pad_width + w_offset * dilation_width;
+            y[(c_out * y_height + h_out) * y_width + w_out] =
+              (h_in >= 0 && h_in < x_height && w_in >= 0 && w_in < x_width)
+                ? x[(c_in * x_height + h_in) * x_width + w_in]
+                : static_cast<T>(0);
+          }
+        }
+
+        data_index_step(&c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
+      }
+    };
+
+    ParallelLaunch(task, static_cast<size_t>(y_out_plane), block_size);
+
+    x += inner_size_x;
+    y += inner_size_y;
+  }
 
   return true;
 }

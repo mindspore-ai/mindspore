@@ -90,10 +90,7 @@ uint32_t Im2colCpuKernel::Im2colParamCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void Im2colCpuKernel::InnerCompute(
-  int64_t batch_idx, int64_t c_col,
-  Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> x_4d,
-  Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d) {
+void Im2colCpuKernel::InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr) {
   int64_t w_offset = c_col % kernel_width;
   int64_t h_offset = (c_col / kernel_width) % kernel_height;
   int64_t c_im = c_col / kernel_height / kernel_width;
@@ -102,14 +99,14 @@ void Im2colCpuKernel::InnerCompute(
     for (int64_t w_col = 0; w_col < out_width; ++w_col) {
       int64_t w_im = w_col * stride_width - pad_width_left + w_offset * dilation_width;
       if (is_NCHW) {
-        y_4d(batch_idx, c_col, h_col, w_col) =
+        y_ptr[(c_col * out_height + h_col) * out_width + w_col] =
           (h_im >= kValue0 && w_im >= kValue0 && h_im < input_height && w_im < input_width)
-            ? x_4d(batch_idx, c_im, h_im, w_im)
+            ? x_ptr[(c_im * input_height + h_im) * input_width + w_im]
             : static_cast<T>(0);
       } else {
-        y_4d(batch_idx, h_col, w_col, c_col) =
+        y_ptr[(h_col * out_width + w_col) * out_plane + c_col] =
           (h_im >= kValue0 && w_im >= kValue0 && h_im < input_height && w_im < input_width)
-            ? x_4d(batch_idx, h_im, w_im, c_im)
+            ? x_ptr[(h_im * input_width + w_im) * input_channel + c_im]
             : static_cast<T>(0);
       }
     }
@@ -120,8 +117,6 @@ template <typename T>
 uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
   Tensor *x = ctx.Input(0);
   Tensor *y = ctx.Output(0);
-  auto y_col = reinterpret_cast<T *>(y->GetData());
-  std::fill_n(y_col, y->NumElements(), T(0));
   std::vector<int64_t> y_shapes = y->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> x_shapes = x->GetTensorShape()->GetDimSizes();
   Format x_format = x->GetTensorShape()->GetFormat();
@@ -132,55 +127,77 @@ uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
   input_width = kValue0;
   out_height = kValue0;
   out_width = kValue0;
-  out_channel = kValue0;
+  out_plane = kValue0;
 
   if (is_NCHW) {
+    input_channel = x_shapes[kIndex1];
     input_height = x_shapes[kIndex2];
     input_width = x_shapes[kIndex3];
 
-    out_channel = y_shapes[kIndex1];
-    out_height = y_shapes[kIndex2];
-    out_width = y_shapes[kIndex3];
+    out_plane = y_shapes[kIndex1] * y_shapes[kIndex2];
+    total_block = y_shapes[kIndex3];
   } else {
+    input_channel = x_shapes[kIndex3];
     input_height = x_shapes[kIndex1];
     input_width = x_shapes[kIndex2];
 
-    out_channel = y_shapes[kIndex3];
-    out_height = y_shapes[kIndex1];
-    out_width = y_shapes[kIndex2];
+    out_plane = y_shapes[kIndex3] * y_shapes[kIndex1];
+    total_block = y_shapes[kIndex2];
   }
+
   kernel_height = ksizes.front();
   kernel_width = ksizes.back();
   stride_height = strides.front();
   stride_width = strides.back();
   dilation_height = dilations.front();
   dilation_width = dilations.back();
+
   // pad distance
   pad_height_top = kValue0;
   pad_width_left = kValue0;
 
-  if (padding_mode == "CALCULATED") {
-    if (!pads.empty() && pads.size() <= kValue2) {
-      pad_height_top = pads.front();
-      pad_width_left = pads.back();
-    } else if (!pads.empty() && pads.size() == kValue4) {
-      pad_height_top = pads[kIndex0];
-      pad_width_left = pads[kIndex2];
-    }
+  if (padding_mode == "VALID") {
+    int64_t effective_filter_h = (kernel_height - 1) * dilation_height + 1;
+    int64_t effective_filter_w = (kernel_width - 1) * dilation_width + 1;
+    out_height = (input_height - effective_filter_h + stride_height) / stride_height;
+    out_width = (input_width - effective_filter_w + stride_width) / stride_width;
   } else if (padding_mode == "SAME") {
     pad_height_top = (kernel_height - kValue1) / kValue2;
     pad_width_left = (kernel_width - kValue1) / kValue2;
-  }  // else VALID no padding
-
-  EigenTensor y_et(y, y->GetData());
-  EigenTensor x_et(x, x->GetData());
-  auto x_4d = x_et.tensor<T, kValue4>();
-  auto y_4d = y_et.tensor<T, kValue4>();
-
-  for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-    for (int64_t c_col = 0; c_col < out_channel; ++c_col) {
-      InnerCompute<T>(batch_idx, c_col, x_4d, y_4d);
+    out_height = (input_height + stride_height - kValue1) / stride_height;
+    out_width = (input_width + stride_width - kValue1) / stride_width;
+  } else if (padding_mode == "CALCULATED") {
+    int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
+    if (!pads.empty() && pads.size() <= kValue2) {
+      pad_height_top = pad_h_top = pad_h_bottom = pads.front();
+      pad_width_left = pad_w_before = pad_w_after = pads.back();
+    } else if (!pads.empty() && pads.size() == kValue4) {
+      pad_height_top = pad_h_top = pads[kIndex0];
+      pad_h_bottom = pads[kIndex1];
+      pad_width_left = pad_w_before = pads[kIndex2];
+      pad_w_after = pads[kIndex3];
     }
+    out_height = (input_height + pad_h_top + pad_h_bottom - (dilation_height * (kernel_height - kValue1) + kValue1)) /
+                   stride_height +
+                 kValue1;
+    out_width = (input_width + pad_w_before + pad_w_after - (dilation_width * (kernel_width - kValue1) + kValue1)) /
+                  stride_width +
+                kValue1;
+  }
+
+  KERNEL_CHECK_FALSE(total_block == out_width * out_height, KERNEL_STATUS_PARAM_INVALID,
+                     "For 'Im2Col', the output shape's last dim must be equal to out_width * out_width");
+
+  auto x_ptr = reinterpret_cast<T *>(x->GetData());
+  auto y_ptr = reinterpret_cast<T *>(y->GetData());
+  int64_t inner_size_x = input_height * input_channel * input_width;
+  int64_t inner_size_y = out_plane * out_height * out_width;
+  for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
+    for (int64_t c_col = 0; c_col < out_plane; ++c_col) {
+      InnerCompute<T>(c_col, x_ptr, y_ptr);
+    }
+    x_ptr += inner_size_x;
+    y_ptr += inner_size_y;
   }
   return KERNEL_STATUS_OK;
 }

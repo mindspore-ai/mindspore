@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CudaIm2Col(const int64_t output_size, const int64_t x_channel, const int64_t x_height,
-                                const int64_t x_width, const int64_t y_channel, const int64_t y_height,
+CUDA_LIB_EXPORT void CudaIm2Col(const int64_t batches, const int64_t x_channel, const int64_t x_height,
+                                const int64_t x_width, const int64_t y_out_plane, const int64_t y_height,
                                 const int64_t y_width, const int64_t kernel_height, const int64_t kernel_width,
                                 const int64_t stride_height, const int64_t stride_width, const int64_t dilation_height,
                                 const int64_t dilation_width, const int64_t pad_height, const int64_t pad_width, T *x,
