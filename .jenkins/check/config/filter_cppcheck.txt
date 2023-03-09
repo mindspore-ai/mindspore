@@ -15,6 +15,7 @@
 "mindspore/mindspore/ccsrc/pipeline/jit/validator.cc"                                                 "constVariable"
 "mindspore/mindspore/ccsrc/utils/tensorprint_utils.cc"                                                "invalidPointerCast"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/optimizer/ir_fission/ir_fission/bn_grad_split.cc"     "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/sequence/sequence_concat_cpu_kernel.cc"           "syntaxError"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_ftrl_cpu_kernel.cc"                  "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_adam_cpu_kernel.cc"                  "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_lazy_adam_cpu_kernel.cc"             "containerOutOfBounds"

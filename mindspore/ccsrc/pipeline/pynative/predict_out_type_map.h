@@ -206,6 +206,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SelfAdjointEig", kTupleTensor2},
                                                        {"SequenceAdd", kTypeNone},
                                                        {"SequenceAddN", kTypeNone},
+                                                       {"SequenceConcat", kTypeNone},
                                                        {"SequenceCount", kTypeNone},
                                                        {"SequenceIndex", kTypeNone},
                                                        {"SequenceMul", kTypeNone},
