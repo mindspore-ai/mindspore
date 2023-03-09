@@ -46,6 +46,63 @@ class ListAppend(Primitive):
         self.init_prim_io_names(inputs=['input_data', 'target'], outputs=['output_data'])
 
 
+class ListInsert(Primitive):
+    r"""
+    Insert element to the index of list.
+
+    .. note::
+        This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_data** (List) - The list for target to append. Must be dynamic length sequence
+        - **index** (Int) - The list for index to insert.
+        - **target** (Any Object) - The target element to be inserted. The shape and type of target must be the same as
+          as the element within 'input_data'.
+
+    Outputs:
+        Dynamic length list after insert.
+
+    Raises:
+        TypeError: The 'input_data' is not dynamic length list.
+        ValueError: The shape or type of 'target' is not the same as the element within 'input_data'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListInsert"""
+        self.init_prim_io_names(inputs=['input_data', 'index', 'target'], outputs=['output_data'])
+
+
+class ListAppendAndInsertGrad(Primitive):
+    r"""
+    Pop the end of element from list.
+
+    .. note::
+        This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_data** (List) - The list for target to pop. Must be dynamic length sequence
+        - **index** (Int) - The list for index to pop.
+
+    Outputs:
+        Dynamic length list after pop and the pop value.
+
+    Raises:
+        TypeError: The 'input_data' is not dynamic length list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppendAndInsertGrad"""
+        self.init_prim_io_names(inputs=['input_data', 'index'], outputs=['output_data'])
+
+
 class SequenceSlice(Primitive):
     r"""
     Sequence slice operation.

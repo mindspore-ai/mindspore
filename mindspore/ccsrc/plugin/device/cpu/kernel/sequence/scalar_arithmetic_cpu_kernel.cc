@@ -128,7 +128,9 @@ void FloorDivImpl(const T *in_x, const S *in_y, N *out) {
                                << ", y: " << std::to_string(y) << ".";
     }
   }
-  *out = std::floor(x / y);
+  T n = std::floor(static_cast<float>(x) / static_cast<float>(y));
+  auto mod = x - n * y;
+  *out = (x - mod) / y;
 }
 
 template <typename T, typename S, typename N>
@@ -282,7 +284,7 @@ std::vector<std::pair<KernelAttr, ScalarArithmeticCpuKernelMod::ScalarArithmetic
     ADD_KERNEL(Int32, Float64, Float64, int32_t, double, double),
     ADD_KERNEL(Int32, Int32, Int32, int32_t, int32_t, int32_t),
     ADD_KERNEL(Int32, Int64, Int64, int32_t, int64_t, int64_t),
-    ADD_KERNEL(Int32, Bool, Int64, int32_t, bool, int32_t),
+    ADD_KERNEL(Int32, Bool, Int32, int32_t, bool, int32_t),
     ADD_KERNEL(Int64, Float64, Float64, int64_t, double, double),
     ADD_KERNEL(Int64, Float32, Float32, int64_t, float, float),
     ADD_KERNEL(Int64, Int64, Int64, int64_t, int64_t, int64_t),
@@ -290,8 +292,8 @@ std::vector<std::pair<KernelAttr, ScalarArithmeticCpuKernelMod::ScalarArithmetic
     ADD_KERNEL(Int64, Bool, Int64, int64_t, bool, int64_t),
     ADD_KERNEL(Bool, Float32, Float32, bool, float, float),
     ADD_KERNEL(Bool, Float64, Float64, bool, double, double),
-    ADD_KERNEL(Bool, Int32, Float32, bool, int32_t, int32_t),
-    ADD_KERNEL(Bool, Int64, Float32, bool, int64_t, int32_t),
+    ADD_KERNEL(Bool, Int32, Int32, bool, int32_t, int32_t),
+    ADD_KERNEL(Bool, Int64, Int64, bool, int64_t, int64_t),
     ADD_KERNEL(Bool, Bool, Int32, bool, bool, int32_t),
 };
 

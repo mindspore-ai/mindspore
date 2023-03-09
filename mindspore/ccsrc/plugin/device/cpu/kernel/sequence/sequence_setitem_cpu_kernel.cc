@@ -75,9 +75,11 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << input_size
                       << "} is not equal to the size of output: {" << output_size << "}";
   }
-  auto cp_ret = memcpy_s(output_addr, output_size, data_addr, input_size);
-  if (cp_ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  if (input_size != 0) {
+    auto cp_ret = memcpy_s(output_addr, output_size, data_addr, input_size);
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    }
   }
 
   if (idx < -len || idx >= len) {

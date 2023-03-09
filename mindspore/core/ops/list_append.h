@@ -27,7 +27,7 @@ class MIND_API ListAppend : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListAppend);
   /// \brief Constructor.
-  ListAppend() : BaseOperator(prim::kListAppend) {}
+  ListAppend() : BaseOperator(prim::kListAppend) { InitIOName({"input_data", "target"}, {"output_data"}); }
   /// \brief Init function.
   void Init() const {}
 };
