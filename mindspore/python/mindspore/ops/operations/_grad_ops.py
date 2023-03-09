@@ -885,16 +885,7 @@ class AdaptiveAvgPool2DGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize AdaptiveAvgPool2DGrad"""
-
-
-class AdaptiveAvgPool2DGradV1(Primitive):
-    """Gradients of the adaptive avg pool 2D V1 operation."""
-
-    @prim_attr_register
-    def __init__(self, orig_input_shape):
-        """Initialize AdaptiveAvgPool2DGradV1"""
-        self.init_prim_io_names(inputs=['input_grad'], outputs=['output_grad'])
-        self.add_prim_attr('orig_input_shape', self.orig_input_shape)
+        self.init_prim_io_names(inputs=['input_grad', 'orig_input_shape'], outputs=['output_grad'])
 
 
 class AdaptiveAvgPool3DGrad(Primitive):

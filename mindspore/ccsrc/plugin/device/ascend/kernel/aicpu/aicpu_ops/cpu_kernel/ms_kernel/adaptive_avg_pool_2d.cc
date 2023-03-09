@@ -22,7 +22,7 @@
 using namespace std;
 
 namespace {
-const char *kAdaptiveAvgPool2d = "AdaptiveAvgPool2d";
+const char *kAdaptiveAvgPool2d = "AdaptiveAvgPool2D";
 constexpr uint32_t kInputNum = 1;
 constexpr uint32_t kOutputNum = 1;
 constexpr int64_t kParallelDataNums = 4 * 1024;
@@ -57,7 +57,7 @@ struct AdaptiveCalcArgs {
     }                                                                        \
   } else {                                                                   \
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
-                        "AdaptiveAvgPool2d #SHARD Compute failed.");         \
+                        "AdaptiveAvgPool2D #SHARD Compute failed.");         \
   }
 }  // namespace
 
@@ -122,7 +122,7 @@ uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
 
   for (int32_t i = 0; i < input_dims; i++) {
     KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Adaptive_avg_pool2d: expected input to have non-empty spatial "
+                       "AdaptiveAvgPool2D: expected input to have non-empty spatial "
                        "dimensions, "
                        "but input 0 has sizes [%d] with dimension [%d] being empty.",
                        input_dims, i);
@@ -148,7 +148,7 @@ uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
     args.out_size_w = output_size_data[1] > 0 ? output_size_data[1] : input_dim_sizes.end()[-1];
   } else if (output_size_data.size() == 1) {
     KERNEL_CHECK_FALSE((output_size_data[0] >= 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Adaptive_avg_pool2d: output_size value should be non-negative");
+                       "AdaptiveAvgPool2D: output_size value should be non-negative");
     args.out_size_h = output_size_data[0];
     args.out_size_w = output_size_data[0];
   } else {
@@ -187,10 +187,12 @@ uint32_t AdaptiveAvgPool2d::Compute(CpuKernelContext &ctx) {
   switch (data_type) {
     case DT_FLOAT:
       return AdaptiveAvgPool2dOutTemplate<float>(ctx);
+    case DT_DOUBLE:
+      return AdaptiveAvgPool2dOutTemplate<double>(ctx);
     case DT_FLOAT16:
       return AdaptiveAvgPool2dOutTemplate<Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("AdaptiveAvgPool2d kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      KERNEL_LOG_ERROR("AdaptiveAvgPool2D kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

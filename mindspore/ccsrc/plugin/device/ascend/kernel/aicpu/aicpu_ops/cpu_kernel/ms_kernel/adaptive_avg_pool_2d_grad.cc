@@ -20,7 +20,7 @@
 #include "cpu_kernel/common/cpu_kernel_utils.h"
 
 namespace {
-const char *kAdaptiveAvgPool2dGrad = "AdaptiveAvgPool2dGrad";
+const char *kAdaptiveAvgPool2dGrad = "AdaptiveAvgPool2DGrad";
 template <typename SCALAR_T>
 struct AdaptiveCalcArgs {
   SCALAR_T *input_data = nullptr;
@@ -67,7 +67,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
     }
   };
   KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total_size, total_size / max_core_num_total, shard_init),
-                      "AdaptiveAvgPool2dGrad Compute failed.");
+                      "AdaptiveAvgPool2DGrad Compute failed.");
 
   int64_t in_size_db = args.in_size_d * args.in_size_b;
   if (max_core_num > in_size_db) {
@@ -103,7 +103,7 @@ uint32_t AdaptiveAvgPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<S
     }
   };
   KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, in_size_db, in_size_db / max_core_num, shard_work),
-                      "AdaptiveAvgPool2dGrad Compute failed.");
+                      "AdaptiveAvgPool2DGrad Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
@@ -112,12 +112,12 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
 
   auto input_shape_ptr = input.GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input x shape failed.");
+  KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get dout shape failed.");
   int32_t input_dims = input_shape_ptr->GetDims();
 
   for (int32_t i = 0; i < input_dims; i++) {
     KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Adaptive_avg_pool2d_grad: expected input to have non-empty spatial "
+                       "AdaptiveAvgPool2DGrad: expected input to have non-empty spatial "
                        "dimensions, "
                        "but input has sizes [%d] with dimension [%d] being empty.",
                        input_dims, i);
@@ -135,7 +135,9 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   args.out_stride_h = 1;
   args.in_stride_h = 1;
 
-  std::vector<int64_t> orig_input_size = ctx.GetAttr("orig_input_shape")->GetListInt();
+  auto orig_input_shape_data = reinterpret_cast<int64_t *>(ctx.Input(1)->GetData());
+  auto orig_input_shape_rank = ctx.Input(1)->NumElements();
+  std::vector<int64_t> orig_input_size(orig_input_shape_data, orig_input_shape_data + orig_input_shape_rank);
 
   int dim_w = orig_input_size.size() == 4 ? 3 : 2;
   int dim_h = orig_input_size.size() == 4 ? 2 : 1;
@@ -148,7 +150,7 @@ uint32_t AdaptiveAvgPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   args.out_size_h = orig_input_size[dim_h];
   args.out_size_w = orig_input_size[dim_w];
   KERNEL_CHECK_FALSE((args.out_size_h != 0 && args.out_size_w != 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Adaptive_avg_pool2d_grad: internal error, output_size H "
+                     "AdaptiveAvgPool2DGrad: internal error, output_size H "
                      "or W can not be zero, "
                      "now H is [%lld], W is [%lld].",
                      args.out_size_h, args.out_size_w);
@@ -180,27 +182,17 @@ uint32_t AdaptiveAvgPool2dGrad::Compute(CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(output_0, KERNEL_STATUS_PARAM_INVALID, "Get output tensor failed.");
   KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.");
 
-  AttrValue *attr_orig_input_shape = ctx.GetAttr("orig_input_shape");
-  KERNEL_CHECK_NULLPTR(attr_orig_input_shape, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:orig_input_shape failed.",
-                       kAdaptiveAvgPool2dGrad);
-  std::vector<int64_t> v_orig_input_shape = attr_orig_input_shape->GetListInt();
-
-  KERNEL_LOG_INFO(
-    "AdaptiveAvgPool2dGrad kernel, input[0]: size is [%llu]; output_0: size "
-    "is [%llu].",
-    input_0->GetDataSize(), output_0->GetDataSize());
-  KERNEL_LOG_INFO("[%s] get attr:orig_input_shape [%s].", kAdaptiveAvgPool2dGrad,
-                  VectorToString(v_orig_input_shape).c_str());
-
   auto data_type = static_cast<DataType>(input_0->GetDataType());
   // Compute by data_type
   switch (data_type) {
+    case DT_DOUBLE:
+      return AdaptiveAvgPool2dGradOutCpuTemplate<double>(ctx);
     case DT_FLOAT:
       return AdaptiveAvgPool2dGradOutCpuTemplate<float>(ctx);
     case DT_FLOAT16:
       return AdaptiveAvgPool2dGradOutCpuTemplate<Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("AdaptiveAvgPool2dGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      KERNEL_LOG_ERROR("AdaptiveAvgPool2DGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

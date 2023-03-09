@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "ops/adaptive_avg_pool_2d_v1.h"
+#include "ops/adaptive_avg_pool_2d.h"
 
 #include <set>
 #include <string>
 
-#include "ops/adaptive_avg_pool_2d.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -45,8 +44,8 @@ namespace {
 constexpr int64_t kOutputSizeLen2 = 2;
 constexpr int64_t kValueNone = -1;
 
-abstract::ShapePtr AdaptiveAvgPool2DV1InferShape(const PrimitivePtr &primitive,
-                                                 const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
@@ -81,7 +80,7 @@ abstract::ShapePtr AdaptiveAvgPool2DV1InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
-TypePtr AdaptiveAvgPool2DV1InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AdaptiveAvgPool2DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
@@ -90,37 +89,34 @@ TypePtr AdaptiveAvgPool2DV1InferType(const PrimitivePtr &primitive, const std::v
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2DV1, BaseOperator);
-MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2D, AdaptiveAvgPool2DV1);
-AbstractBasePtr AdaptiveAvgPool2DV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+MIND_API_OPERATOR_IMPL(AdaptiveAvgPool2D, BaseOperator);
+AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto types = AdaptiveAvgPool2DV1InferType(primitive, input_args);
-  auto shapes = AdaptiveAvgPool2DV1InferShape(primitive, input_args);
+  auto types = AdaptiveAvgPool2DInferType(primitive, input_args);
+  auto shapes = AdaptiveAvgPool2DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
 // AG means auto generated
-class MIND_API AGAdaptiveAvgPool2DV1Infer : public abstract::OpInferBase {
+class MIND_API AGAdaptiveAvgPool2DInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return AdaptiveAvgPool2DV1InferShape(primitive, input_args);
+    return AdaptiveAvgPool2DInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return AdaptiveAvgPool2DV1InferType(primitive, input_args);
+    return AdaptiveAvgPool2DInferType(primitive, input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return AdaptiveAvgPool2DV1Infer(engine, primitive, input_args);
+    return AdaptiveAvgPool2DInfer(engine, primitive, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool2DV1, prim::kPrimAdaptiveAvgPool2DV1, AGAdaptiveAvgPool2DV1Infer,
-                                 false);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool2D, prim::kPrimAdaptiveAvgPool2D, AGAdaptiveAvgPool2DV1Infer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AdaptiveAvgPool2D, prim::kPrimAdaptiveAvgPool2D, AGAdaptiveAvgPool2DInfer, false);
 }  // namespace ops
 }  // namespace mindspore

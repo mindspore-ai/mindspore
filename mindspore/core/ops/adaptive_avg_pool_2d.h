@@ -18,21 +18,24 @@
 #define MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_H_
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/adaptive_avg_pool_2d_v1.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdaptiveAvgPool2D = "AdaptiveAvgPool2D";
-class MIND_API AdaptiveAvgPool2D : public AdaptiveAvgPool2DV1 {
+class MIND_API AdaptiveAvgPool2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdaptiveAvgPool2D);
-
-  /// \brief Constructor.
-  AdaptiveAvgPool2D() : AdaptiveAvgPool2DV1(kNameAdaptiveAvgPool2D) {}
+  AdaptiveAvgPool2D() : BaseOperator(kNameAdaptiveAvgPool2D) { InitIOName({"x"}, {"y"}); }
+  explicit AdaptiveAvgPool2D(const std::string &kName) : BaseOperator(kName) { InitIOName({"x"}, {"y"}); }
 };
+MIND_API abstract::AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+using PrimAdaptiveAvgPool2DPtr = std::shared_ptr<AdaptiveAvgPool2D>;
 }  // namespace ops
 }  // namespace mindspore
 

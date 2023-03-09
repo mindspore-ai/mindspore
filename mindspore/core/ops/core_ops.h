@@ -863,8 +863,6 @@ GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool3D, std::make_shared<Primitive>("Adap
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool3DGrad, std::make_shared<Primitive>("AdaptiveAvgPool3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool2D, std::make_shared<Primitive>("AdaptiveAvgPool2D"));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool2DGrad, std::make_shared<Primitive>("AdaptiveAvgPool2DGrad"));
-GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool2DV1, std::make_shared<Primitive>("AdaptiveAvgPool2DV1"));
-GVAR_DEF(PrimitivePtr, kPrimAdaptiveAvgPool2DGradV1, std::make_shared<Primitive>("AdaptiveAvgPool2DGradV1"));
 GVAR_DEF(PrimitivePtr, kPrimBesselI0e, std::make_shared<Primitive>("BesselI0e"));
 GVAR_DEF(PrimitivePtr, kPrimBesselI1e, std::make_shared<Primitive>("BesselI1e"));
 GVAR_DEF(PrimitivePtr, kPrimBesselJ0, std::make_shared<Primitive>("BesselJ0"));

@@ -1622,10 +1622,11 @@ REG_BPROP_BUILDER("AdaptiveAvgPool3D").SetUnusedInputs({i0, i1}).SetBody(BODYFUN
   return {dx};
 });
 
-REG_BPROP_BUILDER("AdaptiveAvgPool2DV1").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto shape = ib->Shape(x);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("AdaptiveAvgPool2DGradV1", {dout}, {{"orig_input_shape", MakeValue(ib->GetShape(x))}});
+  auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {dout, shape});
   return {dx};
 });
 
@@ -1761,13 +1762,6 @@ REG_BPROP_BUILDER("FractionalMaxPoolWithFixedKsize").SetUnusedInputs({i1}).SetBo
                       {"output_shape", ib->GetAttr("output_shape")},
                       {"format", ib->GetAttr("format")}});
   return {dx, ib->ZerosLike(random_samples)};
-});
-
-REG_BPROP_BUILDER("AdaptiveAvgPool2D").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("AdaptiveAvgPool2DGrad", {x, dout});
-  return {dx};
 });
 
 REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {

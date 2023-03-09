@@ -14,20 +14,21 @@
 # ============================================================================
 
 
-"""AdaptiveAvgPool2DV1 op"""
+"""AdaptiveAvgPool2D op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-adaptive_avg_pool_2d_v1_op_info = AiCPURegOp("AdaptiveAvgPool2DV1") \
+adaptive_avg_pool_2d_op_info = AiCPURegOp("AdaptiveAvgPool2D") \
     .fusion_type("OPAQUE") \
     .input(0, "x", "required")\
     .output(0, "y", "required") \
     .attr("output_size", "listInt") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
 
-@op_info_register(adaptive_avg_pool_2d_v1_op_info)
-def _adaptive_avg_pool_2d_v1_aicpu():
-    """AdaptiveAvgPool2DV1 aicpu register"""
+@op_info_register(adaptive_avg_pool_2d_op_info)
+def _adaptive_avg_pool_2d_aicpu():
+    """AdaptiveAvgPool2D aicpu register"""
     return
