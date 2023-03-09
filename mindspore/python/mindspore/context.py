@@ -658,21 +658,21 @@ def set_auto_parallel_context(**kwargs):
                           and `size`. Config is same as `allgather`.
 
         strategy_ckpt_config (dict): A dict contains the configurations for setting the parallel strategy file. This
-                        interface contains the functions of interface `strategy_ckpt_load_file` and
-                        `strategy_ckpt_save_file`, it is recommonded to use this interface to replace those two
-                        interfaces.
+                        interface contains the functions of parameter `strategy_ckpt_load_file` and
+                        `strategy_ckpt_save_file`, it is recommonded to use this parameter to replace those two
+                        parameters.
                         It contains following configurations:
 
                         - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
-                          `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in protobufer
+                          `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in ProtoBuf
                           format.
                           Default: ''
 
                         - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
-                          `.json`, the file is saved in JSON format. Otherwise, the file is saved in protobufer format.
+                          `.json`, the file is saved in JSON format. Otherwise, the file is saved in ProtoBuf format.
                           Default: ''
 
-                        - only_trainable_params: Only save/load the strategy information for trainable parameters.
+                        - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: True.
 
     Raises:
@@ -699,6 +699,8 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
         >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
         >>> ms.set_auto_parallel_context(comm_fusion=config)
+        >>> stra_ckpt_dict = {"load_file": "./stra0.ckpt", "save_file": "./stra1.ckpt", "only_trainable_params": False}
+        >>> ms.set_auto_parallel_context(strategy_ckpt_config=stra_ckpt_dict)
     """
     _set_auto_parallel_context(**kwargs)
 

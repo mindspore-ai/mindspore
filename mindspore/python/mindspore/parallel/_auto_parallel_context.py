@@ -1087,7 +1087,7 @@ _get_auto_parallel_context_func_map = {
     "sharding_propagation": auto_parallel_context().get_sharding_propagation,
     "enable_alltoall": auto_parallel_context().get_enable_alltoall,
     "comm_fusion": auto_parallel_context().get_comm_fusion,
-    "strategy_ckpt_config": auto_parallel_context().get_strategy_ckpt_config(),
+    "strategy_ckpt_config": auto_parallel_context().get_strategy_ckpt_config,
     "full_batch_is_set": auto_parallel_context().get_full_batch_is_set}
 
 
