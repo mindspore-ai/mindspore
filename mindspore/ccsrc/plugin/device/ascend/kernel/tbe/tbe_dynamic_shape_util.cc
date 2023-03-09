@@ -95,8 +95,7 @@ inline void GetRangeByShape(const AnfNodePtr &anf_node, const ShapeVector &shape
 }
 
 ShapeVector TbeDynamicShapeUtil::UpdateShape(const AnfNodePtr &node, const std::string &format,
-                                             const ShapeVector &shape, size_t index, bool is_input,
-                                             bool *is_change_nd) {
+                                             const ShapeVector &shape, size_t index, bool is_input) {
   MS_EXCEPTION_IF_NULL(node);
   const std::set<std::string> op_names = {kTransDataOpName};
   if (!node->isa<CNode>() || op_names.find(common::AnfAlgo::GetCNodeName(node)) == op_names.end()) {
@@ -104,6 +103,7 @@ ShapeVector TbeDynamicShapeUtil::UpdateShape(const AnfNodePtr &node, const std::
   }
   std::string sp_format = format;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
   if (kernel_info->select_kernel_build_info() != nullptr) {
     auto in_format = AnfAlgo::GetInputFormat(node, 0);
     auto out_format = AnfAlgo::GetOutputFormat(node, 0);
@@ -113,9 +113,6 @@ ShapeVector TbeDynamicShapeUtil::UpdateShape(const AnfNodePtr &node, const std::
   const auto &pad_idx =
     is_input ? AnfAlgo::GetInputReshapeType(node, index) : AnfAlgo::GetOutputReshapeType(node, index);
   if (format == kOpFormat_NCHW && shape.size() < kDim4 && IsOneOfDynRankNeedPadShape(sp_format)) {
-    if (is_change_nd) {
-      *is_change_nd = true;
-    }
     return trans::PaddingShape(shape, sp_format, pad_idx);
   }
   return shape;

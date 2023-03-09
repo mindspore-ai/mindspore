@@ -101,7 +101,6 @@ CNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp
 }
 
 AnfNodePtr CreateTransDataWithOutReshape(const CreateNodeArgs &args) {
-  // don't need padding insert TransData only
   auto trans_data = NewTransOpNode(args.func_graph, args.input_node, args.orig_node, args.kernel_select,
                                    args.need_padding, args.trans_opname);
   RefreshKernelBuildInfo(args.kernel_select, args.input_format, args.dst_format, trans_data, args.reshape_type,
