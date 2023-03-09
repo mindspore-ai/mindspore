@@ -816,7 +816,7 @@ class Multinomial(Primitive):
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
         >>> multinomial = ops.Multinomial(seed=10)
         >>> output = multinomial(x, 2)
-        >>> print(output) # run in CPU
+        >>> print(output)
         [[1 1]]
     """
 
