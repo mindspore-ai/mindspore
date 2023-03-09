@@ -643,7 +643,8 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
 static const std::vector<DataConverterPtr> &GetStubDataConverters() {
   // Convert data by python object type.
   static const std::vector<DataConverterPtr> data_converters{
-    std::make_shared<ByTypeDataConverter<Tensor>>(PyStubNodeCast),
+    std::make_shared<ByFuncDataConverter>([](const py::object &obj) -> bool { return IsStubTensor(obj); },
+                                          PyStubNodeCast),
   };
   return data_converters;
 }
