@@ -1080,7 +1080,7 @@ class _PyNativeExecutor:
         """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
-    def check_run(self, grad, obj, grad_hash_id, *args, **kwargs):
+    def check_run(self, grad, obj, weights, grad_hash_id, *args, **kwargs):
         """
         Whether the forward graph need to construct.
 
@@ -1094,7 +1094,7 @@ class _PyNativeExecutor:
         Return:
             bool, specifies whether the forward graph need to construct.
         """
-        return self._executor.check_run(grad, obj, grad_hash_id, *args, *(kwargs.values()))
+        return self._executor.check_run(grad, obj, weights, grad_hash_id, *args, *(kwargs.values()))
 
     def grad(self, obj, grad, weights, grad_position, *args, **kwargs):
         """

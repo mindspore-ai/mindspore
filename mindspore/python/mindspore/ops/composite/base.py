@@ -361,7 +361,7 @@ class GradOperation(GradOperation_):
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
-                self._pynative_forward_run(fn, grad_, args, kwargs)
+                self._pynative_forward_run(fn, grad_, weights, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _pynative_executor()
                 out = _grads_divided_by_device_num_if_recomputation(out)
@@ -381,7 +381,7 @@ class GradOperation(GradOperation_):
         self.weights_id = weights_id
         return self.grad_fn
 
-    def _pynative_forward_run(self, fn, grad, args, kwargs):
+    def _pynative_forward_run(self, fn, grad, weights, args, kwargs):
         """ Pynative forward run to build grad graph. """
         new_kwargs = kwargs
         if self.sens_param:
@@ -391,14 +391,14 @@ class GradOperation(GradOperation_):
                 new_kwargs = kwargs.copy()
                 new_kwargs.pop('sens')
         if isinstance(fn, (FunctionType, MethodType)):
-            if not _pynative_executor.check_run(grad, fn, self.weights_id, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, weights, self.weights_id, *args, **new_kwargs):
                 _pynative_executor.set_grad_flag(True)
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
                 output = fn(*args, **new_kwargs)
                 _pynative_executor.end_graph(fn, output, *args, **new_kwargs)
         else:
             # Check if fn have run already
-            if not _pynative_executor.check_run(grad, fn, self.weights_id, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, weights, self.weights_id, *args, **new_kwargs):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
                 fn.set_grad(False)
@@ -579,7 +579,7 @@ class _Grad(GradOperation_):
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
-                res = self._pynative_forward_run(fn, grad_, args, kwargs)
+                res = self._pynative_forward_run(fn, grad_, weights, args, kwargs)
                 _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _pynative_executor()
                 out = _grads_divided_by_device_num_if_recomputation(out)
@@ -614,7 +614,7 @@ class _Grad(GradOperation_):
         self.grad_hash_id = (grad_position, weights_id)
         return self.grad_fn
 
-    def _pynative_forward_run(self, fn, grad, args, kwargs):
+    def _pynative_forward_run(self, fn, grad, weights, args, kwargs):
         """ Pynative forward runs to build grad graph. """
         new_kwargs = kwargs
         outputs = ()
@@ -625,7 +625,7 @@ class _Grad(GradOperation_):
             else:
                 args = args[:-1]
         if isinstance(fn, (FunctionType, MethodType)):
-            if not _pynative_executor.check_run(grad, fn, self.grad_hash_id, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, weights, self.grad_hash_id, *args, **new_kwargs):
                 _pynative_executor.set_grad_flag(True)
                 _pynative_executor.new_graph(fn, *args, **new_kwargs)
                 outputs = fn(*args, **new_kwargs)
@@ -633,7 +633,7 @@ class _Grad(GradOperation_):
                 return outputs
         else:
             # Check if fn has run already.
-            if not _pynative_executor.check_run(grad, fn, self.grad_hash_id, *args, **new_kwargs):
+            if not _pynative_executor.check_run(grad, fn, weights, self.grad_hash_id, *args, **new_kwargs):
                 fn.set_grad()
                 outputs = fn(*args, **new_kwargs)
                 fn.set_grad(False)

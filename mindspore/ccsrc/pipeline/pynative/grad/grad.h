@@ -99,8 +99,8 @@ class GradExecutor {
                     const py::object &grad_position, const py::args &args);
   py::object RunGradGraph();
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
-  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &grad_hash_id,
-                             const py::args &args);
+  py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
+                             const py::object &grad_hash_id, const py::args &args);
   TopCellInfoPtr GetAlreadyRunTopCell(const std::string &already_run_cell_id) const;
   void GetPreRunTopCell(const prim::GradOperationPtr &grad, const py::object &obj, const py::args &args);
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
