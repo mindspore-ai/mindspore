@@ -49,7 +49,7 @@ int ExpFP32Coder::DoCode(CoderContext *ctx) {
           });
   nnacl::NNaclFp32Serializer code;
   code.CodeStruct("exp_parameter", *exp_parameter_);
-  code.CodeFunction("exp", input_tensor_, output_tensor_, "(ExpParameter *)&exp_parameter", kDefaultTaskId);
+  code.CodeFunction("ExpFusionFp32", input_tensor_, output_tensor_, "(ExpParameter *)&exp_parameter", kDefaultTaskId);
   ctx->AppendCode(code.str());
   return RET_OK;
 }
