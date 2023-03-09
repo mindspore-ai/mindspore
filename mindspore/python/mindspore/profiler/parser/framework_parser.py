@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import List
 from collections import defaultdict
 from collections import namedtuple
-
+import glob
 import numpy as np
+
 from mindspore import log as logger
 from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT, TENSOR_DATA_STRUCT, STEP_INFO_STRUCT
 from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
@@ -34,6 +35,7 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundE
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
+from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 FILE_DATA_STRUCT_DICT = {
     FileDataType.STEP_INFO.value: STEP_INFO_STRUCT,
@@ -41,7 +43,8 @@ FILE_DATA_STRUCT_DICT = {
     FileDataType.TASK_DESC_INFO.value: TASK_DESC_STRUCT
 }
 
-COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info']
+COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info',
+             'graph_id']
 OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
@@ -388,6 +391,7 @@ class FrameworkParser:
     def _construct_op_data_to_file(self, task_desc_info, task_id_op_attr_dict):
         """Build data written to a file."""
         all_op_data = []
+        graph_ids = set()
         for task_desc in task_desc_info:
             task_id = task_desc['taskId']
             full_op_name = task_desc['opName']
@@ -400,8 +404,11 @@ class FrameworkParser:
                              op_name=full_op_name.split('/')[-1],
                              op_type=task_desc['opType'],
                              subgraph=subgraph,
-                             op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})))
+                             op_info=json.dumps(task_id_op_attr_dict.get(combined_task_id, {})),
+                             graph_id=task_desc['modelId'])
+            graph_ids.add(task_desc['modelId'])
             all_op_data.append(op_data)
+        ProfilerInfo.set_graph_ids(list(graph_ids))
         return all_op_data
 
 
@@ -641,6 +648,23 @@ class GpuFrameWorkParser:
         dynamic_shape_file_path = os.path.join(self._output_path, output_dynamic_shape_file_name)
         with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
             json.dump(result, fp)
+
+    def get_graph_ids(self):
+        """Get gpu graph ids."""
+        gpu_framework_file = list(glob.glob(os.path.join(self._output_path,
+                                                         'gpu_framework_{}.txt'.format(self._dev_id))))
+        if not gpu_framework_file:
+            return []
+        graph_ids = set()
+        with open(gpu_framework_file[0], 'r') as f_obj:
+            framework_info = f_obj.readlines()
+        for line_info in framework_info:
+            if line_info.startswith("InitDataSetQueue"):
+                continue
+            line_info = line_info.strip(' ').strip('\n').split(';')
+            if len(line_info) > 2 and line_info[2].isdigit():
+                graph_ids.add(int(line_info[2]))
+        return list(graph_ids)
 
     def _organize_result(self, step, op_info, args):
         """Organize the results."""
