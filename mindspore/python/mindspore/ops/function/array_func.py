@@ -4539,28 +4539,28 @@ def _check_check_axis_in_range(axis, ndim):
     return axis
 
 
-def index_select(x, axis, index):
+def index_select(input, axis, index):
     """
-    Generates a new Tensor that accesses the values of `x` along the specified `axis` dimension
-    using the indices specified in `index`. The new Tensor has the same number of dimensions as `x`,
+    Generates a new Tensor that accesses the values of `input` along the specified `axis` dimension
+    using the indices specified in `index`. The new Tensor has the same number of dimensions as `input`,
     with the size of the `axis` dimension being equal to the length of `index`, and the size of all other
-    dimensions will be unchanged from the original `x` Tensor.
+    dimensions will be unchanged from the original `input` Tensor.
 
     .. note::
-        The value of index must be in the range of `[0, x.shape[axis])`, the result is undefined out of range.
+        The value of index must be in the range of `[0, input.shape[axis])`, the result is undefined out of range.
 
     Args:
-        x (Tensor): The input Tensor.
+        input (Tensor): The input Tensor.
         axis (int): The dimension to be indexed.
-        index (Tensor): A 1-D Tensor with the indices to access in `x` along the specified axis.
+        index (Tensor): A 1-D Tensor with the indices to access in `input` along the specified axis.
 
     Returns:
         Tensor, has the same dtype as input Tensor.
 
     Raises:
-        TypeError: If `x` or `index` is not a Tensor.
+        TypeError: If `input` or `index` is not a Tensor.
         TypeError: If `axis` is not int number.
-        ValueError: If the value of `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+        ValueError: If the value of `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
         ValueError: If the dimension of `index` is not equal to 1.
 
     Supported Platforms:
@@ -4570,24 +4570,24 @@ def index_select(x, axis, index):
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
-        >>> x = Tensor(np.arange(16).astype(np.float32).reshape(2, 2, 4))
-        >>> print(x)
+        >>> input = Tensor(np.arange(16).astype(np.float32).reshape(2, 2, 4))
+        >>> print(input)
         [[[ 0.  1.  2.  3.]
           [ 4.  5.  6.  7.]]
          [[ 8.  9. 10. 11.]
           [12. 13. 14. 15.]]]
         >>> index = Tensor([0,], mindspore.int32)
-        >>> y = ops.index_select(x, 1, index)
+        >>> y = ops.index_select(input, 1, index)
         >>> print(y)
         [[[ 0.  1.  2.  3.]]
          [[ 8.  9. 10. 11.]]]
     """
-    if not (isinstance(x, Tensor) and isinstance(index, Tensor)):
-        raise TypeError(f"For 'index_select', inputs `x` and `index` must be all tensors.")
+    if not (isinstance(input, Tensor) and isinstance(index, Tensor)):
+        raise TypeError(f"For 'index_select', `input` and `index` must be all tensors.")
     if index.ndim != 1:
         raise ValueError(f"For 'index_select', the dimension of `index` must be 1, but got {index.ndim}")
-    axis = _check_check_axis_in_range(axis, x.ndim)
-    return gather_(x, index, axis)
+    axis = _check_check_axis_in_range(axis, input.ndim)
+    return gather_(input, index, axis)
 
 
 def population_count(input_x):

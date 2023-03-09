@@ -1979,19 +1979,19 @@ def _scale_factor_convert_size(shape, scale_factor, dim):
     return [int(floor(float(shape[i + 2]) * scale_factor[i])) for i in range(dim)]
 
 
-def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
+def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
     r"""
     Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
 
     Args:
-        x (Tensor): Tensor to be resized.
+        input (Tensor): Tensor to be resized.
             Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
             `(batch, channels, [optional depth], [optional height], width)`, with data type of float.
         size (Union[int, tuple[int], list[int]], optional): The target size.
-            If size is a tuple or list, size must have the same dimensions as x.
+            If size is a tuple or list, size must have the same dimensions as input.
             One and only one of size and scale_factor can be set to None. Default: None.
         scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
-            If size is a tuple or list, size must have the same dimensions as x.
+            If size is a tuple or list, size must have the same dimensions as input.
             One and only one of size and scale_factor can be set to None. Default: None.
         mode (str): The sampling algorithm.
             One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only), 'trilinear' (5D only),
@@ -2013,49 +2013,49 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
 
     Args Support List and Supported Platforms:
 
-    +----------------+------+----------------+---------------+------------------+
-    | mode           | x.dim| align_corners  | scale_factor  | device           |
-    +================+======+================+===============+==================+
-    | nearest        | 3    | \-             | ×             | Ascend,GPU,CPU   |
-    +----------------+------+----------------+---------------+------------------+
-    |                | 4    | \-             | ×             | Ascend,GPU,CPU   |
-    +----------------+------+----------------+---------------+------------------+
-    |                | 5    | \-             | √             | GPU,CPU          |
-    +----------------+------+----------------+---------------+------------------+
-    | linear         | 3    | √              | ×             | GPU,CPU          |
-    +----------------+------+----------------+---------------+------------------+
-    | bilinear       | 4    | √              | ×             | Ascend,GPU,CPU   |
-    +----------------+------+----------------+---------------+------------------+
-    | trilinear      | 5    | √              | √             | GPU,CPU          |
-    +----------------+------+----------------+---------------+------------------+
-    | bicubic        | 4    | √              | ×             | GPU,CPU          |
-    +----------------+------+----------------+---------------+------------------+
-    | area           | 3    | \-             | √             | Ascend,GPU,CPU   |
-    +----------------+------+----------------+---------------+------------------+
-    |                | 4    | \-             | √             | GPU              |
-    +----------------+------+----------------+---------------+------------------+
-    |                | 5    | \-             | √             | GPU,CPU          |
-    +----------------+------+----------------+---------------+------------------+
-    | nearest-exact  | 3    | \-             | ×             | Ascend,CPU       |
-    +----------------+------+----------------+---------------+------------------+
-    |                | 4    | \-             | ×             | Ascend,CPU       |
-    +----------------+------+----------------+---------------+------------------+
+    +---------------+-----------+---------------+--------------+----------------+
+    | mode          | input.dim | align_corners | scale_factor | device         |
+    +===============+===========+===============+==============+================+
+    | nearest       | 3         | \-            | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | GPU,CPU        |
+    +---------------+-----------+---------------+--------------+----------------+
+    | linear        | 3         | √             | ×            | GPU,CPU        |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | trilinear     | 5         | √             | √            | GPU,CPU        |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bicubic       | 4         | √             | ×            | GPU,CPU        |
+    +---------------+-----------+---------------+--------------+----------------+
+    | area          | 3         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | √            | GPU            |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | GPU,CPU        |
+    +---------------+-----------+---------------+--------------+----------------+
+    | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+`
 
     - `-` indicates that there is no such parameter.
     - `×` indicates that this parameter is not currently supported.
     - `√` indicates that this parameter is supported.
 
     Returns:
-        Tensor, resized, whose dimensions and dtype are the same as `x`.
+        Tensor, resized, whose dimensions and dtype are the same as `input`.
 
     Raises:
-        TypeError: `x` is not a Tensor.
+        TypeError: `input` is not a Tensor.
         ValueError: Both `size` and `scale_factor` are not empty.
         ValueError: Both `size` and `scale_factor` are empty.
-        ValueError: When `size` is a tuple or list, its length is not equal to `x.ndim - 2`.
-        ValueError: When `scale_factor` is a tuple or list, its length is not equal to `x.ndim - 2`.
+        ValueError: When `size` is a tuple or list, its length is not equal to `input.ndim - 2`.
+        ValueError: When `scale_factor` is a tuple or list, its length is not equal to `input.ndim - 2`.
         ValueError: `mode` is not in the list of supported modes.
-        ValueError: `x.ndim` is not in the list of supported dimensions for the corresponding mode.
+        ValueError: `input.ndim` is not in the list of supported dimensions for the corresponding mode.
         ValueError: `size` is not empty, `recompute_scale_factor` is not empty.
         ValueError: `scale_factor` is not in the corresponding list of supported values.
         ValueError: `align_corners` is not in the corresponding list of supported values.
@@ -2066,8 +2066,8 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
-        >>> output = ops.interpolate(x, size=(6,), mode='nearest')
+        >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> output = ops.interpolate(input, size=(6,), mode='nearest')
         >>> print(output)
             [[[1. 1. 2. 2. 3. 3.]
               [4. 4. 5. 5. 6. 6.]]]
@@ -2158,46 +2158,46 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         "area": run_area,
         "nearest-exact": run_nearest_exact,
     }
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For 'interpolate', 'x' must be a tensor, but got {type(x)}")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'interpolate', 'input' must be a tensor, but got {type(input)}")
     if size is not None and scale_factor is not None:
         raise ValueError(
-            "For 'interpolate', only one of size or scale_factor should be defined"
+            "For 'interpolate', 'size' and 'scale_factor' cannot be set simultaneously"
         )
     if size is not None:
         if isinstance(size, (list, tuple)):
-            if len(size) != x.ndim - 2:
+            if len(size) != input.ndim - 2:
                 raise ValueError(
-                    f"For 'interpolate', 'x' and 'size' must have same number of spatial dimensions, "
-                    f"but got 'x' is {x.ndim - 2}D, 'size' is {len(size)}D"
+                    f"For 'interpolate', 'input' and 'size' must have the same spatial dimensions, "
+                    f"but got 'input' is {input.ndim - 2}D, 'size' is {len(size)}D"
                 )
             check_positive_int_sequence_const(size, "size", "interpolate")
         else:
             check_positive_int_const(size, "size", "interpolate")
-            size = [size for _ in range(x.ndim - 2)]
+            size = [size for _ in range(input.ndim - 2)]
     elif scale_factor is not None:
         if isinstance(scale_factor, (list, tuple)):
-            if len(scale_factor) != x.ndim - 2:
+            if len(scale_factor) != input.ndim - 2:
                 raise ValueError(
-                    f"For 'interpolate', 'x' and 'scale_factor' must have same number of spatial dimensions, "
-                    f"but got 'x' is {x.ndim - 2}D, 'scale_factor' is {len(scale_factor)}D"
+                    f"For 'interpolate', 'input' and 'scale_factor' must have the same spatial dimensions, "
+                    f"but got 'input' is {input.ndim - 2}D, 'scale_factor' is {len(scale_factor)}D"
                 )
             check_positive_float_sequence_const(scale_factor, "scale_factor", "interpolate")
         else:
             check_positive_float_const(scale_factor, "scale_factor", "interpolate")
-            scale_factor = [scale_factor for _ in range(x.ndim - 2)]
+            scale_factor = [scale_factor for _ in range(input.ndim - 2)]
     else:
         raise ValueError(
-            "For 'interpolate', either 'size' or 'scale_factor' should be defined"
+            "For 'interpolate', 'size' and 'scale_factor' cannot be both empty"
         )
 
     if isinstance(mode, list) or mode not in supported_dict:
         raise ValueError(
             f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
         )
-    if x.ndim not in supported_dict.get(mode):
+    if input.ndim not in supported_dict.get(mode):
         raise ValueError(
-            f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {x.ndim}D"
+            f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {input.ndim}D"
         )
     # "area" mode always requires an explicit size rather than scale factor.
     if mode == "area" and size is None:
@@ -2206,26 +2206,27 @@ def interpolate(x, size=None, scale_factor=None, mode="nearest", align_corners=N
         check_bool_const(recompute_scale_factor, "recompute_scale_factor", "interpolate")
         if size is not None:
             raise ValueError(
-                "For 'interpolate', 'recompute_scale_factor' is not meaningful with an explicit size"
+                "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
+                " after specifying an explicit 'size'."
             )
-        size = _scale_factor_convert_size(x.shape, scale_factor, x.ndim - 2)
+        size = _scale_factor_convert_size(input.shape, scale_factor, input.ndim - 2)
         scale_factor = None
     else:
-        if scale_factor is not None and "scale_factor" not in supported_dict.get(mode, {}).get(x.ndim):
+        if scale_factor is not None and "scale_factor" not in supported_dict.get(mode, {}).get(input.ndim):
             raise ValueError(
                 f"For 'interpolate', 'scale_factor' option cannot currently be set with the "
-                f"mode = {mode} and dim = {x.ndim}D."
+                f"mode = {mode} and dim = {input.ndim}D."
             )
     if align_corners is not None:
         check_bool_const(align_corners, "align_corners", "interpolate")
-        if "align_corners" not in supported_dict.get(mode, {}).get(x.ndim):
+        if "align_corners" not in supported_dict.get(mode, {}).get(input.ndim):
             raise ValueError(
                 f"For 'interpolate', 'align_corners' option cannot currently be set with the "
-                f"mode = {mode}, and dim = {x.ndim}D"
+                f"mode = {mode}, and dim = {input.ndim}D"
             )
     else:
         align_corners = False
-    return resize_func.get(mode)(x, size, align_corners, scale_factor)
+    return resize_func.get(mode)(input, size, align_corners, scale_factor)
 
 
 def softsign(x):
