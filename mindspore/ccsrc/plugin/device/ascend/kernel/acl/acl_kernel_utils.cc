@@ -68,7 +68,9 @@ static const std::unordered_map<std::string, std::string> kMsNeedPad = {{kTransD
                                                                         {kBNTrainingReduceOpName, kOpFormat_NCHW},
                                                                         {kBNTrainingUpdateOpName, kOpFormat_NCHW},
                                                                         {kBNTrainingReduceGradOpName, kOpFormat_NCHW},
-                                                                        {kBNTrainingUpdateGradOpName, kOpFormat_NCHW}};
+                                                                        {kBNTrainingUpdateGradOpName, kOpFormat_NCHW},
+                                                                        {kBNInferOpName, kOpFormat_NCHW},
+                                                                        {kStridedSliceGradOpName, kOpFormat_NCHW}};
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
@@ -186,7 +188,8 @@ void AclOpDesc::AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const 
 
 void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
                            const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list,
-                           const std::vector<std::string> &input_names, const std::vector<std::string> &output_names) {
+                           const std::vector<std::string> &input_names, const std::vector<std::string> &output_names,
+                           const std::map<int, tensor::TensorPtr> &const_input_list) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   input_tensor_data_.clear();
@@ -207,6 +210,10 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
       continue;
     }
     input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);
+    if (const_input_list.find(idx) != const_input_list.end()) {
+      const auto &tensor = const_input_list.at(idx);
+      aclSetTensorConst(input_tensor_desc_[idx], tensor->data_c(), tensor->Size());
+    }
   }
 
   output_tensor_data_.clear();

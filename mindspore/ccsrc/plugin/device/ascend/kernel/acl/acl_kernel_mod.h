@@ -52,10 +52,12 @@ class AclKernelMod : public AscendKernelMod {
   void UpdateReduceAxisAttr(const AnfNodePtr &node);
 
  private:
-  int UpdateInput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
+  int UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info,
+                  const std::map<uint32_t, tensor::TensorPtr> &value_depend_list);
   void UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
   std::vector<GeTensorDescPtr> input_desc_list_{};
   std::vector<GeTensorDescPtr> output_desc_list_{};
+  std::map<int, tensor::TensorPtr> const_input_list_{};
   std::string op_type_{};
   bool is_dynamic_{false};
   bool need_skip_execute_ = false;

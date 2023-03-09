@@ -54,7 +54,8 @@ class AclOpDesc {
   void AddTensorDesc(const std::vector<GeTensorDescPtr> &inputs, const std::vector<GeTensorDescPtr> &outputs);
   void AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vector<size_t> &input_size_list,
                   const std::vector<AddressPtr> &outputs, const std::vector<size_t> &output_size_list,
-                  const std::vector<std::string> &input_names, const std::vector<std::string> &output_names);
+                  const std::vector<std::string> &input_names, const std::vector<std::string> &output_names,
+                  const std::map<int, tensor::TensorPtr> &const_input_list);
   void ProcessAclAttrs(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
   void ClearNullTensor();
 
