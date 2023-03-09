@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MAX_AVG_POOL_3D_INFO_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MAX_AVG_POOL_3D_INFO_H_
 
 #include <string>
 #include <memory>
@@ -30,23 +30,18 @@
 
 namespace mindspore {
 namespace parallel {
-class Conv2DInfo : public OperatorInfo {
+class MaxPool3DInfo : public OperatorInfo {
  public:
-  Conv2DInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
+  MaxPool3DInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
-  ~Conv2DInfo() override = default;
+  ~MaxPool3DInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  void ReComputeBatchSplitFlagList() override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
-  Status GetAttrsBase();
-  virtual Status CheckAttrsBase();
-  virtual std::vector<int64_t> GetStrideAttr();
-  virtual std::vector<int64_t> GetDilationAttr();
   Status GetAttrs() override;
   Status CheckStrategyBase(const StrategyPtr &strategy);
   Status CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const;
@@ -66,26 +61,23 @@ class Conv2DInfo : public OperatorInfo {
   void InferSendRankIds();
   void InferRecvRankIds();
   void InferCommunicationAttrs();
+  void AdjustPadList();
+  bool pad_list_adjusted_ = false;
   virtual std::string ReplaceNodeName() const;
-  AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
+  virtual AnfNodePtr GenerateNewOpNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   OperatorAttrs CreateNeighborExchangeV2Attrs();
-  OperatorAttrs CreateConv2DAttrs();
+  virtual OperatorAttrs CreateNewOpAttrs();
   virtual void ComputeReplaceGraph(const CNodePtr &cnode);
 
-  int64_t out_channel_ = 1;
-  std::vector<int64_t> kernel_size_;               // two integers
-  std::vector<int64_t> kernel_size_use_dilation_;  // two integers, it is dilation * (kernel_size - 1) + 1
-  int64_t mode_ = 1;
-  int64_t pad_mode_ = 0;           // "pad": 0; "same": 1; "valid": 2;
-  std::vector<int64_t> pad_list_;  // four integers
-  std::vector<int64_t> stride_;    // four integers
-  std::vector<int64_t> dilation_;  // four integers
-  int64_t group_ = 1;
+  std::vector<int64_t> kernel_size_;  // 3D: five integers (1, 1, k1, k2, k3)
+  std::string pad_mode_;              // "pad"(maxpool3d: CALCULATED), "same" or "valid"
+  std::vector<int64_t> pad_list_;     // 3D: six integers
+  std::vector<int64_t> stride_;       // 3D: five integers (1, 1, s1, s2, s3)
   std::string format_;
-  bool out_channel_shard_ = false;
-  int64_t new_out_channel_ = 1;
   std::vector<int64_t> new_pad_list_;
+  std::vector<int64_t> kernel_size_use_dilation_;  // (k1, k2, k3)
 
+  // notice, the w dim means the 2th dimension of input, the h dim means the 3th dimension of input
   bool w_dim_need_exchange_overlap_ = false;
   bool h_dim_need_exchange_overlap_ = false;
   int64_t h_rank_bias_ = 0;        // the bias of current rank in h dimension of device matrix
@@ -146,58 +138,27 @@ class Conv2DInfo : public OperatorInfo {
   virtual int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias);
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
 
  private:
+  std::vector<int64_t> CalculatePadListInSameMode();
   Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
   Status CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t dimension_id);
   Status CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy);
-  void AdjustPadList();
-  bool pad_list_adjusted_ = false;
 };
 
-class Conv2DBackpropInputInfo : public Conv2DInfo {
+class AvgPool3DInfo : public MaxPool3DInfo {
  public:
-  Conv2DBackpropInputInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                          const PrimitiveAttrs &attrs)
-      : Conv2DInfo(name, inputs_shape, outputs_shape, attrs) {}
-  ~Conv2DBackpropInputInfo() override = default;
-  void UpdateOutShape();
-  void ReplaceNodeInputOrAttrs() override;
+  AvgPool3DInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : MaxPool3DInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+
+  ~AvgPool3DInfo() override = default;
 
  protected:
-  Status GetAttrs() override;
-  Status GetOutShape();
-  Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferDevMatrixShape() override;
-  Status InferTensorMap() override;
-  Status InferMirrorOps() override;  // can not use OperatorInfo::InferMirrorOps(), since the 'out_shape' is not tensor
-
-  Status CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) override;
-  void InferNewPadList() override;
-  void InferNewPadListByDimension(const std::string &dimension);
-  int64_t ComputeOverlapTopSizeByRankBias(int64_t rank_bias) override;
-  int64_t ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) override;
-  int64_t ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) override;
-  int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias) override;
-  Shapes InferStrategyIndividualMode(const Shapes &in_strategy) override;
-
- private:
-  Shape out_shape_;
-  Shape out_slice_shape_;
+  std::string ReplaceNodeName() const override;
+  OperatorAttrs CreateNewOpAttrs() override;
 };
-
-class Conv2DTransposeInfo : public Conv2DBackpropInputInfo {
- public:
-  Conv2DTransposeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                      const PrimitiveAttrs &attrs)
-      : Conv2DBackpropInputInfo(name, inputs_shape, outputs_shape, attrs) {}
-  ~Conv2DTransposeInfo() override = default;
-};
-
-constexpr size_t IN_CHANNEL_INDEX = 1;
-using Conv2DBackpropInputInfoPtr = std::shared_ptr<Conv2DBackpropInputInfo>;
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_CONV2D_INFO_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MAX_AVG_POOL_3D_INFO_H_
