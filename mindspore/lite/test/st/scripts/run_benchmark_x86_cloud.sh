@@ -11,9 +11,6 @@ function Run_x86_java() {
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
     # compile benchmark
     cd mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./tools/converter/lib/
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/glog
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/third_party/dnnl
     echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
     javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
 
@@ -23,6 +20,7 @@ function Run_x86_java() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
+        echo $LD_LIBRARY_PATH >> "${run_x86_java_log_file}"
         echo ${model_name} >> "${run_x86_java_log_file}"
         echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
         java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.mindir ${models_path}/input_output/input/${model_name}.bin ${models_path}/input_output/output/${model_name}.out 1 "Runner" >> ${run_x86_java_log_file}
@@ -34,6 +32,7 @@ function Run_x86_java() {
             cat ${run_java_result_file}
             exit 1
         fi
+        sleep 1
     done < ${models_java_config}
 }
 
