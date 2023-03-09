@@ -25,7 +25,7 @@ import pytest
 
 import mindspore
 from mindspore import context
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 from mindspore import nn
 
@@ -49,7 +49,7 @@ class NetInplaceUpdateV2(nn.Cell):
 @pytest.mark.env_onecard
 def test_inplace_update_fp16():
     """
-    Feature: ALL To ALL
+    Feature: InplaceUpdateV2
     Description: test cases for InplaceUpdateV2
     Expectation: the result match to expect result
     """
@@ -61,5 +61,41 @@ def test_inplace_update_fp16():
     real_indices = Tensor([0, 1], dtype=mindspore.int32)
 
     output = inplace_update_v2(real_indices)
+    expect = Tensor([[0.5, 1.0], [1.0, 1.5], [5, 6]], mindspore.float16)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inplace_update_tensor():
+    """
+    Feature: InplaceUpdateV2
+    Description: test tensor interface for InplaceUpdateV2
+    Expectation: the result match to expect result
+    """
+    x = Tensor([[1, 2], [3, 4], [5, 6]], mindspore.float16)
+    v = Tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float16)
+    real_indices = Tensor([0, 1], dtype=mindspore.int32)
+
+    output = x.inplace_update(v, real_indices)
+    expect = Tensor([[0.5, 1.0], [1.0, 1.5], [5, 6]], mindspore.float16)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inplace_update_functional():
+    """
+    Feature: InplaceUpdateV2
+    Description: test function interface for InplaceUpdateV2
+    Expectation: the result match to expect result
+    """
+    x = Tensor([[1, 2], [3, 4], [5, 6]], mindspore.float16)
+    v = Tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float16)
+    real_indices = Tensor([0, 1], dtype=mindspore.int32)
+
+    output = ops.inplace_update(x, v, real_indices)
     expect = Tensor([[0.5, 1.0], [1.0, 1.5], [5, 6]], mindspore.float16)
     assert (output.asnumpy() == expect).all()

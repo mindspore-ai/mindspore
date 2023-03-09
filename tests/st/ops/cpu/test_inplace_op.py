@@ -25,10 +25,10 @@ import mindspore.nn as nn
 class InplaceUpdate(nn.Cell):
     def __init__(self, indices):
         super(InplaceUpdate, self).__init__()
-        self.indices = indices
+        self.inplace_update = P.InplaceUpdate(indices)
 
     def construct(self, x, v):
-        return x.inplace_update(v, self.indices)
+        return self.inplace_update(x, v)
 
 
 class InplaceAdd(nn.Cell):

@@ -1818,30 +1818,15 @@ class InplaceUpdateV2(Primitive):
     r"""
     Updates specified rows with values in `v`.
 
-    Note:
-        This operator only supports dynamic shape. As for static shape, please use operator 'InplaceUpdate' instead.
-
-    Args:
-
-    Inputs:
-        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
-          float32, float16 and int32.
-        - **indices** (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
-        - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
-          the first dimension, which must be the same as the size of `indices`.
-
-    Outputs:
-        Tensor, with the same type and shape as the input `x`.
-
-    Raises:
-        TypeError: If `indices` is neither int nor tuple.
-        TypeError: If `indices` is a tuple and its element is not an int.
+    Refer to :func:`mindspore.ops.inplace_update` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
@@ -1866,40 +1851,13 @@ class InplaceUpdateV2(Primitive):
 
 class InplaceUpdate(Primitive):
     r"""
-    Updates specified rows with values in `v`.
-
-    Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
-
-    Inputs:
-        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
-          float32, float16 and int32.
-        - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
-          the first dimension, which must be the same as the size of `indices`.
-
-    Outputs:
-        Tensor, with the same type and shape as the input `x`.
-
-    Raises:
-        TypeError: If `indices` is neither int nor tuple.
-        TypeError: If `indices` is a tuple and its element is not an int.
+    The InplaceUpdate interface is deprecated, please use the :class:`mindspore.ops.InplaceUpdateV2` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> indices = (0, 1)
-        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
-        >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplace_update = ops.InplaceUpdate(indices)
-        >>> output = inplace_update(x, v)
-        >>> print(output)
-        [[0.5 1. ]
-         [1.  1.5]
-         [5.  6. ]]
+        Deprecated
     """
 
+    @deprecated("2.0", "ops.InplaceUpdateV2", False)
     @prim_attr_register
     def __init__(self, indices):
         """Initialize InplaceUpdate"""

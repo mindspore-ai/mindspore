@@ -1358,9 +1358,8 @@ def inplace_update(x, v, indices):
             `indices` refers to the left-most dimension.
 
     Args:
-        indices (Union[int, tuple], Tensor): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x). If the type
-            is Tensor, it supports dynamic shape. Otherwise, it only supports static shape.
+        indices (Union[int, tuple, Tensor]): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is an int or tuple or tensor, whose value is in [0, the first dimension size of x).
         x (Tensor): A tensor which to be inplace updated. It can be one of the following data types:
             float32, float16 and int32.
         v (Tensor): A tensor with the same type as `x` and the same dimension size as `x` except
@@ -1370,13 +1369,16 @@ def inplace_update(x, v, indices):
         Tensor, with the same type and shape as the input `x`.
 
     Raises:
-        TypeError: If `indices` is neither int nor tuple.
-        TypeError: If `indices` is a tuple and its element is not an int.
+        TypeError: If `indices` is neither int nor tuple nor Tensor.
+        TypeError: If `indices` is a tuple or Tensor, but its element is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
@@ -1386,13 +1388,8 @@ def inplace_update(x, v, indices):
          [1.  1.5]
          [5.  6. ]]
     """
-    if not isinstance(indices, (Tensor, Tensor_)):
-        inplace_update_inner = _get_cache_prim(P.InplaceUpdate)(indices)
-        output = inplace_update_inner(x, v)
-    else:
-        inplace_update_inner = InplaceUpdateV2()
-        output = inplace_update_inner(x, indices, v)
-    return output
+    inplace_update_inner = InplaceUpdateV2()
+    return inplace_update_inner(x, indices, v)
 
 
 def inplace_add(x, v, indices):
