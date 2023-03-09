@@ -1158,7 +1158,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
-def dropout(input, p=0.5):
+def dropout(input, p=0.5, training=True):
     """
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
@@ -1169,10 +1169,10 @@ def dropout(input, p=0.5):
         input (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
+        training (bool): Apply dropout if is True. Default: True.
 
     Returns:
         - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
-        - **mask** (Tensor) - Mask for zeroing, bitwise compression and alignment are performed internally.
 
     Raises:
         TypeError: If `p` is not a float.
@@ -1188,6 +1188,8 @@ def dropout(input, p=0.5):
         >>> print(output.shape)
         (2, 2)
     """
+    if training is False:
+        return input
     keep_prob = 1 - p
     out, _ = P.Dropout(keep_prob=keep_prob)(input)
     return out
@@ -1230,7 +1232,7 @@ def celu(x, alpha=1.0):
     return celu_op(x)
 
 
-def dropout1d(x, p=0.5, training=True):
+def dropout1d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
     from a Bernoulli distribution(For a 3-dimensional tensor with a shape of :math:`NCL`,
@@ -1250,7 +1252,7 @@ def dropout1d(x, p=0.5, training=True):
     `dropout1d` can improve the independence between channel feature maps.
 
     Args:
-        x (Tensor): A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size, `C` is the
+        input (Tensor): A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size, `C` is the
             number of channels, `L` is the feature length. The data type must be int8, int16, int32, int64, float16,
             float32 or float64.
         p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
@@ -1258,13 +1260,13 @@ def dropout1d(x, p=0.5, training=True):
         training (bool): Apply dropout if is True. Default: True.
 
     Returns:
-        Tensor, output, with the same shape and data type as `x`.
+        Tensor, output, with the same shape and data type as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not `2D` or `3D`.
+        ValueError: If `input` shape is not `2D` or `3D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1280,25 +1282,25 @@ def dropout1d(x, p=0.5, training=True):
     if p < 0 or p > 1:
         raise ValueError(f"For dropout1d, the 'p' must be a number in range [0, 1], but got {p}.")
 
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For dropout1d, 'x' must be Tensor, but got type {type(x)}.")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For dropout1d, 'input' must be Tensor, but got type {type(input)}.")
 
-    if not training:
-        p = 0
+    if training is False:
+        return input
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
 
-    if len(x.shape) == 2:
-        x = x.expand_dims(0)
-        x = x.expand_dims(-1)
-        out, _ = dropout_2d_op(x)
+    if len(input.shape) == 2:
+        input = input.expand_dims(0)
+        input = input.expand_dims(-1)
+        out, _ = dropout_2d_op(input)
         out = out.squeeze(-1)
         out = out.squeeze(0)
-    elif len(x.shape) == 3:
-        x = x.expand_dims(-1)
-        out, _ = dropout_2d_op(x)
+    elif len(input.shape) == 3:
+        input = input.expand_dims(-1)
+        out, _ = dropout_2d_op(input)
         out = out.squeeze(-1)
     else:
-        raise ValueError(f"For dropout1d, x shape should be 2D or 3D, but got {len(x.shape)}.")
+        raise ValueError(f"For dropout1d, input shape should be 2D or 3D, but got {len(input.shape)}.")
     return out
 
 
