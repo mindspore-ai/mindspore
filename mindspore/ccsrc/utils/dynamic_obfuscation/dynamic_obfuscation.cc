@@ -557,7 +557,7 @@ bool DynamicObfuscator::IsTarget(const std::string &cnode_name) {
     int op_name_len = cnode_name.size();
     int target_name_len = target_op_name.size();
     if ((op_name_len >= target_name_len) && (cnode_name.substr(0, target_name_len) == target_op_name)) {
-      MS_LOG(WARNING) << "find target node.";
+      MS_LOG(INFO) << "find target node.";
       return true;
     }
   }
@@ -682,7 +682,7 @@ FuncGraphPtr DynamicObfuscator::CloneSubGraph(const std::vector<mindspore::CNode
   mindspore::AnfNodePtr last_node = input_x;
   for (auto node : node_arr) {
     std::string obf_type = ObfuscateOpType(node);
-    MS_LOG(WARNING) << "obf_type: " << obf_type;
+    MS_LOG(INFO) << "obf_type: " << obf_type;
     mindspore::ObfCase obf_case = ObfuscateOpCase(obf_type);
     switch (obf_case) {
       case ObfCase::OneInputNoWeightNode: {
