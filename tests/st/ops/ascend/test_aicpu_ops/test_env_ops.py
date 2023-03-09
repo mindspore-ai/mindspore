@@ -123,7 +123,7 @@ def test_reftoembed_with_two_weights():
     """
     Feature: RefToEmbed can be properly be evaluated.
     Description: Multiple weights with same shape and type can be evaluatd properly
-                 even SimplifyDataStructures (one more round of Renormalize) takes effect.
+                 even RewriterBeforeOptA (one more round of Renormalize) takes effect.
     Expectation: return expected value.
     """
     @jit_class

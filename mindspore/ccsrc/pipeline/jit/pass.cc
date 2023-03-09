@@ -103,11 +103,11 @@ bool PyInterpretToExecutePass(const ResourcePtr &resource) {
   return true;
 }
 
-bool SimplifyDataStructuresPass(const ResourcePtr &resource) {
+bool RewriterBeforeOptAPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::SimplifyDataStructures(func_graph, resource->manager());
+  (void)opt::RewriterBeforeOptA(func_graph, resource->manager());
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -131,11 +131,20 @@ bool TransformTopGraphPass(const ResourcePtr &resource) {
   return true;
 }
 
-bool CleanAfterOptAPass(const ResourcePtr &resource) {
+bool RewriterAfterOptAPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::CleanAfterOptA(func_graph, resource);
+  (void)opt::RewriterAfterOptA(func_graph, resource);
+  UpdateArgsSpec(func_graph, resource);
+  return true;
+}
+
+bool OrderPyExecuteAfterRewriterPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  (void)opt::OrderPyExecuteAfterRewriter(func_graph, resource);
   UpdateArgsSpec(func_graph, resource);
   return true;
 }
@@ -872,9 +881,10 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
 }
 
 std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
-                                   {"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"rewriter_before_opt_a", RewriterBeforeOptAPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"clean_after_opta", CleanAfterOptAPass},
+                                   {"rewriter_after_opt_a", RewriterAfterOptAPass},
+                                   {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
                                    {"opt_b", OptPassBGroup},
                                    {"cconv", CconvPass},
                                    {"opt_after_cconv", OptPassAfterCconvGroup},
@@ -895,9 +905,10 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"handle_group_info", HandleGroupInfoPass}};
 
 std::vector<PassItem> kGePasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
-                                   {"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"rewriter_before_opt_a", RewriterBeforeOptAPass},
                                    {"opt_a", OptPassAGroup},
-                                   {"clean_after_opta", CleanAfterOptAPass},
+                                   {"rewriter_after_opt_a", RewriterAfterOptAPass},
+                                   {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
                                    {"opt_b", OptPassBGroup},
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
@@ -911,6 +922,6 @@ std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"transform_top", TransformTopGraphPass},
                                          {"transform_graph", OptPassTransformGraphGroup}};
 
-std::vector<PassItem> kInlinePasses = {{"simplify_data_structures", SimplifyDataStructuresPass}, {"a1a2", OptPassA1A2}};
+std::vector<PassItem> kInlinePasses = {{"rewriter_before_opt_a", RewriterBeforeOptAPass}, {"a1a2", OptPassA1A2}};
 }  // namespace pipeline
 }  // namespace mindspore

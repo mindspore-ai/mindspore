@@ -205,14 +205,14 @@ class BaseRewriter : protected SimpleRewriter {
 };
 
 // ===========================================================================
-// SimplifyDataStructuresRewriter convert ObjectClass, Dictionary to Tuple.
+// BeforeOptARewriter convert ObjectClass, Dictionary to Tuple.
 // ===========================================================================
-class SimplifyDataStructuresRewriter : public BaseRewriter {
+class BeforeOptARewriter : public BaseRewriter {
  public:
-  using ThisClass = SimplifyDataStructuresRewriter;
-  SimplifyDataStructuresRewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
+  using ThisClass = BeforeOptARewriter;
+  BeforeOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
       : BaseRewriter(root_graph, manager), is_dict_output_{HasDictOutput()} {}
-  ~SimplifyDataStructuresRewriter() override = default;
+  ~BeforeOptARewriter() override = default;
 
   bool Execute() override {
     bool changed = Run();
@@ -603,14 +603,14 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
 };
 
 // ==================================================================
-// CleanAfterOptARewriter converts List, Sparse, RowTensor to Tuple.
+// AfterOptARewriter converts List, Sparse, RowTensor to Tuple.
 // ==================================================================
-class CleanAfterOptARewriter : public BaseRewriter {
+class AfterOptARewriter : public BaseRewriter {
  public:
-  using ThisClass = CleanAfterOptARewriter;
-  CleanAfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
+  using ThisClass = AfterOptARewriter;
+  AfterOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
       : BaseRewriter(root_graph, manager) {}
-  ~CleanAfterOptARewriter() override = default;
+  ~AfterOptARewriter() override = default;
 
   void UpdateAbstracts() {
     const auto &nodes = manager_->all_nodes();
@@ -1097,24 +1097,84 @@ class CleanAfterOptARewriter : public BaseRewriter {
 };
 }  // namespace
 
-bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
-  SimplifyDataStructuresRewriter rewriter(root, manager);
+  BeforeOptARewriter rewriter(root, manager);
   return rewriter.Execute();
 }
 
-bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(resource);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
-  CleanAfterOptARewriter rewriter(root, manager);
+  AfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
   // Renormalize for new PyExecute node.
   rewriter.UpdateAbstracts();
   if (rewriter.need_renormalized()) {
+    abstract::AbstractBasePtrList new_args_spec;
+    std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                   [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)pipeline::Renormalize(resource, root, new_args_spec);
+  }
+  return change;
+}
+
+static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(graph);
+  AnfNodePtr return_node = graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
+  CNodePtr former_node = nullptr;
+  CNodePtr latter_node = nullptr;
+  bool change = false;
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+      continue;
+    }
+    if (former_node == nullptr) {
+      former_node = dyn_cast<CNode>(node);
+      continue;
+    } else {
+      latter_node = dyn_cast<CNode>(node);
+    }
+    MS_EXCEPTION_IF_NULL(former_node);
+    MS_EXCEPTION_IF_NULL(latter_node);
+
+    // Make former node as latter node's input.
+    auto tr = manager->Transact();
+    int latest_index = latter_node->size() - 1;
+    const auto &last_input_abs = latter_node->input(latest_index)->abstract();
+    if (last_input_abs != nullptr && last_input_abs->isa<abstract::AbstractMonad>()) {  // Should be IO monad.
+      const auto &monad_node = latter_node->input(latest_index);
+      tr.SetEdge(latter_node, latest_index, former_node);
+      tr.AddEdge(latter_node, monad_node);
+    } else {
+      tr.AddEdge(latter_node, former_node);
+    }
+    tr.Commit();
+
+    former_node = latter_node;
+    change = true;
+  }
+  return change;
+}
+
+bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
+  auto manager = resource->manager();
+  auto func_graphs_used_total = root->func_graphs_used_total();
+  bool change = false;
+  if (!func_graphs_used_total.empty()) {
+    change =
+      std::all_of(func_graphs_used_total.cbegin(), func_graphs_used_total.cend(),
+                  [&manager](const FuncGraphPtr &func_graph) { return OrderPyExecuteCNode(func_graph, manager); });
+  }
+  change |= OrderPyExecuteCNode(root, manager);
+  if (change) {
     abstract::AbstractBasePtrList new_args_spec;
     std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
                    [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
