@@ -123,7 +123,8 @@ const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &fun
   // The virtual node maybe the output node of graph and can't miss the attribute of value.
   if (node == nullptr || func_graph == nullptr || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
       common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple) ||
-      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
     return nullptr;
   }
   if (!node->isa<CNode>()) {

@@ -960,24 +960,60 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
+  AnfNodePtr ValueListConvertPyExecute(const ValuePtr &value, const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(value);
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto value_list = value->cast<ValueListPtr>();
+    MS_EXCEPTION_IF_NULL(value_list);
+    auto values = value_list->value();
+
+    // Script and local parameters keys
+    constexpr auto internal_element_str_prefix = "__internal_list_element_";
+    std::stringstream script_buffer;
+    script_buffer << "list((";
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    for (size_t i = 0; i < values.size(); ++i) {
+      std::string element_name_str = internal_element_str_prefix + std::to_string(i) + "__";
+      script_buffer << element_name_str << ", ";
+      const auto element_name = std::make_shared<StringImm>(element_name_str);
+      (void)key_value_names_list.emplace_back(NewValueNode(element_name));
+    }
+    script_buffer << "))";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
+
+    // Pack the local parameters values, not support list, tuple, or dict.
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    for (auto element : values) {
+      auto converted_element = ProcessValueSequence(element);
+      (void)key_value_list.emplace_back(converted_element);
+    }
+    const auto key_value_tuple = func_graph->NewCNode(key_value_list);
+
+    // Build the new dict node.
+    const auto list_value_node = func_graph->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+    MS_LOG(DEBUG) << "List value node convert to PyExecute node: " << list_value_node->DebugString();
+    return list_value_node;
+  }
+
   AnfNodePtr ProcessValueSequence(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<ValueSequence>()) {
-      auto value_seq = value->cast<ValueSequencePtr>();
+    if (value->isa<ValueTuple>()) {
+      auto value_seq = value->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value_seq);
       auto values = value_seq->value();
       std::vector<AnfNodePtr> value_seq_inputs;
-      if (value_seq->isa<ValueList>()) {
-        (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
-      } else {
-        (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-      }
+      (void)value_seq_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
       for (auto inner_value : values) {
         auto inner_value_seq = ProcessValueSequence(inner_value);
         (void)value_seq_inputs.emplace_back(inner_value_seq);
       }
       auto iter_value = root_graph_->NewCNode(value_seq_inputs);
       return iter_value;
+    } else if (value->isa<ValueList>()) {
+      return ValueListConvertPyExecute(value, root_graph_);
     }
     if (value->isa<None>()) {
       return NoneConvertPyExecute(root_graph_);

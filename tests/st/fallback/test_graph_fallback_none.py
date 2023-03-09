@@ -398,7 +398,7 @@ def test_none_nested_input_of_dict_return():
         return z
 
     out = foo()
-    assert out == {'y': 'a', 'u': 9, 'v': False, 'w': (None, None), 'q': (1, (2, None), None)}
+    assert out == {'y': 'a', 'u': 9, 'v': False, 'w': (None, None), 'q': [1, (2, None), None]}
 
 
 @pytest.mark.level0

@@ -347,7 +347,6 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     assert compare(output, expect)
 
 
-@pytest.mark.skip(reason="not support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -406,7 +405,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
               np.array([[1.7, 1.7, 1.7],
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
-    assert compare(output, list)
+    assert compare(output, expect)
     grad_net = GradNetWrtX1(Net())
     output = grad_net()
     assert isinstance(output, list)
