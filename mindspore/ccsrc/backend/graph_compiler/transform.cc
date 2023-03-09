@@ -307,7 +307,7 @@ void CompileGraph::AddPartial(const CNodePtr &node) {
   }
   auto fn = inputs[1];
   if (!IsValueNode<FuncGraph>(fn)) {
-    MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph";
+    MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph, but got:" << fn->ToString();
   }
   for (size_t i = 1; i < inputs.size(); i++) {
     args.emplace_back(Ref(inputs[i]));
