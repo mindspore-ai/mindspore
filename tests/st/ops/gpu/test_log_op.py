@@ -35,10 +35,7 @@ class NetLog(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("data_type", [np.bool_, np.int8, np.int16, np.int32, np.int64,
-                                       np.uint8, np.uint16, np.uint32, np.uint64,
-                                       np.float16, np.float32, np.float64,
-                                       np.complex64, np.complex128])
+@pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_log(data_type, mode):
     """
