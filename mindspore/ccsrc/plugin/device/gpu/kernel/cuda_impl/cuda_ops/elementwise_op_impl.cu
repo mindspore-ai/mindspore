@@ -222,7 +222,13 @@ struct ReciprocalFunctor<half> {
   ReciprocalFunctor() {}
   __device__ __forceinline__ half operator()(half x) const {
     if (x != zero_) {
+#if CUDA_VERSION > 11000
       return one_ / x;
+#else
+      float one_f = 1.0;
+      float x_f = __half2float(x);
+      return __float2half(one_f / x_f);
+#endif
     }
     if (std::numeric_limits<half>::infinity()) {
       return std::numeric_limits<half>::infinity() + one_;

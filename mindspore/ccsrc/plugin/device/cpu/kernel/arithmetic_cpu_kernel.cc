@@ -30,6 +30,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/power_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/sub_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
+#include "Eigen/Eigen"
 
 namespace mindspore {
 namespace kernel {
@@ -675,38 +676,65 @@ void ArithmeticCpuTypeFunc<T>::FloorMod(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
+void PowEigenTask(T *x_addr, T *y_addr, T *output_addr, size_t start, size_t end, bool same_shape) {
+  Eigen::Map<Eigen::Array<T, -1, 1>> x_v(x_addr + start, end - start);
+  Eigen::Map<Eigen::Array<T, -1, 1>> o_v(output_addr + start, end - start);
+  if (same_shape) {
+    Eigen::Map<Eigen::Array<T, -1, 1>> y_v(y_addr + start, end - start);
+    o_v = x_v.pow(y_v);
+  } else {
+    o_v = x_v.pow(*y_addr);
+  }
+}
+
+template <>
+void PowEigenTask(float16 *x_addr, float16 *y_addr, float16 *output_addr, size_t start, size_t end, bool same_shape) {
+  Eigen::half *ex_addr = reinterpret_cast<Eigen::half *>(x_addr);
+  Eigen::half *ey_addr = reinterpret_cast<Eigen::half *>(y_addr);
+  Eigen::half *eo_addr = reinterpret_cast<Eigen::half *>(output_addr);
+  Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> x_v(ex_addr + start, end - start);
+  Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> o_v(eo_addr + start, end - start);
+  if (same_shape) {
+    Eigen::Map<Eigen::Array<Eigen::half, -1, 1>> y_v(ey_addr + start, end - start);
+    o_v = x_v.pow(y_v);
+  } else {
+    o_v = x_v.pow(*ey_addr);
+  }
+}
+
+template <typename T>
 void ArithmeticCpuTypeFunc<T>::Pow(const T *input1, const T *input2, T *out) {
-  if constexpr (std::is_same_v<T, float>) {
-    auto is_power_single = [this]() {
-      bool is_power_single_inner = false;
+  if constexpr (std::is_same_v<T, float16> || std::is_same_v<T, float> || std::is_same_v<T, double>) {
+    auto is_same_shape = [this]() {
+      bool is_same_shape_inner = false;
       if (input_shape1_.size() == input_shape2_.size()) {
-        is_power_single_inner = true;
+        is_same_shape_inner = true;
         for (size_t i = 0; i < input_shape1_.size(); ++i) {
           if (input_shape1_[i] != input_shape2_[i]) {
-            is_power_single_inner = false;
+            is_same_shape_inner = false;
             break;
           }
         }
       }
-      return is_power_single_inner;
+      return is_same_shape_inner;
     };
-
+    auto x_addr = const_cast<T *>(input1);
+    auto y_addr = const_cast<T *>(input2);
     if (op_para_.in_elements_num1_ == 1) {
-      auto task = [&](size_t start, size_t end) {
-        (void)Power(input1 + start, input2, out + start, SizeToInt(end - start), 1.0, 0.0, true);
+      auto task = [&x_addr, &y_addr, &out](size_t start, size_t end) {
+        PowEigenTask(x_addr, y_addr, out, start, end, false);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
-    if (is_power_single()) {
-      auto task = [&](size_t start, size_t end) {
-        (void)Power(input1 + start, input2 + start, out + start, SizeToInt(end - start), 1.0, 0.0, false);
+    if (is_same_shape()) {
+      auto task = [&x_addr, &y_addr, &out](size_t start, size_t end) {
+        PowEigenTask(x_addr, y_addr, out, start, end, true);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
   }
-
   if (!is_init_broadcast_) {
     InitBroadCast();
   }
@@ -721,11 +749,12 @@ void ArithmeticCpuTypeFunc<T>::Pow(const T *input1, const T *input2, T *out) {
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
   } else {
     for (size_t i = 0; i < output_size_; i++) {
-      auto sx = static_cast<double>(input1[input_index1_[i]]);
-      auto sy = static_cast<double>(input2[input_index2_[i]]);
-      out[i] = static_cast<T>(std::pow(sx, sy));
+      auto x = static_cast<double>(input1[input_index1_[i]]);
+      auto y = static_cast<double>(input2[input_index2_[i]]);
+      out[i] = static_cast<T>(std::pow(x, y));
     }
   }
+  return;
 }
 
 template <typename T>
