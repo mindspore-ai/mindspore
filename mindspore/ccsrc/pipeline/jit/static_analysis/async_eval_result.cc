@@ -141,11 +141,29 @@ void AnalysisSchedule::SetNextReady() {
     MS_EXCEPTION_IF_NULL(item);
     return item->HasResult();
   });
-  if (it == schedule_list_.end()) {
-    if (IntToSize(infer_thread_count_.load()) >= schedule_list_.size()) {
-      MS_LOG(DEBUG) << "There is some task to be added. Please wait.";
+  while (it == schedule_list_.end()) {
+    if (IntToSize(infer_thread_count_.load()) > schedule_list_.size()) {
+      MS_LOG(DEBUG) << "There is some task to be added. Please wait. "
+                    << " infer_count: " << infer_thread_count_.load() << " schedule: " << schedule_list_.size();
       return;
     }
+
+    (void)std::for_each(schedule_list_.begin(), schedule_list_.end(),
+                        [](const auto &item) { MS_LOG(DEBUG) << "Leave infer thread: " << item->thread_id(); });
+    if (enable_waiting_branch_eval()) {
+      // Try to set one of possible result.
+      auto possible_it = std::find_if(schedule_list_.cbegin(), schedule_list_.cend(), [](const auto &item) {
+        MS_EXCEPTION_IF_NULL(item);
+        return item->SetPossibleResult();
+      });
+      if (possible_it != schedule_list_.end()) {
+        MS_LOG(DEBUG) << "Try to set one branch result from the other branch. " << (*possible_it)->thread_id()
+                      << " result: " << (*possible_it)->HasResult();
+        it = possible_it;
+        break;
+      }
+    }
+
     // Enter endless loop if there is not ready result.
     (void)activate_threads_.insert(schedule_list_.front()->thread_id());
     // Let the first thread to trigger endless loop exception.
@@ -155,6 +173,7 @@ void AnalysisSchedule::SetNextReady() {
     schedule_list_.pop_front();
     return;
   }
+
   auto async_task = *it;
   (void)activate_threads_.insert(async_task->thread_id());
   async_task->SetReady();
@@ -166,12 +185,32 @@ void AnalysisSchedule::SetNextReady() {
 }
 
 AbstractBasePtr AsyncAbstract::GetResult() {
+  ClearPossibleResult();
   auto async_task = AsyncInferTask::MakeShared(shared_from_this());
   MS_LOG(DEBUG) << GetInferThread() << " is waiting for async: " << async_task.get();
   AnalysisSchedule::GetInstance().Add2Schedule(async_task);
   auto ret = async_task->GetResult();
   MS_LOG(DEBUG) << GetInferThread() << " success to get async result: " << async_task.get() << " " << ret->ToString();
   return ret;
+}
+void AsyncAbstract::ClearPossibleResult() {
+  std::lock_guard<std::mutex> lock(lock_);
+  if (result_ != nullptr && result_->isa<AsyncAbstractFuncAtom>()) {
+    result_ = nullptr;
+  }
+}
+
+bool AsyncAbstract::SetPossibleResult() {
+  std::lock_guard<std::mutex> lock(lock_);
+  if (not_copy_from_other_ && switchAbstract_ != nullptr && switchAbstract_->HasResult()) {
+    result_ = switchAbstract_->TryGetResult();
+    if (NeedWaitForBranches(result_)) {
+      result_ = AsyncAbstractFuncAtom::MakeShared(shared_from_this(), std::vector<size_t>{0});
+    }
+    not_copy_from_other_ = false;
+    return true;
+  }
+  return false;
 }
 
 namespace {
@@ -202,6 +241,22 @@ AbstractFunctionPtr GetAbstractFuncRecursively(const AbstractBasePtr &abs, const
                     << abs->ToString();
 }
 }  // namespace
+bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<AbstractFunction>()) {
+    return true;
+  }
+  if (abstract->isa<AbstractSequence>()) {
+    auto seq = abstract->cast_ptr<AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(seq);
+    auto elements = seq->elements();
+    if (std::any_of(elements.begin(), elements.end(),
+                    [](const AbstractBasePtr &item) { return NeedWaitForBranches(item); })) {
+      return true;
+    }
+  }
+  return false;
+}
 
 AbstractFunctionPtr AsyncAbstractFuncAtom::GetUnique() {
   if (resolved_ != nullptr) {
@@ -300,6 +355,11 @@ std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
            << item->BuildValue()->ToString() << "\n";
   }
   return buffer.str();
+}
+bool enable_waiting_branch_eval() {
+  static std::string ms_env = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL");
+  static bool enable_waiting_branch_eval_ = ms_env != "1";
+  return enable_waiting_branch_eval_;
 }
 }  // namespace abstract
 }  // namespace mindspore

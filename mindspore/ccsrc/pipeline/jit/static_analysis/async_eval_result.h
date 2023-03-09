@@ -40,6 +40,7 @@ namespace abstract {
 
 class AsyncInferTask;
 class AsyncAbstract;
+class AsyncAbstractFuncAtom;
 using AsyncInferTaskPtr = std::shared_ptr<AsyncInferTask>;
 using AsyncAbstractPtr = std::shared_ptr<AsyncAbstract>;
 class AnalysisSchedule {
@@ -212,7 +213,7 @@ class NormalCache {
 
 class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
  public:
-  AsyncAbstract() = default;
+  explicit AsyncAbstract(std::shared_ptr<AsyncAbstract> switchAbstract = nullptr) : switchAbstract_(switchAbstract) {}
   ~AsyncAbstract() = default;
   AbstractBasePtr GetResult();
   AbstractBasePtr TryGetResult() {
@@ -224,10 +225,12 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
     return result_ != nullptr;
   }
   void set_result(const AbstractBasePtr &result) {
-    MS_EXCEPTION_IF_NULL(result);
     std::lock_guard<std::mutex> lock(lock_);
     result_ = result;
   }
+
+  void ClearPossibleResult();
+
   std::string ToString() {
     std::ostringstream buffer;
     std::lock_guard<std::mutex> lock(lock_);
@@ -235,9 +238,13 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
     return buffer.str();
   }
 
+  bool SetPossibleResult();
+
  private:
   std::mutex lock_;
   AbstractBasePtr result_{nullptr};
+  bool not_copy_from_other_{true};
+  std::shared_ptr<AsyncAbstract> switchAbstract_;
 };
 
 // Wrap AsyncAbstract, so it can work with Join method of AbstractFunction.
@@ -320,6 +327,7 @@ class AsyncInferTask {
   }
 
   bool HasResult() { return abstract_ptr_->HasResult(); }
+  bool SetPossibleResult() { return abstract_ptr_->SetPossibleResult(); }
   int ready() {
     std::lock_guard<std::mutex> lock(lock_);
     return SizeToInt(ready_);
@@ -454,6 +462,8 @@ class AnalysisResultCacheMgr {
 };
 
 std::string ArgsToString(const AbstractBasePtrList &args_abs_list);
+bool enable_waiting_branch_eval();
+bool NeedWaitForBranches(const AbstractBasePtr &abstract);
 
 inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisSchedule::thread_id() + ":"; }
 }  // namespace abstract

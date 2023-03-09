@@ -147,6 +147,8 @@ def test_branch_value_compatible():
 
     try:
         forward_net(x, y, i)
+    except RuntimeError as e:
+        assert 'limit' in str(e)
     except ValueError as e:
         assert 'Join Failed' in str(e)
 
