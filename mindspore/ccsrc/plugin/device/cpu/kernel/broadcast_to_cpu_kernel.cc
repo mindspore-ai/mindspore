@@ -60,13 +60,45 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
       {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>}}},
     {kDynamicBroadcastTo,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeFloat32),
        &BroadcastToCpuKernelMod::LaunchKernel<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeInt32),
        &BroadcastToCpuKernelMod::LaunchKernel<int>},
-      {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeBool)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeBool),
        &BroadcastToCpuKernelMod::LaunchKernel<bool>},
-      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+         .AddOutputAttr(kNumberTypeInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &BroadcastToCpuKernelMod::LaunchKernel<float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt32),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeBool)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeBool),
+       &BroadcastToCpuKernelMod::LaunchKernel<bool>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeInt8),
        &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
 
 bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
