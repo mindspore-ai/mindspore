@@ -1908,7 +1908,7 @@ def gather_elements(x, dim, index):
     return F.gather_elements(x, dim, index)
 
 
-def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
+def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
     """
     Return sum of array elements over a given axis.
 
@@ -1917,7 +1917,7 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
         `extobj` are not supported.
 
     Args:
-        x (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
+        input (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
         axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
             If None, sum all of the elements of the input array.
             If axis is negative it counts from the last to the first axis.
@@ -1953,7 +1953,7 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
         >>> print(input_x.sum(axis=1))
         [10. 35.]
     """
-    input_x = x.astype(mstype.int32) if x.dtype == mstype.bool_ else x
+    input_x = input.astype(mstype.int32) if input.dtype == mstype.bool_ else input
     dtype = input_x.dtype if dtype is None else dtype
     dtype = check_astype_dtype_const(dtype)
     if not isinstance(keepdims, int):
@@ -1963,12 +1963,10 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
     if axis is None:
         axis = ()
     else:
-        axis = check_and_canonicalize_axes(axis, x.ndim)
+        axis = check_and_canonicalize_axes(axis, input.ndim)
 
     if not check_type_support(input_x.dtype, 'GPU', (mstype.float64, mstype.float32, mstype.float16)):
         input_x = input_x.astype(mstype.float32)
-    if 0 in x.shape:
-        x = const_utils.make_tensor([0], x.dtype)
     if keepdims:
         res = _reduce_sum_keepdims(input_x, axis)
     else:
@@ -3608,45 +3606,45 @@ def gather(input_x, input_indices, axis, batch_dims=0):
     return F.gather(input_x, input_indices, axis, batch_dims)
 
 
-def split(x, split_size_or_sections, axis=0):
+def split(tensor, split_size_or_sections, axis=0):
     """
     Splits the Tensor into chunks along the given axis.
     Refer to :func:`mindspore.ops.split` for more detail.
     """
-    return F.split(x, split_size_or_sections, axis)
+    return F.split(tensor, split_size_or_sections, axis)
 
 
-def tensor_split(x, indices_or_sections, axis=0):
+def tensor_split(input, indices_or_sections, axis=0):
     """
     Splits a tensor into multiple sub-tensors along the given axis.
     Refer to :func:`mindspore.ops.tensor_split` for more detail.
     """
-    return F.tensor_split(x, indices_or_sections, axis=axis)
+    return F.tensor_split(input, indices_or_sections, axis=axis)
 
 
-def vsplit(x, indices_or_sections):
+def vsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors vertically. It is equivalent to `ops.tensor_split` with :math:`axis=0` .
     Refer to :func:`mindspore.ops.vsplit` for more detail.
     """
-    return F.vsplit(x, indices_or_sections)
+    return F.vsplit(input, indices_or_sections)
 
 
-def hsplit(x, indices_or_sections):
+def hsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors horizontally. It is equivalent to `ops.tensor_split` with :math:`axis=1` .
     Refer to :func:`mindspore.ops.hsplit` for more detail.
     """
-    return F.hsplit(x, indices_or_sections)
+    return F.hsplit(input, indices_or_sections)
 
 
-def dsplit(x, indices_or_sections):
+def dsplit(input, indices_or_sections):
     """
     Splits a tensor into multiple sub-tensors along the 3rd axis.
     It is equivalent to `ops.tensor_split` with :math:`axis=2` .
     Refer to :func:`mindspore.ops.tensor_split` for more detail.
     """
-    return F.dsplit(x, indices_or_sections)
+    return F.dsplit(input, indices_or_sections)
 
 
 def xlogy(x, y):
@@ -3983,24 +3981,7 @@ def cumprod(input, dim, dtype=None):
 
 
 def multiply(input, other):
-    r"""
-    Multiplies two tensors element-wise.
-
-    .. math::
-
-        out_{i} = x_{i} * y_{i}
-
-    Refer to :func:`mindspore.ops.mul` for more details.
-
-    Supported platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Example:
-        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-        >>> output = x.multiply(y)
-        [4.0 10.0 18.0]
-    """
+    """For details, please refer to :func:`mindspore.ops.multiply`."""
     return F.multiply(input, other)
 
 
@@ -4208,11 +4189,9 @@ def sort(input, dim=-1, descending=False):
     return F.sort(input, axis=dim, descending=descending)
 
 
-def argsort(input_x, axis=-1, descending=False):
-    r"""
-    Return the indices that sort the input tensor along the given dimension in the specified order.
-    """
-    return F.argsort(input_x, axis, descending)
+def argsort(input, axis=-1, descending=False):
+    """For details, please refer to :func:`mindspore.ops.argsort`."""
+    return F.argsort(input, axis, descending)
 
 
 def trunc(input):
