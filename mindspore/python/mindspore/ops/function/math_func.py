@@ -790,15 +790,15 @@ def sub(x, y):
     return tensor_sub(x, y)
 
 
-def subtract(x, other, *, alpha=1):
+def subtract(input, other, *, alpha=1):
     r"""
     Performs the element-wise subtraction of input tensors.
 
     .. math::
-        output[i] = x[i] - alpha * y[i]
+        output[i] = input[i] - alpha * y[i]
 
     Args:
-        x (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
+        input (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
         other (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
 
     Keyword Args:
@@ -808,19 +808,19 @@ def subtract(x, other, *, alpha=1):
         Tensor, has the same shape and dtype as input tensors.
 
     Raises:
-        TypeError: `x` or `other` is neither Tensor nor number.Number.
+        TypeError: `input` or `other` is neither Tensor nor number.Number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([4, 5, 6]), mindspore.float32)
+        >>> input = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> z = ops.subtract(x, y, alpha=1)
+        >>> z = ops.subtract(input, y, alpha=1)
         >>> print(z)
         [3. 3. 3.]
     """
-    return tensor_sub(x, alpha * other)
+    return tensor_sub(input, alpha * other)
 
 
 def true_divide(dividend, divisor):
@@ -1281,19 +1281,19 @@ def log(x):
     return log_(x)
 
 
-def logdet(x):
+def logdet(input):
     r"""
     Calculates log determinant of one or a batch of square matrices.
 
     Args:
-        x (Tensor): Input Tensor of any dimension.
+        input (Tensor): Input Tensor of any dimension.
 
     Returns:
-        Tensor, the log determinant of `x`. If the matrix determinant is smaller than 0, nan will be returned. If the
-        matrix determinant is 0, -inf will be returned.
+        Tensor, the log determinant of `input`. If the matrix determinant is smaller than 0, nan will be returned. If
+        the matrix determinant is 0, -inf will be returned.
 
     Raises:
-        TypeError: If dtype of `x` is not float32, float64, Complex64 or Complex128.
+        TypeError: If dtype of `input` is not float32, float64, Complex64 or Complex128.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1304,7 +1304,7 @@ def logdet(x):
         >>> print(output)
         [1.9459091 0.6931454]
     """
-    det_x = det(x)
+    det_x = det(input)
     return log_(det_x)
 
 
@@ -5172,27 +5172,27 @@ def mv(mat, vec):
     return out
 
 
-def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
+def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
     r"""
-    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step and add `x` to the result.
+    Applies batch matrix multiplication to `batch1` and `batch2`, with a reduced add step and add `input` to the result.
 
     The optional values `alpha` and `beta` are the matrix-matrix product between `batch1` and `batch2` and the scale
-    factor for the added tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+    factor for the added tensor `input` respectively. If `beta` is 0, then `input` will be ignored.
 
     .. math::
-        output = \beta x + \alpha (\sum_{i=0}^{b-1} {batch1 @ batch2})
+        output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1 @ batch2})
 
     Args:
-        x (Tensor): Tensor to be added.
+        input (Tensor): Tensor to be added.
         batch1 (Tensor): The first batch of tensor to be multiplied.
         batch2 (Tensor): The second batch of tensor to be multiplied.
 
     Keyword Args:
-        beta (Union[int, float], optional): Multiplier for `x`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `input`. Default: 1.
         alpha (Union[int, float], optional): Multiplier for `batch1` @ `batch2`. Default: 1.
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
         TypeError: If `alpha` or beta is not an int or float.
@@ -5224,27 +5224,27 @@ def addbmm(x, batch1, batch2, *, beta=1, alpha=1):
         raise TypeError(f"For 'addbmm', parameter 'beta' must be an int or float, but got {type(beta)}.")
     bmm_op = _get_cache_prim(P.BatchMatMul)()
     bmm_res = bmm_op(batch1, batch2)
-    return beta * x + alpha * (bmm_res.sum(axis=0))
+    return beta * input + alpha * (bmm_res.sum(axis=0))
 
 
-def addmm(x, mat1, mat2, *, beta=1, alpha=1):
+def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     r"""
-    Multiplies matrix `mat1` and matrix `mat2`. The matrix `x` is added to the final result.
+    Multiplies matrix `mat1` and matrix `mat2`. The matrix `input` is added to the final result.
 
     Args:
-        x (Tensor): Tensor to be added.
+        input (Tensor): Tensor to be added.
         mat1 (Tensor): The first tensor to be multiplied.
         mat2 (Tensor): The second tensor to be multiplied.
 
     Keyword Args:
-        beta (Union[int, float], optional): Multiplier for `x`. Default: 1.
+        beta (Union[int, float], optional): Multiplier for `input`. Default: 1.
         alpha (Union[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
 
     .. math::
-        output = \beta x + \alpha (mat1 @ mat2)
+        output = \beta input + \alpha (mat1 @ mat2)
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
         ValueError: If `mat1`, `mat2` cannot apply matrix multiplication.
@@ -5270,7 +5270,7 @@ def addmm(x, mat1, mat2, *, beta=1, alpha=1):
     if not isinstance(beta, (int, float)):
         raise TypeError(f"For 'addmm', parameter 'beta' must be an int or float, but got {type(beta)}.")
     matmul_op = _get_cache_prim(P.MatMul)()
-    return beta * x + alpha * (matmul_op(mat1, mat2))
+    return beta * input + alpha * (matmul_op(mat1, mat2))
 
 
 def addmv(x, mat, vec, beta=1, alpha=1):
@@ -8123,7 +8123,7 @@ def matmul(input, other):
     return reshape_op(res, shape_out)
 
 
-def inner(x, other):
+def inner(input, other):
     r"""
     Returns the inner product of two tensors.
 
@@ -8132,61 +8132,62 @@ def inner(x, other):
     For higher dimensions, returns a sum product over the last axis.
 
     Note:
-         If `x` or `other` is a Tensor scalar, :func:`mindspore.ops.inner` will be the same as
+         If `input` or `other` is a Tensor scalar, :func:`mindspore.ops.inner` will be the same as
          :func:`mindspore.ops.mul` .
 
     Args:
-        x (Tensor): First input.
+        input (Tensor): First input.
         other (Tensor): Second input.
 
     Returns:
         Tensor, the result of the inner product.
 
     Raises:
-        ValueError: If neither `x` nor `other` is scalar, and the last dimension of the two input tensors do not match.
+        ValueError: If neither `input` nor `other` is scalar, and the last dimension of the two input tensors do not
+            match.
 
     Examples:
         >>> # case1: 2 1D tensors
-        >>> x = ms.Tensor([1, 2, 3], mstype.float32)
+        >>> input = ms.Tensor([1, 2, 3], mstype.float32)
         >>> y = ms.Tensor([4, 5, 6], mstype.float32)
-        >>> output = ops.inner(x, y)
+        >>> output = ops.inner(input, y)
         >>> print(output)
         32
         >>> # case2: Tensor scalar and tensor
-        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
+        >>> input = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
         >>> y = ms.Tensor(2, mstype.float32)
-        >>> output = ops.inner(x, y)
+        >>> output = ops.inner(input, y)
         >>> print(output)
         [[[ 2.  4.  6.]
           [ 6.  4.  2.]]
          [[ 8. 10. 12.]
           [ 8. 10. 12.]]]
         >>> # case3: Two tensors
-        >>> x = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
+        >>> input = ms.Tensor([[[1, 2, 3], [3, 2, 1]], [[4, 5, 6], [4, 5, 6]]], mstype.float32)
         >>> y = ms.Tensor([[2, 3, 4], [4, 3, 2]], mstype.float32)
-        >>> output = ops.inner(x, y)
+        >>> output = ops.inner(input, y)
         >>> print(output)
         [[[20. 16.]
           [16. 20.]]
          [[47. 43.]
           [47. 43.]]]
     """
-    x_dim = x.ndim
+    x_dim = input.ndim
     other_dim = other.ndim
-    x_dtype = x.dtype
+    x_dtype = input.dtype
 
     if x_dim == 0 or other_dim == 0:
-        output = x * other
-        if output.dtype != x.dtype:
+        output = input * other
+        if output.dtype != input.dtype:
             return output.astype(x_dtype)
         return output
 
-    x_shape = x.shape
+    x_shape = input.shape
     other_shape = other.shape
     if x_shape[-1] != other_shape[-1]:
-        raise ValueError(f"For 'inner', the last dimension of 'x' and 'other' must be the same, \
-                         but got x.shape: {x_shape} and other.shape: {other_shape}.")
-    return C.tensor_dot(x, other, axes=(-1, -1))
+        raise ValueError(f"For 'inner', the last dimension of 'input' and 'other' must be the same, \
+                         but got input.shape: {x_shape} and other.shape: {other_shape}.")
+    return C.tensor_dot(input, other, axes=(-1, -1))
 
 
 def bmm(input_x, mat2):
