@@ -375,23 +375,38 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, input_node.get(), true);
 }
 
+namespace {
+bool IsEmptySequenceTensor(const TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->base_shape_ptr() == nullptr || (!tensor->base_shape_ptr()->isa<abstract::SequenceShape>())) {
+    return false;
+  }
+  const auto &sequence_shape = tensor->base_shape_ptr()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_shape);
+  return sequence_shape->size() == 0;
+}
+}  // namespace
+
 void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
                                                       const KernelGraphPtr &graph,
                                                       const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(graph);
-  auto tensor_data_size = input_tensor->data().nbytes();
   MS_EXCEPTION_IF_NULL(input_node);
   auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr) {
+    if (IsEmptySequenceTensor(input_tensor)) {
+      return;
+    }
     if (graph->is_dynamic_shape()) {
       auto device_format = device_address->format();
       static const std::set<std::string> kNormalFormat = {
         kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
       };
       if (kNormalFormat.find(device_format) != kNormalFormat.end()) {
+        auto tensor_data_size = input_tensor->data().nbytes();
         MS_LOG(DEBUG) << "Set device address:" << device_address << " size from:" << device_address->GetSize()
                       << " to:" << tensor_data_size;
         device_address->SetSize(tensor_data_size);

@@ -229,6 +229,20 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(output_node);
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                << ", output index: " << output_index << ", output position: " << output_position;
+
+  // If output is an empty sequence return an empty tensor directly.
+  if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
+      output_node->abstract()->cast<abstract::AbstractSequencePtr>()->size() == 0) {
+    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    ShapeVector shape = {0};
+    TypeId type_id =
+      (device_tensor->type_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64 : device_tensor->type_id());
+    const auto &tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+    tensor->set_base_shape(output_node->Shape());
+    return tensor;
+  }
+
   const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
   if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
     return CreateOutputMapTensor(output_node, output_index);
@@ -293,6 +307,10 @@ void OutputActor::UpdateOutputDeviceAddress() {
 
     auto &tensor = outputs_[i];
     MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor->base_shape_ptr() != nullptr && tensor->base_shape_ptr()->isa<abstract::SequenceShape>() &&
+        tensor->base_shape_ptr()->cast<abstract::SequenceShapePtr>()->size() == 0) {
+      continue;
+    }
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     // Update tensor device address by device tensor of output node.
