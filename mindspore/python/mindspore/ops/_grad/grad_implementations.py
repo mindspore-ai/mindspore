@@ -164,12 +164,6 @@ def bprop_load(param, u_monad, out, dout):
     return dout, C.zeros_like(u_monad)
 
 
-@bprops.register("mutable")
-def bprop_mutable(x, out, dout):
-    """Backpropagator for primitive `mutable`."""
-    return (dout,)
-
-
 @bprops.register("scalar_ne")
 @bprops.register("bool_and")
 @bprops.register("bool_or")

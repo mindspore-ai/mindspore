@@ -164,6 +164,16 @@ class PyExecuteGradient : public MetaFuncGraph {
 };
 using PyExecuteGradientPtr = std::shared_ptr<PyExecuteGradient>;
 
+class MutableGradient : public MetaFuncGraph {
+ public:
+  explicit MutableGradient(const std::string &name) : MetaFuncGraph(name) {}
+  ~MutableGradient() override = default;
+  MS_DECLARE_PARENT(MutableGradient, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const MutableGradient &lhs, const MutableGradient &rhs) { return lhs.name_ == rhs.name_; }
+};
+using MutableGradientPtr = std::shared_ptr<MutableGradient>;
+
 class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
