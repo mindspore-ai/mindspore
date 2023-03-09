@@ -18,6 +18,7 @@
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList CheckBpropExpander(const BpropIRBuilder *ib) {
@@ -67,6 +68,41 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
     r2 = ib->Reshape(ib->Mul(partial_x, dout), sx);
   }
   return {r1, r2};
+}
+
+inline bool IsScalar(const ShapeVector &shape) { return shape.empty() || (shape.size() == 1 && shape[0] == 1); }
+
+bool IsExpandMinMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
+  auto is_ascend = (ib->GetTargetFromContext() == kAscendDevice);
+  if (!is_ascend) {
+    return false;
+  }
+
+  auto x_shp = ib->GetShape(x);
+  auto y_shp = ib->GetShape(y);
+  // Expand to ops for dynamic case.
+  if (IsDynamic(x_shp) || IsDynamic(y_shp)) {
+    return true;
+  }
+
+  // Only expand to ops in scalar broadcast static case.
+  return (IsScalar(x_shp) ^ IsScalar(y_shp));
+}
+
+NodePtrList MinimumMaximumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
+                               bool is_minimum) {
+  auto zeros = ib->ZerosLike(dout);
+  NodePtr x_mask;
+  if (is_minimum) {
+    x_mask = ib->LessEqual(x, y);
+  } else {
+    x_mask = ib->GreaterEqual(x, y);
+  }
+
+  auto grad_x = ib->Select(x_mask, dout, zeros);
+  auto grad_y = ib->Select(x_mask, zeros, dout);
+
+  return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
@@ -373,6 +409,11 @@ REG_BPROP_BUILDER("Minimum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+
+  if (IsExpandMinMaxGrad(ib, x, y)) {
+    MS_LOG(DEBUG) << "Expand MinimumGrad to ops.";
+    return MinimumMaximumGrad(ib, x, y, dout, true);
+  }
   auto tmp = ib->Emit("MinimumGrad", {x, y, dout}, {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
   auto dx = ib->TupleGetItem(tmp, 0);
   auto dy = ib->TupleGetItem(tmp, 1);
@@ -383,6 +424,12 @@ REG_BPROP_BUILDER("Maximum").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+
+  if (IsExpandMinMaxGrad(ib, x, y)) {
+    MS_LOG(DEBUG) << "Expand MaximumGrad to ops.";
+    return MinimumMaximumGrad(ib, x, y, dout, false);
+  }
+
   auto tmp = ib->Emit("MaximumGrad", {x, y, dout}, {{"grad_x", MakeValue(true)}, {"grad_y", MakeValue(true)}});
   auto dx = ib->TupleGetItem(tmp, 0);
   auto dy = ib->TupleGetItem(tmp, 1);
