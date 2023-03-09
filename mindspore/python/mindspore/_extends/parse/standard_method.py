@@ -41,7 +41,7 @@ from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr, _primexpr
 from ...common import dtype as mstype
-from ...ops.operations._sequence_ops import ListAppend, SequenceMax, SequenceMin
+from ...ops.operations._sequence_ops import ListAppend, ListInsert, SequenceMax, SequenceMin
 
 __all__ = ['MultitypeFuncGraph', 'env_get',
            'hyper_add', 'zeros_like', 'ones_like']
@@ -3400,6 +3400,8 @@ def list_append(self_, list_item):
 
 def list_insert(self_, index, obj):
     """Insert into list"""
+    if F.is_sequence_shape_unknown(self_):
+        return ListInsert()(self_, index, obj)
     return _insert(self_, index, obj)
 
 

@@ -134,6 +134,28 @@ def get_bprop_lsit_setitem(self):
     return bprop
 
 
+@bprop_getters.register(seq.ListAppend)
+def get_bprop_list_append(self):
+    """Generate bprop for ListAppend"""
+
+    def bprop(x, value, out, dout):
+        d_x = seq.ListAppendAndInsertGrad()(dout, -1)
+        return (d_x, zeros_like(value))
+
+    return bprop
+
+
+@bprop_getters.register(seq.ListInsert)
+def get_bprop_list_insert(self):
+    """Generate bprop for ListInsert"""
+
+    def bprop(x, idx, value, out, dout):
+        d_x = seq.ListAppendAndInsertGrad()(dout, idx)
+        return (d_x, zeros_like(idx), zeros_like(value))
+
+    return bprop
+
+
 @bprop_getters.register("tuple_le")
 @bprop_getters.register("tuple_lt")
 @bprop_getters.register("list_le")

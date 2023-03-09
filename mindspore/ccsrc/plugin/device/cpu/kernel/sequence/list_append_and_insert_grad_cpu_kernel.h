@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IN_SEQUENCE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IN_SEQUENCE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LIST_APPEND_AND_INSERT_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LIST_APPEND_AND_INSERT_GRAD_CPU_KERNEL_H_
 #include <vector>
+#include <memory>
 #include <utility>
 #include <map>
 #include <string>
@@ -25,10 +26,11 @@
 
 namespace mindspore {
 namespace kernel {
-class InSequenceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<InSequenceCpuKernelMod, AddressPtr> {
+class ListAppendAndInsertGradCpuKernelMod : public NativeCpuKernelMod,
+                                            public MatchKernelHelper<ListAppendAndInsertGradCpuKernelMod, AddressPtr> {
  public:
-  InSequenceCpuKernelMod() = default;
-  ~InSequenceCpuKernelMod() override = default;
+  ListAppendAndInsertGradCpuKernelMod() = default;
+  ~ListAppendAndInsertGradCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -51,11 +53,8 @@ class InSequenceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelp
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  std::vector<int64_t> tuple_shape_;
-  std::vector<int64_t> ele_shape_;
-  TypeId ele_type_;
-  TypeId input_type_;
+  std::vector<int64_t> list_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_IN_SEQUENCE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_LIST_APPEND_AND_INSERT_GRAD_CPU_KERNEL_H_
