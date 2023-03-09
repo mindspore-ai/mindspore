@@ -228,7 +228,7 @@ std::string GetCompilerCachePath() { return Common::GetUserDefineCachePath(); }
 void KernelMeta::Initialize() {
   auto config_path = GetCompilerCachePath();
   kernel_meta_path_ = config_path + std::string(kAkgKernelMeta);
-  FileUtils::CreateNotExistDirs(kernel_meta_path_);
+  FileUtils::CreateNotExistDirs(kernel_meta_path_, true);
   initialized_ = true;
 }
 
@@ -582,7 +582,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
 
 void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path) {
   std::string path = base_path + json_name + kInfoSuffix;
-  auto realpath = Common::CreatePrefixPath(path);
+  auto realpath = Common::CreatePrefixPath(path, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << path;
     return;
