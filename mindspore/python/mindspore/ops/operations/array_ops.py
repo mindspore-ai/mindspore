@@ -1332,7 +1332,7 @@ class MatrixSetDiagV3(Primitive):
         - **k** (Tensor) - Tensor type int32, used for diagonal offset(s).
           `k` can either be a single integer, which represents a single diagonal,
           or a pair of integers that specify the low and high ends of a matrix band.
-          In this case(这里是指什么情况下？), `k[0]` should not be greater than `k[1]`.
+          In this case, `k[0]` should not be greater than `k[1]`.
           The value of `k` has restructions, which means that value of `k` must be in range (-x.shape[-2], x.shape[-1]).
           Input `k` must be const Tensor when taking Graph mode.
 
