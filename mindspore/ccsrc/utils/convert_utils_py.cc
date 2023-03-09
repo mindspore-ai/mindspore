@@ -195,6 +195,14 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
 py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBasePtr &abs) {
   auto value_sequeue = value->value();
   auto value_size = value_sequeue.size();
+  if (value_size == 0) {
+    // If output size of value sequence is 0, return an empty sequence.
+    py::tuple res_sequeue(value_size);
+    if (value->isa<ValueTuple>()) {
+      return res_sequeue;
+    }
+    return res_sequeue.cast<py::list>();
+  }
   py::tuple res_sequeue(value_size);
   auto abs_sequeue = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
   if (abs_sequeue == nullptr) {
