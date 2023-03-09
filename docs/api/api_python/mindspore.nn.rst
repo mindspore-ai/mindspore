@@ -263,6 +263,7 @@ Dropout层
     mindspore.nn.MarginRankingLoss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
+    mindspore.nn.MultilabelMarginLoss
     mindspore.nn.MultiLabelSoftMarginLoss
     mindspore.nn.NLLLoss
     mindspore.nn.PoissonNLLLoss

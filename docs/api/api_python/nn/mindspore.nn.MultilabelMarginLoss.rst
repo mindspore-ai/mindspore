@@ -26,16 +26,16 @@ mindspore.nn.MultilabelMarginLoss
     输入：
         - **x** (Tensor) - 预测值。hape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
           为批量大小，:math:`C` 为类别数。数据类型必须为：float16或float32。
-        - **target** (Tensor) - 目标值，shape与 `inputs` 相同，数据类型必须为int32，标签目标由-1填充。
+        - **target** (Tensor) - 目标值，shape与 `x` 相同，数据类型必须为int32，标签目标由-1填充。
 
     输出：
         - **y** (Union[Tensor, Scalar]) - MultilabelMarginLoss损失。如果 `reduction` 的值为 "none"，
           那么返回shape为 :math:`(N)` 的Tensor类型数据。否则返回一个标量。
 
     异常：
-        - **TypeError** - 当 `inputs` 或者 `target` 数据不是Tensor时。
-        - **TypeError** - 当 `inputs` 数据类型不是以下其中之一时：float16、float32。
+        - **TypeError** - 当 `x` 或者 `target` 数据不是Tensor时。
+        - **TypeError** - 当 `x` 数据类型不是以下其中之一时：float16、float32。
         - **TypeError** - 当 `target` 数据类型不是int32时。
-        - **ValueError** - 当 `inputs` 的数据维度不是以下其中之一时：1、2。
-        - **ValueError** - 当 `inputs` 和 `target` 的shape不相同时。
+        - **ValueError** - 当 `x` 的数据维度不是以下其中之一时：1、2。
+        - **ValueError** - 当 `x` 和 `target` 的shape不相同时。
         - **ValueError** - 当 `reduction` 的值不是以下其中之一时：'none'、 'mean'、 'sum'。

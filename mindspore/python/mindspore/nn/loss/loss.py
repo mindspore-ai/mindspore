@@ -1536,7 +1536,7 @@ class MultilabelMarginLoss(LossBase):
 
     Furthermore, both :math:`y` and :math:`x` should have identical sizes.
 
-    .. note::
+    Note:
         For this operator, only a contiguous sequence of non-negative targets that starts at
         the beginning is taken into consideration, which means that different samples can have different
         number of target classes.

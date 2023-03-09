@@ -1252,7 +1252,8 @@ class SoftShrink(Cell):
         \end{cases}
 
     Args:
-        lambd: the :math:`\lambda` must be no less than zero for the SoftShrink formulation. Default: 0.5.
+        lambd (float): the :math:`\lambda` must be no less than zero for the SoftShrink formulation.
+            Default: 0.5.
 
     Inputs:
         - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.

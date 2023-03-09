@@ -1,7 +1,7 @@
 mindspore.ops.SoftShrink
 ========================
 
-.. py:class:: mindspore.ops.SoftShrink
+.. py:class:: mindspore.ops.SoftShrink(lambd=0.5)
 
     Soft Shrink激活函数。
 
