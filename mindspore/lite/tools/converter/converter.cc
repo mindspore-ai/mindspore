@@ -273,11 +273,11 @@ std::shared_ptr<ConverterPara> CreateConvertParam(const std::map<std::string, st
   }
   for (auto &pair : model_params) {
     if (parse_funcs.find(pair.first) == parse_funcs.end()) {
-      MS_LOG(ERROR) << "In multi-model scenario, " << pair.first << " is not supported";
+      MS_LOG(ERROR) << "INPUT ILLEGAL: `" << pair.first << "` is not supported in [model_param]";
       return nullptr;
     }
     if (parse_funcs[pair.first](pair.second, parm) != RET_OK) {
-      MS_LOG(ERROR) << pair.first << "'s param is invalid";
+      MS_LOG(ERROR) << "In multi-model scenario, " << pair.first << " is not supported";
       return nullptr;
     }
   }
