@@ -1119,9 +1119,10 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   constexpr size_t fn_index = 0;
   auto fn_abs = args_spec_list[fn_index];
-  constexpr size_t weight_index = 2;
-  if (return_ids_ && args_spec_list.size() >= weight_index) {
-    weight_value_ = args_spec_list[1];
+  constexpr size_t len_with_weight = 2;
+  constexpr size_t weights_index = 1;
+  if (return_ids_ && args_spec_list.size() >= len_with_weight) {
+    weight_value_ = args_spec_list[weights_index];
   }
   MS_EXCEPTION_IF_NULL(fn_abs);
   AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
@@ -1182,21 +1183,29 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   grad_fg->debug_info()->set_name(ss.str());
   ParameterPtr param_graph = grad_fg->add_parameter();
 
-  bool is_weights_none = false;
+  bool is_weights_empty_or_none = false;
   AnfNodePtr weights = nullptr;
   AnfNodePtr position = nullptr;
+  if (args_spec_list.size() > weights_index) {
+    auto weights_abs = args_spec_list[weights_index];
+    MS_EXCEPTION_IF_NULL(weights_abs);
+    if (weights_abs->isa<AbstractSequence>()) {
+      if (weights_abs->cast<AbstractSequencePtr>()->empty()) {
+        is_weights_empty_or_none = true;
+      }
+    }
+  }
   if (get_by_position_) {
     weights = grad_fg->add_parameter();
     position = grad_fg->add_parameter();
   } else if (get_by_list_) {
     weights = grad_fg->add_parameter();
     // Check if weights is None.
-    constexpr size_t weights_index = 1;
-    if (args_spec_list.size() > weights_index) {
+    if (!is_weights_empty_or_none && args_spec_list.size() > weights_index) {
       auto weights_abs = args_spec_list[weights_index];
       MS_EXCEPTION_IF_NULL(weights_abs);
       if (weights_abs->isa<AbstractNone>()) {
-        is_weights_none = true;
+        is_weights_empty_or_none = true;
       }
     }
   }
@@ -1210,7 +1219,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   {
     TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
     k_child = GetGrad(j, weights, position, forward_graph->parameters(),
-                      forward_graph->has_flag("enable_tuple_grad_first"), is_weights_none);
+                      forward_graph->has_flag("enable_tuple_grad_first"), is_weights_empty_or_none);
   }
   grad_fg->set_output(NewValueNode(k_child));
 
