@@ -669,7 +669,8 @@ bool AbstractSequence::PurifyElements() {
 }
 
 void AbstractSequence::CheckAndConvertToDynamicLenSequence() {
-  const size_t input_len = size();
+  // Can not use size() since it will raise error when sequence is already dynamic length.
+  const size_t input_len = elements_.size();
   if (input_len > 1) {
     auto first_element = elements()[0];
     MS_EXCEPTION_IF_NULL(first_element);
