@@ -76,11 +76,12 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
     MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }
-  if (split_count == 0 || shape[LongToSize(split_dim)] % split_count != 0) {
-    MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_dim
-                      << "] = " << shape[LongToSize(split_dim)] << trace::DumpSourceLines(all_to_all);
+  size_t split_idx = split_dim < 0 ? LongToSize(split_dim + shape_size) : LongToSize(split_dim);
+  if (split_count == 0 || shape[split_idx] % split_count != 0) {
+    MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_idx
+                      << "] = " << shape[split_idx] << trace::DumpSourceLines(all_to_all);
   }
-  shape[LongToSize(split_dim)] /= split_count;
+  shape[split_idx] /= split_count;
   std::vector<TypeId> dtypes(split_count, dtype);
   std::vector<ShapeVector> shapes(split_count, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
@@ -164,7 +165,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
     MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }
-  single_shape[LongToSize(concat_dim)] *= split_count;
+  size_t concat_idx = concat_dim < 0 ? LongToSize(concat_dim + shape_size) : LongToSize(concat_dim);
+  single_shape[concat_idx] *= split_count;
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)},
                                               {single_shape}, concat.get());
 
