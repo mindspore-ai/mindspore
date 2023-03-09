@@ -651,9 +651,12 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     if (IsDynamicSequence(node) || is_real_squence_output) {
       const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);
-      const auto &element_abs = sequence_abs->dynamic_len_element_abs();
+      auto element_abs = sequence_abs->dynamic_len_element_abs();
       ShapeVector shape_vector = {SizeToLong(tuple_shape->size())};
-      if (element_abs == nullptr || (!element_abs->isa<abstract::AbstractTensor>())) {
+      if ((!sequence_abs->dynamic_len()) && element_abs == nullptr && (!sequence_abs->elements().empty())) {
+        element_abs = sequence_abs->elements()[0];
+        MS_EXCEPTION_IF_NULL(element_abs);
+      } else if (element_abs == nullptr || (!element_abs->isa<abstract::AbstractTensor>())) {
         return shape_vector;
       }
       MS_LOG(DEBUG) << "Element of dynamic sequence is tensor:" << element_abs->ToString()
@@ -680,10 +683,14 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
                    << " is a TupleShape:" << base_shape->ToString();
       return ShapeVector();
+    } else if (b_shp->isa<abstract::DynamicSequenceShape>()) {
+      const auto &base_shape = GetDynamicSequenceShape(node, output_idx);
+      return GetOutputInferShape(node, base_shape, 0);
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
-                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
+                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node)
+                        << " dst shape:" << b_shp->ToString();
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return ShapeVector();
@@ -2055,16 +2062,34 @@ bool AnfAlgo::IsReduceOp(const std::string &op_name) {
 
 abstract::BaseShapePtr AnfAlgo::GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  abstract::AbstractSequencePtr sequence_abs = nullptr;
   if (node->Shape() == nullptr || (!node->Shape()->isa<abstract::DynamicSequenceShape>())) {
-    MS_LOG(EXCEPTION) << "Invalid dynamic shape in node:" << node->DebugString() << ".";
+    MS_LOG(INFO) << "node:" << node->fullname_with_scope() << " index:" << output_idx
+                 << " abs:" << node->abstract()->ToString();
+    if (!node->abstract()->isa<abstract::AbstractSequence>()) {
+      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+    }
+    const auto &top_sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(top_sequence_abs);
+    if (output_idx >= top_sequence_abs->elements().size()) {
+      MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for abs:" << top_sequence_abs->ToString()
+                        << "node:" << node->fullname_with_scope();
+    }
+    const auto &sub_abs = top_sequence_abs->elements()[output_idx];
+    MS_EXCEPTION_IF_NULL(sub_abs);
+    if (!sub_abs->isa<abstract::AbstractSequence>()) {
+      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+    }
+    sequence_abs = sub_abs->cast<abstract::AbstractSequencePtr>();
+  } else {
+    if (node->abstract() == nullptr) {
+      MS_LOG(EXCEPTION) << "Empty abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+    }
+    if (!node->abstract()->isa<abstract::AbstractSequence>()) {
+      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+    }
+    sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
   }
-  if (node->abstract() == nullptr) {
-    MS_LOG(EXCEPTION) << "Empty abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
-  }
-  if (!node->abstract()->isa<abstract::AbstractSequence>()) {
-    MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
-  }
-  const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(sequence_abs);
   if (!sequence_abs->dynamic_len()) {
     MS_LOG(EXCEPTION) << "Not dynamic abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
