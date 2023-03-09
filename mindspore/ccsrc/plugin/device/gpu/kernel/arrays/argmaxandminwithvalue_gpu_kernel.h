@@ -136,7 +136,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     }
     size_t input_element_num = std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
     if (input_element_num == 0) {
-      return KRET_OK;
+      return true;
     }
 
     input_size_ = sizeof(T);
