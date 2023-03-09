@@ -451,7 +451,8 @@
     "Trace": "Hadn't adapted tbe implementation",
     "AssignAdd": "Frac_nz in pangu not support",
     "Range": "not support dynamic shape with tiling failed",
-    "AtomicAddrClean": "need to clean addr larger than 2G, int32 is not enough"
+    "AtomicAddrClean": "need to clean addr larger than 2G, int32 is not enough",
+    "TensorMove": "not support uint32 in op json"
   },
   "SkipNodes": [
     "Im2col",
@@ -484,7 +485,8 @@
     "AssignAdd",
     "Range",
     "AtomicAddrClean",
-    "Assign"
+    "Assign",
+    "TensorMove"
   ],
   "FallbackOps": {
     "DeformableOffsets": [

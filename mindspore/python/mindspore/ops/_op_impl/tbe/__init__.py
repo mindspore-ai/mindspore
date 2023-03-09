@@ -39,3 +39,4 @@ from .atomic_addr_clean import _atomic_addr_clean_tbe # need to clean addr large
 from .assign import _assign_tbe # Different formats of assign inputs cause memory to increase
 from .npu_clear_float_status_v2 import _npu_clear_float_status_v2_tbe  # io mismatch
 from .npu_get_float_status_v2 import _npu_get_float_status_v2_tbe  # io mismatch
+from .tensor_move import _tensor_move_tbe # not support uint32 in op json
