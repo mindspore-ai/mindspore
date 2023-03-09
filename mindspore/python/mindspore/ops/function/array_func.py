@@ -3242,10 +3242,11 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
             Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
         axis (int): Specifies the dimension index to gather indices.
+        batch_dims (int): Specifies the number of batch dimensions. Default: 0.
 
     Returns:
         Tensor, the shape of tensor is
-        :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
+        :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -3281,15 +3282,14 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         [[1.  2.  3.  4.]
          [9. 10. 11. 12.]]
         >>> # case4: input_indices is a Tensor with shape (2, ) and
-        >>> # input_params is a Tensor with shape (3, 4) and axis is 1.
+        >>> # input_params is a Tensor with shape (3, 4) and axis is 1, batch_dims is 1.
         >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+        >>> input_indices = Tensor(np.array([0, 2, 1]), mindspore.int32)
         >>> axis = 1
-        >>> output = ops.gather(input_params, input_indices, axis)
+        >>> batch_dims = 1
+        >>> output = ops.gather(input_params, input_indices, axis, batch_dims)
         >>> print(output)
-        [[1.  3.]
-         [5.  7.]
-         [9. 11.]]
+        [ 1.  7. 10.]
     """
     _gather = _get_cache_prim(P.Gather)(batch_dims)
     return _gather(input_params, input_indices, axis)

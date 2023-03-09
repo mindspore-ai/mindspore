@@ -975,15 +975,15 @@ class Gather(Primitive):
         >>> print(output)
         [[1.  2.  3.  4.]
          [9. 10. 11. 12.]]
-        >>> # case4: input_indices is a Tensor with shape (2, ). input_params is a Tensor with shape (3, 4) and axis is 1.
+        >>> # case4: input_indices is a Tensor with shape (2, ).
+        >>> # input_params is a Tensor with shape (3, 4) and axis is 1, batch_dims is 1.
         >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+        >>> input_indices = Tensor(np.array([0, 2, 1]), mindspore.int32)
         >>> axis = 1
-        >>> output = ops.Gather()(input_params, input_indices, axis)
+        >>> batch_dims = 1
+        >>> output = ops.Gather(batch_dims)(input_params, input_indices, axis)
         >>> print(output)
-        [[1.  3.]
-         [5.  7.]
-         [9. 11.]]
+        [ 1.  7. 10.]
     """
 
     @prim_attr_register
