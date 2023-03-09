@@ -64,7 +64,6 @@ class Scheduler {
   std::vector<kernel::KernelExec *> NonTailCallNodes();
 
  private:
-  bool CheckRunNCXPass();
   int SchedulePreProcess();
   int CheckInputParam(const std::vector<kernel::KernelExec *> *dst_kernels) const;
   void FindNodeInoutTensors(const LiteGraph::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);

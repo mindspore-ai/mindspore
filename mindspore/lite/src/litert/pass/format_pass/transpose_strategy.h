@@ -17,10 +17,11 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_PASS_TRANSPOSE_STRATEGY_H_
 
 #include <map>
-#include <unordered_map>
+#include <set>
 #include <vector>
+#include <unordered_map>
 #include "src/litert/kernel_exec.h"
-#include "src/litert/pass/pass_utils.h"
+#include "src/litert/pass/format_pass/pass_utils.h"
 
 namespace mindspore::lite::pass {
 // bool value determines whether the kernel has axis attribute or not.
@@ -82,8 +83,8 @@ static const std::unordered_map<schema::PrimitiveType, bool> dynamic_format_kern
   {schema::PrimitiveType_Erf, false},
 };
 
-static TransInfoPair NHWC2NCHWTrans = {Format_NHWC, Format_NCHW};
-static TransInfoPair NCHW2NHWCTrans = {Format_NCHW, Format_NHWC};
+static TransInfoPair NHWC2NCHWTrans = {Format::NHWC, Format::NCHW};
+static TransInfoPair NCHW2NHWCTrans = {Format::NCHW, Format::NHWC};
 
 class TransposeStrategy {
  public:

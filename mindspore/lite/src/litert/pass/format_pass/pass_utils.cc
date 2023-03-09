@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "src/litert/pass/pass_utils.h"
+#include "src/litert/pass/format_pass/pass_utils.h"
 #include <string>
-#include <memory>
 #include <map>
 #include <vector>
+#include <memory>
 #include "src/litert/kernel_registry.h"
 #include "nnacl/format_transpose_parameter.h"
+#include "nnacl/arg_min_max_parameter.h"
 
 namespace mindspore::lite::pass {
 static const std::map<FormatC, std::string> format_str = {
@@ -31,7 +32,7 @@ std::string GetFormatStr(const FormatC &format) {
 }
 
 bool IsNoneTranspose(const TransInfoPair &trans) {
-  return trans.src_format_ == Format_NONE && trans.dst_format_ == Format_NONE;
+  return trans.src_format_ == Format::DEFAULT_FORMAT && trans.dst_format_ == Format::DEFAULT_FORMAT;
 }
 
 bool IsSameTranspose(const TransInfoPair &trans0, const TransInfoPair &trans1) {
@@ -63,8 +64,8 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   }
   (void)memset(param, 0, sizeof(FormatTransposeParameter));
   param->op_parameter_.type_ = static_cast<int>(schema::PrimitiveType_FormatTranspose);
-  param->src_format_ = trans_info.src_format_;
-  param->dst_format_ = trans_info.dst_format_;
+  param->src_format_ = static_cast<FormatC>((trans_info.src_format_));
+  param->dst_format_ = static_cast<FormatC>((trans_info.dst_format_));
   kernel::KernelKey format_transpose_key = desc;
   format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
   format_transpose_key.format = NHWC;
@@ -166,11 +167,11 @@ int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info
       perm.push_back(perm_data[i]);
     }
     if (perm == nc2nh_perm) {
-      trans_info->src_format_ = Format_NCHW;
-      trans_info->dst_format_ = Format_NHWC;
+      trans_info->src_format_ = NCHW;
+      trans_info->dst_format_ = NHWC;
     } else if (perm == nh2nc_perm) {
-      trans_info->src_format_ = Format_NHWC;
-      trans_info->dst_format_ = Format_NCHW;
+      trans_info->src_format_ = NHWC;
+      trans_info->dst_format_ = NCHW;
     } else {
       return RET_INVALID_OP_ATTR;
     }
@@ -178,8 +179,8 @@ int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info
   if (kernel->type() == schema::PrimitiveType_FormatTranspose) {
     auto param = reinterpret_cast<FormatTransposeParameter *>(kernel->op_parameter());
     CHECK_NULL_RETURN(param);
-    trans_info->src_format_ = param->src_format_;
-    trans_info->dst_format_ = param->dst_format_;
+    trans_info->src_format_ = static_cast<Format>((param->src_format_));
+    trans_info->dst_format_ = static_cast<Format>((param->dst_format_));
   }
   return RET_OK;
 }

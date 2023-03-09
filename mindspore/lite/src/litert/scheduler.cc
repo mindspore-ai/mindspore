@@ -40,7 +40,7 @@
 #include "src/common/context_util.h"
 #include "src/litert/infer_manager.h"
 #include "src/litert/runtime_pass.h"
-#include "src/litert/pass/runtime_ncx_pass.h"
+#include "src/litert/pass/format_pass/format_pass.h"
 #if !defined(AUTO_PARALLEL_CLIP) || !defined(RUNTIME_PASS_CLIP)
 #include "src/litert/sub_graph_split.h"
 #include "src/litert/pass/online_fusion/online_fusion_pass_registry.h"
@@ -244,7 +244,7 @@ int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
       for (auto *tensor : node->out_tensors()) {
         if (tensor->IsConst()) {
           MS_CHECK_TRUE_MSG(node->op_parameter() != nullptr, RET_NULL_PTR, "node's op_parameter is invalid.");
-          if (node->op_parameter()->type_ == PrimType::PrimType_Inner_ShapeFusion) {
+          if (node->op_parameter()->type_ == ::PrimType::PrimType_Inner_ShapeFusion) {
             continue;
           }
           MS_LOG(ERROR) << "Illegitimate kernel output tensor : " << tensor->tensor_name();
@@ -414,25 +414,6 @@ STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::KernelExec *> *ker
   return RET_OK;
 }
 
-bool Scheduler::CheckRunNCXPass() {
-  // Only valid for CPU inference right now.
-  if (*is_control_flow_ || delegate_ != nullptr || is_train_session_) {
-    return false;
-  }
-  if (!context_->IsDeviceTypeEnabled(DeviceType::DT_CPU)) {
-    return false;
-  }
-  if (context_->IsDeviceTypeEnabled(DeviceType::DT_GPU) || context_->IsDeviceTypeEnabled(DeviceType::DT_NPU) ||
-      context_->IsDeviceTypeEnabled(DeviceType::DT_ASCEND)) {
-    return false;
-  }
-  if (std::all_of(inputs_->begin(), inputs_->end(),
-                  [](const auto &tensor) { return tensor->format() == Format::NCHW; })) {
-    return true;
-  }
-  return false;
-}
-
 int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
@@ -501,14 +482,6 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   if (status != RET_OK) {
     MS_LOG(ERROR) << "runtime pass failed.";
     return RET_ERROR;
-  }
-  // Support NC4HW4(fp32) or NC8HW8(fp16) runtime kernel.
-  if (CheckRunNCXPass()) {
-    status = pass::RuntimeNCXPass(dst_kernels, src_tensors_);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "runtime pass failed.";
-      return RET_ERROR;
-    }
   }
 
   ret = InitKernels(std::move(*dst_kernels));

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/litert/pass/decrease_transpose_algo.h"
+#include "src/litert/pass/format_pass/eliminate_transpose.h"
 #include "src/litert/kernel_exec_util.h"
-#include "src/litert/pass/pass_utils.h"
-#include "nnacl/base/format_transpose.h"
 
 namespace mindspore::lite::pass {
 int TransFullyFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans_kernel0,
@@ -44,7 +42,6 @@ int TransFullyFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans
   }
   return RET_OK;
 }
-
 int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans_kernel0,
                         kernel::KernelExec *trans_kernel1, const TransInfoPair &trans_info) {
   CHECK_NULL_RETURN(trans_kernel0);
@@ -83,58 +80,6 @@ int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *tr
   return RET_OK;
 }
 
-int DecreaseTransposeAlgo::TransTransFusion(kernel::SubGraphKernel *subgraph) {
-  auto kernels = &(subgraph->nodes());
-  auto kernel_iter = kernels->begin();
-  while (kernel_iter != kernels->end()) {
-    auto &kernel = *kernel_iter;
-    CHECK_NULL_RETURN(kernel);
-    (void)kernel_iter++;
-
-    if (kernel->in_kernels().size() == 0 || !IsContain(subgraph->nodes(), kernel->in_kernels().at(0))) {
-      continue;
-    }
-    TransInfoPair pre_trans;
-    TransInfoPair post_trans;
-    if (GetTransposeInfo(kernel, &post_trans) != RET_OK) {
-      MS_LOG(INFO) << "The kernel " << kernel->name() << " isn't transpose and can't be fused.";
-      continue;
-    }
-    auto pre_kernel = kernel->in_kernels().at(0);
-    if (GetTransposeInfo(pre_kernel, &pre_trans) != RET_OK) {
-      MS_LOG(INFO) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be fused.";
-      continue;
-    }
-    if (pre_trans.dst_format_ != post_trans.src_format_) {
-      continue;
-    }
-
-    graph_changed_ = true;
-    // record the next kernel to update iterator
-    auto next_kernel = (kernel_iter == kernels->end()) ? nullptr : (*kernel_iter);
-    if (pre_trans.src_format_ == post_trans.dst_format_) {
-      // pattern opposite, like: nhwc2nchw & nchw2nhwc -> none
-      auto ret = TransFullyFusion(subgraph, pre_kernel, kernel);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Fusion " << pre_kernel->name() << " and " << kernel->name() << " failed";
-        return RET_ERROR;
-      }
-    } else {
-      // pattern, the previous dest format and the post source format are same
-      // op1: format1 -> format2, op2: format2 -> format3, like: nhwc2nchw & nchw2nc4hw4 -> nhwc2nc4hw4
-      auto ret =
-        TransHeadTailFusion(subgraph, pre_kernel, kernel, TransInfoPair(pre_trans.src_format_, post_trans.dst_format_));
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Fusion " << pre_kernel->name() << " and " << kernel->name() << " failed";
-        return RET_ERROR;
-      }
-    }
-    // The dropped kernel may be in front of the kernel, update kernel iterator.
-    kernel_iter = (next_kernel == nullptr) ? kernels->end() : (find(kernels->begin(), kernels->end(), next_kernel));
-  }
-  return RET_OK;
-}
-
 int PackConstData(Tensor *tensor, const TransInfoPair &pre_trans) {
   if (tensor->shape().size() != 4) {
     MS_LOG(ERROR) << "Pack const data only valid for 4 dims tensor.";
@@ -162,14 +107,6 @@ int PackConstData(Tensor *tensor, const TransInfoPair &pre_trans) {
     MS_LOG(ERROR) << "Malloc new format data failed";
     return ret;
   }
-  // To be opened. Because the crop function of CI, the TransData can't be packed in the package.
-  //  ret = TransData(original_data, tensor->data(), pre_trans.dst_format_, pre_trans.src_format_,
-  //                  (TypeIdC)(tensor->Height()), tensor->Batch(), tensor->Channel(), tensor->Height() *
-  //                  tensor->Width());
-  //  if (ret != RET_OK) {
-  //    MS_LOG(ERROR) << "TransData failed";
-  //    return ret;
-  //  }
 
   if (original_own_data) {
     if (allocator != nullptr) {
@@ -270,8 +207,7 @@ int DoPostFusion(kernel::SubGraphKernel *subgraph, const kernel::KernelExec *ker
   return RET_OK;
 }
 
-int DecreaseTransposeAlgo::DecreaseTransposeForSingleKernel(kernel::SubGraphKernel *subgraph,
-                                                            std::vector<Tensor *> *all_tensors) {
+int EliminateTranspose::EliminateForSingleKernel(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *all_tensors) {
   auto kernels = &(subgraph->nodes());
   auto kernel_iter = kernels->begin();
   while (kernel_iter != kernels->end()) {
@@ -306,7 +242,57 @@ int DecreaseTransposeAlgo::DecreaseTransposeForSingleKernel(kernel::SubGraphKern
   return RET_OK;
 }
 
-int DecreaseTransposeAlgo::HorizontalTransposeFusionPass(kernel::SubGraphKernel *subgraph) {
+int EliminateTranspose::RepeteTransposeFusionPass(kernel::SubGraphKernel *subgraph,
+                                                  std::vector<lite::Tensor *> *all_tensors) {
+  std::vector<kernel::KernelExec *> nodes = subgraph->in_nodes();
+  std::vector<lite::Tensor *> tensors = subgraph->in_tensors();
+  auto iter = tensors.begin();
+  while (iter != tensors.end()) {
+    auto tensor = *iter;
+
+    std::vector<kernel::KernelExec *> repete_trans;
+    for (auto node : nodes) {
+      if (node->type() != schema::PrimitiveType_Transpose && node->type() != schema::PrimitiveType_FormatTranspose) {
+        iter++;
+        continue;
+      }
+      if (node->in_tensors().size() == 1 && node->in_tensors().at(0) == tensor) {
+        repete_trans.push_back(node);
+      }
+    }
+
+    if (repete_trans.size() <= 1) {
+      iter++;
+      continue;
+    }
+    graph_changed_ = true;
+    kernel::KernelExec *transpose_kernel = repete_trans.at(0);
+    auto reserve_tensor = transpose_kernel->out_tensors().at(0);
+
+    for (size_t i = 1; i < repete_trans.size(); i++) {
+      kernel::KernelExec *replace_kernel = repete_trans.at(i);
+      lite::Tensor *replace_tensor = replace_kernel->out_tensors().at(0);
+
+      auto post_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(replace_kernel, replace_tensor);
+      for (const auto &post : post_kernels) {
+        replace_kernel->RemoveOutKernel(post);
+        post->RemoveInKernel(replace_kernel);
+
+        post->AddInKernel(transpose_kernel);
+        transpose_kernel->AddOutKernel(post);
+
+        auto input_index = post->FindInTensorIndex(replace_kernel->out_tensors().at(0));
+        post->set_in_tensor(reserve_tensor, input_index);
+      }
+      subgraph->DropNode(replace_kernel);
+      delete replace_kernel;
+    }
+    iter++;
+  }
+  return RET_OK;
+}
+
+int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *subgraph) {
   auto kernels = &(subgraph->nodes());
   auto kernel_iter = kernels->begin();
   while (kernel_iter != kernels->end()) {
@@ -376,34 +362,97 @@ int DecreaseTransposeAlgo::HorizontalTransposeFusionPass(kernel::SubGraphKernel 
   return RET_OK;
 }
 
-int DecreaseTransposeAlgo::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) {
+int EliminateTranspose::DoubleTransposeFusion(kernel::SubGraphKernel *subgraph) {
+  auto kernels = &(subgraph->nodes());
+  auto kernel_iter = kernels->begin();
+  while (kernel_iter != kernels->end()) {
+    auto &kernel = *kernel_iter;
+    CHECK_NULL_RETURN(kernel);
+    (void)kernel_iter++;
+
+    if (kernel->in_kernels().size() != 1) {
+      continue;
+    }
+
+    auto pre_kernel = kernel->in_kernels().at(0);
+    if (IsContain(subgraph->nodes(), kernel->in_kernels().at(0)) == false) {
+      continue;
+    }
+
+    TransInfoPair post_trans_info;
+    if (GetTransposeInfo(kernel, &post_trans_info) != RET_OK) {
+      MS_LOG(INFO) << "The kernel " << kernel->name() << " isn't transpose and can't be fused.";
+      continue;
+    }
+
+    TransInfoPair pre_trans_info;
+    if (GetTransposeInfo(pre_kernel, &pre_trans_info) != RET_OK) {
+      MS_LOG(INFO) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be fused.";
+      continue;
+    }
+
+    if (pre_trans_info.dst_format_ != post_trans_info.src_format_) {
+      continue;
+    }
+
+    graph_changed_ = true;
+    // record the next kernel to update iterator
+    auto next_kernel = (kernel_iter == kernels->end()) ? nullptr : (*kernel_iter);
+
+    int ret = RET_OK;
+    if (pre_trans_info.src_format_ == post_trans_info.dst_format_) {
+      // pattern opposite, like: nhwc2nchw & nchw2nhwc -> none
+      ret = TransFullyFusion(subgraph, pre_kernel, kernel);
+    } else {
+      // pattern, the previous dest format and the post source format are same
+      // op1: format1 -> format2, op2: format2 -> format3, like: nhwc2nchw & nchw2nc4hw4 -> nhwc2nc4hw4
+      TransInfoPair new_trans_info(pre_trans_info.src_format_, post_trans_info.dst_format_);
+      ret = TransHeadTailFusion(subgraph, pre_kernel, kernel, new_trans_info);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fusion " << pre_kernel->name() << " and " << kernel->name() << " failed";
+      return RET_ERROR;
+    }
+
+    // The dropped kernel may be in front of the kernel, update kernel iterator.
+    kernel_iter = (next_kernel == nullptr) ? kernels->end() : (find(kernels->begin(), kernels->end(), next_kernel));
+  }
+  return RET_OK;
+}
+
+int EliminateTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Tensor *> *tensors) {
   int pass_count = 0;
   while (graph_changed_ && pass_count < max_pass_count_) {
     graph_changed_ = false;
-    auto ret = TransTransFusion(subgraph);
+
+    auto ret = DoubleTransposeFusion(graph);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Transpose and transpose op fusion failed in runtime pass.";
+      MS_LOG(ERROR) << "Double transpose fusion failed in runtime pass.";
       return RET_ERROR;
     }
 
-    ret = DecreaseTransposeForSingleKernel(subgraph, tensors);
+    ret = EliminateForSingleKernel(graph, tensors);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "DecreaseTransposeForSingleKernel failed in runtime pass.";
+      MS_LOG(ERROR) << "Eliminate for single kernel failed in runtime pass.";
       return RET_ERROR;
     }
 
-    ret = HorizontalTransposeFusionPass(subgraph);
+    ret = HorizontalTransposeFusionPass(graph);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "HorizontalTransposeFusionPass failed in runtime pass.";
       return RET_ERROR;
     }
 
-    // todo, single trans in and single trans out subgraph, like: transpose -> act -> exp -> transpose
-    // TransMultiNodeTransFusion
+    ret = RepeteTransposeFusionPass(graph, tensors);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Graph input fusion pass failed.";
+      return RET_ERROR;
+    }
+
     pass_count++;
   }
 
-  auto ret = subgraph->TopologicalSortNodes();
+  auto ret = graph->TopologicalSortNodes();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Topological sort kernels failed.";
     return RET_ERROR;
