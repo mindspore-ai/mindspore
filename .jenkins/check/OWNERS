@@ -1,7 +1,5 @@
 approvers:
-- anyrenwei
-- baochong
-- c_34
+- baochong #
 - chujinjin
 - ckey_dou
 - cristoval
@@ -10,7 +8,6 @@ approvers:
 - ginfung
 - guoqi1024
 - hangangqiang
-- heleiwang
 - HilbertDavid
 - hwhewei
 - jjfeing
@@ -19,14 +16,11 @@ approvers:
 - jpc_chenjianping
 - kingxian
 - liangchenghui
-- lilongfei15
 - limingqi107
 - linqingke
-- liucunwei
 - luoyang42
 - mickf
 - nsyca
-- ouwenchang
 - pandoublefeng
 - robingrosman
 - stsuteng
@@ -35,9 +29,7 @@ approvers:
 - wangyue01
 - wenkai_dist
 - wilfchen
-- wuxuejian
 - xu-yfei
-- yelihua
 - yuchaojie
 - zh_qh
 - zhaizhiqiang
@@ -47,7 +39,6 @@ approvers:
 - zhoufeng54
 - zlq2020
 - zqstar
-- z0020952
 - chenshushu2020
 reviewers:
 - nicholas_yhr
