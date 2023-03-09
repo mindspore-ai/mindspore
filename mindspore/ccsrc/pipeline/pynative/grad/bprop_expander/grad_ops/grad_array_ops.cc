@@ -1235,7 +1235,7 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   } else {
     dx = ib->Reshape(dout_reshaped, need_reduce.second);
   }
-  auto shape_x = ib->Emit("Shape", {x});
+  auto shape_x = ib->Shape(x);
   dx = ib->Reshape(dx, shape_x);
   return {dx, ib->ZerosLike(input_multiples)};
 });
