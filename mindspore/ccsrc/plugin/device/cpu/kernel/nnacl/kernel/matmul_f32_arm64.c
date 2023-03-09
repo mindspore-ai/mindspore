@@ -15,8 +15,8 @@
  */
 
 #ifdef ENABLE_ARM64
-#include "nnacl/kernel/matmul_fp32_arm64.h"
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_arm64.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pack_fp32_opt.h"
@@ -197,6 +197,7 @@ int MatmulFp32Arm64_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
 
 KernelBase *CreateMatmulFp32Arm64() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  matmul->matmul_type_ = kMatmulFp32Arm64Cpu;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Arm64_CheckThreadCuttingByRow;
   matmul->init_global_varibale_ = MatmulFp32Arm64_InitGlobalVariable;
   matmul->parallel_run_by_oc_ = MatmulFp32Arm64_ParallelRunByOC;

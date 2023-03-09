@@ -15,14 +15,10 @@
  */
 
 #ifdef ENABLE_ARM32
-#include "nnacl/kernel/matmul_fp32_arm32.h"
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_arm32.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
-
-bool MatmulFp32Arm32_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) { return false; }
-int MatmulFp32Arm32_PackMatrixAImplOpt(MatmulFp32Struct *matmul) { return NNACL_ERR; }
-int MatmulFp32Arm32_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) { return NNACL_ERR; }
 
 void MatmulFp32Arm32_InitGlobalVariable(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
@@ -99,11 +95,9 @@ int MatmulFp32Arm32_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
 
 KernelBase *CreateMatmulFp32Arm32() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
-  matmul->check_thread_cutting_by_row_ = MatmulFp32Arm32_CheckThreadCuttingByRow;
+  matmul->matmul_type_ = kNotImplemented;
   matmul->init_global_varibale_ = MatmulFp32Arm32_InitGlobalVariable;
-  matmul->pack_matrix_a_impl_opt_ = MatmulFp32Arm32_PackMatrixAImplOpt;
   matmul->parallel_run_by_batch_ = MatmulFp32Arm32_ParallelRunByBatch;
-  matmul->parallel_run_by_row_ = MatmulFp32Arm32_ParallelRunByRow;
   matmul->parallel_run_by_oc_ = MatmulFp32Arm32_ParallelRunByOC;
   return (KernelBase *)matmul;
 }

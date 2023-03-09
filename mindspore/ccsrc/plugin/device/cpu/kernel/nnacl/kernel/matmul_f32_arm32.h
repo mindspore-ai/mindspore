@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_FP32_SSE_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_FP32_SSE_H_
-#ifdef ENABLE_SSE
+#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_
+#define MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_
+
+#ifdef ENABLE_ARM32
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateMatmulFp32Sse();
+KernelBase *CreateMatmulFp32Arm32();
 
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_SSE_H_
+#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_F32_ARM32_H_

@@ -81,9 +81,9 @@ function Run_x86_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -199,9 +199,9 @@ function Run_cortex_m_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -353,9 +353,9 @@ function Run_quant_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape="${spec_shapes}"\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter '${model_type}' quant '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' quant '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter '${model_type}' quant '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' quant '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -491,9 +491,9 @@ function Run_arm_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 

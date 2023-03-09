@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/reshape.h"
+#include "nnacl/nnacl_reshape.h"
 #include "nnacl/nnacl_manager.h"
 #include "schema/model_generated.h"
 #include "src/litert/kernel_registry.h"

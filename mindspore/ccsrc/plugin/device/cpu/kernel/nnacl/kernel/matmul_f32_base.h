@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_FP32_BASE_H_
-#define MINDSPORE_NNACL_KERNEL_MATMUL_FP32_BASE_H_
+#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_F32_BASE_H_
+#define MINDSPORE_NNACL_KERNEL_MATMUL_F32_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
+#include "nnacl/kernel/matmul.h"
 #include "nnacl/matmul_parameter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define SPLIT_COUNT 16
+#define MAX_BATCH_SIZE 512
 
 typedef struct MatrixInfo {
   bool need_pack_;
@@ -46,8 +44,12 @@ typedef struct MatmulSlice {
 
 typedef struct MatmulFp32Struct {
   KernelBase base_;
-  int a_batch_;
-  int b_batch_;
+  int row_;
+  int col_;
+  int deep_;
+  int row_align_;
+  int col_align_;
+  int deep_align_;
   int row_num_;
   int col_tile_;
   int row_tile_;
@@ -57,35 +59,19 @@ typedef struct MatmulFp32Struct {
   int batch_stride_;
   int pack_b_stride_;
   int block_col_unit_;
+  MatmulType matmul_type_;
 
+  /* model pool optimize */
+  int model_thread_nr_;
+
+  /* batch-matmul broadcast */
   int batch_;
-  int row_;
-  int col_;
-  int deep_;
-  int row_align_;
-  int col_align_;
-  int deep_align_;
-  bool a_const_;
-  bool b_const_;
-
-  //  int row_4_;
-  //  int row_6_;
-  //  int row_12_;
-  //  int row_16_;
-  //  int col_4_;
-  //  int col_8_;
-  //  int deep_4_;
-  //  int deep_16_;
-  //  bool use_axis_;
-  //  int axis_;
-  //  MatmulType matmul_type_;
-
-  bool infer_shape_;
-  int model_thread_nr_; /* model pool optimize */
+  int a_batch_;
+  int b_batch_;
+  int a_offset_[MAX_BATCH_SIZE];
+  int b_offset_[MAX_BATCH_SIZE];
 
   int split_points_[SPLIT_COUNT];
-  int a_offset_[512];
-  int b_offset_[512];
 
   float *output_data_;
   float *conv1x1_origin_bias_;
@@ -93,6 +79,9 @@ typedef struct MatmulFp32Struct {
   float *pack_b_src_;
   float *pack_b_dst_;
 
+  bool a_const_;
+  bool b_const_;
+  bool infer_shape_;
   bool pack_opt_;
   bool is_sharing_pack_;
   bool out_need_aligned_;
@@ -117,8 +106,9 @@ typedef struct MatmulFp32Struct {
   void (*get_thread_cutting_policy_)(struct MatmulFp32Struct *matmul);
   void (*get_thread_cutting_info_by_row_)(struct MatmulFp32Struct *matmul);
 
-  void (*get_pack_data_by_sharing_weight_)(const void *tensor_data, const size_t size, bool *is_packed);
-  void (*free_by_sharing_weight_)(void *tensor_data);
+  void *pack_weight_manager_;
+  void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
+  void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
 
   void (*gemm_not_pack_fun_)(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 
@@ -133,8 +123,8 @@ typedef struct MatmulFp32Struct {
   int row_split_points_size_;
   int col_split_points_[SPLIT_COUNT];
   int row_split_points_[SPLIT_COUNT];
-  MatmulSlice matmul_slice_set_[SPLIT_COUNT][SPLIT_COUNT];
   int matmul_slice_count_[SPLIT_COUNT];
+  MatmulSlice matmul_slice_set_[SPLIT_COUNT][SPLIT_COUNT];
   int (*parallel_run_by_gemm_)(struct MatmulFp32Struct *matmul, int task_id);
   int (*parallel_run_by_gepm_)(struct MatmulFp32Struct *matmul, int task_id);
   int (*parallel_run_by_gepdot_)(struct MatmulFp32Struct *matmul, int task_id);
@@ -144,11 +134,9 @@ typedef struct MatmulFp32Struct {
 
 void MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul);
 int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul);
-int matmul_fp32_prepare(KernelBase *self);
-int matmul_fp32_resize(KernelBase *self);
+int matmul_f32_prepare(KernelBase *self);
+int matmul_f32_resize(KernelBase *self);
 KernelBase *CreateMatmulFp32Base();
 KernelBase *CreateMatmulFp32();
-#ifdef __cplusplus
-}
-#endif
-#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_BASE_H_
+
+#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_F32_BASE_H_

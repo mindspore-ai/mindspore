@@ -70,6 +70,7 @@ int NnaclKernel::Run() {
     return RET_ERROR;
   }
   UpdateTensorC();
+  kernel_->workspace_ = workspace();
   return kernel_->compute(kernel_);
 }
 

@@ -21,9 +21,9 @@
 #include "src/common/file_utils.h"
 #include "src/litert/tensor_category.h"
 #include "src/common/log_adapter.h"
-#include "src/litert/kernel/cpu/fp32/fullconnection_fp32.h"
 #include "src/litert/infer_manager.h"
 #include "src/litert/kernel_registry.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;
@@ -67,9 +67,7 @@ TEST_F(TestFcFp32, FcTest1) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -121,9 +119,7 @@ TEST_F(TestFcFp32, FcTest2) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -177,9 +173,7 @@ TEST_F(TestFcFp32, FcTest3) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -234,6 +228,7 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
   param->a_transpose_ = false;
   param->b_transpose_ = true;
   param->has_bias_ = true;
+  param->op_parameter_.type_ = 67;
   param->act_type_ = ActType_No;
 
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -242,9 +237,7 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-  auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
+  auto *kernel = nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   ASSERT_EQ(kernel->Prepare(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -253,8 +246,8 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
   ASSERT_EQ(kernel->Run(), RET_OK);
 
   std::vector<float> except_result = {11, 21, 31, 41, 51, 62, 72, 82, 92, 32};
-  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
-                                 outputs[0]->ElementsNum(), 0.000001));
+  float *output = static_cast<float *>(outputs[0]->data());
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), outputs[0]->ElementsNum(), 0.000001));
   FcTest4_Resize(&inputs, &outputs);
   ASSERT_EQ(kernel->ReSize(), RET_OK);
 #ifdef SUPPORT_TRAIN
@@ -263,8 +256,8 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
 #endif
   ASSERT_EQ(kernel->Run(), RET_OK);
   except_result = {11, 21, 31, 41, 51, 62, 72, 82, 92, 32, 9, 17, 25, 33, 41, 50, 58, 66, 74, 21};
-  ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()), except_result.data(),
-                                 outputs[0]->ElementsNum(), 0.000001));
+  float *out = static_cast<float *>(outputs[0]->data());
+  ASSERT_EQ(0, CompareOutputData(out, except_result.data(), outputs[0]->ElementsNum(), 0.000001));
 #ifdef SUPPORT_TRAIN
   kernel->FreeWorkspace();
 #endif

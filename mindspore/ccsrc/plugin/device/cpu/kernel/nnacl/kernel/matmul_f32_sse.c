@@ -15,14 +15,10 @@
  */
 
 #ifdef ENABLE_SSE
-#include "nnacl/kernel/matmul_fp32_sse.h"
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_sse.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
-
-bool MatmulFp32Sse_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) { return false; }
-int MatmulFp32Sse_PackMatrixAImplOpt(MatmulFp32Struct *matmul) { return NNACL_ERR; }
-int MatmulFp32Sse_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) { return NNACL_ERR; }
 
 void MatmulFp32Sse_InitGlobalVariable(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)matmul->base_.param_;
@@ -89,9 +85,9 @@ int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
     if (func_flag == 0) {
       MatMulOpt(a, b, c, bias, param->act_type_, matmul->deep_, matmul->row_, compute_oc, matmul->col_, OutType_Nhwc);
     } else if (func_flag == C1NUM) {
-      MatVecMulFp32Block8(a, b, c, bias, param->act_type_, param->deep_, compute_oc);
+      MatVecMulFp32Block8(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc);
     } else {
-      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, param->deep_, compute_oc, matmul->col_step_);
+      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_step_);
     }
   }
   return NNACL_OK;
@@ -99,11 +95,9 @@ int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
 
 KernelBase *CreateMatmulFp32Sse() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
-  matmul->check_thread_cutting_by_row_ = MatmulFp32Sse_CheckThreadCuttingByRow;
-  matmul->pack_matrix_a_impl_opt_ = MatmulFp32Sse_PackMatrixAImplOpt;
+  matmul->matmul_type_ = kNotImplemented;
   matmul->init_global_varibale_ = MatmulFp32Sse_InitGlobalVariable;
   matmul->parallel_run_by_oc_ = MatmulFp32Sse_ParallelRunByOC;
-  matmul->parallel_run_by_row_ = MatmulFp32Sse_ParallelRunByRow;
   matmul->parallel_run_by_batch_ = MatmulFp32Sse_ParallelRunByBatch;
   return (KernelBase *)matmul;
 }

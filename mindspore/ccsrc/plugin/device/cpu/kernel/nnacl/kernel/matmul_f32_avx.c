@@ -15,8 +15,8 @@
  */
 
 #ifdef ENABLE_AVX
-#include "nnacl/kernel/matmul_fp32_avx.h"
-#include "nnacl/kernel/matmul_fp32_base.h"
+#include "nnacl/kernel/matmul_f32_avx.h"
+#include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 
@@ -31,8 +31,6 @@ void MatmulFp32Avx_InitGlobalVariable(MatmulFp32Struct *matmul) {
   matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
   matmul->matrix_b_pack_fun_ = param->b_transpose_ ? RowMajor2Col32MajorParallel : RowMajor2Row32MajorParallel;
 }
-
-int MatmulFp32Avx_PackMatrixAImplOpt(MatmulFp32Struct *matmul) { return NNACL_ERR; }
 
 int MatmulFp32Avx_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
@@ -153,8 +151,8 @@ bool MatmulFp32Avx_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
 
 KernelBase *CreateMatmulFp32Avx() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  matmul->matmul_type_ = kNotImplemented;
   matmul->init_global_varibale_ = MatmulFp32Avx_InitGlobalVariable;
-  matmul->pack_matrix_a_impl_opt_ = MatmulFp32Avx_PackMatrixAImplOpt;
   matmul->parallel_run_by_batch_ = MatmulFp32Avx_ParallelRunByBatch;
   matmul->parallel_run_by_row_ = MatmulFp32Avx_ParallelRunByRow;
   matmul->parallel_run_by_oc_ = MatmulFp32Avx_ParallelRunByOC;
