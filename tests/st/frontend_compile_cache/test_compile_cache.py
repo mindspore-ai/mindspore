@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,57 @@ import shutil
 import subprocess
 import pytest
 import numpy as np
+from tests.st.model_zoo_tests import utils
 
 match_output = re.compile(r'[{](.*?)[}]', re.S)
 match_num = re.compile(r'\d+\.?\d*', re.S)
+
+
+def exec_insert_command(regex, context, file_name):
+    ret = os.system('sed -i "/{0}/{1}" {2}'.format(regex, context, file_name))
+    if ret != 0:
+        raise ValueError('exec `sed -i "/{0}/{1}" {2}` failed.'.format(regex, context, file_name))
+    return ret
+
+
+def exec_cd_command(command):
+    ret = os.system('cd "{0}"'.format(command))
+    if ret != 0:
+        raise ValueError('exec `cd  "{0}"` failed.'.format(command))
+    return ret
+
+
+def exec_cp_command(src, dst):
+    ret = os.system("cp -af {0} {1}".format(src, dst))
+    if ret != 0:
+        raise ValueError("cp -af {0} {1}".format(src, dst))
+    return ret
+
+
+def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context):
+    exec_shell = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; "\
+                 + "export MS_COMPILER_CACHE_PATH={}; cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
+                 .format(cache_path, utils.rank_table_path, dataset_path, config_path)
+    os.system(exec_shell)
+    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
+    ret = utils.process_check(100, cmd)
+    exec_shell = f"unset MS_COMPILER_CACHE_ENABLE; unset MS_COMPILER_CACHE_PATH"
+    os.system(exec_shell)
+    assert ret
+    log_file = os.path.join(cur_model_path, "scripts/train_parallel{}/log")
+    for i in range(8):
+        per_step_time = utils.get_perf_data(log_file.format(i))
+        assert per_step_time < 40.0
+    loss_list = []
+    for i in range(8):
+        loss = utils.get_loss_data_list(log_file.format(i))
+        loss_list.append(loss[-1])
+        with open(log_file.format(i), "r") as f:
+            data = f.read()
+        assert check_context in data
+        os.remove(log_file.format(i))
+    loss = sum(loss_list) / len(loss_list)
+    return loss
 
 
 def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_file_name_second):
@@ -327,3 +375,44 @@ def test_compile_cache_run_two_cells_once():
     Expectation: success.
     """
     run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
+def test_compile_cache_pipeline_parallel_and_recompute():
+    """
+    Feature: Compile cache.
+    Description: Test whether pipeline parallel and recompute can successfullty with compile cache.
+    Expectation: success.
+    """
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+    model_path = "{}/../../../tests/models/official/cv".format(cur_path)
+    model_name = "resnet"
+    utils.copy_files(model_path, cur_path, model_name)
+    cur_model_path = os.path.join(cur_path, "resnet")
+    old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
+    new_list = ["total_epochs=10", "10"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
+    net_path = os.path.join(cur_model_path, "src/resnet.py")
+    cache_path = os.path.join(cur_model_path, "cache")
+
+    exec_insert_command("def _make_layer(self", "i\\        self.conv1.pipeline_stage = 0", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.layer1.pipeline_stage = 0", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.layer2.pipeline_stage = 0", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.layer3.pipeline_stage = 1", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.layer4.pipeline_stage = 1", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.end_point.pipeline_stage = 1", net_path)
+    exec_insert_command("def _make_layer(self", "i\\        self.relu.recompute()", net_path)
+
+    exec_cp_command("run_resnet.py", "resnet/train.py")
+    dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
+    config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
+
+    check_context = "Check the consistency of dependency files hash failed. Execute all the compilation actions."
+    loss_first = exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context)
+
+    check_context = "Use the compilation cache and execute the backend actions only. Be aware of correctness risks."
+    loss_second = exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context)
+    assert np.allclose(loss_first, loss_second, 0.1, 0.1)
