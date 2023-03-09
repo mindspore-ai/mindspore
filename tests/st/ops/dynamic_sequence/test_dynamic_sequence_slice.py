@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import numpy as np
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.ops.operations import _sequence_ops as S
@@ -82,3 +83,26 @@ def test_seq_slice_grad():
     net_ms = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_seq_slice_mutable():
+    """
+    Feature: test sequence_slice mutable
+    Description: slice operation on tuple type
+    Expectation: the behavior is matched to python style
+    """
+    class Net(nn.Cell):
+        def construct(self, x, a, b):
+            out = x[a:b]
+            return out
+
+    x = mutable((0, mutable(2), mutable(-3), mutable(-1),
+                 mutable(4), -1, -9, mutable(-5), -10))
+    a, b = mutable(-9), mutable(-7)
+    net = Net()
+    out = net(x, a, b)
+    ex = x[a:b]
+    assert np.allclose(out, ex)
