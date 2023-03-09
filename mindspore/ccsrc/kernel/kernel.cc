@@ -214,6 +214,11 @@ std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
     auto elements = tuple_ptr->elements();
     (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
                          [](const TypePtr &t) { return t->type_id(); });
+  } else if (type_ptr->isa<List>()) {
+    auto list_ptr = type_ptr->cast<ListPtr>();
+    auto elements = list_ptr->elements();
+    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
+                         [](const TypePtr &t) { return t->type_id(); });
   } else {
     types.push_back(TypeId::kTypeUnknown);
   }
