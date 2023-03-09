@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
+
+# Run these tests in separate processes since many tests update config parameters, like shared memory config
+pytestmark = pytest.mark.forked
 
 DATA_DIR = ["../data/dataset/testPyfuncMap/data.data"]
 SCHEMA_DIR = "../data/dataset/testPyfuncMap/schema.json"

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -126,6 +126,8 @@ def test_svhn_content_check():
     assert num_iter == 12
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_svhn_basic():
     """
     Feature: test_svhn_basic.

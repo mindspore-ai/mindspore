@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -563,6 +563,8 @@ def test_generator_17():
         i = i + 1
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_generator_18():
     """
     Feature: GeneratorDataset

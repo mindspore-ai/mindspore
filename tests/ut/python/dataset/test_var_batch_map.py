@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" Test batch variations including per_batch_map """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -62,6 +64,8 @@ def test_batch_corner_cases():
     assert len(tst4) == 4, "\nATTENTION BATCH FAILED\n"
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_variable_size_batch():
     """
     Feature: Batch
@@ -82,15 +86,15 @@ def test_variable_size_batch():
         for i in range(num):
             yield (np.array([i]),)
 
-    def add_one_by_batch_num(batchInfo):
-        return batchInfo.get_batch_num() + 1
+    def add_one_by_batch_num(batch_info):
+        return batch_info.get_batch_num() + 1
 
-    def add_one_by_epoch(batchInfo):
-        return batchInfo.get_epoch_num() + 1
+    def add_one_by_epoch(batch_info):
+        return batch_info.get_epoch_num() + 1
 
-    def simple_copy(colList, batchInfo):
-        _ = batchInfo
-        return ([np.copy(arr) for arr in colList],)
+    def simple_copy(col_list, batch_info):
+        _ = batch_info
+        return ([np.copy(arr) for arr in col_list],)
 
     def test_repeat_batch(gen_num, r, drop, func, res):
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).repeat(r).batch(batch_size=func,
@@ -214,11 +218,11 @@ def test_basic_batch_map():
         for i in range(num):
             yield (np.array([i]),)
 
-    def invert_sign_per_epoch(colList, batchInfo):
-        return ([np.copy(((-1) ** batchInfo.get_epoch_num()) * arr) for arr in colList],)
+    def invert_sign_per_epoch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_epoch_num()) * arr) for arr in col_list],)
 
-    def invert_sign_per_batch(colList, batchInfo):
-        return ([np.copy(((-1) ** batchInfo.get_batch_num()) * arr) for arr in colList],)
+    def invert_sign_per_batch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
 
     def batch_map_config(num, r, batch_size, func, res):
         data1 = ds.GeneratorDataset((lambda: gen(num)), ["num"]) \
@@ -252,17 +256,17 @@ def test_batch_multi_col_map():
         for i in range(num):
             yield (np.array([i]), np.array([i ** 2]))
 
-    def col1_col2_add_num(col1, col2, batchInfo):
-        _ = batchInfo
+    def col1_col2_add_num(col1, col2, batch_info):
+        _ = batch_info
         return ([[np.copy(arr + 100) for arr in col1],
                  [np.copy(arr + 300) for arr in col2]])
 
-    def invert_sign_per_batch(colList, batchInfo):
-        return ([np.copy(((-1) ** batchInfo.get_batch_num()) * arr) for arr in colList],)
+    def invert_sign_per_batch(col_list, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
 
-    def invert_sign_per_batch_multi_col(col1, col2, batchInfo):
-        return ([np.copy(((-1) ** batchInfo.get_batch_num()) * arr) for arr in col1],
-                [np.copy(((-1) ** batchInfo.get_batch_num()) * arr) for arr in col2])
+    def invert_sign_per_batch_multi_col(col1, col2, batch_info):
+        return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col1],
+                [np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col2])
 
     def batch_map_config(num, r, batch_size, func, col_names, res):
         data1 = ds.GeneratorDataset((lambda: gen(num)), ["num", "num_square"]) \
@@ -313,8 +317,8 @@ def test_var_batch_multi_col_map():
     # first epoch batch_size per batch: 1, 2 ,3 ... ...
     # second epoch batch_size per batch: 2, 4, 6 ... ...
     # third epoch batch_size per batch: 3, 6 ,9 ... ...
-    def batch_func(batchInfo):
-        return (batchInfo.get_batch_num() + 1) * (batchInfo.get_epoch_num() + 1)
+    def batch_func(batch_info):
+        return (batch_info.get_batch_num() + 1) * (batch_info.get_epoch_num() + 1)
 
     # multiply first col by batch_num, multiply second col by -batch_num
     def map_func(col1, col2, batch_info):
@@ -342,12 +346,12 @@ def test_var_batch_var_resize():
     Expectation: Output is equal to the expected output
     """
     # fake resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
-    def np_psedo_resize(col, batchInfo):
-        s = (batchInfo.get_batch_num() + 1) ** 2
+    def np_psedo_resize(col, batch_info):
+        s = (batch_info.get_batch_num() + 1) ** 2
         return ([np.copy(c[0:s, 0:s, :]) for c in col],)
 
-    def add_one(batchInfo):
-        return batchInfo.get_batch_num() + 1
+    def add_one(batch_info):
+        return batch_info.get_batch_num() + 1
 
     data1 = ds.ImageFolderDataset("../data/dataset/testPK/data/", num_parallel_workers=4, decode=True)
     data1 = data1.batch(batch_size=add_one, drop_remainder=True, input_columns=["image"], per_batch_map=np_psedo_resize)
@@ -368,13 +372,13 @@ def test_exception():
         for i in range(num):
             yield (np.array([i]),)
 
-    def bad_batch_size(batchInfo):
+    def bad_batch_size(batch_info):
         raise StopIteration
-        # return batchInfo.get_batch_num()
+        # Note: return batch_info.get_batch_num()
 
-    def bad_map_func(col, batchInfo):
+    def bad_map_func(col, batch_info):
         raise StopIteration
-        # return (col,)
+        # Note: return (col,)
 
     data1 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(bad_batch_size)
     try:
@@ -403,16 +407,16 @@ def test_multi_col_map():
         for i in range(1, 1 + num):
             yield (np.array([i]), np.array([i ** 2]))
 
-    def split_col(col, batchInfo):
+    def split_col(col, batch_info):
         return ([np.copy(arr) for arr in col], [np.copy(-arr) for arr in col])
 
-    def merge_col(col1, col2, batchInfo):
+    def merge_col(col1, col2, batch_info):
         merged = []
         for k, v in enumerate(col1):
             merged.append(np.array(v + col2[k]))
         return (merged,)
 
-    def swap_col(col1, col2, batchInfo):
+    def swap_col(col1, col2, batch_info):
         return ([np.copy(a) for a in col2], [np.copy(b) for b in col1])
 
     def batch_map_config(num, s, f, in_nms, out_nms, col_order=None):
@@ -647,7 +651,7 @@ if __name__ == '__main__':
     logger.info("Running test_var_batch_map.py test_batch_multi_col_map() function")
     test_batch_multi_col_map()
 
-    logger.info("Running test_var_batch_map.py tesgit t_var_batch_multi_col_map() function")
+    logger.info("Running test_var_batch_map.py test_var_batch_multi_col_map() function")
     test_var_batch_multi_col_map()
 
     logger.info("Running test_var_batch_map.py test_var_batch_var_resize() function")

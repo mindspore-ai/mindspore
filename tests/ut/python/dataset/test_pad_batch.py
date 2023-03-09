@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 import time
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 
@@ -230,6 +231,8 @@ def test_pad_via_map():
         np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_pad_via_map_multiproc():
     """
     Feature: Batch Padding

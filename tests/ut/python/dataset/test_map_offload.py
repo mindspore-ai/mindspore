@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ def test_offload_string():
         np.testing.assert_array_equal(d0['text'], (d1['text']))
 
 
+@pytest.mark.forked
 def test_auto_offload():
     """
     Feature: Test auto_offload config option.
@@ -333,6 +334,7 @@ def test_offload_typecast_op_2():
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
 
 
+@pytest.mark.forked
 def test_offload_different_column_end_of_pipeline():
     """
     Feature: Test offload end_of_pipeline check.

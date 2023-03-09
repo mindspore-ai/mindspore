@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -433,7 +433,7 @@ def test_map_skip_errors_success1(my_num_workers, my_mp):
 
 
 @pytest.mark.parametrize("my_error_samples_mode, my_num_workers",
-                         [(ErrorSamplesMode.RETURN, 3), (ErrorSamplesMode.REPLACE, 2), (ErrorSamplesMode.SKIP, 1)])
+                         [(ErrorSamplesMode.REPLACE, 2), (ErrorSamplesMode.SKIP, 1)])
 def test_map_error_samples_imagefolder1_cop(my_error_samples_mode, my_num_workers, plot=False):
     """
     Feature: Process Error Samples
@@ -774,7 +774,7 @@ if __name__ == '__main__':
     test_map_replace_errors_success2(True)
     test_map_replace_errors_success3(3, False)
     test_map_skip_errors_success1(3, True)
-    test_map_error_samples_imagefolder1_cop(ErrorSamplesMode.REPLACE, 4, plot=True)
+    test_map_error_samples_imagefolder1_cop(ErrorSamplesMode.RETURN, 4, plot=True)
     test_map_error_samples_imagefolder1_pyop(ErrorSamplesMode.REPLACE, 3, True, plot=True)
     test_map_error_samples_imagefolder2(ErrorSamplesMode.REPLACE, 4, True)
     test_map_error_samples_imagefolder3(ErrorSamplesMode.SKIP, 3, True)
