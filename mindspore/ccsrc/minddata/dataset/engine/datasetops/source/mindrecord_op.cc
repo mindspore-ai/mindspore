@@ -400,13 +400,14 @@ Status MindRecordOp::RemoveWorkers(int32_t num_workers) {
 }
 
 Status MindRecordOp::InitPullMode() {
+  num_workers_ = 1;
   RETURN_IF_NOT_OK(Init());
   RETURN_IF_NOT_OK(shard_reader_->Launch(true));
   return this->PrepareData();
 }
 
 Status MindRecordOp::LoadTensorRowPullMode(row_id_type row_id, TensorRow *row) {
-  return GetRowFromReader(row, row_id, id());
+  return GetRowFromReader(row, row_id, 0);
 }
 
 }  // namespace dataset
