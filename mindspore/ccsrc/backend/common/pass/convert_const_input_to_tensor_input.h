@@ -19,7 +19,7 @@
 
 #include "ir/anf.h"
 #include "include/common/utils/convert_utils.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

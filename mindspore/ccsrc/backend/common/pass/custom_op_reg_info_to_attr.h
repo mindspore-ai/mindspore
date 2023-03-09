@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_REG_INFO_TO_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_REG_INFO_TO_ATTR_H_
 #include <memory>
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

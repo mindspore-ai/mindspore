@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ir_fission/dynamic_rnn_grad_fission_v2.h"
 #include "plugin/device/ascend/optimizer/ir_fission/dynamic_gru_v2_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"

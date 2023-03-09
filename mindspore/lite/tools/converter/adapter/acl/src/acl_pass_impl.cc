@@ -41,7 +41,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
-#include "mindspore/ccsrc/backend/common/optimizer/graph_optimizer.h"
+#include "mindspore/ccsrc/include/backend/optimizer/graph_optimizer.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_scale_fusion.h"

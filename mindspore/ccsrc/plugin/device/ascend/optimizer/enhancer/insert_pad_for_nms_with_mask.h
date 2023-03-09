@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_PAD_FOR_NMS_WITH_MASK_H
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_INSERT_PAD_FOR_NMS_WITH_MASK_H
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

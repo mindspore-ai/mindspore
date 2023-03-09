@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_TRANS_OP_FORMAT_REFINE_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_TRANS_OP_FORMAT_REFINE_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 namespace mindspore {
 namespace opt {
 class TransOpFormatRefine : public PatternProcessPass {

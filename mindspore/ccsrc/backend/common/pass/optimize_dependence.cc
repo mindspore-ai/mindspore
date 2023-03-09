@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"

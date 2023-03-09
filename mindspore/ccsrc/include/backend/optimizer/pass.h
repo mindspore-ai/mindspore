@@ -44,5 +44,4 @@ class Pass {
 using PassPtr = std::shared_ptr<Pass>;
 }  // namespace opt
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_PASS_H_

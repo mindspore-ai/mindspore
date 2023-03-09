@@ -18,8 +18,8 @@
 
 #include <vector>
 #include "include/backend/kernel_graph.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass_manager.h"
 
 namespace mindspore::graphkernel {
 using opt::PassManagerPtr;

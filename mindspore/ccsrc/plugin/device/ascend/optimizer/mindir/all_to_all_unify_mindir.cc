@@ -20,7 +20,7 @@
 #include "utils/trace_base.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 

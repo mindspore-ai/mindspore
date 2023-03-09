@@ -20,8 +20,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_context.h"
-#include "backend/common/optimizer/fusion_id_allocator.h"
-#include "backend/common/optimizer/helper.h"
+#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 
 namespace mindspore {

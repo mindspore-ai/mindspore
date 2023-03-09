@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "include/backend/visible.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"

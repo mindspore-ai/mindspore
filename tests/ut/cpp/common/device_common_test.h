@@ -22,7 +22,7 @@
 #include "common/common_test.h"
 #include "abstract/abstract_function.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/graph_compiler/backend.h"
 #include "runtime/hardware/device_context.h"

@@ -18,7 +18,7 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {

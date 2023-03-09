@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include <memory>
 #include "utils/ms_context.h"
-#include "backend/common/optimizer/fusion_id_allocator.h"
+#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

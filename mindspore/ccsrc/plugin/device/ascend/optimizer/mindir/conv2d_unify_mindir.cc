@@ -26,7 +26,7 @@
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/kernel_info.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

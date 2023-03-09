@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 #include <algorithm>
 #include <set>
 #include <queue>
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-bool BACKEND_EXPORT AlwaysReturnTrue(const BaseRef &n) { return true; }
+bool AlwaysReturnTrue(const BaseRef &n) { return true; }
 
 bool PatternMap::Contains(const std::string &name) const { return name_set_.count(name) > 0; }
 

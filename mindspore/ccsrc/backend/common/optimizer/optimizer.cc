@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
 
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/manager.h"

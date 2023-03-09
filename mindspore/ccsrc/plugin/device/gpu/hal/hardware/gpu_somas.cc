@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/hal/hardware/gpu_somas.h"
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

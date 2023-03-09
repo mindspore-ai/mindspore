@@ -16,9 +16,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_REDUCE_MIN_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_REDUCE_MIN_FISSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

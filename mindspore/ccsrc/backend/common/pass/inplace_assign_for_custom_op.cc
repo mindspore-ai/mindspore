@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include <regex>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

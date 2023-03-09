@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/pass/const_input_to_attr.h"
 
 #include <vector>
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

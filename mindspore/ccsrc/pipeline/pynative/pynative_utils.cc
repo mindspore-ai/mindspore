@@ -16,8 +16,8 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include <algorithm>
 #include <vector>
-#include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "utils/ms_context.h"
 #include "ir/cell.h"

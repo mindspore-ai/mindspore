@@ -23,8 +23,8 @@
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
-#include "backend/common/optimizer/helper.h"
+#include "backend/common/pass/const_input_to_attr.h"
+#include "include/backend/optimizer/helper.h"
 #include "common/common_test.h"
 
 namespace mindspore {

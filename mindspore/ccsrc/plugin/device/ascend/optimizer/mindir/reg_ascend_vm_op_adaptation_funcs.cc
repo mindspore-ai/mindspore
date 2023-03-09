@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 

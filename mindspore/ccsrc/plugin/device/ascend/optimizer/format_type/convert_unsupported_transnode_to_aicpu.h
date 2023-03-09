@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H_
 #define MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H_
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 namespace mindspore {
 namespace opt {

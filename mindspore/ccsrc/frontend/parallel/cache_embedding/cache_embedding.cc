@@ -25,7 +25,7 @@
 #include <algorithm>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "frontend/optimizer/optimizer.h"
 #include "ir/func_graph.h"
 #include "utils/cache_embedding_hashmap_struct.h"

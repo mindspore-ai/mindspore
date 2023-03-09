@@ -15,9 +15,10 @@
  */
 
 #include "plugin/device/ascend/optimizer/ge/clip_by_norm_fission.h"
+#include <algorithm>
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

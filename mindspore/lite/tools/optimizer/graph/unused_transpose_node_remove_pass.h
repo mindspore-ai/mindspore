@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_TRANSPOSE_NODE_REMOVE_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_TRANSPOSE_NODE_REMOVE_PASS_H_
 #include <string>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;

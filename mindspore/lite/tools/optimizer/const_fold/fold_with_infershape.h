@@ -20,7 +20,7 @@
 #include <set>
 #include <utility>
 #include <memory>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/registry/converter_context.h"
 #include "tools/optimizer/graph/node_infershape.h"
 #include "tools/optimizer/const_fold/fold_utils.h"

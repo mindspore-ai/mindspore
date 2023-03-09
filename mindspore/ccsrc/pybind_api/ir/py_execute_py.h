@@ -33,10 +33,10 @@
 #include "mindspore/ccsrc/include/common/utils/python_utils.h"
 #include "mindspore/ccsrc/include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/common/utils/python_fallback_running.h"
+#include "mindspore/ccsrc/include/backend/optimizer/helper.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/data_converter.h"
 #include "mindspore/ccsrc/pybind_api/ir/tensor_py.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
-#include "mindspore/ccsrc/backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "mindspore/ccsrc/pipeline/jit/parse/resolve.h"
 
 namespace py = pybind11;
@@ -76,7 +76,7 @@ class PyExecuteInitializer {
  public:
   PyExecuteInitializer() {
     mindspore::ops::PyExecuteInfer::set_infer_handler(PyExecuteInferPy);
-    mindspore::opt::dynamic_shape::set_cpp_infer_py_handler(CppInferShapeAndTypePy);
+    mindspore::opt::SetCppInferPyHanbdler(CppInferShapeAndTypePy);
   }
 
   ~PyExecuteInitializer() = default;

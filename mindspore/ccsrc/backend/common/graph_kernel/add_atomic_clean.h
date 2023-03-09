@@ -21,7 +21,7 @@
 #include <tuple>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/backend/kernel_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/inplace_assign_builder.h"

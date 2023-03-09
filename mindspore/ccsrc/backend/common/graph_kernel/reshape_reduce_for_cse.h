@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::graphkernel {
 class ReshapeReduceForCSE : public opt::Pass {

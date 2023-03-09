@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_UPDATE_INPUT_NAMES_STRIDED_SLICE_GRAD_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_UPDATE_INPUT_NAMES_STRIDED_SLICE_GRAD_H_
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

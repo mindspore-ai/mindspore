@@ -30,7 +30,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/contract.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
 namespace mindspore {

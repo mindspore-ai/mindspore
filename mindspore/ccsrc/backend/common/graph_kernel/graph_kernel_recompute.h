@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {

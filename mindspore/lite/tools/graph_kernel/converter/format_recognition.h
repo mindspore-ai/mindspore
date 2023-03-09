@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_FORMAT_RECOGNITION_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_FORMAT_RECOGNITION_H_
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 class FormatRecognition : public opt::Pass {

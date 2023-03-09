@@ -23,7 +23,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/graph_utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 

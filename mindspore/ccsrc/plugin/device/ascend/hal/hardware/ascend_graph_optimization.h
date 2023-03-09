@@ -21,7 +21,7 @@
 #include <set>
 #include <memory>
 #include "include/backend/kernel_graph.h"
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
 
 namespace mindspore {
 namespace device {

@@ -15,7 +15,7 @@
  */
 
 #include "pattern_to_pattern_pass_utils.h"
-#include "backend/common/optimizer/node_pass.h"
+#include "include/backend/optimizer/node_pass.h"
 
 namespace mindspore {
 namespace opt {

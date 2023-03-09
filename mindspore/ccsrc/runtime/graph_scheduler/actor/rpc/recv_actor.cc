@@ -22,7 +22,7 @@
 #include <condition_variable>
 #include "proto/topology.pb.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace runtime {

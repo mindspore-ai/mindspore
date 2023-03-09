@@ -22,7 +22,7 @@
 #include "common/common_test.h"
 #define private public
 #define protected public
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #undef private
 #undef protected
 

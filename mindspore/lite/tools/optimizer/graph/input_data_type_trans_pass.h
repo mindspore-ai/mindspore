@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INPUT_DATA_TYPE_TRANS_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INPUT_DATA_TYPE_TRANS_PASS_H_
 #include <string>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/api/data_type.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/api/types.h"

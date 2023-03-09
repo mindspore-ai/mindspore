@@ -21,7 +21,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/format_utils.h"
 

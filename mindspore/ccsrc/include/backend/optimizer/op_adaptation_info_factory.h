@@ -29,7 +29,7 @@
 #include "include/backend/visible.h"
 
 namespace mindspore::opt {
-class OpAdaptationInfo {
+class BACKEND_EXPORT OpAdaptationInfo {
  public:
   explicit OpAdaptationInfo(const std::string &me_op_name, std::string device_name, bool flag)
       : me_op_name_(me_op_name),
@@ -41,44 +41,19 @@ class OpAdaptationInfo {
   OpAdaptationInfo &operator=(const OpAdaptationInfo &op_adaptation_info);
   virtual ~OpAdaptationInfo() = default;
 
-  OpAdaptationInfo &set_backend_op_name(const std::string &default_op_name) {
-    backend_op_name_ = default_op_name;
-    return *this;
-  }
+  OpAdaptationInfo &set_backend_op_name(const std::string &default_op_name);
+  OpAdaptationInfo &set_target_op_name(const std::string &target_op_name);
+  OpAdaptationInfo &set_pre_check_func(std::function<bool(CNodePtr)> pre_check_func);
+  OpAdaptationInfo &set_need_tbe_check_supported(bool need_tbe_check_supported);
+  OpAdaptationInfo &set_input_attr_info(size_t input_index, std::string attr_data_type = "");
 
-  OpAdaptationInfo &set_target_op_name(const std::string &target_op_name) {
-    target_op_name_ = target_op_name;
-    return *this;
-  }
-
-  OpAdaptationInfo &set_pre_check_func(std::function<bool(CNodePtr)> pre_check_func) {
-    pre_check_func_ = std::move(pre_check_func);
-    return *this;
-  }
-
-  OpAdaptationInfo &set_need_tbe_check_supported(bool need_tbe_check_supported) {
-    need_tbe_check_supported_ = need_tbe_check_supported;
-    return *this;
-  }
-
-  OpAdaptationInfo &set_input_attr_info(size_t input_index, std::string attr_data_type = "") {
-    auto find = input_attr_map_.find(input_index);
-    if (find != input_attr_map_.end()) {
-      MS_LOG(ERROR) << "This input index (" << input_index << ")"
-                    << " has been registered.";
-      return *this;
-    }
-    input_attr_map_[input_index] = attr_data_type;
-    return *this;
-  }
-
-  std::string me_op_name() const { return me_op_name_; }
-  std::string backend_op_name() const { return backend_op_name_; }
-  std::string target_op_name() const { return target_op_name_; }
-  std::function<bool(CNodePtr)> pre_check_func() const { return pre_check_func_; }
+  const std::string &me_op_name() const { return me_op_name_; }
+  const std::string &backend_op_name() const { return backend_op_name_; }
+  const std::string &target_op_name() const { return target_op_name_; }
+  const std::function<bool(CNodePtr)> &pre_check_func() const { return pre_check_func_; }
   bool need_tbe_check_supported() const { return need_tbe_check_supported_; }
-  std::map<size_t, std::string> input_attr_map() const { return input_attr_map_; }
-  std::string device_name() const { return device_name_; }
+  const std::map<size_t, std::string> &input_attr_map() const { return input_attr_map_; }
+  const std::string &device_name() const { return device_name_; }
   bool flag() const { return flag_; }
 
  private:

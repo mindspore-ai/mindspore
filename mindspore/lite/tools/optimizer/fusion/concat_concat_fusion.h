@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONCAT_CONCAT_FUSION_H
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONCAT_CONCAT_FUSION_H
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

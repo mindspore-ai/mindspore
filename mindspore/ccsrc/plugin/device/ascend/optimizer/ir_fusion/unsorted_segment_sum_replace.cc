@@ -20,7 +20,7 @@
 #include <memory>
 #include <set>
 #include "utils/hash_set.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/pass/const_input_to_attr.h"
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_graph.h"

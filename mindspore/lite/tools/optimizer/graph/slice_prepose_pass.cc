@@ -28,7 +28,7 @@
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/helper.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 

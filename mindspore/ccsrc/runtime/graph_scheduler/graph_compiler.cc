@@ -28,11 +28,12 @@
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/convert_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "kernel/common_utils.h"
 #include "profiler/device/profiling.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
@@ -45,7 +46,7 @@
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"

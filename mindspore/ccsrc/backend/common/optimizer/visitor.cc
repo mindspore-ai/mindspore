@@ -16,18 +16,17 @@
  * limitations under the License.
  */
 
-#include "backend/common/optimizer/visit.h"
+#include "include/backend/optimizer/visitor.h"
 
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "utils/any.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"
 
-/* namespace to support utils definition */
 namespace mindspore {
 bool CheckIfNeedExpand(const std::vector<BaseRef> &list) {
   return std::any_of(list.begin(), list.end(), [](const BaseRef &any) { return utils::isa<Seq>(any); });

@@ -15,11 +15,12 @@
  */
 
 #include "backend/common/pass/eliminate_func_data_type.h"
+#include <vector>
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
 #include "include/backend/kernel_graph.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::opt {

@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "ir/anf.h"
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 
 namespace mindspore::opt {
 class CreateNodeHelper {

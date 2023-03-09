@@ -16,7 +16,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "backend/common/pass/convert_list_to_tuple.h"
 #include "backend/common/pass/eliminate_func_data_type.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"

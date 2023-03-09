@@ -18,7 +18,7 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "include/backend/visible.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 class BACKEND_EXPORT BindValueToGraph : public opt::Pass {

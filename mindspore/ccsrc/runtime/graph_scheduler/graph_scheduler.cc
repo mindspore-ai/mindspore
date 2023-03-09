@@ -30,7 +30,7 @@
 #include "mindrt/include/async/async.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/config_manager.h"
 #include "utils/log_adapter.h"

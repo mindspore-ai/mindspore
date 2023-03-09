@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/common/utils/config_manager.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/debug/anf_ir_dump.h"

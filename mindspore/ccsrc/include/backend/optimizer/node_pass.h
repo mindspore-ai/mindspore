@@ -20,7 +20,7 @@
 #include <vector>
 #include <set>
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -43,7 +43,6 @@ class BACKEND_EXPORT NodePass : public Pass {
   bool ProcessFastPass(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_graph_index);
   bool ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
 };
-using NodePassPtr = std::shared_ptr<NodePass>;
 void GenIndex(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_graph_index);
 void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
                                 mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> *out_caller_map,

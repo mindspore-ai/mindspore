@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ELIMINATE_REDUNDANT_CAST_PASS_H_
 #include <set>
 #include "include/registry/converter_context.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::opt {
 using mindspore::converter::FmkType;

@@ -22,10 +22,10 @@
 #include <utility>
 #include <vector>
 
-#include "backend/common/optimizer/optimizer.h"
-#include "include/backend/visible.h"
 #include "base/base.h"
 #include "base/base_ref.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {

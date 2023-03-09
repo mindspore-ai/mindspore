@@ -32,8 +32,8 @@
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #endif
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"

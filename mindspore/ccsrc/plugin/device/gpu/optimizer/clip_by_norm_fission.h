@@ -20,8 +20,8 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
 
 // This pass will split `ClipByNorm` op to smaller ops, such as `square`, `sqrt`, `reducesum` to achieve same function
 namespace mindspore {

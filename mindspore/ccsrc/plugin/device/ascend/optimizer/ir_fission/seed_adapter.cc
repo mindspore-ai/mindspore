@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
-
+#include <set>
 #include <string>
 #include <vector>
 #include <memory>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"

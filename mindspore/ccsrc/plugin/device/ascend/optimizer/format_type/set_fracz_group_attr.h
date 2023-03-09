@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "ir/anf.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

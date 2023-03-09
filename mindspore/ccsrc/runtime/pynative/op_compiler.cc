@@ -23,6 +23,7 @@
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "runtime/device/device_address_utils.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 
 namespace mindspore {
 using runtime::DeviceAddressUtils;

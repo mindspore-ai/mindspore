@@ -23,7 +23,7 @@
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/debug/trace.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/expander.h"

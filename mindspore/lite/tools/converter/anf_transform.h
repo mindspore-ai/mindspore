@@ -20,8 +20,8 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "ir/anf.h"

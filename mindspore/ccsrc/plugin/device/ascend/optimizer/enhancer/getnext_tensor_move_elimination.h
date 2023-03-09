@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_TENSORMOVE_ELIMINATION_H
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ENHANCER_GETNEXT_TENSORMOVE_ELIMINATION_H
 
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

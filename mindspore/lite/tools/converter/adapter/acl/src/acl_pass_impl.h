@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/errorcode.h"
 #include "include/api/types.h"
 #include "include/registry/converter_context.h"

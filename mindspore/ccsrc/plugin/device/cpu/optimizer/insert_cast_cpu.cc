@@ -21,7 +21,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

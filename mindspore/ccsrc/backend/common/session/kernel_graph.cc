@@ -29,7 +29,7 @@
 #include "kernel/kernel_build_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "kernel/common_utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/anf_utils.h"
 #include "backend/common/session/exec_order_builder.h"
 

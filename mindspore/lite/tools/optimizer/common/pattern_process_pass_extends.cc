@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/manager.h"

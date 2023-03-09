@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "tools/optimizer/common/node_pass_extends.h"
 
 namespace mindspore {

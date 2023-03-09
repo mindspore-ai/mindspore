@@ -18,7 +18,7 @@
 #include <deque>
 #include <vector>
 #include "backend/common/session/session_factory.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #ifdef ENABLE_D
 #include "runtime/hardware/device_context_manager.h"
 #else

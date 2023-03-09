@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_CAST_H_
 #include <string>
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "ir/anf.h"
 
 namespace mindspore {

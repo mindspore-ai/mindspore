@@ -31,11 +31,11 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "include/backend/visible.h"
-#include "backend/common/optimizer/visit.h"
 #include "base/base.h"
 #include "utils/log_adapter.h"
 #include "base/base_ref.h"
+#include "include/backend/visible.h"
+#include "include/backend/optimizer/visitor.h"
 
 namespace mindspore {
 class CondVar;
@@ -48,8 +48,6 @@ using ConditionFunc = std::function<bool(const BaseRef &)>;
 
 // Base wildcard variable which could match any anf node.
 class BACKEND_EXPORT Var : public Base {
-  friend class VarHasher;
-
  public:
   explicit Var(std::string tag = "") : tag_(std::move(tag)), primitive_(nullptr) { EnsureTag(); }
   explicit Var(const PrimitivePtr &primitive, std::string tag = "") : tag_(std::move(tag)), primitive_(primitive) {
@@ -98,11 +96,6 @@ class VarNode : public AnfNode {
   const VarPtr var_;
 };
 using VarNodePtr = std::shared_ptr<VarNode>;
-
-class VarHasher {
- public:
-  std::size_t operator()(const Var &var) const { return var.hash(); }
-};
 
 // Condition Var, match an anf node when condition function return true.
 class CondVar : public Var {

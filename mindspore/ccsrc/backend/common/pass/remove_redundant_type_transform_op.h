@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_REMOVE_REDUNDANT_TYPE_TRANSFORM_OP_H_
 #define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_REMOVE_REDUNDANT_TYPE_TRANSFORM_OP_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

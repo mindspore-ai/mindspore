@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_ATTR_TO_UNIFY_MINDIR_H_
 
 #include <memory>
-#include "backend/common/optimizer/inplace_node_pass.h"
+#include "include/backend/optimizer/inplace_node_pass.h"
 
 namespace mindspore {
 namespace opt {

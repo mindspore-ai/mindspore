@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "backend/common/graph_kernel/core/split_schemer.h"
 
 namespace mindspore::graphkernel {

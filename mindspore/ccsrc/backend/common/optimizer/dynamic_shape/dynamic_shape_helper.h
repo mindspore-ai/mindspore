@@ -19,11 +19,12 @@
 
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore::opt::dynamic_shape {
 bool IsRealCNode(const BaseRef &n);
-BACKEND_EXPORT void InferOp(const CNodePtr &node, void *args = nullptr);
+void InferOp(const CNodePtr &node, void *args = nullptr);
 AnfNodePtr GenInferNode(const AnfNodePtr &node);
 AnfNodePtr GenInitNode(const AnfNodePtr &node);
 
@@ -55,8 +56,7 @@ class CustomActorNodeManager {
   OrderedMap<AnfNodePtr, RelatedCustomActorNode> custom_nodes_map_;
 };
 
-using InfPyHandler = abstract::AbstractBasePtr (*)(const CNodePtr &, const PrimitivePtr &, const AbstractBasePtrList &);
 extern InfPyHandler cpp_infer_py_handler_;
-BACKEND_EXPORT void set_cpp_infer_py_handler(const InfPyHandler &infer_handler);
+void set_cpp_infer_py_handler(const InfPyHandler &infer_handler);
 }  // namespace mindspore::opt::dynamic_shape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H

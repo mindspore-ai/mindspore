@@ -18,7 +18,7 @@
 
 #include <string>
 #include <map>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/hal/device/lic_manager.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CUSTOM_OP_CONST_INPUT_TO_ATTR_H_
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

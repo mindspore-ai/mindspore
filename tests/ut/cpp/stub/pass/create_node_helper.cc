@@ -22,7 +22,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 
 namespace mindspore::opt {

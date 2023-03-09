@@ -20,8 +20,8 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
-#include "backend/common/optimizer/pattern_engine.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_pass_control.h"
 
 namespace mindspore {

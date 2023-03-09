@@ -19,7 +19,7 @@
 #include <string>
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {

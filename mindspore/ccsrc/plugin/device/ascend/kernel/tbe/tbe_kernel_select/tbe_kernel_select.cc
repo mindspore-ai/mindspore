@@ -29,7 +29,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_property_checker.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_selector_creator.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore::kernel {
 constexpr int64_t kDynamicInvalidNum = -1;

@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "tools/optimizer/fusion/scale_base_fusion.h"
 #include "ops/mat_mul.h"
 
