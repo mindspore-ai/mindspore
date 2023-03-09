@@ -40,3 +40,4 @@ mindspore.nn.AvgPool2d
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 为tuple/list时长度不为1或2。
         - **ValueError** - `x` 的shape长度不等于3或4。
+        - **ValueError** - `divisor_override` 为0。
