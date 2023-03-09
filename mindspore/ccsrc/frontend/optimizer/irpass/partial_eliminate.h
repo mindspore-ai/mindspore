@@ -219,21 +219,24 @@ class ChoicePartialEliminater : public AnfVisitor {
 
  private:
   static std::vector<AnfNodePtr> ArgsUnion(const std::vector<AnfNodePtrList> args_list) {
-    std::set<AnfNodePtr> no_monad_args;
-    std::set<AnfNodePtr> monad_args;
+    std::vector<AnfNodePtr> no_monad_args;
+    std::vector<AnfNodePtr> monad_args;
     for (const auto &args : args_list) {
       for (const auto &arg : args) {
         if (HasAbstractMonad(arg)) {
-          (void)monad_args.insert(arg);
+          if (!count(monad_args.begin(), monad_args.end(), arg)) {
+            monad_args.push_back(arg);
+          }
           continue;
         }
-        (void)no_monad_args.insert(arg);
+        if (!count(no_monad_args.begin(), no_monad_args.end(), arg)) {
+          no_monad_args.push_back(arg);
+        }
       }
     }
     // Keep monad args after no monad args.
-    std::vector<AnfNodePtr> union_args(no_monad_args.cbegin(), no_monad_args.cend());
-    (void)union_args.insert(union_args.cend(), monad_args.cbegin(), monad_args.cend());
-    return union_args;
+    no_monad_args.insert(no_monad_args.end(), monad_args.begin(), monad_args.end());
+    return no_monad_args;
   }
 
   static HashMap<FuncGraphPtr, HashMap<AnfNodePtr, size_t>> GenOldArgsIndexes(
