@@ -30,7 +30,7 @@ class BufferSample(PrimitiveWithInfer):
     Returns the tuple tensor with the given shape, decided by the given batchsize.
 
     .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.
@@ -142,7 +142,7 @@ class BufferAppend(PrimitiveWithInfer):
     push data to the bottom of buffer under the First-In-First-Out rule.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.
@@ -244,7 +244,7 @@ class BufferGetItem(PrimitiveWithInfer):
     Get the data from buffer in the position of input index.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.

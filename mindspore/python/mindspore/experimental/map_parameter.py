@@ -32,7 +32,7 @@ class MapParameter(Parameter):
     MapParameter is a parameter that stores a map like data structure.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         key_dtype (:class:`mindspore.dtype`): The data type of the key. The argument should be defined in

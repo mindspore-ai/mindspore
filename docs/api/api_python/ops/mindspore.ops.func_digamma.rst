@@ -9,7 +9,7 @@ mindspore.ops.digamma
         P(input) = grad(In(gamma(input)))
 
     .. warning::
-        这是一个实验性接口，后续可能删除或修改。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 输入Tensor，数据类型是float16，float32或float64。

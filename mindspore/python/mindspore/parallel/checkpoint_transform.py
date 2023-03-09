@@ -34,6 +34,9 @@ __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_che
 def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
     """
     Merge parallel strategy between all pipeline stages in pipeline parallel mode.
+    For more details about converting distributed Checkpoint, please refer to
+    `Distributed Resilience Training and
+    Inference <https://www.mindspore.cn/tutorials/experts/en/master/parallel/resilience_train_and_predict.html>`_.
 
     Note:
         Strategy file of each pipeline stage should be included in src_strategy_dirs.
@@ -71,7 +74,9 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """
     List of original distributed checkpoint rank index for obtaining the target checkpoint of a rank_id
-    during the distributed checkpoint conversion.
+    during the distributed checkpoint conversion. For more details about converting distributed Checkpoint,
+    please refer to `Distributed Resilience Training and
+    Inference <https://www.mindspore.cn/tutorials/experts/en/master/parallel/resilience_train_and_predict.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
@@ -131,7 +136,9 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
                                  src_strategy_file=None, dst_strategy_file=None):
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy by rank
-    for a network.
+    for a network. For more details about converting distributed Checkpoint, please refer to
+    `Distributed Resilience Training and
+    Inference <https://www.mindspore.cn/tutorials/experts/en/master/parallel/resilience_train_and_predict.html>`_.
 
     Args:
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
@@ -213,9 +220,12 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                           dst_strategy_file=None):
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
+    For more details about converting distributed Checkpoint, please refer to
+    `Distributed Resilience Training and
+    Inference <https://www.mindspore.cn/tutorials/experts/en/master/parallel/resilience_train_and_predict.html>`_.
 
     Note:
-        The src_checkpoints_dir directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
+        The `src_checkpoints_dir` directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
         rank number should be set to a subdirectory and the checkpoint file is stored in this subdirectory. If multiple
         files exist in a rank directory, the last file in the lexicgraphic order would be selected.
 

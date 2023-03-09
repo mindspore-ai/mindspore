@@ -8,9 +8,10 @@ mindspore.amp.custom_mixed_precision
     当提供 `black_list` 时，网络中不包含在 `black_list` 里的Primitive或Cell会进行精度转换。
     需要提供 `white_list` 和 `black_list` 中的一个。
 
-    .. note::
+    .. warning::
+        - 这是一个实验性API，后续可能修改或删除。
 
-        - 这是一个实验性接口，后续可能删除或修改。
+    .. note::
         - `custom_mixed_precision` 和 `auto_mixed_precision` 不应该同时使用。当需要同时使用 `build_train_network` 和 `custom_mixed_precision` 时，应该先使用 `level='O0'` 参数调用 `build_train_network` ，然后再调用 `custom_mixed_precision` 。
         - 当使用黑名单时，Primitive类型还未支持。
 

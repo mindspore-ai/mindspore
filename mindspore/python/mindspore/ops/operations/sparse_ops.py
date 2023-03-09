@@ -746,7 +746,7 @@ class DenseToCSRSparseMatrix(Primitive):
     Converts a dense matrix(maybe batched) to its CSR sparse form.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **dense_input** (Tensor) - A 2-D or 3-D Tensor. It represents the input dense matrix.
@@ -875,7 +875,7 @@ class Sspaddmm(Primitive):
     If `x1_shape` is :math:`(s0, s1)`, `x2_shpae` should be :math:`(s0, s2)`, the `x3_shape` should be :math:`(s2, s1)`.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     .. math::
         out =\beta * x1  + \alpha * (x2 @ x3),
@@ -1563,7 +1563,7 @@ class SparseMatrixSoftmax(Primitive):
     Calculates the softmax of a CSRTensorMatrix.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (dtype.Number) - The valid data type. Only constant value is allowed.

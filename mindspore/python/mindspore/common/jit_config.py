@@ -19,8 +19,8 @@ class JitConfig:
     """
     Jit config for compile.
 
-    Note:
-        This is an experimental function that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         jit_level (str): Option for argument `level` for Optimization of lift graph.

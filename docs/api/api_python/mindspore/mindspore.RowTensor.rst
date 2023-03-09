@@ -19,8 +19,8 @@ mindspore.RowTensor
          [0, 0],
          [0, 0]]
 
-    .. note::
-        这是一个实验特性，在未来可能会发生API的变化。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **indices** (Tensor) - 形状为[D0]的一维整数张量。默认值：None。

@@ -9,7 +9,7 @@ mindspore.ops.unique
     若需要 `idx` 与 `y` 的shape相同，请参考 :class:`mindspore.ops.UniqueWithPad` 算子。
 
     .. warning::
-        此算子为实验性算子，将来可能面临更改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 需要被去重的Tensor。shape： :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。

@@ -6,7 +6,7 @@ mindspore.transform_checkpoints
     将一个分布式网络的Checkpoint由源切分策略转换到目标切分策略。关于更多分布式Checkpoint转换的细节，请参考：`分布式弹性训练与推理 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html>`_。
 
     .. note::
-        src_checkpoints_dir目录必须组织为“src_checkpoints_dir/rank_0/a.ckpt”这样的目录结构，rank号必须作为子目录并且该rank的Checkpoint必须放置于该子目录内。如果多个文件存在于一个rank目录下，将会选名字的字典序最高的文件。
+        `src_checkpoints_dir` 目录必须组织为“src_checkpoints_dir/rank_0/a.ckpt”这样的目录结构，rank号必须作为子目录并且该rank的Checkpoint必须放置于该子目录内。如果多个文件存在于一个rank目录下，将会选名字的字典序最高的文件。
 
     参数：
         - **src_checkpoints_dir** (str) - 源Checkpoint文件所在的目录。

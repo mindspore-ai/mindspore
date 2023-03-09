@@ -48,5 +48,5 @@ mindspore.ops.deformable_conv2d
         - **ValueError** - 如果 `strides` 或者 `dilations` 对应N和C维度的值不为1。
         - **ValueError** - 如果 `modulated` 的值不是True。
 
-    .. note::
-        - 这是一个实验性质的接口，将来有可能被修改或删除。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
