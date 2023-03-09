@@ -477,11 +477,14 @@ std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
           micro = MakeValue(int64_t(0));
         }
         if (stage_ == *parameter_stage.begin()) {
+          auto user_stage = graph->stage();
           auto stage_info = node->user_data<NodeStageInfo>();
-          if (graph->stage() == stage_ || stage_info == nullptr) {
+          if (stage_info) {
+            user_stage = stage_info->stage();
+          }
+          if (graph->stage() == stage_ || user_stage == -1) {
             continue;
           }
-          auto user_stage = stage_info->stage();
           if (Reuse(parameter, user_stage, make_tuple_input, DEST_RANK)) {
             continue;
           }
