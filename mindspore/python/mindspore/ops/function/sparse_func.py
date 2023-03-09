@@ -603,8 +603,8 @@ def coo_concat(sp_input, concat_dim=0):
     """
     concatenates the input SparseTensor(COO format) along the specified dimension.
 
-    Note:
-        demo API now, and only supported CPU
+    .. warning::
+        This is an experimental API that is subjected to change or deletion. Only supported on CPU now.
 
     Args:
         sp_input (Union[list(COOTensor), tuple(COOTensor)]) - the list of SparseTensor which need to concatenates.

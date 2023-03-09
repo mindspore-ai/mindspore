@@ -2625,8 +2625,8 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         ValueError: The N or C dimensions of 'strides' or `dilations` is not set to 1.
         ValueError: If `modulated` is not set to True.
 
-    Note:
-        - This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

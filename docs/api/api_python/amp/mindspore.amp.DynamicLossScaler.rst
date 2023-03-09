@@ -7,8 +7,8 @@ mindspore.amp.DynamicLossScaler
 
     动态损失缩放管理器在保证梯度不溢出的情况下，尝试确定最大的损失缩放值 `scale_value`。在梯度不溢出的情况下，`scale_value` 将会每间隔 `scale_window` 步被扩大 `scale_factor` 倍，若存在溢出情况，则会将 `scale_value` 缩小 `scale_factor` 倍，并重置计数器。
 
-    .. note::
-        - 这是一个实验性接口，后续可能删除或修改。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **scale_value** (Union(float, int)) - 初始梯度放大系数。

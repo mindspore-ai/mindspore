@@ -31,7 +31,7 @@ def vmap(fn, in_axes=0, out_axes=0):
     for better performance. When combined with `Graph Kernel Fusion`, operational efficiency would be further improved.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or delete.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         1. The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a

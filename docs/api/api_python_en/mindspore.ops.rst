@@ -666,7 +666,7 @@ Sparse Functions
 ----------------
 
 .. warning::
-    The following APIs are experimental prototypes that are subject to change.
+    These are experimental APIs that are subject to change or deletion.
 
 .. msplatwarnautosummary::
     :toctree: ops
@@ -681,7 +681,7 @@ COO Functions
 ^^^^^^^^^^^^^
 
 .. warning::
-    The following APIs are experimental prototypes that are subject to change.
+    These are experimental APIs that are subject to change or deletion.
 
 .. msplatwarnautosummary::
     :toctree: ops
@@ -726,7 +726,7 @@ CSR Functions
 ^^^^^^^^^^^^^
 
 .. warning::
-    The following APIs are experimental prototypes that are subject to change.
+    These are experimental APIs that are subject to change or deletion.
 
 .. msplatwarnautosummary::
     :toctree: ops

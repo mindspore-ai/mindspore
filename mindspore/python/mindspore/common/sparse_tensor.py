@@ -97,8 +97,8 @@ class RowTensor(RowTensorInner):
          [0, 0],
          [0, 0]]
 
-    Note:
-        RowTensor is deprecated from version 2.0, and will be removed in future version.
+    .. warning::
+        This is an experimental API that is subjected to change or deletion.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
@@ -227,10 +227,10 @@ class COOTensor(COOTensor_):
     and division (/). For details about operations supported by `COOTensor`, see
     `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
 
-    Note:
-        This is an experimental feature and is subjected to change.
-        Currently, duplicate coordinates in the indices will not be coalesced.
-        If the indices contain out-of-bound values, the result will be undefined.
+    .. warning::
+        - This is an experimental API that is subject to change or deletion.
+        - Currently, duplicate coordinates in the indices will not be coalesced.
+          If the indices contain out-of-bound values, the result will be undefined.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
@@ -563,11 +563,11 @@ class CSRTensor(CSRTensor_):
     and division (/). For details about operations supported by `CSRTensor`, see
     `operators <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#operators>`_.
 
-    Note:
-        This is an experimental feature and is subjected to change.
-        If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
-    when the length of `values` or `indices` exceeds the range indicated by indptr, and when the columns indicated by
-    `indices` are repeated on the same row.
+    .. warning::
+        - This is an experimental API that is subjected to change.
+        - If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
+          when the length of `values` or `indices` exceeds the range indicated by indptr, and when the columns
+          indicated by `indices` are repeated on the same row.
 
     Args:
         indptr (Tensor): 1-D Tensor of shape :math:`(M)`, which equals to `shape[0] + 1`, which indicates the

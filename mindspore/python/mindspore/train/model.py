@@ -1214,7 +1214,7 @@ class Model:
         Build computational graphs and data graphs with the sink mode.
 
         .. warning::
-            This is an experimental prototype that is subject to change or deletion.
+            This is an experimental API that is subject to change or deletion.
 
         Note:
             The interface builds the computational graphs, when the interface is executed first, 'Model.train' only
@@ -1536,7 +1536,7 @@ class Model:
         Only dataset sink mode is supported for now.
 
         .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
+            This is an experimental API that is subject to change or deletion.
 
         Note:
             This is a pre-compile function. The arguments should be the same as model.train() function.

@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """
-Parallel Loss for the Parallel Training
-This is an experimental interface that is subject to change or deletion.
+Parallel Loss for the Parallel Training.
+These are experimental APIs that are subject to change or deletion.
 """
 from __future__ import absolute_import
 

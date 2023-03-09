@@ -153,7 +153,7 @@ class AdaFactor(Optimizer):
     Cost <https://arxiv.org/abs/1804.04235>`_.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Adafactor for weight vector are as follows,
 

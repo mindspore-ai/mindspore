@@ -27,7 +27,7 @@ class TensorArray(PrimitiveWithInfer):
     TensorArrayCreate used to create a TensorArray and return an unique handle.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
@@ -76,7 +76,7 @@ class TensorArrayWrite(PrimitiveWithInfer):
     TensorArrayWrite used to write tensor into a created TensorArray.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **index** (Tensor[int64]) - The position to write.
@@ -116,7 +116,7 @@ class TensorArrayRead(PrimitiveWithInfer):
     TensorArrayRead used to read tensor from a created TensorArray by the given index.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
@@ -167,7 +167,7 @@ class TensorArrayClose(PrimitiveWithInfer):
     TensorArrayClose used to close the created TensorArray. The resources in TensorArray will be deleted.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
@@ -203,7 +203,7 @@ class TensorArrayClear(PrimitiveWithInfer):
     TensorArrayClear used to reset the created TensorArray. The instance of TensorArray is still aviliable.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
@@ -239,7 +239,7 @@ class TensorArrayStack(Primitive):
     TensorArrayStack used to stack the tensors in a created TensorArray into one tensor.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
@@ -283,7 +283,7 @@ class TensorArraySize(PrimitiveWithInfer):
     TensorArraySize used to get the logical size of the created TensorArray.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
@@ -319,7 +319,7 @@ class TensorArrayGather(PrimitiveWithInfer):
     TensorArrayGather used to gather specified elements from the created TensorArray.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.

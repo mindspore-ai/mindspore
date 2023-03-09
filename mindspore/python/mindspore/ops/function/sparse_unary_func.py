@@ -1998,7 +1998,7 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         out_i = \\tanh^{-1}(x_{i})
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -2038,7 +2038,7 @@ def coo_atanh(x: COOTensor) -> COOTensor:
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         x (COOTensor): Input COOTensor.
