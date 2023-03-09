@@ -63,6 +63,10 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
 
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
+  std::size_t nelems = queue->elements().size();
+  if (nelems == 0) {
+    MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
+  }
   // Input or index is variable, items shape and type should be same.
   if (index_value == kAnyValue) {
     const auto &elements = queue->elements();
@@ -76,11 +80,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
   }
   auto index_int64_value = GetValue<int64_t>(index_value);
-  std::size_t nelems = queue->elements().size();
   if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
-    if (nelems == 0) {
-      MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
-    }
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
                              << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
   }
