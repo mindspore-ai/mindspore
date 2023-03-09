@@ -136,6 +136,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"GridSampler3D", kTupleTensor2},
                                                        {"GridSampler3DGrad", kTupleTensor2},
                                                        {"IFMR", kTupleTensor2},
+                                                       {"IdentityN", kTuple},
                                                        {"InstanceNorm", kTupleTensor3},
                                                        {"InstanceNormGrad", kTupleTensor3},
                                                        {"InstanceNormV2", kTupleTensor3},
