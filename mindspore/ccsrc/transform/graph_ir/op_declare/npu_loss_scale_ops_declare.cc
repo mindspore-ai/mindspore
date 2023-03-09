@@ -34,4 +34,16 @@ INPUT_MAP(NPUClearFloatStatus) = {{1, INPUT_DESC(addr)}};
 OUTPUT_MAP(NPUClearFloatStatus) = {{0, OUTPUT_DESC(data)}};
 ATTR_MAP(NPUClearFloatStatus) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(NPUClearFloatStatus, kNameNPUClearFloatStatus, ADPT_DESC(NPUClearFloatStatus))
+
+// NPUGetFloatStatusV2
+INPUT_MAP(NPUGetFloatStatusV2) = EMPTY_INPUT_MAP;
+OUTPUT_MAP(NPUGetFloatStatusV2) = {{0, OUTPUT_DESC(data)}};
+ATTR_MAP(NPUGetFloatStatusV2) = EMPTY_ATTR_MAP;
+REG_ADPT_DESC(NPUGetFloatStatusV2, kNameNPUGetFloatStatusV2, ADPT_DESC(NPUGetFloatStatusV2))
+
+// NPUClearFloatStatusV2
+INPUT_MAP(NPUClearFloatStatusV2) = EMPTY_INPUT_MAP;
+OUTPUT_MAP(NPUClearFloatStatusV2) = EMPTY_OUTPUT_MAP;
+ATTR_MAP(NPUClearFloatStatusV2) = EMPTY_ATTR_MAP;
+REG_ADPT_DESC(NPUClearFloatStatusV2, kNameNPUClearFloatStatusV2, ADPT_DESC(NPUClearFloatStatusV2))
 }  // namespace mindspore::transform

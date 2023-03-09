@@ -1804,6 +1804,14 @@ bool DfGraphConvertor::IsDataInput(const AnfNodePtr &node, const AnfNodePtr &inp
     return false;
   }
 
+  // The NPUClearFloatStatusV2 of GE has no input and output, and the NPUGetFloatStatusV2 has no input.
+  // The extra data edges of MindSpore need to be converted to control edges of GE.
+  if (IsPrimitiveCNode(input, prim::kPrimNPUClearFloatStatusV2) ||
+      IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2) ||
+      IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -2204,6 +2212,7 @@ std::string DfGraphConvertor::GetGNodeType(const ::ge::GNode &node) const {
 // 2) Identity or IdentityN is the subgraph(If) input, not delete
 // 3) Identity or IdentityN it the output, not delete
 // 4) Identity or IdentityN has multiple users, not delete
+// 5) Nodes with control edges, temporarily not delete
 bool DfGraphConvertor::IsIdentityRedundant(const ::ge::GNode &node) const {
   auto node_type = GetGNodeType(node);
   if (node_type != kTypeIdentityN && node_type != kTypeIdentity) {
@@ -2229,6 +2238,11 @@ bool DfGraphConvertor::IsIdentityRedundant(const ::ge::GNode &node) const {
       return false;
     }
   }
+
+  if (!node.GetOutControlNodes().empty()) {
+    return false;
+  }
+
   return true;
 }
 

@@ -168,7 +168,7 @@ namespace mindspore::transform {
 #define OUTPUT_MAP(T) \
   template <>         \
   const std::map<int, OutputDesc> OpAdapter<T>::output_map_
-#define EMPTY_OUTPUT_MAP mindspore::HashMap<int, OutputDesc>()
+#define EMPTY_OUTPUT_MAP std::map<int, OutputDesc>()
 #define OUTPUT_DESC(name) \
   {                       \
 #name, \
