@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_DEPEND_ELIMINATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_DEPEND_ELIMINATION_H_
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 // Optimize cases like %1 = Depend(%0, %0). This depend statement is necessary in frontend, but not here.

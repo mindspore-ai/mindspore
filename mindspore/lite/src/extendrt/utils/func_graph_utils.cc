@@ -23,7 +23,7 @@
 
 #include "src/extendrt/utils/func_graph_utils.h"
 #include "include/common/utils/convert_utils.h"
-#include "mindspore/ccsrc/backend/common/optimizer/helper.h"
+#include "mindspore/ccsrc/include/backend/optimizer/helper.h"
 
 namespace mindspore {
 const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");

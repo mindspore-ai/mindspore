@@ -22,7 +22,7 @@
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/gather_grad_kernels.cc"      "build/include"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/drop_out_gen_mask_kernels.cc"      "build/include"
-"mindspore/mindspore/ccsrc/backend/common/optimizer/op_adaptation_info_factory.h"                   "runtime/explicit"
+"mindspore/mindspore/ccsrc/include/backend/optimizer/op_adaptation_info_factory.h"                   "runtime/explicit"
 "mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cu"            "runtime/int"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/threadsafe_fn"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/references"

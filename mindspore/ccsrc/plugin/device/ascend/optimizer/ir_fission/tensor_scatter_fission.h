@@ -17,10 +17,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FUSION_TENSOR_SCATTER_FISSION_H_
 #include <string>
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

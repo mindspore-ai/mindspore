@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TRANSPOSE_MATMUL_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TRANSPOSE_MATMUL_FUSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

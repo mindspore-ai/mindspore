@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CONV2D_TRANSPOSE_INPUT_ADJUST_H_
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/pass.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::lite {
 class Conv2DTransposeInputAdjust {

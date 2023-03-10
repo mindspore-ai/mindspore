@@ -23,7 +23,7 @@
 #include <unordered_map>
 
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "kernel/common_utils.h"
 #include "kernel/kernel.h"
 #include "kernel/akg/akg_kernel_build.h"

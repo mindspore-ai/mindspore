@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_REMOVE_RESHAPE_PAIR_H_
 
 #include "ir/anf.h"
-#include "backend/common/optimizer/pattern_engine.h"
-#include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

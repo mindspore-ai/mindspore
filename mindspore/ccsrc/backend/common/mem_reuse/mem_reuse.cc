@@ -19,7 +19,7 @@
 #include <utility>
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/mem_reuse/mem_reuse_checker.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace memreuse {

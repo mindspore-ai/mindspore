@@ -29,7 +29,7 @@
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/device_address.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "runtime/device/ms_device_shape_transfer.h"

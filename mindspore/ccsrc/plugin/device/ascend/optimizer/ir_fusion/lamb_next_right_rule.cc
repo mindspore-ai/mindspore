@@ -15,7 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_right_rule.h"
 #include <vector>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "utils/trace_base.h"
 namespace mindspore {

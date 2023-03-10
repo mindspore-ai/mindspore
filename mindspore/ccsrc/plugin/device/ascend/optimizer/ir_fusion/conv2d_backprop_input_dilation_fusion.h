@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 
 namespace mindspore {

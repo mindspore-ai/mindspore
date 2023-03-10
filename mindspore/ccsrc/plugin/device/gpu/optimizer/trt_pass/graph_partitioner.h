@@ -22,7 +22,7 @@
 #include <tuple>
 #include <string>
 #include "utils/hash_map.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

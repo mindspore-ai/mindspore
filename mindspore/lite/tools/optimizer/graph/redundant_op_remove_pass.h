@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_REDUNDANT_OP_REMOVE_PASS_H_
 #include <string>
 #include <set>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
 

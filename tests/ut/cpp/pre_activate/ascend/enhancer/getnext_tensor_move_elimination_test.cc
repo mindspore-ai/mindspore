@@ -21,7 +21,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 
 namespace mindspore {

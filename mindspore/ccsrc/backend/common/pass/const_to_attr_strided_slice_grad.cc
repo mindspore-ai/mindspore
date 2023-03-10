@@ -21,7 +21,7 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/pass/const_input_to_attr.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

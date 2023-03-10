@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_REMOVE_HOST_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_REMOVE_HOST_KERNEL_H_
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 namespace mindspore {
 namespace opt {
 class RemoveHostKernel : public PatternProcessPass {

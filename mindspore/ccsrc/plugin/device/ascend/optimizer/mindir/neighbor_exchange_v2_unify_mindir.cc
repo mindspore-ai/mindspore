@@ -21,7 +21,7 @@
 #include <utility>
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 

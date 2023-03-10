@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_LARS_V2_FISSION_H_
 
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

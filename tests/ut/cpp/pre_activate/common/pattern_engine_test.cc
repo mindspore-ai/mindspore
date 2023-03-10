@@ -21,9 +21,9 @@
 #include <algorithm>
 
 #include "common/common_test.h"
-#include "backend/common/optimizer/pattern_engine.h"
-#include "backend/common/optimizer/visit.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/visitor.h"
+#include "include/backend/optimizer/helper.h"
 #include "base/base_ref.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
@@ -31,6 +31,8 @@
 
 namespace mindspore {
 using PatternListType = std::initializer_list<BaseRef>;
+
+std::shared_ptr<VectorRef> ExpandList(const std::vector<BaseRef> &list);
 
 bool Equal(const BaseRef &a, const BaseRef &b) { return a == b; }
 

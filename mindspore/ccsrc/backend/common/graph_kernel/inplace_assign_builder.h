@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::graphkernel {
 struct InplaceAssignerInfo {

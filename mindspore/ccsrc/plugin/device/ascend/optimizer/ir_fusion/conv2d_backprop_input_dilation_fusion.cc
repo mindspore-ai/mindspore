@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "plugin/device/ascend/hal/device/lic_manager.h"

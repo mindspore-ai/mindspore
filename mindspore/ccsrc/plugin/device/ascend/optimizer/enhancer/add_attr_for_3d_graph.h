@@ -19,9 +19,9 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

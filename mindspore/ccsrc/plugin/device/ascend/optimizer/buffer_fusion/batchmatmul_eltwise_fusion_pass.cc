@@ -21,7 +21,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/optimizer/fusion_id_allocator.h"
+#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 
 namespace mindspore {
 namespace opt {

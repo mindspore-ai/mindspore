@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_ADD_DYNAMIC_SHAPE_ATTR_H
 #define MINDSPORE_ADD_DYNAMIC_SHAPE_ATTR_H
-#include "backend/common/optimizer/inplace_node_pass.h"
+#include "include/backend/optimizer/inplace_node_pass.h"
 namespace mindspore {
 namespace opt {
 class AddDynamicShapeAttr : public InplaceNodePass {

@@ -22,7 +22,7 @@
 #include <algorithm>
 #include "utils/log_adapter.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/device/device_address_utils.h"
@@ -513,7 +513,7 @@ void InferNodeRealShape(const CNodePtr &kernel) {
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
     MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
-  opt::dynamic_shape::InferOp(kernel);
+  opt::InferOp(kernel);
 }
 
 void ResizeNodeInput(const CNodePtr &kernel) {

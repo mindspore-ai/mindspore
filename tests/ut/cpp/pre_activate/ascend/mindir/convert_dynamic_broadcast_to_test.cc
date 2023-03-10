@@ -18,8 +18,8 @@
 #include "frontend/operator/ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "utils/ms_utils.h"
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
 

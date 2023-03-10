@@ -15,6 +15,7 @@
  */
 
 #include "runtime/hardware/device_context.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -51,6 +52,11 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
 
   FreeMemory(address->GetMutablePtr());
   address->set_ptr(nullptr);
+}
+
+void DeprecatedKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
+void DeprecatedKernelExecutor::AddUnifyMindIRPass(const std::shared_ptr<opt::GraphOptimizer> &opt) const {
+  opt->AddPassManager(opt::GetCommonUnifyMindIRPassManager());
 }
 }  // namespace device
 }  // namespace mindspore

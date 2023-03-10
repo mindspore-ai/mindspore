@@ -38,8 +38,5 @@ class Visitor {
   void Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodePtr *output) const;
   void Visit(const ValueNodePtr &vnode, VectorRef *const values_ref, AnfNodePtr *output) const;
 };
-
-std::shared_ptr<VectorRef> ExpandList(const std::vector<BaseRef> &list);
-bool CheckIfNeedExpand(const std::vector<BaseRef> &list);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_

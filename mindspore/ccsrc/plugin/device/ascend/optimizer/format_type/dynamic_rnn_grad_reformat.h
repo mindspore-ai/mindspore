@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
 #include "ir/anf.h"
-#include "backend/common/optimizer/pattern_engine.h"
-#include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

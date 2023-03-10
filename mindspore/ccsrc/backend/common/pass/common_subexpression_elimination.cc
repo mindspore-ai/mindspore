@@ -24,7 +24,7 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

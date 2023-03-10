@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <cstdlib>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/common/utils/anfalgo.h"

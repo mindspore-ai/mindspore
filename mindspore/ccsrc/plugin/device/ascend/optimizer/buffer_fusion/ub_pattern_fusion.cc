@@ -26,7 +26,7 @@
 
 #include "utils/hash_map.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "include/backend/anf_runtime_algorithm.h"

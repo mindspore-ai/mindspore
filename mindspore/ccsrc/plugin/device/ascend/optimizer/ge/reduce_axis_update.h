@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_GE_REDUCE_AXIS_UPDATE_H_
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

@@ -21,9 +21,8 @@
 #include <vector>
 #include <set>
 #include <shared_mutex>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
 #include "runtime/device/ms_device_shape_transfer.h"
@@ -1767,7 +1766,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
-      opt::dynamic_shape::InferOp(kernel);
+      opt::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
       if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
           static_cast<int>(kernel::KRET_RESIZE_FAILED)) {

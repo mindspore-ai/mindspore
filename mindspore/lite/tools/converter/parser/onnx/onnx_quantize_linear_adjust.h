@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/pass.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 
 namespace mindspore::lite {

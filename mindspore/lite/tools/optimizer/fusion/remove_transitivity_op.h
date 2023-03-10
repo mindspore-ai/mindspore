@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_REMOVE_TRANSITIVITY_OP_H
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_REMOVE_TRANSITIVITY_OP_H
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/optimizer/graph/preprocess_dynamic_shape.h"
 
 namespace mindspore {

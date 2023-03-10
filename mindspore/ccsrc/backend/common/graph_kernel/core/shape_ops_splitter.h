@@ -19,7 +19,7 @@
 #include <vector>
 #include <utility>
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 class ShapeOpsSplitter : public opt::Pass {

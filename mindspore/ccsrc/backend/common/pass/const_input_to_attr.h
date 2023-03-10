@@ -48,7 +48,7 @@ class ConstInputToAttrInfoRegister {
   mindspore::HashSet<size_t> input_attr_set_;
 };
 
-class BACKEND_EXPORT ConstInputToAttrInfoRegistry {
+class ConstInputToAttrInfoRegistry {
  public:
   static ConstInputToAttrInfoRegistry &Instance();
   void Register(const ConstInputToAttrInfoRegister &reg);
@@ -62,21 +62,7 @@ class BACKEND_EXPORT ConstInputToAttrInfoRegistry {
   mindspore::HashMap<std::string, ConstInputToAttrInfoRegister> op_input_to_attr_map_;
 };
 
-struct ConstInputToAttrInfoReceiver {
-  // Note: This is implicitly converting constructor
-  ConstInputToAttrInfoReceiver(const ConstInputToAttrInfoRegister &reg) {  // NOLINT(runtime/explicit)
-    ConstInputToAttrInfoRegistry::Instance().Register(reg);
-  }
-};
-
 BACKEND_EXPORT CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs);
 }  // namespace opt
-
-#define REG_CONST_INPUT_TO_ATTR(op_name) REG_CONST_INPUT_TO_ATTR_UNIQ_HELPER(__COUNTER__, op_name)
-#define REG_CONST_INPUT_TO_ATTR_UNIQ_HELPER(ctr, op_name) REG_CONST_INPUT_TO_ATTR_UNIQ(ctr, op_name)
-#define REG_CONST_INPUT_TO_ATTR_UNIQ(ctr, op_name)                                                                     \
-  static ::mindspore::opt::ConstInputToAttrInfoReceiver g_const_input_to_attr_register_##ctr __attribute__((unused)) = \
-    ::mindspore::opt::ConstInputToAttrInfoRegister(op_name)
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_H_

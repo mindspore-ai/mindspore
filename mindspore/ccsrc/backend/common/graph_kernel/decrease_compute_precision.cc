@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include "mindspore/core/ops/core_ops.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_AVGPOOL_3D_GRAD_FUSION_H_
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

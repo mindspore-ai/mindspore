@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "abstract/dshape.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/kernel_graph.h"

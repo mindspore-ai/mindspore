@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_
 #define MINDSPORE_CCSRC_PLUGIN_GPU_OPTIMIZER_REG_GPU_CONST_INPUT_TO_ATTR_H_
 
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 
 // Do not add operators here, input to attribute function has been abandoned
 namespace mindspore::opt {

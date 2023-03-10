@@ -18,7 +18,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {

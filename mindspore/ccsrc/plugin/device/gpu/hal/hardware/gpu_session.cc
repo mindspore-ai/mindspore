@@ -17,9 +17,9 @@
 
 #include <string>
 #include <utility>
-#include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/gpu/optimizer/adam_weight_decay_fusion.h"
 #include "plugin/device/gpu/optimizer/adam_fusion.h"

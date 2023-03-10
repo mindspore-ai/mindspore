@@ -25,7 +25,7 @@
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
 #include "tools/converter/quantizer/quant_strategy.h"
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"

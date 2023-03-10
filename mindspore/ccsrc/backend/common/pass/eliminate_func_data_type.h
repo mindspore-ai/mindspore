@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ELIMINATE_FUNC_TYPE_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
 
 // In control flow case, the function data type wil existed in graph to avoid expanding closures.
 // The function data type will be processed in mindRT, but it is not supported in kernel graph.

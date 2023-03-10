@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_SPACE_BATCH_ND_ATTR_UPDATE_H_
 
 #include <memory>
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 
 namespace mindspore {
 namespace opt {

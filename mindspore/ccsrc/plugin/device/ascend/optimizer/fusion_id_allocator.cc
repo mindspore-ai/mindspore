@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/fusion_id_allocator.h"
+#include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

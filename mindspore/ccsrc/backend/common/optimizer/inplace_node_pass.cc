@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/optimizer/inplace_node_pass.h"
+#include "include/backend/optimizer/inplace_node_pass.h"
 
 namespace mindspore {
 namespace opt {

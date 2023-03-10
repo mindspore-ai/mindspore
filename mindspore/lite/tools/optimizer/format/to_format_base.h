@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 

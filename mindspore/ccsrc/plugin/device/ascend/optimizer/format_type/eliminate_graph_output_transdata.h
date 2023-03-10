@@ -18,7 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_FORMAT_TYPE_ELIMINATE_GRAPH_OUTPUT_TRANSDATA_H_
 
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

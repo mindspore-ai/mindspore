@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 struct NodeIOInfo {

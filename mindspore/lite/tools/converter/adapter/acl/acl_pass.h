@@ -19,7 +19,7 @@
 
 #define USE_DEPRECATED_API
 #include <memory>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {

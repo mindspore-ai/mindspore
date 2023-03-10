@@ -13,13 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 
 #include <memory>
 #include "kernel/oplib/oplib.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::opt {
+OpAdaptationInfo &OpAdaptationInfo::set_backend_op_name(const std::string &default_op_name) {
+  backend_op_name_ = default_op_name;
+  return *this;
+}
+
+OpAdaptationInfo &OpAdaptationInfo::set_target_op_name(const std::string &target_op_name) {
+  target_op_name_ = target_op_name;
+  return *this;
+}
+
+OpAdaptationInfo &OpAdaptationInfo::set_pre_check_func(std::function<bool(CNodePtr)> pre_check_func) {
+  pre_check_func_ = std::move(pre_check_func);
+  return *this;
+}
+
+OpAdaptationInfo &OpAdaptationInfo::set_need_tbe_check_supported(bool need_tbe_check_supported) {
+  need_tbe_check_supported_ = need_tbe_check_supported;
+  return *this;
+}
+
+OpAdaptationInfo &OpAdaptationInfo::set_input_attr_info(size_t input_index, std::string attr_data_type) {
+  auto find = input_attr_map_.find(input_index);
+  if (find != input_attr_map_.end()) {
+    MS_LOG(ERROR) << "This input index (" << input_index << ")"
+                  << " has been registered.";
+    return *this;
+  }
+  input_attr_map_[input_index] = attr_data_type;
+  return *this;
+}
+
 OpAdaptationInfoRegister &OpAdaptationInfoRegister::GetInstance() {
   static OpAdaptationInfoRegister inst;
   return inst;

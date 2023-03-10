@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_MERGE_CAST_TO_OP_H
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

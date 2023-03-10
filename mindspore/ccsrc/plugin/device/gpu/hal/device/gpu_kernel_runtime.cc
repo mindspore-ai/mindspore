@@ -36,7 +36,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_copy_manager.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ir/dtype.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "include/backend/optimizer/helper.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
@@ -769,7 +769,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     }
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      opt::dynamic_shape::InferOp(kernel);
+      opt::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
       if (gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
           kernel::KRET_RESIZE_FAILED) {
@@ -899,7 +899,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     }
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      opt::dynamic_shape::InferOp(kernel);
+      opt::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
       if (gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
           kernel::KRET_RESIZE_FAILED) {

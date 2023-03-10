@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "include/backend/kernel_graph.h"
 #include "utils/ms_utils.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/visible.h"
 
@@ -263,6 +263,11 @@ BACKEND_EXPORT int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNode
                                         std::vector<AnfNodePtr> *plant_inputs);
 
 BACKEND_EXPORT AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr);
+
+BACKEND_EXPORT void InferOp(const CNodePtr &node, void *args = nullptr);
+
+using InfPyHandler = abstract::AbstractBasePtr (*)(const CNodePtr &, const PrimitivePtr &, const AbstractBasePtrList &);
+BACKEND_EXPORT void SetCppInferPyHanbdler(const InfPyHandler &infer_handler);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

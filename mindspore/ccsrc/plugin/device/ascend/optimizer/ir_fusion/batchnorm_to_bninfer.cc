@@ -23,7 +23,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_OPTIMIZER_ASCEND_IR_CONV2D_BACKPROP_FILTER_MUL_H_
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

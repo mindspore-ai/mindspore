@@ -25,7 +25,7 @@
 #include "backend/common/session/session_factory.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/anf.h"

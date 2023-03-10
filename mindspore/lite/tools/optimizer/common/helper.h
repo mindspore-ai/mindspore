@@ -20,7 +20,7 @@
 #include <utility>
 #include <memory>
 #include <vector>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

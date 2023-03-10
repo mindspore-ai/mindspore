@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_OUTPUT_H_
 #include <memory>
 #include "ir/anf.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

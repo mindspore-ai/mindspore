@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ERASE_VISIT_ATTR_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UPDATE_CONV2D_PARAM_PASS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UPDATE_CONV2D_PARAM_PASS_H_
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {

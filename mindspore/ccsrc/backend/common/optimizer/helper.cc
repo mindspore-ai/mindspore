@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include <string>
 #include <utility>
 #include <algorithm>
@@ -32,9 +32,10 @@
 #include "include/backend/kernel_info.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/pass/const_input_to_attr.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "frontend/operator/ops_front_infer_function.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -1335,6 +1336,12 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     return new_cnode;
   }
   return nullptr;
+}
+
+void InferOp(const CNodePtr &node, void *args) { dynamic_shape::InferOp(node, args); }
+
+void SetCppInferPyHanbdler(const InfPyHandler &infer_handler) {
+  dynamic_shape::set_cpp_infer_py_handler(infer_handler);
 }
 }  // namespace opt
 }  // namespace mindspore

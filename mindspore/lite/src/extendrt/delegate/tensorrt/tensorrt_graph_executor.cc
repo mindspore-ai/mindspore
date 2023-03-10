@@ -26,7 +26,7 @@
 #include <fstream>
 #include "src/extendrt/delegate/delegate_utils.h"
 #include "ccsrc/kernel/common_utils.h"
-#include "ccsrc/backend/common/optimizer/helper.h"
+#include "ccsrc/include/backend/optimizer/helper.h"
 #include "ccsrc/include/common/utils/convert_utils.h"
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "common/config_infos.h"

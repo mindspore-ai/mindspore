@@ -16,8 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_BCE_WITH_LOGITS_LOSS_FISSION_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_BCE_WITH_LOGITS_LOSS_FISSION_FISSION_H_
 
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

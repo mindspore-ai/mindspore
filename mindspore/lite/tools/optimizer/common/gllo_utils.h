@@ -27,7 +27,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
-#include "backend/common/optimizer/pattern_engine.h"
+#include "include/backend/optimizer/pattern_engine.h"
 #include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_context.h"

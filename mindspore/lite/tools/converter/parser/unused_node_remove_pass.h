@@ -18,7 +18,7 @@
 
 #include <set>
 #include <string>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "mindspore/lite/include/errorcode.h"
 
 using mindspore::lite::STATUS;

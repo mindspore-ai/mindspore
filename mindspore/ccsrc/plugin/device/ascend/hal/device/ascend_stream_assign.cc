@@ -28,7 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "include/common/utils/utils.h"
 

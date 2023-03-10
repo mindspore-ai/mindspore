@@ -21,7 +21,7 @@
 #include "ir/manager.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/utils.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "backend/common/pass/getitem_tuple.h"
 
 namespace mindspore {

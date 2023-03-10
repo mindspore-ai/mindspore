@@ -23,7 +23,7 @@
 #include "utils/hash_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 namespace mindspore {
 namespace opt {
 const BaseRef ConvertCastFormat::DefinePattern() const {

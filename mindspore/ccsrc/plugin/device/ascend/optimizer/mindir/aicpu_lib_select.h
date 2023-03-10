@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_AICPU_LIB_SELECT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_AICPU_LIB_SELECT_H_
 
-#include "backend/common/optimizer/inplace_node_pass.h"
+#include "include/backend/optimizer/inplace_node_pass.h"
 
 namespace mindspore {
 namespace opt {

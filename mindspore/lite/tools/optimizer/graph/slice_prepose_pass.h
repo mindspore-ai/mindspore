@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 #include <string>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "include/errorcode.h"
 #include "mindspore/core/ir/manager.h"
 #include "include/registry/converter_context.h"

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_CPU_INSERT_CAST_CPU_H
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "ir/anf.h"
 
 namespace mindspore {

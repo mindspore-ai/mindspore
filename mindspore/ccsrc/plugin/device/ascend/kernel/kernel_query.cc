@@ -26,7 +26,7 @@
 #include "plugin/device/ascend/kernel/akg/akg_kernel_metadata.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "kernel/common_utils.h"

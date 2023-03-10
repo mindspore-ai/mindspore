@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
+#include "backend/common/optimizer/cache_manager.h"
 
 namespace mindspore {
 namespace opt {

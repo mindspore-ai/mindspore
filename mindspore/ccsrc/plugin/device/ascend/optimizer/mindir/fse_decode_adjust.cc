@@ -21,7 +21,7 @@
 
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 #include "ops/op_name.h"

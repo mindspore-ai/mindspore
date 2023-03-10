@@ -18,7 +18,7 @@
 
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_SOFTMAX_DROPOUT_DO_MASK_V3_FUSION_H_
 
 #include <memory>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

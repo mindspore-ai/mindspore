@@ -20,7 +20,7 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/optimizer/graph_optimizer.h"
+#include "include/backend/optimizer/graph_optimizer.h"
 
 #include "backend/common/graph_kernel/core/arithmetic_simplify.h"
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"

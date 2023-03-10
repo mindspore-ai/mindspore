@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BATCH_NORM_GRAD_SPLIT_H_
 
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

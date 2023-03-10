@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_REWRITE_OUTPUT_SHAPE_H_
 #include <string>
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
 class SaveOutputShape : public opt::Pass {

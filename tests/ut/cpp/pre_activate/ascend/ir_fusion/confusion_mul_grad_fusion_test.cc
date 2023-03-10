@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/confusion_mul_grad_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "include/common/debug/anf_ir_dump.h"

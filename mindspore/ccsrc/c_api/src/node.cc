@@ -25,7 +25,7 @@
 #include "ir/anf.h"
 #include "ir/scope.h"
 #include "ir/func_graph_cloner.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/oplib/opinfo.h"
 

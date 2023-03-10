@@ -20,7 +20,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/registry/converter_context.h"
 

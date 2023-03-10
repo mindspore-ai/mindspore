@@ -19,7 +19,7 @@
 #include <map>
 #include <utility>
 #include <vector>
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"

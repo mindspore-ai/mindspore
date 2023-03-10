@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include "include/common/debug/anf_ir_dump.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 #include "utils/trace_base.h"
 #include "ir/func_graph_cloner.h"
 #ifndef ENABLE_SECURITY

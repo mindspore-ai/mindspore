@@ -32,7 +32,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/trace_base.h"

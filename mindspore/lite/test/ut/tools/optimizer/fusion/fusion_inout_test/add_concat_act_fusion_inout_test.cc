@@ -19,9 +19,9 @@
 #include <memory>
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
 #include "ir/anf.h"
-#include "backend/common/optimizer/pass.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/optimizer/pass_manager.h"
+#include "include/backend/optimizer/pass.h"
+#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/optimizer/pass_manager.h"
 #include "tools/optimizer/fusion/add_concat_activation_fusion.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/fusion/activation.h"

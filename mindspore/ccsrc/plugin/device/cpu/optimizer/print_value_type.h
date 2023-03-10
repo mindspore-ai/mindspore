@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_OPTIMIZER_PRINT_VALUE_TYPE_H_
 
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {

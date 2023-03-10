@@ -19,7 +19,7 @@
 #include <map>
 #include <memory>
 
-#include "backend/common/optimizer/pass.h"
+#include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {

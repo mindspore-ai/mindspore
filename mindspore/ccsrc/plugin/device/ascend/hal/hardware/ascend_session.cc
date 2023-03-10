@@ -41,7 +41,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/config_manager.h"

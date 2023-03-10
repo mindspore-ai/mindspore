@@ -26,7 +26,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #ifndef _WIN32
 #include "plugin/device/gpu/kernel/nccl/nccl_gpu_kernel.h"
 #endif

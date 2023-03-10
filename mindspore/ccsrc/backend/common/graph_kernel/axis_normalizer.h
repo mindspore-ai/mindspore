@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_AXIS_NORMALIZER_H_
 
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::graphkernel {
 // change Reduce nodes' axis to non-negative value

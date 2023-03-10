@@ -16,8 +16,8 @@
 #include "backend/common/pass/convert_const_input_to_attr.h"
 
 #include <algorithm>
-#include "backend/common/optimizer/const_input_to_attr.h"
-#include "backend/common/optimizer/op_adaptation_info_factory.h"
+#include "backend/common/pass/const_input_to_attr.h"
+#include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 

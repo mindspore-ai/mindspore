@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

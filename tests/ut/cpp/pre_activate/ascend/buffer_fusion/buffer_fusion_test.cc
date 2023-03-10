@@ -19,7 +19,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "kernel/kernel.h"
 #include "include/backend/kernel_info.h"
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/eltwise_fusion_pass.h"

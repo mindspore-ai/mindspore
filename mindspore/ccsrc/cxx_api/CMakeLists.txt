@@ -75,7 +75,7 @@ if((MODE_ASCEND_ACL) AND NOT BUILD_LITE)
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/pattern_engine.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/helper.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/node_pass.cc"
-        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/visit.cc"
+        "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/common/optimizer/visitor.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/operator/ops_backend_infer_function.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_build_info.cc"
         "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_info.cc"

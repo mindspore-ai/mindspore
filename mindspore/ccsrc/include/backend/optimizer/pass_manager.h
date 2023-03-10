@@ -22,30 +22,18 @@
 #include <memory>
 #include <map>
 
-#include "backend/common/optimizer/pass.h"
-#include "backend/common/optimizer/node_pass.h"
+#include "include/backend/optimizer/pass.h"
+#include "include/backend/optimizer/node_pass.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
-class CacheManager {
- public:
-  CacheManager() {}
-  ~CacheManager() = default;
-  void Update(const AnfNodePtr &node);
-  TypeId GetOutputType(const AnfNodePtr &node, size_t index);
-  ShapeVector GetOutputShape(const AnfNodePtr &node, size_t index);
-
- private:
-  std::map<AnfNodePtr, std::map<size_t, TypeId>> type_map_;
-  std::map<AnfNodePtr, std::map<size_t, ShapeVector>> shape_map_;
-};
-
+class CacheManager;
+using CacheManagerPtr = std::shared_ptr<CacheManager>;
 // @brief For optimization passes management
 class BACKEND_EXPORT PassManager {
  public:
-  explicit PassManager(const std::string &name = "pm", bool run_only_once = true)
-      : name_(name), passes_{}, run_only_once_(run_only_once), cache_manager_(std::make_shared<CacheManager>()) {}
+  explicit PassManager(const std::string &name = "pm", bool run_only_once = true);
   virtual ~PassManager() = default;
   // Get all the passes added by AddPass
   const std::vector<PassPtr> &Passes() const { return passes_; }

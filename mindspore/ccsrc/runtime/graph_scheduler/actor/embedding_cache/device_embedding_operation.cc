@@ -17,7 +17,7 @@
 #include <string>
 #include <limits>
 #include "kernel/common_utils.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"
 
@@ -227,7 +227,7 @@ ValueNodePtr DeviceEmbeddingOperation::NewValueNode(int64_t value, const DeviceC
 
 bool DeviceEmbeddingOperation::InferOpShape(const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  opt::dynamic_shape::InferOp(kernel);
+  opt::InferOp(kernel);
   auto args = kernel::GetArgsFromCNode(kernel);
   MS_EXCEPTION_IF_NULL(args);
 

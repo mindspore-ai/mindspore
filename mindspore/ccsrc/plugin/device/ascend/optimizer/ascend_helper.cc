@@ -21,7 +21,7 @@
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_info.h"
 #include "kernel/oplib/oplib.h"

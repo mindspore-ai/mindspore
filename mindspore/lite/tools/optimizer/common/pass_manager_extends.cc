@@ -21,11 +21,15 @@
 #include <string>
 #include <algorithm>
 #include "ir/anf.h"
+#include "backend/common/optimizer/cache_manager.h"
 
 namespace mindspore {
 namespace opt {
 constexpr size_t kMaxRepassTimes = 12;
 constexpr uint64_t kUSecondInSecond = 1000000;
+
+PassManager::PassManager(const std::string &name, bool run_only_once)
+    : name_(name), passes_{}, run_only_once_(run_only_once), cache_manager_(std::make_shared<CacheManager>()) {}
 
 void PassManager::AddPass(const PassPtr &pass) {
   if (pass != nullptr) {

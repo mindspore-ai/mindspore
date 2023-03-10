@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include "backend/common/optimizer/optimizer.h"
+#include "include/backend/optimizer/optimizer.h"
 #include "utils/check_convert_utils.h"
 #include "tools/optimizer/graph/preprocess_dynamic_shape.h"
 

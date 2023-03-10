@@ -28,7 +28,7 @@
 
 #define private public
 #define protected public
-#include "backend/common/optimizer/pattern_to_pattern.h"
+#include "include/backend/optimizer/pattern_to_pattern.h"
 #undef private
 #undef protected
 
