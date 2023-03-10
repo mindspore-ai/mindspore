@@ -51,6 +51,16 @@ abstract::ShapePtr ScaleAndTranslateGradInferShape(const PrimitivePtr &primitive
   auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto translation_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  // support dynamic rank
+  if (IsDynamicRank(grads_shape) || IsDynamicRank(original_image_shape) || IsDynamicRank(scale_shape) ||
+      IsDynamicRank(translation_shape)) {
+    return std::make_shared<abstract::Shape>(original_image_shape);
+  }
+  // support dynamic shape
+  if (IsDynamicShape(grads_shape) || IsDynamicShape(original_image_shape) || IsDynamicShape(scale_shape) ||
+      IsDynamicShape(translation_shape)) {
+    return std::make_shared<abstract::Shape>(original_image_shape);
+  }
   const int64_t kShapeSize1 = 1;
   const int64_t kShapeSize2 = 4;
   const int64_t kElementsNumber = 2;
