@@ -1,7 +1,7 @@
 mindspore.ops.gather
 ======================
 
-.. py:function:: mindspore.ops.gather(input_params, input_indices, axis)
+.. py:function:: mindspore.ops.gather(input_params, input_indices, axis, batch_dims=0)
 
     返回输入Tensor在指定 `axis` 上 `input_indices` 索引对应的元素组成的切片。
 
@@ -19,9 +19,10 @@ mindspore.ops.gather
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
         - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。数据类型必须是int32或int64。
         - **axis** (int) - 指定要切片的维度索引。
+        - **batch_dims** (int) - 指定batch维的数量。默认值：0。
 
     返回：
-        Tensor，shape为 :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]` 。
+        Tensor，shape为 :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]` 。
 
     异常：
         - **TypeError** - `axis` 不是int。
