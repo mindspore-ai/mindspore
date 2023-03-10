@@ -9,7 +9,7 @@ mindspore.ops.range
 
     参数：
         - **start** (Tensor) - 标量Tensor，序列中的第一个数字。数据类型必须为int32，int64，float32或者float64。
-        - **end** (Tensor) - 标量Tensor，序列中的数值上线，不包括其本身。数据类型必须为int32，int64，float32或者float64。
+        - **end** (Tensor) - 标量Tensor，序列中的数值上限，不包括其本身。数据类型必须为int32，int64，float32或者float64。
         - **step** (Tensor) - 标量Tensor，表述序列中数值的步长。数据类型必须为int32，int64，float32或者float64。
 
     返回：

@@ -2400,10 +2400,33 @@ class Logit(Primitive):
 
 class ReduceStd(Primitive):
     """
-    Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
+    Returns the standard-deviation and mean of each row of the input Tensor in the dimension `axis`.
     If `axis` is a list of dimensions, reduce over all of them.
 
-    Refer to :func:`mindspore.ops.std` for more details.
+    Args:
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
+            Default: (), reduce all dimensions. Only constant value is allowed.
+            Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
+        unbiased (bool, optional):  Whether to use Bessel’s correction.
+            If True, will use the Bessel correction unbiased estimation.
+            If False, will through the biased estimation to calculate the standard deviation.
+            Default: True.
+        keep_dims (bool, optional): Whether the output Tensor has dim retained or not.
+            If True, keep these reduced dimensions specified by `axis` and the length is 1.
+            If False, don't keep these dimensions.
+            Default: Fasle.
+
+    Inputs:
+        - **input_x** (Tensor[Number]) - The input Tensor, it has dtype Number with shape
+          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+
+    Outputs:
+        Tuple(output_std, output_mean) containing the standard deviation and mean.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2956,6 +2979,16 @@ class RealDiv(_MathBinaryOp):
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Refer to :func:`mindspore.ops.div` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3971,9 +4004,18 @@ class GreaterEqual(PrimitiveWithCheck):
 
 class Lerp(Primitive):
     """
-    Calculate the linear interpolation between two tensors based on the weight parameter.
+    Does a linear interpolation of two tensors start and end based on a float or tensor weight.
 
     Refer to :func:`mindspore.ops.lerp` for more details.
+
+    Inputs:
+        start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
+        end (Tensor): The tensor with the ending points. Data type must be the same as `start`.
+        weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
+            or a scalar tensor with float16 or float32 data type.
+
+    Returns:
+        Tensor, has the same type and shape as input `start`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

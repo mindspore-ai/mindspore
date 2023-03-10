@@ -140,6 +140,16 @@ class StandardNormal(Primitive):
 
     Refer to :func:`mindspore.ops.standard_normal` for more details.
 
+    Args:
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
+
+    Inputs:
+        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+
+    Outputs:
+        Tensor. The shape is the same as the input `shape`. The dtype is float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -703,6 +713,22 @@ class RandomChoiceWithMask(Primitive):
 
     Refer to :func:`mindspore.ops.choice_with_mask` for more details.
 
+    Args:
+        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: 256.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating
+            pseudo-random numbers. Default: 0.
+        seed2 (int, optional): Second seed to avoid collision. Default: 0.
+
+    Inputs:
+        input_x (Tensor[bool]): The input tensor.
+            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
+
+    Outputs:
+        Two tensors, the first one is the index tensor and the other one is the mask tensor.
+
+        - **index** (Tensor) - The output shape is 2-D.
+        - **mask** (Tensor) - The output shape is 1-D.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -837,6 +863,8 @@ class MultinomialWithReplacement(Primitive):
     r"""
     Returns a tensor where each row contains numsamples indices sampled from the multinomial distribution.
 
+    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
+
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum.
@@ -855,8 +883,6 @@ class MultinomialWithReplacement(Primitive):
 
     Outputs:
         Tensor with the same rows as `x`, each row has num_samples sampled indices.
-
-    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

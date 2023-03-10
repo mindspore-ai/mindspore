@@ -303,7 +303,8 @@ def eye(n, m=None, dtype=None):
         m (int): The number of columns of returned tensor. Constant value only.
             Default: if None, the number of columns is as the same as n.
         dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
-            The data type can be Number. Default: if None, the data type of the returned tensor is mindspore.float32.
+            The data type can be bool or Number.
+            Default: None, the data type of the returned tensor is mindspore.float32.
 
     Returns:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
