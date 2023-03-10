@@ -1751,6 +1751,11 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
                                               const std::vector<KernelAttr> &kernel_attr_list) {
   auto input_num = kernel_attr.GetInputSize();
   auto output_num = kernel_attr.GetOutputSize();
+  auto AttrMatched = [](const DataType &attr, const DataType &compared_attr) {
+    return (attr.dtype != compared_attr.dtype && attr.dtype != kTypeUnknown) ||
+           (!AnfAlgo::IsEquivalentFormat(attr.format, compared_attr.format)) ||
+           (attr.object_type != compared_attr.object_type && attr.object_type != kTypeUnknown);
+  };
   for (size_t index = 0; index < kernel_attr_list.size(); ++index) {
     const auto &cur_kernel_attr = kernel_attr_list[index];
     // Attr skip indicates that any attr is supported.
@@ -1770,9 +1775,7 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
       MS_EXCEPTION_IF_CHECK_FAIL((kernel_attr.GetInputSize() > i), "The input num is out of range.");
       auto &input_attr = kernel_attr.GetInputAttr(i);
       auto &cur_input_attr = cur_kernel_attr.GetInputAttr(i);
-      if ((input_attr.dtype != cur_input_attr.dtype) ||
-          (!AnfAlgo::IsEquivalentFormat(input_attr.format, cur_input_attr.format)) ||
-          (input_attr.object_type != cur_input_attr.object_type && input_attr.object_type != kTypeUnknown)) {
+      if (AttrMatched(input_attr, cur_input_attr)) {
         mis_match = true;
         break;
       }
@@ -1787,9 +1790,7 @@ std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
       MS_EXCEPTION_IF_CHECK_FAIL((kernel_attr.GetOutputSize() > i), "The output num is out of range.");
       auto &output_attr = kernel_attr.GetOutputAttr(i);
       auto &cur_output_attr = cur_kernel_attr.GetOutputAttr(i);
-      if ((output_attr.dtype != cur_output_attr.dtype) ||
-          (!AnfAlgo::IsEquivalentFormat(output_attr.format, cur_output_attr.format)) ||
-          (output_attr.object_type != cur_output_attr.object_type && output_attr.object_type != kTypeUnknown)) {
+      if (AttrMatched(output_attr, cur_output_attr)) {
         mis_match = true;
         break;
       }
