@@ -36,30 +36,6 @@ FuncGraphPtr ReluBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
   return fg;
 }
 
-FuncGraphPtr Conv2DBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
-  auto fg = NewGraph(input_abs);
-  // x, out, dout
-  constexpr size_t expected_arg_size = 4;
-  const auto &parameters = fg->parameters();
-  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
-  auto x = parameters[kIndex0];
-  auto w = parameters[kIndex1];
-  auto dout = parameters[kIndex3];
-
-  auto x_shape_node = NewNode(fg, {Shape(), x}, true, true);
-  auto w_shape_node = NewNode(fg, {Shape(), w}, true, true);
-  if (IsSequenceValueUnknown(fg, x_shape_node)) {
-    x_shape_node = NewNode(fg, {TensorShape(), x});
-  }
-  if (IsSequenceValueUnknown(fg, w_shape_node)) {
-    w_shape_node = NewNode(fg, {Cast(fg), NewNode(fg, {TensorShape(), w}), NewValueNode(kInt32)});
-  }
-  auto dx = NewNode(fg, {Conv2DBackpropInput(fg, primal), dout, w, x_shape_node});
-  auto dw = NewNode(fg, {Conv2DBackpropFilter(fg, primal), dout, x, w_shape_node});
-  fg->set_output(NewNode(fg, {MakeTuple(), dx, dw}));
-  return fg;
-}
-
 FuncGraphPtr LayerNormBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
   // x, gamma, beta, out, dout
@@ -166,7 +142,6 @@ FuncGraphPtr GeLUBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
 
 void RegNNOps() {
   REGISTER_PRIMITIVE_BPROP_IMPL(ReLU, ReluBprop);
-  REGISTER_PRIMITIVE_BPROP_IMPL(Conv2D, Conv2DBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(LayerNorm, LayerNormBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(MaxPool, MaxPoolBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(BatchNorm, BatchNormBprop);
