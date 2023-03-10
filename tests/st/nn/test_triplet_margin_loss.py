@@ -55,8 +55,8 @@ def test_triplet_margin_loss_float64(mode):
     positive = Tensor(positive_array)
     negative = Tensor(negative_array)
     ms_margin = Tensor(margin)
-    triplet_margin_loss = nn.TripletMarginLoss(p=p, eps=eps, swap=swap, reduction=reduction)
-    output_ms = triplet_margin_loss(anchor, positive, negative, ms_margin)
+    triplet_margin_loss = nn.TripletMarginLoss(p=p, eps=eps, swap=swap, reduction=reduction, margin=ms_margin)
+    output_ms = triplet_margin_loss(anchor, positive, negative)
 
     torch_anchor = torch.tensor(anchor_array)
     torch_positive = torch.tensor(positive_array)
@@ -106,8 +106,8 @@ def test_triplet_margin_loss_float32(mode):
     positive = Tensor(positive_array)
     negative = Tensor(negative_array)
     ms_margin = Tensor(margin)
-    triplet_margin_loss = nn.TripletMarginLoss(p=p, eps=eps, swap=swap, reduction=reduction)
-    output_ms = triplet_margin_loss(anchor, positive, negative, ms_margin)
+    triplet_margin_loss = nn.TripletMarginLoss(p=p, eps=eps, swap=swap, reduction=reduction, margin=ms_margin)
+    output_ms = triplet_margin_loss(anchor, positive, negative)
 
     torch_anchor = torch.tensor(anchor_array)
     torch_positive = torch.tensor(positive_array)

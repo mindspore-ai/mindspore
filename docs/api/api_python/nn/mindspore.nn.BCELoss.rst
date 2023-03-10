@@ -1,7 +1,7 @@
 mindspore.nn.BCELoss
 ====================
 
-.. py:class:: mindspore.nn.BCELoss(weight=None, reduction='none')
+.. py:class:: mindspore.nn.BCELoss(weight=None, reduction='mean')
 
     计算目标值和预测值之间的二值交叉熵损失值。
 
@@ -27,7 +27,7 @@ mindspore.nn.BCELoss
 
     参数：
         - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。与输入数据的shape和数据类型相同。默认值：None。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值有：'mean'，'sum'，或'none'。默认值：'none'。
+        - **reduction** (str) - 指定输出结果的计算方式。可选值有：'mean'，'sum'，或'none'。默认值：'mean'。
 
     输入：
         - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。数据类型必须为float16或float32。
@@ -40,4 +40,3 @@ mindspore.nn.BCELoss
         - **TypeError** - `logits` 的数据类型，`labels` 或 `weight` （如果给定）既不是float16，也不是float32。
         - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
         - **ValueError** - `logits` 的shape与 `labels` 或 `weight` （如果给定）不同。
-

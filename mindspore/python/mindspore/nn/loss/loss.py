@@ -1305,6 +1305,8 @@ class MultiMarginLoss(LossBase):
         p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
         margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
         reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        weight(Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float32, float16 or float64. Default: None.
 
     Inputs:
         - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
@@ -1342,15 +1344,18 @@ class MultiMarginLoss(LossBase):
         0.6666667
     """
 
-    def __init__(self, p=1, margin=1.0, reduction='mean'):
+    def __init__(self, p=1, margin=1.0, reduction='mean', weight=None):
         """Initialize MultiMarginLoss."""
         super(MultiMarginLoss, self).__init__()
         self.multi_margin_loss = MultiMarginLossOp(p=p, margin=margin, reduction=reduction)
         self.ones = P.Ones()
+        self.weight = weight
 
     def construct(self, x, target, weight=None):
         _check_is_tensor('x', x, self.cls_name)
         _check_is_tensor('target', target, self.cls_name)
+        if self.weight is not None:
+            weight = self.weight
         weight_one = weight is None
         if not weight_one:
             _check_is_tensor('weight', weight, self.cls_name)
@@ -1390,7 +1395,7 @@ class BCELoss(LossBase):
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             And it must have the same shape and data type as `inputs`. Default: None
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum'. Default: 'none'.
+            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
@@ -1419,9 +1424,9 @@ class BCELoss(LossBase):
         1.8952923
     """
 
-    def __init__(self, weight=None, reduction='none'):
+    def __init__(self, weight=None, reduction='mean'):
         """Initialize BCELoss."""
-        super(BCELoss, self).__init__()
+        super(BCELoss, self).__init__(reduction)
         self.binary_cross_entropy = P.BinaryCrossEntropy(reduction=reduction)
         self.weight_one = weight is None
         if not self.weight_one:
@@ -1572,8 +1577,7 @@ class MultilabelMarginLoss(LossBase):
        >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
        >>> output = loss(x, target)
        >>> print(output)
-       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
-       [[1, 1, 1, 1], [0, 0, 1, 1]]))
+       Tensor(shape=[], dtype=Float32, value=0.325)
     """
 
     def __init__(self, reduction='mean'):
@@ -1913,6 +1917,7 @@ class TripletMarginLoss(LossBase):
             sample and negative sample. Default: "False".
         reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
             Default: "mean".
+        margin (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair. Default: 1.0.
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
@@ -1922,6 +1927,7 @@ class TripletMarginLoss(LossBase):
         - **negative** (Tensor) - A sample belonging to the different class from `x`, with the same type and shape
           as `x`. :math:`n` in the above formula.
         - **margin** (Union[Tensor, float]) - Make a margin between the positive pair and the negative pair.
+          Default: 1.0.
 
     Outputs:
         Tensor. If `reduction` is "none", its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
@@ -1946,20 +1952,22 @@ class TripletMarginLoss(LossBase):
         >>> x = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
         >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
-        >>> margin = Tensor(1.0, mindspore.float32)
-        >>> output = loss(x, positive, negative, margin)
+        >>> output = loss(x, positive, negative)
         >>> print(output)
         0.8881968
     """
 
-    def __init__(self, p=2, swap=False, eps=1e-06, reduction='mean'):
+    def __init__(self, p=2, swap=False, eps=1e-06, reduction='mean', margin=1.):
         super(TripletMarginLoss, self).__init__()
         self.p = p
         self.swap = swap
         self.eps = eps
         self.reduction = reduction
+        self.margin = margin
 
-    def construct(self, x, positive, negative, margin):
+    def construct(self, x, positive, negative, margin=1.):
+        if self.margin != 1.0:
+            margin = self.margin
         return F.triplet_margin_loss(x, positive, negative, margin=margin, p=self.p,
                                      eps=self.eps, swap=self.swap, reduction=self.reduction)
 
