@@ -33,13 +33,51 @@
 
 namespace mindspore {
 namespace parallel {
-Status Conv2DInfo::GetAttrsBase() {
-  // format
-  format_ = GetStringAttr(FORMAT);
+Status Conv2DInfo::CheckAttrsBase() {
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The format must be 'NCHW', but got " << format_;
     return FAILED;
   }
+
+  if (kernel_size_.size() != 2) {
+    MS_LOG(ERROR) << name_ << ": The size of kernel_size'tuple must be 2, but got " << kernel_size_.size();
+    return FAILED;
+  }
+
+  if (pad_list_.size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of pad_list must be 4, but got " << pad_list_.size();
+    return FAILED;
+  }
+
+  if (stride_.size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of stride must be 4, but got " << stride_.size();
+    return FAILED;
+  }
+
+  if (stride_[0] != 1 || stride_[1] != 1) {
+    MS_LOG(ERROR) << name_ << ": The first two elements of stride must be 1, but got (" << stride_[0] << ", "
+                  << stride_[1] << ")";
+    return FAILED;
+  }
+
+  if (dilation_.size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of dilation must be 4, but got " << dilation_.size();
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": The out channel is " << out_channel_ << ", kernel size is " << kernel_size_
+               << ", mode is " << mode_ << ", pad mode is " << pad_mode_ << ", pad list is " << pad_list_
+               << ", stride is " << stride_ << ", dilation is " << dilation_ << ", group is " << group_
+               << ", format is " << format_ << ", the kernel size use dilation is " << kernel_size_use_dilation_;
+  return SUCCESS;
+}
+
+std::vector<int64_t> Conv2DInfo::GetStrideAttr() { return GetTupleIntAttr(STRIDE); }
+
+std::vector<int64_t> Conv2DInfo::GetDilationAttr() { return GetTupleIntAttr(DILATION); }
+
+Status Conv2DInfo::GetAttrsBase() {
+  // format
+  format_ = GetStringAttr(FORMAT);
 
   // out_channel
   out_channel_ = GetIntAttr(OUT_CHANNEL);
@@ -58,13 +96,9 @@ Status Conv2DInfo::GetAttrsBase() {
   MS_EXCEPTION_IF_NULL(kernel_size_iter->second);
   if (kernel_size_iter->second->isa<Int64Imm>()) {
     int64_t kernel_size = kernel_size_iter->second->cast<Int64ImmPtr>()->value();
-    kernel_size_ = {kernel_size, kernel_size};
+    kernel_size_ = Shape(inputs_shape_[1].size() - 2, kernel_size);
   } else if (kernel_size_iter->second->isa<ValueTuple>() || kernel_size_iter->second->isa<ValueList>()) {
     kernel_size_ = GetValue<std::vector<int64_t>>(kernel_size_iter->second);
-    if (kernel_size_.size() != 2) {
-      MS_LOG(ERROR) << name_ << ": The size of kernel_size'tuple must be 2, but got " << kernel_size_.size();
-      return FAILED;
-    }
   } else {
     MS_LOG(ERROR) << name_ << ": The kernel_size must be int or tuple";
     return FAILED;
@@ -86,30 +120,12 @@ Status Conv2DInfo::GetAttrsBase() {
 
   // pad_list
   pad_list_ = GetTupleIntAttr(PAD_LIST);
-  if (pad_list_.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of pad_list must be 4, but got " << pad_list_.size();
-    return FAILED;
-  }
 
   // stride
-  stride_ = GetTupleIntAttr(STRIDE);
-  if (stride_.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of stride must be 4, but got " << stride_.size();
-    return FAILED;
-  }
-
-  if (stride_[0] != 1 || stride_[1] != 1) {
-    MS_LOG(ERROR) << name_ << ": The first two elements of stride must be 1, but got (" << stride_[0] << ", "
-                  << stride_[1] << ")";
-    return FAILED;
-  }
+  stride_ = GetStrideAttr();
 
   // dilation
-  dilation_ = GetTupleIntAttr(DILATION);
-  if (dilation_.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of dilation must be 4, but got " << dilation_.size();
-    return FAILED;
-  }
+  dilation_ = GetDilationAttr();
 
   for (size_t i = 0; i < kernel_size_.size(); ++i) {
     kernel_size_use_dilation_.push_back(dilation_[i + 2] * (kernel_size_[i] - 1) + 1);
@@ -118,28 +134,60 @@ Status Conv2DInfo::GetAttrsBase() {
   // group
   group_ = GetIntAttr(GROUP);
 
-  MS_LOG(INFO) << name_ << ": The out channel is " << out_channel_ << ", kernel size is " << kernel_size_
-               << ", mode is " << mode_ << ", pad mode is " << pad_mode_ << ", pad list is " << pad_list_
-               << ", stride is " << stride_ << ", dilation is " << dilation_ << ", group is " << group_
-               << ", format is " << format_ << ", the kernel size use dilation is " << kernel_size_use_dilation_;
   infer_strategy_mode_ = INDIVIDUAL_MODE;
   return SUCCESS;
 }
 
-Status Conv2DInfo::GetAttrs() { return GetAttrsBase(); }
+void Conv2DInfo::AdjustPadList() {
+  // adjust the pad list for 'pad' mode
+  // because the output_len = (in_len + pad_all - k) / s, so the useless_len = (in_len + pad_all - k) % s
+  // and need to adjust the bottom_pad/right_pad if useless_len != 0
+  if (pad_mode_ != 0 || pad_list_adjusted_) {
+    return;
+  }
+
+  int64_t useless_len_2th_dim =
+    (inputs_shape_[0][2] + pad_list_[0] + pad_list_[1] - kernel_size_use_dilation_[0]) % stride_[2];
+  int64_t useless_len_3th_dim =
+    (inputs_shape_[0][3] + pad_list_[2] + pad_list_[3] - kernel_size_use_dilation_[1]) % stride_[3];
+  if (useless_len_2th_dim == 0 && useless_len_3th_dim == 0) {
+    return;
+  }
+
+  if (useless_len_2th_dim > pad_list_[1]) {
+    MS_LOG(EXCEPTION) << name_ << ": The useless len for 2th dim (" << useless_len_2th_dim
+                      << ") can not larger than pad_list[1] (" << pad_list_[1] << ")";
+  }
+  if (useless_len_3th_dim > pad_list_[3]) {
+    MS_LOG(EXCEPTION) << name_ << ": The useless len for 3th dim (" << useless_len_3th_dim
+                      << ") can not larger than pad_list[3] (" << pad_list_[3] << ")";
+  }
+  pad_list_[1] -= useless_len_2th_dim;
+  pad_list_[3] -= useless_len_3th_dim;
+  pad_list_adjusted_ = true;
+  MS_LOG(INFO) << name_ << ": After adjusting, the pad_list is " << pad_list_;
+}
+
+Status Conv2DInfo::GetAttrs() {
+  if (GetAttrsBase() != SUCCESS || CheckAttrsBase() != SUCCESS) {
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
 
 Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const {
   if (outputs_shape_[0][2] % h_strategy != 0) {
     FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": Do not support to split h dimension when out_shape of h dimension is not"
-                                     " divisible by strategy of h dimension";
+                                  << ": Do not support to split 2th dimension when out_shape of 2th dimension is not"
+                                     " divisible by strategy of 2th dimension";
     return FAILED;
   }
 
   if (outputs_shape_[0][3] % w_strategy != 0) {
     FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": Do not support to split w dimension when out_shape of w dimension is not"
-                                     " divisible by strategy of w dimension";
+                                  << ": Do not support to split 3th dimension when out_shape of 3th dimension is not"
+                                     " divisible by strategy of 3th dimension";
     return FAILED;
   }
 
@@ -153,7 +201,7 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   if ((kernel_size_use_dilation_[0] > stride_[2] && h_strategy > 1) ||
       (kernel_size_use_dilation_[1] > stride_[3] && w_strategy > 1)) {
     FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": The 'valid' mode do not support to split H or W when"
+                                  << ": The 'valid' mode do not support to split 2th or 3th dimension when"
                                      " kernel_size_use_dilation_ > stride";
     return FAILED;
   }
@@ -161,7 +209,7 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   if (kernel_size_use_dilation_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
     FILTER_LOG(is_auto_parallel_)
       << name_
-      << ": The 'valid' mode do not support to split H when kernel_size_use_dilation_ <= stride but slice shape is "
+      << ": The 'valid' mode do not support to split 2th when kernel_size_use_dilation_ <= stride but slice shape is "
          "not divisible by stride ";
     return FAILED;
   }
@@ -169,7 +217,7 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   if (kernel_size_use_dilation_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
     FILTER_LOG(is_auto_parallel_)
       << name_
-      << ": The 'valid' mode do not support to split W when kernel_size_use_dilation_ <= stride but slice shape is "
+      << ": The 'valid' mode do not support to split 3th when kernel_size_use_dilation_ <= stride but slice shape is "
          "not divisible by stride ";
     return FAILED;
   }
@@ -177,13 +225,13 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   return SUCCESS;
 }
 
-Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, const std::string &dimension) {
+Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t dimension_id) {
   if (strategy == 1) {
     return SUCCESS;
   }
 
   int64_t h_or_w_input_shape = 0, h_or_w_output_shape = 0, h_or_w_kernel_size = 0, h_or_w_stride = 0, pad_all = 0;
-  if (dimension == H_DIMENSION) {
+  if (dimension_id == 2) {
     h_or_w_input_shape = inputs_shape_[0][2];
     h_or_w_output_shape = outputs_shape_[0][2];
     h_or_w_kernel_size = kernel_size_use_dilation_[0];
@@ -197,26 +245,52 @@ Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, const std
     pad_all = pad_list_[2] + pad_list_[3];
   }
 
+  // kernel size <= stride, no need to exchange
+  if (h_or_w_kernel_size <= h_or_w_stride) {
+    if (pad_all != 0) {
+      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                                    << "th dimension when kernel_size <= stride and pad != 0";
+      return FAILED;
+    }
+    if ((h_or_w_input_shape / strategy) % h_or_w_stride != 0) {
+      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                                    << "th dimension when kernel_size <= stride and input's slice % stride != 0";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+
+  // kernel_size > stride, need to exchange
   if ((h_or_w_input_shape + pad_all - h_or_w_kernel_size) % h_or_w_stride != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension
-                                  << " when input_shape + pad_all - k is not divisible by stride ";
+    FILTER_LOG(is_auto_parallel_)
+      << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+      << "th dimension when kernel_size > stride and input_shape + pad_all - k is not divisible by stride";
     return FAILED;
   }
 
   if ((h_or_w_output_shape * h_or_w_stride - h_or_w_input_shape) % strategy != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension
-                                  << " when output_shape * s - input_shape is not divisible by stride ";
+    FILTER_LOG(is_auto_parallel_)
+      << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+      << "th dimension when kernel_size > stride and output_shape * s - input_shape is not divisible by stride";
     return FAILED;
+  }
+
+  // if the h/w dimension is split, and the pad mode is not "valid", need to exchange overlap
+  if (dimension_id == 2) {
+    h_dim_need_exchange_overlap_ = true;
+  } else if (dimension_id == 3) {
+    w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
 }
 
 Status Conv2DInfo::CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy) {
-  if (CheckHWStrategyPadModeByDimension(h_strategy, H_DIMENSION) != SUCCESS) {
+  AdjustPadList();
+  if (CheckHWStrategyPadModeByDimension(h_strategy, 2) != SUCCESS) {
     return FAILED;
   }
 
-  if (CheckHWStrategyPadModeByDimension(w_strategy, W_DIMENSION) != SUCCESS) {
+  if (CheckHWStrategyPadModeByDimension(w_strategy, 3) != SUCCESS) {
     return FAILED;
   }
   return SUCCESS;
@@ -251,21 +325,7 @@ Status Conv2DInfo::CheckStrategyBase(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Dimensions input_strategy = stra[0];
   Dimensions weight_strategy = stra[1];
-  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
-    MS_LOG(ERROR) << name_
-                  << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
-                  << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
-    return FAILED;
-  }
-
-  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
-    MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
-                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
-    return FAILED;
-  }
-
   if (weight_strategy[0] > 1) {
     out_channel_shard_ = true;
     new_out_channel_ = out_channel_ / weight_strategy[0];
@@ -293,9 +353,22 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra[0];
   Dimensions weight_strategy = stra[1];
+  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
+    MS_LOG(ERROR) << name_
+                  << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
+                  << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
+    return FAILED;
+  }
+
   if (input_strategy[1] != weight_strategy[1]) {
     MS_LOG(ERROR) << name_ << ": The shard num of c-in for input strategy is " << input_strategy[1]
                   << ", but the shard num of c-in for weight strategy is " << weight_strategy[1];
+    return FAILED;
+  }
+
+  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
+    MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
+                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
     return FAILED;
   }
 
@@ -305,20 +378,13 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
-  // if the h/w dimension is split, and the pad mode is not "valid", need to exchange overlap
-  if (input_strategy[2] > 1 && pad_mode_ != 2) {
-    h_dim_need_exchange_overlap_ = true;
-  }
-
-  if (input_strategy[3] > 1 && pad_mode_ != 2) {
-    w_dim_need_exchange_overlap_ = true;
-  }
   return SUCCESS;
 }
 
 Status Conv2DInfo::InferDevMatrixShape() {
-  // the strategy is ((n, i, h, w), (o, i, 1, 1))
-  // the dev matrix is (n, i, h, w, o)
+  // conv2d: the strategy is ((n, i, a, b), (o, i, 1, 1))
+  // conv3d: the strategy is ((n, i, a, b, 1), (o, i, 1, 1, 1))
+  // the dev matrix is (n, i, a, b, o)
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.size() != 2) {
@@ -326,7 +392,7 @@ Status Conv2DInfo::InferDevMatrixShape() {
     return FAILED;
   }
 
-  dev_matrix_shape_ = stra[0];
+  dev_matrix_shape_ = {stra[0][0], stra[0][1], stra[0][2], stra[0][3]};
   dev_matrix_shape_.push_back(stra[1][0]);
   h_dimension_shard_num_ = stra[0][2];
   w_dimension_shard_num_ = stra[0][3];
@@ -334,18 +400,18 @@ Status Conv2DInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-std::vector<int64_t> Conv2DInfo::GetAdjacentRankIdsAndBiases(int64_t rank_id, const std::string &dimension) {
+std::vector<int64_t> Conv2DInfo::GetAdjacentRankIdsAndBiases(int64_t rank_id, int64_t dimension) {
   std::vector<int64_t> ret;
   if (rank_id < 0) {
     ret = {-1, -1, -1, -1, -1};
     return ret;
   }
 
-  MS_LOG(INFO) << name_ << ": The rank id is " << rank_id << ", the dimension is " << dimension;
+  MS_LOG(INFO) << name_ << ": The rank id is " << rank_id << ", the dimension is " << dimension << "th dimension";
 
   uint64_t index_in_dev_matrix = 0;
   int64_t dimension_shard_num = 1;
-  if (dimension == H_DIMENSION) {
+  if (dimension == 2) {
     index_in_dev_matrix = 2;
     dimension_shard_num = h_dimension_shard_num_;
   } else {
@@ -364,21 +430,21 @@ std::vector<int64_t> Conv2DInfo::GetAdjacentRankIdsAndBiases(int64_t rank_id, co
   }
 
   if (group_devices.size() <= 1) {
-    MS_LOG(INFO) << name_ << ": The devices' size of " << dimension << " is " << group_devices.size()
+    MS_LOG(INFO) << name_ << ": The devices' size of " << dimension << "th dimension is " << group_devices.size()
                  << ", no need to infer rank bias";
     ret = {-1, -1, -1, -1, -1};
     return ret;
   }
 
   if (group_devices.size() != LongToSize(dimension_shard_num)) {
-    MS_LOG(EXCEPTION) << name_ << ": The devices' size of " << dimension << " is " << group_devices.size()
-                      << ", but the shard num of w dimension is " << dimension_shard_num;
+    MS_LOG(EXCEPTION) << name_ << ": The devices' size of " << dimension << "th dimension is " << group_devices.size()
+                      << ", but the shard num of this dimension is " << dimension_shard_num;
   }
 
   std::vector<int64_t>::iterator it = std::find(group_devices.begin(), group_devices.end(), rank_id);
   if (it == group_devices.end()) {
     MS_LOG(EXCEPTION) << name_ << ": Can not find the current rank in device list of " << dimension
-                      << ", the current rank is " << rank_id << ", the device list is " << group_devices;
+                      << "th dimension, the current rank is " << rank_id << ", the device list is " << group_devices;
   }
 
   int64_t left_or_top_rank_id = -1;
@@ -425,25 +491,25 @@ void Conv2DInfo::InferAdjacentRankInfo() {
 
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->global_rank();
-  std::vector<int64_t> h_dim_rank_info = GetAdjacentRankIdsAndBiases(rank, H_DIMENSION);
+  std::vector<int64_t> h_dim_rank_info = GetAdjacentRankIdsAndBiases(rank, 2);
   top_rank_id_ = h_dim_rank_info[0];
   bottom_rank_id_ = h_dim_rank_info[1];
   top_rank_bias_ = h_dim_rank_info[2];
   bottom_rank_bias_ = h_dim_rank_info[3];
   h_rank_bias_ = h_dim_rank_info[4];
 
-  std::vector<int64_t> w_dim_rank_info = GetAdjacentRankIdsAndBiases(rank, W_DIMENSION);
+  std::vector<int64_t> w_dim_rank_info = GetAdjacentRankIdsAndBiases(rank, 3);
   left_rank_id_ = w_dim_rank_info[0];
   right_rank_id_ = w_dim_rank_info[1];
   left_rank_bias_ = w_dim_rank_info[2];
   right_rank_bias_ = w_dim_rank_info[3];
   w_rank_bias_ = w_dim_rank_info[4];
 
-  std::vector<int64_t> top_w_dim_rank_info = GetAdjacentRankIdsAndBiases(top_rank_id_, W_DIMENSION);
+  std::vector<int64_t> top_w_dim_rank_info = GetAdjacentRankIdsAndBiases(top_rank_id_, 3);
   top_left_rank_id_ = top_w_dim_rank_info[0];
   top_right_rank_id_ = top_w_dim_rank_info[1];
 
-  std::vector<int64_t> bottom_w_dim_rank_info = GetAdjacentRankIdsAndBiases(bottom_rank_id_, W_DIMENSION);
+  std::vector<int64_t> bottom_w_dim_rank_info = GetAdjacentRankIdsAndBiases(bottom_rank_id_, 3);
   bottom_left_rank_id_ = bottom_w_dim_rank_info[0];
   bottom_right_rank_id_ = bottom_w_dim_rank_info[1];
 
@@ -561,13 +627,13 @@ void Conv2DInfo::InferOverlapSizeForWDim() {
 
 void Conv2DInfo::CheckHDimensionOverlapSizeNonNegative() {
   if (h_dimension_shard_num_ == 1) {
-    MS_LOG(INFO) << name_ << ": The h dimension is not shard";
+    MS_LOG(INFO) << name_ << ": The 2th dimension is not shard";
     return;
   }
 
   int64_t h_first_rank_bottom_size = ComputeOverlapBottomSizeByRankBias(0);
   if (h_first_rank_bottom_size < 0) {
-    MS_LOG(EXCEPTION) << name_ << ": The bottom overlap size of h dimension rank bias 0 must be positive, but it is "
+    MS_LOG(EXCEPTION) << name_ << ": The bottom overlap size of 2th dimension rank bias 0 must be positive, but it is "
                       << h_first_rank_bottom_size;
   }
 
@@ -575,7 +641,7 @@ void Conv2DInfo::CheckHDimensionOverlapSizeNonNegative() {
     auto top_size = ComputeOverlapTopSizeByRankBias(h_rank_bias);
     auto bottom_size = ComputeOverlapBottomSizeByRankBias(h_rank_bias);
     if (top_size < 0 || bottom_size < 0) {
-      MS_LOG(EXCEPTION) << name_ << ": The overlap size of h dimension rank bias " << h_rank_bias
+      MS_LOG(EXCEPTION) << name_ << ": The overlap size of 2th dimension rank bias " << h_rank_bias
                         << " must be positive, but top overlap size is " << top_size << ", bottom overlap size is "
                         << bottom_size;
     }
@@ -583,19 +649,19 @@ void Conv2DInfo::CheckHDimensionOverlapSizeNonNegative() {
 
   int64_t h_last_rank_top_size = ComputeOverlapTopSizeByRankBias(h_dimension_shard_num_ - 1);
   if (h_last_rank_top_size < 0) {
-    MS_LOG(EXCEPTION) << name_ << ": The top overlap size of h dimension last rank bias must be positive, but it is "
+    MS_LOG(EXCEPTION) << name_ << ": The top overlap size of 2th dimension last rank bias must be positive, but it is "
                       << h_last_rank_top_size;
   }
 }
 
 void Conv2DInfo::CheckWDimensionOverlapSizeNonNegative() {
   if (w_dimension_shard_num_ == 1) {
-    MS_LOG(INFO) << name_ << ": The w dimension is not shard";
+    MS_LOG(INFO) << name_ << ": The 3th dimension is not shard";
     return;
   }
   int64_t w_first_rank_right_size = ComputeOverlapRightSizeByRankBias(0);
   if (w_first_rank_right_size < 0) {
-    MS_LOG(EXCEPTION) << name_ << ": The right overlap size of w dimension rank bias 0 must be positive, but it is "
+    MS_LOG(EXCEPTION) << name_ << ": The right overlap size of 3th dimension rank bias 0 must be positive, but it is "
                       << w_first_rank_right_size;
   }
 
@@ -603,7 +669,7 @@ void Conv2DInfo::CheckWDimensionOverlapSizeNonNegative() {
     auto left_size = ComputeOverlapLeftSizeByRankBias(w_rank_bias);
     auto right_size = ComputeOverlapRightSizeByRankBias(w_rank_bias);
     if (left_size < 0 || right_size < 0) {
-      MS_LOG(EXCEPTION) << name_ << ": The overlap size of w dimension rank bias " << w_rank_bias
+      MS_LOG(EXCEPTION) << name_ << ": The overlap size of 3th dimension rank bias " << w_rank_bias
                         << " must be positive, but left overlap size is " << left_size << ", right overlap size is "
                         << right_size;
     }
@@ -611,7 +677,7 @@ void Conv2DInfo::CheckWDimensionOverlapSizeNonNegative() {
 
   int64_t w_last_rank_left_size = ComputeOverlapLeftSizeByRankBias(w_dimension_shard_num_ - 1);
   if (w_last_rank_left_size < 0) {
-    MS_LOG(EXCEPTION) << name_ << ": The left overlap size of w dimension last rank bias must be positive, but it is "
+    MS_LOG(EXCEPTION) << name_ << ": The left overlap size of 3th dimension last rank bias must be positive, but it is "
                       << w_last_rank_left_size;
   }
 }
@@ -651,7 +717,7 @@ Status Conv2DInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-// Conv2d: dev_matrix is (n, i, h, w, o), if in channel is split, it need to insert all reduce
+// Conv2d/Conv3d: dev_matrix is (n, i, h, w, o), if in channel is split, it need to insert all reduce
 // Conv2DBackpropInputInfo: dev_matrix is (n, o, h, w, i), if out channel is split, it need to insert all reduce
 Status Conv2DInfo::InferForwardCommunication() {
   forward_op_.clear();
@@ -785,13 +851,13 @@ void Conv2DInfo::InferCommunicationAttrs() {
   int64_t h_slice_shape = input_slice_shape_[2];
   if (send_top_len > h_slice_shape || send_bottom_len > h_slice_shape || recv_top_len > h_slice_shape ||
       recv_bottom_len > h_slice_shape) {
-    MS_LOG(EXCEPTION) << name_ << ": The send or recv len larger than slice shape of h dimension " << h_slice_shape;
+    MS_LOG(EXCEPTION) << name_ << ": The send or recv len larger than slice shape of 2th dimension " << h_slice_shape;
   }
 
   int64_t w_slice_shape = input_slice_shape_[3];
   if (send_left_len > w_slice_shape || send_right_len > w_slice_shape || recv_left_len > w_slice_shape ||
       recv_right_len > w_slice_shape) {
-    MS_LOG(EXCEPTION) << name_ << ": The send or recv len larger than slice shape of w dimension " << w_slice_shape;
+    MS_LOG(EXCEPTION) << name_ << ": The send or recv len larger than slice shape of 3th dimension " << w_slice_shape;
   }
 }
 
@@ -827,7 +893,7 @@ OperatorAttrs Conv2DInfo::CreateConv2DAttrs() {
   Attr data_format = {DATA_FORMAT, MakeValue(format_)};
 
   OperatorAttrs attrs;
-  if (name_.find(CONV2D_INFO) != std::string::npos) {
+  if (name_.find(CONV2D_INFO) != std::string::npos || name_.find(CONV3D_INFO) != std::string::npos) {
     attrs = {out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format};
   } else {  // Conv2DTranspose
     attrs = {out_channel, kernel_size, pad_mode, pad, pad, mode, stride, dilation, group, data_format};
@@ -937,7 +1003,9 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
   auto search_mode = parallel_context->strategy_search_mode();
   // generate data parallel strategy when the search mode is not sharding propagation
   if (parallel_mode == parallel::kAutoParallel && search_mode != parallel::kShardingPropagation) {
-    Strategies strategy = {{stage_device_size_, 1, 1, 1}, {1, 1, 1, 1}};
+    Shape input_strategy(inputs_shape_[0].size(), 1);
+    input_strategy[0] = stage_device_size_;
+    Strategies strategy = {input_strategy, Shape(inputs_shape_[1].size(), 1)};
     StrategyPtr data_parallel_sp = std::make_shared<Strategy>(stage_id, strategy);
     sp_vector.push_back(data_parallel_sp);
     return sp_vector;
@@ -948,8 +1016,14 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape tmp_shape = inputs_shape_[0];
   if (name_.find(CONV2D_INFO) != std::string::npos) {  // conv2d: ((N, C-in, H, W), (C-out, C-in, k1, k2))
     tmp_shape.push_back(inputs_shape_[1][0]);          // the tmp shape is (N, C-in, H, W, C-out)
-  } else {                                             // conv2d-transpose: ((N, C-out, H, W), (C-out, C-in, k1, k2))
-    tmp_shape.push_back(inputs_shape_[1][1]);          // the tmp shape is (N, C-out, H, W, C-in)
+  } else if (name_.find(CONV2D_TRANSPOSE) !=
+             std::string::npos) {              // conv2d-transpose: ((N, C-out, H, W), (C-out, C-in, k1, k2))
+    tmp_shape.push_back(inputs_shape_[1][1]);  // the tmp shape is (N, C-out, H, W, C-in)
+  } else if (name_.find(CONV3D_INFO) != std::string::npos) {  // conv3d
+    tmp_shape.pop_back();
+    tmp_shape.push_back(inputs_shape_[1][0]);
+  } else {
+    MS_LOG(EXCEPTION) << name_ << ": It does not support to generate strategies";
   }
   Shapes tmp_inputs_shape = {tmp_shape};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
@@ -966,11 +1040,19 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
     if (tmp_strategy.size() != 5) {
       MS_LOG(EXCEPTION) << name_ << ": The size of first tmp strategy must be 5, but got " << tmp_strategy.size();
     }
-    Dimensions input0_strategy = {tmp_strategy[0], tmp_strategy[1], tmp_strategy[2], tmp_strategy[3]};
+
+    Dimensions input0_strategy;
     Dimensions input1_strategy;
-    if (name_.find(CONV2D_INFO) != std::string::npos) {            // conv2d
+
+    if (name_.find(CONV2D_INFO) != std::string::npos) {  // conv2d
+      input0_strategy = {tmp_strategy[0], tmp_strategy[1], tmp_strategy[2], tmp_strategy[3]};
       input1_strategy = {tmp_strategy[4], tmp_strategy[1], 1, 1};  // (C-out, C-in, k1, k2), the k1/k2 can not be split
-    } else {                                                       // conv2d-transpose
+    } else if (name_.find(CONV3D_INFO) != std::string::npos) {     // conv3d
+      input0_strategy = {tmp_strategy[0], tmp_strategy[1], tmp_strategy[2], tmp_strategy[3], 1};
+      input1_strategy = {tmp_strategy[4], tmp_strategy[1], 1, 1, 1};
+    } else if (name_.find(CONV2D_TRANSPOSE) != std::string::npos ||
+               name_.find(CONV2D_BACK_PROP_INPUT) != std::string::npos) {  // conv2d-transpose
+      input0_strategy = {tmp_strategy[0], tmp_strategy[1], tmp_strategy[2], tmp_strategy[3]};
       input1_strategy = {tmp_strategy[1], tmp_strategy[4], 1, 1};
     }
     replace_strategy.push_back(input0_strategy);
@@ -1078,7 +1160,7 @@ Status Conv2DBackpropInputInfo::GetOutShape() {
 }
 
 Status Conv2DBackpropInputInfo::GetAttrs() {
-  if (GetAttrsBase() != SUCCESS) {
+  if (GetAttrsBase() != SUCCESS || CheckAttrsBase() != SUCCESS) {
     return FAILED;
   }
 
@@ -1095,9 +1177,22 @@ Status Conv2DBackpropInputInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra[0];
   Dimensions weight_strategy = stra[1];
+  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
+    MS_LOG(ERROR) << name_
+                  << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
+                  << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
+    return FAILED;
+  }
+
   if (input_strategy[1] != weight_strategy[0]) {
     MS_LOG(ERROR) << name_ << ": The shard num of c-out for input strategy is " << input_strategy[1]
                   << ", but the shard num of c-out for weight strategy is " << weight_strategy[0];
+    return FAILED;
+  }
+
+  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
+    MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
+                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
     return FAILED;
   }
 

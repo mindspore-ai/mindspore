@@ -1459,6 +1459,7 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
