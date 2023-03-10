@@ -66,40 +66,11 @@ ShapePtr SingleElementShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) 
   return nullptr;
 }
 
-// If shape sizes are not equal, but shape1 and shape2 are all dynamic shape, return a dynamic rank.
-ShapePtr DifferentSizeDynShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
-  auto shape_max = shape1->shape();
-  auto shape_min = shape2->shape();
-  if (shape2->shape().size() > shape1->shape().size()) {
-    shape_max = shape2->shape();
-    shape_min = shape1->shape();
-  }
-  // (3, -1) join (3, 4, -1) = Error
-  // (3, -1) join (3, -1, -1) = (-2)
-  for (size_t i = 0; i < shape_max.size(); ++i) {
-    if (i < shape_min.size()) {
-      if (shape_min[i] != shape_max[i]) {
-        return nullptr;
-      }
-      continue;
-    }
-    if (shape_max[i] != Shape::kShapeDimAny) {
-      return nullptr;
-    }
-  }
-  return std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}));
-}
-
 ShapeValueDType SingleShapeValueJoin(const ShapeValueDType &shape_value1, const ShapeValueDType &shape_value2) {
   if (shape_value1 == shape_value2) {
     return shape_value1;
   }
-  // (-1, 2) join (1, -1) should be (-1, -1)
-  if (shape_value1 == Shape::kShapeDimAny || shape_value2 == Shape::kShapeDimAny) {
-    return Shape::kShapeDimAny;
-  }
-  // shape_value1 != shape_value2
-  return Shape::kShapeError;
+  return Shape::kShapeDimAny;
 }
 
 ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
@@ -119,11 +90,7 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
     if (joined_shape != nullptr) {
       return joined_shape;
     }
-    joined_shape = DifferentSizeDynShapeJoin(shape1, shape2);
-    if (joined_shape != nullptr) {
-      return joined_shape;
-    }
-    return nullptr;
+    return std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}));
   }
   ShapeVector dims(shape1->shape().size());
   for (std::size_t i = 0; i < shape1->shape().size(); i++) {
