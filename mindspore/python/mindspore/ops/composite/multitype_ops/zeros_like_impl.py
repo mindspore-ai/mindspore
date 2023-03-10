@@ -30,7 +30,9 @@ using ".register" decorator.
 @zeros_like_leaf.register("Number")
 def _zeros_like_scalar(x):
     """Returns 0 which has the same dtype as x where x is a scalar."""
-    return 0
+    if isinstance(x, int):
+        return 0
+    return 0.
 
 
 @zeros_like_leaf.register("Bool")
@@ -58,12 +60,6 @@ def _zeros_like_func(x):
 def _zeros_like_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     return F.zeros_like(x)
-
-
-@zeros_like_leaf.register("Tuple")
-def _zeros_like_tuple(x):
-    """Returns a Tuple with the same shape and dtype as x and all elements are 0."""
-    return seq.SequenceZerosLike()(x)
 
 
 @zeros_like_leaf.register("COOTensor")
@@ -187,6 +183,11 @@ def _zeros_like_env_type(x):
     return F.environ_create()
 
 
-# zeros_like is an object that will generate graph of zero_like operation for different type
-zeros_like = base.HyperMap(zeros_like_leaf)
-"""`zeros_like` is an object that will generate graph of `zero_like` operation for different type."""
+zeros_like_ = base.HyperMap(zeros_like_leaf)
+
+
+def zeros_like(x):
+    """`zeros_like` is an object that will generate graph of `zero_like` operation for different type."""
+    if isinstance(x, (tuple, list)) and F.is_sequence_shape_unknown(x):
+        return seq.SequenceZerosLike()(x)
+    return zeros_like_(x)
