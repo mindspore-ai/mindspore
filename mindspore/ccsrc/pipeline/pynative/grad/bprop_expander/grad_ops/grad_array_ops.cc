@@ -905,30 +905,6 @@ REG_BPROP_BUILDER("NonZero").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
   return {ib->ZerosLike(x)};
 });
 
-REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto ta = GetValue<bool>(ib->GetAttr("transpose_a"));
-  auto tb = GetValue<bool>(ib->GetAttr("transpose_b"));
-  auto x = ib->GetInput(kIndex0);
-  auto w = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-
-  NodePtr dx;
-  if (ta) {
-    dx = ib->BatchMatMul(w, dout, (ta && tb), (ta || !tb));
-  } else {
-    dx = ib->BatchMatMul(dout, w, (ta && tb), (ta || !tb));
-  }
-
-  NodePtr dw;
-  if (tb) {
-    dw = ib->BatchMatMul(dout, x, ((!ta) || tb), (ta && tb));
-  } else {
-    dw = ib->BatchMatMul(x, dout, ((!ta) || tb), (ta && tb));
-  }
-
-  return BinopGradCommonWithShift(ib, x, w, dx, dw, 2);
-});
-
 REG_BPROP_BUILDER("Argmax").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   return {ib->ZerosLike(x)};

@@ -27,6 +27,7 @@
 #include "ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -553,6 +554,10 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
   };
 
   auto calc_res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  const size_t cal_num = 2;
+  if (calc_res.size() != cal_num) {
+    MS_LOG(EXCEPTION) << "Number of ShapeCalc should be 2, but got " << calc_res.size();
+  }
   auto output_shape_kept_dims = calc_res[0];
   auto tile_scaling = calc_res[1];
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
