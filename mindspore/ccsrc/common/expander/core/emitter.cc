@@ -35,21 +35,23 @@ std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
   if (node->isa<ValueNode>()) {
     value_ptr = node->get<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(value_ptr);
-    if (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>()) {
-      return std::make_pair(true, CheckAndConvertUtils::CheckIntOrTupleInt("value", value_ptr, "GetIntList"));
-    }
   } else {
     auto abstract = node->get()->abstract();
     if (abstract != nullptr) {
       value_ptr = abstract->BuildValue();
     }
   }
-  if (value_ptr != nullptr && value_ptr->isa<tensor::Tensor>()) {
-    auto tensor = value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    // In pynative mode, need data sync before get tensor value, otherwise the tensor value may be undefined.
-    tensor->data_sync();
-    return std::make_pair(true, CheckAndConvertUtils::CheckTensorIntValue("value", value_ptr, "GetIntList"));
+  if (value_ptr != nullptr) {
+    if (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>()) {
+      return std::make_pair(true, CheckAndConvertUtils::CheckIntOrTupleInt("value", value_ptr, "GetIntList"));
+    }
+    if (value_ptr->isa<tensor::Tensor>()) {
+      auto tensor = value_ptr->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      // In pynative mode, need data sync before get tensor value, otherwise the tensor value may be undefined.
+      tensor->data_sync();
+      return std::make_pair(true, CheckAndConvertUtils::CheckTensorIntValue("value", value_ptr, "GetIntList"));
+    }
   }
   return std::make_pair(false, std::vector<int64_t>{});
 }

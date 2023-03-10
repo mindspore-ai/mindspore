@@ -54,26 +54,6 @@ static NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, co
   return ib->Reshape(reduce_x, shape_x);
 }
 
-NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
-  MS_EXCEPTION_IF_NULL(ib);
-  MS_EXCEPTION_IF_NULL(dx);
-  auto reduce_dx = dx;
-  auto dx_origin_dtype = dx->dtype();
-  MS_EXCEPTION_IF_NULL(dx_origin_dtype);
-  auto dx_origin_dtype_id = dx_origin_dtype->type_id();
-  bool need_cast = (dx_origin_dtype_id == kNumberTypeInt16 || dx_origin_dtype_id == kNumberTypeInt32 ||
-                    dx_origin_dtype_id == kNumberTypeInt64);
-  if (need_cast) {
-    reduce_dx = ib->Cast(reduce_dx, kFloat32);
-  }
-  reduce_dx =
-    ib->Emit("ReduceSum", {reduce_dx, axis}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
-  if (need_cast) {
-    reduce_dx = ib->Cast(reduce_dx, dx_origin_dtype_id);
-  }
-  return reduce_dx;
-}
-
 NodePtrList DynBinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
                                const NodePtr &dy) {
   auto shape_of_x = ib->Emit("TensorShape", {x});
@@ -165,6 +145,26 @@ TypeId GetOutputDtype(TypeId t1, TypeId t2, bool use_complex = false) {
 }
 }  // namespace
 
+NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const NodePtr &axis) {
+  MS_EXCEPTION_IF_NULL(ib);
+  MS_EXCEPTION_IF_NULL(dx);
+  auto reduce_dx = dx;
+  auto dx_origin_dtype = dx->dtype();
+  MS_EXCEPTION_IF_NULL(dx_origin_dtype);
+  auto dx_origin_dtype_id = dx_origin_dtype->type_id();
+  bool need_cast = (dx_origin_dtype_id == kNumberTypeInt16 || dx_origin_dtype_id == kNumberTypeInt32 ||
+                    dx_origin_dtype_id == kNumberTypeInt64);
+  if (need_cast) {
+    reduce_dx = ib->Cast(reduce_dx, kFloat32);
+  }
+  reduce_dx =
+    ib->Emit("ReduceSum", {reduce_dx, axis}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  if (need_cast) {
+    reduce_dx = ib->Cast(reduce_dx, dx_origin_dtype_id);
+  }
+  return reduce_dx;
+}
+
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis) {
   auto rank = input_shape.size();
   std::set<int64_t> reduction_indices_set;
@@ -177,10 +177,8 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
     reduced_num *= input_shape[i];
     perm.emplace_back(i);
   }
-  ShapeVector other_indices;
   for (int64_t i = 0; i < (int64_t)rank; i++) {
     if (reduction_indices_set.find(i) == reduction_indices_set.end()) {
-      other_indices.emplace_back(i);
       other_num *= input_shape[i];
       perm.emplace_back(i);
     }
@@ -561,16 +559,29 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
   return ib->Emit("DynamicBroadcastTo", {grad, ib->Value(x->shape())});
 }
 
-NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const std::vector<int64_t> &axis, const NodePtr &out,
+NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout) {
   auto input_shape = ib->GetShape(x);
-  auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto axis_value = inputs.at(1);
+    return {ReduceShape(input_shape, axis_value)};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
+  };
+
+  auto output_shape_kept_dims = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1})[0];
   auto y = ib->Reshape(out, output_shape_kept_dims);
   auto grad = ib->Reshape(dout, output_shape_kept_dims);
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
   auto minn = 1e-24;
   auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
-  auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis, false), output_shape_kept_dims) + min_num;
+  auto num_selected = ib->Reshape(ib->Emit("ReduceSum", {indicators, axis},
+                                           {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(false)}}),
+                                  output_shape_kept_dims) +
+                      min_num;
   return indicators / num_selected * grad;
 }
 
@@ -630,7 +641,7 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x) {
   auto lanczos_gamma_plus_one_half = k_lanczos_gamma + 0.5;
   auto log_lanczos_gamma_plus_one_half = log(lanczos_gamma_plus_one_half);
   auto inf = std::numeric_limits<double>::infinity();
-  auto infinity = ib->Fill(inf, ib->GetShape(x), input_dtype->type_id());
+  auto infinity = ib->Fill(inf, ib->Shape(x), input_dtype->type_id());
   auto need_to_reflect = ib->Less(x, one_half);
   auto neg_input = ib->Neg(x);
   auto z = ib->Select(need_to_reflect, neg_input, ib->Sub(x, one));
