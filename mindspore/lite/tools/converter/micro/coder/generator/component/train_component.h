@@ -26,8 +26,14 @@
 #include "tools/converter/micro/coder/context.h"
 
 namespace mindspore::lite::micro {
+void CodeMSModelSetTrainModeState(std::ofstream &ofs);
+void CodeMSModelSetTrainModeCommon(std::ofstream &ofs);
 void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelRunStepState(std::ofstream &ofs);
+void CodeMSModelRunStepCommon(std::ofstream &ofs);
 void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelExportWeightState(std::ofstream &ofs);
+void CodeMSModelExportWeightCommon(std::ofstream &ofs);
 void CodeMSModelExportWeight(std::ofstream &ofs, const int model_index);
 void CodeWeightInitFuncForTrain(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeCopyTrainOutputsState(std::ofstream &ofs, const int model_index);

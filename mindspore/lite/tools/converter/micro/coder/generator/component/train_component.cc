@@ -21,6 +21,31 @@
 #include "coder/utils/type_cast.h"
 
 namespace mindspore::lite::micro {
+const char micro_model_run_step_state[] = R"RAW(
+typedef MSStatus (*ModelRunStep)(MSModelHandle model,
+                                 const MSKernelCallBackC before,
+                                 const MSKernelCallBackC after);
+)RAW";
+
+void CodeMSModelSetTrainModeState(std::ofstream &ofs) {
+  ofs << "typedef MSStatus (*ModelSetTrainMode)(MSModelHandle model, bool train);";
+}
+
+void CodeMSModelSetTrainModeCommon(std::ofstream &ofs) {
+  ofs << R"RAW(
+MSStatus MSModelSetTrainMode(MSModelHandle model, bool train) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  if (micro_model->set_train_mode == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  return micro_model->set_train_mode(model, train);
+}
+)RAW";
+}
+
 void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> train_outputs = ctx->graph_train_outputs();
   std::vector<Tensor *> eval_outputs = ctx->graph_eval_outputs();
@@ -42,8 +67,8 @@ void CodeMSModelSetTrainMode(std::ofstream &ofs, const std::unique_ptr<CoderCont
     ofs << "    output_tensors[" << index << "]->data = NULL;\n";
   };
 
+  ofs << "MSStatus MSModelSetTrainMode" << ctx->GetCurModelIndex() << "(MSModelHandle model, bool train) {\n";
   ofs << R"RAW(
-MSStatus MSModelSetTrainMode(MSModelHandle model, bool train) {
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
@@ -76,12 +101,30 @@ MSStatus MSModelSetTrainMode(MSModelHandle model, bool train) {
          "}\n\n";
 }
 
+void CodeMSModelRunStepState(std::ofstream &ofs) { ofs << micro_model_run_step_state; }
+
+void CodeMSModelRunStepCommon(std::ofstream &ofs) {
+  ofs << R"RAW(
+MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  if (micro_model->run_step == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  return micro_model->run_step(model, before, after);
+}
+)RAW";
+}
+
 void CodeMSModelRunStep(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   auto inputs_size = ctx->graph_inputs().size();
   size_t train_outputs_size = ctx->graph_train_outputs().size();
   size_t eval_outputs_size = ctx->graph_eval_outputs().size();
+  ofs << "MSStatus MSModelRunStep" << ctx->GetCurModelIndex()
+      << "(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after) {\n";
   ofs << R"RAW(
-MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, const MSKernelCallBackC after) {
   MicroModel *micro_model = (MicroModel *)model;
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
@@ -128,8 +171,27 @@ MSStatus MSModelRunStep(MSModelHandle model, const MSKernelCallBackC before, con
       << "}\n\n";
 }
 
+void CodeMSModelExportWeightState(std::ofstream &ofs) {
+  ofs << "typedef MSStatus (*ModelExportWeight)(MSModelHandle model, const char *export_path);";
+}
+
+void CodeMSModelExportWeightCommon(std::ofstream &ofs) {
+  ofs << R"RAW(
+MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  if (micro_model->export_weight == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+  return micro_model->export_weight(model, export_path);
+}
+)RAW";
+}
+
 void CodeMSModelExportWeight(std::ofstream &ofs, const int model_index) {
-  ofs << "MSStatus MSModelExportWeight(MSModelHandle model, const char *export_path) {\n"
+  ofs << "MSStatus MSModelExportWeight" << model_index << "(MSModelHandle model, const char *export_path) {\n"
       << "int ret = Export" << model_index << "(export_path);\n"
       << "return ret == RET_OK ? kMSStatusSuccess : kMSStatusLiteError;\n"
       << "}\n"
