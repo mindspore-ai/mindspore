@@ -204,14 +204,22 @@ py::object ValueSequenceToPyData(const ValueSequencePtr &value, const AbstractBa
     return res_sequeue.cast<py::list>();
   }
   py::tuple res_sequeue(value_size);
-  auto abs_sequeue = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
-  if (abs_sequeue == nullptr) {
+  if (abs != nullptr && abs->isa<abstract::AbstractSequence>() &&
+      abs->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+    // Dynamic length sequence directly use value to create python object.
     for (size_t i = 0; i < value_size; i++) {
       res_sequeue[i] = ValueToPyData(value_sequeue[i]);
     }
   } else {
-    for (size_t i = 0; i < value_size; i++) {
-      res_sequeue[i] = ValueToPyData(value_sequeue[i], abs_sequeue->elements()[i]);
+    auto abs_sequeue = CheckAbstractElementsSize<abstract::AbstractSequencePtr>(abs, value_size);
+    if (abs_sequeue == nullptr) {
+      for (size_t i = 0; i < value_size; i++) {
+        res_sequeue[i] = ValueToPyData(value_sequeue[i]);
+      }
+    } else {
+      for (size_t i = 0; i < value_size; i++) {
+        res_sequeue[i] = ValueToPyData(value_sequeue[i], abs_sequeue->elements()[i]);
+      }
     }
   }
   if (value->isa<ValueTuple>()) {
