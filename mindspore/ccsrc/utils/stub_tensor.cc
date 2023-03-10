@@ -193,7 +193,7 @@ bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
 }
 
 py::object SequenceNode::GetElements() {
-  if (elements_.empty()) {
+  if (!is_elements_build_.load()) {
     (void)WaitAbstract();
   }
   py::tuple out(elements_.size());
@@ -209,11 +209,12 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
     return false;
   }
   auto children = seq_abs->elements();
-  if (elements_.empty()) {
+  if (!is_elements_build_.load()) {
     for (auto child : children) {
       elements_.emplace_back(MakeStubNode(child->BuildType()));
     }
   }
+  is_elements_build_ = true;
   if (elements_.size() != children.size()) {
     return false;
   }
