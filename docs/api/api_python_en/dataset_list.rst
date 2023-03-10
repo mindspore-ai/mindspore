@@ -98,7 +98,7 @@ Others
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
 
-{% elif objname in ['Caltech101Dataset', 'Caltech256Dataset', 'CelebADataset', 'Cifar100Dataset', 'Cifar10Dataset', 'CityscapesDataset', 'CocoDataset', 'DIV2KDataset', 'EMnistDataset', 'FakeImageDataset', 'FashionMnistDataset', 'FlickrDataset', 'Flowers102Dataset', 'ImageFolderDataset', 'KMnistDataset', 'ManifestDataset', 'MnistDataset', 'PhotoTourDataset', 'Places365Dataset', 'QMnistDataset', 'SBDataset', 'SBUDataset', 'SemeionDataset', 'STL10Dataset', 'SVHNDataset', 'USPSDataset', 'VOCDataset', 'WIDERFaceDataset', 'Food101Dataset', 'SUN397Dataset', 'SST2Dataset', 'RenderedSST2Dataset']%}
+{% elif objname in ['Caltech101Dataset', 'Caltech256Dataset', 'CelebADataset', 'Cifar100Dataset', 'Cifar10Dataset', 'CityscapesDataset', 'CocoDataset', 'DIV2KDataset', 'EMnistDataset', 'FakeImageDataset', 'FashionMnistDataset', 'FlickrDataset', 'Flowers102Dataset', 'ImageFolderDataset', 'KITTIDataset', 'KMnistDataset', 'LFWDataset', 'LSUNDataset', 'ManifestDataset', 'MnistDataset', 'OmniglotDataset', 'PhotoTourDataset', 'Places365Dataset', 'QMnistDataset', 'SBDataset', 'SBUDataset', 'SemeionDataset', 'STL10Dataset', 'SVHNDataset', 'USPSDataset', 'VOCDataset', 'WIDERFaceDataset', 'Food101Dataset', 'SUN397Dataset', 'SST2Dataset', 'RenderedSST2Dataset']%}
 
 {{ fullname | underline }}
 
@@ -194,7 +194,7 @@ Others
     mindspore.dataset.Dataset.to_json
 
 
-{% elif objname in ['LJSpeechDataset', 'SpeechCommandsDataset', 'TedliumDataset', 'YesNoDataset'] %}
+{% elif objname in ['CMUArcticDataset', 'GTZANDataset', 'LibriTTSDataset', 'LJSpeechDataset', 'SpeechCommandsDataset', 'TedliumDataset', 'YesNoDataset'] %}
 
 {{ fullname | underline }}
 
@@ -290,7 +290,7 @@ Others
     mindspore.dataset.Dataset.to_json
 
 
-{% elif objname in ['AGNewsDataset', 'AmazonReviewDataset', 'CLUEDataset', 'CoNLL2000Dataset', 'CSVDataset', 'DBpediaDataset', 'EnWik9Dataset', 'GeneratorDataset', 'IMDBDataset', 'IWSLT2016Dataset', 'IWSLT2017Dataset', 'MindDataset', 'NumpySlicesDataset', 'OBSMindDataset', 'PaddedDataset', 'PennTreebankDataset', 'RandomDataset', 'SogouNewsDataset', 'TextFileDataset', 'TFRecordDataset', 'UDPOSDataset', 'WikiTextDataset', 'YahooAnswersDataset', 'YelpReviewDataset'] %}
+{% elif objname in ['AGNewsDataset', 'AmazonReviewDataset', 'CLUEDataset', 'CoNLL2000Dataset', 'CSVDataset', 'DBpediaDataset', 'EnWik9Dataset', 'GeneratorDataset', 'IMDBDataset', 'IWSLT2016Dataset', 'IWSLT2017Dataset', 'Multi30kDataset', 'MindDataset', 'NumpySlicesDataset', 'OBSMindDataset', 'PaddedDataset', 'PennTreebankDataset', 'RandomDataset', 'SogouNewsDataset', 'SQuADDataset', 'TextFileDataset', 'TFRecordDataset', 'UDPOSDataset', 'WikiTextDataset', 'YahooAnswersDataset', 'YelpReviewDataset'] %}
 
 {{ fullname | underline }}
 
