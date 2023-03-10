@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/mem_reuse/mem_dynamic_allocator.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include <string>
 #include <algorithm>
 #include <numeric>
@@ -129,9 +129,9 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
 
 size_t DynamicMemPoolBestFit::AlignMemorySize(size_t size) const {
   if (size == 0) {
-    return DYNAMIC_MEM_ALIGN_SIZE;
+    return kDynamicMemAlignSize;
   }
-  return ((size + DYNAMIC_MEM_ALIGN_SIZE - 1) / DYNAMIC_MEM_ALIGN_SIZE) * DYNAMIC_MEM_ALIGN_SIZE;
+  return ((size + kDynamicMemAlignSize - 1) / kDynamicMemAlignSize) * kDynamicMemAlignSize;
 }
 
 DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size, bool from_persistent_mem) {
@@ -285,7 +285,7 @@ size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persis
 }
 
 bool DynamicMemPoolBestFit::IsSplit(size_t tensor_size, size_t mem_buf_size) const {
-  return mem_buf_size - tensor_size >= DYNAMIC_MEM_ALIGN_SIZE;
+  return mem_buf_size - tensor_size >= kDynamicMemAlignSize;
 }
 
 void DynamicMemPoolBestFit::SplitMemBuf(size_t size, const DynamicMemBufPtr &mem_buf,
@@ -464,7 +464,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
-  size_t total_used_size_list[ALLOCATOR_TYPE_NUM] = {0};
+  size_t total_used_size_list[kAllocatorTypeNum] = {0};
   auto fn = [&](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->mem_block_list_.empty()) {
@@ -479,7 +479,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
            mb != mem_mng->mem_block_list_[i]->block_all_mem_buf_map_.end(); ++mb) {
         if (mb->second->status_ == DynamicMemBufStatus::kMemBufUsed) {
           mem_block_used_size += mb->second->size_;
-          MS_EXCEPTION_IF_CHECK_FAIL((static_cast<int>(mb->second->allocator_type_) < ALLOCATOR_TYPE_NUM),
+          MS_EXCEPTION_IF_CHECK_FAIL((static_cast<int>(mb->second->allocator_type_) < kAllocatorTypeNum),
                                      "Allocator type is out of range.");
           total_used_size_list[static_cast<int>(mb->second->allocator_type_)] += mb->second->size_;
         }
@@ -565,6 +565,17 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
   fn(common_mem_, std::string(kCommonMem));
   fn(persistent_mem_, std::string(kPersistentParamMem));
   MS_LOG(WARNING) << "Finish dump dynamic memory pool debug info.";
+}
+
+// The statistics information.
+size_t DynamicMemPoolBestFit::TotalMemStatistics() const {
+  return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
+}
+size_t DynamicMemPoolBestFit::TotalUsedMemStatistics() const {
+  return common_mem_->mps_.total_used_mem_size_ + persistent_mem_->mps_.total_used_mem_size_;
+}
+size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
+  return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
 }  // namespace device
 }  // namespace mindspore

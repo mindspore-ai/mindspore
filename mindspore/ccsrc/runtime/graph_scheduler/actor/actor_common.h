@@ -35,7 +35,7 @@
 #include "ir/tensor.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "backend/common/mem_reuse/mem_dynamic_allocator.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 
 namespace mindspore {
 namespace runtime {

@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace memreuse {
+// todo: delete with kernel-runtime
 enum RefCountType { kDynamicRefCount, kStaticRefCount };
 enum NodeType { kCommonNode, kCommunicationNode };
 enum KernelRefType { kCommon, kRefNodeInput, kRefNodeOutput, kCommNotReuse, kCommReuse, kSummary };

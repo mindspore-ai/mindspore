@@ -426,8 +426,8 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
     }
   }
   if (max_sum_size > GPUMemoryAllocator::GetInstance().MemAllocUnitSize()) {
-    size_t unit_size = (max_sum_size / DYNAMIC_MEM_ALLOC_UNIT_SIZE + 1) * DYNAMIC_MEM_ALLOC_UNIT_SIZE;
-    if (unit_size < DYNAMIC_MEM_ALLOC_UNIT_SIZE) {
+    size_t unit_size = (max_sum_size / kDynamicMemAllocUnitSize + 1) * kDynamicMemAllocUnitSize;
+    if (unit_size < kDynamicMemAllocUnitSize) {
       MS_LOG(WARNING) << "Current memory unit size [" << unit_size << "] is too small.";
       return;
     }

@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace memreuse {
 constexpr auto kSplitC = '/';
+// todo: delete with kernel-runtime
 class BACKEND_EXPORT MemReuseChecker {
  public:
   static MemReuseChecker &GetInstance();

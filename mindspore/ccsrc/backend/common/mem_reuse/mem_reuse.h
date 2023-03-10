@@ -27,6 +27,7 @@
 #include "utils/ms_context.h"
 namespace mindspore {
 namespace memreuse {
+// todo: delete with kernel-runtime
 static constexpr int kMaxRefCount = 9999;
 static constexpr size_t kDefaultMemAlignSize = 512;
 static constexpr size_t kAttAlignSize = 31;

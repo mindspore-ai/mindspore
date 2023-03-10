@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "kernel/kernel.h"
 
+// todo: delete with kernel-runtime
 namespace mindspore {
 namespace device {
 namespace gpu {

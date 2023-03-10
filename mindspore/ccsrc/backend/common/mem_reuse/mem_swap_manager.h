@@ -29,6 +29,7 @@ using PerformPair = std::pair<float, float>;
 namespace mindspore {
 namespace device {
 namespace memswap {
+// todo: delete with kernel-runtime
 class BACKEND_EXPORT MemSwapManager {
  public:
   explicit MemSwapManager(const MemCopyManagerPtr &mem_copy_manager)

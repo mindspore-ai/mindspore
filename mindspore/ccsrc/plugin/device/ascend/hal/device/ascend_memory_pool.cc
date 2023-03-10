@@ -40,11 +40,11 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
                       << ", and the actual effective value will be " << available_device_mem_size;
     }
     // Reserve 1G for persistent_mem
-    if (available_device_mem_size > DYNAMIC_MEM_ALLOC_UNIT_SIZE) {
-      available_device_mem_size -= DYNAMIC_MEM_ALLOC_UNIT_SIZE;
+    if (available_device_mem_size > kDynamicMemAllocUnitSize) {
+      available_device_mem_size -= kDynamicMemAllocUnitSize;
     }
     size_t real_block_size = std::min(config_size, available_device_mem_size);
-    SetMemAllocUintSize(real_block_size, DYNAMIC_MEM_ALLOC_UNIT_SIZE);
+    SetMemAllocUintSize(real_block_size, kDynamicMemAllocUnitSize);
     return;
   }
 
@@ -55,7 +55,7 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
     SetMemAllocUintSize(ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE,
                         ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE);
   } else {
-    SetMemAllocUintSize(DYNAMIC_MEM_ALLOC_UNIT_SIZE, DYNAMIC_MEM_ALLOC_UNIT_SIZE);
+    SetMemAllocUintSize(kDynamicMemAllocUnitSize, kDynamicMemAllocUnitSize);
   }
 }
 

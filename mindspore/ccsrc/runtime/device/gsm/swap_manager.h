@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/mem_reuse/mem_dynamic_allocator.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "include/backend/device_address.h"
 #include "runtime/device/gsm/io_handle.h"
 #include "runtime/device/gsm/host_mem_pool.h"
