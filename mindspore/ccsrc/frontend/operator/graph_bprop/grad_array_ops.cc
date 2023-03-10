@@ -21,48 +21,6 @@
 
 namespace mindspore {
 namespace graph_bprop {
-namespace {
-std::vector<int64_t> TransposePermPositive(const AbstractBasePtr &perm_abs) {
-  auto perm = GetValue<std::vector<int64_t>>(perm_abs->BuildValue());
-  std::vector<int64_t> res;
-  for (auto &p : perm) {
-    (void)res.emplace_back((p >= 0) ? p : (p + perm.size()));
-  }
-  return res;
-}
-
-AnfNodePtr DynTransposePermPositive(const FuncGraphPtr &fg, const AnfNodePtr &perm) {
-  auto add = NewNode(fg, {Add(), perm, DynSize(fg, perm)});
-  return NewNode(fg, {Mod(), add, DynSize(fg, perm)});
-}
-}  // namespace
-
-FuncGraphPtr TransposeBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
-  auto fg = NewGraph(input_abs);
-  // x, perm, out, dout
-  constexpr size_t expected_arg_size = 4;
-  const auto &parameters = fg->parameters();
-  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
-  auto perm = parameters[kIndex1];
-  auto dout = parameters[kIndex3];
-
-  bool is_mutable = ConvertToTensor(perm);
-  if (is_mutable) {
-    perm = DynTransposePermPositive(fg, perm);
-    auto transpose = NewNode(fg, {Transpose(fg), dout, DynInvertPermutation(fg, perm)});
-    auto zeros_like = ZerosLikeFunction(fg, perm);
-    fg->set_output(NewNode(fg, {MakeTuple(), transpose, zeros_like}));
-    return fg;
-  }
-
-  perm = NewValueNode(TransposePermPositive(input_abs[kIndex1]));
-  auto invert_permutation = NewNode(fg, {InvertPermutation(fg), perm});
-  auto transpose = NewNode(fg, {Transpose(fg), dout, invert_permutation});
-  auto zeros_like = ZerosLikeFunction(fg, perm);
-  fg->set_output(NewNode(fg, {MakeTuple(), transpose, zeros_like}));
-  return fg;
-}
-
 FuncGraphPtr CastBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   constexpr size_t expected_arg_size = 4;
   auto fg = NewGraph(input_abs);
@@ -90,9 +48,6 @@ FuncGraphPtr CastBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
   return fg;
 }
 
-void RegArrayOps() {
-  REGISTER_PRIMITIVE_BPROP_IMPL(Transpose, TransposeBprop);
-  REGISTER_PRIMITIVE_BPROP_IMPL(Cast, CastBprop);
-}
+void RegArrayOps() { REGISTER_PRIMITIVE_BPROP_IMPL(Cast, CastBprop); }
 }  // namespace graph_bprop
 }  // namespace mindspore

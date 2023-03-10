@@ -184,8 +184,6 @@ AnfNodePtr GeLUGrad() { return NewValueNode(prim::kPrimGeLUGrad); }
 
 AnfNodePtr MakeTuple() { return NewValueNode(prim::kPrimMakeTuple); }
 
-AnfNodePtr TensorShape() { return NewValueNode(prim::kPrimTensorShape); }
-
 AnfNodePtr Shape() { return NewValueNode(prim::kPrimShape); }
 
 AnfNodePtr RowTensorGetValues() { return NewValueNode(prim::kPrimRowTensorGetValues); }
@@ -237,40 +235,6 @@ AnfNodePtr GetAttr(const FuncGraphPtr &fg, const AnfNodePtr &node, const std::st
   return fg->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), node, NewValueNode(attr)});
 }
 
-AnfNodePtr Conv2DBackpropInput(const FuncGraphPtr &fg, const PrimitivePtr &primal) {
-  auto out_channel = GetAndCheckAttr(primal, ops::kOutChannel);
-  auto kernel_size = GetAndCheckAttr(primal, kAttrKernelSize);
-  auto pad_mode = GetPadModStr(GetAndCheckAttr(primal, kAttrPadMode));
-  auto pad = GetAndCheckAttr(primal, kAttrPad);
-  auto pad_list = GetAndCheckAttr(primal, "pad_list");
-  auto mode = GetAndCheckAttr(primal, kAttrMode);
-  auto dilation = GetAndCheckAttr(primal, kAttrDilation);
-  auto stride = GetAndCheckAttr(primal, kAttrStride);
-  auto group = GetAndCheckAttr(primal, kAttrGroup);
-  auto format = GetAndCheckAttr(primal, kAttrFormat);
-  return fg->NewCNodeInOrder({GetClassType("mindspore.ops.operations.nn_ops", "Conv2DBackpropInput"),
-                              NewValueNode(out_channel), NewValueNode(kernel_size), NewValueNode(pad_mode),
-                              NewValueNode(pad), NewValueNode(pad_list), NewValueNode(mode), NewValueNode(stride),
-                              NewValueNode(dilation), NewValueNode(group), NewValueNode(format)});
-}
-
-AnfNodePtr Conv2DBackpropFilter(const FuncGraphPtr &fg, const PrimitivePtr &primal) {
-  auto out_channel = GetAndCheckAttr(primal, ops::kOutChannel);
-  auto kernel_size = GetAndCheckAttr(primal, kAttrKernelSize);
-  auto pad_mode = GetPadModStr(GetAndCheckAttr(primal, kAttrPadMode));
-  auto pad = GetAndCheckAttr(primal, kAttrPad);
-  auto pad_list = GetAndCheckAttr(primal, "pad_list");
-  auto mode = GetAndCheckAttr(primal, kAttrMode);
-  auto dilation = GetAndCheckAttr(primal, kAttrDilation);
-  auto stride = GetAndCheckAttr(primal, kAttrStride);
-  auto group = GetAndCheckAttr(primal, kAttrGroup);
-  auto format = GetAndCheckAttr(primal, kAttrFormat);
-  return fg->NewCNodeInOrder({GetClassType("mindspore.ops.operations._grad_ops", "Conv2DBackpropFilter"),
-                              NewValueNode(out_channel), NewValueNode(kernel_size), NewValueNode(pad_mode),
-                              NewValueNode(pad), NewValueNode(pad_list), NewValueNode(mode), NewValueNode(stride),
-                              NewValueNode(dilation), NewValueNode(group), NewValueNode(format)});
-}
-
 AnfNodePtr ReduceSum(const FuncGraphPtr &fg, bool keep_dims, bool skip_mode) {
   return fg->NewCNodeInOrder(
     {GetClassType("mindspore.ops.operations.math_ops", "ReduceSum"), NewValueNode(keep_dims), NewValueNode(skip_mode)});
@@ -304,161 +268,6 @@ AnfNodePtr BatchNormGrad(const FuncGraphPtr &fg, const PrimitivePtr &primal) {
                               NewValueNode(is_training), NewValueNode(epsilon), NewValueNode(data_format)});
 }
 
-AnfNodePtr DynSize(const FuncGraphPtr &fg, const AnfNodePtr &node, const TypePtr &dtype) {
-  auto shape = NewNode(fg, {Cast(fg), NewNode(fg, {TensorShape(), node}), NewValueNode(kFloat32)});
-  auto size = NewNode(fg, {Cast(fg), NewNode(fg, {ReduceProd(fg), shape}), NewValueNode(dtype)});
-  return size;
-}
-
-AnfNodePtr DynInvertPermutation(const FuncGraphPtr &fg, const AnfNodePtr &perm) {
-  auto indices = NewNode(fg, {ExpandDims(fg), perm, NewValueNode(static_cast<int64_t>(-1))});
-  auto end = DynSize(fg, perm);
-  auto end_dtype = GetAttr(fg, end, kAttrDType);
-  auto cast1 = NewNode(fg, {Cast(fg), NewValueNode(0), end_dtype});
-  auto cast2 = NewNode(fg, {Cast(fg), NewValueNode(1), end_dtype});
-  auto updates = NewNode(fg, {Range(fg), cast1, end, cast2});
-  auto output = NewNode(fg, {ZerosLike(), updates});
-  auto cast3 = NewNode(fg, {Cast(fg), output, NewValueNode(kFloat32)});
-  auto cast4 = NewNode(fg, {Cast(fg), updates, NewValueNode(kFloat32)});
-  auto new_perm = NewNode(fg, {TensorScatterUpdate(fg), cast3, indices, cast4});
-  return NewNode(fg, {Cast(fg), new_perm, NewValueNode(kInt32)});
-}
-
-AnfNodePtr ReduceSumWithCast(const FuncGraphPtr &fg, const AnfNodePtr &dx, const ShapeVector &axis) {
-  auto dx_origin_dtype = GetTensorDType(dx->abstract());
-  // Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
-  if (dx_origin_dtype == kNumberTypeInt16 || dx_origin_dtype == kNumberTypeInt32 ||
-      dx_origin_dtype == kNumberTypeInt64) {
-    auto new_dx = NewNode(fg, {ReduceSum(fg), NewNode(fg, {Cast(fg), dx, NewValueNode(kFloat32)}), NewValueNode(axis)});
-    return NewNode(fg, {Cast(fg), new_dx, NewValueNode(TypeIdToType(dx_origin_dtype))});
-  }
-  return NewNode(fg, {ReduceSum(fg), dx, NewValueNode(axis)});
-}
-
-AnfNodePtr DynBinopGradCommon(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &y, const AnfNodePtr &dx,
-                              const AnfNodePtr &dy) {
-  auto shape_x = NewNode(fg, {TensorShape(), x});
-  auto shape_y = NewNode(fg, {TensorShape(), y});
-  auto dynamic_broadcast_gradient_args = NewNode(fg, {DynamicBroadcastGradientArgs(), shape_x, shape_y});
-  auto rx = TupleGetItem(fg, dynamic_broadcast_gradient_args, SizeToLong(kIndex0));
-  auto ry = TupleGetItem(fg, dynamic_broadcast_gradient_args, SizeToLong(kIndex1));
-
-  auto dx_origin_dtype = GetTensorDType(dx->abstract());
-  AnfNodePtr new_dx;
-  if (dx_origin_dtype == kNumberTypeInt16 || dx_origin_dtype == kNumberTypeInt32 ||
-      dx_origin_dtype == kNumberTypeInt64) {
-    new_dx = NewNode(fg, {Cast(fg), dx, NewValueNode(kFloat32)});
-    new_dx = SumGradReduceAxis(fg, new_dx, rx);
-    new_dx = NewNode(fg, {Cast(fg), new_dx, NewValueNode(TypeIdToType(dx_origin_dtype))});
-  } else {
-    new_dx = SumGradReduceAxis(fg, dx, rx);
-  }
-
-  auto dy_origin_dtype = GetTensorDType(dy->abstract());
-  AnfNodePtr new_dy;
-  if (dy_origin_dtype == kNumberTypeInt16 || dy_origin_dtype == kNumberTypeInt32 ||
-      dy_origin_dtype == kNumberTypeInt64) {
-    new_dy = NewNode(fg, {Cast(fg), dy, NewValueNode(kFloat32)});
-    new_dy = SumGradReduceAxis(fg, new_dy, ry);
-    new_dy = NewNode(fg, {Cast(fg), new_dy, NewValueNode(TypeIdToType(dy_origin_dtype))});
-  } else {
-    new_dy = SumGradReduceAxis(fg, dy, ry);
-  }
-
-  auto reduce_dx = NewNode(fg, {Reshape(fg), new_dx, shape_x});
-  auto reduce_dy = NewNode(fg, {Reshape(fg), new_dy, shape_y});
-  return NewNode(fg, {MakeTuple(), reduce_dx, reduce_dy});
-}
-
-namespace {
-std::pair<abstract::AbstractTuplePtr, abstract::AbstractTuplePtr> GetBroadcastGradientArgsAbstract(
-  const AnfNodePtr &node) {
-  const auto &abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  auto abs_tuple = abs->cast_ptr<abstract::AbstractTuple>();
-  if (abs_tuple == nullptr) {
-    MS_LOG(EXCEPTION) << "The abstract of node " << node->DebugString() << " should be an AbstractTuple, but got"
-                      << abs->ToString();
-  }
-  constexpr size_t output_size = 2;
-  if (abs_tuple->size() != output_size) {
-    MS_LOG(EXCEPTION) << "The abstract size of abstract tuple " << abs_tuple->ToString() << " should be " << output_size
-                      << ", but got " << abs_tuple->size();
-  }
-  auto abs0_tuple = abs_tuple->elements()[0]->cast<abstract::AbstractTuplePtr>();
-  if (abs0_tuple == nullptr) {
-    MS_LOG(EXCEPTION) << "The abstract 0 of abstract tuple " << abs_tuple->ToString()
-                      << " should be an AbstractTuple, but got" << abs_tuple->elements()[0]->ToString();
-  }
-  auto abs1_tuple = abs_tuple->elements()[1]->cast<abstract::AbstractTuplePtr>();
-  if (abs1_tuple == nullptr) {
-    MS_LOG(EXCEPTION) << "The abstract 1 of abstract tuple " << abs_tuple->ToString()
-                      << " should be an AbstractTuple, but got" << abs_tuple->elements()[1]->ToString();
-  }
-  return {abs0_tuple, abs1_tuple};
-}
-
-AnfNodePtr GetReduceNode(const FuncGraphPtr &fg, const AnfNodePtr &dx,
-                         const abstract::AbstractTuplePtr &scalar_abs_tuple, const AnfNodePtr &shape_x_node) {
-  ShapeVector scalar_list;
-  const auto &elements = scalar_abs_tuple->elements();
-  (void)std::transform(elements.begin(), elements.end(), std::back_inserter(scalar_list),
-                       [](const AbstractBasePtr &abs) {
-                         auto abs_scalar = dyn_cast_ptr<abstract::AbstractScalar>(abs);
-                         if (abs_scalar == nullptr) {
-                           MS_LOG(EXCEPTION) << "The abstract should be AbstractScalar, but got " << abs->ToString();
-                         }
-                         return GetValue<int64_t>(abs_scalar->BuildValue());
-                       });
-  auto new_dx = dx;
-  const auto &dx_abs = dx->abstract();
-  MS_EXCEPTION_IF_NULL(dx_abs);
-  if (dx_abs->BuildShape()->isa<abstract::Shape>()) {
-    new_dx = ReduceSumWithCast(fg, dx, scalar_list);
-  }
-  return NewNode(fg, {Reshape(fg), new_dx, shape_x_node});
-}
-}  // namespace
-
-AnfNodePtr BinopGradCommon(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &y, const AnfNodePtr &dx,
-                           const AnfNodePtr &dy) {
-  auto reduce_dx = dx;
-  auto reduce_dy = dy;
-  auto x_abs = x->abstract();
-  MS_EXCEPTION_IF_NULL(x_abs);
-  auto y_abs = y->abstract();
-  MS_EXCEPTION_IF_NULL(y_abs);
-  // x or y is scalar
-  if (!x_abs->BuildShape()->isa<abstract::Shape>() || !y_abs->BuildShape()->isa<abstract::Shape>()) {
-    if (!x_abs->BuildShape()->isa<abstract::Shape>()) {
-      reduce_dx = ReduceSumWithCast(fg, dx, ShapeVector());
-    }
-    if (!y_abs->BuildShape()->isa<abstract::Shape>()) {
-      reduce_dy = ReduceSumWithCast(fg, dy, ShapeVector());
-    }
-    return NewNode(fg, {MakeTuple(), reduce_dx, reduce_dy});
-  }
-
-  auto shape_x = NewNode(fg, {Shape(), x}, true, true);
-  auto shape_y = NewNode(fg, {Shape(), y}, true, true);
-  if (!(IsSequenceValueUnknown(fg, shape_x) || IsSequenceValueUnknown(fg, shape_y))) {
-    auto rx = BroadcastGradientArgs(fg, shape_x, shape_y);
-    auto rx_abs = GetBroadcastGradientArgsAbstract(rx);
-    if (!rx_abs.first->elements().empty()) {
-      reduce_dx = GetReduceNode(fg, dx, rx_abs.first, shape_x);
-    }
-    if (!rx_abs.second->elements().empty()) {
-      reduce_dy = GetReduceNode(fg, dy, rx_abs.second, shape_y);
-    }
-    return NewNode(fg, {MakeTuple(), reduce_dx, reduce_dy});
-  }
-  return DynBinopGradCommon(fg, x, y, dx, dy);
-}
-
-AnfNodePtr SumGradReduceAxis(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &rx, bool keep_dims) {
-  return fg->NewCNodeInOrder({ReduceSum(fg, keep_dims, true), x, rx});
-}
-
 bool IsSequenceValueUnknown(const FuncGraphPtr &fg, const AnfNodePtr &shape_node) {
   auto is_shape_known_node = NewNode(fg, {NewValueNode(prim::kPrimIsShapeUnknown), shape_node}, true);
   const auto &abs = is_shape_known_node->abstract();
@@ -471,13 +280,6 @@ bool IsSequenceValueUnknown(const FuncGraphPtr &fg, const AnfNodePtr &shape_node
                       << " should be a AbstractScalar.";
   }
   return GetValue<bool>(abs_scalar->BuildValue());
-}
-
-AnfNodePtr BroadcastGradientArgs(const FuncGraphPtr &fg, const AnfNodePtr &x_shape_node,
-                                 const AnfNodePtr &y_shape_node) {
-  auto broadcast_gradient_args =
-    NewNode(fg, {NewValueNode(prim::kPrimBroadcastGradientArgs), x_shape_node, y_shape_node}, true);
-  return broadcast_gradient_args;
 }
 
 ValuePtr GetPadModStr(const ValuePtr &value, bool upper) {
