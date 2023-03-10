@@ -5633,17 +5633,17 @@ def min(x, axis=0, keep_dims=False):
     return argmin_with_value_(x)
 
 
-def aminmax(x, *, axis=0, keepdims=False):
+def aminmax(input, *, axis=0, keepdims=False):
     """
     It returns the minimum and maximum value along the given axis of input tensor.
 
     Args:
-        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
+        input (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
 
     Keyword Args:
         axis (int, optional): The dimension to reduce. The value range of `axis` is [-rank, rank),
-            where "rank" is the dimension of `x`. Default: 0.
+            where "rank" is the dimension of `input`. Default: 0.
         keepdims (bool, optional): Whether to maintain dimension. When set to True, the output will keep the same
             dimension as the input, or the dimension specified by `axis` is reduced. Default: False.
 
@@ -5661,7 +5661,7 @@ def aminmax(x, *, axis=0, keepdims=False):
         ValueError: If `axis` is not in range [-rank, rank).
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
@@ -5671,8 +5671,8 @@ def aminmax(x, *, axis=0, keepdims=False):
     """
     argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
     argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)
-    _, output0 = argmin_with_value_op(x)
-    _, output1 = argmax_with_value_op(x)
+    _, output0 = argmin_with_value_op(input)
+    _, output1 = argmax_with_value_op(input)
     return output0, output1
 
 
@@ -6460,7 +6460,7 @@ def moveaxis(x, source, destination):
     return movedim(x, source, destination)
 
 
-def count_nonzero(x, dims=None):
+def count_nonzero(input, dims=None):
     """
     Calculates the total number of non-zero entries in the input tensor along the
     specified dimensions. If no dimensions are given, then the function will
@@ -6470,18 +6470,18 @@ def count_nonzero(x, dims=None):
         The value range of `dims` is [-x_dims, x_dims), `x_dims` is the dimension length of input "x".
 
     Args:
-        x (Tensor): Input to be computed, Tensor of any dimension. Set the shape of input tensor as
+        input (Tensor): Input to be computed, Tensor of any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
         dims (Union[int, list(int), tuple(int)], optional): The dimension to count the number of non-zero values along.
             Default: None.
 
     Returns:
         A N-D Tensor, represents the number of the nonzero elements of the input tensor along the `dims`.
-        Reduces x_shape along the dimensions given in `dims`. For example, if the size of `x` is :math:`(2, 3, 4)`,
+        Reduces x_shape along the dimensions given in `dims`. For example, if the size of `input` is :math:`(2, 3, 4)`,
         `dims` is :math:`[0, 1]`, y_shape will be :math:`(4,)`.
 
     Raises:
-        TypeError: If the data type of `x` is not supported.
+        TypeError: If the data type of `input` is not supported.
         TypeError: If the data type of `dims` is not int.
         ValueError: If any of the values of `dims` is not in range [-x_dims, x_dims).
 
@@ -6496,7 +6496,7 @@ def count_nonzero(x, dims=None):
     """
     dims = [] if dims is None else dims
     count_nonzero_ = CountNonZero(dims)
-    return count_nonzero_(x)
+    return count_nonzero_(input)
 
 
 @constexpr

@@ -2624,11 +2624,11 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     return output
 
 
-def pdist(x, p=2.0):
+def pdist(input, p=2.0):
     r"""
     Calculates the distance between every pair of row vectors in
-    the input using the p-norm. If the input `x` is a 2D Tensor with shape :math:`(N, M)`,
-    the `output` must be a 1D Tensor with shape :math:`(N * (N - 1) / 2,)`. If `x` has batch
+    the input using the p-norm. If the input `input` is a 2D Tensor with shape :math:`(N, M)`,
+    the `output` must be a 1D Tensor with shape :math:`(N * (N - 1) / 2,)`. If `input` has batch
     dimension with shape :math:`(*B, N, M)`, then the `output` must be a Tensor with
     shape :math:`(*B, N * (N - 1) / 2)`.
 
@@ -2638,22 +2638,22 @@ def pdist(x, p=2.0):
     where :math:`x_{i}, x_{j}` are two different row vectors in the input.
 
     Args:
-        x (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
+        input (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
             dtype: float16, float32 or float64.
         p (float): The order of norm distance, :math:`p∈[0,∞)`. Default: 2.0.
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
-        ValueError: If dimension of `x` is less than 2.
+        ValueError: If dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
@@ -2662,7 +2662,7 @@ def pdist(x, p=2.0):
         [1.4142135 2.828427 1.4142135]
     """
     pdist_ = _get_cache_prim(NN_OPS.Pdist)(p=p)
-    return pdist_(x)
+    return pdist_(input)
 
 
 @constexpr

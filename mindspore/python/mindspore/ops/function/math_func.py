@@ -2224,7 +2224,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
         ValueError: If the shape of `abs` is not the same as that of `angle`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> abs = Tensor(np.array([1, 2]), mindspore.float64)
@@ -4174,7 +4174,7 @@ def nan_to_num(x, nan=0.0, posinf=None, neginf=None):
     return _nan_to_num(x)
 
 
-def fmax(x1, x2):
+def fmax(input, other):
     r"""
     Computes the maximum of input tensors element-wise.
 
@@ -4182,25 +4182,26 @@ def fmax(x1, x2):
         output_i = max(x1_i, x2_i)
 
     Note:
-        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
-        - Shapes of `x1` and `x2` should be able to broadcast.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
+        - Shapes of `input` and `other` should be able to broadcast.
         - If one of the elements to be compared is NaN, another element is returned.
 
     Args:
-        x1 (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
-        x2 (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        input (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        other (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
 
     Returns:
         A Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x1` or `x2` is not Tensor.
-        TypeError: If dtype of `x1` or `x2` is not one of: float16, float32, float64, int32, int64.
-        ValueError: If the shape of  `x1` and `x2` can not broadcast.
+        TypeError: If `input` or `other` is not Tensor.
+        TypeError: If dtype of `input` or `other` is not one of: float16, float32, float64, int32, int64.
+        ValueError: If the shape of  `input` and `other` can not broadcast.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -4210,7 +4211,7 @@ def fmax(x1, x2):
         [4. 5. 6.]
     """
     fmax_ = Fmax()
-    return fmax_(x1, x2)
+    return fmax_(input, other)
 
 
 def maximum(x, y):
@@ -6360,7 +6361,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
@@ -6405,7 +6406,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
@@ -6755,7 +6756,7 @@ def combinations(x, r=2, with_replacement=False):
     return ops.reshape(ret, (-1, r))
 
 
-def dist(input_x, input_y, p=2):
+def dist(input, other, p=2):
     r"""
     Computes batched the :math:`p`-norm distance between each pair of the two collections of row vectors.
 
@@ -6764,16 +6765,16 @@ def dist(input_x, input_y, p=2):
         a type error will be raised if :math:`p` is not an integer.
 
     Args:
-        input_x (Tensor): The first input tensor. The dtype must be float16 or float32.
-        input_y (Tensor): The second input tensor. The dtype must be float16 or float32.
+        input (Tensor): The first input tensor. The dtype must be float16 or float32.
+        other (Tensor): The second input tensor. The dtype must be float16 or float32.
         p (int, optional): The order of norm. `p` is greater than or equal to 0. Default: 2.
 
     Returns:
-        Tensor, has the same dtype as `input_x`, which shape is :math:`(1)`.
+        Tensor, has the same dtype as `input`, which shape is :math:`(1)`.
 
     Raises:
-        TypeError: If `input_x` or `input_y` is not a Tensor.
-        TypeError: If dtype of `input_x` or `input_y` is neither float16 nor float32.
+        TypeError: If `input` or `other` is not a Tensor.
+        TypeError: If dtype of `input` or `other` is neither float16 nor float32.
         TypeError: If `p` is not a non-negative integer.
 
     Supported Platforms:
@@ -6786,11 +6787,11 @@ def dist(input_x, input_y, p=2):
         >>> print(out.asnumpy())
         3.1622777
     """
-    if not isinstance(input_x, Tensor):
-        raise TypeError(f"For 'dist', 'input_x' must be a tensor, but got {type(input_x)}")
-    if not isinstance(input_y, Tensor):
-        raise TypeError(f"For 'dist', 'input_y' must be a tensor, but got {type(input_y)}")
-    z = input_x - input_y
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'dist', 'input_x' must be a tensor, but got {type(input)}")
+    if not isinstance(other, Tensor):
+        raise TypeError(f"For 'dist', 'input_y' must be a tensor, but got {type(other)}")
+    z = input - other
     if z.ndim == 0:
         return ops.abs(z)
 
@@ -7629,7 +7630,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import functional as F
@@ -8237,13 +8238,13 @@ def bmm(input_x, mat2):
     return bmm_op(input_x, mat2)
 
 
-def quantile(x, q, axis=None, keepdims=False):
+def quantile(input, q, axis=None, keepdims=False):
     r"""
-    Computes the q-th quantiles of all elements in `x`, when the
+    Computes the q-th quantiles of all elements in `input`, when the
     q-th quantile lies between two data points, a linear interpolation is implemented between them.
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
             Supported dtypes: float32, float64.
         q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
             Supported dtypes: float32, float64.
@@ -8252,9 +8253,9 @@ def quantile(x, q, axis=None, keepdims=False):
         keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
 
     Returns:
-        Tensor, has the same dtype as the `x`.
+        Tensor, has the same dtype as the `input`.
 
-        Suppose the shape of `x` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
+        Suppose the shape of `input` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
         the element count of input `q`.
 
         - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
@@ -8263,16 +8264,16 @@ def quantile(x, q, axis=None, keepdims=False):
         - If `q` is 1D Tensor and `keepdims` is False, the shape of output is :math:`(m, x_0, x_1, ..., X_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `q` is not a Tensor or float.
-        TypeError: If dtype of `x` is not float32 or float64.
+        TypeError: If dtype of `input` is not float32 or float64.
         TypeError: If dtype of `q` is not float32 or float64.
-        TypeError: If dtype of `x` and the dtype of `q` is different.
+        TypeError: If dtype of `input` and the dtype of `q` is different.
         ValueError: If the `q` values not in the range [0, 1].
         ValueError: If the `axis` values out of range.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
@@ -8288,10 +8289,10 @@ def quantile(x, q, axis=None, keepdims=False):
         _check_attr_dtype("keepdims", keepdims, [bool], "quantile")
 
     quantile_ = _get_cache_prim(Quantile)(dim=axis, keep_dims=keepdims)
-    return quantile_(x, q)
+    return quantile_(input, q)
 
 
-def nanquantile(x, q, axis=None, keepdims=False):
+def nanquantile(input, q, axis=None, keepdims=False):
     r"""
     This operator is derived from mindspore.ops.quantile() that 'ignores' NaN values.
     It computes quantiles as though the input has no NaN values. If all values in a
@@ -8300,7 +8301,7 @@ def nanquantile(x, q, axis=None, keepdims=False):
     Refer to :func:`mindspore.ops.quantile` for more details.
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
             Supported dtypes: float32, float64.
         q (Union[float, Tensor]): A scalar or 1D tensor of quantile values in the range [0, 1].
             Supported dtypes: float32, float64.
@@ -8309,9 +8310,9 @@ def nanquantile(x, q, axis=None, keepdims=False):
         keepdims (bool, optional): Whether the output tensor has dim retained or not. Default: False.
 
     Returns:
-        Tensor, has the same dtype as the `x`.
+        Tensor, has the same dtype as the `input`.
 
-        Suppose the shape of `x` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
+        Suppose the shape of `input` is :math:`(m, x_0, x_1, ..., x_i, ..., X_R)`, `axis` = :math:`i` and m is
         the element count of input `q`.
 
         - If `q` is scalar and `keepdims` is True, the shape of output is :math:`(x_0, x_1, ..., 1, ..., X_R)`.
@@ -8320,16 +8321,16 @@ def nanquantile(x, q, axis=None, keepdims=False):
         - If `q` is 1D Tensor and `keepdims` is False, the shape of output is :math:`(m, x_0, x_1, ..., X_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `q` is not a Tensor or float.
-        TypeError: If dtype of `x` is not float32 or float64.
+        TypeError: If dtype of `input` is not float32 or float64.
         TypeError: If dtype of `q` is not float32 or float64.
-        TypeError: If dtype of `x` and the dtype of `q` is different.
+        TypeError: If dtype of `input` and the dtype of `q` is different.
         ValueError: If the `q` values not in the range [0, 1].
         ValueError: If the `axis` values out of range.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
@@ -8345,7 +8346,7 @@ def nanquantile(x, q, axis=None, keepdims=False):
         _check_attr_dtype("keepdims", keepdims, [bool], "nanquantile")
 
     quantile_ = _get_cache_prim(Quantile)(dim=axis, keep_dims=keepdims, ignore_nan=True)
-    return quantile_(x, q)
+    return quantile_(input, q)
 
 
 def baddbmm(x, batch1, batch2, beta=1, alpha=1):
@@ -8465,14 +8466,14 @@ def arrange(x):
     return lists
 
 
-def rot90(x, k, dims):
+def rot90(input, k, dims):
     """
     Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
     Rotation direction is from the first towards the second axis if k > 0,
     and from the second towards the first for k < 0.
 
     Args:
-        x (Tensor): Input tensor.
+        input (Tensor): Input tensor.
         k (int): Number of times to rotate. Default: 1.
         dims (Union[list(int), tuple(int)]): Axis to rotate. Default: [0,1].
 
@@ -8480,15 +8481,15 @@ def rot90(x, k, dims):
         Tensor.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `k` is not integer.
         TypeError: If `dims` is not tuple of integers or list of ints.
         ValueError: If the length of `dims` is not `2`.
-        ValueError: If any dims is out of Tensor's range [-x.ndim, x.ndim).
+        ValueError: If any dims is out of Tensor's range [-input.ndim, input.ndim).
         RuntimeError: If rotation dims are not different.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[0, 1], [2, 3]])).astype(np.float32)
@@ -8500,14 +8501,14 @@ def rot90(x, k, dims):
         [0. 2.]]
     """
 
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("the input x must be Tensor!")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("the input input must be Tensor!")
     if not isinstance(k, int):
         raise TypeError("the input k must be int!")
     if not isinstance(dims, (list, tuple)):
         raise TypeError("the input dims must be list or tuple!")
 
-    total_dims = x.ndim
+    total_dims = input.ndim
     total_rot_dims = len(dims)
 
     if total_rot_dims != 2:
@@ -8522,11 +8523,11 @@ def rot90(x, k, dims):
     k = (4 + (k % 4)) % 4
 
     if k == 0:
-        out = x
+        out = input
         return out
     if k == 2:
         op1 = P.ReverseV2(axis=[dims[0]])
-        output = op1(x)
+        output = op1(input)
         op2 = P.ReverseV2(axis=[dims[1]])
         out = op2(output)
         return out
@@ -8537,10 +8538,10 @@ def rot90(x, k, dims):
 
     if k == 1:
         op = P.ReverseV2(axis=[dims[1]])
-        output = op(x)
+        output = op(input)
         out = output.transpose(axes_list)
     else:
-        output = x.transpose(axes_list)
+        output = input.transpose(axes_list)
         op = P.ReverseV2(axis=[dims[1]])
         out = op(output)
     return out
@@ -9765,7 +9766,7 @@ def igammac(input, other):
     return igammac_op(input, other)
 
 
-def lgamma(x):
+def lgamma(input):
     r"""
     Computes the natural logarithm of the absolute value of the gamma function on input.
 
@@ -9773,14 +9774,14 @@ def lgamma(x):
         \text{out}_{i} = \ln \Gamma(|\text{input}_{i}|)
 
     Args:
-        x (Tensor): The input tensor. With type of float16 or float32 or float64.
+        input (Tensor): The input tensor. With type of float16 or float32 or float64.
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32 or float64.
+        TypeError: If input is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32 or float64.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -9792,10 +9793,10 @@ def lgamma(x):
         [0.5723649 0.8854049 9.549267 ]
     """
     lgamma_op = _get_cache_prim(P.Lgamma)()
-    return lgamma_op(x)
+    return lgamma_op(input)
 
 
-def digamma(x):
+def digamma(input):
     r"""
     Computes the grad of the lgamma function on input.
 
@@ -9806,14 +9807,14 @@ def digamma(x):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
-        x (Tensor): The input tensor. With type of float16 or float32 or float64.
+        input (Tensor): The input tensor. With type of float16 or float32 or float64.
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32 or float64.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -9825,10 +9826,10 @@ def digamma(x):
         [ 0.0365 -1.964   2.14  ]
     """
     digamma_op = _get_cache_prim(P.Digamma)()
-    return digamma_op(x)
+    return digamma_op(input)
 
 
-def polygamma(a, x):
+def polygamma(n, input):
     r"""
     Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
 
@@ -9838,18 +9839,18 @@ def polygamma(a, x):
     where :math:`\psi(x)` is the digamma function.
 
     Args:
-        a (Tensor): The order of the polygamma function.
-            Supported dtypes: int32, int64. The shape of `a` is :math:`()`.
-        x (Tensor): The tensor to compute the `a^{th}` derivative of the polygamma function with.
+        n (Tensor): The order of the polygamma function.
+            Supported dtypes: int32, int64. The shape of `n` is :math:`()`.
+        input (Tensor): The tensor to compute the `n^{th}` derivative of the polygamma function with.
 
     Returns:
-        Tensor, has the same dtype as `x`.
+        Tensor, has the same dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not one of: float16, float32, float64.
-        TypeError: If dtype of `a` is not one of: int32, int64.
-        TypeError: If shape of `a` is not :math:`()`.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not one of: float16, float32, float64.
+        TypeError: If dtype of `n` is not one of: int32, int64.
+        TypeError: If shape of `n` is not :math:`()`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -9862,7 +9863,7 @@ def polygamma(a, x):
         [ 0.3745, 15.4988]
     """
     polygamma_op = _get_cache_prim(P.Polygamma)()
-    return polygamma_op(a, x)
+    return polygamma_op(n, input)
 
 
 def isinf(input):
@@ -10101,38 +10102,38 @@ def nansum(x, axis=None, keepdims=False, *, dtype=None):
     return x
 
 
-def diag_embed(x, offset=0, dim1=-2, dim2=-1):
+def diag_embed(input, offset=0, dim1=-2, dim2=-1):
     r"""
-    Creates a tensor with diagonals filled by `x`. The remaining elements are filled by 0.
-    If the shape of `x` is :math:`[x_{0}, x_{1}, ..., x_{n-1}, x_{n}]`, the output shape is: the vector obtained
+    Creates a tensor with diagonals filled by `input`. The remaining elements are filled by 0.
+    If the shape of `input` is :math:`[x_{0}, x_{1}, ..., x_{n-1}, x_{n}]`, the output shape is: the vector obtained
     by inserting :math:`x_{n}+|offset|` into the vector :math:`[x_{0}, x_{1}, ..., x_{n-1}]`
     at position `dim1` and `dim2`.
 
     Args:
-        x (Tensor): Values to fill diagonal.
+        input (Tensor): Values to fill diagonal.
         offset (int, optional): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. Default: 0.
 
             - If :math:`offset>0`, fill the diagonals that are `offset` units upward from the main diagonal.
             - If :math:`offset<0`, fill the diagonals that are `offset` units downward from the main diagonal.
 
-        dim1 (int, optional): The first dimension in `x` with respect to which to fill diagonal. Default: -2.
-        dim2 (int, optional): The second dimension in `x` with respect to which to fill diagonal. Default: -1.
+        dim1 (int, optional): The first dimension in `input` with respect to which to fill diagonal. Default: -2.
+        dim2 (int, optional): The second dimension in `input` with respect to which to fill diagonal. Default: -1.
 
     Returns:
-        Tensor, has the same dtype as `x`, but the shape of output is one dimension higher than the `x`.
+        Tensor, has the same dtype as `input`, but the shape of output is one dimension higher than the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not supported.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not supported.
         TypeError: If `offset` is not an int.
         TypeError: If `dim1` or `dim2` is not an int.
-        ValueError: If the dimension of `x` is not 1D-6D.
-        ValueError: If `dim1` is not in range of [-len(x.shape), len(x.shape)).
-        ValueError: If `dim2` is not in range of [-len(x.shape), len(x.shape)).
+        ValueError: If the dimension of `input` is not 1D-6D.
+        ValueError: If `dim1` is not in range of [-len(input.shape), len(input.shape)).
+        ValueError: If `dim2` is not in range of [-len(input.shape), len(input.shape)).
         ValueError: If `dim1` and `dim2` are identical.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2,3,4]), mindspore.float32)
@@ -10146,20 +10147,20 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
     transpose_op = Transpose()
     matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
     zeros = ops.Zeros()
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("For 'diag_embed', 'x' must be Tensor.")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For 'diag_embed', 'input' must be Tensor.")
     dtypeop = P.DType()
-    input_dtype = dtypeop(x)
+    input_dtype = dtypeop(input)
     if not (input_dtype in (mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16,
                             mstype.uint32, mstype.uint64, mstype.float16, mstype.float32, mstype.float64)):
-        raise TypeError("For 'diag_embed', the dtype of 'x' must be int8, int16, int32, int64, "
+        raise TypeError("For 'diag_embed', the dtype of 'input' must be int8, int16, int32, int64, "
                         f"uint8, uint16, uint32, uint64, float16, float32 or float64, but got '{input_dtype}'.")
     _check_attr_dtype("offset", offset, [int], "diag_embed")
     _check_attr_dtype("dim1", dim1, [int], "diag_embed")
     _check_attr_dtype("dim2", dim2, [int], "diag_embed")
-    if len(x.shape) > 6:
-        raise ValueError("For 'diag_embed', the dimension of 'x' must be 1-6D.")
-    x_shape = x.shape
+    if len(input.shape) > 6:
+        raise ValueError("For 'diag_embed', the dimension of 'input' must be 1-6D.")
+    x_shape = input.shape
     output_dim = len(x_shape) + 1
     if dim1 < -output_dim or dim1 > (output_dim - 1):
         raise ValueError(f"For 'diag_embed', 'dim1' must be in range of [{-output_dim}, {output_dim - 1}), "
@@ -10184,9 +10185,9 @@ def diag_embed(x, offset=0, dim1=-2, dim2=-1):
         dsize = x_shape[-1] - offset
     diag_plane = (dsize, dsize)
     output_shape_trans = batch_shape + diag_plane
-    output = zeros(output_shape_trans, x.dtype)
+    output = zeros(output_shape_trans, input.dtype)
     k = P.Cast()(offset, mstype.int32)
-    output = matrix_set_diag_op(output, x, k)
+    output = matrix_set_diag_op(output, input, k)
     dim = 0
     perm = ()
     for i in range(output_dim):
