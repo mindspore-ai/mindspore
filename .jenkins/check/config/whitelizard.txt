@@ -34,6 +34,9 @@ mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool3d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool2d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:max_unpool1d
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:pad
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv1d
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
+mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv2d
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:cov
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
