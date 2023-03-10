@@ -2855,9 +2855,9 @@ def cosh(x):
     return F.cosh(x)
 
 
-def ger(x, y):
-    """Ger product of `x1` and `x2`.."""
-    return F.ger(x, y)
+def ger(input, other):
+    """Ger product of `input` and `other`."""
+    return F.ger(input, other)
 
 
 def gt(x, y):
@@ -3553,11 +3553,11 @@ def sparse_ndim_(x):
     return F.tuple_len(x.shape)
 
 
-def bernoulli(x, p=0.5, seed=None):
+def bernoulli(input, p=0.5, seed=None):
     """
     Randomly draws binary numbers from a Bernoulli distribution.
     """
-    return F.bernoulli(x, p, seed)
+    return F.bernoulli(input, p, seed)
 
 
 def gather_nd(input_x, indices):

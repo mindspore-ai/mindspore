@@ -1195,7 +1195,7 @@ def poisson(shape, mean, seed=None):
 
 
 @_function_forbid_reuse
-def multinomial(inputs, num_sample, replacement=True, seed=None):
+def multinomial(input, num_samples, replacement=True, seed=None):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of the input tensor.
@@ -1205,9 +1205,9 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        inputs (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
+        input (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
           float32 data type.
-        num_sample (int): Number of samples to draw.
+        num_samples (int): Number of samples to draw.
         replacement (bool, optional): Whether to draw with replacement or not, default: True.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate
           pseudo-random numbers, must be non-negative. Default: None.
@@ -1217,8 +1217,8 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         The dtype is float32.
 
     Raises:
-        TypeError: If `x` is not a Tensor whose dtype is not float32.
-        TypeError: If `num_sample` is not an int.
+        TypeError: If `input` is not a Tensor whose dtype is not float32.
+        TypeError: If `num_samples` is not an int.
         TypeError: If `seed` is neither an int nor an optional.
 
     Supported Platforms:
@@ -1229,8 +1229,8 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
         >>> # case 1: The output is random, and the length of the output is the same as num_sample.
-        >>> x = Tensor([0, 9, 4, 0], mindspore.float32)
-        >>> output = ops.multinomial(x, 2)
+        >>> input = Tensor([0, 9, 4, 0], mindspore.float32)
+        >>> output = ops.multinomial(input, 2)
         >>> # print(output)
         >>> # [1 2] or [2 1]
         >>> # the case where the result is [2 1] in multiple times.
@@ -1240,37 +1240,37 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         >>> # case 2: The output is random, and the length of the output is the same as num_sample.
         >>> # replacement is False(Default).
         >>> # If the extracted value is 0, the index value of 1 will be returned.
-        >>> x = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = ops.multinomial(x, 4)
+        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
+        >>> output = ops.multinomial(input, 4)
         >>> print(output)
         [1 1 2 1]
         >>> # case 3: The output is random, num_sample == x_length = 4, and replacement is True,
         >>> # Can extract the same elements。
-        >>> x = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = ops.multinomial(x, 4, True)
+        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
+        >>> output = ops.multinomial(input, 4, True)
         >>> print(output)
         [1 1 2 2]
     """
     shape = P.Shape()
     reshape = P.Reshape()
-    const_utils.check_valid_dim(len(shape(inputs)), "multinomial")
+    const_utils.check_valid_dim(len(shape(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
-        if shape(inputs)[-1] < num_sample:
-            const_utils.raise_value_error("For 'multinomial', the 'num_sample' must be less than "
+        if shape(input)[-1] < num_samples:
+            const_utils.raise_value_error("For 'multinomial', the 'num_samples' must be less than "
                                           "the last dimension of input without 'replacement', "
-                                          "but got 'num_sample': {} and "
-                                          "'replacement': {}".format(num_sample, replacement))
+                                          "but got 'num_samples': {} and "
+                                          "'replacement': {}".format(num_samples, replacement))
         n_dist = 1
-        if len(shape(inputs)) > 1:
-            n_dist = shape(inputs)[-2]
-        random_uniform = P.UniformReal(seed1, seed2)((n_dist * shape(inputs)[-1],))
+        if len(shape(input)) > 1:
+            n_dist = shape(input)[-2]
+        random_uniform = P.UniformReal(seed1, seed2)((n_dist * shape(input)[-1],))
         if n_dist != 1:
-            random_uniform = reshape(random_uniform, (n_dist, shape(inputs)[-1]))
-        vals = P.RealDiv()(P.Log()(random_uniform), inputs + 1e-6)
-        _, indices = P.TopK()(vals, num_sample)
+            random_uniform = reshape(random_uniform, (n_dist, shape(input)[-1]))
+        vals = P.RealDiv()(P.Log()(random_uniform), input + 1e-6)
+        _, indices = P.TopK()(vals, num_samples)
         return indices
-    return P.Multinomial(seed1, seed2)(inputs, num_sample)
+    return P.Multinomial(seed1, seed2)(input, num_samples)
 
 
 def _check_shape(input_shape):
