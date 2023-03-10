@@ -414,7 +414,6 @@
     "PRelu",
     "Trunc",
     "AccumulateNV2",
-    "SoftmaxCrossEntropyWithLogits",
     "ReduceMeanD",
     "SquareSumV1",
     "SplitVD",
