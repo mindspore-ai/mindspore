@@ -98,18 +98,20 @@ class ImageTensorOperation(TensorOperation):
 
 
 class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Apdjust brightness of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the brightness of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        brightness_factor (float): How much to adjust the brightness. Can be any non negative number.
+        brightness_factor (float): How much to adjust the brightness, must be non negative.
             0 gives a black image, 1 gives the original image,
             while 2 increases the brightness by a factor of 2.
 
     Raises:
         TypeError: If `brightness_factor` is not of type float.
         ValueError: If `brightness_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -142,18 +144,20 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustContrast(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust contrast of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the contrast of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        contrast_factor (float): How much to adjust the contrast. Can be any non negative number.
+        contrast_factor (float): How much to adjust the contrast, must be non negative.
             0 gives a solid gray image, 1 gives the original image,
             while 2 increases the contrast by a factor of 2.
 
     Raises:
         TypeError: If `contrast_factor` is not of type float.
         ValueError: If `contrast_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -242,17 +246,19 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustHue(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust hue of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the hue of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
         hue_factor (float): How much to add to the hue channel,
-            must be in the interval [-0.5, 0.5].
+            must be in range of [-0.5, 0.5].
 
     Raises:
         TypeError: If `hue_factor` is not of type float.
         ValueError: If `hue_factor` is not in the interval [-0.5, 0.5].
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -285,17 +291,20 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust saturation of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the saturation of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        saturation_factor (float): How much to adjust the saturation. Can be any non negative number.
+        saturation_factor (float): How much to adjust the saturation, must be non negative.
             0 gives a black image, 1 gives the original image while 2 increases the saturation by a factor of 2.
 
     Raises:
         TypeError: If `saturation_factor` is not of type float.
         ValueError: If `saturation_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C> or channel is not 3.
+        RuntimeError: If shape of the input image is not <H, W, C>.
+        RuntimeError: If channel of the input image is not 3.
 
     Supported Platforms:
         ``CPU``
@@ -328,18 +337,20 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustSharpness(ImageTensorOperation):
-    r"""
-    Adjust sharpness of input image. Input image is expected to be in [H, W, C] or [H, W] format.
+    """
+    Adjust the sharpness of the input image.
+
+    The input image is expected to be in shape of [H, W, C] or [H, W].
 
     Args:
-        sharpness_factor (float): How much to adjust the sharpness, should be a
-            non negative number. 0 gives a blurred image, 1 gives the
-            original image while 2 increases the Sharpness by a factor of 2.
+        sharpness_factor (float): How much to adjust the sharpness, must be
+            non negative. 0 gives a blurred image, 1 gives the
+            original image while 2 increases the sharpness by a factor of 2.
 
     Raises:
         TypeError: If `sharpness_factor` is not of type float.
         ValueError: If `sharpness_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C> or <H, W>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -366,13 +377,11 @@ class Affine(ImageTensorOperation):
 
     Args:
         degrees (float): Rotation angle in degrees between -180 and 180, clockwise direction.
-        translate (Sequence): The horizontal and vertical translations, must be a sequence of size 2.
+        translate (Sequence[float, float]): The horizontal and vertical translations, must be a sequence of size 2.
         scale (float): Scaling factor, which must be positive.
-        shear (Union[float, Sequence]): Shear angle value in degrees between -180 to 180.
-            If a number is provided, a shearing parallel to X axis with a factor selected from
-            ( `-shear` , `shear` ) will be applied.
-            If a sequence is provided, a shearing parallel to X axis with a factor selected
-            from ( `shear` [0], `shear` [1]) will be applied.
+        shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between -180 to 180.
+            If float is provided, shear along the x axis with this value, without shearing along the y axis;
+            If Sequence[float, float] is provided, shear along the x axis and y axis with these two values separately.
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
@@ -392,11 +401,11 @@ class Affine(ImageTensorOperation):
         TypeError: If `degrees` is not of type float.
         TypeError: If `translate` is not of type Sequence[float, float].
         TypeError: If `scale` is not of type float.
+        ValueError: If `scale` is non positive.
         TypeError: If `shear` is not of float or Sequence[float, float].
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
-        ValueError: If `scale` is non positive.
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -973,20 +982,24 @@ class Erase(ImageTensorOperation):
         left (int): Horizontal ordinate of the upper left corner of erased region.
         height (int): Height of erased region.
         width (int): Width of erased region.
-        value (Union[int, Sequence[int]], optional): Pixel value used to pad the erased area.
-            If a single integer is provided, it will be used for all RGB channels.
-            If a sequence of length 3 is provided, it will be used for R, G, B channels respectively.
-            Default: 0.
+        value (Union[int, Sequence[int, int, int]], optional): Pixel value used to pad the erased area. Default: 0.
+            If int is provided, it will be used for all RGB channels.
+            If Sequence[int, int, int] is provided, it will be used for R, G, B channels respectively.
         inplace (bool, optional): Whether to apply erasing inplace. Default: False.
 
     Raises:
         TypeError: If `top` is not of type int.
+        ValueError: If `top` is negative.
         TypeError: If `left` is not of type int.
+        ValueError: If `left` is negative.
         TypeError: If `height` is not of type int.
+        ValueError: If `height` is not positive.
         TypeError: If `width` is not of type int.
-        TypeError: If `value` is not of type int or Sequence[int].
+        ValueError: If `width` is not positive.
+        TypeError: If `value` is not of type int or Sequence[int, int, int].
+        ValueError: If `value` is not in range of [0, 255].
         TypeError: If `inplace` is not of type bool.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -1698,29 +1711,29 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
     Apply perspective transformation on input image.
 
     Args:
-        start_points (Sequence[Sequence[int, int]]): List containing four lists of two integers corresponding to four
-            corners [top-left, top-right, bottom-right, bottom-left] of the original image.
-        end_points (Sequence[Sequence[int, int]]): List containing four lists of two integers corresponding to four
-            corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
+        start_points (Sequence[Sequence[int, int]]): Sequence of the starting point coordinates, containing four
+            two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
+            quadrilateral in the original image.
+        end_points (Sequence[Sequence[int, int]]): Sequence of the ending point coordinates, containing four
+            two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
+            quadrilateral in the target image.
         interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR, Inter.LINEAR,
             Inter.NEAREST, Inter.AREA, Inter.PILCUBIC, Inter.CUBIC or Inter.BICUBIC. Default: Inter.BILINEAR.
 
             - Inter.BILINEAR, bilinear interpolation.
-            - Inter.LINEAR, bilinear interpolation, here is the same as Inter.BILINEAR.
+            - Inter.LINEAR, linear interpolation, the same as Inter.BILINEAR.
             - Inter.NEAREST, nearest-neighbor interpolation.
             - Inter.BICUBIC, bicubic interpolation.
-            - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
-            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
-              should be in 3 channels format.(PIL input is not supported)
-            - Inter.AREA, pixel area interpolation.(PIL input is not supported)
+            - Inter.CUBIC, cubic interpolation, the same as Inter.BICUBIC.
+            - Inter.PILCUBIC, cubic interpolation based on the implementation of Pillow,
+              only numpy.ndarray input is supported.
+            - Inter.AREA, pixel area interpolation, only numpy.ndarray input is supported.
 
     Raises:
-        TypeError: If `start_points` is not of type Sequence[Sequence[int, int]] of length 4.
-        TypeError: If element in `start_points` is not of type Sequence[int, int] of length 2.
-        TypeError: If `end_points` is not of type Sequence[Sequence[int, int]] of length 4.
-        TypeError: If element in `end_points` is not of type Sequence[int, int] of length 2.
+        TypeError: If `start_points` is not of type Sequence[Sequence[int, int]].
+        TypeError: If `end_points` is not of type Sequence[Sequence[int, int]].
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -1772,7 +1785,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
 
 class Posterize(ImageTensorOperation):
     """
-    Posterize an image by reducing the number of bits for each color channel.
+    Posterize the input image by reducing the number of bits for each color channel.
 
     Args:
         bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
@@ -1780,7 +1793,7 @@ class Posterize(ImageTensorOperation):
     Raises:
         TypeError: If `bits` is not of type int.
         ValueError: If `bits` is not in range [0, 8].
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
     """
 
     @check_posterize
@@ -1795,39 +1808,42 @@ class Posterize(ImageTensorOperation):
 
 class RandAugment(ImageTensorOperation):
     """
-    Apply RandAugment data augmentation method based on
-    `RandAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1909.13719.pdf>`_ .
-    This operation works only with 3-channel RGB images.
+    Apply RandAugment data augmentation method on the input image.
+
+    Refer to `RandAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1909.13719.pdf>`_ .
+
+    Only support 3-channel RGB image.
 
     Args:
         num_ops (int, optional): Number of augmentation transformations to apply sequentially. Default: 2.
-        magnitude (int, optional): Magnitude for all the transformations and its value should be smaller than the value
-            of num_magnitude_bins. Default: 9.
-        num_magnitude_bins (int, optional): The number of different magnitude values. The number of different magnitude
-            values, must be greater than or equal to 2. Default: 31.
-        interpolation (Inter, optional): Image interpolation mode for Resize operation.
-            It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]. Default: Inter.NEAREST.
+        magnitude (int, optional): Magnitude for all the transformations, must be smaller than
+            `num_magnitude_bins`. Default: 9.
+        num_magnitude_bins (int, optional): The number of different magnitude values,
+            must be no less than 2. Default: 31.
+        interpolation (Inter, optional): Image interpolation method. Default: Inter.NEAREST.
+            It can be Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC or Inter.AREA.
 
-            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+            - Inter.AREA, pixel area interpolation.
 
-            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
-
-            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
-
-            - Inter.AREA: means the interpolation method is pixel area interpolation.
-
-        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the transformed
-            image. It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-            If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255].
-            Default: 0.
+        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
+            transformed image, must be in range of [0, 255]. Default: 0.
+            If int is provided, pad all RGB channels with this value.
+            If tuple[int, int, int] is provided, pad R, G, B channels respectively.
 
     Raises:
         TypeError: If `num_ops` is not of type int.
+        ValueError: If `num_ops` is negative.
         TypeError: If `magnitude` is not of type int.
+        ValueError: If `magnitude` is not positive.
         TypeError: If `num_magnitude_bins` is not of type int.
+        ValueError: If `num_magnitude_bins` is less than 2.
         TypeError: If `interpolation` not of type :class:`mindspore.dataset.vision.Inter` .
-        TypeError: If `fill_value` is not an int or a tuple of length 3.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        TypeError: If `fill_value` is not of type int or tuple[int, int, int].
+        ValueError: If `fill_value` is not in range of [0, 255].
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -3559,38 +3575,39 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
 class ResizedCrop(ImageTensorOperation):
     """
-    Crop the input image at a specific location, and resize the cropped image using a selected interpolation mode.
+    Crop the input image at a specific region and resize it to desired size.
 
     Args:
-        top (int): Horizontal ordinate of the upper left corner of the crop image.
-        left (int): Vertical ordinate of the upper left corner of the crop image.
-        height (int): Height of cropped image.
-        width (int): Width of cropped image.
-        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        interpolation (Inter, optional): Image interpolation mode. Default: Inter.LINEAR.
-            It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
+        top (int): Horizontal ordinate of the upper left corner of the crop region.
+        left (int): Vertical ordinate of the upper left corner of the crop region.
+        height (int): Height of the crop region.
+        width (int): Width of the cropp region.
+        size (Union[int, Sequence[int, int]]): The size of the output image.
+            If int is provided, the smaller edge of the image will be resized to this value,
+            keeping the image aspect ratio the same.
+            If Sequence[int, int] is provided, it should be (height, width).
+        interpolation (Inter, optional): Image interpolation method. Default: Inter.BILINEAR.
+            It can be Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA or Inter.PILCUBIC.
 
-            - Inter.LINEAR, means interpolation method is bilinear interpolation.
-
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
-
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
-
-            - Inter.AREA, means interpolation method is pixel area interpolation.
-
-            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
-              should be in 3 channels format.
+            - Inter.LINEAR, bilinear interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+            - Inter.AREA, pixel area interpolation.
+            - Inter.PILCUBIC, cubic interpolation based on the implementation of Pillow
 
     Raises:
         TypeError: If `top` is not of type int.
+        ValueError: If `top` is negative.
         TypeError: If `left` is not of type int.
+        ValueError: If `left` is negative.
         TypeError: If `height` is not of type int.
+        ValueError: If `height` is not positive.
         TypeError: If `width` is not of type int.
-        TypeError: If `size` is not of type int or Sequence[int].
+        ValueError: If `width` is not positive.
+        TypeError: If `size` is not of type int or Sequence[int, int].
+        ValueError: If `size` is not posotive.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -4091,36 +4108,36 @@ class ToType(TypeCast):
 
 class TrivialAugmentWide(ImageTensorOperation):
     """
-    Apply TrivialAugmentWide data augmentation method based on
+    Apply TrivialAugmentWide data augmentation method on the input image.
+
+    Refer to
     `TrivialAugmentWide: Tuning-free Yet State-of-the-Art Data Augmentation <https://arxiv.org/abs/2103.10158>`_ .
-    This operation works only with 3-channel RGB images.
+
+    Only support 3-channel RGB image.
 
     Args:
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be greater than or equal to 2. Default: 31.
-        interpolation (Inter, optional): Image interpolation mode for Resize operation. Default: Inter.NEAREST.
-            It can be any of [Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA].
+        interpolation (Inter, optional): Image interpolation method. Default: Inter.NEAREST.
+            It can be Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC or Inter.AREA.
 
-            - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+            - Inter.AREA, pixel area interpolation.
 
-            - Inter.BILINEAR: means interpolation method is bilinear interpolation.
-
-            - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
-
-            - Inter.AREA: means the interpolation method is pixel area interpolation.
-
-        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside
-            the transformed image.
-            It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-            If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255]
-            Default: 0.
+        fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
+            transformed image, must be in range of [0, 255]. Default: 0.
+            If int is provided, pad all RGB channels with this value.
+            If tuple[int, int, int] is provided, pad R, G, B channels respectively.
 
     Raises:
         TypeError: If `num_magnitude_bins` is not of type int.
         ValueError: If `num_magnitude_bins` is less than 2.
-        TypeError: If `interpolation` is not of type Inter.
-        TypeError: If `fill_value` is not an integer or a tuple of length 3.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        TypeError: If `interpolation` not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `fill_value` is not of type int or tuple[int, int, int].
+        ValueError: If `fill_value` is not in range of [0, 255].
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``

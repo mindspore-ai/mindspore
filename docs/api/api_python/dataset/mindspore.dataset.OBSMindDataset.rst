@@ -33,7 +33,7 @@
         - **ValueError** - `columns_list` 参数无效。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note::
         - 需要用户提前在云存储上创建同步用的目录，然后通过 `sync_obs_path` 指定。

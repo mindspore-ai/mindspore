@@ -267,14 +267,30 @@ def linear_fbanks(n_freqs, f_min, f_max, n_filter, sample_rate):
     Creates a linear triangular filterbank.
 
     Args:
-        n_freqs (int): Number of frequency.
-        f_min (float): Minimum of frequency in Hz.
-        f_max (float): Maximum of frequency in Hz.
+        n_freqs (int): Number of frequencies to highlight/apply.
+        f_min (float): Minimum frequency in Hz.
+        f_max (float): Maximum frequency in Hz.
         n_filter (int): Number of (linear) triangular filter.
-        sample_rate (int): Sample rate.
+        sample_rate (int): Sample rate of the waveform.
 
     Returns:
         numpy.ndarray, the linear triangular filterbank.
+
+    Raises:
+        TypeError: If `n_freqs` is not of type int.
+        ValueError: If `n_freqs` is negative.
+        TypeError: If `f_min` is not of type float.
+        ValueError: If `f_min` is negative.
+        TypeError: If `f_max` is not of type float.
+        ValueError: If `f_max` is negative.
+        ValueError: If `f_min` is larger than `f_max`.
+        TypeError: If `n_filter` is not of type int.
+        ValueError: If `n_filter` is not positive.
+        TypeError: If `sample_rate` is not of type int.
+        ValueError: If `sample_rate` is not positive.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.audio import linear_fbanks

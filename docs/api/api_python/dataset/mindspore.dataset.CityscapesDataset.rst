@@ -10,12 +10,12 @@ mindspore.dataset.CityscapesDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集。当参数 `quality_mode` 取值为 'fine'时，此参数可取值为 'train'、 'test'、 'val'或 'all'。
-          当参数 `quality_mode` 取值为 'coarse'时，此参数可取值为 'train'、 'train_extra'、 'val'或 'all'。默认值：'train'，全部样本图片。
-        - **quality_mode** (str, 可选) - 指定数据集的质量模式，可取值为 'fine'或 'coarse'。默认值：'fine'。
-        - **task** (str, 可选) - 指定数据集的任务类型，可取值为 'instance'、 'semantic'、 'polygon'或 'color'。默认值：'instance'。
+        - **usage** (str, 可选) - 指定数据集的子集。当参数 `quality_mode` 取值为 'fine'时，此参数可取值为 'train'、'test'、'val' 或 'all'。
+          当参数 `quality_mode` 取值为 'coarse'时，此参数可取值为 'train'、'train_extra'、'val' 或 'all'。默认值：'train'，全部样本图片。
+        - **quality_mode** (str, 可选) - 指定数据集的质量模式，可取值为 'fine' 或 'coarse'。默认值：'fine'。
+        - **task** (str, 可选) - 指定数据集的任务类型，可取值为 'instance'、'semantic'、'polygon' 或 'color'。默认值：'instance'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -34,7 +34,7 @@ mindspore.dataset.CityscapesDataset
         - **ValueError** - `task` 参数取值不为 'instance'、 'semantic'、 'polygon'或 'color'。
         - **ValueError** - `quality_mode` 参数取值不为 'fine'或 'coarse'。
         - **ValueError** - `usage` 参数取值不在给定的字段中。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

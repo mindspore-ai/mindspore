@@ -551,7 +551,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If sampler and sharding are specified at the same time.
         ValueError: If num_shards is specified but shard_id is None.
         ValueError: If shard_id is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - If you configure `python_multiprocessing=True (default: True)` and `num_parallel_workers>1 (default: 1)`
@@ -929,7 +929,7 @@ class NumpySlicesDataset(GeneratorDataset):
         ValueError: If sampler and sharding are specified at the same time.
         ValueError: If num_shards is specified but shard_id is None.
         ValueError: If shard_id is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
         >>> # 1) Input data can be a list

@@ -10,11 +10,11 @@ mindspore.dataset.Places365Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 'train-standard'、 'train-challenge'或 'val'。默认值：'train-standard'。
+        - **usage** (str, 可选) - 'train-standard'、'train-challenge' 或 'val'。默认值：'train-standard'。
         - **small** (bool, 可选) - 是否使用256*256的低分辨率图像（True）或高分辨率图像（False）。默认值：False，使用低分辨率图像。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。

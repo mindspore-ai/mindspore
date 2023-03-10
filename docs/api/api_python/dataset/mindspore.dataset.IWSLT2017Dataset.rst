@@ -9,7 +9,7 @@ mindspore.dataset.IWSLT2017Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'valid'， 'test'或 'all'。默认值：None，读取全部样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'valid'、'test' 或 'all'。默认值：None，读取全部样本。
         - **language_pair** (sequence, 可选) - 包含源语和目标语的语言列表，支持的语言对有（'en', 'nl'）、
           （'en', 'de'）、（'en', 'it'）、（'en', 'ro'）、（'nl', 'en'）、（'nl', 'de'）、（'nl', 'it'）、（'nl', 'ro'）、
           （'de', 'en'）、（'de', 'nl'）、（'de', 'it'）、（'de', 'ro'）、（'it', 'en'）、（'it', 'nl'）、（'it', 'de'）、
@@ -24,7 +24,7 @@ mindspore.dataset.IWSLT2017Dataset
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：

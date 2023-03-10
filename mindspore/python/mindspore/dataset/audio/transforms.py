@@ -916,16 +916,20 @@ class Filtfilt(AudioTensorOperation):
     Apply an IIR filter forward and backward to a waveform.
 
     Args:
-        a_coeffs (Sequence): denominator coefficients of difference equation of dimension of (n_order + 1).
+        a_coeffs (Sequence[float]): Denominator coefficients of difference equation of dimension.
             Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
             Must be same size as b_coeffs (pad with 0's as necessary).
-        b_coeffs (Sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
+        b_coeffs (Sequence[float]): Numerator coefficients of difference equation of dimension.
             Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
         clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1]. Default: True.
 
     Raises:
-        RuntimeError: If the shape of input audio waveform does not match <..., time>.
+        TypeError: If `a_coeffs` is not of type Sequence[float].
+        TypeError: If `b_coeffs` is not of type Sequence[float].
+        ValueError: If `a_coeffs` and `b_coeffs` are of different sizes.
+        TypeError: If `clamp` is not of type bool.
+        RuntimeError: If shape of the input audio is not <..., time>.
 
     Examples:
         >>> import numpy as np

@@ -12,10 +12,10 @@ mindspore.dataset.SBDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
-        - **task** (str, 可选) - 指定读取SB数据集的任务类型，支持 'Boundaries'和 'Segmentation'。默认值：'Boundaries'。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、 'val'、 'train_noval'和 'all'。默认值：'train'。
+        - **task** (str, 可选) - 指定读取SB数据集的任务类型，支持 'Boundaries' 和 'Segmentation'。默认值：'Boundaries'。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'val'、'train_noval' 和 'all'。默认值：'train'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有图像样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -32,7 +32,7 @@ mindspore.dataset.SBDataset
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - `task` 不是['Boundaries', 'Segmentation']中的任何一个。
         - **ValueError** - `usage` 不是['train', 'val', 'train_noval', 'all']中的任何一个。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

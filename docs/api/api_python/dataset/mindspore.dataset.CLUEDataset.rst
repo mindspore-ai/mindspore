@@ -5,14 +5,14 @@ mindspore.dataset.CLUEDataset
 
     读取和解析CLUE数据集的源文件构建数据集。
 
-    目前支持的CLUE分类任务包括：'AFQMC'、 'TNEWS 、'IFLYTEK'、 'CMNLI'、 'WSC'和 'CSL'。更多CLUE数据集的说明详见 `CLUE GitHub <https://github.com/CLUEbenchmark/CLUE>`_ 。
+    目前支持的CLUE分类任务包括：'AFQMC'、'TNEWS'、'IFLYTEK'、'CMNLI'、'WSC' 和 'CSL'。更多CLUE数据集的说明详见 `CLUE GitHub <https://github.com/CLUEbenchmark/CLUE>`_ 。
 
     参数：
         - **dataset_files** (Union[str, list[str]]) - 数据集文件路径，支持单文件路径字符串、多文件路径字符串列表或可被glob库模式匹配的字符串，文件列表将在内部进行字典排序。
-        - **task** (str, 可选) - 任务类型，可取值为 'AFQMC' 、 'TNEWS'、 'IFLYTEK'、 'CMNLI'、 'WSC' 或 'CSL'。默认值：'AFQMC'。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'test'或 'eval'。默认值：'train'。
+        - **task** (str, 可选) - 任务类型，可取值为 'AFQMC'、'TNEWS'、'IFLYTEK'、'CMNLI'、'WSC' 或 'CSL'。默认值：'AFQMC'。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'eval'。默认值：'train'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
@@ -171,7 +171,7 @@ mindspore.dataset.CLUEDataset
         - **ValueError** - `task` 参数不为 'AFQMC'、 'TNEWS'、 'IFLYTEK'、 'CMNLI'、 'WSC' 或 'CSL'。
         - **ValueError** - `usage` 参数不为 'train'、 'test' 或 'eval'。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
 
