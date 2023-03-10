@@ -1396,7 +1396,29 @@ class LpNorm(Primitive):
     .. math::
         output = sum(abs(input)**p)**(1/p)
 
-    Refer to :func:`mindspore.ops.norm` for more details.
+    Args:
+        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
+        p(int, optional): The order of norm. Default: 2.
+        keep_dims(bool, optional): Whether the output tensors have dim retained or not. Default: False.
+        epsilon(float, optional): A value added to the denominator for numerical stability. Default: 1e-12.
+
+    Inputs:
+        - **input** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same dtype as `input`, its shape depends on `axis`. For example, if the shape of input
+        is :math:`(2, 3, 4)`, `axis` is :math:`[0, 1]`, output shape will be :math:`(4,)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not one of: float16, float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `axis` is not an int, a tuple or a list.
+        TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If the element of `axis` is out of the range :math:`[-r, r)`,
+            where :math:`r` is the rank of `input`.
+        ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2346,18 +2368,16 @@ class Logit(Primitive):
     r"""
     Calculate the logit of a tensor element-wise. Element in `x` is clamped to [eps, 1-eps].
 
-    .. math::
-        \begin{align}
-        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
-        z_{i} & = \begin{cases}
-        x_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
-        x_{i} & \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
-        1 - \text{eps} & \text{if } x_{i} \gt 1 - \text{eps}
-        \end{cases}
-        \end{align}
-
     Refer to :func:`mindspore.ops.logit` for more details.
+
+    Args:
+        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: -1.0.
+
+    Inupts:
+        x (Tensor): The input tensor.
+
+    Outputs:
+        Tensor, with the same shape and dtype as the `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6733,6 +6753,17 @@ class Cross(Primitive):
 
     Refer to :func:`mindspore.ops.cross` for more details.
 
+    Args:
+        dim (int): Spefcified dim along which to cumpute cross product with. Default: -65530.
+
+    Inputs:
+        - **x1** (Tensor) - Input Tensor.
+        - **x2** (Tensor) - Another input Tensor, must have the same shape and
+          the same type as `x1`, and the size of their `dim` dimension should be 3.
+
+    Outputs:
+        Tensor, has the same shape and type as inputs.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -7420,6 +7451,18 @@ class TrilIndices(Primitive):
 
     Refer to :func:`mindspore.ops.tril_indices` for more details.
 
+    Args:
+        row (int): number of rows in the 2-D matrix.
+        col (int): number of columns in the 2-D matrix.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+
+    Outputs:
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
+          lower triangular matrix.
+
     Supported Platforms:
         ``GPU`` ``CPU``
 
@@ -7626,6 +7669,18 @@ class TriuIndices(Primitive):
     and returns them as a 2-by-N Tensor.
 
     Refer to :func:`mindspore.ops.triu_indices` for more details.
+
+    Args:
+        row (int): number of rows in the 2-D matrix.
+        col (int): number of columns in the 2-D matrix.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+
+    Outputs:
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
+          lower triangular matrix.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7956,6 +8011,18 @@ class Roll(Primitive):
     Rolls the elements of a tensor along an axis.
 
     Refer to :func:`mindspore.ops.roll` for more details.
+
+    Args:
+        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
+            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
+            in the opposite direction.
+        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

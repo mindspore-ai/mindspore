@@ -4199,8 +4199,8 @@ def meshgrid(*inputs, indexing='xy'):
             The length of inputs should be greater than 1. The data type is Number.
 
     Keyword Args:
-        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
-            matrix ('ij') indexing of output. In the 2-D case with
+        indexing (str, optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
             for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
