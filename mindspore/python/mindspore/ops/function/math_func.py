@@ -2410,7 +2410,7 @@ def cosh(input):
     return cosh_(input)
 
 
-def tanh(input_x):
+def tanh(input):
     r"""
     Computes hyperbolic tangent of input element-wise. The Tanh function is defined as:
 
@@ -2421,26 +2421,26 @@ def tanh(input_x):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
             additional dimensions, with float16 or float32 data type.
 
     Returns:
-        Tensor, with the same type and shape as the `input_x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.tanh(input_x)
+        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.tanh(input)
         >>> print(output)
         [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
     """
-    return tanh_(input_x)
+    return tanh_(input)
 
 
 def asinh(x):
