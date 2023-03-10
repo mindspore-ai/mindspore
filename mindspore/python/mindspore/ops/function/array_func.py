@@ -2147,13 +2147,13 @@ def unsqueeze(input, dim):
     return expand_dims_(input, dim)
 
 
-def squeeze(input_x, axis=()):
+def squeeze(input, axis=None):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
 
-    If :math:`axis=()`, it will remove all the dimensions of size 1.
+    If :math:`axis=None`, it will remove all the dimensions of size 1.
     If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
-    For example, if the dimension is not specified :math:`axis=()`, input shape is (A, 1, B, C, 1, D),
+    For example, if the dimension is not specified :math:`axis=None`, input shape is (A, 1, B, C, 1, D),
     then the shape of the output Tensor is (A, B, C, D). If the dimension is specified, the squeeze operation
     is only performed in the specified dimension. If input shape is (A, 1, B), input Tensor will not be
     changed when :math:`axis=0` , but when :math:`axis=1` , the shape of the input Tensor will be changed to (A, B).
@@ -2164,16 +2164,16 @@ def squeeze(input_x, axis=()):
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
     Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
             all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
-            Default: (), an empty tuple.
+            Default: None, an empty tuple will be used.
 
     Returns:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
 
     Raises:
-        TypeError: If `input_x` is not a tensor.
+        TypeError: If `input` is not a tensor.
         TypeError: If `axis` is neither an int nor tuple.
         TypeError: If `axis` is a tuple whose elements are not all int.
         ValueError: If the corresponding dimension of the specified axis isn't equal to 1.
@@ -2182,15 +2182,17 @@ def squeeze(input_x, axis=()):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> output = ops.squeeze(input_x)
+        >>> input = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+        >>> output = ops.squeeze(input)
         >>> print(output)
         [[1. 1.]
          [1. 1.]
          [1. 1.]]
     """
+    if axis is None:
+        axis = ()
     squeeze_ = _get_cache_prim(P.Squeeze)(axis)
-    return squeeze_(input_x)
+    return squeeze_(input)
 
 
 def transpose(input_x, input_perm):
