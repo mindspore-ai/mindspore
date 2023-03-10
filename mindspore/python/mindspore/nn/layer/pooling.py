@@ -500,7 +500,7 @@ def _cal_padding(padding, cls_name, nd):
             padding_end = tuple(padding[i // 2] for i in range(nd * 2))
             padding = padding_start + padding_end
         elif len(padding) == 1:
-            padding = (0, 0) * (3 - nd) + padding * nd * 2
+            padding = (0, 0) * (3 - nd) + tuple(padding * nd * 2)
         else:
             if nd == 1:
                 raise ValueError(f"For {cls_name}, the padding must be a int or tuple/list contains one int, "
@@ -660,8 +660,8 @@ class AvgPool2d(_PoolNd):
             up-down direction of the input and `padding[1]` times in the left-right direction of the input.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
-        divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
-            otherwise kernel_size will be used. Default: None.
+        divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
+            in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
@@ -680,6 +680,7 @@ class AvgPool2d(_PoolNd):
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1 or 2.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
+        ValueError: If `divisor_override` is equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -720,6 +721,8 @@ class AvgPool2d(_PoolNd):
                                  f"or divisor_override is not None, but got padding:{padding}, ceil_mode:{ceil_mode}, "
                                  f"count_include_pad:{count_include_pad}, divisor_override:{divisor_override}.")
             self.is_expand = True
+            if divisor_override == 0:
+                raise ValueError(f"For '{self.cls_name}', the 'divisor_override' can not be 0.")
             divisor_override = 0 if divisor_override is None else divisor_override
             padding = _cal_padding(padding, self.cls_name, 2)
 
