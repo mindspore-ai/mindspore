@@ -344,7 +344,9 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
                                                             kPrimalAttrForwardUniqueId};
   if (IsOneOfPrimitiveCNode(origin_node, dropout_prims)) {
     for (auto &primal_attr : need_primal_attr) {
-      recomputed_node->AddPrimalAttr(primal_attr, origin_node->GetPrimalAttr(primal_attr));
+      if (origin_node->HasPrimalAttr(primal_attr)) {
+        recomputed_node->AddPrimalAttr(primal_attr, origin_node->GetPrimalAttr(primal_attr));
+      }
     }
   }
   return recomputed_node;
