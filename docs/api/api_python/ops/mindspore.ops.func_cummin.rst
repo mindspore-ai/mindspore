@@ -1,9 +1,9 @@
 mindspore.ops.cummin
 ====================
 
-.. py:function:: mindspore.ops.cummin(x, axis)
+.. py:function:: mindspore.ops.cummin(input, axis)
 
-    返回一个元组（最值、索引），其中最值是输入Tensor `x` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
+    返回一个元组（最值、索引），其中最值是输入Tensor `input` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
 
     .. math::
         \begin{array}{ll} \\
@@ -11,13 +11,13 @@ mindspore.ops.cummin
         \end{array}
 
     参数：
-        - **x** (Tensor) - 输入Tensor，要求维度大于0。
-        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+        - **input** (Tensor) - 输入Tensor，要求维度大于0。
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-input.ndim, input.ndim - 1]。
 
     返回：
         一个包含两个Tensor的元组，分别表示累积最小值和对应索引。每个输出Tensor的形状和输入Tensor的形状相同。
 
     异常：
-        - **TypeError** - 如果 `x` 不是Tensor。
+        - **TypeError** - 如果 `input` 不是Tensor。
         - **TypeError** - 如果 `axis` 不是int。
-        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+        - **ValueError** - 如果 `axis` 不在范围[-input.ndim, input.ndim - 1]内。

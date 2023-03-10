@@ -389,20 +389,20 @@ def addcmul(input, tensor1, tensor2, value=1):
     return _get_cache_prim(P.Addcmul)()(input, tensor1, tensor2, Tensor(value))
 
 
-def angle(x):
+def angle(input):
     """
     Returns the element-wise argument of a complex tensor.
     The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
     is the imaginary part. The argument returned by this function is of the form atan2(b,a).
 
     Args:
-        x (Tensor): The input tensor. types: complex64, complex128.
+        input (Tensor): The input tensor. types: complex64, complex128.
 
     Returns:
         Tensor, has the float32 or float64 type and the same shape as input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If the dtype of input is not one of: complex64, complex128.
 
     Supported Platforms:
@@ -414,32 +414,32 @@ def angle(x):
         >>> print(output)
         [1.7607845 1.0899091]
     """
-    return angle_(x)
+    return angle_(input)
 
 
-def bincount(x, weights=None, minlength=0):
+def bincount(input, weights=None, minlength=0):
     """
-    Counts the number of occurrences of each value in `x`.
+    Counts the number of occurrences of each value in `input`.
 
     If you don't specify 'minlength', the length of output Tensor will be
-    the maximum value of the input 'x' plus one.
+    the maximum value of the input 'input' plus one.
 
-    If `minlength` is specified, the length of output Tensor is the value of maximum of `x` plus 1 and `minlength`.
+    If `minlength` is specified, the length of output Tensor is the value of maximum of `input` plus 1 and `minlength`.
 
-    Each value in the output Tensor marks the number of occurrences of that index in 'x'.
+    Each value in the output Tensor marks the number of occurrences of that index in 'input'.
     If 'weights' is specified, the output results are weighted, i.e ``out[n] += weight[i]`` instead of ``out[n] += 1``.
 
     Args:
-        x (Tensor): 1-d input tensor.
-        weights (Tensor, optional): Weights, a tensor of the same shape as `x`. Defaults to None.
+        input (Tensor): 1-d input tensor.
+        weights (Tensor, optional): Weights, a tensor of the same shape as `input`. Defaults to None.
         minlength (int, optional): A minimum number of bins for the output tensor. Defaults to 0.
 
     Returns:
         Tensor, a tensor of shape Size([max(input) + 1]) if input is non-empty, else Size(0).
 
     Raises:
-        TypeError: if `x` or `weights` is not a tensor.
-        ValueError: If `x` is not one-dimensional, or if `x` and `weights` do not have the same shape.
+        TypeError: if `input` or `weights` is not a tensor.
+        ValueError: If `input` is not one-dimensional, or if `input` and `weights` do not have the same shape.
         ValueError: If `minlength` is a negative integer.
 
     Supported Platforms:
@@ -453,31 +453,31 @@ def bincount(x, weights=None, minlength=0):
         >>> print(ops.bincount(x, weights=weights))
         [1.75 0.5  0.   0.   0.25]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError("For math function 'bincount', 'x' must be Tensor.")
-    if x.dtype not in (mstype.Int, mstype.int16, mstype.int32, mstype.int64):
-        raise TypeError(f"For math function 'bincount', the type of 'x' must be in [Int, int16, int32, int64], but" \
-                        f" got {x.dtype}.")
+    if not isinstance(input, Tensor):
+        raise TypeError("For math function 'bincount', 'input' must be Tensor.")
+    if input.dtype not in (mstype.Int, mstype.int16, mstype.int32, mstype.int64):
+        raise TypeError(f"For math function 'bincount', the type of 'input' must be in [Int, int16, int32, int64],"
+                        f"but got {input.dtype}.")
     if weights is not None and not isinstance(weights, Tensor):
         raise TypeError(f"For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
     if not isinstance(minlength, int):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
     rank_op = _get_cache_prim(P.Rank)()
-    if rank_op(x) != 1:
-        raise ValueError("For math function 'bincount', `x` should be one-dimensional tensor.")
-    if x.shape[0] == 0:
+    if rank_op(input) != 1:
+        raise ValueError("For math function 'bincount', `input` should be one-dimensional tensor.")
+    if input.shape[0] == 0:
         return Tensor([])
     if minlength < 0:
         raise ValueError("For bincount minlength should be >= 0.")
-    if max(x.astype(mstype.float32)) > minlength - 1:
-        length = (max(x.astype(mstype.float32)) + 1).astype(mstype.int32)
+    if max(input.astype(mstype.float32)) > minlength - 1:
+        length = (max(input.astype(mstype.float32)) + 1).astype(mstype.int32)
     else:
         length = P.Cast()(minlength, mstype.int32)
     idx = F.arange(length).expand_dims(-1)
-    idx_mapping = equal(x, idx)
+    idx_mapping = equal(input, idx)
     if weights is not None:
-        if x.shape != weights.shape:
-            raise ValueError('for bincount `x` and `weights` must have the same length')
+        if input.shape != weights.shape:
+            raise ValueError('for bincount `input` and `weights` must have the same length')
         idx_mapping *= weights
     return P.ReduceSum()(idx_mapping.astype(mstype.float32), 1).ravel()
 
@@ -514,7 +514,7 @@ def exp2(x):
     return exp2_(tensor_2, x)
 
 
-def argmin(x, axis=None, keepdims=False):
+def argmin(input, axis=None, keepdims=False):
     """
     Returns the indices of the minimum value of a tensor across the axis.
 
@@ -522,7 +522,8 @@ def argmin(x, axis=None, keepdims=False):
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
-        x (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        input (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means,
+            any number of additional dimensions.
         axis (Union[int, None], optional): Axis where the Argmin operation applies to. Default: None.
         keepdims (bool, optional): Whether the output tensor retains the specified
             dimension. Ignored if `axis` is None. Default: False.
@@ -542,14 +543,14 @@ def argmin(x, axis=None, keepdims=False):
         >>> print(index)
         2
     """
-    if x.shape == ():
+    if input.shape == ():
         return Tensor(0)
     is_axis_none = False
     if axis is None:
-        x = P.Reshape()(x, (-1,))
+        input = P.Reshape()(input, (-1,))
         axis = 0
         is_axis_none = True
-    out = _get_cache_prim(P.Argmin)(axis)(x)
+    out = _get_cache_prim(P.Argmin)(axis)(input)
     if keepdims and not is_axis_none:
         out = P.ExpandDims()(out, axis)
     return out
@@ -943,14 +944,14 @@ def div(input, other, *, rounding_mode=None):
     return output
 
 
-def divide(x, other, *, rounding_mode=None):
+def divide(input, other, *, rounding_mode=None):
     """
     Alias for :func:`mindspore.ops.div` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return div(x, other, rounding_mode=rounding_mode)
+    return div(input, other, rounding_mode=rounding_mode)
 
 
 def float_power(x, exponent):
@@ -1185,7 +1186,7 @@ def floor_mod(x, y):
     return tensor_mod(x, y)
 
 
-def exp(x):
+def exp(input):
     r"""
     Returns exponential of a tensor element-wise.
 
@@ -1194,13 +1195,13 @@ def exp(x):
         out_i = e^{x_i}
 
     Args:
-        x (Tensor): The input tensor, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1211,7 +1212,7 @@ def exp(x):
         >>> print(output)
         [ 2.718282  7.389056 54.598152]
     """
-    return tensor_exp(x)
+    return tensor_exp(input)
 
 
 def expm1(x):
@@ -1244,7 +1245,7 @@ def expm1(x):
     return tensor_expm1(x)
 
 
-def log(x):
+def log(input):
     """
     Returns the natural logarithm of a tensor element-wise.
 
@@ -1260,15 +1261,15 @@ def log(x):
         be affacted.
 
     Args:
-        x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+        input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64 on CPU.
-        TypeError: If dtype of `x` is not float16 or float32 on Ascend.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64 on CPU.
+        TypeError: If dtype of `input` is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1279,7 +1280,7 @@ def log(x):
         >>> print(output)
         [0.        0.6931472 1.3862944]
     """
-    return log_(x)
+    return log_(input)
 
 
 def logdet(input):
@@ -1309,7 +1310,7 @@ def logdet(input):
     return log_(det_x)
 
 
-def floor(x):
+def floor(input):
     r"""
     Rounds a tensor down to the closest integer element-wise.
 
@@ -1318,15 +1319,15 @@ def floor(x):
         out_i = \lfloor x_i \rfloor
 
     Args:
-        x (Tensor): The input tensor, its rank must be in [0, 7] inclusive
+        input (Tensor): The input tensor, its rank must be in [0, 7] inclusive
             and data type must be float16, float32 or float64.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not in [float16, float32, float64].
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not in [float16, float32, float64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1338,7 +1339,7 @@ def floor(x):
         [ 1.  2. -2.]
     """
     _floor = _get_cache_prim(P.Floor)()
-    return _floor(x)
+    return _floor(input)
 
 
 def i0(x):
@@ -1834,7 +1835,7 @@ def sinc(x):
     return sinc_(x)
 
 
-def cos(x):
+def cos(input):
     r"""
     Computes cosine of input element-wise.
 
@@ -1846,15 +1847,15 @@ def cos(x):
         cause a problem of missing precision.
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape and dtype as `x`.
+        Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1865,7 +1866,7 @@ def cos(x):
         >>> print(output)
         [0.971338 0.6748758 0.95233357 0.9959527]
     """
-    return cos_(x)
+    return cos_(input)
 
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-08):
@@ -3349,27 +3350,27 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
     return matrix_solve_(matrix, rhs)
 
 
-def slogdet(x):
+def slogdet(input):
     r"""
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
     Args:
-        x (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
+        input (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
           The matrix must be at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The signs of the log determinants. The shape is :math:`x.shape[:-2]`,
-        and the dtype is same as `x`.
+        Tensor. The signs of the log determinants. The shape is :math:`input.shape[:-2]`,
+        and the dtype is same as `input`.
 
-        Tensor. The absolute values of the log determinants. The shape is :math:`x.shape[:-2]`, and
-        the dtype is same as `x`.
+        Tensor. The absolute values of the log determinants. The shape is :math:`input.shape[:-2]`, and
+        the dtype is same as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` not float32, float64, complex64 or complex128.
-        ValueError: If the last two dimensions of `x` is not same size.
-        ValueError: If the dimension of `x` is less than 2.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` not float32, float64, complex64 or complex128.
+        ValueError: If the last two dimensions of `input` is not same size.
+        ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3382,7 +3383,7 @@ def slogdet(x):
         >>> print(output)
         [2.80336046e+00    3.04452229e+00]
     """
-    return _get_cache_prim(P.LogMatrixDeterminant)()(x)
+    return _get_cache_prim(P.LogMatrixDeterminant)()(input)
 
 
 def truncate_div(x, y):
@@ -5475,32 +5476,32 @@ def lcm(input, other):
     return lcm_(input, other)
 
 
-def cdist(x, y, p=2.0):
+def cdist(x1, x2, p=2.0):
     """
     Computes p-norm distance between each pair of row vectors of two input Tensors.
 
     Args:
-        x (Tensor): Input tensor of shape :math:`(B, P, M)`.
+        x1 (Tensor): Input tensor of shape :math:`(B, P, M)`.
           Letter :math:`B` represents 0 or positive int number.
           When :math:`B` is equal to 0, it means this dimension can be ignored,
           i.e. shape of the tensor is :math:`(P, M)`. The supported dtype is
           [float32, float64] on GPU, or [float32] on CPU.
-        y (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x`.
+        x2 (Tensor): Input tensor of shape :math:`(B, R, M)`, has the same dtype as `x1`.
         p (float, optional): P value for the p-norm distance to calculate between each
           vector pair, P ∈ [0,∞]. Default: 2.0.
 
     Returns:
-        Tensor, p-norm distance, has the same dtype as `x`, its shape is :math:`(B, P, R)`.
+        Tensor, p-norm distance, has the same dtype as `x1`, its shape is :math:`(B, P, R)`.
 
     Raises:
-        TypeError: If `x` or `y` is not Tensor.
-        TypeError: If dtype of x or y is not in [float32, float64] on GPU, or is not in [float32] on CPU.
+        TypeError: If `x1` or `x2` is not Tensor.
+        TypeError: If dtype of `x1` or `x2` is not in [float32, float64] on GPU, or is not in [float32] on CPU.
         TypeError: If `p` is not float32.
         ValueError: If `p` is negative.
-        ValueError: If dimension of `x` is not the same as `y`.
-        ValueError: If dimension of `x` or `y` is neither 2 nor 3.
-        ValueError: If the batch shape of `x` is not the same as the shape of `y`.
-        ValueError: If the number of columns of `x` is not the same as the number of `y`.
+        ValueError: If dimension of `x1` is not the same as `x2`.
+        ValueError: If dimension of `x1` or `x2` is neither 2 nor 3.
+        ValueError: If the batch shape of `x1` is not the same as the shape of `x2`.
+        ValueError: If the number of columns of `x1` is not the same as the number of `x2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5514,25 +5515,25 @@ def cdist(x, y, p=2.0):
           [1.4142137 1.4142137]]]
     """
     cdist_ = _get_cache_prim(P.Cdist)(p)
-    return cdist_(x, y)
+    return cdist_(x1, x2)
 
 
-def gcd(x1, x2):
+def gcd(input, other):
     """
     Computes greatest common divisor of input tensors element-wise.
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: int32, int64
 
     Args:
-        x1 (Tensor): The first input tensor.
-        x2 (Tensor): The second input tensor.
+        input (Tensor): The first input tensor.
+        other (Tensor): The second input tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
         with higher digits in the two inputs.
 
     Raises:
-        TypeError: If data type `x1` or `x2` is not int32 or int64.
+        TypeError: If data type `input` or `other` is not int32 or int64.
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
@@ -5547,7 +5548,7 @@ def gcd(x1, x2):
     """
 
     gcd_ = _get_cache_prim(Gcd)()
-    return gcd_(x1, x2)
+    return gcd_(input, other)
 
 
 def lerp(start, end, weight):
@@ -5898,9 +5899,9 @@ def _create_cummin_perm(axis, x_shape):
     return prem
 
 
-def cummin(x, axis):
+def cummin(input, axis):
     r"""
-    Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `x`
+    Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `input`
     along the dimension `axis`, and `indices` is the index location of each minimum value.
 
     .. math::
@@ -5909,18 +5910,18 @@ def cummin(x, axis):
         \end{array}
 
     Args:
-        x (Tensor): The input Tensor, rank of `x` > 0.
+        input (Tensor): The input Tensor, rank of `input` > 0.
         axis (int): The dimension to do the operation over. The value of `axis` must be in the range
-            `[-x.ndim, x.ndim - 1]`.
+            `[-input.ndim, input.ndim - 1]`.
 
     Returns:
         tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
-        The shape of each output tensor is the same as input `x`.
+        The shape of each output tensor is the same as input `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+        ValueError: If `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5937,22 +5938,22 @@ def cummin(x, axis):
     """
     cummin_op = _get_cache_prim(Cummin)(axis=0)
     if axis == 0:
-        out1, out2 = cummin_op(x)
+        out1, out2 = cummin_op(input)
     else:
         transpose = _get_cache_prim(P.Transpose)()
         _shape_op = _get_cache_prim(P.Shape)()
-        x_shape = _shape_op(x)
+        x_shape = _shape_op(input)
         prem = _create_cummin_perm(axis, x_shape)
-        x = transpose(x, prem)
-        out1, out2 = cummin_op(x)
+        input = transpose(input, prem)
+        out1, out2 = cummin_op(input)
         out1 = transpose(out1, prem)
         out2 = transpose(out2, prem)
     return [out1, out2]
 
 
-def cummax(x, axis):
+def cummax(input, axis):
     r"""
-    Returns a tuple (values,indices) where 'values' is the cumulative maximum value of input Tensor `x`
+    Returns a tuple (values,indices) where 'values' is the cumulative maximum value of input Tensor `input`
     along the dimension `axis`, and `indices` is the index location of each maximum value.
 
     .. math::
@@ -5961,18 +5962,18 @@ def cummax(x, axis):
         \end{array}
 
     Args:
-        x (Tensor): The input Tensor, rank of `x` > 0.
+        input (Tensor): The input Tensor, rank of `input` > 0.
         axis (int): The dimension to do the operation over. The value of `axis` must be in the range
-            `[-x.ndim, x.ndim - 1]`.
+            `[-input.ndim, input.ndim - 1]`.
 
     Returns:
         tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index,
-        The shape of each output tensor is the same as input `x`.
+        The shape of each output tensor is the same as input `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
+        ValueError: If `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -5996,7 +5997,7 @@ def cummax(x, axis):
          [2 1 2 0]]
     """
     _cummax = _get_cache_prim(ops.Cummax)(axis=axis)
-    return _cummax(x)
+    return _cummax(input)
 
 
 def cumsum(x, axis, dtype=None):
@@ -7680,25 +7681,25 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     return None, None, None
 
 
-def renorm(input_x, p, dim, maxnorm):
+def renorm(input, p, axis, maxnorm):
     """
-    Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
+    Renormalizes the sub-tensors along dimension `axis`, and each sub-tensor's p-norm should not exceed the
     'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
     `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
     Args:
-        input_x (Tensor): A Tensor, types: float32 or float16.
+        input (Tensor): A Tensor, types: float32 or float16.
         p (int): Power of norm calculation.
-        dim (int): The dimension that expected to get the slice-tensor.
+        axis (int): The dimension that expected to get the slice-tensor.
         maxnorm (float32): Max norm.
 
     Returns:
-        Tensor, has the same dtype and shape as input_x.
+        Tensor, has the same dtype and shape as input.
 
     Raises:
         TypeError: If dtype of `p` is not int.
-        TypeError: If dtype of `dim` is not int.
+        TypeError: If dtype of `axis` is not int.
         TypeError: If dtype of `maxnorm` is not float32.
         ValueError: If the value of `p` less than 1.
 
@@ -7707,14 +7708,14 @@ def renorm(input_x, p, dim, maxnorm):
 
     Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
-        >>> y = ops.renorm(x, p=1, dim=0, maxnorm=5.)
+        >>> y = ops.renorm(x, p=1, axis=0, maxnorm=5.)
         >>> print(y)
         [[1.       1.        1.        ]
         [1.6666666 1.6666666 1.6666666 ]
         [1.6666667 1.6666667 1.6666667 ]]
     """
-    renorm_ = _get_cache_prim(Renorm)(p, dim, maxnorm)
-    return renorm_(input_x)
+    renorm_ = _get_cache_prim(Renorm)(p, axis, maxnorm)
+    return renorm_(input)
 
 
 # TODO: remove comment

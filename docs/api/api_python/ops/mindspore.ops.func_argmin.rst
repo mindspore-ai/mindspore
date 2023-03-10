@@ -1,14 +1,14 @@
 mindspore.ops.argmin
 ====================
 
-.. py:function:: mindspore.ops.argmin(x, axis=None, keepdims=False)
+.. py:function:: mindspore.ops.argmin(input, axis=None, keepdims=False)
 
     返回输入Tensor在指定轴上的最小值索引。
 
     如果输入Tensor的shape为 :math:`(x_1, ..., x_N)` ，则输出Tensor的shape为 :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
 
     参数：
-        - **x** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。
         - **axis** (Union[int, None]，可选) - 指定计算轴。如果是None，将会返回扁平化Tensor在指定轴上的最小值索引。默认值：None。
         - **keepdims** (bool，可选) - 输出Tensor是否保留指定轴。如果 `axis` 是None，忽略该选项。默认值： False。
 

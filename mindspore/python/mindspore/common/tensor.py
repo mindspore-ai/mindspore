@@ -1257,12 +1257,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('norm')(self, ord, dim, keepdim, dtype=dtype)
 
-    def renorm(self, p, dim, maxnorm):
+    def renorm(self, p, axis, maxnorm):
         """
         For details, please refer to :func:`mindspore.ops.renorm`.
         """
         self._init_check()
-        return tensor_operator_registry.get("renorm")(self, p, dim, maxnorm)
+        return tensor_operator_registry.get("renorm")(self, p, axis, maxnorm)
 
     def approximate_equal(self, other, tolerance=1e-5):
         r"""

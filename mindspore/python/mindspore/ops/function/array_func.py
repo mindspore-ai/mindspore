@@ -483,18 +483,18 @@ def reverse(x, axis):
     return P.ReverseV2(axis)(x)
 
 
-def ravel(x):
+def ravel(input):
     """
     Return a contiguous flattened tensor.
 
     Args:
-        x (Tensor): A tensor to be flattened.
+        input (Tensor): A tensor to be flattened.
 
     Returns:
         Tensor, a 1-D tensor, containing the same elements of the input.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `input` is not Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -507,7 +507,7 @@ def ravel(x):
         >>> print(output.shape)
         (4,)
     """
-    return ops.reshape(x, (-1,))
+    return ops.reshape(input, (-1,))
 
 
 def matrix_band_part(x, lower, upper):
@@ -739,12 +739,12 @@ def full(size, fill_value, *, dtype=None): # pylint: disable=redefined-outer-nam
     return fill_(dtype, size, fill_value)
 
 
-def full_like(x, fill_value, *, dtype=None):
+def full_like(input, fill_value, *, dtype=None):
     """
-    Return a Tensor of the same shape as `x` and filled with `fill_value`.
+    Return a Tensor of the same shape as `input` and filled with `fill_value`.
 
     Args:
-        x (Tensor): input Tensor and the output Tensor have the same shape as `x`.
+        input (Tensor): input Tensor and the output Tensor have the same shape as `input`.
         fill_value (number.Number): Value to fill the returned Tensor. Complex numbers are not supported for now.
 
     Keyword Args:
@@ -755,7 +755,7 @@ def full_like(x, fill_value, *, dtype=None):
         Tensor.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -773,14 +773,14 @@ def full_like(x, fill_value, *, dtype=None):
          [0. 0. 0.]
          [0. 0. 0.]]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For ops.full_like, the argument 'x' must be tensor, but got {type(x)}")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For ops.full_like, the argument 'x' must be tensor, but got {type(input)}")
     if dtype is None:
-        dtype = x.dtype
-    return full(x.shape, fill_value, dtype=dtype)
+        dtype = input.dtype
+    return full(input.shape, fill_value, dtype=dtype)
 
 
-def chunk(x, chunks, axis=0):
+def chunk(input, chunks, axis=0):
     """
     Cut the input Tensor into `chunks` sub-tensors along the specified axis.
 
@@ -788,7 +788,7 @@ def chunk(x, chunks, axis=0):
         This function may return less then the specified number of chunks!
 
     Args:
-        x (Tensor): A Tensor to be cut.
+        input (Tensor): A Tensor to be cut.
         chunks (int): Number of sub-tensors to cut.
         axis (int): Specify the dimensions that you want to split. Default: 0.
 
@@ -796,10 +796,10 @@ def chunk(x, chunks, axis=0):
         A tuple of sub-tensors.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `input` is not Tensor.
         TypeError: The sum of `chunks` is not int.
         TypeError: If argument `axis` is not int.
-        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)` .
+        ValueError: If argument `axis` is out of range of :math:`[-input.ndim, input.ndim)` .
         ValueError: If argument `chunks` is not positive number.
 
     Supported Platforms:
@@ -813,35 +813,35 @@ def chunk(x, chunks, axis=0):
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f'For ops.chunk parameter `x` must be Tensor, but got {type(x)}')
+    if not isinstance(input, Tensor):
+        raise TypeError(f'For ops.chunk parameter `input` must be Tensor, but got {type(input)}')
     _check_axis_type(axis, True, False, False, "ops.chunk")
-    axis = _canonicalize_axis(axis, x.ndim)
+    axis = _canonicalize_axis(axis, input.ndim)
 
     if not isinstance(chunks, int):
         raise TypeError(f"For ops.chunk type of argument `chunks` should be integer, but got {type(chunks)}")
     if chunks <= 0:
         raise ValueError(f"For ops.chunk parameter 'chunks' must be greater than 0, but got {chunks}")
 
-    arr_shape = x.shape
+    arr_shape = input.shape
     length_along_dim = arr_shape[axis]
 
     if chunks > length_along_dim:
-        res = P.Split(axis, length_along_dim)(x)
+        res = P.Split(axis, length_along_dim)(input)
     elif length_along_dim % chunks == 0:
-        res = P.Split(axis, chunks)(x)
+        res = P.Split(axis, chunks)(input)
     else:
         block_size = int(np.ceil(length_along_dim / chunks))
         true_chunks = int(length_along_dim // block_size)
         length1 = true_chunks * block_size
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank(input), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, true_chunks)(tensor_slice(x, start1, size1))
+        res = P.Split(axis, true_chunks)(tensor_slice(input, start1, size1))
         if length2:
-            res += P.Split(axis, 1)(tensor_slice(x, start2, size2))
+            res += P.Split(axis, 1)(tensor_slice(input, start2, size2))
     return res
 
 
@@ -1968,7 +1968,7 @@ def concat(input_x, axis=0):
     return cat(input_x, axis)
 
 
-def stack(input_x, axis=0):
+def stack(tensors, axis=0):
     r"""
     Stacks a list of tensors in specified axis.
 
@@ -1979,18 +1979,18 @@ def stack(input_x, axis=0):
     :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
-        input_x (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
+        tensors (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
         axis (int): Dimension to stack. Default: 0.
             Negative values wrap around. The range is [-(R+1), R+1).
 
     Returns:
-        Tensor. A stacked Tensor with the same type as `input_x`.
+        Tensor. A stacked Tensor with the same type as `tensors`.
 
     Raises:
-        TypeError: If the data types of elements in `input_x` are not the same.
-        ValueError: If the length of `input_x` is not greater than 1;
+        TypeError: If the data types of elements in `tensors` are not the same.
+        ValueError: If the length of `tensors` is not greater than 1;
                     or if axis is out of the range [-(R+1), R+1);
-                    or if the shapes of elements in input_x are not the same.
+                    or if the shapes of elements in tensors are not the same.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2004,7 +2004,7 @@ def stack(input_x, axis=0):
          [2. 3.]]
     """
     _stack = _get_cache_prim(P.Stack)(axis)
-    return _stack(input_x)
+    return _stack(tensors)
 
 
 def unstack(input_x, axis=0):
@@ -4259,7 +4259,7 @@ def affine_grid(theta, output_size, align_corners=False):
     return affine_grid_op(theta, output_size)
 
 
-def broadcast_to(x, shape):
+def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
     """
     Broadcasts input tensor to a given shape. The dim of input shape must be smaller
     than or equal to that of target shape. Suppose input shape is :math:`(x_1, x_2, ..., x_m)`,
@@ -4300,13 +4300,13 @@ def broadcast_to(x, shape):
     input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
                     The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
                        where it will be substituted by the input tensor's shape in that position, see example.
 
     Returns:
-        Tensor, with the given `shape` and the same data type as `x`.
+        Tensor, with the given `shape` and the same data type as `input`.
 
     Raises:
         TypeError: If `shape` is not a tuple.
@@ -4332,9 +4332,9 @@ def broadcast_to(x, shape):
     """
     if  isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
         _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
-        return _dyn_broadcast_to(x, shape)
+        return _dyn_broadcast_to(input, shape)
     _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
-    return _broadcast_to(x)
+    return _broadcast_to(input)
 
 
 def unsorted_segment_min(x, segment_ids, num_segments):
@@ -4913,23 +4913,23 @@ def masked_fill(input_x, mask, value):
     return select(mask, masked_value, input_x)
 
 
-def diag(input_x):
+def diag(input):
     r"""
     Constructs a diagonal tensor with a given diagonal values.
 
-    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+    Assume `input` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
     rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
-    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
+    :math:`output[i_1,..., i_k, i_1,..., i_k] = input[i_1,..., i_k]` and 0 everywhere else.
 
     Args:
-        input_x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
-        Tensor, has the same dtype as the `input_x`.
+        Tensor, has the same dtype as the `input`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If rank of `input_x` is less than 1.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If rank of `input` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4945,7 +4945,7 @@ def diag(input_x):
          [0 0 3 0]
          [0 0 0 4]]
     """
-    return diag_(input_x)
+    return diag_(input)
 
 
 def diagflat(x, offset=0):
@@ -5153,13 +5153,13 @@ def split(tensor, split_size_or_sections, axis=0):
     return tuple(res)
 
 
-def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
+def tril(input, diagonal=0): # pylint: disable=redefined-outer-name
     """
-    Returns the lower triangle part of 'input_x' (elements that contain the diagonal and below),
+    Returns the lower triangle part of 'input' (elements that contain the diagonal and below),
     and set the other elements to zeros.
 
     Args:
-        input_x (Tensor): A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
+        input (Tensor): A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
           Supporting all number types including bool.
         diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
             indicating the main diagonal.
@@ -5209,7 +5209,7 @@ def tril(input_x, diagonal=0): # pylint: disable=redefined-outer-name
          [14 15 16  0]]
     """
     tril_ = Tril(diagonal)
-    return tril_(input_x)
+    return tril_(input)
 
 
 @constexpr
