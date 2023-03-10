@@ -58,7 +58,7 @@ class InplaceOpV2GpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept;
 
  private:
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   using InplaceOpFunc =
@@ -69,6 +69,8 @@ class InplaceOpV2GpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> indices_;
   int kernel_type_{-1};
   size_t unit_size_{1};
+  size_t indices_size_{1};
+  int64_t first_dimension_{0};
   size_t input_elements_x;
   size_t input_elements_v;
   int64_t band_size_;

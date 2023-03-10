@@ -27,7 +27,7 @@ enum BroadcastOpType {
 
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CalInplaceOp(const size_t size_v, const T *input_v, T *output, S *indices, S *indices_key_ptr,
-                                  const int64_t band_size, const uint32_t &device_id, int op_type,
-                                  cudaStream_t cuda_stream);
+                                  const int64_t first_dimension, const int64_t band_size,
+                                  const uint32_t &device_id, int op_type, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_INPLACE_UPDATE_IMPL_CUH_

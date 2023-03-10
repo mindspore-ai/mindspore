@@ -78,6 +78,7 @@ int InplaceOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   for (size_t i = 1; i < input_shape_x.size(); ++i) {
     band_size_ *= input_shape_x[i];
   }
+  first_dimension_ = input_shape_x[kIndex0];
   input_elements_x = std::accumulate(input_shape_x.begin(), input_shape_x.end(), 1, std::multiplies<int64_t>());
   input_elements_v = std::accumulate(input_shape_v.begin(), input_shape_v.end(), 1, std::multiplies<int64_t>());
   size_t input_size_x = input_elements_x * unit_size_;
@@ -125,8 +126,8 @@ bool InplaceOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(indices_ptr, indices_.data(), indices_.size() * sizeof(int64_t),
                                                      cudaMemcpyHostToDevice, cuda_stream),
                                      "cudaMemcpyAsync indices variable failed.");
-  CalInplaceOp(input_elements_v, input_v, output, indices_ptr, indices_key_ptr, band_size_, device_id_, kernel_type_,
-               cuda_stream);
+  CalInplaceOp(input_elements_v, input_v, output, indices_ptr, indices_key_ptr, first_dimension_, band_size_,
+               device_id_, kernel_type_, cuda_stream);
   return true;
 }
 

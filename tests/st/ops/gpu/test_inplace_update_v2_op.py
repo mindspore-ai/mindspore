@@ -99,3 +99,39 @@ def test_inplace_update_functional():
     output = ops.inplace_update(x, v, real_indices)
     expect = Tensor([[0.5, 1.0], [1.0, 1.5], [5, 6]], mindspore.float16)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inplace_update_functional_tuple_indices():
+    """
+    Feature: InplaceUpdateV2
+    Description: test function interface for InplaceUpdateV2 with tuple indices input.
+    Expectation: the result match to expect result
+    """
+    x = Tensor([[1, 2], [3, 4], [5, 6]], mindspore.float16)
+    v = Tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float16)
+    real_indices = (0, 1)
+
+    output = ops.inplace_update(x, v, real_indices)
+    expect = Tensor([[0.5, 1.0], [1.0, 1.5], [5, 6]], mindspore.float16)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_inplace_update_functional_scalar_index():
+    """
+    Feature: InplaceUpdateV2
+    Description: test function interface for InplaceUpdateV2 with scalar index input.
+    Expectation: the result match to expect result
+    """
+    x = Tensor([[1, 2], [3, 4], [5, 6]], mindspore.float16)
+    v = Tensor([[0.5, 1.0]], mindspore.float16)
+    real_indices = 0
+
+    output = ops.inplace_update(x, v, real_indices)
+    expect = Tensor([[0.5, 1.0], [3, 4], [5, 6]], mindspore.float16)
+    assert (output.asnumpy() == expect).all()
