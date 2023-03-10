@@ -1421,7 +1421,7 @@ class MatrixBandPart(Primitive):
     Refer to :func:`mindspore.ops.matrix_band_part` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+
 
     Examples:
         >>> matrix_band_part = ops.MatrixBandPart()

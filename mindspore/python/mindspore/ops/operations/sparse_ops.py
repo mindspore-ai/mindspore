@@ -224,7 +224,7 @@ class SparseSlice(Primitive):
         ValueError: If the shape of `shape` is not corresponding to `size`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> indices = Tensor(np.array([[0, 1], [1, 2], [1, 3], [2, 2]]).astype(np.int64))
@@ -776,7 +776,7 @@ class DenseToCSRSparseMatrix(Primitive):
         ValueError: If shape[1] of `indices` and rank of `dense_input` is not the same.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=mindspore.float32)
@@ -1465,7 +1465,7 @@ class SparseSegmentMeanWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -1736,7 +1736,7 @@ class SparseMatrixTranspose(Primitive):
         TypeError: The input data should have the correct CSR form.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as ops
@@ -1810,7 +1810,7 @@ class SparseSparseMinimum(Primitive):
         ValueError: If shape[0] of `x1_shape` is not corresponding to shape[0] of `x2_shape`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
@@ -2076,7 +2076,7 @@ class SparseMatrixMatMul(Primitive):
         ValueError: If shape[0]-1 of `x1_batch_pointers` and shape[0] of `x2_dense` are not the same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x1_dense_shape = Tensor([4, 5], dtype=ms.int32)
@@ -2716,7 +2716,7 @@ class RaggedTensorToSparse(Primitive):
         ValueError: If the rank of `rt_dense_values` is not more than 0.
 
     Supported Platforms:
-        ``CPU``
+
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import RaggedTensorToSparse

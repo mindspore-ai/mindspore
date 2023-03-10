@@ -537,7 +537,7 @@ def matrix_band_part(x, lower, upper):
         ValueError: If the shape of `upper` is not equal to 0D.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))

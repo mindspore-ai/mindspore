@@ -148,7 +148,6 @@ std::vector<KernelAttr> UpsampleNearest3dGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, UpsampleNearest3dFunc> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, UpsampleNearest3D, UpsampleNearest3dGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

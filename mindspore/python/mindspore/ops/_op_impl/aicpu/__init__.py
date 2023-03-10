@@ -20,10 +20,8 @@ from .adaptive_avg_pool_3d_grad import _adaptiveavgpool3d_grad_aicpu
 from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
 from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
-from .space_to_depth import _space_to_depth_aicpu
 from .sparse_matrix_transpose import _sparse_matrix_transpose_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
-from .sparse_matrix_mat_mul import _sparse_matrix_mat_mul_aicpu
 from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
 from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
@@ -148,15 +146,12 @@ from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
 from .sparse_fill_empty_rows_grad import _sparse_fill_empty_rows_grad_aicpu
 from .sparse_reshape import _sparse_reshape_aicpu
 from .sparse_segment_sqrt_n_grad import _sparse_segment_sqrt_n_grad_aicpu
-from .sparse_segment_mean_with_num_segments import _sparse_segment_mean_with_num_segments_aicpu
 from .sparse_segment_sum import _sparse_segment_sum_aicpu
 from .sparse_segment_sum_with_num_segments import _sparse_segment_sum_with_num_segments_aicpu
 from .sparse_softmax_cross_entropy_with_logits_v2 import _sparse_softmax_cross_entropy_with_logits_v2_aicpu
 from .sparsesparsemaximum import _sparsesparsemaximum_aicpu
-from .sparse_sparse_minimum import _sparse_sparse_minimum_aicpu
 from .split import _split_aicpu
 from .transpose import _transpose_aicpu
-from .tridiagonal_matmul import _tridiagonal_matmul_aicpu
 from .tril_indices import _tril_indices_aicpu
 from .triu_indices import _triu_indices_aicpu
 from .triplet_margin_loss import _triplet_margin_loss_aicpu
@@ -361,7 +356,6 @@ from .coalesce import _coalesce_aicpu
 from .crop_and_resize_grad_boxes import _crop_and_resize_grad_boxes_aicpu
 from .crop_and_resize_grad_image import _crop_and_resize_grad_image_aicpu
 from .dense_to_dense_set_operation import _dense_to_dense_set_operation_aicpu
-from .depth_to_space import _depth_to_space_aicpu
 from .div_no_nan import _div_no_nan_aicpu
 from .expm1 import _expm1_aicpu
 from .fractional_max_pool3d_with_fixed_ksize import _fractional_max_pool3d_with_fixed_ksize_aicpu

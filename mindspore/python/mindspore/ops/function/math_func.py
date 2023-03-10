@@ -10320,7 +10320,7 @@ def matrix_power(x, n):
         ValueError: If `n` is negative but got input `x` has singular matrices.
 
     Supported Platforms:
-        ``CPU``
+
 
     Examples:
         >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)

@@ -185,7 +185,6 @@ std::vector<KernelAttr> UpsampleTrilinear3DGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, UpsampleTrilinear3DFunc> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, UpsampleTrilinear3D, UpsampleTrilinear3DGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

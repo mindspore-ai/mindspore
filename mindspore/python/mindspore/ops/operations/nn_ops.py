@@ -3678,7 +3678,7 @@ class UpsampleTrilinear3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
@@ -9647,7 +9647,7 @@ class UpsampleNearest3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
