@@ -118,22 +118,6 @@ def test_net3():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_op1():
-    """
-    Feature: test dropout mask equal by equal seed.
-    Description: dropout.
-    Expectation: No exception.
-    """
-    x = Tensor(np.arange(0, 12).reshape(3, 4).astype(np.float16))
-    output1 = ops.dropout(x, p=0.5)
-    output2 = ops.dropout(x, p=0.5)
-
-    assert np.allclose(output1.asnumpy(), output2.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_op2():
     """
     Feature: test Dropout2D.

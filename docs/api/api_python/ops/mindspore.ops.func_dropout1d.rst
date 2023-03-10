@@ -1,7 +1,7 @@
 mindspore.ops.dropout1d
 ========================
 
-.. py:function:: mindspore.ops.dropout1d(x, p=0.5, training=True)
+.. py:function:: mindspore.ops.dropout1d(input, p=0.5, training=True)
 
     在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些通道归零（对于形状为 `NCL` 的三维Tensor，其通道特征图指的是后一维 `L` 的一维特征图）。
     例如，在批处理输入中 :math:`i\_th` 批， :math:`j\_th` 通道的 `input[i, j]` `1D` Tensor 是一个待处理数据。
@@ -12,15 +12,15 @@ mindspore.ops.dropout1d
     `dropout1d` 可以提高通道特征映射之间的独立性。
 
     参数：
-        - **x** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
+        - **input** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
         - **p** (float) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
         - **training** (bool) - 若为True则启用dropout功能。默认值：True。
 
     返回：
-        Tensor，输出，具有与输入 `x` 相同的shape和数据类型。
+        Tensor，输出，具有与输入 `input` 相同的shape和数据类型。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `p` 的数据类型不是float。
         - **ValueError** - `p` 值不在 `[0.0, 1.0]` 之间。
-        - **ValueError** - `x` 的维度不是 `2D` 或 `3D`。
+        - **ValueError** - `input` 的维度不是 `2D` 或 `3D`。
