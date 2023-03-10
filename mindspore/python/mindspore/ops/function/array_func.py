@@ -5780,7 +5780,7 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     return unsorted_segment_sum_(input_x, segment_ids, num_segments)
 
 
-def topk(input_x, k, dim=None, largest=True, sorted=True):
+def topk(input, k, dim=None, largest=True, sorted=True):
     r"""
     Finds values and indices of the `k` largest or smallest entries along a given dimension.
 
@@ -5789,8 +5789,8 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
           different memory layout and traversal methods on different platforms, the display order of calculation results
           may be inconsistent when `sorted` is False.
 
-    If the `input_x` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
-    and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input_x`,
+    If the `input` is a one-dimensional Tensor, finds the `k` largest  or smallest entries in the Tensor,
+    and outputs its value and index as a Tensor. values[`k`] is the `k` largest item in `input`,
     and its index is indices [`k`].
 
     For a multi-dimensional matrix,
@@ -5803,7 +5803,7 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
     Args:
-        input_x (Tensor): Input to be computed, data type must be float16, float32 or int32.
+        input (Tensor): Input to be computed, data type must be float16, float32 or int32.
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: None.
         largest (bool, optional): If largest is False then the k smallest elements are returned. Default: True.
@@ -5818,9 +5818,9 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
 
     Raises:
         TypeError: If `sorted` is not a bool.
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `k` is not an int.
-        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
+        TypeError: If dtype of `input` is not one of the following: float16, float32 or int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5852,17 +5852,17 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
     """
     top_k_ = _get_cache_prim(P.TopK)(sorted)
     if not largest:
-        input_x = -input_x
-    if dim is None or dim == input_x.ndim - 1:
+        input = -input
+    if dim is None or dim == input.ndim - 1:
         if not largest:
-            res = top_k_(input_x, k)
+            res = top_k_(input, k)
             values, indices = -res[0], res[1]
             return values, indices
-        return top_k_(input_x, k)
-    input_x = input_x.swapaxes(dim, input_x.ndim - 1)
-    output = top_k_(input_x, k)
-    values = output[0].swapaxes(dim, input_x.ndim - 1)
-    indices = output[1].swapaxes(dim, input_x.ndim - 1)
+        return top_k_(input, k)
+    input = input.swapaxes(dim, input.ndim - 1)
+    output = top_k_(input, k)
+    values = output[0].swapaxes(dim, input.ndim - 1)
+    indices = output[1].swapaxes(dim, input.ndim - 1)
     if not largest:
         res = (-values, indices)
     else:
@@ -6618,38 +6618,38 @@ def _cal_reshape(x_shape, rep, axis):
     return tuple(x_reshape)
 
 
-def repeat_interleave(x, repeats, dim=None):
+def repeat_interleave(input, repeats, axis=None):
     """
     Repeat elements of a tensor along an axis, like `numpy.repeat`.
 
     Args:
-        x (Tensor): The tensor to repeat values for. Must be of type: float16,
+        input (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
         repeats (int): The number of times to repeat, must be positive.
-        dim (int, optional): The axis along which to repeat, default: None. if dims is None, the input Tensor will be
+        axis (int, optional): The axis along which to repeat, default: None. if dims is None, the input Tensor will be
             flattened and the output will alse be flattened.
 
     Returns:
-        One tensor with values repeated along the specified axis. If x has shape
+        One tensor with values repeated along the specified axis. If input has shape
         (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
-        si * repeats, ..., sn). The output type will be the same as the type of `x`.
+        si * repeats, ..., sn). The output type will be the same as the type of `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = ops.repeat_interleave(x, repeats=2, dim=0)
+        >>> input = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
+        >>> output = ops.repeat_interleave(input, repeats=2, axis=0)
         >>> print(output)
         [[0 1 2]
          [0 1 2]
          [3 4 5]
          [3 4 5]]
     """
-    if dim is None:
-        x = x.reshape(-1)
-        dim = 0
-    return repeat_elements(x, repeats, dim)
+    if axis is None:
+        input = input.reshape(-1)
+        axis = 0
+    return repeat_elements(input, repeats, axis)
 
 
 def repeat_elements(x, rep, axis=0):

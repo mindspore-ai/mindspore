@@ -1,18 +1,18 @@
 mindspore.ops.tan
 ===================
 
-.. py:function:: mindspore.ops.tan(x)
+.. py:function:: mindspore.ops.tan(input)
 
     计算输入元素的正切值。
 
     .. math::
-        out_i = tan(x_i)
+        out_i = tan(input_i)
 
     参数：
-        - **x** (Tensor) - Tan的输入，任意维度的Tensor。
+        - **input** (Tensor) - Tan的输入，任意维度的Tensor。
 
     返回：
-        Tensor，数据类型和shape与 `x` 相同。
+        Tensor，数据类型和shape与 `input` 相同。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。
