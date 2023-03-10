@@ -46,7 +46,6 @@ typedef struct {
   MSTensorHandleArray inputs;
   MSTensorHandleArray outputs;
   ModelBuild build;
-  ModelPredict predict;
   ModelSetWorkspace set_work_space;
   ModelCalcWorkspaceSize calc_work_space;
   FreeResource free_resource;
@@ -302,12 +301,27 @@ int Generator::CodeCommonModelFile() {
        << "#define MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_MODEL_H_\n\n"
        << "#include \"c_api/model_c.h\"\n";
   CodeMSModelBuildState(hofs);
-  CodeMSModelPredictState(hofs);
+  if (config_->code_mode() == CodeMode::Inference) {
+    CodeMSModelPredictState(hofs);
+  } else {
+    CodeMSModelRunStepState(hofs);
+    CodeMSModelSetTrainModeState(hofs);
+    CodeMSModelExportWeightState(hofs);
+  }
   CodeFreeResourceState(hofs);
   hofs << set_workspace_state;
   hofs << calc_workspace_state;
   hofs << micro_model_define_source;
+  if (config_->code_mode() == CodeMode::Inference) {
+    hofs << "  ModelPredict predict;\n";
+  } else {
+    hofs << "  ModelRunStep run_step;\n";
+    hofs << "  ModelSetTrainMode set_train_mode;\n";
+    hofs << "  ModelExportWeight export_weight;\n";
+  }
   hofs << "} MicroModel;\n";
+
+  hofs << "void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs);\n";
   hofs << "#endif // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_MODEL_H_\n\n";
 
   // model source file
@@ -335,9 +349,9 @@ int Generator::CodeCommonModelFile() {
   CodeMSModelBuildCommon(cofs, *config_);
   cofs << model_runtime_other_source;
   if (config_->code_mode() == CodeMode::Train) {
-    CodeMSModelRunStep(cofs, ctx_);
-    CodeMSModelSetTrainMode(cofs, ctx_);
-    CodeMSModelExportWeight(cofs, ctx_->GetCurModelIndex());
+    CodeMSModelRunStepCommon(cofs);
+    CodeMSModelSetTrainModeCommon(cofs);
+    CodeMSModelExportWeightCommon(cofs);
   } else {
     CodeMSModelPredictCommon(cofs);
   }
@@ -387,11 +401,21 @@ int Generator::CodeMSModelImplement() {
   }
   ofs << "MSStatus MSModelBuild" << ctx_->GetCurModelIndex() << "(MSModelHandle model, const void *model_data,\n"
       << "                       size_t data_size, const MSContextHandle model_context);\n";
-  ofs << "MSStatus MSModelPredict" << ctx_->GetCurModelIndex()
-      << "(MSModelHandle model, const MSTensorHandleArray inputs,\n"
-      << "                         MSTensorHandleArray *output,\n"
-      << "                         const MSKernelCallBackC before,\n"
-      << "                         const MSKernelCallBackC after);\n";
+  if (config_->code_mode() == CodeMode::Inference) {
+    ofs << "MSStatus MSModelPredict" << ctx_->GetCurModelIndex()
+        << "(MSModelHandle model, const MSTensorHandleArray inputs,\n"
+        << "                         MSTensorHandleArray *output,\n"
+        << "                         const MSKernelCallBackC before,\n"
+        << "                         const MSKernelCallBackC after);\n";
+  } else {
+    ofs << "MSStatus MSModelRunStep" << ctx_->GetCurModelIndex()
+        << "(MSModelHandle model,\n"
+           "                       const MSKernelCallBackC before,\n"
+           "                       const MSKernelCallBackC after);\n";
+    ofs << "MSStatus MSModelSetTrainMode" << ctx_->GetCurModelIndex() << "(MSModelHandle model, bool train);\n";
+    ofs << "MSStatus MSModelExportWeight" << ctx_->GetCurModelIndex()
+        << "(MSModelHandle model, const char *export_path);\n";
+  }
   ofs << "void MSModelSetWorkspace" << ctx_->GetCurModelIndex()
       << "(MSModelHandle model, void *workspace, size_t workspace_size);\n";
   ofs << "size_t MSModelCalcWorkspaceSize" << ctx_->GetCurModelIndex() << "(MSModelHandle model);\n";
@@ -399,8 +423,14 @@ int Generator::CodeMSModelImplement() {
       << "                             .train_mode = false,\n"
       << "                             .inputs = {" << ctx_->graph_inputs().size() << ", NULL},\n"
       << "                             .outputs = {" << ctx_->graph_outputs().size() << ", NULL},\n"
-      << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n"
-      << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n";
+      << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n";
+  if (config_->code_mode() == CodeMode::Inference) {
+    ofs << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n";
+  } else {
+    ofs << "                             .run_step = MSModelRunStep" << ctx_->GetCurModelIndex() << ",\n"
+        << "                             .set_train_mode = MSModelSetTrainMode" << ctx_->GetCurModelIndex() << ",\n"
+        << "                             .export_weight = MSModelExportWeight" << ctx_->GetCurModelIndex() << ",\n";
+  }
   if (config_->target() == kCortex_M) {
     ofs << "                             .set_work_space = MSModelSetWorkspace" << ctx_->GetCurModelIndex() << ",\n"
         << "                             .calc_work_space = MSModelCalcWorkspaceSize" << ctx_->GetCurModelIndex()
