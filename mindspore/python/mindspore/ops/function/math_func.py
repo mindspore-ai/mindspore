@@ -4685,7 +4685,7 @@ def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-o
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
@@ -4710,7 +4710,7 @@ def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-o
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `axis` is not one of the following: None, int, tuple.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -4743,7 +4743,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
@@ -4768,7 +4768,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `axis` is not one of the following: None, int, tuple.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -4816,7 +4816,7 @@ def std(input, axis=None, ddof=0, keepdims=False):
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
@@ -4841,7 +4841,7 @@ def std(input, axis=None, ddof=0, keepdims=False):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `axis` is not one of the following: None, int, tuple.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -4874,7 +4874,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Only constant value is allowed.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
@@ -4899,7 +4899,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: None, int, tuple or list.
+        TypeError: If `axis` is not one of the following: None, int, tuple.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is out of range.
 

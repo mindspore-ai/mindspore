@@ -758,8 +758,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         - `specify_prefix` and `filter_prefix` do not affect each other.
         - If none of the parameters are loaded from checkpoint file, it will throw ValueError.
         - `specify_prefix` and `filter_prefix` are in the process of being deprecated,
-            `choice_func` is recommended instead.
-            And using either of those two args will override `choice_func` at the same time.
+          `choice_func` is recommended instead.
+          And using either of those two args will override `choice_func` at the same time.
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
@@ -811,6 +811,14 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>> param_dict1 = ms.load_checkpoint(ckpt_file_name, choice_func=func)
         >>> print(param_dict1["conv2.weight"])
         Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
+        >>> def func(param_name):
+        >>>     whether_load = False
+        >>>     if param_name.startswith("conv1"):
+        >>>         whether_load = True
+        >>>     return whether_load
+        >>> param_dict2 = ms.load_checkpoint(ckpt_file_name, choice_func=func)
+        >>> print(param_dict2)
+        {'conv1.weight': Parameter (name=conv1.weight, shape=(6, 1, 5, 5), dtype=Float32, requires_grad=True)}
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
