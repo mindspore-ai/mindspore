@@ -1812,12 +1812,12 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   } else if (ast_->IsClassMember(target_object)) {
     target_node = ParseAttribute(block, target_object);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
-    TraceGuard(GetLocation(target_object));
+    TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only support augassign to attribute of self, but got attribute of "
                             << py::str(target_object.attr("value").attr("id")) << ".\n"
                             << "More details please refer to syntax support at https://www.mindspore.cn";
   } else {
-    TraceGuard(GetLocation(target_object));
+    TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
                             << target_object.get_type()
                             << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
@@ -2039,7 +2039,7 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   after_block->Mature();
   py::object orelse_obj = python_adapter::GetPyObjAttr(node, "orelse");
   if (py::len_hint(orelse_obj) != 0) {
-    TraceGuard(GetLocation(orelse_obj));
+    TraceGuard trace_guard(GetLocation(orelse_obj));
     MS_LOG(EXCEPTION) << "The 'while...else...' statement is not supported now.";
   }
   auto &end_block = loop_context.EndBlock();
@@ -2066,7 +2066,7 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   // Check for-else
   py::object orelse_obj = python_adapter::GetPyObjAttr(node, "orelse");
   if (py::len_hint(orelse_obj) != 0) {
-    TraceGuard(GetLocation(orelse_obj));
+    TraceGuard trace_guard(GetLocation(orelse_obj));
     MS_LOG(EXCEPTION) << "The 'for...else...' statement is not supported now.";
   }
   static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
@@ -2734,12 +2734,12 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   } else if (ast_->IsClassMember(target_object)) {
     HandleAssignClassMember(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
-    TraceGuard(GetLocation(target_object));
+    TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only support assign to attribute of self, but got attribute of "
                             << py::str(target_object.attr("value").attr("id")) << ".\n"
                             << "More details please refer to syntax support at https://www.mindspore.cn";
   } else {
-    TraceGuard(GetLocation(target_object));
+    TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
                             << target_object.get_type()
                             << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
