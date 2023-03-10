@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" Test split operation """
+import numpy as np
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.vision as vision
 from util import config_get_set_num_parallel_workers, config_get_set_seed
-
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
 # the label of each image is [0,0,0,1,1] each image can be uniquely identified
@@ -26,6 +28,7 @@ manifest_map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (6
 text_file_dataset_path = "../data/dataset/testTextFileDataset/*"
 text_file_data = ["This is a text file.", "Another file.", "Be happy every day.",
                   "End of file.", "Good luck to everyone."]
+
 
 def split_with_invalid_inputs(d):
     with pytest.raises(ValueError) as info:
@@ -684,6 +687,65 @@ def test_rounding():
     assert s3_output == [3, 4]
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
+def test_split_numpyslices_num_workers():
+    """
+    Feature: Split op
+    Description: Test split op when using NumpySlicesDataset(..., num_parallel_workers=2, ...)
+    Expectation: Error is raised as expected
+    """
+
+    # Note: Since NumpySlicesDataset is derived from GeneratorDataset and GeneratorDataset has
+    # python_multiprocessing=True as default, need to disable shared memory when running this test in CI
+    # since NumpySlicesDataset using num_parallel_workers > 1.
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
+    # construct data and label
+    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
+
+    label = [1, 2, 3, 4]
+
+    # load the data and label by NumpySlicesDataset
+    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"], num_parallel_workers=2)
+
+    dataset_train, dataset_val = dataset.split([0.5, 0.5])
+
+    # apply the transform to data
+    dataset_train = dataset_train.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
+
+    # batch
+    dataset_train = dataset_train.batch(batch_size=2)
+
+    # create iterator
+    epochs = 2
+    ds_iter = dataset_train.create_dict_iterator(output_numpy=True, num_epochs=epochs)
+    count = 0
+    for _ in range(epochs):
+        for item in ds_iter:
+            assert item["data"].shape == (2, 250, 250, 3)
+            count += 1
+    assert count == 2
+
+    # create val iterator
+    epochs = 2
+    ds_iter = dataset_val.create_dict_iterator(output_numpy=True, num_epochs=epochs)
+    count = 0
+    for _ in range(epochs):
+        for item in ds_iter:
+            assert item["data"].shape == (300, 300, 3)
+            count += 1
+    assert count == 4
+
+    # Restore configuration
+    ds.config.set_enable_shared_mem(mem_original)
+
+
 if __name__ == '__main__':
     test_unmappable_invalid_input()
     test_unmappable_split()
@@ -700,3 +762,4 @@ if __name__ == '__main__':
     test_mappable_get_dataset_size()
     test_mappable_multi_split()
     test_rounding()
+    test_split_numpyslices_num_workers()

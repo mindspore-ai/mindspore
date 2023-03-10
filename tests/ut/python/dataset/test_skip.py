@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" Test skip operation """
 import numpy as np
 import pytest
 
@@ -52,12 +53,21 @@ def generator_md():
         yield (np.array([i]),)
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_generator_skip():
     """
     Feature: Skip op
     Description: Test simple skip op usage with GeneratorDataset with num_parallel_workers=4
     Expectation: Output is equal to the expected output
     """
+    # Note: Since GeneratorDataset has python_multiprocessing=True as default,
+    # need to disable shared memory when running this test in CI
+    # since GeneratorDataset using num_parallel_workers > 1.
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
     ds1 = ds.GeneratorDataset(generator_md, ["data"], num_parallel_workers=4)
 
     # Here ds1 should be [3, 4]
@@ -68,6 +78,9 @@ def test_generator_skip():
         buf.append(data[0][0])
     assert len(buf) == 2
     assert buf == [3, 4]
+
+    # Restore configuration
+    ds.config.set_enable_shared_mem(mem_original)
 
 
 def test_skip_1():
@@ -281,53 +294,6 @@ def test_skip_exception_2():
     assert "Input count is not within the required interval" in str(e.value)
 
 
-def test_skip_with_generator_dataset_multi_process():
-    """
-    Feature: Skip op
-    Description: Test skip op when using GeneratorDataset(..., num_parallel_workers=2, ...)
-    Expectation: Error is raised as expected
-    """
-
-    # construct data and label
-    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-
-    label = [1, 2, 3, 4]
-
-    # load the data and label by NumpySlicesDataset
-    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"], num_parallel_workers=2)
-
-    dataset_train, dataset_val = dataset.split([0.5, 0.5])
-
-    # apply the transform to data
-    dataset_train = dataset_train.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
-
-    # batch
-    dataset_train = dataset_train.batch(batch_size=2)
-
-    # create iterator
-    epochs = 2
-    ds_iter = dataset_train.create_dict_iterator(output_numpy=True, num_epochs=epochs)
-    count = 0
-    for _ in range(epochs):
-        for item in ds_iter:
-            assert item["data"].shape == (2, 250, 250, 3)
-            count += 1
-    assert count == 2
-
-    # create val iterator
-    epochs = 2
-    ds_iter = dataset_val.create_dict_iterator(output_numpy=True, num_epochs=epochs)
-    count = 0
-    for _ in range(epochs):
-        for item in ds_iter:
-            assert item["data"].shape == (300, 300, 3)
-            count += 1
-    assert count == 4
-
-
 if __name__ == "__main__":
     test_tf_skip()
     test_generator_skip()
@@ -342,4 +308,3 @@ if __name__ == "__main__":
     test_skip_filter_2()
     test_skip_exception_1()
     test_skip_exception_2()
-    test_skip_with_generator_dataset_multi_process()

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -257,6 +257,8 @@ def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_par
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
+# Run this test in separate process since this test updates config settings
+@pytest.mark.forked
 @pytest.mark.parametrize("num_parallel_workers", (2, 4, 6))
 @pytest.mark.parametrize("num_samples", (1, 2, 5, 6))
 def test_python_map_mp_repeatability(num_parallel_workers, num_samples, set_seed_to=1605):
@@ -290,6 +292,8 @@ def test_python_map_mp_repeatability(num_parallel_workers, num_samples, set_seed
     ds.config.set_enable_shared_mem(original_enable_shared_mem)
 
 
+# Run this test in separate process since this test updates config settings
+@pytest.mark.forked
 def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=4, num_repeat=5):
     """
     Feature: Map op

@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -208,6 +208,8 @@ class GNNGraphDataset():
         return nodes_neighbors, neg_nodes_neighbors, nodes_neighbors_features[0], neg_neighbors_features[1]
 
 
+# Run this test in separate process since this test updates shared memory config
+@pytest.mark.forked
 def test_graphdata_generatordataset():
     """
     Feature: GraphData
