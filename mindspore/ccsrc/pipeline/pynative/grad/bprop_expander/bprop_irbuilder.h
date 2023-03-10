@@ -44,7 +44,8 @@ class BpropIRBuilder : public Emitter {
       : Emitter(func_graph, infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
 
   /// \brief Run irbuilder to generate a graph
-  NodePtrList Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle);
+  NodePtrList Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
+                  const std::string &instance_name);
 
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
@@ -103,9 +104,11 @@ class BpropIRBuilder : public Emitter {
   // case 2: x[2, ..., 1:3]   => StridedSlice(x, {{0,{2}}, {-1,{1,3}}})
   // case 3: x[..., 0:3:2, 0::2, :]   => StridedSlice(x, {{-3,{0,3,2}}, {-2,{0,LLONG_MAX,2}}})
   NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const;
+  std::string GetInstanceName() const { return instance_name_; }
 
  protected:
   std::string name_;
+  std::string instance_name_;
   const NodePtrList *inputs_ptr_{nullptr};
   const DAttr *attrs_ptr_{nullptr};
 };
