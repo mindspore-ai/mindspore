@@ -43,7 +43,7 @@ class _Grad(Cell):
 
 class GradOfFirstInput(_Grad):
     """
-    get grad of first input
+    get grad of first tuple_input
     """
 
     def __init__(self, network, sens_param=True, real_inputs_count=None):
@@ -63,17 +63,18 @@ class GradOfAllInputs(_Grad):
 class TupleFactory():
     def __init__(self, net_x, func_x, input_x, const_value_idx=None):
         self.input_num = len(input_x)
-        self.input = []
+        self.tuple_input = []
+        self.const_tuple_input = input_x
         if const_value_idx is None:
             const_value_idx = []
         for i, item in enumerate(input_x):
             if i not in const_value_idx:
                 if isinstance(item, int):
-                    self.input.append(mutable(item))
+                    self.tuple_input.append(mutable(item))
                 else:
-                    self.input.append(mutable(item, True))
+                    self.tuple_input.append(mutable(item, True))
             else:
-                self.input.append(item)
+                self.tuple_input.append(item)
         self.input_func = input_x
         self.net = net_x
         self.func = func_x
@@ -82,11 +83,13 @@ class TupleFactory():
     def forward_cmp(self):
         out_func = self.func(*self.input_func)
         self.grad_input = out_func
-        out_mindspore = self.net(*self.input)
-        assert out_func == out_mindspore
+        out_const_mindspore = self.net(*self.tuple_input)
+        out_tuple_mindspore = self.net(*self.const_tuple_input)
+        assert out_func == out_const_mindspore
+        assert out_func == out_tuple_mindspore
 
     def grad_impl(self):
         grad_net = GradOfFirstInput(self.net) if self.input_num == 1 else GradOfAllInputs(self.net)
         grad_net.set_train()
-        input_grad = grad_net(*self.input, self.grad_input)
+        input_grad = grad_net(*self.tuple_input, self.grad_input)
         return input_grad
