@@ -19,6 +19,8 @@
 #include <set>
 #include <vector>
 #include <unordered_map>
+#include <queue>
+#include <map>
 #include <utility>
 #include "include/registry/node_parser_registry.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -735,12 +737,78 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
   return status;
 }
 
+std::vector<int> OnnxModelParser::SortOnnxNodeIndex(const onnx::GraphProto &onnx_graph) {
+  std::vector<int> sorted_node_index;
+  std::queue<int> onnx_nodes_queue;
+  std::set<std::string> node_names;
+  // for const tensor
+  for (const auto &const_tensor : onnx_graph.initializer()) {
+    const auto &name = const_tensor.name();
+    node_names.insert(name);
+  }
+  // for graph input
+  for (int i = 0; i < onnx_graph.input().size(); i++) {
+    node_names.insert(onnx_graph.input(i).name());
+  }
+  for (int i = 0; i < onnx_graph.node().size(); i++) {
+    auto onnx_node = onnx_graph.node(i);
+    if (onnx_node.op_type() == "If" || onnx_node.op_type() == "Loop" || has_subgraph_) {
+      sorted_node_index.clear();
+      has_subgraph_ = true;
+      for (int index = 0; index < onnx_graph.node().size(); index++) {
+        sorted_node_index.push_back(index);
+      }
+      return sorted_node_index;
+    }
+    if (onnx_node.op_type() == "Constant") {
+      sorted_node_index.push_back(i);
+      for (auto output_name : onnx_node.output()) {
+        node_names.insert(output_name);
+      }
+    } else {
+      onnx_nodes_queue.push(i);
+    }
+  }
+  bool find = false;
+  int pre_node_index = -1;
+  while (!onnx_nodes_queue.empty()) {
+    auto node_index = onnx_nodes_queue.front();
+    auto onnx_node = onnx_graph.node(node_index);
+    if (std::any_of(onnx_node.input().begin(), onnx_node.input().end(),
+                    [&](const string &name) { return node_names.count(name) == 0 && !name.empty(); })) {
+      onnx_nodes_queue.pop();
+      onnx_nodes_queue.push(node_index);
+      if (!find && pre_node_index == node_index) {
+        MS_LOG(ERROR) << "sort onnx node failed.";
+        return {};
+      }
+      find = false;
+      pre_node_index = pre_node_index == -1 ? node_index : pre_node_index;
+    } else {
+      find = true;
+      pre_node_index = pre_node_index == node_index ? -1 : pre_node_index;
+      sorted_node_index.push_back(node_index);
+      onnx_nodes_queue.pop();
+      for (int i = 0; i < onnx_node.output_size(); i++) {
+        node_names.insert(onnx_node.output(i));
+      }
+    }
+  }
+  return sorted_node_index;
+}
+
 STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
                                      std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                                      std::vector<AnfNodePtr> *graph_inputs, const std::string &root_node_name) {
   MS_ASSERT(anf_graph != nullptr && anf_nodes_map != nullptr && extra_subgraph_inputs != nullptr);
+  auto sorted_node_index = SortOnnxNodeIndex(onnx_graph);
+  if (sorted_node_index.empty()) {
+    MS_LOG(ERROR) << "SortOnnxNodeIndex failed.";
+    return RET_ERROR;
+  }
   STATUS status = RET_OK;
-  for (const auto &onnx_node : onnx_graph.node()) {
+  for (auto node_index : sorted_node_index) {
+    const auto &onnx_node = onnx_graph.node(node_index);
     ops::PrimitiveCPtr primitive_c;
     auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeOnnx, onnx_node.op_type());
     if (node_parser != nullptr) {
