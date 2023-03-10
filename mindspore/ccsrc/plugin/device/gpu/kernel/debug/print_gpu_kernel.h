@@ -61,6 +61,7 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
   // size_in_byte, typeid
   std::vector<std::tuple<size_t, TypeId>> input_info_;
   std::vector<std::vector<int64_t>> input_shape_;
+  std::unordered_map<int64_t, int64_t> list_pos_;
 
   bool is_null_input_{false};
 };

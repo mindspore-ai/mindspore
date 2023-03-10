@@ -78,6 +78,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   new_inputs.push_back(inputs[0]);
   bool need_update = false;
   std::vector<int64_t> fake_tensor_pos;
+  std::vector<int64_t> value_list_pos;
   // the first input is primitive node which is not the real input
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
@@ -90,6 +91,9 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
       new_inputs.push_back(tensor_input);
       fake_tensor_pos.push_back(i);
       need_update = true;
+      if (IsValueNode<ValueList>(input_node)) {
+        value_list_pos.push_back(i);
+      }
     } else {
       new_inputs.push_back(input_node);
     }
@@ -110,8 +114,13 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
     if (kernel_graph != nullptr) {
       kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
     }
-    if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimPrint) && fake_tensor_pos.size() > 0) {
-      common::AnfAlgo::SetNodeAttr(kFakeTensorPos, MakeValue<std::vector<int64_t>>(fake_tensor_pos), new_cnode);
+    if (common::AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimPrint)) {
+      if (fake_tensor_pos.size() > 0) {
+        common::AnfAlgo::SetNodeAttr(kFakeTensorPos, MakeValue<std::vector<int64_t>>(fake_tensor_pos), new_cnode);
+      }
+      if (value_list_pos.size() > 0) {
+        common::AnfAlgo::SetNodeAttr(kFakeTensorListPos, MakeValue<std::vector<int64_t>>(value_list_pos), new_cnode);
+      }
     }
     return new_cnode;
   }

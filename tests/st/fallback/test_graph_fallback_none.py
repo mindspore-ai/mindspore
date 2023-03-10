@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
+import sys
+import time
+import tempfile
+from contextlib import contextmanager
 import pytest
 import numpy as np
-
 from mindspore import Tensor, jit, context, Parameter
 from mindspore.nn import Cell
 from mindspore.nn.probability import distribution
@@ -25,10 +29,43 @@ import mindspore as ms
 context.set_context(mode=context.GRAPH_MODE)
 
 
+class Capture():
+    def __init__(self):
+        self._old_stdout = sys.stdout
+        self._stdout_fd = sys.stdout.fileno()
+        self._saved_stdout_fd = os.dup(sys.stdout.fileno())
+        self._file = tempfile.TemporaryFile(mode='w+t')
+        self.output = ''
+
+    def start(self):
+        os.dup2(self._file.fileno(), self._stdout_fd)
+
+    def stop(self):
+        os.dup2(self._saved_stdout_fd, self._stdout_fd)
+        os.close(self._saved_stdout_fd)
+        sys.stdout = self._old_stdout
+        self._file.seek(0)
+        self.output = self._file.read()
+        self._file.close()
+
+
+@contextmanager
+def capture(cap):
+    cap.start()
+    try:
+        yield cap
+    finally:
+        cap.stop()
+
+
+def check_output(output, patterns):
+    assert output, "Capture output failed!"
+    for pattern in patterns:
+        assert output.find(pattern) != -1, "Unexpected output:\n" + output + "\n--- pattern ---\n" + pattern
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_none_compare():
     """
@@ -48,9 +85,15 @@ def test_none_compare():
         print(d is None)
         return None
 
-    res = foo()
-    print("res:", res)
-    assert res is None
+    cap = Capture()
+    with capture(cap):
+        res = foo()
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'False\nFalse\nFalse\nFalse'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
@@ -87,8 +130,6 @@ def test_none_is_sequence_input():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_inner_function_has_not_return():
     """
@@ -102,8 +143,15 @@ def test_inner_function_has_not_return():
         x = 3
         print("x:", x)
 
-    res = foo()
-    assert res is None
+    cap = Capture()
+    with capture(cap):
+        res = foo()
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'x:\n3'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.skip(reason="No support assert.")
@@ -144,8 +192,6 @@ def test_inner_function_has_not_return_2():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_none_is_default_value_of_parameter():
     """
@@ -162,15 +208,20 @@ def test_none_is_default_value_of_parameter():
         print("x:", x)
         return y
 
-    x = [1, 2]
-    res1 = foo(x)
-    assert res1 is None
+    cap = Capture()
+    with capture(cap):
+        x = [1, 2]
+        res = foo(x)
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'y is None\nx:\n[1, 2]'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_none_is_default_value_of_parameter_2():
     """
@@ -187,10 +238,17 @@ def test_none_is_default_value_of_parameter_2():
         print("x:", x)
         return y
 
-    x = [1, 2]
-    y = [3, 4]
-    res2 = foo(x, y)
-    assert res2 == [3, 4]
+    cap = Capture()
+    with capture(cap):
+        x = [1, 2]
+        y = [3, 4]
+        res = foo(x, y)
+        assert res == [3, 4]
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'y:\n[3, 4]\nx:\n[1, 2]'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
@@ -226,8 +284,6 @@ def test_none_is_slice_in_list():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_none_assign_print():
     """
@@ -242,8 +298,15 @@ def test_none_assign_print():
         print("convert bool:", bool(None))
         return x
 
-    res = foo()
-    assert res is None
+    cap = Capture()
+    with capture(cap):
+        res = foo()
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'x:\nNone\nconvert bool:\nFalse\n'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
@@ -285,9 +348,16 @@ def test_none_is_condition():
             print("The input is not None!")
         return x
 
-    input_x = None
-    res = foo(input_x)
-    assert res is None
+    cap = Capture()
+    with capture(cap):
+        input_x = None
+        res = foo(input_x)
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'The input is None!'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
@@ -315,9 +385,16 @@ def test_none_is_inner_function_output():
             print('The output of inner function is not None!')
         return None
 
-    x = Tensor([1])
-    res = foo(x)
-    assert res is None
+    cap = Capture()
+    with capture(cap):
+        x = Tensor([1])
+        res = foo(x)
+        assert res is None
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'The output of inner function is not None!'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
@@ -483,10 +560,17 @@ def test_none_is_return_of_sub_graph_control_flow():
             self.check_value(x)
             return x
 
-    net = Net()
-    data = Tensor(np.ones([2, 3]), dtype=ms.float32)
-    out = net(data)
-    assert (out.asnumpy() == data).all()
+    cap = Capture()
+    with capture(cap):
+        net = Net()
+        data = Tensor(np.ones([2, 3]), dtype=ms.float32)
+        out = net(data)
+        assert (out.asnumpy() == data).all()
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'The input is less 2.'}
+    check_output(cap.output, patterns)
 
 
 @pytest.mark.level0
