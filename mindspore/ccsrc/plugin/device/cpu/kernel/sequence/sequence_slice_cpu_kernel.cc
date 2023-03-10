@@ -53,16 +53,16 @@ int SequenceSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-template <typename T>
+template <typename T, typename D0, typename D1, typename D2>
 bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &workspace,
                                              const std::vector<AddressPtr> &outputs) {
   const auto seq_addr = GetDeviceAddress<T>(inputs, 0);
-  const auto start_addr = GetDeviceAddress<int64_t>(inputs, 1);
-  const auto stop_addr = GetDeviceAddress<int64_t>(inputs, 2);
-  const auto step_addr = GetDeviceAddress<int64_t>(inputs, 3);
+  const auto start_addr = GetDeviceAddress<D0>(inputs, 1);
+  const auto stop_addr = GetDeviceAddress<D1>(inputs, 2);
+  const auto step_addr = GetDeviceAddress<D2>(inputs, 3);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-  int64_t len = inputs[0]->size;
+  int64_t len = inputs[0]->size / sizeof(T);
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
   int64_t step = step_addr[0];
@@ -128,224 +128,224 @@ std::vector<std::pair<KernelAttr, SequenceSliceCpuKernelMod::SequenceSliceFunc>>
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int64_t, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int64_t, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int64_t, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<float>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<float, int64_t, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int64_t, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int64_t, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int64_t, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeDouble)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeDouble),
-    &SequenceSliceCpuKernelMod::LaunchKernel<double>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<double, int64_t, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int64_t, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int64_t, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int64_t, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int, int64_t, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int, int64_t, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int64_t, int, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int64_t, int, int64_t>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>},
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int64_t, int64_t, int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t>}};
+    &SequenceSliceCpuKernelMod::LaunchKernel<int64_t, int64_t, int64_t, int64_t>}};
 
 std::vector<KernelAttr> SequenceSliceCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

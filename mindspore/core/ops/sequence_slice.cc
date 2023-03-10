@@ -72,10 +72,8 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     if (start >= end) {
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
-    int64_t idx = 0;
     for (int64_t i = start; i < end; i += step) {
       abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[i]->BuildValue(), elems[i]->BuildType()));
-      idx++;
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
   } else {
@@ -93,10 +91,8 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     if (start <= end) {
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
-    int64_t idx = 0;
     for (int64_t i = start; i > end; i += step) {
       abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[i]->BuildValue(), elems[i]->BuildType()));
-      idx++;
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
   }
