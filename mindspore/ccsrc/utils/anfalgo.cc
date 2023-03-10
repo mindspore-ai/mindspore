@@ -395,9 +395,9 @@ std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithIndex(const AnfNodePtr &no
       value_node_index[value_node] = output_with_index.second;
     } else {
       value_node_index[value_node]++;
-      MS_LOG(INFO) << "Set output value node new index, value node: " << value_node->fullname_with_scope()
-                   << ", original index: " << output_with_index.second
-                   << ", new index:" << value_node_index[value_node];
+      MS_LOG(DEBUG) << "Set output value node new index, value node: " << value_node->fullname_with_scope()
+                    << ", original index: " << output_with_index.second
+                    << ", new index:" << value_node_index[value_node];
       output_with_index.second = value_node_index[value_node];
     }
   }
