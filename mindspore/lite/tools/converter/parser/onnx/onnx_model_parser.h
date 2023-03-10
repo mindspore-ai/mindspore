@@ -45,6 +45,7 @@ class OnnxModelParser : public converter::ModelParser {
 
  private:
   STATUS InitOriginModel(const std::string &model_file);
+  std::vector<int> SortOnnxNodeIndex(const onnx::GraphProto &onnx_graph);
   STATUS ConvertNodes(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                       std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
                       const std::string &root_node_name);
@@ -83,6 +84,7 @@ class OnnxModelParser : public converter::ModelParser {
   std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_{};
   std::unordered_map<std::string, std::string> child_root_map_{};  // for nest control flow node
   std::string model_file_{};
+  bool has_subgraph_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore
