@@ -32,7 +32,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
-     export, _save_graph, load
+    export, _save_graph, load
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 
@@ -49,6 +49,7 @@ class Net(nn.Cell):
         fc.weight
         fc.bias
     """
+
     def __init__(self, num_classes=10):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
@@ -370,10 +371,10 @@ def test_load_checkpoint_error_param():
     net = Net(10)
     ckpt_file = "check_name.ckpt"
     save_checkpoint(net, ckpt_file)
-    with pytest.raises(TypeError):
-        load_checkpoint(ckpt_file, specify_prefix=123)
     with pytest.raises(ValueError):
-        load_checkpoint(ckpt_file, filter_prefix="")
+        load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith(123))
+    with pytest.raises(ValueError):
+        load_checkpoint(ckpt_file, choice_func=lambda x: not x.startswith(""))
     if os.path.exists(ckpt_file):
         os.remove(ckpt_file)
 
@@ -389,7 +390,7 @@ def test_load_checkpoint_error_load():
     ckpt_file = "check_name.ckpt"
     save_checkpoint(net, ckpt_file)
     with pytest.raises(ValueError):
-        load_checkpoint(ckpt_file, specify_prefix="123")
+        load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith("123"))
     if os.path.exists(ckpt_file):
         os.remove(ckpt_file)
 
@@ -404,11 +405,11 @@ def test_load_checkpoint_specify_prefix():
     net = Net(10)
     ckpt_file = "specify_prefix.ckpt"
     save_checkpoint(net, ckpt_file)
-    param_dict = load_checkpoint(ckpt_file, specify_prefix="bn")
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith("bn"))
     assert len(param_dict) == 4
-    param_dict = load_checkpoint(ckpt_file, specify_prefix="fc")
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith("fc"))
     assert len(param_dict) == 2
-    param_dict = load_checkpoint(ckpt_file, specify_prefix=["fc", "bn"])
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith(("fc", "bn")))
     assert len(param_dict) == 6
     if os.path.exists(ckpt_file):
         os.remove(ckpt_file)
@@ -424,11 +425,11 @@ def test_load_checkpoint_filter_prefix():
     net = Net(10)
     ckpt_file = "filter_prefix.ckpt"
     save_checkpoint(net, ckpt_file)
-    param_dict = load_checkpoint(ckpt_file, filter_prefix="fc")
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: not x.startswith("fc"))
     assert len(param_dict) == 5
-    param_dict = load_checkpoint(ckpt_file, filter_prefix="bn")
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: not x.startswith("bn"))
     assert len(param_dict) == 3
-    param_dict = load_checkpoint(ckpt_file, filter_prefix=["bn", "fc"])
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: not x.startswith(("bn", "fc")))
     assert len(param_dict) == 1
     if os.path.exists(ckpt_file):
         os.remove(ckpt_file)
@@ -444,9 +445,10 @@ def test_load_checkpoint_specify_filter_prefix():
     net = Net(10)
     ckpt_file = "specify_filter_prefix.ckpt"
     save_checkpoint(net, ckpt_file)
-    param_dict = load_checkpoint(ckpt_file, specify_prefix="bn", filter_prefix="bn1.moving")
+    param_dict = load_checkpoint(ckpt_file, choice_func=lambda x: x.startswith("bn") and not x.startswith("bn1.moving"))
     assert len(param_dict) == 2
-    param_dict = load_checkpoint(ckpt_file, specify_prefix=["bn", "fc"], filter_prefix="fc.weight")
+    param_dict = load_checkpoint(ckpt_file,
+                                 choice_func=lambda x: x.startswith(("bn", "fc")) and not x.startswith("fc.weight"))
     assert len(param_dict) == 5
     if os.path.exists(ckpt_file):
         os.remove(ckpt_file)

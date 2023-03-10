@@ -750,13 +750,16 @@ def obfuscate_model(obf_config, **kwargs):
 
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
-                    dec_key=None, dec_mode="AES-GCM", specify_prefix=None):
+                    dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
     """
     Load checkpoint info from a specified file.
 
     Note:
-        1. `specify_prefix` and `filter_prefix` do not affect each other.
-        2. If none of the parameters are loaded from checkpoint file, it will throw ValueError.
+        - `specify_prefix` and `filter_prefix` do not affect each other.
+        - If none of the parameters are loaded from checkpoint file, it will throw ValueError.
+        - `specify_prefix` and `filter_prefix` are in the process of being deprecated,
+            `choice_func` is recommended instead.
+            And using either of those two args will override `choice_func` at the same time.
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
@@ -765,14 +768,18 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
                             on the parameters of the same type, such as float32 to float16. Default: False.
-        filter_prefix (Union[str, list[str], tuple[str]]): Parameters starting with the filter_prefix
-            will not be loaded. Default: None.
+        filter_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
+            filter_prefix will not be loaded. Default: None.
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
                                       is not required. Default: None.
         dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
                         mode, currently supports 'AES-GCM' and 'AES-CBC' and 'SM4-CBC'. Default: 'AES-GCM'.
-        specify_prefix (Union[str, list[str], tuple[str]]): Parameters starting with the specify_prefix
-            will be loaded. Default: None.
+        specify_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
+            specify_prefix will be loaded. Default: None.
+        choice_func (Union[None, function]) : Input value of the function is a Parameter name of type string,
+            and the return value is a bool. If returns True, the Parameter
+            that matches the custom condition will be loaded. If returns False, the Parameter that
+            matches the custom condition will be removed. Default: None.
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
@@ -790,8 +797,19 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>> import mindspore as ms
         >>>
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
-        >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1", specify_prefix="conv", )
+        >>> param_dict = ms.load_checkpoint(ckpt_file_name,
+        ...                                 choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
         >>> print(param_dict["conv2.weight"])
+        Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
+        >>> def func(param_name):
+        >>>     whether_load = False
+        >>>     if param_name.startswith("conv"):
+        >>>         whether_load = True
+        >>>     if param_name.startswith("conv1"):
+        >>>         whether_load = False
+        >>>     return whether_load
+        >>> param_dict1 = ms.load_checkpoint(ckpt_file_name, choice_func=func)
+        >>> print(param_dict1["conv2.weight"])
         Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
@@ -805,8 +823,17 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     parameter_dict = {}
     try:
         param_data_list = []
+        if specify_prefix:
+            logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
+                           "please use `choice_func` instead.")
+        if filter_prefix:
+            logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
+                           "please use `choice_func` instead.")
         for element_id, element in enumerate(checkpoint_list.value):
             if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
+                continue
+            if specify_prefix is None and filter_prefix is None and \
+                    choice_func is not None and not choice_func(element.tag):
                 continue
             if element.tensor.ByteSize() == 0:
                 _load_mapparameter(element, parameter_dict)
