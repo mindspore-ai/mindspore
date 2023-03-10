@@ -20,6 +20,7 @@
 #include "pipeline/pynative/grad/bprop_expander/bprop_irbuilder.h"
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -149,6 +150,9 @@ NodePtrList TensorScatterPossibleReplacement(const BpropIRBuilder *ib) {
 }
 
 ShapeArray RegenerateOutputShapeFunc(const ShapeArray &inputs) {
+  constexpr size_t inputs_num = 4;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 4.");
+
   auto x_shape = inputs.at(0);
   auto indices_shape = inputs.at(1);
 
@@ -159,23 +163,37 @@ ShapeArray RegenerateOutputShapeFunc(const ShapeArray &inputs) {
     axis_value += x_shape.size();
   }
 
+  auto batch_dims = inputs.at(3);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
   std::vector<int64_t> out_shape(x_shape.begin(), x_shape.begin() + axis_value);
-  out_shape.insert(out_shape.end(), indices_shape.begin(), indices_shape.end());
+  out_shape.insert(out_shape.end(), indices_shape.begin() + batch_dims_value, indices_shape.end());
   out_shape.insert(out_shape.end(), x_shape.begin() + axis_value + 1, x_shape.end());
   return {out_shape};
 }
 
 ShapeVector RegenerateOutputInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) {
+  constexpr size_t inputs_num = 4;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 4.");
+
   if (!invalid_indices.empty()) {
     return {-1};
   }
 
   auto x_rank = inputs.at(0).size();
   auto indices_rank = inputs.at(1).size();
-  return {static_cast<int64_t>(x_rank + indices_rank)};
+  auto batch_dims = inputs.at(3);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
+  return {static_cast<int64_t>(x_rank + indices_rank - LongToSize(batch_dims_value))};
 }
 
 ShapeArray Perm1ShapeFunc(const ShapeArray &inputs) {
+  constexpr size_t inputs_num = 4;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 4.");
+
   auto dout_rank = SizeToLong(inputs.at(0).size());
   auto indices_rank = SizeToLong(inputs.at(1).size());
 
@@ -186,13 +204,23 @@ ShapeArray Perm1ShapeFunc(const ShapeArray &inputs) {
     axis_value += dout_rank - indices_rank + 1;
   }
 
-  std::vector<int64_t> perm(indices_rank);
-  std::iota(perm.begin(), perm.end(), axis_value);
-  int64_t index_end = std::min(dout_rank, axis_value);
-  for (int64_t i = 0; i < index_end; ++i) {
+  auto batch_dims = inputs.at(3);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
+  std::vector<int64_t> perm;
+  int64_t outer_offset = axis_value + indices_rank - batch_dims_value;
+  for (int64_t i = 0; i < batch_dims_value; i++) {
     perm.push_back(i);
   }
-  for (int64_t i = axis_value + indices_rank; i < dout_rank; ++i) {
+  for (int64_t i = axis_value; i < outer_offset; i++) {
+    perm.push_back(i);
+  }
+  int64_t index_end = std::min(dout_rank, axis_value);
+  for (int64_t i = batch_dims_value; i < index_end; i++) {
+    perm.push_back(i);
+  }
+  for (int64_t i = outer_offset; i < dout_rank; i++) {
     perm.push_back(i);
   }
 
@@ -208,26 +236,138 @@ ShapeVector PermInferFunc(const ShapeArray &inputs, const std::unordered_set<siz
 }
 
 ShapeArray Perm2ShapeFunc(const ShapeArray &inputs) {
+  constexpr size_t inputs_num = 3;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 3.");
+
   auto x_rank = SizeToLong(inputs.at(0).size());
   auto axis = inputs.at(1);
   MS_EXCEPTION_IF_CHECK_FAIL(axis.size() == 1, "axis should be a scalar.");
   auto axis_value = axis[0];
-
   if (axis_value < 0) {
     axis_value += x_rank;
   }
 
-  std::vector<int64_t> perm(axis_value);
-  std::iota(perm.begin(), perm.end(), 1);
-  perm.push_back(0);
-  for (int64_t i = 1 + SizeToLong(axis_value); i < x_rank; ++i) {
+  auto batch_dims = inputs.at(2);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
+  std::vector<int64_t> perm;
+  for (int64_t i = 0; i < batch_dims_value; i++) {
+    perm.push_back(i);
+  }
+  for (int64_t i = batch_dims_value + 1; i < axis_value + 1; i++) {
+    perm.push_back(i);
+  }
+  perm.push_back(batch_dims_value);
+  for (int64_t i = axis_value + 1; i < x_rank; i++) {
     perm.push_back(i);
   }
 
   return {perm};
 }
 
+ShapeArray GatherReshapeShapeFunc(const ShapeArray &inputs) {
+  constexpr size_t inputs_num = 5;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 5.");
+
+  auto values_shape = inputs.at(0);
+  auto indices_shape = inputs.at(1);
+  auto x_shape = inputs.at(2);
+  auto axis = inputs.at(3);
+  MS_EXCEPTION_IF_CHECK_FAIL(axis.size() == 1, "axis should be a scalar.");
+  auto axis_value = axis[0];
+  if (axis_value < 0) {
+    axis_value += SizeToLong(x_shape.size());
+  }
+
+  auto batch_dims = inputs.at(4);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
+  MS_EXCEPTION_IF_CHECK_FAIL(x_shape.size() > LongToSize(axis_value), "axis should within interval: [0, params_rank).");
+  MS_EXCEPTION_IF_CHECK_FAIL(axis_value >= batch_dims_value, "axis can not less than batch_dims.");
+  int64_t batch_size = 1;
+  for (int64_t i = 0; i < batch_dims_value; i++) {
+    batch_size *= x_shape[i];
+  }
+  auto axis_dim = x_shape[axis_value];
+
+  std::vector<int64_t> values_reshape = {-1};
+  (void)values_reshape.insert(values_reshape.end(), values_shape.begin() + batch_dims_value, values_shape.end());
+
+  std::vector<int64_t> indices_reshape = {-1};
+  (void)indices_reshape.insert(indices_reshape.end(), indices_shape.begin() + batch_dims_value, indices_shape.end());
+
+  std::vector<int64_t> delta_reshape = {batch_size};
+  auto indices_rank = SizeToLong(indices_reshape.size());
+  for (int64_t i = 0; i < indices_rank - 1; i++) {
+    delta_reshape.push_back(1);
+  }
+
+  std::vector<int64_t> params_grad_reshape(values_shape.begin(), values_shape.begin() + batch_dims_value);
+  params_grad_reshape.push_back(axis_dim);
+  (void)params_grad_reshape.insert(params_grad_reshape.end(), values_reshape.begin() + indices_rank,
+                                   values_reshape.end());
+
+  ShapeArray res = {values_reshape, indices_reshape, delta_reshape, params_grad_reshape};
+  return res;
+}
+
+ShapeVector GatherReshapeInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) {
+  constexpr size_t inputs_num = 5;
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 5.");
+
+  constexpr size_t return_num = 4;
+  if (!invalid_indices.empty()) {
+    return ShapeVector(return_num, -1);
+  }
+
+  auto batch_dims = inputs.at(4);
+  MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
+  auto batch_dims_value = batch_dims[0];
+
+  auto values_rank = SizeToLong(inputs.at(0).size()) - batch_dims_value + 1;
+  auto indices_rank = SizeToLong(inputs.at(1).size()) - batch_dims_value + 1;
+  auto delta_rank = indices_rank;
+  auto params_grad_rank = SizeToLong(inputs.at(2).size());
+
+  ShapeVector res = {values_rank, indices_rank, delta_rank, params_grad_rank};
+  return res;
+}
+
+NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
+                       int64_t axis, int64_t batch_dims) {
+  auto x_shape = ib->Shape(x, true);
+  auto batch_size = ib->Tensor(1, kInt64);
+  for (int64_t i = 0; i < batch_dims; i++) {
+    batch_size = ib->Mul(batch_size, ib->TensorGetItem(x_shape, i));
+  }
+  auto axis_dim = ib->TensorGetItem(x_shape, axis);
+
+  auto reshape_shape = ib->ShapeCalc({values, indices, x, ib->Tensor(axis), ib->Tensor(batch_dims)},
+                                     GatherReshapeShapeFunc, GatherReshapeInferFunc, {3, 4});
+  constexpr size_t reshape_size = 4;
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_shape.size() == reshape_size, "reshape_shape should equal to 4.");
+  auto values_reshape = reshape_shape[0];
+  auto indices_reshape = reshape_shape[1];
+  auto delta_reshape = reshape_shape[2];
+  auto params_grad_reshape = reshape_shape[3];
+
+  auto values_rshp = ib->Reshape(values, values_reshape);
+  auto indices_rshp = ib->Reshape(indices, indices_reshape);
+  auto limit = ib->Cast(ib->Mul(batch_size, axis_dim), kInt64);
+  constexpr int64_t range_max_len = 1000000;
+  auto delta = ib->Emit("Range", {ib->Tensor(0, kInt64), limit, ib->Cast(axis_dim, kInt64)},
+                        {{"maxlen", MakeValue(range_max_len)}});
+  delta = ib->Reshape(delta, delta_reshape);
+  indices_rshp = ib->Add(indices_rshp, delta);
+  auto params_grad = ib->Emit("UnsortedSegmentSum", {values_rshp, indices_rshp, limit});
+  params_grad = ib->Reshape(params_grad, params_grad_reshape);
+  return params_grad;
+}
+
 NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
+  auto batch_dims = ib->GetAttr<int64_t>(kAttrBatchDims);
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto axis = ib->GetInput(kIndex2);
@@ -240,25 +380,45 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
     dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
   }
 
+  int64_t axis_v = 0;
+  MS_EXCEPTION_IF_NULL(axis);
+  MS_EXCEPTION_IF_NULL(axis->abstract());
+  auto axis_tmp = axis->abstract()->BuildValue();
+  MS_EXCEPTION_IF_NULL(axis_tmp);
+  if (axis_tmp->isa<tensor::Tensor>()) {
+    axis_v = CheckAndConvertUtils::CheckTensorIntValue("axis value", axis_tmp, "Gather")[0];
+  } else {
+    axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
+  }
+  if (batch_dims < 0) {
+    batch_dims += SizeToLong(ind_shp.size());
+  }
+
   if (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)) {
+    auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
       indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
 
-      auto out_shp1 = ib->ShapeCalc({x, indices, axis}, RegenerateOutputShapeFunc, RegenerateOutputInferFunc, {2})[0];
+      auto out_shp1 = ib->ShapeCalc({x, indices, axis, batch_dims_tensor}, RegenerateOutputShapeFunc,
+                                    RegenerateOutputInferFunc, {2, 3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
 
     // Calculate perm.
-    auto perm_1 = ib->ShapeCalc({dout, indices, axis}, Perm1ShapeFunc, PermInferFunc, {2})[0];
-    auto perm_2 = ib->ShapeCalc({x, axis}, Perm2ShapeFunc, PermInferFunc, {1})[0];
+    auto perm_1 = ib->ShapeCalc({dout, indices, axis, batch_dims_tensor}, Perm1ShapeFunc, PermInferFunc, {2, 3})[0];
+    auto perm_2 = ib->ShapeCalc({x, axis, batch_dims_tensor}, Perm2ShapeFunc, PermInferFunc, {1, 2})[0];
     auto values_transpose = ib->Transpose(dout, perm_1);
-    auto x_grad = ib->Emit("UnsortedSegmentSum",
-                           {values_transpose, indices, ib->Emit("TupleGetItem", {ib->Emit("Shape", {x}), axis})});
+    NodePtr x_grad = nullptr;
+    if (batch_dims > 0) {
+      x_grad = CalBatchGather(ib, values_transpose, indices, x, axis_v, batch_dims);
+    } else {
+      x_grad =
+        ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->TensorGetItem(ib->Shape(x, true), axis_v)});
+    }
     x_grad = ib->Transpose(x_grad, perm_2);
     return {x_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
   }
 
-  auto axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
   if (ind_shp.empty()) {
     indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
     ind_shp = ib->GetShape(indices);
@@ -266,11 +426,16 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
     dout = ib->Reshape(dout, out_shp1);
   }
   out_shp = ib->GetShape(dout);
-  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v);
+  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v, batch_dims);
   auto values_transpose = ib->Transpose(dout, perm_1);
-  auto tmp = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
-  auto perm_2 = GenerateInverseIndex(x_shp, axis_v);
-  auto params_grad = ib->Transpose(tmp, perm_2);
+  NodePtr x_grad = nullptr;
+  if (batch_dims > 0) {
+    x_grad = CalBatchGather(ib, values_transpose, indices, x, axis_v, batch_dims);
+  } else {
+    x_grad = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
+  }
+  auto perm_2 = GenerateInverseIndex(x_shp, axis_v, batch_dims);
+  auto params_grad = ib->Transpose(x_grad, perm_2);
   return {params_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
 }
 

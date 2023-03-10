@@ -424,42 +424,45 @@ NodePtr GetEps(const BpropIRBuilder *ib, const TypePtr &type) {
   }
 }
 
-std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v) {
+std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v, int64_t batch_dims) {
   int64_t x_rank = static_cast<int64_t>(x_shp.size());
   auto index = Range(x_rank);
   if (axis_v < 0) {
     axis_v += x_rank;
   }
   std::vector<int64_t> perm;
-  auto start1 = x_rank <= 1 ? index.end() : index.begin() + 1;
+  auto start1 = x_rank <= 1 ? index.end() : index.begin() + batch_dims + 1;
   auto end1 = axis_v + 1 >= x_rank ? index.end() : index.begin() + axis_v + 1;
   auto start2 = axis_v + 1 >= x_rank ? index.end() : index.begin() + axis_v + 1;
+  (void)std::copy(index.begin(), index.begin() + batch_dims, std::back_inserter(perm));
   (void)std::copy(start1, end1, std::back_inserter(perm));
-  perm.push_back(0);
+  perm.push_back(batch_dims);
   (void)std::copy(start2, index.end(), std::back_inserter(perm));
   return perm;
 }
 
 std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, const std::vector<int64_t> &ind_shp,
-                                        int64_t axis_v) {
+                                        int64_t axis_v, int64_t batch_dims) {
   int64_t out_rank = static_cast<int64_t>(out_shp.size());
   int64_t ind_rank = static_cast<int64_t>(ind_shp.size());
   if (axis_v < 0) {
     axis_v += out_rank - ind_rank + 1;
   }
-  auto perm_part1 = Range(axis_v, axis_v + ind_rank);
+  auto perm_part1 = Range(axis_v, axis_v + ind_rank - batch_dims);
   auto index = Range(out_rank);
   std::vector<int64_t> perm;
   auto end = axis_v >= out_rank ? out_rank - 1 : axis_v;
-  auto start = axis_v + ind_rank >= out_rank ? index.end() : index.begin() + axis_v + ind_rank;
+  auto start =
+    (axis_v + ind_rank - batch_dims) >= out_rank ? index.end() : (index.begin() + axis_v + ind_rank - batch_dims);
+  (void)std::copy(index.begin(), index.begin() + batch_dims, std::back_inserter(perm));
   (void)std::copy(perm_part1.begin(), perm_part1.end(), std::back_inserter(perm));
-  (void)std::copy(index.begin(), index.begin() + end, std::back_inserter(perm));
+  (void)std::copy(index.begin() + batch_dims, index.begin() + end, std::back_inserter(perm));
   (void)std::copy(start, index.end(), std::back_inserter(perm));
   return perm;
 }
 
 std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, const std::vector<int64_t> &ind_shp,
-                                           int64_t axis_v) {
+                                           int64_t axis_v, int64_t batch_dims) {
   int64_t rank = static_cast<int64_t>(x_shp.size());
   if (axis_v < 0) {
     axis_v += rank;
@@ -468,7 +471,7 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
   auto end = axis_v >= rank ? rank - 1 : axis_v;
   auto start = axis_v + 1 >= rank ? x_shp.end() : x_shp.begin() + axis_v + 1;
   (void)std::copy(x_shp.begin(), x_shp.begin() + end, std::back_inserter(out_shp));
-  (void)std::copy(ind_shp.begin(), ind_shp.end(), std::back_inserter(out_shp));
+  (void)std::copy(ind_shp.begin() + batch_dims, ind_shp.end(), std::back_inserter(out_shp));
   (void)std::copy(start, x_shp.end(), std::back_inserter(out_shp));
   return out_shp;
 }

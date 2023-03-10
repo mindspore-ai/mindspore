@@ -65,7 +65,7 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return KRET_UNKNOWN_SHAPE;
   }
   if (batch_dims_ < 0) {
-    batch_dims_ += SizeToLong(input_shapes_.size());
+    batch_dims_ += SizeToLong(indices_shapes_.size());
   }
   is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name_, "input") ||
                    CHECK_SHAPE_NULL(indices_shapes_, kernel_name_, "indices") ||
