@@ -4270,14 +4270,14 @@ def meshgrid(*inputs, indexing='xy'):
     return meshgrid_op(inputs)
 
 
-def affine_grid(theta, output_size, align_corners=False):
+def affine_grid(theta, size, align_corners=False):
     r"""
     Returns a 2D or 3D flow field (sampling grid) based on `theta`, a batch of affine matrices.
 
     Args:
         theta (Tensor): The input tensor of flow field whose dtype is float16, float32.
             Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
-        output_size (tuple[int]): The target output image size.
+        size (tuple[int]): The target output image size.
             The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
             If ``True``, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
@@ -4288,12 +4288,12 @@ def affine_grid(theta, output_size, align_corners=False):
         or [N, D, H, W, 3] for 3D grid.
 
     Raises:
-        TypeError: If `theta` is not a Tensor or `output_size` is not a tuple.
+        TypeError: If `theta` is not a Tensor or `size` is not a tuple.
         ValueError: If the shape of `theta` is not [N, 2, 3] or [N, 3, 4].
-        ValueError: If the size of `output_size` is not 4 or 5.
-        ValueError: If the shape of `theta` is [N, 2, 3], the size of `output_size` is not 4;
-                    If the shape of `theta` is [N, 3, 4], the size of `output_size` is not 5.
-        ValueError: If the output_size[0] is not equal to the shape[0] of theta.
+        ValueError: If the size of `size` is not 4 or 5.
+        ValueError: If the shape of `theta` is [N, 2, 3], the size of `size` is not 4;
+                    If the shape of `theta` is [N, 3, 4], the size of `size` is not 5.
+        ValueError: If the size[0] is not equal to the shape[0] of theta.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4314,7 +4314,7 @@ def affine_grid(theta, output_size, align_corners=False):
         [ 0.78333336  0.06666666]]]]
     """
     affine_grid_op = AffineGrid(align_corners)
-    return affine_grid_op(theta, output_size)
+    return affine_grid_op(theta, size)
 
 
 def broadcast_to(input, shape): # pylint: disable=redefined-outer-name

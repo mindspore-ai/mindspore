@@ -688,7 +688,7 @@ def permute(x, dims):
     return transpose_(x, dims)
 
 
-def ceil(x):
+def ceil(input):
     r"""
     Rounds a tensor up to the closest integer element-wise.
 
@@ -697,14 +697,14 @@ def ceil(x):
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Args:
-        x (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -715,7 +715,7 @@ def ceil(x):
         >>> print(output)
         [ 2.  3. -1.]
     """
-    return tensor_ceil(x)
+    return tensor_ceil(input)
 
 
 def round(input):
@@ -835,26 +835,27 @@ def true_divide(dividend, divisor):
     return div(dividend, divisor, rounding_mode=None)
 
 
-def mul(x, y):
+def mul(input, other):
     r"""
     Multiplies two tensors element-wise.
 
     .. math::
 
-        out_{i} = x_{i} * y_{i}
+        out_{i} = input_{i} * other_{i}
     .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the
+          data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -863,8 +864,8 @@ def mul(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+        TypeError: If `input` and `other` is not one of the following: Tensor, number.Number, bool.
+        ValueError: If `input` and `other` are not the same shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -876,7 +877,7 @@ def mul(x, y):
         >>> print(output)
         [ 4. 10. 18.]
     """
-    return tensor_mul(x, y)
+    return tensor_mul(input, other)
 
 
 def multiply(input, other):
@@ -1084,26 +1085,27 @@ def fmod(input, other):
     return input - div(input, other, rounding_mode="trunc") * other
 
 
-def pow(x, y):
+def pow(input, exponent):
     r"""
-    Calculates the `y` power of each element in `x`.
+    Calculates the `exponent` power of each element in `input`.
 
     .. math::
 
-        out_{i} = x_{i} ^{ y_{i}}
+        out_{i} = input_{i} ^{ exponent_{i}}
 
     .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `exponent` comply with the implicit type conversion rules to make the
+          data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
 
     Args:
-        x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
+        exponent (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -1112,8 +1114,8 @@ def pow(x, y):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number or bool.
-        ValueError: If the shape of `x` and `y` are different.
+        TypeError: If `input` and `exponent` is not one of the following: Tensor, number.Number or bool.
+        ValueError: If the shape of `input` and `exponent` are different.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1131,7 +1133,7 @@ def pow(x, y):
         >>> print(output)
         [ 1. 16. 64.]
     """
-    return tensor_pow(x, y)
+    return tensor_pow(input, exponent)
 
 
 def floor_mod(x, y):
@@ -1215,7 +1217,7 @@ def exp(input):
     return tensor_exp(input)
 
 
-def expm1(x):
+def expm1(input):
     r"""
     Returns exponential then minus 1 of a tensor element-wise.
 
@@ -1224,14 +1226,14 @@ def expm1(x):
         out_i = e^{x_i} - 1
 
     Args:
-        x (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1242,7 +1244,7 @@ def expm1(x):
         >>> print(output)
         [ 0.        1.718282  6.389056 53.598152]
     """
-    return tensor_expm1(x)
+    return tensor_expm1(input)
 
 
 def log(input):
@@ -2376,7 +2378,7 @@ def sinh(input):
     return sinh_(input)
 
 
-def cosh(x):
+def cosh(input):
     r"""
     Computes hyperbolic cosine of input element-wise.
 
@@ -2385,16 +2387,16 @@ def cosh(x):
         out_i = \cosh(x_i)
 
     Args:
-        x (Tensor): The input tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
+        input (Tensor): The input tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
             and data type must be float16, float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `input`.
 
     Raises:
-        TypeError: If the dtype of `x` is not one of the following types:
+        TypeError: If the dtype of `input` is not one of the following types:
                    float16, float32, float64, complex64, complex128.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2405,7 +2407,7 @@ def cosh(x):
         >>> print(output)
         [1.0289385 1.364684 1.048436 1.0040528]
     """
-    return cosh_(x)
+    return cosh_(input)
 
 
 def tanh(input_x):
@@ -2956,24 +2958,24 @@ def invert(x):
     return invert_(x)
 
 
-def erf(x):
+def erf(input):
     r"""
-    Computes the Gauss error function of `x` element-wise.
+    Computes the Gauss error function of `input` element-wise.
 
     .. math::
 
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        x (Tensor): The input tensor of Gaussian error function. Its rank must be in [0, 7] inclusive
+        input (Tensor): The input tensor of Gaussian error function. Its rank must be in [0, 7] inclusive
             and data type must be float16 float32 or float64.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2984,27 +2986,27 @@ def erf(x):
         >>> print(output)
         [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
     """
-    return erf_(x)
+    return erf_(input)
 
 
-def erfc(x):
+def erfc(input):
     r"""
-    Computes the complementary error function of `x` element-wise.
+    Computes the complementary error function of `input` element-wise.
 
     .. math::
 
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        x (Tensor): The input tensor with a dtype of float16, float32 or float64,
+        input (Tensor): The input tensor with a dtype of float16, float32 or float64,
             its rank should be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape and dtype as `x`.
+        Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3015,7 +3017,7 @@ def erfc(x):
         >>> print(output)
         [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
     """
-    return erfc_(x)
+    return erfc_(input)
 
 
 def bessel_j0(x):
@@ -5628,47 +5630,47 @@ def gcd(input, other):
     return gcd_(input, other)
 
 
-def lerp(start, end, weight):
+def lerp(input, end, weight):
     """
-    Does a linear interpolation of two tensors start and end based on a float or tensor weight.
+    Does a linear interpolation of two tensors input and end based on a float or tensor weight.
 
     If `weight` is a tensor, the shapes of three inputs need to be broadcast;
-    If `weight` is a float, the shapes of `start` and `end` need to be broadcast.
+    If `weight` is a float, the shapes of `input` and `end` need to be broadcast.
 
     .. math::
 
-        output_{i} = start_{i} + weight_{i} * (end_{i} - start_{i})
+        output_{i} = input_{i} + weight_{i} * (end_{i} - input_{i})
 
     Args:
-        start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
-        end (Tensor): The tensor with the ending points. Data type must be the same as `start`.
+        input (Tensor): The tensor with the starting points. Data type must be float16 or float32.
+        end (Tensor): The tensor with the ending points. Data type must be the same as `input`.
         weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
             or a scalar tensor with float16 or float32 data type.
 
     Returns:
-        Tensor, has the same type and shape as input `start`.
+        Tensor, has the same type and shape as input `input`.
 
     Raises:
-        TypeError: If `start` or `end` is not a tensor.
+        TypeError: If `input` or `end` is not a tensor.
         TypeError: If `weight` is neither scalar(float) nor tensor.
-        TypeError: If dtype of `start` or `end` is neither float16 nor float32.
+        TypeError: If dtype of `input` or `end` is neither float16 nor float32.
         TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
-        TypeError: If `start` and `end` have different data types.
-        TypeError: If `start`, `end` and `weight` have different data types when `weight` is a tensor.
-        ValueError: If `end` could not be broadcast to a tensor with shape of `start`.
-        ValueError: If `weight` could not be broadcast to tensors with shapes of `start` and `end` when it is a tensor.
+        TypeError: If `input` and `end` have different data types.
+        TypeError: If `input`, `end` and `weight` have different data types when `weight` is a tensor.
+        ValueError: If `end` could not be broadcast to a tensor with shape of `input`.
+        ValueError: If `weight` could not be broadcast to tensors with shapes of `input` and `end` when it is a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
         >>> end = Tensor(np.array([10., 10., 10., 10.]), mindspore.float32)
-        >>> output = ops.lerp(start, end, 0.5)
+        >>> output = ops.lerp(input, end, 0.5)
         >>> print(output)
         [5.5 6. 6.5 7. ]
     """
-    return lerp_(start, end, weight)
+    return lerp_(input, end, weight)
 
 
 def bernoulli(input, p=0.5, seed=None):

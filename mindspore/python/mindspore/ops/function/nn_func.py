@@ -3044,7 +3044,7 @@ def _innner_log_softmax(inputs, axis):
     return inputs - logsumexp(inputs, axis, True)
 
 
-def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
+def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
     r"""
     The cross entropy loss between input and target.
 
@@ -3096,9 +3096,9 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
               \end{cases}
 
     Args:
-        inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+        input (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
-            `inputs` is expected to be log-probabilities, data type must be float16 or float32.
+            `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
             high-dimensional loss.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
@@ -3127,10 +3127,10 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
         >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> output = ops.cross_entropy(inputs, target)
     """
-    class_dim = 0 if inputs.ndim == 1 else 1
-    if inputs.size == target.size:
-        return _cross_entropy(inputs, target, class_dim, weight, reduction, label_smoothing)
-    return nll_loss(_innner_log_softmax(inputs, class_dim), target, weight, ignore_index, reduction, label_smoothing)
+    class_dim = 0 if input.ndim == 1 else 1
+    if input.size == target.size:
+        return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
+    return nll_loss(_innner_log_softmax(input, class_dim), target, weight, ignore_index, reduction, label_smoothing)
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
@@ -3338,7 +3338,7 @@ def l1_loss(x, target, reduction='mean'):
     return _get_loss(loss, reduction, "l1_loss")
 
 
-def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
+def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
 
@@ -3368,22 +3368,22 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     :math:`\text{beta}>0` , its default value is 1.0. :math:`N` is the batch size.
 
     Args:
-        logits (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        labels (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `logits`.
+        input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        target (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `input`.
         beta (float): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: 1.0.
         reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
 
     Returns:
-        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `input`.
         Otherwise, the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-        TypeError: If dtype of `logits` or `labels` is not one of float16, float32, float64.
+        TypeError: If dtype of `input` or `target` is not one of float16, float32, float64.
         ValueError: If `beta` is less than or equal to 0.
-        ValueError: If shape of `logits` is not the same as `labels`.
+        ValueError: If shape of `input` is not the same as `target`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3396,7 +3396,7 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         [0.  0.  0.5]
     """
     _smooth_l1_loss = _get_cache_prim(P.SmoothL1Loss)(beta, reduction)
-    return _smooth_l1_loss(logits, labels)
+    return _smooth_l1_loss(input, target)
 
 
 def threshold(input_x, thr, value):
@@ -3866,21 +3866,21 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
     return out
 
 
-def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
+def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corners=False):
     """
-    Given an `input_x` and a flow-field `grid`, computes the `output` using `input_x` values and pixel locations from
-    `grid`. Only spatial (4-D) and volumetric (5-D) `input_x` is supported.
+    Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from
+    `grid`. Only spatial (4-D) and volumetric (5-D) `input` is supported.
 
-    In the spatial (4-D) case, for `input_x` with shape :math:`(N, C, H_{in}, W_{in})` and `grid` with shape
+    In the spatial (4-D) case, for `input` with shape :math:`(N, C, H_{in}, W_{in})` and `grid` with shape
     :math:`(N, H_{out}, W_{out}, 2)`, the `output` will have shape :math:`(N, C, H_{out}, W_{out})`.
 
-    For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input_x` pixel
+    For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel
     locations `x` and `y`, which are used to interpolate the output value `output[n, :, h, w]`. In the case of 5D
     inputs, `grid[n, d, h, w]`, specifies the `x`, `y`, `z` pixel locations for interpolating
-    `output[n, :, d, h, w]`. And `interpolation_mode` argument specifies "nearest" or "bilinear" or "bicubic"
+    `output[n, :, d, h, w]`. And `mode` argument specifies "nearest" or "bilinear" or "bicubic"
     (supported in 4D case only) interpolation method to sample the input pixels.
 
-    `grid` specifies the sampling pixel locations normalized by the `input_x` spatial dimensions. Therefore, it should
+    `grid` specifies the sampling pixel locations normalized by the `input` spatial dimensions. Therefore, it should
     have most values in the range of :math:`[-1, 1]`.
 
     If `grid` has values outside the range of :math:`[-1, 1]`, the corresponding outputs are handled as defined by
@@ -3890,13 +3890,13 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     far away from the border, it will keep being reflected until becoming in bound.
 
     Args:
-        input_x (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
+        input (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
             H_{in}, W_{in})` (5-D case) and dtype of float32 or float64.
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
-            H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input_x`.
-        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
+            H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
+        mode (str): An optional string specifying the interpolation method. The optional values are
             "bilinear", "nearest" or "bicubic". Default: "bilinear". Note: `bicubic` supports only 4-D input. When
-            `interpolation_mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
+            `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legistimately be bilinear.
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: "zeros".
@@ -3906,18 +3906,18 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
             `False`.
 
     Returns:
-        Tensor, dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
+        Tensor, dtype is the same as `input` and whose shape is :math:`(N, C, H_{out}, W_{out})` (4-D) and
         :math:`(N, C, D_{out}, H_{out}, W_{out})` (5-D).
 
     Raises:
-        TypeError: If `input_x` or `grid` is not a Tensor.
-        TypeError: If the dtypes of `input_x` and `grid` are inconsistent.
-        TypeError: If the dtype of `input_x` or `grid` is not a valid type.
+        TypeError: If `input` or `grid` is not a Tensor.
+        TypeError: If the dtypes of `input` and `grid` are inconsistent.
+        TypeError: If the dtype of `input` or `grid` is not a valid type.
         TypeError: If `align_corners` is not a boolean value.
-        ValueError: If the rank of `input_x` or `grid` is not equal to 4(4-D case) or 5(5-D case).
-        ValueError: If the first dimension of `input_x` is not equal to that of `grid`.
+        ValueError: If the rank of `input` or `grid` is not equal to 4(4-D case) or 5(5-D case).
+        ValueError: If the first dimension of `input` is not equal to that of `grid`.
         ValueError: If the last dimension of `grid` is not equal to 2(4-D case) or 3(5-D case).
-        ValueError: If `interpolation_mode` is not "bilinear", "nearest", "bicubic" or a string value.
+        ValueError: If `mode` is not "bilinear", "nearest", "bicubic" or a string value.
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
@@ -3926,7 +3926,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     Examples:
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(0.2, 1, 0.1).reshape((2, 2, 1, 2)).astype(np.float32))
-        >>> output = ops.grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros',
+        >>> output = ops.grid_sample(input_x, grid, mode='bilinear', padding_mode='zeros',
         ...                          align_corners=True)
         >>> print(output)
         [[[[ 1.9      ]
@@ -3938,11 +3938,11 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
           [[14.5      ]
            [14.8      ]]]]
     """
-    if input_x.ndim == 4:
-        _grid_sampler_2d = _get_cache_prim(NN_OPS.GridSampler2D)(interpolation_mode, padding_mode, align_corners)
-        return _grid_sampler_2d(input_x, grid)
-    _grid_sampler_3d = _get_cache_prim(NN_OPS.GridSampler3D)(interpolation_mode, padding_mode, align_corners)
-    return _grid_sampler_3d(input_x, grid)
+    if input.ndim == 4:
+        _grid_sampler_2d = _get_cache_prim(NN_OPS.GridSampler2D)(mode, padding_mode, align_corners)
+        return _grid_sampler_2d(input, grid)
+    _grid_sampler_3d = _get_cache_prim(NN_OPS.GridSampler3D)(mode, padding_mode, align_corners)
+    return _grid_sampler_3d(input, grid)
 
 
 @constexpr
@@ -4443,7 +4443,7 @@ def conv2d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     return output
 
 
-def hardsigmoid(input_x):
+def hardsigmoid(input):
     r"""
     Hard sigmoid activation function.
 
@@ -4458,15 +4458,15 @@ def hardsigmoid(input_x):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(*)`, where :math:`*` means any number of
+        input (Tensor): Tensor of shape :math:`(*)`, where :math:`*` means any number of
           dimensions, with float16, float32 or float64 data type.
 
     Returns:
-        A Tensor whose dtype and shape are the same as `input_x`.
+        A Tensor whose dtype and shape are the same as `input`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4478,7 +4478,7 @@ def hardsigmoid(input_x):
         [0.  0.5 1. ]
     """
     hardsigmoid_ = NN_OPS.HSigmoid()
-    return hardsigmoid_(input_x)
+    return hardsigmoid_(input)
 
 
 def hardtanh(x, min_val=-1.0, max_val=1.0):
@@ -5129,7 +5129,7 @@ def glu(x, axis=-1):
     return x * y
 
 
-def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mean'):
+def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean'):
     r"""
     Hinge loss for optimizing a multi-class classification.
 
@@ -5145,7 +5145,7 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
     where :math:`i\in \{0,⋯,x.size(0)−1\} \space and \space i \ne y`
 
     Args:
-        inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        input (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
             It is :math:`x` in the above formula.
         target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
             value of target should be non-negative, less than C. It is :math:`y` in the above formula.
@@ -5168,13 +5168,13 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
         TypeError: If dtype of `p` or `target` is not int.
         TypeError: If dtype of `margin` is not int.
         TypeError: If dtype of `reduction` is not str.
-        TypeError: If dtype of `inputs` is not float16, float or float64.
-        TypeError: If dtype of `weight` and `inputs` is not the same.
+        TypeError: If dtype of `input` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `input` is not the same.
         ValueError: If `p` is not 1 or 2.
         ValueError: If `reduction` is not one of {'none','sum','mean'}.
-        ValueError: If shape[0] of `inputs` is not equal to shape[0] of `target`.
-        ValueError: If shape[1] of `inputs` is not equal to shape[0] of `weight`.
-        ValueError: If rank of `weight` is not 1 or  rank of `target` is not 1 or `inputs` is not 2.
+        ValueError: If shape[0] of `input` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `input` is not equal to shape[0] of `weight`.
+        ValueError: If rank of `weight` is not 1 or  rank of `target` is not 1 or `input` is not 2.
 
     Supported Platforms:
         ``Ascend``  ``CPU``
@@ -5192,11 +5192,11 @@ def multi_margin_loss(inputs, target, p=1, margin=1, weight=None, reduction='mea
         raise TypeError(f"For 'multi_margin_loss', the type of 'margin' must be int, but got {type(margin)}.")
     margin_ = float(margin)
     loss = _get_cache_prim(P.MultiMarginLoss)(p, margin_, reduction)
-    outputs = loss(inputs, target, weight)
+    outputs = loss(input, target, weight)
     return outputs
 
 
-def multilabel_margin_loss(inputs, target, reduction='mean'):
+def multilabel_margin_loss(input, target, reduction='mean'):
     r"""
     Hinge loss for optimizing a multi-label classification.
 
@@ -5218,9 +5218,9 @@ def multilabel_margin_loss(inputs, target, reduction='mean'):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        inputs (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+        input (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
             is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same shape as `inputs`, data type must be int32 and
+        target (Tensor): Ground truth data, with the same shape as `input`, data type must be int32 and
             label targets padded by -1.
         reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
             'sum'. Default: 'mean'.
@@ -5234,11 +5234,11 @@ def multilabel_margin_loss(inputs, target, reduction='mean'):
           is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `inputs` or `target` is not a Tensor.
-        TypeError: If dtype of `inputs` is neither float16 nor float32.
+        TypeError: If `input` or `target` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 nor float32.
         TypeError: If dtype of `target` is not int32.
-        ValueError: If length of shape of `inputs` is neither 1 nor 2.
-        ValueError: If shape of `inputs` is not the same as `target`.
+        ValueError: If length of shape of `input` is neither 1 nor 2.
+        ValueError: If shape of `input` is not the same as `target`.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
@@ -5253,7 +5253,7 @@ def multilabel_margin_loss(inputs, target, reduction='mean'):
     """
 
     loss = _get_cache_prim(P.MultilabelMarginLoss)(reduction)
-    outputs, _ = loss(inputs, target)
+    outputs, _ = loss(input, target)
     return outputs
 
 
@@ -5639,16 +5639,16 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     return ((sign(out) * ops.relu(ops.abs(out))) * (kw * kh)).pow(1.0 / norm_type)
 
 
-def mse_loss(input_x, target, reduction='mean'):
+def mse_loss(input, target, reduction='mean'):
     r"""
     Calculates the mean squared error between the predicted value and the label value.
 
     For detailed information, please refer to :class:`mindspore.nn.MSELoss`.
 
     Args:
-        input_x (Tensor): Tensor of any dimension.
-        target (Tensor): The input label. Tensor of any dimension, same shape as the `input_x` in common cases.
-            However, it supports that the shape of `input_x` is different from the shape of `target`
+        input (Tensor): Tensor of any dimension.
+        target (Tensor): The input label. Tensor of any dimension, same shape as the `input` in common cases.
+            However, it supports that the shape of `input` is different from the shape of `target`
             and they should be broadcasted to each other.
         reduction (str, optional): Type of reduction to be applied to loss.
             The optional values are "mean", "none" and "sum". Default: "mean".
@@ -5659,7 +5659,7 @@ def mse_loss(input_x, target, reduction='mean'):
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
-        ValueError: If `input_x` and `target` have different shapes and cannot be broadcasted.
+        ValueError: If `input` and `target` have different shapes and cannot be broadcasted.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5672,14 +5672,14 @@ def mse_loss(input_x, target, reduction='mean'):
         [[0. 1. 4.]
          [0. 0. 1.]]
     """
-    if not isinstance(input_x, (Tensor, Tensor_)):
-        raise TypeError("For ops.mse_loss, the `input_x` must be tensor")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For ops.mse_loss, the `input` must be tensor")
     if not isinstance(target, (Tensor, Tensor_)):
         raise TypeError("For ops.mse_loss, the `target` must be tensor")
     if reduction not in ['mean', 'none', 'sum']:
         raise ValueError("For ops.mse_loss, `reduction` value should be either 'mean', 'none' or 'sum'.")
 
-    x = _get_cache_prim(P.Square)()(input_x - target)
+    x = _get_cache_prim(P.Square)()(input - target)
     input_dtype = x.dtype
     x = _get_cache_prim(P.Cast)()(x, mstype.float32)
 
