@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 """ test list pop operation """
 import pytest
 import numpy as np
-from mindspore import jit, context, Tensor
+import mindspore as ms
+from mindspore import jit, context, Tensor, nn
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -195,3 +196,24 @@ def test_list_pop_type_error():
         res = list_pop()
         print("res:", res)
     assert "Integer argument expected, but got FP32Imm type value: 1.000000" in str(error_info)
+
+
+def test_list_pop_no_return():
+    """
+    Feature: list pop has no return.
+    Description: support list pop.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            shp1 = x.shape
+            shp1 = list(shp1)
+            shp1.insert(2, 3)
+            shp1.pop()
+            return shp1
+
+    net = Net()
+    np1 = np.random.randint(6, size=(2, 4, 3, 4, 5))
+    data1 = Tensor(np1, dtype=ms.float32)
+    out = net(data1)
+    assert out == [2, 4, 3, 3, 4]

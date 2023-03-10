@@ -832,6 +832,22 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
     // Make a Expr CNode.
     AnfNodePtr call_node = ParseExprNode(block, value_object);
     if (py::len(expand_info) == expect_size) {
+      // list_x.pop(a) does not write the return value of pop.
+      // -->  list_x = list_x.pop(a) need renew the list_x.
+      if (IsPopOperation(call_node)) {
+        if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMember(list_pop_target_obj_)) {
+          // self.list_x = [xx, xx]
+          // self.list_x.pop()
+          MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
+        } else {
+          auto func_graph = block->func_graph();
+          MS_EXCEPTION_IF_NULL(func_graph);
+          auto new_list = func_graph->NewCNodeInOrder(
+            {NewValueNode(prim::kPrimTupleGetItem), call_node, NewValueNode(SizeToLong(0))});
+          WriteAssignVars(block, list_pop_target_obj_, new_list);
+          return block;
+        }
+      }
       // Expression that not assigned to any variable.
       // This is usually a call with side effects.
       // e.g.: print(x)
