@@ -35,6 +35,8 @@ class NetSequenceAddN(nn.Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_addn():
@@ -51,6 +53,8 @@ def test_seq_tensor_addn():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_addn1():
@@ -67,6 +71,8 @@ def test_seq_tensor_addn1():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_addn():
