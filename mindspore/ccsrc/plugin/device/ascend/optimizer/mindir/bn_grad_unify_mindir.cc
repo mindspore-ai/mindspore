@@ -65,7 +65,8 @@ bool BatchNormGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGra
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (common::AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode) ||
-      (func_graph->has_flag(kAttrMutableKernel) && !GetBoolAttr(cnode, kAttrIsTraining))) {
+      (func_graph->has_flag(kAttrMutableKernel) && !GetBoolAttr(cnode, kAttrIsTraining)) ||
+      func_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     return false;
   }
   return true;
