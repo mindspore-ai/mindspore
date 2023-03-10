@@ -29,8 +29,9 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 // Remove the class type from graphs
-bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
-bool CleanAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
+bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
+bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
+bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 }  // namespace opt
 }  // namespace mindspore
 

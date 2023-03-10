@@ -170,7 +170,7 @@ class PyExecuteInitializer {
         MS_EXCEPTION(TypeError) << "PyExecute node output can not contain stub tensor.";
       }
       MS_LOG(DEBUG) << "Python output type: " << py::str(output.get_type()) << ", output: " << output;
-      PushPyExecuteOutput(script_str, output);
+      PushPyExecuteOutput(output);
       if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
         const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
