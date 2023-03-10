@@ -48,6 +48,7 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
+#include "frontend/optimizer/grouped_pairwise_exchange_alltoall.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
@@ -626,6 +627,12 @@ bool SliceRecomputeActivationPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool GroupedPairwiseExchangeAllToAllPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::SetGroupedPairwiseExchangeAllToAll(resource);
+  return true;
+}
+
 bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::LabelMicroInterleavedIndex(resource->func_graph());
@@ -891,6 +898,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"comm_op_add_attrs", CommOpAddAttrs},
                                    {"add_comm_op_reuse_tag", AddCommOpReusePass},
                                    {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
+                                   {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass}};
 

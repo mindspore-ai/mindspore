@@ -563,6 +563,9 @@ class FeedForward(Cell):
             self.dropout_4d = nn.Dropout(p=dropout_rate)
             self.dropout_4d.dropout.shard(((dp, ep, 1, 1),))
             self.cast = P.Cast()
+            # for grouped pairwise exchange alltoall method in pass
+            self.mapping.matmul.add_prim_attr("gpea_label", True)
+            self.projection.matmul.add_prim_attr("gpea_label", True)
 
     def construct(self, x):
         _check_input_dtype(F.dtype(x), "x", [mstype.float32, mstype.float16], self.cls_name)
