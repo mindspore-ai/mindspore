@@ -15,10 +15,6 @@ mindspore.nn.Unflatten
     输出：
         折叠操作后的Tensor。
 
-        - :math:`out\_depth = ksize\_row * ksize\_col * in\_depth`
-        - :math:`out\_row = (in\_row - (ksize\_row + (ksize\_row - 1) * (rate\_row - 1))) // stride\_row + 1`
-        - :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
-
     异常：
         - **TypeError** - `axis` 不是int。
         - **TypeError** - `unflattened_size` 既不是tuple[int]也不是list[int]。

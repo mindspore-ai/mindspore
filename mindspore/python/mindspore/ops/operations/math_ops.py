@@ -1396,7 +1396,29 @@ class LpNorm(Primitive):
     .. math::
         output = sum(abs(input)**p)**(1/p)
 
-    Refer to :func:`mindspore.ops.norm` for more details.
+    Args:
+        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
+        p(int, optional): The order of norm. Default: 2.
+        keep_dims(bool, optional): Whether the output tensors have dim retained or not. Default: False.
+        epsilon(float, optional): A value added to the denominator for numerical stability. Default: 1e-12.
+
+    Inputs:
+        - **input** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same dtype as `input`, its shape depends on `axis`. For example, if the shape of input
+        is :math:`(2, 3, 4)`, `axis` is :math:`[0, 1]`, output shape will be :math:`(4,)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not one of: float16, float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `axis` is not an int, a tuple or a list.
+        TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If the element of `axis` is out of the range :math:`[-r, r)`,
+            where :math:`r` is the rank of `input`.
+        ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2346,18 +2368,16 @@ class Logit(Primitive):
     r"""
     Calculate the logit of a tensor element-wise. Element in `x` is clamped to [eps, 1-eps].
 
-    .. math::
-        \begin{align}
-        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
-        z_{i} & = \begin{cases}
-        x_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
-        x_{i} & \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
-        1 - \text{eps} & \text{if } x_{i} \gt 1 - \text{eps}
-        \end{cases}
-        \end{align}
-
     Refer to :func:`mindspore.ops.logit` for more details.
+
+    Args:
+        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: -1.0.
+
+    Inupts:
+        x (Tensor): The input tensor.
+
+    Outputs:
+        Tensor, with the same shape and dtype as the `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2380,10 +2400,33 @@ class Logit(Primitive):
 
 class ReduceStd(Primitive):
     """
-    Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
+    Returns the standard-deviation and mean of each row of the input Tensor in the dimension `axis`.
     If `axis` is a list of dimensions, reduce over all of them.
 
-    Refer to :func:`mindspore.ops.std` for more details.
+    Args:
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
+            Default: (), reduce all dimensions. Only constant value is allowed.
+            Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
+        unbiased (bool, optional):  Whether to use Bessel’s correction.
+            If True, will use the Bessel correction unbiased estimation.
+            If False, will through the biased estimation to calculate the standard deviation.
+            Default: True.
+        keep_dims (bool, optional): Whether the output Tensor has dim retained or not.
+            If True, keep these reduced dimensions specified by `axis` and the length is 1.
+            If False, don't keep these dimensions.
+            Default: Fasle.
+
+    Inputs:
+        - **input_x** (Tensor[Number]) - The input Tensor, it has dtype Number with shape
+          :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+
+    Outputs:
+        Tuple(output_std, output_mean) containing the standard deviation and mean.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2936,6 +2979,16 @@ class RealDiv(_MathBinaryOp):
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Refer to :func:`mindspore.ops.div` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3698,7 +3751,7 @@ class Quantile(Primitive):
     Computes the q-th quantiles of all elements in the input tensor, doing a linear interpolation when the
     q-th quantile lies between two data points.
 
-    Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more detail.
+    Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3951,9 +4004,18 @@ class GreaterEqual(PrimitiveWithCheck):
 
 class Lerp(Primitive):
     """
-    Calculate the linear interpolation between two tensors based on the weight parameter.
+    Does a linear interpolation of two tensors start and end based on a float or tensor weight.
 
     Refer to :func:`mindspore.ops.lerp` for more details.
+
+    Inputs:
+        start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
+        end (Tensor): The tensor with the ending points. Data type must be the same as `start`.
+        weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
+            or a scalar tensor with float16 or float32 data type.
+
+    Returns:
+        Tensor, has the same type and shape as input `start`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5644,7 +5706,7 @@ class MatrixPower(Primitive):
         ValueError: If n is negative but got input x has singular matrices.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+
 
     Examples:
         >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
@@ -6119,7 +6181,7 @@ class TridiagonalMatMul(Primitive):
                     are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> tridiagonalmatmul = ops.TridiagonalMatMul()
@@ -6504,38 +6566,12 @@ class LuSolve(Primitive):
 
 class LuUnpack(Primitive):
     """
-    Unpack the LU_data and LU_pivots from a LU factorization of a tensor.
+    Converts `LU_data` and `LU_pivots` back into P, L and U matrices, where
+    P is a permutation matrix, L is a lower triangular matrix, and U is an
+    upper triangular matrix. Typically, `LU_data` and `LU_pivots` are generated
+    from the LU decomposition of a matrix.
 
-    Args:
-        unpack_data (bool, optional): A flag indicating if the LU_data should be unpacked.
-            If False, then the returned L and U are None. Default: True.
-        unpack_pivots (bool, optional): A flag indicating if the LU_pivots should be unpacked
-            into a permutation matrix P. If False, then the returned P is None. Default: True.
-
-    Inputs:
-        - **LU_data** (Tensor) - The packed LU factorization data. A tensor of size `[*, M, N]`,
-          where * is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
-          float32, float64. The dims of LU_data must be equal to or greater than 2.
-        - **LU_pivots** (Tensor) - The packed LU factorization pivots. A tensor of size `[*, min(M, N)]`,
-          where * is batch dimensions, with data type int8, uint8, int16, int32, int64.
-
-    Outputs:
-        - **pivots** (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`,
-          the dtype is same as `LU_data`.
-        - **L** (Tensor) - The L matrix  of LU factorization. The dtype is the same as `LU_data`.
-        - **U** (Tensor) - The U matrix  of LU factorization. The dtype is the same as `LU_data`.
-
-    Raises:
-        TypeError: If the dtype of `LU_data` is not one of the following: int8, uint8, int16, int32,
-                   int64, float16, float32, float64.
-        TypeError: If the dtype of `LU_pivots` is not one of the following: int8, uint8, int16, int32, int64.
-        ValueError: If the dimension of `LU_data` is less than 2.
-        ValueError: If the dimension of `LU_pivots` is less than 1.
-        ValueError: If the size of the last dimension of LU_pivots is not equal to the minimum of the sizes of
-                    the last two dimensions of LU_data.
-        ValueError: If the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.
-        ValueError: On the CPU platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
-        RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
+    Refer to :func:`mindspore.ops.lu_unpack` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6735,6 +6771,17 @@ class Cross(Primitive):
     Returns the cross product of vectors in dimension `dim` of x1 and x2.
 
     Refer to :func:`mindspore.ops.cross` for more details.
+
+    Args:
+        dim (int): Spefcified dim along which to cumpute cross product with. Default: -65530.
+
+    Inputs:
+        - **x1** (Tensor) - Input Tensor.
+        - **x2** (Tensor) - Another input Tensor, must have the same shape and
+          the same type as `x1`, and the size of their `dim` dimension should be 3.
+
+    Outputs:
+        Tensor, has the same shape and type as inputs.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -7422,6 +7469,18 @@ class TrilIndices(Primitive):
 
     Refer to :func:`mindspore.ops.tril_indices` for more details.
 
+    Args:
+        row (int): number of rows in the 2-D matrix.
+        col (int): number of columns in the 2-D matrix.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+
+    Outputs:
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
+          lower triangular matrix.
+
     Supported Platforms:
         ``GPU`` ``CPU``
 
@@ -7628,6 +7687,18 @@ class TriuIndices(Primitive):
     and returns them as a 2-by-N Tensor.
 
     Refer to :func:`mindspore.ops.triu_indices` for more details.
+
+    Args:
+        row (int): number of rows in the 2-D matrix.
+        col (int): number of columns in the 2-D matrix.
+        offset (int, optional): diagonal offset from the main diagonal. Default: 0.
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
+            An optional data type of `mstype.int32` and `mstype.int64`. Default: `mstype.int32`.
+
+    Outputs:
+        - **y** (Tensor) - indices of the elements in lower triangular part of matrix. The type specified by `dtype`.
+          The shape of output is :math:`(2, tril\_size)`, where :math:`tril\_size` is the number of elements in the
+          lower triangular matrix.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7958,6 +8029,18 @@ class Roll(Primitive):
     Rolls the elements of a tensor along an axis.
 
     Refer to :func:`mindspore.ops.roll` for more details.
+
+    Args:
+        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
+            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
+            in the opposite direction.
+        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

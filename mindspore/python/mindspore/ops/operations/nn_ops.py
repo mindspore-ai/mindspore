@@ -305,6 +305,18 @@ class AdaptiveMaxPool2D(Primitive):
 
     Refer to :func:`mindspore.ops.adaptive_max_pool2d` for more details.
 
+    Args:
+        output_size (Union[int, tuple]): The target output size is H x W.
+            `ouput_size` can be a tuple, or a single H for H x H. H and W can be int or None
+            in which case the output size is the same as the input.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of AdaptiveMaxPool2D, which is a 3D or 4D tensor,
+          with float16, float32 or float64 data type.
+
+    Outputs:
+        Tensor, with the same type as the `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -364,6 +376,19 @@ class AdaptiveMaxPool3D(Primitive):
     Performs 3D adaptive max pooling on a multi-plane input signal.
 
     Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more details.
+
+    Inputs:
+        x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
+            int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
+        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
+            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
+            The value must be a positive integer. If it is None, the output size and input size of the corresponding
+            dimension are the same.
+
+    Outputs:
+        - **y** (Tensor) - Tensor, with the same number of dims and data type as the `input`.
+        - **argmax** (Tensor) - Tensor, the indices of max value, which has the same shape as the
+          `y` and it's data type is int32.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1264,7 +1289,89 @@ class Conv2D(Primitive):
     r"""
     2D convolution layer.
 
-    Refer to :func:`mindspore.ops.conv2d` for more details.
+    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
+    the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
+    For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+
+    .. math::
+
+        out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,
+
+    where :math:`ccor` is the cross correlation operator, :math:`C_{in}` is the input channel number, :math:`j` ranges
+    from :math:`0` to :math:`C_{out} - 1`, :math:`W_{ij}` corresponds to the :math:`i`-th channel of the :math:`j`-th
+    filter and :math:`out_{j}` corresponds to the :math:`j`-th channel of the output. :math:`W_{ij}` is a slice
+    of kernel and it has shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the
+    convolution kernel. The full kernel has shape
+    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where group is the group number to split the input in the channel dimension.
+
+    If the 'pad_mode' is set to be "pad", the output height and width will be
+    :math:`\left \lfloor{1 + \frac{H_{in} + \text{padding[0]} + \text{padding[1]} - \text{kernel_size[0]} -
+    (\text{kernel_size[0]} - 1) \times (\text{dilation[0]} - 1) }{\text{stride[0]}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{W_{in} + \text{padding[2]} + \text{padding[3]} - \text{kernel_size[1]} -
+    (\text{kernel_size[1]} - 1) \times (\text{dilation[1]} - 1) }{\text{stride[1]}}} \right \rfloor` respectively.
+    Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
+
+
+    The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
+    http://cs231n.github.io/convolutional-networks/.
+
+    Args:
+        out_channel (int): The number of output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
+            and width of the 2D convolution window. Single int means the value is for both the height and the width of
+            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
+            width of the kernel.
+        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid" and "pad". Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
+              left and right possiblily.
+              Otherwise, the last extra padding will be calculated from the bottom and the right side.
+              If this mode is set, `pad` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
+              without padding. Extra pixels will be discarded. If this mode is set, `pad` must be 0.
+
+            - pad: Implicit paddings on both sides of the input `x`. The number of `pad` will be padded to the input
+              Tensor borders. `pad` must be greater than or equal to 0.
+        pad (Union(int, tuple[int])): Implicit paddings on both sides of the input `x`. If `pad` is one integer,
+                    the paddings of top, bottom, left and right are the same, equal to pad. If `pad` is a tuple
+                    with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
+                    pad[1], pad[2], and pad[3] accordingly. Default: 0.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
+                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value must
+                                      be greater than or equal to 1 and bounded by the height and width of the
+                                      input `x`. Default: 1.
+        group (int): Splits input into groups. Default: 1.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+          then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]}, \text{kernel_size[1]})`.
+
+    Outputs:
+        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
+        TypeError: If `out_channel` or `group` is not an int.
+        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2909,6 +3016,27 @@ class MultiMarginLoss(Primitive):
 
     Refer to :func:`mindspore.ops.multi_margin_loss` for more details.
 
+    Args:
+        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        margin (int, optional): A parameter to change pairwise distance. Default: 1.0.
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean',
+            'sum'. Default: 'mean'.
+
+            - 'none': no reduction will be applied.
+            - 'mean': the sum of the output will be divided by the number of elements in the output.
+            - 'sum': the output will be summed.
+
+    Inputs:
+        inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+            value of target should be non-negative, less than C.
+        weight (Tensor): The rescaling weight to each class with shape :math:`(C,)`. Data type only
+            support float16, float32 or float64.
+
+    Outputs:
+        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Otherwise, it is a scalar. Has the same data type with `inputs`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3628,7 +3756,7 @@ class UpsampleTrilinear3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
@@ -6835,7 +6963,25 @@ class Dropout2D(PrimitiveWithInfer):
     Note:
         The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout2d`.
 
-    Refer to :func:`mindspore.ops.dropout2d` for more details.
+    Args:
+        keep_prob (float, optional): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
+            means dropping out 20% of channels. Default: 0.5.
+
+    Inputs:
+        - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
+          of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
+          int64, float16 or float32.
+
+    Outputs:
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
+        TypeError: If the data type of `keep_prob` is not float.
+        ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
+        ValueError: If `x` shape is not `4D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6862,12 +7008,28 @@ class Dropout3D(PrimitiveWithInfer):
     with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
     the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
 
-    Dropout3D can improve the independence between channel feature maps.
-
     Note:
         The keep probability :math:`keep\_prob` is equal to :math:`1 - p` in :func:`mindspore.ops.dropout3d`.
 
-    Refer to :func:`mindspore.ops.dropout3d` for more details.
+    Dropout3D can improve the independence between channel feature maps.
+
+    Args:
+        keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
+            means dropping out 20% of channels. Default: 0.5.
+
+    Inputs:
+        - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
+          of channels, D is the feature depth, H is the feature height, and W is the feature width.
+          The data type should be int8, int16, int32, int64, float16 or float32.
+
+    Outputs:
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
+
+    Raises:
+        TypeError: If the data type of `keep_prob` is not float.
+        ValueError: If `keep_prob` is out of the range [0.0, 1.0];
+                    or if the dim of input is not 5-D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7526,7 +7688,91 @@ class Conv3D(Primitive):
     r"""
     3D convolution layer.
 
-    Refer to :func:`mindspore.ops.conv3d` for more details.
+    Applies a 3D convolution over an input tensor which is typically of shape
+    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
+    the formula is defined as:
+
+    .. math::
+
+        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
+        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
+        \operatorname{input}\left(N_{i}, k\right))
+
+    where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
+
+    If the 'pad_mode' is set to be "valid", the output depth, height and width will be
+    :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
+    (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
+    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
+    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
+    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
+    :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
+
+    Args:
+        out_channel (int): The number of output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
+            and width of the 3D convolution window. Single int means the value is for the depth, height and width
+            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
+            width of the kernel.
+        mode (int): Modes for different convolutions. It is currently not used. Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid" and "pad". Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be equal to
+              the input `x` divided by stride. The padding will be evenly calculated in head and tail, top and bottom,
+              left and right directions possiblily.
+              Otherwise, the last extra padding will be calculated from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              must be 0.
+
+            - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+                    pad[3], pad[4] and pad[5] correspondingly.
+        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
+                                      :math:`(dilation_d, dilation_h, dilation_w)`.
+                                      Currently, dilation on depth only supports the case of 1.
+                                      Specifies the dilation rate to use for dilated convolution.
+                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
+                                      for each sampling location. Its value must be greater than or equal to 1 and
+                                      bounded by the height and width of the input. Default: 1.
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
+            divisible by the number of groups. Default: 1. Only 1 is currently supported.
+        data_format (str): The optional value for data format. Currently only support "NCDHW".
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+          Currently input data type only support float16 and float32.
+        - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
+          :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)`.
+          Currently weight data type only support float16 and float32.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
+
+    Outputs:
+        Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `out_channel` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
+        ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9599,7 +9845,7 @@ class UpsampleNearest3D(Primitive):
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])

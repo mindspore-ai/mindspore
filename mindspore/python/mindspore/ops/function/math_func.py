@@ -7656,7 +7656,10 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
 def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     """
-    Unpack the LU_data and LU_pivots from a LU factorization of a tensor.
+    Converts `LU_data` and `LU_pivots` back into P, L and U matrices, where
+    P is a permutation matrix, L is a lower triangular matrix, and U is an
+    upper triangular matrix. Typically, `LU_data` and `LU_pivots` are generated
+    from the LU decomposition of a matrix.
 
     Args:
         LU_data (Tensor): The packed LU factorization data. A tensor of size [*, M, N], where * is batch
@@ -7670,10 +7673,10 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
             False, then the returned P is None. Default: True.
 
     Returns:
-        pivots (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`, the dtype is
-        same as `LU_data`.
-        L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
-        U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
+        - pivots(Tensor) - The permutation matrix of LU factorization.
+          The shape is `[*, M, M]`, the dtype is same as `LU_data`.
+        - L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
+        - U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
 
     Raises:
         TypeError: If the dtype of `LU_data` is not one of the following: int8, uint8, int16, int32,
@@ -10397,7 +10400,7 @@ def matrix_power(input, n):
         ValueError: If `n` is negative but got input `input` has singular matrices.
 
     Supported Platforms:
-        ``CPU``
+
 
     Examples:
         >>> input = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)

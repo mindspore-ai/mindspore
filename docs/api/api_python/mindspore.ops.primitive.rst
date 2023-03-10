@@ -84,8 +84,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.PadV3
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
-    mindspore.ops.UpsampleNearest3D
-    mindspore.ops.UpsampleTrilinear3D
 
 损失函数
 ^^^^^^^^^^
@@ -532,7 +530,6 @@ Array操作
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
-    mindspore.ops.MatrixPower
     mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
@@ -541,6 +538,7 @@ Array操作
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Quantile
     mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
@@ -570,7 +568,6 @@ Array操作
     mindspore.ops.Sort
     mindspore.ops.SpaceToBatchND
     mindspore.ops.SpaceToDepth
-    mindspore.ops.SparseSlice
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
     mindspore.ops.SplitV
