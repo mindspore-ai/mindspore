@@ -42,6 +42,7 @@ void DataDumper::OpDebugUnregister() {}
 DataDumper::~DataDumper() {}
 std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {}
+void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t stream) {}
 void KernelDumper::Init() {}
 void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {}
 void KernelDumper::OpDebugUnregisterForStream() {}

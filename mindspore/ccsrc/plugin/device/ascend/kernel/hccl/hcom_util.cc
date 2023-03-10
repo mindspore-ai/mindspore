@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,31 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVect
   for (size_t i = 0; i < output_num; ++i) {
     auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     (void)hccl_kernel_output_shape_list->emplace_back(shape_i);
+  }
+
+  return true;
+}
+
+bool HcomUtil::GetKernelInputInferShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_input_infer_shape_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(hccl_input_infer_shape_list);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, i);
+    (void)hccl_input_infer_shape_list->emplace_back(shape_i);
+  }
+
+  return true;
+}
+
+bool HcomUtil::GetKernelOutputInferShape(const AnfNodePtr &anf_node,
+                                         vector<ShapeVector> *hccl_output_infer_shape_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(hccl_output_infer_shape_list);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  for (size_t i = 0; i < output_num; ++i) {
+    auto shape_i = common::AnfAlgo::GetOutputInferShape(anf_node, i);
+    (void)hccl_output_infer_shape_list->emplace_back(shape_i);
   }
 
   return true;

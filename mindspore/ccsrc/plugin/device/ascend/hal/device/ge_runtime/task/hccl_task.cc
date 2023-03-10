@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,10 @@ void HcclTask::Distribute() {
   if (result != 0) {
     MS_LOG(EXCEPTION) << "davinci_model : load task fail, return ret: " << result;
   }
+
+#ifndef ENABLE_SECURITY
+  kernel_dumper_.DumpHcclOutput(task_info_, stream_);
+#endif
 
   MS_LOG(INFO) << "Call function LoadTask end.";
 }

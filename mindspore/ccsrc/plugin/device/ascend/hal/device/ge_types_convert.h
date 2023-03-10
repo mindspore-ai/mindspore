@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "ir/dtype/type_id.h"
 #include "include/common/utils/utils.h"
 #include "external/graph/types.h"
+#include "hccl/hccl_types.h"
 
 namespace mindspore {
 namespace device {
@@ -31,10 +32,11 @@ class GeTypesConvert {
  public:
   GeTypesConvert() = default;
   ~GeTypesConvert() = default;
-  static ge::proto::DataType GetGeDataType(TypeId type_id);
-  static ge::Format GetGeFormat(const std::string &format, size_t shape_size);
-  static std::string GetGeTilingFormat(ge::Format ge_format);
-  static ge::DataType TransTypeIdToGeDataType(TypeId type_id);
+  static ::ge::proto::DataType GetGeDataType(TypeId type_id);
+  static ::ge::proto::DataType TransHcclDataTypeToGeDataType(HcclDataType dtype);
+  static ::ge::Format GetGeFormat(const std::string &format, size_t shape_size);
+  static std::string GetGeTilingFormat(::ge::Format ge_format);
+  static ::ge::DataType TransTypeIdToGeDataType(TypeId type_id);
 };
 }  // namespace ascend
 }  // namespace device

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,25 @@ ge::proto::DataType GeTypesConvert::GetGeDataType(TypeId type_id) {
   auto iter = data_type_map.find(type_id);
   if (iter == data_type_map.end()) {
     MS_LOG(EXCEPTION) << "MindSpore data type:" << TypeIdLabel(type_id) << " can't been found in GE.";
+  }
+  return iter->second;
+}
+
+ge::proto::DataType GeTypesConvert::TransHcclDataTypeToGeDataType(HcclDataType dtype) {
+  static const std::map<HcclDataType, ge::proto::DataType> data_type_map = {
+    {HcclDataType::HCCL_DATA_TYPE_INT8, ge::proto::DT_INT8},
+    {HcclDataType::HCCL_DATA_TYPE_INT16, ge::proto::DT_INT16},
+    {HcclDataType::HCCL_DATA_TYPE_INT32, ge::proto::DT_INT32},
+    {HcclDataType::HCCL_DATA_TYPE_FP16, ge::proto::DT_FLOAT16},
+    {HcclDataType::HCCL_DATA_TYPE_FP32, ge::proto::DT_FLOAT},
+    {HcclDataType::HCCL_DATA_TYPE_INT64, ge::proto::DT_INT64},
+    {HcclDataType::HCCL_DATA_TYPE_UINT64, ge::proto::DT_UINT64},
+    {HcclDataType::HCCL_DATA_TYPE_RESERVED, ge::proto::DT_UNDEFINED},
+  };
+  MS_LOG(INFO) << "Origin HcclDataType: " << dtype;
+  auto iter = data_type_map.find(dtype);
+  if (iter == data_type_map.end()) {
+    MS_LOG(EXCEPTION) << "HcclDataType: " << dtype << " can't been found in GE.";
   }
   return iter->second;
 }

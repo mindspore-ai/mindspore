@@ -835,7 +835,8 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
   for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
-        DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel))) {
+        DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel)) &&
+        DumpJsonParser::GetInstance().InputNeedDump()) {
       auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);

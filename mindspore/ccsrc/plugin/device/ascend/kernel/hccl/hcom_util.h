@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ class HcomUtil {
  public:
   static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_intput_shape_list);
   static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
+  static bool GetKernelInputInferShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_input_infer_shape_list);
+  static bool GetKernelOutputInferShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_output_infer_shape_list);
   static ::HcclDataType ConvertHcclType(TypeId type_id);
   static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);
   static bool GetHcclOpSize(const HcclDataType &data_type, const ShapeVector &shape, size_t *size);
