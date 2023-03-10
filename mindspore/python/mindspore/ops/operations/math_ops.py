@@ -1949,7 +1949,7 @@ class InplaceSub(Primitive):
     Refer to :func:`mindspore.ops.inplace_sub` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -7344,29 +7344,7 @@ class Polar(Primitive):
     r"""
     Converts polar coordinates to Cartesian coordinates.
 
-    Returns a complex tensor, its elements are Cartesian coordinates constructed with the polar
-    coordinates which is specified by radial distance `abs` and polar angle `angle`.
-
-    .. math::
-
-        y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
-
-    Inputs:
-        - **abs** (Tensor) - Radial distance. The shape of tensor is
-          :math:`(N,*)` where :math:`N` means the batchsize of the input tensor,
-          :math:`*` means, any number of additional dimensions.
-          Must be one of the following types: float32, float64.
-
-        - **angle** (Tensor) - Polar angle. It has the same shape and dtype as `abs`.
-
-    Outputs:
-        Tensor, has the same shape and data type as `abs`.
-
-    Raises:
-        TypeError: If neither `abs` nor `angle` is a Tensor.
-        TypeError: If the dtype of input is not one of: float32, float64.
-        TypeError: If the dtypes of `abs` and `angle` are not the same.
-        ValueError: If `abs`'s shape is not the same as `angle`.
+    Refer to :func:`mindspore.ops.polar` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``

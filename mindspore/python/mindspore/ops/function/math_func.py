@@ -1509,7 +1509,7 @@ def inplace_sub(x, v, indices):
         ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2201,30 +2201,32 @@ def arctan2(input, other):
 
 def polar(abs, angle):  # pylint: disable=redefined-outer-name
     r"""
-    Returns the complex tensor at polar coordinates.
+    Converts polar coordinates to Cartesian coordinates.
+
+    Returns a complex tensor, its elements are Cartesian coordinates constructed with the polar
+    coordinates which is specified by radial distance `abs` and polar angle `angle`.
 
     .. math::
 
         y_{i} =  abs_{i} * cos(angle_{i}) + abs_{i} * sin(angle_{i}) * j
 
     Args:
-        abs (Tensor): The shape of tensor is
-            :math:`(N,*)`, where :math:`*` means additional dimensions of size less than 8.
-            Must be one of the following types: float32, float64.
-
-        angle (Tensor): The shape of tensor is
-            :math:`(N,*)`, where :math:`*` means additional dimensions of size less than 8.
-            Must be one of the following types: float32, float64.
+        abs (Tensor): Radial distance. The shape of tensor is
+          :math:`(N,*)` where :math:`N` means the batchsize of the input tensor,
+          :math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+        angle (Tensor):  Polar angle. It has the same shape and dtype as `abs`.
 
     Returns:
-        Tensor, has the same shape as `abs`.If the inputs are float32,data type must be complex64.
-    If the inputs are float64,data type must be complex128.
+        Tensor, has the same shape as `abs`.
+        - If the inputs are float32, data type must be complex64.
+        - If the inputs are float64, data type must be complex128.
 
     Raises:
         TypeError: If neither `abs` nor `angle` is a Tensor.
         TypeError: If the dtype of input is not one of: float32, float64.
-        TypeError: If the dtypes of two args are not the same.
-        ValueError: If the shape of `abs` is not the same as that of `angle`.
+        TypeError: If the dtypes of `abs` and `angle` are not the same.
+        ValueError: If `abs`'s shape is not the same as `angle`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
