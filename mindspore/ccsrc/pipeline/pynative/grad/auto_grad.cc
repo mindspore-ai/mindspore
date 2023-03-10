@@ -304,6 +304,25 @@ bool IsMonadPrim(const PrimitivePtr &prim, const CNodePtr &cnode, const GradPara
   }
   return false;
 }
+
+AnfNodePtr GetTupleItemNodeInput(const FuncGraphPtr &tape, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(tape);
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  AnfNodePtr new_cnode = nullptr;
+  if (IsPrimitive(cnode->input(kIndex1), prim::kPrimTupleGetItem)) {
+    auto inner_cnode = cnode->input(kIndex1)->cast<CNodePtr>();
+    new_cnode = tape->NewCNode(
+      {inner_cnode->input(kIndex0), GetTupleItemNodeInput(tape, inner_cnode), inner_cnode->input(kIndex2)});
+  } else {
+    AnfNodePtrList new_inputs{cnode->inputs().begin(), cnode->inputs().end()};
+    new_cnode = tape->NewCNode(new_inputs);
+  }
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->set_abstract(cnode->abstract());
+  return new_cnode;
+}
 }  // namespace
 
 AnfNodePtr FunctionNode::HyperAdd(const AnfNodePtr &left_node, const AnfNodePtr &right_node) {
@@ -621,14 +640,14 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
   auto ad_graph = ad_param()->tape_;
   pynative::PyNativeAlgo::Common::DumpGraphIR("ad_output_graph.ir", ad_graph);
 
-  bool ms_function_by_value = grad_param->is_ms_function_graph && grad_param->grad_by_value;
-  if (ms_function_by_value) {
-    pynative::PyNativeAlgo::Common::ReplaceCNodeWithValueNode(ad_graph);
-  }
-
   // Save ad graph in cache
   if (!grad_param->use_dynamic_shape_process) {
     pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(ad_graph);
+  }
+  // Replace cnode with valuenode for reduce compute
+  bool ms_function_by_value = grad_param->is_ms_function_graph && grad_param->grad_by_value;
+  if (ms_function_by_value) {
+    pynative::PyNativeAlgo::Common::ReplaceCNodeWithValueNode(ad_graph);
   }
   // Restore ad param
   ad_param_ = current_ad_param;
@@ -799,9 +818,9 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
         (void)node_list.emplace_back(node);
         continue;
       }
-      // TupleGetItem need repalce
+      // TupleGetItem need replace
       if (node->has_user_data(kParamterIsSequence)) {
-        (void)node_list.emplace_back(node);
+        (void)node_list.emplace_back(GetTupleItemNodeInput(ad_param()->tape_, node));
         need_do_manager_replace_ = true;
         continue;
       }
@@ -1230,20 +1249,16 @@ void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CN
 
 void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg) {
   BuildForwardLastNode();
-  // Add sens parameter
-  ParameterPtr sens_param = nullptr;
-  if (has_sens_arg) {
-    sens_param = ad_param()->tape_->add_parameter();
-    sens_param->debug_info()->set_name("sens");
-    sens_param->set_abstract(ad_param()->last_node_->abstract());
-  }
 
-  // update dout for dout
+  // Update dout for dout
   MS_EXCEPTION_IF_NULL(ad_param()->last_node_);
   if (ad_param()->anfnode_to_variable_adjoint_.find(ad_param()->last_node_) !=
       ad_param()->anfnode_to_variable_adjoint_.end()) {
     const auto &variable = ad_param()->anfnode_to_variable_adjoint_.at(ad_param()->last_node_);
-    if (has_sens_arg && sens_param != nullptr) {
+    if (has_sens_arg) {
+      ParameterPtr sens_param = ad_param()->tape_->add_parameter();
+      sens_param->debug_info()->set_name("sens");
+      sens_param->set_abstract(ad_param()->last_node_->abstract());
       variable->fn()->UpdateAccumulativeDout(sens_param);
     } else {
       variable->fn()->UpdateAccumulativeDout(BuildOnesLikeNode(ad_param()->tape_, sens_value_));

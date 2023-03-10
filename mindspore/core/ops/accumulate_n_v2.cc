@@ -30,9 +30,14 @@ namespace ops {
 namespace {
 abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
   (void)primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
@@ -71,10 +76,14 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = prim->name();
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  const auto &prim_name = prim->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
@@ -97,14 +106,8 @@ MIND_API_OPERATOR_IMPL(AccumulateNV2, BaseOperator);
 AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-  }
+  const auto &prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto infer_type = AccumulateNV2InferType(primitive, input_args);
   auto infer_shape = AccumulateNV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

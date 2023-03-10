@@ -25,15 +25,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t kOneNum = 1;
 abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
@@ -49,7 +52,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
   auto element0_rank = element0_shape.size();
-  if (element0_rank < kOneNum) {
+  if (element0_rank < 1) {
     MS_EXCEPTION(ValueError) << "For [" << prim_name
                              << "], the rank of input must greater than 1. But got:" << element0_rank << ".";
   }
@@ -66,7 +69,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 1; i < elements.size(); ++i) {
     auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
-    (void)CheckAndConvertUtils::CheckInteger("x" + std::to_string(i) + ".shape[0]", elementi_shape[0], kEqual, kOneNum,
+    (void)CheckAndConvertUtils::CheckInteger("x" + std::to_string(i) + ".shape[0]", elementi_shape[0], kEqual, 1,
                                              prim_name);
     if (elementi_shape.size() != element0_shape.size()) {
       MS_EXCEPTION(ValueError) << "For [" << prim_name << "], the rank of all elements should be the same, but got "
@@ -92,16 +95,15 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
 
 TypePtr ParallelConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', the input must be a list or tuple of tensors. But got:" << input_args[0]->ToString()
-                            << ".";
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {

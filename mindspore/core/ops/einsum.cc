@@ -254,16 +254,13 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   }
 
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
-
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be a list or tuple of tensors.";
-  }
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
   std::vector<std::vector<int64_t>> input_shapes;
   for (size_t idx = 0; idx < elements.size(); ++idx) {
     auto shape = elements[idx]->BuildShape();
@@ -299,9 +296,14 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   return std::make_shared<abstract::Shape>(out_shape);
 }
 TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  const auto &prim_name = primitive->name();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1) {
+    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+    }
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("out_type", elements[0]->BuildType());
@@ -310,8 +312,7 @@ TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
 AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   auto res = std::make_shared<abstract::AbstractTensor>(EinsumInferType(primitive, input_args),
                                                         EinsumInferShape(primitive, input_args));
   return res;
