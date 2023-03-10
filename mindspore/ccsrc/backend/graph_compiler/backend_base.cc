@@ -382,6 +382,21 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
 }
 
 namespace {
+int64_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
+  MS_EXCEPTION_IF_NULL(tuple_get_item);
+  if (tuple_get_item->size() != kTupleGetItemInputSize) {
+    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+  }
+  auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(output_index_value_node);
+  auto value_node = output_index_value_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto idx = value->isa<Int64Imm>() ? GetValue<int64_t>(value) : GetValue<int>(value);
+  return idx;
+}
+
 KernelWithIndex VisitRealNodeWithNestLevel(const AnfNodePtr &anf_node, size_t index, size_t *nest_level) {
   if (!anf_node->isa<CNode>()) {
     return {anf_node, index};
@@ -408,7 +423,7 @@ bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
   if (common::AnfAlgo::GetCNodeName(cnode) != prim::kTupleGetItem || cnode->inputs().size() != kTupleGetItemInputSize) {
     return false;
   }
-  if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>()) {
+  if (!cnode->input(kInputNodeOutputIndexInTupleGetItem)->isa<ValueNode>() || GetTupleGetItemOutIndex(cnode) < 0) {
     return true;
   }
   size_t nest_level = 0;
