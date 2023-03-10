@@ -58,13 +58,12 @@ int LiteKernelMod::Run() {
   for (auto address : workspace) {
     ms_context_->allocator->Free(address->addr);
   }
-
-  return (ret == true) ? RET_OK : RET_ERROR;
+  return ret ? RET_OK : RET_ERROR;
 }
 
-std::shared_ptr<LiteKernelMod> LiteKernelModRegistry(BaseOperatorPtr base_operator,
-                                                     std::vector<lite::Tensor *> in_tensors,
-                                                     std::vector<lite::Tensor *> out_tensors,
+std::shared_ptr<LiteKernelMod> LiteKernelModRegistry(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
+                                                     const std::vector<lite::Tensor *> &in_tensors,
+                                                     const std::vector<lite::Tensor *> &out_tensors,
                                                      const lite::InnerContext *ctx) {
   std::string op_type = base_operator->name();
 
@@ -76,19 +75,25 @@ std::shared_ptr<LiteKernelMod> LiteKernelModRegistry(BaseOperatorPtr base_operat
   }
 
   auto lite_kernel_mod =
-    std::make_shared<mindspore::kernel::LiteKernelMod>(kernel_mod, base_operator, in_tensors, out_tensors, ctx);
-
+    std::make_shared<mindspore::kernel::LiteKernelMod>(kernel_mod, cnode, base_operator, in_tensors, out_tensors, ctx);
   return lite_kernel_mod;
 }
 
-kernel::KernelExec *FindKernelMod(BaseOperatorPtr base_operator, std::vector<lite::Tensor *> in_tensors,
-                                  std::vector<lite::Tensor *> out_tensors, const lite::InnerContext *ctx) {
+kernel::KernelExec *FindKernelMod(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
+                                  const std::vector<lite::Tensor *> &in_tensors,
+                                  const std::vector<lite::Tensor *> &out_tensors, const lite::InnerContext *ctx) {
   std::shared_ptr<kernel::LiteKernelMod> lite_kernel_mod =
-    mindspore::kernel::LiteKernelModRegistry(base_operator, in_tensors, out_tensors, ctx);
+    mindspore::kernel::LiteKernelModRegistry(cnode, base_operator, in_tensors, out_tensors, ctx);
   if (lite_kernel_mod == nullptr) {
-    MS_LOG(ERROR) << "Create lite kernel mod failed. kernel name: " << base_operator;
+    MS_LOG(ERROR) << "Create lite kernel mod failed. kernel name: " << base_operator->name();
     return nullptr;
   }
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  if (kernel_info == nullptr) {
+    MS_LOG(ERROR) << "Create KernelInfo failed. kernel name: " << base_operator->name();
+    return nullptr;
+  }
+  cnode->set_kernel_info(kernel_info);
 
   kernel::KernelExec *kernel_exec = new kernel::KernelExec(lite_kernel_mod);
   auto desc = kernel_exec->desc();

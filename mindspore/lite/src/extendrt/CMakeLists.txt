@@ -9,7 +9,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     endif()
     set(ENABLE_CPU on)
     set(LOAD_PLUGIN_STATIC on)
-    add_compile_definitions(USE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
@@ -61,6 +60,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_flow.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/cnode_infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_compiler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc

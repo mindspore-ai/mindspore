@@ -35,7 +35,7 @@ abstract::ExecutionFlowPtr SingleGraphCompiler::Schedule(const CompileResultPtr 
   // choose lite-kernel else choose kernel-mod
   // tensor data type/format transform
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->context_);
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->context_.get());
   }
   return scheduler_->Schedule(node_list);
 }

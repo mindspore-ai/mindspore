@@ -15,7 +15,9 @@
  */
 #ifndef MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_SINGLE_GRAPH_SCHEDULER_H_
 #define MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_SINGLE_GRAPH_SCHEDULER_H_
+#include <map>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include "src/extendrt/graph_compiler/compile_result.h"
@@ -32,20 +34,25 @@ enum KernelType {
 
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(std::shared_ptr<lite::InnerContext> context) : context_(std::move(context)) {}
+  explicit SingleGraphScheduler(lite::InnerContext *context) : context_(context) {}
   virtual ~SingleGraphScheduler() = default;
-  ExecutionFlowPtr Schedule(const CompileResultPtr node_list);
+  ExecutionFlowPtr Schedule(const CompileResultPtr &node_list);
 
  private:
-  KernelType SelectKernel(const CompileNode *compile_node);
-  bool HandleWeightForKernel(const CompileNode *compile_node, const KernelType kernel_type);
+  int ScheduleToKernels(const CompileResultPtr &node_list);
+  abstract::Kernel *CreateKernel(const CompileNode *compile_node);
+  bool HandleWeightForKernels();
   bool AppendKernelToPlan(kernel::KernelExec *kernel);
   bool OptimizeTranspose(const std::vector<kernel::KernelExec *> &kernels);
-  bool InferShape(const std::vector<kernel::KernelExec *> &kernels);
+  bool InferShape(const CompileResultPtr &node_list);
 
  private:
-  std::shared_ptr<lite::InnerContext> context_;
+  lite::InnerContext *context_;
   ExecutionFlowPtr execution_plan_{nullptr};
+  kernel::KERNEL_ARCH graph_arch_;
+  TypeId graph_data_type_ = kTypeUnknown;
+
+  std::map<std::string, OpParameter *> op_parameters_;
 };
 using SingleGraphSchedulerPtr = std::shared_ptr<SingleGraphScheduler>;
 }  // namespace infer

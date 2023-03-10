@@ -55,7 +55,11 @@ FuncGraphPtr CreateFuncGraph() {
   add_node->set_abstract(abs);
 
   // Reshape.
-  std::vector<AnfNodePtr> reshape_inputs{NewValueNode(prim::kPrimReshape), add_node};
+  auto abstract_shape_node = NewValueNode(shp);
+  abs = std::make_shared<abstract::AbstractTensor>(kInt64, std::vector<int64_t>{2});
+  abs->set_shape_value(MakeValue(shp));
+  abstract_shape_node->set_abstract(abs);
+  std::vector<AnfNodePtr> reshape_inputs{NewValueNode(prim::kPrimReshape), add_node, abstract_shape_node};
   auto reshape_node = func_graph->NewCNode(reshape_inputs);
   abs = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   reshape_node->set_abstract(abs);

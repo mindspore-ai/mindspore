@@ -54,4 +54,24 @@ abstract::Kernel *ExecutionFlow::ConstructFusionKernel() {
   sub_graph_kernel->set_context(context_.get());
   return sub_graph_kernel;
 }
+
+std::string ExecutionFlow::Dump() const {
+  std::ostringstream oss;
+  oss << "inputs: [" << std::endl;
+  for (const auto &input : inputs_) {
+    oss << input->ToString() << std::endl;
+  }
+  oss << "]" << std::endl;
+  oss << "outputs: [" << std::endl;
+  for (const auto &output : outputs_) {
+    oss << output->ToString() << std::endl;
+  }
+  oss << "]" << std::endl;
+  oss << "kernels: [" << std::endl;
+  for (const auto &kernel : kernels_) {
+    oss << kernel->ToString() << std::endl << std::endl;
+  }
+  oss << "]" << std::endl;
+  return oss.str();
+}
 }  // namespace mindspore::infer

@@ -33,6 +33,15 @@ if(MSLITE_ENABLE_CONTROLFLOW)
             ${OPS_SRC_CONTROL_TENSORLIST}
             )
 endif()
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    file(GLOB OPS_SRC_CORE_OPERATOR_POPULATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/operator_populate/*.cc
+            )
+    set(OPS_SRC
+            ${OPS_SRC}
+            ${OPS_SRC_CORE_OPERATOR_POPULATE}
+            )
+endif()
 
 add_library(cpu_ops_mid OBJECT ${OPS_SRC})
 add_dependencies(cpu_ops_mid fbs_src fbs_inner_src)

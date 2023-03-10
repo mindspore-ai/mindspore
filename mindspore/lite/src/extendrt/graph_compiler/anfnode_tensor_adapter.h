@@ -52,10 +52,10 @@ class TensorAdapter {
   static Tensor *Convert2Tensor(const mindspore::abstract::AbstractBasePtr &abstract,
                                 const std::string &tensor_name = "");
 
- private:
   static StatusCode GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                               ShapeVector *shape_vector);
 
+ private:
   static StatusCode GetDTAndShapeFromParameter(const ParameterPtr &param_node, TypeId *data_type,
                                                ShapeVector *shape_vector);
 
