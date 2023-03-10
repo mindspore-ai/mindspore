@@ -2484,8 +2484,8 @@ class KITTIDataset(MappableDataset):
     """
     A source dataset that reads and parses the KITTI dataset.
 
-    When usage is "train", the generated dataset has multiple columns: :py:obj:`[image, label, truncated,
-    occluded, alpha, bbox, dimensions, location, rotation_y]` ; When usage is "test", the generated dataset
+    When `usage` is "train", the generated dataset has multiple columns: :py:obj:`[image, label, truncated,
+    occluded, alpha, bbox, dimensions, location, rotation_y]` ; When `usage` is "test", the generated dataset
     has only one column: :py:obj:`[image]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is of the uint32 type.
@@ -2575,7 +2575,7 @@ class KITTIDataset(MappableDataset):
     and a 3D laser scanner. Despite its popularity, the dataset itself does not contain ground truth for
     semantic segmentation. However, various researchers have manually annotated parts of the dataset to fit
     their necessities. Álvarez et al. generated ground truth for 323 images from the road detection challenge
-    with three classes: road, vertical,and sky. Zhang et al. annotated 252 (140 for training and 112 for testing)
+    with three classes: road, vehicles and sky. Zhang et al. annotated 252 (140 for training and 112 for testing)
     acquisitions – RGB and Velodyne scans – from the tracking challenge for ten object categories: building, sky,
     road, vegetation, sidewalk, car, pedestrian, cyclist, sign/pole, and fence.
 
@@ -2751,8 +2751,8 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the LFW dataset.
 
-    When task is 'people', the generated dataset has two columns: :py:obj:`[image, label]`;
-    When task is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]` .
+    When `task` is 'people', the generated dataset has two columns: :py:obj:`[image, label]`;
+    When `task` is 'pairs', the generated dataset has three columns: :py:obj:`[image1, image2, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`image1` is of the uint8 type.
     The tensor of column :py:obj:`image2` is of the uint8 type.
@@ -2761,11 +2761,11 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str, optional): Set the task type of reading lfw data, support 'people' and 'pairs'.
-            Default: 'people'.
+            Default: None, means 'people'.
         usage (str, optional): The image split to use, support '10fold', 'train', 'test' and 'all'.
-            Default: 'all', will read samples including train and test.
-        image_set (str, optional): Image set of image funneling to use, support 'original', 'funneled' or
-            'deepfunneled'. Default: 'funneled', will read 'funneled' set.
+            Default: None, will read samples including train and test.
+        image_set (str, optional): Type of image funneling to use, support 'original', 'funneled' or
+            'deepfunneled'. Default: None, will use 'funneled'.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -2785,11 +2785,16 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
             Default: None, which means no cache is used.
 
     Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= `num_shards` ).
+
+    Note:
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -2829,15 +2834,17 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     About LFW dataset:
 
-    LFW is a database of photographs designed for studying the problem of
-    unconstrained recognition. This database was created and maintained by researchers at the University
-    of Massachusetts, Amherst (specific references are in Acknowledgments section). 13,233 images of 5,749
-    people were detected and centered by the Viola Jones detector and collected from the web. 1,680 of the
-    people pictured have two or more distinct photos in the dataset.
+    LFW (Labelled Faces in the Wild) dataset is one of the most commonly used and widely open datasets in
+    the field of face recognition. It was released by Gary B. Huang and his team at Massachusetts Institute
+    of Technology in 2007. The dataset includes nearly 50,000 images of 13,233 individuals, which are sourced
+    from various internet platforms and contain diverse environmental factors such as different poses, lighting
+    conditions, and angles. Most of the images in the dataset are frontal and cover a wide range of ages, genders,
+    and ethnicities.
 
     You can unzip the original LFW dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── lfw_dataset_directory
             ├── lfw
@@ -2914,7 +2921,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be `train` , `test` , `valid` or `all`
             Default: None, will be set to `all` .
-        classes(Union[str, list[str]], optional): Choose the specific classes to load. Default: None, means loading
+        classes (Union[str, list[str]], optional): Choose the specific classes to load. Default: None, means loading
             all classes in root directory.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, all images.
@@ -2935,12 +2942,17 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
             Default: None, which means no cache is used.
 
     Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
         RuntimeError: If 'sampler' and 'shuffle' are specified at the same time.
         RuntimeError: If 'sampler' and sharding are specified at the same time.
         RuntimeError: If 'num_shards' is specified but 'shard_id' is None.
         RuntimeError: If 'shard_id' is specified but 'num_shards' is None.
         ValueError: If 'shard_id' is invalid (< 0 or >= `num_shards` ).
         ValueError: If 'usage' or 'classes' is invalid (not in specific types).
+
+    Note:
+        - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
@@ -2981,15 +2993,17 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
 
     About LSUN dataset:
 
-    The LSUN dataset accesses the effectiveness of this cascading procedure and enables further progress
-    in visual recognition research.
+    The LSUN (Large-Scale Scene Understanding) is a large-scale dataset used for indoors scene
+    understanding. It was originally launched by Stanford University in 2015 with the aim of
+    providing a challenging and diverse dataset for research in computer vision and machine
+    learning. The main application of this dataset for research is indoor scene analysis.
 
-    The LSUN dataset contains around one million labeled images for each of 10 scene categories
-    and 20 object categories. The author experimented with training popular convolutional networks and found
-    that they achieved substantial performance gains when trained on this dataset.
+    This dataset contains ten different categories of scenes, including bedrooms, living rooms,
+    restaurants, lounges, studies, kitchens, bathrooms, corridors, children's room, and outdoors.
+    Each category contains tens of thousands of images from different perspectives, and these
+    images are high-quality, high-resolusion real-world images.
 
-    You can unzip the original LSUN dataset files into this directory structure using official data.py and
-    read by MindSpore's API.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
 

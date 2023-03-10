@@ -98,18 +98,20 @@ class ImageTensorOperation(TensorOperation):
 
 
 class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Apdjust brightness of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the brightness of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        brightness_factor (float): How much to adjust the brightness. Can be any non negative number.
+        brightness_factor (float): How much to adjust the brightness, must be non negative.
             0 gives a black image, 1 gives the original image,
             while 2 increases the brightness by a factor of 2.
 
     Raises:
         TypeError: If `brightness_factor` is not of type float.
         ValueError: If `brightness_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -142,18 +144,20 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustContrast(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust contrast of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the contrast of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        contrast_factor (float): How much to adjust the contrast. Can be any non negative number.
+        contrast_factor (float): How much to adjust the contrast, must be non negative.
             0 gives a solid gray image, 1 gives the original image,
             while 2 increases the contrast by a factor of 2.
 
     Raises:
         TypeError: If `contrast_factor` is not of type float.
         ValueError: If `contrast_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -242,17 +246,19 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustHue(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust hue of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the hue of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
         hue_factor (float): How much to add to the hue channel,
-            must be in the interval [-0.5, 0.5].
+            must be in range of [-0.5, 0.5].
 
     Raises:
         TypeError: If `hue_factor` is not of type float.
         ValueError: If `hue_factor` is not in the interval [-0.5, 0.5].
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -285,17 +291,20 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
-    r"""
-    Adjust saturation of input image. Input image is expected to be in [H, W, C] format.
+    """
+    Adjust the saturation of the input image.
+
+    The input image is expected to be in shape of [H, W, C].
 
     Args:
-        saturation_factor (float): How much to adjust the saturation. Can be any non negative number.
+        saturation_factor (float): How much to adjust the saturation, must be non negative.
             0 gives a black image, 1 gives the original image while 2 increases the saturation by a factor of 2.
 
     Raises:
         TypeError: If `saturation_factor` is not of type float.
         ValueError: If `saturation_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C> or channel is not 3.
+        RuntimeError: If shape of the input image is not <H, W, C>.
+        RuntimeError: If channel of the input image is not 3.
 
     Supported Platforms:
         ``CPU``
@@ -328,18 +337,20 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
 
 class AdjustSharpness(ImageTensorOperation):
-    r"""
-    Adjust sharpness of input image. Input image is expected to be in [H, W, C] or [H, W] format.
+    """
+    Adjust the sharpness of the input image.
+
+    The input image is expected to be in shape of [H, W, C] or [H, W].
 
     Args:
-        sharpness_factor (float): How much to adjust the sharpness, should be a
-            non negative number. 0 gives a blurred image, 1 gives the
-            original image while 2 increases the Sharpness by a factor of 2.
+        sharpness_factor (float): How much to adjust the sharpness, must be
+            non negative. 0 gives a blurred image, 1 gives the
+            original image while 2 increases the sharpness by a factor of 2.
 
     Raises:
         TypeError: If `sharpness_factor` is not of type float.
         ValueError: If `sharpness_factor` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W, C> or <H, W>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -366,13 +377,11 @@ class Affine(ImageTensorOperation):
 
     Args:
         degrees (float): Rotation angle in degrees between -180 and 180, clockwise direction.
-        translate (Sequence): The horizontal and vertical translations, must be a sequence of size 2.
+        translate (Sequence[float, float]): The horizontal and vertical translations, must be a sequence of size 2.
         scale (float): Scaling factor, which must be positive.
-        shear (Union[float, Sequence]): Shear angle value in degrees between -180 to 180.
-            If a number is provided, a shearing parallel to X axis with a factor selected from
-            ( `-shear` , `shear` ) will be applied.
-            If a sequence is provided, a shearing parallel to X axis with a factor selected
-            from ( `shear` [0], `shear` [1]) will be applied.
+        shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between -180 to 180.
+            If float is provided, shear along the x axis with this value, without shearing along the y axis;
+            If Sequence[float, float] is provided, shear along the x axis and y axis with these two values separately.
         resample (Inter, optional): An optional resampling filter. Default: Inter.NEAREST.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
@@ -392,11 +401,11 @@ class Affine(ImageTensorOperation):
         TypeError: If `degrees` is not of type float.
         TypeError: If `translate` is not of type Sequence[float, float].
         TypeError: If `scale` is not of type float.
+        ValueError: If `scale` is non positive.
         TypeError: If `shear` is not of float or Sequence[float, float].
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
-        ValueError: If `scale` is non positive.
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
