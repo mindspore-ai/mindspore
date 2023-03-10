@@ -39,8 +39,6 @@ class ScaleFP32Coder final : public OperatorCoder {
 
  private:
   ScaleParameter *scale_param_{nullptr};
-  float *scale_{nullptr};
-  float *offset_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MICRO_CODER_OPCODERS_FP32__CODER_H_
