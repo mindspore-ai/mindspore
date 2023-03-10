@@ -623,8 +623,7 @@ class Converter:
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
-            ...                              "mobilenet_v2_1.0_224.tflite")
+            >>> converter = mslite.Converter()
             >>> section = "common_quant_param"
             >>> config_info_in = {"quant_type": "WEIGHT_QUANT"}
             >>> converter.set_config_info(section, config_info_in)
@@ -675,8 +674,7 @@ class Converter:
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
-            ...                              "mobilenet_v2_1.0_224.tflite")
+            >>> converter = mslite.Converter()
             >>> section = "common_quant_param"
             >>> config_info = {"quant_type": "WEIGHT_QUANT"}
             >>> converter.set_config_info(section, config_info)

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -235,99 +235,112 @@ class Tensor:
     Examples:
         >>> import mindspore_lite as mslite
         >>> tensor = mslite.Tensor()
-        >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+        >>> tensor.name = "tensor1"
+        >>> print(tensor.name)
+        tensor1
+        >>> tensor.dtype = mslite.DataType.FLOAT32
+        >>> print(tensor.dtype)
+        DataType.FLOAT32
+        >>> tensor.shape = [1, 2, 2, 3]
+        >>> print(tensor.shape)
+        [1, 2, 2, 3]
+        >>> tensor.format = mslite.Format.NCHW
+        >>> print(tensor.format)
+        Format.NCHW
+        >>> print(tensor.element_num)
+        12
+        >>> print(tensor.data_size)
+        48
         >>> print(tensor)
-        tensor_name: ,
-        data_type: DataType.FLOAT32,
-        shape: [],
+        name: tensor1,
+        dtype: DataType.FLOAT32,
+        shape: [1, 2, 2, 3],
         format: Format.NCHW,
-        element_num: 1,
-        data_size: 4.
+        element_num: 12,
+        data_size: 48.
     """
 
     def __init__(self, tensor=None):
         self._numpy_obj = None
         if tensor is not None:
             if not isinstance(tensor, _c_lite_wrapper.TensorBind):
-                raise TypeError(f"tensor must be MindSpore Lite's Tensor, but got {type(tensor)}.")
+                raise TypeError(f"tensor must be MindSpore Lite's Tensor._tensor, but got {type(tensor)}.")
             self._tensor = tensor
         else:
             self._tensor = _c_lite_wrapper.create_tensor()
 
-    def set_tensor_name(self, tensor_name):
-        """
-        Set the name of the Tensor.
+    def __str__(self):
+        res = f"name: {self.name},\n" \
+              f"dtype: {self.dtype},\n" \
+              f"shape: {self.shape},\n" \
+              f"format: {self.format},\n" \
+              f"element_num: {self.element_num},\n" \
+              f"data_size: {self.data_size}."
+        return res
 
-        Args:
-            tensor_name (str): The name of the Tensor.
-
-        Raises:
-            TypeError: `tensor_name` is not a str.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_tensor_name("tensor0")
-        """
-        if not isinstance(tensor_name, str):
-            raise TypeError(f"tensor_name must be str, but got {type(tensor_name)}.")
-        self._tensor.set_tensor_name(tensor_name)
-
-    def get_tensor_name(self):
+    @property
+    def name(self):
         """
         Get the name of the Tensor.
 
         Returns:
             str, the name of the Tensor.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_tensor_name("tensor0")
-            >>> tensor_name = tensor.get_tensor_name()
-            >>> print(tensor_name)
-            tensor0
         """
         return self._tensor.get_tensor_name()
 
-    def set_data_type(self, data_type):
+    @name.setter
+    def name(self, name):
         """
-        Set data type for the Tensor.
+        Set the name of the Tensor.
 
         Args:
-            data_type (DataType): The data type of the Tensor. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+            name (str): The name of the Tensor.
 
         Raises:
-            TypeError: `data_type` is not a DataType.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            TypeError: `name` is not a str.
         """
-        if not isinstance(data_type, DataType):
-            raise TypeError(f"data_type must be DataType, but got {type(data_type)}.")
-        self._tensor.set_data_type(data_type_py_cxx_map.get(data_type))
+        if not isinstance(name, str):
+            raise TypeError(f"name must be str, but got {type(name)}.")
+        self._tensor.set_tensor_name(name)
 
-    def get_data_type(self):
+    @property
+    def dtype(self):
         """
         Get the data type of the Tensor.
 
         Returns:
             DataType, the data type of the Tensor.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
-            >>> data_type = tensor.get_data_type()
-            >>> print(data_type)
-            DataType.FLOAT32
         """
         return data_type_cxx_py_map.get(self._tensor.get_data_type())
 
-    def set_shape(self, shape):
+    @dtype.setter
+    def dtype(self, dtype):
+        """
+        Set data type for the Tensor.
+
+        Args:
+            dtype (DataType): The data type of the Tensor. For details, see
+                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+
+        Raises:
+            TypeError: `dtype` is not a DataType.
+        """
+        if not isinstance(dtype, DataType):
+            raise TypeError(f"dtype must be DataType, but got {type(dtype)}.")
+        self._tensor.set_data_type(data_type_py_cxx_map.get(dtype))
+
+    @property
+    def shape(self):
+        """
+        Get the shape of the Tensor.
+
+        Returns:
+            list[int], the shape of the Tensor.
+        """
+        return self._tensor.get_shape()
+
+    @shape.setter
+    def shape(self, shape):
         """
         Set shape for the Tensor.
 
@@ -337,11 +350,6 @@ class Tensor:
         Raises:
             TypeError: `shape` is not a list.
             TypeError: `shape` is a list, but the elements is not int.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_shape([1, 112, 112, 3])
         """
         if not isinstance(shape, list):
             raise TypeError(f"shape must be list, but got {type(shape)}.")
@@ -350,24 +358,18 @@ class Tensor:
                 raise TypeError(f"shape element must be int, but got {type(element)} at index {i}.")
         self._tensor.set_shape(shape)
 
-    def get_shape(self):
+    @property
+    def format(self):
         """
-        Get the shape of the Tensor.
+        Get the format of the Tensor.
 
         Returns:
-            list[int], the shape of the Tensor.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_shape([1, 112, 112, 3])
-            >>> shape = tensor.get_shape()
-            >>> print(shape)
-            [1, 112, 112, 3]
+            Format, the format of the Tensor.
         """
-        return self._tensor.get_shape()
+        return format_cxx_py_map.get(self._tensor.get_format())
 
-    def set_format(self, tensor_format):
+    @format.setter
+    def format(self, tensor_format):
         """
         Set format of the Tensor.
 
@@ -377,50 +379,23 @@ class Tensor:
 
         Raises:
             TypeError: `tensor_format` is not a Format.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_format(mslite.Format.NHWC)
         """
         if not isinstance(tensor_format, Format):
-            raise TypeError(f"tensor_format must be Format, but got {type(tensor_format)}.")
+            raise TypeError(f"format must be Format, but got {type(tensor_format)}.")
         self._tensor.set_format(format_py_cxx_map.get(tensor_format))
 
-    def get_format(self):
-        """
-        Get the format of the Tensor.
-
-        Returns:
-            Format, the format of the Tensor.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_format(mslite.Format.NHWC)
-            >>> tensor_format = tensor.get_format()
-            >>> print(tensor_format)
-            Format.NHWC
-        """
-        return format_cxx_py_map.get(self._tensor.get_format())
-
-    def get_element_num(self):
+    @property
+    def element_num(self):
         """
         Get the element num of the Tensor.
 
         Returns:
             int, the element num of the Tensor data.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> num = tensor.get_element_num()
-            >>> print(num)
-            1
         """
         return self._tensor.get_element_num()
 
-    def get_data_size(self):
+    @property
+    def data_size(self):
         """
         Get the data size of the Tensor.
 
@@ -428,15 +403,6 @@ class Tensor:
 
         Returns:
             int, the data size of the Tensor data.
-
-        Examples:
-            >>> # data_size is related to data_type
-            >>> import mindspore_lite as mslite
-            >>> tensor = mslite.Tensor()
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
-            >>> size = tensor.get_data_size()
-            >>> print(size)
-            4
         """
         return self._tensor.get_data_size()
 
@@ -457,13 +423,13 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.set_shape([1, 224, 224, 3])
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> tensor.shape = [1, 224, 224, 3]
+            >>> tensor.dtype = mslite.DataType.FLOAT32
             >>> in_data = np.fromfile("input.bin", dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> print(tensor)
-            tensor_name: ,
-            data_type: DataType.FLOAT32,
+            name: ,
+            dtype: DataType.FLOAT32,
             shape: [1, 224, 224, 3],
             format: Format.NCHW,
             element_num: 150528,
@@ -472,13 +438,13 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.set_shape([1, 2, 2, 3])
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> tensor.shape = [1, 2, 2, 3]
+            >>> tensor.dtype = mslite.DataType.FLOAT32
             >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> print(tensor)
-            tensor_name: ,
-            data_type: DataType.FLOAT32,
+            name: ,
+            dtype: DataType.FLOAT32,
             shape: [1, 2, 2, 3],
             format: Format.NCHW,
             element_num: 12,
@@ -500,12 +466,12 @@ class Tensor:
             numpy.float32: DataType.FLOAT32,
             numpy.float64: DataType.FLOAT64,
         }
-        if data_type_map.get(numpy_obj.dtype.type) != self.get_data_type():
+        if data_type_map.get(numpy_obj.dtype.type) != self.dtype:
             raise RuntimeError(
-                f"data type not equal! Numpy type: {numpy_obj.dtype.type}, Tensor type: {self.get_data_type()}")
-        if numpy_obj.nbytes != self.get_data_size():
+                f"data type not equal! Numpy type: {numpy_obj.dtype.type}, Tensor type: {self.dtype}")
+        if numpy_obj.nbytes != self.data_size:
             raise RuntimeError(
-                f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.get_data_size()}")
+                f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.data_size}")
         self._numpy_obj = numpy_obj.flatten()  # keep reference count of numpy objects
         self._tensor.set_data_from_numpy(self._numpy_obj)
 
@@ -520,8 +486,8 @@ class Tensor:
             >>> import mindspore_lite as mslite
             >>> import numpy as np
             >>> tensor = mslite.Tensor()
-            >>> tensor.set_shape([1, 2, 2, 3])
-            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> tensor.shape = [1, 2, 2, 3]
+            >>> tensor.dtype = mslite.DataType.FLOAT32
             >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
             >>> data = tensor.get_data_to_numpy()
@@ -532,12 +498,3 @@ class Tensor:
                [ 9. 10. 11.]]]]
         """
         return self._tensor.get_data_to_numpy()
-
-    def __str__(self):
-        res = f"tensor_name: {self.get_tensor_name()},\n" \
-              f"data_type: {self.get_data_type()},\n" \
-              f"shape: {self.get_shape()},\n" \
-              f"format: {self.get_format()},\n" \
-              f"element_num: {self.get_element_num()},\n" \
-              f"data_size: {self.get_data_size()}."
-        return res

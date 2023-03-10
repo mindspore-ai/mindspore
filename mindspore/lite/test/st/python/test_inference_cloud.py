@@ -23,16 +23,16 @@ import numpy as np
 
 def prepare_inputs_data(inputs, file_path, input_shapes):
     for i in range(len(inputs)):
-        data_type = inputs[i].get_data_type()
-        if data_type == mslite.DataType.FLOAT32:
+        dtype = inputs[i].dtype
+        if dtype == mslite.DataType.FLOAT32:
             in_data = np.fromfile(file_path[i], dtype=np.float32)
-        elif data_type == mslite.DataType.INT32:
+        elif dtype == mslite.DataType.INT32:
             in_data = np.fromfile(file_path[i], dtype=np.int32)
-        elif data_type == mslite.DataType.INT64:
+        elif dtype == mslite.DataType.INT64:
             in_data = np.fromfile(file_path[i], dtype=np.int64)
         else:
             raise RuntimeError('not support DataType!')
-        inputs[i].set_shape(input_shapes[i])
+        inputs[i].shape = input_shapes[i]
         inputs[i].set_data_from_numpy(in_data)
 
 
@@ -52,87 +52,86 @@ def model_common_predict(context, model_path, in_data_path, input_shapes):
     model = mslite.Model()
     model.build_from_file(model_path, mslite.ModelType.MINDIR, context)
     inputs = model.get_inputs()
-    outputs = model.get_outputs()
     prepare_inputs_data(inputs, in_data_path, input_shapes)
-    model.predict(inputs, outputs)
+    outputs = model.predict(inputs)
     in_data_path_group2 = get_inputs_group2_if_exist(in_data_path)
     if len(in_data_path_group2) == len(in_data_path):
         prepare_inputs_data(inputs, in_data_path_group2, input_shapes)
-        model.predict(inputs, outputs)
+        outputs = model.predict(inputs)
 
 
-def runner_common_predict(runner_config, model_path, in_data_path, input_shapes):
+def runner_common_predict(context, model_path, in_data_path, input_shapes):
     runner = mslite.ModelParallelRunner()
-    runner.init(model_path=model_path, runner_config=runner_config)
+    runner.build_from_file(model_path=model_path, context=context)
     inputs = runner.get_inputs()
     prepare_inputs_data(inputs, in_data_path, input_shapes)
-    outputs = []
-    runner.predict(inputs, outputs)
+    outputs = runner.predict(inputs)
     in_data_path_group2 = get_inputs_group2_if_exist(in_data_path)
     if len(in_data_path_group2) == len(in_data_path):
         inputs = runner.get_inputs()
         prepare_inputs_data(inputs, in_data_path_group2, input_shapes)
-        outputs = []
-        runner.predict(inputs, outputs)
+        outputs = runner.predict(inputs)
 
 
 # ============================ cpu inference ============================
 def test_model_inference_cpu(model_path, in_data_path, input_shapes):
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["cpu"]
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
     model_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 # ============================ gpu inference ============================
 def test_model_inference_gpu(model_path, in_data_path, input_shapes):
-    gpu_device_info = mslite.GPUDeviceInfo(device_id=0, enable_fp16=False)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(gpu_device_info)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["gpu"]
+    context.gpu.device_id = 0
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
     model_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 # ============================ ascend inference ============================
 def test_model_inference_ascend(model_path, in_data_path, input_shapes):
-    ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(ascend_device_info)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["ascend"]
+    context.ascend.device_id = 0
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
     model_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 # ============================ cpu server inference ============================
 def test_parallel_inference_cpu(model_path, in_data_path, input_shapes):
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context, 2)
-    runner_common_predict(runner_config, model_path, in_data_path, input_shapes)
+    context = mslite.Context()
+    context.target = ["cpu"]
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
+    context.parallel.workers_num = 2
+    runner_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 # ============================ gpu server inference ============================
 def test_parallel_inference_gpu(model_path, in_data_path, input_shapes):
-    gpu_device_info = mslite.GPUDeviceInfo(device_id=0, enable_fp16=False)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(gpu_device_info)
-    context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context, 2)
-    runner_common_predict(runner_config, model_path, in_data_path, input_shapes)
+    context = mslite.Context()
+    context.target = ["gpu"]
+    context.gpu.device_id = 0
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
+    context.parallel.workers_num = 2
+    runner_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 # ============================ ascend server inference ============================
 def test_parallel_inference_ascend(model_path, in_data_path, input_shapes):
-    ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    context = mslite.Context(thread_num=2, thread_affinity_mode=0)
-    context.append_device_info(ascend_device_info)
-    context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context, 2)
-    runner_common_predict(runner_config, model_path, in_data_path, input_shapes)
+    context = mslite.Context()
+    context.target = ["ascend"]
+    context.ascend.device_id = 0
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
+    context.parallel.workers_num = 2
+    runner_common_predict(context, model_path, in_data_path, input_shapes)
 
 
 if __name__ == '__main__':

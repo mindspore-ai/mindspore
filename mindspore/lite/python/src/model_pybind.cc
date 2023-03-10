@@ -23,11 +23,11 @@ namespace mindspore::lite {
 namespace py = pybind11;
 
 void ModelPyBind(const py::module &m) {
-  py::enum_<ModelType>(m, "ModelType")
+  (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
     .value("kMindIR_Lite", ModelType::kMindIR_Lite);
 
-  py::enum_<StatusCode>(m, "StatusCode")
+  (void)py::enum_<StatusCode>(m, "StatusCode")
     .value("kSuccess", StatusCode::kSuccess)
     .value("kLiteError", StatusCode::kLiteError)
     .value("kLiteNullptr", StatusCode::kLiteNullptr)
@@ -53,18 +53,21 @@ void ModelPyBind(const py::module &m) {
     .value("kLiteInferInvalid", StatusCode::kLiteInferInvalid)
     .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid);
 
-  py::class_<Status, std::shared_ptr<Status>>(m, "Status")
+  (void)py::class_<Status, std::shared_ptr<Status>>(m, "Status")
     .def(py::init<>())
     .def("ToString", &Status::ToString)
     .def("IsOk", &Status::IsOk)
     .def("IsError", &Status::IsError);
 
-  py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
+  (void)py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
     .def("build_from_buff",
          py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
     .def("build_from_file",
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
+    .def("build_from_buff_with_decrypt",
+         py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &, const Key &,
+                           const std::string &, const std::string &>(&Model::Build))
     .def("build_from_file_with_decrypt",
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
@@ -82,7 +85,7 @@ void ModelPyBind(const py::module &m) {
 
 void ModelParallelRunnerPyBind(const py::module &m) {
 #ifdef PARALLEL_INFERENCE
-  py::class_<RunnerConfig, std::shared_ptr<RunnerConfig>>(m, "RunnerConfigBind")
+  (void)py::class_<RunnerConfig, std::shared_ptr<RunnerConfig>>(m, "RunnerConfigBind")
     .def(py::init<>())
     .def("set_config_info", py::overload_cast<const std::string &, const std::map<std::string, std::string> &>(
                               &RunnerConfig::SetConfigInfo))
@@ -113,7 +116,7 @@ void ModelParallelRunnerPyBind(const py::module &m) {
       return result;
     });
 
-  py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
+  (void)py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
     .def(py::init<>())
     .def("init",
          py::overload_cast<const std::string &, const std::shared_ptr<RunnerConfig> &>(&ModelParallelRunner::Init))

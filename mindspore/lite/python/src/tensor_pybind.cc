@@ -30,7 +30,7 @@ namespace py = pybind11;
 py::buffer_info GetPyBufferInfo(const MSTensor &tensor);
 
 void TensorPyBind(const py::module &m) {
-  py::enum_<DataType>(m, "DataType")
+  (void)py::enum_<DataType>(m, "DataType")
     .value("kTypeUnknown", DataType::kTypeUnknown)
     .value("kObjectTypeString", DataType::kObjectTypeString)
     .value("kObjectTypeList", DataType::kObjectTypeList)
@@ -50,7 +50,7 @@ void TensorPyBind(const py::module &m) {
     .value("kNumberTypeFloat64", DataType::kNumberTypeFloat64)
     .value("kInvalidType", DataType::kInvalidType);
 
-  py::enum_<Format>(m, "Format")
+  (void)py::enum_<Format>(m, "Format")
     .value("DEFAULT_FORMAT", Format::DEFAULT_FORMAT)
     .value("NCHW", Format::NCHW)
     .value("NHWC", Format::NHWC)
@@ -72,7 +72,7 @@ void TensorPyBind(const py::module &m) {
     .value("NDHWC", Format::NDHWC)
     .value("NC8HW8", Format::NC8HW8);
 
-  py::class_<MSTensor, std::shared_ptr<MSTensor>>(m, "TensorBind")
+  (void)py::class_<MSTensor, std::shared_ptr<MSTensor>>(m, "TensorBind")
     .def(py::init<>())
     .def("set_tensor_name", [](MSTensor &tensor, const std::string &name) { tensor.SetTensorName(name); })
     .def("get_tensor_name", &MSTensor::Name)

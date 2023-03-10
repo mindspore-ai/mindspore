@@ -24,10 +24,9 @@ def common_predict(context, model_path, in_data_path):
     model.build_from_file(model_path, mslite.ModelType.MINDIR_LITE, context)
 
     inputs = model.get_inputs()
-    outputs = model.get_outputs()
     in_data = np.fromfile(in_data_path, dtype=np.float32)
     inputs[0].set_data_from_numpy(in_data)
-    model.predict(inputs, outputs)
+    outputs = model.predict(inputs)
     for output in outputs:
         data = output.get_data_to_numpy()
         print("data: ", data)
@@ -35,10 +34,10 @@ def common_predict(context, model_path, in_data_path):
 
 # ============================ cpu inference ============================
 def test_cpu_inference_01():
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    print("cpu_device_info: ", cpu_device_info)
-    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["cpu"]
+    context.cpu.thread_num = 1
+    context.cpu.thread_affinity_mode = 2
     cpu_model_path = "mobilenetv2.ms"
     cpu_in_data_path = "mobilenetv2.ms.bin"
     common_predict(context, cpu_model_path, cpu_in_data_path)
@@ -46,13 +45,13 @@ def test_cpu_inference_01():
 
 # ============================ gpu inference ============================
 def test_gpu_inference_01():
-    gpu_device_info = mslite.GPUDeviceInfo(device_id=0, enable_fp16=False)
-    print("gpu_device_info: ", gpu_device_info)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    print("cpu_device_info: ", cpu_device_info)
-    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
-    context.append_device_info(gpu_device_info)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["gpu"]
+    context.gpu.device_id = 0
+    print("gpu: ", context.gpu)
+    context.cpu.thread_num = 1
+    context.cpu.thread_affinity_mode = 2
+    print("cpu_backup: ", context.cpu)
     gpu_model_path = "mobilenetv2.ms"
     gpu_in_data_path = "mobilenetv2.ms.bin"
     common_predict(context, gpu_model_path, gpu_in_data_path)
@@ -60,13 +59,13 @@ def test_gpu_inference_01():
 
 # ============================ ascend inference ============================
 def test_ascend_inference_01():
-    ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
-    print("ascend_device_info: ", ascend_device_info)
-    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-    print("cpu_device_info: ", cpu_device_info)
-    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
-    context.append_device_info(ascend_device_info)
-    context.append_device_info(cpu_device_info)
+    context = mslite.Context()
+    context.target = ["ascend"]
+    context.ascend.device_id = 0
+    print("ascend: ", context.ascend)
+    context.cpu.thread_num = 1
+    context.cpu.thread_affinity_mode = 2
+    print("cpu_backup: ", context.cpu)
     ascend_model_path = "mnist.tflite.ms"
     ascend_in_data_path = "mnist.tflite.ms.bin"
     common_predict(context, ascend_model_path, ascend_in_data_path)
@@ -74,41 +73,18 @@ def test_ascend_inference_01():
 
 # ============================ server inference ============================
 def test_server_inference_01():
-    cpu_device_info = mslite.CPUDeviceInfo()
-    print("cpu_device_info: ", cpu_device_info)
-    context = mslite.Context(thread_num=4)
-    context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context, 4)
+    context = mslite.Context()
+    context.target = ["cpu"]
+    context.cpu.thread_num = 4
+    context.parallel.workers_num = 1
     model_parallel_runner = mslite.ModelParallelRunner()
     cpu_model_path = "mobilenetv2.ms"
     cpu_in_data_path = "mobilenetv2.ms.bin"
-    model_parallel_runner.init(model_path=cpu_model_path, runner_config=runner_config)
+    model_parallel_runner.build_from_file(model_path=cpu_model_path, context=context)
 
     inputs = model_parallel_runner.get_inputs()
     in_data = np.fromfile(cpu_in_data_path, dtype=np.float32)
     inputs[0].set_data_from_numpy(in_data)
-    outputs = model_parallel_runner.get_outputs()
-    model_parallel_runner.predict(inputs, outputs)
-    data = outputs[0].get_data_to_numpy()
-    print("data: ", data)
-
-
-# ============================ server inference ============================
-def test_server_inference_02():
-    cpu_device_info = mslite.CPUDeviceInfo()
-    print("cpu_device_info: ", cpu_device_info)
-    context = mslite.Context(thread_num=4)
-    context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context, 1)
-    model_parallel_runner = mslite.ModelParallelRunner()
-    cpu_model_path = "mobilenetv2.ms"
-    cpu_in_data_path = "mobilenetv2.ms.bin"
-    model_parallel_runner.init(model_path=cpu_model_path, runner_config=runner_config)
-
-    inputs = model_parallel_runner.get_inputs()
-    in_data = np.fromfile(cpu_in_data_path, dtype=np.float32)
-    inputs[0].set_data_from_numpy(in_data)
-    outputs = []
-    model_parallel_runner.predict(inputs, outputs)
+    outputs = model_parallel_runner.predict(inputs)
     data = outputs[0].get_data_to_numpy()
     print("data: ", data)

@@ -21,21 +21,21 @@ namespace mindspore::lite {
 namespace py = pybind11;
 
 void ContextPyBind(const py::module &m) {
-  py::enum_<DeviceType>(m, "DeviceType", py::arithmetic())
+  (void)py::enum_<DeviceType>(m, "DeviceType", py::arithmetic())
     .value("kCPU", DeviceType::kCPU)
     .value("kGPU", DeviceType::kGPU)
     .value("kKirinNPU", DeviceType::kKirinNPU)
     .value("kAscend", DeviceType::kAscend);
 
-  py::class_<DeviceInfoContext, std::shared_ptr<DeviceInfoContext>>(m, "DeviceInfoContextBind");
+  (void)py::class_<DeviceInfoContext, std::shared_ptr<DeviceInfoContext>>(m, "DeviceInfoContextBind");
 
-  py::class_<CPUDeviceInfo, DeviceInfoContext, std::shared_ptr<CPUDeviceInfo>>(m, "CPUDeviceInfoBind")
+  (void)py::class_<CPUDeviceInfo, DeviceInfoContext, std::shared_ptr<CPUDeviceInfo>>(m, "CPUDeviceInfoBind")
     .def(py::init<>())
     .def("get_device_type", &CPUDeviceInfo::GetDeviceType)
     .def("set_enable_fp16", &CPUDeviceInfo::SetEnableFP16)
     .def("get_enable_fp16", &CPUDeviceInfo::GetEnableFP16);
 
-  py::class_<GPUDeviceInfo, DeviceInfoContext, std::shared_ptr<GPUDeviceInfo>>(m, "GPUDeviceInfoBind")
+  (void)py::class_<GPUDeviceInfo, DeviceInfoContext, std::shared_ptr<GPUDeviceInfo>>(m, "GPUDeviceInfoBind")
     .def(py::init<>())
     .def("get_device_type", &GPUDeviceInfo::GetDeviceType)
     .def("set_device_id", &GPUDeviceInfo::SetDeviceID)
@@ -45,7 +45,7 @@ void ContextPyBind(const py::module &m) {
     .def("get_rank_id", &GPUDeviceInfo::GetRankID)
     .def("get_group_size", &GPUDeviceInfo::GetGroupSize);
 
-  py::class_<AscendDeviceInfo, DeviceInfoContext, std::shared_ptr<AscendDeviceInfo>>(m, "AscendDeviceInfoBind")
+  (void)py::class_<AscendDeviceInfo, DeviceInfoContext, std::shared_ptr<AscendDeviceInfo>>(m, "AscendDeviceInfoBind")
     .def(py::init<>())
     .def("get_device_type", &AscendDeviceInfo::GetDeviceType)
     .def("set_device_id", &AscendDeviceInfo::SetDeviceID)
@@ -79,12 +79,13 @@ void ContextPyBind(const py::module &m) {
                                       const std::string &cfg_path) { device_info.SetInsertOpConfigPath(cfg_path); })
     .def("get_insert_op_cfg_path", &AscendDeviceInfo::GetInsertOpConfigPath);
 
-  py::class_<Context, std::shared_ptr<Context>>(m, "ContextBind")
+  (void)py::class_<Context, std::shared_ptr<Context>>(m, "ContextBind")
     .def(py::init<>())
     .def("append_device_info",
          [](Context &context, const std::shared_ptr<DeviceInfoContext> &device_info) {
            context.MutableDeviceInfo().push_back(device_info);
          })
+    .def("clear_device_info", [](Context &context) { context.MutableDeviceInfo().clear(); })
     .def("set_thread_num", &Context::SetThreadNum)
     .def("get_thread_num", &Context::GetThreadNum)
     .def("set_inter_op_parallel_num", &Context::SetInterOpParallelNum)

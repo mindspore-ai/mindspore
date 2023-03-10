@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 Context API.
 """
 from __future__ import absolute_import
+import os
+
 from mindspore_lite._checkparam import check_isinstance, check_list_of_element
 from mindspore_lite.lib import _c_lite_wrapper
 
-__all__ = ['Context', 'DeviceInfo', 'CPUDeviceInfo', 'GPUDeviceInfo', 'AscendDeviceInfo']
+__all__ = ['Context']
 
 
 class Context:
@@ -27,313 +29,681 @@ class Context:
     Context is used to transfer environment variables during execution.
 
     The context should be configured before running the program.
-    If it is not configured, it will be automatically set according to the device target by default.
-
-    Note:
-        If `thread_affinity_core_list` and `thread_affinity_mode` are set at the same time in one context, the
-        `thread_affinity_core_list` is effective, but the `thread_affinity_mode` is not effective.
-
-    Args:
-        thread_num (int, optional): Set the number of threads at runtime. `thread_num` cannot be less than
-            `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically adjusted
-            based on computer performance and core numbers. Default: None, None is equivalent to 0.
-        inter_op_parallel_num (int, optional): Set the parallel number of operators at runtime. `inter_op_parallel_num`
-            cannot be greater than `thread_num` . Setting `inter_op_parallel_num` to 0 represents
-            `inter_op_parallel_num` will be automatically adjusted based on computer performance and core num. Default:
-            None, None is equivalent to 0.
-        thread_affinity_mode (int, optional): Set the mode of the CPU/GPU/NPU core binding policy at runtime. The
-            following `thread_affinity_mode` are supported. Default: None, None is equivalent to 0.
-
-            - 0: no binding core.
-            - 1: binding big cores first.
-            - 2: binding middle cores first.
-
-        thread_affinity_core_list (list[int], optional): Set the list of CPU/GPU/NPU core binding policies at runtime.
-            For example, [0,1] on the CPU device represents the specified binding of CPU0 and CPU1. Default: None, None
-            is equivalent to [].
-        enable_parallel (bool, optional): Set the status whether to perform model inference or training in parallel.
-            Default: False.
-
-    Raises:
-        TypeError: `thread_num` is neither an int nor None.
-        TypeError: `inter_op_parallel_num` is neither an int nor None.
-        TypeError: `thread_affinity_mode` is neither an int nor None.
-        TypeError: `thread_affinity_core_list` is neither a list nor None.
-        TypeError: `thread_affinity_core_list` is a list, but the elements are neither int nor None.
-        TypeError: `enable_parallel` is not a bool.
-        ValueError: `thread_num` is less than 0.
-        ValueError: `inter_op_parallel_num` is less than 0.
+    If it is not configured, it will be set cpu target, and automatically set cpu attributes by default.
 
     Examples:
+        >>> # create default context, which target is cpu by default.
         >>> import mindspore_lite as mslite
-        >>> context = mslite.Context(thread_num=1, inter_op_parallel_num=1, thread_affinity_mode=1,
-        ...                          enable_parallel=False)
+        >>> context = mslite.Context()
         >>> print(context)
-        thread_num: 1,
-        inter_op_parallel_num: 1,
-        thread_affinity_mode: 1,
-        thread_affinity_core_list: [],
-        enable_parallel: False,
-        device_list: .
+        target: ["cpu"].
     """
 
-    def __init__(self, thread_num=None, inter_op_parallel_num=None, thread_affinity_mode=None, \
-                 thread_affinity_core_list=None, enable_parallel=False):
-        if thread_num is not None:
-            check_isinstance("thread_num", thread_num, int)
-            if thread_num < 0:
-                raise ValueError(f"Context's init failed, thread_num must be a non-negative int.")
-        if inter_op_parallel_num is not None:
-            check_isinstance("inter_op_parallel_num", inter_op_parallel_num, int)
-            if inter_op_parallel_num < 0:
-                raise ValueError(f"Context's init failed, inter_op_parallel_num must be a non-negative int.")
-        if thread_affinity_mode is not None:
-            check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
-        check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
-        check_isinstance("enable_parallel", enable_parallel, bool)
-        core_list = [] if thread_affinity_core_list is None else thread_affinity_core_list
-        self._context = _c_lite_wrapper.ContextBind()
-        if thread_num is not None:
-            self._context.set_thread_num(thread_num)
-        if inter_op_parallel_num is not None:
-            self._context.set_inter_op_parallel_num(inter_op_parallel_num)
-        if thread_affinity_mode is not None:
-            self._context.set_thread_affinity_mode(thread_affinity_mode)
-        self._context.set_thread_affinity_core_list(core_list)
-        if enable_parallel:
-            self._context.set_enable_parallel(enable_parallel)
+    def __init__(self):
+        self._context = _InnerContext()
+        self.cpu = _CPU(self._context)
+        self.gpu = _GPU()
+        self.ascend = _Ascend()
+        self.target = ["cpu"]
+        if hasattr(_c_lite_wrapper, "RunnerConfigBind"):
+            self.parallel = _Parallel(self._context)
 
     def __str__(self):
-        res = f"thread_num: {self._context.get_thread_num()},\n" \
-              f"inter_op_parallel_num: {self._context.get_inter_op_parallel_num()},\n" \
-              f"thread_affinity_mode: {self._context.get_thread_affinity_mode()},\n" \
-              f"thread_affinity_core_list: {self._context.get_thread_affinity_core_list()},\n" \
-              f"enable_parallel: {self._context.get_enable_parallel()},\n" \
-              f"device_list: {self._context.get_device_list()}."
+        res = f"target: {self.target}."
         return res
 
-    def append_device_info(self, device_info):
+    @property
+    def target(self):
         """
-        Append one user-defined device info to the context.
+        Get the target device information of context. Currently support target: ["cpu"] | ["gpu"] | ["ascend"].
 
         Note:
-            After gpu device info is added, cpu device info must be added before call context.
-            Because when ops are not supported on GPU, The system will try whether the CPU supports it.
-            At that time, need to switch to the context with cpu device info.
+            After gpu is added to target, cpu will be added automatically as the backup target.
+            Because when ops are not supported on gpu, The system will try whether the cpu supports it.
+            At that time, need to switch to the context with cpu.
 
-            After Ascend device info is added, users can choose to add CPU device info before using `context` when the
-            inputs format of the original model is inconsistent with that of the model generated by Converter. Because
-            in this case, the model generated by Converter on Ascend device will contain the 'Transpose' node, which
-            needs to be executed on the CPU device currently, so it needs to switch to the context with CPU device info.
+            After Ascend is added, cpu will be added automatically as the backup target. when the inputs format of the
+            original model is inconsistent with that of the model generated by Converter, the model generated by
+            Converter on Ascend device will contain the 'Transpose' node, which needs to be executed on the cpu device
+            currently. So it needs to switch to the context with cpu target.
 
-        Args:
-            device_info (DeviceInfo): the instance of device info.
+        cpu properties:
+            inter_op_parallel_num (int): Set the parallel number of operators at runtime. `inter_op_parallel_num`
+                cannot be greater than `thread_num` . Setting `inter_op_parallel_num` to 0 represents
+                `inter_op_parallel_num` will be automatically adjusted based on computer performance and core num.
+            precision_mode (str): Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
 
-        Raises:
-            TypeError: `device_info` is not a DeviceInfo.
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+            thread_num (int): Set the number of threads at runtime. `thread_num` cannot be less than
+                `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
+                adjusted based on computer performance and core numbers.
+            thread_affinity_mode (int): Set the mode of the CPU core binding policy at runtime. The
+                following `thread_affinity_mode` are supported.
+
+                - 0: no binding core.
+                - 1: binding big cores first.
+                - 2: binding middle cores first.
+
+            thread_affinity_core_list (list[int]): Set the list of CPU core binding policies at runtime.
+                For example, [0,1] represents the specified binding of CPU0 and CPU1.
+
+        gpu properties:
+            device_id(int): The device id.
+            group_size(int): the number of the clusters. Get only, not settable.
+            precision_mode (str): Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
+
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+            rank_id(int): the ID of the current device in the cluster, which starts from 0. Get only, not settable.
+
+
+        ascend properties:
+            device_id(int): The device id.
+            precision_mode (str): Set the mix precision mode. Options: "allow_fp32_to_fp16" |
+                "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
+
+                - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
+                - "allow_mix_precision": allow mix precision mode.
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+        Returns:
+            list[str], the target device information of context.
 
         Examples:
+            >>> # create default context, which target is cpu by default.
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
-            >>> context.append_device_info(mslite.CPUDeviceInfo())
-            >>> print(context)
-            thread_num: 0,
-            inter_op_parallel_num: 0,
-            thread_affinity_mode: 0,
-            thread_affinity_core_list: [],
-            enable_parallel: False,
-            device_list: 0, .
+            >>> # set context with cpu target.
+            >>> context.target = ["cpu"]
+            >>> print(context.target)
+            ["cpu"]
+            >>> context.cpu.precision_mode="force_fp16"
+            >>> context.cpu.thread_num = 2
+            >>> context.cpu.inter_op_parallel_num = 2
+            >>> context.cpu.thread_affinity_mode = 1
+            >>> context.cpu.thread_affinity_core_list = [0,1]
+            >>> # set context with gpu target.
+            >>> context.target = ["gpu"]
+            >>> print(context.target)
+            ["gpu"]
+            >>> context.gpu.precision_mode = "force_fp16"
+            >>> context.gpu.device_id = 2
+            >>> print(context.gpu.rank_id)
+            0
+            >>> print(context.gpu.group_size)
+            1
+            >>> print(context.gpu)
+            device_type: DeviceType:kGPU,
+            precision_mode: force_fp16,
+            device_id: 2,
+            rank_id: 0,
+            group_size: 1.
+            >>> # set context with ascend target.
+            >>> context.target = ["ascend"]
+            >>> print(context.target)
+            ["ascend"]
+            >>> context.ascend.precision_mode = "force_fp16"
+            >>> context.ascend.device_id = 2
+            >>> print(context.ascend)
+            device_type: DeviceType:kAscend,
+            precision_mode: force_fp16,
+            device_id: 2.
         """
-        if not isinstance(device_info, DeviceInfo):
-            raise TypeError("device_info must be DeviceInfo, but got {}.".format(
-                type(device_info)))
-        self._context.append_device_info(device_info._device_info)
+        return self._target
+
+    @target.setter
+    def target(self, target):
+        """
+        Set the target device information of context.
+
+        Args:
+            target (list[str]): the target device information of context.
+            Currently support target: ["cpu"] | ["cpu"] | ["ascend"].
+
+        Raises:
+            TypeError: `target` is not a list.
+            TypeError: `target` is a list, but the elements are not str.
+            ValueError: `target` is a list, but the elements are not in ['cpu', 'gpu', 'ascend'].
+        """
+        target = ["cpu"] if not target else target
+        check_list_of_element("target", target, str)
+        for ele in target:
+            if ele.lower() not in ["cpu", "gpu", "ascend"]:
+                raise ValueError(f"target elements must be in ['cpu', 'gpu', 'ascend'].")
+        self._context.clear_target()
+        need_cpu_backup = False
+        for ele in target:
+            if ele.lower() == "ascend":
+                self._context.append_device_info(self.ascend)
+                need_cpu_backup = True
+            elif ele.lower() == "gpu":
+                self._context.append_device_info(self.gpu)
+                need_cpu_backup = True
+            else:
+                self._context.append_device_info(self.cpu)
+        if need_cpu_backup:
+            self._context.append_device_info(self.cpu)
+        self._target = target
 
 
-class DeviceInfo:
+class _InnerContext:
+    """_InnerContext is used to bind Python API(Context) to C++ API(Context)."""
+    def __init__(self):
+        self._inner_context = _c_lite_wrapper.ContextBind()
+
+    @property
+    def cpu_thread_num(self):
+        """Get the number of threads at runtime."""
+        return self._inner_context.get_thread_num()
+
+    @cpu_thread_num.setter
+    def cpu_thread_num(self, cpu_thread_num):
+        """Set the number of threads at runtime."""
+        check_isinstance("cpu_thread_num", cpu_thread_num, int)
+        if cpu_thread_num < 0:
+            raise ValueError(f"cpu_thread_num must be a non-negative int.")
+        self._inner_context.set_thread_num(cpu_thread_num)
+
+    @property
+    def cpu_inter_op_parallel_num(self):
+        """Get the parallel number of operators at runtime."""
+        return self._inner_context.get_inter_op_parallel_num()
+
+    @cpu_inter_op_parallel_num.setter
+    def cpu_inter_op_parallel_num(self, cpu_inter_op_parallel_num):
+        """Set the parallel number of operators at runtime."""
+        check_isinstance("cpu_inter_op_parallel_num", cpu_inter_op_parallel_num, int)
+        if cpu_inter_op_parallel_num < 0:
+            raise ValueError(f"Context's init failed, cpu_inter_op_parallel_num must be a non-negative int.")
+        self._inner_context.set_inter_op_parallel_num(cpu_inter_op_parallel_num)
+
+    @property
+    def cpu_thread_affinity_mode(self):
+        """Get the mode of the CPU core binding policy at runtime."""
+        return self._inner_context.get_thread_affinity_mode()
+
+    @cpu_thread_affinity_mode.setter
+    def cpu_thread_affinity_mode(self, cpu_thread_affinity_mode):
+        """Set the mode of the CPU core binding policy at runtime."""
+        check_isinstance("cpu_thread_affinity_mode", cpu_thread_affinity_mode, int)
+        self._inner_context.set_thread_affinity_mode(cpu_thread_affinity_mode)
+
+    @property
+    def cpu_thread_affinity_core_list(self):
+        """Get the list of CPU core binding policies at runtime."""
+        return self._inner_context.get_thread_affinity_core_list()
+
+    @cpu_thread_affinity_core_list.setter
+    def cpu_thread_affinity_core_list(self, cpu_thread_affinity_core_list):
+        """Set the list of CPU core binding policies at runtime."""
+        check_list_of_element("cpu_thread_affinity_core_list", cpu_thread_affinity_core_list, int, enable_none=False)
+        self._inner_context.set_thread_affinity_core_list(cpu_thread_affinity_core_list)
+
+    def get_target(self):
+        """Get the target device information of context."""
+        return self._inner_context.get_device_list()
+
+    def clear_target(self):
+        """Clear the target device information of context."""
+        self._inner_context.clear_device_info()
+
+    def append_device_info(self, target):
+        """Append one user-defined target device info to the context."""
+        check_isinstance("target", target, _Target)
+        self._inner_context.append_device_info(target._device_info)
+
+
+class _Target:
     """
     Helper class used to describe device hardware information.
     """
 
     def __init__(self):
-        """ Initialize DeviceInfo"""
+        """ Initialize _Target"""
 
 
-class CPUDeviceInfo(DeviceInfo):
+class _CPU(_Target):
     """
-    Helper class used to describe CPU device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    Helper class used to describe CPU device hardware information, and it inherits :class:`mindspore_lite._Target`
     base class.
 
     Args:
-        enable_fp16(bool, optional): Whether to enable performing the Float16 inference. Default: False.
-
-    Raises:
-        TypeError: `enable_fp16` is not a bool.
-
-    Examples:
-        >>> import mindspore_lite as mslite
-        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=True)
-        >>> print(cpu_device_info)
-        device_type: DeviceType.kCPU,
-        enable_fp16: True.
-        >>> context = mslite.Context()
-        >>> context.append_device_info(cpu_device_info)
-        >>> print(context)
-        thread_num: 0,
-        inter_op_parallel_num: 0,
-        thread_affinity_mode: 0,
-        thread_affinity_core_list: [],
-        enable_parallel: False,
-        device_list: 0, .
+        inner_context(_InnerContext): Use to set inner context's cpu parameters.
     """
 
-    def __init__(self, enable_fp16=False):
-        super(CPUDeviceInfo, self).__init__()
-        check_isinstance("enable_fp16", enable_fp16, bool)
+    def __init__(self, inner_context):
+        super(_CPU, self).__init__()
+        check_isinstance("inner_context", inner_context, _InnerContext)
+        self._inner_context = inner_context
         self._device_info = _c_lite_wrapper.CPUDeviceInfoBind()
-        self._device_info.set_enable_fp16(enable_fp16)
 
     def __str__(self):
-        res = f"device_type: {self._device_info.get_device_type()},\n" \
-              f"enable_fp16: {self._device_info.get_enable_fp16()}."
+        res = f"cpu_device_type: {self._device_info.get_device_type()},\n" \
+              f"cpu_precision_mode: {self.precision_mode},\n" \
+              f"cpu_thread_num: {self.thread_num},\n" \
+              f"cpu_inter_op_parallel_num: {self.inter_op_parallel_num},\n" \
+              f"cpu_thread_affinity_mode: {self.thread_affinity_mode},\n" \
+              f"cpu_thread_affinity_core_list: {self.thread_affinity_core_list}."
         return res
 
+    @property
+    def precision_mode(self):
+        """Get mixed precision mode."""
+        if self._device_info.get_enable_fp16():
+            return "force_fp16"
+        return "must_keep_origin_dtype"
 
-class GPUDeviceInfo(DeviceInfo):
+    @precision_mode.setter
+    def precision_mode(self, cpu_precision_mode):
+        """
+        Set mixed precision mode.
+
+        Args:
+            cpu_precision_mode (str): Set mixed precision mode. CPU options: "force_fp16" | "must_keep_origin_dtype".
+
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+        Raises:
+            TypeError: `cpu_precision_mode` is not a str.
+            ValueError: `cpu_precision_mode` is neither "must_keep_origin_dtype" nor "force_fp16" when it is a str.
+        """
+        check_isinstance("cpu_precision_mode", cpu_precision_mode, str)
+        if cpu_precision_mode not in ["must_keep_origin_dtype", "force_fp16"]:
+            raise ValueError(f"cpu_precision_mode must be in [must_keep_origin_dtype, force_fp16].")
+        if cpu_precision_mode == "force_fp16":
+            self._device_info.set_enable_fp16(True)
+        else:
+            self._device_info.set_enable_fp16(False)
+
+    @property
+    def thread_num(self):
+        """Get the number of threads at runtime."""
+        return self._inner_context.cpu_thread_num
+
+    @thread_num.setter
+    def thread_num(self, cpu_thread_num):
+        """
+        Set the number of threads at runtime.
+
+        Args:
+            cpu_thread_num (int): Set the number of threads at runtime. `cpu_thread_num` cannot be less than
+                `cpu_inter_op_parallel_num` . Setting `cpu_thread_num` to 0 represents `cpu_thread_num` will be
+                automatically adjusted based on computer performance and core numbers.
+
+        Raises:
+            TypeError: `cpu_thread_num` is not an int.
+            ValueError: `cpu_thread_num` is less than 0.
+        """
+        check_isinstance("cpu_thread_num", cpu_thread_num, int)
+        if cpu_thread_num < 0:
+            raise ValueError(f"cpu_thread_num must be a non-negative int.")
+        self._inner_context.cpu_thread_num = cpu_thread_num
+
+    @property
+    def inter_op_parallel_num(self):
+        """Get the parallel number of operators at runtime."""
+        return self._inner_context.cpu_inter_op_parallel_num
+
+    @inter_op_parallel_num.setter
+    def inter_op_parallel_num(self, cpu_inter_op_parallel_num):
+        """
+        Set the parallel number of operators at runtime.
+
+        Args:
+            cpu_inter_op_parallel_num (int): Set the parallel number of operators at runtime.
+                `cpu_inter_op_parallel_num` cannot be greater than `cpu_thread_num` . Setting
+                `cpu_inter_op_parallel_num` to 0 represents `cpu_inter_op_parallel_num` will be automatically adjusted
+                based on computer performance and core num.
+
+        Raises:
+            TypeError: `cpu_inter_op_parallel_num` is not an int.
+            ValueError: `cpu_inter_op_parallel_num` is less than 0.
+        """
+        check_isinstance("cpu_inter_op_parallel_num", cpu_inter_op_parallel_num, int)
+        if cpu_inter_op_parallel_num < 0:
+            raise ValueError(f"cpu_inter_op_parallel_num must be a non-negative int.")
+        self._inner_context.cpu_inter_op_parallel_num = cpu_inter_op_parallel_num
+
+    @property
+    def thread_affinity_mode(self):
+        """Get the mode of the CPU core binding policy at runtime."""
+        return self._inner_context.cpu_thread_affinity_mode
+
+    @thread_affinity_mode.setter
+    def thread_affinity_mode(self, cpu_thread_affinity_mode):
+        """
+        Set the mode of the CPU core binding policy at runtime.
+
+        Args:
+            cpu_thread_affinity_mode (int): Set the mode of the CPU core binding policy at runtime. The
+                following `cpu_thread_affinity_mode` are supported.
+
+                - 0: no binding core.
+                - 1: binding big cores first.
+                - 2: binding middle cores first.
+
+        Raises:
+            TypeError: `cpu_thread_affinity_mode` is not an int.
+        """
+        check_isinstance("cpu_thread_affinity_mode", cpu_thread_affinity_mode, int)
+        self._inner_context.cpu_thread_affinity_mode = cpu_thread_affinity_mode
+
+    @property
+    def thread_affinity_core_list(self):
+        """Get the list of CPU core binding policies at runtime."""
+        return self._inner_context.cpu_thread_affinity_core_list
+
+    @thread_affinity_core_list.setter
+    def thread_affinity_core_list(self, cpu_thread_affinity_core_list):
+        """
+        Set the list of CPU core binding policies at runtime.
+
+        Args:
+            cpu_thread_affinity_core_list (list[int]): Set the list of CPU core binding policies at runtime.
+                For example, [0,1] represents the specified binding of CPU0 and CPU1.
+
+        Raises:
+            TypeError: `cpu_thread_affinity_core_list` is not a list.
+            TypeError: `cpu_thread_affinity_core_list` is a list, but the elements are not int.
+        """
+        check_list_of_element("cpu_thread_affinity_core_list", cpu_thread_affinity_core_list, int, enable_none=False)
+        self._inner_context.cpu_thread_affinity_core_list = cpu_thread_affinity_core_list
+
+
+class _GPU(_Target):
     """
-    Helper class used to describe GPU device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    Helper class used to describe GPU device hardware information, and it inherits :class:`mindspore_lite._Target`
     base class.
-
-    Args:
-        device_id(int, optional): The device id. Default: 0.
-        enable_fp16(bool, optional): enables to perform the Float16 inference. Default: False.
-
-    Raises:
-        TypeError: `device_id` is not an int.
-        TypeError: `enable_fp16` is not a bool.
-        ValueError: `device_id` is less than 0.
-
-    Examples:
-        >>> # Use case: inference on GPU device.
-        >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
-        >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
-        >>> import mindspore_lite as mslite
-        >>> gpu_device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=False)
-        >>> print(gpu_device_info)
-        device_type: DeviceType.kGPU,
-        device_id: 1,
-        enable_fp16: False.
-        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-        >>> context = mslite.Context()
-        >>> context.append_device_info(gpu_device_info)
-        >>> context.append_device_info(cpu_device_info)
-        >>> print(context)
-        thread_num: 0,
-        inter_op_parallel_num: 0,
-        thread_affinity_mode: 0,
-        thread_affinity_core_list: [],
-        enable_parallel: False,
-        device_list: 1, 0, .
     """
 
-    def __init__(self, device_id=0, enable_fp16=False):
-        super(GPUDeviceInfo, self).__init__()
-        check_isinstance("device_id", device_id, int)
-        if device_id < 0:
-            raise ValueError(f"GPUDeviceInfo's init failed, device_id must be a non-negative int.")
-        check_isinstance("enable_fp16", enable_fp16, bool)
+    def __init__(self):
+        super(_GPU, self).__init__()
         self._device_info = _c_lite_wrapper.GPUDeviceInfoBind()
-        self._device_info.set_device_id(device_id)
-        self._device_info.set_enable_fp16(enable_fp16)
 
     def __str__(self):
         res = f"device_type: {self._device_info.get_device_type()},\n" \
-              f"device_id: {self._device_info.get_device_id()},\n" \
-              f"enable_fp16: {self._device_info.get_enable_fp16()}."
+              f"precision_mode: {self.precision_mode},\n" \
+              f"device_id: {self.device_id},\n" \
+              f"rank_id: {self.rank_id},\n" \
+              f"group_size: {self.group_size}."
         return res
 
-    def get_rank_id(self):
+    @property
+    def precision_mode(self):
+        """Get mixed precision mode."""
+        if self._device_info.get_enable_fp16():
+            return "force_fp16"
+        return "must_keep_origin_dtype"
+
+    @precision_mode.setter
+    def precision_mode(self, gpu_precision_mode):
+        """
+        Set mixed precision mode.
+
+        Args:
+            gpu_precision_mode (str): Set mixed precision mode. GPU options: "force_fp16" | "must_keep_origin_dtype".
+
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+        Raises:
+            TypeError: `gpu_precision_mode` is not a str.
+            ValueError: `gpu_precision_mode` is neither "must_keep_origin_dtype" nor "force_fp16" when it is a str.
+        """
+        check_isinstance("gpu_precision_mode", gpu_precision_mode, str)
+        if gpu_precision_mode not in ["must_keep_origin_dtype", "force_fp16"]:
+            raise ValueError(f"gpu_precision_mode must be in [must_keep_origin_dtype, force_fp16].")
+        if gpu_precision_mode == "force_fp16":
+            self._device_info.set_enable_fp16(True)
+        else:
+            self._device_info.set_enable_fp16(False)
+
+    @property
+    def device_id(self):
+        """Get the device id."""
+        return self._device_info.get_device_id()
+
+    @device_id.setter
+    def device_id(self, gpu_device_id):
+        """
+        Set the device id.
+
+        Args:
+            gpu_device_id(int): The device id.
+
+        Raises:
+            TypeError: `gpu_device_id` is not an int.
+            ValueError: `gpu_device_id` is less than 0.
+        """
+        check_isinstance("gpu_device_id", gpu_device_id, int)
+        if gpu_device_id < 0:
+            raise ValueError(f"gpu_device_id must be a non-negative int.")
+        self._device_info.set_device_id(gpu_device_id)
+
+    @property
+    def rank_id(self):
         """
         Get the ID of the current device in the cluster from context.
 
         Returns:
             int, the ID of the current device in the cluster, which starts from 0.
-
-        Examples:
-            >>> # Use case: inference on GPU device.
-            >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
-            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
-            >>> import mindspore_lite as mslite
-            >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
-            >>> rank_id = device_info.get_rank_id()
-            >>> print(rank_id)
-            0
         """
         return self._device_info.get_rank_id()
 
-    def get_group_size(self):
+    @property
+    def group_size(self):
         """
         Get the number of the clusters from context.
 
         Returns:
             int, the number of the clusters.
-
-        Examples:
-            >>> # Use case: inference on GPU device.
-            >>> # precondition 1: Building MindSpore Lite GPU package by export MSLITE_GPU_BACKEND=tensorrt.
-            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
-            >>> import mindspore_lite as mslite
-            >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
-            >>> group_size = device_info.get_group_size()
-            >>> print(group_size)
-            1
         """
         return self._device_info.get_group_size()
 
 
-class AscendDeviceInfo(DeviceInfo):
+class _Ascend(_Target):
     """
-    Helper class used to describe Ascend device hardware information, and it inherits :class:`mindspore_lite.DeviceInfo`
+    Helper class used to describe Ascend device hardware information, and it inherits :class:`mindspore_lite._Target`
     base class.
-
-    Args:
-        device_id(int, optional): The device id. Default: 0.
-
-    Raises:
-        TypeError: `device_id` is not an int.
-        ValueError: `device_id` is less than 0.
-
-    Examples:
-        >>> # Use case: inference on Ascend device.
-        >>> # precondiction 1: Building MindSpore Lite Ascend package on Ascend device.
-        >>> # precondiction 2: install wheel package of MindSpore Lite built by precondiction 1.
-        >>> import mindspore_lite as mslite
-        >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
-        >>> print(ascend_device_info)
-        device_type: DeviceType.kAscend,
-        device_id: 0.
-        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
-        >>> context = mslite.Context()
-        >>> context.append_device_info(ascend_device_info)
-        >>> context.append_device_info(cpu_device_info)
-        >>> print(context)
-        thread_num: 0,
-        inter_op_parallel_num: 0,
-        thread_affinity_mode: 0,
-        thread_affinity_core_list: [],
-        enable_parallel: False,
-        device_list: 3, 0, .
     """
 
-    def __init__(self, device_id=0):
-        super(AscendDeviceInfo, self).__init__()
-        check_isinstance("device_id", device_id, int)
-        if device_id < 0:
-            raise ValueError(f"AscendDeviceInfo's init failed, device_id must be a non-negative int.")
+    def __init__(self):
+        super(_Ascend, self).__init__()
         self._device_info = _c_lite_wrapper.AscendDeviceInfoBind()
-        self._device_info.set_device_id(device_id)
 
     def __str__(self):
         res = f"device_type: {self._device_info.get_device_type()},\n" \
-              f"device_id: {self._device_info.get_device_id()}."
+              f"precision_mode: {self.precision_mode},\n" \
+              f"device_id: {self.device_id}."
         return res
+
+    @property
+    def precision_mode(self):
+        """Get mixed precision mode."""
+        return self._device_info.get_precision_mode()
+
+    @precision_mode.setter
+    def precision_mode(self, ascend_precision_mode):
+        """
+        Set mixed precision mode.
+
+        Args:
+            ascend_precision_mode (str): Set mixed precision mode. Ascend options: "allow_fp32_to_fp16" |
+                "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
+
+                - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
+                - "allow_mix_precision": allow mix precision mode.
+                - "force_fp16": Force the fp16 precision mode.
+                - "must_keep_origin_dtype": keep the origin precision data type.
+
+        Raises:
+            TypeError: `ascend_precision_mode` is not a str.
+            ValueError: `ascend_precision_mode` is not in ["force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype",
+            "allow_mix_precision"] when it is a str.
+        """
+        check_isinstance("ascend_precision_mode", ascend_precision_mode, str)
+        if ascend_precision_mode not in ["force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype",
+                                         "allow_mix_precision"]:
+            raise ValueError(f"ascend_precision_mode must be in [force_fp16, allow_fp32_to_fp16, "
+                             f"must_keep_origin_dtype, allow_mix_precision].")
+        self._device_info.set_precision_mode(ascend_precision_mode)
+
+    @property
+    def device_id(self):
+        """Get the device id."""
+        return self._device_info.get_device_id()
+
+    @device_id.setter
+    def device_id(self, ascend_device_id):
+        """
+        Set the device id.
+
+        Args:
+            ascend_device_id(int): The device id.
+
+        Raises:
+            TypeError: `ascend_device_id` is not an int.
+            ValueError: `ascend_device_id` is less than 0.
+        """
+        check_isinstance("ascend_device_id", ascend_device_id, int)
+        if ascend_device_id < 0:
+            raise ValueError(f"ascend_device_id must be a non-negative int.")
+        self._device_info.set_device_id(ascend_device_id)
+
+
+class _Parallel:
+    """
+    _Parallel Class defines the context and configuration of `ModelParallelRunner` class.
+
+    Args:
+        context (Context, optional): Define the context used to store options during execution. Default: None.
+
+    Raises:
+        TypeError: `context` is neither a Context nor None.
+        RuntimeError: Not MindSpore Lite serving package, can't set parallel.
+    """
+
+    def __init__(self, context=None):
+        if hasattr(_c_lite_wrapper, "RunnerConfigBind"):
+            self._runner_config = _c_lite_wrapper.RunnerConfigBind()
+        else:
+            raise RuntimeError(f"parallel init failed, If you want to set parallel, you need to build"
+                               f"MindSpore Lite serving package by export MSLITE_ENABLE_SERVER_INFERENCE=on.")
+        if context is not None:
+            self._runner_config.set_context(context._inner_context)
+
+    def __str__(self):
+        res = f"workers num: {self.workers_num},\n" \
+              f"config info: {self.config_info},\n" \
+              f"config file: {self.config_path}."
+        return res
+
+    @property
+    def workers_num(self):
+        """Get the num of workers."""
+        return self._runner_config.get_workers_num()
+
+    @workers_num.setter
+    def workers_num(self, workers_num):
+        """
+        Set the num of workers.
+
+        Args:
+            workers_num (int): the num of workers. A `ModelParallelRunner` contains multiple workers, which
+                are the units that actually perform parallel inferring. Setting `workers_num` to 0 represents
+                `workers_num` will be automatically adjusted based on computer performance and core numbers.
+
+        Raises:
+            TypeError: `workers_num` is not an int.
+            ValueError: `workers_num` is an int, but it is less than 0.
+        """
+        check_isinstance("workers_num", workers_num, int)
+        if workers_num < 0:
+            raise ValueError(f"Set parallel failed, workers_num must be a non-negative int.")
+        self._runner_config.set_workers_num(workers_num)
+
+    @property
+    def config_info(self):
+        """Get the device id."""
+        return self._runner_config.get_config_info_string()
+
+    @config_info.setter
+    def config_info(self, config_info):
+        """
+        Set the device id.
+
+        Args:
+            config_info (dict{str, dict{str, str}}): Nested map for passing model weight paths.
+                For example, {"weight": {"weight_path": "/home/user/weight.cfg"}}.
+                key currently supports ["weight"];
+                value is in dict format, key of it currently supports ["weight_path"],
+                value of it is the path of weight, For example, "/home/user/weight.cfg".
+
+        Raises:
+            TypeError: `config_info` is not a dict.
+            TypeError: `config_info` is a dict, but the key is not str.
+            TypeError: `config_info` is a dict, the key is str, but the value is not dict.
+            TypeError: `config_info` is a dict, the key is str, the value is dict, but the key of value is not str.
+            TypeError: `config_info` is a dict, the key is str, the value is dict, the key of the value is str, but
+                the value of the value is not str.
+        """
+        check_isinstance("config_info", config_info, dict)
+        for k, v in config_info.items():
+            check_isinstance("config_info_key", k, str)
+            check_isinstance("config_info_value", v, dict)
+            for v_k, v_v in v.items():
+                check_isinstance("config_info_value_key", v_k, str)
+                check_isinstance("config_info_value_value", v_v, str)
+        for k, v in config_info.items():
+            self._runner_config.set_config_info(k, v)
+
+    @property
+    def config_path(self):
+        """Get the config file path."""
+        return self._runner_config.get_config_path()
+
+    @config_path.setter
+    def config_path(self, config_path):
+        """
+        Set the config file path.
+
+        Args:
+            config_path (str): Set the config file path. the config file is used to transfer user defined
+                options during building `ModelParallelRunner` . In the following scenarios, users may need to set the
+                parameter. For example, "/home/user/config.txt".
+
+                - Usage 1: Set mixed precision inference. The content and description of the configuration file are as
+                      follows:
+
+                      .. code-block::
+
+                          [execution_plan]
+                          [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                          [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+
+                - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
+                      configuration file are as follows:
+
+                      .. code-block::
+
+                          [ms_cache]
+                          serialize_Path=[serialization model path](storage path of serialization model)
+                          [gpu_context]
+                          input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
+                          dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
+                          opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
+
+        Raises:
+            TypeError: `config_path` is not a str.
+            ValueError: `config_path` does not exist.
+        """
+        check_isinstance("config_path", config_path, str)
+        if config_path != "":
+            if not os.path.exists(config_path):
+                raise ValueError(f"Set parallel failed, config_path does not exist!")
+            self._runner_config.set_config_path(config_path)
