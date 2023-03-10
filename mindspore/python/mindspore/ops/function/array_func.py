@@ -890,7 +890,7 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
 
 def ones_like(input, *, dtype=None):
     """
-    Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
+    Returns a Tensor with a value of 1 and its shape is the same as the input.
 
     Args:
         input (Tensor): Tensor of any dimension.

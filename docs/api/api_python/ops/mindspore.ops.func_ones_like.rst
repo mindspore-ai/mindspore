@@ -3,7 +3,7 @@ mindspore.ops.ones_like
 
 .. py:function:: mindspore.ops.ones_like(input, *, dtype=None)
 
-    返回值为1的Tensor，shape和数据类型与输入相同。
+    返回值为1的Tensor，shape与输入相同。
 
     参数：
         - **input** (Tensor) - 任意维度的Tensor。
