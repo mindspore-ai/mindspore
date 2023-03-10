@@ -1,7 +1,7 @@
 mindspore.ops.polygamma
 =======================
 
-.. py:function:: mindspore.ops.polygamma(a, x)
+.. py:function:: mindspore.ops.polygamma(n, input)
 
     计算关于 `x` 的多伽马函数的 :math:`a` 阶导数。
 
@@ -11,14 +11,14 @@ mindspore.ops.polygamma
     其中 :math:`\psi(x)` 为digamma函数。
 
     参数：
-        - **a** (Tensor) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `a` 的shape为 :math:`()` 。
-        - **x** (Tensor) - 用于计算多伽马函数的Tensor。
+        - **n** (Tensor) - 多伽马函数求导的阶数，支持的数据类型为int32和int64， `n` 的shape为 :math:`()` 。
+        - **input** (Tensor) - 用于计算多伽马函数的Tensor。
 
     返回：
-        Tensor。数据类型与 `x` 一致。
+        Tensor。数据类型与 `input` 一致。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `x` 的数据类型不是float16、float32或float64。
-        - **TypeError** - `a` 的数据类型不是int32或int64。
-        - **TypeError** - `a` 的shape不是 :math:`()` 。
+        - **TypeError** - `input` 不是Tensor。
+        - **TypeError** - `input` 的数据类型不是float16、float32或float64。
+        - **TypeError** - `n` 的数据类型不是int32或int64。
+        - **TypeError** - `n` 的shape不是 :math:`()` 。
