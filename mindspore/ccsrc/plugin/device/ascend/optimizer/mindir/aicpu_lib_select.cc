@@ -65,7 +65,6 @@ bool AICpuLibSelectPass::Process(const AnfNodePtr &node) const {
                                                                mindspore::kComplexAbsOpName,
                                                                mindspore::kConcatOpName,
                                                                mindspore::kCosOpName,
-                                                               mindspore::kGenerateEodMaskOpName,
                                                                mindspore::kCountNonZeroOpName,
                                                                mindspore::kCumulativeLogsumexpOpName,
                                                                mindspore::kCumProdOpName,

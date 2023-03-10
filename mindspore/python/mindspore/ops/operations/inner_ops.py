@@ -655,52 +655,6 @@ class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
         return param_type
 
 
-class GenerateEodMask(Primitive):
-    r"""
-    Given the input `inputs_ids`, if found eod_token_id, the output position and attention mask matrix will be reset.
-    This means the `position_id` will start counting from 0, and the corresponding mask matrix will be filled with 0.
-
-    Args:
-        eod_token_id (int) - In the NLP scenario, this value corresponds to the id of
-            the symbol of 'EodOfDocument' in the vocabulary.
-
-    Inputs:
-      - **inputs_ids** (Tensor) - token id, a 2-D Tensor with shape :math:`(batch\_size, seq\_length)`.
-
-    Outputs:
-      - **position_id** (Tensor) - position id matrix with same shape and type as original `inputs_ids`.
-      - **attention_mask** (Tensor) - attention mask matrix with type
-            float16 and shape :math:`(batch\_size, seq\_length)`.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> op = ops.GenerateEodMask(eod_token_id=0)
-        >>> position, mask = op(Tensor([[1, 0, 3], [1, 0, 0]], dtype=mindspore.int32))
-        >>> print(position)
-        [[0 1 0] [0 0 1]]
-        >>> print(mask)
-        [[[ 1. 0. 0.]
-          [1. 1. 0.]
-          [0. 0. 1.]]
-         [[1. 0. 0.]
-          [0. 1. 0.]
-          [0. 1. 1.]]]
-
-    Raises:
-        - **TypeError** - If `eod_token_id` is not int.
-        - **TypeError** - If `inputs_ids` is not int.
-        - **ValueError** - If `inputs_ids` is not a 2-D Tensor.
-    """
-    @prim_attr_register
-    def __init__(self, eod_token_id):
-        """Initialize GenerateEodMask"""
-        validator.check_value_type("eod_token_id", eod_token_id, [int], self.name)
-        self.init_prim_io_names(inputs=['inputs_ids'],
-                                outputs=['position_ids', 'attention_mask'])
-
-
 class ScaleGrad(PrimitiveWithInfer):
     """
     Scale the input grad according to the loss scale.

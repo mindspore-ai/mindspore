@@ -60,7 +60,6 @@ from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
-from .generate_eod_mask import _generate_eod_mask_aicpu
 from .gather_grad import _gather_grad_aicpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_aicpu
 from .gather_d import _gather_d_aicpu
