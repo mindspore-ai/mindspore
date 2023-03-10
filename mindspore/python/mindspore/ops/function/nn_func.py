@@ -2797,32 +2797,32 @@ def pad(input_x, padding, mode='constant', value=None):
     return out
 
 
-def relu(x):
+def relu(input):
     r"""
     Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-    It returns :math:`\max(x,\  0)` element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
 
-        ReLU(x) = (x)^+ = max(0, x)
+        ReLU(input) = (input)^+ = max(0, input)
 
     Note:
         In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
         output one more Mask.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
           `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
-        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `x`.
+        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `x` is not a number.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `input` is not a number.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2835,7 +2835,7 @@ def relu(x):
          [2. 0. 9.]]
     """
     relu_ = _get_cache_prim(NN_OPS.ReLU)()
-    return relu_(x)
+    return relu_(input)
 
 
 def relu6(x):
