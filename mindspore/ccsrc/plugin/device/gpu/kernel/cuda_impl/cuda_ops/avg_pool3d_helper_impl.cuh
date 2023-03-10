@@ -21,7 +21,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalRealKernelSize(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &kernel_size,
-                                       const std::vector<int64_t> &edge_kernel_size, T *kernel,
-                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalRealKernelSize(const std::vector<int64_t> &input_shape,
+                                              const std::vector<int64_t> &kernel_size,
+                                              const std::vector<int64_t> &edge_kernel_size, T *kernel,
+                                              const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_AVG_POOL3D_HELPER_IMPL_CUH_

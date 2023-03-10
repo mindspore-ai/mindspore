@@ -72,8 +72,9 @@ bool AdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *variable_out = GetDeviceAddress<T>(outputs, kIndex0);
   T *accumulation_out = GetDeviceAddress<T>(outputs, kIndex1);
 
-  ApplyAdagrad(inputs[0]->size / sizeof(T), update_slots, learning_rate, gradient, variable, accumulation,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = ApplyAdagrad(inputs[0]->size / sizeof(T), update_slots, learning_rate, gradient, variable, accumulation,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(stream_ptr)),
                                      "cudaMemcpyAsync output failed");

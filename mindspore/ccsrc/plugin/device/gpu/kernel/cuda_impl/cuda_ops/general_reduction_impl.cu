@@ -301,51 +301,51 @@ void GeneralReductionImpl(bool small, size_t outer_size, size_t bound, size_t in
 }
 
 template <typename T, typename S>
-void CalGeneralReduction(bool small, const T *input, const size_t bound, const size_t outerSize,
+cudaError_t CalGeneralReduction(bool small, const T *input, const size_t bound, const size_t outerSize,
                          const size_t innerSize, S *output_index, T *output, cudaStream_t stream) {
   T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
   GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 template <typename S>
-void CalGeneralReduction(bool small, const half *input, const size_t bound, const size_t outerSize,
+cudaError_t CalGeneralReduction(bool small, const half *input, const size_t bound, const size_t outerSize,
                         const size_t innerSize, S *output_index, half *output, cudaStream_t stream) {
   half init_K = small ? static_cast<half>(65504) : static_cast<half>(-65504);
   GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int8_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int8_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int64_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int64_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint8_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint8_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   uint8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint64_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint64_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int16_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int16_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const int32_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const int32_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   int32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint16_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint16_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const uint32_t *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const uint32_t *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const double *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const double *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const float *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const float *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalGeneralReduction(bool small, const half *input, const size_t bound_,
+template CUDA_LIB_EXPORT cudaError_t CalGeneralReduction(bool small, const half *input, const size_t bound_,
                                                   const size_t outerSize_, const size_t innerSize_, int *index,
                                                   half *output, cudaStream_t cuda_stream);

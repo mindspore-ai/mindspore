@@ -115,22 +115,23 @@ __global__ void CalAdjustSaturationKernel(const size_t tuple_elements, const int
 }
 
 template <typename T>
-void CalAdjustSaturation(const int input_elements, const T *input, T *output, const float *saturation_scale,
-                         const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalAdjustSaturation(const int input_elements, const T *input, T *output, const float *saturation_scale,
+                                const uint32_t &device_id, cudaStream_t cuda_stream) {
   const int channel_num = 3;
   int tuple_element = input_elements / channel_num;
   CalAdjustSaturationKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     tuple_element, channel_num, input, output, saturation_scale);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalAdjustSaturation<float>(const int input_elements, const float *input, float *output,
-                                                         const float *saturation_scale, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAdjustSaturation<float>(const int input_elements, const float *input,
+                                                                float *output, const float *saturation_scale,
+                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdjustSaturation<half>(const int input_elements, const half *input, half *output,
-                                                        const float *saturation_scale, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAdjustSaturation<half>(const int input_elements, const half *input,
+                                                               half *output, const float *saturation_scale,
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalAdjustSaturation<double>(const int input_elements, const double *input, double *output,
-                                                          const float *saturation_scale, const uint32_t &device_id,
-                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAdjustSaturation<double>(const int input_elements, const double *input,
+                                                                 double *output, const float *saturation_scale,
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);

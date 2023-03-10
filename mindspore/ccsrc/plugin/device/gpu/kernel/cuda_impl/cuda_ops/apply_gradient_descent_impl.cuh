@@ -20,7 +20,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalApplyGradientDescent(const size_t &size, T *var, const T *alpha, const T *delta, T *output,
-                                             cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalApplyGradientDescent(const size_t &size, T *var, const T *alpha, const T *delta,
+                                                    T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_APPLY_GRADIENT_DESCENT_IMPL_CUH_

@@ -20,16 +20,14 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateAffineGrid4D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr,
-                                           const int32_t &N, const int32_t &C,
-                                           const int32_t &H, const int32_t &W,
-                                           const bool &align_corners,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudnnStatus_t CalculateAffineGrid4D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr, const int32_t &N,
+                                                    const int32_t &C, const int32_t &H, const int32_t &W,
+                                                    const bool &align_corners, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void CalculateAffineGrid5D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr,
-                                           const int32_t &N, const int32_t &C,
-                                           const int32_t &D, const int32_t &H, const int32_t &W,
-                                           const bool &align_corners,
-                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalculateAffineGrid5D(const T *theta_ptr, T *workspace_ptr, T *grid_ptr, const int32_t &N,
+                                                  const int32_t &C, const int32_t &D, const int32_t &H,
+                                                  const int32_t &W, const bool &align_corners,
+                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_AFFINE_GRID_IMPL_CUH_

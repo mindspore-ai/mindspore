@@ -150,23 +150,25 @@ __global__ void AdaptiveAvgPool2DKernel(const uint size, const uint input_height
 }
 
 template <typename T>
-void ApplyAdaptiveAvgPool2D(const uint size, const uint input_height, const uint input_width, const uint output_height,
-                            const uint output_width, T *input_data, T *output_data, cudaStream_t cuda_stream) {
+cudaError_t ApplyAdaptiveAvgPool2D(const uint size, const uint input_height, const uint input_width,
+                                   const uint output_height, const uint output_width, T *input_data, T *output_data,
+                                   cudaStream_t cuda_stream) {
   AdaptiveAvgPool2DKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, input_height, input_width, output_height, output_width, input_data, output_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2D<float>(const uint size, const uint input_height,
-                                                            const uint input_width, const uint output_height,
-                                                            const uint output_width, float *input_data,
-                                                            float *output_data, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool2D<float>(const uint size, const uint input_height,
+                                                                   const uint input_width, const uint output_height,
+                                                                   const uint output_width, float *input_data,
+                                                                   float *output_data, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2D<half>(const uint size, const uint input_height,
-                                                           const uint input_width, const uint output_height,
-                                                           const uint output_width, half *input_data,
-                                                           half *output_data, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool2D<half>(const uint size, const uint input_height,
+                                                                  const uint input_width, const uint output_height,
+                                                                  const uint output_width, half *input_data,
+                                                                  half *output_data, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2D<double>(const uint size, const uint input_height,
-                                                             const uint input_width, const uint output_height,
-                                                             const uint output_width, double *input_data,
-                                                             double *output_data, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool2D<double>(const uint size, const uint input_height,
+                                                                    const uint input_width, const uint output_height,
+                                                                    const uint output_width, double *input_data,
+                                                                    double *output_data, cudaStream_t cuda_stream);

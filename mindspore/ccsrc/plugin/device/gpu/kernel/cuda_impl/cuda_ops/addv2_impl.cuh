@@ -21,12 +21,11 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalAddV2(const size_t size, const std::vector<size_t> &x0_dims,
-                              const std::vector<size_t> &x1_dims, const std::vector<size_t> &y_dims,
-                              const T *x0, const T *x1,
-                              T *y, const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalAddV2(const size_t size, const std::vector<size_t> &x0_dims,
+                                     const std::vector<size_t> &x1_dims, const std::vector<size_t> &y_dims, const T *x0,
+                                     const T *x1, T *y, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void ElewiseAddV2(const int &nums, const T *x0, const T *x1, T *y, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t ElewiseAddV2(const int &nums, const T *x0, const T *x1, T *y, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADDV2_IMPL_CUH_

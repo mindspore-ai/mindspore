@@ -73,18 +73,20 @@ __global__ void CalApplyProximalAdagradKernel(const size_t input_elements, const
 }
 
 template <typename T>
-void CalApplyProximalAdagrad(const size_t input_elements, const int64_t batch_size, const T *lr, const T *l1,
-                             const T *l2, const T *grad, T *var, T *accum, const uint32_t &device_id,
-                             cudaStream_t cuda_stream) {
+cudaError_t CalApplyProximalAdagrad(const size_t input_elements, const int64_t batch_size, const T *lr, const T *l1,
+                                    const T *l2, const T *grad, T *var, T *accum, const uint32_t &device_id,
+                                    cudaStream_t cuda_stream) {
   CalApplyProximalAdagradKernel<<<CUDA_BLOCKS(device_id, input_elements * batch_size), CUDA_THREADS(device_id), 0,
                                   cuda_stream>>>(input_elements, batch_size, lr, l1, l2, grad, var, accum);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalApplyProximalAdagrad<float>(const size_t size, const int64_t batch_size,
-                                                             const float *lr, const float *l1, const float *l2,
-                                                             const float *grad, float *var, float *accum,
-                                                             const uint32_t &device_id, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalApplyProximalAdagrad<half>(const size_t size, const int64_t batch_size, const half *lr,
-                                                            const half *l1, const half *l2, const half *grad, half *var,
-                                                            half *accum, const uint32_t &device_id,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApplyProximalAdagrad<float>(const size_t size, const int64_t batch_size,
+                                                                    const float *lr, const float *l1, const float *l2,
+                                                                    const float *grad, float *var, float *accum,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApplyProximalAdagrad<half>(const size_t size, const int64_t batch_size,
+                                                                   const half *lr, const half *l1, const half *l2,
+                                                                   const half *grad, half *var, half *accum,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);

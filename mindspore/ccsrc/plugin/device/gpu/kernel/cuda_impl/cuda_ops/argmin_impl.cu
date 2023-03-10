@@ -36,30 +36,32 @@ __global__ void Argmin(const T *input, const S bound, const size_t outer_size, c
 }
 
 template <typename T, typename S>
-void CalArgmin(const T *input, const S bound, const size_t outer_size, const size_t inner_size, S *output,
-               const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalArgmin(const T *input, const S bound, const size_t outer_size, const size_t inner_size, S *output,
+                      const uint32_t &device_id, cudaStream_t cuda_stream) {
   Argmin<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, bound, outer_size,
                                                                                           inner_size, output);
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalArgmin<double, int>(const double *input, const int bound, const size_t outer_size,
-                                                    const size_t inner_size, int *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmin<float, int>(const float *input, const int bound, const size_t outer_size,
-                                                    const size_t inner_size, int *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmin<half, int>(const half *input, const int bound, const size_t outer_size,
-                                                   const size_t inner_size, int *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmin<double, int64_t>(const double *input, const int64_t bound,
-                                                         const size_t outer_size, const size_t inner_size,
-                                                         int64_t *output, const uint32_t &device_id,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmin<float, int64_t>(const float *input, const int64_t bound,
-                                                        const size_t outer_size, const size_t inner_size,
-                                                        int64_t *output, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalArgmin<half, int64_t>(const half *input, const int64_t bound, const size_t outer_size,
-                                                       const size_t inner_size, int64_t *output,
-                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<double, int>(const double *input, const int bound,
+                                                            const size_t outer_size, const size_t inner_size,
+                                                            int *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<float, int>(const float *input, const int bound, const size_t outer_size,
+                                                           const size_t inner_size, int *output,
+                                                           const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<half, int>(const half *input, const int bound, const size_t outer_size,
+                                                          const size_t inner_size, int *output,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<double, int64_t>(const double *input, const int64_t bound,
+                                                                const size_t outer_size, const size_t inner_size,
+                                                                int64_t *output, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<float, int64_t>(const float *input, const int64_t bound,
+                                                               const size_t outer_size, const size_t inner_size,
+                                                               int64_t *output, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalArgmin<half, int64_t>(const half *input, const int64_t bound,
+                                                              const size_t outer_size, const size_t inner_size,
+                                                              int64_t *output, const uint32_t &device_id,
+                                                              cudaStream_t cuda_stream);

@@ -21,7 +21,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax, const int output_stride,
-                                              const int argmax_stride, const int batch, T *output_data,
-                                              const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalAdaptiveMaxPool3DGrad(const T *input_grad, const S *input_argmax,
+                                                     const int output_stride, const int argmax_stride, const int batch,
+                                                     T *output_data, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAPTIVE_MAX_POOL3D_GRAD_IMPL_CUH_

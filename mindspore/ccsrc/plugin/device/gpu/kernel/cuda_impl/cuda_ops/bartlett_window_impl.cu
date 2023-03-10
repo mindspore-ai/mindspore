@@ -39,8 +39,8 @@ __global__ void BartlettWindow(const size_t size, const double N, const double M
 }
 
 template <typename T, typename S>
-void CalBartlettWindow(const size_t size, const T *input, const bool periodic, S *output, const uint32_t &device_id,
-                       cudaStream_t cuda_stream) {
+cudaError_t CalBartlettWindow(const size_t size, const T *input, const bool periodic, S *output,
+                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   T N = 0;
   cudaMemcpy(&N, &input[0], sizeof(T), cudaMemcpyDeviceToHost);
   if (N == 1) {
@@ -50,29 +50,28 @@ void CalBartlettWindow(const size_t size, const T *input, const bool periodic, S
     double M = (N - 1) / 2;
     BartlettWindow<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, N, M, output);
   }
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int, half>(const size_t size, const int *input, const bool periodic,
-                                                  half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int64_t, half>(const size_t size, const int64_t *input, const bool periodic,
-                                                      half *output, const uint32_t &device_id,
-                                                      cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int, float>(const size_t size, const int *input, const bool periodic,
-                                                   float *output, const uint32_t &device_id,
-                                                   cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int64_t, float>(const size_t size, const int64_t *input, const bool periodic,
-                                                       float *output, const uint32_t &device_id,
-                                                       cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int, double>(const size_t size, const int *input, const bool periodic,
-                                                    double *output, const uint32_t &device_id,
-                                                    cudaStream_t cuda_stream);
-template
-CUDA_LIB_EXPORT void CalBartlettWindow<int64_t, double>(const size_t size, const int64_t *input, const bool periodic,
-                                                        double *output, const uint32_t &device_id,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int, half>(const size_t size, const int *input,
+                                                                  const bool periodic, half *output,
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int64_t, half>(const size_t size, const int64_t *input,
+                                                                      const bool periodic, half *output,
+                                                                      const uint32_t &device_id,
+                                                                      cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int, float>(const size_t size, const int *input,
+                                                                   const bool periodic, float *output,
+                                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int64_t, float>(const size_t size, const int64_t *input,
+                                                                       const bool periodic, float *output,
+                                                                       const uint32_t &device_id,
+                                                                       cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int, double>(const size_t size, const int *input,
+                                                                    const bool periodic, double *output,
+                                                                    const uint32_t &device_id,
+                                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalBartlettWindow<int64_t, double>(const size_t size, const int64_t *input,
+                                                                        const bool periodic, double *output,
+                                                                        const uint32_t &device_id,
+                                                                        cudaStream_t cuda_stream);

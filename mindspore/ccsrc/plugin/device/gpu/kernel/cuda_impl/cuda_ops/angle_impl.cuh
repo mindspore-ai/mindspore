@@ -22,7 +22,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void CalAngle(const size_t size, T *input, S *output, const uint32_t device_id,
-                              cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalAngle(const size_t size, T *input, S *output, const uint32_t device_id,
+                                     cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_Angle_IMPL_CUH_

@@ -62,7 +62,8 @@ __global__ void SoftplusGradKernel(const size_t size, const half threshold, cons
     const half one = 1;
     const half threshold_in_half = threshold;
     half x = x_addr[pos];
-    dx_addr[pos] = dy_addr[pos] * (x > -threshold ? one : (x < threshold ? hexp(x) : one / (one + hexp(-x))));
+    dx_addr[pos] =
+      dy_addr[pos] * (x > -threshold_in_half ? one : (x < threshold_in_half ? hexp(x) : one / (one + hexp(-x))));
   }
 }
 

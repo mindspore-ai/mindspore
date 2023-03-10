@@ -29,24 +29,24 @@ __global__ void ApproximateEqual(const size_t size, const T *input_x1, const T *
 }
 
 template <typename T>
-void CalApproximateEqual(const size_t size, const T *input_x1, const T *input_x2, const float tolerance,
-                         bool *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+cudaError_t CalApproximateEqual(const size_t size, const T *input_x1, const T *input_x2, const float tolerance,
+                                bool *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   ApproximateEqual<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input_x1, input_x2,
                                                                                               tolerance, output);
-  return;
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalApproximateEqual<half>(const size_t size, const half *input_x1, const half *input_x2,
-                                                        const float tolerance, bool *output,
-                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApproximateEqual<half>(const size_t size, const half *input_x1,
+                                                               const half *input_x2, const float tolerance,
+                                                               bool *output, const uint32_t &device_id,
+                                                               cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalApproximateEqual<float>(const size_t size, const float *input_x1,
-                                                         const float *input_x2, const float tolerance,
-                                                         bool *output,
-                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalApproximateEqual<float>(const size_t size, const float *input_x1,
+                                                                const float *input_x2, const float tolerance,
+                                                                bool *output, const uint32_t &device_id,
+                                                                cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalApproximateEqual<double>(const size_t size, const double *input_x1,
-                                                          const double *input_x2, const float tolerance,
-                                                          bool *output,
-                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
-
+template CUDA_LIB_EXPORT cudaError_t CalApproximateEqual<double>(const size_t size, const double *input_x1,
+                                                                 const double *input_x2, const float tolerance,
+                                                                 bool *output, const uint32_t &device_id,
+                                                                 cudaStream_t cuda_stream);

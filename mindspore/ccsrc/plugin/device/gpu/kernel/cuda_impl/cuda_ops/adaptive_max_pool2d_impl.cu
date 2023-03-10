@@ -75,30 +75,29 @@ __global__ void AdaptiveMaxPool2DKernel(const size_t size, const size_t input_he
 }
 
 template <typename T>
-void ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height, const size_t input_width,
-                            const size_t output_height, const size_t output_width, T *input_data, T *output_data,
-                            int64_t *indices_data, cudaStream_t cuda_stream) {
+cudaError_t ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height, const size_t input_width,
+                                   const size_t output_height, const size_t output_width, T *input_data, T *output_data,
+                                   int64_t *indices_data, cudaStream_t cuda_stream) {
   int blocksH = size > 16 ? 1 : (16L / size);
   dim3 blocks(size, blocksH);
   dim3 threads(32, 8);
   AdaptiveMaxPool2DKernel<<<blocks, threads, 0, cuda_stream>>>(size, input_height, input_width, output_height,
                                                                output_width, input_data, output_data, indices_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool2D<float>(const size_t size, const size_t input_height,
-                                                            const size_t input_width, const size_t output_height,
-                                                            const size_t output_width, float *input_data,
-                                                            float *output_data, int64_t *indices_data,
-                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool2D<float>(const size_t size, const size_t input_height,
+                                                                   const size_t input_width, const size_t output_height,
+                                                                   const size_t output_width, float *input_data,
+                                                                   float *output_data, int64_t *indices_data,
+                                                                   cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool2D<half>(const size_t size, const size_t input_height,
-                                                           const size_t input_width, const size_t output_height,
-                                                           const size_t output_width, half *input_data,
-                                                           half *output_data, int64_t *indices_data,
-                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool2D<half>(const size_t size, const size_t input_height,
+                                                                  const size_t input_width, const size_t output_height,
+                                                                  const size_t output_width, half *input_data,
+                                                                  half *output_data, int64_t *indices_data,
+                                                                  cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool2D<double>(const size_t size, const size_t input_height,
-                                                             const size_t input_width, const size_t output_height,
-                                                             const size_t output_width, double *input_data,
-                                                             double *output_data, int64_t *indices_data,
-                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool2D<double>(
+  const size_t size, const size_t input_height, const size_t input_width, const size_t output_height,
+  const size_t output_width, double *input_data, double *output_data, int64_t *indices_data, cudaStream_t cuda_stream);

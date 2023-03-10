@@ -42,7 +42,8 @@ class FusedAddReluGradV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto mask = GetDeviceAddress<uint32_t>(inputs, 2);
     auto dx = GetDeviceAddress<T>(outputs, 0);
 
-    AddReluGradV2(element_num_, x1, x2, mask, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = AddReluGradV2(element_num_, x1, x2, mask, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
     return true;
   }
 

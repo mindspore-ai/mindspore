@@ -20,20 +20,19 @@
 
 template <typename T>
 __global__ void InitOutput(T *output_ptr, const uint out_size) {
-    T zero = 0;
-    for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < out_size; id += blockDim.x * gridDim.x) {
-      output_ptr[id] = zero;
-    }
-    return;
+  T zero = 0;
+  for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < out_size; id += blockDim.x * gridDim.x) {
+    output_ptr[id] = zero;
+  }
+  return;
 }
 
 template <typename T>
-__global__ void AdaptiveAvgPool3DGradKernel(const uint in_size, const uint out_size,
-                                            const uint input_channel, const uint input_height,
-                                            const uint input_width, const uint input_depth,
+__global__ void AdaptiveAvgPool3DGradKernel(const uint in_size, const uint out_size, const uint input_channel,
+                                            const uint input_height, const uint input_width, const uint input_depth,
                                             const uint output_channel, const uint output_height,
-                                            const uint output_width, const uint output_depth,
-                                            T *input_data, T *output_data) {
+                                            const uint output_width, const uint output_depth, T *input_data,
+                                            T *output_data) {
   for (uint pos = blockIdx.x * blockDim.x + threadIdx.x; pos < in_size; pos += gridDim.x * blockDim.x) {
     const uint in = pos / (input_channel * input_height * input_width * input_depth);
     const uint ic = pos / (input_height * input_width * input_depth) % input_channel;
@@ -58,51 +57,40 @@ __global__ void AdaptiveAvgPool3DGradKernel(const uint in_size, const uint out_s
     uint in_index = (((in * input_channel + ic) * input_height + ih) * input_width + iw) * input_depth + id;
     uint out_index = 0;
     for (uint oh = oh0; oh < oh1; oh++) {
-        for (uint ow = ow0; ow < ow1; ow++) {
-            for (uint od = od0; od < od1; od++) {
-                out_index = (((on * output_channel + oc) * output_height + oh) * output_width + ow) * output_depth + od;
-                MsAtomicAdd(output_data + out_index, input_data[in_index] / static_cast<T>(kh * kw * kd));
-            }
+      for (uint ow = ow0; ow < ow1; ow++) {
+        for (uint od = od0; od < od1; od++) {
+          out_index = (((on * output_channel + oc) * output_height + oh) * output_width + ow) * output_depth + od;
+          MsAtomicAdd(output_data + out_index, input_data[in_index] / static_cast<T>(kh * kw * kd));
         }
+      }
     }
   }
 }
 
-
 template <typename T>
-void ApplyAdaptiveAvgPool3DGrad(const uint in_size, const uint out_size,
-                                const uint input_channel, const uint input_height,
-                                const uint input_width, const uint input_depth,
-                                const uint output_channel, const uint output_height,
-                                const uint output_width, const uint output_depth,
-                                T *input_data, T *output_data, cudaStream_t cuda_stream) {
+cudaError_t ApplyAdaptiveAvgPool3DGrad(const uint in_size, const uint out_size, const uint input_channel,
+                                       const uint input_height, const uint input_width, const uint input_depth,
+                                       const uint output_channel, const uint output_height, const uint output_width,
+                                       const uint output_depth, T *input_data, T *output_data,
+                                       cudaStream_t cuda_stream) {
   InitOutput<<<GET_BLOCKS(out_size), GET_THREADS, 0, cuda_stream>>>(output_data, out_size);
   AdaptiveAvgPool3DGradKernel<<<GET_BLOCKS(in_size), GET_THREADS, 0, cuda_stream>>>(
     in_size, out_size, input_channel, input_height, input_width, input_depth, output_channel, output_height,
     output_width, output_depth, input_data, output_data);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool3DGrad<float>(
+  const uint in_size, const uint out_size, const uint input_channel, const uint input_height, const uint input_width,
+  const uint input_depth, const uint output_channel, const uint output_height, const uint output_width,
+  const uint output_depth, float *input_data, float *output_data, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool3DGrad<float>(const uint in_size, const uint out_size,
-                                                                const uint input_channel, const uint input_height,
-                                                                const uint input_width, const uint input_depth,
-                                                                const uint output_channel, const uint output_height,
-                                                                const uint output_width, const uint output_depth,
-                                                                float *input_data, float *output_data,
-                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool3DGrad<half>(
+  const uint in_size, const uint out_size, const uint input_channel, const uint input_height, const uint input_width,
+  const uint input_depth, const uint output_channel, const uint output_height, const uint output_width,
+  const uint output_depth, half *input_data, half *output_data, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool3DGrad<half>(const uint in_size, const uint out_size,
-                                                               const uint input_channel, const uint input_height,
-                                                               const uint input_width, const uint input_depth,
-                                                               const uint output_channel, const uint output_height,
-                                                               const uint output_width, const uint output_depth,
-                                                               half *input_data, half *output_data,
-                                                               cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool3DGrad<double>(const uint in_size, const uint out_size,
-                                                                 const uint input_channel, const uint input_height,
-                                                                 const uint input_width, const uint input_depth,
-                                                                 const uint output_channel, const uint output_height,
-                                                                 const uint output_width, const uint output_depth,
-                                                                 double *input_data, double *output_data,
-                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveAvgPool3DGrad<double>(
+  const uint in_size, const uint out_size, const uint input_channel, const uint input_height, const uint input_width,
+  const uint input_depth, const uint output_channel, const uint output_height, const uint output_width,
+  const uint output_depth, double *input_data, double *output_data, cudaStream_t cuda_stream);

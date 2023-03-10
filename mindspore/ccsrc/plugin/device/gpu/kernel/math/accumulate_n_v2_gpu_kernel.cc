@@ -85,7 +85,8 @@ bool AccumulateNV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(inputs_array, inputs_host.get(), n_ * sizeof(T *), cudaMemcpyHostToDevice, stream),
     "cudaMemcpy failed.");
-  CalAccumulateNV2(output_elements_, n_, inputs_array, output, device_id_, stream);
+  auto status = CalAccumulateNV2(output_elements_, n_, inputs_array, output, device_id_, stream);
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

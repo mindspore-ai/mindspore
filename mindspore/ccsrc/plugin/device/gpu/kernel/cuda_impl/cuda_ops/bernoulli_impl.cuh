@@ -22,12 +22,13 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void BernoulliForward(const T *input, S *output, uint64_t seed, const size_t num_count,
-                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BernoulliForward(const T *input, S *output, uint64_t seed, const size_t num_count,
+                                             const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-CUDA_LIB_EXPORT void BroadcastBernoulliForward(const std::vector<size_t> &x_dims, const std::vector<size_t> &p_dims,
-                                               const T *input, S *output, uint64_t seed, const size_t num_count,
-                                               const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t BroadcastBernoulliForward(const std::vector<size_t> &x_dims,
+                                                      const std::vector<size_t> &p_dims, const T *input, S *output,
+                                                      uint64_t seed, const size_t num_count, const uint32_t &device_id,
+                                                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BERNOULLI_IMPL_CUH_

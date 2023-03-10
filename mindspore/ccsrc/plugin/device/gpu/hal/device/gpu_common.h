@@ -92,6 +92,15 @@ namespace gpu {
     }                                                                                    \
   } while (0);
 
+#define CHECK_CUDA_LAUNCH_STATUS(status, kernel_name)                                                              \
+  do {                                                                                                             \
+    if (status != cudaSuccess) {                                                                                   \
+      MS_LOG(ERROR) << "For `" << kernel_name << "`, the cuda Kernel fails to run, the error number is " << status \
+                    << ", which means " << cudaGetErrorString(status) << ".";                                      \
+      return false;                                                                                                \
+    }                                                                                                              \
+  } while (0)
+
 #define CHECK_CUDA_RET_WITH_EXCEPT(node, expression, message)                                 \
   do {                                                                                        \
     cudaError_t status = (expression);                                                        \

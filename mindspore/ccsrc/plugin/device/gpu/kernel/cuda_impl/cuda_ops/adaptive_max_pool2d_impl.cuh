@@ -18,8 +18,9 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAPTIVE_MAXPOOL2D_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height, const size_t input_width,
-                                            const size_t output_height, const size_t output_width, T *input_data,
-                                            T *output_data, int64_t *indices, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height,
+                                                   const size_t input_width, const size_t output_height,
+                                                   const size_t output_width, T *input_data, T *output_data,
+                                                   int64_t *indices, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAPTIVE_MAXPOOL2D_IMPL_CUH_

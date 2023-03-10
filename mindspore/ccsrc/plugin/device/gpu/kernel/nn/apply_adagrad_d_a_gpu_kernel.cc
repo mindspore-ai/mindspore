@@ -257,8 +257,10 @@ bool ApplyAdagradDAGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   auto *output_accum = reinterpret_cast<T *>(outputs[kAccumIndex]->addr);
   auto *output_squared_accum = reinterpret_cast<T *>(outputs[kSquaredAccumIndex]->addr);
 
-  ApplyAdagradDA(batch_size_, input_elements_, var, accum, squared_accum, grad, lr, l1, l2, global_step, output_var,
-                 output_accum, output_squared_accum, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    ApplyAdagradDA(batch_size_, input_elements_, var, accum, squared_accum, grad, lr, l1, l2, global_step, output_var,
+                   output_accum, output_squared_accum, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 
