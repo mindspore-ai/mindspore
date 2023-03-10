@@ -107,7 +107,7 @@ bool IsExpandMinMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePt
   }
 
   // Only expand to ops in scalar broadcast static case.
-  return (IsScalar(x_shp) ^ IsScalar(y_shp));
+  return (IsScalar(x_shp) != IsScalar(y_shp));
 }
 
 NodePtrList MinimumMaximumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,

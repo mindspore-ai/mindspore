@@ -40,10 +40,10 @@ NodePtr ReduceSumWithCast(const BpropIRBuilder *ib, const NodePtr &dx, const std
     if (dx_origin_dtype == TypeId::kNumberTypeInt16 || dx_origin_dtype == TypeId::kNumberTypeInt32 ||
         dx_origin_dtype == TypeId::kNumberTypeInt64) {
       auto dx_fp32 = ib->Cast(dx, kFloat32);
-      auto red = ib->Emit("ReduceSum", {dx_fp32, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+      auto red = ib->ReduceSum(dx_fp32, axis);
       reduce_x = ib->Cast(red, dx_origin_dtypeptr);
     } else {
-      reduce_x = ib->Emit("ReduceSum", {dx, ib->Value(axis)}, {{"keep_dims", MakeValue(false)}});
+      reduce_x = ib->ReduceSum(dx, axis);
     }
   }
   return reduce_x;
@@ -79,8 +79,8 @@ NodePtrList DynBinopGradCommonWithShift(const BpropIRBuilder *ib, const NodePtr 
   auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape_of_x, broadcast_shape_of_y});
   auto rx = ib->TupleGetItem(brod, 0);
   auto ry = ib->TupleGetItem(brod, 1);
-  auto reduce_dx = ib->Emit("ReduceSum", {dx, rx}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
-  auto reduce_dy = ib->Emit("ReduceSum", {dy, ry}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  auto reduce_dx = ib->ReduceSum(dx, rx, false, true);
+  auto reduce_dy = ib->ReduceSum(dy, ry, false, true);
   reduce_dx = ib->Reshape(reduce_dx, shape_of_x);
   reduce_dy = ib->Reshape(reduce_dy, shape_of_y);
   return {reduce_dx, reduce_dy};
@@ -158,8 +158,7 @@ NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, c
   if (need_cast) {
     reduce_dx = ib->Cast(reduce_dx, kFloat32);
   }
-  reduce_dx =
-    ib->Emit("ReduceSum", {reduce_dx, axis}, {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(true)}});
+  reduce_dx = ib->ReduceSum(reduce_dx, axis, false, true);
   if (need_cast) {
     reduce_dx = ib->Cast(reduce_dx, dx_origin_dtype_id);
   }
@@ -586,10 +585,7 @@ NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
   auto minn = 1e-24;
   auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
-  auto num_selected = ib->Reshape(ib->Emit("ReduceSum", {indicators, axis},
-                                           {{"keep_dims", MakeValue(false)}, {"skip_mode", MakeValue(false)}}),
-                                  output_shape_kept_dims) +
-                      min_num;
+  auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis), output_shape_kept_dims) + min_num;
   return indicators / num_selected * grad;
 }
 

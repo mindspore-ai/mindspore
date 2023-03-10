@@ -117,6 +117,7 @@ class COMMON_EXPORT Emitter {
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,
                                           bool keep_dim) const;
   std::pair<bool, ShapeVector> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim) const;
+  NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false) const;
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false) const;
 
   NodePtr ZerosLike(const NodePtr &node) const;
@@ -137,6 +138,15 @@ class COMMON_EXPORT Emitter {
     }
     auto value_tensor = Cast(Tensor(value), data_type);
     return Emit("DynamicBroadcastTo", {value_tensor, shape});
+  }
+
+  NodePtr Shape(const NodePtr &node, bool tensor = false) const {
+    auto shape = node->shape();
+    if (tensor) {
+      return IsDynamic(shape) ? Emit("TensorShape", {node}) : Tensor(shape);
+    } else {
+      return IsDynamic(shape) ? Emit("Shape", {node}) : Value<ShapeVector>(shape);
+    }
   }
 
   /// \brief Emit a value node

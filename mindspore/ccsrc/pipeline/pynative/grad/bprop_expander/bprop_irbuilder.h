@@ -57,14 +57,6 @@ class BpropIRBuilder : public Emitter {
 
   // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
-  NodePtr Shape(const NodePtr &node, bool tensor = false) const {
-    auto shape = GetShape(node);
-    if (tensor) {
-      return IsDynamic(shape) ? Emit("TensorShape", {node}) : Tensor(shape);
-    } else {
-      return IsDynamic(shape) ? Emit("Shape", {node}) : Value<ShapeVector>(shape);
-    }
-  }
   NodePtr DynamicBroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1) const {
     return Emit("DynamicBroadcastGradientArgs", {s0, s1});
   }
