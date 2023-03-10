@@ -954,14 +954,14 @@ def divide(input, other, *, rounding_mode=None):
     return div(input, other, rounding_mode=rounding_mode)
 
 
-def float_power(x, exponent):
+def float_power(input, exponent):
     """
-    Computes `x` to the power of the exponent.
-    For the real number type, cast `x` and `exponent` to mindspore.float64 to calculate.
+    Computes `input` to the power of the exponent.
+    For the real number type, cast `input` and `exponent` to mindspore.float64 to calculate.
     Currently, complex type calculation is not supported.
 
     Args:
-        x (Union[Tensor, Number]): The first input is a tensor or a number.
+        input (Union[Tensor, Number]): The first input is a tensor or a number.
         exponent (Union[Tensor, Number]): The second input, if the first input is Tensor,
             the second input can be Number or Tensor. Otherwise, it must be a Tensor.
 
@@ -971,36 +971,36 @@ def float_power(x, exponent):
         the return value type is mindspore.float64.
 
     Raises:
-        TypeError: If neither `x` nor `exponent` is a Tensor.
-        TypeError: If the data type of `x` or `exponent` is not in Tensor and Number.
+        TypeError: If neither `input` nor `exponent` is a Tensor.
+        TypeError: If the data type of `input` or `exponent` is not in Tensor and Number.
 
     Supported Platforms:
         ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-1.5, 0., 2.]))
-        >>> output = ops.float_power(x, 2)
+        >>> input = Tensor(np.array([-1.5, 0., 2.]))
+        >>> output = ops.float_power(input, 2)
         >>> print(output)
         [2.25 0.   4.  ]
     """
-    if not (isinstance(x, Tensor) or isinstance(exponent, Tensor)):
+    if not (isinstance(input, Tensor) or isinstance(exponent, Tensor)):
         raise TypeError("At least one of the types of inputs must be tensor, " + \
-                        f"but the type of 'x' got is {type(x)}, " + \
+                        f"but the type of 'input' got is {type(input)}, " + \
                         f"and the type of 'exponent' is {type(exponent)}.")
-    if not isinstance(x, (Tensor, numbers.Number)):
-        raise TypeError(f"The type of 'x' must be Tensor or Number, but got {type(x)}.")
+    if not isinstance(input, (Tensor, numbers.Number)):
+        raise TypeError(f"The type of 'input' must be Tensor or Number, but got {type(input)}.")
     if not isinstance(exponent, (Tensor, numbers.Number)):
         raise TypeError(f"The type of 'exponent' must be Tensor or Number, but got {type(exponent)}.")
 
-    if (isinstance(x, Tensor) and is_complex(x)) or \
+    if (isinstance(input, Tensor) and is_complex(input)) or \
             (isinstance(exponent, Tensor) and is_complex(exponent)) or \
-            isinstance(x, complex) or isinstance(exponent, complex):
-        x = cast_(x, mstype.complex128)
+            isinstance(input, complex) or isinstance(exponent, complex):
+        input = cast_(input, mstype.complex128)
         exponent = cast_(exponent, mstype.complex128)
     else:
-        x = cast_(x, mstype.float64)
+        input = cast_(input, mstype.float64)
         exponent = cast_(exponent, mstype.float64)
-    return pow(x, exponent)
+    return pow(input, exponent)
 
 
 def floor_div(x, y):
@@ -1046,19 +1046,19 @@ def floor_div(x, y):
     return tensor_floordiv(x, y)
 
 
-def fmod(x, other):
+def fmod(input, other):
     """
-    Computes the floating-point remainder of the division operation x/other.
+    Computes the floating-point remainder of the division operation input/other.
 
     .. math::
 
-        out = x - n * other
+        out = input - n * other
 
-    Where :math:`n` is :math:`x/other` with its fractional part truncated.
-    The returned value has the same sign as `x` and is less than `other` in magnitude.
+    Where :math:`n` is :math:`input/other` with its fractional part truncated.
+    The returned value has the same sign as `input` and is less than `other` in magnitude.
 
     Args:
-        x (Union[Tensor, Number]): the dividend.
+        input (Union[Tensor, Number]): the dividend.
         other (Union[Tensor, Number]): the divisor.
 
     Returns:
@@ -1066,22 +1066,22 @@ def fmod(x, other):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `other` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-4., -3.5, 0, 3.5, 4]), mindspore.float32)
-        >>> output = ops.fmod(x, 2.5)
+        >>> input = Tensor(np.array([-4., -3.5, 0, 3.5, 4]), mindspore.float32)
+        >>> output = ops.fmod(input, 2.5)
         >>> print(output)
         [-1.5 -1.   0.   1.   1.5]
     """
-    if not (isinstance(x, (Tensor, Tensor_)) or isinstance(other, (Tensor, Tensor_))):
+    if not (isinstance(input, (Tensor, Tensor_)) or isinstance(other, (Tensor, Tensor_))):
         raise TypeError("At least one of the types of inputs must be tensor, " + \
-                        f"but the type of 'x' got is {type(x)}, " + \
+                        f"but the type of 'input' got is {type(input)}, " + \
                         f"and the type of 'other' is {type(other)}.")
-    return x - div(x, other, rounding_mode="trunc") * other
+    return input - div(input, other, rounding_mode="trunc") * other
 
 
 def pow(x, y):
@@ -1342,14 +1342,14 @@ def floor(input):
     return _floor(input)
 
 
-def i0(x):
+def i0(input):
     r"""
     Alias for :func:`mindspore.ops.bessel_i0` .
 
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    return bessel_i0(x)
+    return bessel_i0(input)
 
 
 def inplace_update(x, v, indices):
@@ -1773,66 +1773,66 @@ def sgn(input):
     return res
 
 
-def sin(x):
+def sin(input):
     r"""
     Computes sine of the input element-wise.
 
     .. math::
 
-        out_i = sin(x_i)
+        out_i = sin(input_i)
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape and dtype as `x`.
+        Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64, complex64, complex128.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sin(x)
+        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = ops.sin(input)
         >>> print(output)
         [0.5810352 0.27635565 0.41687083 0.5810352]
     """
-    return sin_(x)
+    return sin_(input)
 
 
-def sinc(x):
+def sinc(input):
     r"""
     Computes the normalized sinc of input.
 
     .. math::
 
-        out_i = \begin{cases} \frac{sin(\pi x_i)}{x_i} & x_i\neq 0\\
-        1 & x_i=0 \end{cases}
+        out_i = \begin{cases} \frac{sin(\pi input_i)}{input_i} & input_i\neq 0\\
+        1 & input_i=0 \end{cases}
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
 
     Returns:
-        Tensor, has the same shape as the `x`. The dtype of output is float32 when dtype of `x` is in
-        [int, bool]. Otherwise output has the same dtype as the `x`.
+        Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
+        [int, bool]. Otherwise output has the same dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sinc(x)
+        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = ops.sinc(input)
         >>> print(output)
         [0.47735003 0.8759357  0.7224278  0.47735003]
     """
-    return sinc_(x)
+    return sinc_(input)
 
 
 def cos(input):
@@ -3639,14 +3639,14 @@ def less(x, y):
     return tensor_lt(x, y)
 
 
-def lt(x, other):
+def lt(input, other):
     """
     Alias for :func:`mindspore.ops.less` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return less(x, other)
+    return less(input, other)
 
 
 def le(x, y):
@@ -4095,18 +4095,18 @@ def isreal(x):
     return imag_op(x) == 0
 
 
-def is_complex(x):
+def is_complex(input):
     '''
     Return True if the data type of the tensor is complex, otherwise return False.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
         Bool, return whether the data type of the tensor is complex.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4114,14 +4114,14 @@ def is_complex(x):
     Examples:
         >>> from mindspore import ops, Tensor
         >>> from mindspore import dtype as mstype
-        >>> x = Tensor([1, 1+1j, 2+2j], mstype.complex64)
-        >>> output = ops.is_complex(x)
+        >>> input = Tensor([1, 1+1j, 2+2j], mstype.complex64)
+        >>> output = ops.is_complex(input)
         >>> print(output)
         True
     '''
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("The input x must be Tensor!")
-    return x.dtype in mstype.complex_type
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("The input must be Tensor!")
+    return input.dtype in mstype.complex_type
 
 
 def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
@@ -4451,17 +4451,17 @@ def orgqr(x, tau):
     return orgqr_(x, tau)
 
 
-def hypot(x, other):
+def hypot(input, other):
     r"""
     Computes hypotenuse of input tensors element-wise as legs of a right triangle.
     The shape of two inputs should be broadcastable, and data type of them should be
     one of: float32, float64
 
     .. math::
-        out_i = \sqrt{x_i^2 + other_i^2}
+        out_i = \sqrt{input_i^2 + other_i^2}
 
     Args:
-        x (Tensor): The first input tensor.
+        input (Tensor): The first input tensor.
         other (Tensor): The second input tensor.
 
     Returns:
@@ -4469,61 +4469,61 @@ def hypot(x, other):
         with higher precision in the two inputs.
 
     Raises:
-        TypeError: If data type `x` or `other` is not float32 or float64.
+        TypeError: If data type `input` or `other` is not float32 or float64.
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([3., 5., 7.]))
+        >>> input = Tensor(np.array([3., 5., 7.]))
         >>> other = Tensor(np.array([4., 12., 24.]))
-        >>> y = ops.hypot(x, other)
+        >>> y = ops.hypot(input, other)
         >>> print(y)
         [ 5. 13. 25.]
     """
 
     hypot_ = Hypot()
-    return hypot_(x, other)
+    return hypot_(input, other)
 
 
-def heaviside(x, values):
+def heaviside(input, values):
     r"""
     Computes the Heaviside step function for each element in input.
 
     .. math::
-            \text { heaviside }(\text { x, values })=\left\{\begin{array}{ll}
-            0, & \text { if x }<0 \\
-            \text { values, } & \text { if x }==0 \\
-            1, & \text { if x }>0
+            \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
+            0, & \text { if input }<0 \\
+            \text { values, } & \text { if input }==0 \\
+            1, & \text { if input }>0
             \end{array}\right.
 
     Args:
-        x (Tensor): The input tensor. With real number data type.
-        values (Tensor): The values to use where `x` is zero. Values can be broadcast with `x` .
-            `x` should have the same dtype with 'values'.
+        input (Tensor): The input tensor. With real number data type.
+        values (Tensor): The values to use where `input` is zero. Values can be broadcast with `input` .
+            `input` should have the same dtype with 'values'.
 
     Returns:
-        Tensor, has the same type as `x` and `values`.
+        Tensor, has the same type as `input` and `values`.
 
     Raises:
-        TypeError: If `x` or `values` is not Tensor.
-        TypeError: If data type `x` and `values` is different.
+        TypeError: If `input` or `values` is not Tensor.
+        TypeError: If data type `input` and `values` is different.
         ValueError: If shape of two inputs are not broadcastable.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-5., 1., 0., 2., 0.]))
+        >>> input = Tensor(np.array([-5., 1., 0., 2., 0.]))
         >>> values = Tensor(np.array([3.]))
-        >>> y = ops.heaviside(x, values)
+        >>> y = ops.heaviside(input, values)
         >>> print(y)
         [0. 1. 3. 1. 3.]
     """
 
     heaviside_ = Heaviside()
-    return heaviside_(x, values)
+    return heaviside_(input, values)
 
 
 def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
@@ -8360,7 +8360,7 @@ def nanquantile(input, q, axis=None, keepdims=False):
     return quantile_(input, q)
 
 
-def baddbmm(x, batch1, batch2, beta=1, alpha=1):
+def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     r"""
     The result is the sum of the input and a batch matrix-matrix product of matrices in batch1 and batch2.
     The formula is defined as follows:
@@ -8369,21 +8369,21 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     Args:
-        x (Tensor): The input Tensor. When batch1 is a (CxWxT) Tensor and batch2 is a (CxTxH) Tensor,
-            x must be broadcastable with (CxWxH) Tensor.
-        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as x.
-        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as x.
+        input (Tensor): The input Tensor. When batch1 is a (CxWxT) Tensor and batch2 is a (CxTxH) Tensor,
+            input must be broadcastable with (CxWxH) Tensor.
+        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
+        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
         alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
             Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
             be a real number.
 
     Returns:
-        Tensor, has the same dtype as x, shape will be (CxWxH).
+        Tensor, has the same dtype as input, shape will be (CxWxH).
 
     Raises:
-        TypeError: The type of `x`, `batch1`, `batch2` is not Tensor.
-        TypeError: The types of `x`, `batch1`, `batch2` are different.
+        TypeError: The type of `input`, `batch1`, `batch2` is not Tensor.
+        TypeError: The types of `input`, `batch1`, `batch2` are different.
         TypeError: For inputs of type FloatTensor or DoubleTensor, \
                     arguments beta and alpha not be real numbers, otherwise not be integers.
         TypeError: For Baddbmm, attributes alpha and beta are not real numbers
@@ -8404,12 +8404,12 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
     """
     dtypeop = _get_cache_prim(P.DType)()
     bmmop = _get_cache_prim(P.BatchMatMul)(False, False)
-    if not (isinstance(x, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
+    if not (isinstance(input, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
         raise TypeError("For Baddbmm, inputs must be all tensors.")
     if len(batch1.shape) != 3 or len(batch2.shape) != 3:
         raise ValueError("For batch1 and batch2 must be 3-D tensors each containing the same number of matrices, "
                          f"but got length of batch1:'{len(batch1.shape)}', length of batch2:'{len(batch2.shape)}'.")
-    input_dtype = dtypeop(x)
+    input_dtype = dtypeop(input)
     if not (input_dtype == dtypeop(batch1) and input_dtype == dtypeop(batch2)):
         raise TypeError("For Baddbmm, the inputs should be the same dtype.")
     if input_dtype in (mstype.float16, mstype.float32, mstype.float64):
@@ -8421,7 +8421,7 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
         if not (isinstance(alpha, int) and isinstance(beta, int)):
             raise TypeError("For inputs of type not FloatTensor or DoubleTensor, "
                             "arguments beta and alpha must be integers.")
-    y = beta * x + alpha * (bmmop(batch1, batch2))
+    y = beta * input + alpha * (bmmop(batch1, batch2))
     return y
 
 

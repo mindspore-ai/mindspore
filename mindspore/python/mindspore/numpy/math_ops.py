@@ -3543,7 +3543,7 @@ def arcsin(x, dtype=None):
     return _apply_tensor_op(F.asin, x, dtype=dtype)
 
 
-def arccos(x, dtype=None):
+def arccos(input, dtype=None):
     """
     Trigonometric inverse cosine, element-wise.
 
@@ -3552,7 +3552,7 @@ def arccos(x, dtype=None):
         not supported.
 
     Args:
-        x (Tensor): Input tensor. x-coordinate on the unit circle.
+        input (Tensor): Input tensor. x-coordinate on the unit circle.
             For real arguments, the domain is :math:`[-1, 1]`.
         dtype (:class:`mindspore.dtype`, optional): Default: :class:`None`. Overrides the dtype of the
             output Tensor.
@@ -3568,13 +3568,13 @@ def arccos(x, dtype=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> x = np.asarray([1, -1], np.float32)
-        >>> output = np.arccos(x)
+        >>> input = np.asarray([1, -1], np.float32)
+        >>> output = np.arccos(input)
         >>> print(output)
         [0.        3.1415927]
     """
-    x = _cast_type_for_trigonometric(x)
-    return _apply_tensor_op(F.acos, x, dtype=dtype)
+    input = _cast_type_for_trigonometric(input)
+    return _apply_tensor_op(F.acos, input, dtype=dtype)
 
 
 def arctan(x, dtype=None):
