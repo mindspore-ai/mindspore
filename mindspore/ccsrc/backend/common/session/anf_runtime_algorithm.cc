@@ -148,6 +148,27 @@ size_t GetOutputTensorNumByKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(build_info);
   return build_info->GetAllOutputDeviceTypes().size();
 }
+
+bool ContainScalarOut(const AbstractBasePtr &abs) {
+  // Check the output abstract of node whether is scalar.
+  if ((abs != nullptr) && (abs->isa<abstract::AbstractScalar>())) {
+    return true;
+  }
+  // Check the output abstracts of node whether have scalar.
+  if ((abs != nullptr) && (abs->isa<abstract::AbstractSequence>())) {
+    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len()) {
+      const auto &element_abs = abs_seq->dynamic_len_element_abs();
+      return (element_abs == nullptr) || (element_abs->isa<abstract::AbstractScalar>());
+    }
+    const auto &elements = abs_seq->elements();
+    bool has_scalar_out = std::any_of(elements.begin(), elements.end(),
+                                      [](const AbstractBasePtr &element) { return ContainScalarOut(element); });
+    return has_scalar_out;
+  }
+  return false;
+}
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -1831,31 +1852,12 @@ bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, 
     return false;
   }
 
-  bool need_converted = true;
   const auto &abs = node->abstract();
-  // Check the output abstract of node whether is scalar.
-  if ((abs != nullptr) && (abs->isa<abstract::AbstractScalar>())) {
-    need_converted = false;
-  }
-  // Check the output abstracts of node whether have scalar.
-  if ((abs != nullptr) && (abs->isa<abstract::AbstractSequence>())) {
-    auto abs_seq = abs->cast_ptr<abstract::AbstractSequence>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    if (abs_seq->dynamic_len()) {
-      const auto &element_abs = abs_seq->dynamic_len_element_abs();
-      need_converted = (element_abs == nullptr) || (!element_abs->isa<abstract::AbstractScalar>());
-    } else {
-      const auto &elements = abs_seq->elements();
-      need_converted = !std::any_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
-        return (element != nullptr) && element->isa<abstract::AbstractScalar>();
-      });
-    }
-  }
-
-  if (!need_converted) {
+  if (ContainScalarOut(abs)) {
     MS_LOG(INFO) << "The input scalar value node:" << input_node->fullname_with_scope()
                  << " of cnode:" << node->fullname_with_scope() << " doesn't need convert to tensor.";
+    return false;
   }
-  return need_converted;
+  return true;
 }
 }  // namespace mindspore::session

@@ -176,6 +176,26 @@ def test_dict_return_1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_return_empty_dict_pyexecute():
+    """
+    Feature: Return empty dict
+    Description: Return empty dict.
+    Expectation: No error.
+    """
+    @ms.jit
+    def dict_func():
+        return {}
+
+    with pytest.raises(RuntimeError):
+        x = dict_func()
+        assert x == {}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_dict_return_2():
     """
     Feature: Return dict.
