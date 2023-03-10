@@ -732,6 +732,30 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     MS_EXCEPTION_IF_NULL(type_ptr);
   }
 
+  if (type_ptr->isa<List>()) {
+    auto list_ptr = type_ptr->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_ptr);
+    if (list_ptr->size() == 0) {
+      return kTypeUnknown;
+    }
+    if (list_ptr->dynamic_len()) {
+      MS_EXCEPTION_IF_NULL(list_ptr->dynamic_element_type());
+      if (list_ptr->dynamic_element_type()->isa<TensorType>()) {
+        const auto &tensor_type = list_ptr->dynamic_element_type()->cast<TensorTypePtr>();
+        MS_EXCEPTION_IF_NULL(tensor_type);
+        const auto &element_type = tensor_type->element();
+        return element_type->type_id();
+      }
+      return list_ptr->dynamic_element_type()->type_id();
+    }
+    MS_EXCEPTION_IF_NULL(list_ptr);
+    if (output_idx >= list_ptr->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << " must be less than output number " << list_ptr->size();
+    }
+    type_ptr = (*list_ptr)[output_idx];
+    MS_EXCEPTION_IF_NULL(type_ptr);
+  }
+
   if (type_ptr->isa<SparseTensorType>()) {
     auto tensor_ptr = type_ptr->cast<SparseTensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_ptr);
@@ -987,7 +1011,7 @@ bool AnfAlgo::IsTupleOutput(const AnfNodePtr &anf) {
   }
 
   MS_EXCEPTION_IF_NULL(type);
-  return type->isa<Tuple>() || type->isa<SparseTensorType>();
+  return type->isa<Tuple>() || type->isa<List>() || type->isa<SparseTensorType>();
 }
 
 AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {

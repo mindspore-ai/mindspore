@@ -94,10 +94,10 @@ std::set<size_t> FetchRealIndexByAbstract(const AbstractBasePtr &abstract, std::
   indexes->pop_back();
 
   // Fetch the dest abstract by index, and the abstracts num before the dest abstract.
-  if (abstract->isa<abstract::AbstractTuple>()) {
-    auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_abstract);
-    const auto &sub_abstracts = tuple_abstract->elements();
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    auto sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_abstract);
+    const auto &sub_abstracts = sequence_abstract->elements();
     if (sub_abstracts.size() <= index) {
       MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
     }

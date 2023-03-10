@@ -220,7 +220,7 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
   TypePtr type = node->Type();
   if (type == nullptr) {
     res = 0;
-  } else if (type->isa<Tuple>()) {
+  } else if (type->isa<Tuple>() || type->isa<List>()) {
     const auto &kernel_info = node->kernel_info();
     if (kernel_info == nullptr || (!kernel_info->has_build_info())) {
       return 1;
@@ -256,7 +256,7 @@ size_t AnfRuntimeAlgorithm::GetOutputNumWithoutKernelInfo(const AnfNodePtr &node
   TypePtr type = node->Type();
   if (type == nullptr) {
     res = 0;
-  } else if (type->isa<Tuple>()) {
+  } else if (type->isa<Tuple>() || type->isa<List>()) {
     res = 1;
   } else if (type->isa<TypeNone>()) {
     res = 0;
