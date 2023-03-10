@@ -3683,55 +3683,55 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
     return _tensor_scatter_elements(input_x, indices, updates)
 
 
-def scatter(x, axis, index, src):
+def scatter(input, axis, index, src):
     """
-    Update the value in `src` to `x` according to the specified index.
+    Update the value in `src` to `input` according to the specified index.
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
     Args:
-        x (Tensor): The target tensor.
+        input (Tensor): The target tensor.
             The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
-        axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(x).
+        axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
         index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
-            mindspore.int64. Same rank as `x` . And accepted range is [-s, s) where s is the size along axis.
-        src (Tensor): The tensor doing the update operation with `x` , has the same type as `x` ,
+            mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
+        src (Tensor): The tensor doing the update operation with `input` , has the same type as `input` ,
             and the shape of `src` should be equal to the shape of `index` .
 
     Returns:
-        Tensor, has the same shape and type as `x` .
+        Tensor, has the same shape and type as `input` .
 
     Raises:
         TypeError: If `index` is neither int32 nor int64.
-        ValueError: If anyone of the rank among `x` , `index` and `src` less than 1.
+        ValueError: If anyone of the rank among `input` , `index` and `src` less than 1.
         ValueError: If the shape of `src` is not equal to the shape of `index` .
-        ValueError: If the rank of `src` is not equal to the rank of `x` .
-        RuntimeError: If the data type of `x` and `src` conversion of Parameter
+        ValueError: If the rank of `src` is not equal to the rank of `input` .
+        RuntimeError: If the data type of `input` and `src` conversion of Parameter
             is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
+        >>> input = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
         >>> src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter(x=x, axis=1, index=index, src=src)
+        >>> out = ops.scatter(input=input, axis=1, index=index, src=src)
         >>> print(out)
         [[1. 2. 8. 4. 8.]]
-        >>> x = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter(x=x, axis=0, index=index, src=src)
+        >>> out = ops.scatter(input=input, axis=0, index=index, src=src)
         >>> print(out)
         [[1. 2. 3. 0. 0.]
         [0. 0. 0. 0. 0.]
         [4. 5. 6. 0. 0.]
         [0. 0. 0. 0. 0.]
         [7. 8. 9. 0. 0.]]
-        >>> x = Tensor(np.zeros((5, 5)), dtype=ms.float32)
+        >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter(x=x, axis=1, index=index, src=src)
+        >>> out = ops.scatter(input=input, axis=1, index=index, src=src)
         >>> print(out)
         [[1. 0. 2. 0. 3.]
         [4. 0. 5. 0. 6.]
@@ -3739,7 +3739,7 @@ def scatter(x, axis, index, src):
         [0. 0. 0. 0. 0.]
         [0. 0. 0. 0. 0.]]
     """
-    return F.tensor_scatter_elements(input_x=x, indices=index, updates=src, axis=axis)
+    return F.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
 
 
 def space_to_batch_nd(input_x, block_size, paddings):
@@ -6504,20 +6504,20 @@ def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
 
 
-def swapaxes(x, axis0, axis1):
+def swapaxes(input, axis0, axis1):
     '''
     Interchange two axes of a tensor.
 
     Args:
-        x(Tensor): Input tensor.
+        input(Tensor): Input tensor.
         axis0 (int): First axis.
         axis1 (int): Second axis.
 
     Returns:
-        Transposed tensor, has the same data type as `x`.
+        Transposed tensor, has the same data type as `input`.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `input` is not Tensor.
         TypeError: If `axis0` or `axis1` is not integer.
         ValueError: If `axis0` or `axis1` is not in the range of :math:`[-ndim, ndim-1]`.
 
@@ -6528,46 +6528,46 @@ def swapaxes(x, axis0, axis1):
         >>> import numpy as np
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
-        >>> output = ops.swapaxes(x, 0, 2)
+        >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = ops.swapaxes(input, 0, 2)
         >>> print(output.shape)
         (4,3,2)
     '''
-    if not isinstance(x, Tensor):
-        raise TypeError(f'For ops.swapaxes, parameter `x` must be Tensor, but got {type(x)}')
+    if not isinstance(input, Tensor):
+        raise TypeError(f'For ops.swapaxes, parameter `input` must be Tensor, but got {type(input)}')
 
-    axis0, axis1 = _check_swapaxes_axis((axis0, axis1), x.ndim)
+    axis0, axis1 = _check_swapaxes_axis((axis0, axis1), input.ndim)
     if axis0 == axis1:
-        return x
+        return input
     if axis0 > axis1:
         axis0, axis1 = axis1, axis0
 
-    perm = F.make_range(0, x.ndim)
-    if axis1 + 1 < x.ndim:
+    perm = F.make_range(0, input.ndim)
+    if axis1 + 1 < input.ndim:
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1] + perm[axis1 + 1:]
     else:
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1]
 
-    return _get_cache_prim(P.Transpose)()(x, new_perm)
+    return _get_cache_prim(P.Transpose)()(input, new_perm)
 
 
-def swapdims(x, dim0, dim1):
+def swapdims(input, dim0, dim1):
     '''
     Interchange two dims of a tensor.
     This function is equivalent to :func:`mindspore.ops.swapaxes` function.
 
     Args:
-        x(Tensor): Input tensor.
+        input(Tensor): Input tensor.
         dim0 (int): First dim.
         dim1 (int): Second dim.
 
     Returns:
-        Transposed tensor, has the same data type as `x`.
+        Transposed tensor, has the same data type as `input`.
 
     Raises:
-        TypeError: If argument `x` is not Tensor.
+        TypeError: If argument `input` is not Tensor.
         TypeError: If `dim0` or `dim1` is not integer.
         ValueError: If `dim0` or `dim1` is not in the range of :math:`[-ndim, ndim-1]`.
 
@@ -6578,12 +6578,12 @@ def swapdims(x, dim0, dim1):
         >>> import numpy as np
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
-        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
-        >>> output = ops.swapdims(x, 0, 2)
+        >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = ops.swapdims(input, 0, 2)
         >>> print(output.shape)
         (4,3,2)
     '''
-    return F.swapaxes(x, dim0, dim1)
+    return F.swapaxes(input, dim0, dim1)
 
 
 @constexpr

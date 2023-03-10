@@ -691,11 +691,11 @@ def scatter(self, axis, index, src):
     return F.scatter(self, axis, index, src)
 
 
-def swapaxes(x, axis0, axis1):
+def swapaxes(input, axis0, axis1):
     """
     Interchange two axes of a tensor.
     """
-    return F.swapaxes(x, axis0, axis1)
+    return F.swapaxes(input, axis0, axis1)
 
 
 def swapdims(x, dim0, dim1):
@@ -1266,11 +1266,11 @@ def resize(x, *new_shape):
     return res.reshape(new_shape)
 
 
-def det(x):
+def det(input):
     """
     Computes the determinant of one or more square matrices.
     """
-    return F.det(x)
+    return F.det(input)
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):
@@ -3203,11 +3203,11 @@ def str_bool(x):
     return True
 
 
-def matrix_power(x, n):
+def matrix_power(input, n):
     """
     Raises a square matrix to the (integer) power `n` .
     """
-    return F.matrix_power(x, n)
+    return F.matrix_power(input, n)
 
 
 def log1p(x):
@@ -3553,7 +3553,7 @@ def sparse_ndim_(x):
     return F.tuple_len(x.shape)
 
 
-def bernoulli(x, p=0.5, seed=-1):
+def bernoulli(x, p=0.5, seed=None):
     """
     Randomly draws binary numbers from a Bernoulli distribution.
     """

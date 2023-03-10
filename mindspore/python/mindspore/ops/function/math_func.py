@@ -3235,37 +3235,37 @@ def linspace(start, end, steps):
     return linspace_(start, end, steps)
 
 
-def det(x):
+def det(input):
     r"""
     Computes the determinant of one or more square matrices.
 
     Args:
-        x (Tensor): A matrix to be calculated, its shape should be :math:`[..., M, M]` who must
+        input (Tensor): A matrix to be calculated, its shape should be :math:`[..., M, M]` who must
           have at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The shape is :math:`x.shape[:-2]`, and the dtype is same as `x`.
+        Tensor. The shape is :math:`x.shape[:-2]`, and the dtype is same as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` not float32, float64, complex64 or complex128.
-        ValueError: If the last two dimensions of `x` is not same size.
-        ValueError: If the dimension of `x` is less than 2.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` not float32, float64, complex64 or complex128.
+        ValueError: If the last two dimensions of `input` is not same size.
+        ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-        >>> output = ops.det(input_x)
+        >>> input = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.det(input)
         >>> print(output)
         [-16.5 21. ]
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return _get_cache_prim(P.MatrixDeterminant)()(x)
+    return _get_cache_prim(P.MatrixDeterminant)()(input)
 
 
 def matrix_exp(x):
@@ -5594,7 +5594,7 @@ def lerp(start, end, weight):
     return lerp_(start, end, weight)
 
 
-def bernoulli(x, p=0.5, seed=-1):
+def bernoulli(input, p=0.5, seed=None):
     r"""
     Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
 
@@ -5602,22 +5602,23 @@ def bernoulli(x, p=0.5, seed=-1):
         out_{i} \sim Bernoulli(p_{i})
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
-                    type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
+        input (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
+                        type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         p (Union[Tensor, float], optional): The shape of p need to be broadcast. Data type must be float32 or float64.
                                             The elements of p represent the probability of setting 1 for the
                                             corresponding broadcast position of the current Tensor. The value of `p`
                                             must be in the range `[0, 1]`. Default: 0.5.
-        seed (int, optional): The seed value for random generating. The value of `seed` must be -1 or a positive
-                              integer. Default: -1, which means using the current timestamp.
+        seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
+                                           positive integer, and -1 means using the current timestamp. Default: None,
+                                           which will be treated as 0.
 
     Returns:
-        output (Tensor), with the same shape and type as x.
+        output (Tensor), with the same shape and type as `input` .
 
     Raises:
-        TypeError: If dtype of `x` is not one of: int8, uint8, int16, int32, int64, bool, float32, float64.
+        TypeError: If dtype of `input` is not one of: int8, uint8, int16, int32, int64, bool, float32, float64.
         TypeError: If dtype of `p` is not one of: float32, float64.
-        TypeError: If dtype of `seed` is not int.
+        TypeError: If dtype of `seed` is not int or None.
         ValueError: If `p` is not in range [0, 1].
         ValueError: If `seed` is less than 0 and not -1.
 
@@ -5638,10 +5639,12 @@ def bernoulli(x, p=0.5, seed=-1):
         >>> print(output)
         [0 1 1]
     """
+    if seed is None:
+        seed = 0
     bernoulli_ = _get_cache_prim(Bernoulli)(seed)
     if not isinstance(p, Tensor):
         p = Tensor([p])
-    return bernoulli_(x, p)
+    return bernoulli_(input, p)
 
 
 def bessel_i1(x):
@@ -10279,9 +10282,9 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     return out
 
 
-def tanhshrink(x):
+def tanhshrink(input):
     '''
-    Tanhshrink Activation, :math:`Tanhshrink(x)=x-Tanh(x)` .
+    Tanhshrink Activation, :math:`Tanhshrink(x)=x-Tanh(x)` , where :math:`x` corresponds to `input` .
     See :class:`mindspore.nn.Tanhshrink` for more details.
 
     Supported Platforms:
@@ -10292,50 +10295,50 @@ def tanhshrink(x):
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor
         >>> import numpy as np
-        >>> x = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
-        >>> output = ops.tanhshrink(x)
+        >>> input = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
+        >>> output = ops.tanhshrink(input)
         >>> print(output)
         [0.2383 1.036  2.004  1.036  0.2383]
     '''
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For tanhshrink, the input must be a Tensor, but got {type(x)}.")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For tanhshrink, the input must be a Tensor, but got {type(input)}.")
 
-    if x.dtype in mstype.int_type + mstype.uint_type:
-        x = x.astype(mstype.float64)
+    if input.dtype in mstype.int_type + mstype.uint_type:
+        input = input.astype(mstype.float64)
 
     tanh_op = _get_cache_prim(P.Tanh)()
-    return x - tanh_op(x)
+    return input - tanh_op(input)
 
 
-def matrix_power(x, n):
+def matrix_power(input, n):
     """
     Raises a square matrix to the (integer) power `n` .
 
-    - When :math:`n=0` , returns the identity matrix, which has the same shape as `x` .
-    - When :math:`n<0` and `x` is invertible, returns the inverse of `x` to the power of :math:`-n` .
+    - When :math:`n=0` , returns the identity matrix, which has the same shape as `input` .
+    - When :math:`n<0` and `input` is invertible, returns the inverse of `input` to the power of :math:`-n` .
 
     Args:
-        x (Tensor): A 3-D Tensor. Supported data types are float16 and float32.
+        input (Tensor): A 3-D Tensor. Supported data types are float16 and float32.
             The shape is :math:`(b, m, m)` , represents b m-D square matrices.
         n (int): The exponent, a required int.
 
     Returns:
-        A 3-D Tensor. Data type and shape are the same as `x` 's.
+        A 3-D Tensor. Data type and shape are the same as `input` 's.
 
     Raises:
         TypeError: If the data type of `n` is not int.
-        TypeError: If the data type of `x` is neither float32 nor float16.
-        TypeError: If `x` is not a Tensor.
-        ValueError: If `x` is not a 3-D tensor.
-        ValueError: If shape[1] and shape[2] of `x` are not the same.
-        ValueError: If `n` is negative but got input `x` has singular matrices.
+        TypeError: If the data type of `input` is neither float32 nor float16.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If `input` is not a 3-D tensor.
+        ValueError: If shape[1] and shape[2] of `input` are not the same.
+        ValueError: If `n` is negative but got input `input` has singular matrices.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
-        >>> y = ops.matrix_power(x, 2)
+        >>> input = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
+        >>> y = ops.matrix_power(input, 2)
         >>> print(y)
         [[[-1.  0.]
           [-0. -1.]]
@@ -10343,7 +10346,7 @@ def matrix_power(x, n):
           [ 0.  1.]]]
     """
     matrix_power_ops = _get_cache_prim(P.MatrixPower)(n=n)
-    return matrix_power_ops(x)
+    return matrix_power_ops(input)
 
 
 __all__ = [

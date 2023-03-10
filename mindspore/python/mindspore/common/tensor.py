@@ -3095,7 +3095,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('repeat_interleave')(self, repeats, dim)
 
-    def bernoulli(self, p=0.5, seed=-1):
+    def bernoulli(self, p=0.5, seed=None):
         r"""
         For details, please refer to :func:`mindspore.ops.bernoulli`.
         """
