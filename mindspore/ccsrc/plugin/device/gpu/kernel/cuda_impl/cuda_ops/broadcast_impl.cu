@@ -1124,7 +1124,7 @@ template <>
 struct TruncateDivFunc<half> {
   __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
     half res = __hdiv(lhs, rhs);
-    return res;
+    return htrunc(res);
   }
 };
 
