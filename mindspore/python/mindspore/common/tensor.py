@@ -1393,12 +1393,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('invert')(self)
 
-    def pow(self, power):
+    def pow(self, exponent):
         r"""
         For details, please refer to :func:`mindspore.ops.pow`.
         """
         self._init_check()
-        return tensor_operator_registry.get('pow')()(self, power)
+        return tensor_operator_registry.get('pow')()(self, exponent)
 
     def log(self):
         """
