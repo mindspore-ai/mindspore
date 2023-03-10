@@ -233,7 +233,9 @@ void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
         continue;
       } else {
         MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
-                          << " has multiple users, but the TensorInfo are different";
+                          << " has multiple users, but the TensorInfo are different, they are "
+                          << parameter_tensor_info.tensor_layout().ToString() << std::endl
+                          << " and " << user_tensor_info.tensor_layout().ToString();
       }
     }
   }
