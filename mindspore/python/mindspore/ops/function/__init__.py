@@ -419,6 +419,7 @@ from .nn_func import (
     avg_pool1d,
     avg_pool2d,
     avg_pool3d,
+    max_pool2d,
     max_pool3d,
     batch_norm,
     celu,

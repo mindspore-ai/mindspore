@@ -27,6 +27,9 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(MaxPoolWithArgmax)
 DECLARE_OP_USE_OUTPUT(MaxPoolWithArgmax)
 
+DECLARE_OP_ADAPTER(MaxPoolWithArgmaxV2)
+DECLARE_OP_USE_OUTPUT(MaxPoolWithArgmaxV2)
+
 DECLARE_OP_ADAPTER(MaxPoolGradWithArgmax)
 DECLARE_OP_USE_OUTPUT(MaxPoolGradWithArgmax)
 

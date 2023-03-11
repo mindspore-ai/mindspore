@@ -287,6 +287,7 @@ constexpr const char kNameSoftmaxGrad[] = "SoftmaxGrad";
 constexpr const char kNameMaxPool[] = "MaxPool";
 constexpr const char kNameAvgPool[] = "AvgPool";
 constexpr const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
+constexpr const char kNameMaxPoolWithArgmaxV2[] = "MaxPoolWithArgmaxV2";
 constexpr const char kNameBatchNorm[] = "BatchNorm";
 constexpr const char kNameBatchNormGrad[] = "BatchNormGrad";
 constexpr const char kNameROIAlign[] = "ROIAlign";

@@ -10211,3 +10211,92 @@ class ChannelShuffle(Primitive):
         if not isinstance(group, int):
             raise ValueError(f"For '{self.name}', attr 'group' must be an positive int number")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
+class MaxPoolWithArgmaxV2(Primitive):
+    r"""
+    Performs max pooling on the input Tensor and returns both max values and indices.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
+    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
+            value, is an int number that represents height and width of the kernel, or a tuple of
+            two int numbers that represent height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            not only the height of movement but also the width of movement, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: None, meaning that `strides = kernel_size`.
+        pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
+            strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
+        dilation (Union[int, tuple[int]]): Default: '(1, 1)'.
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
+        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,
+          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+
+    Outputs:
+        Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
+
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
+          It has the same data type as `x`.
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int32 or int64.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If length of shape of `x` is not equal to 4.
+        TypeError: If `kernel_size` , `strides` , `pads` or `dilation` is not int or tuple.
+        ValueError: If `kernel_size`, `strides` or `dilation` is less than 1.
+        ValueError: If `pads` is less than 0.
+        ValueError: If `argmax_type` is not mindspore.int64 or mindspore.int32.
+        TypeError: If `ceil_mode` is not bool.
+
+    Supported Platforms:
+        ``CPU`` ``GPU`` ``Ascend``
+
+    Example:
+        >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
+        >>> maxpool_arg_v2_op = ops.MaxPoolWithArgmaxV2(kernel_size=(3, 2), strides=(2, 1))
+        >>> output_tensor, argmax = maxpool_arg_v2_op(x)
+        >>> print(output_tensor.shape)
+        (20, 16, 24, 31)
+        >>> pirnt(argmax.shape)
+        (20, 16, 24, 31)
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_size, strides=None, pads=0, dilation=(1, 1,), ceil_mode=False, argmax_type=mstype.int64):
+        """Initialize MaxPoolWithArgmaxV2."""
+        self.init_prim_io_names(inputs=["x"], outputs=["output", "argmax"])
+        validator.check_value_type("ceil_mode", ceil_mode, bool, self.name)
+        self.ceil_mode = ceil_mode
+        validator.check_value_type("argmax_type", argmax_type, [mstype.Type], self.name)
+        argmax_type_valid_values = (mstype.int32, mstype.int64)
+        validator.check_type_name("argmax_type", argmax_type, argmax_type_valid_values, self.name)
+        if argmax_type == mstype.int32:
+            self.add_prim_attr("argmax_type", 3)
+        elif argmax_type == mstype.int64:
+            self.add_prim_attr("argmax_type", 4)
+        else:
+            raise ValueError(
+                f"For '{self.name}', the 'argmax_type' must be mstype.int32 or mstype.int64, but got {argmax_type}.")
+        self.kernel_size = _check_positive_int_or_tuple("kernel_size", kernel_size, self.name, ret_four=True,
+                                                        allow_four=True)
+        if strides is None:
+            strides = kernel_size
+        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, ret_four=True, allow_four=True)
+        self.pads = _check_positive_int_or_tuple("pads", pads, self.name, ret_four=True, allow_four=True,
+                                                 strict_positive=False)
+        self.dilation = _check_positive_int_or_tuple("dilation", dilation, self.name, ret_four=True, allow_four=True)
+        self.add_prim_attr("kernel_size", self.kernel_size)
+        self.add_prim_attr("strides", self.strides)
+        self.add_prim_attr("pads", self.pads)
+        self.add_prim_attr("dilation", self.dilation)
+        self.add_prim_attr("ceil_mode", self.ceil_mode)
