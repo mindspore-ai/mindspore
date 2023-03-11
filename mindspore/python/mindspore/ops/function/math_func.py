@@ -5351,13 +5351,13 @@ def adjoint(x):
     Returns the conjugate with the last two dimensions transposed.
 
     Args:
-        x (Tensor): Input tensor.
+        x (Tensor): Input Tensor.
 
     Returns:
         Tensor, the calculated result.
 
     Raises:
-        TypeError: If `x` is not a tensor.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
