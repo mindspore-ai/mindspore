@@ -459,7 +459,7 @@ build_lite() {
     cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
-        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet -UseModernBuildSystem=YES IPHONEOS_DEPLOYMENT_TARGET=11.0
+        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet -UseModernBuildSystem=YES
     elif [[ "$(uname)" == "Darwin" && "${local_lite_platform}" == "x86_64" ]]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet -UseModernBuildSystem=YES
     else
