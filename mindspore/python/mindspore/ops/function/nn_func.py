@@ -5257,71 +5257,76 @@ def multilabel_margin_loss(inputs, target, reduction='mean'):
     return outputs
 
 
-def multilabel_soft_margin_loss(x, target, weight=None, reduction='mean'):
+def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     r"""
     Calculates the MultiLabelSoftMarginLoss.
     The multi-label soft margin loss is a commonly used loss function in multi-label classification tasks
     where an input sample can belong to multiple classes.
-    Given an input `x` and binary labels `y` of size `(N,C)`, where `N` denotes the number of samples
+    Given an input `input` and binary labels `output` of size `(N,C)`, where `N` denotes the number of samples
     and `C` denotes the number of classes.
 
     .. math::
-        \mathcal{loss\left( x , y \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
-        \sum_{j = 1}^{C}\left(y_{ij}\log\frac{1}{1 + e^{- x_{ij}}} + \left( 1 - y_{ij}
-        \right)\log\frac{e^{-x_{ij}}}{1 + e^{-x_{ij}}} \right)
+        \mathcal{loss\left( input , output \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
+        \sum_{j = 1}^{C}\left(output_{ij}\log\frac{1}{1 + e^{- input_{ij}}} + \left( 1 - output_{ij}
+        \right)\log\frac{e^{-input_{ij}}}{1 + e^{-input_{ij}}} \right)
 
-    where :math:`x{ij}` represents the predicted score of sample :math:`i` for class :math:`j`. :math:`y{ij}`
-    represents the binary label of sample :math:`i` for class :math:`j`, where sample :math:`i` belongs to
-    class :math:`j` if :math:`y{ij}=1` , and sample :math:`i` does not belong to class :math:`j` if :math:`y{ij}=0`.
-    For a multi-label classification task, each sample may have multiple labels with a value of 1 in the binary
-    label :math:`y`. `weight` will multiply to the loss of each class if given.
+    where :math:`input{ij}` represents the predicted score of sample :math:`i` for class :math:`j`.
+    :math:`output{ij}` represents the binary label of sample :math:`i` for class :math:`j`, where
+    sample :math:`i` belongs to class :math:`j` if :math:`output{ij}=1` , and sample :math:`i` does
+    not belong to class :math:`j` if :math:`output{ij}=0`. For a multi-label classification task, each
+    sample may have multiple labels with a value of 1 in the binary label :math:`output`. `weight` will
+    multiply to the loss of each class if given.
 
     Args:
-        x (Tensor): A tensor of shape (N, C), where N is batch size and C is number of classes.
-        target (Tensor): The label target Tensor which has the same shape as `x`.
+        input (Tensor): A tensor of shape (N, C), where N is batch size and C is number of classes.
+        target (Tensor): The label target Tensor which has the same shape as `input`.
         weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: None.
         reduction (str): Specifies which reduction to be applied to the output. It must be one of
             'none', 'mean', and 'sum', meaning no reduction, reduce mean and sum on output, respectively.
             Default: 'mean'.
 
     Returns:
-        Tensor, the data type is the same as x, if the reduction is 'none', its shape is (N), otherwise it is zero.
+        Tensor, the data type is the same as input, if the reduction is 'none', its shape is (N), otherwise it is zero.
 
     Raises:
-        ValueError: If the rank of `x` or `target` is not 2.
+        ValueError: If the rank of `input` or `target` is not 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
+        >>> input = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
         >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
-        >>> loss = ops.multilabel_soft_margin_loss(x, target, reduction='mean')
-        >>> out = loss(x, target)
+        >>> loss = ops.multilabel_soft_margin_loss(input, target, reduction='mean')
+        >>> out = loss(input, target)
         >>> print(out.asnumpy())
         0.84693956
     """
     cls_name = "multilabel_soft_margin_loss"
-    _check_is_tensor('x', x, cls_name)
+    _check_is_tensor('input', input, cls_name)
     _check_is_tensor('target', target, cls_name)
-    if x.ndim != 2 or target.ndim != 2:
+    if input.ndim != 2 or target.ndim != 2:
         raise ValueError(
-            "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got shapes: "
-            f"x: {x.shape}, target: {target.shape} "
+            "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got dims: "
+            f"input: {input.ndim}, target: {target.ndim} "
         )
 
     mul_op = _get_cache_prim(P.Mul)()
     exp_op = _get_cache_prim(P.Exp)()
     add_op = _get_cache_prim(P.Add)()
     log_op = _get_cache_prim(P.Log)()
+    dyn_shape = _get_cache_prim(P.TensorShape)()
+    input_shape = input.shape
+    if ops.is_sequence_value_unknown(input_shape):
+        input_shape = dyn_shape(input)
 
-    pos = log_op(add_op(exp_op(-x), 1))
-    neg = log_op(add_op(exp_op(x), 1))
+    pos = log_op(add_op(exp_op(-input), 1))
+    neg = log_op(add_op(exp_op(input), 1))
     loss = mul_op(target, pos) + mul_op(1 - target, neg)
     if weight is not None:
         loss = mul_op(loss, weight)
-    class_dim = x.ndim - 1
-    loss = loss.sum(axis=class_dim) / x.shape[class_dim]
+    class_dim = input.ndim - 1
+    loss = loss.sum(axis=class_dim) / input_shape[class_dim]
     return _get_loss(loss, reduction, cls_name)
 
 
