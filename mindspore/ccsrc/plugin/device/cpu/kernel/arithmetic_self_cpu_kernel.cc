@@ -590,36 +590,6 @@ void Relu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
 
-template <typename T>
-void Identity(const T *in, T *out, size_t size) {
-  (void)std::copy(in, in + size, out);
-}
-
-template <typename T>
-bool IdentityCpuFunc(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  Identity<T>(input, output, lens);
-  return true;
-}
-
-static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists = {
-  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), IdentityCpuFunc<uint64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), IdentityCpuFunc<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), IdentityCpuFunc<uint32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), IdentityCpuFunc<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), IdentityCpuFunc<uint16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), IdentityCpuFunc<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), IdentityCpuFunc<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), IdentityCpuFunc<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), IdentityCpuFunc<complex64>},
-  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), IdentityCpuFunc<complex128>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), IdentityCpuFunc<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), IdentityCpuFunc<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
-
 void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &) {
@@ -1150,13 +1120,15 @@ bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;
     return false;
   }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  kernel_func_ = identity_kernel_attr_lists[index].second;
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -1176,13 +1148,59 @@ int IdentityCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> kernel_attr_list;
-  (void)std::transform(identity_kernel_attr_lists.begin(), identity_kernel_attr_lists.end(),
-                       std::back_inserter(kernel_attr_list),
-                       [](const std::pair<KernelAttr, LaunchFunc> &pair) { return pair.first; });
-  return kernel_attr_list;
+template <typename T>
+bool IdentityCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t input_num = inputs[0]->size / sizeof(T);
+  auto task = [input, output](size_t start, size_t end) {
+    for (size_t i = 0; i < end; i++) {
+      output[i] = input[i];
+    }
+  };
+  ParallelLaunchAutoSearch(task, input_num, this, &parallel_search_info_);
+  return true;
 }
+
+std::vector<std::pair<KernelAttr, IdentityCpuKernelMod::IdentityFunc>> IdentityCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &IdentityCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &IdentityCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &IdentityCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &IdentityCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &IdentityCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &IdentityCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &IdentityCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &IdentityCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &IdentityCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &IdentityCpuKernelMod::LaunchKernel<complex128>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &IdentityCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &IdentityCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &IdentityCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &IdentityCpuKernelMod::LaunchKernel<bool>}};
+
+std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, IdentityFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Rsqrt,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRsqrt); });
@@ -1248,7 +1266,5 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU); });
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

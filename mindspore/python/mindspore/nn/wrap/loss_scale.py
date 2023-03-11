@@ -511,7 +511,7 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.grad_reducer = F.identity
+        self.grad_reducer = self.identity
         self.degree = 1
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
@@ -568,3 +568,6 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         if not overflow:
             self.optimizer(grads)
         return (loss, overflow, scaling_sens)
+
+    def identity(self, x):
+        return x

@@ -176,6 +176,10 @@ class _TrainFreezeCell(Cell):
             self.grad_accumulation = GradientAccumulation(
                 self.max_accumulation_step, self.optimizer)
 
+    @staticmethod
+    def identity(x):
+        return x
+
     def construct(self, *inputs):
         loss = self.net(*inputs)
         sens = F.fill(loss.dtype, loss.shape, self.sens)
@@ -209,7 +213,11 @@ class GradientFreeze:
         self._freeze_type = freeze_type
         self._freeze_p = freeze_p
         self._total_steps = total_steps
-        self.grad_reducer = F.identity
+        self.grad_reducer = self.identity
+
+    @staticmethod
+    def identity(x):
+        return x
 
     def split_parameters_groups(self, net, freeze_para_groups_number):
         r"""
@@ -348,7 +356,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for reducer, opt in zip(grad_reducers, optimizer.opts))
     else:
-        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, F.identity,
+        freeze_nets = tuple(_TrainFreezeCell(network, sens, grad, _TrainFreezeCell.identity,
                                              use_grad_accumulation, opt, max_accumulation_step)
                             for opt in optimizer.opts)
     return freeze_nets

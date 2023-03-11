@@ -117,7 +117,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
-                        CheckValid, Partial, Depend, identity, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
+                        CheckValid, Partial, Depend, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
                         SampleDistortedBoundingBoxV2)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
@@ -363,7 +363,6 @@ __all__ = [
     'Depend',
     'UpdateState',
     'StopGradient',
-    'identity',
     'AvgPool',
     # Back Primitive
     'Equal',
