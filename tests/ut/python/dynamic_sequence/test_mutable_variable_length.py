@@ -351,3 +351,38 @@ def test_is_dynamic_sequence_element_unknown_3():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "should be variable length sequence" in str(ex.value)
+
+
+def test_convert_to_dynamic_length_sequence_twice():
+    """
+    Feature: mutable with dynamic length.
+    Description: mutable with dynamic length.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit
+    def foo():
+        x = mutable((1, 2, 3), True)
+        y = mutable(x, True)
+        return y
+
+    ret = foo()
+    assert ret == (1, 2, 3)
+
+
+def test_convert_dynamic_length_sequence_to_constant_length():
+    """
+    Feature: mutable with dynamic length.
+    Description: mutable with dynamic length.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    @jit
+    def foo():
+        x = mutable((1, 2, 3), True)
+        y = mutable(x)
+        return y
+
+    with pytest.raises(RuntimeError) as ex:
+        foo()
+    assert "Can not convert a dynamic length sequence to constant length" in str(ex.value)

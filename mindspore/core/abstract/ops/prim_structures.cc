@@ -351,17 +351,24 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
     }
     variable_len = arg_value->cast<BoolImmPtr>()->value();
   }
+  auto data = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(data);
   if (!variable_len) {
-    CheckMutableArgAbstract(args_spec_list[0]);
-    return AbstractBroaden(args_spec_list[0]);
+    if (data->isa<abstract::AbstractSequence>() && data->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "Can not convert a dynamic length sequence to constant length.";
+    }
+    CheckMutableArgAbstract(data);
+    return AbstractBroaden(data);
   }
-  auto ret = args_spec_list[0]->Clone();
+  auto ret = data->Clone();
   if (!ret->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
                             << " list or tuple, but got: " << ret->ToString();
   }
   auto ret_seq = ret->cast<AbstractSequencePtr>();
-  ret_seq->CheckAndConvertToDynamicLenSequence();
+  if (!ret_seq->dynamic_len()) {
+    ret_seq->CheckAndConvertToDynamicLenSequence();
+  }
   return ret;
 }
 
