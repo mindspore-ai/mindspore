@@ -50,7 +50,7 @@ class Log1pCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   TypeId input_dtype_{kTypeUnknown};
 };

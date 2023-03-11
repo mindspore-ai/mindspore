@@ -65,13 +65,16 @@ bool Log1pCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 
 template <typename T>
 void Log1pCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &outputs) const {
-  const auto *input = static_cast<T *>(inputs[0]->addr);
-  auto *output = static_cast<T *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(T);
-  for (size_t i = 0; i < elem_num; i++) {
-    output[i] = static_cast<T>(log(input[i] + T(1)));
-  }
+                                     const std::vector<kernel::AddressPtr> &outputs) {
+  const auto *in = static_cast<T *>(inputs[0]->addr);
+  auto *out = static_cast<T *>(outputs[0]->addr);
+  size_t size = inputs[0]->size / sizeof(T);
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(log(in[i] + T(1)));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Log1p, Log1pCpuKernelMod);
