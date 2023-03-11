@@ -121,6 +121,9 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   auto padding_value_rank = SizeToLong(padding_shape.size());
   constexpr int64_t number_one = 1;
   constexpr int64_t number_two = 2;
+  if (input_args[kInputIndex0]->BuildShape()->IsDynamic()) {
+    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
   if (IsDynamicRank(x_shape)) {
     ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(out_shape);
