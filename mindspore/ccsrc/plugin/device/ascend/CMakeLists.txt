@@ -25,7 +25,7 @@ endif()
 
 ### cxx api need file ###
 if(ENABLE_ACL)
-    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
+    include_directories(${GRAPHENGINE_PATH}/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_INFER_D
             "${CMAKE_SOURCE_DIR}/mindspore/ccsrc/cxx_api/graph/ascend/*.cc"
@@ -60,6 +60,12 @@ endforeach()
 
 list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
+if(${ASCEND_VERSION} STREQUAL "910")
+    set_target_properties(mindspore_ascend PROPERTIES VERSION 1)
+elseif(${ASCEND_VERSION} STREQUAL "910b")
+    set_target_properties(mindspore_ascend PROPERTIES VERSION 2)
+endif()
+
 target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core mindspore_common)
 target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)

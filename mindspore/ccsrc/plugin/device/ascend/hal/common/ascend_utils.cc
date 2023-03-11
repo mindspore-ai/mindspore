@@ -278,6 +278,20 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
   }
   return find_iter->second;
 }
+
+#ifdef ASCEND_910B
+const std::set<std::string> kAscend910BSocVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+
+// for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
+const bool SelectAscendPlugin = []() -> bool {
+  std::string soc_version = GetSocVersion();
+  auto iter = kAscend910BSocVersions.find(soc_version);
+  if (iter == kAscend910BSocVersions.end()) {
+    MS_LOG(EXCEPTION) << "910b soc version: " << soc_version << " can not be found in kAscend910BSocVersions.";
+  }
+  return true;
+}();
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

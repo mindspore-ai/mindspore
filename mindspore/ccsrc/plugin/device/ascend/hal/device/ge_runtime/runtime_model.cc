@@ -18,7 +18,7 @@
 #include <set>
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
-#include "graphengine/inc/external/runtime/rt_error_codes.h"
+#include "external/runtime/rt_error_codes.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/model_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task_factory.h"

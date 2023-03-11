@@ -431,7 +431,7 @@ add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)
 
 if(MSLITE_ENABLE_ACL)
-    include_directories(${TOP_DIR}/graphengine/inc/external)
+    include_directories(${TOP_DIR}/graphengine/910/inc/external)
     if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
         add_subdirectory(litert/kernel/ascend)
     else()

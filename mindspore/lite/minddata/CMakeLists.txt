@@ -63,11 +63,11 @@ if(MSLITE_ENABLE_RUNTIME_GLOG AND (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLIT
 endif()
 
 if(MSLITE_ENABLE_ACL)
-include_directories(${TOP_DIR}/graphengine/metadef/inc/external)
-include_directories(${TOP_DIR}/graphengine/metadef/inc)
-include_directories(${TOP_DIR}/graphengine/inc)
-include_directories(${TOP_DIR}/graphengine/inc/external)
-include_directories(${TOP_DIR}/graphengine/third_party/fwkacllib/inc)
+include_directories(${TOP_DIR}/graphengine/910/metadef/inc/external)
+include_directories(${TOP_DIR}/graphengine/910/metadef/inc)
+include_directories(${TOP_DIR}/graphengine/910/inc)
+include_directories(${TOP_DIR}/graphengine/910/inc/external)
+include_directories(${TOP_DIR}/graphengine/910/third_party/fwkacllib/inc)
 include_directories(${CCSRC_DIR})
 endif()
 
