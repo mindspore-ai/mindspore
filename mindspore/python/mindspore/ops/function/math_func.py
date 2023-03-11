@@ -1686,8 +1686,9 @@ def sign(input):
         >>> print(output)
         [[-1  0  1  1  1]
          [ 1  1  1 -1  0]]
-        >>> input = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
-        >>> output = ops.sign(input)
+        >>> ms.set_context(device_target="CPU")
+        >>> x = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
+        >>> output = ops.sign(x)
         >>> print(output)
         [[-1.  0.  1.  1.  0.]
          [ 1.  1. -1. -1.  0.]]
