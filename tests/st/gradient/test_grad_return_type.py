@@ -387,7 +387,7 @@ def test_grad_operation_multiple_params():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_operation_no_param():
@@ -695,7 +695,7 @@ def test_grad_operation_no_input_and_multiple_params():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_operation_single_input_and_no_param():
@@ -720,7 +720,7 @@ def test_grad_operation_single_input_and_no_param():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_operation_multiple_inputs_and_no_param():
@@ -746,7 +746,7 @@ def test_grad_operation_multiple_inputs_and_no_param():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_operation_no_input_and_no_param():
@@ -1069,7 +1069,7 @@ def test_grad_int_position_and_multiple_params():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_int_position_and_no_param():
@@ -1205,7 +1205,7 @@ def test_grad_tuple_position_and_multiple_params():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_tuple_position_and_no_param():
@@ -1337,7 +1337,7 @@ def test_grad_none_position_and_multiple_params():
     check_grad_result(out_pynative, expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_none_position_and_no_param():
