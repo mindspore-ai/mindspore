@@ -19,7 +19,7 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
-from mindspore.ops.function.array_func import narrow
+from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops
@@ -161,7 +161,7 @@ tensor_operator_registry.register('reshape', P.Reshape)
 tensor_operator_registry.register('reverse', P.ReverseV2)
 tensor_operator_registry.register('reverse_sequence', P.ReverseSequence)
 tensor_operator_registry.register('xlogy', P.Xlogy)
-tensor_operator_registry.register('flatten', P.Flatten)
+tensor_operator_registry.register('flatten', flatten)
 tensor_operator_registry.register('transpose', P.Transpose)
 tensor_operator_registry.register('broadcast_to', P.BroadcastTo)
 tensor_operator_registry.register('matmul', matmul)

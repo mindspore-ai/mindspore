@@ -122,6 +122,9 @@ def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
+check_flatten_order_const = constexpr(validator.check_flatten_order)
+
+
 ##############################
 # Tensor Creation Functions.
 ##############################
@@ -1556,20 +1559,30 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
     return P.ReverseSequence(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
 
 
-def flatten(input_x):
+def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     r"""
-    Flattens a tensor without changing its batch size on the 0-th axis.
+    Flatten a tensor along dimensions from `start_dim` to `start_dim`.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
+        input (Tensor): The input Tensor.
+        order (str, optional): Only 'C' and 'F' are supported. 'C' means to flatten in row-major (C-style) order.
+            'F' means to flatten in column-major (Fortran-style) order. Default: 'C'.
+
+    Keyword Args:
+        start_dim (int, optional): The first dimension to flatten. Default: 1.
+        end_dim (int, optional): The last dimension to flatten. Default: -1.
 
     Returns:
-        Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
-        the product of the remaining dimension.
+        Tensor. If no dimensions are flattened, returns the original `input`, otherwise return the flattened Tensor.
+        If `input` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If length of shape of `input_x` is less than 1.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `order` is not string type.
+        ValueError: If `order` is string type, but not 'C' or 'F'.
+        TypeError: If `start_dim` or `end_dim` is not int.
+        ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+        ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1580,8 +1593,50 @@ def flatten(input_x):
         >>> print(output.shape)
         (1, 24)
     """
-    _flatten = _get_cache_prim(P.Flatten)()
-    return _flatten(input_x)
+    def canonicalize_axis(axis, x_rank):
+        ndim = x_rank if x_rank != 0 else 1
+        if axis < -ndim or axis >= ndim:
+            const_utils.raise_value_error("'start_dim' or 'end_dim' out of range.")
+        return axis if axis >= 0 else axis + ndim
+
+    # Check the types of arguments.
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'flatten', argument 'input' must be Tensor.")
+    if not isinstance(start_dim, int) or not isinstance(end_dim, int):
+        raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
+    check_flatten_order_const(order)
+    if order == 'F':
+        perm = F.make_range(0, F.rank(input))
+        new_order = F.tuple_reversed(perm)
+        input = _get_cache_prim(P.Transpose)()(input, new_order)
+
+    # Handle the default case.
+    x_shape = shape_(input)
+    x_rank = rank_(input)
+    if start_dim == 1 and end_dim == -1:
+        if x_rank in (0, 1):
+            return reshape_(input, (-1,))
+        return _get_cache_prim(P.Flatten)()(input)
+
+    # Check axis.
+    start_dim = canonicalize_axis(start_dim, x_rank)
+    end_dim = canonicalize_axis(end_dim, x_rank)
+    if start_dim > end_dim:
+        const_utils.raise_value_error("For 'flatten', 'start_dim' cannot come after 'end_dim'.")
+    # If input is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+    if x_rank in (0, 1):
+        return reshape_(input, (-1,))
+    # If no dimensions to flatten, return the original object.
+    if start_dim == end_dim:
+        return input
+    # Flatten elements along specified dimensions.
+    dim_length = 1
+    idx = start_dim
+    while idx <= end_dim:
+        dim_length *= x_shape[idx]
+        idx += 1
+    new_shape = x_shape[:start_dim] + (dim_length,) + x_shape[end_dim + 1:]
+    return reshape_(input, new_shape)
 
 
 @constexpr

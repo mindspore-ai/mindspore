@@ -1657,20 +1657,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('remainder')(self, divisor)
 
-    def flatten(self, order='C'):
+    def flatten(self, order='C', *, start_dim=0, end_dim=-1):
         r"""
         For details, please refer to :func:`mindspore.ops.flatten`.
         """
         self._init_check()
-        reshape_op = tensor_operator_registry.get('reshape')()
-        trans_op = tensor_operator_registry.get('transpose')()
-
-        order = validator.check_flatten_order(order)
-        if order == 'C':
-            return reshape_op(self, (-1,))
-
-        perm = tuple(range(self.ndim - 1, -1, -1))
-        return reshape_op(trans_op(self, perm), (-1,))
+        return tensor_operator_registry.get('flatten')(self, order, start_dim=start_dim, end_dim=end_dim)
 
     def float_power(self, other):
         r"""

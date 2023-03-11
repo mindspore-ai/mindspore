@@ -848,7 +848,6 @@ class Validator:
             raise TypeError(f"For Tensor.flatten, the parameter 'order' must be a string, but got {type(order)}")
         if order not in ('C', 'F'):
             raise ValueError(f"For Tensor.flatten, the parameter 'order' must be 'C' or 'F', but got '{order}'")
-        return order
 
     @staticmethod
     def check_swapaxes_axis(axes, ndim):

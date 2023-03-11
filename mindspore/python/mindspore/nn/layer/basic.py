@@ -589,20 +589,24 @@ class Upsample(Cell):
 
 class Flatten(Cell):
     r"""
-    Flatten the dimensions other than the 0th dimension of the input Tensor.
+    Flatten the input Tensor along dimensions from `start_dim` to `end_dim`.
+
+    Args:
+        start_dim (int, optional): The first dimension to flatten. Default: 1.
+        end_dim (int, optional): The last dimension to flatten. Default: -1.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor to be flattened. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-          The shape is :math:`(N, *)` , where :math:`*` means any number of additional dimensions
-          and the shape can't be ().
+        - **x** (Tensor) - The input Tensor to be flattened.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
-        the product of the remaining dimensions.
+        Tensor. If no dimensions are flattened, returns the original `x`, otherwise return the flattened Tensor.
+        If `x` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
 
     Raises:
-        TypeError: If `x` is not a subclass of Tensor.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `start_dim` or `end_dim` is not int.
+        ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+        ValueError: If `start_dim` or `end_dim` is not in range of [-x.dim, x.dim-1].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -620,12 +624,14 @@ class Flatten(Cell):
         after flatten the output shape is (2, 4)
     """
 
-    def __init__(self):
+    def __init__(self, start_dim=1, end_dim=-1):
         """Initialize Flatten."""
         super(Flatten, self).__init__()
+        self.start_dim = start_dim
+        self.end_dim = end_dim
 
     def construct(self, x):
-        return F.reshape(x, (F.shape(x)[0], -1))
+        return F.flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
 
 
 class Identity(Cell):
