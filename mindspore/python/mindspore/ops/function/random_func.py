@@ -620,7 +620,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> n = 4
@@ -630,16 +630,8 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         >>> print(output)
         [1 0 2 3]
     """
-    if is_cpu_backend():
-        if isinstance(n, int):
-            n = Tensor(n)
-        randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
-        return randperm_(n, seed, offset)
-    if isinstance(n, Tensor):
-        n = int(n)
-    randperm_ = _get_cache_prim(P.Randperm)(max_length=n, dtype=dtype)
-    return randperm_(Tensor((n,)))
-
+    randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
+    return randperm_(n, seed, offset)
 
 
 @_function_forbid_reuse
