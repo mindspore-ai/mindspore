@@ -1188,6 +1188,7 @@ constexpr auto kTensorValueIsType = "tensor_value_is_type";
 constexpr auto kTensorValueIsEmpty = "tensor_value_is_empty";
 constexpr auto kTensorUserDataIsSensTensor = "is_sens_tensor";
 constexpr auto kFakeTensorPos = "fake_tensor_pos";
+constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";

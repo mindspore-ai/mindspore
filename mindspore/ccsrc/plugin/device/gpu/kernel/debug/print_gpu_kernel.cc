@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,14 @@ bool PrintGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     auto value_type_pos = kernel_ptr->get_value_type_pos();
     for (size_t i = 0; i < value_type.size(); i++) {
       value_type_[value_type_pos[i]] = value_type[i];
+      list_pos_[i] = 0;
+    }
+    if (kernel_ptr->HasAttr(kFakeTensorListPos)) {
+      auto value_ptr = kernel_ptr->GetAttr(kFakeTensorListPos);
+      auto fake_tensor_list_pos = GetValue<std::vector<int64_t>>(value_ptr);
+      for (size_t i = 0; i < fake_tensor_list_pos.size(); i++) {
+        list_pos_[fake_tensor_list_pos[i]] = 1;
+      }
     }
   }
 
@@ -213,7 +221,8 @@ std::string PrintGpuKernelMod::GetString(size_t tensor_index, size_t original_in
   if (value_type_.count(original_index) > 0) {
     // not a tensor
     auto out = current_tensor.data().ToString(type_id, shape, true);
-    if (value_type_[original_index] != 0) {
+    // need check is not list
+    if (value_type_[original_index] != 0 && list_pos_[original_index] == 0) {
       // tuple, not scalar
       (void)std::replace(out.begin(), out.end(), '[', '(');
       (void)std::replace(out.begin(), out.end(), ']', ')');
