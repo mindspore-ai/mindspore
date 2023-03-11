@@ -14,31 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_GRAD_V1_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_GRAD_V1_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_GRAD__CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_GRAD__CPU_KERNEL_H_
 #include <functional>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveAvgPool2DGradV1CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveAvgPool2DGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  AdaptiveAvgPool2DGradV1CpuKernelMod() = default;
-  ~AdaptiveAvgPool2DGradV1CpuKernelMod() override = default;
+  AdaptiveAvgPool2DGradCpuKernelMod() = default;
+  ~AdaptiveAvgPool2DGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<kernel::AddressPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
- protected:
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   std::vector<int64_t> grad_output_dim_sizes;
   std::vector<int64_t> orig_input_shape_dim_sizes;
+  int64_t orig_input_shape_dims;
   std::vector<int64_t> grad_input_dim_sizes;
   TypeId dtype_{kTypeUnknown};
 

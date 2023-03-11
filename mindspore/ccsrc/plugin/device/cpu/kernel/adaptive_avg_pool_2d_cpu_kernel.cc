@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_v1_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_cpu_kernel.h"
 #include <cmath>
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -54,7 +54,7 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-void AdaptiveAvgPool2DV1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+void AdaptiveAvgPool2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
   node_wpt_ = kernel_node;
@@ -64,7 +64,7 @@ void AdaptiveAvgPool2DV1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename SCALAR_T>
-CTask AdaptiveAvgPool2DV1OutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
+CTask AdaptiveAvgPool2DOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   auto shard_frame = [&args](int64_t start, int64_t end) {
     MS_EXCEPTION_IF_NULL(args.input_data);
     MS_EXCEPTION_IF_NULL(args.output_data);
@@ -100,15 +100,17 @@ CTask AdaptiveAvgPool2DV1OutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   return shard_frame;
 }
 
-bool AdaptiveAvgPool2DV1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                             const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     (void)LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     (void)LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    (void)LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of input x "
                       << "should be float16 or float32 but got " << TypeIdLabel(dtype_) << ".";
@@ -118,8 +120,8 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::Launch(const std::vector<kernel::AddressPt
 }
 
 template <typename SCALAR_T>
-bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) {
+bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto input_size_iter = input_dim_sizes_.rbegin();
   auto output_size_iter = output_size_data_.rbegin();
   for (; output_size_iter != output_size_data_.rend(); output_size_iter++, input_size_iter++) {
@@ -161,7 +163,7 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   args.output_data = output_y;
   // resize output
   if (input_dims == k3D) {
-    auto shard_frame = AdaptiveAvgPool2DV1OutFrame<SCALAR_T>(args);
+    auto shard_frame = AdaptiveAvgPool2DOutFrame<SCALAR_T>(args);
     ParallelLaunchAutoSearch(shard_frame, args.size_d, this, &parallel_search_info_);
   } else {
     auto shard_template = [&args, this](int64_t start, int64_t end) {
@@ -169,7 +171,7 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
         AdaptiveCalcArgs<SCALAR_T> sub_args = args;
         sub_args.input_data = args.input_data + b * args.in_stride_d * args.size_d;
         sub_args.output_data = args.output_data + b * args.size_d * args.out_size_h * args.out_size_w;
-        auto shard_frame = AdaptiveAvgPool2DV1OutFrame<SCALAR_T>(sub_args);
+        auto shard_frame = AdaptiveAvgPool2DOutFrame<SCALAR_T>(sub_args);
         shard_frame(0, sub_args.size_d);
       }
     };
@@ -178,13 +180,14 @@ bool AdaptiveAvgPool2DV1CpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   return true;
 }
 
-std::vector<KernelAttr> AdaptiveAvgPool2DV1CpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> AdaptiveAvgPool2DCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveAvgPool2DV1, AdaptiveAvgPool2DV1CpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveAvgPool2D, AdaptiveAvgPool2DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

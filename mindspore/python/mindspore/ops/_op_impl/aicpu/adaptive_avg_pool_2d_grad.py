@@ -14,20 +14,21 @@
 # ============================================================================
 
 
-"""AdaptiveAvgPool2DGradV1 op"""
+"""AdaptiveAvgPool2DGrad op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-adaptive_avg_pool_2d_grad_v1_op_info = AiCPURegOp("AdaptiveAvgPool2DGradV1") \
+adaptive_avg_pool_2d_grad_op_info = AiCPURegOp("AdaptiveAvgPool2DGrad") \
     .fusion_type("OPAQUE") \
     .input(0, "input_grad", "required")\
+    .input(1, "orig_input_shape", "required") \
     .output(0, "output_grad", "required") \
-    .attr("orig_input_shape", "listInt") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
     .get_op_info()
 
 
-@op_info_register(adaptive_avg_pool_2d_grad_v1_op_info)
-def _adaptive_avg_pool_2d_grad_v1_aicpu():
-    """AdaptiveAvgPool2DGradV1 aicpu register"""
+@op_info_register(adaptive_avg_pool_2d_grad_op_info)
+def _adaptive_avg_pool_2d_grad_aicpu():
+    """AdaptiveAvgPool2DGrad aicpu register"""
     return

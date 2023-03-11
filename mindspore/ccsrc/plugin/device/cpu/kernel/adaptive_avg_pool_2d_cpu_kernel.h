@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_V1_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_V1_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVE_AVG_POOL_2D_CPU_KERNEL_H_
 #include <functional>
 #include <memory>
 #include <vector>
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AdaptiveAvgPool2DV1CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class AdaptiveAvgPool2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  AdaptiveAvgPool2DV1CpuKernelMod() = default;
-  ~AdaptiveAvgPool2DV1CpuKernelMod() override = default;
+  AdaptiveAvgPool2DCpuKernelMod() = default;
+  ~AdaptiveAvgPool2DCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_grad_v1_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/adaptive_avg_pool_2d_grad_cpu_kernel.h"
 #include <cmath>
 #include <memory>
+#include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -24,8 +25,6 @@ namespace kernel {
 namespace {
 constexpr size_t k4D = 4;
 constexpr size_t k3D = 3;
-constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNum = 1;
 constexpr int64_t kIdxR3rd = -3;
 constexpr int64_t kIdxR2nd = -2;
 constexpr int64_t kIdxR1st = -1;
@@ -52,17 +51,36 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-void AdaptiveAvgPool2DGradV1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  grad_output_dim_sizes = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex0);
-  orig_input_shape_dim_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "orig_input_shape");
-  grad_input_dim_sizes = AnfAlgo::GetOutputDeviceShape(kernel_node, kOutputIndex0);
+bool AdaptiveAvgPool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  return true;
+}
+
+int AdaptiveAvgPool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                              const std::vector<KernelTensorPtr> &inputs,
+                                              const std::vector<KernelTensorPtr> &outputs,
+                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  dtype_ = inputs[kIndex0]->GetDtype();
+  grad_output_dim_sizes = inputs[kIndex0]->GetShapeVector();
+  grad_input_dim_sizes = outputs[kIndex0]->GetShapeVector();
+  orig_input_shape_dims = inputs[kIndex1]->GetShapeVector()[0];
+  return KRET_OK;
 }
 
 template <typename SCALAR_T>
-CTask AdaptiveAvgPool2DGradV1OutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
+CTask AdaptiveAvgPool2DGradOutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   auto shard_frame = [&args](int64_t start, int64_t end) {
     for (auto d = start; d < end; d++) {
       double *grad_input_p_d = args.input_data + d * args.in_size_w * args.in_size_h;
@@ -91,27 +109,28 @@ CTask AdaptiveAvgPool2DGradV1OutFrame(const AdaptiveCalcArgs<SCALAR_T> &args) {
   return shard_frame;
 }
 
-bool AdaptiveAvgPool2DGradV1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+bool AdaptiveAvgPool2DGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     (void)LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     (void)LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    (void)LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', dtype of input x "
-                      << "should be float16 or float32 but got " << TypeIdLabel(dtype_) << ".";
+                      << "should be float16, float32 or float64 but got " << TypeIdLabel(dtype_) << ".";
     return false;
   }
   return true;
 }
 
 template <typename SCALAR_T>
-bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                       const std::vector<kernel::AddressPtr> &outputs) {
-  int32_t orig_input_shape_dims = static_cast<int32_t>(orig_input_shape_dim_sizes.size());
+bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                     const std::vector<kernel::AddressPtr> &outputs) {
+  auto orig_input_shape_ptr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+  orig_input_shape_dim_sizes = std::vector<int64_t>(orig_input_shape_ptr, orig_input_shape_ptr + orig_input_shape_dims);
   if (orig_input_shape_dims != k3D && orig_input_shape_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', Non-empty [3D] or [4D] tensor expected for orig_input, "
@@ -127,6 +146,9 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel:
     }
   }
   size_t grad_output_dims = grad_output_dim_sizes.size();
+  if (std::any_of(grad_output_dim_sizes.begin(), grad_output_dim_sizes.end(), [](int64_t x) { return x <= 0; })) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', grad_output_dim_sizes contains non-positive element.";
+  }
   if (grad_output_dims != k3D && grad_output_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', Non-empty [3D] or [4D] tensor expected for input_grad, "
@@ -151,7 +173,7 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel:
   if (orig_input_shape_dims == k3D) {
     args.input_data = input_data_ptr.get();
     args.output_data = output_data_ptr;
-    auto shard_frame = AdaptiveAvgPool2DGradV1OutFrame<SCALAR_T>(args);
+    auto shard_frame = AdaptiveAvgPool2DGradOutFrame<SCALAR_T>(args);
     ParallelLaunchAutoSearch(shard_frame, args.size_d, this, &parallel_search_info_);
   } else {
     auto shard_template = [&args, &input_data_ptr, &output_data_ptr, this](int64_t start, int64_t end) {
@@ -159,7 +181,7 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel:
         AdaptiveCalcArgs<SCALAR_T> sub_args = args;
         sub_args.input_data = input_data_ptr.get() + b * args.size_d * args.in_size_h * args.in_size_w;
         sub_args.output_data = output_data_ptr + b * args.size_d * args.out_size_h * args.out_size_w;
-        auto shard_frame = AdaptiveAvgPool2DGradV1OutFrame<SCALAR_T>(sub_args);
+        auto shard_frame = AdaptiveAvgPool2DGradOutFrame<SCALAR_T>(sub_args);
         ParallelLaunchAutoSearch(shard_frame, sub_args.size_d, this, &parallel_search_info_);
       }
     };
@@ -171,13 +193,14 @@ bool AdaptiveAvgPool2DGradV1CpuKernelMod::LaunchKernel(const std::vector<kernel:
   return true;
 }
 
-std::vector<KernelAttr> AdaptiveAvgPool2DGradV1CpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> AdaptiveAvgPool2DGradCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveAvgPool2DGradV1, AdaptiveAvgPool2DGradV1CpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AdaptiveAvgPool2DGrad, AdaptiveAvgPool2DGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

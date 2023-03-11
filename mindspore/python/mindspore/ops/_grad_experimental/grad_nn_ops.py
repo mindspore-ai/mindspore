@@ -53,8 +53,6 @@ from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations._grad_ops import PadV3Grad
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
-from mindspore.ops.operations.nn_ops import AdaptiveAvgPool2DV1
-from mindspore.ops.operations._grad_ops import AdaptiveAvgPool2DGradV1
 from mindspore.ops.operations.nn_ops import UpsampleNearest3D
 from mindspore.ops.operations._grad_ops import UpsampleNearest3DGrad
 from mindspore.ops.operations.nn_ops import MaxPoolV1
@@ -344,19 +342,6 @@ def get_bprop_adaptiveavgpool3d(self):
         get_x_shape = P.TensorShape()
         x_shape = get_x_shape(x).astype(mstype.int32)
         dx = grad(dout, x_shape)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(AdaptiveAvgPool2DV1)
-def get_bprop_adaptive_avg_pool_2d_v1(self):
-    """Grad definition for `AdaptiveAvgPool2DV1` operation."""
-
-    shape = P.Shape()
-    def bprop(x, out, dout):
-        adaptive_avgpool_grad = AdaptiveAvgPool2DGradV1(orig_input_shape=shape(x))
-        dx = adaptive_avgpool_grad(dout)
         return (dx,)
 
     return bprop

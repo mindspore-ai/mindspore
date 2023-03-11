@@ -439,9 +439,10 @@ def get_bprop_avg_pool_grad(self):
 def get_bprop_adaptive_avg_pool2d_grad(self):
     """Grad definition for `AdaptiveAvgPool2D` operation."""
     adaptive_avgpool_grad = G.AdaptiveAvgPool2DGrad()
+    shape = P.TensorShape()
 
     def bprop(x, out, dout):
-        dx = adaptive_avgpool_grad(x, dout)
+        dx = adaptive_avgpool_grad(dout, shape(x))
         return (dx,)
 
     return bprop

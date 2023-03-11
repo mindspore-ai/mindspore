@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD_H_
-#define MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD__H_
+#define MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD__H_
 #include <memory>
 #include <vector>
 #include <string>
@@ -29,7 +29,9 @@ constexpr auto kNameAdaptiveAvgPool2DGrad = "AdaptiveAvgPool2DGrad";
 class MIND_API AdaptiveAvgPool2DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdaptiveAvgPool2DGrad);
-  AdaptiveAvgPool2DGrad() : BaseOperator(kNameAdaptiveAvgPool2DGrad) { InitIOName({"x1_shape"}, {"grad_shape"}); }
+  AdaptiveAvgPool2DGrad() : BaseOperator(kNameAdaptiveAvgPool2DGrad) {
+    InitIOName({"input_grad", "orig_input_shape"}, {"output_grad"});
+  }
 };
 
 MIND_API abstract::AbstractBasePtr AdaptiveAvgPool2DGradInfer(const abstract::AnalysisEnginePtr &,
@@ -39,4 +41,4 @@ using PrimAdaptiveAvgPool2DGradPtr = std::shared_ptr<AdaptiveAvgPool2DGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_ADAPTIVE_AVG_POOL_2D_GRAD__H_

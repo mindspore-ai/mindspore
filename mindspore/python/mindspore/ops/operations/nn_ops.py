@@ -191,9 +191,9 @@ class AdaptiveAvgPool3D(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class AdaptiveAvgPool2DV1(Primitive):
+class AdaptiveAvgPool2D(Primitive):
     r"""
-    AdaptiveAvgPool2DV1 operation.
+    AdaptiveAvgPool2D operation.
 
     This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
     That is, for any input size, the size of the specified output is H x W.
@@ -202,7 +202,7 @@ class AdaptiveAvgPool2DV1(Primitive):
     The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
     H is the feature height, and W is the feature width.
 
-    For AdaptiveAvgPool2DV1:
+    For AdaptiveAvgPool2D:
 
     ..  math::
         \begin{align}
@@ -220,8 +220,8 @@ class AdaptiveAvgPool2DV1(Primitive):
           which means the output size is the same as the input.
 
     Inputs:
-        - **input_x** (Tensor) - The input of AdaptiveAvgPool2DV1, which is a 3D or 4D tensor,
-          with float16 or float32 data type.
+        - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
+          with float16 ,float32 or float64 data type.
 
     Outputs:
         Tensor, with the same type as the `input_x`.
@@ -239,19 +239,19 @@ class AdaptiveAvgPool2DV1(Primitive):
 
     Raises:
         TypeError: If `input_x` is not a tensor.
-        TypeError: If dtype of `input_x` is not float16 nor float32.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
         ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1((None, 2))
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((None, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
         [[[1.5 2.5]
@@ -264,7 +264,7 @@ class AdaptiveAvgPool2DV1(Primitive):
           [4.5 5.5]
           [7.5 8.5]]]
         >>> # case 2: output_size=2
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1(2)
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D(2)
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
         [[[3. 4.]
@@ -274,7 +274,7 @@ class AdaptiveAvgPool2DV1(Primitive):
          [[3. 4.]
           [6. 7.]]]
         >>> # case 3: output_size=(1, 2)
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2DV1((1, 2))
+        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((1, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
         [[[4.5 5.5]]
@@ -284,7 +284,7 @@ class AdaptiveAvgPool2DV1(Primitive):
 
     @prim_attr_register
     def __init__(self, output_size):
-        """Initialize AdaptiveAvgPool2DV1."""
+        """Initialize AdaptiveAvgPool2D."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("output_size", output_size, [int, tuple], self.name)
         if isinstance(output_size, tuple):
@@ -297,57 +297,6 @@ class AdaptiveAvgPool2DV1(Primitive):
 
         self.output_size = tuple(-1 if val is None else val for val in self.output_size)
         self.add_prim_attr('output_size', self.output_size)
-
-
-class AdaptiveAvgPool2D(AdaptiveAvgPool2DV1):
-    r"""
-    2D adaptive average pooling for temporal data.
-
-    Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
-
-    Supported Platforms:
-        ``GPU``
-
-    Examples:
-        >>> # case 1: output_size=(None, 2)
-        >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((None, 2))
-        >>> output = adaptive_avg_pool_2d(input_x)
-        >>> print(output)
-        [[[[1.5 2.5]
-           [4.5 5.5]
-           [7.5 8.5]]
-          [[1.5 2.5]
-           [4.5 5.5]
-           [7.5 8.5]]
-          [[1.5 2.5]
-           [4.5 5.5]
-           [7.5 8.5]]]]
-        >>> # case 2: output_size=2
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D(2)
-        >>> output = adaptive_avg_pool_2d(input_x)
-        >>> print(output)
-        [[[[3. 4.]
-           [6. 7.]]
-          [[3. 4.]
-           [6. 7.]]
-          [[3. 4.]
-           [6. 7.]]]]
-        >>> # case 3: output_size=(1, 2)
-        >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((1, 2))
-        >>> output = adaptive_avg_pool_2d(input_x)
-        >>> print(output)
-        [[[[4.5 5.5]]
-          [[4.5 5.5]]
-          [[4.5 5.5]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self, output_size):
-        """Initialize AdaptiveAvgPool2D."""
-        super(AdaptiveAvgPool2D, self).__init__(output_size)
 
 
 class AdaptiveMaxPool2D(Primitive):
