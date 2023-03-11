@@ -82,6 +82,9 @@ abstract::ShapePtr Dilation2DBackpropInputInferShape(const PrimitivePtr &primiti
   auto filter_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto out_backprop_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape) || IsDynamicRank(filter_shape) || IsDynamicRank(out_backprop_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
   // Check inputs' dimension
   const int64_t x_shape_size = 4;
   const int64_t filter_shape_size = 3;
@@ -92,6 +95,12 @@ abstract::ShapePtr Dilation2DBackpropInputInferShape(const PrimitivePtr &primiti
                                            filter_shape_size, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("out_backprop shape size", SizeToLong(out_backprop_shape.size()), kEqual,
                                            out_backprop_shape_size, primitive->name());
+
+  if (IsDynamicShape(x_shape) || IsDynamicShape(filter_shape) || IsDynamicShape(out_backprop_shape)) {
+    return std::make_shared<abstract::Shape>(
+      ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
+                   abstract::Shape::kShapeDimAny}));
+  }
   std::string data_format = GetValue<std::string>(primitive->GetAttr("format"));
   std::string pad_mode = GetValue<std::string>(primitive->GetAttr("pad_mode"));
   ShapeVector stride = GetValue<std::vector<int64_t>>(primitive->GetAttr("stride"));
