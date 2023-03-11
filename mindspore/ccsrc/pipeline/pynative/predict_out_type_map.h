@@ -92,6 +92,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ComputeAccidentalHits", kTupleTensor3},
                                                        {"ConfusionMulGrad", kTupleTensor2},
                                                        {"CorrectionMulGradReduce", kTupleTensor3},
+                                                       {"CudnnGRU", kTupleTensor4},
                                                        {"Cummax", kTupleTensor2},
                                                        {"Cummin", kTupleTensor2},
                                                        {"Custom", kAnyType},
