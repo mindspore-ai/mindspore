@@ -94,6 +94,7 @@ class AclPassImpl {
   AnfNodePtrList graph_outputs_;
   std::vector<size_t> tuple_idx_;
   std::vector<std::vector<int64_t>> graph_output_dims_;
+  bool is_ascend_quant_ = false;
 };
 }  // namespace opt
 }  // namespace mindspore

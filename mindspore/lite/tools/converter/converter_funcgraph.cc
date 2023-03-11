@@ -177,7 +177,9 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
     MS_LOG(ERROR) << "GetFuncGraphOutputNames failed.";
     return RET_ERROR;
   }
-  if (param->device.find("Ascend") != std::string::npos) {
+
+  // Ascend quant still need to use lite op.
+  if (param->device.find("Ascend") != std::string::npos && param->fullQuantParam.target_device != quant::ASCEND) {
     MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
     return RET_OK;
   }

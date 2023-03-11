@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_MATMUL_FUSION_MAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_MATMUL_FUSION_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_LAYERNORM_FUSION_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_LAYERNORM_FUSION_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/fusion/mat_mul_fusion.h"
+#include "ops/fusion/layer_norm_fusion.h"
 
 namespace mindspore {
 namespace lite {
-using mindspore::ops::kNameMatMulFusion;
+using mindspore::ops::kNameLayerNormFusion;
 
-class MatMulFusionMapper : public PrimitiveMapper {
+class LayerNormFusionMapper : public PrimitiveMapper {
  public:
-  MatMulFusionMapper() : PrimitiveMapper(kNameMatMulFusion) {}
-  ~MatMulFusionMapper() override = default;
+  LayerNormFusionMapper() : PrimitiveMapper(kNameLayerNormFusion) {}
+  ~LayerNormFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
-
- private:
-  STATUS QuantMapper(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_MATMUL_FUSION_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_LAYERNORM_FUSION_MAPPER_H_

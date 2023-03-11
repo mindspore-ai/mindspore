@@ -43,6 +43,7 @@ class RemoveRedundantOpPass : public Pass {
 
  private:
   int GetConstDataFromInputNode(const CNodePtr &cnode, lite::DataInfo *data_info);
+  int RemoveRedundantOp(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   bool is_train_model_ = false;
   bool remove_side_effect_ = false;
   std::set<AnfNodePtr> remove_cnode_;

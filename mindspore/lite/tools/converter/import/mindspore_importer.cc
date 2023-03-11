@@ -75,7 +75,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
   if (!param->train_model) {
     auto cast_op_adjust = std::make_shared<opt::CastOpAdjust>();
     MS_CHECK_TRUE_MSG(cast_op_adjust != nullptr, RET_NULL_PTR, "cast_op_adjust is nullptr.");
-    if (!cast_op_adjust->Run(func_graph, false)) {
+    if (!cast_op_adjust->Run(func_graph, param->device.find("Ascend") != std::string::npos)) {
       MS_LOG(ERROR) << "MindIr adjust cast operator failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;

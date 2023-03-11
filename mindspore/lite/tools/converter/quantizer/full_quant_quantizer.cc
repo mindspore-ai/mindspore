@@ -513,9 +513,9 @@ void FullQuantQuantizer::InitAscendConfig() {
   init_param_.weight_data_type_ = kNumberTypeInt8;
   init_param_.activation_symmetric_ = false;
   init_param_.weight_channel_symmetric_ = true;
-  init_param_.weight_layer_symmetric_ = false;
-  support_int8_ops_ = {prim::kPrimConv2DFusion};
-  per_channel_ops_ = {prim::kPrimConv2DFusion};
+  init_param_.weight_layer_symmetric_ = true;
+  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMulFusion};
+  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMulFusion};
 }
 
 void FullQuantQuantizer::InitQMinMax() {
@@ -557,9 +557,10 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
       continue;
     }
     //  Mark quantifiable nodes
-    auto is_support_op =
-      quant_strategy_->CanOpFullQuantized(cnode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
+    auto is_support_op = quant_strategy_->CanOpFullQuantized(func_graph->manager(), cnode, support_int8_ops_,
+                                                             skip_check_dtype_ops_, support_activation_);
     if (is_support_op) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " mark quant.";
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " add quantized op failed.";
@@ -597,9 +598,14 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
                                  init_param_.activation_q_min_, this->param_->fullQuantParam.activation_quant_method,
                                  this->param_->dataPreProcessParam, init_param_.activation_symmetric_);
   MSLITE_CHECK_PTR(calibrator_);
-  quant_strategy_ = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
-                                                    param_->commonQuantParam.min_quant_weight_channel,
-                                                    param_->commonQuantParam.skip_quant_node);
+  if (param_->fullQuantParam.target_device == ASCEND) {
+    quant_strategy_ = std::make_unique<QuantStrategy>(
+      param_->commonQuantParam.min_quant_weight_size, param_->commonQuantParam.min_quant_weight_channel,
+      param_->commonQuantParam.skip_quant_node, param_->fullQuantParam.target_device);
+  } else {
+    quant_strategy_ = std::make_unique<QuantStrategy>(0, 0, param_->commonQuantParam.skip_quant_node);
+  }
+
   CHECK_NULL_RETURN(quant_strategy_);
   auto ret = MarkQuantNode(func_graph);
   if (ret != RET_OK) {

@@ -189,36 +189,6 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
   return RET_OK;
 }
 
-int ConvertFp16ToFp32(const FuncGraphPtr &old_graph) {
-  auto cnodes = old_graph->GetOrderedCnodes();
-  for (auto &cnode : cnodes) {
-    for (size_t i = kPrimOffset; i < cnode->size(); ++i) {
-      auto input = cnode->input(i);
-      if (!input->isa<Parameter>() || !input->cast<ParameterPtr>()->has_default()) {
-        continue;
-      }
-      ParameterPtr param_node;
-      tensor::TensorPtr tensor_info;
-      GetParameterAndTensor(input, &param_node, &tensor_info);
-      CHECK_NULL_RETURN(tensor_info);
-      CHECK_NULL_RETURN(param_node);
-      if (tensor_info->data_type() == kNumberTypeFloat16) {
-        MS_LOG(INFO) << "convert " << input->fullname_with_scope() << " from fp16 to fp32.";
-        auto data = static_cast<float16 *>(tensor_info->data_c());
-        std::vector<float> fp32_data(tensor_info->DataSize());
-        for (size_t j = 0; j < tensor_info->DataSize(); j++) {
-          fp32_data[j] = mindspore::Float16::ToFloat32(data[j]);
-        }
-        mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
-          kNumberTypeFloat32, tensor_info->shape_c(), fp32_data.data(), fp32_data.size() * sizeof(float));
-        param_node->set_default_param(tensor_ptr);
-        param_node->set_abstract(tensor_ptr->ToAbstract());
-      }
-    }
-  }
-  return RET_OK;
-}
-
 int ConvertValueNodeToParameter(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
