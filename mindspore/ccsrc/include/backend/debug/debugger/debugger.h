@@ -23,30 +23,34 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "google/protobuf/repeated_field.h"
+#include "include/backend/debug/tensor_data.h"
 #include "include/backend/kernel_graph.h"
-#include "debug/debugger/grpc_client.h"
-#include "debug/debug_services.h"
-#include "runtime/device/ms_device_shape_transfer.h"
 #include "include/backend/device_address.h"
 #include "include/backend/visible.h"
 
-using debugger::Chunk;
-using debugger::DataType;
-using debugger::EventReply;
-using debugger::GraphProto;
-using debugger::ModelProto;
-using debugger::Statistics;
-using debugger::TensorProto;
-using debugger::WatchCondition;
-using debugger::WatchCondition_Parameter;
-using debugger::WatchNode;
-using debugger::WatchpointHit;
-using mindspore::kernel::KernelLaunchInfo;
+namespace debugger {
+class Chunk;
+class EventReply;
+class GraphProto;
+class ModelProto;
+class Statistics;
+class TensorProto;
+class WatchCondition;
+class WatchCondition_Parameter;
+class WatchNode;
+class WatchpointHit;
+class TensorBase;
+class TensorSummary;
+enum DataType : int;
+}  // namespace debugger
 
 template <class T>
 using ProtoVector = google::protobuf::RepeatedPtrField<T>;
 
 namespace mindspore {
+class GrpcClient;
+class DebugServices;
 // different types of command received by debugger
 // need to keep sync with client-side proto and server-side proto
 enum class DebuggerCommand {
@@ -60,13 +64,7 @@ enum class DebuggerCommand {
 
 class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
  public:
-  static std::shared_ptr<Debugger> GetInstance() {
-    std::lock_guard<std::mutex> i_lock(instance_lock_);
-    if (debugger_ == nullptr) {
-      debugger_ = std::shared_ptr<Debugger>(new (std::nothrow) Debugger());
-    }
-    return debugger_;
-  }
+  static std::shared_ptr<Debugger> GetInstance();
 
   // deconstructor
   ~Debugger() = default;
@@ -96,8 +94,6 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
-
-  bool DumpDataEnabledIteration() const;
 
   static uint32_t GetRankID();
 
@@ -212,15 +208,15 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   void CheckDatasetGraph();
 
   // serialize graph and get proto
-  GraphProto GetGraphProto(const KernelGraphPtr &graph_ptr) const;
+  debugger::GraphProto GetGraphProto(const KernelGraphPtr &graph_ptr) const;
 
   // send heartbeat message to UI once per 30 second by default
   void SendHeartbeat(int32_t period);
 
   // send graph and enter command wait loop
-  void SendGraphAndSuspend(const GraphProto &graph_proto);
+  void SendGraphAndSuspend(const debugger::GraphProto &graph_proto);
 
-  void SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list);
+  void SendMultiGraphsAndSuspend(const std::list<debugger::GraphProto> &graph_proto_list);
 
   // send multi_graphs and clear the graph_proto_list_
   void SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr);
@@ -231,43 +227,43 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   void CommandLoop();
 
   // Process the RunCMD
-  void ProcessRunCMD(const EventReply &reply);
+  void ProcessRunCMD(const debugger::EventReply &reply);
   // Process the KSetCMD
-  void ProcessKSetCMD(const EventReply &reply);
+  void ProcessKSetCMD(const debugger::EventReply &reply);
   // Process the KViewCMD
-  void ProcessKViewCMD(const EventReply &reply);
+  void ProcessKViewCMD(const debugger::EventReply &reply);
   // ViewCMD base level
-  void ViewBaseLevel(const EventReply &reply);
+  void ViewBaseLevel(const debugger::EventReply &reply);
   // ViewCMD statistics level
-  void ViewStatLevel(const EventReply &reply);
+  void ViewStatLevel(const debugger::EventReply &reply);
   // ViewCMD value level
-  void ViewValueLevel(const EventReply &reply);
+  void ViewValueLevel(const debugger::EventReply &reply);
   // set what nodes and conditions to watch
-  void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
-                     const ProtoVector<WatchCondition_Parameter> &parameters);
+  void SetWatchpoint(const ProtoVector<debugger::WatchNode> &nodes, const debugger::WatchCondition &condition,
+                     const int32_t id, const ProtoVector<debugger::WatchCondition_Parameter> &parameters);
 
   // remove watchpoint with id
   void RemoveWatchpoint(const int32_t id);
 
   // load tensor for view command
-  std::list<TensorProto> LoadTensors(const ProtoVector<TensorProto> &tensors) const;
+  std::list<debugger::TensorProto> LoadTensors(const ProtoVector<debugger::TensorProto> &tensors) const;
 
   // load tensor base for view command
-  std::list<TensorBase> LoadTensorsBase(const ProtoVector<TensorProto> &tensors) const;
+  std::list<debugger::TensorBase> LoadTensorsBase(const ProtoVector<debugger::TensorProto> &tensors) const;
 
   // load tensor statistics for view command
-  std::list<TensorSummary> LoadTensorsStat(const ProtoVector<TensorProto> &tensors) const;
+  std::list<debugger::TensorSummary> LoadTensorsStat(const ProtoVector<debugger::TensorProto> &tensors) const;
 
   // terminate training process
   void Exit(bool exit_success = false);
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
-  std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string(),
-                                            const CNodePtr &kernel = nullptr, bool recheck = false);
+  std::list<debugger::WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string(),
+                                                      const CNodePtr &kernel = nullptr, bool recheck = false);
 
   // send watchpoints that hit
-  void SendWatchpoints(const std::list<WatchpointHit> &points);
+  void SendWatchpoints(const std::list<debugger::WatchpointHit> &points);
 
   // Check if the port is valid
   bool CheckPort(const std::string &port) const;
@@ -305,7 +301,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   bool initial_suspend_;
   bool enable_heartbeat_;
 
-  std::list<GraphProto> graph_proto_list_;
+  std::list<debugger::GraphProto> graph_proto_list_;
   std::list<KernelGraphPtr> graph_ptr_list_;
   // The vector of all the kernel graph pointers for the root graph that will execute in the current step.
   std::vector<KernelGraphPtr> graph_ptr_step_vec_;
@@ -327,28 +323,6 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   bool enable_debugger_called_;
   std::string version_;
 };
-
 using DebuggerPtr = std::shared_ptr<Debugger>;
-// get debugger ModelProto
-ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph);
-
-// for getting proto DataType from Type of Tensor
-DataType GetDebuggerNumberDataType(const TypePtr &type);
-
-// process reply and command type
-DebuggerCommand GetCommand(const EventReply &reply);
-
-// parse other data out of EventReply
-ProtoVector<WatchCondition_Parameter> GetParameters(const EventReply &reply);
-ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply);
-std::string GetNodeName(const EventReply &reply);
-std::string GetRunLevel(const EventReply &reply);
-WatchCondition GetWatchcondition(const EventReply &reply);
-int32_t GetWatchpointID(const EventReply &reply);
-bool GetWatchpointDelete(const EventReply &reply);
-ProtoVector<TensorProto> GetTensors(const EventReply &reply);
-bool GetMiVersionMatched(const EventReply &reply);
-// get the full name of a tensor, which is the name used in TensorLoader
-std::string GetTensorFullName(const TensorProto &tensor);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_H_

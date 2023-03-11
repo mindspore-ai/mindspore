@@ -72,13 +72,13 @@
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "distributed/init.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "kernel/akg/akg_kernel_build_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "abstract/abstract_value.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)

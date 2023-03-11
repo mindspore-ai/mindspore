@@ -61,9 +61,8 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
-#else
-#include "debug/debugger/proto_exporter_stub.h"
 #endif
+#include "include/backend/debug/debugger/proto_exporter.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_exec_order_recorder.h"
 #include "include/common/debug/rdr/recorder_manager.h"
@@ -71,8 +70,8 @@
 #include "runtime/hardware/device_context_manager.h"
 #endif
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #endif
 
 namespace mindspore {

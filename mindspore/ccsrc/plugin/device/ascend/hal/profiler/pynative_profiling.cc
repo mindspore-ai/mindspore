@@ -19,7 +19,7 @@
 #include <memory>
 #include <algorithm>
 #include "include/common/utils/utils.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "include/common/pybind_api/api_register.h"
 #include "mindspore/core/utils/file_utils.h"
 

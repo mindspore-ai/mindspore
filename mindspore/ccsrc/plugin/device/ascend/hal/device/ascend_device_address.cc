@@ -36,7 +36,7 @@
 #include "include/common/utils/utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"

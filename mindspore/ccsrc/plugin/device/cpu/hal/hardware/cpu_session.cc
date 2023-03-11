@@ -44,7 +44,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "kernel/graph_kernel_info.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/util.h"

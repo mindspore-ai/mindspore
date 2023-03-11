@@ -19,14 +19,15 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #include "kernel/kernel.h"
 #include "runtime/hardware/device_context.h"
+#include "proto/debug_grpc.grpc.pb.h"
+
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchInfo;
 
 namespace mindspore {
-
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
@@ -45,5 +46,21 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 void LoadDataForDebugger(const KernelGraphPtr &graph_ptr);
 
 void SuperKernelE2eDump(const KernelGraphPtr &graph);
+
+// process reply and command type
+DebuggerCommand GetCommand(const debugger::EventReply &reply);
+
+// parse other data out of EventReply
+ProtoVector<debugger::WatchCondition_Parameter> GetParameters(const debugger::EventReply &reply);
+ProtoVector<debugger::WatchNode> GetWatchnodes(const debugger::EventReply &reply);
+std::string GetNodeName(const debugger::EventReply &reply);
+std::string GetRunLevel(const debugger::EventReply &reply);
+debugger::WatchCondition GetWatchcondition(const debugger::EventReply &reply);
+int32_t GetWatchpointID(const debugger::EventReply &reply);
+bool GetWatchpointDelete(const debugger::EventReply &reply);
+ProtoVector<debugger::TensorProto> GetTensors(const debugger::EventReply &reply);
+bool GetMiVersionMatched(const debugger::EventReply &reply);
+// get the full name of a tensor, which is the name used in TensorLoader
+std::string GetTensorFullName(const debugger::TensorProto &tensor);
 }  // namespace mindspore
 #endif

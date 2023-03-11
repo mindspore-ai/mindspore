@@ -28,27 +28,6 @@
 namespace mindspore {
 class Debugger;
 class TensorData;
-class CsvWriter {
- public:
-  static CsvWriter &GetInstance() {
-    static CsvWriter instance = CsvWriter();
-    return instance;
-  }
-
-  CsvWriter() = default;
-  ~CsvWriter();
-  DISABLE_COPY_AND_ASSIGN(CsvWriter)
-  bool OpenFile(const std::string &path, const std::string &header = "");
-  void CloseFile() noexcept;
-  template <typename T>
-  void WriteToCsv(const T &val, bool end_line = false);
-
- private:
-  const std::string kSeparator = ",";
-  const std::string kEndLine = "\n";
-  std::ofstream file_;
-  std::string file_path_str_ = "";
-};
 
 class BACKEND_EXPORT TensorStatDump {
  public:

@@ -24,7 +24,7 @@
 #include "utils/ms_context.h"
 #include "nlohmann/json.hpp"
 #include "mindspore/core/ops/core_ops.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace device {

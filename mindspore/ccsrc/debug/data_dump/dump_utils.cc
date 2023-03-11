@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #include <dirent.h>
 #ifdef ENABLE_DEBUGGER
 #include <sys/stat.h>
@@ -27,7 +27,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/debug/anf_ir_utils.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -39,6 +39,8 @@
 using mindspore::runtime::DeviceTensorStore;
 
 namespace mindspore {
+static std::vector<std::string> g_overflow_operators;
+
 uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -48,14 +50,6 @@ uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
   return kernel_runtime->device_id();
 }
 
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU and CPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Generate dir path to dump data. It will be in these formats:
- * 1) tensor/statistic: /dump_path/rank_{rank_id}/{net_name}/{graph_id}/{iter_num}.
- * 2) constant data: /dump_path/rank_{rank_id}/{net_name}/{graph_id}/constants/.
- */
 std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id, bool is_cst) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string net_name = dump_json_parser.net_name();
@@ -85,12 +79,6 @@ void GetFileKernelName(NotNull<std::string *> kernel_name) {
   }
 }
 
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU and CPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Get the actual tensor shape for dumping based on trans_flag option in configuration json file.
- */
 void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> const int_shapes, bool trans_flag) {
   if (trans_flag) {
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
@@ -111,18 +99,12 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
   bool trans_flag = dump_json_parser.trans_flag();
   auto ref_node = device_addr->GetNodeIndex().first;
   MS_EXCEPTION_IF_NULL(ref_node);
-  GetDumpIntShape(ref_node, PARAMETER_OUTPUT_INDEX, int_shapes, trans_flag);
-  *host_type = common::AnfAlgo::GetOutputInferDataType(ref_node, PARAMETER_OUTPUT_INDEX);
-  *device_type = AnfAlgo::GetOutputDeviceDataType(ref_node, PARAMETER_OUTPUT_INDEX);
+  GetDumpIntShape(ref_node, kParameterOutputIndex, int_shapes, trans_flag);
+  *host_type = common::AnfAlgo::GetOutputInferDataType(ref_node, kParameterOutputIndex);
+  *device_type = AnfAlgo::GetOutputDeviceDataType(ref_node, kParameterOutputIndex);
   return device_addr;
 }
 
-/*
- * Feature group: Dump.
- * Target device group: Ascend, CPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Dump the data in memory into file path.
- */
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag) {
   auto format = kOpFormat_DEFAULT;
@@ -133,12 +115,6 @@ void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &ad
   }
 }
 
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU, CPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Remove scope from operator name. The default separator is "--".
- */
 std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator) {
   std::size_t found = fullname_with_scope.rfind(separator);
   std::string op_name;
@@ -148,13 +124,6 @@ std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const 
   return op_name;
 }
 
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU, CPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Dump string content into file path. Current purpose is to save operator overflow information in json
- * file in ascend a+m dump mode.
- */
 void DumpToFile(const std::string &file_name, const std::string &dump_str) {
   if (dump_str.empty()) {
     MS_LOG(ERROR) << "Failed to dump empty tensor data.";
@@ -275,7 +244,7 @@ void SaveOverflowOperator(const std::string &iterator, const std::string &dump_r
   const std::string overflow_file_prefix = "Opdebug.Node_OpDebug.";
   const std::string cur_step_overflow_path = dump_rank_path + "/" + overflow_dump_dir + "/" + iterator;
   DIR *d = opendir(cur_step_overflow_path.c_str());
-  overflowOperators.clear();
+  g_overflow_operators.clear();
   if (d == nullptr) {
     MS_LOG(INFO) << "Overflow file directory does not exist!";
   } else {
@@ -294,7 +263,7 @@ void SaveOverflowOperator(const std::string &iterator, const std::string &dump_r
           dots_count++;
         }
         std::string stream_task_name = filename_substr.substr(first_dot, third_dot + 1);
-        overflowOperators.emplace_back(stream_task_name);
+        g_overflow_operators.emplace_back(stream_task_name);
       }
     }
     (void)closedir(d);
@@ -340,7 +309,7 @@ void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id) {
                    filename_splits.at(split_len - one_dots_num);
       }
       bool is_exist =
-        std::any_of(std::begin(overflowOperators), std::end(overflowOperators),
+        std::any_of(std::begin(g_overflow_operators), std::end(g_overflow_operators),
                     [&](std::string stream_task_str) { return filename.find(stream_task_str) != std::string::npos; });
       if (!is_exist) {
         auto ret = remove((overflow_operator_dump_path + "/" + tmp_filename).c_str());

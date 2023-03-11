@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 #include <map>
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "acl/acl_prof.h"
 #include "include/backend/kernel_graph.h"
 #include "kernel/kernel.h"

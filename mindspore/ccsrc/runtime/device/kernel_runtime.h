@@ -26,7 +26,7 @@
 #include "ir/tensor.h"
 #include "include/common/utils/convert_utils.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"

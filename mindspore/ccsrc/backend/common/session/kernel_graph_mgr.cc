@@ -26,8 +26,8 @@
 #include "utils/trace_base.h"
 #include "ir/func_graph_cloner.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #endif
 
 namespace mindspore {

@@ -22,9 +22,9 @@
 #include <map>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "backend/common/session/session_basic.h"
-#include "debug/data_dump/e2e_dump.h"
-#include "debug/debugger/debugger.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/anfalgo.h"
@@ -37,6 +37,20 @@
 namespace mindspore {
 using Adx::DumpChunk;
 namespace ascend {
+struct dump_data_t {
+  std::string dump_file_path;
+  char *data_ptr;
+  mindspore::TypeId data_type;
+  std::string format;
+  ShapeVector device_shape;
+  ShapeVector host_shape;
+  size_t data_size;
+  int32_t sub_format;
+  std::string in_out_str;
+  uint32_t slot;
+  std::shared_ptr<tensor::Tensor> trans_buf{nullptr};
+};
+
 class AscendAsyncDumpManager {
  public:
   static AscendAsyncDumpManager &GetInstance();

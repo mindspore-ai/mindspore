@@ -50,7 +50,7 @@
 #include "pybind_api/gil_scoped_long_running.h"
 
 #ifndef ENABLE_SECURITY
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #endif
 
 namespace py = pybind11;

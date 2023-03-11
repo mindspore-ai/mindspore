@@ -25,9 +25,9 @@
 #include <utility>
 #include <deque>
 #include <algorithm>
-#include "debug/tensor_data.h"
-#ifdef ONLINE_DBG_MODE
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/tensor_data.h"
+#ifndef OFFLINE_DBG_MODE
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 namespace mindspore {
 class TensorLoader {
@@ -235,7 +235,7 @@ class TensorLoader {
 
   void SetMemTotal(uint64_t total_mem_size) { this->mem_total_ = total_mem_size; }
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   /*
    * Feature group: Dump.
    * Target device group: GPU, Ascend.

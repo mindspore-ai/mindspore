@@ -24,7 +24,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace profiler {

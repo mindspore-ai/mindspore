@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include <chrono>
 #include <cmath>
 #include "utils/log_adapter.h"

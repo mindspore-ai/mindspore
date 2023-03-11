@@ -21,14 +21,14 @@
 #include <vector>
 
 #include "include/common/debug/common.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/debugger/proto_exporter.h"
 #include "ir/graph_utils.h"
-#include "proto/debug_graph.pb.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
+#include "proto/debug_graph.pb.h"
 
 namespace mindspore {
-enum LocDebugDumpMode { kDebugOff = 0, kDebugTopStack = 1, kDebugWholeStack = 2 };
 class DebuggerProtoExporter {
  public:
   DebuggerProtoExporter() {}
@@ -67,9 +67,10 @@ class DebuggerProtoExporter {
 
   debugger::ModelProto model_;
 };
-BACKEND_EXPORT void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix,
-                                           const std::string &target_dir,
-                                           LocDebugDumpMode dump_location = kDebugWholeStack);
-BACKEND_EXPORT void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir);
+
+// get debugger ModelProto
+debugger::ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph);
+// for getting proto DataType from Type of Tensor
+debugger::DataType GetDebuggerNumberDataType(const TypePtr &type);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_H_

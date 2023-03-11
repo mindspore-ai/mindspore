@@ -43,10 +43,10 @@
 #include "distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"

@@ -30,11 +30,11 @@
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "plugin/device/ascend/hal/device/dump/dumper_base.h"
 #endif
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 
 namespace mindspore {

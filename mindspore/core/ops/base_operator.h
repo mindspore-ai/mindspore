@@ -76,6 +76,7 @@ class MIND_API OperatorRegisterHelper {
  public:
   OperatorRegisterHelper(const std::string &kname, const OperatorDefineFunc &fn) {
     OperatorRegister::GetInstance().SetOperatorMap(kname, fn);
+    (void)id_;  // make compiler happy on macos
   }
 
   ~OperatorRegisterHelper() = default;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/debugger/proto_exporter_stub.h"
+#include "include/backend/debug/debugger/proto_exporter.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,

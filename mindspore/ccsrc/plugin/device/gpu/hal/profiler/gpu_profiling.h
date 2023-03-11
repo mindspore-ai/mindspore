@@ -27,8 +27,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "profiler/device/profiling.h"
-#include "profiler/device/data_saver.h"
+#include "include/backend/debug/profiler/profiling.h"
+#include "include/backend/debug/profiler/data_saver.h"
 #include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 
 namespace mindspore {

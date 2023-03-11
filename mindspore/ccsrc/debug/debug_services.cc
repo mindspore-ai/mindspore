@@ -29,9 +29,9 @@
 #include <regex>
 #include <iomanip>
 #include "pybind11/stl.h"
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
 #include "include/common/debug/common.h"
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/anfalgo.h"
 #endif
@@ -39,6 +39,7 @@
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace {
@@ -413,7 +414,7 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
 }
 #endif
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
 /*
  * Feature group: Online debugger.
  * Target device group: Ascend, GPU.
@@ -701,7 +702,7 @@ void DebugServices::SortWatchpointsInfo(std::vector<std::future<void>> *const te
     (*tensor_future_vec)[i].wait();
     (*tensor_future_vec)[i].get();
     for (unsigned int j = 0; j < (chunk_data->chunk_exec_orders)[i].size(); j++) {
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
       // if the execution order is repeated,inserts the new one before the others with same execution order.
       std::vector<int>::iterator iter =
         std::lower_bound(exec_order->begin(), exec_order->end(), (chunk_data->chunk_exec_orders)[i][j]);
@@ -1757,7 +1758,7 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
     if (std::get<1>(result) == nullptr) {
       continue;
     }
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
     if (!CompareCurrentRootGraph(std::get<1>(result)->GetRootGraphId())) {
       MS_LOG(INFO) << "tensor root_graph_id: " << std::get<1>(result)->GetRootGraphId()
                    << " is different from cur_root_graph_id: " << Debugger::GetInstance()->GetCurrentRootGraphId()
@@ -1782,7 +1783,7 @@ void DebugServices::SearchNodesTensors(const std::vector<std::string> &name,
   tensor_loader_->SearchTensors(name, result_list);
 }
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
 bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel) const {
   bool ret = false;
   for (auto w_table_item : watchpoint_table_) {
@@ -1827,7 +1828,7 @@ std::shared_ptr<TensorData> DebugServices::GetTensor(const std::string &tensor_n
 
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
 bool DebugServices::DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const {
   return tensor_loader_->DumpTensorToFile(filepath, tensor_name, slot);
 }
@@ -1881,7 +1882,7 @@ void DebugServices::ResetLoadedTensors() {
   overflow_ops_.clear();
 }
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::shared_ptr<TensorData>> result;
@@ -1902,7 +1903,7 @@ std::string GetOnlineOpOverflowDir() {
   // only called for online debugger mode
   // get operator overflow directory for current iteration
   std::string overflow_bin_path = "";
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   if (DumpJsonParser::GetInstance().path().empty()) {
     MS_LOG(INFO) << "Dump config is not set.";
     return "";
@@ -2028,7 +2029,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   }
   std::string overflow_bin_path = "";
   std::string tensors_path = "";
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   overflow_bin_path = GetOnlineOpOverflowDir();
   tensors_path = overflow_bin_path;
 #else

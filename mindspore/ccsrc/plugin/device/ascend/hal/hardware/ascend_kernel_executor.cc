@@ -31,19 +31,19 @@
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
 #include "toolchain/adx_datadump_callback.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "utils/anf_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
-#include "debug/data_dump/overflow_dumper.h"
+#include "include/backend/debug/data_dump/overflow_dumper.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;

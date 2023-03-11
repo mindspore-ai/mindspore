@@ -24,7 +24,7 @@
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 
 using TaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TaskInfo>;

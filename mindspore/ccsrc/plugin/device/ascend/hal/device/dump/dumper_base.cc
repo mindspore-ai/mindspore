@@ -22,7 +22,7 @@
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "proto/op_mapping_info.pb.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "runtime/dev.h"

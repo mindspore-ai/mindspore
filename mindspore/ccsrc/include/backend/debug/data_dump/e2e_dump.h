@@ -25,10 +25,10 @@
 
 #include "include/backend/kernel_graph.h"
 #include "include/backend/device_address.h"
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 #include "include/backend/visible.h"
 
@@ -36,20 +36,6 @@
 class Debugger;
 #endif
 namespace mindspore {
-struct dump_data_t {
-  std::string dump_file_path;
-  char *data_ptr;
-  mindspore::TypeId data_type;
-  std::string format;
-  ShapeVector device_shape;
-  ShapeVector host_shape;
-  size_t data_size;
-  int32_t sub_format;
-  std::string in_out_str;
-  uint32_t slot;
-  std::shared_ptr<tensor::Tensor> trans_buf{nullptr};
-};
-
 class BACKEND_EXPORT E2eDump {
  public:
   E2eDump() = default;

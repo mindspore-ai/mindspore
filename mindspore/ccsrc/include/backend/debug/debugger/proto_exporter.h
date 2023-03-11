@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PROTO_EXPORTER_STUB_H
-#define MINDSPORE_PROTO_EXPORTER_STUB_H
+#ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_DEBUG_DEBUGGER_PROTO_EXPORTER_H
+#define MINDSPORE_CCSRC_INCLUDE_BACKEND_DEBUG_DEBUGGER_PROTO_EXPORTER_H
 
 #include <string>
 #include "utils/symbolic.h"
@@ -27,4 +27,4 @@ BACKEND_EXPORT void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const
                                            LocDebugDumpMode dump_location = kDebugWholeStack);
 BACKEND_EXPORT void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir);
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_MINDSPORE_PROTO_EXPORTER_STUB_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_DEBUG_DEBUGGER_PROTO_EXPORTER_H

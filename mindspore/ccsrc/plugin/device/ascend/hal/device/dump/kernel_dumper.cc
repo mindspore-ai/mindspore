@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include <algorithm>
 #include <utility>
+#include "google/protobuf/util/json_util.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #include "include/common/utils/anfalgo.h"
 #include "graph/def_types.h"
@@ -34,7 +35,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #endif
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 
 namespace mindspore {

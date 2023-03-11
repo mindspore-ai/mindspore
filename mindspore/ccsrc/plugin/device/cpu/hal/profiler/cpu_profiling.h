@@ -25,8 +25,8 @@
 #include <utility>
 #include <vector>
 #include <optional>
-#include "profiler/device/profiling.h"
-#include "profiler/device/data_saver.h"
+#include "include/backend/debug/profiler/profiling.h"
+#include "include/backend/debug/profiler/data_saver.h"
 #include "actor/actormgr.h"
 #include "include/backend/kernel_graph.h"
 
