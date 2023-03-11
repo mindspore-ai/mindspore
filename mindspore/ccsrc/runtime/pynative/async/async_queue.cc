@@ -73,6 +73,9 @@ void AsyncQueue::WorkerLoop() {
         task->SetException(e_ptr);
         while (!tasks_.empty()) {
           auto &t = tasks_.front();
+          if (t->task_type() == kExitTask) {
+            break;
+          }
           t->SetException(e_ptr);
           tasks_.pop();
         }
@@ -159,6 +162,7 @@ void AsyncQueue::WorkerJoin() {
       }
       worker_->join();
       MS_LOG(DEBUG) << "Worker join finish";
+      MsException::Instance().CheckException();
     }
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "WorkerJoin failed: " << e.what();
