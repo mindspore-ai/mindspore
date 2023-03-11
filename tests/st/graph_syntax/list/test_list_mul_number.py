@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,28 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test_list_extend """
+""" test list mul number """
+
 import pytest
-import numpy as np
-import mindspore as ms
+from mindspore import context, jit
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_list_extend_tensor():
+def test_list_mul_non_integer_number():
     """
-    Feature: list extend.
-    Description: support list extend.
-    Expectation: No exception.
+    Feature: list multiple non-integet number.
+    Description: list can only multiply integet number.
+    Expectation: Raise TypeError.
     """
-    @ms.jit
-    def func():
-        x = []
-        y = ms.Tensor([[1, 2], [3, 4]])
-        x.extend(y)
-        return x
-
-    out = func()
-    assert np.all(out[0].asnumpy() == ms.Tensor([1, 2]).asnumpy())
-    assert np.all(out[1].asnumpy() == ms.Tensor([3, 4]).asnumpy())
+    @jit
+    def foo():
+        x = [1, 2, 3, 4]
+        return x * 2.0
+    with pytest.raises(TypeError) as error_info:
+        foo()
+    assert "can't multiply sequence by non-int of type" in str(error_info)

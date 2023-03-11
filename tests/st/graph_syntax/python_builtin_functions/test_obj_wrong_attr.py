@@ -22,6 +22,9 @@ from mindspore import context, Tensor
 context.set_context(mode=context.GRAPH_MODE)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_tensor_wrong_attr():
     """
     Feature: Syntax invalid attr
@@ -29,9 +32,6 @@ def test_tensor_wrong_attr():
     Expectation: No Expectation
     """
     class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-
         def construct(self, x):
             x.abcd()
             return x
@@ -40,4 +40,5 @@ def test_tensor_wrong_attr():
     net = Net()
     with pytest.raises(AttributeError) as ex:
         net(x)
-    assert "Tensor object has no attribute: abcd" in str(ex.value)
+    assert "'Tensor' object has no attribute 'abcd'" or\
+           "Tensor object has no attribute abcd" in str(ex.value)

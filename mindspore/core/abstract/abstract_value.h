@@ -1244,6 +1244,8 @@ class MS_CORE_API AbstractNone final : public AbstractBase {
 
   std::string ToString() const override;
 
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+
  protected:
   ValuePtr RealBuildValue() const override;
 };

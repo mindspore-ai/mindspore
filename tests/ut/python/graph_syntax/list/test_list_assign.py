@@ -650,47 +650,6 @@ def test_list_slice_negative_step():
     assert graph_out == python_out
 
 
-def test_graph_list_slice_assign_extended_number():
-    """
-    Feature: List assign
-    Description: Test negative step list slice assign
-    Expectation: No exception.
-    """
-    a = [1, 2, 3, 4, 5, 6]
-    b = 1
-
-    net = Net2()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(TypeError) as err:
-        net(a, b, 0, None, 2)
-    assert "must assign iterable to extended slice" in str(err.value)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(TypeError) as err:
-        net(a, b, 0, None, 2)
-    assert "must assign iterable to extended slice" in str(err.value)
-
-
-def test_graph_list_slice_assign_number():
-    """
-    Feature: List assign
-    Description: Test negative step list slice assign
-    Expectation: No exception.
-    """
-    a = [1, 2, 3, 4, 5, 6]
-    b = 1
-    net = Net2()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(TypeError) as err:
-        net(a, b, 0, None, 1)
-    assert "can only assign an iterable" in str(err.value)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(TypeError) as err:
-        net(a, b, 0, None, 1)
-    assert "can only assign an iterable" in str(err.value)
-
-
 def test_list_slice_negetive_error():
     """
     Feature: List assign

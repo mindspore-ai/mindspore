@@ -61,10 +61,11 @@ def test_joinedstr_basic_variable_ascend():
             res = f"res: {x}"
         return res
 
-    with pytest.raises(RuntimeError, match="Illegal input dtype: String"):
+    with pytest.raises(RuntimeError) as v:
         input_x = Tensor(np.array([1, 2, 3, 4, 5]))
         out = joined_net(input_x, input_x)
         assert out == "x: [1, 2, 3, 4, 5]"
+    assert "Illegal input dtype: String" in str(v.value)
 
 
 @pytest.mark.level0
