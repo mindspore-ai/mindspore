@@ -37,7 +37,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t LABEL_NUM = 52;
 constexpr size_t ELL_VAL = 52;
-constexpr int BIG_C_BEGIN = 26;
+constexpr int LOWER_CASE_BEGIN = 26;
 constexpr char ELLIPSIS = '.';
 constexpr int SPLIT_DIM = 4;
 constexpr int SHAPE_WORKSPACE_NUM = 3;
@@ -66,9 +66,9 @@ class EinsumHelper {
 
   int64_t char_to_index(const char cur_char) {
     if (cur_char <= 'z' && cur_char >= 'a') {
-      return static_cast<int64_t>(cur_char - 'a');
+      return static_cast<int64_t>(cur_char - 'a' + LOWER_CASE_BEGIN);
     }
-    return static_cast<int64_t>(cur_char - 'A' + BIG_C_BEGIN);
+    return static_cast<int64_t>(cur_char - 'A');
   }
   size_t GetShapeSize(const std::vector<int64_t> &shape) {
     size_t size = sizeof(T);

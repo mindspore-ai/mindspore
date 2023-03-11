@@ -47,12 +47,12 @@ namespace {
 constexpr int kEinsumEllVal = 52;
 constexpr int kEinsumLableNum = 52;
 constexpr int kEinsumEllLen = 3;
+constexpr int kLowerCaseBegin = 26;
 static int64_t char_to_index(char cur_char) {
   if (cur_char <= 'z' && cur_char >= 'a') {
-    return static_cast<int64_t>(cur_char - 'a');
+    return static_cast<int64_t>(cur_char - 'a' + kLowerCaseBegin);
   }
-  constexpr int kBigCBegin = 26;
-  return static_cast<int64_t>(cur_char - 'A' + kBigCBegin);
+  return static_cast<int64_t>(cur_char - 'A');
 }
 
 static void seg_left_equation(const std::string &left_equation, const std::string &prim_name,
