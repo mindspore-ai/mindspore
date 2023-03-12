@@ -33,12 +33,23 @@
 #include "ops/mod.h"
 #include "ops/add.h"
 #include "ops/fusion/add_fusion.h"
+#include "ops/mul.h"
 #include "ops/fusion/mul_fusion.h"
+#include "ops/bias_add.h"
+#include "ops/eltwise.h"
+#include "ops/div.h"
+#include "ops/fusion/div_fusion.h"
+#include "ops/sub.h"
 #include "ops/fusion/sub_fusion.h"
 
 using mindspore::ops::kActivationType;
+using mindspore::ops::kMode;
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAddFusion;
+using mindspore::ops::kNameBiasAdd;
+using mindspore::ops::kNameDiv;
+using mindspore::ops::kNameDivFusion;
+using mindspore::ops::kNameEltwise;
 using mindspore::ops::kNameEqual;
 using mindspore::ops::kNameFloorDiv;
 using mindspore::ops::kNameFloorMod;
@@ -51,12 +62,18 @@ using mindspore::ops::kNameLogicalOr;
 using mindspore::ops::kNameMaximum;
 using mindspore::ops::kNameMinimum;
 using mindspore::ops::kNameMod;
+using mindspore::ops::kNameMul;
+using mindspore::ops::kNameMulFusion;
 using mindspore::ops::kNameNotEqual;
 using mindspore::ops::kNameRealDiv;
 using mindspore::ops::kNameSquaredDifference;
+using mindspore::ops::kNameSub;
 using mindspore::ops::kNameSubFusion;
 
 using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_BiasAdd;
+using mindspore::schema::PrimitiveType_DivFusion;
+using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
 using mindspore::schema::PrimitiveType_FloorMod;
@@ -69,6 +86,7 @@ using mindspore::schema::PrimitiveType_LogicalOr;
 using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
 using mindspore::schema::PrimitiveType_Mod;
+using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
@@ -77,7 +95,7 @@ using mindspore::schema::PrimitiveType_SubFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateArithmeticCommonOpPara(const BaseOperatorPtr &base_operator) {
-  auto param = reinterpret_cast<ArithmeticParameter *>(PopulateOpParameter<ArithmeticParameter>());
+  auto param = reinterpret_cast<ArithmeticParameter *>(PopulateOpParameter<ArithmeticParameter>(base_operator));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticParameter failed.";
     return nullptr;
@@ -101,9 +119,25 @@ OpParameter *PopulateArithmeticFusionOpParameter(const BaseOperatorPtr &base_ope
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_OPERATOR_POPULATE(kNameSubFusion, PrimitiveType_SubFusion, PopulateArithmeticFusionOpParameter)
+OpParameter *PopulateEltwiseOpParameter(const BaseOperatorPtr &base_operator) {
+  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(PopulateArithmeticCommonOpPara(base_operator));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
+    return nullptr;
+  }
+  mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kMode);
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "The attr(" << kMode << ") of operator(" << base_operator->name() << ") not exist";
+    free(param);
+    return nullptr;
+  }
+  param->eltwise_mode_ = GetValue<int64_t>(attr);
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 REG_OPERATOR_POPULATE(kNameAdd, PrimitiveType_AddFusion, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameAddFusion, PrimitiveType_AddFusion, PopulateArithmeticFusionOpParameter)
+REG_OPERATOR_POPULATE(kNameBiasAdd, PrimitiveType_BiasAdd, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameRealDiv, PrimitiveType_RealDiv, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameLogicalAnd, PrimitiveType_LogicalAnd, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameLogicalOr, PrimitiveType_LogicalOr, PopulateArithmeticCommonOpPara)
@@ -118,6 +152,13 @@ REG_OPERATOR_POPULATE(kNameMinimum, PrimitiveType_Minimum, PopulateArithmeticCom
 REG_OPERATOR_POPULATE(kNameFloorDiv, PrimitiveType_FloorDiv, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameFloorMod, PrimitiveType_FloorMod, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameMod, PrimitiveType_Mod, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameMul, PrimitiveType_MulFusion, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameMulFusion, PrimitiveType_MulFusion, PopulateArithmeticFusionOpParameter)
 REG_OPERATOR_POPULATE(kNameSquaredDifference, PrimitiveType_SquaredDifference, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameEltwise, PrimitiveType_Eltwise, PopulateEltwiseOpParameter)
+REG_OPERATOR_POPULATE(kNameDiv, PrimitiveType_DivFusion, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameDivFusion, PrimitiveType_DivFusion, PopulateArithmeticFusionOpParameter)
+REG_OPERATOR_POPULATE(kNameSub, PrimitiveType_SubFusion, PopulateArithmeticCommonOpPara)
+REG_OPERATOR_POPULATE(kNameSubFusion, PrimitiveType_SubFusion, PopulateArithmeticFusionOpParameter)
 }  // namespace lite
 }  // namespace mindspore
