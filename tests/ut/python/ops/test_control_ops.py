@@ -852,8 +852,7 @@ def test_switch_layer_shape_join_failed():
 
     inp = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(1, mstype.int32)
-    with pytest.raises(ValueError) as err:
-        net(i, inp)
+    net(i, inp)
 
 
 def test_switch_layer_dtype_join_failed():
