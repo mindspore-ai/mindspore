@@ -273,6 +273,7 @@ constexpr auto kDeadNodeName = "DeadNode";
 constexpr auto kDenseToCSRSparseMatrixOpName = "DenseToCSRSparseMatrix";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kDenseToSparseSetOperation = "DenseToSparseSetOperation";
+constexpr auto kDependOpName = "Depend";
 constexpr auto kDepthwiseConv2dNativeBackpropFilterOpName = "DepthwiseConv2dNativeBackpropFilter";
 constexpr auto kDepthwiseConv2dNativeBackpropDFilterOpName = "DepthwiseConv2dNativeBackpropFilterD";
 constexpr auto kDepthwiseConv2dNativeBackpropInputOpName = "DepthwiseConv2dNativeBackpropInput";
