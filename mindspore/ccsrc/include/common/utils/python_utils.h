@@ -22,21 +22,6 @@
 #include "utils/info.h"
 
 namespace mindspore {
-template <typename ThrowExceptionType, typename CatchedExceptionType>
-static void ThrowException(const std::function<void(void)> &other_error_handler, const DebugInfoPtr &debug_info,
-                           const CatchedExceptionType &ex) {
-  if (other_error_handler) {
-    other_error_handler();
-  }
-  if (debug_info == nullptr) {
-    throw ThrowExceptionType(ex.what());
-  } else {
-    std::stringstream ss;
-    ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
-    throw ThrowExceptionType(ss.str());
-  }
-}
-
 inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
                                    const std::function<void(void)> &already_set_error_handler,
                                    const std::function<void(void)> &other_error_handler,
@@ -55,49 +40,258 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     // Re-throw this exception to Python interpreter to handle it
     throw(py::error_already_set(ex));
   } catch (const py::type_error &ex) {
-    ThrowException<py::type_error, py::type_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::type_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::type_error(ss.str());
+    }
   } catch (const py::value_error &ex) {
-    ThrowException<py::value_error, py::value_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::value_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::value_error(ss.str());
+    }
   } catch (const py::index_error &ex) {
-    ThrowException<py::index_error, py::index_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::index_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::index_error(ss.str());
+    }
   } catch (const py::key_error &ex) {
-    ThrowException<py::key_error, py::key_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::key_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::key_error(ss.str());
+    }
   } catch (const py::attribute_error &ex) {
-    ThrowException<py::attribute_error, py::attribute_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::attribute_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::attribute_error(ss.str());
+    }
   } catch (const py::name_error &ex) {
-    ThrowException<py::name_error, py::name_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::name_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::name_error(ss.str());
+    }
   } catch (const py::assertion_error &ex) {
-    ThrowException<py::assertion_error, py::assertion_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::assertion_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::assertion_error(ss.str());
+    }
   } catch (const py::base_exception &ex) {
-    ThrowException<py::base_exception, py::base_exception>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::base_exception(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::base_exception(ss.str());
+    }
   } catch (const py::keyboard_interrupt &ex) {
-    ThrowException<py::keyboard_interrupt, py::keyboard_interrupt>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::keyboard_interrupt(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::keyboard_interrupt(ss.str());
+    }
   } catch (const py::stop_iteration &ex) {
-    ThrowException<py::stop_iteration, py::stop_iteration>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::stop_iteration(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::stop_iteration(ss.str());
+    }
   } catch (const py::overflow_error &ex) {
-    ThrowException<py::overflow_error, py::overflow_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::overflow_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::overflow_error(ss.str());
+    }
   } catch (const py::zero_division_error &ex) {
-    ThrowException<py::zero_division_error, py::zero_division_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::zero_division_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::zero_division_error(ss.str());
+    }
   } catch (const py::environment_error &ex) {
-    ThrowException<py::environment_error, py::environment_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::environment_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::environment_error(ss.str());
+    }
   } catch (const py::io_error &ex) {
-    ThrowException<py::io_error, py::io_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::io_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::io_error(ss.str());
+    }
   } catch (const py::os_error &ex) {
-    ThrowException<py::os_error, py::os_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::os_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::os_error(ss.str());
+    }
   } catch (const py::memory_error &ex) {
-    ThrowException<py::memory_error, py::memory_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::memory_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::memory_error(ss.str());
+    }
   } catch (const py::unbound_local_error &ex) {
-    ThrowException<py::unbound_local_error, py::unbound_local_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::unbound_local_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::unbound_local_error(ss.str());
+    }
   } catch (const py::not_implemented_error &ex) {
-    ThrowException<py::not_implemented_error, py::not_implemented_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::not_implemented_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::not_implemented_error(ss.str());
+    }
   } catch (const py::indentation_error &ex) {
-    ThrowException<py::indentation_error, py::indentation_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::indentation_error(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::indentation_error(ss.str());
+    }
   } catch (const py::runtime_warning &ex) {
-    ThrowException<py::runtime_warning, py::runtime_warning>(other_error_handler, debug_info, ex);
-  } catch (const std::runtime_error &ex) {
-    ThrowException<std::runtime_error, std::runtime_error>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    if (debug_info == nullptr) {
+      throw py::runtime_warning(ex);
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw py::runtime_warning(ss.str());
+    }
   } catch (const std::exception &ex) {
-    ThrowException<std::runtime_error, std::exception>(other_error_handler, debug_info, ex);
+    if (other_error_handler) {
+      other_error_handler();
+    }
+
+    // Re-throw this exception to Python interpreter to handle it.
+    if (debug_info == nullptr) {
+      throw std::runtime_error(ex.what());
+    } else {
+      std::stringstream ss;
+      ss << ex.what() << ".\n\n" << trace::GetDebugInfo(debug_info);
+      throw std::runtime_error(ss.str());
+    }
   } catch (...) {
     if (default_error_handler) {
       default_error_handler();

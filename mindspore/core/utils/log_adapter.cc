@@ -385,10 +385,10 @@ void LogWriter::operator^(const LogStream &stream) const {
   if (exception_handler != nullptr) {
     exception_handler(exception_type_, oss.str());
   } else {
-    oss << "[Runtime error for null exception handler]";
+    MS_LOG(ERROR) << "Runtime error for null exception handler.";
     throw std::runtime_error(oss.str());
   }
-  oss << "[Runtime error for unknown exception type:" << exception_type_ << "]";
+  MS_LOG(ERROR) << "Runtime error for unknown exception type:" << exception_type_ << ".";
   throw std::runtime_error(oss.str());
 }
 
