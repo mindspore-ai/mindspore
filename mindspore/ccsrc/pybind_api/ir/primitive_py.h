@@ -93,6 +93,8 @@ class PrimitivePy : public Primitive {
 class PrimitivePyAdapter {
  public:
   explicit PrimitivePyAdapter(const py::str &name);
+  PrimitivePyAdapter(const PrimitivePyAdapter &adapter);
+  PrimitivePyAdapter &operator=(const PrimitivePyAdapter &other);
   ~PrimitivePyAdapter() = default;
   void AddPyAttr(const py::str &name, const py::object &obj);
   void DelPyAttr(const py::str &name);
