@@ -1,7 +1,7 @@
 mindspore.nn.TripletMarginLoss
 ===============================
 
-.. py:class:: mindspore.nn.TripletMarginLoss(p=2, swap=False, eps=1e-06, reduction='mean')
+.. py:class:: mindspore.nn.TripletMarginLoss(p=2, swap=False, eps=1e-06, reduction='mean', margin=1.)
 
     执行三元组损失函数的操作。
 

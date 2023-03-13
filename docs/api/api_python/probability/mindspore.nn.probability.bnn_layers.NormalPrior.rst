@@ -10,5 +10,5 @@ mindspore.nn.probability.bnn_layers.NormalPrior
         - **mean** (int, float) - 正态分布的平均值。默认值：0。
         - **std** (int, float) - 正态分布的标准差。默认值：0.1。
 
-    返回：           
+    返回：
         Cell，一种正态分布的结果。

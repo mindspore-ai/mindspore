@@ -429,7 +429,7 @@ class ModelParallelRunner:
             inputs (list[Tensor]): A list that includes all input Tensors in order.
 
         Returns:
-            list[Tensor]): outputs, the model outputs are filled in the container in sequence.
+            list[Tensor], outputs, the model outputs are filled in the container in sequence.
 
         Raises:
             TypeError: `inputs` is not a list.

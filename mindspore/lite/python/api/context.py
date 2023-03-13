@@ -68,47 +68,48 @@ class Context:
             currently. So it needs to switch to the context with cpu target.
 
         cpu properties:
-            inter_op_parallel_num (int): Set the parallel number of operators at runtime. `inter_op_parallel_num`
-                cannot be greater than `thread_num` . Setting `inter_op_parallel_num` to 0 represents
-                `inter_op_parallel_num` will be automatically adjusted based on computer performance and core num.
-            precision_mode (str): Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
+            - **inter_op_parallel_num** (int) - Set the parallel number of operators at runtime.
+              `inter_op_parallel_num` cannot be greater than `thread_num` . Setting `inter_op_parallel_num`
+               to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
+               performance and core num.
+            - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
 
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+              - "force_fp16": Force the fp16 precision mode.
+              - "must_keep_origin_dtype": keep the origin precision data type.
 
-            thread_num (int): Set the number of threads at runtime. `thread_num` cannot be less than
-                `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
-                adjusted based on computer performance and core numbers.
-            thread_affinity_mode (int): Set the mode of the CPU core binding policy at runtime. The
-                following `thread_affinity_mode` are supported.
+            - **thread_num** (int) - Set the number of threads at runtime. `thread_num` cannot be less than
+              `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
+              adjusted based on computer performance and core numbers.
+            - **thread_affinity_mode** (int) - Set the mode of the CPU core binding policy at runtime. The
+              following `thread_affinity_mode` are supported.
 
-                - 0: no binding core.
-                - 1: binding big cores first.
-                - 2: binding middle cores first.
+              - 0: no binding core.
+              - 1: binding big cores first.
+              - 2: binding middle cores first.
 
-            thread_affinity_core_list (list[int]): Set the list of CPU core binding policies at runtime.
-                For example, [0,1] represents the specified binding of CPU0 and CPU1.
+            - **thread_affinity_core_list** (list[int]) - Set the list of CPU core binding policies at runtime.
+              For example, [0,1] represents the specified binding of CPU0 and CPU1.
 
         gpu properties:
-            device_id(int): The device id.
-            group_size(int): the number of the clusters. Get only, not settable.
-            precision_mode (str): Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
+            - **device_id** (int) - The device id.
+            - **group_size** (int) - the number of the clusters. Get only, not settable.
+            - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
 
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+              - "force_fp16": Force the fp16 precision mode.
+              - "must_keep_origin_dtype": keep the origin precision data type.
 
-            rank_id(int): the ID of the current device in the cluster, which starts from 0. Get only, not settable.
-
+            - **rank_id** (int) - the ID of the current device in the cluster, which starts from 0. Get only,
+              not settable.
 
         ascend properties:
-            device_id(int): The device id.
-            precision_mode (str): Set the mix precision mode. Options: "allow_fp32_to_fp16" |
-                "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
+            - **device_id** (int) - The device id.
+            - **precision_mode** (str) - Set the mix precision mode. Options: "allow_fp32_to_fp16" |
+              "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
 
-                - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
-                - "allow_mix_precision": allow mix precision mode.
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+              - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
+              - "allow_mix_precision": allow mix precision mode.
+              - "force_fp16": Force the fp16 precision mode.
+              - "must_keep_origin_dtype": keep the origin precision data type.
 
         Returns:
             list[str], the target device information of context.
