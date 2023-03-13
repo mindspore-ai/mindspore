@@ -70,7 +70,8 @@ static const std::unordered_map<std::string, std::string> kMsNeedPad = {{kTransD
                                                                         {kBNTrainingReduceGradOpName, kOpFormat_NCHW},
                                                                         {kBNTrainingUpdateGradOpName, kOpFormat_NCHW},
                                                                         {kBNInferOpName, kOpFormat_NCHW},
-                                                                        {kStridedSliceGradOpName, kOpFormat_NCHW}};
+                                                                        {kStridedSliceGradOpName, kOpFormat_NCHW},
+                                                                        {kTensorMoveOpName, kOpFormat_NCHW}};
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
