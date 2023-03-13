@@ -1,8 +1,11 @@
 approvers:
-- zhang_xue_tong
+- zhang_xue_tong #
 - HilbertDavid
 - jpc_chenjianping
 - yangruoqi713
 - ling_qiao_min
 - xu_anyue
 - greatpanc
+
+options:
+  no_parent_owners: true

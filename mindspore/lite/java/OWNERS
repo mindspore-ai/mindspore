@@ -1,4 +1,7 @@
 approvers:
 - zqstar
-- yeyunpeng2020
+- yeyunpeng2020 #
 - jpc_chenjianping
+
+options:
+  no_parent_owners: true
