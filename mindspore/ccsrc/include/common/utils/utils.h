@@ -704,6 +704,7 @@ constexpr auto kSegmentSumOpName = "SegmentSum";
 constexpr auto kSequenceAddOpName = "SequenceAdd";
 constexpr auto kSequenceAddOffsetOpName = "SequenceAddOffset";
 constexpr auto kSequenceAddNOpName = "SequenceAddN";
+constexpr auto kSequenceConcatOpName = "SequenceConcat";
 constexpr auto kSelectOpName = "Select";
 constexpr auto kSelfAdjointEigOpName = "SelfAdjointEig";
 constexpr auto kSeLUOpName = "SeLU";
