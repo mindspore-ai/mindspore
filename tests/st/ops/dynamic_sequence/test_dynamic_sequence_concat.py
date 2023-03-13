@@ -21,7 +21,7 @@ from mindspore.common import mutable
 from mindspore.ops.operations._sequence_ops import SequenceConcat
 from sequence_help import context_prepare
 
-context.set_context(device_target="CPU", mode=context.GRAPH_MODE)
+context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
@@ -36,6 +36,7 @@ class NetSequenceConcat(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_tensor_concat0():
     """
@@ -52,6 +53,7 @@ def test_seq_tensor_concat0():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_tensor_concat1():
     """
