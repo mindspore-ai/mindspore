@@ -33,119 +33,36 @@
 
 namespace mindspore {
 namespace device {
-using DeviceMemPtr = void(*);
-
 // The status of memory buf.
 enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed };
-
 // Memory allocator type is used to record the memory classification statistics information.
 enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kOther };
-static const int ALLOCATOR_TYPE_NUM = 4;
-
+constexpr int kAllocatorTypeNum = 4;
 // Alloc memory aligned according to 512 bytes.
-static const size_t DYNAMIC_MEM_ALIGN_SIZE = 512;
-
+constexpr size_t kDynamicMemAlignSize = 512;
 // The minimum unit size (1G) of memory block used for dynamic extend.
-static const size_t DYNAMIC_MEM_ALLOC_UNIT_SIZE = 1024 << 20;
+constexpr size_t kDynamicMemAllocUnitSize = 1024 << 20;
 
 // The Comparator of device address from small to large.
+using DeviceMemPtr = void(*);
 struct DeviceAddrCmp {
   bool operator()(const DeviceMemPtr &addr1, const DeviceMemPtr &addr2) const { return addr1 < addr2; }
 };
 
-// Recording information for debugging the memory allocator.
-struct AllocatorDebugInfo {
-  std::string name_{"Unknown"};
-  AllocatorType type_{AllocatorType::kOther};
-  int input_index_{-1};
-  int output_index_{-1};
-};
-
 // The AllocatorDebugInfo wrapper which is the local thread for the dynamic memory pool.
-class DynamicMemAllocatorDebugInfo {
- public:
-  static AllocatorDebugInfo &GetDebugInfo() noexcept { return debug_info_; }
-
-  // Set the debug info when memory alloc.
-  static void SetDebugInfo(const std::string &name, AllocatorType type, int input_index = -1, int output_index = -1) {
-    debug_info_.name_ = name;
-    debug_info_.type_ = type;
-    debug_info_.input_index_ = input_index;
-    debug_info_.output_index_ = output_index;
-  }
-
- private:
-  DynamicMemAllocatorDebugInfo() = default;
-  virtual ~DynamicMemAllocatorDebugInfo() = default;
-  DISABLE_COPY_AND_ASSIGN(DynamicMemAllocatorDebugInfo);
-
-  static thread_local AllocatorDebugInfo debug_info_;
-};
-
+class DynamicMemAllocatorDebugInfo;
 // Memory buf is the smallest operation object of dynamic memory pool.
-struct DynamicMemBuf {
-  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size,
-                const std::string &allocator_name = "Unknown", AllocatorType allocator_type = AllocatorType::kOther)
-      : device_addr_(addr),
-        status_(status),
-        size_(size),
-        allocator_name_(allocator_name),
-        allocator_type_{allocator_type} {}
-  DeviceMemPtr device_addr_;
-  DynamicMemBufStatus status_;
-  size_t size_;
-
-  // Debug info.
-  std::string allocator_name_;
-  AllocatorType allocator_type_;
-};
+struct DynamicMemBuf;
 using DynamicMemBufPtr = std::shared_ptr<DynamicMemBuf>;
 // Multimap key is the tensor size, for finding the idle memory buf by tensor size.
 using SizeMapMemBuf = std::multimap<size_t, DynamicMemBufPtr>;
 // Map key is the device address, for finding the used memory buf in memory block by device address.
 using DeviceAddrMapMemBuf = std::map<DeviceMemPtr, DynamicMemBufPtr, DeviceAddrCmp>;
-
 // Memory block is composed of memory buf.
-class DynamicMemBlock {
- public:
-  DynamicMemBlock() = default;
-  DynamicMemBlock(DeviceMemPtr addr_base, size_t size) : device_addr_base_(addr_base), mem_block_size_(size) {}
-  ~DynamicMemBlock() { block_all_mem_buf_map_.clear(); }
-  const DeviceMemPtr &device_addr() const { return device_addr_base_; }
-  size_t size() const { return mem_block_size_; }
-
- private:
-  friend class DynamicMemPoolBestFit;
-
-  // The map of all memory buf in this memory block by device address.
-  DeviceAddrMapMemBuf block_all_mem_buf_map_;
-
-  DeviceMemPtr device_addr_base_{nullptr};
-  size_t mem_block_size_{0};
-};
+class DynamicMemBlock;
 using DynamicMemBlockPtr = std::shared_ptr<DynamicMemBlock>;
 
-struct DeviceState {
-  // Memory allocated from device
-  size_t total_mem_size_{0};
-  // Memory in use
-  size_t total_used_mem_size_{0};
-  // Maximum peak memory usage
-  size_t used_mem_peak_size_{0};
-};
-
-struct MemStatusManager {
-  size_t unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
-  // Mem pool state
-  DeviceState mps_;
-  std::vector<DynamicMemBlockPtr> mem_block_list_;
-  // The map of all idle memory buf by size.
-  SizeMapMemBuf idle_mem_buf_map_;
-  void clear() noexcept {
-    mem_block_list_.clear();
-    idle_mem_buf_map_.clear();
-  }
-};
+struct MemStatusManager;
 using MemStatusManagerPtr = std::shared_ptr<MemStatusManager>;
 
 // The main class of dynamic memory pool.
@@ -168,18 +85,12 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Get the minimum memory unit size using for dynamic extend.
   size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
   // Set the minimum memory unit size using for dynamic extend.
-  void SetMemAllocUintSize(size_t common_size, size_t persist_size = DYNAMIC_MEM_ALLOC_UNIT_SIZE);
+  void SetMemAllocUintSize(size_t common_size, size_t persist_size = kDynamicMemAllocUnitSize);
 
   // The statistics information.
-  size_t TotalMemStatistics() const {
-    return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
-  }
-  size_t TotalUsedMemStatistics() const {
-    return common_mem_->mps_.total_used_mem_size_ + persistent_mem_->mps_.total_used_mem_size_;
-  }
-  size_t UsedMemPeakStatistics() const {
-    return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
-  }
+  size_t TotalMemStatistics() const;
+  size_t TotalUsedMemStatistics() const;
+  size_t UsedMemPeakStatistics() const;
 
   // Display the brief state information of memory block and memory buf.
   void DumpDynamicMemPoolStateInfo();
@@ -231,9 +142,93 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   MemStatusManagerPtr common_mem_{nullptr};
   // In the graph mode, the unit size set in the context will be modified through the FetchMemUnitSize function, so it
   // needs to be changed back after that
-  size_t config_unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
+  size_t config_unit_size_{kDynamicMemAllocUnitSize};
+};
+
+// Recording information for debugging the memory allocator.
+struct AllocatorDebugInfo {
+  std::string name_{"Unknown"};
+  AllocatorType type_{AllocatorType::kOther};
+  int input_index_{-1};
+  int output_index_{-1};
+};
+
+class DynamicMemAllocatorDebugInfo {
+ public:
+  static AllocatorDebugInfo &GetDebugInfo() noexcept { return debug_info_; }
+
+  // Set the debug info when memory alloc.
+  static void SetDebugInfo(const std::string &name, AllocatorType type, int input_index = -1, int output_index = -1) {
+    debug_info_.name_ = name;
+    debug_info_.type_ = type;
+    debug_info_.input_index_ = input_index;
+    debug_info_.output_index_ = output_index;
+  }
+
+ private:
+  DynamicMemAllocatorDebugInfo() = default;
+  virtual ~DynamicMemAllocatorDebugInfo() = default;
+  DISABLE_COPY_AND_ASSIGN(DynamicMemAllocatorDebugInfo);
+
+  static thread_local AllocatorDebugInfo debug_info_;
+};
+
+struct DynamicMemBuf {
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size,
+                const std::string &allocator_name = "Unknown", AllocatorType allocator_type = AllocatorType::kOther)
+      : device_addr_(addr),
+        status_(status),
+        size_(size),
+        allocator_name_(allocator_name),
+        allocator_type_{allocator_type} {}
+  DeviceMemPtr device_addr_;
+  DynamicMemBufStatus status_;
+  size_t size_;
+
+  // Debug info.
+  std::string allocator_name_;
+  AllocatorType allocator_type_;
+};
+
+class DynamicMemBlock {
+ public:
+  DynamicMemBlock() = default;
+  DynamicMemBlock(DeviceMemPtr addr_base, size_t size) : device_addr_base_(addr_base), mem_block_size_(size) {}
+  ~DynamicMemBlock() { block_all_mem_buf_map_.clear(); }
+  const DeviceMemPtr &device_addr() const { return device_addr_base_; }
+  size_t size() const { return mem_block_size_; }
+
+ private:
+  friend class DynamicMemPoolBestFit;
+
+  // The map of all memory buf in this memory block by device address.
+  DeviceAddrMapMemBuf block_all_mem_buf_map_;
+
+  DeviceMemPtr device_addr_base_{nullptr};
+  size_t mem_block_size_{0};
+};
+
+struct DeviceState {
+  // Memory allocated from device
+  size_t total_mem_size_{0};
+  // Memory in use
+  size_t total_used_mem_size_{0};
+  // Maximum peak memory usage
+  size_t used_mem_peak_size_{0};
+};
+
+struct MemStatusManager {
+  size_t unit_size_{kDynamicMemAllocUnitSize};
+  // Mem pool state
+  DeviceState mps_;
+  std::vector<DynamicMemBlockPtr> mem_block_list_;
+  // The map of all idle memory buf by size.
+  SizeMapMemBuf idle_mem_buf_map_;
+  void clear() noexcept {
+    mem_block_list_.clear();
+    idle_mem_buf_map_.clear();
+  }
 };
 }  // namespace device
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_DYNAMIC_ALLOCATOR_H_
