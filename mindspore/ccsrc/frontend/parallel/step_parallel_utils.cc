@@ -1516,6 +1516,17 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   return tensorlayout_in;
 }
 
+Shape mirror_group_list(const TensorLayoutPtr &layout) {
+  int64_t rank = g_device_manager->global_rank();
+  auto stage_dev_list = g_device_manager->GetDeviceListInThisStage();
+  DeviceMatrix dev_matrix(rank, stage_dev_list, layout->device_arrangement().array());
+  RankList group_devices;
+  if (dev_matrix.GetDevicesByTensorMap(layout->tensor_map().array(), &group_devices) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "For layout:" << layout->ToString() << ", infer mirror failed";
+  }
+  return group_devices;
+}
+
 std::string GetSerialNumberString(size_t number) {
   std::string suffix = "th";
   if (number == kSizeOne) {
