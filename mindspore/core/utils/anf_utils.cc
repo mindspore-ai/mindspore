@@ -300,6 +300,10 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
         }
       }
     }
+  } else if (type->isa<List>()) {
+    auto list_type = type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    res = list_type->size();
   } else if (type->isa<TypeNone>()) {
     res = 0;
   } else if (type->isa<CSRTensorType>()) {
