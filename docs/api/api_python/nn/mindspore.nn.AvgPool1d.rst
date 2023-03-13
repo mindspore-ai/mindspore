@@ -38,3 +38,4 @@ mindspore.nn.AvgPool1d
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 为tuple/list时长度不为1。
         - **ValueError** -  `x` 的shape长度不等于2或3。
+        - **ValueError** -  `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
