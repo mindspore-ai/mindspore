@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/lstm.h"
 #include "nnacl/op_base.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,7 +43,8 @@ PrimitiveCPtr OnnxLstmParser::Parse(const onnx::GraphProto &onnx_graph, const on
       prim->set_has_bias(true);
     }
   }
-
+  int fmk_type = mindspore::converter::FmkType::kFmkTypeOnnx;
+  (void)prim->AddAttr(ops::kFmkType, api::MakeValue(fmk_type));
   return prim->GetPrim();
 }
 
