@@ -77,6 +77,33 @@ class SequenceSlice(Primitive):
         self.init_prim_io_names(inputs=['seq', 'start', 'stop', 'step'], outputs=['output_data'])
 
 
+class InSequence(Primitive):
+    r"""
+    element in sequence.
+
+    .. note::
+        This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **element** (Any Object) - The element can be a tensor or scalar
+        - **input_data** (Sequence) - The sequence. Must be dynamic length sequence
+
+    Outputs:
+        element in sequence, True or False.
+
+    Raises:
+        TypeError: The 'input_data' is not dynamic length list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppend"""
+        self.init_prim_io_names(inputs=['element', 'input_data'], outputs=['output_data'])
+
+
 class SequenceSliceSetItem(Primitive):
     r"""
     Sequence slice setitem operation.
