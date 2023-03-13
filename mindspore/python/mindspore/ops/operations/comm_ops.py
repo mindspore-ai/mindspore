@@ -19,8 +19,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mindspore.common import Tensor
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.communication.management import get_rank, get_group_size, GlobalComm, _get_group, _host_distribute
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
@@ -262,7 +261,7 @@ class AllGather(PrimitiveWithInfer):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.rank = get_rank(_get_group(group))
         self.rank_size = get_group_size(_get_group(group))
-        validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
+        validator.check('rank', self.rank, 'rank_size', self.rank_size, validator.LT, self.name)
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
@@ -296,7 +295,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.rank = get_rank(_get_group(group))
         self.rank_size = get_group_size(_get_group(group))
-        validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
+        validator.check('rank', self.rank, 'rank_size', self.rank_size, validator.LT, self.name)
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 1)
@@ -332,7 +331,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
         if group != "":
             self.rank = get_rank(_get_group(group))
             self.rank_size = get_group_size(_get_group(group))
-            validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
+            validator.check('rank', self.rank, 'rank_size', self.rank_size, validator.LT, self.name)
             self.add_prim_attr('rank_size', self.rank_size)
             self.add_prim_attr('group', _get_group(group))
             self.add_prim_attr('fusion', 1)
@@ -382,9 +381,9 @@ class _HostAllGather(PrimitiveWithInfer):
         if group is None:
             raise ValueError(f"For '{self.name}', the 'group' cannot be None, but got {group}.")
         validator.check_value_type('group', group, (tuple, list), self.name)
-        validator.check_int(len(group), 2, Rel.GE, "group size", self.name)
+        validator.check_int(len(group), 2, validator.GE, "group size", self.name)
         for r in group:
-            validator.check_int_range(r, 0, 7, Rel.INC_BOTH, "rank_id", self.name)
+            validator.check_int_range(r, 0, 7, validator.INC_BOTH, "rank_id", self.name)
             validator.check_value_type("rank_id", r, (int,), self.name)
         self.group_size = len(group)
         self.add_prim_attr('group', group)
@@ -518,9 +517,9 @@ class _HostReduceScatter(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the 'group' cannot be None, but got {group}.")
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
         validator.check_value_type('group', group, (tuple, list), self.name)
-        validator.check_int(len(group), 2, Rel.GE, "group size", self.name)
+        validator.check_int(len(group), 2, validator.GE, "group size", self.name)
         for r in group:
-            validator.check_int_range(r, 0, 7, Rel.INC_BOTH, "rank_id", self.name)
+            validator.check_int_range(r, 0, 7, validator.INC_BOTH, "rank_id", self.name)
             validator.check_value_type("rank_id", r, (int,), self.name)
         self.op = op
         self.group_size = len(group)

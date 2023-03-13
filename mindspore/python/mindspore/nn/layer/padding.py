@@ -25,12 +25,27 @@ __all__ = ['ConstantPad1d', 'ConstantPad2d', 'ConstantPad3d', 'ReflectionPad1d',
            'ZeroPad2d', 'ReplicationPad1d', 'ReplicationPad2d', 'ReplicationPad3d']
 
 
-@constexpr
+def _check_dim(dim, target1, target2, cls_name):
+    """check dim"""
+    def _check_func():
+        if not (dim == target1 or dim == target2):
+            raise ValueError(f"For '{cls_name}', the in_shape must have {target1} or {target2} dims, but got {dim}.")
+        return None
+    _check_func()
+
+
+@_primexpr
 def _check_padding_dimension(dimension, padding):
     r"""
     Validate the input padding and add placeholders if needed.
     Note: the input 'padding' in this function is already converted to list of lists to match MirrorPad
     """
+    def _check_padding(dimension, padding):
+        if dimension < len(padding):
+            raise ValueError(f"For padding with length {len(padding) * 2}, the dimension of the tensor should "
+                             f"be at least {len(padding)}, but got {dimension}")
+        return None
+    _check_padding(dimension, padding)
     # add place holders
     if dimension > len(padding):
         padding = [(0, 0) for _ in range(dimension - len(padding))] + [x for x in padding]
@@ -53,16 +68,53 @@ def _swap_to_ms_padding_order(padding):
 
 
 @_primexpr
-def _check(input_shape, padding):
+def _check(input_shape, padding, name):
     """
     Check relationship between input shape and padding to make sure after negative dimension padding the out is
     positive.
     """
+    def _check_len(input_shape, padding):
+        if len(input_shape) < len(padding):
+            msg = "For '{}', the dimension of input must more than or equal to len(padding)/2, " \
+                "but got {}".format(name, len(input_shape))
+            raise ValueError(msg)
+        return None
+
+    def _check_item(item, input_shape, index, dim_name):
+        if item < -input_shape[index]:
+            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
+                  "value of parameter 'padding' applied to the {} dimension of input must " \
+                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item)
+            raise ValueError(msg)
+        return None
+
+    def _check_item_two(item0, item1, input_shape, index, dim_name):
+        if input_shape[index] + item0 + item1 <= 0:
+            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
+                  "but the {} dimension of input shape {} plus padding {} and {} resulted in a non-positive output " \
+                  "shape.".format(name, input_shape, dim_name, input_shape[index], item0, item1)
+            raise ValueError(msg)
+        return None
+
+    _check_len(input_shape, padding)
     if len(input_shape) > len(padding):
         if len(padding) == 2 and isinstance(padding[0], int):
             padding = [(0, 0) for i in range(len(input_shape) - 1)] + [padding]
         else:
             padding = [(0, 0) for i in range(len(input_shape) - len(padding))] + [x for x in padding]
+    for index, item in enumerate(padding):
+        if index == 0:
+            dim_name = '1st'
+        elif index == 1:
+            dim_name = '2nd'
+        elif index == 2:
+            dim_name = '3rd'
+        else:
+            dim_name = str(index + 1) + 'th'
+
+        _check_item(item[0], input_shape, index, dim_name)
+        _check_item(item[1], input_shape, index, dim_name)
+        _check_item_two(item[0], item[1], input_shape, index, dim_name)
     return padding
 
 
@@ -166,7 +218,7 @@ class _ConstantPadNd(Cell):
     def construct(self, x):
         """Construct the pad net."""
         input_shape = x.shape
-        padding = _check(input_shape, self.padding)
+        padding = _check(input_shape, self.padding, self._name)
         new_padding, start, end = _get_new_padding(padding)
         mask = ops.OnesLike()(x)
         output = ops.Pad(new_padding)(x)
@@ -639,11 +691,17 @@ class _ReplicationPadNd(Cell):
         self.padv3 = nn_ops.PadV3(mode="edge")
 
     @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        raise NotImplementedError
+
+    @staticmethod
     @constexpr
     def _need_expend_dim(x):
         raise NotImplementedError
 
     def construct(self, x):
+        self._check_input_dim(x.shape, self.name)
         need_expend_dims = self._need_expend_dim(x)
         if need_expend_dims:
             x = x.expand_dims(0)
@@ -706,6 +764,11 @@ class ReplicationPad1d(_ReplicationPadNd):
             padding = (padding, padding)
         super(ReplicationPad1d, self).__init__(padding, name="ReplicationPad1d")
 
+    @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        _check_dim(dim, 2, 3, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -773,6 +836,11 @@ class ReplicationPad2d(_ReplicationPadNd):
             padding = (padding, padding, padding, padding)
         super(ReplicationPad2d, self).__init__(padding, name="ReplicationPad2d")
 
+    @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        _check_dim(dim, 3, 4, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -841,6 +909,11 @@ class ReplicationPad3d(_ReplicationPadNd):
             padding = (padding, padding, padding, padding, padding, padding)
         super(ReplicationPad3d, self).__init__(padding, name="ReplicationPad3d")
 
+    @staticmethod
+    @_primexpr
+    def _check_input_dim(shape, cls_name):
+        dim = len(shape)
+        _check_dim(dim, 4, 5, cls_name)
 
     def _need_expend_dim(self, x):
         input_shape = x.shape

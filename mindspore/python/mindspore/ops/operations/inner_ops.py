@@ -16,8 +16,7 @@
 """inner_ops"""
 
 import numbers
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.dtype import tensor, dtype_to_pytype
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
@@ -97,7 +96,7 @@ class Randperm(Primitive):
         """Initialize Randperm"""
         validator.check_value_type("pad", pad, [int], self.name)
         validator.check_value_type("max_length", max_length, [int], self.name)
-        validator.check_int(max_length, 1, Rel.GE, "max_length", self.name)
+        validator.check_int(max_length, 1, validator.GE, "max_length", self.name)
         valid_values = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16,
                         mstype.uint32, mstype.uint64, mstype.float16, mstype.float32, mstype.float64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)
@@ -172,7 +171,7 @@ class NoRepeatNGram(Primitive):
     def __init__(self, ngram_size=1):
         """NoRepeatNGram Randperm"""
         validator.check_value_type("ngram_size", ngram_size, [int], self.name)
-        validator.check_int(ngram_size, 1, Rel.GE, "ngram_size", self.name)
+        validator.check_int(ngram_size, 1, validator.GE, "ngram_size", self.name)
         self.ngram_size = ngram_size
         self.init_prim_io_names(inputs=['state_seq', 'log_probs'], outputs=['log_probs'])
 
@@ -236,9 +235,9 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
 
     def infer_shape(self, grad_shape, v_shape, m_shape, var_shape, beta1_shape, sub1_shape,
                     beta2_shape, sub2_shape, eps_shape, steps_shape, use_weight_shape, weight_decay_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "m_shape", m_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, validator.EQ, self.name)
         return m_shape, v_shape, m_shape
 
     def infer_dtype(self, grad_dtype, v_dtype, m_dtype, var_dtype, beta1_dtype, sub1_dtype,
@@ -298,7 +297,7 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, w_norm_shape, g_norm_shape, lr_shape, update_shape, var_shape):
-        validator.check("var_shape", var_shape, "update_shape", update_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "update_shape", update_shape, validator.EQ, self.name)
         return var_shape
 
     def infer_dtype(self, w_norm_dtype, g_norm_dtype, lr_dtype, update_dtype, var_dtype):
@@ -466,9 +465,9 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
 
     def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
                     epsilon_shape, decay_shape, grad_shape, global_norm):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "m_shape", m_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, validator.EQ, self.name)
         return var_shape, m_shape, v_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
@@ -604,7 +603,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
     def infer_shape(self, epsilon_shape, clip_threshold_shape, beta1_shape, beta2t_shape, weight_decay_shape,
                     learning_rate_shape, grad_shape, param_shape, exp_avg_shape, exp_avg_sq_row_shape,
                     exp_avg_sq_col_shape, exp_avg_sq_shape):
-        validator.check("grad_shape", grad_shape, "param_shape", param_shape, Rel.EQ, self.name)
+        validator.check("grad_shape", grad_shape, "param_shape", param_shape, validator.EQ, self.name)
         return param_shape
 
     def infer_dtype(self, epsilon_type, clip_threshold_type, beta1_type, beta2t_type, weight_decay_type,
@@ -626,7 +625,7 @@ class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
     def infer_shape(self, epsilon_shape, clip_threshold_shape, beta1_shape, beta2t_shape, weight_decay_shape,
                     learning_rate_shape, grad_shape, param_shape, exp_avg_shape, exp_avg_sq_row_shape,
                     exp_avg_sq_col_shape, exp_avg_sq_shape, global_norm_shape):
-        validator.check("grad_shape", grad_shape, "param_shape", param_shape, Rel.EQ, self.name)
+        validator.check("grad_shape", grad_shape, "param_shape", param_shape, validator.EQ, self.name)
         return param_shape
 
     def infer_dtype(self, epsilon_type, clip_threshold_type, beta1_type, beta2t_type, weight_decay_type,

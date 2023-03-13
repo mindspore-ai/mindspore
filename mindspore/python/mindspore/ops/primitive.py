@@ -26,7 +26,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import Primitive_, prim_type
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
 
 
@@ -487,10 +487,10 @@ class PrimitiveWithCheck(Primitive):
         ...     def __init__(self):
         ...         pass
         ...     def check_shape(self, input_x):
-        ...         validator.check_int(len(input_x), 1, Rel.GE, 'input_x rank', self.name)
+        ...         Validator.check_int(len(input_x), 1, validator.GE, 'input_x rank', self.name)
         ...
         ...     def check_dtype(self, input_x):
-        ...         validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
+        ...         Validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
         ...
         >>> # init a Primitive obj
         >>> add = Flatten()

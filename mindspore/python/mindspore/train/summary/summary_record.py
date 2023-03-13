@@ -28,7 +28,7 @@ from mindspore import context
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common.api import _cell_graph_executor
 from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type, \
     check_summary_param

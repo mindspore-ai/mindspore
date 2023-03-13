@@ -14,7 +14,7 @@
 # ============================================================================
 """Operations for sequence"""
 from mindspore.ops.primitive import Primitive, prim_attr_register
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 
 
 class ListAppend(Primitive):

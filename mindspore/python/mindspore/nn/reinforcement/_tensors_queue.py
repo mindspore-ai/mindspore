@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
-from mindspore._checkparam import Rel, Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 
 
@@ -59,9 +59,9 @@ class TensorsQueue(Cell):
         """Initialize TensorsQueue"""
         super(TensorsQueue, self).__init__()
         Validator.check_subclass("dtype", dtype, mstype.number_type + (mstype.bool_,), self.cls_name)
-        Validator.check_int(size, 0, Rel.GE, "size", self.cls_name)
+        Validator.check_int(size, 0, Validator.GE, "size", self.cls_name)
         elements_num = len(shapes)
-        Validator.check_int(elements_num, 1, Rel.GE, "len(shapes)", self.cls_name)
+        Validator.check_int(elements_num, 1, Validator.GE, "len(shapes)", self.cls_name)
         self.handle_ = rl_ops.TensorsQueueCreate(dtype, shapes, size, name)()
         self.tensors_q_put = rl_ops.TensorsQueuePut(dtype, shapes)
         self.tensors_q_get = rl_ops.TensorsQueueGet(dtype, shapes)

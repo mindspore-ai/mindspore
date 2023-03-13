@@ -16,8 +16,7 @@
 """Operators for TensorArray."""
 
 import mindspore as ms
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
+from mindspore import _checkparam as validator
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
@@ -56,7 +55,7 @@ class TensorArray(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, dtype, element_shape, dynamic_size=True, size=0, name="TA"):
         validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
-        validator.check_int(size, 0, Rel.GE, "size", self.name)
+        validator.check_int(size, 0, validator.GE, "size", self.name)
         self.add_prim_attr('dtype', dtype)
         self.add_prim_attr('element_shape', element_shape)
         self.add_prim_attr('dynamic_size', dynamic_size)

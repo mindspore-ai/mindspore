@@ -14,7 +14,7 @@
 # ============================================================================
 """Graph Attention Networks."""
 import mindspore.nn as nn
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 
 from aggregator import AttentionAggregator
 

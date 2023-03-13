@@ -22,7 +22,8 @@ import mindspore.log as logger
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
 from mindspore.parallel._ps_context import _is_role_pserver
 from mindspore._c_expression import AutoParallelContext
-from mindspore._checkparam import args_type_check, Validator
+from mindspore._checkparam import args_type_check
+from mindspore import _checkparam as Validator
 
 _MAX_GROUP_NAME_LEN = 127
 _DEFAULT_HCCL_FUSION_GROUP_NAME = "hccl_world_groupsum1"

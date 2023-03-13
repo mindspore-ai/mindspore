@@ -25,7 +25,8 @@ from mindspore.communication.management import get_group_size, get_rank
 from mindspore.ops import operations as P
 from mindspore.ops.operations._thor_ops import ThorIm2Col
 from mindspore.common.parameter import Parameter
-from mindspore._checkparam import Validator, Rel, twice
+from mindspore import _checkparam as Validator
+from mindspore._checkparam import twice
 from mindspore import context
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
@@ -46,6 +47,7 @@ class DenseThor(Cell):
 
     Applies dense connected layer for the input and saves the information A and G in the dense connected layer
     needed for THOR.
+
     This layer implements the operation as:
 
     .. math::
@@ -432,8 +434,8 @@ class Conv2dThor(_ConvThor):
         """Initialize depthwise conv2d op"""
         if context.get_context("device_target") == "Ascend" and self.group > 1:
             self.dilation = self._dilation
-            Validator.check_int('group', self.group, self.in_channels, Rel.EQ, self.cls_name)
-            Validator.check_int('group', self.group, self.out_channels, Rel.EQ, self.cls_name)
+            Validator.check_int('group', self.group, self.in_channels, Validator.EQ, self.cls_name)
+            Validator.check_int('group', self.group, self.out_channels, Validator.EQ, self.cls_name)
             self.conv2d = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                   kernel_size=self.kernel_size,
                                                   pad_mode=self.pad_mode,
@@ -586,7 +588,7 @@ class EmbeddingThor(Cell):
         self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
-            self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_BOTH,
+            self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_BOTH,
                                                          "padding_idx", self.cls_name)
             self.init_tensor = self.init_tensor.init_data().asnumpy()
             self.init_tensor[self.padding_idx] = 0

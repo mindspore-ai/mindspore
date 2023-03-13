@@ -25,7 +25,7 @@ import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 import mindspore.log as logger
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 from mindspore import context

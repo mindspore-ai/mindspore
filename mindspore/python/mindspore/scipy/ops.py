@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Operators for scipy submodule"""
+from mindspore import _checkparam as validator
 from ..ops import PrimitiveWithInfer, prim_attr_register, Primitive
-from .._checkparam import Validator as validator
 from ..common import dtype as mstype
 
 

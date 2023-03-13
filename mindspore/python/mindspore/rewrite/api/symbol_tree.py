@@ -18,7 +18,7 @@ from types import FunctionType
 import mindspore as ms
 
 from mindspore.nn import Cell
-from ..._checkparam import Validator
+from mindspore import _checkparam as Validator
 from .node import Node
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl

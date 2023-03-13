@@ -16,8 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common.tensor import Tensor
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
@@ -37,7 +36,7 @@ def _check_param_value(rho, epsilon, prim_name=None):
     """Check inputs param."""
     validator.check_value_type("rho", rho, [float], prim_name)
     validator.check_value_type("epsilon", epsilon, [float], prim_name)
-    validator.check_float_range(rho, 0.0, 1.0, Rel.INC_BOTH, "rho", prim_name)
+    validator.check_float_range(rho, 0.0, 1.0, validator.INC_BOTH, "rho", prim_name)
     validator.check_non_negative_float(epsilon, "epsilon", prim_name)
 
 

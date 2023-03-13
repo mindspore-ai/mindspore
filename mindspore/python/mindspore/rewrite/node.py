@@ -20,7 +20,7 @@ import inspect
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
 from mindspore import log as logger
-from .._checkparam import Validator, Rel
+from .. import _checkparam as Validator
 from .ast_helpers import AstModifier
 from .api.scoped_value import ScopedValue, ValueType
 from .api.node_type import NodeType
@@ -748,12 +748,12 @@ class Node:
             ValueError: If `node` has multi-outputs while `out_idx` is None or `out_idx` is not offered.
         """
         Validator.check_value_type("node", node, [Node], "Node")
-        Validator.check_int_range(arg_idx, 0, self._args_num, Rel.INC_LEFT, "arg_idx")
+        Validator.check_int_range(arg_idx, 0, self._args_num, Validator.INC_LEFT, "arg_idx")
         if out_idx is None:
             if len(node._targets) != 1:
                 raise RuntimeError("node should has one output when out_idx is not provided")
             out_idx = 0
-        Validator.check_int_range(out_idx, 0, len(node._targets), Rel.INC_LEFT, "arg_idx")
+        Validator.check_int_range(out_idx, 0, len(node._targets), Validator.INC_LEFT, "arg_idx")
         new_arg = node._targets[out_idx]
         self._normalized_args[self._normalized_args_keys[arg_idx]] = new_arg
         self._sync_arg()
@@ -770,7 +770,7 @@ class Node:
         Raises:
             ValueError: If `index` is out of range.
         """
-        Validator.check_int_range(index, 0, self._args_num, Rel.INC_LEFT, "index")
+        Validator.check_int_range(index, 0, self._args_num, Validator.INC_LEFT, "index")
         Validator.check_value_type("arg", arg, [ScopedValue, str], "Node")
         if isinstance(arg, str):
             arg = ScopedValue.create_naming_value(arg)
@@ -790,7 +790,7 @@ class Node:
         Raises:
             TypeError: Element of new argument is not an instance of ScopedValue.
         """
-        Validator.check_int_range(len(args), 0, self._args_num, Rel.INC_LEFT, "Length of args")
+        Validator.check_int_range(len(args), 0, self._args_num, Validator.INC_LEFT, "Length of args")
         Validator.check_element_type_of_iterable("args", args, [ScopedValue], "Node")
         for arg_index, arg in enumerate(args):
             if not isinstance(arg, ScopedValue):
@@ -810,7 +810,7 @@ class Node:
             TypeError: Value of new argument is not an instance of ScopedValue.
             RuntimeError: Length of new arguments is not equal to length of old arguments.
         """
-        Validator.check_int_range(len(kwargs), 0, self._kwargs_num, Rel.INC_LEFT, "Length of kwargs")
+        Validator.check_int_range(len(kwargs), 0, self._kwargs_num, Validator.INC_LEFT, "Length of kwargs")
         Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         for key, arg in kwargs.items():
             if key not in self._normalized_args.keys() or key not in self._normalized_args_keys:

@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 
 # constants
 DEFAULT_GRAPH_SEED = 87654321

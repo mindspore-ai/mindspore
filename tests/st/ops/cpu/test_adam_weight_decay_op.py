@@ -23,8 +23,7 @@ from mindspore.nn import Dense
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore._checkparam import Rel
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as Validator
 from mindspore.nn.optim.optimizer import Optimizer
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -40,12 +39,12 @@ def _adam_opt(opt, beta1, beta2, eps, lr, weight_decay, param, m, v, gradient):
 
 def _check_param_value(beta1, beta2, eps, prim_name):
     """Check the type of inputs."""
-    validator.check_value_type("beta1", beta1, [float], prim_name)
-    validator.check_value_type("beta2", beta2, [float], prim_name)
-    validator.check_value_type("eps", eps, [float], prim_name)
-    validator.check_float_range(beta1, 0.0, 1.0, Rel.INC_NEITHER, "beta1", prim_name)
-    validator.check_float_range(beta2, 0.0, 1.0, Rel.INC_NEITHER, "beta2", prim_name)
-    validator.check_positive_float(eps, "eps", prim_name)
+    Validator.check_value_type("beta1", beta1, [float], prim_name)
+    Validator.check_value_type("beta2", beta2, [float], prim_name)
+    Validator.check_value_type("eps", eps, [float], prim_name)
+    Validator.check_float_range(beta1, 0.0, 1.0, Validator.INC_NEITHER, "beta1", prim_name)
+    Validator.check_float_range(beta2, 0.0, 1.0, Validator.INC_NEITHER, "beta2", prim_name)
+    Validator.check_positive_float(eps, "eps", prim_name)
 
 
 class AdamWeightDecayOp(Optimizer):

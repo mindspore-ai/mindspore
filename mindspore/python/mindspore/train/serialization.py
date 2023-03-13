@@ -40,7 +40,8 @@ import mindspore
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import log as logger
-from mindspore._checkparam import check_input_data, check_input_dataset, Validator
+from mindspore._checkparam import check_input_data, check_input_dataset
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.api import _MindsporeFunctionExecutor

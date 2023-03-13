@@ -15,13 +15,14 @@
 """ test_checkparameter """
 import pytest
 
-from mindspore._checkparam import Validator, check_input_format, _expand_tuple
+from mindspore._checkparam import check_input_format, _expand_tuple
+from mindspore import _checkparam as Validator
 
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
 triple = _expand_tuple(3)
-kernel_size = 5
-kernel_size1 = twice(kernel_size)
+KERNEL_SIZE = 5
+kernel_size1 = twice(KERNEL_SIZE)
 assert kernel_size1 == (5, 5)
 
 
@@ -34,11 +35,21 @@ def check_int_positive_1():
         Validator.check_positive_int(-1)
 
 
-def test_NCHW1():
+def test_nchw1():
+    """
+    Feature: test check_input_format
+    Description: NCHW
+    Expectation: success
+    """
     assert check_input_format("NCHW") == "NCHW"
 
 
-def test_NCHW3():
+def test_nchw3():
+    """
+    Feature: test check_input_format
+    Description: rt
+    Expectation: ValueError
+    """
     with pytest.raises(ValueError):
         check_input_format("rt")
 

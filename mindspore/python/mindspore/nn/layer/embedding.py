@@ -29,9 +29,8 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
 from mindspore.parallel._ps_context import _get_ps_context, _enable_distributed_mindrt
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver
 from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _set_rank_id
-from mindspore._checkparam import Rel
-from mindspore._checkparam import Validator as validator
-from mindspore.ops.primitive import constexpr
+from mindspore import _checkparam as Validator
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.nn.layer.basic import ClipByNorm
 from mindspore.nn.layer.math import Range
 from mindspore.nn.cell import Cell
@@ -39,9 +38,16 @@ from mindspore.nn.cell import Cell
 __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 
 
+@_primexpr
+def _check_input_2d(input_shape, param_name, func_name):
+    if len(input_shape) != 2:
+        raise TypeError(f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
+    return None
+
+
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
-    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+    Validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
 
 class Embedding(Cell):
@@ -95,16 +101,16 @@ class Embedding(Cell):
                  dtype=mstype.float32, padding_idx=None):
         """Initialize Embedding."""
         super(Embedding, self).__init__()
-        self.vocab_size = validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
-        self.embedding_size = validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
-        validator.check_value_type('use_one_hot', use_one_hot, [bool], self.cls_name)
-        validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
+        self.embedding_size = Validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
+        Validator.check_value_type('use_one_hot', use_one_hot, [bool], self.cls_name)
+        Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.use_one_hot = use_one_hot
         self.dtype = dtype
         self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
-            self.padding_idx = validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_LEFT,
+            self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_LEFT,
                                                          "padding_idx", self.cls_name)
             if isinstance(self.init_tensor, Tensor) and self.init_tensor.init is not None:
                 self.init_tensor = self.init_tensor.init_data()
@@ -227,14 +233,14 @@ class EmbeddingLookup(Cell):
                  max_norm=None, sparse=True, vocab_cache_size=0):
         """Initialize EmbeddingLookup."""
         super(EmbeddingLookup, self).__init__()
-        validator.check_value_type('sparse', sparse, [bool], self.cls_name)
-        self.vocab_size = validator.check_positive_int(vocab_size, 'vocab_size')
-        self.vocab_cache_size = validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
+        Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
+        self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size')
+        self.vocab_cache_size = Validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
         self.target = target
         self.sparse = sparse
         self.cache_enable = self.vocab_cache_size > 0
         self.forward_unique = False
-        validator.check_string(target, ['CPU', 'DEVICE'], 'target', self.cls_name)
+        Validator.check_string(target, ['CPU', 'DEVICE'], 'target', self.cls_name)
         if not sparse and target == 'CPU':
             raise ValueError(f"For '{self.cls_name}', 'sparse' must be True when 'target' is \"CPU\", "
                              f"but got 'sparse': {sparse} and 'target': {target}")
@@ -247,7 +253,7 @@ class EmbeddingLookup(Cell):
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
-        self.embedding_size = validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
+        self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
                                          name='embedding_table')
         parallel_mode = _get_parallel_mode()
@@ -272,7 +278,7 @@ class EmbeddingLookup(Cell):
                 raise TypeError(f"For '{self.cls_name}', the type of 'manual_shapes' must be tuple(int), "
                                 f"but got {type(manual_shapes).__name__}!")
             for dim in manual_shapes:
-                validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
+                Validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)
             self.embeddinglookup.add_prim_attr("manual_split", manual_shapes)
             self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))
@@ -310,7 +316,7 @@ class EmbeddingLookup(Cell):
         self.embedding_table.unique = self.forward_unique
         self.max_norm = max_norm
         if self.max_norm is not None:
-            self.max_norm = validator.check_positive_float(self.max_norm, 'max_norm', self.cls_name)
+            self.max_norm = Validator.check_positive_float(self.max_norm, 'max_norm', self.cls_name)
             self.max_norm = Tensor(self.max_norm, dtype=mstype.float32)
 
     def _process_vocab_cache(self, slice_mode):
@@ -548,7 +554,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         """Initialize MultiFieldEmbeddingLookup."""
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
                                                         slice_mode, feature_num_list, max_norm, sparse)
-        self.field_size = validator.check_positive_int(field_size, 'field_size', self.cls_name)
+        self.field_size = Validator.check_positive_int(field_size, 'field_size', self.cls_name)
         self.operator = operator
 
         self.mul = P.Mul()
@@ -566,7 +572,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         self.max_mask_mul = P.Mul()
         self.max_no_equal = P.NotEqual()
 
-        validator.check_string(operator, ['SUM', 'MAX', 'MEAN'], 'operator', self.cls_name)
+        Validator.check_string(operator, ['SUM', 'MAX', 'MEAN'], 'operator', self.cls_name)
         if operator == MultiFieldEmbeddingLookup.OPERATOR_SUM:
             self.merge_op = P.UnsortedSegmentSum()
         elif operator == MultiFieldEmbeddingLookup.OPERATOR_MAX:
@@ -618,6 +624,9 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         self.negative_inf_value = -3.402823466E+38
 
     def construct(self, input_indices, input_values, field_ids):
+        _check_input_2d(F.shape(input_indices), "input_indices", self.cls_name)
+        _check_input_2d(F.shape(input_values), "input_values", self.cls_name)
+        _check_input_2d(F.shape(field_ids), "field_ids", self.cls_name)
         _check_input_dtype(F.dtype(input_indices), "input_indices", [mstype.int32, mstype.int64], self.cls_name)
         _check_input_dtype(F.dtype(input_values), "input_values", [mstype.float32], self.cls_name)
         _check_input_dtype(F.dtype(field_ids), "field_ids", [mstype.int32], self.cls_name)

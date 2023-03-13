@@ -17,7 +17,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 import mindspore.nn as nn
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_greater_zero, check_distribution_name

@@ -39,7 +39,7 @@ from mindspore.numpy.array_ops import ravel, expand_dims, moveaxis, concatenate,
     split
 
 from mindspore.numpy.utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
-    _raise_type_error, _check_same_type, _check_is_float, \
+    _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
     _raise_value_error, _promote, _check_axis_type, _canonicalize_axis, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
@@ -683,6 +683,7 @@ def inner(a, b):
     if F.rank(a) == 0 or F.rank(b) == 0:
         return F.tensor_mul(a, b)
 
+    _check_shape_aligned(F.shape(a), F.shape(b))
     aligned_shape_a = (F.shape_mul(F.shape(a)[:-1]), F.shape(a)[-1])
     aligned_shape_b = (F.shape_mul(F.shape(b)[:-1]), F.shape(a)[-1])
     a_aligned = F.reshape(a, aligned_shape_a)
@@ -1941,7 +1942,7 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
     """
     # This implementation is inspired by jax.numpy
     _check_input_tensor(a)
-    axis = _canonicalize_axis(axis, a.ndim)
+    new_axis = _canonicalize_axis(axis, a.ndim)
     if not isinstance(n, int):
         _raise_type_error("Input n should be int, but got ", n)
     if n < 0:
@@ -1959,17 +1960,17 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
         combined = _handle_prepend_append(combined, a, append, axis)
 
     if combined:
-        a = concatenate(combined, axis)
+        a = concatenate(combined, new_axis)
 
     # if n > maximum length allowed, the tensor is empty, and is not supported
-    if n >= a.shape[axis]:
+    if n >= a.shape[new_axis]:
         _raise_value_error("n is bigger then the specified dimension, this will result in an empty tensor.")
 
     original_dtype = a.dtype
     # will change once F.tensor_slice supports types other than float32
     if not _check_is_float(original_dtype):
         a = a.astype(mstype.float32)
-    a = moveaxis(a, axis, -1)
+    a = moveaxis(a, new_axis, -1)
     for _ in F.make_range(n):
         slice_start = _list_comprehensions(F.rank(a) - 1, 0, True)
         slice_size = F.shape(a)[:-1] + (F.shape(a)[-1] - 1,)
@@ -1978,7 +1979,7 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
         a = F.tensor_sub(minuend, subtrahend)
     if not _check_is_float(original_dtype):
         a = a.astype(original_dtype)
-    return moveaxis(a, -1, axis)
+    return moveaxis(a, -1, new_axis)
 
 
 def ediff1d(ary, to_end=None, to_begin=None):

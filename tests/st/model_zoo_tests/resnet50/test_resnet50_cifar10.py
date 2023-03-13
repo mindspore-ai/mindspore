@@ -31,6 +31,9 @@ def test_resnet50_cifar10_ascend():
     old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
     config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     exec_network_shell = "cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
@@ -71,6 +74,9 @@ def test_ge_resnet50_cifar10_ascend():
                 "=dataset_sink_mode"]
     list_new = ["total_epochs=1", "1", "=True"]
     utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     dataset = os.path.join(utils.data_root, "cifar-10-batches-bin")
     #Do not execute ckpt graph
     config = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
@@ -104,6 +110,9 @@ def test_resnet50_cifar10_gpu_accuracy():
     old_list = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size"]
     new_list = ["total_epochs=10", "10"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     dataset_path = os.path.join(utils.data_root, "cifar-10-batches-bin")
     config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     os.system("nvidia-smi")
@@ -137,6 +146,9 @@ def test_resnet50_cifar10_gpu_performance():
     model_name = "resnet"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, "resnet")
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     os.system("cp -r {} {}".format(os.path.join(cur_path, "train.py"), cur_model_path))
     config_path = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
     os.system("nvidia-smi")

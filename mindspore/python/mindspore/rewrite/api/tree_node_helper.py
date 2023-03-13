@@ -16,7 +16,7 @@
 from typing import Optional
 
 from mindspore import log as logger
-from ..._checkparam import Validator
+from mindspore import _checkparam as Validator
 from .symbol_tree import SymbolTree
 from .node import Node
 from .node_type import NodeType

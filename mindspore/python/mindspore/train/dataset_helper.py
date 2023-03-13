@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import math
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
 from mindspore.common._utils import is_shape_unknown

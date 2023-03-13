@@ -27,8 +27,7 @@ from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
-from mindspore._checkparam import Rel
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
@@ -54,6 +53,7 @@ class _ScatterOp(PrimitiveWithInfer):
             raise ValueError(f"For '{prim_name}', "
                              f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+        return None
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -134,6 +134,7 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
             raise ValueError(f"For '{prim_name}', "
                              f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+        return None
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -158,11 +159,12 @@ class _ScatterNdOp(_ScatterOp):
 
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
         validator.check('the dimension of x', len(x_shape),
-                        'the dimension of indices', indices_shape[-1], Rel.GE)
+                        'the dimension of indices', indices_shape[-1], validator.GE)
         if indices_shape[:-1] + x_shape[indices_shape[-1]:] != updates_shape:
             raise ValueError(f"For '{prim_name}', updates_shape = "
                              f"indices_shape[:-1] + x_shape[indices_shape[-1]:], but got x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+        return None
 
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
@@ -458,13 +460,13 @@ class Im2Col(Primitive):
         self.dilations = (dilations, dilations) if isinstance(dilations, int) else dilations
         self.pads = (pads, pads) if isinstance(pads, int) else pads
 
-        validator.check("ksizes size", len(self.ksizes), "", [1, 2], Rel.IN, self.name)
+        validator.check("ksizes size", len(self.ksizes), "", [1, 2], validator.IN, self.name)
         validator.check_positive_int_sequence(self.ksizes, "ksizes", self.name)
-        validator.check("strides size", len(self.strides), "", [1, 2], Rel.IN, self.name)
+        validator.check("strides size", len(self.strides), "", [1, 2], validator.IN, self.name)
         validator.check_positive_int_sequence(self.strides, "strides", self.name)
-        validator.check("dilations size", len(self.dilations), "", [1, 2], Rel.IN, self.name)
+        validator.check("dilations size", len(self.dilations), "", [1, 2], validator.IN, self.name)
         validator.check_positive_int_sequence(self.dilations, "dilations", self.name)
-        validator.check("pads size", len(self.pads), "", [1, 2], Rel.IN, self.name)
+        validator.check("pads size", len(self.pads), "", [1, 2], validator.IN, self.name)
         validator.check_non_negative_int_sequence(self.pads, "pads", self.name)
 
         self.add_prim_attr('ksizes', self.ksizes)
@@ -550,13 +552,13 @@ class Col2Im(Primitive):
         self.padding = (padding, padding) if isinstance(padding, int) else padding
         self.stride = (stride, stride) if isinstance(stride, int) else stride
 
-        validator.check("kernel_size size", len(self.kernel_size), "", 2, Rel.EQ, self.name)
+        validator.check("kernel_size size", len(self.kernel_size), "", 2, validator.EQ, self.name)
         validator.check_positive_int_sequence(self.kernel_size, "kernel_size", self.name)
-        validator.check("dilation size", len(self.dilation), "", 2, Rel.EQ, self.name)
+        validator.check("dilation size", len(self.dilation), "", 2, validator.EQ, self.name)
         validator.check_positive_int_sequence(self.dilation, "dilation", self.name)
-        validator.check("padding size", len(self.padding), "", 2, Rel.EQ, self.name)
+        validator.check("padding size", len(self.padding), "", 2, validator.EQ, self.name)
         validator.check_non_negative_int_sequence(self.padding, "padding", self.name)
-        validator.check("stride size", len(self.stride), "", 2, Rel.EQ, self.name)
+        validator.check("stride size", len(self.stride), "", 2, validator.EQ, self.name)
         validator.check_positive_int_sequence(self.stride, "stride", self.name)
 
         self.add_prim_attr('kernel_size', self.kernel_size)
@@ -592,7 +594,7 @@ class Reshape(PrimitiveWithCheck):
     def infer_value(self, x, shape):
         """infer value"""
         # for shape is not constant
-        if shape is None or x is None:
+        if shape is None or (isinstance(shape, (tuple, list)) and None in shape) or x is None:
             return None
         if isinstance(shape, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),
@@ -985,7 +987,7 @@ class GatherV2(PrimitiveWithCheck):
         axis_v = axis['value']
         validator.check_value_type('axis', axis_v, [int], self.name)
         rank = len(params['shape'])
-        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
+        validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, "axis", self.name)
 
 
 class SparseGatherV2(PrimitiveWithCheck):
@@ -1032,7 +1034,7 @@ class SparseGatherV2(PrimitiveWithCheck):
         axis_v = axis['value']
         validator.check_value_type('axis', axis_v, [int], self.name)
         rank = len(params['shape'])
-        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
+        validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, "axis", self.name)
 
 
 class Padding(Primitive):
@@ -1684,7 +1686,7 @@ class TupleToArray(PrimitiveWithInfer):
 
     def infer_value(self, x):
         validator.check_value_type("x", x, [tuple], self.name)
-        validator.check("size of x", len(x), '', 0, Rel.GT, self.name)
+        validator.check("size of x", len(x), '', 0, validator.GT, self.name)
         dtype = type(x[0])
         for i, item in enumerate(x):
             validator.check_value_type(f"x[{i}]", item, [numbers.Number], self.name)
@@ -1816,13 +1818,13 @@ class InvertPermutation(PrimitiveWithInfer):
             if z[i - 1] == z[i]:
                 raise ValueError(f"For '{self.name}', the 'input_x' can not contain duplicate values, "
                                  f"but got duplicated {z[i]} in the 'input_x'.")
-        validator.check(f'value min', min(x_value), '', 0, Rel.EQ, self.name)
-        validator.check(f'value max', max(x_value), '', len(x_value) - 1, Rel.EQ, self.name)
+        validator.check(f'value min', min(x_value), '', 0, validator.EQ, self.name)
+        validator.check(f'value max', max(x_value), '', len(x_value) - 1, validator.EQ, self.name)
 
         y = [None] * len(x_value)
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
-            validator.check(f'value', z[i], f'index', i, Rel.EQ, self.name)
+            validator.check(f'value', z[i], f'index', i, validator.EQ, self.name)
             y[value] = i
             z.append(value)
         return {'shape': x_shp,
@@ -2301,7 +2303,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
-                            'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
+                            'length of segments_id', segment_ids_shape[0], validator.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
         validator.check_positive_int(num_segments_v, "num_segments", self.name)
@@ -2411,7 +2413,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         if not is_shape_unknown(x_shape) and not is_shape_unknown(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
-                            'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
+                            'length of segments_id', segment_ids_shape[0], validator.EQ, self.name)
         num_segments_v = num_segments['value']
         validator.check_value_type('num_segments', num_segments_v, [int], self.name)
         validator.check_positive_int(num_segments_v, "num_segments", self.name)
@@ -2592,12 +2594,12 @@ class ParallelConcat(Primitive):
 def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     """for stack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
-    validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
+    validator.check_int(len(x_shape), 1, validator.GE, "len of input_x", prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
 
     out_n = len(x_shape)
     for i in range(1, out_n):
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], validator.EQ, prim_name, TypeError)
 
     new_x_shape = []
     for i, shp in enumerate(x_shape):
@@ -2615,14 +2617,14 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     rank_base = len(new_x_shape[0]["shape"])
     for i in range(1, n):
         validator.check('len of x_shape[%d]' % new_x_shape[i]["id"], len(new_x_shape[i]["shape"]),
-                        'len of x_shape[0]', rank_base, Rel.EQ, prim_name, ValueError)
+                        'len of x_shape[0]', rank_base, validator.EQ, prim_name, ValueError)
         for j in range(0, rank_base):
             if new_x_shape[i]["shape"][j] != new_x_shape[0]["shape"][j] and \
                     new_x_shape[i]["shape"][j] != -1 and new_x_shape[0]["shape"][j] != -1:
                 raise ValueError("For \'{}\' element {} shape in input can not pack with first element".format(
                     prim_name, new_x_shape[i]['id']))
 
-    validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
+    validator.check_int_range(axis, -rank_base - 1, rank_base, validator.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
 
@@ -2741,7 +2743,7 @@ class Unpack(PrimitiveWithInfer):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         x_shape = list(x['shape'])
         dim = len(x_shape)
-        validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
+        validator.check_int_range(self.axis, -dim, dim, validator.INC_LEFT, 'axis value', self.name)
         if self.axis < 0:
             self.axis = self.axis + dim
         output_num = x_shape[self.axis]
@@ -2749,7 +2751,7 @@ class Unpack(PrimitiveWithInfer):
         validator.check_positive_int(output_num, "output_num", self.name)
         self.add_prim_attr('num', output_num)
         output_valid_check = x_shape[self.axis] - output_num
-        validator.check_int(output_valid_check, 0, Rel.EQ,
+        validator.check_int(output_valid_check, 0, validator.EQ,
                             "The dimension which to unstack divides output_num", self.name)
         out_shapes = []
         out_dtypes = []
@@ -5090,7 +5092,7 @@ class SpaceToDepth(Primitive):
     def __init__(self, block_size):
         """Initialize SpaceToDepth"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, self.name, 2, Rel.GE)
+        validator.check('block_size', block_size, self.name, 2, validator.GE)
         self.block_size = block_size
         self.add_prim_attr("data_format", "NCHW")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -5143,7 +5145,7 @@ class DepthToSpace(Primitive):
     def __init__(self, block_size):
         """Initialize DepthToSpace"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
+        validator.check('block_size', block_size, '', 2, validator.GE, self.name)
         self.block_size = block_size
         self.add_prim_attr("data_format", "NCHW")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -5209,9 +5211,9 @@ class SpaceToBatch(Primitive):
         logger.warning("WARN_DEPRECATED: The usage of SpaceToBatch is deprecated."
                        " Please use SpaceToBatchND.")
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, self.name, 2, Rel.GE, self.name)
+        validator.check('block_size', block_size, self.name, 2, validator.GE, self.name)
         self.block_size = block_size
-        validator.check('paddings shape', np.array(paddings).shape, self.name, (2, 2), Rel.EQ, self.name)
+        validator.check('paddings shape', np.array(paddings).shape, self.name, (2, 2), validator.EQ, self.name)
         for elem in itertools.chain(*paddings):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
@@ -5276,7 +5278,7 @@ class BatchToSpace(PrimitiveWithInfer):
         logger.warning("WARN_DEPRECATED: The usage of BatchToSpace is deprecated."
                        " Please use BatchToSpaceND.")
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
+        validator.check('block_size', block_size, '', 2, validator.GE, self.name)
         self.block_size = block_size
         validator.check_value_type('crops type', crops, [list, tuple], self.name)
         validator.check('crops shape', np.array(crops).shape, self.name, (2, 2))
@@ -5295,7 +5297,7 @@ class BatchToSpace(PrimitiveWithInfer):
         for i in range(2):
             x_block_prod = out_shape[i + 2] * self.block_size
             crops_sum = self.crops[i][0] + self.crops[i][1]
-            validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT, self.name)
+            validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, validator.GT, self.name)
             out_shape[i + 2] = x_block_prod - crops_sum
         block_size_prod = self.block_size * self.block_size
         if out_shape[0] % block_size_prod != 0:
@@ -5374,24 +5376,25 @@ class SpaceToBatchND(Primitive):
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
         validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
-        validator.check('paddings length', len(paddings), '', 1, Rel.GE, self.name)
+        validator.check('paddings length', len(paddings), '', 1, validator.GE, self.name)
 
         if isinstance(block_shape, int):
             block_shape = (block_shape,) * np.array(paddings).shape[0]
 
         self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
-        validator.check('block_shape shape', len(np.array(block_shape).shape), 'default value', 1, Rel.EQ, self.name)
+        validator.check('block_shape shape', len(np.array(block_shape).shape),
+                        'default value', 1, validator.EQ, self.name)
         block_rank = len(block_shape)
         if context.get_context("device_target") == "Ascend":
-            validator.check('block_shape length', block_rank, 'default value', 2, Rel.EQ, self.name)
+            validator.check('block_shape length', block_rank, 'default value', 2, validator.EQ, self.name)
         for elem in block_shape:
-            validator.check('block_shape element', elem, 'min value', 1, Rel.GE, self.name)
+            validator.check('block_shape element', elem, 'min value', 1, validator.GE, self.name)
             validator.check_value_type('block_shape element', elem, [int], self.name)
         self.block_shape = block_shape
 
         validator.check(
-            'paddings shape', np.array(paddings).shape, 'default value', (block_rank, 2), Rel.EQ, self.name)
+            'paddings shape', np.array(paddings).shape, 'default value', (block_rank, 2), validator.EQ, self.name)
         for elem in itertools.chain(*paddings):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
@@ -5425,18 +5428,18 @@ class BatchToSpaceND(Primitive):
             block_shape = (block_shape,) * np.array(crops).shape[0]
         self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
-        validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
+        validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, validator.EQ, self.name)
         block_rank = len(block_shape)
         if context.get_context("device_target") == "Ascend":
-            validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
+            validator.check('block_shape length', block_rank, '', 2, validator.EQ, self.name)
         for elem in block_shape:
-            validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
+            validator.check('block_shape element', elem, '', 1, validator.GE, self.name)
             validator.check_value_type('block_shape element', elem, [int], self.name)
         self.block_shape = block_shape
 
         validator.check_value_type('crops type', crops, [list, tuple], self.name)
-        validator.check('crops length', len(crops), '', 1, Rel.GE, self.name)
-        validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), Rel.EQ, self.name)
+        validator.check('crops length', len(crops), '', 1, validator.GE, self.name)
+        validator.check('crops shape', np.array(crops).shape, '', (block_rank, 2), validator.EQ, self.name)
         for elem in itertools.chain(*crops):
             validator.check_non_negative_int(elem, 'crops element', self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
@@ -5489,10 +5492,10 @@ class BroadcastTo(PrimitiveWithCheck):
     def __init__(self, shape):
         """Initialize BroadcastTo"""
         validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of x", len(shape), "", 0, Rel.GT, self.name)
+        validator.check("dimension of x", len(shape), "", 0, validator.GT, self.name)
         for ix, i in enumerate(shape):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
-            validator.check("shape element", i, "shape element min limit", -1, Rel.GE, self.name)
+            validator.check("shape element", i, "shape element min limit", -1, validator.GE, self.name)
         self.shape = shape
 
     def infer_value(self, x):
@@ -5583,11 +5586,11 @@ class Meshgrid(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check_value_type("shape", x_shape, [tuple], self.name)
-        validator.check_int(len(x_shape), 2, Rel.GE, "len of input", self.name)
+        validator.check_int(len(x_shape), 2, validator.GE, "len of input", self.name)
         n = len(x_shape)
         shape_0 = []
         for s in x_shape:
-            validator.check_int(len(s), 1, Rel.EQ, 'each input rank', self.name)
+            validator.check_int(len(s), 1, validator.EQ, 'each input rank', self.name)
             shape_0.append(s[0])
         if self.indexing == "xy":
             shape_0[0], shape_0[1] = shape_0[1], shape_0[0]
@@ -5598,7 +5601,7 @@ class Meshgrid(PrimitiveWithInfer):
         validator.check_subclass("input[0]", x_type[0], mstype.tensor, self.name)
         n = len(x_type)
         for i in range(1, n):
-            validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, self.name, TypeError)
+            validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], validator.EQ, self.name, TypeError)
         return x_type
 
 
@@ -6039,11 +6042,11 @@ class Range(PrimitiveWithCheck):
 
     def check_shape(self, start_shape, limit_shape, delta_shape):
         if not is_shape_unknown(start_shape):
-            validator.check("start_shape", len(start_shape), "", 0, Rel.EQ, self.name)
+            validator.check("start_shape", len(start_shape), "", 0, validator.EQ, self.name)
         if not is_shape_unknown(limit_shape):
-            validator.check("limit_shape", len(limit_shape), "", 0, Rel.EQ, self.name)
+            validator.check("limit_shape", len(limit_shape), "", 0, validator.EQ, self.name)
         if not is_shape_unknown(delta_shape):
-            validator.check("delta_shape", len(delta_shape), "", 0, Rel.EQ, self.name)
+            validator.check("delta_shape", len(delta_shape), "", 0, validator.EQ, self.name)
 
     def check_dtype(self, start_dtype, limit_dtype, delta_dtype):
         valid_dtypes = [mstype.int32, mstype.float32, mstype.int64, mstype.float64]
@@ -6672,7 +6675,8 @@ class ListDiff(Primitive):
         """Initialize ListDiff"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['out', 'idx'])
         validator.check_value_type("out_idx", out_idx, [mstype.Type], self.name)
-        validator.check("out_idx", out_idx, "", [mstype.int32, mstype.int64], Rel.IN, self.name, excp_cls=TypeError)
+        validator.check("out_idx", out_idx, "", [mstype.int32, mstype.int64], validator.IN,
+                        self.name, excp_cls=TypeError)
         self.out_idx = out_idx
         self.add_prim_attr('out_idx', out_idx)
 
@@ -6870,13 +6874,13 @@ class ExtractVolumePatches(Primitive):
         if isinstance(kernel_size, (list, tuple)):
             kernel_size = tuple(kernel_size)
             if len(kernel_size) == 5:
-                validator.check_int(kernel_size[0], 1, Rel.EQ, "kernel_size[0]", self.name)
-                validator.check_int(kernel_size[1], 1, Rel.EQ, "kernel_size[1]", self.name)
+                validator.check_int(kernel_size[0], 1, validator.EQ, "kernel_size[0]", self.name)
+                validator.check_int(kernel_size[1], 1, validator.EQ, "kernel_size[1]", self.name)
         if isinstance(strides, (list, tuple)):
             strides = tuple(strides)
             if len(strides) == 5:
-                validator.check_int(strides[0], 1, Rel.EQ, "strides[0]", self.name)
-                validator.check_int(strides[1], 1, Rel.EQ, "strides[1]", self.name)
+                validator.check_int(strides[0], 1, validator.EQ, "strides[0]", self.name)
+                validator.check_int(strides[1], 1, validator.EQ, "strides[1]", self.name)
         self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
                                                   allow_five=True, ret_five=True, greater_zero=True)
         self.strides = _check_3d_int_or_tuple("strides", strides, self.name,

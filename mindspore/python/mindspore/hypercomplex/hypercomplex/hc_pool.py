@@ -17,7 +17,7 @@ from typing import Tuple
 from abc import abstractmethod
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore._checkparam import Rel, Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
@@ -302,8 +302,8 @@ class MaxPool1d(_PoolNd):
                                                ['VALID', 'SAME'],
                                                'pad_mode',
                                                self.cls_name)
-        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
-        validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
+        validator.check_int(kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
+        validator.check_int(stride, 1, validator.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
@@ -499,8 +499,8 @@ class AvgPool1d(_PoolNd):
                                                ['VALID', 'SAME'],
                                                'pad_mode',
                                                self.cls_name)
-        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
-        validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
+        validator.check_int(kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
+        validator.check_int(stride, 1, validator.GE, "stride", self.cls_name)
         super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
@@ -659,8 +659,7 @@ class AdaptiveAvgPool1d(_AdaptivePoolNd):
     def __init__(self, output_size: int) -> None:
         """Initialize AdaptiveAvgPool1d."""
         super(AdaptiveAvgPool1d, self).__init__(output_size)
-        validator.check_value_type('output_size', output_size, [int], self.cls_name)
-        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
 
     def _construct(self,
                    x: Tensor,
@@ -886,7 +885,7 @@ class AdaptiveMaxPool1d(_AdaptivePoolNd):
         """Initialize AdaptiveMaxPool1d."""
         super(AdaptiveMaxPool1d, self).__init__(output_size)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
-        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
 
     def _construct(self,
                    x: Tensor,

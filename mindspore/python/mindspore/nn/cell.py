@@ -31,7 +31,7 @@ from mindspore.common.hook_handle import HookHandle
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
 from mindspore.common.api import _generate_branch_control_input

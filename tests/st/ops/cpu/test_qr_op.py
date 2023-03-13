@@ -18,7 +18,7 @@ import scipy as osp
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops import PrimitiveWithInfer
 from mindspore.ops import prim_attr_register
