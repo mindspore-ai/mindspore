@@ -377,7 +377,7 @@ def dot(input, other):
     return matmul_op(input, other)
 
 
-@constexpr
+@_primexpr
 def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
