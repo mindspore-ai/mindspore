@@ -40,7 +40,7 @@ class SizeInfer : public abstract::OpInferBase {
     return res;
   }
 
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSizeInputNum, prim_name);

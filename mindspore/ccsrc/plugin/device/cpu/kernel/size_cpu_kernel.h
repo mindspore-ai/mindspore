@@ -44,7 +44,7 @@ class SizeCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  int32_t input_elements;
+  int64_t input_elements;
 };
 }  // namespace kernel
 }  // namespace mindspore

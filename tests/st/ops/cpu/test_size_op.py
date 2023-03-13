@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -85,3 +86,23 @@ def test_size_3_dimension(mode):
     net = Net()
     out = net(input_x)
     assert out == expect
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_size_dynamic(mode):
+    """
+    Feature: test pynative mode and graph mode
+    Description: Test dynamic shape
+    Expectation: the result match to expected value
+    """
+    context.set_context(mode=mode)
+    net = Net()
+    input_x_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    net.set_inputs(input_x_dyn)
+    input_x = Tensor(np.random.random(([3, 4])), dtype=ms.float32)
+    output = net(input_x)
+    expect = 12
+    assert output == expect
