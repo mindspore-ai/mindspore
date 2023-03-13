@@ -325,7 +325,7 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
     MS_EXCEPTION_IF_NULL(parameter);
     const auto &abs = parameter->abstract();
     MS_EXCEPTION_IF_NULL(abs);
-    if (abs->isa<abstract::AbstractTuple>() && (!common::AnfAlgo::IsDynamicSequence(parameter))) {
+    if (abs->isa<abstract::AbstractSequence>() && (!common::AnfAlgo::IsDynamicSequence(parameter))) {
       MS_LOG(DEBUG) << "Fetch input tensor for tuple parameter:" << parameter->DebugString() << " in control flow.";
       PushTupleTensor(args, origin_parameters, parameter, parameter_with_index.second, &input_tensors);
     } else {
@@ -971,7 +971,7 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   auto &output_abstract = output_node->abstract();
   MS_EXCEPTION_IF_NULL(output_abstract);
   // Wrap output to VectorRef if the output is tuple.
-  if (output_abstract->isa<abstract::AbstractTuple>()) {
+  if (output_abstract->isa<abstract::AbstractSequence>()) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
       if (*output_position >= output_tensors.size()) {
