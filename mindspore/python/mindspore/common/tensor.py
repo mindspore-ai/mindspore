@@ -3861,7 +3861,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
            \end{array}
 
         Args:
-            A (Tensor) - The m by k matrix equivalent to `a` in above.
+            A (Tensor): The m by k matrix equivalent to `a` in above.
                 The input tensor whose data type is float16, float32 or float64.
 
         Returns:
