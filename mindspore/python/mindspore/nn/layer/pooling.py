@@ -328,7 +328,7 @@ class MaxPool3d(_PoolNd):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> np_x = np.random.randint(0, 10, [5, 3, 4, 6, 7])
-        >>> x = Tensor(np_x, mindspore.float32)
+        >>> x = Tensor(np_x, ms.float32)
         >>> pool1 = nn.MaxPool3d(kernel_size=2, stride=1, pad_mode='pad', padding=1, dilation=3, return_indices=True)
         >>> output = pool1(x)
         >>> print(output[0].shape)
@@ -724,7 +724,8 @@ class AvgPool3d(_PoolNd):
         pad_mode (str): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
-            - same: The width of the output is the same as the value after the input is divided by stride.
+            - same: The depth, height and width of the output is the same as the value after the input is divided
+              by stride.
 
             - valid: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
@@ -762,6 +763,7 @@ class AvgPool3d(_PoolNd):
         ValueError: If element of `padding` is less than 0.
         ValueError: If length of shape of `x` is neither 4 nor 5.
         ValueError: If `divisor_override` is equal to 0.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -827,7 +829,7 @@ class AvgPool2d(_PoolNd):
         pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
-            - same: The width of the output is the same as the value after the input is divided by stride.
+            - same: The height and width of the output is the same as the value after the input is divided by stride.
 
             - valid: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
@@ -864,6 +866,7 @@ class AvgPool2d(_PoolNd):
         ValueError: If length of `padding` tuple/list is not 1 or 2.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
         ValueError: If `divisor_override` is equal to 0.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -992,6 +995,7 @@ class AvgPool1d(_PoolNd):
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

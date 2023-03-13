@@ -20,7 +20,7 @@ mindspore.nn.AvgPool3d
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。如果为int，则同时代表池化核的深度，高度和宽度方向上的移动步长。如果为tuple，其值必须包含三个整数值，分别表示池化核的深度，高度和宽度方向上的移动步长。取值必须为正整数。默认值：1。
         - **pad_mode** (str) - 指定池化的填充方式，可选值为"same"，"valid"或"pad"，不区分大小写。默认值："valid"。
 
-          - same: 输出的宽度与输入整除 `stride` 后的值相同。
+          - same: 输出的深度、高度和宽度分别与输入整除 `stride` 后的值相同。
           - valid: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
           - pad: 对输入进行填充。在输入的前后上下左右分别填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
@@ -45,3 +45,4 @@ mindspore.nn.AvgPool3d
         - **ValueError** - `padding` 的元素小于0。
         - **ValueError** - `x` 的shape长度不等于4或5。
         - **ValueError** - `divisor_override` 为0。
+        - **ValueError** -  `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
