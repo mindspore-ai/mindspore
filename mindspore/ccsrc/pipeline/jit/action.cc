@@ -30,6 +30,7 @@
 #include "ir/cell.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
@@ -127,12 +128,6 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
 bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
-    return false;
-  }
-
   return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -145,7 +140,17 @@ bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
                     << " has no abstract, Debug String: " << node->DebugString();
       return false;
     }
-    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kAnyValue;
+    auto ret = abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kAnyValue;
+    if (ret) {
+      auto op_name = common::AnfAlgo::GetCNodeName(node);
+      if (op_name == kDependOpName) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false;
+    }
   });
 }
 
