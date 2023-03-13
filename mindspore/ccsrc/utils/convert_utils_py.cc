@@ -574,6 +574,10 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
     return ret;
   }
 
+  if (value_size == 0) {
+    return ref_tuple;
+  }
+
   // Current VectorRef reflects a COOTensor type
   if (abs->isa<abstract::AbstractCSRTensor>()) {
     return MakeCSRTensor(value_list);
