@@ -2674,11 +2674,8 @@ def masked_fill(x, mask, value):
     Fills elements of Tensor with value where mask is True.
     """
     check_is_tensor(mask)
-    if not isinstance(value, Tensor):
-        value = Tensor(value)
     check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
-    masked_value = P.FillV2()(x.shape, value.astype(x.dtype))
-    return P.Select()(mask, masked_value, x)
+    return F.masked_fill(x, mask, value)
 
 
 def col2im(*inputs):
