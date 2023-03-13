@@ -2837,13 +2837,11 @@ def nextafter(input, other):
         out_{i} =  nextafter({input_{i}, other_{i}})
 
     Args:
-        - **input** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Must be one of the following types: float32, float64.
+        input (Tensor): The first input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions. Must be one of the following types: float32, float64.
 
-        - **other** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Must be one of the following types: float32, float64.
+        other (Tensor): The second input tensor. The shape of tensor is :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions. Must be one of the following types: float32, float64.
 
     Returns:
         Tensor, has the same shape and data type as `input`.
@@ -3441,7 +3439,7 @@ def trace(input):
         Input must be matrix, and complex number is not supported at present.
 
     Args:
-        - **input** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
+        input (Tensor): A matrix to be calculated. The matrix must be two dimensional.
 
     Returns:
         Tensor, with the same data type as input `input`, and size equals to 1.

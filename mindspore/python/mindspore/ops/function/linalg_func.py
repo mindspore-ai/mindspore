@@ -44,7 +44,7 @@ def svd(input, full_matrices=False, compute_uv=True):
 
     Args:
         input (Tensor): Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
-          the supported dtype are float32 and float64..
+          the supported dtype are float32 and float64.
         full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
                                         only the leading P singular vectors, with P is the minimum of M and N.
                                         Default: False.
@@ -202,21 +202,18 @@ def qr(input, mode='reduced'):
     If `mode` is 'reduced'(the default), compute the P columns of Q where P is minimum of the 2 innermost dimensions of
     input. If `mode` is 'complete', compute full-sized Q and R.
 
-
     Args:
-        - **input** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions.
-          types: float16, float32, float64, complex64, complex128.
-          Define the shape of input as (..., m, n), p as the minimum values of m and n.
-        - **mode** (str, optional) - Whether compute reduce-sized QR decomposition. Default: 'reduced'.
-
+        input (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
+            float16, float32, float64, complex64 and complex128. Define the shape of input as (..., m, n), p as the
+            minimum values of m and n.
+        mode (Union['reduced', 'complete'], optional): If `mode` is 'reduced', computing reduce-sized QR decomposition,
+            otherwise, computing the full-sized QR decomposition. Default: 'reduced'.
 
     Returns:
-        - **Q** (Tensor) - The orthonormal matrices of input.
-          If `some` is false, the shape is :math:`(m, m)`, else the shape is :math:`(m, p)`.
-          The dtype of `Q` is same as `input`.
-        - **R** (Tensor) - The upper triangular matrices of input.
-          If `some` is false, the shape is :math:`(m, n)`, else the shape is :math:`(p, n)`.
-          The dtype of `R` is same as `input`.
+        - **Q** (Tensor) - The orthonormal matrices of input. If `mode` is 'complete', the shape is :math:`(m, m)`,
+          else the shape is :math:`(m, p)`. The dtype of `Q` is same as `input`.
+        - **R** (Tensor) - The upper triangular matrices of input. If `mode` is 'complete', the shape is :math:`(m, n)`,
+          else the shape is :math:`(p, n)`. The dtype of `R` is same as `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
