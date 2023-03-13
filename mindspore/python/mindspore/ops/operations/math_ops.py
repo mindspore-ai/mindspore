@@ -5706,7 +5706,7 @@ class MatrixPower(Primitive):
         ValueError: If n is negative but got input x has singular matrices.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+
 
     Examples:
         >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
@@ -6181,7 +6181,7 @@ class TridiagonalMatMul(Primitive):
                     are not same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> tridiagonalmatmul = ops.TridiagonalMatMul()
