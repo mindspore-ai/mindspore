@@ -452,7 +452,6 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                    << kTensorAlignBytes << " types.";
       output_addr->set_is_ptr_persisted(false);
       output_addr->set_from_mem_pool(false);
-      std::static_pointer_cast<::mindspore::device::cpu::CPUDeviceAddress>(output_addr)->DoClearDeviceMemory();
       output_addr->set_deleter(deleter);
       output_addr->set_ptr(ge_data);
       output_addr->SetSize(tensor->GetSize());
