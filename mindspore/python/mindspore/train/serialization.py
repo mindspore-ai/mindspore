@@ -998,8 +998,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                             on the parameters of the same type, such as float32 to float16. Default: False.
 
     Returns:
-        List, the parameter name in model which are not loaded into the network.
-        List, the parameter name in checkpoint file which are not loaded into the network.
+        param_not_load (List): the parameter name in model which are not loaded into the network.
+        ckpt_not_load (List): the parameter name in checkpoint file which are not loaded into the network.
 
     Raises:
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
@@ -1010,7 +1010,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         >>> net = Net()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
-        >>> param_not_load = ms.load_param_into_net(net, param_dict)
+        >>> param_not_load, _ = ms.load_param_into_net(net, param_dict)
         >>> print(param_not_load)
         ['conv1.weight']
     """
