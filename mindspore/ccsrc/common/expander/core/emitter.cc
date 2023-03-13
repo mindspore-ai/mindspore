@@ -297,23 +297,32 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const Nod
   return std::make_pair(true, v);
 }
 
-NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
+NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims, bool skip_mode) const {
   MS_EXCEPTION_IF_NULL(x);
-  auto need_reduce = NeedReduce(x->shape(), axis, keep_dims);
+  auto need_reduce = NeedReduce(Shape(x), axis, keep_dims);
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
+  return Emit(prim::kPrimReduceSum->name(), {x, axis},
+              {{"keep_dims", MakeValue(keep_dims)}, {"skip_mode", MakeValue(skip_mode)}});
+}
+
+NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) const {
+  MS_EXCEPTION_IF_NULL(x);
+  auto real_axis = axis;
 #ifdef WITH_BACKEND
   const auto &shape = x->shape();
-  auto real_axis = axis;
-  if (axis.empty()) {
-    for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
-      (void)real_axis.emplace_back(i);
+  if (real_axis.empty()) {
+    if (IsDynamicRank(shape)) {
+      MS_LOG(DEBUG) << "For ReduceSum, it may wrong with a empty axis for dynamic rank case.";
+    } else {
+      for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
+        (void)real_axis.emplace_back(i);
+      }
     }
   }
-  return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(real_axis)}, {{"keep_dims", MakeValue(keep_dims)}});
 #endif
-  return Emit(prim::kPrimReduceSum->name(), {x, Value<ShapeVector>(axis)}, {{"keep_dims", MakeValue(keep_dims)}});
+  return ReduceSum(x, Value<ShapeVector>(real_axis), keep_dims, false);
 }
 
 NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
