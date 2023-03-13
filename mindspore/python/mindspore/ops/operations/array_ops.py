@@ -1126,6 +1126,17 @@ class Split(Primitive):
 
     Refer to :func:`mindspore.ops.split` for more details.
 
+    Args:
+        axis (int): Index of the split position. Default: 0.
+        output_num (int): The number of output tensors. Must be positive int. Default: 1.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        tuple[Tensor], the shape of each output tensor is the same, which is
+        :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with `input_x`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1558,10 +1569,15 @@ class Ones(Primitive):
     r"""
     Creates a tensor filled with value ones.
 
-    Creates a tensor with shape described by the first argument and
-    fills it with value ones in type of the second argument.
-
     Refer to :func:`mindspore.ops.ones` for more details.
+
+    Inputs:
+        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
+          Only constant positive int is allowed.
+        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor. Only constant value is allowed.
+
+    Outputs:
+        Tensor, has the same type and shape as input shape value.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1834,6 +1850,22 @@ class Argmax(Primitive):
     Returns the indices of the maximum value of a tensor across the axis.
 
     Refer to :func:`mindspore.ops.argmax` for more details.
+
+    Args:
+        axis (int): Axis where the Argmax operation applies to. Default: -1.
+        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
+            Default: `mindspore.dtype.int32`.
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Support data type list as follows:
+
+          - Ascend: Float16, Float32.
+          - GPU: Float16, Float32.
+          - CPU: Float16, Float32, Float64.
+
+    Outputs:
+        Tensor, indices of the max value of input tensor across the axis.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3630,6 +3662,17 @@ class Eye(Primitive):
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
     Refer to :func:`mindspore.ops.eye` for more details.
+
+    Inputs:
+        n (int): The number of rows of returned tensor. Constant value only.
+        m (int): The number of columns of returned tensor. Constant value only.
+        t (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+            The data type can be bool or Number.
+            Default: None, the data type of the returned tensor is mindspore.float32.
+
+    Outputs:
+        Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
+        the user's Inputs `n` and `m`. And the data type depends on Inputs `t`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5963,11 +6006,27 @@ class IdentityN(Primitive):
 
 class Range(PrimitiveWithCheck):
     r"""
-    Creates a sequence of numbers that begins at `start` and extends by increments of
-    `delta` up to but not including `limit`. Length of the created sequence can not exceed `maxlen`.
-    The default value of `maxlen` is 1000000.
+    Creates a sequence of numbers that begins at `start` and extlimits by increments of
+    `delta` up to but not including `limit`.
 
     Refer to :func:`mindspore.ops.range` for more details.
+
+    Args:
+        maxlen (int, optional): Memory that can fit `maxlen` many elements
+            will be allocated for the output. Optional, must be positive, defaults to 1000000.
+            If the output has more than `maxlen` elements, a runtime error
+            will occur.
+
+    Inputs:
+        - **start** (Tensor) - A scalar Tensor. The first number in the sequence. Must have
+          type: int32 ,int64, float32 or float64.
+        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive. Must
+          have type: int32 ,int64, float32 or float64.
+        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`. Must have
+          type: int32 ,int64, float32 or float64.
+
+    Outputs:
+       A 1-D Tensor, with the same type as the inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6180,6 +6239,23 @@ class SearchSorted(Primitive):
     into `sorted_sequence` so that the order of the sequence is maintained.
 
     Refer to :func:`mindspore.ops.searchsorted` for more details.
+
+    Args:
+        dtype (:class:`mindspore.dtype`, optional): Output data type. An optional data type of
+            `mstype.int32` and `mstype.int64`. Default: `mstype.int64`.
+        right (bool, optional): Search Strategy. If True, return the last suitable index found;
+            if False, return the first such index. Default: False.
+
+    Inputs:
+        sorted_sequence (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
+            It must contain a monotonically increasing sequence on the innermost dimension.
+        values (Tensor): The value that should be inserted.
+            The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
+
+    Outputs:
+        Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
+        if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
+        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of `values`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

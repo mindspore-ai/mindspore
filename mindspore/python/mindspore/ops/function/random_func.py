@@ -563,7 +563,7 @@ def choice_with_mask(input_x, count=256, seed=None):
 
     Raises:
         TypeError: If `count` is not an int.
-        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `seed` is not an int.
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:

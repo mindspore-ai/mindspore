@@ -17,4 +17,4 @@
         - **periodic** (bool，可选) - 如果为True，返回一个窗口作为周期函数使用。如果为False，返回一个对称窗口。默认值：True。
 
     输出：
-        1D Tensor，大小为 `window_length` ，数据类型🈶由 `dtype` 指定。
+        1D Tensor，大小为 `window_length` ，数据类型由 `dtype` 指定。
