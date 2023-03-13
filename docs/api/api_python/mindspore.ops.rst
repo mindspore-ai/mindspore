@@ -418,6 +418,8 @@ Reduction函数
     mindspore.ops.tensor_dot
     mindspore.ops.logdet
     mindspore.ops.slogdet
+    mindspore.ops.qr
+    mindspore.ops.trace
 
 谱函数
 ^^^^^^^^^^^^^

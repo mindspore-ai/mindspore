@@ -3,7 +3,7 @@ mindspore.ops.trace
 
 .. py:function:: mindspore.ops.trace(input)
 
-    返回在Tensor的对角线方向上的总和。
+    返回input的对角线方向上的总和。
 
     .. note::
         输入必须是Tensor，复数类型暂不支持。
