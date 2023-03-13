@@ -661,6 +661,9 @@ Parameter操作函数
 稀疏函数
 ----------------
 
+.. warning::
+    以下是实验性接口，后续可能删除或修改。
+
 .. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
@@ -672,6 +675,9 @@ Parameter操作函数
 
 COO函数
 ^^^^^^^^^^^^^^^^
+
+.. warning::
+    以下是实验性接口，后续可能删除或修改。
 
 .. mscnplatwarnautosummary::
     :toctree: ops
@@ -714,6 +720,9 @@ COO函数
 
 CSR函数
 ^^^^^^^^^^^^^^^^
+
+.. warning::
+    以下是实验性接口，后续可能删除或修改。
 
 .. mscnplatwarnautosummary::
     :toctree: ops
