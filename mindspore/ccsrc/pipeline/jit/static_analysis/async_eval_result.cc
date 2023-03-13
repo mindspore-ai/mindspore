@@ -151,14 +151,25 @@ void AnalysisSchedule::SetNextReady() {
     (void)std::for_each(schedule_list_.begin(), schedule_list_.end(),
                         [](const auto &item) { MS_LOG(DEBUG) << "Leave infer thread: " << item->thread_id(); });
     if (enable_waiting_branch_eval()) {
-      // Try to set one of possible result.
+      // Try to set one of possible result in the case of ignore value.
       auto possible_it = std::find_if(schedule_list_.cbegin(), schedule_list_.cend(), [](const auto &item) {
         MS_EXCEPTION_IF_NULL(item);
-        return item->SetPossibleResult();
+        return item->SetPossibleResult(true);
       });
       if (possible_it != schedule_list_.end()) {
-        MS_LOG(DEBUG) << "Try to set one branch result from the other branch. " << (*possible_it)->thread_id()
-                      << " result: " << (*possible_it)->HasResult();
+        MS_LOG(DEBUG) << "Try to set one branch result from the other branch, ignore value: true, infer thread: "
+                      << (*possible_it)->thread_id() << " , result: " << (*possible_it)->HasResult();
+        it = possible_it;
+        break;
+      }
+      // Try to set one of possible result.
+      possible_it = std::find_if(schedule_list_.cbegin(), schedule_list_.cend(), [](const auto &item) {
+        MS_EXCEPTION_IF_NULL(item);
+        return item->SetPossibleResult(false);
+      });
+      if (possible_it != schedule_list_.end()) {
+        MS_LOG(DEBUG) << "Try to set one branch result from the other branch, ignore value: false, infer thread: "
+                      << (*possible_it)->thread_id() << " , result: " << (*possible_it)->HasResult();
         it = possible_it;
         break;
       }
@@ -200,9 +211,13 @@ void AsyncAbstract::ClearPossibleResult() {
   }
 }
 
-bool AsyncAbstract::SetPossibleResult() {
+bool AsyncAbstract::SetPossibleResult(bool first) {
   std::lock_guard<std::mutex> lock(lock_);
-  if (not_copy_from_other_ && switchAbstract_ != nullptr && switchAbstract_->HasResult()) {
+  bool condition = not_copy_from_other_ && switchAbstract_ != nullptr && switchAbstract_->HasResult();
+  if (first && condition) {
+    condition = switchAbstract_->ignore_value_;
+  }
+  if (condition) {
     result_ = switchAbstract_->TryGetResult();
     if (NeedWaitForBranches(result_)) {
       result_ = AsyncAbstractFuncAtom::MakeShared(shared_from_this(), std::vector<size_t>{0});
@@ -357,9 +372,8 @@ std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
   return buffer.str();
 }
 bool enable_waiting_branch_eval() {
-  static std::string ms_env = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL");
-  static bool enable_waiting_branch_eval_ = ms_env != "1";
-  return enable_waiting_branch_eval_;
+  static bool enable_waiting_branch_eval = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL") != "1";
+  return enable_waiting_branch_eval;
 }
 }  // namespace abstract
 }  // namespace mindspore
