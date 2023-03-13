@@ -82,27 +82,27 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
        :widths: 25 25 50
        :header-rows: 1
 
-        * - Parameter `sampler`
-          - Parameter `shuffle`
-          - Expected Order Behavior
-        * - None
-          - None
-          - random order
-        * - None
-          - True
-          - random order
-        * - None
-          - False
-          - sequential order
-        * - Sampler object
-          - None
-          - order defined by sampler
-        * - Sampler object
-          - True
-          - not allowed
-        * - Sampler object
-          - False
-          - not allowed
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Examples:
         >>> cmu_arctic_dataset_directory = "/path/to/cmu_arctic_dataset_directory"
