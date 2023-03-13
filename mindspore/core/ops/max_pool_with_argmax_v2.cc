@@ -166,7 +166,6 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
   auto W_out_d =
     ((W_in + factor * pads[kAttrW] - dilation[kAttrW] * (kernel_size[kAttrW] - 1) - 1) / strides[kAttrW]) + 1;
   if (GetValue<bool>(prim->GetAttr(kCeilMode))) {
-    // math: out = ceil(((in + 2 * pad - dilation * (kernel_size - 1) - 1) / stride) + 1)
     H_out = static_cast<int>(ceil(H_out_d));
     W_out = static_cast<int>(ceil(W_out_d));
     // Whether the last pooling starts inside the image or not.
@@ -177,7 +176,6 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
       --W_out;
     }
   } else {
-    // math: out = floor(((int + 2 * pad - dilation * (kernel_size - 1) - 1) / stride) + 1)
     H_out = static_cast<int>(floor(H_out_d));
     W_out = static_cast<int>(floor(W_out_d));
   }
