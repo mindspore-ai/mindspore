@@ -724,7 +724,7 @@ class AvgPool3d(_PoolNd):
         pad_mode (str): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
-            - same: The output width is the same as the integer value after the input is multiplied by the stride.
+            - same: The width of the output is the same as the value after the input is divided by stride.
 
             - valid: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
@@ -732,8 +732,8 @@ class AvgPool3d(_PoolNd):
             - pad: Pads the input. Fill the front, back, top, and bottom of the input with 0s of size `padding`.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Pooling padding value. Default: 0.
-            `padding` can only be an integer or a tuple/list containing one or three integers.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
+            Default: 0. `padding` can only be an integer or a tuple/list containing one or three integers.
             If `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
             front, back, top, bottom, left and right of the input. If `padding` is a tuple/list containing three
             integers, it will be padded in front and back of the input `padding[0]` times, up and down `padding[1]`
@@ -761,6 +761,7 @@ class AvgPool3d(_PoolNd):
         ValueError: If `padding` is a tuple/list whose length is neither 1 nor 3.
         ValueError: If element of `padding` is less than 0.
         ValueError: If length of shape of `x` is neither 4 nor 5.
+        ValueError: If `divisor_override` is equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -786,6 +787,8 @@ class AvgPool3d(_PoolNd):
         """Initialize AvgPool3d."""
         super(AvgPool3d, self).__init__(kernel_size, stride, pad_mode)
         padding = _cal_padding(padding, self.cls_name, 3)
+        if divisor_override == 0:
+            raise ValueError(f"For '{self.cls_name}', the 'divisor_override' can not be 0.")
         divisor_override = 0 if divisor_override is None else divisor_override
         self.avg_pool = P.AvgPool3D(self.kernel_size, self.stride, pad_mode, padding, ceil_mode, count_include_pad,
                                     divisor_override)
@@ -824,7 +827,7 @@ class AvgPool2d(_PoolNd):
         pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
-            - same: The output width is the same as the integer value after the input is multiplied by the stride.
+            - same: The width of the output is the same as the value after the input is divided by stride.
 
             - valid: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
@@ -832,11 +835,12 @@ class AvgPool2d(_PoolNd):
             - pad: pads the input. Pads the top, bottom, left, and right sides of the input with `padding` number of
               zeros. If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Specifies the padding value of the pooling operation. Default: 0.
-            `padding` can only be an integer or a tuple/list containing one or two integers. If `padding` is an integer
-            or a tuple/list containing one integer, it will be padded `padding` times in the four directions of the
-            input. If `padding` is a tuple/list containing two integers, it will be padded `padding[0]` times in the
-            up-down direction of the input and `padding[1]` times in the left-right direction of the input.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
+            Default: 0. `padding` can only be an integer or a tuple/list containing one or two integers.
+            If `padding` is an integer or a tuple/list containing one integer, it will be padded `padding` times in the
+            four directions of the input. If `padding` is a tuple/list containing two integers, it will be padded
+            `padding[0]` times in the up-down direction of the input and `padding[1]` times in the left-right direction
+            of the input.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
         divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
@@ -895,10 +899,11 @@ class AvgPool2d(_PoolNd):
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad \
                 or divisor_override is not None:
             if self.format == "NHWC":
-                raise ValueError(f"For '{self.cls_name}, the 'NHWC' format are not support when 'padding' is not 0 "
-                                 f"or 'ceil_mode' is not False or 'count_include_pad' is not True "
-                                 f"or divisor_override is not None, but got padding:{padding}, ceil_mode:{ceil_mode}, "
-                                 f"count_include_pad:{count_include_pad}, divisor_override:{divisor_override}.")
+                raise ValueError(f"For '{self.cls_name}, the 'NHWC' format are not support when 'pad_mode' is 'pad' or "
+                                 f"'padding' is not 0 or 'ceil_mode' is not False or 'count_include_pad' is not True"
+                                 f"or divisor_override is not None, but got pade_mode:{pad_mode}, padding:{padding}, "
+                                 f"ceil_mode:{ceil_mode}, count_include_pad:{count_include_pad}, "
+                                 f"divisor_override:{divisor_override}.")
             self.is_expand = True
             if divisor_override == 0:
                 raise ValueError(f"For '{self.cls_name}', the 'divisor_override' can not be 0.")
@@ -961,7 +966,7 @@ class AvgPool1d(_PoolNd):
         pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
-            - same: The output width is the same as the integer value after the input is multiplied by the stride.
+            - same: The width of the output is the same as the value after the input is divided by stride.
 
             - valid: Returns the output obtained by effective calculation without padding.
               The excess pixels that do not meet the calculation will be discarded.
@@ -969,9 +974,9 @@ class AvgPool1d(_PoolNd):
             - pad: Performs padding on the input. Adds padding size of zeros to both ends of the input.
               If this mode is set, padding must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Padding value for the pooling. Default value is 0.
-            padding can only be an integer or a tuple/list containing a single integer, in which case padding times or
-            padding[0] times are padded on both sides of the input.
+        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
+            Default: 0. padding can only be an integer or a tuple/list containing a single integer, in which case
+            padding times or padding[0] times are padded on both sides of the input.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
 
