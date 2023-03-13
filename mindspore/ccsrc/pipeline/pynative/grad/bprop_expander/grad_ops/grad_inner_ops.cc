@@ -262,8 +262,7 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
   if (need_cast) {
     dout = ib->Cast(dout, kFloat32);
   }
-  auto reduced_grad =
-    ib->Emit("ReduceSum", {dout, reduction_axes}, {{"keep_dims", MakeValue(true)}, {"skip_mode", MakeValue(true)}});
+  auto reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
   if (need_cast) {
     reduced_grad = ib->Cast(reduced_grad, dout_dtype_id);
   }

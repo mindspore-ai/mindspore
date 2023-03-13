@@ -66,7 +66,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
 
       auto is_positive_shape = ib->ShapeCalc({gathered, is_positive}, shape_func, infer_func, {})[0];
       is_positive = ib->Reshape(is_positive, is_positive_shape);
-      auto shape_gather = ib->Emit("TupleToTensor", {ib->Emit("Shape", {gathered}), ib->Value(kInt64)});
+      auto shape_gather = ib->Shape(gathered, true);
       is_positive = ib->LogicalAnd(is_positive, ib->Fill(1.0, shape_gather, TypeId::kNumberTypeBool));
     } else {
       auto back_size = ib->GetShape(gathered).size() - ib->GetShape(is_positive).size();
@@ -717,8 +717,8 @@ REG_BPROP_BUILDER("Range").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUN
   return {ib->ZerosLike(start), ib->ZerosLike(limit), ib->ZerosLike(delta)};
 });
 
-REG_BPROP_BUILDER("Pack").SetUnusedInputs({i1}).SetBody(StackBpropFunc);
-REG_BPROP_BUILDER("Stack").SetUnusedInputs({i1}).SetBody(StackBpropFunc);
+REG_BPROP_BUILDER("Pack").SetUnusedInputs({i0, i1}).SetBody(StackBpropFunc);
+REG_BPROP_BUILDER("Stack").SetUnusedInputs({i0, i1}).SetBody(StackBpropFunc);
 
 REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
@@ -742,7 +742,7 @@ REG_BPROP_BUILDER("StridedSlice").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib)
 
   NodePtr x_shape_node;
   if (IsDynamic(x_shape_vec)) {
-    x_shape_node = ib->Emit("TensorShape", {x});
+    x_shape_node = ib->Shape(x);
   } else {
     x_shape_node = ib->EmitValue(MakeValue(x_shape_vec));
   }
@@ -841,7 +841,7 @@ REG_BPROP_BUILDER("GatherNd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto x_shp = ib->GetShape(x);
   NodePtr shp;
   if (IsDynamic(x_shp)) {
-    shp = ib->Emit("TensorShape", {x});
+    shp = ib->Shape(x, true);
   } else {
     shp = ib->EmitValue(MakeValue(x_shp));
   }
@@ -881,7 +881,7 @@ REG_BPROP_BUILDER("Flatten").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto x_shape = ib->GetShape(x);
   if (IsDynamic(x_shape)) {
-    return {ib->Reshape(dout, ib->Emit("Shape", {x}))};
+    return {ib->Reshape(dout, ib->Shape(x))};
   }
   return {ib->Reshape(dout, x_shape)};
 });
@@ -895,7 +895,7 @@ REG_BPROP_BUILDER("Reshape").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) 
   if (!IsDynamic(shape_x)) {
     dx = ib->Reshape(dout, shape_x);
   } else {
-    dx = ib->Reshape(dout, ib->Emit("TensorShape", {x}));
+    dx = ib->Reshape(dout, ib->Shape(x));
   }
   return {dx, ib->ZerosLike(shp)};
 });
@@ -996,7 +996,7 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto concat_offset = ib->ShapeCalc(x_tuple, shape_func, infer_func, {});
   NodePtrList res;
   for (size_t i = 0; i < input_nums; ++i) {
-    auto input = ib->Emit("Shape", {ib->TupleGetItem(x, i)});
+    auto input = ib->Shape(ib->TupleGetItem(x, i));
     auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset.at(i), input});
     res.push_back(slice_out);
   }
@@ -1063,7 +1063,7 @@ REG_BPROP_BUILDER("IndexFill").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
     value_grad = dout;
   } else {
     auto tmp = ib->Emit("Gather", {dout, indices, dim});
-    value_grad = ib->Emit("ReduceSum", {tmp, ib->Value(ShapeVector())}, {{"keep_dims", MakeValue(false)}});
+    value_grad = ib->ReduceSum(tmp, ShapeVector());
   }
   return {x_grad, ib->ZerosLike(dim), ib->ZerosLike(indices), value_grad};
 });
@@ -1196,19 +1196,17 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
     }
     dx = ib->Reshape(reduced_grad, x_shape);
   } else {
-    auto x_shape_node = ib->Emit("TensorShape", {x});
-    auto broadcast_shape_node = ib->Emit("TensorShape", {dout});
+    auto x_shape_node = ib->Shape(x, true);
+    auto broadcast_shape_node = ib->Shape(dout, true);
     auto brod = ib->Emit("DynamicBroadcastGradientArgs", {broadcast_shape_node, x_shape_node});
     auto reduction_axes = ib->TupleGetItem(brod, 1);
     NodePtr reduced_grad;
     if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
       auto dout_cast = ib->Cast(dout, kFloat32);
-      reduced_grad = ib->Emit("ReduceSum", {dout_cast, reduction_axes},
-                              {{"keep_dims", MakeValue(true)}, {"skip_mode", MakeValue(true)}});
+      reduced_grad = ib->ReduceSum(dout_cast, reduction_axes, true, true);
       reduced_grad = ib->Cast(reduced_grad, ib->GetDtype(dout));
     } else {
-      reduced_grad =
-        ib->Emit("ReduceSum", {dout, reduction_axes}, {{"keep_dims", MakeValue(true)}, {"skip_mode", MakeValue(true)}});
+      reduced_grad = ib->ReduceSum(dout, reduction_axes, true, true);
     }
     dx = ib->Reshape(reduced_grad, x_shape_node);
   }
@@ -1272,7 +1270,7 @@ REG_BPROP_BUILDER("ExpandDims").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
   auto shape_x = ib->GetShape(x);
   NodePtr dx;
   if (IsDynamic(shape_x)) {
-    dx = ib->Reshape(dout, ib->Emit("TensorShape", {x}));
+    dx = ib->Reshape(dout, ib->Shape(x));
   } else {
     dx = ib->Reshape(dout, shape_x);
   }
@@ -1284,7 +1282,7 @@ REG_BPROP_BUILDER("Squeeze").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto shapex = ib->GetShape(x);
   if (IsDynamic(shapex)) {
-    return {ib->Reshape(dout, ib->Emit("Shape", {x}))};
+    return {ib->Reshape(dout, ib->Shape(x))};
   }
   return {ib->Reshape(dout, shapex)};
 });
@@ -1299,7 +1297,7 @@ REG_BPROP_BUILDER("Padding").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     return {dx};
   }
 
-  auto shape_node = ib->Emit("Shape", {x});
+  auto shape_node = ib->Shape(x);
   auto begin_node = ib->ZerosLike(shape_node);
   return {ib->Emit("Slice", {dout, begin_node, shape_node})};
 });
@@ -1368,10 +1366,10 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   if (need_reduce.first) {
     if (dout_dtype == kNumberTypeInt16 || dout_dtype == kNumberTypeInt32 || dout_dtype == kNumberTypeInt64) {
       dout_reshaped = ib->Cast(dout_reshaped, kFloat32);
-      dx = ib->Emit("ReduceSum", {dout_reshaped, axis}, {{"keep_dims", MakeValue(false)}});
+      dx = ib->ReduceSum(dout_reshaped, axis);
       dx = ib->Cast(dx, dout_dtype);
     } else {
-      dx = ib->Emit("ReduceSum", {dout_reshaped, axis}, {{"keep_dims", MakeValue(false)}});
+      dx = ib->ReduceSum(dout_reshaped, axis);
     }
   } else {
     dx = ib->Reshape(dout_reshaped, need_reduce.second);
@@ -1471,7 +1469,7 @@ REG_BPROP_BUILDER("StridedSliceV2").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(i
   auto x_shape_vec = ib->GetShape(x);
   NodePtr x_shape;
   if (IsDynamic(x_shape_vec)) {
-    x_shape = ib->Emit("TensorShape", {x});
+    x_shape = ib->Shape(x);
   } else {
     x_shape = ib->Tensor(x_shape_vec);
   }
