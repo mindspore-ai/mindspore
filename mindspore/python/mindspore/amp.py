@@ -59,6 +59,7 @@ def _overflow(inputs):
     return 1 - status.all()
 
 
+@jit
 def all_finite(inputs):
     r"""
     Returns a scalar Tensor indicating whether the inputs are finite.
@@ -278,7 +279,6 @@ class DynamicLossScaler(LossScaler):
         """
         return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
 
-    @jit
     def adjust(self, grads_finite):
         """
         Adjust the `scale_value` dependent on whether grads are finite.
