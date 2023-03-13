@@ -518,9 +518,10 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
     return dic;
   }
   if (arg_list->dynamic_len()) {
+    auto elem_out = ConvertAbstractToPython(arg_list->dynamic_len_element_abs());
     dic[ATTR_VALUE] = py::none();
-    dic[ATTR_SHAPE] = ShapeVector{abstract::Shape::kShapeDimAny};
-    dic[ATTR_DTYPE] = arg_list->BuildType();
+    dic[ATTR_SHAPE] = elem_out[ATTR_SHAPE];
+    dic[ATTR_DTYPE] = elem_out[ATTR_DTYPE];
     return dic;
   }
   size_t len = arg_list->size();
