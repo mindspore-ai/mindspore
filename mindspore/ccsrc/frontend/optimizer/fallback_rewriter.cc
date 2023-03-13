@@ -1166,7 +1166,7 @@ static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGrap
 
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
   auto manager = resource->manager();
-  auto func_graphs_used_total = root->func_graphs_used_total();
+  const auto &func_graphs_used_total = root->func_graphs_used_total();
   bool change = false;
   if (!func_graphs_used_total.empty()) {
     change =

@@ -60,22 +60,20 @@ using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 class EvalResult : public Base {
  public:
   EvalResult(const AbstractBasePtr &abs, const AttrValueMapPtr &attr)
-      : abstract_(abs), attribute_(attr), has_isolated_side_effect_(false) {}
+      : abstract_(abs), attribute_(attr), has_side_effect_node_(false) {}
   ~EvalResult() override = default;
   MS_DECLARE_PARENT(EvalResult, Base);
   const AbstractBasePtr &abstract() const { return abstract_; }
   const AttrValueMapPtr &attribute() const { return attribute_; }
-  bool has_isolated_side_effect() const { return has_isolated_side_effect_; }
-  void set_has_isolated_side_effect(bool has_isolated_side_effect) {
-    has_isolated_side_effect_ = has_isolated_side_effect;
-  }
+  bool has_side_effect_node() const { return has_side_effect_node_; }
+  void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
 
  private:
   AbstractBasePtr abstract_;
   // Attribute related to PrimEvaluator;
   AttrValueMapPtr attribute_;
 
-  bool has_isolated_side_effect_;
+  bool has_side_effect_node_;
 };
 using EvalResultPtr = std::shared_ptr<EvalResult>;
 
@@ -296,7 +294,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
         func_graph_manager_(func_graph_manager),
         forward_count_(0),
         enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1"),
-        check_isolated_side_effect_(false) {}
+        check_side_effect_(false) {}
   virtual ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
@@ -342,10 +340,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
-  bool check_isolated_side_effect() const { return check_isolated_side_effect_; }
-  void set_check_isolated_side_effect(bool check_isolated_side_effect) {
-    check_isolated_side_effect_ = check_isolated_side_effect;
-  }
+  bool check_side_effect() const { return check_side_effect_; }
+  void set_check_side_effect(bool check_side_effect) { check_side_effect_ = check_side_effect; }
   void SetUndeterminedFlag(const std::string &thread_id, const FuncGraph &fg);
   void SetIgnoreValueFlag(const std::string &thread_id, FuncGraph *fg);
 
@@ -397,7 +393,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   bool enable_recursive_eval_;
 
-  bool check_isolated_side_effect_;
+  bool check_side_effect_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;

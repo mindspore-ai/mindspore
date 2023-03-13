@@ -842,12 +842,12 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
     }
     bool ignore_build_value = false;
     AnfNodePtr replace_node = nullptr;
-    if (specializer_->engine()->check_isolated_side_effect()) {
+    if (specializer_->engine()->check_side_effect()) {
       auto cnode_input = dyn_cast_ptr<CNode>(node_input);
-      ignore_build_value = (cnode_input != nullptr && cnode_input->has_isolated_side_effect_node());
+      ignore_build_value = (cnode_input != nullptr && cnode_input->has_side_effect_node());
       if (ignore_build_value) {
         MS_LOG(INFO) << "Don't build value node for CNode which contains isolated side-effect inputs, node: "
-                     << cnode_input->DebugString() << ", flag: " << cnode_input->has_isolated_side_effect_node();
+                     << cnode_input->DebugString() << ", flag: " << cnode_input->has_side_effect_node();
       }
     }
     if (!ignore_build_value) {
