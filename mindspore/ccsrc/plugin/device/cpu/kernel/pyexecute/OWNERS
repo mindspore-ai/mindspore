@@ -1,0 +1,7 @@
+approvers:
+- zh_qh
+- ginfung
+- chenfei52
+
+options:
+    no_parent_owners: true
