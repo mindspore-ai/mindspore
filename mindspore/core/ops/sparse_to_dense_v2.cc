@@ -41,6 +41,11 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(output_shape_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto default_value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(default_value_shape_ptr)[kShape];
+  if (IsDynamic(indices_shape) || IsDynamic(output_shape_shape) || IsDynamic(values_shape) ||
+      IsDynamic(default_value_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", static_cast<int64_t>(indices_shape.size()), kLessEqual,
                                            Indiceselement, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("outshape dimension", static_cast<int64_t>(output_shape_shape.size()),
