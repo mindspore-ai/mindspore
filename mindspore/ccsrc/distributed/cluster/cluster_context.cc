@@ -198,11 +198,13 @@ bool ClusterContext::BuildCluster() {
     std::string port_range_pb = cgn->GetMetadata(kNodePortRange);
     topology::NodePortRanges node_port_ranges;
     (void)node_port_ranges.ParseFromArray(port_range_pb.c_str(), SizeToInt(port_range_pb.size()));
-    auto port_range = node_port_ranges.data().at(node_id);
-    port_range_.first = port_range.min_port();
-    port_range_.second = port_range.max_port();
-    MS_LOG(INFO) << "Port range assigned for this node " << node_id << " is " << port_range_.first << " to "
-                 << port_range_.second;
+    if (node_port_ranges.data().count(node_id) != 0) {
+      auto port_range = node_port_ranges.data().at(node_id);
+      port_range_.first = port_range.min_port();
+      port_range_.second = port_range.max_port();
+      MS_LOG(INFO) << "Port range assigned for this node " << node_id << " is " << port_range_.first << " to "
+                   << port_range_.second;
+    }
   }
   return true;
 }
