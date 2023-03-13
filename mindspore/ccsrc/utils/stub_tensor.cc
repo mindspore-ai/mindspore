@@ -39,7 +39,6 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
     auto node = std::make_shared<SequenceNode>(elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
       auto elem = MakeStubNode(elements[i]);
-      elem->SetTopNode(node);
       node->SetElement(i, elem);
     }
     return node;
@@ -110,19 +109,14 @@ void StubNode::SetException(const std::exception_ptr &e_ptr) {
 AbstractBasePtr StubNode::WaitAbstract() {
   GilReleaseWithCheck gil_release;
   if (abstract_.get() == nullptr) {
-    auto top = top_node_;
-    if (top) {
-      top->WaitAbstract();
-    } else {
-      wait_flag_.store(true);
-      std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
-      wait_flag_.store(false);
-      if (e_ptr_ != nullptr) {
-        // Need to clear exception in the instance.
-        MsException::Instance().CheckException();
-        std::rethrow_exception(e_ptr_);
-      }
+    wait_flag_.store(true);
+    std::unique_lock<std::mutex> lock(stub_mutex_);
+    stub_cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
+    wait_flag_.store(false);
+    if (e_ptr_ != nullptr) {
+      // Need to clear exception in the instance.
+      MsException::Instance().CheckException();
+      std::rethrow_exception(e_ptr_);
     }
   }
   return abstract_;
@@ -131,19 +125,14 @@ AbstractBasePtr StubNode::WaitAbstract() {
 ValuePtr StubNode::WaitValue() {
   GilReleaseWithCheck gil_release;
   if (value_.get() == nullptr) {
-    auto top = top_node_;
-    if (top) {
-      top->WaitValue();
-    } else {
-      wait_flag_.store(true);
-      std::unique_lock<std::mutex> lock(stub_mutex_);
-      stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr || e_ptr_ != nullptr; });
-      wait_flag_.store(false);
-      if (e_ptr_ != nullptr) {
-        // Need to clear exception in the instance.
-        MsException::Instance().CheckException();
-        std::rethrow_exception(e_ptr_);
-      }
+    wait_flag_.store(true);
+    std::unique_lock<std::mutex> lock(stub_mutex_);
+    stub_cond_var_.wait(lock, [this] { return value_.get() != nullptr || e_ptr_ != nullptr; });
+    wait_flag_.store(false);
+    if (e_ptr_ != nullptr) {
+      // Need to clear exception in the instance.
+      MsException::Instance().CheckException();
+      std::rethrow_exception(e_ptr_);
     }
   }
   return value_;
@@ -230,9 +219,15 @@ void SequenceNode::SetValue(const ValuePtr &val) {
   auto children = seq_value->value();
   for (size_t i = 0; i < children.size(); ++i) {
     elements_[i]->SetValue(children[i]);
-    elements_[i]->SetTopNode(nullptr);
   }
   StubNode::SetValue(val);
+}
+
+void SequenceNode::SetException(const std::exception_ptr &e_ptr) {
+  for (auto &element : elements_) {
+    element->SetException(e_ptr);
+  }
+  StubNode::SetException(e_ptr);
 }
 
 bool AnyTypeNode::SetAbstract(const AbstractBasePtr &abs) {
@@ -255,6 +250,13 @@ py::object AnyTypeNode::GetRealNode() {
 py::object NoneTypeNode::GetRealValue() {
   auto val = WaitValue();
   return ValueToPyData(val);
+}
+
+void AnyTypeNode::SetException(const std::exception_ptr &e_ptr) {
+  StubNode::SetException(e_ptr);
+  if (real_node_ != nullptr) {
+    real_node_->SetException(e_ptr);
+  }
 }
 
 std::pair<py::object, StubNodePtr> MakeTopNode(const TypePtr &type) {

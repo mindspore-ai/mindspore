@@ -24,6 +24,7 @@
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
 #include "pipeline/pynative/forward/forward_task.h"
+#include "pipeline/pynative/predict_out_type_map.h"
 #include "include/common/utils/stub_tensor.h"
 #include "runtime/pynative/op_executor.h"
 
@@ -186,8 +187,10 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
   const auto &abs = op_run_info->base_op_run_info.abstract;
   auto success = op_run_info->stub_output->SetAbstract(abs);
   if (!success) {
-    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, infer type is " << abs->BuildType()
-                            << ", the name of operator is [" << op_run_info->base_op_run_info.op_name
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                            << PredictOutTypeByName(op_name) << ", infer type is " << abs->BuildType()
+                            << ", the name of operator is [" << op_name
                             << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
   }
 
