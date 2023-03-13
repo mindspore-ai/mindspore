@@ -233,11 +233,12 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
             SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, fg, cnode, abs_func_graph, context);
           }
         }
-        if (engine->check_isolated_side_effect() && node_eval_result->has_isolated_side_effect()) {
-          const auto &cnode = node->cast<CNodePtr>();
+        if (engine->check_side_effect() && node_eval_result->has_side_effect_node()) {
+          auto cnode = dyn_cast_ptr<CNode>(node);
           MS_EXCEPTION_IF_NULL(cnode);
-          cnode->set_has_isolated_side_effect_node(true);
-          fg->set_has_isolated_side_effect_node(true);
+          MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString() << ", func_graph: " << fg->ToString();
+          cnode->set_has_side_effect_node(true);
+          fg->set_has_side_effect_node(true);
         }
         MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config";
       } else {
@@ -345,7 +346,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
   MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << abstract->ToString();
 
-  SyncFuncGraphIsolatedSideEffectFlag(fg);
+  SyncFuncGraphSideEffectFlag(fg);
 
   trace::TraceGraphEvalLeave(context);
   // Decrease the func graph call depth.

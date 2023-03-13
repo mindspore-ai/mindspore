@@ -125,7 +125,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
     engine->SaveEvalResultInCache(conf, result);
   }
   fg_evaluator->PushAlwaysEvalFlag(always_eval_flag);
-  fg_evaluator->SyncFuncGraphIsolatedSideEffectFlag(fg);
+  fg_evaluator->SyncFuncGraphSideEffectFlag(fg);
   // Create a new stack frame and set arguments for it.
   auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, parent_context);
   new_stack_frame->set_args_abs_list(std::move(args_abs_list));
@@ -199,12 +199,16 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
     node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
   } else {
     node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
-    MS_EXCEPTION_IF_NULL(node_eval_result);
-    if (engine->check_isolated_side_effect() && node_eval_result->has_isolated_side_effect()) {
-      const auto &cnode = current_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      cnode->set_has_isolated_side_effect_node(true);
-      current_context_->func_graph()->set_has_isolated_side_effect_node(true);
+    if (engine->check_side_effect()) {
+      MS_EXCEPTION_IF_NULL(node_eval_result);
+      if (node_eval_result->has_side_effect_node()) {
+        auto cnode = dyn_cast_ptr<CNode>(current_node);
+        MS_EXCEPTION_IF_NULL(cnode);
+        MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                      << ", func_graph: " << node_conf->func_graph()->ToString();
+        cnode->set_has_side_effect_node(true);
+        current_context_->func_graph()->set_has_side_effect_node(true);
+      }
     }
   }
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
@@ -224,13 +228,27 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
     result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
   }
 
-  // Check if child func graph contains isolated side-effect.
-  if (engine->check_isolated_side_effect()) {
-    if (last_stack_frame->func_graph()->has_isolated_side_effect_node()) {
-      auto cnode = dyn_cast_ptr<CNode>(CurrentNode());
-      MS_EXCEPTION_IF_NULL(cnode);
-      cnode->set_has_isolated_side_effect_node(true);
-      cnode->func_graph()->set_has_isolated_side_effect_node(true);
+  // Check if callee func graph contains side-effect.
+  if (engine->check_side_effect()) {
+    auto cnode = dyn_cast_ptr<CNode>(CurrentNode());
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (last_stack_frame->func_graph()->has_side_effect_node()) {
+      MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                    << ", func_graph: " << func_graph()->ToString();
+      cnode->set_has_side_effect_node(true);
+      func_graph()->set_has_side_effect_node(true);
+    } else {
+      // Check inputs side-effect.
+      for (std::size_t i = 1; i < cnode->inputs().size(); ++i) {
+        auto input_cnode = dyn_cast_ptr<CNode>(cnode->input(i));
+        if (input_cnode != nullptr && input_cnode->has_side_effect_node()) {
+          MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                        << ", func_graph: " << func_graph()->ToString();
+          cnode->set_has_side_effect_node(true);
+          func_graph()->set_has_side_effect_node(true);
+          break;
+        }
+      }
     }
   }
 

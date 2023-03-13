@@ -669,14 +669,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Check whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
   ///
   /// \return True if contains, otherwise false.
-  bool has_isolated_side_effect_node() const { return has_isolated_side_effect_node_; }
+  bool has_side_effect_node() const { return has_side_effect_node_; }
 
   /// \brief Set whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
   ///
-  /// \param[in] has_isolated_side_effect_node Boolean.
-  void set_has_isolated_side_effect_node(bool has_isolated_side_effect_node) {
-    has_isolated_side_effect_node_ = has_isolated_side_effect_node;
-  }
+  /// \param[in] has_side_effect_node Boolean.
+  void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
 
  private:
   static constexpr size_t kStopGradient = 0;
@@ -697,7 +695,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   NodeDebugInfoSet fused_debug_infos_;
 
   // If the inputs or their inputs contain Depend CNode with isolated side-effect node.
-  bool has_isolated_side_effect_node_{false};
+  bool has_side_effect_node_{false};
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
