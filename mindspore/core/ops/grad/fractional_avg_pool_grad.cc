@@ -41,6 +41,7 @@
 #include "mindapi/ir/value.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -49,9 +50,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInpuSizes = 4;
-constexpr size_t kInpuDims = 1;
-constexpr int64_t kDynamicRankValue = -2;
+constexpr size_t kInputSizes = 4;
+constexpr size_t kInputDims = 1;
 abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -59,63 +59,26 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input 'orig_input_tensor_shape' must be a tensor.";
-  }
-  auto input_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  auto input_type = input_args[kInputIndex0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  auto input_type_id = input_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_type_id);
-  auto input_type_element = input_type_id->element();
-  MS_EXCEPTION_IF_NULL(input_type_element);
-  auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape]);
-  auto shape_v = shape_ptr->shape();
-  if (shape_v.size() > kInpuDims) {
+
+  auto shape_v = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (shape_v.size() > kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the input 'orig_input_tensor_shape' tensor must be a 1-D tensor.";
   }
-
-  std::vector<int64_t> output_shape;
-  if (IsDynamicRank(shape_v)) {
-    output_shape.push_back(kDynamicRankValue);
-    return std::make_shared<abstract::Shape>(output_shape);
+  std::vector<int64_t> output_shape = GetShapeValue(primitive, input_args[kInputIndex0]);
+  if (IsDynamicRank(output_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(kInputSizes, abstract::Shape::kShapeDimAny));
   }
-
-  if (IsDynamic(shape_v)) {
-    output_shape = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                    abstract::Shape::kShapeDimAny};
-    return std::make_shared<abstract::Shape>(output_shape);
+  (void)CheckAndConvertUtils::CheckInteger("orig_input_tensor_shape", SizeToLong(output_shape.size()), kEqual,
+                                           kInputSizes, op_name);
+  int64_t shape_m = SizeToLong(SizeOf(output_shape));
+  if (shape_m > max_length) {
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the number of elements of output must be less than max length: " << max_length
+                             << ", but got " << shape_m
+                             << "! The shape of  output must be reduced or max_length must be increased";
   }
-
-  if (!input_args[kInputIndex0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex0]->BuildValue()->isa<None>()) {
-    int64_t shape_m = 1;
-    auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
-    for (auto i = 0; i < shape_v[kInputIndex0]; ++i) {
-      if (input_shape_ptr[i] > 0) {
-        output_shape.push_back(input_shape_ptr[i]);
-        shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
-      }
-    }
-    if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', the number of elements of output must be less than max length: " << max_length
-                               << ", but got " << shape_m
-                               << "! The shape of  output must be reduced or max_length must be increased";
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    for (int i = 0; i < shape_v[kInputIndex0]; i++) {
-      output_shape.push_back(abstract::Shape::kShapeDimAny);
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr FractionalAvgPoolGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

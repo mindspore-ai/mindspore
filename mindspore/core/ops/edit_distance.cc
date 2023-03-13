@@ -39,6 +39,7 @@
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
@@ -99,64 +100,67 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   auto truth_indices_shape = GetShape(kIndex3);
   auto truth_values_shape = GetShape(kIndex4);
   auto truth_shape_shape = GetShape(kIndex5);
-  if (IsDynamicRank(hypothesis_indices_shape) || IsDynamicRank(hypothesis_values_shape) ||
-      IsDynamicRank(hypothesis_shape_shape) || IsDynamicRank(truth_indices_shape) ||
-      IsDynamicRank(truth_values_shape) || IsDynamicRank(truth_shape_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
-  }
 
   const int64_t indices_rank = 2;
   const int64_t values_shape_rank = 1;
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_indices rank", SizeToLong(hypothesis_indices_shape.size()),
-                                           kEqual, indices_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_indices rank", SizeToLong(truth_indices_shape.size()), kEqual,
-                                           indices_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_values rank", SizeToLong(hypothesis_values_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_shape rank", SizeToLong(hypothesis_shape_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_values rank", SizeToLong(truth_values_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_shape rank", SizeToLong(truth_shape_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-
-  if (IsDynamicShape(hypothesis_indices_shape) || IsDynamicShape(hypothesis_values_shape) ||
-      IsDynamicShape(hypothesis_shape_shape) || IsDynamicShape(truth_indices_shape) ||
-      IsDynamicShape(truth_values_shape) || IsDynamicShape(truth_shape_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  std::vector<ShapeVector> check_shapes = {hypothesis_indices_shape, hypothesis_values_shape, hypothesis_shape_shape,
+                                           truth_indices_shape,      truth_values_shape,      truth_shape_shape};
+  auto is_dyn_rank = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamicRank);
+  auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamic);
+  if (!is_dyn_rank) {
+    (void)CheckAndConvertUtils::CheckInteger("hypothesis_indices rank", SizeToLong(hypothesis_indices_shape.size()),
+                                             kEqual, indices_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("truth_indices rank", SizeToLong(truth_indices_shape.size()), kEqual,
+                                             indices_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("hypothesis_values rank", SizeToLong(hypothesis_values_shape.size()),
+                                             kEqual, values_shape_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("hypothesis_shape rank", SizeToLong(hypothesis_shape_shape.size()), kEqual,
+                                             values_shape_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("truth_values rank", SizeToLong(truth_values_shape.size()), kEqual,
+                                             values_shape_rank, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("truth_shape rank", SizeToLong(truth_shape_shape.size()), kEqual,
+                                             values_shape_rank, prim_name);
   }
 
-  CheckEditDistanceShape(hypothesis_indices_shape, hypothesis_values_shape, hypothesis_shape_shape, truth_indices_shape,
-                         truth_values_shape, truth_shape_shape);
-
-  const std::set<TypePtr> valid_types = {kInt64};
-  auto hypothesis_shape_abs = input_args[kIndex2];
-  auto truth_shape_abs = input_args[kIndex5];
-  auto hypothesis_shape_type = hypothesis_shape_abs->BuildType();
-  MS_EXCEPTION_IF_NULL(hypothesis_shape_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_shape", hypothesis_shape_type, valid_types, prim_name);
-  auto truth_shape_type = truth_shape_abs->BuildType();
-  MS_EXCEPTION_IF_NULL(truth_shape_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_shape", truth_shape_type, valid_types, prim_name);
-
-  auto hypothesis_shape_value = hypothesis_shape_abs->BuildValue();
-  MS_EXCEPTION_IF_NULL(hypothesis_shape_value);
-  if (!hypothesis_shape_value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "hypothesis_shape_value should be a Tensor but got: " << hypothesis_shape_value->ToString()
-                      << ".";
+  if (!is_dynamic) {
+    CheckEditDistanceShape(hypothesis_indices_shape, hypothesis_values_shape, hypothesis_shape_shape,
+                           truth_indices_shape, truth_values_shape, truth_shape_shape);
+    if (hypothesis_values_shape[kIndex0] != hypothesis_indices_shape[kIndex0]) {
+      MS_EXCEPTION(ValueError) << "hypothesis_values shape should be equal to hypothesis_indices shape[0] but got "
+                               << "hypothesis_values shape: " << hypothesis_values_shape[kIndex0]
+                               << " and hypothesis_indices shape[0]: " << hypothesis_indices_shape[kIndex0] << ".";
+    }
+    auto hypothesis_shape_shape_val = hypothesis_shape_shape[kIndex0];
+    if (hypothesis_shape_shape_val != hypothesis_indices_shape[kIndex1]) {
+      MS_EXCEPTION(ValueError) << "hypothesis_shape should be equal to hypothesis_indices shape[1] but got "
+                               << "hypothesis_shape: " << hypothesis_shape_shape_val
+                               << " and hypothesis_indices shape[1]: " << hypothesis_indices_shape[kIndex1] << ".";
+    }
+    if (truth_values_shape[kIndex0] != truth_indices_shape[kIndex0]) {
+      MS_EXCEPTION(ValueError) << "truth_values shape should be equal to truth_indices shape[0] but got "
+                               << "truth_values shape: " << truth_values_shape[kIndex0]
+                               << " and truth_indices shape[0]: " << truth_indices_shape[kIndex0] << ".";
+    }
+    if (hypothesis_shape_shape_val != truth_shape_shape[kIndex0]) {
+      MS_EXCEPTION(ValueError) << "hypothesis_shape should be equal to truth_shape but got hypothesis_shape: "
+                               << hypothesis_shape_shape_val << " and truth_shape: " << truth_shape_shape[kIndex0]
+                               << ".";
+    }
   }
-  auto hypothesis_shape_ptr = static_cast<int64_t *>(hypothesis_shape_value->cast<tensor::TensorPtr>()->data_c());
-  auto truth_shape_value = truth_shape_abs->BuildValue();
-  MS_EXCEPTION_IF_NULL(truth_shape_value);
-  if (!truth_shape_value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "truth_shape_value should be a Tensor but got: " << truth_shape_value->ToString() << ".";
+
+  auto hypothesis_shape_value_ptr = input_args[kIndex2]->BuildValue();
+  MS_EXCEPTION_IF_NULL(hypothesis_shape_value_ptr);
+  auto truth_shape_value_ptr = input_args[kIndex5]->BuildValue();
+  MS_EXCEPTION_IF_NULL(truth_shape_value_ptr);
+  if (!IsValueKnown(hypothesis_shape_value_ptr) || !IsValueKnown(truth_shape_value_ptr)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  auto truth_shape_ptr = static_cast<int64_t *>(truth_shape_value->cast<tensor::TensorPtr>()->data_c());
+  auto hypothesis_shape_value =
+    CheckAndConvertUtils::CheckTensorIntValue("hypothesis_shape", hypothesis_shape_value_ptr, prim_name);
+  auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name);
   ShapeVector infer_shape;
-  for (auto i = 0; i < hypothesis_shape_shape[kIndex0] - 1; ++i) {
-    infer_shape.push_back(std::max(*hypothesis_shape_ptr, *truth_shape_ptr));
-    hypothesis_shape_ptr++;
-    truth_shape_ptr++;
+  for (size_t i = 0; i < hypothesis_shape_value.size() - 1; ++i) {
+    infer_shape.push_back(std::max(hypothesis_shape_value[i], truth_shape_value[i]));
   }
   return std::make_shared<abstract::Shape>(infer_shape);
 }
@@ -174,12 +178,23 @@ TypePtr EditDistanceInferType(const PrimitivePtr &prim, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(hypothesis_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_values", hypothesis_values_type, values_valid_types,
                                                    prim_name);
+
+  auto hypothesis_shape_type = input_args[kIndex2]->BuildType();
+  MS_EXCEPTION_IF_NULL(hypothesis_shape_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_shape", hypothesis_shape_type, indices_valid_types,
+                                                   prim_name);
+
   auto truth_indices_type = input_args[kIndex3]->BuildType();
   MS_EXCEPTION_IF_NULL(truth_indices_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_indices", truth_indices_type, indices_valid_types, prim_name);
   auto truth_values_type = input_args[kIndex4]->BuildType();
   MS_EXCEPTION_IF_NULL(truth_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_values", truth_values_type, values_valid_types, prim_name);
+
+  auto truth_shape_type = input_args[kIndex5]->BuildType();
+  MS_EXCEPTION_IF_NULL(truth_shape_type);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_shape", truth_shape_type, indices_valid_types, prim_name);
+
   return kFloat32;
 }
 }  // namespace
@@ -188,8 +203,8 @@ MIND_API_OPERATOR_IMPL(EditDistance, BaseOperator);
 AbstractBasePtr EditDistanceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto infer_shape = EditDistanceInferShape(primitive, input_args);
   auto infer_type = EditDistanceInferType(primitive, input_args);
+  auto infer_shape = EditDistanceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
@@ -204,10 +219,13 @@ class MIND_API AGEditDistanceInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return EditDistanceInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return EditDistanceInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2, 5}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(EditDistance, prim::kPrimEditDistance, AGEditDistanceInfer, false);

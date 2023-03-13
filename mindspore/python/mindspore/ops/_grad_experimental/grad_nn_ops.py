@@ -17,10 +17,13 @@
 """Define the grad rules of neural network related operations."""
 from __future__ import absolute_import
 
+from mindspore.common import dtype as mstype
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations.nn_ops import FractionalAvgPool
+from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
@@ -32,6 +35,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
+from mindspore.ops.operations._sequence_ops import TupleToTensor
 
 
 @bprop_getters.register(FractionalMaxPool)
@@ -54,6 +58,20 @@ def get_bprop_fractional_max_pool3d_with_fixed_ksize(self):
     def bprop(x, random_samples, out, dout):
         dx = fractional_max_pool3d_grad_with_fixed_ksize(x, dout[0], out[1])
         return (dx, zeros_like(random_samples))
+
+    return bprop
+
+
+@bprop_getters.register(FractionalAvgPool)
+def get_bprop_fractional_avg_pool(self):
+    """Grad definition for `FractionalAvgPool` operation."""
+    fractional_avg_pool_grad = FractionalAvgPoolGrad(overlapping=self.overlapping)
+    shape_op = P.Shape()
+    tuple_to_tensor_op = TupleToTensor()
+
+    def bprop(x, out, dout):
+        dx = fractional_avg_pool_grad(tuple_to_tensor_op(shape_op(x), mstype.int64), dout[0], out[1], out[2])
+        return (dx,)
 
     return bprop
 

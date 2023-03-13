@@ -87,7 +87,7 @@ uint32_t SparseApplyMomentumCpuKernel::ValidParam(CpuKernelContext &ctx) {
   scalar_shapes.insert({"lr", lr_shape});
   scalar_shapes.insert({"momentum", momentum_shape});
   for (auto iter = scalar_shapes.begin(); iter != scalar_shapes.end(); iter++) {
-    KERNEL_CHECK_FALSE(iter->second->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
+    KERNEL_CHECK_FALSE(iter->second->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
                        "The input %s should be a scalar, got dim size [%d].", iter->first.c_str(),
                        iter->second->GetDims());
   }

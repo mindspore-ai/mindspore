@@ -62,7 +62,8 @@ void CudaIm2Col(const int64_t batches, const int64_t x_channel, const int64_t x_
   const int64_t inner_size_y = y_out_plane * y_height * y_width;
   const int64_t inner_size_x = x_channel * x_height * x_width;
   const int64_t num_kernels = x_channel * y_height * y_width;
-  Im2ColKernel<T><<<CUDA_BLOCKS(device_id, num_kernels), CUDA_THREADS(device_id), 0, stream>>>(
+  const int64_t block_num = static_cast<int64_t>(CUDA_THREADS(device_id)) / 4;
+  Im2ColKernel<T><<<CUDA_BLOCKS_CAL(device_id, num_kernels, block_num), block_num, 0, stream>>>(
     num_kernels, x, y, inner_size_x, inner_size_y, x_height, x_width, kernel_height, kernel_width, pad_height,
     pad_width, stride_height, stride_width, dilation_height, dilation_width, y_height, y_width, batches);
 }

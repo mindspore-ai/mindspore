@@ -591,8 +591,9 @@ class Reshape(PrimitiveWithCheck):
     def infer_value(self, x, shape):
         """infer value"""
         # for shape is not constant
-        if shape is None or (isinstance(shape, (tuple, list)) and None in shape) or x is None:
+        if shape is None or self.none_in_tuple_or_list(shape) or x is None:
             return None
+
         if isinstance(shape, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),
                                                [mstype.int32, mstype.int64], self.name)
@@ -629,6 +630,9 @@ class Reshape(PrimitiveWithCheck):
                                  f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
             out = Tensor(x.asnumpy().reshape(shape))
         return out
+
+    def none_in_tuple_or_list(self, x):
+        return isinstance(x, (tuple, list)) and None in x
 
 
 class Shape(Primitive):
@@ -1409,24 +1413,10 @@ class MatrixBandPart(Primitive):
 
 class Fill(PrimitiveWithCheck):
     """
-    Create a Tensor of the specified shape and fill it with the specified value.
-
-    Refer to :func:`mindspore.ops.fill` for more details.
+    The Fill interface is deprecated, please use the :class:`mindspore.ops.FillV2` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> fill = ops.Fill()
-        >>> output = fill(mindspore.float32, (2, 2), 1)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-        >>> output = fill(mindspore.float32, (3, 3), 0)
-        >>> print(output)
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
+        Deprecated
     """
 
     @prim_attr_register
@@ -3202,24 +3192,31 @@ class StridedSlice(PrimitiveWithInfer):
         if len(tuple(filter(lambda x: x == '1', bin(ellipsis_mask)[-1:1:-1]))) > 1:
             raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {ellipsis_mask}.")
         validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
-        validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
+        validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask',
+                                         self.name)
 
     def __infer__(self, x, begin, end, strides):
         begin_v, begin_len = self._check_and_get_value(begin, 'begin')
         end_v, end_len = self._check_and_get_value(end, 'end')
         strides_v, strides_len = self._check_and_get_value(strides, 'strides')
 
-        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x['shape']):
+        is_dynamic_tuple = (self._is_none_in_tuple(begin_v['value'])
+                            or self._is_none_in_tuple(end_v['value'])
+                            or self._is_none_in_tuple(strides_v['value']))
+        is_dynamic = None in (begin_v['value'], end_v['value'], strides_v['value'])
+
+        if not is_dynamic and (begin_len != strides_len or end_len != strides_len):
+            raise ValueError(
+                f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
+                f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}."
+            )
+
+        if is_dynamic or is_dynamic_tuple or is_shape_unknown(x['shape']):
             ret_shape = self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
             rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None}
-
             return rets
-
-        if begin_len != strides_len or end_len != strides_len:
-            raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
-                             f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
         ret_shape = self._compute_slicing_shape(x['shape'], begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
@@ -3259,7 +3256,7 @@ class StridedSlice(PrimitiveWithInfer):
                 # When slicing forward, if begin >= end, the length of the slicing is 0.
                 slicing_length = 0
             else:
-                slicing_length = 1 + (end - 1 - begin) // stride
+                slicing_length = -1
             return slicing_length
         # When slicing forward, convert begin and end to positive numbers.
         if begin >= x_dim or end < -x_dim:
@@ -3290,7 +3287,7 @@ class StridedSlice(PrimitiveWithInfer):
             if begin <= end:
                 slicing_length = 0
             else:
-                slicing_length = 1 + (end + 1 - begin) // stride
+                slicing_length = -1
             return slicing_length
         # When slicing backward, convert begin and end to negative numbers.
         if begin < -x_dim or end >= x_dim:
@@ -3325,6 +3322,9 @@ class StridedSlice(PrimitiveWithInfer):
         if strides_value is None:
             strides_value = strides_v['shape_value']
         return begin_value, end_value, strides_value
+
+    def _is_none_in_tuple(self, x):
+        return isinstance(x, tuple) and None in x
 
     def _compute_slicing_length(self, begin, end, stride, x_dim):
         """Computes the length of the slicing."""
@@ -3433,7 +3433,7 @@ class StridedSlice(PrimitiveWithInfer):
     def _compute_dynamic_slicing_length(self, begin, end, stride, x_dim):
         """Computes the length of the slicing for dynamic shape."""
         slicing_length = -1
-        if -1 in (begin, end, stride):
+        if None in (begin, end, stride) or -1 in (begin, end, stride):
             return slicing_length
         slicing_length = self._compute_slicing_length(begin, end, stride, x_dim)
         return slicing_length
@@ -3451,8 +3451,12 @@ class StridedSlice(PrimitiveWithInfer):
         ret_shape = []
         i, j = 0, 0
         slice_has_special_value = False
-        begin_value, end_value, strides_value = self._get_slice_value(begin_v, end_v, strides_v)
-        if None in (begin_v['value'], end_v['value'], strides_v['value']):
+        begin_value, end_value, strides_value = self._get_slice_value(
+            begin_v, end_v, strides_v)
+        is_dynamic_tuple = (self._is_none_in_tuple(begin_value)
+                            or self._is_none_in_tuple(end_value)
+                            or self._is_none_in_tuple(strides_value))
+        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_dynamic_tuple:
             slice_has_special_value = True
         while i < x_rank or j < slice_len:
             slicing_length = -1
@@ -3519,7 +3523,7 @@ class StridedSlice(PrimitiveWithInfer):
             raise TypeError(f"For '{self.name}', both the 'begin', 'end', and 'strides' must be a tuple or Tensor, "
                             f"but got '{name}': {slice_value}.")
 
-        if tuple(filter(lambda x: not isinstance(x, int), slice_value)):
+        if tuple(filter(lambda x: x is not None and not isinstance(x, int), slice_value)):
             raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
                             f"but got {name}: {slice_value}.")
 

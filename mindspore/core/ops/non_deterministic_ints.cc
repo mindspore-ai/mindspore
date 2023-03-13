@@ -49,7 +49,11 @@ namespace {
 abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t kDimOne = 1;
   const uint32_t kMinShapeDim = 2;
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("shape's rank", SizeToLong(shape_shape.size()), kEqual, kDimOne, prim_name);
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
@@ -61,14 +65,14 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
   auto shape_v = GetShapeValue(primitive, input_args[0]);
   if (!IsDynamic(shape_v)) {
     if (shape_v.size() < kMinShapeDim) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'shape' must be at least 2-dimensional.";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'shape' must be at least 2-dimensional.";
     }
     if (std::any_of(shape_v.begin(), shape_v.end(), [](int64_t x) { return x <= 0; })) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'shape' can't contain non-positive dim.";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'shape' can't contain non-positive dim.";
     }
     auto shape_m = static_cast<int64_t>(SizeOf(shape_v));
     if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', the number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
                                << ". The shape of output must be reduced or max_length must be increased";
@@ -80,9 +84,10 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 1;
+  auto shape_type = input_args[0]->BuildType();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64, kUInt32, kUInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

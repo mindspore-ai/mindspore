@@ -45,31 +45,46 @@ abstract::TupleShapePtr ApplyKerasMomentumInferShape(const PrimitivePtr &primiti
                                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 5, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+
   auto var_shape = input_args[0]->BuildShape();
   auto accum_shape = input_args[1]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   auto grad_shape = input_args[3]->BuildShape();
+
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
   auto momentum_shape_rank = SizeToLong(momentum_shape.size());
+
   // lr, momentum must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("momentum_shape rank", momentum_shape_rank, kEqual, 0, prim_name);
+  if (!IsDynamic(lr_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape rank", SizeToLong(lr_shape.size()), kEqual, 0, prim_name);
+  }
+  if (!IsDynamic(momentum_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("momentum_shape rank", momentum_shape_rank, kEqual, 0, prim_name);
+  }
+
   // var, accum and grad must have the same shape
-  std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
-  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
-  for (auto &elem : same_shape_args_map) {
-    if (*elem.second != *var_shape) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
-                               << "' must have the same shape as 'var'. But got '" << elem.first
-                               << "' shape: " << elem.second->ToString() << ", 'var' shape: " << var_shape->ToString()
-                               << ".";
+  std::vector<abstract::BaseShapePtr> check_shapes = {var_shape, accum_shape, grad_shape};
+  auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(),
+                                [&](const abstract::BaseShapePtr &shape) { return shape->IsDynamic(); });
+  if (!is_dynamic) {
+    std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
+    (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
+    (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
+    for (auto &elem : same_shape_args_map) {
+      if (*elem.second != *var_shape) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
+                                 << "' must have the same shape as 'var'. But got '" << elem.first
+                                 << "' shape: " << elem.second->ToString() << ", 'var' shape: " << var_shape->ToString()
+                                 << ".";
+      }
     }
   }
+
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, accum_shape});
 }
 

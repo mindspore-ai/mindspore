@@ -50,9 +50,7 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  const int64_t x_rank = 4;
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
+
   auto pooling_ratio = GetValue<std::vector<float>>(primitive->GetAttr(kPoolingRatio));
   if (pooling_ratio.size() != kPoolingRatioDim) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter 'pooling_ratio' must be 4, but got "
@@ -78,13 +76,29 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
                              << "', the forth element of parameter 'pooling_ratio' must be 1.0, but got "
                              << std::to_string(pooling_ratio[kInputIndex3]) << ".";
   }
-  std::vector<int64_t> out_shape(x_rank);
-  for (int i = 0; i < x_rank; ++i) {
-    out_shape[IntToSize(i)] = static_cast<int64_t>(std::floor(in_shape[IntToSize(i)] / pooling_ratio[IntToSize(i)]));
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  const int64_t x_rank = 4;
+  if (IsDynamicRank(x_shape)) {
+    abstract::ShapePtr output_shape =
+      std::make_shared<abstract::Shape>(std::vector<int64_t>(x_rank, abstract::Shape::kShapeDimAny));
+    abstract::ShapePtr row_col_shape =
+      std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{output_shape, row_col_shape, row_col_shape});
   }
 
-  int64_t row = out_shape[kInputIndex1] + 1;
-  int64_t col = out_shape[kInputIndex2] + 1;
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(x_shape.size()), kEqual, x_rank, op_name);
+  std::vector<int64_t> out_shape(x_rank);
+  for (int i = 0; i < x_rank; ++i) {
+    out_shape[IntToSize(i)] = x_shape[i] == abstract::Shape::kShapeDimAny
+                                ? abstract::Shape::kShapeDimAny
+                                : static_cast<int64_t>(std::floor(x_shape[IntToSize(i)] / pooling_ratio[IntToSize(i)]));
+  }
+  int64_t row = out_shape[kInputIndex1] != abstract::Shape::kShapeDimAny ? out_shape[kInputIndex1] + 1
+                                                                         : abstract::Shape::kShapeDimAny;
+  int64_t col = out_shape[kInputIndex2] != abstract::Shape::kShapeDimAny ? out_shape[kInputIndex2] + 1
+                                                                         : abstract::Shape::kShapeDimAny;
   std::vector<int64_t> row_dim = {row};
   std::vector<int64_t> col_dim = {col};
   abstract::ShapePtr output0_shape = std::make_shared<abstract::Shape>(out_shape);

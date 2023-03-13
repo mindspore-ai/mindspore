@@ -75,7 +75,7 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    const int64_t kInputNum = 4;
+    const int64_t kInputNum = 3;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
@@ -85,7 +85,7 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
-    const int64_t kInputNum = 4;
+    const int64_t kInputNum = 3;
     auto prim_name = prim->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     std::set<TypePtr> valid_types = {kFloat16, kFloat32};
@@ -94,11 +94,15 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
     (void)types.emplace("labels", input_args[kInputIndex1]->BuildType());
     (void)types.emplace("dout", input_args[kInputIndex2]->BuildType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-    auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-    if (weight_shape.size() > 0) {
-      (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
+    if (SizeToLong(input_args.size()) > kInputNum &&
+        input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
+      auto weight_shape =
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+      if (weight_shape.size() > 0) {
+        (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
+      }
+      (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
     }
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
     return input_args[kInputIndex0]->BuildType();
   }
 };

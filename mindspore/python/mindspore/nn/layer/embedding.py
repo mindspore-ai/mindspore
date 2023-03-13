@@ -32,7 +32,6 @@ from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_e
 from mindspore import _checkparam as Validator
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.nn.layer.basic import ClipByNorm
-from mindspore.nn.layer.math import Range
 from mindspore.nn.cell import Cell
 
 __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
@@ -632,7 +631,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
         batch_size = self.shape(input_indices)[0]
         num_segments = batch_size * self.field_size
-        bias = Range(0, num_segments, self.field_size)()
+        bias = F.tuple_to_array(F.make_range(0, num_segments, self.field_size))
         bias = self.reshape(bias, (batch_size, -1))
         field_ids = self.bias_add(field_ids, bias)
 

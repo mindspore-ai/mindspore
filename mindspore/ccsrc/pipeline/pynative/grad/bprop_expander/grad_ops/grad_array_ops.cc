@@ -1300,7 +1300,12 @@ REG_BPROP_BUILDER("Cast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   } else {
     dx = ib->Cast(dout, x_dtype);
   }
-  return {dx, ib->ZerosLike(t)};
+  auto abs = x->abstract();
+  if (!(abs->isa<abstract::AbstractScalar>())) {
+    return {dx, ib->ZerosLike(t)};
+  }
+  auto dx_ = ib->Emit("TensorToScalar", {dx});
+  return {dx_, ib->ZerosLike(t)};
 });
 
 REG_BPROP_BUILDER("ExpandDims").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
