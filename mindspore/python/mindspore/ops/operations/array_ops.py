@@ -5473,10 +5473,22 @@ class Meshgrid(PrimitiveWithInfer):
     """
     Generates coordinate matrices from given coordinate tensors.
 
-    Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
-    coordinate tensors for evaluating expressions on an N-D grid.
-
     Refer to :func:`mindspore.ops.meshgrid` for more details.
+
+    Args:
+        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
+            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
+            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
+            case with inputs of length `M`, `N` and `P`, outputs are of shape
+            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
+
+    Inputs:
+        - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
+          The length of input should be greater than 1. The data type is Number.
+
+    Outputs:
+        Tensors, A Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
