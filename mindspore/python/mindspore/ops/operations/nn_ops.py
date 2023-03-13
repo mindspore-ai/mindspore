@@ -2124,7 +2124,7 @@ class MaxUnpool3D(Primitive):
         self.output_shape = output_shape
 
 
-class AvgPool(_Pool):
+class AvgPool(Primitive):
     r"""
     Average pooling operation.
 
@@ -2189,7 +2189,23 @@ class AvgPool(_Pool):
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         """Initialize AvgPool."""
-        super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'data_format' is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
+        self.add_prim_attr('data_format', self.format)
+        self.kernel_size = _check_positive_int_or_tuple(
+            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
+        self.add_prim_attr("kernel_size", self.kernel_size)
+        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, allow_four=False, ret_four=True)
+        self.add_prim_attr("strides", self.strides)
 
 
 class AvgPoolV1(Primitive):

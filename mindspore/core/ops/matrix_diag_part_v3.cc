@@ -30,104 +30,83 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t TrueValueCal(const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rank = SizeToLong(x_shape.size());
-  int64_t true_value = 1;
-  const int64_t number_two = 2;
-  for (int64_t i = 0; i < rank - number_two; i++) {
-    true_value *= x_shape[LongToSize(i)];
-  }
-  return true_value;
-}
 abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
-  if (input_args[kInputIndex0]->BuildShape()->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
-  }
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+
   const int64_t kNumber1 = 1;
   const int64_t kNumber2 = 2;
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto rank = SizeToLong(x_shape.size());
+  if (!IsDynamicRank(x_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
+  }
+
   auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
+
   auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto padding_value_rank = SizeToLong(padding_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rank = SizeToLong(x_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  int64_t row = x_shape[LongToSize(rank - kNumber2)];
-  int64_t col = x_shape[LongToSize(rank - 1)];
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
-    auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(k);
-    auto k_value_ptr = k->BuildValue();
-    MS_EXCEPTION_IF_NULL(k_value_ptr);
-    auto k_tensor = k_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(k_tensor);
-    auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
-    size_t k_val_size = LongToSize(k_tensor->DataSize());
-    CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
-                                                prim_name);
-    if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-        input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
-      auto padding_value = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(padding_value);
-      auto padding_value_ptr = padding_value->BuildValue();
-      MS_EXCEPTION_IF_NULL(padding_value_ptr);
-      auto padding_value_tensor = padding_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(padding_value_tensor);
-      size_t padding_value_size = LongToSize(padding_value_tensor->DataSize());
-      (void)CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(padding_value_size), kEqual, kNumber1,
-                                               prim_name);
-    } else {
-      MS_EXCEPTION(TypeError) << "For " << prim_name << ", input k and padding_value must be const Tensor.";
-    }
-    std::vector<int64_t> out_shape;
-    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber2);
-    int64_t max_diag_len = 0;
-    int64_t true_value = TrueValueCal(input_args);
-    if (!(k_val[0] > -row && k_val[0] < col)) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
-                               << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
-                               << ", but got " << k_val[0] << ".";
-    }
-    if (k_val_size == 1 || k_val[0] == k_val[1]) {
-      max_diag_len = std::min(row + std::min(k_val[0], 0), col + std::min(-k_val[0], 0));
-      out_shape.push_back(max_diag_len);
-      true_value *= max_diag_len;
-    } else {
-      if (!(k_val[1] > -row && k_val[1] < col)) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
-                                 << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
-                                 << ", but got " << k_val[1] << ".";
-      }
-      if (!(k_val[0] <= k_val[1])) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
-      }
-      max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
-      out_shape.push_back(IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
-      out_shape.push_back(max_diag_len);
-      true_value *= max_diag_len;
-      true_value *= (IntToLong(k_val[1]) - IntToLong(k_val[0]) + 1);
-    }
-    auto max_length_ptr = primitive->GetAttr("max_length");
-    MS_EXCEPTION_IF_NULL(max_length_ptr);
-    int64_t max_value = GetValue<int64_t>(max_length_ptr);
-    if (true_value > max_value) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name
-                               << ", the number of elements of output must be less than max length: " << max_value
-                               << ", but got " << true_value
-                               << "! The shape of output must be reduced or max_length must be increased.";
-    }
-    return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    ShapeVector out_shape = {-2};
+  if (!IsDynamic(padding_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
+  }
+
+  auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(k_val_ptr);
+  if (IsDynamic(x_shape) || IsDynamic(k_shape) || !IsValueKnown(k_val_ptr)) {
+    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(out_shape);
   }
+
+  std::vector<int64_t> out_shape;
+  (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber2);
+
+  int64_t row = x_shape[LongToSize(rank - kNumber2)];
+  int64_t col = x_shape[LongToSize(rank - 1)];
+  auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
+  size_t k_val_size = LongToSize(k_val.size());
+  CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
+                                              prim_name);
+  int64_t max_diag_len = 0;
+  if (!(k_val[0] > -row && k_val[0] < col)) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
+                             << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
+                             << ", but got " << k_val[0] << ".";
+  }
+  int64_t kValueZero = 0;
+  if (k_val_size == 1 || k_val[0] == k_val[1]) {
+    max_diag_len = std::min(row + std::min(k_val[0], kValueZero), col + std::min(-k_val[0], kValueZero));
+    out_shape.push_back(max_diag_len);
+  } else {
+    if (!(k_val[1] > -row && k_val[1] < col)) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the value of k must be in (-x.shape[-2], x.shape[-1]),"
+                               << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
+                               << ", but got " << k_val[1] << ".";
+    }
+    if (!(k_val[0] <= k_val[1])) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
+    }
+    max_diag_len = std::min(row + std::min(k_val[1], kValueZero), col + std::min(-k_val[0], kValueZero));
+    out_shape.push_back(k_val[1] - k_val[0] + 1);
+    out_shape.push_back(max_diag_len);
+  }
+
+  auto max_length_ptr = primitive->GetAttr("max_length");
+  MS_EXCEPTION_IF_NULL(max_length_ptr);
+  int64_t max_value = GetValue<int64_t>(max_length_ptr);
+
+  auto true_value = SizeToLong(SizeOf(out_shape));
+  if (true_value > max_value) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name
+                             << ", the number of elements of output must be less than max length: " << max_value
+                             << ", but got " << true_value
+                             << "! The shape of output must be reduced or max_length must be increased.";
+  }
+
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -188,10 +167,13 @@ class MIND_API AGMatrixDiagPartV3Infer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return MatrixDiagPartV3InferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return MatrixDiagPartV3Infer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MatrixDiagPartV3, prim::kPrimMatrixDiagPartV3, AGMatrixDiagPartV3Infer, false);
