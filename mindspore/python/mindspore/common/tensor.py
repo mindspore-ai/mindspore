@@ -2586,6 +2586,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(x.trace())
             3.0
         """
+        if offset == 0 and axis1 == 0 and axis2 == 1 and dtype is None:
+            self._init_check()
+            return tensor_operator_registry.get('trace')(self)
         d = self.diagonal(offset, axis1=axis1, axis2=axis2)
         shape = d.shape
         if dtype is None:
@@ -4226,6 +4229,23 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get('imag')(self)
+
+
+    def nextafter(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.nextafter`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nextafter')(self, other)
+
+
+    def qr(self, some=True):
+        r"""
+        For details, please refer to :func:`mindspore.ops.qr`.
+        """
+        self._init_check()
+        validator.check_value_type('some', some, bool, 'Tensor.qr')
+        return tensor_operator_registry.get('qr')(self, 'reduced' if some else 'complete')
 
 
 def _vm_compare(*args):
