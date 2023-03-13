@@ -893,19 +893,19 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.debug as debug
         >>> class CustomizedHook(debug.DebugHook):
-        >>>     def __init__(self):
-        >>>         super().__init__()
-        >>>     def compute(self, *args):
-        >>>         # Add your debugging code here.
-        >>>         return args
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...     def compute(self, *args):
+        ...         # Add your debugging code here.
+        ...         return args
         >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
 
         4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
         >>> import mindspore.dataset as ds
         >>> ds.config.set_debug_mode(True)
-        >>> dataset = ds.ImageFolderDataset(...)
+        >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
         >>> # the debug hook is added after `Decode` operation.
-        >>> dataset.map([Decode(), CustomizedHook(), CenterCrop()])
+        >>> dataset = dataset.map([Decode(), CustomizedHook(), CenterCrop()])
     """
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
