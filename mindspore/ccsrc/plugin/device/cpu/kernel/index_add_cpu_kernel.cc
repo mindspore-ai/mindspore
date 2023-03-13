@@ -167,8 +167,6 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
         const size_t x_idx = x_outer_idx * x_axis_inner_size + x_axis_idx * inner_size_ + x_inner_idx;
         x[x_idx] += y[i];
       } else {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << input_shapes_
-                      << ".";
         index_mismatch = 1;
       }
     }
@@ -187,8 +185,6 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
           x[x_idx + j] += y[y_idx + j];
         }
       } else {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices out of range with input_shape: " << input_shapes_
-                      << ".";
         index_mismatch = 1;
       }
     }
@@ -209,6 +205,8 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   }
 
   if (index_mismatch) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices are out of range with input_shape: " << input_shapes_
+                  << ".";
     return false;
   }
 
