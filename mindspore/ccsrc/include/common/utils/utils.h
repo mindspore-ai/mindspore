@@ -1332,6 +1332,8 @@ COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 COMMON_EXPORT bool IsOneOfDynRankNeedPadShape(const std::string &format);
 
+COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
+
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
 using OutputInputRefMap = std::map<size_t, size_t>;

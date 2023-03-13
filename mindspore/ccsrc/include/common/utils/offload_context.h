@@ -42,7 +42,7 @@ class COMMON_EXPORT OffloadContext {
   std::string offload_checkpoint() const { return offload_checkpoint_; }
 
   void set_offload_ddr_size(size_t offload_ddr_size);
-  size_t offload_ddr_size() const { return offload_ddr_size_; }
+  size_t offload_ddr_size();
 
   void set_offload_disk_size(size_t offload_disk_size);
   size_t offload_disk_size() const { return offload_disk_size_; }

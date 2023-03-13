@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_HOST_MEM_POOL_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_HOST_MEM_POOL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_PIN_MEM_POOL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_PIN_MEM_POOL_H_
 
-#include <memory>
-#include "include/backend/visible.h"
+#include "runtime/device/gsm/pin_mem_pool.h"
 
 namespace mindspore {
 namespace device {
-class HostMemPool {
+namespace gpu {
+class GPUPinMemPool : public PinMemPool {
  public:
-  explicit BACKEND_EXPORT HostMemPool(size_t max_size) : max_size_(max_size) {}
-  ~HostMemPool() = default;
-  virtual void *Malloc(size_t size) { return nullptr; }
-  virtual void Free(const void *ptr) {}
+  ~GPUPinMemPool() = default;
+  static GPUPinMemPool &GetInstance();
 
- protected:
-  size_t max_size_;
+ private:
+  GPUPinMemPool() = default;
+  GPUPinMemPool(const GPUPinMemPool &) = delete;
+  GPUPinMemPool &operator=(const GPUPinMemPool &) = delete;
+  void PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) override;
+  bool FreeDeviceMem(const DeviceMemPtr &addr) override;
 };
-using HostMemPoolPtr = std::shared_ptr<HostMemPool>;
+}  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_HOST_MEM_POOL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_PIN_MEM_POOL_H_

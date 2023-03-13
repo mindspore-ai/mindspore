@@ -20,7 +20,11 @@
 #include <mutex>
 
 #include "utils/log_adapter.h"
+#include "include/common/utils/utils.h"
 namespace mindspore {
+namespace {
+constexpr char kMemAvailable[] = "MemAvailable";
+}
 std::shared_ptr<OffloadContext> OffloadContext::GetInstance() {
   static std::once_flag init_flag;
   static std::shared_ptr<OffloadContext> inst_context_ = nullptr;
@@ -44,6 +48,14 @@ void OffloadContext::set_offload_checkpoint(const std::string &offload_checkpoin
 }
 
 void OffloadContext::set_offload_ddr_size(size_t offload_ddr_size) { offload_ddr_size_ = offload_ddr_size; }
+
+size_t OffloadContext::offload_ddr_size() {
+  if (offload_ddr_size_ == 0) {
+    offload_ddr_size_ = mindspore::GetSystemMemorySize(kMemAvailable);
+    MS_LOG(WARNING) << "Offload ddr size is not set, please set this via the context.set_offload_context() method.";
+  }
+  return offload_ddr_size_;
+}
 
 void OffloadContext::set_offload_disk_size(size_t offload_disk_size) { offload_disk_size_ = offload_disk_size; }
 

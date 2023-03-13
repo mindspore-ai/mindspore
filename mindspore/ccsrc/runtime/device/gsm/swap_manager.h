@@ -24,14 +24,14 @@
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "include/backend/device_address.h"
 #include "runtime/device/gsm/io_handle.h"
-#include "runtime/device/gsm/host_mem_pool.h"
+#include "runtime/device/gsm/pin_mem_pool.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
 class BACKEND_EXPORT SwapManager {
  public:
-  SwapManager(size_t stream_id, DynamicMemPoolBestFit *device_memory_pool, HostMemPoolPtr host_memory_pool);
+  SwapManager(size_t stream_id, DynamicMemPoolBestFit *device_memory_pool, PinMemPool *pin_mem_pool);
   ~SwapManager() = default;
   // Device memory
   void *AllocDeviceMemory(size_t size);
@@ -69,7 +69,7 @@ class BACKEND_EXPORT SwapManager {
  private:
   size_t stream_id_;
   DynamicMemPoolBestFit *device_memory_pool_;
-  HostMemPoolPtr host_memory_pool_;
+  PinMemPool *pin_mem_pool_;
   size_t max_file_size_{0};
   size_t current_used_file_size_{0};
   HashMap<std::string, size_t> file_size_;
