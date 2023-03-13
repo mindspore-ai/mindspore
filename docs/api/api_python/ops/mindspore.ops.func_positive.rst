@@ -1,16 +1,16 @@
 mindspore.ops.positive
 ======================
 
-.. py:function:: mindspore.ops.positive(x)
+.. py:function:: mindspore.ops.positive(input)
 
     返回输入Tensor。
 
     参数：
-        - **x** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         输入Tensor。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - `x` 的dtype是bool。
+        - **TypeError** - `input` 不是Tensor。
+        - **TypeError** - `input` 的dtype是bool。

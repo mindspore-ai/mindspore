@@ -1,15 +1,15 @@
 mindspore.ops.t
 ===============
 
-.. py:function:: mindspore.ops.t(x)
+.. py:function:: mindspore.ops.t(input)
 
     转置二维Tensor。一维Tensor按原样返回。
 
     参数：
-        - **x** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
-        Tensor，`x` 的转置。
+        Tensor，`input` 的转置。
 
     异常：
-        - **ValueError** - `x` 的维度大于2。
+        - **ValueError** - `input` 的维度大于2。

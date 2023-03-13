@@ -588,29 +588,28 @@ def neg(input):
     return neg_tensor(input)
 
 
-def negative(x):
+def negative(input):
     r"""
     Alias for :func:`mindspore.ops.neg` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return neg_tensor(x)
+    return neg_tensor(input)
 
 
-def positive(x):
+def positive(input):
     r"""
     Return self Tensor.
 
     Args:
-        x(Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
 
     Returns:
         Tensor, self input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of self Tensor is bool type.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -623,25 +622,23 @@ def positive(x):
         >>> print(ops.positive(x))
         [ -5.    1.5   3.  100. ]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For positive, the input must be a Tensor, but got {type(x)}")
-    if x.dtype == mstype.bool_:
-        raise TypeError("For positive, the type of tensor can not be bool.")
-    return x
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For positive, the input must be a Tensor, but got {type(input)}")
+    return input
 
 
-def numel(x):
+def numel(input):
     r"""
     Returns a Scalar of type int that represents the total number of elements in the Tensor.
 
     Args:
-        x (Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
 
     Returns:
         int. A scalar representing the total of elements in the Tensor.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -651,25 +648,25 @@ def numel(x):
         >>> print(ops.numel(input_x))
         4
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For numel, the input must be a Tensor, but got {type(x)}")
-    return x.size
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For numel, the input must be a Tensor, but got {type(input)}")
+    return input.size
 
 
-def permute(x, dims):
+def permute(input, axis):
     """
-    Permutes the dimensions of the input tensor according to input `dims` .
+    Permutes the dimensions of the input tensor according to input `axis` .
 
     Args:
-        x(Tensor): Input Tensor.
-        dims(Union[tuple(int), list(int), int]): Permute will permute the tensor to the input `dims` order.
+        input (Tensor): Input Tensor.
+        axis (Union[tuple(int), list(int), int]): Permute will permute the tensor to the input `axis` order.
 
     Returns:
-        Tensor, has the same dimension as input tensor, with `dims` suitably permuted.
+        Tensor, has the same dimension as input tensor, with `axis` suitably permuted.
 
     Raises:
-        ValueError: If `dims` is None.
-        ValueError: If the number of elements of `dims` is not equal to `x` ndim.
+        ValueError: If `axis` is None.
+        ValueError: If the number of elements of `axis` is not equal to `input` ndim.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -685,7 +682,7 @@ def permute(x, dims):
           [ 8. 11.]
           [ 9. 12.]]]
     """
-    return transpose_(x, dims)
+    return transpose_(input, axis)
 
 
 def ceil(x):
@@ -2059,18 +2056,18 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
     return ops.true_divide(c, _get_default_div_type(norm_factor)).squeeze()
 
 
-def t(x):
+def t(input):
     r"""
     Transposes a 2-D Tensor. 1-D Tensor are returned as it is.
 
     Args:
-        x (Tensor): The input Tensor.
+        input (Tensor): The input Tensor.
 
     Returns:
-        Tensor, the transpose of `x` .
+        Tensor, the transpose of `input` .
 
     Raises:
-        ValueError: If the dimension of `x` is larger than 2.
+        ValueError: If the dimension of `input` is larger than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2083,11 +2080,11 @@ def t(x):
          [2. 3.]
          [3. 4.]]
     """
-    if x.ndim > 2:
-        raise ValueError(f"For t(), the dimension of tensor should be less than 3, but got {x.ndim}.")
-    if x.ndim == 2:
-        return _get_cache_prim(P.Transpose)()(x, (1, 0))
-    return x
+    if input.ndim > 2:
+        raise ValueError(f"For t(), the dimension of tensor should be less than 3, but got {input.ndim}.")
+    if input.ndim == 2:
+        return _get_cache_prim(P.Transpose)()(input, (1, 0))
+    return input
 
 
 def tan(input):
@@ -2172,11 +2169,11 @@ def xlogy(input, other):
     return xlogy_(input, other)
 
 
-def arccosh(x):
+def arccosh(input):
     r"""
     For details, please refer to :func:`mindspore.ops.acosh`.
     """
-    return acosh_(x)
+    return acosh_(input)
 
 
 def arcsin(x):
@@ -2186,11 +2183,11 @@ def arcsin(x):
     return asin_(x)
 
 
-def arctan(x):
+def arctan(input):
     r"""
     For details, please refer to :func:`mindspore.ops.atan`.
     """
-    return atan_(x)
+    return atan_(input)
 
 
 def arctan2(input, other):
@@ -2315,16 +2312,16 @@ def arccos(input):
     return acos(input)
 
 
-def atan(x):
+def atan(input):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
     .. math::
 
-        out_i = tan^{-1}(x_i)
+        out_i = tan^{-1}(input_i)
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32.
 
@@ -2332,8 +2329,8 @@ def atan(x):
         A Tensor, has the same type as the input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2344,7 +2341,7 @@ def atan(x):
         >>> print(output)
         [0.7853982 0.       ]
     """
-    return atan_(x)
+    return atan_(input)
 
 
 def sinh(input):
@@ -2490,7 +2487,7 @@ def arctanh(input):
     return atanh(input)
 
 
-def acosh(x):
+def acosh(input):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
 
@@ -2499,17 +2496,17 @@ def acosh(x):
         out_i = \cosh^{-1}(input_i)
 
     .. warning::
-        Given an input tensor x, the function computes inverse hyperbolic cosine of every element.
+        Given an input tensor input, the function computes inverse hyperbolic cosine of every element.
         Input range is [1, inf].
 
     Args:
-        x (Tensor): The input tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shape and type as `x`.
+        Tensor, has the same shape and type as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2520,7 +2517,7 @@ def acosh(x):
         >>> print(output)
         [0.        0.9624237 1.7627472 5.298292 ]
     """
-    return acosh_(x)
+    return acosh_(input)
 
 
 def atanh(x):
@@ -2852,21 +2849,21 @@ def inv(x):
     return inv_(x)
 
 
-def inverse(x):
+def inverse(input):
     """
     Compute the inverse of the input matrix.
 
     Args:
-        x (Tensor): A matrix to be calculated. Input `x` must be at least two dimensions, and the size of
+        input (Tensor): A matrix to be calculated. Input `input` must be at least two dimensions, and the size of
             the last two dimensions must be the same size.
 
     Returns:
-        Tensor, has the same type and shape as input `x`.
+        Tensor, has the same type and shape as input `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        ValueError: If the size of the last two dimensions of `x` is not the same.
-        ValueError: If the dimension of `x` is less than 2.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If the size of the last two dimensions of `input` is not the same.
+        ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2877,9 +2874,9 @@ def inverse(x):
         [[-2.   1. ]
          [ 1.5 -0.5]]
     """
-    if x.dtype in mstype.int_type:
-        _get_cache_prim(P.Cast)()(x, mstype.float64)
-    return _get_cache_prim(P.MatrixInverse)()(x)
+    if input.dtype in mstype.int_type:
+        _get_cache_prim(P.Cast)()(input, mstype.float64)
+    return _get_cache_prim(P.MatrixInverse)()(input)
 
 
 def invert(x):
@@ -4059,19 +4056,19 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=True):
     return is_close(x1, x2)
 
 
-def isreal(x):
+def isreal(input):
     """
     Tests element-wise for real number.
     A complex value is considered real when its imaginary part is 0.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
-       Tensor, true where `x` is real number, false otherwise.
+       Tensor, true where `input` is real number, false otherwise.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -4085,18 +4082,18 @@ def isreal(x):
         [ True False True]
     """
 
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("the input x must be Tensor!")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("the input must be Tensor!")
 
     # Note: Integral and Floating tensor values are always real
     fillv2_op = _get_cache_prim(P.FillV2)()
     value = Tensor(1, mstype.bool_)
     real_dtype = mstype.int_type + mstype.uint_type + mstype.float_type + (mstype.bool_,)
-    if x.dtype in real_dtype:
-        return fillv2_op(x.shape, value)
+    if input.dtype in real_dtype:
+        return fillv2_op(input.shape, value)
 
     imag_op = _get_cache_prim(P.Imag)()
-    return imag_op(x) == 0
+    return imag_op(input) == 0
 
 
 def is_complex(input):
@@ -4364,25 +4361,25 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
-def median(x, axis=-1, keepdims=False):
+def median(input, axis=-1, keepdims=False):
     r"""
     Computes the median and indices of input tensor.
 
     Args:
-        x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
+        input (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         axis (int, optional): The dimension need to reduce. Default: -1.
         keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
     Returns:
-        y (Tensor), has the same dtype as the `x`. If `keepdims` is true,
-        the `y` has the same shape as the `x` except the shape of `y` in dimension `axis` is size 1.
+        y (Tensor), has the same dtype as the `input`. If `keepdims` is true,
+        the `y` has the same shape as the `input` except the shape of `y` in dimension `axis` is size 1.
         Otherwise, the `y` lacks `axis` dimension than input.
 
         indices (Tensor), has the same shape as the `y`, but dtype is int64.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
-        TypeError: If input `x` is not a Tensor.
+        TypeError: If dtype of `input` is not one of the following: int16, int32, int64, float32, float64.
+        TypeError: If input `input` is not a Tensor.
         TypeError: If `axis` is not a int.
         TypeError: If `keepdims` is not a bool.
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
@@ -4396,7 +4393,7 @@ def median(x, axis=-1, keepdims=False):
         >>> print(y)
         (Tensor(shape=[3], dtype=Float32, value=[0.38, 0.16, 0.44]), Tensor(shape=[3], dtype=Int64, value=[1, 2, 2]))
     """
-    return Median(False, axis, keepdims)(x)
+    return Median(False, axis, keepdims)(input)
 
 
 def orgqr(input, tau):
@@ -4580,24 +4577,24 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
     return logspace_(start, end)
 
 
-def logaddexp(x1, x2):
+def logaddexp(input, other):
     """
     Computes the logarithm of the sum of exponentiations of the inputs.
 
     .. math::
 
-        out_i = log(exp(x1_i) + exp(x2_i))
+        out_i = log(exp(input_i) + exp(other_i))
 
     Args:
-        x1 (Tensor): Input Tensor.
-        x2 (Tensor): Input Tensor. If the shape of `x1` is not equal to the shape of `x2`, they must be broadcastable to
-            a common shape (which becomes the shape of the output).
+        input (Tensor): Input Tensor.
+        other (Tensor): Input Tensor. If the shape of `input` is not equal to the shape of `other`,
+            they must be broadcastable to a common shape (which becomes the shape of the output).
 
     Returns:
         Tensor.
 
     Raises:
-        TypeError: If `x1`, `x2` is not a Tensor.
+        TypeError: If `input`, `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4612,28 +4609,28 @@ def logaddexp(x1, x2):
 
     log_op = _get_cache_prim(P.Log)()
     exp_op = _get_cache_prim(P.Exp)()
-    y = log_op(exp_op(x1) + exp_op(x2))
+    y = log_op(exp_op(input) + exp_op(other))
     return y
 
 
-def logaddexp2(x1, x2):
+def logaddexp2(input, other):
     """
     Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
 
     .. math::
 
-        out_i = log_2(2^{x1_i} + 2^{x2_i})
+        out_i = log_2(2^{input_i} + 2^{other_i})
 
     Args:
-        x1 (Tensor): Input tensor.
-        x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be broadcastable to
+        input (Tensor): Input tensor.
+        other (Tensor): Input tensor. If ``input.shape != other.shape``, they must be broadcastable to
             a common shape (which becomes the shape of the output).
 
     Returns:
         Tensor.
 
     Raises:
-        TypeError: If `x1`, `x2` is not a Tensor.
+        TypeError: If `input`, `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4650,12 +4647,12 @@ def logaddexp2(x1, x2):
     pow_op = _get_cache_prim(P.Pow)()
     add_op = _get_cache_prim(P.Add)()
 
-    if not isinstance(x1, (Tensor, Tensor_)):
-        raise TypeError("The input x1 must be Tensor.")
-    if not isinstance(x2, (Tensor, Tensor_)):
-        raise TypeError("The input x2 must be Tensor.")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("The input must be Tensor.")
+    if not isinstance(other, (Tensor, Tensor_)):
+        raise TypeError("The other must be Tensor.")
 
-    add_exp = add_op(pow_op(2, x1), pow_op(2, x2))
+    add_exp = add_op(pow_op(2, input), pow_op(2, other))
     tensor_2 = _make_tensor(2, add_exp.dtype)
 
     return log_op(add_exp) / log_op(tensor_2)
@@ -6578,14 +6575,14 @@ def atleast_3d(inputs):
     return tuple([_expand3(arr) for arr in inputs])
 
 
-def view_as_real(x):
+def view_as_real(input):
     r"""
     View a complex Tensor as a real Tensor.
     The size of last dimension of the returned real Tensor is 2, and the last dimension is composed of
     the real and imaginary components of complex numbers.
 
     Args:
-        x (Tensor): the input must be a complex Tensor.
+        input (Tensor): the input must be a complex Tensor.
 
     Returns:
         A real Tensor.
@@ -6604,10 +6601,10 @@ def view_as_real(x):
          [ 2. -1.]
          [ 2.  0.]]
     """
-    if not is_complex(x):
+    if not is_complex(input):
         raise TypeError("For view_as_real, the dtype of input Tensor must be complex.")
-    real_part = x.real().expand_dims(-1)
-    imag_part = x.imag().expand_dims(-1)
+    real_part = input.real().expand_dims(-1)
+    imag_part = input.imag().expand_dims(-1)
     con = _get_cache_prim(ops.Concat)(-1)
     return con((real_part, imag_part))
 
@@ -6943,21 +6940,21 @@ def _type_convert(force, obj):
     return force(obj)
 
 
-def logsumexp(x, axis, keep_dims=False):
+def logsumexp(input, axis, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
     then calculate logarithm of the sum.
 
     .. math::
 
-        logsumexp(x) = \log(\sum(e^(x-x_{max}))) + x_{max}
+        logsumexp(input) = \log(\sum(e^(input-input_{max}))) + input_{max}
 
     Note:
         The dimension of input Tensor on Ascend should be less than or equal to 8,
         and the dimension of input Tensor on CPU should be less than 8.
 
     Args:
-        x (Tensor): The input tensor. With float16 or float32 data type.
+        input (Tensor): The input tensor. With float16 or float32 data type.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
             Only constant value is allowed.
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
@@ -6965,14 +6962,14 @@ def logsumexp(x, axis, keep_dims=False):
             Default : False.
 
     Returns:
-        Tensor, has the same dtype as the `x`.
+        Tensor, has the same dtype as the `input`.
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
         - If axis is int, set as 2, and keep_dims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6987,13 +6984,13 @@ def logsumexp(x, axis, keep_dims=False):
     _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
     _log = _get_cache_prim(P.Log)()
 
-    x_max = x.max(axis=axis, keepdims=True)
-    x_exp = _exp(x - x_max)
-    x_sumexp = _reduce_sum(x_exp, axis)
-    x_logsumexp = _log(x_sumexp)
+    input_max = input.max(axis=axis, keepdims=True)
+    input_exp = _exp(input - input_max)
+    input_sumexp = _reduce_sum(input_exp, axis)
+    input_logsumexp = _log(input_sumexp)
     if not keep_dims:
-        x_max = x_max.squeeze(axis=axis)
-    return x_logsumexp + x_max
+        input_max = input_max.squeeze(axis=axis)
+    return input_logsumexp + input_max
 
 
 def amin(input, axis=None, keep_dims=False):
@@ -7230,17 +7227,17 @@ def mean(x, axis=None, keep_dims=False):
     return _get_cache_prim(P.ReduceMean)(keep_dims)(x, axis)
 
 
-def prod(x, axis=None, keep_dims=False):
+def prod(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
-    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
-    controlling `keep_dims`.
+    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
+    by controlling `keep_dims`.
 
     Args:
-        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+          Only constant value is allowed. Assume the rank of `input` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
 
@@ -7250,12 +7247,12 @@ def prod(x, axis=None, keep_dims=False):
         - If `axis` is None, and `keep_dims` is False,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+          the shape of output is :math:`(input_0, input_2, ..., input_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
@@ -7305,7 +7302,7 @@ def prod(x, axis=None, keep_dims=False):
     """
     if axis is None:
         axis = ()
-    return _get_cache_prim(P.ReduceProd)(keep_dims)(x, axis)
+    return _get_cache_prim(P.ReduceProd)(keep_dims)(input, axis)
 
 
 def _multi_svd_norm(x, row_axis, col_axis, op):
@@ -8921,11 +8918,11 @@ def any(input, axis=None, keep_dims=False):
     return _get_cache_prim(P.ReduceAny)(keep_dims)(input, axis)
 
 
-def remainder(x, y):
+def remainder(input, other):
     r"""
     Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors,
     both dtypes cannot be bool, and the shapes of them could be broadcast. When the inputs are one tensor
     and one scalar, the scalar could only be a constant.
@@ -8940,9 +8937,9 @@ def remainder(x, y):
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
 
     Args:
-        x (Union[Tensor, numbers.Number, bool]): The first input is a number, a bool
+        input (Union[Tensor, numbers.Number, bool]): The first input is a number, a bool
             or a tensor whose data type is number.
-        y (Union[Tensor, numbers.Number, bool]): When the first input is a tensor, The second input
+        other (Union[Tensor, numbers.Number, bool]): When the first input is a tensor, The second input
             could be a number, a bool or a tensor whose data type is number.
 
     Returns:
@@ -8950,8 +8947,8 @@ def remainder(x, y):
         and the data type is the one with higher precision.
 
     Raises:
-        TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.
-        ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
+        TypeError: If neither `input` nor `other` is one of the following: Tensor, number, bool.
+        ValueError: If the shape `input` and `other` cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8964,7 +8961,7 @@ def remainder(x, y):
         [2.  1.  0.]
     """
 
-    out = x - tensor_floordiv(x, y) * y
+    out = input - tensor_floordiv(input, other) * other
     return out
 
 
@@ -9796,7 +9793,7 @@ def lgamma(input):
         Tensor, has the same dtype as `input`.
 
     Raises:
-        TypeError: If input is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If dtype of `input` is not float16 or float32 or float64.
 
     Supported Platforms:
@@ -9817,7 +9814,7 @@ def digamma(input):
     Computes the grad of the lgamma function on input.
 
     .. math::
-        P(x) = grad(ln(gamma(x)))
+        P(input) = grad(\ln \Gamma(input))
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -9930,15 +9927,15 @@ def _is_sign_inf(x, fn):
     return _get_cache_prim(P.Cast)()(res, mstype.bool_)
 
 
-def isposinf(x):
+def isposinf(input):
     """
     Tests element-wise for positive infinity.
 
     Args:
-        x (Tensor): Input values.
+        input (Tensor): Input values.
 
     Returns:
-       Tensor, true where `x` is positive infinity, false otherwise.
+       Tensor, true where `input` is positive infinity, false otherwise.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -9952,20 +9949,20 @@ def isposinf(x):
         [[False  True]
          [False  True]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For isposinf, the input x must be a Tensor, but got {type(x)}")
-    return _is_sign_inf(x, tensor_gt)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For isposinf, the input must be a Tensor, but got {type(input)}")
+    return _is_sign_inf(input, tensor_gt)
 
 
-def isneginf(x):
+def isneginf(input):
     """
     Tests element-wise for negative infinity.
 
     Args:
-        x (Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
 
     Returns:
-       Tensor, true where `x` is negative infinity, false otherwise.
+       Tensor, true where `input` is negative infinity, false otherwise.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -9979,9 +9976,9 @@ def isneginf(x):
         [[ True False]
          [False  True]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For isneginf, the input x must be a Tensor, but got {type(x)}")
-    return _is_sign_inf(x, tensor_lt)
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For isneginf, the input must be a Tensor, but got {type(input)}")
+    return _is_sign_inf(input, tensor_lt)
 
 
 def logical_xor(input, other):
@@ -10058,34 +10055,34 @@ def _check_repeat_in_axis(axis, x_ndim, prim_name):
                 raise RuntimeError(f"For {prim_name}, dim {dim} appears multiple times in axis.")
 
 
-def nansum(x, axis=None, keepdims=False, *, dtype=None):
+def nansum(input, axis=None, keepdims=False, *, dtype=None):
     """
-    Computes sum of `x` over a given dimension, treating NaNs as zero.
+    Computes sum of `input` over a given dimension, treating NaNs as zero.
 
     Args:
-        x (Tensor): The input Tensor.
-        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Supposed the rank of `x` is r,
-            axis must be in the range [-rank(x), rank(x)). Default: None, all dimensions are reduced.
+        input (Tensor): The input Tensor.
+        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Supposed the rank of `input` is r,
+            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keepdims (bool, optional): Whether the output Tensor keeps dimensions or not. Default: False.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The dtype of output Tensor. Default: None.
 
     Returns:
-        Tensor, the sum of input `x` in the given dimension dim, treating NaNs as zero.
+        Tensor, the sum of input `input` in the given dimension dim, treating NaNs as zero.
 
         - If axis is None, keepdims is False,
           the output is a 0-D Tensor representing the sum of all elements in the input Tensor.
         - If axis is int, set as 2, and keepdims is False,
-          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If axis is tuple(int) or list(int), set as (2, 3), and keepdims is False,
-          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
-        TypeError: If `x` is not Tensor.
+        TypeError: If `input` is not Tensor.
         TypeError: If `keepdims` is not a bool.
-        TypeError: If the dtype of `x` or `dtype` is complex type.
-        ValueError: If 'axis' not in [-rank(`x`), rank(`x`)).
+        TypeError: If the dtype of `input` or `dtype` is complex type.
+        ValueError: If 'axis' not in [-rank(`input`), rank(`input`)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -10099,23 +10096,23 @@ def nansum(x, axis=None, keepdims=False, *, dtype=None):
         >>> print(output2)
         [[1. 4. 3.]]
     """
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For nansum, input must be Tensor, but got {type(x)}.")
-    _check_repeat_in_axis(axis, x.ndim, "nansum")
-    if x.is_complex():
-        raise TypeError(f'For nansum, input are not supported complex type, but got {x.dtype}.')
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For nansum, input must be Tensor, but got {type(input)}.")
+    _check_repeat_in_axis(axis, input.ndim, "nansum")
+    if input.is_complex():
+        raise TypeError(f'For nansum, input are not supported complex type, but got {input.dtype}.')
     if dtype is not None and dtype in mstype.complex_type:
         raise TypeError(f'For nansum, dtype not supported complex type, but got {dtype}.')
     if axis is None:
         axis = ()
-    if x.dtype == mstype.bool_:
-        x = x.astype(mstype.int64)
-    is_nan = _get_cache_prim(P.IsNan)()(x)
-    x = ops.masked_fill(x, is_nan, 0)
-    x = _get_cache_prim(P.ReduceSum)(keepdims)(x, axis)
-    if dtype is not None and x.dtype != dtype:
-        x = x.astype(dtype)
-    return x
+    if input.dtype == mstype.bool_:
+        input = input.astype(mstype.int64)
+    is_nan = _get_cache_prim(P.IsNan)()(input)
+    input = ops.masked_fill(input, is_nan, 0)
+    input = _get_cache_prim(P.ReduceSum)(keepdims)(input, axis)
+    if dtype is not None and input.dtype != dtype:
+        input = input.astype(dtype)
+    return input
 
 
 def diag_embed(input, offset=0, dim1=-2, dim2=-1):

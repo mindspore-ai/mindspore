@@ -532,7 +532,7 @@ class CentralCrop(Cell):
 
 class PixelShuffle(Cell):
     r"""
-    Applies the PixelShuffle operation over input `x` which implements sub-pixel convolutions
+    Applies the PixelShuffle operation over input which implements sub-pixel convolutions
     with stride :math:`1/r` . For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
@@ -548,16 +548,16 @@ class PixelShuffle(Cell):
             `upscale_factor` is the above-mentioned :math:`r`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and
-          the length of third to last dimension can be divisible by `upscale_factor` squared.
+        - **input** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2,
+          and the length of third to last dimension can be divisible by `upscale_factor` squared.
 
     Outputs:
         - **output** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` .
 
     Raises:
         ValueError: If `upscale_factor` is not a positive integer.
-        ValueError: If the length of third to last dimension of `x` is not divisible by `upscale_factor` squared.
-        TypeError: If the dimension of `x` is less than 3.
+        ValueError: If the length of third to last dimension of `input` is not divisible by `upscale_factor` squared.
+        TypeError: If the dimension of `input` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -574,13 +574,13 @@ class PixelShuffle(Cell):
         super(PixelShuffle, self).__init__()
         self.upscale_factor = upscale_factor
 
-    def construct(self, x):
-        return ops.pixel_shuffle(x, self.upscale_factor)
+    def construct(self, input):
+        return ops.pixel_shuffle(input, self.upscale_factor)
 
 
 class PixelUnshuffle(Cell):
     r"""
-    Applies the PixelUnshuffle operation over input `x` which is the inverse of PixelShuffle. For more details, refer
+    Applies the PixelUnshuffle operation over input which is the inverse of PixelShuffle. For more details, refer
     to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
@@ -592,8 +592,9 @@ class PixelUnshuffle(Cell):
             `downscale_factor` is the above-mentioned :math:`r`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than
-          2, and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
+        - **input** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `input` is
+          larger than 2, and the length of second to last dimension or last dimension can be divisible by
+          `downscale_factor` .
 
     Outputs:
         - **output** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
@@ -601,7 +602,7 @@ class PixelUnshuffle(Cell):
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
         ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
-        TypeError: If the dimension of `x` is less than 3.
+        TypeError: If the dimension of `input` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -618,5 +619,5 @@ class PixelUnshuffle(Cell):
         super(PixelUnshuffle, self).__init__()
         self.downscale_factor = downscale_factor
 
-    def construct(self, x):
-        return ops.pixel_unshuffle(x, self.downscale_factor)
+    def construct(self, input):
+        return ops.pixel_unshuffle(input, self.downscale_factor)
