@@ -1265,11 +1265,16 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     op = CreateAllGatherOp(group);
   }
   CNodePtr cast_node = InsertAllGatherAfterCast(cnode);
-  std::string opt_shard_mirror_group;
   auto param_ptr = node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(param_ptr);
+  bool is_with_mirror = false;
   if (param_ptr->user_data<TensorLayout>()) {
-    opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+    auto opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+    is_with_mirror = !opt_shard_mirror_group.empty();
+    if (!param_ptr->param_info()->parallel_optimizer()) {
+      auto mirror_group = mirror_group_list(param_ptr->user_data<TensorLayout>());
+      is_with_mirror = mirror_group.size() > 1;
+    }
   }
   if (!is_shared_param && cast_node) {
     allgather = ReplaceNode(op, cast_node, graph, PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE, param_name, root);
@@ -1294,16 +1299,16 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
   AddNodeFusionInfo(cnode, allgather, "reduce_scatter", fusion_id);
   // add gradients mean
   AddCommOpMeanFlag(allgather);
+  AddCNodePrimAttr(allgather, "with_mirror_operator", MakeValue<bool>(is_with_mirror));
   if (op_name == MICRO_STEP_ALL_GATHER) {
     // When grad_accumulation_shard is enabled, the ReduceScatter is inserted at each micro step
     // so no need to do backward for the micro_step_allgather
-    AddCommOpMirrorFlag(allgather, !grad_accumulation_shard);
+    AddCNodePrimAttr(allgather, DO_MIRROR, MakeValue<bool>(!grad_accumulation_shard));
   } else if (op_name == MINI_STEP_ALL_GATHER) {
     // We need to manually set the add_accu to be false if it's father node is MirrorMiniStep
     bool add_accu = root->has_flag(kAccumulation);
-    bool is_with_mirror = opt_shard_mirror_group.size() > 1;
-    AddCommOpAddAccuFlag(allgather, !add_accu && !is_with_mirror);
-    AddCommOpMirrorFlag(allgather, grad_accumulation_shard || !add_accu);
+    AddCNodePrimAttr(allgather, ADD_ACCU, MakeValue<bool>(!add_accu && !is_with_mirror));
+    AddCNodePrimAttr(allgather, DO_MIRROR, MakeValue<bool>(!grad_accumulation_shard || !add_accu));
   }
 }
 
