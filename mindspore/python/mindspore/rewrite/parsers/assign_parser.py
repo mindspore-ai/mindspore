@@ -102,7 +102,7 @@ class AssignParser(Parser):
             return ScopedValue.create_naming_value(node.attr, scope.id)
         if isinstance(node, ast.Tuple):
             return AssignParser._create_scopedvalue_from_tuple_ast(node)
-        if isinstance(node, ast.Constant):
+        if isinstance(node, (ast.Constant, ast.NameConstant)):
             return ScopedValue.create_variable_value(node.value)
         if isinstance(node, ast.Num):
             return ScopedValue.create_variable_value(node.n)
@@ -467,6 +467,62 @@ class AssignParser(Parser):
                 return False
         return True
 
+    @staticmethod
+    def _convert_ast_mathops_to_node(ast_node: Union[ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare],
+                                     father_ast_node: ast.Assign) -> Node:
+        """
+        Convert ast node of math operations(ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare) to
+        a symbol tree node.
+
+        Args:
+            ast_node (Union[ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare]): An assign node with mathematival
+                operation in construct function.
+            father_ast_node (ast.Assign): Assign node in construct.
+
+        Returns:
+            An instance of Node in Symbol Tree.
+
+        Raises:
+            TypeError: The type of parameter 'ast_node' is not in (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare).
+
+        """
+        if not isinstance(ast_node, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare)):
+            raise TypeError("The type of parameter 'ast_node' must be one of (ast.BinOp, ast.UnaryOp, "
+                            "ast.BoolOp, ast.Compare), but got ", type(ast_node))
+
+        targets = AssignParser._get_targets(AssignParser._create_scopedvalue(father_ast_node.targets[0]))
+        args = []
+        op_type_str = type(ast_node).__name__
+        op_type = ScopedValue.create_naming_value(op_type_str)
+        ops = {}
+        name = op_type_str
+        if isinstance(ast_node, ast.BinOp):
+            op = type(ast_node.op).__name__
+            name = name + '_' + op
+            ops['0'] = ScopedValue.create_naming_value(op)
+            args.append(AssignParser._create_scopedvalue(ast_node.left))
+            args.append(AssignParser._create_scopedvalue(ast_node.right))
+        elif isinstance(ast_node, ast.UnaryOp):
+            op = type(ast_node.op).__name__
+            name = name + '_' + op
+            ops['0'] = ScopedValue.create_naming_value(op)
+            args.append(AssignParser._create_scopedvalue(ast_node.operand))
+        elif isinstance(ast_node, ast.BoolOp):
+            op = type(ast_node.op).__name__
+            name = name + '_' + op
+            ops['0'] = ScopedValue.create_naming_value(op)
+            for value in ast_node.values:
+                args.append(AssignParser._create_scopedvalue(value))
+        elif isinstance(ast_node, ast.Compare):
+            args.append(AssignParser._create_scopedvalue(ast_node.left))
+            for idx, ast_op in enumerate(ast_node.ops):
+                op = type(ast_op).__name__
+                name = name + '_' + op
+                ops[str(idx)] = ScopedValue.create_naming_value(op)
+                args.append(AssignParser._create_scopedvalue(ast_node.comparators[idx]))
+        name = name.lower()
+        return Node.create_mathops_node(father_ast_node, targets, op_type, args, ops, name)
+
     def process(self, stree: SymbolTree, node: ast.Assign):
         """
         Parse ast.Assign and create a node in symbol tree.
@@ -494,11 +550,10 @@ class AssignParser(Parser):
             if isinstance(value, ast.Call):
                 node_ = self._convert_ast_call_to_node(value, node, stree)
                 stree.append_origin_field(node_)
-            elif isinstance(value, ast.BinOp):
-                logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
-                            f"ignored as a python node now")
-                stree.try_append_python_node(node, node)
-            elif isinstance(value, (ast.BoolOp, ast.Subscript)):
+            elif isinstance(value, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare)):
+                node_ = AssignParser._convert_ast_mathops_to_node(value, node)
+                stree.append_origin_field(node_)
+            elif isinstance(value, ast.Subscript):
                 logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                             f"ignored as a python node now")
                 stree.try_append_python_node(node, node)

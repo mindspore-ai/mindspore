@@ -29,6 +29,7 @@ class NodeType(Enum):
     - Input: `Input` node represents input of `SymbolTree` corresponding to arguments of forward method.
     - Output: `Output` node represents output of SymbolTree corresponding to return statement of forward method.
     - Tree: `Tree` node represents sub-network invoking in forward method.
+    - MathOps: `MathOps` node represents a mathematical operation, such as adding or comparing in forward method.
 
     """
     Unknown = 0
@@ -44,3 +45,4 @@ class NodeType(Enum):
     Output = 8
     Tree = 9
     CellContainer = 10
+    MathOps = 11

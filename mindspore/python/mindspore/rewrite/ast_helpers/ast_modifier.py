@@ -461,7 +461,7 @@ class AstModifier(ast.NodeTransformer):
 
         Args:
             src_argument (ScopedValue): An instance of ScopedValue represents new argument.
-            dst_ast (ast.AST): Targets of ast.Assign.
+            dst_ast (ast.AST): Ast node to be updated by ScopedValue.
 
         Raises:
             TypeError: Input src_argument is not a ScopedValue
@@ -480,7 +480,7 @@ class AstModifier(ast.NodeTransformer):
         """
         if not isinstance(src_argument, ScopedValue):
             raise TypeError("src_argument should be ScopedValue, got: ", type(src_argument))
-        if isinstance(dst_ast, ast.Constant):
+        if isinstance(dst_ast, (ast.Constant, ast.NameConstant)):
             if src_argument.type not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue]:
                 raise RuntimeError("src_argument should be a IntValue, FloatValue or StringValue, got:",
                                    str(src_argument.type))
@@ -491,6 +491,12 @@ class AstModifier(ast.NodeTransformer):
                 raise RuntimeError("src_argument should be a IntValue or FloatValue, but got:",
                                    str(src_argument.type))
             dst_ast.n = src_argument.value
+            return
+        if isinstance(dst_ast, ast.Str):
+            if src_argument.type not in [ValueType.StringValue]:
+                raise RuntimeError("src_argument should be a StringValue, but got:",
+                                   str(src_argument.type))
+            dst_ast.s = src_argument.value
             return
         if isinstance(dst_ast, ast.Name):
             if src_argument.type not in [ValueType.NamingValue, ValueType.StringValue]:
