@@ -87,15 +87,15 @@ void ShapeJoinCheck(const ShapeVector &shape_vec1, const ShapeVector &shape_vec2
 // Expectation: Joined shape is expect shape or nullptr.
 TEST_F(TestUtils, TestShapeJoin) {
   ShapeJoinCheck({3, 4}, {3, 4}, {3, 4});
-  ShapeJoinCheck({3, 5}, {3, 4}, nullptr);
-  ShapeJoinCheck({3, 4}, {3, 4, 1}, nullptr);
+  ShapeJoinCheck({3, 5}, {3, 4}, {3, -1});
+  ShapeJoinCheck({3, 4}, {3, 4, 1}, {-2});
   ShapeJoinCheck({3, -1}, {-1, -1}, {-1, -1});
-  ShapeJoinCheck({3, 4, -1}, {4, -1, -1}, nullptr);
+  ShapeJoinCheck({3, 4, -1}, {4, -1, -1}, {-1, -1, -1});
   ShapeJoinCheck({3, -1}, {-1, 3}, {-1, -1});
   ShapeJoinCheck({3, 4}, {-1, -1}, {-1, -1});
   ShapeJoinCheck({3, 4}, {3, -1}, {3, -1});
-  ShapeJoinCheck({3, -1}, {3, 4, -1}, nullptr);
-  ShapeJoinCheck({3, 4}, {4, -1, 5}, nullptr);
+  ShapeJoinCheck({3, -1}, {3, 4, -1}, {-2});
+  ShapeJoinCheck({3, 4}, {4, -1, 5}, {-2});
   ShapeJoinCheck({3, 4}, {-2}, {-2});
   ShapeJoinCheck({-1, -1}, {-1, -1, -1}, {-2});
   ShapeJoinCheck({3, -1}, {3, -1, -1}, {-2});
