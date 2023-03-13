@@ -74,72 +74,6 @@ int AddcmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-void AddcmulCpuKernelMod::AddcmulMul1(const T *input1, const T *input2, T *output) {
-  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_) == 0) {
-    output[0] = static_cast<T>(input1[0] * input2[0]);
-  } else {
-    BroadcastIterator mul_iter(input_shape1_, input_shape2_, output_shape_);
-    auto mul_task = [&input1, &input2, &output, &mul_iter](size_t mul_start, size_t mul_end) {
-      auto iter = mul_iter;
-      iter.SetPos(mul_start);
-      for (size_t i = mul_start; i < mul_end; i++) {
-        output[i] = static_cast<T>(input1[iter.GetInputPosA()] * input2[iter.GetInputPosB()]);
-        iter.GenNextPos();
-      }
-    };
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<size_t>(output_shape_[i]);
-    }
-    ParallelLaunchAutoSearch(mul_task, output_size_, this, &parallel_search_info_);
-  }
-}
-
-template <typename T1, typename T2>
-void AddcmulCpuKernelMod::AddcmulMul2(const T2 *input1, const T1 *input2, T1 *output) {
-  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_) == 0) {
-    output[0] = static_cast<T1>(input1[0]) * input2[0];
-  } else {
-    BroadcastIterator base_iter(input_shape3_, output_shape_, output_shape_);
-    auto task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
-      for (size_t i = start; i < end; i++) {
-        output[i] = static_cast<T1>(input1[iter.GetInputPosA()]) * input2[iter.GetInputPosB()];
-        iter.GenNextPos();
-      }
-    };
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<size_t>(output_shape_[i]);
-    }
-    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
-  }
-}
-
-template <typename T>
-void AddcmulCpuKernelMod::AddcmulAdd(const T *input1, const T *input2, T *output) {
-  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
-    output[0] = static_cast<T>(input1[0] + input2[0]);
-  } else {
-    BroadcastIterator base_iter(input_shape0_, output_shape_, output_shape_);
-    auto add_task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
-      auto iter = base_iter;
-      iter.SetPos(start);
-      for (size_t i = start; i < end; i++) {
-        output[i] = static_cast<T>(input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()]);
-        iter.GenNextPos();
-      }
-    };
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<size_t>(output_shape_[i]);
-    }
-    ParallelLaunchAutoSearch(add_task, output_size_, this, &parallel_search_info_);
-  }
-}
-
-template <typename T>
 bool AddcmulCpuKernelMod::AddcmulCheck(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   if (dtype_value_ == kNumberTypeFloat16) {
     return AddcmulCompute<T, float16>(inputs, outputs);
@@ -173,9 +107,28 @@ bool AddcmulCpuKernelMod::AddcmulCompute(const std::vector<AddressPtr> &inputs,
   const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
   auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
 
-  AddcmulMul1(input1, input2, output);
-  AddcmulMul2(input3, output, output);
-  AddcmulAdd(input0, output, output);
+  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
+    output[0] = input1[0] * input2[0] * static_cast<T1>(input3[0]) + input0[0];
+  } else {
+    MultipleBroadcastIterator multi_broadcast_iterator({input_shape0_, input_shape1_, input_shape2_, input_shape3_},
+                                                       output_shape_);
+    auto base_task = [&input0, &input1, &input2, &input3, &output, &multi_broadcast_iterator](size_t start,
+                                                                                              size_t end) {
+      auto iter = multi_broadcast_iterator;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        output[i] = input1[iter.GetInputPos(kIndex1)] * input2[iter.GetInputPos(kIndex2)] *
+                      static_cast<T1>(input3[iter.GetInputPos(kIndex3)]) +
+                    input0[iter.GetInputPos(kIndex0)];
+        iter.GenNextPos();
+      }
+    };
+    output_size_ = 1;
+    for (size_t i = 0; i < output_shape_.size(); ++i) {
+      output_size_ *= static_cast<size_t>(output_shape_[i]);
+    }
+    ParallelLaunchAutoSearch(base_task, output_size_, this, &parallel_search_info_);
+  }
   return true;
 }
 
