@@ -139,7 +139,7 @@ add_subdirectory(micro/coder)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 if(MSLITE_ENABLE_ACL)
-    include_directories(${TOP_DIR}/graphengine/inc/external)
+    include_directories(${TOP_DIR}/graphengine/910/inc/external)
     set(MODE_ASCEND_ACL ON)
     include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
     add_subdirectory(adapter/acl)

@@ -46,7 +46,7 @@ MANUAL_HEADERS = [
 # To stop gcc command once reaching these external headers
 # (not all of them may be used now in MindData lite)
 EXTERNAL_DEPS = [
-    "graphengine/inc/external",
+    "graphengine/910/inc/external",
     "akg/third_party/fwkacllib/inc",
     "third_party",
     "third_party/securec/include",

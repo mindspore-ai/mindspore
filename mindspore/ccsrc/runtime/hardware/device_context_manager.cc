@@ -180,7 +180,7 @@ float VersionToFloat(size_t major, size_t minor) {
 bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
   MS_EXCEPTION_IF_NULL(err_msg);
   int pipe_fd[2];
-  if (pipe(pipe_fd) != 0) {
+  if (pipe2(pipe_fd, O_NONBLOCK) != 0) {
     MS_LOG(WARNING) << "Create pipe failed, ret = " << errno << ", reason = " << strerror(errno);
     return false;
   }
@@ -200,7 +200,7 @@ bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
     FdScope null(null_fd);
     (void)dup2(null_fd, STDOUT_FILENO);
     (void)dup2(null_fd, STDERR_FILENO);
-    // try to dlopen
+    // try to dlopen, dlopne can not catch the std::exception in cpp code.
     void *handle = dlopen(plugin_file.c_str(), RTLD_LAZY | RTLD_LOCAL);
     if (handle == nullptr) {
       std::string err_msg_str = GetDlErrorMsg();
@@ -221,7 +221,8 @@ bool TestLoadDynamicLib(const std::string &plugin_file, std::string *err_msg) {
       MS_LOG(ERROR) << "Wait child process failed, ret = " << errno << ", reason = " << strerror(errno);
       return false;
     }
-    if (auto read_size = read(pipe_fd[0], buffer.data(), buffer.size()); read_size <= 0) {
+    auto read_size = read(pipe_fd[0], buffer.data(), buffer.size());
+    if (read_size <= 0) {
       MS_LOG(WARNING) << "Read from pipe failed, ret = " << errno << ", reason = " << strerror(errno);
       return false;
     } else {

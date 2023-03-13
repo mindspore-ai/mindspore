@@ -6,9 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/src)
 
 # graphengine include directories
-if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
-    include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
-endif()
+include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
 
 set(SERVER_FLATBUFFER_OUTPUT "${CMAKE_BINARY_DIR}/schema")
 

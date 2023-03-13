@@ -9,9 +9,7 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CUDA_INCLUDE_DIRS})
 
 # graphengine include directories
-if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
-    include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
-endif()
+include(${CMAKE_SOURCE_DIR}/cmake/graphengine_variables.cmake)
 
 if(ENABLE_ACL)
     add_definitions(-D ENABLE_ACL)
