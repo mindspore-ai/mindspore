@@ -5589,7 +5589,7 @@ def max(x, axis=0, keep_dims=False):
         >>> print(index, output)
         [3] [0.7]
     """
-    if x.shape == ():
+    if not x.shape:
         return (Tensor(0), x)
     argmax_with_value_op = ArgMaxWithValue(axis, keep_dims)
     return argmax_with_value_op(x)
@@ -5621,7 +5621,7 @@ def argmax(input, dim=None, keepdim=False):
         >>> print(output)
         [1 0 0]
     """
-    if input.shape == ():
+    if not input.shape:
         return Tensor(0)
     is_dim_none = False
     if dim is None:
@@ -5680,7 +5680,7 @@ def min(x, axis=0, keep_dims=False):
         >>> print(index, output)
         [0] [0.0]
     """
-    if x.shape == ():
+    if not x.shape:
         return (Tensor(0), x)
     argmin_with_value_ = ArgMinWithValue(axis=axis, keep_dims=keep_dims)
     return argmin_with_value_(x)

@@ -83,7 +83,8 @@ abstract::AbstractBasePtr ArgminV2Infer(const abstract::AnalysisEnginePtr &, con
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num,
                                            primitive->name());
-  return abstract::MakeAbstract(ArgminV2InferShape(primitive, input_args), ArgminV2InferType(primitive, input_args));
+  return abstract::MakeAbstractTensor(ArgminV2InferShape(primitive, input_args),
+                                      ArgminV2InferType(primitive, input_args));
 }
 
 // AG means auto generated
