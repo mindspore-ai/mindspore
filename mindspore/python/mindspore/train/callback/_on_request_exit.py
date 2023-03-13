@@ -19,7 +19,7 @@ import os
 import signal
 
 from mindspore import log
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.train.serialization import load_checkpoint, save_checkpoint, export
 from mindspore.train.callback._callback import Callback
 

@@ -22,7 +22,7 @@ import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as P
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor

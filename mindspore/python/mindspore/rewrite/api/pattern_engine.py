@@ -20,7 +20,7 @@ import abc
 from mindspore.nn import Cell
 from mindspore.ops.primitive import Primitive
 from mindspore import log as logger
-from ..._checkparam import Validator
+from mindspore import _checkparam as Validator
 from .node_type import NodeType
 from .node import Node
 from .symbol_tree import SymbolTree

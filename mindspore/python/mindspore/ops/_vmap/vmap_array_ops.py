@@ -23,8 +23,7 @@ from mindspore.common import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops import constexpr
-from mindspore.ops.primitive import _primexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im, NonZero, IndexFill, \
@@ -149,9 +148,13 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
     the generated prefix is a Tensor([[[0], [0]],
                                       [[1], [1]]])
     """
+    def _check(indices_shape):
+        if not indices_shape:
+            raise ValueError("indices_shape is empty in _get_prefix.")
+        return None
 
+    _check(indices_shape)
     indices_len = len(indices_shape)
-
     if indices_len == 1:
         prefix = P.Range()(Tensor(0, indices_dtype), P.Fill()(
             indices_dtype, (), axis_size), Tensor(1, indices_dtype))
@@ -357,6 +360,11 @@ def get_reshape_vmap_rule(prim, axis_size):
 
     @_primexpr
     def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
+        def _check(neg_index, target_shape):
+            if neg_index != -1:
+                raise ValueError(f'The shape can only has one -1 at most, but {target_shape}.')
+            return None
+
         if x_dim == 0:
             return (axis_size,) + target_shape, 0, False
 
@@ -367,6 +375,7 @@ def get_reshape_vmap_rule(prim, axis_size):
         dim_prod = 1
         for i, shp_i in enumerate(target_shape):
             if shp_i == -1:
+                _check(neg_index, target_shape)
                 neg_index = i
             else:
                 dim_prod *= shp_i

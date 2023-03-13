@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import math
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore import context
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes
 from mindspore.nn.wrap import GetNextSingleOp

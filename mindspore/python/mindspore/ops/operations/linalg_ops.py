@@ -16,7 +16,7 @@
 """Operators for linalg."""
 
 from __future__ import absolute_import
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.primitive import prim_attr_register
 

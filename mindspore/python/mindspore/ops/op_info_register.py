@@ -23,7 +23,7 @@ import os
 import functools
 
 from mindspore._c_expression import Oplib
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 
 # path of built-in op info register.
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"

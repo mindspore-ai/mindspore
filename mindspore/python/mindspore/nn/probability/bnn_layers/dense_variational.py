@@ -14,7 +14,7 @@
 # ============================================================================
 """dense_variational"""
 from mindspore.ops import operations as P
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from ...cell import Cell
 from ...layer.activation import get_activation
 from ..distribution.normal import Normal

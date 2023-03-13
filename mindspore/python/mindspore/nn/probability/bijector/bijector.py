@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from ..distribution._utils.utils import CheckTensor, cast_to_tensor, raise_type_error
 from ..distribution import Distribution
 from ..distribution import TransformedDistribution

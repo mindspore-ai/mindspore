@@ -23,7 +23,7 @@ import threading
 import mindspore.context as context
 from mindspore import log as logger
 from mindspore import nn
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._cell_wrapper import destroy_allgather_cell

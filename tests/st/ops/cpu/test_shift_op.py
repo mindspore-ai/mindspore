@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import PrimitiveWithInfer, prim_attr_register
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")

@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore import nn
 from mindspore.ops.primitive import Primitive
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.nn.layer.normalization import BatchNorm2d, BatchNorm1d
 from mindspore.nn.layer.activation import get_activation, LeakyReLU
 from mindspore.nn.cell import Cell

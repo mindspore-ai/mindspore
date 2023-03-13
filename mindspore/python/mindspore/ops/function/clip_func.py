@@ -23,7 +23,7 @@ from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
-from mindspore._checkparam import Rel, Validator
+from mindspore import _checkparam as Validator
 from mindspore.ops._primitive_cache import _get_cache_prim
 
 __all__ = [
@@ -267,7 +267,7 @@ class _ClipByGlobalNorm(Cell):
         if use_norm is not None:
             raise ValueError(f"For '{self.cls_name}', input 'use_norm' only supports None currently, "
                              f"but got 'use_norm': {use_norm}")
-        Validator.check_number("clip_norm", clip_norm, 0.0, Rel.GT, self.cls_name)
+        Validator.check_number("clip_norm", clip_norm, 0.0, Validator.GT, self.cls_name)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
         self.greater_equal = P.GreaterEqual()
@@ -283,7 +283,7 @@ class _ClipByGlobalNorm(Cell):
 
 @constexpr
 def _check_value(clip_norm):
-    Validator.check_number("clip_norm", clip_norm, 0.0, Rel.GT, "clip_by_global_norm")
+    Validator.check_number("clip_norm", clip_norm, 0.0, Validator.GT, "clip_by_global_norm")
     return clip_norm
 
 

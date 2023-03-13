@@ -23,7 +23,7 @@ from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 import mindspore.context as context
-from mindspore._checkparam import Validator as validator, Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
@@ -156,7 +156,7 @@ class BatchNormGrad(Primitive):
     @prim_attr_register
     def __init__(self, is_training=False, epsilon=1e-5, data_format='NCHW'):
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
 
 
@@ -166,7 +166,7 @@ class BatchNormGradGrad(Primitive):
     @prim_attr_register
     def __init__(self, is_training=False, epsilon=1e-5, data_format='NCHW'):
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
 
 
@@ -175,10 +175,10 @@ class SyncBatchNormGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, group="group0", device_num=2):
-        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
         if not isinstance(group, str):
             raise TypeError("The group attr of SyncBatchNormGrad must be str.")
-        validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
+        validator.check_int(device_num, 2, validator.GE, "device_num", self.name)
 
 
 class BiasAddGrad(Primitive):
@@ -591,7 +591,7 @@ class DropoutGrad(Primitive):
 
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
-        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
 
 
 class FlattenGrad(PrimitiveWithInfer):
@@ -627,7 +627,7 @@ class InstanceNormV2Grad(Primitive):
         self.init_prim_io_names(inputs=['dy', 'x', 'gamma', 'mean', 'variance', 'save_mean', 'save_variance'],
                                 outputs=['pd_x', 'pd_gamma', 'pd_beta'])
         validator.check_is_float(epsilon, 'epsilon', self.name)
-        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
         validator.check_bool(is_training, "is_training", self.name)
 
 
@@ -695,7 +695,7 @@ class NeighborExchangeV2Grad(PrimitiveWithInfer):
 
     def __infer__(self, dy):
         dy_shape = dy['shape']
-        validator.check(f'dy_shape.size()', len(dy_shape), f'4', 4, Rel.EQ, self.name)
+        validator.check(f'dy_shape.size()', len(dy_shape), f'4', 4, validator.EQ, self.name)
         if self.send_rank_ids[5] != -1 or self.send_rank_ids[6] != -1 or self.send_rank_ids[7] != -1:
             dy_shape[3] -= self.send_lens[2]
 
@@ -1490,7 +1490,7 @@ class LSTMGradData(Primitive):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1509,7 +1509,7 @@ class LSTMGradWeight(Primitive):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1528,7 +1528,7 @@ class LSTMGrad(Primitive):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1564,7 +1564,7 @@ class GruGradData(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1576,12 +1576,12 @@ class GruGradData(PrimitiveWithInfer):
         # dhy and dcy should be same shape
         validator.check_equal_int(len(dhy_shape), 3, "h_shape", self.name)
 
-        validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
+        validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, validator.EQ, "h_shape[0]", self.name)
         validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
 
         validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
         validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
-        validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
+        validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, validator.EQ, "dy[2]", self.name)
 
         dx_shape = (y_shape[0], y_shape[1], self.input_size)
         dhx_shape = dhy_shape
@@ -1606,7 +1606,7 @@ class GruGradWeight(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -1641,7 +1641,7 @@ class GRUV2Grad(Primitive):
         self.has_bias = validator.check_value_type('has_bias', has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type('bidirectional', bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -2117,8 +2117,9 @@ class SliceGrad(PrimitiveWithInfer):
             for i in range(dy_shape_len):
                 if size_value[i] == -1:
                     size_value[i] = x_shape[i] - begin_v[i]
-                validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
-                validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
+                validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], validator.LE, self.name)
+                validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]',
+                                size_value[i], validator.EQ, self.name)
 
         return {'shape': x_shape,
                 'dtype': x['dtype'],
@@ -2349,20 +2350,20 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
     def infer_shape(self, c_shape, dht_shape, dct_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape):
         # dhy and dcy should be same shape
         validator.check_equal_int(len(c_shape), 2, "c rank", self.name)
-        validator.check("dht rank", len(dht_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("dct rank", len(dct_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("it rank", len(it_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("jt rank", len(jt_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("ft rank", len(ft_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("ot rank", len(ot_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("tanhct rank", len(tanhct_shape), "c rank", len(c_shape), Rel.EQ, self.name)
-        validator.check("dht shape", dht_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("dct shape", dct_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("it shape", it_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("jt shape", jt_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("ft shape", ft_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("ot shape", ot_shape, "c shape", c_shape, Rel.EQ, self.name)
-        validator.check("tanhct shape", tanhct_shape, "c shape", c_shape, Rel.EQ, self.name)
+        validator.check("dht rank", len(dht_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("dct rank", len(dct_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("it rank", len(it_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("jt rank", len(jt_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("ft rank", len(ft_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("ot rank", len(ot_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("tanhct rank", len(tanhct_shape), "c rank", len(c_shape), validator.EQ, self.name)
+        validator.check("dht shape", dht_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("dct shape", dct_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("it shape", it_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("jt shape", jt_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("ft shape", ft_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("ot shape", ot_shape, "c shape", c_shape, validator.EQ, self.name)
+        validator.check("tanhct shape", tanhct_shape, "c shape", c_shape, validator.EQ, self.name)
 
         dgate_shape = (c_shape[0], 4 * c_shape[1])
         dct_1_shape = c_shape
@@ -2398,11 +2399,11 @@ class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, h_shape, dgate_shape):
         validator.check_equal_int(len(x_shape), 2, "x rank", self.name)
-        validator.check("h rank", len(h_shape), " x rank", len(x_shape), Rel.EQ, self.name)
-        validator.check("dgate rank", len(dgate_shape), "x rank", len(x_shape), Rel.EQ, self.name)
-        validator.check("h_shape[0]", h_shape[0], "x_shape[0]", x_shape[0], Rel.EQ, self.name)
-        validator.check("dgate_shape[0]", dgate_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
-        validator.check("dgate_shape[1]", dgate_shape[1], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
+        validator.check("h rank", len(h_shape), " x rank", len(x_shape), validator.EQ, self.name)
+        validator.check("dgate rank", len(dgate_shape), "x rank", len(x_shape), validator.EQ, self.name)
+        validator.check("h_shape[0]", h_shape[0], "x_shape[0]", x_shape[0], validator.EQ, self.name)
+        validator.check("dgate_shape[0]", dgate_shape[0], "h_shape[0]", h_shape[0], validator.EQ, self.name)
+        validator.check("dgate_shape[1]", dgate_shape[1], "4*h_shape[1]", 4 * h_shape[1], validator.EQ, self.name)
         input_size = x_shape[1]
         hidden_size = h_shape[1]
         dw_shape = (input_size + hidden_size, 4 * hidden_size)
@@ -2425,12 +2426,12 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, keep_prob):
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, "keep_prob", self.name)
 
     def infer_shape(self, dgate_shape, w_shape):
         validator.check_equal_int(len(dgate_shape), 2, "dgate rank", self.name)
         validator.check_equal_int(len(w_shape), 2, "w rank", self.name)
-        validator.check("dgate_shape[1]", dgate_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
+        validator.check("dgate_shape[1]", dgate_shape[1], "w_shape[1]", w_shape[1], validator.EQ, self.name)
         batch_size = dgate_shape[0]
         hidden_size = dgate_shape[1] // 4
         input_size = w_shape[0] - hidden_size
@@ -2546,7 +2547,7 @@ class SoftShrinkGrad(Primitive):
     def __init__(self, lambd=0.5):
         self.init_prim_io_names(inputs=['input_grad', 'input_x'], outputs=['output'])
         validator.check_value_type("lambd", lambd, [float], self.name)
-        validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
+        validator.check_number("lambd", lambd, 0, validator.GE, self.name)
 
 
 class CdistGrad(Primitive):
@@ -2979,7 +2980,7 @@ class MultiMarginLossGrad(Primitive):
     def __init__(self, p=1, margin=1.0, reduction="mean"):
         """Initialize MultiMarginLossGrad"""
         self.p = validator.check_value_type('p', p, [int], self.name)
-        validator.check_int(p, {1, 2}, Rel.IN, 'p', self.name)
+        validator.check_int(p, {1, 2}, validator.IN, 'p', self.name)
         self.margin = validator.check_value_type('margin', margin, [float], self.name)
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'weight'], outputs=['x_grad'])
@@ -3188,9 +3189,9 @@ class MaxUnpool2DGrad(Primitive):
         validator.check_value_type("pads", pads, [int, tuple], self.name)
         validator.check_value_type("output_shape", output_shape, [tuple], self.name)
         validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
-        validator.check_int(len(ksize), 4, Rel.EQ, "ksize rank", self.name)
-        validator.check_int(len(strides), 4, Rel.EQ, "strides rank", self.name)
-        validator.check_int(len(pads), 4, Rel.EQ, "pads rank", self.name)
+        validator.check_int(len(ksize), 4, validator.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 4, validator.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 4, validator.EQ, "pads rank", self.name)
 
 
 class MaxUnpool3DGrad(Primitive):
@@ -3207,9 +3208,9 @@ class MaxUnpool3DGrad(Primitive):
         validator.check_value_type("pads", pads, [int, tuple], self.name)
         validator.check_value_type("output_shape", output_shape, [tuple], self.name)
         validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
-        validator.check_int(len(ksize), 5, Rel.EQ, "ksize rank", self.name)
-        validator.check_int(len(strides), 5, Rel.EQ, "strides rank", self.name)
-        validator.check_int(len(pads), 5, Rel.EQ, "pads rank", self.name)
+        validator.check_int(len(ksize), 5, validator.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 5, validator.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 5, validator.EQ, "pads rank", self.name)
 
 
 class FractionalAvgPoolGrad(Primitive):
@@ -3624,15 +3625,16 @@ class ResizeBicubicGrad(Primitive):
         validator.check_tensor_dtype_valid("original_image", original_image_dtype,
                                            [mstype.float32, mstype.float64], self.name)
         # check input shape rank
-        validator.check("grads rank", len(grads_shape), "expected", 4, Rel.EQ, self.name)
-        validator.check("original_image rank", len(original_image_shape), "expected", 4, Rel.EQ, self.name)
-        validator.check("batch_size equal", grads_shape[0], "expected", original_image_shape[0], Rel.EQ, self.name)
-        validator.check("channel equal", grads_shape[3], "expected", original_image_shape[3], Rel.EQ, self.name)
+        validator.check("grads rank", len(grads_shape), "expected", 4, validator.EQ, self.name)
+        validator.check("original_image rank", len(original_image_shape), "expected", 4, validator.EQ, self.name)
+        validator.check("batch_size equal", grads_shape[0], "expected",
+                        original_image_shape[0], validator.EQ, self.name)
+        validator.check("channel equal", grads_shape[3], "expected", original_image_shape[3], validator.EQ, self.name)
         # check original_image_shape and grads_shape
         validator.check("original_image[0] and grads[0]", original_image_shape[0],
-                        "expected", grads_shape[0], Rel.EQ, self.name)
+                        "expected", grads_shape[0], validator.EQ, self.name)
         validator.check("original_image[3] and grads[3]", original_image_shape[3],
-                        "expected", grads_shape[3], Rel.EQ, self.name)
+                        "expected", grads_shape[3], validator.EQ, self.name)
 
         batch_size = grads_shape[0]
         height = original_image_shape[1]

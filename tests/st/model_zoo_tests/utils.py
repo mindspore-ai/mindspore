@@ -112,3 +112,18 @@ def parse_log_file(pattern, log_path):
         cmd = "cat {}".format(log_path)
         os.system(cmd)
     return value_list
+
+def replace_check_param(head_path):
+    """the using of validator is changed in mindspore"""
+    file_path = "{}/tests/models/official/nlp/bert/src/adam.py".format(head_path)
+    old_list = ["from mindspore._checkparam import Validator as validator"]
+    new_list = ["from mindspore import _checkparam as validator"]
+    exec_sed_command(old_list, new_list, file_path)
+
+    old_list = ["from mindspore._checkparam import Rel"]
+    new_list = [""]
+    exec_sed_command(old_list, new_list, file_path)
+
+    old_list = ["Rel"]
+    new_list = ["validator"]
+    exec_sed_command(old_list, new_list, file_path)

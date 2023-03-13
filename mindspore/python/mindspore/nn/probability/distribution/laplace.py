@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from mindspore.ops import operations as P
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.nn.probability.distribution import Distribution
 from mindspore.nn.probability.distribution._utils.utils import check_greater_zero

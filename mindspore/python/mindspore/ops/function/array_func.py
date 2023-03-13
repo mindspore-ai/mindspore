@@ -57,8 +57,7 @@ from mindspore.ops.operations.array_ops import (
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 
 tuple_to_tensor_ = TupleToTensor()
@@ -1682,6 +1681,13 @@ def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
                         f"then the input[{tensor_name}] must be a Tensor of float32.")
 
 
+@_primexpr
+def _check_select_shape_match(input_shape, cond_shape, tensor_name):
+    if input_shape != cond_shape:
+        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
+    return None
+
+
 @constexpr
 def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
     if not is_cond_tensor:
@@ -1797,6 +1803,7 @@ def select(cond, x, y):
     input_x = x
     input_y = y
     if is_x_scalar:
+        _check_select_shape_match(y.shape, cond.shape, "y")
         _check_select_type_match(x, y.dtype, "x", "y")
         input_x = zeros_like_(y) + x
         if isinstance(x, int):
@@ -1805,6 +1812,7 @@ def select(cond, x, y):
             input_x = cast_(input_x, mstype.float32)
 
     if is_y_scalar:
+        _check_select_shape_match(x.shape, cond.shape, "x")
         _check_select_type_match(y, x.dtype, "y", "x")
         input_y = zeros_like_(x) + y
         if isinstance(y, int):
@@ -5929,8 +5937,8 @@ def narrow(input, axis, start, length):
          [ 8 9]]
     """
     validator.check_axis_in_range(axis, input.ndim)
-    validator.check_int_range(start, 0, input.shape[axis], Rel.INC_LEFT)
-    validator.check_int_range(length, 1, input.shape[axis] - start, Rel.INC_BOTH)
+    validator.check_int_range(start, 0, input.shape[axis], validator.INC_LEFT)
+    validator.check_int_range(length, 1, input.shape[axis] - start, validator.INC_BOTH)
 
     begins = [0] * input.ndim
     begins[axis] = start
@@ -6134,7 +6142,7 @@ def _check_fold_param(param, param_name):
     """Check the parameters of fold op."""
     validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
     param = (param, param) if isinstance(param, int) else param
-    validator.check(param_name + " size", len(param), "", 2, Rel.EQ, 'fold')
+    validator.check(param_name + " size", len(param), "", 2, validator.EQ, 'fold')
     if param_name == "padding":
         validator.check_non_negative_int_sequence(param, param_name, 'fold')
     else:
@@ -6195,7 +6203,7 @@ def _check_unfold_params(param, param_name, param_size):
     """Check the parameters of unfold op."""
     validator.check_value_type(param_name, param, [int, tuple, list], 'unfold')
     param = (param, param) if isinstance(param, int) else param
-    validator.check(param_name + " size", len(param), "", param_size, Rel.IN, 'unfold')
+    validator.check(param_name + " size", len(param), "", param_size, validator.IN, 'unfold')
     if param_name == "padding":
         validator.check_non_negative_int_sequence(param, param_name, 'unfold')
     else:
@@ -6782,7 +6790,7 @@ def _check_positive_int(arg_value, arg_name, op_name):
 
 @constexpr
 def _check_axis_range(arg_value, limit, arg_name, op_name):
-    arg_value = validator.check_int_range(arg_value, -limit, limit, Rel.INC_LEFT, arg_name, op_name)
+    arg_value = validator.check_int_range(arg_value, -limit, limit, validator.INC_LEFT, arg_name, op_name)
     return arg_value
 
 

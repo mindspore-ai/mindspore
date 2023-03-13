@@ -20,7 +20,7 @@ import numpy as np
 
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore._checkparam import Validator, Rel
+from mindspore import _checkparam as Validator
 from mindspore import log as logger
 from mindspore.ops import functional as F, ReduceOp
 from mindspore import nn, ops
@@ -102,7 +102,7 @@ class ReduceLROnPlateau(Callback):
                  mode='auto', min_delta=1e-4, cooldown=0, min_lr=0):
         super(ReduceLROnPlateau, self).__init__()
         self.monitor = Validator.check_value_type('monitor', monitor, str)
-        self.factor = Validator.check_float_range(factor, 0.0, 1.0, Rel.INC_NEITHER)
+        self.factor = Validator.check_float_range(factor, 0.0, 1.0, Validator.INC_NEITHER)
         self.patience = Validator.check_non_negative_int(patience)
         self.verbose = Validator.check_bool(verbose)
         self.mode = Validator.check_value_type('mode', mode, str)

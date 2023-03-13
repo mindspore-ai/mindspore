@@ -33,7 +33,7 @@ from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode

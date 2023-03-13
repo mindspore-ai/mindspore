@@ -30,8 +30,6 @@ from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
 context.set_context(mode=context.GRAPH_MODE)
@@ -865,12 +863,6 @@ def test_summary_nn_ops_security_on():
             ScalarSummaryNet()
         assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
 
-
-@non_graph_engine
-@mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
-def test_compile():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return test_cases
 
 
 @mindspore_test(pipeline_for_verify_exception_for_case_by_case_config)

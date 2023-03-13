@@ -15,7 +15,7 @@
 """Aggregator."""
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore._extends import cell_attr_register
 from mindspore.common.initializer import initializer
 from mindspore.nn.layer.activation import get_activation

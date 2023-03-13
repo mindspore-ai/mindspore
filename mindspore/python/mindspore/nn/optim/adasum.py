@@ -22,7 +22,7 @@ import math
 import mindspore.nn as nn
 import mindspore.log as logger
 from mindspore import context
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.parallel._utils import _get_global_rank, _get_stage_device_num

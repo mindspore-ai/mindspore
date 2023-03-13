@@ -133,8 +133,16 @@ def _raise_value_error(info, param=None):
 @_primexpr
 def _get_broadcast_shape(x_shape, dst, axis_size):
     """Get the target shape for broadcast array."""
+    def _check(dst, broadcast_ndim):
+        if dst < -broadcast_ndim or dst >= broadcast_ndim:
+            _raise_value_error("Destination axis {} is out of bounds for array of dimension"
+                               " [{}, {}).".format(dst, -broadcast_ndim, broadcast_ndim))
+        return None
+
     x_ndim = len(x_shape)
     broadcast_ndim = x_ndim + 1
+
+    _check(dst, broadcast_ndim)
 
     if dst < 0:
         dst = broadcast_ndim + dst

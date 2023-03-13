@@ -23,7 +23,7 @@ from mindspore.train.dataset_helper import _has_dynamic_shape, _check_inputs
 import mindspore.dataset as ds
 from mindspore._c_expression import _set_dataset_mode_config
 from mindspore.parallel._utils import _get_device_num, _need_to_full, _to_full_shapes, _get_pipeline_stages
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 
 
 def _init_sink_dataset(dataset, sink_size, input_signature, create_info):

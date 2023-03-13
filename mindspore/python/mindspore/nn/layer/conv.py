@@ -24,7 +24,8 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator, Rel, twice, _check_3d_int_or_tuple
+from mindspore import _checkparam as Validator
+from mindspore._checkparam import twice, _check_3d_int_or_tuple
 from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
 
@@ -315,6 +316,13 @@ class Conv2d(_Conv):
         return output
 
 
+@_primexpr
+def _check_input_3d(input_shape, op_name):
+    if len(input_shape) != 3:
+        raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
+    return None
+
+
 class Conv1d(_Conv):
     r"""
     Calculates the 1D convolution on the input tensor. The input is typically of shape :math:`(N, C_{in}, L_{in})`,
@@ -434,10 +442,10 @@ class Conv1d(_Conv):
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
-        Validator.check_int(kernel_size, 1, Rel.GE, 'kernel_size', self.cls_name)
-        Validator.check_int(stride, 1, Rel.GE, 'stride', self.cls_name)
+        Validator.check_int(kernel_size, 1, Validator.GE, 'kernel_size', self.cls_name)
+        Validator.check_int(stride, 1, Validator.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-        Validator.check_int(dilation, 1, Rel.GE, 'dilation', self.cls_name)
+        Validator.check_int(dilation, 1, Validator.GE, 'dilation', self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
         dilation = (1, dilation)
@@ -476,8 +484,11 @@ class Conv1d(_Conv):
         self.bias_add = P.BiasAdd()
         self.expand_dims = P.ExpandDims()
         self.squeeze = P.Squeeze(2)
+        self.shape = P.Shape()
 
     def construct(self, x):
+        x_shape = self.shape(x)
+        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -491,6 +502,7 @@ class Conv1d(_Conv):
 def _check_input_5dims(input_shape, op_name):
     if len(input_shape) != 5:
         raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")
+    return None
 
 
 class Conv3d(_Conv):
@@ -1253,10 +1265,10 @@ class Conv1dTranspose(_Conv):
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
-        Validator.check_int(kernel_size, 1, Rel.GE, 'kernel_size', self.cls_name)
-        Validator.check_int(stride, 1, Rel.GE, 'stride', self.cls_name)
+        Validator.check_int(kernel_size, 1, Validator.GE, 'kernel_size', self.cls_name)
+        Validator.check_int(stride, 1, Validator.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-        Validator.check_int(dilation, 1, Rel.GE, 'dilation', self.cls_name)
+        Validator.check_int(dilation, 1, Validator.GE, 'dilation', self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
         dilation = (1, dilation)
@@ -1314,6 +1326,8 @@ class Conv1dTranspose(_Conv):
         return self
 
     def construct(self, x):
+        x_shape = self.shape(x)
+        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
 
         n, _, h, w = self.shape(x)

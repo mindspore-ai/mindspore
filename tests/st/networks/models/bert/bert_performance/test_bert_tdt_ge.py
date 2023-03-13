@@ -27,6 +27,12 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.optim import Lamb
 from mindspore.train import Callback, Model
 import mindspore.nn.learning_rate_schedule as lr_schedules
+
+from tests.st.model_zoo_tests import utils
+
+head_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../"
+utils.replace_check_param(head_path)
+
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepCell
 from tests.models.official.nlp.bert.src.bert_model import BertConfig

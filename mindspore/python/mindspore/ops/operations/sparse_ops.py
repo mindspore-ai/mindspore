@@ -18,7 +18,7 @@
 
 """Operators for sparse operators."""
 
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops import signature as sig
 from mindspore.ops.primitive import prim_attr_register, Primitive

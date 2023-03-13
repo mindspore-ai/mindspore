@@ -1247,6 +1247,19 @@ def tile(a, reps):
     return F.tile(a, reps)
 
 
+@_primexpr
+def _check_can_broadcast_to(shape, target_shape):
+    """Determines if shape can be broadcast to target_shape."""
+    ndim = len(shape)
+    ndim_target = len(target_shape)
+    if ndim > ndim_target:
+        return False
+    for i, j in zip(reversed(shape), reversed(target_shape)):
+        if not (i == 1 or i == j):
+            return False
+    return True
+
+
 def broadcast_to(array, shape):
     """
     Broadcasts an array to a new shape.
@@ -1273,6 +1286,12 @@ def broadcast_to(array, shape):
         [1 2 3]
         [1 2 3]]
     """
+    def _check(shape_a, shape):
+        if not _check_can_broadcast_to(shape_a, shape):
+            _raise_value_error('cannot broadcast with ', shape)
+        return None
+    shape_a = F.shape(array)
+    _check(shape_a, shape)
     return _broadcast_to_shape(array, shape)
 
 
@@ -1418,29 +1437,29 @@ def _split(x, indices_or_sections, opname, axis=0):
     """Splits a tensor based on ``np.split`` or ``np.array_split``."""
     _check_input_tensor(x)
     _ = _check_axis_type(axis, True, False, False)
-    axis = _canonicalize_axis(axis, x.ndim)
+    axis_new = _canonicalize_axis(axis, x.ndim)
     res = None
     arr_shape = x.shape
-    length_along_dim = arr_shape[axis]
+    length_along_dim = arr_shape[axis_new]
     if isinstance(indices_or_sections, int):
         if indices_or_sections > length_along_dim:
             _raise_value_error("empty tensor encountered.")
         if opname == "split" or length_along_dim % indices_or_sections == 0:
-            res = P.Split(axis, indices_or_sections)(x)
+            res = P.Split(axis_new, indices_or_sections)(x)
         else:
             num_long_tensor = length_along_dim % indices_or_sections
             num_short_tensor = indices_or_sections - num_long_tensor
             length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
             length2 = length_along_dim - length1
             start1 = _list_comprehensions(F.rank(x), 0, True)
-            size1 = _tuple_setitem(arr_shape, axis, length1)
-            start2 = _tuple_setitem(start1, axis, length1)
-            size2 = _tuple_setitem(arr_shape, axis, length2)
-            res = P.Split(axis, num_long_tensor)(F.tensor_slice(x, start1, size1)) + \
-                P.Split(axis, num_short_tensor)(F.tensor_slice(x, start2, size2))
+            size1 = _tuple_setitem(arr_shape, axis_new, length1)
+            start2 = _tuple_setitem(start1, axis_new, length1)
+            size2 = _tuple_setitem(arr_shape, axis_new, length2)
+            res = P.Split(axis_new, num_long_tensor)(F.tensor_slice(x, start1, size1)) + \
+                P.Split(axis_new, num_short_tensor)(F.tensor_slice(x, start2, size2))
 
     elif isinstance(indices_or_sections, (list, tuple)) and _check_element_int(indices_or_sections):
-        res = _split_sub_tensors(x, indices_or_sections, axis)
+        res = _split_sub_tensors(x, indices_or_sections, axis_new)
     else:
         _raise_type_error("Argument `indices_or_sections` in `mindspore.numpy.split`\
             should be integer, tuple(int) or list(int), but got", indices_or_sections)

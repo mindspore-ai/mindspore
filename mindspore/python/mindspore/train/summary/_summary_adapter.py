@@ -28,7 +28,7 @@ from mindspore import context
 from mindspore.communication.management import get_rank
 from mindspore.communication.management import GlobalComm
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.train.anf_ir_pb2 import DataType, ModelProto
 from mindspore.train.summary_pb2 import Event
 

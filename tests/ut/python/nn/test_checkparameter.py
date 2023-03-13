@@ -15,7 +15,8 @@
 """ test check parameter """
 import pytest
 import numpy as np
-from mindspore._checkparam import Validator, twice
+from mindspore._checkparam import twice
+from mindspore import _checkparam as Validator
 
 kernel_size = 5
 kernel_size1 = twice(kernel_size)

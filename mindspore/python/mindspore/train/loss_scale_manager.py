@@ -15,7 +15,7 @@
 """Loss scale manager abstract class."""
 from __future__ import absolute_import
 
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore import nn
 
 
