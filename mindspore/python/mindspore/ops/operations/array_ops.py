@@ -666,7 +666,7 @@ class Reshape(PrimitiveWithCheck):
 
 class Shape(Primitive):
     """
-    Returns the shape of the input tensor. And it used to be static shape.
+    Returns the shape of the input tensor.
 
     Refer to :func:`mindspore.ops.shape` for more details.
 
