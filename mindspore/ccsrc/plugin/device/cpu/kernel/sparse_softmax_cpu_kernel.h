@@ -51,6 +51,8 @@ class SparseSoftmaxCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   template <typename I, typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
+  template <typename I, typename T>
+  void QuickSortIndicesAndValues(I *indices_addr, T *values_addr, const int64_t &left, const int64_t &right);
 
   std::vector<size_t> output_shape_;
   size_t values_size_{0};

@@ -16,6 +16,8 @@
 
 #include "plugin/device/cpu/kernel/sparse_softmax_cpu_kernel.h"
 #include <algorithm>
+#include <stack>
+#include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -33,7 +35,82 @@ constexpr size_t kinput_shape = 2;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
 constexpr size_t kIndex2 = 2;
+
+template <typename I>
+inline bool CompareIndices(const I *a, const I *b, const size_t &len) {
+  size_t i = 0;
+  while (i < len) {
+    if (a[i] != b[i]) {
+      return a[i] > b[i];
+    }
+    ++i;
+  }
+  return true;
+}
+
+template <typename I, typename T>
+inline void CopyIndicesAndValue(I *dst_indices_addr, T *dst_values_addr, const I *src_indices_addr,
+                                const T *src_values_addr, const size_t &indices_size) {
+  memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  *dst_values_addr = *src_values_addr;
+}
+
+template <typename I, typename T>
+inline int64_t Partition(I *__restrict indices_addr, T *__restrict values_addr, I *__restrict tmp_indices,
+                         const size_t &indices_len, const int64_t &left, const int64_t &right) {
+  int64_t i = left, j = right;
+  T tmp_values = 0;
+  const size_t indices_size = indices_len * sizeof(I);
+#define INDICES_OFFSET_ADDR(addr, index, len) addr + index *len
+
+  CopyIndicesAndValue(tmp_indices, &tmp_values, INDICES_OFFSET_ADDR(indices_addr, left, indices_len),
+                      values_addr + left, indices_size);
+  while (i < j) {
+    while (i < j && CompareIndices(INDICES_OFFSET_ADDR(indices_addr, j, indices_len), tmp_indices, indices_len)) {
+      --j;
+    }
+    CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i,
+                        INDICES_OFFSET_ADDR(indices_addr, j, indices_len), values_addr + j, indices_size);
+    while (i < j && !CompareIndices(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), tmp_indices, indices_len)) {
+      ++i;
+    }
+    CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, j, indices_len), values_addr + j,
+                        INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i, indices_size);
+  }
+  CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i, tmp_indices, &tmp_values,
+                      indices_size);
+  return i;
+}
 }  // namespace
+
+template <typename I, typename T>
+void SparseSoftmaxCpuKernelMod::QuickSortIndicesAndValues(I *__restrict indices_addr, T *__restrict values_addr,
+                                                          const int64_t &left, const int64_t &right) {
+  std::stack<int64_t> index_stk;
+  index_stk.emplace(right);
+  index_stk.emplace(left);
+  const size_t indices_len = shape_size_;
+  I *indices_buff = new I[indices_len];
+
+  while (!index_stk.empty()) {
+    int64_t i = index_stk.top();
+    index_stk.pop();
+    int64_t j = index_stk.top();
+    index_stk.pop();
+    if (i < j) {
+      int64_t k = Partition(indices_addr, values_addr, indices_buff, indices_len, i, j);
+      if (k > i) {
+        index_stk.emplace(k - 1);
+        index_stk.emplace(i);
+      }
+      if (j > k) {
+        index_stk.emplace(j);
+        index_stk.emplace(k + 1);
+      }
+    }
+  }
+  free(indices_buff);
+}
 
 bool SparseSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
@@ -82,6 +159,7 @@ int SparseSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   return KRET_OK;
 }
+
 template <typename I, typename T>
 bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &,
@@ -95,14 +173,17 @@ bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
   }
-  const auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
-  const auto *values_addr = static_cast<T *>(inputs[kIndex1]->addr);
+  auto *indices_addr = static_cast<I *>(inputs[kIndex0]->addr);
+  auto *values_addr = static_cast<T *>(inputs[kIndex1]->addr);
   auto *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   const size_t indices_length = inputs[kIndex0]->size / sizeof(I);
   const size_t values_length = inputs[kIndex1]->size / sizeof(T);
   std::vector<T> exp_values;
   std::vector<size_t> index_values;
   std::vector<size_t> visited;
+
+  QuickSortIndicesAndValues(indices_addr, values_addr, 0, SizeToLong(values_size_) - 1);
+
   for (size_t i = 0; i < values_size_; ++i) {
     visited.push_back(0);
   }
