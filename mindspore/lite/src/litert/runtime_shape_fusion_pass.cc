@@ -142,6 +142,28 @@ int ShapeFusionPass::FusePostNodes(LiteGraph::Node *node, size_t subgraph_index)
   return RET_OK;
 }
 
+bool ShapeFusionPass::CheckArithmetic(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
+                                      uint32_t input_idx) {
+  MS_ASSERT(shape_fusion != nullptr && post_node != nullptr);
+  auto type = post_node->node_type_;
+  if (is_div_ && type != schema::PrimitiveType_DivFusion) {
+    // couldn't fuse add/sub/mul+div or add/sub/div+mul, because it maybe change indivisible to divisible.
+    return false;
+  }
+  MS_CHECK_TRUE_RET(post_node->input_indices_.size() == kInputSize1, false);
+  auto input1_index =
+    post_node->input_indices_.at(0) == input_idx ? post_node->input_indices_.at(1) : post_node->input_indices_.at(0);
+  auto tensor = src_tensors_->at(input1_index);
+  MS_CHECK_TRUE_RET(tensor != nullptr, false);
+  if (tensor->IsConst()) {
+    return true;
+  }
+  auto shape_fusion_outputs = shape_fusion->output_indices_;
+  auto fused_output =
+    std::find(shape_fusion_outputs.begin(), shape_fusion_outputs.end(), input1_index) != shape_fusion_outputs.end();
+  return fused_output && (type == schema::PrimitiveType_AddFusion || type == schema::PrimitiveType_SubFusion);
+}
+
 bool ShapeFusionPass::CheckCanFused(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
                                     uint32_t input_idx, size_t subgraph_index) {
   MS_ASSERT(shape_fusion != nullptr && post_node != nullptr);
@@ -157,28 +179,17 @@ bool ShapeFusionPass::CheckCanFused(const LiteGraph::Node *shape_fusion, const L
   auto shape_fusion_outputs = shape_fusion->output_indices_;
   switch (post_node->node_type_) {
     case schema::PrimitiveType_Cast: {
+      MS_CHECK_TRUE_RET(post_node->input_indices_.size() == kInputSize1, false);
       auto dst_type_tensor = src_tensors_->at(post_node->input_indices_.at(1));
       MS_CHECK_TRUE_RET(dst_type_tensor != nullptr && dst_type_tensor->data() != nullptr, false);
       auto data_type = reinterpret_cast<int *>(dst_type_tensor->data())[0];
       return data_type == kNumberTypeInt || data_type == kNumberTypeInt32;
     }
     case schema::PrimitiveType_AddFusion:
-    case schema::PrimitiveType_SubFusion: {
-      auto input1_index = post_node->input_indices_.at(0) == input_idx ? post_node->input_indices_.at(1)
-                                                                       : post_node->input_indices_.at(0);
-      auto tensor = src_tensors_->at(input1_index);
-      MS_CHECK_TRUE_RET(tensor != nullptr, false);
-      return tensor->IsConst() || std::find(shape_fusion_outputs.begin(), shape_fusion_outputs.end(), input1_index) !=
-                                    shape_fusion_outputs.end();
-    }
+    case schema::PrimitiveType_SubFusion:
     case schema::PrimitiveType_MulFusion:
-    case schema::PrimitiveType_DivFusion: {
-      auto input1_index = post_node->input_indices_.at(0) == input_idx ? post_node->input_indices_.at(1)
-                                                                       : post_node->input_indices_.at(0);
-      auto tensor = src_tensors_->at(input1_index);
-      MS_CHECK_TRUE_RET(tensor != nullptr, false);
-      return tensor->IsConst();
-    }
+    case schema::PrimitiveType_DivFusion:
+      return CheckArithmetic(shape_fusion, post_node, input_idx);
     case schema::PrimitiveType_Concat: {
       bool is_supported =
         std::all_of(post_node->input_indices_.begin(), post_node->input_indices_.end(), [&](uint32_t idx) {
