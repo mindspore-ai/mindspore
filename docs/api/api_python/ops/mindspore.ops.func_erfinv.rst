@@ -8,6 +8,8 @@ mindspore.ops.erfinv
     .. math::
         erfinv(erf(x)) = x
 
+    其中 :math:`x` 代表输入Tensor。
+
     参数：
         - **input** (Tensor) - 输入Tensor，数据类型必须为float16、float32、float64。
 

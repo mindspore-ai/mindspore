@@ -5,15 +5,15 @@ mindspore.ops.cholesky_inverse
 
     使用Cholesky分解计算对称正定矩阵的逆矩阵。
 
-    如果 `upper` 为False，则返回的矩阵 :math:`U` 为下三角矩阵，输出的结果：
-
-    .. math::
-        inv = (UU^{T})^{-1}
-
     如果 `upper` 为True，则返回的矩阵 :math:`U` 为上三角矩阵，输出的结果：
    
     .. math::
         inv = (U^{T}U)^{-1}
+
+    如果 `upper` 为False，则返回的矩阵 :math:`U` 为下三角矩阵，输出的结果：
+
+    .. math::
+        inv = (UU^{T})^{-1}
 
     .. note::
        输入Tensor必须是一个由Cholesky分解得到的上三角矩阵或者下三角矩阵。    

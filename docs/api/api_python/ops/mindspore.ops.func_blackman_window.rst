@@ -14,7 +14,7 @@ mindspore.ops.blackman_window
 
     参数：
         - **window_length** (Tensor) - 返回窗口的大小，数据类型为int32，int64。输入数据的值为[0, 1000000]的整数。
-        - **periodic** (bool，可选) - 如果为True，返回一个窗口作为周期函数使用。如果为False，返回一个对称窗口。默认值：True。
+        - **periodic** (bool，可选) - 决定返回的窗口作为周期函数或者对称窗口。默认值：True。
 
     关键字参数：
         - **dtype** (mindspore.dtype，可选) - 输出数据类型，目前只支持float16、float32和float64。默认值：None。

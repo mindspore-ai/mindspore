@@ -891,11 +891,12 @@ def div(input, other, *, rounding_mode=None):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
-    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
+    Note:
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+          consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, dtypes of them cannot be bool at the same time, and the shapes of them
+          could be broadcast. When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     .. math::
 
@@ -906,15 +907,16 @@ def div(input, other, *, rounding_mode=None):
             a bool or a tensor whose data type is number or bool.
         other (Union[Tensor, Number, bool]): The second input is a number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Keyword Args:
         rounding_mode (str, optional): Type of rounding applied to the result. Three types are defined as,
 
-            - None: Default behavior. Equivalent to true division in Python or `true_divide` in NumPy.
+            - None: Default behavior, which is the same as true division in Python or `true_divide` in NumPy.
 
-            - "floor": Rounds the results of the division down. Equivalent to floor division in Python
+            - "floor": Rounds the division of the inputs down, which is the same as floor division in Python
               or `floor_divide` in NumPy.
 
-            - "trunc": Rounds the results of the division towards zero. Equivalent to C-style integer division.
-              Default: None.
+            - "trunc": Rounds the division of the inputs towards zero, which is the same as C-style integer division.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -9353,24 +9355,26 @@ def trapz(y, x=None, dx=1.0, dim=-1):
 
 def cholesky(input_x, upper=False):
     r"""
-    Computes the Cholesky decomposition of a symmetric positive-definite matrix :math:`A`
-    or for batches of symmetric positive-definite matrices.
+    Returns the Cholesky decomposition of zero or more batch dimensions consisting of symmetric positive-definite
+    matrices.
 
-    If `upper` is `True`, the returned matrix :math:`U` is upper-triangular, and the decomposition has the form:
+    If `upper` is `True`, returns an upper-triangular matrix, :math:`U`, and the decomposition has the form:
 
     .. math::
         A = U^TU
 
-    If `upper` is `False`, the returned matrix :math:`L` is lower-triangular, and the decomposition has the form:
+    If `upper` is `False`, returns a lower-triangular matrix, :math:`L`, and the decomposition has the form:
 
     .. math::
         A = LL^T
 
+    where `A` is the symmetric positive-definite matrix.
+
     Args:
         input_x (Tensor): Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
             consisting of symmetric positive-definite matrices, with float32 or float64 data type.
-        upper (bool): Flag that indicates whether to return a upper or lower triangular matrix.
-            Default: False.
+        upper (bool): If `upper` is `True`, returns an upper-triangular matrix. If `upper` is `False`, returns
+            a lower-triangular matrix. Default: False.
 
     Returns:
         Tensor, has the same shape and data type as `input_x`.
@@ -9398,13 +9402,7 @@ def cholesky(input_x, upper=False):
 
 def cholesky_inverse(input_x, upper=False):
     r"""
-    Returns the inverse of the positive definite matrix using cholesky matrix factorization by its Cholesky factor `U`.
-
-    If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
-
-    .. math::
-
-        inv = (UU^{T})^{-1}
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization by its Cholesky factor.
 
     If `upper` is `True`, :math:`U` is an upper triangular such that the output tensor is
 
@@ -9412,12 +9410,19 @@ def cholesky_inverse(input_x, upper=False):
 
         inv = (U^{T}U)^{-1}
 
+    If `upper` is `False`, :math:`L` is a lower triangular such that the output tensor is
+
+    .. math::
+
+        inv = (LL^{T})^{-1}
+
     Note:
-        The input must be either an upper triangular matrix or a lower triangular matrix from Cholesky decomposition.
+        The input must be either an upper-triangular matrix or a lower-triangular matrix from Cholesky decomposition.
 
     Args:
         input_x (Tensor): The input tensor with a rank of 2. Supported dtypes: float32, float64.
-        upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
+        upper (bool): If `upper` is `True`, return an upper triangular matrix. If `upper` is `False`, return
+            a lower-triangular matrix. Default: False.
 
     Returns:
         Tensor, has the same shape and dtype as `input_x`.
@@ -9477,15 +9482,14 @@ def conj(input):
 
 def cross(input, other, dim=None):
     r"""
-    Returns the cross product of vectors in dimension `dim` of input `input` and `other`. `input` and `other` must
-    have the same shape and the same type, and the size of their `dim` dimension should be `3`.
-    If `dim` is not given, it defaults to the first dimension found with the size `3`.
+    Computes the cross product of `input` and `other` in dimension `dim`.
 
     Args:
         input (Tensor): input is a tensor.
         other (Tensor):  The other Tensor, `other` must have the same shape and type as input `input`, and
             the size of their `dim` dimension should be `3`.
-        dim (int): dimension to apply cross product in. Default: None.
+        dim (int): dimension to apply cross product in. if `dim` is None, it is set to be the first dimension
+            found with the size `3`. Default: None.
 
     Returns:
         Tensor, has the same shape and type as input `input`.
@@ -9502,11 +9506,20 @@ def cross(input, other, dim=None):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor([1, 2, 3], mstype.int8)
-        >>> other = Tensor([1, 2, 3], mstype.int8)
+        >>> # case 1: dim=None.
+        >>> x = Tensor([[1, 2, 3], [1, 2, 3]])
+        >>> other = Tensor([[4, 5, 6], [4, 5, 6]])
         >>> output = ops.cross(x, other)
         >>> print(output)
-        [0 0 0]
+        [[-3  6 -3]
+         [-3  6 -3]]
+        >>> # case 2: dim=1.
+        >>> x = Tensor([[1, 2, 3], [1, 2, 3]])
+        >>> other = Tensor([[4, 5, 6], [4, 5, 6]])
+        >>> output = ops.cross(x, other, dim=1)
+        >>> print(output)
+        [[-3  6 -3]
+         [-3  6 -3]]
     """
     if dim is None:
         dim = -65530
@@ -9632,11 +9645,14 @@ def einsum(equation, *operands):
 
 def erfinv(input):
     r"""
-    Computes the inverse error function of input. The inverse error function is defined in the range `(-1, 1)` as:
+    Returns the result of the inverse error function with `input`, which is defined in the
+    range `(-1, 1)` as:
 
     .. math::
 
         erfinv(erf(x)) = x
+
+    where :math:`x` is the `input`.
 
     Args:
         input (Tensor): The input tensor to compute to, with data type float32, float16 or float64.

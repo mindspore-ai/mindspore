@@ -1,7 +1,7 @@
 mindspore.ops.div
 =================
 
-.. py:function:: mindspore.ops.div(input, other, rounding_mode=None)
+.. py:function:: mindspore.ops.div(input, other, *, rounding_mode=None)
 
     逐元素计算第一个输入Tensor除以第二输入Tensor的商。
 
@@ -16,6 +16,8 @@ mindspore.ops.div
     参数：
         - **input** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或bool，或数据类型为数值型或bool的Tensor。
         - **other** (Union[Tensor, Number, bool]) - 第二个输入，当第一个输入是Tensor时，第二个输入必须是一个数值型或bool，或是数据类型为数值型或bool的Tensor。
+
+    关键字参数：
         - **rounding_mode** (str, 可选) - 应用于结果的舍入类型。三种类型被定义为None、"floor" 和 "trunc" 。默认值：None。
 
           - **None**: 默认行为。相当于Python中的 `true division` 或NumPy中的 `true_divide` 。

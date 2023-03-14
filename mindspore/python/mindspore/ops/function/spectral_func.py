@@ -24,12 +24,13 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
     r"""
     Blackman window function.
 
-    The input `window_length` is a tensor with datatype int,
-    it determines the returned window size. In particular, if `window_length` is equal to `1`,
-    the returned window contains a single value `1`.
-    Attr `periodic` determines whether the returned window trims off the last duplicate value
-    from the symmetric window and is ready to be used as a periodic window with functions.
-    Therefore, if attr `periodic` is true, the :math:`N` in formula is in fact :math:`window\_length + 1`.
+    The `window_length` is a input tensor which determines the returned window size, and its data should be
+    an integer. In particular, if `window_length` is equal to `1`, only a single value `1` exists in the
+    returned window.
+
+    Attr `periodic` determines whether the returned window removes the last duplicate value
+    from the symmetric window and prepares to be a periodic window with functions.
+    Therefore, if attr `periodic` is true, the :math:`N` in formula is :math:`window\_length + 1`.
 
     .. math::
 
@@ -38,13 +39,13 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
     where N is the full window size, and n is natural number less than N:[0, 1, ..., N-1].
 
     Args:
-        window_length (Tensor): the size of returned window, with data type int32, int64.
+        window_length (Tensor): The size of returned window, with data type int32, int64.
             The input data should be an integer with a value of [0, 1000000].
-        periodic (bool, optional): If True, returns a window to be used as periodic function.
-            If False, return a symmetric window. Default: True.
+        periodic (bool, optional): Indicates whether to returns a window to be used as periodic function or
+            a symmetric window. Default: True.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): the desired data type of returned tensor.
+        dtype (mindspore.dtype, optional): The data type of returned tensor.
             Only float16, float32 and float64 is allowed. Default: None.
 
     Returns:
@@ -81,12 +82,13 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
     r"""
     Bartlett window function.
 
-    The input `window_length` is a tensor that datatype must be an integer, which controlling the returned window size.
-    In particular, if `window_length` = 1, the returned window contains a single value 1.
+    The `window_length` is a input tensor which determines the returned window size, and its data should be
+    an integer. In particular, if `window_length` is equal to `1`, only a single value 1 exists in the
+    returned window.
 
-    Attr `periodic` determines whether the returned window trims off the last duplicate value from the symmetric
-    window and is ready to be used as a periodic window with functions. Therefore, if attr `periodic` is true,
-    the "N" in formula is in fact `window_length` + 1.
+    Attr `periodic` determines whether the returned window removes the last duplicate value from the symmetric
+    window and prepares to be a periodic window with functions. Therefore, if attr `periodic` is true,
+    the `N` in formula is `window_length` + 1.
 
     .. math::
 
@@ -95,16 +97,16 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         2 - \frac{2n}{N - 1} & \text{if } \frac{N - 1}{2} < n < N \\
         \end{cases},
 
-        \text{where : N is the full window size.}
+    where N is the full window size.
 
     Args:
         window_length (Tensor): The size of returned window, with data type int32, int64.
             The input data should be an integer with a value of [0, 1000000].
-        periodic (bool, optional): If True, returns a window to be used as periodic function.
-            If False, return a symmetric window. Default: True.
+        periodic (bool, optional): Indicates whether to returns a window to be used as periodic function or
+            a symmetric window. Default: True.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The desired datatype of returned tensor.
+        dtype (mindspore.dtype, optional): The datatype of returned tensor.
             Only float16, float32 and float64 are allowed. Default: None.
 
     Returns:
