@@ -383,7 +383,7 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
   auto &device_list = context->MutableDeviceInfo();
   device_list.push_back(device_info);
 
-  auto ret = model.Build(content, size, kMindIR, context);
+  auto ret = model.Build(content, size, kMindIR_Lite, context);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build error ";
     std::cerr << "Build error " << std::endl;
@@ -408,70 +408,6 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
     std::cerr << "Inference error " << std::endl;
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int PreInferenceMindIR(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &graph, bool train_model) {
-  if (train_model) {
-    MS_LOG(WARNING) << "train model dont support pre-infer.";
-    return RET_OK;
-  }
-  MindIRSerializer mindir_serializer(false);
-  auto ret = mindir_serializer.Save(param, graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Save funcgraph failed";
-    return ret;
-  }
-  void *data = nullptr;
-  size_t size = 0;
-  ret = mindir_serializer.GetBuffAndSize(&data, &size);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get buffer and size failed";
-    return ret;
-  }
-
-  mindspore::Model model;
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "New context failed while running ";
-    std::cerr << "New context failed while running " << std::endl;
-    free(data);
-    return RET_ERROR;
-  }
-  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
-  auto &device_list = context->MutableDeviceInfo();
-  device_list.push_back(device_info);
-
-  auto status = model.Build(data, size, kMindIR, context);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "Build error ";
-    std::cerr << "Build error " << std::endl;
-    free(data);
-    return RET_ERROR;
-  }
-  for (auto &tensor : model.GetInputs()) {
-    if (tensor.Shape().empty() || tensor.DataSize() == 0 ||
-        std::find(tensor.Shape().begin(), tensor.Shape().end(), -1) != tensor.Shape().end()) {
-      MS_LOG(WARNING) << tensor.Name() << " is dynamic shape and will not be pre-infer.";
-      free(data);
-      return RET_OK;
-    }
-    ret = GenerateRandomData(&tensor);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << tensor.Name() << "GenerateRandomData failed.";
-      free(data);
-      return ret;
-    }
-  }
-  std::vector<MSTensor> outputs;
-  status = model.Predict(model.GetInputs(), &outputs);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "Inference error ";
-    std::cerr << "Inference error " << std::endl;
-    free(data);
-    return RET_ERROR;
-  }
-  free(data);
   return RET_OK;
 }
 
@@ -1125,7 +1061,16 @@ int ConverterImpl::SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<Con
                                    size_t *data_size) {
   int status = RET_OK;
   if (param->pre_infer) {
-    status = PreInferenceMindIR(param, graph, param->train_model);
+    schema::MetaGraphT *meta_graph = nullptr;
+    auto new_param = std::make_shared<ConverterPara>();
+    new_param->fmk_type = converter::kFmkTypeMs;
+    new_param->save_type = kMindIR;
+    meta_graph = lite::ConverterToMetaGraph::Build(new_param, graph);
+    if (meta_graph == nullptr) {
+      MS_LOG(ERROR) << "FuncGraph convert to meta graph failed";
+      return false;
+    }
+    status = PreInference(*meta_graph, param->train_model);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "PreInferenceMindIR failed: " << status << " " << GetErrorInfo(status);
       return status;
