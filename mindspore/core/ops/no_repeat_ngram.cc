@@ -68,10 +68,18 @@ abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(log_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
+
   (void)CheckAndConvertUtils::CheckInteger("rank of state_seq", SizeToLong(state_shape.size()), kEqual, kShapeSize,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of log_probs", SizeToLong(log_shape.size()), kEqual, kShapeSize,
                                            prim_name);
+  if (IsDynamicShape(state_shape)) {
+    std::vector<int64_t> output_shape(state_shape.size(), -1);
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+  if (IsDynamicShape(log_shape)) {
+    return std::make_shared<abstract::Shape>(log_shape);
+  }
   (void)CheckAndConvertUtils::CheckValue("state_seq shape[0]", state_shape.at(kIndex0), kEqual, "log_probs shape[0]",
                                          log_shape.at(kIndex0), prim_name);
   (void)CheckAndConvertUtils::CheckValue("state_seq shape[1]", state_shape.at(kIndex1), kEqual, "log_probs shape[1]",
