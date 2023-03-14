@@ -661,6 +661,12 @@ int InsertQuantNodeManager::CreateFSEInputs(const FuncGraphPtr &func_graph, cons
   auto shape_node = opt::BuildParameterNode(func_graph, shape_tensor_info, "input_shape");
   op_inputs->push_back(shape_node);
 
+  auto chunk_ends_tensor_info =
+    lite::CreateTensorInfo(fse_buffer.chunk_ends, sizeof(uint64_t) * fse_buffer.chunk_ends_count,
+                           {static_cast<int64_t>(fse_buffer.chunk_ends_count)}, kNumberTypeUInt64);
+  auto chunk_ends_node = opt::BuildParameterNode(func_graph, chunk_ends_tensor_info, "chunk_ends");
+  op_inputs->push_back(chunk_ends_node);
+
   // Free buffer
   free(states_table);
   free(bit_count_table);

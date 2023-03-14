@@ -551,6 +551,7 @@ enum PrimType {
   PrimType_Inner_GraphKernel = 10004,
   PrimType_Inner_SplitReduceConcatFusion = 10005,
   PrimType_Inner_EncoderLayer = 10006,
+  PrimType_Inner_FseDecode = 10007,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

@@ -272,6 +272,11 @@ int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_str
     MS_LOG(ERROR) << "INPUT ILLEGAL: update_mindir should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!weight_quant_string.max_segments.empty() &&
+      !ConvertIntNum(weight_quant_string.max_segments, &weight_quant->max_segments)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: decode_threads should be a number.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 }  // namespace lite

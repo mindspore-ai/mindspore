@@ -21,6 +21,7 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "tools/converter/quantizer/fse_bit_stream.h"
+#include "tools/converter/quantizer/fse_chunk_end.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
@@ -28,13 +29,16 @@
 namespace mindspore::lite::quant {
 constexpr size_t MAX_SYMS = 65534;
 constexpr size_t MAX_TABLE_LOG = 16;
+
 typedef struct FSEQuant {
-  uint16_t *symbol_table{nullptr};  // the place to store the quantized tensor
-  size_t symbol_table_count{0};     // the number of symbols that exist
-  float centroids_float[MAX_SYMS];  // the mean of all the numbers that got quantized into it
-  int32_t centroids_int[MAX_SYMS];  // the mean of all the numbers that got quantized into it
-  uint32_t frequency[MAX_SYMS];     // holds the number of times each symbol appears in `*symbol_table`
-  size_t size{0};                   // the number of entries in `symbol_table`
+  uint16_t *symbol_table{nullptr};    // the place to store the quantized tensor
+  size_t symbol_table_count{0};       // the number of symbols that exist
+  float centroids_float[MAX_SYMS];    // the mean of all the numbers that got quantized into it
+  int32_t centroids_int[MAX_SYMS];    // the mean of all the numbers that got quantized into it
+  uint32_t frequency[MAX_SYMS];       // holds the number of times each symbol appears in `*symbol_table`
+  size_t size{0};                     // the number of entries in `symbol_table`
+  size_t num_chunk_ends{0};           // number of chunk ends elements
+  ChunkEndData *chunk_ends{nullptr};  // chunk ends elements
 } FSEQuant;
 
 class FSEEncoder {
@@ -43,14 +47,16 @@ class FSEEncoder {
   ~FSEEncoder() = default;
 
   int Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param,
-               mindspore::TensorCompressionType compress_type);
+               mindspore::TensorCompressionType compress_type, int max_chanks = 1);
 
  private:
   int FSECreateStatesForEncoding(const uint32_t *frequency, size_t frequency_count, size_t table_log,
                                  uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
                                  uint16_t *symbol_table);
 
-  uint16_t FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, const uint32_t *delta_bit_count,
+  uint8_t NumOfBits(uint16_t sym, uint16_t state, const uint32_t *delta_bit_count);
+
+  uint16_t FSEEncodeSymbolGetNewState(FSEBitStream *bs, uint16_t sym, uint16_t state, uint8_t num_of_bits,
                                       const int16_t *delta_state, const uint16_t *coding_table);
 
   // Encoding is therefore just a repeat of this process :
@@ -60,7 +66,7 @@ class FSEEncoder {
   // - determine sub-Range Id
   // - look for Symbol position of same Id : you get your next state
   int FSEEncode(FSEBitStream *bs, const uint16_t *data, size_t data_count, const uint32_t *frequency,
-                size_t frequency_count, size_t table_log);
+                const size_t num_chunk_ends, ChunkEndData *chunk_ends, size_t frequency_count, size_t table_log);
 
   int NormalizeFrequency(FSEQuant *q, size_t *table_log);
 

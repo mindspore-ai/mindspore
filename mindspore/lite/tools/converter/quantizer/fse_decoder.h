@@ -36,6 +36,8 @@ struct FSEBuffer {
   size_t chunk_size = 0;
   uint64_t curr_chunk = 0;
   uint8_t curr_bit_count = 0;
+  size_t chunk_ends_count = 0;
+  uint64_t *chunk_ends = nullptr;
 };
 class FSEDecoder {
  public:

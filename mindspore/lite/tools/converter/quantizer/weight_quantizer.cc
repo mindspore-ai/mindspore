@@ -224,7 +224,7 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
       auto quant_params = tensor_quant_params.at(idx - 1);
       mindspore::TensorCompressionType compress_type =
         dequant_strategy_ == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
-      ret = fse_encoder.Compress(parameter, quant_params, compress_type);
+      ret = fse_encoder.Compress(parameter, quant_params, compress_type, max_segments_);
       auto new_tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
       CHECK_NULL_RETURN(new_tensor_info);
       weight_quantized_tensors_.insert(new_tensor_info);
