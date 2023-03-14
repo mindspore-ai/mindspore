@@ -6,11 +6,11 @@ mindspore.nn.AvgPool1d
     在一个输入Tensor上应用1D平均池化运算，可被视为组成一个1D输入平面。
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AvgPool1d在 :math:`(L_{in})` 维度上输出区域平均值。
-    给定 `kernel_size` 为 :math:`k` 和 `stride` ，公式定义如下：
+    给定 `kernel_size` 为 :math:`l_{ker}` ，`stride` 为 :math:`s_0` ，公式定义如下：
 
     .. math::
-        \text{output}(N_i, C_j, l) = \frac{1}{k} \sum_{n=0}^{k-1}
-        \text{input}(N_i, C_j, stride \times l + n)
+        \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times l + n)
 
 
     参数：
