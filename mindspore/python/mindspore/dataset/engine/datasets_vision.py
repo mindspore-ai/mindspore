@@ -2597,6 +2597,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
     You can unzip the original KITTI dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── kitti_dataset_directory
             ├── data_object_image_2
@@ -3413,6 +3414,7 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
     You can unzip the original Omniglot dataset files into this directory structure and read by MindSpore's API.
 
     .. code-block::
+
         .
         └── omniglot_dataset_directory
              ├── images_background/
