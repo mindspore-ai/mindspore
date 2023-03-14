@@ -610,7 +610,6 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   MS_LOG(DEBUG) << "Created getattr_obj_call_node: " << getattr_obj_call_node->DebugString(recursive_level);
 
   getattr_obj_call_node->set_debug_info(cnode->debug_info());
-  fg->ReplaceInOrder(cnode, getattr_obj_call_node);
   AnalysisEnginePtr eng = conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(getattr_obj_call_node, conf->context(), conf->func_graph());

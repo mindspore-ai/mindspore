@@ -828,6 +828,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     device_sync_ = tensor.device_sync_;
     need_release_device_mem_ = tensor.need_release_device_mem_;
     is_forward_output_ = tensor.is_forward_output_;
+    MS_EXCEPTION_IF_NULL(data_);
     if (data_->is_sub_data()) {
       // If tensor data is sub data, we should keep data
       // memory address unchange and copy data to it.
@@ -919,7 +920,7 @@ void Tensor::data_sync(bool need_wait) const {
   if (device_sync_ == nullptr) {
     return;
   }
-
+  MS_EXCEPTION_IF_NULL(data_);
   if (data_->is_sub_data()) {
     return;
   }
@@ -945,7 +946,7 @@ void Tensor::data_sync_directly(const DeviceSync *const device_sync, bool need_w
   if (device_sync == nullptr) {
     return;
   }
-
+  MS_EXCEPTION_IF_NULL(data_);
   if (data_->is_sub_data()) {
     return;
   }
@@ -961,6 +962,7 @@ void Tensor::data_sync_directly(const DeviceSync *const device_sync, bool need_w
 
 TypeId Tensor::set_data_type(TypeId data_type) {
   if (data_type != data_type_) {
+    MS_EXCEPTION_IF_NULL(data_);
     data_ = MakeTensorData(data_type, shape_, data_->data(), data_type_);
     return MetaTensor::set_data_type(data_type);
   }
