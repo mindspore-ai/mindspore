@@ -33,7 +33,6 @@ AnfNodePtr Conj();
 AnfNodePtr ReluGrad();
 AnfNodePtr GeLUGrad();
 AnfNodePtr MakeTuple();
-AnfNodePtr TensorShape();
 AnfNodePtr Shape();
 AnfNodePtr RowTensorGetValues();
 AnfNodePtr RowTensorGetIndices();
@@ -48,8 +47,6 @@ AnfNodePtr InvertPermutation(const FuncGraphPtr &fg);
 AnfNodePtr Transpose(const FuncGraphPtr &fg);
 AnfNodePtr ZerosLike();
 AnfNodePtr Neg();
-AnfNodePtr Conv2DBackpropInput(const FuncGraphPtr &fg, const PrimitivePtr &primal);
-AnfNodePtr Conv2DBackpropFilter(const FuncGraphPtr &fg, const PrimitivePtr &primal);
 AnfNodePtr LayerNormGrad(const FuncGraphPtr &fg, const ValuePtr &begin_norm_axis, const ValuePtr &begin_params_axis);
 AnfNodePtr ReduceSum(const FuncGraphPtr &fg, bool keep_dims = false, bool skip_mode = false);
 AnfNodePtr Reshape(const FuncGraphPtr &fg);
@@ -65,17 +62,7 @@ AnfNodePtr GetAttr(const FuncGraphPtr &fg, const AnfNodePtr &node, const std::st
 AnfNodePtr TupleGetItem(const FuncGraphPtr &fg, const AnfNodePtr &output, int64_t idx);
 AnfNodePtr NewNode(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &inputs, bool need_infer = false,
                    bool infer_value = false);
-AnfNodePtr DynSize(const FuncGraphPtr &fg, const AnfNodePtr &node, const TypePtr &dtype = kInt64);
-AnfNodePtr DynInvertPermutation(const FuncGraphPtr &fg, const AnfNodePtr &perm);
-AnfNodePtr DynBinopGradCommon(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &y, const AnfNodePtr &dx,
-                              const AnfNodePtr &dy);
-AnfNodePtr BinopGradCommon(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &y, const AnfNodePtr &dx,
-                           const AnfNodePtr &dy);
-AnfNodePtr ReduceSumWithCast(const FuncGraphPtr &fg, const AnfNodePtr &dx, const ShapeVector &axis);
-AnfNodePtr SumGradReduceAxis(const FuncGraphPtr &fg, const AnfNodePtr &x, const AnfNodePtr &rx, bool keep_dims = false);
 bool IsSequenceValueUnknown(const FuncGraphPtr &fg, const AnfNodePtr &shape_node);
-AnfNodePtr BroadcastGradientArgs(const FuncGraphPtr &fg, const AnfNodePtr &x_shape_node,
-                                 const AnfNodePtr &y_shape_node);
 ValuePtr GetPadModStr(const ValuePtr &value, bool upper = false);
 }  // namespace graph_bprop
 }  // namespace mindspore
