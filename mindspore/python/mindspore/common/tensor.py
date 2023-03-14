@@ -162,14 +162,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False, const_arg=False):
         self.init_finished = False
+        if is_stub_tensor(input_data):
+            input_data = input_data.stub_sync()
 
         if internal:
             if input_data is not None:
                 Tensor_.__init__(self, input_data)
         else:
-            if is_stub_tensor(input_data):
-                input_data = input_data.stub_sync()
-
             # If input data is numpy number, convert it to np array
             if isinstance(input_data, np_types):
                 input_data = np.array(input_data)
