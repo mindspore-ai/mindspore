@@ -330,10 +330,9 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
   top_cell->SetNodeMapInGraphInfoMap(out_id, ms_function_cnode);
 
   // Connect grad graph of ms_function to context.
-  auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
-  auto grad_param = std::make_shared<autograd::GradParam>(
-    ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
-    is_not_support_by_expander_ ? grad_graph : ms_func_graph, !top_cell->is_high_order_top_cell());
+  auto grad_param =
+    std::make_shared<autograd::GradParam>(ms_function_cnode, op_run_info->input_value, op_run_info->out_value,
+                                          grad_graph, !top_cell->is_high_order_top_cell());
   grad_param->graph_cache_key = op_run_info->op_info;
   grad_param->use_dynamic_shape_process = grad_executor->use_dynamic_shape_process();
   grad_param->is_ms_function_graph = true;
@@ -342,7 +341,7 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();
   }
-  if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
+  if (!top_cell->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
                       << ms_function_cnode->DebugString();
   }
@@ -379,17 +378,16 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
                                      const FuncGraphPtr &grad_graph) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
+  // Step 1: Replace added cnode forward with actual output
+  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
 
-  // Step 1: Update actual output tensors used in grad graph.
+  // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
   grad_executor->top_cell()->GetOpInfo(op_run_info);
   grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
 
-  // Step 2: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
+  // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
   grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
-
-  // Step 3: Replace added cnode forward with actual output
-  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
 
   // Change ms function graph to real output
   auto clone_ms_func_graph = BasicClone(ms_func_graph);
@@ -407,20 +405,12 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->CheckGraphDynamic(ms_function_cnode, true, op_run_info->base_op_run_info.op_name);
 }
 
-void MsFunction::SetMsFuncGraphParameters(const FuncGraphPtr &ms_func_graph) {
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
-  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
-    for (auto &parameter : ms_func_graph->parameters()) {
-      auto param = parameter->cast<ParameterPtr>();
-      if (param->has_default()) {
-        (void)ms_function_params_.emplace_back(param->name());
-      }
-    }
-  }
+void MsFunction::Reset() {
+  is_not_support_by_expander_ = true;
+  graph_phase_.clear();
 }
 
-void MsFunction::ModifyMsFunctionForwardOutput(const FuncGraphPtr &ms_func_graph) {
+FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};
@@ -450,9 +440,11 @@ void MsFunction::ModifyMsFunctionForwardOutput(const FuncGraphPtr &ms_func_graph
       node_list.emplace_back(cnode);
     }
   }
+  auto clone_graph = BasicClone(ms_func_graph);
   ms_func_graph->set_used_forward_nodes(node_list);
   ModifyOutputNode(ms_func_graph);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_after_forward_graph.ir", ms_func_graph);
+  return clone_graph;
 }
 
 py::object MsFunction::GradMsFunction(const py::object &out, const py::args &args) {
@@ -481,18 +473,11 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
   }
   ValuePtr added_out_v;
   const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, &added_out_v);
-  is_not_support_by_expander_ =
-    PyNativeAlgo::Common::IsControlFlowGraph(ms_func_graph) || parallel::IsAutoParallelCareGraph(ms_func_graph);
-  MS_LOG(DEBUG) << "Graph is control flow " << PyNativeAlgo::Common::IsControlFlowGraph(ms_func_graph)
-                << ", auto parallel " << parallel::IsAutoParallelCareGraph(ms_func_graph);
-  FuncGraphPtr grad_graph = nullptr;
-  if (is_not_support_by_expander_) {
-    grad_graph = executor->GetGradGraph(graph_phase_);
-  }
+  FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
+  is_not_support_by_expander_ = !grad_graph->has_flag(kFlagGraphGradByExpander);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);
   GradMsFunctionInner(op_run_info, grad_executor.get(), added_out_v, ms_func_graph, grad_graph);
-  SetMsFuncGraphParameters(ms_func_graph);
-  graph_phase_.clear();
+  Reset();
   return ret;
 }
 }  // namespace pynative

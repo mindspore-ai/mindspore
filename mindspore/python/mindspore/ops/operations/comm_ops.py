@@ -268,9 +268,6 @@ class AllGather(PrimitiveWithInfer):
         self.add_prim_attr('mean_flag', False)
         self.add_prim_attr('no_eliminate', True)
 
-    def __call__(self, tensor):
-        raise NotImplementedError
-
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
         if x_shape[0] > 0:
@@ -489,9 +486,6 @@ class ReduceScatter(Primitive):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('no_eliminate', True)
-
-    def __call__(self, tensor):
-        raise NotImplementedError
 
 
 class _HostReduceScatter(PrimitiveWithInfer):

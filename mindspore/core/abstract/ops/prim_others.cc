@@ -362,7 +362,7 @@ AbstractBasePtr InferImplAllGather(const AnalysisEnginePtr &, const PrimitivePtr
   if (!primitive->HasAttr(kRankSize)) {
     MS_LOG(EXCEPTION) << "Primitive don't have rank_size attr";
   }
-  auto rank_size = GetValue<int>(primitive->GetAttr(kRankSize));
+  auto rank_size = GetValue<int64_t>(primitive->GetAttr(kRankSize));
   if (rank_size == 0) {
     MS_LOG(EXCEPTION) << "rank_size is 0";
   }
@@ -386,7 +386,7 @@ AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const Primitiv
   if (!primitive->HasAttr(kRankSize)) {
     MS_LOG(EXCEPTION) << "Primitive don't have rank_size attr";
   }
-  auto rank_size = GetValue<int>(primitive->GetAttr(kRankSize));
+  auto rank_size = GetValue<int64_t>(primitive->GetAttr(kRankSize));
   if (tmp_shape.empty()) {
     MS_LOG(EXCEPTION) << "shape size is 0";
   }
