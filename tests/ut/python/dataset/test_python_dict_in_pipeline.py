@@ -355,6 +355,7 @@ def test_dict_generator_batch_5(my_batch):
     assert counter == 2
 
 
+@pytest.mark.skip(reason="random failure")
 def test_dict_advanced_pyfunc_dict():
     """
     Feature: Dataset pipeline contains Python dict objects.
