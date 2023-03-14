@@ -58,6 +58,7 @@ ADD_CONVERTER_TBE_OP(BatchToSpaceTF)
 ADD_CONVERTER_TBE_OP(ClipByValue)
 ADD_CONVERTER_TBE_OP(SqueezeV3)
 ADD_CONVERTER_TBE_OP(ReduceSumAcl)
+ADD_CONVERTER_TBE_OP(CommonLSTM)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

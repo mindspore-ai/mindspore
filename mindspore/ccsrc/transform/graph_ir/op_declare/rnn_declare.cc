@@ -142,14 +142,9 @@ OUTPUT_MAP(DynamicGRUV2Grad) = {{0, OUTPUT_DESC(dw_input)},  {1, OUTPUT_DESC(dw_
 REG_ADPT_DESC(DynamicGRUV2Grad, kNameDynamicGRUV2Grad, ADPT_DESC(DynamicGRUV2Grad))
 
 // CommonLSTM
-INPUT_MAP(CommonLSTM) = {{1, INPUT_DESC(x)},
-                         {2, INPUT_DESC(w)},
-                         {3, INPUT_DESC(r)},
-                         {4, INPUT_DESC(b)},
-                         {5, INPUT_DESC(sequence_lens)},
-                         {6, INPUT_DESC(initial_h)},
-                         {7, INPUT_DESC(initial_c)},
-                         {8, INPUT_DESC(p)}};
+INPUT_MAP(CommonLSTM) = {
+  {1, INPUT_DESC(x)},         {2, INPUT_DESC(w)},         {3, INPUT_DESC(r)}, {4, INPUT_DESC(b)},
+  {5, INPUT_DESC(initial_h)}, {6, INPUT_DESC(initial_c)}, {7, INPUT_DESC(p)}, {8, INPUT_DESC(sequence_lens)}};
 ATTR_MAP(CommonLSTM) = {
   {"activation_alpha", ATTR_DESC(activation_alpha, AnyTraits<std::vector<float>>())},
   {"activation_beta", ATTR_DESC(activation_beta, AnyTraits<std::vector<float>>())},
