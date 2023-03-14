@@ -296,7 +296,7 @@ def qr(input, mode='reduced'):
         ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([[20., -31, 7], [4, 270, -90], [-8, 17, -32]]), mstype.float32)
