@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,10 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   // Asynchronously copy device memory to host side.
   bool AsyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr, size_t stream_id) const;
 
+ protected:
+  bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
+  bool CopyHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
+
  private:
   bool SyncDeviceToHostAndConvertFormat(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const;
   bool ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const;
@@ -91,6 +95,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   void BindDevice() const;
   void CopyHostToDevice(const void *src, uint64_t size) const;
   void CopyDeviceToHost(void *dst, uint64_t size) const;
+  bool CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
+                             bool host_to_device) const;
 
   // The 'const' for this class is irrational, but I abide by it
   int64_t GetGroupsWithCache() const;

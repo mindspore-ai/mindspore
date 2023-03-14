@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
+#include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -186,11 +187,22 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "SyncStream Finish!";
 }
 
+bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, size_t size, bool async,
+                                           size_t stream_id) const {
+  return CopyBetweenHostDevice(dst, src, size, async, stream_id, false);
+}
+
+bool AscendDeviceAddress::CopyHostToDevice(void *dst, const void *src, size_t size, bool async,
+                                           size_t stream_id) const {
+  return CopyBetweenHostDevice(dst, src, size, async, stream_id, true);
+}
+
 bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   BindDevice();
   SyncStream();
+  MoveToDevice(false);
   CopyDeviceToHost(host_ptr, size);
   return true;
 }
@@ -199,6 +211,7 @@ bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) co
   MS_EXCEPTION_IF_NULL(host_ptr);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   BindDevice();
+  MoveToDevice(false);
   CopyHostToDevice(host_ptr, size);
   return true;
 }
@@ -212,6 +225,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   }
   BindDevice();
   SyncStream();
+  MoveToDevice(false);
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
@@ -394,6 +408,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     return true;
   }
   BindDevice();
+  MoveToDevice(false);
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
@@ -530,6 +545,7 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   }
 
   BindDevice();
+  MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -551,6 +567,8 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
 bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
                                             const void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
+  BindDevice();
+  MoveToDevice(false);
   MS_ERROR_IF_NULL(ptr_);
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   if (stream == nullptr) {
@@ -558,7 +576,6 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, siz
   }
   MS_ERROR_IF_NULL(stream);
 
-  BindDevice();
   auto ret = aclrtMemcpyAsync(ptr_, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
@@ -570,11 +587,11 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, siz
 bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
                                             void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
+  BindDevice();
+  MoveToDevice(false);
   MS_ERROR_IF_NULL(ptr_);
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
-
-  BindDevice();
   auto ret = aclrtMemcpyAsync(host_ptr, size, ptr_, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
@@ -636,6 +653,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
 
 void AscendDeviceAddress::ClearDeviceMemory() {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  (void)Wait();
   if (offload_ptr_ != nullptr) {
     auto device_context = GetDeviceContext();
     MS_EXCEPTION_IF_NULL(device_context);
@@ -675,9 +693,37 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size) const
   }
 }
 
+bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
+                                                bool host_to_device) const {
+  MS_EXCEPTION_IF_NULL(dst);
+  MS_EXCEPTION_IF_NULL(src);
+  auto copy_kind = host_to_device ? ACL_MEMCPY_HOST_TO_DEVICE : ACL_MEMCPY_DEVICE_TO_HOST;
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
+  BindDevice();
+  auto ret = aclrtMemcpyAsync(dst, size, src, size, copy_kind, stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
+    return false;
+  }
+  if (async) {
+    auto record_event = std::make_shared<AscendEvent>();
+    record_event->set_record_stream(stream);
+    record_event->RecordEvent();
+    swap_event_.device_event_ = record_event;
+  } else {
+    if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
+      MS_LOG(ERROR) << "Sync default stream failed.";
+      return false;
+    }
+  }
+  return true;
+}
+
 AscendDeviceAddress::~AscendDeviceAddress() {
   try {
     ClearDeviceMemory();
+    LoadableDeviceAddress::ReleaseResource();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "AscendDeviceAddress destructor failed: " << e.what();
   } catch (...) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,13 +343,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
       }
     } else {
       // Move the device ptr from device_tensor to tensor_device_address.
-      tensor_device_address->set_ptr(device_tensor->GetMutablePtr());
-      tensor_device_address->set_from_mem_pool(device_tensor->from_mem_pool());
-      tensor_device_address->SetOffloadPtr(device_tensor->GetOffloadPtr());
-      tensor_device_address->set_deleter(device_tensor->deleter());
-      device_tensor->set_ptr(nullptr);
-      device_tensor->set_from_mem_pool(false);
-      device_tensor->SetOffloadPtr(nullptr);
+      device_tensor->Swap(tensor_device_address.get());
     }
   }
 

@@ -19,6 +19,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
@@ -60,9 +61,14 @@ class BACKEND_EXPORT SwapManager {
   std::vector<void *> AllocDeviceContinuousMemSimply(const std::vector<size_t> &size_list);
   void *AllocHostMemorySimply(const size_t &size);
   bool EnoughFileSpace(const size_t &size);
+  size_t GetSizeLevel(size_t size) const;
 
   template <class Input, class Output>
   bool TryAllocate(std::queue<const DeviceAddress *> queue, const Input &input,
+                   Output (SwapManager::*allocate_func)(const Input &), const std::function<bool(Output)> &success,
+                   Output *output);
+  template <class Input, class Output>
+  bool SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> &swap_type, size_t total_size, const Input &input,
                    Output (SwapManager::*allocate_func)(const Input &), const std::function<bool(Output)> &success,
                    Output *output);
 
@@ -76,7 +82,9 @@ class BACKEND_EXPORT SwapManager {
   struct compare {
     bool operator()(const DeviceAddressPtr &l, const DeviceAddressPtr &r) const { return l->GetSize() < r->GetSize(); }
   };
-  std::priority_queue<DeviceAddressPtr, std::vector<DeviceAddressPtr>, compare> swappable_tensors_;
+  std::vector<std::vector<DeviceAddressPtr>> swappable_tensors_;
+  HashSet<DeviceAddressPtr> all_swappable_tensors_;
+  const size_t size_level_num_{8};
   std::mutex swapping_tensors_device_mutex_;
   std::queue<const DeviceAddress *> swapping_tensors_device_;
   std::mutex swapping_tensors_host_mutex_;

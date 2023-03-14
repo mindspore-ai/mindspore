@@ -52,21 +52,21 @@ class BACKEND_EXPORT IOHandle {
   ~IOHandle() = default;
   bool DeleteSwapFile(const std::string &file_name) const;
   bool CreateSwapFile(const std::string &file_name) const;
+  void LoadAio(const std::string &aio_shared_lib_name, const std::string &instance_func_name);
   bool Read(const std::string &file_name, void *data, size_t byte_num);
   bool Write(const std::string &file_name, const void *data, size_t byte_num);
   bool ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token);
   bool WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token);
   bool Wait(AsyncIOToken sync_token);
 
+  void set_swap_path(const std::string &swap_path) { swap_path_ = swap_path; }
+
  private:
   std::string GetSwapFileWholeName(const std::string &file_name) const;
 
  private:
-  bool use_aio_{false};
-  size_t aio_block_size_{0};
-  size_t aio_queue_depth_{0};
   std::string swap_path_;
-  std::shared_ptr<AsyncIO> aio_{nullptr};
+  AsyncIO *aio_{nullptr};
 };
 using IOHandlePtr = std::shared_ptr<IOHandle>;
 }  // namespace device
