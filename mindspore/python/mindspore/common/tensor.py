@@ -2009,7 +2009,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
                 computation on empty slice. Default: None.
-            where (bool Tensor, optional):
+            where (Tensor[bool], optional):
                 A boolean tensor which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
                 is passed, initial must also be provided. Default: True.
@@ -3858,7 +3858,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
            \end{array}
 
         Args:
-            A (Tensor) - The m by k matrix equivalent to `a` in above.
+            A (Tensor): The m by k matrix equivalent to `a` in above.
                 The input tensor whose data type is float16, float32 or float64.
 
         Returns:

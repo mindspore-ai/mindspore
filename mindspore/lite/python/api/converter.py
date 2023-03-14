@@ -567,24 +567,24 @@ class Converter:
                 `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
                 For example, "/home/user/model.cfg". Default: "".
 
-            Raises:
-                TypeError: `fmk_type` is not a FmkType.
-                TypeError: `model_file` is not a str.
-                TypeError: `output_file` is not a str.
-                TypeError: `weight_file` is not a str.
-                TypeError: `config_file` is not a str.
-                RuntimeError: `model_file` does not exist.
-                RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
-                RuntimeError: `config_file` is not "", but `config_file` does not exist.
-                RuntimeError: converter model failed.
+        Raises:
+            TypeError: `fmk_type` is not a FmkType.
+            TypeError: `model_file` is not a str.
+            TypeError: `output_file` is not a str.
+            TypeError: `weight_file` is not a str.
+            TypeError: `config_file` is not a str.
+            RuntimeError: `model_file` does not exist.
+            RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
+            RuntimeError: `config_file` is not "", but `config_file` does not exist.
+            RuntimeError: converter model failed.
 
-            Examples:
-                >>> import mindspore_lite as mslite
-                >>> converter = mslite.Converter()
-                >>> converter.converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
-                ...                     "mobilenet_v2_1.0_224.tflite")
-                CONVERT RESULT SUCCESS:0
-                >>> # mobilenet_v2_1.0_224.tflite.ms model will be generated.
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> converter = mslite.Converter()
+            >>> converter.converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            ...                     "mobilenet_v2_1.0_224.tflite")
+            CONVERT RESULT SUCCESS:0
+            >>> # mobilenet_v2_1.0_224.tflite.ms model will be generated.
         """
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)
