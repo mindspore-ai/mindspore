@@ -1383,11 +1383,7 @@ def size(input_x):  # pylint: disable=redefined-outer-name
 
 def shape(input_x):
     """
-    Returns the shape of the input tensor. This operation is used in static shape cases.
-
-    static shape: A shape that can be obtained without running the graph. It is an inherent property of tensor and
-    may be unknown. The static shape information can be completed by artificial setting.
-    No matter what the input of the graph is, the static shape is not affected.
+    Returns the shape of the input tensor.
 
     Args:
         input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
