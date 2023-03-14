@@ -719,6 +719,9 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
   }
 
+  // enable overflow detection
+  (*ge_options)["ge.exec.overflow"] = "1";
+
   UseOpDebugConfig(ge_options);
 }
 
