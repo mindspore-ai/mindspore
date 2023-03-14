@@ -1105,21 +1105,20 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include 'train', 'test, 'valid' or 'all'. Default: 'all'.
-        language_pair (str, optional): Acceptable language_pair include ['en', 'de'], ['de', 'en'].
-            Default: ['en', 'de'].
+        usage (str, optional): Acceptable usages include 'train', 'test, 'valid' or 'all'.
+            Default: None, will read all samples.
+        language_pair (Sequence[str, str], optional): Acceptable language_pair include ['en', 'de'], ['de', 'en'].
+            Default: None, means ['en', 'de'].
         num_samples (int, optional): The number of images to be included in the dataset.
-            Default: None, all samples.
+            Default: None, will read all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the config.
-        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
-            Set the mode of data shuffling by passing in enumeration variables:
+            Default: None, will use number set in the config.
+        shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: None, means Shuffle.GLOBAL.
+            If False is provided, no shuffling will be performed.
+            If True is provided, it is the same as setting to mindspore.dataset.Shuffle.GLOBAL.
+            If Shuffle is provided, the effect is as follows:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
-
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -1133,12 +1132,13 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
-        RuntimeError: If `usage` is not 'train', 'test', 'valid' or 'all'.
-        RuntimeError: If the length of language_pair is not equal to 2.
-        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `usage` is not 'train', 'test', 'valid' or 'all'.
+        TypeError: If `language_pair` is not of type Sequence[str, str].
+        RuntimeError: If num_samples is less than 0.
+        RuntimeError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        RuntimeError: If num_samples is less than 0.
+        ValueError: If `shard_id` is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> multi30k_dataset_dir = "/path/to/multi30k_dataset_directory"
@@ -1146,11 +1146,11 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
     About Multi30k dataset:
 
-    Multi30K is a dataset to stimulate multilingual multimodal research for English-German.
-    It is based on the Flickr30k dataset, which contains images sourced from online
-    photo-sharing websites. Each image is paired with five English descriptions, which were
-    collected from Amazon Mechanical Turk. The Multi30K dataset extends the Flickr30K
-    dataset with translated and independent German sentences.
+    Multi30K is a multilingual dataset that features approximately 31,000 standardized images
+    described in multiple languages. The images are sourced from Flickr and each image comes
+    with sentence descripitions in both English and German, as well as descriptions in other
+    languages. Multi30k is used primarily for training and testing in tasks such as image
+    captioning, machine translation, and visual question answering.
 
     You can unzip the dataset files into the following directory structure and read by MindSpore's API.
 
@@ -1398,14 +1398,12 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
             Default: None, will include all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
-        shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
-            Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
-            If shuffle is False, no shuffling will be performed.
-            If shuffle is True, it is equivalent to setting `shuffle` to mindspore.dataset.Shuffle.GLOBAL.
-            Set the mode of data shuffling by passing in enumeration variables:
+        shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: None, means Shuffle.GLOBAL.
+            If False is provided, no shuffling will be performed.
+            If True is provided, it is the same as setting to mindspore.dataset.Shuffle.GLOBAL.
+            If Shuffle is provided, the effect is as follows:
 
             - Shuffle.GLOBAL: Shuffle both the files and samples.
-
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
@@ -1421,6 +1419,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> squad_dataset_dir = "/path/to/squad_dataset_file"
@@ -1428,7 +1427,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
 
     About SQuAD dataset:
 
-    Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by
+    SQuAD (Stanford Question Answering Dataset) is a reading comprehension dataset, consisting of questions posed by
     crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span,
     from the corresponding reading passage, or the question might be unanswerable.
 
