@@ -60,6 +60,7 @@ ADD_CONVERTER_TBE_OP(SqueezeV3)
 ADD_CONVERTER_TBE_OP(DynamicReduceProd)
 ADD_CONVERTER_TBE_OP(TopKV2)
 ADD_CONVERTER_TBE_OP(CommonLSTM)
+ADD_CONVERTER_TBE_OP(Swish)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
