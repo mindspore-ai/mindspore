@@ -238,12 +238,14 @@ class AsyncAbstract : public std::enable_shared_from_this<AsyncAbstract> {
     return buffer.str();
   }
 
-  bool SetPossibleResult();
+  bool SetPossibleResult(bool first);
+  void set_ignore_value(bool ignore_value) { ignore_value_ = ignore_value; }
 
  private:
   std::mutex lock_;
   AbstractBasePtr result_{nullptr};
   bool not_copy_from_other_{true};
+  bool ignore_value_{false};
   std::shared_ptr<AsyncAbstract> switchAbstract_;
 };
 
@@ -327,7 +329,7 @@ class AsyncInferTask {
   }
 
   bool HasResult() { return abstract_ptr_->HasResult(); }
-  bool SetPossibleResult() { return abstract_ptr_->SetPossibleResult(); }
+  bool SetPossibleResult(bool first) { return abstract_ptr_->SetPossibleResult(first); }
   int ready() {
     std::lock_guard<std::mutex> lock(lock_);
     return SizeToInt(ready_);
