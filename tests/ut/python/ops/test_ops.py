@@ -3858,8 +3858,7 @@ test_case_array_ops = [
         'desc_bprop': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))]
         }),
     ('Im2Col', {
-        'block': Im2Col(ksizes=[2, 2], dilations=[1, 1], strides=[2, 2],
-                        padding_mode="CALCULATED", pads=[1]),
+        'block': Im2Col(ksizes=[2, 2], dilations=[1, 1], strides=[2, 2], pads=[1]),
         'desc_inputs': [[2, 5, 16, 16]],
         'skip': ['backward']}),
     ('Col2Im', {

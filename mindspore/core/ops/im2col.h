@@ -50,10 +50,6 @@ class MIND_API Im2Col : public BaseOperator {
 
   std::vector<int64_t> get_dilations() const;
 
-  void set_pad_mode(const std::string &pad_mode);
-
-  std::string get_pad_mode() const;
-
   void set_pads(const std::vector<int64_t> &pads);
 
   std::vector<int64_t> get_pads() const;

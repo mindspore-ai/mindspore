@@ -72,14 +72,7 @@ uint32_t Im2colCpuKernel::Im2colParamCheck(CpuKernelContext &ctx) {
     KERNEL_CHECK_FALSE(VectorShapeAndValueCheck(dilations), KERNEL_STATUS_PARAM_INVALID,
                        "The size of dilations must be 1 or 2 and value > 0.");
   }
-  // padding_mode check
-  if (NotNull(ctx.GetAttr("padding_mode"))) {
-    padding_mode = ctx.GetAttr("padding_mode")->GetString();
-    KERNEL_CHECK_FALSE(std::find(padding_modes.begin(), padding_modes.end(), padding_mode) != padding_modes.end(),
-                       KERNEL_STATUS_PARAM_INVALID, "The padding_mode only support VALID, SAME and CALCULATED.");
-  }
-  // only padding_mode == "CALCULATED", to check the pads
-  if (padding_mode == "CALCULATED" && NotNull(ctx.GetAttr("pads"))) {
+  if (NotNull(ctx.GetAttr("pads"))) {
     pads = ctx.GetAttr("pads")->GetListInt();
     auto iter = std::find_if(pads.begin(), pads.end(), [&](const int64_t &item) -> bool { return (item < 0); });
     KERNEL_CHECK_FALSE(iter == pads.end(), KERNEL_STATUS_PARAM_INVALID, "The values of pads must >= 0.");
@@ -95,9 +88,9 @@ void Im2colCpuKernel::InnerCompute(int64_t c_col, T *x_ptr, T *y_ptr) {
   int64_t h_offset = (c_col / kernel_width) % kernel_height;
   int64_t c_im = c_col / kernel_height / kernel_width;
   for (int64_t h_col = 0; h_col < out_height; ++h_col) {
-    int64_t h_im = h_col * stride_height - pad_height_top + h_offset * dilation_height;
+    int64_t h_im = h_col * stride_height - pad_height + h_offset * dilation_height;
     for (int64_t w_col = 0; w_col < out_width; ++w_col) {
-      int64_t w_im = w_col * stride_width - pad_width_left + w_offset * dilation_width;
+      int64_t w_im = w_col * stride_width - pad_width + w_offset * dilation_width;
       if (is_NCHW) {
         y_ptr[(c_col * out_height + h_col) * out_width + w_col] =
           (h_im >= kValue0 && w_im >= kValue0 && h_im < input_height && w_im < input_width)
@@ -153,37 +146,18 @@ uint32_t Im2colCpuKernel::Im2colCompute(CpuKernelContext &ctx) {
   dilation_width = dilations.back();
 
   // pad distance
-  pad_height_top = kValue0;
-  pad_width_left = kValue0;
-
-  if (padding_mode == "VALID") {
-    int64_t effective_filter_h = (kernel_height - 1) * dilation_height + 1;
-    int64_t effective_filter_w = (kernel_width - 1) * dilation_width + 1;
-    out_height = (input_height - effective_filter_h + stride_height) / stride_height;
-    out_width = (input_width - effective_filter_w + stride_width) / stride_width;
-  } else if (padding_mode == "SAME") {
-    pad_height_top = (kernel_height - kValue1) / kValue2;
-    pad_width_left = (kernel_width - kValue1) / kValue2;
-    out_height = (input_height + stride_height - kValue1) / stride_height;
-    out_width = (input_width + stride_width - kValue1) / stride_width;
-  } else if (padding_mode == "CALCULATED") {
-    int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
-    if (!pads.empty() && pads.size() <= kValue2) {
-      pad_height_top = pad_h_top = pad_h_bottom = pads.front();
-      pad_width_left = pad_w_before = pad_w_after = pads.back();
-    } else if (!pads.empty() && pads.size() == kValue4) {
-      pad_height_top = pad_h_top = pads[kIndex0];
-      pad_h_bottom = pads[kIndex1];
-      pad_width_left = pad_w_before = pads[kIndex2];
-      pad_w_after = pads[kIndex3];
-    }
-    out_height = (input_height + pad_h_top + pad_h_bottom - (dilation_height * (kernel_height - kValue1) + kValue1)) /
-                   stride_height +
-                 kValue1;
-    out_width = (input_width + pad_w_before + pad_w_after - (dilation_width * (kernel_width - kValue1) + kValue1)) /
-                  stride_width +
-                kValue1;
+  pad_height = kValue0;
+  pad_width = kValue0;
+  if (!pads.empty()) {
+    pad_height = pads.front();
+    pad_width = pads.back();
   }
+  out_height =
+    (input_height + pad_height + pad_height - (dilation_height * (kernel_height - kValue1) + kValue1)) / stride_height +
+    kValue1;
+  out_width =
+    (input_width + pad_width + pad_width - (dilation_width * (kernel_width - kValue1) + kValue1)) / stride_width +
+    kValue1;
 
   KERNEL_CHECK_FALSE(total_block == out_width * out_height, KERNEL_STATUS_PARAM_INVALID,
                      "For 'Im2Col', the output shape's last dim must be equal to out_width * out_width");
