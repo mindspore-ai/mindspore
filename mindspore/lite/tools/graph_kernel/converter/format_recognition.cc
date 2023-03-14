@@ -30,7 +30,7 @@ using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 std::pair<std::string, bool> GetLiteFormat(const CNodePtr &cnode) {
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr || !prim->HasAttr("format")) {
-    return std::make_pair("unknown", false);
+    return std::make_pair(kOpFormat_NCHW, false);
   }
   auto format_attr = prim->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);

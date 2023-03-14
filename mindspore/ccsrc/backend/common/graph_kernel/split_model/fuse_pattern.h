@@ -165,5 +165,19 @@ class FuseVirtualNode : public FusePattern {
   bool Check(const AreaPtr &area) override { return area->pattern() == NodePattern::VIRTUAL; }
   bool Match(const AreaPtr &area) override;
 };
+
+namespace ascend {
+class FuseMatMul : public FusePattern {
+ public:
+  FuseMatMul() : FusePattern("matmul_depth") { direction_ = FuseDirection::BACKWARD; }
+  ~FuseMatMul() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override {
+    return dom->dom()->op() == kMatMulOpName || dom->dom()->op() == kBatchMatMulOpName;
+  }
+  bool Match(const AreaPtr &dom) override;
+};
+}  // namespace ascend
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_FUSE_PATTERN_H_

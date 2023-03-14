@@ -31,7 +31,6 @@ class BACKEND_EXPORT CallbackImpl : public Callback {
   std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
   std::string GetProcessor(const AnfNodePtr &node) override;
-  std::string GetTargetFromContext() override;
   TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
   TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
   TypeId GetInputInferType(const AnfNodePtr &node, size_t i) override;
@@ -42,6 +41,7 @@ class BACKEND_EXPORT CallbackImpl : public Callback {
   void ResetKernelInfo(const AnfNodePtr &node) override;
 
  private:
+  std::string GetTargetFromContextImpl(bool detail) override;
   void CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,
                                    std::vector<std::string> *input_formats, bool is_basic_node = false);
 };

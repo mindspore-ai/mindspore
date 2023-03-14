@@ -382,4 +382,11 @@ int64_t GkUtils::GetChannelInConvFormat(const std::string &format_string) {
   auto channel = format_string.substr(n_pos, format_string.size() - nchwc_len);
   return std::stol(channel);
 }
+
+AnfNodePtrList GkUtils::GetGraphKernelNodes(const FuncGraphPtr &func_graph) {
+  AnfNodePtrList todos = TopoSort(func_graph->output());
+  AnfNodePtrList node_list;
+  (void)std::copy_if(todos.cbegin(), todos.cend(), std::back_inserter(node_list), AnfUtils::IsGraphKernel);
+  return node_list;
+}
 }  // namespace mindspore::graphkernel

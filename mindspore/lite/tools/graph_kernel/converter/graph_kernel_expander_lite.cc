@@ -33,26 +33,9 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr TensorToValueDeco::Run(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
-  for (const auto &idx : input_idx_) {
-    if (cnode->input(idx + 1)->isa<ValueNode>()) {
-      auto value = cnode->input(idx + 1)->cast<ValueNodePtr>()->value();
-      if (value->isa<tensor::Tensor>()) {
-        auto param_value = value->cast<tensor::TensorPtr>();
-        auto int_value = static_cast<int *>(param_value->data_ptr()->data());
-        ShapeVector out_list;
-        std::transform(int_value, int_value + param_value->data_ptr()->size(), std::back_inserter(out_list), IntToLong);
-        auto new_value = std::make_shared<ValueNode>(MakeValue(out_list));
-        cnode->set_input(idx + 1, new_value);
-      }
-    }
-  }
-  return decorated_->Run(cnode);
-}
-
 AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   std::vector<std::string> format = {kOpFormat_DEFAULT};
@@ -74,7 +57,7 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
 AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
   std::unordered_set<std::string> akg_exclude_nodes = {prim::kPrimGather->name(), prim::kPrimShape->name(),
                                                        prim::kPrimConcat->name(), prim::kPrimConstantOfShape->name(),
-                                                       prim::kPrimStridedSliceOnnx->name()};
+                                                       "StridedSliceOnnx"};
   auto cnode = QuickCloneCNode(node);
   auto ret = decorated_->Run(cnode);
   if (ret == nullptr) {
@@ -164,19 +147,30 @@ bool GraphKernelExpanderLite::DisableConvTuning() {
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
-  std::vector<OpWithLevel> expand_ops_with_level = {
-    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},       {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
-    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},       {kCPUDevice, OpLevel_0, prim::kPrimSquare},
-    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},    {kCPUDevice, OpLevel_0, prim::kPrimActivation},
-    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},       {kCPUDevice, OpLevel_1, prim::kPrimExpandDims},
-    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},       {kCPUDevice, OpLevel_1, prim::kPrimSqueeze},
-    {kCPUDevice, OpLevel_1, prim::kPrimTranspose},       {kCPUDevice, OpLevel_1, prim::kPrimReshape},
-    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},       {kCPUDevice, OpLevel_1, prim::kPrimGather},
-    {kCPUDevice, OpLevel_1, prim::kPrimShape},           {kCPUDevice, OpLevel_1, prim::kPrimConcat},
-    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape}, {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
-    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion}, {kCPUDevice, OpLevel_1, prim::kPrimFusedBatchNorm},
-    {kCPUDevice, OpLevel_1, prim::kPrimInstanceNorm},    {kCPUDevice, OpLevel_1, prim::kPrimSoftmax},
-    {kCPUDevice, OpLevel_1, prim::kPrimScaleFusion}};
+  std::vector<OpWithLevel> expand_ops_with_level = {{kAllTarget, OpLevel_0, prim::kPrimSquare},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimSqueeze},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimTranspose},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimReshape},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimGather},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimShape},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimConcat},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimFusedBatchNorm},
+                                                    {kAllTarget, OpLevel_1, prim::kPrimSoftmax},
+                                                    // cpu device
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimSubFusion},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimReduceFusion},
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimActivation},
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimDivFusion},
+                                                    {kCPUDevice, OpLevel_0, prim::kPrimExpFusion},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimUnsqueeze},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimConstantOfShape},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimLayerNormFusion},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimInstanceNorm},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimStridedSlice},
+                                                    {kCPUDevice, OpLevel_1, prim::kPrimScaleFusion}};
   const auto &flags = GraphKernelFlags::GetInstance();
   auto conv_tuning_op_list = ConvTuningExpanderOps();
   if (DisableConvTuning()) {
@@ -230,8 +224,8 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimShape->name(), {FixFormatDeco::Creator}},
     {prim::kPrimReshape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
     {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
-    {prim::kPrimTranspose->name(), {TensorToValueDeco::GetCreator({1}), InputToAttrDeco::Creator}},
-    {prim::kPrimGather->name(), {TensorToValueDeco::GetCreator({2}), InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimTranspose->name(), {InputToAttrDeco::Creator}},
+    {prim::kPrimGather->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
     {prim::kPrimConcat->name(), {FixFormatDeco::Creator}},
     {prim::kPrimStridedSlice->name(), {FixFormatDeco::Creator}},
     {prim::kPrimConv2DFusion->name(), {SubstituteConv2D::Creator}},
@@ -247,7 +241,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
 }
 
 void GraphKernelExpanderLite::PreProcessAllNode(const CNodePtr &node) {
-  if (!AnfUtils::IsGraphKernel(node)) {
+  if (Callback::Instance()->GetTargetFromContext() == "CPU" && !AnfUtils::IsGraphKernel(node)) {
     BasicOpInferShape().InferShape(node);
   }
 }

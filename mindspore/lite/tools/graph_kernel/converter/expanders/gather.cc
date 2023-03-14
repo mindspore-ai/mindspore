@@ -31,7 +31,7 @@ class Gather : public OpDesc {
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     const auto &input_y = inputs[1];
-    auto axis = GetValue<std::vector<int64_t>>(attrs_["axis"]);
+    auto axis = GetAxisList(attrs_["axis"]);
     auto result = gb.Gather(input_x, input_y, axis[0]);
     return {result};
   }

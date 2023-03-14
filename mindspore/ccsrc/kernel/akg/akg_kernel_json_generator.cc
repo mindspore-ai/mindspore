@@ -22,11 +22,13 @@
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "kernel/oplib/oplib.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "runtime/hardware/device_context_manager.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+#include "kernel/oplib/oplib.h"
+#include "runtime/hardware/device_context_manager.h"
+#endif
 
 namespace mindspore::graphkernel {
 using kernel::OpAttr;
@@ -1121,7 +1123,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
 }
 
 namespace {
-bool GetCpuInfo(nlohmann::json *target_info) {
+void GetCpuInfo(nlohmann::json *target_info) {
   const auto &flags = GraphKernelFlags::GetInstance();
   std::string target_os = flags.target_os;
   std::string arch = flags.cpu_arch;
@@ -1174,17 +1176,17 @@ bool GetCpuInfo(nlohmann::json *target_info) {
   }
 
   (*target_info)[kJsonKeySystem] = target_os;
-  (*target_info)[kJsonKeyCpuArch] = arch;
+  (*target_info)[kJsonKeyArch] = arch;
   (*target_info)[kJsonKeyCpuFeature] = feature;
   if (!type.empty()) {
     (*target_info)[kJsonKeyCpuType] = type;
   }
-  return true;
+  return;
 }
 }  // namespace
 
 void TargetInfoSetter::GetTargetInfo() {
-  auto target = Callback::Instance()->GetTargetFromContext();
+  auto target = Callback::Instance()->GetTargetFromContext(true);
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (target == kGPUDevice) {
     const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -1198,17 +1200,23 @@ void TargetInfoSetter::GetTargetInfo() {
     if (major_version == -1 || minor_version == -1 || sm_count == -1) {
       has_info_ = false;
     } else {
-      has_info_ = true;
       (target_info_)[kJsonKeyComputeCapability] = std::to_string(major_version) + "." + std::to_string(minor_version);
       (target_info_)[kJsonKeySmCount] = sm_count;
     }
     return;
   }
 #endif
+
   if (target == kCPUDevice) {
-    has_info_ = GetCpuInfo(&target_info_);
+    GetCpuInfo(&target_info_);
     return;
   }
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  // ascend
+  target_info_[kJsonKeyArch] = target;
+#else
+  has_info_ = false;
+#endif
 }
 
 void TargetInfoSetter::SetTargetInfo(nlohmann::json *kernel_info) const {

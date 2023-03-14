@@ -66,10 +66,14 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return kernel::GetProcessorStr(node); }
 
-std::string CallbackImpl::GetTargetFromContext() {
+std::string CallbackImpl::GetTargetFromContextImpl(bool detail) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  const auto &target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (detail && target == kAscendDevice) {
+    return "Ascend910";
+  }
+  return target;
 }
 
 void CallbackImpl::CollectInputTypesAndFormats(const AnfNodePtr &node, std::vector<TypeId> *input_types,

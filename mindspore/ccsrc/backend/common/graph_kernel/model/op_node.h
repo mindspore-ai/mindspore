@@ -272,6 +272,7 @@ class GatherOp : public OpaqueOp {
   NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
 
  protected:
+  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *input_abstract_ptr) override;
   template <typename TM>
   tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };

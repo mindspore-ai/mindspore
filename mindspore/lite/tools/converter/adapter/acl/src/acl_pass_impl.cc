@@ -53,6 +53,7 @@
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/adapter/acl/src/acl_custom_opp_installer.h"
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 
 namespace mindspore {
 namespace opt {
@@ -894,6 +895,15 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Deparse graph failed.";
     return false;
   }
+
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (param_->device.find("Ascend") != std::string::npos) {
+    if (GraphKernelOptimize(func_graph, param_) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+      return false;
+    }
+  }
+#endif
 
   if (BuildGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Build graph failed.";

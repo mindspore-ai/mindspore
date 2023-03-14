@@ -44,34 +44,6 @@ class FuseReduceBwd : public FusePattern {
   }
 };
 
-class FuseMatMul : public FusePattern {
- public:
-  FuseMatMul() : FusePattern("matmul_depth") {}
-  ~FuseMatMul() = default;
-
- protected:
-  bool Check(const AreaPtr &dom) override {
-    return dom->IsAlive() && (dom->dom()->op() == kMatMulOpName || dom->dom()->op() == kBatchMatMulOpName);
-  }
-  bool Match(const AreaPtr &dom) override {
-    auto dom_name = dom->dom()->op();
-    for (auto &a : dom->users()) {
-      if (!a->IsAlive()) {
-        continue;
-      }
-      auto user_name = a->dom()->op();
-      if (((dom_name == kMatMulOpName &&
-            (user_name == kAddNOpName || user_name == kTensorAddOpName || user_name == kCastOpName)) ||
-           (dom_name == kBatchMatMulOpName && a->pattern() == NodePattern::ELEMWISE)) &&
-          !HasCircle(dom, a)) {
-        (void)fused_areas_.emplace_back(a);
-      }
-    }
-    direction_ = FuseDirection::BACKWARD;
-    return !fused_areas_.empty();
-  }
-};
-
 class FuseTransdata : public FusePattern {
  public:
   FuseTransdata() : FusePattern("transdata") {}

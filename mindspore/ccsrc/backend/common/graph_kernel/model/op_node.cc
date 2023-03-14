@@ -514,15 +514,8 @@ std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &inputs, con
   const auto &value = attrs.find("shape")->second;
   std::vector<int64_t> res;
   if (value->isa<ValueSequence>()) {
-    auto valueseq = value->cast<ValueSequencePtr>();
-    if (valueseq->type()->type_id() == TypeId::kNumberTypeInt32) {
-      auto shp = GetValue<std::vector<int32_t>>(value);
-      (void)std::transform(shp.begin(), shp.end(), std::back_inserter(res), IntToLong);
-      return {res};
-    } else if (valueseq->type()->type_id() == TypeId::kNumberTypeInt64) {
-      res = GetValue<std::vector<int64_t>>(value);
-      return {res};
-    }
+    res = GetValue<std::vector<int64_t>>(value);
+    return {res};
   } else if (value->isa<tensor::Tensor>()) {
     auto tvalue = value->cast<tensor::TensorPtr>();
     if (tvalue->data_type_c() == TypeId::kNumberTypeInt32) {
@@ -649,6 +642,12 @@ std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
   }
   new_shape.push_back(accu);
   return new_shape;
+}
+
+void GatherOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *input_abstract_ptr) {
+  if (primitive->HasAttr("axis")) {
+    (void)input_abstract_ptr->emplace_back(primitive->GetAttr("axis")->ToAbstract());
+  }
 }
 
 template <typename TM>

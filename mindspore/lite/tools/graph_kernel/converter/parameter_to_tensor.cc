@@ -18,18 +18,13 @@
 namespace mindspore::graphkernel {
 bool ParameterToTensor::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->output());
-  auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, true);
-    func_graph->set_manager(mng);
-  }
   for (auto &node : todos) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
       continue;
     }
 
-    for (size_t idx = 1; idx < cnode->inputs().size(); idx++) {
+    for (size_t idx = 1; idx < cnode->size(); idx++) {
       if (cnode->input(idx)->isa<Parameter>()) {
         auto default_param = cnode->input(idx)->cast<ParameterPtr>()->default_param();
         if (default_param == nullptr) {
@@ -41,7 +36,7 @@ bool ParameterToTensor::Run(const FuncGraphPtr &func_graph) {
         }
         auto value = NewValueNode(param_value);
         value->set_abstract(param_value->ToAbstract());
-        (void)mng->Replace(cnode->input(idx), value);
+        cnode->set_input(idx, value);
       }
     }
   }

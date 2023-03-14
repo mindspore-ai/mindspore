@@ -112,6 +112,7 @@
 #include "src/common/log_util.h"
 #include "src/common/string_utils.h"
 #include "src/common/config_infos.h"
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/optimizer/fusion/reshape_like_operator_ablation.h"
@@ -815,6 +816,16 @@ STATUS AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared
     MS_LOG(ERROR) << "optimizer failed.";
     return RET_NULL_PTR;
   }
+
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (param->device.find("Ascend") == std::string::npos) {
+    if (GraphKernelOptimize(main_graph, param) != RET_OK) {
+      MS_LOG(ERROR) << "Run graphkernel optimization failed.";
+      return RET_NULL_PTR;
+    }
+  }
+#endif
+
   return RET_OK;
 }
 }  // namespace mindspore::lite

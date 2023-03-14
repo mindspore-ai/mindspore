@@ -27,14 +27,6 @@
 #include "backend/common/graph_kernel/model/lite_graph.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 
-namespace mindspore::prim {
-GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
-GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
-GVAR_DEF(PrimitivePtr, kPrimStridedSliceOnnx, std::make_shared<Primitive>("StridedSliceOnnx"));
-GVAR_DEF(PrimitivePtr, kPrimSolveTriangular, std::make_shared<Primitive>("SolveTriangular"));
-GVAR_DEF(PrimitivePtr, kPrimLU, std::make_shared<Primitive>("LU"));
-}  // namespace mindspore::prim
-
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
@@ -144,6 +136,11 @@ class GkUtils {
    *     16
    */
   static int64_t GetChannelInConvFormat(const std::string &format_string);
+
+  /**
+   * @brief Get all graphkernel's nodes in topo order.
+   */
+  static AnfNodePtrList GetGraphKernelNodes(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_
