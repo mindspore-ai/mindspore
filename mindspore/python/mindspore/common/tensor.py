@@ -754,6 +754,22 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return self.slice_num_of_persistent_data_
 
+    def histc(self, bins=100, min=0., max=0.):
+        """
+        For details, please refer to :func:`mindspore.ops.histc`.
+        """
+        self._init_check()
+        validator.check_value_type('min', min, (int, float,), 'Tensor.histc')
+        validator.check_value_type('max', max, (int, float,), 'Tensor.histc')
+        return tensor_operator_registry.get('histc')(self, bins, float(min), float(max))
+
+    def geqrf(self):
+        """
+        For details, please refer to :func:`mindspore.ops.geqrf`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('geqrf')(self)
+
     def slice_shape_of_persistent_data(self):
         """
         Get slice shape of tensor after cut to slice size.
