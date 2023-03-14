@@ -76,6 +76,12 @@ ATTR_MAP(SigmoidGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SigmoidGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(SigmoidGrad, kNameSigmoidGrad, ADPT_DESC(SigmoidGrad))
 
+// Swish
+INPUT_MAP(Swish) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Swish) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Swish) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Swish, kSiLUOpName, ADPT_DESC(Swish))
+
 // HardSwish
 INPUT_MAP(HardSwish) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(HardSwish) = EMPTY_ATTR_MAP;
