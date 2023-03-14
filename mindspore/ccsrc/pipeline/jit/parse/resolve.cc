@@ -76,6 +76,7 @@ struct AnfDumpHandlerRegister {
 }  // namespace
 
 abstract::AbstractBasePtr MsClassObject::ToAbstract() {
+  py::gil_scoped_acquire acquire;
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<MsClassType>());
   AbstractBasePtrList args_spec_list = {abs_scalar};
@@ -104,6 +105,7 @@ static inline bool IsSupportedCreateInstanceType(const py::object &obj) {
 }
 
 abstract::AbstractBasePtr ClassType::ToAbstract() {
+  py::gil_scoped_acquire acquire;
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<ClassType>(), std::make_shared<TypeType>());
 
