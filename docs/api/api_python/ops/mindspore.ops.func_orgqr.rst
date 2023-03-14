@@ -12,7 +12,8 @@ mindspore.ops.orgqr
     .. math::
         H_{1} H_{2} \ldots H_{k} \quad \text { with } \quad H_{j}=\mathrm{I}_{M}-\tau_{j} w_{j} w_{j}^{\mathrm{H}}
 
-    其中：:math:`\mathrm{I}_{M}` 是 :math:`M` 维单位矩阵。当 :math:`w` 是复数的时候，:math:`w^{\mathrm{H}}` 是共轭转置，否则是一般转置。输出矩阵的shape与输入矩阵 `input` 相同。    
+    其中：:math:`\mathrm{I}_{M}` 是 :math:`M` 维单位矩阵。当 :math:`w` 是复数的时候，:math:`w^{\mathrm{H}}` 是共轭转置，否则是一般转置。输出矩阵的shape与输入矩阵 `input` 相同。
+    :math:`tau` 即输入 `input2` 。
 
     参数：
         - **input** (Tensor) - shape :math:`(*, M, N)` 的Tensor，表示二维或者三维矩阵。数据类型为float32、float64、complex64或者complex128。
