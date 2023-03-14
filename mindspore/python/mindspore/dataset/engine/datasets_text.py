@@ -1442,6 +1442,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
     For SQuAD 1.1:
 
     .. code-block::
+
         .
         └── SQuAD1
              ├── train-v1.1.json
@@ -1450,6 +1451,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
     For SQuAD 2.0:
 
     .. code-block::
+
         .
         └── SQuAD2
              ├── train-v2.0.json
