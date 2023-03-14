@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,10 @@ void *GetOffloadPtr(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   const auto data_size = host_tensor->Size();
   const trans::TypeIdArgs type_args{host_tensor->data_c(), shape_size, host_tensor->data_type(),
                                     device_tensor->type_id(), data_size};
-  auto offload_ptr = device_context->device_res_manager_->AllocateOffloadMemory(device_tensor->GetSize());
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto swap_manager = device_context->device_res_manager_->swap_manager();
+  MS_EXCEPTION_IF_NULL(swap_manager);
+  auto offload_ptr = swap_manager->AllocHostMemory(device_tensor->GetSize());
   MS_EXCEPTION_IF_NULL(offload_ptr);
   bool trans_ret = trans::TransDataType(type_args, offload_ptr);
   if (!trans_ret) {
@@ -81,13 +84,10 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
-  if (IsDataTakenOverByMemOffload(device_context)) {
-    device_tensor->SetOffloadPtr(GetOffloadPtr(host_tensor, device_tensor, device_context));
-    return;
-  }
+  const bool taken_over_by_swap_manager = IsDataTakenOverByMemOffload(device_context);
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), allocator_type, 0);
-  if ((device_tensor->GetPtr() == nullptr) &&
+  if (!taken_over_by_swap_manager && (device_tensor->GetPtr() == nullptr) &&
       (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
@@ -126,8 +126,11 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
     if (node->isa<ValueNode>()) {
       host_shape = real_host_tensor->shape();
     }
-    if (!device_tensor->SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type, real_host_tensor->data_c(),
-                                         real_host_tensor->device_info().host_format_)) {
+    if (taken_over_by_swap_manager) {
+      device_tensor->SetStorageInfo({GetOffloadPtr(real_host_tensor, device_tensor, device_context), ""});
+    } else if (!device_tensor->SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type,
+                                                real_host_tensor->data_c(),
+                                                real_host_tensor->device_info().host_format_)) {
       std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
                                ", host tensor size: " + std::to_string(host_tensor_size) +
                                ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +

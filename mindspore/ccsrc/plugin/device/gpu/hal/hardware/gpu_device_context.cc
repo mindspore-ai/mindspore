@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License"){}
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/adapter/expander.h"
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
 
 namespace mindspore {
 namespace device {
@@ -143,8 +144,8 @@ void GPUDeviceResManager::Initialize() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
-    auto_mem_offload_ = std::make_shared<MindRTAutoOffloadAdapter>(&GPUMemoryAllocator::GetInstance(),
-                                                                   GPUDeviceManager::GetInstance().default_stream_id());
+    swap_manager_ = std::make_shared<SwapManager>(GPUDeviceManager::GetInstance().default_stream_id(),
+                                                  &GPUMemoryAllocator::GetInstance(), &GPUPinMemPool::GetInstance());
   }
 
   // Initialize NCCL.
@@ -223,6 +224,9 @@ void *GPUDeviceResManager::AllocateMemory(size_t size) const {
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
   }
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceMemory(size);
+  }
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
@@ -248,10 +252,12 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (!BindDeviceToCurrentThread(false)) {
     return false;
   }
-  if (auto_mem_offload_ != nullptr) {
-    return auto_mem_offload_->Malloc(address);
+  void *device_ptr;
+  if (swap_manager_ != nullptr) {
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
+  } else {
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
   }
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
   if (!device_ptr) {
     return false;
   }
@@ -273,8 +279,8 @@ std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vec
     auto align_size = GPUMemoryAllocator::GetInstance().AlignMemorySize(size);
     (void)align_size_list.emplace_back(align_size);
   }
-  if (auto_mem_offload_ != nullptr) {
-    return auto_mem_offload_->MallocContinuousMem(align_size_list);
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceContinuousMem(align_size_list);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
-#include "runtime/graph_scheduler/memory_swap_node_scheduler.h"
+#include "runtime/graph_scheduler/mem_swap_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
@@ -235,7 +235,7 @@ class BACKEND_EXPORT GraphScheduler {
   ControlNodeScheduler control_node_scheduler_;
 
   // Build and link swap actor when memory offload is enabled.
-  MemorySwapNodeScheduler swap_node_scheduler_;
+  MemSwapScheduler swap_node_scheduler_;
 
 #ifdef ENABLE_RPC_ACTOR
   // Return whether the actor set has rpc actors.
