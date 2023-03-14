@@ -236,15 +236,6 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFU
                       {"half_pixel_centers", MakeValue(false)}});
   return {dx, ib->ZerosLike(size)};
 });
-REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto sigmoid_input = ib->Emit("Sigmoid", {x});
-  auto bc_dx = ib->Mul(x, dout);
-  auto bc_dy = ib->Mul(sigmoid_input, dout);
-  auto dx = ib->Emit("SigmoidGrad", {sigmoid_input, bc_dx});
-  return {ib->Add(dx, bc_dy)};
-});
 REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
   auto x = ib->GetInput(kIndex0);
   auto shp = ib->GetInput(kIndex1);

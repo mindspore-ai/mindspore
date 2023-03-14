@@ -120,12 +120,12 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->GetShape(x);
-  auto w_shape = ib->GetShape(w);
+  auto x_shape = ib->Shape(x);
+  auto w_shape = ib->Shape(w);
   auto format = GetValue<std::string>(ib->GetAttr("format"));
   auto dilation = GetValue<ShapeVector>(ib->GetAttr("dilation"));
   auto stride = GetValue<ShapeVector>(ib->GetAttr("stride"));
-  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, ib->Value<ShapeVector>(x_shape)},
+  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, x_shape},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", MakeValue(format == "NHWC" ? ConvToNHWC(dilation) : dilation)},
                       {"stride", MakeValue(format == "NHWC" ? ConvToNHWC(stride) : stride)},
@@ -138,7 +138,7 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                       {"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad", ib->GetAttr("pad")},
                       {"pad_list", ib->GetAttr("pad_list")}});
-  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, ib->Value<ShapeVector>(w_shape)},
+  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, w_shape},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", MakeValue(dilation)},
                       {"stride", MakeValue(stride)},
@@ -219,7 +219,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), res[1], res[2]);
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
     auto out_grad = ib->Emit("ScatterNd", {ind, ib->Reshape(dout0, {-1}), in_shape_1d});
-    out_grad = ib->Reshape(out_grad, ib->Emit("TensorShape", {input_x}));
+    out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
     auto grad_k = ib->ZerosLike(ib->GetInput(kIndex1));
     return {out_grad, grad_k};
   } else {

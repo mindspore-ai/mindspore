@@ -132,6 +132,15 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto tb = ib->GetAttr<bool>("transpose_b");
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
+
+  auto x_type = ib->GetDtype(x);
+  auto w_type = ib->GetDtype(w);
+  if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
+      (*w_type) == (*kComplex128)) {
+    x = ib->Emit("Conj", {x});
+    w = ib->Emit("Conj", {w});
+  }
+
   auto dout = ib->GetInput(kIndex3);
   NodePtr dx;
   NodePtr dw;
@@ -1009,56 +1018,33 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto input_shape = ib->GetShape(x);
-  NodePtr output_shape_kept_dims_p;
-  NodePtr tile_scaling_p;
-  NodePtr pack_shape_p;
-  NodePtr perm_p;
-  NodePtr invert_perm_p;
-  if (IsDynamic(input_shape)) {
-    auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-      auto input_shape = inputs.at(0);
-      auto axis = inputs.at(1);
-      auto output_shape_kept_dims = ReduceShape(input_shape, axis);
-      auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
-      auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
-      return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
-    };
-    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-      if (!invalid_indices.empty()) {
-        return {-1, -1, 2, -1, -1};
-      }
-      auto size = SizeToLong(inputs.at(0).size());
-      return {size, size, 2, size, size};
-    };
-    auto res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
-    output_shape_kept_dims_p = res[0];
-    tile_scaling_p = res[1];
-    pack_shape_p = res[2];
-    perm_p = res[3];
-    invert_perm_p = res[4];
-  } else {
-    auto output_shape_kept_dims = ReduceShape(input_shape, GetIntList(axis));
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto axis = inputs.at(1);
+    auto output_shape_kept_dims = ReduceShape(input_shape, axis);
     auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
-    auto [pack_shape, perm] = SplitShapeIndex(input_shape, GetIntList(axis));
-    auto invert_perm = InvertPermutation(perm);
-    output_shape_kept_dims_p = ib->Value(output_shape_kept_dims);
-    tile_scaling_p = ib->Value(tile_scaling);
-    pack_shape_p = ib->Value(pack_shape);
-    perm_p = ib->Value(perm);
-    invert_perm_p = ib->Value(invert_perm);
-  }
-  dout = ib->Reshape(dout, output_shape_kept_dims_p);
-  auto grad = ib->Tile(dout, tile_scaling_p);
-  auto permuted = ib->Transpose(x, perm_p);
+    auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
+    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    if (!invalid_indices.empty()) {
+      return {-1, -1, 2, -1, -1};
+    }
+    auto size = SizeToLong(inputs.at(0).size());
+    return {size, size, 2, size, size};
+  };
+  auto res = ib->ShapeCalc({x, axis}, shape_func, infer_func, {1});
+  dout = ib->Reshape(dout, res[0]);
+  auto grad = ib->Tile(dout, res[1]);
+  auto permuted = ib->Transpose(x, res[3]);
   auto permuted_shape = ib->Shape(permuted);
-  auto reshaped = ib->Reshape(permuted, pack_shape_p);
+  auto reshaped = ib->Reshape(permuted, res[2]);
   auto left = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                        {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(false)}});
   auto right = ib->Emit("CumProd", {reshaped, ib->Value<int64_t>(0)},
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
-  auto out = ib->Mul(ib->Transpose(y, invert_perm_p), grad);
+  auto out = ib->Mul(ib->Transpose(y, res[4]), grad);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";

@@ -821,10 +821,10 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BOD
 
     auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
       if (!invalid_indices.empty()) {
-        return ShapeVector(-1);
+        return {-1};
       }
       auto rank = SizeToLong(inputs[0].size());
-      return ShapeVector{rank > 2 ? (rank - 2) : 0};
+      return {rank > 2 ? (rank - 2) : 0};
     };
 
     shape = ib->ShapeCalc({x}, shape_func, infer_func, {})[0];
@@ -1305,11 +1305,23 @@ REG_BPROP_BUILDER("Padding").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Transpose").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto perm = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto tmp_perm = GetIntList(perm);
-  std::vector<int64_t> new_perm;
-  (void)std::transform(tmp_perm.begin(), tmp_perm.end(), std::back_inserter(new_perm),
-                       [&tmp_perm](const int64_t v) { return v >= 0 ? v : v + tmp_perm.size(); });
-  auto res_perm = InvertPermutation(new_perm);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto perm = inputs[0];
+    std::vector<int64_t> new_perm;
+    (void)std::transform(perm.begin(), perm.end(), std::back_inserter(new_perm),
+                         [&perm](const int64_t v) { return v >= 0 ? v : v + perm.size(); });
+    auto res_perm = InvertPermutation(new_perm);
+    return {res_perm};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    if (!invalid_indices.empty()) {
+      return {-1};
+    }
+    return {SizeToLong(inputs[0].size())};
+  };
+
+  auto res_perm = ib->ShapeCalc({perm}, shape_func, infer_func, {0})[0];
   return {ib->Transpose(dout, res_perm), ib->ZerosLike(perm)};
 });
 
