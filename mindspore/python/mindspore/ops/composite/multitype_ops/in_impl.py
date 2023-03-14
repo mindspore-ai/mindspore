@@ -20,6 +20,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops import functional as F
 from mindspore.ops.composite import base
+from ...operations._sequence_ops import InSequence
 
 in_ = base.MultitypeFuncGraph("in", True)
 """
@@ -40,6 +41,8 @@ def _number_in_tuple(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
+    if F.is_sequence_shape_unknown(y):
+        return InSequence()(x, y)
     return const_utils.scalar_in_sequence(x, y)
 
 
@@ -55,6 +58,8 @@ def _number_in_list(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
+    if F.is_sequence_shape_unknown(y):
+        return InSequence()(x, y)
     return const_utils.scalar_in_sequence(x, y)
 
 
@@ -133,6 +138,8 @@ def _tensor_in_list(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
+    if F.is_sequence_shape_unknown(y):
+        return InSequence()(x, y)
     return compile_utils.tensor_in_sequence(x, y)
 
 
@@ -148,6 +155,8 @@ def _tensor_in_tuple(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
+    if F.is_sequence_shape_unknown(y):
+        return InSequence()(x, y)
     return compile_utils.tensor_in_sequence(x, y)
 
 

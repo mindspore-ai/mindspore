@@ -87,6 +87,16 @@ def get_bprop_index(self):
     return bprop
 
 
+@bprop_getters.register(seq.InSequence)
+def get_bprop_insequence(self):
+    """Generate bprop for InSequence"""
+
+    def bprop(x, y, out, dout):
+        return (zeros_like(x), seq.SequenceZerosLike()(y))
+
+    return bprop
+
+
 @bprop_getters.register("tuple_equal")
 @bprop_getters.register("list_equal")
 def get_bprop_seq_equal(self):
