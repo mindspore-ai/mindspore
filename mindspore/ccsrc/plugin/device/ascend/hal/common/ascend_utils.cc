@@ -25,6 +25,11 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "acl/error_codes/rt_error_codes.h"
+#ifdef ASCEND_910
+#define EXPECT_ASCEND_VERSION "ascend910"
+#elif defined(ASCEND_910B)
+#define EXPECT_ASCEND_VERSION "ascend910b"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -279,15 +284,27 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
   return find_iter->second;
 }
 
-#ifdef ASCEND_910B
-const std::set<std::string> kAscend910BSocVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+#if defined(ASCEND_910) || defined(ASCEND_910B)
+constexpr auto kAscnedVersion = "Ascend910";
+const std::map<std::string, std::string> kAscendSocVersions = {
+  {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+  {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+  {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
   std::string soc_version = GetSocVersion();
-  auto iter = kAscend910BSocVersions.find(soc_version);
-  if (iter == kAscend910BSocVersions.end()) {
-    MS_LOG(EXCEPTION) << "910b soc version: " << soc_version << " can not be found in kAscend910BSocVersions.";
+  // if soc_version belongs to 310 or 710, return true
+  if (soc_version.find(kAscnedVersion) == std::string::npos) {
+    return true;
+  }
+  auto iter = kAscendSocVersions.find(soc_version);
+  if (iter == kAscendSocVersions.end()) {
+    MS_LOG(EXCEPTION) << "Soc version: " << soc_version << " can not be found in kAscendSocVersions.";
+  }
+  if (iter->second != std::string(EXPECT_ASCEND_VERSION)) {
+    MS_LOG(EXCEPTION) << "Real soc version is: " << soc_version << ", but got " << std::string(EXPECT_ASCEND_VERSION)
+                      << " from shell.";
   }
   return true;
 }();
