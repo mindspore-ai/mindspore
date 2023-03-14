@@ -13,11 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
+import sys
 import ast
-
+import inspect
 import astunparse
 from mindspore import log as logger
 from mindspore._extends.parse.namespace import CellNamespace
+from mindspore.rewrite.ast_creator_register import ast_creator_registry
 from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
@@ -200,7 +202,17 @@ class ClassDefParser(Parser):
             RuntimeError: Not support multi-targets in assign.
             RuntimeError: Only support target.value in [ast.Name] in assign node.
         """
+        def _handle_tuple(t: ast.Tuple):
+            for e in t.elts:
+                if isinstance(e, ast.Attribute):
+                    field_name = e.attr
+                    value = ast.Call(ast.Name('getattr', ast.Load()),
+                                     [ast.Name('obj', ast.Load()),
+                                      ast.Constant(value=field_name, kind=None)], [])
+                    new_assign = ast_creator_registry.get("Assign")(targets=[e], value=value)
+                    new_node_to_be_inserted.append(new_assign)
         body_index_to_be_deleted = []
+        new_node_to_be_inserted = []
         scope_checker = AstScopeChecker("self")
         for body_index, body in enumerate(bodies):
             if body_index == super_index:
@@ -218,6 +230,10 @@ class ClassDefParser(Parser):
             if len(body.targets) != 1:
                 raise RuntimeError("not support multi-targets in assign now!", father_node=body)
             target = body.targets[0]
+            if isinstance(target, ast.Tuple):
+                _handle_tuple(target)
+                body_index_to_be_deleted.append(body_index)
+                continue
             if not isinstance(target, ast.Attribute):  # only keep class member
                 body_index_to_be_deleted.append(body_index)
                 continue
@@ -232,10 +248,28 @@ class ClassDefParser(Parser):
             field_name = target.attr
             body.value = ast.Call(ast.Name('getattr', ast.Load()),
                                   [ast.Name('obj', ast.Load()),
-                                   ast.Constant(value=field_name, kind=None)], [])
+                                   ast.Constant(value=field_name, kind=None)], [], lineno=0, col_offset=0)
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
+        for n in new_node_to_be_inserted:
+            bodies.append(n)
         ClassDefParser._remove_empty_ast_in_init_func(bodies)
+
+    def handle_father_class(self, stree, node: ast.ClassDef):
+        """Handle father class."""
+        for base in node.bases:
+            parser: Parser = ParserRegister.instance().get_parser(type(base))
+            father_class = parser.process(stree, base)
+            if "Cell" not in father_class:
+                for k, m in sys.modules.items():
+                    if k in ("_ast", "ast"):
+                        continue
+                    if hasattr(m, father_class):
+                        cls = getattr(m, father_class)
+                        source_code = inspect.getsource(cls)
+                        ast_root: ast.Module = ast.parse(source_code)
+                        stree._father_class_ast.append(ast_root) # pylint: disable=protected-access
+                        break
 
     def process(self, stree: SymbolTree, node: ast.ClassDef):
         """
@@ -249,7 +283,7 @@ class ClassDefParser(Parser):
         replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
 
         stree.set_class_ast(node)
-
+        self.handle_father_class(stree, node)
         for body in node.body:
             if isinstance(body, ast.FunctionDef):
                 if body.name == "__init__":

@@ -26,9 +26,9 @@ import astunparse
 from mindspore.nn import Cell
 from mindspore import log as logger
 from mindspore.rewrite.ast_creator_register import ast_creator_registry
-from .node import Node, TreeNode, PASS_THROUGH_METHOD
+from .node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, CheckPropertyIsUsed
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -169,6 +169,10 @@ class SymbolTree(Observer, Observable):
         self._class_ast: Optional[ast.ClassDef] = None
         self._root_ast: Optional[ast.FunctionDef] = None
         self._init_func_ast: Optional[ast.FunctionDef] = None
+        self._deleted_field = {}
+        self._deleted_node = []
+        self._external_func_ast = []
+        self._father_class_ast = []
 
         # head node is always point to the first node(in source code order) of SymbolTree
         self._head = None
@@ -260,6 +264,8 @@ class SymbolTree(Observer, Observable):
         replacers.append(replacer)
         for node in stree.nodes():
             if not isinstance(node, TreeNode):
+                continue
+            if node.symbol_tree._class_ast is None:
                 continue
             sub_stree: SymbolTree = node.symbol_tree
             SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
@@ -856,6 +862,7 @@ class SymbolTree(Observer, Observable):
                 value.isolate()
                 break
         self._topo_mgr.on_erase_node(node)
+        self._deleted_node.append(node.get_name())
         return node
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
@@ -980,6 +987,13 @@ class SymbolTree(Observer, Observable):
         dump_st = SymbolTreeDumper(self)
         dump_st.dump()
 
+    def update_module_ast(self):
+        for node in self._external_func_ast:
+            self._module_ast.body.append(node)
+        for node in self._father_class_ast:
+            index = self._module_ast.body.index(self._class_ast)
+            self._module_ast.body.insert(index, node)
+
     def get_code(self) -> str:
         """
         Get source code of modified network.
@@ -991,6 +1005,7 @@ class SymbolTree(Observer, Observable):
         if self._init_func_ast:
             self._remove_unused_field()
         self._remove_duplicated_import()
+        self.update_module_ast()
         ast.fix_missing_locations(self._module_ast)
         # Find all ast.ClassDef which can be export to code
         # Replace duplicated ast.ClassDef reference in main-ClassDef
@@ -1025,7 +1040,9 @@ class SymbolTree(Observer, Observable):
             A network object.
         """
         cls = self._get_cls_through_file()
-        return cls(self._origin_network)
+        new_net = cls(self._origin_network)
+        self._merge_origin_property(new_net)
+        return new_net
 
     def set_saved_file_name(self, file_name: str):
         """Sets the filename used to save the network."""
@@ -1079,48 +1096,33 @@ class SymbolTree(Observer, Observable):
 
     def _filter_out_to_delete_field(self, to_delete_field):
         """filter out used field from `to_delete_field`"""
-        # filter _handler field
-        if to_delete_field.get("_handler"):
-            to_delete_field.pop("_handler")
-        # filter field used in node of construct
-        for node in self._nodes.values():
-            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree,
-                                        NodeType.CellContainer):
-                func: ScopedValue = node.get_func()
-                if func.scope == "self" and to_delete_field.get(func.value):
-                    to_delete_field.pop(func.value)
-            if node.get_node_type() == NodeType.CallMethod and node.get_func() == PASS_THROUGH_METHOD:
-                var_name = node.get_args()[0].value
-                if to_delete_field.get(var_name):
-                    to_delete_field.pop(var_name)
-        # filter field used in test-of-if of construct function
-        for body in self._root_ast.body:
-            if not isinstance(body, ast.If):
+        for func_def in self._class_ast.body:
+            if not isinstance(func_def, ast.FunctionDef):
                 continue
-            test = body.test
-            field_finder = FieldFinder(test)
-            to_delete_to_delete_keys = []
-            for key, _ in to_delete_field.items():
-                if field_finder.check(key):
-                    to_delete_to_delete_keys.append(key)
-            for key in to_delete_to_delete_keys:
-                to_delete_field.pop(key)
-        # filter field used in test-of-if of init function
-        for body in self._init_func_ast.body:
-            if not isinstance(body, ast.If):
-                continue
-            test = body.test
-            field_finder = FieldFinder(test)
-            to_delete_to_delete_keys = []
-            for key, _ in to_delete_field.items():
-                if field_finder.check(key):
-                    to_delete_to_delete_keys.append(key)
-            for key in to_delete_to_delete_keys:
-                to_delete_field.pop(key)
+            if func_def.name != "__init__":
+                to_delete_to_delete_keys = []
+                property_checker = CheckPropertyIsUsed(func_def)
+                for key, _ in self._deleted_field.items():
+                    if property_checker.check("self", key):
+                        to_delete_to_delete_keys.append(key)
+                        property_checker = CheckPropertyIsUsed(func_def)
+                for key in to_delete_to_delete_keys:
+                    self._deleted_field.pop(key)
+            else:
+                for body in func_def.body:
+                    if not isinstance(body, ast.If):
+                        continue
+                    test = body.test
+                    field_finder = FieldFinder(test)
+                    to_delete_to_delete_keys = []
+                    for key, _ in self._deleted_field.items():
+                        if field_finder.check(key):
+                            to_delete_to_delete_keys.append(key)
+                    for key in to_delete_to_delete_keys:
+                        self._deleted_field.pop(key)
 
     def _remove_unused_field(self):
         """remove unused field in __init__ function"""
-        to_delete_field = {}
         multi_targets = []
         for index, body in enumerate(self._init_func_ast.body):
             if not isinstance(body, ast.Assign):
@@ -1129,12 +1131,12 @@ class SymbolTree(Observer, Observable):
             for target in targets:
                 if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) \
                         and target.value.id == "self":
-                    to_delete_field[target.attr] = index
+                    self._deleted_field[target.attr] = index
                     if len(targets) > 1:
                         multi_targets.append(index)
-        self._filter_out_to_delete_field(to_delete_field)
+        self._filter_out_to_delete_field(self._deleted_field)
         for i in range(len(self._init_func_ast.body) - 1, -1, -1):
-            if i in to_delete_field.values():
+            if i in self._deleted_field.values():
                 if i in multi_targets:
                     raise RuntimeError("Can not erase field ast node in __init__ function because of multi-targets")
                 AstModifier.erase_ast_from_function(self._init_func_ast, self._init_func_ast.body[i])
@@ -1367,3 +1369,25 @@ class SymbolTree(Observer, Observable):
                     else:
                         node.get_instance()[index] = n.get_instance()
                     index += 1
+
+    def _cal_difference_set(self, input, other):
+        """Calculate different set of two sets."""
+        set1 = set(input)
+        set2 = set(other)
+        return set1 - set2
+
+    def _merge_origin_property(self, new_net):
+        """Merge property of two network."""
+        tmp = self._cal_difference_set(dir(self._origin_network), dir(new_net))
+        new_attr_names = self._cal_difference_set(tmp, self._deleted_field.keys())
+        for name in new_attr_names:
+            setattr(new_net, name, getattr(self._origin_network, name))
+        # merger cells
+        cells = self._cal_difference_set(self._origin_network.name_cells().keys(), new_net.name_cells().keys())
+        cells = self._cal_difference_set(cells, self._deleted_node)
+        for c in cells:
+            new_net.insert_child_to_cell(c, self._origin_network.name_cells()[c])
+        # merge primitives
+        primitives = self._cal_difference_set(self._origin_network._primitives.keys(), new_net._primitives.keys())
+        for p in primitives:
+            new_net._primitives[p] = self._origin_network._primitives[p]

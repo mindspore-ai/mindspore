@@ -28,6 +28,41 @@ from .ast_helpers import AstModifier
 from .ast_helpers import AstFinder
 
 
+class FunctionSymbolTreeBuilder:
+    """Create function SymbolTree"""
+    def __init__(self, network: Cell, ast_root):
+        self._origin_net = network
+        self._ast_root: ast.Module = ast_root
+        self._root_tree: Optional[SymbolTree] = None
+
+    @staticmethod
+    def _ast_transform(ast_root: ast.AST) -> ast.AST:
+        """
+        Optimize ast before parse.
+
+        Args:
+             ast_root (ast.AST): An instance of ast to be optimized.
+
+        Returns:
+             An instance of ast been optimized.
+        """
+        transform_list = [FlattenRecursiveStmt()]
+        for transformer in transform_list:
+            ast_root = transformer.transform(ast_root)
+        return ast_root
+
+    def build(self) -> SymbolTree:
+        """
+        Build SymbolTree.
+
+        Returns:
+             An instance of SymbolTree.
+        """
+        self._root_tree: SymbolTree = SymbolTree(self._origin_net, self._ast_root)
+        self._root_tree.finish_build()
+        return self._root_tree
+
+
 class SymbolTreeBuilder:
     """
     `SymbolTreeBuilder` for building a SymbolTree from network.
@@ -142,7 +177,7 @@ class SymbolTreeBuilder:
         """
 
         for node in self._root_tree.nodes():
-            if isinstance(node, TreeNode):
+            if isinstance(node, TreeNode) and node.get_instance():
                 SymbolTreeBuilder.merge_module_of_subtree(self._root_tree, node.symbol_tree)
 
     def _reduce_redundant_import(self):
