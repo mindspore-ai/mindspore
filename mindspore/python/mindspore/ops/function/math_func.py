@@ -6921,9 +6921,9 @@ def dist(input, other, p=2):
         3.1622777
     """
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'dist', 'input_x' must be a tensor, but got {type(input)}")
+        raise TypeError(f"For 'dist', 'input' must be a tensor, but got {type(input)}")
     if not isinstance(other, Tensor):
-        raise TypeError(f"For 'dist', 'input_y' must be a tensor, but got {type(other)}")
+        raise TypeError(f"For 'dist', 'other' must be a tensor, but got {type(other)}")
     z = input - other
     if z.ndim == 0:
         return ops.abs(z)
@@ -8636,23 +8636,23 @@ def rot90(input, k, dims):
     """
 
     if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError("the input input must be Tensor!")
+        raise TypeError(f"For `rot90`, the `input` must be Tensor!, but get {type(input)}.")
     if not isinstance(k, int):
-        raise TypeError("the input k must be int!")
+        raise TypeError(f"For `rot90`, the `k` must be int!, but get {type(k)}.")
     if not isinstance(dims, (list, tuple)):
-        raise TypeError("the input dims must be list or tuple!")
+        raise TypeError(f"For `rot90`, the `dims` must be list or tuple!, but get {type(dims)}.")
 
     total_dims = input.ndim
     total_rot_dims = len(dims)
 
     if total_rot_dims != 2:
-        raise ValueError("total rotation dims must be 2.")
+        raise ValueError(f"For `rot90`, total rotation dims must be 2, but get {total_rot_dims}.")
     if dims[0] == dims[1] or (dims[0] - dims[1]) == total_dims or (dims[1] - dims[0]) == total_dims:
-        raise RuntimeError("rotation dims must be different.")
+        raise RuntimeError(f"For `rot90`, rotation dims must be different, but get dim0={dims[0]}, dim1={dims[1]}.")
     if dims[0] >= total_dims or dims[0] < -total_dims:
-        raise ValueError("Rotation dim0 out of range, dim0 = {}".format(dims[0]))
+        raise ValueError(f"For `rot90`, rotation dim0 is out of range, dim0={dims[0]}.")
     if dims[1] >= total_dims or dims[1] < -total_dims:
-        raise ValueError("Rotation dim1 out of range, dim1 = {}".format(dims[1]))
+        raise ValueError(f"For `rot90`, rotation dim1 is out of range, dim1={dims[1]}.")
 
     k = (4 + (k % 4)) % 4
 
@@ -9331,11 +9331,11 @@ def trapz(y, x=None, dx=1.0, dim=-1):
     """
 
     if not isinstance(y, (Tensor, Tensor_)):
-        raise TypeError("The input y must be Tensor.")
+        raise TypeError(f"For `trapz`, the input `y` must be Tensor, but get {type(y)}.")
     if not isinstance(dx, float):
-        raise TypeError("The input dx must be float.")
+        raise TypeError(f"For `trapz`, the input `dx` must be float, but get f{type(dx)}.")
     if not isinstance(dim, int):
-        raise TypeError("The input dim must be int.")
+        raise TypeError(f"For `trapz`, the input `dim` must be int, but get {type(dim)}.")
     if not _check_is_float(y.dtype):
         y = P.Cast()(y, mstype.float32)
     _check_dim_in_range(dim, y.ndim)
@@ -9343,7 +9343,7 @@ def trapz(y, x=None, dx=1.0, dim=-1):
     if x is None:
         return trapezoid(y, dx, dim)
     if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("The input x must be Tensor.")
+        raise TypeError(f"For `trapz`, the input `x` must be Tensor, but get {type(x)}.")
     x = P.Cast()(x, mstype.float32)
     return trapezoid_tensor(y, x, dim)
 

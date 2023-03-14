@@ -1142,10 +1142,10 @@ class PoissonNLLLoss(LossBase):
         \mathcal{L}_{D} = \sum_{i = 0}^{|D|}\left( x_{i} - y_{i}\ln x_{i} + \ln{y_{i}!} \right)
 
     where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
-    :math:`x_{i}` is the `x`.
+    :math:`x_{i}` is the `input`.
 
     If `log_input` is True, use :math:`e^{x_{i}} - y_{i} x_{i}` instead of :math:`x_{i} - y_{i}\ln x_{i}`.
-    When calculating logarithms, the lower bound of `x` is set to `eps` to avoid numerical errors.
+    When calculating logarithms, the lower bound of `input` is set to `eps` to avoid numerical errors.
 
     If `full` is False, the last term :math:`\ln{y_{i}!}` will be omitted,
     otherwise the last term will be approximated using Stirling formula:
@@ -1160,22 +1160,22 @@ class PoissonNLLLoss(LossBase):
     Args:
         log_input (bool, optional): Whether use log input. Default: True.
         full (bool, optional): Whether include the Stirling approximation term in the loss calculation. Default: False.
-        eps (float, optional): Lower bound of `x` when calculating logarithms. Default: 1e-08.
+        eps (float, optional): Lower bound of `input` when calculating logarithms. Default: 1e-08.
         reduction (str, optional): Apply specific reduction method to the output:
             'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor. The shape can be any number of dimensions.
-        - **target** (Tensor) - The label Tensor which has the same shape as `x`.
+        - **input** (Tensor) - The input Tensor. The shape can be any number of dimensions.
+        - **target** (Tensor) - The label Tensor which has the same shape as `input`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `x`.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input`.
         Otherwise it is a scalar.
 
     Raises:
         TypeError: If `reduction` is not a str.
-        TypeError: If neither `x` nor `target` is a tensor.
-        TypeError: If dtype of `x` or `target` is not currently supported.
+        TypeError: If neither `input` nor `target` is a tensor.
+        TypeError: If dtype of `input` or `target` is not currently supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1198,19 +1198,19 @@ class PoissonNLLLoss(LossBase):
         self.maximum = P.Maximum()
         self.cast = P.Cast()
 
-    def construct(self, x, target):
-        _check_is_tensor('x', x, self.cls_name)
+    def construct(self, input, target):
+        _check_is_tensor('input', input, self.cls_name)
         _check_is_tensor('target', target, self.cls_name)
-        if x.ndim == 0 or target.ndim == 0:
+        if input.ndim == 0 or target.ndim == 0:
             raise ValueError(
                 "For 'PoissonNLLLoss', the inputs must be non-scalar, but got shapes: "
-                f"x: {x.shape}, target: {target.shape}"
+                f"input: {input.shape}, target: {target.shape}"
             )
-        target = self.cast(target, x.dtype)
+        target = self.cast(target, input.dtype)
         if self.log_input:
-            loss = x.exp() - target * x
+            loss = input.exp() - target * input
         else:
-            loss = x - target * ((x + self.eps).log())
+            loss = input - target * ((input + self.eps).log())
         if self.full:
             target = self.maximum(target, self.eps)
             stirling_term = (target > 1) * ((target + 0.5) * target.log() - target + get_half_ln_2_pi())
