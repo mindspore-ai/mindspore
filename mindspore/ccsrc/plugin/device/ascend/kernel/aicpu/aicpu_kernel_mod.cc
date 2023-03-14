@@ -289,6 +289,22 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "Start launch of node: " << cnode->fullname_with_scope();
 
+  // need skip, for reducesum empty input axis
+  if (need_skip_execute_) {
+    // Skip reduce if axis is a empty Tensor (shape = 0)
+    MS_LOG(INFO) << "For AICPU ,The node " << cnode->fullname_with_scope() << " Need Skip.";
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
+    rtError_t status = aclrtMemcpyAsync(outputs[0]->addr, inputs[0]->size, inputs[0]->addr, inputs[0]->size,
+                                        ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    if (status != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << cnode->fullname_with_scope();
+    }
+
+    MS_LOG(INFO) << "AICPU Execute node:" << cnode->fullname_with_scope() << " success.";
+    return true;
+  }
+
   // create asyncflag_op's event
   CreateAsyncWaitEventAndUpdateEventInfo(cnode);
 
@@ -377,6 +393,11 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   } else {
     // update output size after InferShape.
     AscendKernelMod::UpdateOutputSizeList();
+  }
+
+  need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
+  if (need_skip_execute_) {
+    return 0;
   }
 
   MS_LOG(DEBUG) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";

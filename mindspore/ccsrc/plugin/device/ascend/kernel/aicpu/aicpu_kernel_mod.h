@@ -85,6 +85,7 @@ class AicpuOpKernelMod : public AscendKernelMod {
   std::vector<int64_t> output_list_;
   rtEvent_t rt_event_ = nullptr;
   bool is_blocking_;  // is op has asyncflag
+  bool need_skip_execute_ = false;
 };
 
 using AicpuOpKernelModPtr = std::shared_ptr<AicpuOpKernelMod>;
