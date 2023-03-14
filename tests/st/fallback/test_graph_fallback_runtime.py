@@ -13,10 +13,13 @@
 # limitations under the License.
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
+import math
 import pytest
 import numpy as np
 
 import mindspore as ms
+from mindspore import nn
+from mindspore import Tensor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import ops
 from mindspore import mutable
@@ -1057,3 +1060,106 @@ def test_pyexecute_with_stub_tensor_3():
     output = net(ms.Tensor(x))
     assert isinstance(output, dict)
     assert output["100"] == 100
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_scalar_input():
+    """
+    Feature: Fallback runtime.
+    Description: The pyexecute node has scalar input.
+    Expectation: No error.
+    """
+    def _check_is_inf_nan(x):
+        if math.isinf(x) or math.isnan(x) or np.isinf(x) or np.isnan(x):
+            return True
+        return False
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return _check_is_inf_nan(x.shape[0])
+
+    net = InnerNet()
+    data = Tensor(np.random.randint(6, size=(2, 4, 3, 4, 5)), dtype=ms.float32)
+    dyn = Tensor(shape=[None, None, None, None, None], dtype=ms.float32)
+    net.set_inputs(dyn)
+    ret = net(data)
+    assert not ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_scalar_input_2():
+    """
+    Feature: Fallback runtime.
+    Description: The pyexecute node has scalar input.
+    Expectation: No error.
+    """
+    def _check_is_inf_nan(x):
+        if math.isinf(x) or math.isnan(x) or np.isinf(x) or np.isnan(x):
+            return True
+        return False
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return _check_is_inf_nan(x)
+
+    net = InnerNet()
+    ret = net(math.inf)
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_scalar_input_3():
+    """
+    Feature: Fallback runtime.
+    Description: The pyexecute node has scalar input.
+    Expectation: No error.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            shp = x.shape
+            return all(i < 3 for i in shp)
+
+    net = InnerNet()
+    data = Tensor(np.random.randint(6, size=(2, 4, 3, 4, 5)), dtype=ms.float32)
+    dyn = Tensor(shape=[None, None, None, None, None], dtype=ms.float32)
+    net.set_inputs(dyn)
+    ret = net(data)
+    assert not ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_with_scalar_input_4():
+    """
+    Feature: Fallback runtime.
+    Description: The pyexecute node has scalar input.
+    Expectation: No error.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            shp = x.shape
+            return any(i < 3 for i in shp)
+
+    net = InnerNet()
+    data = Tensor(np.random.randint(6, size=(2, 4, 3, 4, 5)), dtype=ms.float32)
+    dyn = Tensor(shape=[None, None, None, None, None], dtype=ms.float32)
+    net.set_inputs(dyn)
+    ret = net(data)
+    assert ret
