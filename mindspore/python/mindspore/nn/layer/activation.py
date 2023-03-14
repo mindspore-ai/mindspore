@@ -506,8 +506,8 @@ class RReLU(Cell):
     The activation function is defined as:
 
     .. math::
-            \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
-            {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
+        \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
+        {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
     where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
@@ -1017,7 +1017,7 @@ class PReLU(Cell):
 
     Inputs:
         - **x** (Tensor) - The input of PReLU with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, with the same dtype and shape as the `x`.

@@ -7,7 +7,9 @@ mindspore.ops.matrix_exp
 
     .. math::
 
-        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}，其中 :math:`input` 即输入 `input`。
+        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
+    
+    其中 :math:`input` 即输入 `input`。
 
     参数：
         - **input** (Tensor) - 输入Tensor，shape为 :math:`(*, n, n)` ，其中 `*` 表示0或更多的batch维。

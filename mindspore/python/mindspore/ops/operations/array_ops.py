@@ -3664,11 +3664,11 @@ class Eye(Primitive):
     Refer to :func:`mindspore.ops.eye` for more details.
 
     Inputs:
-        n (int): The number of rows of returned tensor. Constant value only.
-        m (int): The number of columns of returned tensor. Constant value only.
-        t (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
-            The data type can be bool or Number.
-            Default: None, the data type of the returned tensor is mindspore.float32.
+        - **n** (int) - The number of rows of returned tensor. Constant value only.
+        - **m** (int) - The number of columns of returned tensor. Constant value only.
+        - **t** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
+          The data type can be bool or Number.
+          Default: None, the data type of the returned tensor is mindspore.float32.
 
     Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
@@ -6247,10 +6247,10 @@ class SearchSorted(Primitive):
             if False, return the first such index. Default: False.
 
     Inputs:
-        sorted_sequence (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
-            It must contain a monotonically increasing sequence on the innermost dimension.
-        values (Tensor): The value that should be inserted.
-            The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
+        - **sorted_sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
+          It must contain a monotonically increasing sequence on the innermost dimension.
+        - **values** (Tensor) - The value that should be inserted.
+          The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
 
     Outputs:
         Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,

@@ -53,7 +53,7 @@ class Adagrad(Optimizer):
     The updating Pseudo codes are as follows:
 
     .. math::
-       \begin{aligned} \\
+        \begin{aligned} \\
             &\newline
             &\hline \\
             &\textbf{Parameters}: \text{learning rate } \gamma, \:  \text{ params } w_0, \:
@@ -73,7 +73,7 @@ class Adagrad(Optimizer):
             &\bf{return} \:  w_t \\[-1.ex]
             &\newline
             &\hline \\
-       \end{aligned}
+        \end{aligned}
 
     :math:`state\_sum` stands for the accumulated squared sum of the gradients :math:`accum`.
     :math:`g` stands for `grads`, :math:`\lambda` stands for `weight_decay`.
@@ -112,7 +112,7 @@ class Adagrad(Optimizer):
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 
-        accum (float): The starting value for `h`, must be zero or positive values. Default: 0.1.
+        accum (float): The starting value for :math:`h`, must be zero or positive values. Default: 0.1.
         learning_rate (Union[float, int, Tensor, Iterable, LearningRateSchedule]): Default: 0.001.
 
             - float: The fixed learning rate value. Must be equal to or greater than 0.
@@ -127,7 +127,7 @@ class Adagrad(Optimizer):
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
-        update_slots (bool): Whether the `h` will be updated. Default: True.
+        update_slots (bool): Whether the :math:`h` will be updated. Default: True.
         loss_scale (float): Value for the loss scale. It must be greater than 0.0. In general, use the default value.
             Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in

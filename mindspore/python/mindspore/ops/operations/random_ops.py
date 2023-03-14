@@ -720,8 +720,8 @@ class RandomChoiceWithMask(Primitive):
         seed2 (int, optional): Second seed to avoid collision. Default: 0.
 
     Inputs:
-        input_x (Tensor[bool]): The input tensor.
-            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
+        - **input_x** (Tensor[bool]) - The input tensor.
+          The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
 
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.

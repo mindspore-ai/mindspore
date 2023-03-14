@@ -5,7 +5,7 @@ mindspore.nn.BCELoss
 
     计算目标值和预测值之间的二值交叉熵损失值。
 
-    将预测值设置为 :math:`x` ，目标值设置为 :math:`y` ，输出损失设置为 :math:`\ell(x,y)` 。
+    将预测值设置为 :math:`x` ，目标值设置为 :math:`y` ，输出损失设置为 :math:`\ell(x, y)` 。
 
     则公式如下：
 
@@ -30,8 +30,8 @@ mindspore.nn.BCELoss
         - **reduction** (str) - 指定输出结果的计算方式。可选值有：'mean'，'sum'，或'none'。默认值：'mean'。
 
     输入：
-        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。数据类型必须为float16或float32。
-        - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
+        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16或float32。
+        - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
 
     输出：
         Tensor，数据类型与 `logits` 相同。如果 `reduction` 为'none'，则shape与 `logits` 相同。否则，输出为Scalar的Tensor。

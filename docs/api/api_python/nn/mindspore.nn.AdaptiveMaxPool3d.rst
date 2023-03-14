@@ -10,7 +10,7 @@ mindspore.nn.AdaptiveMaxPool3d
         - **return_indices** (bool) - 如果 `return_indices` 为True，将会输出最大值对应的索引，否则不输出索引。默认为False。
 
     输入：
-        - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N，C, D, H, W)` 的Tensor，支持的数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32、float64。
+        - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N, C, D, H, W)` 的Tensor，支持的数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32、float64。
 
     输出：
         - **y** (Tensor) - Tensor，与输入 `input` 的数据类型和维度相同。

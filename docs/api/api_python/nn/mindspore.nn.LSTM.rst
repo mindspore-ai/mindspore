@@ -17,7 +17,7 @@ mindspore.nn.LSTM
             h_t = o_t * \tanh(c_t) \\
         \end{array}
 
-    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W,b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ix}, b_{ix}` 是用于从输入 :math:`x` 转换为 :math:`i` 的权重和偏置。
+    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ix}, b_{ix}` 是用于从输入 :math:`x` 转换为 :math:`i` 的权重和偏置。
 
     详细信息可见论文 `LONG SHORT-TERM MEMORY <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ 和 `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_ 。
 
@@ -38,7 +38,7 @@ mindspore.nn.LSTM
     输入：
         - **x** (Tensor) - shape为 (seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的Tensor。
         - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为(num_directions * `num_layers`, batch_size, `hidden_size`)。`hx` 的数据类型必须与 `x` 相同。
-        - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 `(batch_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
+        - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 :math:`(batch\_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
 
     输出：
         Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。

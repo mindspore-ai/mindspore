@@ -25,7 +25,7 @@ from mindspore.nn.probability.distribution._utils.utils import check_greater_zer
 class Laplace(Distribution):
     r"""
     Laplace distribution.
-    A Laplace distribution is a continuous distribution with the range :math:`[-\inf, \inf)`
+    A Laplace distribution is a continuous distribution with the range :math:`(-\inf, \inf)`
     and the probability density function:
 
     .. math::

@@ -378,12 +378,13 @@ class AdaptiveMaxPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more details.
 
     Inputs:
-        x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
-            int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
-            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. If it is None, the output size and input size of the corresponding
-            dimension are the same.
+        - **x** (Tensor) - Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`,
+          which support int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32
+          or float64 data type.
+        - **output_size** (Union[int, tuple]) - The specified output size, which is an integer that represents depth,
+          height and width, or a tuple of three int numbers that represent depth, height and width respectively.
+          The value must be a positive integer. If it is None, the output size and input size of the corresponding
+          dimension are the same.
 
     Outputs:
         - **y** (Tensor) - Tensor, with the same number of dims and data type as the `input`.
@@ -3026,11 +3027,12 @@ class MultiMarginLoss(Primitive):
             - 'sum': the output will be summed.
 
     Inputs:
-        inputs (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
-        target (Tensor): Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
-            value of target should be non-negative, less than C.
-        weight (Tensor): The rescaling weight to each class with shape :math:`(C,)`. Data type only
-            support float16, float32 or float64.
+        - **inputs** (Tensor) - Input , with shape :math:`(N, C)`. Data type only support float32, float16
+          or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float16, float32 or float64.
 
     Outputs:
         Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
