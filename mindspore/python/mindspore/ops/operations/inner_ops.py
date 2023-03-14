@@ -112,7 +112,7 @@ class Randperm(Primitive):
         self.init_prim_io_names(inputs=[], outputs=['output'])
 
 
-class NoRepeatNGram(PrimitiveWithInfer):
+class NoRepeatNGram(Primitive):
     """
     Updates the probability of occurrence of words with its corresponding n-grams.
 
@@ -181,20 +181,6 @@ class NoRepeatNGram(PrimitiveWithInfer):
         validator.check_int(ngram_size, 1, Rel.GE, "ngram_size", self.name)
         self.ngram_size = ngram_size
         self.init_prim_io_names(inputs=['state_seq', 'log_probs'], outputs=['log_probs'])
-
-    def infer_shape(self, seq_shape, log_shape):
-        validator.check_int(len(seq_shape), 3, Rel.EQ, "rank of state_seq", self.name)
-        validator.check_int(len(log_shape), 3, Rel.EQ, "rank of log_probs", self.name)
-        validator.check("state_seq shape[0]", seq_shape[0], "log_probs shape[0]", log_shape[0], Rel.EQ, self.name)
-        validator.check("state_seq shape[1]", seq_shape[1], "log_probs shape[1]", log_shape[1], Rel.EQ, self.name)
-        validator.check("ngram_size", self.ngram_size, "state_seq shape[2] + 1", seq_shape[2] + 1, Rel.LE, self.name)
-        return log_shape
-
-    def infer_dtype(self, seq_type, log_type):
-        validator.check_type_name("seq_type", seq_type, mstype.int32, self.name)
-        valid_values = (mstype.float16, mstype.float32, mstype.float64)
-        validator.check_type_name("log_type", log_type, valid_values, self.name)
-        return log_type
 
 
 class LambApplyOptimizerAssign(PrimitiveWithInfer):
