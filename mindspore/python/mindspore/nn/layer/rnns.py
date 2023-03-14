@@ -268,9 +268,9 @@ class _DynamicGRUAscend(Cell):
         outputs, _, _, _, _, _ = self.gru(self.cast(x, self.dtype), \
                                           self.cast(self.transpose(w_ih, (1, 0)), self.dtype), \
                                           self.cast(self.transpose(w_hh, (1, 0)), self.dtype), \
-                                          self.cast(b_ih, self.dtype), \
-                                          self.cast(b_hh, self.dtype), \
-                                          None, self.cast(h_0, self.dtype))
+                                          b_ih, \
+                                          b_hh, \
+                                          None, h_0)
         if seq_length is not None:
             h = get_hidden(outputs, seq_length)
             mask = sequence_mask(seq_length, x.shape[0])

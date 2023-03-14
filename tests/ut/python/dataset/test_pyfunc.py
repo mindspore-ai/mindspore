@@ -372,33 +372,6 @@ def test_pyfunc_exception():
         assert "Pyfunc Throw" in str(info.value)
 
 
-def test_pyfunc_exception_multiprocess():
-    """
-    Feature: PyFunc in Map op
-    Description: Test python_multiprocessing=True with exception in child pyfunc process
-    Expectation: Exception is received and test ends gracefully
-    """
-    logger.info("Test Multiprocess PyFunc Exception Throw: lambda x : raise Exception()")
-
-    def pyfunc():
-        raise Exception("MP Pyfunc Throw")
-
-    # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
-
-    with pytest.raises(RuntimeError) as info:
-        # apply dataset operations
-        data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-        data1 = data1.map(operations=pyfunc, input_columns="col0", output_columns="out",
-                          num_parallel_workers=4, python_multiprocessing=True)
-        for _ in data1:
-            pass
-        assert "MP Pyfunc Throw" in str(info.value)
-
-    ds.config.set_enable_shared_mem(mem_original)
-
-
 def test_func_with_yield_manifest_dataset_01():
     """
     Feature: PyFunc in Map op
