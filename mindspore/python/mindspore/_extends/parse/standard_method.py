@@ -387,25 +387,25 @@ def minimum(x, y):
     return F.minimum(x, y)
 
 
-def tile(x, multiples):
+def tile(x, reps):
     r"""
-    Replicates an input tensor with given multiples times.
+    Replicates an input tensor with given reps times.
 
-    Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
-    output tensor has `input_x.shape[i] * multiples[i]` elements, and the values of `input_x`
-    are replicated `multiples[i]` times along the i'th dimension.
+    Creates a new tensor by replicating `input_x` `reps` times. The i'th dimension of
+    output tensor has `input_x.shape[i] * reps[i]` elements, and the values of `input_x`
+    are replicated `reps[i]` times along the i'th dimension.
 
     Note:
-        The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
+        The length of `reps` must be greater or equal to the length of dimension in `input_x`.
 
     Args:
-        multiples (tuple[int]): The parameter that specifies the number of replications,
+        reps (tuple[int]): The parameter that specifies the number of replications,
             the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
-            The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
+            The length of `reps` cannot be smaller than the length of the shape of `input_x`.
             Only constant value is allowed.
 
     Returns:
-        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
+        Tensor, has the same data type as the `input_x`. Suppose the length of `reps` is `d`,
         the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
@@ -416,9 +416,9 @@ def tile(x, multiples):
           :math:`(1*y_1, ..., x_S*y_R)`.
 
     Raises:
-        TypeError: If `multiples` is not a tuple or its elements are not all int.
-        ValueError: If the elements of `multiples` are not all greater than 0.
-        ValueError: If the length of `multiples` are smaller than the length of dimension in `input_x`.
+        TypeError: If `reps` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `reps` are not all greater than 0.
+        ValueError: If the length of `reps` are smaller than the length of dimension in `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -427,15 +427,15 @@ def tile(x, multiples):
         >>> import mindspore as ms
         >>> from mindspore import Tensor
         >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
-        >>> multiples = (2, 3)
-        >>> output = input_x.tile(multiples)
+        >>> reps = (2, 3)
+        >>> output = input_x.tile(reps)
         >>> print(output)
         [[1.  2.  1.  2.  1.  2.]
         [3.  4.  3.  4.  3.  4.]
         [1.  2.  1.  2.  1.  2.]
         [3.  4.  3.  4.  3.  4.]]
-        >>> multiples = (2, 3, 2)
-        >>> output = input_x.tile(multiples)
+        >>> reps = (2, 3, 2)
+        >>> output = input_x.tile(reps)
         >>> print(output)
         [[[1. 2. 1. 2.]
         [3. 4. 3. 4.]
@@ -450,7 +450,7 @@ def tile(x, multiples):
         [1. 2. 1. 2.]
         [3. 4. 3. 4.]]]
     """
-    return F.tile(x, multiples)
+    return F.tile(x, reps)
 
 
 def short(x):
@@ -1888,13 +1888,13 @@ def std(x, axis=None, ddof=0, keepdims=False):
     return F.tensor_pow(x_var, 0.5)
 
 
-def gather_elements(x, dim, index):
+def gather_elements(input, dim, index):
     r"""
     Gathers elements along an axis specified by dim.
 
     Refer to :func:`mindspore.ops.gather_elements` for more detail.
     """
-    return F.gather_elements(x, dim, index)
+    return F.gather_elements(input, dim, index)
 
 
 def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
@@ -2705,12 +2705,12 @@ def col2im(*inputs):
     return F.col2im(*inputs)
 
 
-def narrow(x, axis, start, length):
+def narrow(input, axis, start, length):
     """
     Returns a narrowed tensor from input tensor.
     The dimension axis is input from start to start + length.
     """
-    return F.narrow(x, axis, start, length)
+    return F.narrow(input, axis, start, length)
 
 
 def to_csr(x):
@@ -2970,11 +2970,11 @@ def negative(x):
     return F.neg(x)
 
 
-def nonzero(x):
+def nonzero(input):
     """
     Return a Tensor of the positions of all non-zero values.
     """
-    return F.nonzero(x)
+    return F.nonzero(input)
 
 
 def new_zeros(x, size, *, dtype=None):
@@ -3007,11 +3007,11 @@ def diagflat(x, offset=0):
     return F.diagflat(x, offset)
 
 
-def masked_select(x, mask):
+def masked_select(input, mask):
     """
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
     """
-    return F.masked_select(x, mask)
+    return F.masked_select(input, mask)
 
 
 def inplace_update(x, v, indices):
@@ -4169,11 +4169,11 @@ def sinh(input):
     return F.sinh(input)
 
 
-def sort(input, dim=-1, descending=False):
+def sort(input, axis=-1, descending=False):
     r"""
     Sorts the elements of the input tensor along a given dimension in ascending order by value.
     """
-    return F.sort(input, axis=dim, descending=descending)
+    return F.sort(input, axis=axis, descending=descending)
 
 
 def argsort(input, axis=-1, descending=False):
@@ -4217,25 +4217,25 @@ def frac(x):
     return F.frac(x)
 
 
-def argwhere(x):
+def argwhere(input):
     r"""
     For details, please refer to :func:`mindspore.ops.argwhere`.
     """
-    return F.argwhere(x)
+    return F.argwhere(input)
 
 
-def moveaxis(x, source, destination):
+def moveaxis(input, source, destination):
     r"""
     For details, please refer to :func:`mindspore.ops.moveaxis`.
     """
-    return F.moveaxis(x, source, destination)
+    return F.moveaxis(input, source, destination)
 
 
-def movedim(x, source, destination):
+def movedim(input, source, destination):
     r"""
     For details, please refer to :func:`mindspore.ops.movedim`.
     """
-    return F.movedim(x, source, destination)
+    return F.movedim(input, source, destination)
 
 
 def nextafter(input, other):

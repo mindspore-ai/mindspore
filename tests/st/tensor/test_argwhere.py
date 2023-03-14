@@ -20,8 +20,8 @@ from mindspore import Tensor, nn
 
 
 class Net(nn.Cell):
-    def construct(self, x):
-        return x.argwhere()
+    def construct(self, input_x):
+        return input_x.argwhere()
 
 
 @pytest.mark.level0
