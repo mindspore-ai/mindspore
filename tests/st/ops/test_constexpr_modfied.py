@@ -20,7 +20,7 @@ from mindspore import context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -37,7 +37,7 @@ def test_repeat_interleave():
             self.func = ops.repeat_interleave
 
         def construct(self, x):
-            return self.func(x, repeats=2, dim=0)
+            return self.func(x, repeats=2, axis=0)
 
     x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), ms.int32)
     expect = Tensor(
