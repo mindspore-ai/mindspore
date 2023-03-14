@@ -20,7 +20,7 @@
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_hash_table_util.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 
 namespace mindspore {

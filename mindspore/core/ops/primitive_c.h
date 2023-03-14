@@ -84,6 +84,7 @@ class MS_CORE_API OpPrimCRegisterHelper {
   /// param[in] fn The input end side operator.
   OpPrimCRegisterHelper(const std::string &kname, const OpPrimCDefineFunc &fn) {
     OpPrimCRegister::GetInstance().SetPrimCMap(kname, fn);
+    (void)id_;  // make compiler happy on macos
   }
 
   /// Destructor of OpPrimCRegisterHelper.

@@ -31,7 +31,7 @@
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "kernel/common_utils.h"
 #ifndef ENABLE_SECURITY
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
 #endif
 

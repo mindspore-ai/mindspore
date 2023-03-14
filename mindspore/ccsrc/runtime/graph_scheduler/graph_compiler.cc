@@ -32,20 +32,20 @@
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "kernel/common_utils.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "include/backend/optimizer/helper.h"
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/cpu/hal/hardware/cpu_device_context.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/anf_ir_dump.h"
 #endif
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)

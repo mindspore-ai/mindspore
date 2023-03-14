@@ -31,6 +31,7 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger_utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/tensor_stat_dump.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/csv_writer.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
         )
 else()

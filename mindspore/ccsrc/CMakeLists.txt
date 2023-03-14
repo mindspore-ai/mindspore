@@ -384,7 +384,7 @@ endif()
 
 set(BACKEND_SUB_COMP
         debug
-        profiler
+        debug/profiler
         ps
         distributed
         kernel

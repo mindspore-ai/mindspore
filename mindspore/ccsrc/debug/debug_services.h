@@ -16,10 +16,6 @@
 #ifndef MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 #define MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
 
-#ifndef OFFLINE_DBG_MODE
-#define ONLINE_DBG_MODE
-#endif
-
 #ifdef OFFLINE_DBG_MODE
 #include "base/float16.h"
 #endif
@@ -38,7 +34,7 @@
 #include <sstream>
 #include <utility>
 #include "debug/tensor_load.h"
-#include "debug/tensor_data.h"
+#include "include/backend/debug/tensor_data.h"
 
 namespace mindspore {
 class DebugServices {
@@ -448,7 +444,7 @@ class DebugServices {
 
   void SearchNodesTensors(const std::vector<std::string> &name,
                           std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list);
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
@@ -464,7 +460,7 @@ class DebugServices {
 
   void EmptyCurrentTensor();
 
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   bool DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const;
 #endif
 
@@ -473,7 +469,7 @@ class DebugServices {
   uint32_t GetPrevIteration(const std::shared_ptr<TensorData> &tensor);
 
   void ResetLoadedTensors();
-#ifdef ONLINE_DBG_MODE
+#ifndef OFFLINE_DBG_MODE
   std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
 #endif
 

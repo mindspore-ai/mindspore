@@ -48,8 +48,8 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #endif
 #include "toolchain/adx_datadump_server.h"
@@ -69,7 +69,7 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 #ifndef ENABLE_SECURITY

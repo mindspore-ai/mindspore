@@ -194,7 +194,7 @@ void CPUE2eDump::DumpParameters(const session::KernelGraph *graph, uint32_t grap
   // dump parameters
   const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
-    DumpSingleAnfNode(item, PARAMETER_OUTPUT_INDEX, dump_path);
+    DumpSingleAnfNode(item, kParameterOutputIndex, dump_path);
   }
 }
 
@@ -221,7 +221,7 @@ void CPUE2eDump::DumpConstants(const session::KernelGraph *graph, uint32_t graph
   // dump constants
   const auto value_nodes = graph->graph_value_nodes();
   for (auto &item : value_nodes) {
-    DumpSingleAnfNode(item, VALUE_NODE_OUTPUT_INDEX, dump_path);
+    DumpSingleAnfNode(item, kValueNodeOutputIndex, dump_path);
   }
 }
 

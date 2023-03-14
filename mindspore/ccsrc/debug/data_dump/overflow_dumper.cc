@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/data_dump/overflow_dumper.h"
+#include "include/backend/debug/data_dump/overflow_dumper.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/anf_runtime_algorithm.h"

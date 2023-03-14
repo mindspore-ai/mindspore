@@ -24,7 +24,7 @@
 #include <memory>
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/cpu/hal/profiler/cpu_data_saver.h"
-#include "profiler/device/data_saver.h"
+#include "include/backend/debug/profiler/data_saver.h"
 namespace mindspore {
 namespace profiler {
 namespace gpu {

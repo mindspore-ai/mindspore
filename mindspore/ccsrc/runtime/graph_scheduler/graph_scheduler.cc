@@ -42,15 +42,15 @@
 #include "distributed/cluster/topology/compute_graph_node.h"
 #endif
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "include/common/debug/common.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"

@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/utils/file_utils.h"
 

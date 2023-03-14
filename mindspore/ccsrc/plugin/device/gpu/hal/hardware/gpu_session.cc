@@ -63,14 +63,12 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/data_dump/e2e_dump.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "debug/debugger/proto_exporter.h"
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #include "debug/tensor_load.h"
-#else
-#include "debug/debugger/proto_exporter_stub.h"
 #endif
+#include "include/backend/debug/debugger/proto_exporter.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_runtime.h"
 #include "plugin/device/gpu/hal/device/gpu_stream_assign.h"
@@ -92,7 +90,7 @@
 #endif
 
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 
 namespace mindspore {

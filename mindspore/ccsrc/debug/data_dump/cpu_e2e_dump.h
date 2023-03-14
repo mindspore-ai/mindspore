@@ -20,8 +20,8 @@
 #include <map>
 #include <string>
 
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 
 namespace mindspore {
 class CPUE2eDump {

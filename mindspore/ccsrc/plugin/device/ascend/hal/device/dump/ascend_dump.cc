@@ -19,7 +19,8 @@
 #include <utility>
 #include <algorithm>
 #include <map>
-#include "debug/data_dump/tensor_stat_dump.h"
+#include "include/backend/debug/data_dump/tensor_stat_dump.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace ascend {

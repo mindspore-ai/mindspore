@@ -27,7 +27,7 @@
 #include "toolchain/prof_acl_api.h"
 #include "toolchain/slog.h"
 #include "runtime/base.h"
-#include "profiler/device/profiling.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "acl/acl_prof.h"
 
 using std::map;

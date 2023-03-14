@@ -56,7 +56,7 @@
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/anf_ir_dump.h"

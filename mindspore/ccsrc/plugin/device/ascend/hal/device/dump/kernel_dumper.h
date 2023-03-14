@@ -27,8 +27,8 @@
 #include "include/backend/kernel_graph.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
 #include "aicpu/common/aicpu_task_struct.h"
-#include "debug/data_dump/overflow_dumper.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
+#include "include/backend/debug/data_dump/overflow_dumper.h"
 
 using AddressPtr = mindspore::kernel::AddressPtr;
 using mindspore::ge::model_runner::HcclTaskInfo;

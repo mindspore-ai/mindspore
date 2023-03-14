@@ -38,7 +38,7 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/shape_utils.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 
 namespace {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 
 #include <unistd.h>
 #include <sstream>
@@ -24,7 +24,7 @@
 #include <set>
 #include <utility>
 #include <vector>
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/debug/common.h"
@@ -34,13 +34,14 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/common/utils/config_manager.h"
 #include "utils/file_utils.h"
-#include "debug/data_dump/tensor_stat_dump.h"
+#include "include/backend/debug/data_dump/tensor_stat_dump.h"
+#include "debug/data_dump/csv_writer.h"
 #include "abstract/utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 
 namespace mindspore {
@@ -440,7 +441,7 @@ void E2eDump::DumpParameters(const session::KernelGraph *graph, const std::strin
   // dump parameters
   const auto &parameters = graph->inputs();
   for (auto &item : parameters) {
-    DumpSingleAnfNode(item, PARAMETER_OUTPUT_INDEX, dump_path, trans_flag, debugger);
+    DumpSingleAnfNode(item, kParameterOutputIndex, dump_path, trans_flag, debugger);
   }
 }
 
@@ -469,7 +470,7 @@ void E2eDump::DumpConstantData(const session::KernelGraph *graph, const std::str
   }
   const auto value_nodes = graph->graph_value_nodes();
   for (auto &item : value_nodes) {
-    DumpSingleAnfNode(item, VALUE_NODE_OUTPUT_INDEX, cst_dump_path, false, debugger);
+    DumpSingleAnfNode(item, kValueNodeOutputIndex, cst_dump_path, false, debugger);
   }
 }
 

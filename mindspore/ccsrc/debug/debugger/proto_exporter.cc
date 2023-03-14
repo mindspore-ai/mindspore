@@ -21,20 +21,18 @@
 #include <utility>
 #include <algorithm>
 
-#include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "include/common/debug/anf_dump_utils.h"
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #include "include/common/debug/common.h"
-#include "debug/debugger/debugger.h"
-#include "debug/data_dump/dump_json_parser.h"
-#include "proto/debug_graph.pb.h"
+#include "include/backend/debug/debugger/debugger.h"
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "utils/anf_utils.h"
+#include "debug/debugger/debugger_utils.h"
 
 namespace mindspore {
 
@@ -340,7 +338,7 @@ std::string DebuggerProtoExporter::GetFuncGraphProtoString(const FuncGraphPtr &f
 
 debugger::ModelProto DebuggerProtoExporter::GetFuncGraphProto(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
-    return ModelProto();
+    return debugger::ModelProto();
   }
 
   InitModelInfo();

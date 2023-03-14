@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#include "debug/data_dump/tensor_stat_dump.h"
+#include "include/backend/debug/data_dump/tensor_stat_dump.h"
 
 #include <memory>
 #include <map>
-#include "utils/system/env.h"
-#include "utils/system/file_system.h"
-#include "utils/file_utils.h"
 #include "include/common/debug/common.h"
 #include "debug/debug_services.h"
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
+#include "debug/data_dump/csv_writer.h"
 
 namespace {
 constexpr auto kInput = "input";
@@ -35,64 +33,6 @@ constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
 namespace mindspore {
-bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
-  if (file_.is_open() && path == file_path_str_) {
-    return true;
-  }
-  if (file_.is_open()) {
-    CloseFile();
-  }
-  auto file_path = Common::CreatePrefixPath(path);
-  if (!file_path.has_value()) {
-    MS_LOG(WARNING) << "CreatePrefixPath failed, skipping current statistics";
-    return false;
-  }
-  // try to open file
-  std::string file_path_value = file_path.value();
-  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
-  MS_EXCEPTION_IF_NULL(fs);
-  bool first_time_opening = !fs->FileExist(file_path_value);
-  ChangeFileMode(file_path_value, S_IWUSR);
-  if (first_time_opening) {
-    // remove any possible output from previous runs
-    file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
-  } else {
-    file_.open(file_path_value, std::ios::out | std::ios::app | std::ios::binary);
-  }
-  if (!file_.is_open()) {
-    MS_LOG(WARNING) << "Open file " << file_path_value << " failed." << ErrnoToString(errno);
-    return false;
-  }
-  if (first_time_opening) {
-    file_ << header;
-    (void)file_.flush();
-    file_path_str_ = path;
-  }
-  MS_LOG(INFO) << "Opened file: " << file_path_value;
-  return true;
-}
-
-void CsvWriter::CloseFile() noexcept {
-  if (file_.is_open()) {
-    file_.close();
-    ChangeFileMode(file_path_str_, S_IRUSR);
-    MS_LOG(INFO) << "Closed statistics dump file: " << file_path_str_;
-  }
-}
-
-template <typename T>
-void CsvWriter::WriteToCsv(const T &val, bool end_line) {
-  file_ << val;
-  if (end_line) {
-    file_ << kEndLine;
-    (void)file_.flush();
-  } else {
-    file_ << kSeparator;
-  }
-}
-
-CsvWriter::~CsvWriter() { CloseFile(); }
-
 TensorStatDump::TensorStatDump(const std::string &op_type, const std::string &op_name, uint32_t task_id,
                                uint32_t stream_id, uint64_t timestamp, bool input, size_t slot,
                                size_t tensor_loader_slot)
@@ -189,9 +129,9 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(type);
   csv.WriteToCsv(shape.str());
   if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
-    csv.WriteToCsv("null");
-    csv.WriteToCsv("null");
-    csv.WriteToCsv("null");
+    csv.WriteToCsv(std::string("null"));
+    csv.WriteToCsv(std::string("null"));
+    csv.WriteToCsv(std::string("null"));
   } else {
     csv.WriteToCsv(stat.max_value);
     csv.WriteToCsv(stat.min_value);

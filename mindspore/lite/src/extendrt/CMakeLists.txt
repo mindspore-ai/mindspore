@@ -78,7 +78,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     list(APPEND MSLITE_PROTO_SRC ${COMM_PROTO_SRCS})
 
     if(NOT ENABLE_SECURITY)
-        include_directories("${CCSRC_DIR}/profiler/device/ascend")
+        include_directories("${CCSRC_DIR}/include/backend/debug/profiler/ascend")
         file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "${CCSRC_DIR}/plugin/device/ascend/hal/profiler/memory_profiling.proto")
         ms_protobuf_generate(PROFILER_MEM_PROTO_SRC PROFILER_MEM_PROTO_HDRS ${PROFILER_PROTO_LIST})

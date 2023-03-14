@@ -20,7 +20,7 @@
 #include "utils/system/file_system.h"
 #include "utils/system/env.h"
 #define private public
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #undef private
 
 namespace mindspore {

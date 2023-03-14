@@ -24,7 +24,7 @@
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 #ifdef ENABLE_DEBUGGER
-#include "debug/data_dump/dump_utils.h"
+#include "include/backend/debug/data_dump/dump_utils.h"
 #endif
 
 namespace mindspore {

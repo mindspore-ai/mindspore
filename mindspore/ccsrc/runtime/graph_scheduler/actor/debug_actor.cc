@@ -23,11 +23,11 @@
 #include "utils/log_adapter.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/cpu_e2e_dump.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "utils/ms_context.h"
 #endif
 #ifdef ENABLE_DEBUGGER
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #include "debug/debugger/debugger_utils.h"
 #endif
 

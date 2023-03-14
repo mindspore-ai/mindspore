@@ -43,7 +43,7 @@
 #endif
 #include "utils/shape_utils.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #ifdef ENABLE_DEBUGGER
@@ -60,7 +60,7 @@ namespace gpu {
 using mindspore::device::memswap::MemSwapInfoSet;
 using mindspore::device::memswap::MemSwapManager;
 using mindspore::device::memswap::SwapKind;
-static const size_t PARAMETER_OUTPUT_INDEX = 0;
+static const size_t kParameterOutputIndex = 0;
 static thread_local bool cur_thread_device_inited{false};
 
 bool GPUKernelRuntime::SyncStream() {
@@ -169,7 +169,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       MS_EXCEPTION_IF_NULL(input_kernel);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto addr = kernel_inputs[j];
-      auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+      auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, kParameterOutputIndex);
       // For example, this happens with the Depend op
       if (type == kMetaTypeNone) {
         continue;
@@ -178,7 +178,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       MS_EXCEPTION_IF_NULL(addr);
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
       string input_tensor_name = input_kernel_name + ':' + "0";
-      ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
+      ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, kParameterOutputIndex);
       auto ret =
         gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true, 0, false, true);
       if (!ret) {

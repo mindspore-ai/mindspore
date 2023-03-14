@@ -37,7 +37,7 @@
 #include "pipeline/pynative/base.h"
 
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
-#include "debug/debugger/debugger.h"
+#include "include/backend/debug/debugger/debugger.h"
 #endif
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"

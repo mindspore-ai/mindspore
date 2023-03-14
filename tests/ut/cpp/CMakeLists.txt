@@ -245,7 +245,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/distributed/cluster/topology/*.cc"
         "../../../mindspore/ccsrc/distributed/embedding_cache/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/*.cc"
-        "../../../mindspore/ccsrc/profiler/device/profiling.cc"
+        "../../../mindspore/ccsrc/debug/profiler/profiling.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
         "../../../mindspore/ccsrc/kernel/kernel.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/akg/akg_kernel_metadata.cc"
@@ -291,7 +291,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.cc")
 
 if(ENABLE_SECURITY)
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/profiler/profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/memory_profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST
@@ -343,7 +343,7 @@ endif()
 add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_debug_obj>
         $<TARGET_OBJECTS:_mindspore_common_debug_obj>
-        $<TARGET_OBJECTS:_mindspore_profiler_obj>
+        $<TARGET_OBJECTS:_mindspore_debug_profiler_obj>
         $<TARGET_OBJECTS:_mindspore_ps_obj>
         $<TARGET_OBJECTS:_mindspore_distributed_obj>
         $<TARGET_OBJECTS:_mindspore_kernel_obj>

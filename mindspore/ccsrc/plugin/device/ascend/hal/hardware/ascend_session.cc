@@ -46,8 +46,8 @@
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/config_manager.h"
 #ifndef ENABLE_SECURITY
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #endif
@@ -59,9 +59,8 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
-#else
-#include "debug/debugger/proto_exporter_stub.h"
 #endif
+#include "include/backend/debug/debugger/proto_exporter.h"
 #include "common/util/error_manager/error_manager.h"
 #include "toolchain/adx_datadump_callback.h"
 #include "toolchain/adx_datadump_server.h"

@@ -15,17 +15,16 @@
  */
 
 #include "debug/debugger/debugger_utils.h"
-#include <iostream>
 #include <vector>
 #include <memory>
 #include <string>
 #include "include/common/debug/anf_dump_utils.h"
-#include "debug/debugger/debugger.h"
-#include "debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
 #include "include/common/utils/config_manager.h"
 #include "backend/common/session/session_basic.h"
 
@@ -75,8 +74,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto input_kernel = cnode->input(j + 1);
     std::string input_kernel_name = GetKernelNodeName(input_kernel);
     auto addr = kernel_inputs[j];
-    auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto host_type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto device_type = AnfAlgo::GetOutputDeviceDataType(input_kernel, kParameterOutputIndex);
+    auto host_type = common::AnfAlgo::GetOutputInferDataType(input_kernel, kParameterOutputIndex);
     auto type = trans_flag ? host_type : device_type;
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
@@ -85,12 +84,12 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
 
     auto host_format = kOpFormat_DEFAULT;
     auto device_format =
-      E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, PARAMETER_OUTPUT_INDEX);
+      E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, kParameterOutputIndex);
     auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(addr->addr, addr->size, device_format,
                                                                                 device_type, ShapeVector());
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes;
-    GetDumpIntShape(input_kernel, PARAMETER_OUTPUT_INDEX, NOT_NULL(&int_shapes), trans_flag);
+    GetDumpIntShape(input_kernel, kParameterOutputIndex, NOT_NULL(&int_shapes), trans_flag);
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
                                           true, root_graph_id, false, trans_flag);
     if (!ret) {
@@ -305,5 +304,109 @@ void SuperKernelE2eDump(const KernelGraphPtr &graph) {
 #ifndef ENABLE_SECURITY
   Dump(graph, GetRankID());
 #endif
+}
+
+DebuggerCommand GetCommand(const debugger::EventReply &reply) {
+  DebuggerCommand cmd = DebuggerCommand::kUnknownCMD;
+  switch (reply.cmd_case()) {
+    case debugger::EventReply::CmdCase::kExit:
+      cmd = DebuggerCommand::kExitCMD;
+      break;
+    case debugger::EventReply::CmdCase::kRunCmd:
+      cmd = DebuggerCommand::kRunCMD;
+      break;
+    case debugger::EventReply::CmdCase::kSetCmd:
+      cmd = DebuggerCommand::kSetCMD;
+      break;
+    case debugger::EventReply::CmdCase::kViewCmd:
+      cmd = DebuggerCommand::kViewCMD;
+      break;
+    case debugger::EventReply::CmdCase::kVersionMatched:
+      cmd = DebuggerCommand::kVersionMatchedCMD;
+      break;
+    default:
+      MS_LOG(DEBUG) << "Debug: UnknownCMD";
+      break;
+  }
+  return cmd;
+}
+
+ProtoVector<debugger::WatchCondition_Parameter> GetParameters(const debugger::EventReply &reply) {
+  if (!reply.has_set_cmd() || !reply.set_cmd().has_watch_condition()) {
+    MS_LOG(ERROR) << "Error: Can not get Parameters from command. Returning default value: ProtoVector<Parameter>().";
+    return ProtoVector<debugger::WatchCondition_Parameter>();
+  }
+  return reply.set_cmd().watch_condition().params();
+}
+
+ProtoVector<debugger::WatchNode> GetWatchnodes(const debugger::EventReply &reply) {
+  if (!reply.has_set_cmd()) {
+    MS_LOG(ERROR) << "Error: Not SetCMD, can not get WatchNodes. Returning default value: ProtoVector<WatchNode>().";
+    return ProtoVector<debugger::WatchNode>();
+  }
+  return reply.set_cmd().watch_nodes();
+}
+
+std::string GetNodeName(const debugger::EventReply &reply) {
+  if (!reply.has_run_cmd()) {
+    MS_LOG(ERROR) << "Error: Not RunCMD, can not get NodeName. Returning default value: "
+                     "";
+    return "";
+  }
+  return reply.run_cmd().node_name();
+}
+
+std::string GetRunLevel(const debugger::EventReply &reply) {
+  if (!reply.has_run_cmd()) {
+    MS_LOG(ERROR) << "Error: Not RunCMD, can not get RunLevel. Returning default value: "
+                     "";
+    return "";
+  }
+  return reply.run_cmd().run_level();
+}
+
+debugger::WatchCondition GetWatchcondition(const debugger::EventReply &reply) {
+  if (!reply.has_set_cmd() || !reply.set_cmd().has_watch_condition()) {
+    MS_LOG(ERROR) << "Error: Can not get WatchCondition from command. Returning default value: WatchCondition().";
+    return debugger::WatchCondition();
+  }
+  return reply.set_cmd().watch_condition();
+}
+
+int32_t GetWatchpointID(const debugger::EventReply &reply) {
+  if (!reply.has_set_cmd()) {
+    MS_LOG(ERROR) << "Error: Not SetCMD, can not get Watchpoint ID. Returning default value: 0.";
+    return 0;
+  }
+  return reply.set_cmd().id();
+}
+
+bool GetWatchpointDelete(const debugger::EventReply &reply) {
+  if (!reply.has_set_cmd()) {
+    MS_LOG(ERROR) << "Error: Not SetCMD, can not get Watchpoint delete flag. Returning default value: false.";
+    return false;
+  }
+  return reply.set_cmd().delete_();
+}
+
+ProtoVector<debugger::TensorProto> GetTensors(const debugger::EventReply &reply) {
+  if (!reply.has_view_cmd()) {
+    MS_LOG(ERROR) << "Error: Not ViewCMD, can not get Tensors. Returning default value: ProtoVector<TensorProto>().";
+    return ProtoVector<debugger::TensorProto>();
+  }
+  return reply.view_cmd().tensors();
+}
+
+bool GetMiVersionMatched(const debugger::EventReply &reply) { return reply.version_matched(); }
+
+std::string GetTensorFullName(const debugger::TensorProto &tensor) {
+  string node_name = tensor.node_name();
+  if (tensor.truncate()) {
+    // scopes in node name are separated by '/'
+    // use the name without scope if truncate is true
+    std::size_t found = node_name.find_last_of("/");
+    node_name = node_name.substr(found + 1);
+  }
+  return node_name + ":" + tensor.slot() + (tensor.iter() == "" ? "" : ":" + tensor.iter());
 }
 }  // namespace mindspore
