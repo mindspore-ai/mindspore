@@ -4163,10 +4163,11 @@ def isreal(x):
         raise TypeError("the input x must be Tensor!")
 
     # Note: Integral and Floating tensor values are always real
-    ones_op = _get_cache_prim(P.Ones)()
+    fillv2_op = _get_cache_prim(P.FillV2)()
+    value = Tensor(1, mstype.bool_)
     real_dtype = mstype.int_type + mstype.uint_type + mstype.float_type + (mstype.bool_,)
     if x.dtype in real_dtype:
-        return ones_op(x.shape, mstype.bool_)
+        return fillv2_op(x.shape, value)
 
     imag_op = _get_cache_prim(P.Imag)()
     return imag_op(x) == 0
