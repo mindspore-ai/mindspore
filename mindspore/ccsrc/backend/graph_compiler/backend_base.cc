@@ -858,6 +858,15 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
   MS_EXCEPTION_IF_NULL(tensor_shape);
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(tuple_tensors);
+  // If outputs an empty sequence return an empty sequence value.
+  if (tensor_shape->size() == 0) {
+    if (tensor_shape->isa<abstract::TupleShape>()) {
+      outputs->emplace_back(std::make_shared<ValueTuple>(std::vector<ValuePtr>()));
+    } else {
+      outputs->emplace_back(std::make_shared<ValueList>(std::vector<ValuePtr>()));
+    }
+    return;
+  }
   // No need split multi tensors when the tuple size is not greater than 1.
   if (tensor_shape->size() <= 1) {
     outputs->emplace_back(output_tensor);
@@ -911,6 +920,35 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
   }
 }
 
+namespace {
+bool IsEmptySequence(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
+                     const size_t *const output_position) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(output_position);
+  // When the output node is a valuenode, the position may out of range.
+  if (*output_position >= output_tensors.size()) {
+    return false;
+  }
+
+  if (output_node->abstract() == nullptr || (!output_node->abstract()->isa<abstract::AbstractSequence>())) {
+    return false;
+  }
+  const auto &tuple_abs = output_node->abstract()->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_abs);
+  if ((!tuple_abs->dynamic_len()) && tuple_abs->dynamic_len_element_abs() == nullptr) {
+    return false;
+  }
+  const auto &tensor = output_tensors[*output_position];
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->base_shape_ptr() == nullptr || (!tensor->base_shape_ptr()->isa<abstract::SequenceShape>())) {
+    return false;
+  }
+  const auto &sequence_shape = tensor->base_shape_ptr()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_shape);
+  return sequence_shape->size() == 0;
+}
+}  // namespace
+
 void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
                                          const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,
                                          VectorRef *outputs, std::vector<tensor::TensorPtr> *tuple_tensors) {
@@ -924,6 +962,18 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     prim::kPrimMakeCOOTensor,
     prim::kPrimMakeRowTensor,
   };
+
+  // If outputs an empty sequence return an empty sequence value.
+  if (IsEmptySequence(output_node, output_tensors, output_position)) {
+    if (output_node->abstract()->isa<abstract::AbstractTuple>()) {
+      outputs->emplace_back(std::make_shared<ValueTuple>(std::vector<ValuePtr>()));
+    } else {
+      outputs->emplace_back(std::make_shared<ValueList>(std::vector<ValuePtr>()));
+    }
+    ++(*output_position);
+    return;
+  }
+
   // The MakeTuple/MakeSaprse node need expand and recurse.
   if (IsOneOfPrimitiveCNode(output_node, expand_prims)) {
     auto make_tuple = output_node->cast<CNodePtr>();
