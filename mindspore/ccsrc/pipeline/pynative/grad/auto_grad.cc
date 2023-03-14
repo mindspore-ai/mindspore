@@ -1249,16 +1249,18 @@ void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CN
 
 void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg) {
   BuildForwardLastNode();
-
+  ParameterPtr sens_param = nullptr;
+  if (has_sens_arg) {
+    sens_param = ad_param()->tape_->add_parameter();
+    sens_param->debug_info()->set_name("sens");
+    sens_param->set_abstract(ad_param()->last_node_->abstract());
+  }
   // Update dout for dout
   MS_EXCEPTION_IF_NULL(ad_param()->last_node_);
   if (ad_param()->anfnode_to_variable_adjoint_.find(ad_param()->last_node_) !=
       ad_param()->anfnode_to_variable_adjoint_.end()) {
     const auto &variable = ad_param()->anfnode_to_variable_adjoint_.at(ad_param()->last_node_);
     if (has_sens_arg) {
-      ParameterPtr sens_param = ad_param()->tape_->add_parameter();
-      sens_param->debug_info()->set_name("sens");
-      sens_param->set_abstract(ad_param()->last_node_->abstract());
       variable->fn()->UpdateAccumulativeDout(sens_param);
     } else {
       variable->fn()->UpdateAccumulativeDout(BuildOnesLikeNode(ad_param()->tape_, sens_value_));
