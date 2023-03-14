@@ -134,6 +134,16 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
                {kAttrNewAxisMask, zero},
                {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
 }
+
+NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) const {
+  if (node->abstract()->isa<abstract::AbstractTuple>()) {
+    if (node->isa<ValueNode>()) {
+      return Tensor(GetIntList(node), dtype);
+    }
+    return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+  }
+  return node;
+}
 }  // namespace bprop
 }  // namespace expander
 }  // namespace mindspore

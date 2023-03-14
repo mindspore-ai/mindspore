@@ -652,57 +652,104 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto descending = GetValue<bool>(ib->GetAttr("descending"));
   auto input_x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto x_shape = ib->GetShape(input_x);
-  if (axis < 0) {
-    axis += x_shape.size();
+
+  auto shape_func = [axis](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs[0];
+    auto x_rank = x_shape.size();
+    auto recorrect_axis = RecorrectAxis(axis, x_rank);
+    ShapeVector transposition;
+    ShapeVector invert_perm;
+    if (LongToSize(recorrect_axis + 1) == x_rank) {
+      // A (0, 1, 2, ...) will change Transpose as a copy-like operator.
+      // This can delete two control flow block.
+      transposition = Range(x_rank);
+      invert_perm = Range(x_rank);
+    } else {
+      transposition = GetTransposition(recorrect_axis, x_rank);
+      invert_perm = InvertPermutation(transposition);
+    }
+
+    auto k = x_shape.at(LongToSize(recorrect_axis));
+    return {{k}, transposition, invert_perm};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    if (!invalid_indices.empty()) {
+      return {1, -1, -1};
+    }
+
+    auto x_rank = SizeToLong(inputs[0].size());
+    return {1, x_rank, x_rank};
+  };
+
+  auto res1 = ib->ShapeCalc({input_x}, shape_func, infer_func, {});
+  auto k = res1[0];
+  if (k->abstract()->isa<abstract::AbstractSequence>()) {
+    if (k->isa<ValueNode>()) {
+      auto value = GetIntList(k);
+      k = ib->Tensor(value.at(0), kInt64);
+    } else {
+      k = ib->TupleGetItem(k, 0);
+    }
   }
-  auto k = x_shape[axis];
-  auto rank = x_shape.size();
+  auto transposition = ib->TupleToTensor(res1[1]);
+  auto invert_perm = ib->TupleToTensor(res1[2]);
   auto dvalue = ib->TupleGetItem(dout, 0);
   if (!descending) {
-    input_x = ib->Emit("Neg", {input_x});
-    dvalue = ib->Emit("Neg", {dvalue});
+    input_x = ib->Neg(input_x);
+    dvalue = ib->Neg(dvalue);
   }
-  std::vector<int64_t> transposition;
-  auto top_k_input = input_x;
-  if ((static_cast<size_t>(axis + 1) != rank)) {
-    transposition = GetTransposition(axis, rank);
-    top_k_input = ib->Transpose(input_x, transposition);
-  }
-  auto tmp = ib->Emit("TopK", {top_k_input, ib->Value<int64_t>(k)}, {{"sorted", MakeValue(true)}});
+
+  auto top_k_input = ib->Transpose(input_x, transposition);
+  auto tmp = ib->Emit("TopK", {top_k_input, k}, {{"sorted", MakeValue(true)}});
   auto indices = ib->TupleGetItem(tmp, 1);
-  auto ind_shape = ib->GetShape(indices);
-  auto top_k_input_shape = ib->GetShape(top_k_input);
-  auto in_lastdim = top_k_input_shape[top_k_input_shape.size() - 1];
-  auto ind_lastdim = ind_shape[ind_shape.size() - 1];
-  auto ind_2d = ib->Reshape(indices, {-1, ind_lastdim});
-  auto outer_dim = ib->GetShape(ind_2d)[0];
+
+  auto shape_func1 = [](const ShapeArray &inputs) -> ShapeArray {
+    auto indices_shape = inputs[0];
+    auto top_k_input_shape = inputs[1];
+
+    auto indices_rank = indices_shape.size();
+    auto top_k_input_rank = top_k_input_shape.size();
+    if (indices_rank < 1 || top_k_input_rank < 1) {
+      MS_LOG(EXCEPTION) << "For Sort, indices rank and top k rank should not less than 1, but got " << indices_rank
+                        << " and " << top_k_input_rank;
+    }
+    auto ind_lastdim = indices_shape.at(indices_rank - 1);
+    auto in_lastdim = top_k_input_shape.at(top_k_input_rank - 1);
+    auto x_size = std::accumulate(top_k_input_shape.begin(), top_k_input_shape.end(), 1, std::multiplies<int64_t>());
+
+    auto outer_dim = std::accumulate(indices_shape.begin(), indices_shape.end() - 1, 1, std::multiplies<int64_t>());
+    return {top_k_input_shape, {-1, ind_lastdim}, {in_lastdim}, {x_size}, {outer_dim * in_lastdim}};
+  };
+
+  auto infer_func1 = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    if (invalid_indices.count(1) != 0) {
+      return {-1, 2, 1, 1, 1};
+    }
+
+    auto top_k_input_shape = inputs[1];
+    auto top_k_input_rank = top_k_input_shape.size();
+    return {SizeToLong(top_k_input_rank), 2, 1, 1, 1};
+  };
+
+  auto res = ib->ShapeCalc({indices, top_k_input}, shape_func1, infer_func1);
   auto indices_dtype = ib->GetDtype(indices);
-  auto range_flatten_index = ib->Tensor(Range(0, outer_dim * in_lastdim, in_lastdim), indices_dtype);
+  auto range_flatten_index =
+    ib->Cast(ib->Range(ib->Tensor(0, kInt64), ib->TupleToTensor(res[4]), ib->TupleToTensor(res[2])), indices_dtype);
   range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
+  auto ind_2d = ib->Reshape(indices, res[1]);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});
-  auto x_size = 1;
-  for (size_t i = 0; i < top_k_input_shape.size(); ++i) {
-    x_size *= top_k_input_shape[i];
-  }
-  auto x_shape_1d = ib->Value<ShapeVector>({x_size});
-  NodePtr dx = nullptr;
-  if (!transposition.empty()) {
-    auto invert_perm = InvertPermutation(transposition);
-    dvalue = ib->Transpose(dvalue, invert_perm);
-    auto ind_expand = ib->ExpandDims(ind, -1);
-    auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
-    auto out_grad = ib->Reshape(scatter, top_k_input_shape);
-    dx = ib->Transpose(out_grad, invert_perm);
-  } else {
-    auto ind_expand = ib->ExpandDims(ind, -1);
-    auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), x_shape_1d});
-    dx = ib->Reshape(scatter, top_k_input_shape);
-  }
+
+  dvalue = ib->Transpose(dvalue, invert_perm);
+  auto ind_expand = ib->ExpandDims(ind, -1);
+  auto scatter = ib->Emit("ScatterNd", {ind_expand, ib->Reshape(dvalue, {-1}), res[3]});
+  auto out_grad = ib->Reshape(scatter, res[0]);
+  auto dx = ib->Transpose(out_grad, invert_perm);
+
   if (!descending) {
-    dx = ib->Emit("Neg", {dx});
+    dx = ib->Neg(dx);
   }
-  return {dx};
+  return NodePtrList{dx};
 });
 
 REG_BPROP_BUILDER("Identity").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
