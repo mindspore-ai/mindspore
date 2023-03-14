@@ -32,7 +32,7 @@ class Cauchy(Distribution):
     .. math::
         f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2),
 
-    where a and b are loc and scale parameter respectively.
+    where :math:`a, b` are loc and scale parameter respectively.
 
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location of the Cauchy distribution. Default: None.

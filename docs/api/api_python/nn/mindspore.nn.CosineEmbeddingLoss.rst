@@ -18,8 +18,8 @@ mindspore.nn.CosineEmbeddingLoss
         - **reduction** (str) - 指定输出结果的计算方式。可选值为"none"、"mean"或"sum"，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值："mean"。
 
     输入：
-        - **logits_x1** (Tensor) - 输入Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。
-        - **logits_x2** (Tensor) - 输入Tensor，shape :math:`(N,*)` 。shape和数据类型与 `logits_x1` 相同。
+        - **logits_x1** (Tensor) - 输入Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。
+        - **logits_x2** (Tensor) - 输入Tensor，shape :math:`(N, *)` 。shape和数据类型与 `logits_x1` 相同。
         - **labels** (Tensor) - 输入值为1或-1。假设 `logits_x1` 的shape是 :math:`(x_1, x_2, x_3, ..., x_R)` ，那么 `labels` 的shape必须是 :math:`(x_1, x_3, x_4, ..., x_R)` 。
 
     输出：

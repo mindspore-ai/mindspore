@@ -69,19 +69,20 @@ class Momentum(Optimizer):
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_ for more details.
 
     .. math::
-            v_{t+1} = v_{t} \ast u + grad
+        v_{t+1} = v_{t} \ast u + grad
 
     If use_nesterov is True:
 
     .. math::
-            p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
+        p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
 
     If use_nesterov is False:
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+        p_{t+1} = p_{t} - lr \ast v_{t+1}
 
-    Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
+    Here: where :math:`grad`, :math:`lr`, :math:`p`, :math:`v` and :math:`u` denote the gradients,
+    learning_rate, params, moments, and momentum respectively.
 
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without

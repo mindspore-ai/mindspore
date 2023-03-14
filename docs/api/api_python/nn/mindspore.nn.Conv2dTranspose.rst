@@ -56,9 +56,11 @@ mindspore.nn.Conv2dTranspose
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1]) + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
+                H_{out} = \text H_{in}\times \text {stride[0]} - (padding[0] + padding[1])
+                + \text{kernel_size[0]} + (\text{dilation[0]} - 1) \times
                 (\text{kernel_size[0]} - 1) - \text {stride[0]} + \text {output_padding[0]} \\
-                W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3]) + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
+                W_{out} = \text W_{in}\times \text {stride[1]} - (padding[2] + padding[3])
+                + \text{kernel_size[1]} + (\text{dilation[1]} - 1) \times
                 (\text{kernel_size[1]} - 1) - \text {stride[1]} + \text {output_padding[1]} \\
             \end{array}
 

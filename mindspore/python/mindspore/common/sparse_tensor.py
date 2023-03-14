@@ -154,10 +154,10 @@ class SparseTensor(COOTensor_):
         Please use 'COOTensor' instead.
 
     Args:
-        indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
+        indices (Tensor): A 2-D integer Tensor of shape :math:`(N, ndims)`,
             where N and ndims are the number of `values` and number of dimensions in
             the SparseTensor, respectively.
-        values (Tensor): A 1-D tensor of any type and shape `[N]`, which
+        values (Tensor): A 1-D tensor of any type and shape :math:`(N)`, which
             supplies the values for each element in `indices`.
         shape (tuple(int)): An integer tuple of size `ndims`,
             which specifies the shape of the sparse tensor.
@@ -570,10 +570,10 @@ class CSRTensor(CSRTensor_):
     `indices` are repeated on the same row.
 
     Args:
-        indptr (Tensor): 1-D Tensor of shape `[M]`, which equals to `shape[0] + 1`, which indicates the
+        indptr (Tensor): 1-D Tensor of shape :math:`(M)`, which equals to `shape[0] + 1`, which indicates the
             start and end point for `values` in each row. Default: None. If provided,
             must be int16, int32 or int64.
-        indices (Tensor): 1-D Tensor of shape `[N]`, which has the same length as `values`. `indices`
+        indices (Tensor): 1-D Tensor of shape :math:`(N)`, which has the same length as `values`. `indices`
             indicates the which column `values` should be placed. Default: None. If provided,
             must be int16, int32 or int64.
         values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).

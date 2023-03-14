@@ -32,7 +32,7 @@ class Uniform(Distribution):
     .. math::
         f(x, a, b) = 1 / (b - a),
 
-    where a and b are the lower and upper bound respectively.
+    where :math:`a, b` are the lower and upper bound respectively.
 
     Args:
         low (int, float, list, numpy.ndarray, Tensor): The lower bound of the distribution. Default: None.

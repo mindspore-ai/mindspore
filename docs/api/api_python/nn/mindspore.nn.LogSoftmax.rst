@@ -13,7 +13,7 @@ mindspore.nn.LogSoftmax
 
         \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right),
 
-    其中，:math:`x_i` 是输入Tensor的一个元素。
+    其中，:math:`x_{i}` 是输入Tensor的一个元素。
 
     参数：
         - **axis** (int) - Log Softmax运算的axis，-1表示最后一个维度。默认值：-1。

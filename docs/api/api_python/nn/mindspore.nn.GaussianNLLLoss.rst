@@ -15,7 +15,7 @@ mindspore.nn.GaussianNLLLoss
     其中，:math:`eps` 用于 :math:`log` 的稳定性。当 :math:`full=True` 时，一个常数会被添加到loss中。如果 :math:`var` 和 :math:`logits` 的shape不一致（出于同方差性的假设），那么它们必须能够正确地广播。
 
     参数：
-        - **full** (bool) - 指定损失函数中的常数部分。如果为True，则常数为 :math:`const = 0.5*log(2*pi)`。默认值：False。
+        - **full** (bool) - 指定损失函数中的常数部分。如果 :math:`full=True`，则常数 `const.` 为 :math:`0.5 * log(2\pi)`。默认值：False。
         - **eps** (float) - 用于提高log的稳定性。默认值：1e-6。
         - **reduction** (str) - 指定应用于输出结果的计算方式，'none'、'mean'、'sum'，默认值：'mean'。
 

@@ -262,7 +262,7 @@ def _calculate_in_and_out(arr):
 class XavierNormal(Initializer):
     r"""
     Generates an array with values sampled from Xavier normal distribution
-    :math:`\mathcal{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
+    :math:`{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
 
     .. math::
         sigma = gain * \sqrt{\frac{2}{n_{in} + n_{out}}}

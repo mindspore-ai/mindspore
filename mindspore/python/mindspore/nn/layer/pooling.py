@@ -751,7 +751,7 @@ class AvgPool3d(_PoolNd):
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
-        :math:`(C, D_{in}, H_{in}, W_{in})`, with the same data type as `x`.
+        :math:`(C, D_{out}, H_{out}, W_{out})`, with the same data type as `x`.
 
     Raises:
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
@@ -1243,7 +1243,7 @@ class AdaptiveAvgPool3d(Cell):
 
     Args:
         output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
-            or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
 
     Inputs:
@@ -1828,8 +1828,7 @@ class MaxUnpool2d(Cell):
           If output_size == (), then the shape of output computed by kernel_size, stride and padding.
           If output_size != (), then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
           :math:`(H, W)` and output_size must belong to
-          :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]),
-          (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
+          :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
     Outputs:
         Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`,

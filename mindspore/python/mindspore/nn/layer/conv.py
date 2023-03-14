@@ -715,7 +715,8 @@ class Conv3dTranspose(_Conv):
     Calculates a 3D transposed convolution, which can be regarded as Conv3d for the gradient of the input.
     It also called deconvolution (although it is not an actual deconvolution).
 
-    The input is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size, :math:`C` is a number of
+    he input is typically of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C_{in}` is a number of
     channels, :math:`D_{in}, H_{in}, W_{in}` are the depth, height and width of the feature layer respectively.
 
     When Conv3d and Conv3dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
