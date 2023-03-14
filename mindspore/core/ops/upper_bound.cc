@@ -74,9 +74,10 @@ TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
   (void)input_types.emplace("values", values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, input_valid_types, primitive->name());
   auto dtype_attr = primitive->GetAttr("out_type");
+  MS_EXCEPTION_IF_NULL(dtype_attr);
   auto out_type = dtype_attr->cast<TypePtr>();
-  auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);
+  auto out_type_id = out_type->type_id();
   if (out_type_id != kInt32->type_id() && out_type_id != kInt64->type_id()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'out_type' must be int32 or int64.";
   }
