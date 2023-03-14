@@ -20,13 +20,13 @@
 #include "nnacl/op_base.h"
 #include "nnacl/conv_parameter.h"
 
-KernelBase *CreateConvolution(OpParameter *param, int data_type, FormatC format) {
+KernelBase *CreateConvolution(OpParameter *param, int data_type) {
   ConvParameter *conv = (ConvParameter *)param;
   if (conv->kernel_h_ == 1 && conv->kernel_w_ == 1) {
-    return CreateConv1x1(param, data_type, format);
+    return CreateConv1x1(param, data_type);
   }
   return NULL;
 }
 
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat32, CreateConvolution);
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC8HW8, kNumberTypeFloat16, CreateConvolution);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat32, CreateConvolution);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat16, CreateConvolution);

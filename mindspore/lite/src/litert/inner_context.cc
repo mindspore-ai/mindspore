@@ -49,11 +49,11 @@ InnerContext::InnerContext() {
 
 void InnerContext::InitExperimentalExecEnv() {
 #ifdef MSLITE_ENABLE_EXPERIMENTAL_KERNEL
-  exec_env_.allocator = this->allocator.get();
-  exec_env_.threadPool = this->thread_pool_;
+  exec_env_.allocator_ = this->allocator.get();
+  exec_env_.thread_pool_ = this->thread_pool_;
   exec_env_.alloc = experimental::DefaultAllocatorMalloc;
   exec_env_.free = experimental::DefaultAllocatorFree;
-  exec_env_.parallelLaunch = experimental::DefaultThreadPoolParallelLunch;
+  exec_env_.parallel_launch = experimental::DefaultThreadPoolParallelLunch;
 #endif
 }
 

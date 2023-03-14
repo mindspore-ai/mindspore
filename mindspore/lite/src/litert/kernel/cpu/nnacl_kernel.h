@@ -32,12 +32,14 @@ class NnaclKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  int InferShape();
 
  public:
   int InitKernel(const KernelKey &key, const lite::InnerContext *ctx);
 
  private:
   void UpdateTensorC();
+  void UpdateTensorData();
 
  private:
   KernelBase *kernel_ = nullptr;

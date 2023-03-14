@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-KernelBase *CreateConvolution(OpParameter *param, int data_type, FormatC format);
+KernelBase *CreateConvolution(OpParameter *param, int data_type);
 
 #ifdef __cplusplus
 }
