@@ -414,6 +414,8 @@ Linear Algebraic Functions
     mindspore.ops.tensor_dot
     mindspore.ops.logdet
     mindspore.ops.slogdet
+    mindspore.ops.qr
+    mindspore.ops.trace
 
 Spectral Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^

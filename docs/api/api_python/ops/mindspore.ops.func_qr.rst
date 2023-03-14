@@ -8,11 +8,14 @@ mindspore.ops.qr
     输入：
         - **input** (Tensor) - 要进行分解的矩阵。矩阵必须至少为二维。数据类型：float16、float32、float64、complex64、complex128。
           将 `input` 的shape定义为 :math:`(..., m, n)` ，p定义为m和n的最小值。
-        - **mode** (str, 可选) - 是否进行部分尺寸的QR分解。默认值：'reduced'。
+        - **mode** (union['reduced', 'complete'], 可选) - 如果 `mode` 的值为'reduced', 则进行部分尺寸的QR分解，否则进行全尺寸的QR
+          分解。默认值：'reduced'。
 
     输出：
-        - **Q** (Tensor) - `input` 的正交矩阵。如果 `some` 为True，则shape为 :math:`(m, m)` ，否则shape为 :math:`(m, p)` 。 `Q` 的数据类型与 `input` 相同。
-        - **R** (Tensor) - `input` 的上三角形矩阵。如果 `some` 为True，则shape为 :math:`(m, n)` ，否则shape为 :math:`(p, n)` 。 `R` 的数据类型与 `input` 相同。
+        - **Q** (Tensor) - `input` 的正交矩阵。如果 `mode` 为'complete'，则shape为 :math:`(m, m)` ，
+          否则shape为 :math:`(m, p)` 。 `Q` 的数据类型与 `input` 相同。
+        - **R** (Tensor) - `input` 的上三角形矩阵。如果 `mode` 为'complete'，则shape为 :math:`(m, n)` ，
+          否则shape为 :math:`(p, n)` 。 `R` 的数据类型与 `input` 相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
