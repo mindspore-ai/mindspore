@@ -69,7 +69,7 @@ typedef struct CustomOpInfo {
 ///
 /// \return The created Operator node handle
 MIND_C_API NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
-                              size_t input_num, char **attr_names, AttrHandle attrs[], size_t attr_num);
+                              size_t input_num, const char *const *attr_names, AttrHandle attrs[], size_t attr_num);
 
 /// \brief Pack nodes into a Tuple node.
 ///

@@ -25,7 +25,7 @@
 #include "c_api/base/handle_types.h"
 
 namespace mindspore {
-class TestCApiGraph : public UT::Common {
+class TestCApiGraph : public UT::CApiCommon {
  public:
   TestCApiGraph() = default;
 };

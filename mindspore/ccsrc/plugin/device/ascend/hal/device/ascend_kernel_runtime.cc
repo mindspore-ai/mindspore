@@ -319,6 +319,8 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   AsyncDataDumpUninit();
 #endif
 
+  PlatformInfoUtil::GetInstance().Finalize();
+
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);

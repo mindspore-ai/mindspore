@@ -47,6 +47,21 @@ STATUS MSSetBackendPolicy(const char *policy) {
   return context->set_backend_policy(policy) ? RET_OK : RET_ERROR;
 }
 
+STATUS MSGetBackendPolicy(char str_buf[], size_t str_len) {
+  if (str_buf == nullptr) {
+    MS_LOG(ERROR) << "Input char array [str_buf] is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto context = mindspore::MsContext::GetInstance();
+  auto policy = context->backend_policy();
+  size_t valid_size = policy.size() < str_len - 1 ? policy.size() : str_len - 1;
+  for (size_t i = 0; i < valid_size; i++) {
+    str_buf[i] = policy.c_str()[i];
+  }
+  str_buf[valid_size] = '\0';
+  return RET_OK;
+}
+
 void MSSetDeviceTarget(const char *device) {
   MS_LOG(WARNING) << "Set Device Target: " << device;
   auto context = mindspore::MsContext::GetInstance();

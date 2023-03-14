@@ -26,7 +26,7 @@
 #include "c_api/base/handle_types.h"
 
 namespace mindspore {
-class TestCApiAttr : public UT::Common {
+class TestCApiAttr : public UT::CApiCommon {
  public:
   TestCApiAttr() = default;
 };

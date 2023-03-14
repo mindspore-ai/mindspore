@@ -25,7 +25,7 @@
 #include "c_api/base/handle_types.h"
 
 namespace mindspore {
-class TestCApiNode : public UT::Common {
+class TestCApiNode : public UT::CApiCommon {
  public:
   TestCApiNode() = default;
 };
