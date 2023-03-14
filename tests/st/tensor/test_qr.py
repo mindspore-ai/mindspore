@@ -35,7 +35,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_qr(mode):
+def test_tensor_qr(mode):
     """
     Feature: tensor.qr
     Description: Verify the result of tensor.qr

@@ -39,7 +39,7 @@ class Net(nn.Cell):
 def test_trace(mode):
     """
     Feature: ops.trace
-    Description: Verify the result of ops.nextafter
+    Description: Verify the result of ops.trace
     Expectation: success
     """
     ms.set_context(mode=mode)
