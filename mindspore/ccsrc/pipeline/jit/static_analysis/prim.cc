@@ -2334,17 +2334,18 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(converted_res);
 
     // To check isolated side effect for the func graph who returns constant.
-    if (engine->check_isolated_side_effect()) {
+    if (engine->check_side_effect()) {
       MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", converted_res: " << converted_res->ToString();
       auto prim = GetValueWithoutDoSignature(converted_res)->cast<PrimitivePtr>();
       if (prim != nullptr) {
         auto effect_info = GetPrimEffectInfo(prim);
         if (effect_info.memory || effect_info.io) {
-          MS_LOG(INFO) << "Found Side Effect Primitive CNode: " << out_conf->node()->DebugString();
           const auto &cnode = dyn_cast<CNode>(out_conf->node());
           MS_EXCEPTION_IF_NULL(cnode);
-          cnode->set_has_isolated_side_effect_node(true);
-          out_conf->func_graph()->set_has_isolated_side_effect_node(true);
+          MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                        << ", func_graph: " << out_conf->func_graph()->ToString();
+          cnode->set_has_side_effect_node(true);
+          out_conf->func_graph()->set_has_side_effect_node(true);
         }
       }
     }
@@ -2822,8 +2823,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     // Set isolated side effect flag for raise node.
     const auto &manager = cur_graph->manager();
     manager->Replace(node, raise_error_node);
-    raise_error_node->set_has_isolated_side_effect_node(true);
-    cur_graph->set_has_isolated_side_effect_node(true);
+    raise_error_node->set_has_side_effect_node(true);
+    cur_graph->set_has_side_effect_node(true);
     MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
 
     AnalysisEnginePtr eng = out_conf->engine();

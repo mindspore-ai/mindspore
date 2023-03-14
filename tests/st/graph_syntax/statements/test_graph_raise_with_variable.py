@@ -14,8 +14,10 @@
 # ============================================================================
 """ test graph raise """
 import pytest
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -835,3 +837,44 @@ def test_raise_with_variable_control_flow2():
         print("res:", res)
     assert "The input should not be 1" in str(
         raise_info_joinedstr_tensor.value)
+
+
+def _raise_func(x):
+    raise ValueError(x)
+
+
+def _check_test(shp, x):
+    def _check(shp, x):
+        if shp[0] > 3:
+            _raise_func(f"Check failed. Wrong shape, {x}.")
+        return True
+    ret = _check(shp, x)
+    ms.ops.stop_gradient(ret)
+
+
+class CheckNet(ms.nn.Cell):
+    def __init__(self):
+        super(CheckNet, self).__init__()
+        self.one = ms.Tensor(1, dtype=ms.float32)
+
+    def construct(self, x):
+        shp = x.shape
+        _check_test(shp, x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_isolated_raise():
+    """
+    Feature: Isolated raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    np_data = np.random.randint(6, size=(4,))
+    data = ms.Tensor(np_data, dtype=ms.float32)
+    net = CheckNet()
+    with pytest.raises(ValueError) as err:
+        net(data)
+    assert "Check failed. Wrong shape, " in str(err.value)

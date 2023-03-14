@@ -91,10 +91,8 @@ class FuncGraphBase : public Value {
   // Clear the member of FuncGraph to break loop
   virtual void DoBreakLoop() = 0;
 
-  bool has_isolated_side_effect_node() const { return has_isolated_side_effect_node_; }
-  void set_has_isolated_side_effect_node(bool has_isolated_side_effect_node) {
-    has_isolated_side_effect_node_ = has_isolated_side_effect_node;
-  }
+  bool has_side_effect_node() const { return has_side_effect_node_; }
+  void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
 
   MS_CORE_API const FuncGraphChecker &GetChecker(const std::string &checker_name);
 
@@ -108,7 +106,7 @@ class FuncGraphBase : public Value {
 
  private:
   // If the nodes or their callee's nodes contain Depend CNode with isolated side-effect node.
-  bool has_isolated_side_effect_node_{false};
+  bool has_side_effect_node_{false};
   HashMap<std::string, std::shared_ptr<FuncGraphChecker>> checkers_;
 };
 }  // namespace mindspore
