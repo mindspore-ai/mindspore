@@ -3269,39 +3269,40 @@ def det(input):
     return _get_cache_prim(P.MatrixDeterminant)()(input)
 
 
-def matrix_exp(x):
+def matrix_exp(input):
     r"""
     Computes the exponential of a single or a batch of square matrices.
 
     .. math::
 
-        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
+        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n},
+        where :math:`x` corresponds to `input` .
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
+        input (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.
             Must be one of the following types: float16, float32, float64, complex64, complex128.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of `x` is not one of the following dtype:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of `input` is not one of the following dtype:
                    float16, float32, float64, complex64, complex128.
-        ValueError: If the rank of `x` is less than 2.
-        ValueError: If the last two dimensions of `x` are not equal.
+        ValueError: If the rank of `input` is less than 2.
+        ValueError: If the last two dimensions of `input` are not equal.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
-        >>> output = ops.matrix_exp(x)
+        >>> input = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
+        >>> output = ops.matrix_exp(input)
         >>> print(output)
         [[2.7182817 5.436563 ]
         [0.        2.7182817]]
     """
-    return matrix_exp_(x)
+    return matrix_exp_(input)
 
 
 def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer-name
@@ -4396,7 +4397,7 @@ def median(x, axis=-1, keepdims=False):
     return Median(False, axis, keepdims)(x)
 
 
-def orgqr(x, tau):
+def orgqr(input, tau):
     r"""
     Calculates the explicit representation of the orthogonal matrix :math:`Q`
     returned by :class:`mindspore.ops.Geqrf`.
@@ -4404,8 +4405,8 @@ def orgqr(x, tau):
     Take the case of input without batch dimension as an example,
     computes the first :math:`N` columns of a product of
     `Householder <https://en.wikipedia.org/wiki/Householder_transformation#Householder_matrix>`_
-    matrices. Suppose input `x` is a matrix of size :math:`(M, N)` after householder transformation.
-    When the diagonal of `x` is set to 1, every colunm of lower triangular in `x` is
+    matrices. Suppose input `input` is a matrix of size :math:`(M, N)` after householder transformation.
+    When the diagonal of `input` is set to 1, every colunm of lower triangular in `input` is
     denoted as :math:`w_j` for :math:`j` for
     :math:`j=1, \ldots, M`, this function returns the first :math:`N` columns of the matrix
 
@@ -4414,34 +4415,35 @@ def orgqr(x, tau):
 
     where :math:`\mathrm{I}_{M}` is the :math:`M`-dimensional identity matrix. And when :math:`w` is complex,
     :math:`w^{\mathrm{H}}` is the conjugate transpose, otherwise the transpose.
-    The output matrix is the same size as the input matrix `x`.
+    The output matrix is the same size as the input matrix `input`.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
+        input (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
             with float32, float64, complex64 and complex128 data type.
         tau (Tensor): Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
-            reflecting coefficient in Householder transformation, which have the same type as `x`.
+            reflecting coefficient in Householder transformation, which have the same type as `input`.
 
     Returns:
-        Tensor, has the same shape and data type as `x`.
+        Tensor, has the same shape and data type as `input`.
 
     Raises:
-        TypeError: If `x` or `tau` are not Tensors.
-        TypeError: If dtype of `x` and `tau` is not one of: float64, float32, complex64, complex128.
-        ValueError: If `x` and `tau` have different batch size.
-        ValueError: If x.shape[-2] < x.shape[-1].
-        ValueError: If x.shape[-1] < tau.shape[-1].
-        ValueError: If rank(x) - rank(tau) != 1.
-        ValueError: If rank(x) != 2 or 3.
+        TypeError: If `input` or `tau` are not Tensors.
+        TypeError: If dtype of `input` and `tau` is not one of: float64, float32, complex64, complex128.
+        ValueError: If `input` and `tau` have different batch size.
+        ValueError: If input.shape[-2] < input.shape[-1].
+        ValueError: If input.shape[-1] < tau.shape[-1].
+        ValueError: If rank(input) - rank(tau) != 1.
+        ValueError: If rank(input) != 2 or 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
+        >>> input = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]),
+        ... mindspore.float32)
         >>> tau = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
         >>> net = ops.orgqr()
-        >>> y = net(x, tau)
+        >>> y = net(input, tau)
         >>> print(y)
         [[-0.54999995 -0.2128925   0.8137956 ]
          [ 0.47119996 -0.8752807   0.08240613]

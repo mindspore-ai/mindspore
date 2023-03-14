@@ -32,7 +32,7 @@ from .._primitive_cache import _get_cache_prim
 __all__ = ['svd', 'pinv']
 
 
-def svd(a, full_matrices=False, compute_uv=True):
+def svd(input, full_matrices=False, compute_uv=True):
     """
     Computes the singular value decompositions of one or more matrices.
 
@@ -43,7 +43,7 @@ def svd(a, full_matrices=False, compute_uv=True):
         A=U*diag(S)*V^{T}
 
     Args:
-        a (Tensor): Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
+        input (Tensor): Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
           the supported dtype are float32 and float64..
         full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
                                         only the leading P singular vectors, with P is the minimum of M and N.
@@ -71,8 +71,8 @@ def svd(a, full_matrices=False, compute_uv=True):
         >>> from mindspore import Tensor, set_context
         >>> from mindspore import ops
         >>> set_context(device_target="CPU")
-        >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
-        >>> s, u, v = ops.svd(a, full_matrices=True, compute_uv=True)
+        >>> input = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
+        >>> s, u, v = ops.svd(input, full_matrices=True, compute_uv=True)
         >>> print(s)
         [7.0652843 1.040081 ]
         >>> print(u)
@@ -86,9 +86,9 @@ def svd(a, full_matrices=False, compute_uv=True):
     svd_ = _get_cache_prim(linalg_ops.Svd)(full_matrices=full_matrices, compute_uv=compute_uv)
 
     if compute_uv:
-        return svd_(a)
+        return svd_(input)
 
-    s, _, _ = svd_(a)
+    s, _, _ = svd_(input)
     return s
 
 

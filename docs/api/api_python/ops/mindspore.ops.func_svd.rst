@@ -1,7 +1,7 @@
 mindspore.ops.svd
 ==================
 
-.. py:function:: mindspore.ops.svd(a, full_matrices=False, compute_uv=True)
+.. py:function:: mindspore.ops.svd(input, full_matrices=False, compute_uv=True)
 
     计算单个或多个矩阵的奇异值分解。
 
@@ -11,7 +11,7 @@ mindspore.ops.svd
         A=U*diag(S)*V^{T}
 
     参数：
-        - **a** (Tensor) - 待分解的矩阵。shape为 :math:`(*, M, N)` ，支持的数据类型为float32和float64。
+        - **input** (Tensor) - 待分解的矩阵。shape为 :math:`(*, M, N)` ，支持的数据类型为float32和float64。
         - **full_matrices** (bool, 可选) - 如果为True，则计算完整的 :math:`U` 和 :math:`V` 。否则仅计算前P个奇异向量，P为M和N中的较小值，M和N分别是输入矩阵的行和列。默认值：False。
         - **compute_uv** (bool, 可选) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` ，否则只计算 :math:`S` 。默认值：True。
     返回：
