@@ -23,9 +23,9 @@ from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Bernoulli(Distribution):
-    """
+    r"""
     Bernoulli Distribution.
-    A Bernoulli Distribution is a discrete distribution with the range {0, 1}
+    A Bernoulli Distribution is a discrete distribution with the range :math:`\{0, 1\}`
     and the probability mass function as :math:`P(X = 0) = p, P(X = 1) = 1-p`.
 
     Args:

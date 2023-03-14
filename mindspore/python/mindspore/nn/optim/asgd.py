@@ -96,7 +96,7 @@ class ASGD(Optimizer):
               LearningRateSchedule with step as the input to get the learning rate of current step.
 
         lambd (float): The decay term. Default: 1e-4.
-        alpha (float): The power for :math:`eta` update. Default: 0.75.
+        alpha (float): The power for :math:`\eta` update. Default: 0.75.
         t0 (float): The point of starting averaging. Default: 1e6.
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
 

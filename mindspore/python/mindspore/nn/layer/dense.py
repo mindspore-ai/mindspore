@@ -47,7 +47,7 @@ class BiDense(Cell):
     .. math::
         y = x_1^T A x_2 + b,
 
-    where :math:`x_1` is the first input tensor, :math:`x_2` is the second input tensor
+    where :math:`x_{1}` is the first input tensor, :math:`x_{2}` is the second input tensor
     , :math:`A` is a weight matrix with the same data type as the :math:`x_{*}` created by the layer
     , and :math:`b` is a bias vector with the same data type as the :math:`x_{*}` created by the layer
     (only if has_bias is True).
@@ -60,7 +60,7 @@ class BiDense(Cell):
             The values of str refer to the function `initializer`. Default: None.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter.
             The values of str refer to the function `initializer`. Default: None.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+        has_bias (bool): Specifies whether the layer uses :math:`\text{bias}` vector. Default: True.
 
     Shape:
         - **input1** - :math:`(*, H_{in1})` where :math:`H_{in1}=\text{in1_channels}` and
@@ -69,8 +69,9 @@ class BiDense(Cell):
         - **input2** - :math:`(*, H_{in2})` where :math:`H_{in2}=\text{in2_channels}` and
           :math:`*` means any number of additional dimensions including none. All but the last dimension
           of the inputs should be the same.
-        - **output** - :math:`(*, H_{out})` where :math:`H_{out}=\text{out_channels}`
-          and all but the last dimension are the same shape as the inputs.
+        - **output** - :math:`(*, H_{out})` where :math:`H_{out}=\text{out_channels}` and
+          :math:`*` means any number of additional dimensions including none. All but the last dimension
+          are the same shape as the inputs.
 
     Dtype:
         - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input2**.

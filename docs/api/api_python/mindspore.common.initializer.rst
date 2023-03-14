@@ -106,7 +106,7 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.XavierUniform(gain=1)
 
-    生成一个服从Xarvier均匀分布U(-boundary, boundary)的随机数组用于初始化Tensor，均匀分布的取值范围为[-boundary, boundary]，其中：
+    生成一个服从Xarvier均匀分布 :math:`{U}(-\text{boundary}, \text{boundary})` 的随机数组用于初始化Tensor，均匀分布的取值范围为[-boundary, boundary]，其中：
 
     .. math::
         boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
@@ -145,7 +145,7 @@ mindspore.common.initializer
 
 .. py:class:: mindspore.common.initializer.Sparse(sparsity, sigma=0.01)
 
-    生成一个二维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`N(0, 0.01)` 。
+    生成一个二维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布 :math:`{N}(0, 0.01)` 。
 
     参数：
         - **sparsity** (float) - 矩阵每列中元素被置0的比例。

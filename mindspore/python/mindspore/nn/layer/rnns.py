@@ -808,7 +808,7 @@ class LSTM(_RNNBase):
           or mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
           The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
-          Tensor of shape :math:`(\text{batch_size})`. Default: None.
+          Tensor of shape :math:`(batch\_size)`. Default: None.
           This input indicates the real sequence length before padding to avoid padded elements
           have been used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.

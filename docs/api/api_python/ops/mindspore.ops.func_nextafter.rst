@@ -12,11 +12,11 @@ mindspore.ops.nextafter
 
     更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
 
-    输入：
+    参数：
         - **input** (Tensor) - 第一个输入Tensor，支持数据类型为float32和float64。其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。
         - **other** (Tensor) - 第二个输入Tensor，支持数据类型为float32和float64。其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。
 
-    输出：
+    返回：
         Tensor，shape和数据类型与 `input` 相同。
 
     异常：

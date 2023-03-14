@@ -28,8 +28,8 @@ mindspore.nn.BCEWithLogitsLoss
         - **pos_weight** (Tensor, 可选) - 指定正样本的权重。是一个长度等于分类数的向量。如果不是None，将进行广播，其shape与 `logits` 的shape保持一致，数据类型必须为float16或float32。默认值：None。
 
     输入：
-        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。数据类型必须为float16或float32。
-        - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
+        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16或float32。
+        - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
 
     输出：
         Tensor或Scalar，如果 `reduction` 为 'none'，其shape需和 `logits` 相同。否则，将返回Scalar。

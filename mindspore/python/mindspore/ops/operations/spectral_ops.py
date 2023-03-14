@@ -30,10 +30,10 @@ class BartlettWindow(Primitive):
             Only float16, float32 and float64 are allowed. Default: mstype.float32.
 
     Inputs:
-        window_length (Tensor): The size of returned window, with data type int32, int64.
-            The input data should be an integer with a value of [0, 1000000].
-        periodic (bool, optional): If True, returns a window to be used as periodic function.
-            If False, return a symmetric window. Default: True.
+        - **window_length** (Tensor) - The size of returned window, with data type int32, int64.
+          The input data should be an integer with a value of [0, 1000000].
+        - **periodic** (bool, optional) - If True, returns a window to be used as periodic function.
+          If False, return a symmetric window. Default: True.
 
     Outputs:
         A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.
@@ -72,8 +72,8 @@ class BlackmanWindow(Primitive):
             Only float16, float32 and float64 is allowed. Default: mstype.float32.
 
     Inputs:
-        window_length (Tensor): the size of returned window, with data type int32, int64.
-            The input data should be an integer with a value of [0, 1000000].
+        - **window_length** (Tensor) - the size of returned window, with data type int32, int64.
+          The input data should be an integer with a value of [0, 1000000].
 
     Outputs:
         A 1-D tensor of size `window_length` containing the window. Its datatype is set by the attr `dtype`.

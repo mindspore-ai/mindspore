@@ -4009,12 +4009,12 @@ class Lerp(Primitive):
     Refer to :func:`mindspore.ops.lerp` for more details.
 
     Inputs:
-        start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
-        end (Tensor): The tensor with the ending points. Data type must be the same as `start`.
-        weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
-            or a scalar tensor with float16 or float32 data type.
+        - **start** (Tensor) - The tensor with the starting points. Data type must be float16 or float32.
+        - **end** (Tensor) - The tensor with the ending points. Data type must be the same as `start`.
+        - **weight** (Union[float, Tensor]) - The weight for the interpolation formula. Must be a float
+          or a scalar tensor with float16 or float32 data type.
 
-    Returns:
+    Outputs:
         Tensor, has the same type and shape as input `start`.
 
     Supported Platforms:

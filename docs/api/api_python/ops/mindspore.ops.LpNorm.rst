@@ -11,8 +11,8 @@ mindspore.ops.LpNorm
     参数：
         - **axis** (int,list,tuple) - 指定计算范数的维度。
         - **p** (int，可选) - 范数的阶。默认值：2。
-        - **keep_dims** (Tensor，可选) - 输出Tensor是否保留原有的维度。默认值：False。
-        - **epsilon** (Tensor，可选) - 添加到分母上的值，以确保数值稳定性。默认值：1e-12。
+        - **keep_dims** (bool，可选) - 输出Tensor是否保留原有的维度。默认值：False。
+        - **epsilon** (float，可选) - 添加到分母上的值，以确保数值稳定性。默认值：1e-12。
 
     输入：
         - **input** (Tensor) - 输入Tensor。

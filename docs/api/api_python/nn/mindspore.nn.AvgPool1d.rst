@@ -12,7 +12,6 @@ mindspore.nn.AvgPool1d
         \text{output}(N_i, C_j, l) = \frac{1}{k} \sum_{n=0}^{k-1}
         \text{input}(N_i, C_j, stride \times l + n)
 
-
     参数：
         - **kernel_size** (int) - 指定池化核尺寸大小，数据类型为整型。默认值：1。
         - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值：1。
