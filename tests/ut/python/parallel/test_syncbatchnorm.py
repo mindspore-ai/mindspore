@@ -31,6 +31,7 @@ class Net(Cell):
         self.bn2 = SyncBatchNorm(num_features=8, process_groups=[[0, 1, 2, 3]])
         self.bn3 = SyncBatchNorm(num_features=8)
         self.bn4 = SyncBatchNorm(num_features=8, process_groups=[[0, 1], [2, 3]])
+        self.bn5 = SyncBatchNorm(num_features=8, process_groups=[[0], [1], [2], [3]])
 
     def construct(self, x, b):
         out = self.conv2d(x, self.conv2d_weight)
@@ -38,6 +39,7 @@ class Net(Cell):
         out = self.bn2(out)
         out = self.bn3(out)
         out = self.bn4(out)
+        out = self.bn5(out)
         return out
 
 
@@ -67,3 +69,4 @@ def test_syncbatchnorm():
     assert net.bn2.group_name == "4_937e3b535d29ac4571b6fecb60df6169"
     assert net.bn3.group_name == "hccl_world_group"
     assert net.bn4.group_name == "2_174882033225436b1440b7de44686450"
+    assert net.bn5.is_global is False
