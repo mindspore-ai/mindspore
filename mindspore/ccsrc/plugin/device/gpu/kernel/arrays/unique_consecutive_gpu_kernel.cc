@@ -148,11 +148,13 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     dims = 1;
     is_flattend_ = true;
   }
-  if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "For '" << base_operator_->name() << "', the 'axis' must be in the range [-" << dims << ","
-                      << dims << "), but got " << axis_ << ".";
+  if (!is_flattend_) {
+    if (axis_ < -dims || axis_ >= dims) {
+      MS_LOG(EXCEPTION) << "For '" << base_operator_->name() << "', the 'axis' must be in the range [-" << dims << ","
+                        << dims << "), but got " << axis_ << ".";
+    }
+    axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
   }
-  axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
 
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
