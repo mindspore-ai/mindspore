@@ -171,6 +171,7 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
   std::vector<AnfNodePtr> new_node_input;
   if (op_name == MIRROR_MINI_STEP_OPERATOR || op_name == MINI_STEP_ALL_GATHER ||
       op_name == MIRROR_MICRO_STEP_OPERATOR || op_name == MICRO_STEP_ALL_GATHER) {
+    MS_EXCEPTION_IF_NULL(grad_accu);
     new_node_input = {NewValueNode(pyop_instance), node, grad_accu};
     MS_LOG(INFO) << "Insert the grad accumulation node as the mirror op's input";
   } else {
@@ -1320,17 +1321,22 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
     return;
   }
 
-  if (opt_shard_group.empty() && !ParameterRequireGrad(parameter)) {
+  if (opt_shard_group.empty() && (!ParameterRequireGrad(parameter) || !root->has_flag(kTraining))) {
     return;
   }
+
   // set all gather type
   MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   std::string op_name;
-  if (grad_accumulation_step > 1) {
-    op_name = MINI_STEP_ALL_GATHER;
-  } else if (split_stage_num > 1 && ParameterRequireGrad(parameter)) {
-    op_name = MICRO_STEP_ALL_GATHER;
+  if (root->has_flag("training")) {
+    if (grad_accumulation_step > 1) {
+      op_name = MINI_STEP_ALL_GATHER;
+    } else if (split_stage_num > 1 && ParameterRequireGrad(parameter)) {
+      op_name = MICRO_STEP_ALL_GATHER;
+    } else {
+      op_name = ALL_GATHER;
+    }
   } else {
     op_name = ALL_GATHER;
   }
