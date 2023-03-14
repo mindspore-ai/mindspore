@@ -219,8 +219,17 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
     for (size_t i = 1; i < cnode->size(); ++i) {
       const auto &input = cnode->inputs()[i];
       const auto &input_abstract = input->abstract();
-      if (input_abstract != nullptr && input_abstract->isa<abstract::AbstractTensor>()) {
-        (void)rec_depend_list.emplace(SizeToLong(i - 1));
+      if (input_abstract != nullptr) {
+        auto is_tensor = input_abstract->isa<abstract::AbstractTensor>();
+        bool is_integer = false;
+        if (input_abstract->isa<abstract::AbstractScalar>()) {
+          // Now, only scalar with int32/int64 will be used as the output of operator, so only add them to list.
+          auto scalar_id = input_abstract->BuildType()->type_id();
+          is_integer = (scalar_id == kNumberTypeInt32 || scalar_id == kNumberTypeInt64);
+        }
+        if (is_tensor || is_integer) {
+          (void)rec_depend_list.emplace(SizeToLong(i - 1));
+        }
       }
     }
     return rec_depend_list;
