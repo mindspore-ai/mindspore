@@ -8,17 +8,17 @@ mindspore.nn.Momentum
     有关更多详细信息，请参阅论文 `On the importance of initialization and momentum in deep learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_。
 
     .. math::
-            v_{t+1} = v_{t} \ast u + grad
+        v_{t+1} = v_{t} \ast u + grad
 
     如果 `use_nesterov` 为True：
 
     .. math::
-            p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
+        p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
 
     如果 `use_nesterov` 为False：
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+        p_{t+1} = p_{t} - lr \ast v_{t+1}
 
     其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和 :math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
 

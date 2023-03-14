@@ -28,9 +28,9 @@ class TransformedDistribution(Distribution):
     Transformed Distribution.
     This class contains a bijector and a distribution and transforms the original distribution
     to a new distribution through the operation defined by the bijector.
-    If X is an random variable following the underying distribution,
-    and g(x) is a function represented by the bijector,
-    then Y = g(X) is a random variable following the transformed distribution.
+    If :math:`X` is an random variable following the underying distribution,
+    and :math:`g(x)` is a function represented by the bijector,
+    then :math:`Y = g(X)` is a random variable following the transformed distribution.
 
     Args:
         bijector (Bijector): The transformation to perform.

@@ -28,9 +28,9 @@ from ..distribution import TransformedDistribution
 class Bijector(Cell):
     """
     Bijecotr class. A bijector perform a mapping from one distribution to the other via some function.
-    If X is a random variable following the original distribution,
-    and g(x) is the mapping function,
-    then Y = g(X) is the random variable following the transformed distribution.
+    If :math:`X` is a random variable following the original distribution,
+    and :math:`g(x)` is the mapping function,
+    then :math:`Y = g(X)` is the random variable following the transformed distribution.
 
     Args:
         is_constant_jacobian (bool): Whether the Bijector has constant derivative. Default: False.

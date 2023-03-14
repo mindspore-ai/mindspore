@@ -10,7 +10,7 @@ mindspore.nn.HSwish
     .. math::
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
 
-    其中， :math:`x_i` 是输入的元素。
+    其中， :math:`x_{i}` 是输入的元素。
 
     输入：
         - **x** (Tensor) - 用于计算Hard Swish的Tensor。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。

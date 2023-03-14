@@ -3,7 +3,7 @@ mindspore.nn.probability.bijector.Bijector
 
 .. py:class:: mindspore.nn.probability.bijector.Bijector(is_constant_jacobian=False, is_injective=True, name=None, dtype=None, param=None)
 
-    Bijector类。Bijector描述了一种随机变量的映射方法。可以通过一个已有的随机变量 :math:`X` 和一个映射函数 :math:`g` 生成一个新的随机变量 :math:`Y = g(X)` 。
+    Bijector类。Bijector描述了一种随机变量的映射方法。可以通过一个已有的随机变量 :math:`X` 和一个映射函数 :math:`g(x)` 生成一个新的随机变量 :math:`Y = g(X)` 。
 
     参数：    
         - **is_constant_jacobian** (bool) - Bijector是否具有常数导数。默认值：False。

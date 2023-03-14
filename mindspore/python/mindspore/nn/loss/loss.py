@@ -1229,8 +1229,8 @@ class MultiLabelSoftMarginLoss(LossBase):
     Calculates the MultiLabelSoftMarginLoss.
     The multi-label soft margin loss is a commonly used loss function in multi-label classification tasks
     where an input sample can belong to multiple classes.
-    Given an input `x` and binary labels `y` of size `(N,C)`, where `N` denotes the number of samples
-    and `C` denotes the number of classes.
+    Given an input :math:`x` and binary labels :math:`y` of size :math:`(N,C)`, where :math:`N` denotes
+    the number of samples and :math:`C` denotes the number of classes.
 
     .. math::
         \mathcal{loss\left( x , y \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
@@ -1400,7 +1400,8 @@ class BCELoss(LossBase):
     Inputs:
         - **logits** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - The label tensor with shape :math:`(N, *)`, the same shape and data type as `logits`.
+        - **labels** (Tensor) - The label tensor with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The same shape and data type as `logits`.
 
     Outputs:
         Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
@@ -1624,7 +1625,8 @@ class BCEWithLogitsLoss(LossBase):
     Inputs:
         - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)`, same shape and dtype as `logits`.
+        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The same shape and data type as `logits`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', its shape is the same as `logits`.
@@ -2315,10 +2317,10 @@ class CTCLoss(LossBase):
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
 
     Inputs:
-        - **log_probs** (Tensor) - A tensor of shape (T, N, C) or (T, C), where T is length of input,
+        - **log_probs** (Tensor) - A tensor of shape :math:`(T, N, C)` or :math:`(T, C)`, where T is length of input,
           N is size of the batch and C is the number of classes. T, N and C are positive integers.
-        - **targets** (Tensor) - A tensor of shape (N, S) or (sum( `target_lengths` )), where S is max target length,
-          means the target sequences.
+        - **targets** (Tensor) - A tensor of shape :math:`(N, S)` or (sum( `target_lengths` )),
+          where S is max target length, means the target sequences.
         - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the input.
         - **target_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape(N). It means the lengths of the target.
 
@@ -2333,7 +2335,7 @@ class CTCLoss(LossBase):
         ValueError: If `reduction` is not "none", "mean" or "sum".
         ValueError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, C). C is number of classes of `log_probs` .
-        ValueError: If the dimension of `targets` is not one when the shape of `log_prob` is (T, C).
+        ValueError: If the dimension of `targets` is not one when the shape of `log_prob` is :math:`(T, C)`.
         RuntimeError: If any value of `input_lengths` is larger than T. T is length of `log_probs` .
         RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
@@ -2410,13 +2412,13 @@ class GaussianNLLLoss(LossBase):
         \ \text{eps}\right)\right) + \frac{\left(\text{logits} - \text{labels}\right)^2}
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
-    where `eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to the loss. If
-    the shape of :math:`var` and `logits` are not the same (due to a homoscedastic assumption), their shapes must allow
-    correct broadcasting.
+    where :math:`eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to
+    the loss. If the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
+    their shapes must allow correct broadcasting.
 
     Args:
         full (bool): Whether include the constant term in the loss calculation. When :math:`full=True`,
-             the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
+            the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
         eps (float): Used to improve the stability of log function. Default: 1e-6.
         reduction (str): Apply specific reduction method to the output: 'none', 'mean', or 'sum'. Default: 'mean'.
 
@@ -2430,7 +2432,7 @@ class GaussianNLLLoss(LossBase):
           (to allow for broadcasting).
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
 
     Raises:
         TypeError: If `logits` is not a Tensor.

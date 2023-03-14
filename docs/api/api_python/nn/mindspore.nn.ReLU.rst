@@ -9,7 +9,7 @@ mindspore.nn.ReLU
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
 
-    逐元素求 :math:`\max(x,\  0)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
+    逐元素求 :math:`\max(0, x)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
 
     ReLU相关图参见 `ReLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_rectified_linear.svg>`_ 。
 

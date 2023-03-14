@@ -133,7 +133,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
     For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate= learning\_rate * e^{-decay\_rate * p}
+        decayed\_learning\_rate = learning\_rate * e^{-decay\_rate * p}
 
     Where :
 
@@ -343,8 +343,9 @@ class PolynomialDecayLR(LearningRateSchedule):
     For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate = (learning\_rate - end\_learning\_rate) *
-        (1 - tmp\_step / tmp\_decay\_steps)^{power} + end\_learning\_rate
+        decayed\_learning\_rate = &(learning\_rate - end\_learning\_rate) *\\
+        &(1 - tmp\_step / tmp\_decay\_steps)^{power}\\
+        &+ end\_learning\_rate
 
     Where :
 

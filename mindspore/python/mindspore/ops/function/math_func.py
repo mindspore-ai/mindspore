@@ -3275,8 +3275,9 @@ def matrix_exp(input):
 
     .. math::
 
-        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n},
-        where :math:`x` corresponds to `input` .
+        matrix\_exp(x) = \sum_{k=0}^{\infty} \frac{1}{k !} x^{k} \in \mathbb{K}^{n \times n}
+
+    where :math:`x` corresponds to `input` .
 
     Args:
         input (Tensor): The shape of tensor is :math:`(*, n, n)` where * is zero or more batch dimensions.

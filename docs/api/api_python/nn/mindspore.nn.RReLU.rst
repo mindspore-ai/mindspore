@@ -8,8 +8,8 @@ mindspore.nn.RReLU
    该激活函数定义如下：
 
    .. math::
-      \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
-        {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
+       \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
+       {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
    其中，:math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
