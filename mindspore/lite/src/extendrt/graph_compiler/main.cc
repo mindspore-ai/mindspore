@@ -27,6 +27,7 @@
 #include "backend/graph_compiler/graph_partition.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "src/extendrt/graph_compiler/single_graph_compiler.h"
+#include "load_mindir/load_model.h"
 
 namespace mindspore {
 FuncGraphPtr CreateFuncGraph() {
@@ -77,7 +78,7 @@ FuncGraphPtr CreateFuncGraph() {
 
 #ifdef USE_REAL_MODEL
   const std::string model_path = "";  // /path/to/mobilenet.mindir
-  MindIRLoader mindir_loader;
+  MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
   func_graph = mindir_loader.LoadMindIR(model_path);
 #endif
   return func_graph;

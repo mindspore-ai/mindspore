@@ -519,20 +519,25 @@ Tensor *Tensor::CreateTensor(const std::string &name, TypeId type, const std::ve
     MS_LOG(ERROR) << "Failed to allocate tensor.";
     return nullptr;
   }
-
-  size_t shape_size = 1;
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (shape[i] < 0) {
-      return nullptr;
-    }
-    shape_size *= static_cast<size_t>(shape[i]);
+  if (std::any_of(shape.begin(), shape.end(), [](const int &element) { return element < 0 && element != -1; })) {
+    MS_LOG(ERROR) << "Dims of tensor: " << shape << " is unsupported.";
+    return nullptr;
+  }
+  int shape_size = 0;
+  if (std::any_of(shape.begin(), shape.end(), [](const int &element) { return element == -1; })) {
+    shape_size = -1;
+  } else {
+    shape_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+  }
+  if (shape_size == -1 && data != nullptr) {
+    MS_LOG(ERROR) << "The tensor with dynamic shape can't be const tensor.";
+    return nullptr;
   }
   auto data_type_size = lite::DataTypeSize(type);
   if (data_type_size == 0) {
     MS_LOG(ERROR) << "not support create this type: " << type;
     return nullptr;
   }
-
   if (data == nullptr && data_len != 0) {
     MS_LOG(ERROR) << "shape, data type and data len not match.";
     return nullptr;
