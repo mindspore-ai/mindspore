@@ -14,32 +14,29 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "nnacl/unstack_parameter.h"
-#include "ops/unstack.h"
-using mindspore::ops::kAxis;
-using mindspore::ops::kNameUnstack;
-using mindspore::schema::PrimitiveType_Unstack;
+#include "nnacl/pad_parameter.h"
+#include "ops/fusion/pad_fusion.h"
+using mindspore::ops::kNamePadFusion;
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateUnstackOpParameter(const BaseOperatorPtr &base_operator) {
-  auto param = reinterpret_cast<UnstackParameter *>(PopulateOpParameter<UnstackParameter>());
+OpParameter *PopulatePadOpParameter(const BaseOperatorPtr &base_operator) {
+  auto param = reinterpret_cast<PadParameter *>(PopulateOpParameter<PadParameter>());
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new UnstackParameter failed.";
+    MS_LOG(ERROR) << "new PadParameter failed.";
+    return nullptr;
+  }
+  auto op = dynamic_cast<ops::PadFusion *>(base_operator.get());
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "operator is not PadFusion.";
     return nullptr;
   }
 
-  mindspore::ValuePtr attr = base_operator->GetPrim()->GetAttr(kAxis);
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kAxis << ") of operator(" << base_operator->name() << ") not exist";
-    free(param);
-    return nullptr;
-  }
-  auto axis = GetValue<int64_t>(attr);
-  CHECK_LESS_RETURN_RET(INT32_MAX, axis, nullptr, param);
-  param->axis_ = axis;
+  param->pad_mode_ = static_cast<int>(op->get_padding_mode());
+  param->constant_value_ = op->get_constant_value();
   return reinterpret_cast<OpParameter *>(param);
 }
-REG_OPERATOR_POPULATE(kNameUnstack, PrimitiveType_Unstack, PopulateUnstackOpParameter)
+REG_OPERATOR_POPULATE(kNamePadFusion, PrimitiveType_PadFusion, PopulatePadOpParameter)
 }  // namespace lite
 }  // namespace mindspore

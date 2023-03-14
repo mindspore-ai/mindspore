@@ -33,6 +33,8 @@
 #include "ops/mod.h"
 #include "ops/add.h"
 #include "ops/fusion/add_fusion.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/fusion/sub_fusion.h"
 
 using mindspore::ops::kActivationType;
 using mindspore::ops::kNameAdd;
@@ -52,6 +54,7 @@ using mindspore::ops::kNameMod;
 using mindspore::ops::kNameNotEqual;
 using mindspore::ops::kNameRealDiv;
 using mindspore::ops::kNameSquaredDifference;
+using mindspore::ops::kNameSubFusion;
 
 using mindspore::schema::PrimitiveType_AddFusion;
 using mindspore::schema::PrimitiveType_Equal;
@@ -69,6 +72,7 @@ using mindspore::schema::PrimitiveType_Mod;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore {
 namespace lite {
@@ -84,7 +88,7 @@ OpParameter *PopulateArithmeticCommonOpPara(const BaseOperatorPtr &base_operator
   return reinterpret_cast<OpParameter *>(param);
 }
 
-OpParameter *PopulateAddOpParameter(const BaseOperatorPtr &base_operator) {
+OpParameter *PopulateArithmeticFusionOpParameter(const BaseOperatorPtr &base_operator) {
   ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(PopulateArithmeticCommonOpPara(base_operator));
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonOpPara failed.";
@@ -97,8 +101,9 @@ OpParameter *PopulateAddOpParameter(const BaseOperatorPtr &base_operator) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
+REG_OPERATOR_POPULATE(kNameSubFusion, PrimitiveType_SubFusion, PopulateArithmeticFusionOpParameter)
 REG_OPERATOR_POPULATE(kNameAdd, PrimitiveType_AddFusion, PopulateArithmeticCommonOpPara)
-REG_OPERATOR_POPULATE(kNameAddFusion, PrimitiveType_AddFusion, PopulateAddOpParameter)
+REG_OPERATOR_POPULATE(kNameAddFusion, PrimitiveType_AddFusion, PopulateArithmeticFusionOpParameter)
 REG_OPERATOR_POPULATE(kNameRealDiv, PrimitiveType_RealDiv, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameLogicalAnd, PrimitiveType_LogicalAnd, PopulateArithmeticCommonOpPara)
 REG_OPERATOR_POPULATE(kNameLogicalOr, PrimitiveType_LogicalOr, PopulateArithmeticCommonOpPara)

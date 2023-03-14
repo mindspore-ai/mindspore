@@ -20,6 +20,7 @@
 #include "nnacl/triu_tril.h"
 #include "nnacl/fp32/unique_fp32.h"
 #include "nnacl/scatter_nd_parameter.h"
+#include "nnacl/fp32/ragged_range_fp32.h"
 #include "ops/assert.h"
 #include "ops/where.h"
 #include "ops/unsorted_segment_sum.h"
@@ -38,6 +39,10 @@
 #include "ops/tensor_scatter_add.h"
 #include "ops/scatter_nd.h"
 #include "ops/expand_dims.h"
+#include "ops/rank.h"
+#include "ops/ragged_range.h"
+#include "ops/ones_like.h"
+#include "ops/non_zero.h"
 
 namespace mindspore {
 namespace lite {
@@ -50,6 +55,9 @@ REG_OP_BASE_POPULATE(Size)
 REG_OP_BASE_POPULATE(Shape)
 REG_OP_BASE_POPULATE(Select)
 REG_OP_BASE_POPULATE(ExpandDims)
+REG_OP_BASE_POPULATE(Rank)
+REG_OP_BASE_POPULATE(OnesLike)
+REG_OP_BASE_POPULATE(NonZero)
 
 REG_OP_DEFAULT_POPULATE(SparseToDense)
 REG_OP_DEFAULT_POPULATE(Transpose)
@@ -57,6 +65,8 @@ REG_OP_DEFAULT_POPULATE(Tril)
 REG_OP_DEFAULT_POPULATE(Triu)
 REG_OP_DEFAULT_POPULATE(Where)
 REG_OP_DEFAULT_POPULATE(Unique)
+REG_OP_DEFAULT_POPULATE(RaggedRange)
+
 using mindspore::ops::kNameScatterNd;
 using mindspore::ops::kNameScatterNdUpdate;
 using mindspore::ops::kNameTensorScatterAdd;

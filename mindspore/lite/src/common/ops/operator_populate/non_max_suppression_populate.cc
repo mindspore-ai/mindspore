@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "nnacl/softmax_parameter.h"
-#include "ops/softmax.h"
-using mindspore::ops::kAxis;
-using mindspore::ops::kNameSoftmax;
-using mindspore::schema::PrimitiveType_Softmax;
+#include "nnacl/non_max_suppression_parameter.h"
+#include "ops/non_max_suppression.h"
+using mindspore::ops::kNameNonMaxSuppression;
+using mindspore::schema::PrimitiveType_NonMaxSuppression;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateSoftmaxOpParameter(const BaseOperatorPtr &base_operator) {
-  auto param = reinterpret_cast<SoftmaxParameter *>(PopulateOpParameter<SoftmaxParameter>());
+OpParameter *PopulateNonMaxSuppressionOpParameter(const BaseOperatorPtr &base_operator) {
+  auto param = reinterpret_cast<NMSParameter *>(PopulateOpParameter<NMSParameter>());
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new SoftmaxParameter failed.";
+    MS_LOG(ERROR) << "new NMSParameter failed.";
     return nullptr;
   }
-  ValuePtr attr = base_operator->GetPrim()->GetAttr(kAxis);
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "The attr(" << kAxis << ") of operator(" << base_operator->name() << ") not exist";
+  auto op = dynamic_cast<ops::NonMaxSuppression *>(base_operator.get());
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "operator is not PadFusion.";
+    return nullptr;
+  }
+
+  param->center_point_box_ = static_cast<int>(op->get_center_point_box());
+  if (param->center_point_box_ != C0NUM && param->center_point_box_ != C1NUM) {
+    MS_LOG(ERROR) << "invalid center_point_box value: " << param->center_point_box_;
     free(param);
     return nullptr;
   }
-  auto flat_axis = GetValue<std::vector<int64_t>>(attr);
-  if (flat_axis.size() != 1) {
-    MS_LOG(ERROR) << "axis number invalid!number: " << flat_axis.size();
-    free(param);
-    return nullptr;
-  }
-  param->axis_ = flat_axis.data()[0];
   return reinterpret_cast<OpParameter *>(param);
 }
-
-REG_OPERATOR_POPULATE(kNameSoftmax, PrimitiveType_Softmax, PopulateSoftmaxOpParameter)
+REG_OPERATOR_POPULATE(kNameNonMaxSuppression, PrimitiveType_NonMaxSuppression, PopulateNonMaxSuppressionOpParameter);
 }  // namespace lite
 }  // namespace mindspore
