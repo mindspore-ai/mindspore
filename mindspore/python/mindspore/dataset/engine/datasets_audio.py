@@ -36,7 +36,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses CMUArctic dataset.
 
-    The generated dataset has four columns: :py:obj:`["waveform", "sample_rate", "transcript", "utterance_id"]` .
+    The generated dataset has four columns: :py:obj:`[waveform, sample_rate, transcript, utterance_id]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`transcript` is of a scalar of string type.
@@ -46,7 +46,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         name (str, optional): Part of this dataset, can be 'aew', 'ahw', 'aup', 'awb', 'axb', 'bdl',
             'clb', 'eey', 'fem', 'gka', 'jmk', 'ksp', 'ljm', 'lnh', 'rms', 'rxr', 'slp' or 'slt'.
-            Default: None, equal 'aew'.
+            Default: None, means 'aew'.
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -64,7 +64,6 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             Default: None, which means no cache is used.
 
     Raises:
-        RuntimeError: If source raises an exception during execution.
         RuntimeError: If `dataset_dir` does not contain data files.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
@@ -115,7 +114,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     About CMUArctic dataset:
 
-    The CMU arctic databases are designed for the purpose of speech synthesis research.
+    The CMU Arctic databases are designed for the purpose of speech synthesis research.
     These single speaker speech databases have been carefully recorded under studio conditions
     and consist of approximately 1200 phonetically balanced English utterances. In addition to wavefiles,
     the databases provide complete support for the Festival Speech Synthesis System, including pre-built
@@ -174,7 +173,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses GTZAN dataset.
 
-    The generated dataset has three columns: :py:obj:`["waveform", "sample_rate", "label"]` .
+    The generated dataset has three columns: :py:obj:`[waveform, sample_rate, label]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`label` is of a scalar of string type.
@@ -182,7 +181,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be 'train', 'valid', 'test' or 'all'.
-            Default: None, all samples.
+            Default: None, will read all samples.
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -200,7 +199,6 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
             Default: None, which means no cache is used.
 
     Raises:
-        RuntimeError: If source raises an exception during execution.
         RuntimeError: If `dataset_dir` does not contain data files.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
@@ -254,7 +252,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
     The GTZAN dataset appears in at least 100 published works and is the most commonly used
     public dataset for evaluation in machine listening research for music genre recognition.
     It consists of 1000 audio tracks, each of which is 30 seconds long. It contains 10 genres (blues,
-    classical, country, disco, hiphop, jazz, metal, pop, reggae and reggae), each of which is
+    classical, country, disco, hiphop, jazz, metal, pop, reggae and rock), each of which is
     represented by 100 tracks. The tracks are all 22050Hz Mono 16-bit audio files in .wav format.
 
     You can construct the following directory structure from GTZAN dataset and read by MindSpore's API.
@@ -305,8 +303,8 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
     """
     A source dataset that reads and parses the LibriTTS dataset.
 
-    The generated dataset has seven columns :py:obj:`['waveform', 'sample_rate', 'original_text', 'normalized_text',
-    'speaker_id', 'chapter_id', 'utterance_id']` .
+    The generated dataset has seven columns :py:obj:`[waveform, sample_rate, original_text, normalized_text,
+    speaker_id, chapter_id, utterance_id]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
     The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
     The tensor of column :py:obj:`original_text` is of a scalar of string type.
@@ -318,7 +316,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Part of this dataset, can be 'dev-clean', 'dev-other', 'test-clean', 'test-other',
-            'train-clean-100', 'train-clean-360', 'train-other-500', or 'all'. Default: None, equal 'all'.
+            'train-clean-100', 'train-clean-360', 'train-other-500', or 'all'. Default: None, means 'all'.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -336,7 +334,6 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
             Default: None, which means no cache is used.
 
     Raises:
-        RuntimeError: If source raises an exception during execution.
         RuntimeError: If `dataset_dir` does not contain data files.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.

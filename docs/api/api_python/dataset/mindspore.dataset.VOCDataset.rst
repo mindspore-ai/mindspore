@@ -12,7 +12,7 @@ mindspore.dataset.VOCDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
-        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持 'Segmentation'和 'Detection'。默认值：'Segmentation'。
+        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持 'Segmentation' 和 'Detection'。默认值：'Segmentation'。
         - **usage** (str, 可选) - 指定数据集的子集。默认值：'train'。
 
           - 如果 'task' 的值为 'Segmentation'，则读取 'ImageSets/Segmentation/' 目录下定义的图片和label信息；
