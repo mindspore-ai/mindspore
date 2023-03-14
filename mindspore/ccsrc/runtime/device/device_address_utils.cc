@@ -414,6 +414,18 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   }
 }
 
+namespace {
+// Support the cascade ref node and get the first ref output recursive.
+session::AnfWithOutIndex GetRefNodeRecursive(const KernelGraphPtr &graph, const session::AnfWithOutIndex &out_pair) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (graph->IsInRefOutputMap(out_pair)) {
+    const auto &origin_pair = graph->GetRefCorrespondOutput(out_pair);
+    return GetRefNodeRecursive(graph, origin_pair);
+  }
+  return out_pair;
+}
+}  // namespace
+
 void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &kernels = graph->execution_order();
@@ -427,7 +439,7 @@ void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &gra
     for (size_t i = 0; i < output_num; ++i) {
       session::AnfWithOutIndex out_pair(kernel, i);
       if (graph->IsInRefOutputMap(out_pair)) {
-        auto origin_pair = graph->GetRefCorrespondOutput(out_pair);
+        const auto &origin_pair = GetRefNodeRecursive(graph, out_pair);
         UpdateDeviceAddress(out_pair, origin_pair);
       }
     }
