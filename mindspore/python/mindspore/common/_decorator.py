@@ -15,6 +15,7 @@
 """Providing decorators."""
 
 from __future__ import absolute_import
+from functools import wraps
 from mindspore import log
 
 
@@ -31,6 +32,7 @@ def deprecated(version, substitute, use_substitute_name=False):
     """
 
     def decorate(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             cls = getattr(args[0], "__class__", None) if args else None
             name = cls.__name__ if cls else func.__name__
