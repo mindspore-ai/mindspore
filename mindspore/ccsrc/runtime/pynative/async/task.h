@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_TASK_H_
 
+#include <exception>
+
 namespace mindspore {
 namespace pynative {
 enum TaskType { kUnknownTask = 0, kOpRunTask, kOpBuildTask, kBpropTask, kForwardTask, kExitTask, kWaitTask };
