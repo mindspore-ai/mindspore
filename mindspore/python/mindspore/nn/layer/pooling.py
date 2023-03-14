@@ -77,8 +77,9 @@ class LPPool1d(Cell):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
 
-    Typically the input is of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, the output is of shape
-    :math:`(N, C, L_{in})` or :math:`(C, L_{in})`, with the same shape as input, the operation is as follows.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})``, the output is of
+    shape :math:`(N_{out}, C_{out}, L_{out})` or :math:`(C_{out}, L_{out})`, with the same shape as input,
+    the operation is as follows.
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
@@ -86,7 +87,8 @@ class LPPool1d(Cell):
     Args:
         norm_type (Union[int, float]): Type of normalization, represents p in the formula, can not be 0.
 
-            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
+              pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size (int): The size of kernel window.
@@ -95,11 +97,11 @@ class LPPool1d(Cell):
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
 
     Outputs:
-        - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
-          It has the same data type as `x`.
+        - **output** (Tensor) - LPPool1d result, with shape :math:`(N_{out}, C_{out}, L_{out})` or
+          :math:`(C_{out}, L_{out})`, it has the same data type as `x`.
 
     Raises:
         TypeError: If `x` is not an Tensor.
@@ -302,8 +304,9 @@ class MaxPool3d(_PoolNd):
           :math:`(C_{in}, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, or
-        :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
+        If `return_indices` is False, output is a Tensor, with shape
+        :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`  or :math:`(C_{out}, D_{out}, H_{out}, W_{out})`.
+        It has the same data type as `x`.
 
         If `return_indices` is True, output is a Tuple of 2 Tensors, representing the maxpool result and where
         the max values are generated.
@@ -381,7 +384,7 @@ class MaxPool2d(_PoolNd):
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool2d outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+    :math:`(h_{ker}, w_{ker})` and stride :math:`(s_0, s_1)`, the operation is as follows.
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
@@ -741,8 +744,8 @@ class AvgPool3d(_PoolNd):
             times, and left and right of the input `padding[2]` times.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
         count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
-        divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
-            otherwise kernel_size will be used. Default: None.
+        divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
+            in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
@@ -751,11 +754,13 @@ class AvgPool3d(_PoolNd):
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
-        :math:`(C, D_{in}, H_{in}, W_{in})`, with the same data type as `x`.
+        :math:`(C, D_{out}, H_{out}, W_{out})`, with the same data type as `x`.
 
     Raises:
-        TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.=
+        TypeError: If `kernel_size` is neither an int nor a tuple.
+        TypeError: If `stride` is neither an int nor a tuple.
+        TypeError: If `padding` is neither an int nor a tuple/list.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
         ValueError: If numbers in `kernel_size` or `stride` are not positive.
         ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to 3.
@@ -955,8 +960,8 @@ class AvgPool1d(_PoolNd):
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, AvgPool1d outputs
-    regional average in the :math:`(L_{in})`-dimension. Given kernel size
-    :math:`ks = l_{ker}` and stride :math:`s = s_0`, the operation is as follows:
+    regional average in the :math:`(L_{in})`-dimension. Given `kernel_size`
+    :math:`l_{ker}` and `stride` :math:`s_0`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
