@@ -19,6 +19,7 @@ import astunparse
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
 from mindspore.rewrite.ast_helpers.ast_modifier import AstModifier
 from mindspore import log as logger
+from mindspore import nn
 from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import reg_parser
@@ -77,6 +78,10 @@ class ForParser(Parser):
         iter_var_name = iter_code.split(".")[-1]
         index = stree.get_ast_root().body.index(node) + 1
         if isinstance(iter_obj, list):
+            for obj in iter_obj:
+                if not isinstance(obj, nn.Cell):
+                    stree.try_append_python_node(node, node)
+                    return
             for i, obj in enumerate(iter_obj):
                 ForParser.modify_init_ast(stree, i, obj, iter_var_name)
                 for body in node.body:
