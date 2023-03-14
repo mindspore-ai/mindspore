@@ -76,7 +76,7 @@ def test_bernoulli_dynamic():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.ones([32, 16, 2, 5]).astype(np.float32)
-    p = np.ones([5]).astype(np.float32) * 0.5
+    p = np.ones([1]).astype(np.float32) * 0.5
     net = BernoulliDynamic()
 
     output = net(Tensor(x), Tensor(p))

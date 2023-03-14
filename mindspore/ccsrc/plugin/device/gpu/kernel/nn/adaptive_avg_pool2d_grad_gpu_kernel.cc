@@ -34,7 +34,7 @@ int AdaptiveAvgPool2DGradKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  auto grad_shape = inputs[kIndex1]->GetShapeVector();     // dy
+  auto grad_shape = inputs[kIndex0]->GetShapeVector();     // dy
   auto output_shape = outputs[kIndex0]->GetShapeVector();  // dx
 
   auto input_rank = grad_shape.size();
@@ -67,7 +67,7 @@ template <typename T>
 bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs) {
-  T *dy_addr = GetDeviceAddress<T>(inputs, 1);
+  T *dy_addr = GetDeviceAddress<T>(inputs, 0);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
   float *wk_addr = GetDeviceAddress<float>(workspace, 0);
 
@@ -80,11 +80,11 @@ bool AdaptiveAvgPool2DGradKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 const std::vector<std::pair<KernelAttr, AdaptiveAvgPool2DGradKernelMod::KernelRunFunc>>
   &AdaptiveAvgPool2DGradKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, AdaptiveAvgPool2DGradKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
      &AdaptiveAvgPool2DGradKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
      &AdaptiveAvgPool2DGradKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
      &AdaptiveAvgPool2DGradKernelMod::LaunchKernel<double>},
   };
   return func_list;
