@@ -717,6 +717,7 @@ class Optimizer(Cell):
 
         Examples:
             >>> from mindspore import nn
+            >>> # net = LeNet5()
             >>> net = Net()
             >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
             >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
