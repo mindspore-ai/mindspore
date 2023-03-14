@@ -43,10 +43,7 @@ bool BesselI0eCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
 
-  input_shape_ = inputs[0]->GetShapeVector();
-  output_shape_ = outputs[0]->GetShapeVector();
   input_dtype_ = inputs[0]->GetDtype();
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
 
   switch (input_dtype_) {
     case kNumberTypeFloat64:
@@ -70,9 +67,11 @@ int BesselI0eCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
+  input_shape_ = inputs[0]->GetShapeVector();
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
+
   return 0;
 }
 

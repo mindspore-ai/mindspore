@@ -66,7 +66,6 @@ int BesselI0CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();
