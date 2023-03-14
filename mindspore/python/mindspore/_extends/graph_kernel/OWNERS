@@ -1,6 +1,8 @@
 approvers:
-- gaoxiong1
+- gaoxiong1 #
 - ckey_dou
 - dayschan
 - anyrenwei
 
+options:
+    no_parent_owners: true
