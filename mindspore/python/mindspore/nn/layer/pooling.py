@@ -431,7 +431,7 @@ class MaxPool2d(_PoolNd):
         the max values are generated.
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N, C, H_{out}, W_{out})` or
-        :math:`(C_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
+          :math:`(C_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
 
@@ -574,7 +574,7 @@ class MaxPool1d(_PoolNd):
         the max values are generated.
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N, C_{out}, L_{out})` or
-        :math:`(C_{out}, L_{out})`. It has the same data type as `x`.
+          :math:`(C_{out}, L_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
     Raises:
