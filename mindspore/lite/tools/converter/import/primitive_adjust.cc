@@ -79,6 +79,7 @@
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
 #include "ops/random_standard_normal.h"
+#include "ops/fill.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "nnacl/op_base.h"
 using mindspore::ops::kNameAdd;
@@ -95,6 +96,7 @@ using mindspore::ops::kNameConv2DTranspose;
 using mindspore::ops::kNameDiv;
 using mindspore::ops::kNameElu;
 using mindspore::ops::kNameExp;
+using mindspore::ops::kNameFill;
 using mindspore::ops::kNameGeLU;
 using mindspore::ops::kNameL2Normalize;
 using mindspore::ops::kNameLayerNorm;
@@ -747,5 +749,6 @@ REGIST_PRIMITIVE_ADJUST(kNameResizeBilinearGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighborGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameSoftplus, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameDynamicShape, MoveAttrMapCommon<ops::Shape>)
+REGIST_PRIMITIVE_ADJUST(kNameFill, MoveAttrMapCommon<ops::Fill>)
 }  // namespace lite
 }  // namespace mindspore

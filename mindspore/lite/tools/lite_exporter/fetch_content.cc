@@ -164,33 +164,37 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, converter::FmkType fmk_
   return RET_OK;
 }
 
-int FetchFromInt32OrInt64ImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+template <typename DstImm, typename SrcImm>
+int FetchCastImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
   MS_ASSERT(value_node != nullptr && data_info != nullptr);
-  // data of int64 is converted to int32 here.
-  data_info->data_type_ = kNumberTypeInt32;
+  DstImm dst_imm;
+  data_info->data_type_ = dst_imm.type()->number_type();
   data_info->shape_ = {1};
-  data_info->data_.resize(sizeof(int32_t));
+  data_info->data_.resize(sizeof(dst_imm.value()));
   auto value = value_node->value();
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
-  int real_data = opt::CastToInt(value).front();
-  if (memcpy_s(data_info->data_.data(), sizeof(int32_t), &real_data, sizeof(int32_t)) != EOK) {
+  auto data = value->cast<std::shared_ptr<SrcImm>>();
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr");
+  auto data_value = data->value();
+  decltype(dst_imm.value()) dst_data = static_cast<decltype(dst_imm.value())>(data_value);
+  if (memcpy_s(data_info->data_.data(), sizeof(dst_imm.value()), &dst_data, sizeof(dst_imm.value())) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return RET_MEMORY_FAILED;
   }
   return RET_OK;
 }
 
-int FetchFromBoolImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
+template <typename ImmType>
+int FetchImmValue(const ValueNodePtr &value_node, DataInfo *data_info) {
   MS_ASSERT(value_node != nullptr && data_info != nullptr);
-  data_info->data_type_ = kNumberTypeBool;
-  data_info->shape_ = {1};
-  data_info->data_.resize(sizeof(bool));
-  auto value = value_node->value();
-  MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
-  auto data = value->cast<mindspore::BoolImmPtr>();
-  MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr");
+  auto data = value_node->value()->cast<std::shared_ptr<ImmType>>();
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_NULL_PTR, "cast NumberImm failed");
   auto data_value = data->value();
-  if (memcpy_s(data_info->data_.data(), sizeof(bool), &data_value, sizeof(bool)) != EOK) {
+  data_info->data_type_ = data->type()->number_type();
+  data_info->shape_ = {1};
+  data_info->data_.resize(sizeof(data_value));
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_NULL_PTR, "cast NumberImm failed");
+  if (memcpy_s(data_info->data_.data(), sizeof(data_value), &data_value, sizeof(data_value)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
     return RET_MEMORY_FAILED;
   }
@@ -351,10 +355,14 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
     if (index == kNumWeightIndex && prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
       data_info->format_ = GetValue<int64_t>(prim->GetAttr(mindspore::ops::kFormat));
     }
-  } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
-    ret = FetchFromInt32OrInt64ImmValue(value_node, data_info);
+  } else if (value->isa<mindspore::Int64Imm>()) {
+    ret = FetchCastImmValue<mindspore::Int32Imm, mindspore::Int64Imm>(value_node, data_info);
+  } else if (value->isa<mindspore::Int32Imm>()) {
+    ret = FetchImmValue<mindspore::Int32Imm>(value_node, data_info);
   } else if (value->isa<mindspore::BoolImm>()) {
-    ret = FetchFromBoolImmValue(value_node, data_info);
+    ret = FetchImmValue<mindspore::BoolImm>(value_node, data_info);
+  } else if (value->isa<mindspore::FP32Imm>()) {
+    ret = FetchImmValue<mindspore::FP32Imm>(value_node, data_info);
   } else if (value->isa<mindspore::ValueSequence>()) {
     ret = FetchFromSequenceValue(value_node, data_info);
   } else if (value->isa<Number>()) {
