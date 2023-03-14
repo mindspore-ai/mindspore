@@ -59,4 +59,7 @@ class DebugHook(ABC):
         raise RuntimeError("compute() is not overridden in subclass of class DebugHook.")
 
     def set_previous_op_name(self, prev_op_name):
+        """
+        Set prev_op_name.
+        """
         self.prev_op_name = prev_op_name
