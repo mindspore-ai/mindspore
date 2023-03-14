@@ -50,7 +50,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
   static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
-                                   bool export_air);
+                                   bool export_air, const ConfigInfos config_infos = {});
 
  private:
   const std::shared_ptr<mindspore::Context> context_;
