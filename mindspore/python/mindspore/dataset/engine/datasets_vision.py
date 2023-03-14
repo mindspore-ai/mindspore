@@ -3320,8 +3320,8 @@ class OmniglotDataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        background(bool, optional): Use the background dataset or the evaluation dataset.
-            Default: None, will use the background dataset.
+        background (bool, optional): Whether to create dataset from the "background" set.
+            Otherwise create from the "evaluation" set. Default: None, set to True.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
@@ -3341,6 +3341,7 @@ class OmniglotDataset(MappableDataset):
             Default: None, which means no cache is used.
 
     Raises:
+        RuntimeError: If `dataset_dir` does not contain data files.
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `sharding` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
@@ -3384,10 +3385,10 @@ class OmniglotDataset(MappableDataset):
 
     About Omniglot dataset:
 
-    The Omniglot dataset is designed for developing more human-like learning algorithms. Omniglot is a large dataset
-    of hand-written characters with 1623 characters and 20 examples for each character. These characters are collected
-    based upon 50 alphabets from different countries. It contains both images and strokes data. Stroke data are
-    coordinates with time in milliseconds.
+    The Omniglot dataset is designed for developing more human-like learning algorithms. It contains 1623 different
+    handwritten characters from 50 different alphabets. Each of the 1623 characters was drawn online via Amazon's
+    Mechanical Turk by 20 different people. Each image is paired with stroke data, a sequences of [x, y, t] coordinates
+    with time in milliseconds.
 
     You can unzip the original Omniglot dataset files into this directory structure and read by MindSpore's API.
 
