@@ -2856,9 +2856,9 @@ def cosh(x):
     return F.cosh(x)
 
 
-def ger(input, other):
-    """Ger product of `input` and `other`."""
-    return F.ger(input, other)
+def ger(input, vec2):
+    """Ger product of `input` and `vec2`."""
+    return F.ger(input, vec2)
 
 
 def gt(x, y):
