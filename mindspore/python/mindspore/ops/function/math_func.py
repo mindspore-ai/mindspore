@@ -7734,7 +7734,10 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
 def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     """
-    Unpack the LU_data and LU_pivots from a LU factorization of a tensor.
+    Converts `LU_data` and `LU_pivots` back into P, L and U matrices, where
+    P is a permutation matrix, L is a lower triangular matrix, and U is an
+    upper triangular matrix. Typically, `LU_data` and `LU_pivots` are generated
+    from the LU decomposition of a matrix.
 
     Args:
         LU_data (Tensor): The packed LU factorization data. A tensor of size [*, M, N], where * is batch

@@ -537,6 +537,7 @@ Array Operation
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Quantile
     mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
@@ -690,7 +691,8 @@ Sparse Operator
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
-    
+
+    mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
 Frame Operators

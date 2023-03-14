@@ -3,7 +3,7 @@ mindspore.ops.quantile
 
 .. py:function:: mindspore.ops.quantile(input, q, axis=None, keepdims=False)
 
-    计算 `input` 中所有元素的第 `q` 分位数，如果第 `q` 分位数位于两个数据点之间，则返使用线性插值计算结果。
+    计算 `input` 中所有元素的第 `q` 分位数，如果第 `q` 分位数位于两个数据点之间，则返回使用线性插值计算结果。
 
     参数：
         - **input** (Tensor) - 输入Tensor。其shape为 :math:`(x_1, x_2, ..., x_R)` 。支持的数据类型为：float32、float64。
@@ -15,7 +15,7 @@ mindspore.ops.quantile
         输入Tensor，数据类型与 `input` 一致。
 
         假设 `input` 的shape为 :math:`(m, x_0, x_1, ..., x_i, ..., X_R)` ， `axis` = :math:`i` ，m为 `q` 中的总元素个数。
-        
+
         - 如果 `q` 为标量且 `keepdims` 为True，则输出shape为 :math:`(x_0, x_1, ..., 1, ..., X_R)` 。
         - 如果 `q` 为标量且 `keepdims` 为False，则输出shape为 :math:`(x_0, x_1, ..., X_R)` 。
         - 如果 `q` 为1D Tensor且 `keepdims` 为True，则输出shape为 :math:`(m, x_0, x_1, ..., 1, ..., X_R)` 。
@@ -24,8 +24,8 @@ mindspore.ops.quantile
     异常：
         - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `q` 不是Tensor或float类型。
-        - **TypeError** - `input` 的数据类型float32或float64。
-        - **TypeError** - `q` 的数据类型float32或float64。
+        - **TypeError** - `input` 的数据类型不是float32或float64。
+        - **TypeError** - `q` 的数据类型不是float32或float64。
         - **TypeError** - `input` 和 `q` 的数据类型不一致。
         - **ValueError** - `q` 的值不在[0, 1]范围内。
         - **ValueError** - `axis` 的值不在有效范围内。
