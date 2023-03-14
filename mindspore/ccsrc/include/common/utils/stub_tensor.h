@@ -46,7 +46,7 @@ class COMMON_EXPORT StubNode : public Value {
 
   virtual bool SetAbstract(const AbstractBasePtr &abs);
   virtual void SetValue(const ValuePtr &val);
-  void SetException(const std::exception_ptr &e_ptr);
+  virtual void SetException(const std::exception_ptr &e_ptr);
 
   AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
@@ -54,13 +54,10 @@ class COMMON_EXPORT StubNode : public Value {
   AbstractBasePtr ToAbstract() override { return WaitAbstract(); }
   bool operator==(const Value &other) const override { return other.isa<StubNode>() && &other == this; }
 
-  void SetTopNode(const std::shared_ptr<StubNode> &node) { top_node_ = node; }
-
  protected:
   AbstractBasePtr abstract_;
   ValuePtr value_;
   std::atomic<bool> wait_flag_{false};
-  StubNodePtr top_node_;
   std::exception_ptr e_ptr_{};
 };
 
@@ -84,6 +81,7 @@ class SequenceNode : public StubNode {
 
   bool SetAbstract(const AbstractBasePtr &abs) override;
   void SetValue(const ValuePtr &val) override;
+  void SetException(const std::exception_ptr &e_ptr) override;
 
   void SetElement(int i, StubNodePtr node) { elements_[i] = node; }
   std::vector<StubNodePtr> &Elements() { return elements_; }
@@ -99,6 +97,7 @@ class AnyTypeNode : public StubNode {
   MS_DECLARE_PARENT(AnyTypeNode, StubNode);
   bool SetAbstract(const AbstractBasePtr &abs) override;
   void SetValue(const ValuePtr &val) override;
+  void SetException(const std::exception_ptr &e_ptr) override;
   py::object GetRealNode();
 
  private:

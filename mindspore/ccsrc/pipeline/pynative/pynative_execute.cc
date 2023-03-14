@@ -70,21 +70,6 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
     return res;
   }
 }
-
-TypePtr PredictOutTypeByName(const std::string &op_name) {
-  static PredictOutTypeMap ops_map;
-  const auto iter = ops_map.find(op_name);
-  if (iter != ops_map.end()) {
-    return iter->second;
-  }
-  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-  if (operator_fns.find(op_name) == operator_fns.end()) {
-    return ops_map[op_name] = kTypeNone;
-  }
-  const auto pre_iter = out_type_prediction.find(op_name);
-  auto type = pre_iter == out_type_prediction.end() ? kTensorType : pre_iter->second;
-  return ops_map[op_name] = type;
-}
 }  // namespace
 
 bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const {
