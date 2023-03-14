@@ -1,7 +1,7 @@
 mindspore.ops.multilabel_margin_loss
 ======================================
 
-.. py:function:: mindspore.ops.multilabel_margin_loss(inputs, target, reduction='mean')
+.. py:function:: mindspore.ops.multilabel_margin_loss(input, target, reduction='mean')
 
     用于优化多标签分类问题的合页损失。
 
@@ -20,9 +20,9 @@ mindspore.ops.multilabel_margin_loss
     该标准仅考虑从前方开始的连续非负目标块。这允许不同的样本具有不同数量的目标类别。
 
     参数：
-        - **inputs** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
+        - **input** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
           为批量大小，:math:`C` 为类别数。数据类型必须为：float16或float32。
-        - **target** (Tensor) - 真实标签，shape与 `inputs` 相同，数据类型必须为int32，标签目标由-1填充。
+        - **target** (Tensor) - 真实标签，shape与 `input` 相同，数据类型必须为int32，标签目标由-1填充。
         - **reduction** (str, 可选) - 可选，对输出应用特定的缩减方法：可选"none"、"mean"、"sum"。默认值：'mean'。
 
           - 'none'：不应用缩减方法。
@@ -34,9 +34,9 @@ mindspore.ops.multilabel_margin_loss
           那么返回shape为 :math:`(N)` 的Tensor类型数据。否则返回一个标量。
 
     异常：
-        - **TypeError** - 当 `inputs` 或者 `target` 数据不是Tensor时。
-        - **TypeError** - 当 `inputs` 数据类型不是以下其中之一时：float16、float32。
+        - **TypeError** - 当 `input` 或者 `target` 数据不是Tensor时。
+        - **TypeError** - 当 `input` 数据类型不是以下其中之一时：float16、float32。
         - **TypeError** - 当 `target` 数据类型不是int32时。
-        - **ValueError** - 当 `inputs` 的数据维度不是以下其中之一时：1、2。
-        - **ValueError** - 当 `inputs` 和 `target` 的shape不相同时。
+        - **ValueError** - 当 `input` 的数据维度不是以下其中之一时：1、2。
+        - **ValueError** - 当 `input` 和 `target` 的shape不相同时。
         - **ValueError** - 当 `reduction` 的值不是以下其中之一时：'none'、 'mean'、 'sum'。
