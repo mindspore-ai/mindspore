@@ -81,7 +81,7 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  output_nodes_ = ir_builder->Run(input_nodes_, attrs, *handle);
+  output_nodes_ = ir_builder->Run(input_nodes_, attrs, *handle, GetCNodePrimitive(cnode)->instance_name());
   if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
@@ -249,8 +249,9 @@ class GraphModeBuilder : public BpropIRBuilder {
   GraphModeBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
       : BpropIRBuilder(name, func_graph, infer) {}
 
-  NodePtrList Build(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle) {
-    auto outputs = Run(inputs, attrs, handle);
+  NodePtrList Build(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
+                    const std::string &instance_name) {
+    auto outputs = Run(inputs, attrs, handle, instance_name);
     auto mt = this->MakeTuple(outputs)->get();
     func_graph_->set_output(mt);
     if (has_ctrl_flow_) {
@@ -313,7 +314,7 @@ bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim,
   inputs.reserve(parameters.size());
   (void)std::transform(parameters.cbegin(), parameters.cend(), std::back_inserter(inputs),
                        [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
-  auto outputs = ir_builder.Build(inputs, prim->attrs(), *handle);
+  auto outputs = ir_builder.Build(inputs, prim->attrs(), *handle, prim->instance_name());
   if (outputs.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
