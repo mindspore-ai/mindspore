@@ -25,7 +25,7 @@ namespace mindspore::lite {
 class ConcateTensorRT : public TensorRTOp {
  public:
   ConcateTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
-                  const std::vector<TensorInfo> &out_tensors, std::string name)
+                  const std::vector<TensorInfo> &out_tensors, const std::string &name)
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {
     if (type_ == ops::kNameConcat) {
       axis_ = AsOps<ops::Concat>()->get_axis();
