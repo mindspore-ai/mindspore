@@ -39,7 +39,7 @@ def run_same_network_twice_in_one_process(file_name, log_file_name):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mutable_compile_repeat():
     """
