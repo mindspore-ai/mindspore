@@ -516,6 +516,22 @@ class BeforeOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
+  static void CheckValueSequenceNesting(const ValuePtr &value, size_t depth) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                        << " levels.";
+    }
+
+    if (value->isa<ValueSequence>()) {
+      auto value_seq = value->cast<ValueSequencePtr>();
+      for (auto element : value_seq->value()) {
+        CheckValueSequenceNesting(element, depth + 1);
+      }
+    }
+    return;
+  }
+
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
     if (value->isa<ValueDictionary>()) {
@@ -524,6 +540,7 @@ class BeforeOptARewriter : public BaseRewriter {
         return DictToTuple(value->cast<ValueDictionaryPtr>());
       }
     }
+    CheckValueSequenceNesting(value, 0);
     return nullptr;
   }
 
@@ -538,7 +555,8 @@ class BeforeOptARewriter : public BaseRewriter {
   // AbstractDictionary --> AbstractSequence.
   static AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                        << " levels.";
     }
     auto abs_seq = abs->cast<AbstractSequencePtr>();
     if (abs_seq != nullptr) {
@@ -1078,7 +1096,45 @@ class AfterOptARewriter : public BaseRewriter {
   // AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+      MS_LOG(EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
+                        << " levels.";
+    }
+    // Convert RowTensor in AbstractSequence to AbstractTuple.
+    auto abs_seq = abs->cast<AbstractSequencePtr>();
+    if (abs_seq != nullptr) {
+      // Dynamic length sequence do not convert.
+      if (abs_seq->dynamic_len()) {
+        return nullptr;
+      }
+      const auto &seq_elements = abs_seq->elements();
+      // First we check if elements should be converted,
+      // changed_elements maps old element to new element.
+      mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
+      for (const auto &element : seq_elements) {
+        auto new_element = ConvertToAbstractTuple(element, depth + 1);
+        if (new_element != nullptr) {
+          (void)changed_elements.emplace(element, new_element);
+        }
+      }
+      if (changed_elements.empty()) {
+        // If no RowTensor in sequence is changed, do not convert.
+        return nullptr;
+      }
+      // Make new abstract sequence.
+      std::vector<AbstractBasePtr> elements;
+      elements.reserve(seq_elements.size());
+      for (const auto &element : seq_elements) {
+        auto iter = changed_elements.find(element);
+        if (iter != changed_elements.end()) {
+          (void)elements.emplace_back(iter->second);
+        } else {
+          (void)elements.emplace_back(element);
+        }
+      }
+      if (abs_seq->isa<AbstractList>()) {
+        return std::make_shared<AbstractList>(std::move(elements));
+      }
+      return std::make_shared<AbstractTuple>(std::move(elements));
     }
     // AbstractRowTensor --> AbstractTuple.
     auto abs_row_tensor = abs->cast<std::shared_ptr<AbstractRowTensor>>();
