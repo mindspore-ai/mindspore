@@ -767,7 +767,6 @@ GVAR_DEF(PrimitivePtr, kPrimNonZero, std::make_shared<Primitive>("NonZero"));
 GVAR_DEF(PrimitivePtr, kPrimNonZeroWithValue, std::make_shared<Primitive>("NonZeroWithValue"));
 GVAR_DEF(PrimitivePtr, kPrimNonZeroWithValueShape, std::make_shared<Primitive>("NonZeroWithValueShape"));
 GVAR_DEF(PrimitivePtr, kPrimNoRepeatNGram, std::make_shared<Primitive>("NoRepeatNGram"));
-GVAR_DEF(PrimitivePtr, kPrimGenerateEodMask, std::make_shared<Primitive>("GenerateEodMask"));
 GVAR_DEF(PrimitivePtr, kPrimRealInner, std::make_shared<Primitive>(kRealInner));
 GVAR_DEF(PrimitivePtr, kPrimReal, std::make_shared<Primitive>(kReal));
 GVAR_DEF(PrimitivePtr, kPrimImag, std::make_shared<Primitive>(kImag));

@@ -322,7 +322,6 @@ constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEqualOpName = "Equal";
 constexpr auto kErfOpName = "Erf";
-constexpr auto kGenerateEodMaskOpName = "GenerateEodMask";
 constexpr auto kEuclideanNormOpName = "EuclideanNorm";
 constexpr auto kEuclideanNormDOpName = "EuclideanNormD";
 constexpr auto kExpandOpName = "Expand";
