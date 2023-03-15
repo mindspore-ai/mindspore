@@ -398,8 +398,9 @@ def get_batchnorm_grad_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(G.MaxPoolGradGrad)
 @vmap_rules_getters.register(G.MaxPoolGradGradWithArgmax)
+@vmap_rules_getters.register(G.MaxPoolGradWithArgmaxV2)
 def get_maxpool_grad_grad_vmap_rule(prim, axis_size):
-    """VmapRule for `MaxPoolGradGrad` and `MaxPoolGradGradWithArgmax`."""
+    """VmapRule for `MaxPoolGradGrad`, `MaxPoolGradGradWithArgmax` and `MaxPoolGradWithArgmaxV2`."""
     chw_reverse_index = -3
 
     def vmap_rule(in0_bdim, in1_bdim, in2_bdim):

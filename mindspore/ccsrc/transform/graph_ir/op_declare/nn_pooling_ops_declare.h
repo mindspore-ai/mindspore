@@ -33,6 +33,9 @@ DECLARE_OP_USE_OUTPUT(MaxPoolWithArgmaxV2)
 DECLARE_OP_ADAPTER(MaxPoolGradWithArgmax)
 DECLARE_OP_USE_OUTPUT(MaxPoolGradWithArgmax)
 
+DECLARE_OP_ADAPTER(MaxPoolGradWithArgmaxV2)
+DECLARE_OP_USE_OUTPUT(MaxPoolGradWithArgmaxV2)
+
 DECLARE_OP_ADAPTER(MaxPoolGradGradWithArgmax)
 DECLARE_OP_USE_OUTPUT(MaxPoolGradGradWithArgmax)
 

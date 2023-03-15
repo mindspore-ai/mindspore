@@ -437,7 +437,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
-  auto func_name = op_info_ptr->kernel();
+  auto func_name = op_info_ptr->op_interface();
   (*compute_json)[kJFuncName] = func_name;
   auto python_module_path = op_info_ptr->impl_path();
   if (python_module_path.empty()) {
@@ -453,7 +453,8 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   (*compute_json)[kJInt64Mode] = false;
   (*compute_json)[kJName] = cnode->fullname_with_scope();
   (*compute_json)[kJPattern] = AnfAlgo::GetFusionType(cnode);
-  (*compute_json)[kJModuleName] = kJModuleNamePrefix + func_name;
+  auto file_name = op_info_ptr->op_file().empty() ? func_name : op_info_ptr->op_file();
+  (*compute_json)[kJModuleName] = kJModuleNamePrefix + file_name;
 }
 
 // node_out_idx: node output index
