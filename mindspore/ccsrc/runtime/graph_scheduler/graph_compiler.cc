@@ -239,7 +239,8 @@ void OptimizeNopNode(KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(ref_node);
     auto input_node = common::AnfAlgo::GetInputNode(ref_node, 0);
     MS_EXCEPTION_IF_NULL(input_node);
-    auto origin_pair = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+    // Record the original information of ref node.
+    auto origin_pair = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(origin_pair.first);
     // The device address of parameter as input may be not the running used in the heterogeneous or control flow
     // scenarios, and not set the ref node.
