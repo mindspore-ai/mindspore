@@ -558,7 +558,7 @@ class Broadcast(PrimitiveWithInfer):
         - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
+        tuple[Tensor], Tensor has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
         The contents depend on the data of the `root_rank` device.
 
     Raises:
@@ -623,7 +623,7 @@ class Broadcast(PrimitiveWithInfer):
         if not isinstance(x_dtype, tuple):
             raise TypeError(f"For '{self.name}', the 'input_x' must be a tuple, but got {type(x_dtype).__name__}!")
         for _ele in x_dtype:
-            check_collective_target_dtype('x', _ele, self.name)
+            check_collective_target_dtype('input_x', _ele, self.name)
         return x_dtype
 
 

@@ -13,10 +13,10 @@
         - **group** (str) - 表示通信域。默认值："hccl_world_group"。
 
     输入：
-        - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
+        - **input_x** (tuple[Tensor]) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
 
     输出：
-        Tensor，shape与输入相同，即 :math:`(x_1, x_2, ..., x_R)` 。内容取决于 `root_rank` device的数据。
+        tuple[Tensor]，Tensor的shape与输入相同，即 :math:`(x_1, x_2, ..., x_R)` 。内容取决于 `root_rank` device的数据。
 
     异常：
         - **TypeError** - root_rank不是int或group不是str。
