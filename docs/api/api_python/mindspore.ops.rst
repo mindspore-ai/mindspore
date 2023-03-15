@@ -325,6 +325,7 @@ Reduction函数
     mindspore.ops.cumsum
     mindspore.ops.fmax
     mindspore.ops.fmin
+    mindspore.ops.histc
     mindspore.ops.logsumexp
     mindspore.ops.max
     mindspore.ops.mean
@@ -393,8 +394,10 @@ Reduction函数
     mindspore.ops.batch_dot
     mindspore.ops.det
     mindspore.ops.dot
+    mindspore.ops.eig
     mindspore.ops.inner
     mindspore.ops.inverse
+    mindspore.ops.geqrf
     mindspore.ops.ger
     mindspore.ops.kron
     mindspore.ops.lstsq

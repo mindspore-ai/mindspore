@@ -4530,6 +4530,50 @@ def heaviside(input, values):
     return heaviside_(input, values)
 
 
+def histc(input, bins=100, min=0., max=0.):
+    r"""
+    Computes the histogram of a tensor.
+
+    The elements are sorted into equal width bins between `min` and `max`.
+    If `min` and `max` are both zero, the minimum and maximum values of the data are used.
+
+    Elements lower than min and higher than max are ignored.
+
+    Args:
+        input (Tensor) - the input tensor, type support list [float16, float32, int32]
+        bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
+        min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
+        max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+
+    Returns:
+        Tensor, 1-D Tensor with type int32.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `input` datetype not in support list.
+        TypeError: If attr `min` or `max` is not float or int.
+        TypeError: If attr `bins` is not int.
+        ValueError: If attr value `min` > `max`.
+        ValueError: If attr `bins` <= 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1., 2, 1])
+        >>> y = histc(x, bins=4, min=0.0, max=3.0)
+        >>> print(y)
+        [0 2 1 0]
+    """
+    if not isinstance(min, (int, float)):
+        raise TypeError(f"For 'histc', parameter 'min' must be an int or float, but got {type(min)}.")
+    if not isinstance(max, (int, float)):
+        raise TypeError(f"For 'histc', parameter 'max' must be an int or float, but got {type(max)}.")
+
+    histogram_op = _get_cache_prim(P.Histogram)(bins, float(min), float(max))
+    return histogram_op(input)
+
+
 def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
     r"""
     Returns a Tensor whose value is evenly spaced on a logarithmic scale.
@@ -10612,6 +10656,7 @@ __all__ = [
     'polygamma',
     'quantile',
     'tril_indices',
-    'triu_indices'
+    'triu_indices',
+    'histc'
 ]
 __all__.sort()

@@ -228,6 +228,20 @@ def H(x):
     return output
 
 
+def histc(x, bins=100, min=0., max=0.):
+    """
+    For details, please refer to :func:`mindspore.ops.histc`.
+    """
+    return F.histc(x, bins, min, max)
+
+
+def geqrf(x):
+    """
+    For details, please refer to :func:`mindspore.ops.geqrf`.
+    """
+    return F.geqrf(x)
+
+
 def size_(x):
     """
     Return the number of elements in tensor `x`.

@@ -1,4 +1,4 @@
-﻿mindspore.ops.Eig
+mindspore.ops.Eig
 ==================
 
 .. py:class:: mindspore.ops.Eig(compute_v=False)
