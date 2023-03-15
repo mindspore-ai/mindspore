@@ -122,10 +122,10 @@ uint32_t LogCpuKernel::LogCompute(CpuKernelContext &ctx) {
   if (data_num <= 4 * 1024) {
     for (size_t i = 0; i < data_num; i++) {
       if (*(input_x + i) <= static_cast<T>(0)) {
-        KERNEL_LOG_ERROR("[%llu] must be at least more than 0.", i);
-        return KERNEL_STATUS_PARAM_INVALID;
+        *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+      } else {
+        *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
       }
-      *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
     }
   } else {
     uint32_t min_core_num = 1;
@@ -136,10 +136,10 @@ uint32_t LogCpuKernel::LogCompute(CpuKernelContext &ctx) {
     auto shard_log = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         if (*(input_x + i) <= static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("[%llu] must be at least more than 0.", i);
-          return KERNEL_STATUS_PARAM_INVALID;
+          *(output_y + i) = std::numeric_limits<T>::quiet_NaN();
+        } else {
+          *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
         }
-        *(output_y + i) = std::log(*(input_x + i) * scale_ + shift_) / std::log(base_);
       }
       return KERNEL_STATUS_PARAM_INVALID;
     };
