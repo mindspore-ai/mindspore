@@ -1188,6 +1188,9 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   MS_EXCEPTION_IF_NULL(possible_parent_fg);
   // Eval result of the main.
   AsyncAbstractPtr async_result_main = std::make_shared<AsyncAbstract>();
+  if (possible_parent_fg->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
+    async_result_main->set_ignore_value(true);
+  }
   // Eval result of the branches
   std::vector<AsyncAbstractPtr> async_result_branches;
   SetUndeterminedFlag(AnalysisSchedule::thread_id(), *possible_parent_fg);
