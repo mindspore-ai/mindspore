@@ -785,6 +785,24 @@ T GetScalarValue(const std::string &op_name, const ValuePtr &elem) {
   } else if (elem->isa<Int32Imm>()) {
     auto elem_value = GetValue<int32_t>(elem);
     res = static_cast<T>(elem_value);
+  } else if (elem->isa<Int16Imm>()) {
+    auto elem_value = GetValue<int16_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<Int8Imm>()) {
+    auto elem_value = GetValue<int8_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<UInt64Imm>()) {
+    auto elem_value = GetValue<uint64_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<UInt32Imm>()) {
+    auto elem_value = GetValue<uint32_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<UInt16Imm>()) {
+    auto elem_value = GetValue<uint16_t>(elem);
+    res = static_cast<T>(elem_value);
+  } else if (elem->isa<UInt8Imm>()) {
+    auto elem_value = GetValue<uint8_t>(elem);
+    res = static_cast<T>(elem_value);
   } else if (elem->isa<FP64Imm>()) {
     auto elem_value = GetValue<double>(elem);
     res = static_cast<T>(elem_value);
@@ -803,6 +821,12 @@ T GetScalarValue(const std::string &op_name, const ValuePtr &elem) {
 
 template int64_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
 template int32_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template int16_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template int8_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template uint64_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template uint32_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template uint16_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
+template uint8_t GetScalarValue(const std::string &op_name, const ValuePtr &elem);
 template double GetScalarValue(const std::string &op_name, const ValuePtr &elem);
 template float GetScalarValue(const std::string &op_name, const ValuePtr &elem);
 template bool GetScalarValue(const std::string &op_name, const ValuePtr &elem);

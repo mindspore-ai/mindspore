@@ -42,9 +42,9 @@ class ScalarCast(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
 
-    def __infer__(self, x, t):
+    def __call__(self, x, t):
         validator.check_equal_int(len(x['shape']), 0, 'x shape', self.name)
         value, to = x['value'], t['value']
         if value is not None:
