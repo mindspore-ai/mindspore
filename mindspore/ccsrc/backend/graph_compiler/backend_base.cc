@@ -75,6 +75,55 @@ bool CheckValidTensorTuple(const std::vector<ValuePtr> &values) {
   }
   return true;
 }
+
+// Return a new tensor with type like single_value.
+void SetScalarToTensor(const std::vector<ValuePtr> &values, const TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &tensor_type_id = tensor->data_type();
+  const auto dst_ptr = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(dst_ptr);
+  MS_LOG(DEBUG) << "Set scalar tuple to tensor, dst size:" << tensor->data().nbytes();
+  for (size_t i = 0; i < values.size(); ++i) {
+    // Check mem size.
+    if (SizeToLong(abstract::TypeIdSize(tensor_type_id) * (i + 1)) > tensor->data().nbytes()) {
+      MS_LOG(EXCEPTION) << "Value size:" << values.size() << " type:" << tensor_type_id
+                        << " out of range:" << tensor->data().nbytes();
+    }
+    const auto &value = values[i];
+    MS_EXCEPTION_IF_NULL(value);
+    // Check value type.
+    if (value->type()->type_id() != tensor_type_id) {
+      MS_LOG(EXCEPTION) << "Invalid value type:" << value->type()->type_id() << " for value:" << value->ToString()
+                        << " dst type:" << tensor_type_id;
+    }
+    if (tensor_type_id == TypeId::kNumberTypeInt8) {
+      (reinterpret_cast<int8_t *>(dst_ptr))[i] = GetValue<int8_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt16) {
+      (reinterpret_cast<int16_t *>(dst_ptr))[i] = GetValue<int16_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt32 || tensor_type_id == kNumberTypeInt) {
+      (reinterpret_cast<int32_t *>(dst_ptr))[i] = GetValue<int32_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeInt64) {
+      (reinterpret_cast<int64_t *>(dst_ptr))[i] = GetValue<int64_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeBool) {
+      (reinterpret_cast<bool *>(dst_ptr))[i] = GetValue<bool>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeFloat32 || tensor_type_id == TypeId::kNumberTypeFloat) {
+      (reinterpret_cast<float *>(dst_ptr))[i] = GetValue<float>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeFloat64) {
+      (reinterpret_cast<double *>(dst_ptr))[i] = GetValue<double>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt8) {
+      (reinterpret_cast<uint8_t *>(dst_ptr))[i] = GetValue<uint8_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt16) {
+      (reinterpret_cast<uint16_t *>(dst_ptr))[i] = GetValue<uint16_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt || tensor_type_id == TypeId::kNumberTypeUInt32) {
+      (reinterpret_cast<uint32_t *>(dst_ptr))[i] = GetValue<uint32_t>(value);
+    } else if (tensor_type_id == TypeId::kNumberTypeUInt64) {
+      (reinterpret_cast<uint64_t *>(dst_ptr))[i] = GetValue<uint64_t>(value);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid tuple type:" << tensor_type_id << " for scalar to tensor.";
+    }
+  }
+}
+
 // In dynamic sequence, since the number of members is not determined in compile time, the entire sequence needs
 // to be placed in single tensor, and the shape of the tuple needs to be recorded in the tensor, so that the shape
 // of the tensor can be accurately restored during the dynamic shape derivation process in runtime.
@@ -86,11 +135,23 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
 
   const auto &sequence_value = value->cast<ValueSequencePtr>();
   const auto &values = sequence_value->value();
-  if (values.empty() || values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<Tensor>()))) {
+  if (values.empty()) {
+    auto tensor = std::make_shared<tensor::Tensor>();
+    abstract::BaseShapePtr base_shape = nullptr;
+    if (value->isa<ValueTuple>()) {
+      base_shape = std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList());
+    } else {
+      base_shape = std::make_shared<abstract::ListShape>(abstract::BaseShapePtrList());
+    }
+    tensor->set_base_shape(base_shape);
+    return tensor;
+  }
+  if (values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<Tensor>()))) {
     MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
     return std::make_shared<tensor::Tensor>();
   }
 
+  ShapeVector shape_vector{SizeToLong(values.size())};
   if (values[0]->isa<Tensor>()) {
     MS_LOG(DEBUG) << "Check dynamic tuple tensor";
     if (!CheckValidTensorTuple(values)) {
@@ -100,7 +161,6 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(tensor);
     size_t size = tensor->Size();
     const auto &type_id = tensor->data_type();
-    ShapeVector shape_vector{SizeToLong(values.size())};
     auto single_shape_vector = tensor->shape();
     const auto &single_shape = std::make_shared<abstract::Shape>(single_shape_vector);
     shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
@@ -130,17 +190,9 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
   }
 
   // Create the tensor.
-  TensorPtr tensor;
-  MS_EXCEPTION_IF_NULL(values[0]->type());
-  if (values[0]->type()->type_id() == TypeId::kNumberTypeInt64) {
-    tensor = std::make_shared<tensor::Tensor>(GetValue<std::vector<int64_t>>(value), values[0]->type());
-  } else if (values[0]->type()->type_id() == TypeId::kNumberTypeInt32) {
-    tensor = std::make_shared<tensor::Tensor>(GetValue<std::vector<int32_t>>(value), values[0]->type());
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid tuple type:" << values[0]->type()->type_id() << " for value:" << value->ToString();
-  }
+  auto tensor = std::make_shared<tensor::Tensor>(values[0]->type()->type_id(), shape_vector);
   MS_EXCEPTION_IF_NULL(tensor);
-
+  SetScalarToTensor(values, tensor);
   // Build the tuple shape and set into tensor.
   const auto &element_shape = std::make_shared<abstract::Shape>(ShapeVector({1}));
   const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), element_shape);

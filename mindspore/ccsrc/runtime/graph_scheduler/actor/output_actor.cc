@@ -236,7 +236,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ShapeVector shape = {0};
-    const auto &tensor = std::make_shared<tensor::Tensor>(device_tensor->type_id(), shape);
+    TypeId type_id =
+      (device_tensor->type_id() == TypeId::kTypeUnknown ? TypeId::kNumberTypeInt64 : device_tensor->type_id());
+    const auto &tensor = std::make_shared<tensor::Tensor>(type_id, shape);
     tensor->set_base_shape(output_node->Shape());
     return tensor;
   }
