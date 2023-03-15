@@ -4925,7 +4925,7 @@ def masked_select(input, mask):
         >>> print(output)
         [1 3]
     """
-    return masked_select_(x, mask)
+    return masked_select_(input, mask)
 
 
 def masked_fill(input_x, mask, value):
