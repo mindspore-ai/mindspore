@@ -506,7 +506,7 @@ std::vector<ShapeVector> BaseShapeToShapeVector(const abstract::BaseShapePtr &ba
     const auto &shape = base_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     return {shape->shape()};
-  } else if (base_shape->isa<abstract::TupleShape>()) {
+  } else if (base_shape->isa<abstract::SequenceShape>()) {
     const auto &tuple_shape = base_shape->cast<abstract::SequenceShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     if (tuple_shape->size() == 0) {
