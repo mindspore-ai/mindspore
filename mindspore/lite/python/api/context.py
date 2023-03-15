@@ -26,10 +26,46 @@ __all__ = ['Context']
 
 class Context:
     """
-    Context is used to transfer environment variables during execution.
+    The `Context` class is used to transfer environment variables during execution.
 
     The context should be configured before running the program.
     If it is not configured, it will be set cpu target, and automatically set cpu attributes by default.
+
+    Context.parallel defines the context and configuration of `ModelParallelRunner` class.
+
+    Context.parallel properties:
+        - **workers_num** (int) - the num of workers. A `ModelParallelRunner` contains multiple workers, which
+          are the units that actually perform parallel inferring. Setting `workers_num` to 0 represents
+          `workers_num` will be automatically adjusted based on computer performance and core numbers.
+        - **config_info** (dict{str, dict{str, str}}) - Nested map for passing model weight paths.
+          For example, {"weight": {"weight_path": "/home/user/weight.cfg"}}.
+          key currently supports ["weight"];
+          value is in dict format, key of it currently supports ["weight_path"],
+          value of it is the path of weight, For example, "/home/user/weight.cfg".
+        - **config_path** (str) - Set the config file path. The config file is used to transfer user-defined
+          options during building `ModelParallelRunner` . In the following scenarios, users may need to set the
+          parameter. For example, "/home/user/config.txt".
+
+          - Usage 1: Set mixed precision inference. The content and description of the configuration file are as
+            follows:
+
+            .. code-block::
+
+                [execution_plan]
+                [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+
+          - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
+            configuration file are as follows:
+
+            .. code-block::
+
+                [ms_cache]
+                serialize_Path=[serialization model path](storage path of serialization model)
+                [gpu_context]
+                input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
+                dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
+                opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
 
     Examples:
         >>> # create default context, which target is cpu by default.
@@ -55,7 +91,9 @@ class Context:
     @property
     def target(self):
         """
-        Get the target device information of context. Currently support target: ["cpu"] | ["gpu"] | ["ascend"].
+        Get the target device information of context.
+
+        Currently support target: ["cpu"] | ["gpu"] | ["ascend"].
 
         Note:
             After gpu is added to target, cpu will be added automatically as the backup target.
@@ -70,8 +108,8 @@ class Context:
         cpu properties:
             - **inter_op_parallel_num** (int) - Set the parallel number of operators at runtime.
               `inter_op_parallel_num` cannot be greater than `thread_num` . Setting `inter_op_parallel_num`
-               to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
-               performance and core num.
+              to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
+              performance and core num.
             - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
 
               - "force_fp16": Force the fp16 precision mode.
@@ -679,25 +717,25 @@ class _Parallel:
                 parameter. For example, "/home/user/config.txt".
 
                 - Usage 1: Set mixed precision inference. The content and description of the configuration file are as
-                      follows:
+                  follows:
 
-                      .. code-block::
+                  .. code-block::
 
-                          [execution_plan]
-                          [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
-                          [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+                      [execution_plan]
+                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
 
                 - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
-                      configuration file are as follows:
+                  configuration file are as follows:
 
-                      .. code-block::
+                  .. code-block::
 
-                          [ms_cache]
-                          serialize_Path=[serialization model path](storage path of serialization model)
-                          [gpu_context]
-                          input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
-                          dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
-                          opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
+                      [ms_cache]
+                      serialize_Path=[serialization model path](storage path of serialization model)
+                      [gpu_context]
+                      input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
+                      dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
+                      opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
 
         Raises:
             TypeError: `config_path` is not a str.

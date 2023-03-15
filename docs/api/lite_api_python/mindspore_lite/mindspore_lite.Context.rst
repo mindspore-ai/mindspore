@@ -3,7 +3,7 @@ mindspore_lite.Context
 
 .. py:class:: mindspore_lite.Context()
 
-    Context用于在执行期间传递环境变量。
+    `Context` 类用于在执行期间传递环境变量。
 
     在运行程序之前，应配置context。如果未配置，将设置cpu为target，并默认自动设置cpu属性。
 
@@ -14,29 +14,31 @@ mindspore_lite.Context
         - **config_info** (dict{str: dict{str: str}}) - 传递模型权重文件路径的嵌套映射。例如：{"weight": {"weight_path": "/home/user/weight.cfg"}}。key当前支持["weight"]；value为dict格式，其中的key当前支持["weight_path"]，其中的value为权重的路径，例如 "/home/user/weight.cfg"。
         - **config_path** (str) - 定义配置文件的路径，用于在构建 `ModelParallelRunner` 期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.txt"。
 
-    - **用法1** - 进行混合精度推理的设置，配置文件内容及说明如下：
+          - **用法1** - 进行混合精度推理的设置，配置文件内容及说明如下：
 
-      .. code-block::
+            .. code-block::
 
-          [execution_plan]
-          [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
-          [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
+                [execution_plan]
+                [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
+                [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
 
-    - **用法2** - 在使用GPU推理时，进行TensorRT设置，配置文件内容及说明如下：
+          - **用法2** - 在使用GPU推理时，进行TensorRT设置，配置文件内容及说明如下：
 
-      .. code-block::
+            .. code-block::
 
-          [ms_cache]
-          serialize_path=[serialization model path]（序列化模型的存储路径）
-          [gpu_context]
-          input_shape=input_name:[input_dim]（模型输入维度，用于动态shape）
-          dynamic_dims=[min_dim~max_dim]（模型输入的动态维度范围，用于动态shape）
-          opt_dims=[opt_dim]（模型最优输入维度，用于动态shape）
+                [ms_cache]
+                serialize_path=[serialization model path]（序列化模型的存储路径）
+                [gpu_context]
+                input_shape=input_name:[input_dim]（模型输入维度，用于动态shape）
+                dynamic_dims=[min_dim~max_dim]（模型输入的动态维度范围，用于动态shape）
+                opt_dims=[opt_dim]（模型最优输入维度，用于动态shape）
 
     .. py:method:: target
         :property:
 
-        获取Context的目标设备信息列表。当前支持的target选项：["cpu"] | ["gpu"] | ["ascend"]。
+        获取Context的目标设备信息列表。
+
+        当前支持的target选项：["cpu"] | ["gpu"] | ["ascend"]。
 
         .. note::
             - gpu添加到target后，将自动地添加cpu作为备份target。因为当检测到gpu不支持某一算子时，系统将尝试cpu是否支持它。此时，需要切换到具有cpu的上下文。
@@ -70,7 +72,7 @@ mindspore_lite.Context
 
         Context.ascend属性：
             - **device_id** (int) - 设备id。
-            - **precision_mode** (str) - 设置混合精度模式。选项： "force_fp16"， "allow_fp32_to_fp16"， "must_keep_origin_dtype" 和 "allow_mix_precision"。
+            - **precision_mode** (str) - 设置混合精度模式。选项： "force_fp16"、 "allow_fp32_to_fp16"、 "must_keep_origin_dtype" 和 "allow_mix_precision"。
 
               - **force_fp16** - 强制设置fp16精度。
               - **allow_fp32_to_fp16** - 允许fp32精度转换为fp16精度。
