@@ -536,7 +536,6 @@ class SyncBatchNorm(_BatchNorm):
         self.group_name = None
         self.process_groups = process_groups
         if self.process_groups != 0:
-            self.is_global = True
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
             if self.process_groups is not None:
@@ -544,6 +543,7 @@ class SyncBatchNorm(_BatchNorm):
                 self._check_rank_ids(self.process_groups, self.rank_size)
                 self._create_sync_groups()
             elif self.rank_size > 1:
+                self.is_global = True
                 self.group_device_num = self.rank_size
                 if context.get_context("device_target") == "Ascend":
                     self.group_name = "hccl_world_group"
@@ -562,6 +562,7 @@ class SyncBatchNorm(_BatchNorm):
             validator.check_isinstance("sub group", sub_group, list)
             self.group_device_num = len(sub_group)
             if self.rank_id in sub_group and self.group_device_num > 1:
+                self.is_global = True
                 rank_list_name = '_'.join('%s' % id for id in sub_group)
                 group_dict = _syncbatchnorm_group_dict()
                 if rank_list_name not in group_dict:
