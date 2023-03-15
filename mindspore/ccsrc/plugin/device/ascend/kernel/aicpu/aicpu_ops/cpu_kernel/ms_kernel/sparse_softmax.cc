@@ -17,6 +17,8 @@
 
 #include <securec.h>
 #include <iostream>
+#include <stack>
+#include <memory>
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "kernel_log.h"
@@ -44,6 +46,79 @@ const char *kSparseSoftmax = "SparseSoftmax";
     }                                                        \
     break;                                                   \
   }
+
+inline bool CompareIndices(const int64_t *a, const int64_t *b, const size_t &len) {
+  size_t i = 0;
+  while (i < len) {
+    if (a[i] != b[i]) {
+      return a[i] > b[i];
+    }
+    ++i;
+  }
+  return true;
+}
+
+template <typename T>
+inline void CopyIndicesAndValue(int64_t *dst_indices_addr, T *dst_values_addr, const int64_t *src_indices_addr,
+                                const T *src_values_addr, const size_t &indices_size) {
+  memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  *dst_values_addr = *src_values_addr;
+}
+
+template <typename T>
+inline int64_t Partition(int64_t *__restrict indices_addr, T *__restrict values_addr, int64_t *__restrict tmp_indices,
+                         const size_t &indices_len, const int64_t &left, const int64_t &right) {
+  int64_t i = left, j = right;
+  T tmp_values = 0;
+  const size_t indices_size = indices_len * sizeof(int64_t);
+#define INDICES_OFFSET_ADDR(addr, index, len) addr + index *len
+
+  CopyIndicesAndValue(tmp_indices, &tmp_values, INDICES_OFFSET_ADDR(indices_addr, left, indices_len),
+                      values_addr + left, indices_size);
+  while (i < j) {
+    while (i < j && CompareIndices(INDICES_OFFSET_ADDR(indices_addr, j, indices_len), tmp_indices, indices_len)) {
+      --j;
+    }
+    CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i,
+                        INDICES_OFFSET_ADDR(indices_addr, j, indices_len), values_addr + j, indices_size);
+    while (i < j && !CompareIndices(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), tmp_indices, indices_len)) {
+      ++i;
+    }
+    CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, j, indices_len), values_addr + j,
+                        INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i, indices_size);
+  }
+  CopyIndicesAndValue(INDICES_OFFSET_ADDR(indices_addr, i, indices_len), values_addr + i, tmp_indices, &tmp_values,
+                      indices_size);
+  return i;
+}
+
+template <typename T>
+void QuickSortIndicesAndValues(int64_t *__restrict indices_addr, T *__restrict values_addr, const size_t indices_len,
+                               const int64_t &left, const int64_t &right) {
+  std::stack<int64_t> index_stk;
+  index_stk.emplace(right);
+  index_stk.emplace(left);
+  int64_t *indices_buff = new int64_t[indices_len];
+
+  while (!index_stk.empty()) {
+    int64_t i = index_stk.top();
+    index_stk.pop();
+    int64_t j = index_stk.top();
+    index_stk.pop();
+    if (i < j) {
+      int64_t k = Partition(indices_addr, values_addr, indices_buff, indices_len, i, j);
+      if (k > i) {
+        index_stk.emplace(k - 1);
+        index_stk.emplace(i);
+      }
+      if (j > k) {
+        index_stk.emplace(j);
+        index_stk.emplace(k + 1);
+      }
+    }
+  }
+  free(indices_buff);
+}
 }  // namespace
 
 namespace aicpu {
@@ -112,6 +187,9 @@ uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(CpuKernelContext &ctx) {
     order.push_back(shape_flat[index]);
   }
   std::iota(order.begin(), order.end(), 0);
+
+  QuickSortIndicesAndValues(reinterpret_cast<int64_t *>(indices_t->GetData()),
+                            reinterpret_cast<T *>(values_t->GetData()), shape_t->NumElements(), 0, data_num - 1);
 
   if (st.CreateSparseTensor(indices_t, values_t, shape_flat, order) != KERNEL_STATUS_OK) {
     KERNEL_LOG_ERROR("Create sparse tensor failed.");
