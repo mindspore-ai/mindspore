@@ -30,7 +30,7 @@ mindspore.nn.MaxPool3d
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。
 
     输出：
-        如果 `return_indices` 为False，则是shape为 :math:`(N_{out}, C{out}, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{out}, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
+        如果 `return_indices` 为False，则是shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{out}, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
         如果 `return_indices` 为True，则是一个包含了两个Tensor的Tuple，表示maxpool的计算结果以及生成max值的位置。
 
         - **output** (Tensor) - 最大池化结果，shape为 :math:`(N_{out}, C{out}, D_{out}, H_{out}, W_{out})` 或者 :math:`(C_{out}, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
