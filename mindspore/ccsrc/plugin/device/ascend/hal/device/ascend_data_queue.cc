@@ -256,10 +256,14 @@ AscendTdtQueue::~AscendTdtQueue() {
 
 size_t AscendTdtQueue::QueryQueueSize() const {
   size_t size = 0;
+  if (!IsOpen()) {
+    MS_LOG(INFO) << "Mbuf channel has been closed, should not query size.";
+    return 0;
+  }
   auto status = acltdtQueryChannelSize(acl_handle_, &size);
   if (status != ACL_SUCCESS) {
-    size = 0;
-    MS_LOG(EXCEPTION) << "Unable to query real-time size of Mbuf channel: " << channel_name_;
+    MS_LOG(EXCEPTION) << "Unable to query real-time size of Mbuf channel: " << channel_name_
+                      << ", error code: " << status;
   }
   return size;
 }
