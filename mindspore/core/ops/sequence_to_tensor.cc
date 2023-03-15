@@ -52,13 +52,6 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
 
     // For list/tuple with dynamic len, convert to a dynamic tensor.
     if (queue->dynamic_len()) {
-      auto abs = queue->dynamic_len_element_abs();
-      MS_EXCEPTION_IF_NULL(abs);
-      if (abs == nullptr) {
-        MS_EXCEPTION(ValueError)
-          << "For prim '" << prim_name
-          << " dynamic_len_element_abs can't be null, when the input is dynamic length sequence.";
-      }
       shape.push_back(abstract::Shape::kShapeDimAny);
     } else {
       shape.push_back(queue->elements().size());
