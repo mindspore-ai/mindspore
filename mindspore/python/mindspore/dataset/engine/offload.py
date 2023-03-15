@@ -170,9 +170,10 @@ class RandomHorizontalFlip(nn.Cell):
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
         x_flip = self.h_flip(x)
-        x = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
-
-        return x
+        operation = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
+        # ops.depend is added to find the RandomHorizontalFlip operator in IR files.
+        depend = ops.depend(operation, "RandomHorizontalFlip")
+        return depend
 
 
 class RandomVerticalFlip(nn.Cell):
@@ -202,9 +203,10 @@ class RandomVerticalFlip(nn.Cell):
         flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h*w*c)), (bs, h, w, c))
 
         x_flip = self.h_flip(x)
-        x = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
-
-        return x
+        operation = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
+        # ops.depend is added to find the RandomVerticalFlip operator in IR files.
+        depend = ops.depend(operation, "RandomVerticalFlip")
+        return depend
 
 
 class GenerateRandBatch(nn.Cell):
@@ -347,9 +349,10 @@ class RandomColorAdjust(nn.Cell):
         x_rgb = x_rgb + C.repeat_elements(self.expand_dims((v - c), 1), 3, 1)
 
         x_rgb = self.transpose(x, (0, 2, 3, 1)) * 255.0
-        x_rgb = ops.clip_by_value(x, 0.0, 255.0)
-
-        return x_rgb
+        operation = ops.clip_by_value(x, 0.0, 255.0)
+        # ops.depend is added to find the RandomColorAdjust operator in IR files.
+        depend = ops.depend(operation, "RandomColorAdjust")
+        return depend
 
 
 class RandomSharpness(nn.Cell):
@@ -399,8 +402,10 @@ class RandomSharpness(nn.Cell):
         x_sharp = self.transpose(x_sharp, (0, 2, 3, 1))
 
         x = self.mul(x, degree_rand_factor) + self.mul((1 - degree_rand_factor), x_sharp)
-        x = ops.clip_by_value(x, 0.0, 255.0)
-        return x
+        operation = ops.clip_by_value(x, 0.0, 255.0)
+        # ops.depend is added to find the RandomSharpness operator in IR files.
+        depend = ops.depend(operation, "RandomSharpness")
+        return depend
 
 
 class Rescale(nn.Cell):
@@ -420,9 +425,10 @@ class Rescale(nn.Cell):
     def construct(self, x):
 
         x = self.cast(x, mstype.float32)
-        x = x * self.rescale + self.shift
-
-        return x
+        operation = x * self.rescale + self.shift
+        # ops.depend is added to find the Rescale operator in IR files.
+        depend = ops.depend(operation, "Rescale")
+        return depend
 
 
 class HwcToChw(nn.Cell):
@@ -435,7 +441,10 @@ class HwcToChw(nn.Cell):
         self.trans = P.Transpose()
 
     def construct(self, x):
-        return self.trans(x, (0, 3, 1, 2))
+        operation = self.trans(x, (0, 3, 1, 2))
+        # ops.depend is added to find the HwcToChw operator in IR files.
+        depend = ops.depend(operation, "HwcToChw")
+        return depend
 
 
 class Normalize(nn.Cell):
@@ -457,8 +466,10 @@ class Normalize(nn.Cell):
     def construct(self, x):
         x = self.cast(x, mstype.float32)
         x = self.sub(x, self.mean)
-        x = self.div(x, self.std)
-        return x
+        operation = self.div(x, self.std)
+        # ops.depend is added to find the Normalize operator in IR files.
+        depend = ops.depend(operation, "Normalize")
+        return depend
 
 
 class TypeCast(nn.Cell):
@@ -473,8 +484,10 @@ class TypeCast(nn.Cell):
         self.data_type = mstype.typing.str_to_type(data_type_str)
 
     def construct(self, x):
-
-        return self.cast(x, self.data_type)
+        operation = self.cast(x, self.data_type)
+        # ops.depend is added to find the TypeCast operator in IR files.
+        depend = ops.depend(operation, "TypeCast")
+        return depend
 
 
 class OffloadModel():
