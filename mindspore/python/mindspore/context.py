@@ -588,9 +588,9 @@ def set_auto_parallel_context(**kwargs):
                      data_parallel mode, all parameters are broadcast except for the parameter whose attribute
                      layerwise_parallel is True. Hybrid_parallel, semi_auto_parallel and auto_parallel mode, the
                      segmented parameters do not participate in broadcasting. Default: False.
-        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The interface is not to be
+        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. The parameter is not to be
                        recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
-        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The interface is not to be
+        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. The parameter is not to be
                        recommended currently, it is better using 'strategy_ckpt_config' to replace it. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
                        should be set as True. Default: False. The interface is not to be recommended currently,
