@@ -83,8 +83,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         already_check_nvcc = true;
         if (!CudaEnvChecker::GetInstance().CheckNvccInPath()) {
           MS_LOG(EXCEPTION)
-            << "Failed to find nvcc compiler, please add nvcc position to the PATH environment variable, run "
-               "the command: export PATH=${CUDA_PATH}/bin:${PATH}, CUDA_PATH is the installation path of the "
+            << "#umsg#Failed to find nvcc compiler:#umsg#Please add nvcc position to the PATH environment variable, "
+               "run the command: export PATH=${CUDA_PATH}/bin:${PATH}, CUDA_PATH is the installation path of the "
                "cuda library(eg. /usr/local/cuda).";
         }
       }
@@ -102,7 +102,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         new_factory = false;
       }
       if (!gpu_kernel_mod) {
-        MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
+        MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build gpu kernel op[" << kernel->fullname_with_scope()
+                          << "] failed";
       }
       MS_EXCEPTION_IF_NULL(kernel);
 
@@ -119,7 +120,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
           old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
         }
         if (!old_gpu_kernel_mod->Init(kernel)) {
-          MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
+                            << kernel->fullname_with_scope() << "] failed.";
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(old_gpu_kernel_mod, kernel.get());
       } else {
@@ -132,12 +134,14 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
         if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
-          MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
+                            << kernel->fullname_with_scope() << "] failed.";
         }
         if (!kernel::IfNeedSkipResize(kernel)) {
           if (gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) ==
               kernel::KRET_RESIZE_FAILED) {
-            MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] Resize failed.";
+            MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
+                              << "] Resize failed.";
           }
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());

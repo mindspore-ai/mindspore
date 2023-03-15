@@ -299,7 +299,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
       auto [msg, etype] = SetKernelInfoWithMsg(node);
       if (!msg.empty()) {
-        MS_EXCEPTION(etype) << msg;
+        MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg;
       }
     } else {
       // Kernel selection process for control op.
@@ -332,7 +332,8 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
       auto cnode = graphkernel::TryExpandCNode(node, f);
       if (cnode == nullptr) {
         constexpr auto recursive_level = 2;
-        MS_EXCEPTION(etype) << msg << "\nnode: " << node->DebugString(recursive_level);
+        MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg
+                            << "\nnode: " << node->DebugString(recursive_level);
       }
       (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";
@@ -372,7 +373,8 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
 
     if (cpu_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build cpu operator[" << node->fullname_with_scope()
+                        << "] failed";
     }
 
     // This branch would be removed When KernelMode rectification is complete
@@ -399,7 +401,8 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       }
       if (!kernel::IfNeedSkipResize(node)) {
         if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
-          MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
+          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
+                            << "] Resize failed.";
         }
       }
 
@@ -521,7 +524,7 @@ void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr>
     }
     auto [failure_info, failure_type] = AnfAlgo::GetKernelSelectBackoffInfo(node);
     if (IsVmapNotSupported(node)) {
-      MS_EXCEPTION(failure_type) << failure_info;
+      MS_EXCEPTION(failure_type) << "#umsg#Kernel select failed:#umsg#" << failure_info;
     }
 
     // Judge whether match strictly between kernel build info and supported kernel attrs.
@@ -535,7 +538,7 @@ void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr>
     if (!match_result.first) {
       MS_LOG(INFO) << "Backoff and rebuild kernel on CPU failed for node: " << node->fullname_with_scope()
                    << ", node attr: " << attr_info;
-      MS_EXCEPTION(failure_type) << failure_info;
+      MS_EXCEPTION(failure_type) << "#umsg#Kernel select failed:#umsg#" << failure_info;
     } else {
       // Set the CPU flag.
       common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), node);

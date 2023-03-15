@@ -134,14 +134,14 @@ enum class KernelTransformType {
 
 #define SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, op_context, device_context, kernel_name, alloc_size) \
   do {                                                                                                             \
-    std::string message = "";                                                                                      \
+    std::string message = "#umsg#Memory not enough:#umsg#";                                                        \
     if ((device_context).device_context_key().device_name_ == "CPU") {                                             \
-      message = "Memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                            \
-                ", alloc size: " + std::to_string(alloc_size) + "B.";                                              \
+      message += "Memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                           \
+                 ", alloc size: " + std::to_string(alloc_size) + "B.";                                             \
     } else {                                                                                                       \
-      message = "Device(id:" + std::to_string((device_context).device_context_key().device_id_) +                  \
-                ") memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                          \
-                ", alloc size: " + std::to_string(alloc_size) + "B.";                                              \
+      message += "Device(id:" + std::to_string((device_context).device_context_key().device_id_) +                 \
+                 ") memory isn't enough and alloc failed, kernel name: " + (kernel_name) +                         \
+                 ", alloc size: " + std::to_string(alloc_size) + "B.";                                             \
     }                                                                                                              \
     if ((strategy) == GraphExecutionStrategy::kStep) {                                                             \
       MS_LOG(EXCEPTION) << message;                                                                                \

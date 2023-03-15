@@ -713,7 +713,7 @@ void GPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType k
   if (msg.empty()) {
     return;
   }
-  MS_EXCEPTION(etype) << msg;
+  MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg;
 }
 }  // namespace gpu
 }  // namespace device

@@ -95,7 +95,7 @@ AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
 
   const auto &inputs = cnode->inputs();
   if (inputs.size() <= 1) {
-    MS_LOG(EXCEPTION) << "Invalid cnode:" << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid cnode:" << cnode->DebugString();
   }
   return FetchRealNodeByNopNode(inputs[1]);
 }

@@ -37,7 +37,7 @@ void CollectiveInitializer::InitCollective() {
     void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
     if (handle == nullptr) {
       MS_LOG(EXCEPTION)
-        << "Loading libgpu_collective.so failed. Many reasons could cause this:\n"
+        << "#umsg#Loading libgpu_collective.so failed:#umsg#Many reasons could cause this:\n"
            "1.libgpu_collective.so is not found, please check this MindSpore package is GPU version and built "
            "with distributed feature.\n"
            "2.NCCL is not found or the user-installed NCCL version installed is incompatible: MindSpore "

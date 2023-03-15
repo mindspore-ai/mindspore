@@ -671,7 +671,7 @@ void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType) 
   if (msg.empty()) {
     return;
   }
-  MS_EXCEPTION(etype) << msg;
+  MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg;
 }
 }  // namespace cpu
 }  // namespace device
