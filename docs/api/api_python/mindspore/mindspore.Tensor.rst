@@ -145,6 +145,7 @@ mindspore.Tensor
     mindspore.Tensor.i0
     mindspore.Tensor.igamma
     mindspore.Tensor.igammac
+    mindspore.Tensor.imag
     mindspore.Tensor.index_add
     mindspore.Tensor.index_fill
     mindspore.Tensor.index_select
@@ -207,6 +208,7 @@ mindspore.Tensor
     mindspore.Tensor.msort
     mindspore.Tensor.mT
     mindspore.Tensor.mul
+    mindspore.Tensor.multinomial
     mindspore.Tensor.multiply
     mindspore.Tensor.mvlgamma
     mindspore.Tensor.nan_to_num
