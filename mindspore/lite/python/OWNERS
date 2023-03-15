@@ -1,6 +1,9 @@
 approvers:
 - zhaizhiqiang
 - zhanghaibo5
-- zhang_xue_tong
+- zhang_xue_tong #
 - jpc_chenjianping
 - wang_shaocong
+
+options:
+  no_parent_owners: true
