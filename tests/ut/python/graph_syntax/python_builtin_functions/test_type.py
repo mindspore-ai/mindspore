@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback buildin python function type"""
+import os
 import numpy as np
 from mindspore import jit, context, Tensor
 
@@ -25,12 +26,14 @@ def test_fallback_type_with_input_int():
     Description: Test type() in graph mode with int input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type(1)
         return x
     out = foo()
     assert str(out) == "<class 'int'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_float():
@@ -39,12 +42,14 @@ def test_fallback_type_with_input_float():
     Description: Test type() in graph mode with float input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type(1.0)
         return x
     out = foo()
     assert str(out) == "<class 'float'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_list():
@@ -53,12 +58,14 @@ def test_fallback_type_with_input_list():
     Description: Test type() in graph mode with list input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type([1, 2, 3])
         return x
     out = foo()
     assert str(out) == "<class 'list'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_tuple():
@@ -67,12 +74,14 @@ def test_fallback_type_with_input_tuple():
     Description: Test type() in graph mode with tuple input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type((1, 2, 3))
         return x
     out = foo()
     assert str(out) == "<class 'tuple'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_dict():
@@ -81,12 +90,14 @@ def test_fallback_type_with_input_dict():
     Description: Test type() in graph mode with dict input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type({'a': 1, 'b': 2})
         return x
     out = foo()
     assert str(out) == "<class 'dict'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_numpy_array():
@@ -95,12 +106,14 @@ def test_fallback_type_with_input_numpy_array():
     Description: Test type() in graph mode with numpy array input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type(np.array([1, 2, 3]))
         return x
     out = foo()
     assert str(out) == "<class 'numpy.ndarray'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
 
 
 def test_fallback_type_with_input_tensor():
@@ -109,9 +122,11 @@ def test_fallback_type_with_input_tensor():
     Description: Test type() in graph mode with tensor input.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '0'
     @jit
     def foo():
         x = type(Tensor([1, 2, 3]))
         return x
     out = foo()
     assert str(out) == "<class 'mindspore.common.tensor.Tensor'>"
+    os.environ['MS_DEV_ENABLE_FALLBACK_RUNTIME'] = '1'
