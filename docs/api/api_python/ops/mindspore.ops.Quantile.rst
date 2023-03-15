@@ -1,5 +1,5 @@
-mindspore.ops.Qr
-=================
+mindspore.ops.Quantile
+======================
 
 .. py:class:: mindspore.ops.Quantile(dim=None, keep_dims=False, ignore_nan=False))
 
