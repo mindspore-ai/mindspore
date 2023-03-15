@@ -69,54 +69,40 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
   if (inputs.empty()) {
     MS_LOG(ERROR) << "Invalid inputs is empty.";
     return false;
   }
-  std::vector<size_t> shape =
-    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
-  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-
-  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
-  helper_ptr_->CalMemSize(input_shapes, output_shapes);
-  InitSizeLists();
   is_need_retrieve_output_shape_ = true;
-  if (!is_input_dynamic_shape_.has_value()) {
-    bool is_input_dynamic_shape = false;
-    for (const auto &input : inputs) {
-      auto input_shape = input->GetShapeVector();
-      if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-        is_input_dynamic_shape = true;
-        break;
-      }
-    }
-    is_input_dynamic_shape_ = is_input_dynamic_shape;
-  }
   return true;
 }
 
 int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    if (!Init(base_operator, inputs, outputs)) {
-      return KRET_RESIZE_FAILED;
+  for (const auto &input : inputs) {
+    auto input_shape = input->GetShapeVector();
+    if (!IsValidShape(input_shape)) {
+      return KRET_UNKNOWN_SHAPE;
     }
-    return 0;
-  } else {
-    base_operator_ = base_operator;
-    inputs_ = inputs;
-    outputs_ = outputs;
-    return 0;
   }
+  DestroyResource();
+  ResetResource();
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
+  helper_ptr_->CalMemSize(input_shapes, output_shapes);
+  InitSizeLists();
+  base_operator_ = base_operator;
+  inputs_ = inputs;
+  outputs_ = outputs;
+  return KRET_OK;
 }
 
 void UniqueGpuKernelMod::SyncData() {
