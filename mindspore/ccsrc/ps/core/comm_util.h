@@ -65,7 +65,7 @@
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
 #include "utils/log_adapter.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/configuration.h"
 

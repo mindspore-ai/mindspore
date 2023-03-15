@@ -14,21 +14,47 @@
  * limitations under the License.
  */
 
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 
 #include "kernel/kernel.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "include/backend/distributed/cluster/cluster_context.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
+#include "ps/core/cluster_config.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #else
 #include "include/backend/distributed/cluster/dummy_cluster_context.h"
+#include "ps/core/cluster_config.h"
 #endif
 
 namespace mindspore {
 namespace ps {
+PSContext::PSContext()
+    : ps_enabled_(false),
+      is_worker_(false),
+      is_pserver_(false),
+      is_sched_(false),
+      rank_id_(0),
+      worker_num_(0),
+      server_num_(0),
+      scheduler_host_("0.0.0.0"),
+      scheduler_port_(6667),
+      role_(kEnvRoleOfNotPS),
+      server_mode_(""),
+      cluster_config_(nullptr),
+      scheduler_manage_port_(11202),
+      config_file_path_(""),
+      node_id_(""),
+      enable_ssl_(false),
+      client_password_(),
+      server_password_(),
+      http_url_prefix_(""),
+      instance_name_("") {}
+
+PSContext::~PSContext() {}
+
 std::shared_ptr<PSContext> PSContext::instance() {
   static std::once_flag init_flag;
   static std::shared_ptr<PSContext> ps_instance = nullptr;

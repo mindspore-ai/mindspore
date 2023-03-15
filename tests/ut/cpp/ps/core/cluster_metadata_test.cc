@@ -19,7 +19,7 @@
 
 #include "common/common_test.h"
 #include "ps/core/cluster_config.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

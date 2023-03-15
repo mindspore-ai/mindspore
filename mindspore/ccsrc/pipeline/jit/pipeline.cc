@@ -82,12 +82,12 @@
 #include "abstract/abstract_value.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/constants.h"
-#include "ps/util.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/constants.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
-#include "ps/scheduler.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"

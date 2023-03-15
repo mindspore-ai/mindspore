@@ -49,7 +49,7 @@
 #include "include/backend/optimizer/graph_optimizer.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 

@@ -30,7 +30,7 @@
 #include "mindspore/ccsrc/include/backend/data_queue/data_queue_mgr.h"
 #endif
 #ifndef _WIN32
-#include "mindspore/ccsrc/ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "mindspore/ccsrc/include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #endif
 #ifdef WITH_BACKEND
 #include "utils/ms_context.h"

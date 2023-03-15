@@ -66,8 +66,8 @@
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/util.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 
 namespace mindspore {

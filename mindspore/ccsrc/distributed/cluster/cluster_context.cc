@@ -27,8 +27,9 @@
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "proto/topology.pb.h"
 #include "utils/ms_context.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/comm_util.h"
+#include "ps/core/cluster_config.h"
 #include "include/common/debug/common.h"
 
 namespace mindspore {

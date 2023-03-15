@@ -36,9 +36,9 @@
 #include "frontend/optimizer/ad/bprop_utils.h"
 #include "frontend/operator/graph_bprop/bprop_meta_func_graph.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-#include "ps/util.h"
+#include "include/backend/distributed/ps/util.h"
 #endif
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/distributed/init.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"

@@ -85,8 +85,8 @@
 #include "abstract/utils.h"
 #include "kernel/graph_kernel_info.h"
 #ifdef WITH_BACKEND
-#include "ps/util.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 
 #ifndef ENABLE_SECURITY

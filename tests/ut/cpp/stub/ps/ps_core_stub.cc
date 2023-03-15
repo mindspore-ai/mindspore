@@ -21,7 +21,7 @@
 #include "ps/core/file_configuration.h"
 #include "ps/core/ps_scheduler_node.h"
 #include "ps/core/ps_worker_node.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 namespace mindspore {
 namespace ps {
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {}

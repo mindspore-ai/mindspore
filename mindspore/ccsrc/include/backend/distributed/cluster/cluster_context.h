@@ -27,12 +27,13 @@
 #include "include/backend/distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-
-#include "ps/core/cluster_config.h"
 #include "include/backend/distributed/cluster/topology/node_base.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
+namespace ps::core {
+class ClusterConfig;
+}  // namespace ps::core
 namespace distributed {
 namespace cluster {
 // The environment variable name represents the node id of a certain process(compute graph node).

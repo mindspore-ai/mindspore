@@ -25,7 +25,7 @@
 #include <condition_variable>
 
 #include "utils/log_adapter.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 
 namespace mindspore {
 namespace ps {

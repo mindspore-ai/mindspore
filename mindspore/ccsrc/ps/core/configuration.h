@@ -27,7 +27,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
 

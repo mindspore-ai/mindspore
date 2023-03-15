@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "ps/scheduler.h"
+#include "include/backend/distributed/ps/scheduler.h"
+#include "ps/core/scheduler_node.h"
+#include "ps/core/ps_scheduler_node.h"
 
 namespace mindspore {
 namespace ps {
@@ -22,6 +24,14 @@ Scheduler &Scheduler::GetInstance() {
   static Scheduler instance{};
   return instance;
 }
+
+Scheduler::Scheduler() {
+  if (scheduler_node_ == nullptr) {
+    scheduler_node_ = std::make_unique<core::PSSchedulerNode>();
+  }
+}
+
+Scheduler::~Scheduler() = default;
 
 void Scheduler::Run() {
   MS_LOG(INFO) << "Start scheduler.";

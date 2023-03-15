@@ -29,7 +29,7 @@
 #include "include/common/debug/draw.h"
 #include "include/common/utils/parallel_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 
 namespace mindspore {

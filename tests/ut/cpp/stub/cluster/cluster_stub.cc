@@ -15,6 +15,7 @@
  */
 #include "include/backend/distributed/cluster/topology/node_base.h"
 #include "include/backend/distributed/cluster/cluster_context.h"
+#include "ps/core/cluster_config.h"
 
 namespace mindspore {
 namespace distributed {

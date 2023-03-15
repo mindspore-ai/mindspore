@@ -30,8 +30,8 @@
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/ssl_http.h"
-#include "ps/constants.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/constants.h"
+#include "include/backend/distributed/ps/ps_context.h"
 
 namespace mindspore {
 namespace ps {

@@ -56,8 +56,10 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/scheduler.h"
 #include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/scheduler.h"
 #endif
 
 namespace mindspore {
@@ -878,7 +880,10 @@ bool GeOptimizeAction(const ResourcePtr &resource) { return OptimizeAction(resou
 bool VmOptimizeAction(const ResourcePtr &resource) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode()) {
-    (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
+    (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", [](const ResourcePtr &res) -> bool {
+      MS_EXCEPTION_IF_NULL(res);
+      return ps::Util::FuseServerCommOps(res->func_graph());
+    }));
   }
 #endif
   auto ret = OptimizeAction(resource, kVmPasses);

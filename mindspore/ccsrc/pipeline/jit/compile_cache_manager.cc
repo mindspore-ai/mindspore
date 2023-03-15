@@ -31,7 +31,6 @@
 #include "mindspore/core/utils/file_utils.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/core/node.h"
 #include "include/backend/distributed/cluster/cluster_context.h"
 #endif
 
