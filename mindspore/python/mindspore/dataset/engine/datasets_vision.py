@@ -2480,7 +2480,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         return self.class_indexing
 
 
-class KITTIDataset(MappableDataset):
+class KITTIDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the KITTI dataset.
 
@@ -3310,7 +3310,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
 
 
-class OmniglotDataset(MappableDataset):
+class OmniglotDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses the Omniglot dataset.
 

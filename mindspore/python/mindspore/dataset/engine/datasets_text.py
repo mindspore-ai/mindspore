@@ -1398,7 +1398,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
             Default: None, will include all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
             Default: None, number set in the config.
-        shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: None, means Shuffle.GLOBAL.
+        shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: Shuffle.GLOBAL.
             If False is provided, no shuffling will be performed.
             If True is provided, it is the same as setting to mindspore.dataset.Shuffle.GLOBAL.
             If Shuffle is provided, the effect is as follows:
