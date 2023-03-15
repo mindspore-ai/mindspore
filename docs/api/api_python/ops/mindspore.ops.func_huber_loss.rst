@@ -1,7 +1,7 @@
 mindspore.ops.huber_loss
 ========================
 
-.. py:function:: mindspore.ops.huber_loss(x, target, reduction='mean', delta=1.0)
+.. py:function:: mindspore.ops.huber_loss(input, target, reduction='mean', delta=1.0)
 
     huber_loss计算预测值和目标值之间的误差。它兼有l1_loss和mse_loss的优点。
 
@@ -30,17 +30,17 @@ mindspore.ops.huber_loss
         \end{cases}
 
     参数：
-        - **x** (Tensor) - 输入预测值，任意维度的Tensor。
-        - **target** (Tensor) - 目标值，通常情况下与 `x` 的shape和dtype相同。但是当 `target` 和 `x` 的shape不同时，需要保证他们之间可以互相广播。
+        - **input** (Tensor) - 输入预测值，任意维度的Tensor。
+        - **target** (Tensor) - 目标值，通常情况下与 `input` 的shape和dtype相同。但是当 `target` 和 `x` 的shape不同时，需要保证他们之间可以互相广播。
         - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"或"none"。默认值："mean"。
         - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须大于零。默认值：1.0。
 
     返回：
-        Tensor，和 `x` 具有相同的dtype和shape。
+        Tensor，和 `input` 具有相同的dtype和shape。
 
     异常：
-        - **TypeError** - `x` 或 `target` 不是Tensor。
+        - **TypeError** - `input` 或 `target` 不是Tensor。
         - **TypeError** - `delta` 不是float或int。
         - **ValueError** - `delta` 的值小于或等于0。
         - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
-        - **ValueError** - `x` 和 `target` 有不同的shape，且不能互相广播。
+        - **ValueError** - `input` 和 `target` 有不同的shape，且不能互相广播。

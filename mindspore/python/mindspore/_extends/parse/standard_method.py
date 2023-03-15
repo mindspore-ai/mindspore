@@ -100,12 +100,12 @@ def ndimension(x):
     return len(x.shape)
 
 
-def prod(x, axis=None, keep_dims=False):
+def prod(input, axis=None, keep_dims=False):
     """
     Reduces a dimension of a tensor by product all elements in the dimension.
 
     Args:
-        x (Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
             when axis is None or empty tuple, reduce all dimensions. Default: None.
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
@@ -124,7 +124,7 @@ def prod(x, axis=None, keep_dims=False):
         >>> print(output)
         6.0
     """
-    return F.prod(x, axis, keep_dims)
+    return F.prod(input, axis, keep_dims)
 
 
 def addcdiv(input, tensor1, tensor2, value=1):
@@ -205,12 +205,12 @@ def any_(x, axis=(), keep_dims=False):
     return reduce_any(x, axis)
 
 
-def atan2(x, y):
+def atan2(input, other):
     r"""
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
     Refer to :func:`mindspore.ops.atan2` for more details.
     """
-    return F.atan2(x, y)
+    return F.atan2(input, other)
 
 
 def bincount(x, weights=None, minlength=0):
@@ -850,7 +850,7 @@ def argmin_with_value(x, axis=0, keep_dims=False):
     return F.min(x, axis, keep_dims)
 
 
-def median(x, global_median, axis=0, keep_dims=False):
+def median(input, global_median, axis=0, keep_dims=False):
     r"""
     Computes the median of input tensor.
 
@@ -858,9 +858,9 @@ def median(x, global_median, axis=0, keep_dims=False):
         When attr `global_median` is True, the second output Tensor value is meaningless.
 
     """
-    check_axis_in_range(axis, x.ndim)
+    check_axis_in_range(axis, input.ndim)
     median_ = Median(global_median, axis, keep_dims)
-    return median_(x)
+    return median_(input)
 
 
 def msort(x):
@@ -1127,26 +1127,26 @@ def log2(input):
     return F.log2(input)
 
 
-def logaddexp(x, other):
+def logaddexp(input, other):
     """
     Computes the logarithm of the sum of exponentiations of the inputs.
     """
-    return F.logaddexp(x, other)
+    return F.logaddexp(input, other)
 
 
-def logaddexp2(x, other):
+def logaddexp2(input, other):
     """
     Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
     """
-    return F.logaddexp2(x, other)
+    return F.logaddexp2(input, other)
 
 
-def logsumexp(x, dim, keepdim=False):
+def logsumexp(input, axis, keepdims=False):
     """
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
     then calculate logarithm of the sum.
     """
-    return F.logsumexp(x, dim, keepdim)
+    return F.logsumexp(input, axis, keepdims)
 
 
 def round_(x):
@@ -1192,43 +1192,41 @@ def copysign(x, other):
     return F.copysign(x, other)
 
 
-def numel(x):
+def numel(input):
     """
     Returns a Scalar of type int that represents the total number of elements in the Tensor.
     """
-    return F.numel(x)
+    return F.numel(input)
 
 
-def permute(x, *dims):
+def permute(input, *axis):
     """
     Permutes the dimensions of the input tensor according to input permutation.
     """
-    if dims is None:
-        raise ValueError(f"For Tensor.permute, the dims must not be none.")
-    if len(dims) == 1 and isinstance(dims[0], tuple):
-        return F.permute(x, dims[0])
-    return F.permute(x, dims)
+    ndim = F.rank(input)
+    perm = check_transpose_axis_const(axis, ndim)
+    return F.permute(input, perm)
 
 
-def positive(x):
+def positive(input):
     """
     Return self Tensor.
     """
-    return F.positive(x)
+    return F.positive(input)
 
 
-def remainder(x, divisor):
+def remainder(input, divisor):
     """
     Returns element-wise remainder of division.
     """
-    return F.remainder(x, divisor)
+    return F.remainder(input, divisor)
 
 
-def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
+def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
     """
     Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
     """
-    return F.unique_consecutive(x, return_idx, return_counts, axis)
+    return F.unique_consecutive(input, return_idx, return_counts, axis)
 
 
 def unique_with_pad(x, pad_num):
@@ -1371,18 +1369,18 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
-def digamma(x):
+def digamma(input):
     """
     Computes the logarithmic derivative of the gamma function on input.
     """
-    return F.digamma(x)
+    return F.digamma(input)
 
 
-def lgamma(x):
+def lgamma(input):
     """
     Computes the natural logarithm of the absolute value of the gamma function on input.
     """
-    return F.lgamma(x)
+    return F.lgamma(input)
 
 
 def i0(x):
@@ -1399,25 +1397,25 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     return F.isclose(x1, x2, rtol, atol, equal_nan)
 
 
-def isneginf(x):
+def isneginf(input):
     """
     Tests element-wise for negative infinity, returns result as bool array.
     """
-    return F.isneginf(x)
+    return F.isneginf(input)
 
 
-def isposinf(x):
+def isposinf(input):
     """
     Tests element-wise for positive infinity, returns result as bool array.
     """
-    return F.isposinf(x)
+    return F.isposinf(input)
 
 
-def isreal(x):
+def isreal(input):
     """
     Tests element-wise for real number.
     """
-    return F.isreal(x)
+    return F.isreal(input)
 
 
 def flip(x, dims):
@@ -1483,11 +1481,11 @@ def inv(x):
     return F.inv(x)
 
 
-def inverse(x):
+def inverse(input):
     """
     Computes the inverse of a square matrix.
     """
-    return F.inverse(x)
+    return F.inverse(input)
 
 
 def invert(x):
@@ -1965,34 +1963,34 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
     return res.astype(dtype)
 
 
-def sum_to_size(x, *size):
+def sum_to_size(input, *size):
     """
-    Sum `x` to the `size`. `size` must be expandable to the Tensor size.
+    Sum `input` to the `size`. `size` must be expandable to the Tensor size.
     """
     if len(size) == 1 and isinstance(size[0], tuple):
         size = size[0]
-    shape_x = x.shape
-    if len(size) > x.ndim:
-        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
-    if len(size) < x.ndim:
-        pre_axis = tuple([axis for axis in range(x.ndim - len(size))])
-        x = x.sum(pre_axis)
+    shape_input = input.shape
+    if len(size) > input.ndim:
+        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
+    if len(size) < input.ndim:
+        pre_axis = tuple([axis for axis in range(input.ndim - len(size))])
+        input = input.sum(pre_axis)
     axes = []
     for i, element in enumerate(size):
-        if element != x.shape[i] and element == 1:
+        if element != input.shape[i] and element == 1:
             axes.append(i)
-        elif element != x.shape[i]:
-            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
+        elif element != input.shape[i]:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
     if axes:
-        return x.sum(tuple(axes), keepdims=True)
-    return x
+        return input.sum(tuple(axes), keepdims=True)
+    return input
 
 
-def nansum(x, axis=None, keepdims=False, *, dtype=None):
+def nansum(input, axis=None, keepdims=False, *, dtype=None):
     """
     Computes sum of all elements, treating NaNs as zero.
     """
-    return F.nansum(x, axis=axis, keepdims=keepdims, dtype=dtype)
+    return F.nansum(input, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def repeat(x, repeats, axis=None):
@@ -2777,11 +2775,11 @@ def view(x, *shape):
     return F.reshape(x, shape)
 
 
-def view_as(x, other):
+def view_as(input, other):
     """View self Tensor as the same shape as `other` ."""
     if not isinstance(other, (Tensor, Tensor_)):
         raise TypeError(f"For view_as, the input other must be a Tensor, but got {type(other)}")
-    return F.reshape(x, other.shape)
+    return F.reshape(input, other.shape)
 
 
 def bitwise_and(x, y):
@@ -2850,9 +2848,9 @@ def sub(x, y):
     return F.sub(x, y)
 
 
-def t(x):
+def t(input):
     """Transposes a 2-D tensor."""
-    return F.t(x)
+    return F.t(input)
 
 
 def tan(x):
@@ -2963,11 +2961,11 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
     return F.unsorted_segment_prod(x, segment_ids, num_segments)
 
 
-def negative(x):
+def negative(input):
     r"""
     Return a new tensor with the negative of the elements of input.
     """
-    return F.neg(x)
+    return F.neg(input)
 
 
 def nonzero(input):
@@ -3000,11 +2998,11 @@ def diag(x):
     return F.diag(x)
 
 
-def diagflat(x, offset=0):
+def diagflat(input, offset=0):
     """
     Creates a two-dimensional Tensor with the flattened input as a diagonal.
     """
-    return F.diagflat(x, offset)
+    return F.diagflat(input, offset)
 
 
 def masked_select(input, mask):
@@ -3708,11 +3706,11 @@ def asin(x):
     return F.asin(x)
 
 
-def acosh(x):
+def acosh(input):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
     """
-    return F.acosh(x)
+    return F.acosh(input)
 
 
 def add(input, other):
@@ -3764,11 +3762,11 @@ def asinh(x):
     return F.asinh(x)
 
 
-def atan(x):
+def atan(input):
     r"""
     Computes inverse tangent of the input element-wise.
     """
-    return F.atan(x)
+    return F.atan(input)
 
 
 def atanh(x):

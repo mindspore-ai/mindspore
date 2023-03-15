@@ -1,17 +1,17 @@
 mindspore.ops.inverse
 =====================
 
-.. py:function:: mindspore.ops.inverse(x)
+.. py:function:: mindspore.ops.inverse(input)
 
     计算输入矩阵的逆。
 
     参数：
-        - **x** (Tensor) - 计算的矩阵。`x` 至少是两维的，最后两个维度大小相同。
+        - **input** (Tensor) - 计算的矩阵。`input` 至少是两维的，最后两个维度大小相同。
 
     返回：
-        Tensor，shape和类型和 `x` 相同。
+        Tensor，shape和类型和 `input` 相同。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
-        - **ValueError** - `x` 最后两个维度的大小不相同。
-        - **ValueError** - `x` 的维数小于2。
+        - **TypeError** - `input` 不是Tensor。
+        - **ValueError** - `input` 最后两个维度的大小不相同。
+        - **ValueError** - `input` 的维数小于2。

@@ -6,7 +6,7 @@ mindspore.ops.digamma
     计算gamma对数函数在输入上的梯度。
 
     .. math::
-        P(x) = grad(In(gamma(x)))
+        P(input) = grad(\ln \Gamma(input))
 
     .. warning::
         这是一个实验性接口，后续可能删除或修改。

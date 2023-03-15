@@ -21,7 +21,7 @@ from mindspore import Tensor
 
 class Net(nn.Cell):
     def construct(self, x, dim):
-        return x.logsumexp(dim, keepdim=True)
+        return x.logsumexp(dim, keepdims=True)
 
 
 @pytest.mark.level0

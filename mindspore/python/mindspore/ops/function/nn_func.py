@@ -1445,17 +1445,17 @@ def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=N
     return validator.check_float_range(arg_value, lower_limit, upper_limit, Rel.INC_RIGHT, arg_name, prim_name)
 
 
-def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
+def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    Applies the 2D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    Applies the 2D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
     `output_size` or `output_ratio` cannot be used at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+        input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
             with float16, float32, float64, int32, int64 data type.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents height and width of the kernel, or a tuple
@@ -1477,36 +1477,36 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
             Default: None.
 
     Returns:
-        - **y** (Tensor) - Has the same type as the `input_x`.
+        - **y** (Tensor) - Has the same type as the `input`.
           Has the shape :math:`(N, C, H, W)`.
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int64 data type. It will output only when `return_indices` is True.
 
     Raises:
-        TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
+        TypeError: If data type of `input` is not one of the following: float16, float32, float64, int32, int64.
         TypeError: If data type of `_random_samples` is not one of the following: float16, float32, float64.
         ValueError: If `kernel_size` is not a number and `kernel_size` is not a tuple of length 2.
         ValueError: If `output_size` is not a number and `output_size` is not a tuple of length 2.
         ValueError: If the sum of `kernel_size` , `output_size` and -1 is larger than the corresponding
-                    dimension of `input_x`.
+                    dimension of `input`.
         ValueError: If the dimension of `_random_samples` is not 3.
         ValueError: if `output_size` and `output_ratio` are None at the same time.
-        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
-        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 2.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
+        >>> input = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
         ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
         ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
         ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
         >>> _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
-        >>> y, argmax = ops.fractional_max_pool2d(input_x, kernel_size=2, output_size=(2, 2),
+        >>> y, argmax = ops.fractional_max_pool2d(input, kernel_size=2, output_size=(2, 2),
         ...                                       _random_samples=_random_samples, return_indices=True)
         >>> print(y)
         [[[[0.9545 0.8764]
@@ -1514,7 +1514,7 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
         >>> print(argmax)
         [[[[ 1  9]
            [16 24]]]]
-        >>> y, argmax = ops.fractional_max_pool2d(input_x, kernel_size=2, output_ratio=(0.5, 0.5),
+        >>> y, argmax = ops.fractional_max_pool2d(input, kernel_size=2, output_ratio=(0.5, 0.5),
         ...                                       _random_samples=_random_samples, return_indices=True)
         >>> print(y)
         [[[[0.9545 0.8764]
@@ -1526,8 +1526,8 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
     if output_ratio is not None and output_size is not None or output_ratio is None and output_size is None:
         raise ValueError(f"For fractional_max_pool2d, 'output_size' and 'output_ratio' can not be specified or None"
                          f"at the same time, but got {output_ratio} and {output_size} .")
-    if len(input_x.shape) == 3:
-        input_x = input_x.expand_dims(axis=0)
+    if len(input.shape) == 3:
+        input = input.expand_dims(axis=0)
     if _random_samples is None:
         _random_samples = Tensor([[[0, 0]]], mstype.float32)
     if output_ratio is not None:
@@ -1535,18 +1535,18 @@ def fractional_max_pool2d(input_x, kernel_size, output_size=None, output_ratio=N
             output_ratio = (output_ratio, output_ratio)
         _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
         _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
-        output_size = (int(input_x.shape[-2] * output_ratio[0]), int(input_x.shape[-1] * output_ratio[1]))
+        output_size = (int(input.shape[-2] * output_ratio[0]), int(input.shape[-1] * output_ratio[1]))
     fractional_max_pool = FractionalMaxPoolWithFixedKsize(kernel_size, output_size)
-    output = fractional_max_pool(input_x, _random_samples)
+    output = fractional_max_pool(input, _random_samples)
     if return_indices:
         return output
     return output[0]
 
 
-def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=None, return_indices=False,
+def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    Applies the 3D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
     `output_size` or `output_ratio` cannot be used at the same time.
 
@@ -1556,7 +1556,7 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        input_x (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
+        input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
             Tensor of data type: float16, float32, double, int32, int64.
             Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
@@ -1586,17 +1586,17 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
           `y` and int32 data type. It will output only when `return_indices` is True.
 
     Raises:
-        TypeError: If `input_x` is not a 4D or 5D tensor.
+        TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `imput_x` is not float16, float32, double, int32, int64.
+        TypeError: If data type of `input` is not float16, float32, double, int32, int64.
         TypeError: If dtype of `_random_samples` is not float16, float32, double.
         TypeError: If dtype of `argmax` is not int32, int64.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
         ValueError: If numbers in `output_size` or `kernel_size` is not positive.
         ValueError: if `output_size` and `output_ratio` are None at the same time.
-        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
-        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 3.
 
     Supported Platforms:
@@ -1630,10 +1630,10 @@ def fractional_max_pool3d(input_x, kernel_size, output_size=None, output_ratio=N
         _check_float_range_inc_right(output_ratio[0], 0.0, 1.0)
         _check_float_range_inc_right(output_ratio[1], 0.0, 1.0)
         _check_float_range_inc_right(output_ratio[2], 0.0, 1.0)
-        output_size = (int(input_x.shape[-3] * output_ratio[0]), int(input_x.shape[-2] * output_ratio[1]),
-                       int(input_x.shape[-1] * output_ratio[2]))
+        output_size = (int(input.shape[-3] * output_ratio[0]), int(input.shape[-2] * output_ratio[1]),
+                       int(input.shape[-1] * output_ratio[2]))
     fractional_max_pool = FractionalMaxPool3DWithFixedKsize(kernel_size, output_size)
-    output = fractional_max_pool(input_x, _random_samples)
+    output = fractional_max_pool(input, _random_samples)
     if return_indices:
         return output
     return output[0]
@@ -3282,9 +3282,9 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
     return loss
 
 
-def l1_loss(x, target, reduction='mean'):
+def l1_loss(input, target, reduction='mean'):
     r"""
-    l1_loss is used to calculate the mean absolute error between the `x` value and the target value.
+    l1_loss is used to calculate the mean absolute error between the `input` value and the `target` value.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to "none" ,
     then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
@@ -3306,9 +3306,9 @@ def l1_loss(x, target, reduction='mean'):
         \end{cases}
 
     Args:
-        x (Tensor): Predicted value, Tensor of any dimension.
-        target (Tensor): Target value, usually has the same shape as the `x`. If `x` and `target` have different shape,
-            make sure they can broadcast to each other.
+        input (Tensor): Predicted value, Tensor of any dimension.
+        target (Tensor): Target value, usually has the same shape as the `input`.
+            If `input` and `target` have different shape, make sure they can broadcast to each other.
         reduction (str, optional): Type of reduction to be applied to loss. The optional value is "mean", "sum" or
             "none". Default: "mean".
 
@@ -3316,7 +3316,7 @@ def l1_loss(x, target, reduction='mean'):
         Tensor, the result of l1_loss.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `target` is not a Tensor.
         ValueError: If `reduction` is not one of "none", "mean" or "sum".
 
@@ -3330,11 +3330,11 @@ def l1_loss(x, target, reduction='mean'):
         >>> print(output)
         3.0
     """
-    _check_is_tensor('x', x, "l1_loss")
+    _check_is_tensor('input', input, "l1_loss")
     _check_is_tensor('target', target, "l1_loss")
     if reduction not in ('mean', 'sum', 'none'):
         raise ValueError(f"For l1_loss, the 'reduction' must be in ['mean', 'sum', 'none'], but got {reduction}.")
-    loss = _get_cache_prim(P.Abs)()(x - target)
+    loss = _get_cache_prim(P.Abs)()(input - target)
     return _get_loss(loss, reduction, "l1_loss")
 
 
@@ -3399,21 +3399,21 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
     return _smooth_l1_loss(input, target)
 
 
-def threshold(input_x, thr, value):
+def threshold(input, thr, value):
     r"""
-    Returns each element of `input_x` after thresholding by `thr` as a Tensor.
+    Returns each element of `input` after thresholding by `thr` as a Tensor.
 
     The formula is defined as follows:
 
     .. math::
         y =
         \begin{cases}
-        x, &\text{ if } x > \text{thr} \\
+        input, &\text{ if } input > \text{thr} \\
         \text{value}, &\text{ otherwise }
         \end{cases}
 
     Args:
-        input_x (Tensor): The input of threshold with data type of float16 or float32.
+        input (Tensor): The input of threshold with data type of float16 or float32.
         thr (Union[int, float]): The value of the threshold.
         value (Union[int, float]): The value to replace with when element is less than threshold.
 
@@ -3421,7 +3421,7 @@ def threshold(input_x, thr, value):
         Tensor, the same shape and data type as the input.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `thr` is not a float or an int.
         TypeError: If `value` is not a float or an int.
 
@@ -3434,23 +3434,23 @@ def threshold(input_x, thr, value):
         >>> print(outputs)
         [100.   2.   3.]
     """
-    _check_is_tensor('input_x', input_x, "threshold")
+    _check_is_tensor('input', input, "threshold")
     _check_value_type("thr", thr, [float, int], "threshold")
     _check_value_type("value", value, [float, int], "threshold")
-    cond = _get_cache_prim(P.Greater)()(input_x, thr)
-    value = _get_cache_prim(P.Fill)()(input_x.dtype, input_x.shape, value)
-    return _get_cache_prim(P.Select)()(cond, input_x, value)
+    cond = _get_cache_prim(P.Greater)()(input, thr)
+    value = _get_cache_prim(P.Fill)()(input.dtype, input.shape, value)
+    return _get_cache_prim(P.Select)()(cond, input, value)
 
 
-def leaky_relu(x, alpha=0.2):
+def leaky_relu(input, alpha=0.2):
     r"""
-    leaky_relu activation function. The element of `x` less than 0 times `alpha` .
+    leaky_relu activation function. The element of `input` less than 0 times `alpha` .
 
     The activation function is defined as:
 
     .. math::
-        \text{leaky_relu}(x) = \begin{cases}x, &\text{if } x \geq 0; \cr
-        {\alpha} * x, &\text{otherwise.}\end{cases}
+        \text{leaky_relu}(input) = \begin{cases}input, &\text{if } input \geq 0; \cr
+        {\alpha} * input, &\text{otherwise.}\end{cases}
 
     where :math:`\alpha` represents the `alpha` parameter.
 
@@ -3458,15 +3458,15 @@ def leaky_relu(x, alpha=0.2):
     <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
 
     Args:
-        x (Tensor): The input of leaky_relu is a Tensor of any dimension.
-        alpha (Union[int, float]): Slope of the activation function when the element of `x` is less than 0.
+        input (Tensor): The input of leaky_relu is a Tensor of any dimension.
+        alpha (Union[int, float]): Slope of the activation function when the element of `input` is less than 0.
           Default: 0.2.
 
     Returns:
-        Tensor, has the same type and shape as the `x`.
+        Tensor, has the same type and shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `alpha` is not a float or an int.
 
     Supported Platforms:
@@ -3478,12 +3478,12 @@ def leaky_relu(x, alpha=0.2):
         [[-0.2  4.  -1.6]
          [ 2.  -1.   9. ]]
     """
-    _check_is_tensor('x', x, "leaky_relu")
+    _check_is_tensor('input', input, "leaky_relu")
     _check_value_type("alpha", alpha, [float, int], "leaky_relu")
     select_op = _get_cache_prim(P.Maximum)()
     if alpha > 1:
         select_op = _get_cache_prim(P.Minimum)()
-    return select_op(alpha * x, x)
+    return select_op(alpha * input, input)
 
 
 def intopk(x1, x2, k):
@@ -4481,29 +4481,29 @@ def hardsigmoid(input):
     return hardsigmoid_(input)
 
 
-def hardtanh(x, min_val=-1.0, max_val=1.0):
+def hardtanh(input, min_val=-1.0, max_val=1.0):
     r"""
     Applies the hardtanh activation function element-wise. The activation function is defined as:
 
     .. math::
-        \text{hardtanh}(x) = \begin{cases}
-            1, & \text{ if } x > 1; \\
-            -1, & \text{ if } x < -1; \\
-            x, & \text{ otherwise. }
+        \text{hardtanh}(input) = \begin{cases}
+            1, & \text{ if } input > 1; \\
+            -1, & \text{ if } input < -1; \\
+            input, & \text{ otherwise. }
         \end{cases}
 
     Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
 
     Args:
-        x (Tensor): Input Tensor.
+        input (Tensor): Input Tensor.
         min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
         max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
 
     Returns:
-        Tensor, with the same dtype and shape as `x`.
+        Tensor, with the same dtype and shape as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If dtype of `min_val` is neither float nor int.
         TypeError: If dtype of `max_val` is neither float nor int.
 
@@ -4516,15 +4516,15 @@ def hardtanh(x, min_val=-1.0, max_val=1.0):
         >>> print(output)
         [-1. -1.  0.  1.  1.]
     """
-    _check_is_tensor('x', x, "hardtanh")
+    _check_is_tensor('input', input, "hardtanh")
     _check_value_type("min_val", min_val, [int, float], "hardtanh")
     _check_value_type("max_val", max_val, [int, float], "hardtanh")
-    x = _get_cache_prim(P.Maximum)()(x, min_val)
-    x = _get_cache_prim(P.Minimum)()(x, max_val)
-    return x
+    input = _get_cache_prim(P.Maximum)()(input, min_val)
+    input = _get_cache_prim(P.Minimum)()(input, max_val)
+    return input
 
 
-def huber_loss(x, target, reduction='mean', delta=1.0):
+def huber_loss(input, target, reduction='mean', delta=1.0):
     r"""
     huber_loss calculates the error between the predicted value and the target value.
     It has the best of both the loss of l1 and the loss of mse.
@@ -4555,9 +4555,9 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
         \end{cases}
 
     Args:
-        x (Tensor): Predicted value, Tensor of any dimension.
-        target (Tensor): Target value, has same dtype and shape as the `x` in common cases.
-            However, when the shape of `target` is different from the shape of `x`,
+        input (Tensor): Predicted value, Tensor of any dimension.
+        target (Tensor): Target value, has same dtype and shape as the `input` in common cases.
+            However, when the shape of `target` is different from the shape of `input`,
             and they should be broadcasted to each other.
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum" and "none".
             Default: "mean".
@@ -4565,14 +4565,14 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
             The value must be greater than zero. Default: 1.0.
 
     Returns:
-        Tensor, with the same dtype and shape as `x`.
+        Tensor, with the same dtype and shape as `input`.
 
     Raises:
-        TypeError: If `x` or `target` is not a Tensor.
+        TypeError: If `input` or `target` is not a Tensor.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
         ValueError: If `reduction` is not one of "none", "mean", "sum".
-        ValueError: If `x` and `target` have different shapes and cannot be broadcasted to each other.
+        ValueError: If `input` and `target` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4584,13 +4584,13 @@ def huber_loss(x, target, reduction='mean', delta=1.0):
         >>> print(output)
         13.5
     """
-    _check_is_tensor('x', x, "huber_loss")
+    _check_is_tensor('input', input, "huber_loss")
     _check_is_tensor('target', target, "huber_loss")
     _check_value_type("delta", delta, [int, float], "huber_loss")
     _check_number_gt_value("delta", delta, 0.0, "huber_loss")
     sub = _get_cache_prim(P.Sub)()
     multi = _get_cache_prim(P.Mul)()
-    z = sub(x, target)
+    z = sub(input, target)
     z = _get_cache_prim(P.Abs)()(z)
     cond = _get_cache_prim(P.Less)()(z, delta)
     l1 = multi(0.5, _get_cache_prim(P.Square)()(z))
@@ -4969,22 +4969,22 @@ def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
 
 
-def pixel_shuffle(x, upscale_factor):
+def pixel_shuffle(input, upscale_factor):
     r"""
-    Applies the PixelShuffle operation over input `x` which implements sub-pixel convolutions
+    Applies the PixelShuffle operation over input `input` which implements sub-pixel convolutions
     with stride :math:`1/r` . For more details, refer to
     `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
     <https://arxiv.org/abs/1609.05158>`_ .
 
-    Typically, the `x` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
+    Typically, the `input` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
 
     Note:
         The dimension of input Tensor on Ascend should be less than 7.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2, and the
-            length of third to last dimension can be divisible by `upscale_factor` squared.
+        input (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `input` is larger than 2,
+            and the length of third to last dimension can be divisible by `upscale_factor` squared.
         upscale_factor (int): factor to shuffle the input Tensor, and is a positive integer.
             `upscale_factor` is the above-mentioned :math:`r`.
 
@@ -4994,7 +4994,7 @@ def pixel_shuffle(x, upscale_factor):
     Raises:
         ValueError: If `upscale_factor` is not a positive integer.
         ValueError: If the length of third to last dimension is not divisible by `upscale_factor` squared.
-        TypeError: If the dimension of `x` is less than 3.
+        TypeError: If the dimension of `input` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5007,10 +5007,10 @@ def pixel_shuffle(x, upscale_factor):
         (3, 2, 1, 12, 12)
     """
     _check_positive_int(upscale_factor, "upscale_factor")
-    idx = x.shape
+    idx = input.shape
     length = len(idx)
     if length < 3:
-        raise TypeError(f"For pixel_shuffle, the dimension of `x` should be larger than 2, but got {length}.")
+        raise TypeError(f"For pixel_shuffle, the dimension of `input` should be larger than 2, but got {length}.")
     pre = idx[:-3]
     c, h, w = idx[-3:]
     if c % upscale_factor ** 2 != 0:
@@ -5020,27 +5020,27 @@ def pixel_shuffle(x, upscale_factor):
     input_perm = (pre + (c, upscale_factor, upscale_factor, h, w))
     reshape = _get_cache_prim(P.Reshape)()
     transpose = _get_cache_prim(P.Transpose)()
-    x = reshape(x, input_perm)
+    input = reshape(input, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length, length - 2, length + 1, length - 1]
     input_perm = tuple(input_perm)
-    x = transpose(x, input_perm)
-    x = reshape(x, (pre + (c, upscale_factor * h, upscale_factor * w)))
-    return x
+    input = transpose(input, input_perm)
+    input = reshape(input, (pre + (c, upscale_factor * h, upscale_factor * w)))
+    return input
 
 
-def pixel_unshuffle(x, downscale_factor):
+def pixel_unshuffle(input, downscale_factor):
     r"""
-    Applies the PixelUnshuffle operation over input `x` which is the inverse of PixelShuffle. For more details, refer
-    to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network
-    <https://arxiv.org/abs/1609.05158>`_ .
+    Applies the PixelUnshuffle operation over input `input` which is the inverse of PixelShuffle. For more details,
+    refer to `Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural
+    Network <https://arxiv.org/abs/1609.05158>`_ .
 
     Typically, the input is of shape :math:`(*, C, H \times r, W \times r)` , and the output is of shape
     :math:`(*, C \times r^2, H, W)` , where `r` is a downscale factor and `*` is zero or more batch dimensions.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `x` is larger than 2,
-            and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
+        input (Tensor): Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `input` is larger than
+            2, and the length of second to last dimension or last dimension can be divisible by `downscale_factor` .
         downscale_factor (int): factor to unshuffle the input Tensor, and is a positive integer.
             `downscale_factor` is the above-mentioned :math:`r`.
 
@@ -5050,7 +5050,7 @@ def pixel_unshuffle(x, downscale_factor):
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
         ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
-        TypeError: If the dimension of `x` is less than 3.
+        TypeError: If the dimension of `input` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5063,10 +5063,10 @@ def pixel_unshuffle(x, downscale_factor):
         (1, 4, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
-    idx = x.shape
+    idx = input.shape
     length = len(idx)
     if length < 3:
-        raise TypeError(f"For pixel_unshuffle, the dimension of `x` should be larger than 2, but got {length}.")
+        raise TypeError(f"For pixel_unshuffle, the dimension of `input` should be larger than 2, but got {length}.")
     pre = idx[:-3]
     c, h, w = idx[-3:]
     if h % downscale_factor != 0 or w % downscale_factor != 0:
@@ -5077,13 +5077,13 @@ def pixel_unshuffle(x, downscale_factor):
     input_perm = (pre + (c, h, downscale_factor, w, downscale_factor))
     reshape = _get_cache_prim(P.Reshape)()
     transpose = _get_cache_prim(P.Transpose)()
-    x = reshape(x, input_perm)
+    input = reshape(input, input_perm)
     input_perm = [i for i in range(length - 2)]
     input_perm = input_perm + [length - 1, length + 1, length - 2, length]
     input_perm = tuple(input_perm)
-    x = transpose(x, input_perm)
-    x = reshape(x, (pre + (c * downscale_factor * downscale_factor, h, w)))
-    return x
+    input = transpose(input, input_perm)
+    input = reshape(input, (pre + (c * downscale_factor * downscale_factor, h, w)))
+    return input
 
 
 def glu(x, axis=-1):

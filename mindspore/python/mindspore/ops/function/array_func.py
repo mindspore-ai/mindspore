@@ -1112,7 +1112,7 @@ def range(start, end, step):
 ##############################
 
 
-def unique(x):
+def unique(input):
     """
     Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
     tensor corresponding to the output unique tensor.
@@ -1124,7 +1124,7 @@ def unique(x):
     To get the same shape between `idx` and `y`, please ref to :class:'mindspore.ops.UniqueWithPad' operator.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     .. warning::
@@ -1132,12 +1132,12 @@ def unique(x):
 
     Returns:
         Tuple, containing Tensor objects (`y`, `idx`), `y` is a tensor with the
-        same type as `x`, and contains the unique elements in `x`.
+        same type as `input`, and contains the unique elements in `input`.
         `idx` is a tensor containing indices of elements in
-        the input corresponding to the output tensor, have the same shape with `x`.
+        the input corresponding to the output tensor, have the same shape with `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1162,10 +1162,10 @@ def unique(x):
     unique_op = _get_cache_prim(P.Unique)()
     reshape_op = _get_cache_prim(P.Reshape)()
 
-    shape_x = x.shape
+    shape_x = input.shape
     length_x = get_x_shape(shape_x)
-    x = reshape_op(x, length_x)
-    y, idx = unique_op(x)
+    input = reshape_op(input, length_x)
+    y, idx = unique_op(input)
     idx = reshape_op(idx, shape_x)
     return y, idx
 
@@ -1217,12 +1217,12 @@ def unique_with_pad(x, pad_num):
     return unique_with_pad_(x, pad_num)
 
 
-def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
+def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
     """
     Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
 
     Args:
-        x (Tensor): The input tensor.
+        input (Tensor): The input tensor.
         return_idx (bool, optional): Whether to return the index of where the element in the original input
             maps to the position in the output. Default: False.
         return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
@@ -1231,15 +1231,15 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
 
     Returns:
         A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`). `output` has the
-        same type as `x` and is used to represent the output list of unique scalar elements. If `return_idx` is
-        True, there will be an additional returned tensor, `idx`, which has the same shape as `x` and represents
+        same type as `input` and is used to represent the output list of unique scalar elements. If `return_idx` is
+        True, there will be an additional returned tensor, `idx`, which has the same shape as `input` and represents
         the index of where the element in the original input maps to the position in the output. If `return_counts`
         is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
         for each unique value or tensor.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not supported.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not supported.
         TypeError: If `return_idx` is not a bool.
         TypeError: If `return_counts` is not a bool.
         TypeError: If `axis` is not an int.
@@ -1259,10 +1259,10 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
         [2 2 1 2 1]
     """
 
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("For 'unique_consecutive', 'x' must be Tensor.")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For 'unique_consecutive', 'input' must be Tensor.")
     unique_consecutive_op = _get_cache_prim(UniqueConsecutive)(return_idx, return_counts, axis)
-    output, idx, counts = unique_consecutive_op(x)
+    output, idx, counts = unique_consecutive_op(input)
     if return_idx and return_counts:
         return output, idx, counts
     if return_idx:
@@ -5003,12 +5003,12 @@ def diag(input):
     return diag_(input)
 
 
-def diagflat(x, offset=0):
+def diagflat(input, offset=0):
     r"""
-    Create a 2-D Tensor which diagonal is the flattened `x` .
+    Create a 2-D Tensor which diagonal is the flattened `input` .
 
     Args:
-        x (Tensor): Input Tensor, which is flattened and set as the diagonal of the output.
+        input (Tensor): Input Tensor, which is flattened and set as the diagonal of the output.
         offset (int, optional): `offset` controls which diagonal to choose. Default: 0.
 
             - When `offset` is zero, the diagonal chosen is the main diagonal.
@@ -5016,10 +5016,10 @@ def diagflat(x, offset=0):
             - When `offset` is a negative integer, the diagonal chosen is down the main diagonal.
 
     Returns:
-        The 2-D Tensor, whose diagonal is the flattened `x`.
+        The 2-D Tensor, whose diagonal is the flattened `input`.
 
     Raises:
-        TypeError: If `x` is not a tensor.
+        TypeError: If `input` is not a tensor.
         TypeError: If `offset` is not an integer.
 
     Supported Platforms:
@@ -5033,18 +5033,18 @@ def diagflat(x, offset=0):
          [0. 0. 2.]
          [0. 0. 0.]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For diagflat, the input x must be tensor, but got {type(x)}")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For diagflat, the input x must be tensor, but got {type(input)}")
     if not isinstance(offset, int):
         raise TypeError(f"For diagflat, the offset must be int, but got {type(offset)}")
     offset_abs = abs(offset)
-    if x.size == 0:
-        return zeros((offset_abs, offset_abs), x.dtype)
-    x = x.ravel()
-    res = diag(x)
+    if input.size == 0:
+        return zeros((offset_abs, offset_abs), input.dtype)
+    input = input.ravel()
+    res = diag(input)
     if offset != 0:
-        pad_y = zeros((x.size + offset_abs, offset_abs), x.dtype)
-        pad_x = zeros((offset_abs, x.size), x.dtype)
+        pad_y = zeros((input.size + offset_abs, offset_abs), input.dtype)
+        pad_x = zeros((offset_abs, input.size), input.dtype)
         if offset < 0:
             res = cat((pad_x, res), axis=0)
             res = cat((res, pad_y), axis=1)
