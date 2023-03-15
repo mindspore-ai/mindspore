@@ -26,7 +26,7 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
                                    const std::function<void(void)> &already_set_error_handler,
                                    const std::function<void(void)> &other_error_handler,
                                    const std::function<void(void)> &default_error_handler,
-                                   const DebugInfoPtr &debug_info = nullptr) {
+                                   const DebugInfoPtr &debug_info = nullptr, bool force_rethrow = false) {
   try {
     if (!main_func) {
       MS_LOG(ERROR) << "The 'main_func' should not be empty.";
@@ -37,11 +37,18 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (already_set_error_handler) {
       already_set_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
+
     // Re-throw this exception to Python interpreter to handle it
     throw(py::error_already_set(ex));
   } catch (const py::type_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -55,6 +62,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::value_error(ex);
@@ -66,6 +76,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::index_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -79,6 +92,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::key_error(ex);
@@ -90,6 +106,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::attribute_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -103,6 +122,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::name_error(ex);
@@ -114,6 +136,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::assertion_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -127,6 +152,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::base_exception(ex);
@@ -138,6 +166,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::keyboard_interrupt &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -151,6 +182,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::stop_iteration(ex);
@@ -162,6 +196,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::overflow_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -175,6 +212,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::zero_division_error(ex);
@@ -186,6 +226,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::environment_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -199,6 +242,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::io_error(ex);
@@ -210,6 +256,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::os_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -223,6 +272,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::memory_error(ex);
@@ -234,6 +286,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::unbound_local_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -247,6 +302,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::not_implemented_error(ex);
@@ -258,6 +316,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const py::indentation_error &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     if (debug_info == nullptr) {
@@ -271,6 +332,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
     if (other_error_handler) {
       other_error_handler();
     }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
+    }
 
     if (debug_info == nullptr) {
       throw py::runtime_warning(ex);
@@ -282,6 +346,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (const std::exception &ex) {
     if (other_error_handler) {
       other_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
     // Re-throw this exception to Python interpreter to handle it.
@@ -295,6 +362,9 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
   } catch (...) {
     if (default_error_handler) {
       default_error_handler();
+    }
+    if (force_rethrow) {
+      std::rethrow_exception(std::current_exception());
     }
 
 #ifndef _MSC_VER
