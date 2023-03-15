@@ -15,3 +15,9 @@ reviewers:
 
 options:
     no_parent_owners: true
+
+files:
+  "standard_method.py":
+    approvers:
+    - kingxian
+    - changzherui
