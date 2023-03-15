@@ -53,41 +53,9 @@ bool EditDistance::normalize() const {
 }
 
 namespace {
-abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  constexpr int64_t kInputNum = 6;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kInputNum, prim_name);
-
-  auto GetShape = [&input_args](size_t index) {
-    auto &abs = input_args[index];
-    MS_EXCEPTION_IF_NULL(abs);
-    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
-  };
-
-  auto hypothesis_indices_shape = GetShape(kIndex0);
-  auto hypothesis_values_shape = GetShape(kIndex1);
-  auto hypothesis_shape_shape = GetShape(kIndex2);
-  auto truth_indices_shape = GetShape(kIndex3);
-  auto truth_values_shape = GetShape(kIndex4);
-  auto truth_shape_shape = GetShape(kIndex5);
-
-  const int64_t indices_rank = 2;
-  const int64_t values_shape_rank = 1;
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_indices rank", SizeToLong(hypothesis_indices_shape.size()),
-                                           kEqual, indices_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_indices rank", SizeToLong(truth_indices_shape.size()), kEqual,
-                                           indices_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_values rank", SizeToLong(hypothesis_values_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("hypothesis_shape rank", SizeToLong(hypothesis_shape_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_values rank", SizeToLong(truth_values_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("truth_shape rank", SizeToLong(truth_shape_shape.size()), kEqual,
-                                           values_shape_rank, prim_name);
-
+void CheckEditDistanceShape(const ShapeVector &hypothesis_indices_shape, const ShapeVector &hypothesis_values_shape,
+                            const ShapeVector &hypothesis_shape_shape, const ShapeVector &truth_indices_shape,
+                            const ShapeVector &truth_values_shape, const ShapeVector &truth_shape_shape) {
   if (hypothesis_values_shape[kIndex0] != hypothesis_indices_shape[kIndex0]) {
     MS_EXCEPTION(ValueError) << "hypothesis_values shape should be equal to hypothesis_indices shape[0] but got "
                              << "hypothesis_values shape: " << hypothesis_values_shape[kIndex0]
@@ -110,6 +78,56 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "hypothesis_shape should be equal to truth_shape but got hypothesis_shape: "
                              << hypothesis_shape_shape_val << " and truth_shape: " << truth_shape_shape[kIndex0] << ".";
   }
+}
+
+abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  constexpr int64_t kInputNum = 6;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kInputNum, prim_name);
+
+  auto GetShape = [&input_args](size_t index) {
+    auto &abs = input_args[index];
+    MS_EXCEPTION_IF_NULL(abs);
+    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
+  };
+
+  auto hypothesis_indices_shape = GetShape(kIndex0);
+  auto hypothesis_values_shape = GetShape(kIndex1);
+  auto hypothesis_shape_shape = GetShape(kIndex2);
+  auto truth_indices_shape = GetShape(kIndex3);
+  auto truth_values_shape = GetShape(kIndex4);
+  auto truth_shape_shape = GetShape(kIndex5);
+  if (IsDynamicRank(hypothesis_indices_shape) || IsDynamicRank(hypothesis_values_shape) ||
+      IsDynamicRank(hypothesis_shape_shape) || IsDynamicRank(truth_indices_shape) ||
+      IsDynamicRank(truth_values_shape) || IsDynamicRank(truth_shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  const int64_t indices_rank = 2;
+  const int64_t values_shape_rank = 1;
+  (void)CheckAndConvertUtils::CheckInteger("hypothesis_indices rank", SizeToLong(hypothesis_indices_shape.size()),
+                                           kEqual, indices_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("truth_indices rank", SizeToLong(truth_indices_shape.size()), kEqual,
+                                           indices_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("hypothesis_values rank", SizeToLong(hypothesis_values_shape.size()), kEqual,
+                                           values_shape_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("hypothesis_shape rank", SizeToLong(hypothesis_shape_shape.size()), kEqual,
+                                           values_shape_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("truth_values rank", SizeToLong(truth_values_shape.size()), kEqual,
+                                           values_shape_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("truth_shape rank", SizeToLong(truth_shape_shape.size()), kEqual,
+                                           values_shape_rank, prim_name);
+
+  if (IsDynamicShape(hypothesis_indices_shape) || IsDynamicShape(hypothesis_values_shape) ||
+      IsDynamicShape(hypothesis_shape_shape) || IsDynamicShape(truth_indices_shape) ||
+      IsDynamicShape(truth_values_shape) || IsDynamicShape(truth_shape_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  CheckEditDistanceShape(hypothesis_indices_shape, hypothesis_values_shape, hypothesis_shape_shape, truth_indices_shape,
+                         truth_values_shape, truth_shape_shape);
 
   const std::set<TypePtr> valid_types = {kInt64};
   auto hypothesis_shape_abs = input_args[kIndex2];
