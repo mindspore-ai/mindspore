@@ -290,20 +290,6 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractList>(items);
 }
 
-AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_abs_list, args_spec_size);
-  auto arg_abs = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  auto shape = arg_abs->BuildShape()->cast<ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (shape->shape().empty()) {
-    MS_EXCEPTION(TypeError) << "Not support len of a 0-D tensor.";
-  }
-  return std::make_shared<AbstractScalar>(shape->shape()[0]);
-}
-
 namespace {
 void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
   if (abs->isa<AbstractSequence>()) {
