@@ -502,10 +502,18 @@ class PrimitiveWithCheck(Primitive):
 
     def __check__(self, *args):
         """Checking the input shape and the input type of ops is valid """
-        tracks = ['dtype', 'shape']
-        for track in tracks:
-            fn = getattr(self, 'check_' + track)
-            fn(*(x[track] for x in args))
+        check_dtype_fn = getattr(self, 'check_dtype')
+        check_dtype_fn(*(x['dtype'] for x in args))
+
+        is_shape_known = True
+        for x in args:
+            shape = x['shape']
+            if -1 in shape or -2 in shape:
+                is_shape_known = False
+                break
+        if is_shape_known:
+            check_shape_fn = getattr(self, 'check_shape')
+            check_shape_fn(*(x['shape'] for x in args))
 
     def _clone(self):
         """
