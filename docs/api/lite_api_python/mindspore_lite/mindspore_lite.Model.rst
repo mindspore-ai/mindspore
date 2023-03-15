@@ -3,7 +3,7 @@ mindspore_lite.Model
 
 .. py:class:: mindspore_lite.Model()
 
-    Model类用于定义MindSpore Lite模型，便于计算图管理。
+    `Model` 类定义MindSpore Lite模型，便于计算图管理。
 
     .. py:method:: build_from_file(model_path, model_type, context=None, config_path="")
 
@@ -11,7 +11,7 @@ mindspore_lite.Model
 
         参数：
             - **model_path** (str) - 定义输入模型文件的路径，例如："/home/user/model.ms"。选项：MindSpore模型: "model.mindir" | MindSpore Lite模型: "model.ms"
-            - **model_type** (ModelType) - 定义输入模型文件的类型。选项：ModelType::MINDIR | ModelType::MINDIR_LITE。有关详细信息，请参见 `ModelType <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
+            - **model_type** (ModelType) - 定义输入模型文件的类型。选项：ModelType::MINDIR | ModelType::MINDIR_LITE。有关详细信息，请参见 `模型类型 <https://mindspore.cn/lite/api/zh-CN/master/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
             - **context** (Context，可选) - 定义上下文，用于在执行期间传递选项。默认值：None。None表示设置target为cpu的Context。
             - **config_path** (str，可选) - 定义配置文件的路径，用于在构建模型期间传递用户定义选项。在以下场景中，用户可能需要设置参数。例如："/home/user/config.txt"。默认值：""。
 

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -159,185 +159,14 @@ class Converter:
         return res
 
     @property
-    def weight_fp16(self):
-        """Get the status whether the model will be saved as the Float16 data type."""
-        return self._converter.get_weight_fp16()
-
-    @weight_fp16.setter
-    def weight_fp16(self, weight_fp16):
-        """
-        Set whether the model will be saved as the Float16 data type.
-
-        Args:
-            weight_fp16 (bool): If it is True, the const Tensor of the Float32 in the model will be saved as the Float16
-                data type during Converter, and the generated model size will be compressed. Then, according to
-                `DeviceInfo`'s `enable_fp16` parameter determines the inputs' data type to perform inference. The
-                priority of `weight_fp16` is very low. For example, if quantization is enabled, for the weight of the
-                quantized, `weight_fp16` will not take effect again. `weight_fp16` only effective for the const Tensor
-                in Float32 data type.
-
-        Raises:
-            TypeError: `weight_fp16` is not a bool.
-        """
-        check_isinstance("weight_fp16", weight_fp16, bool)
-        self._converter.set_weight_fp16(weight_fp16)
-
-    @property
-    def input_shape(self):
-        """Get the dimension of the model input."""
-        return self._converter.get_input_shape()
-
-    @input_shape.setter
-    def input_shape(self, input_shape):
-        """
-        Set the dimension of the model input.
-
-        Args:
-            input_shape (dict{str, list[int]}): Set the dimension of the model input. The order of input dimensions is
-                consistent with the original model. In the following scenarios, users may need to set the parameter.
-                For example, {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}.
-
-                - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
-                  inference, then set the parameter to fixed shape. After setting, when inferring on the converted
-                  model, the default input shape is the same as the parameter setting, no need to resize.
-                - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
-                  but prepare to use fixed shape for inference, and the performance of the model is
-                  expected to be optimized as much as possible, then set the parameter to fixed shape. After
-                  setting, the model structure will be further optimized, but the converted model may lose the
-                  characteristics of dynamic shape(some operators strongly related to shape will be merged).
-                - Usage 3: When using the converter function to generate code for Micro inference execution, it is
-                  recommended to set the parameter to reduce the probability of errors during deployment.
-                  When the model contains a Shape ops or the input of the model to be converted is a dynamic
-                  shape, you must set the parameter to fixed shape to support the relevant shape optimization and
-                  code generation.
-
-        Raises:
-            TypeError: `input_shape` is not a dict.
-            TypeError: `input_shape` is a dict, but the keys are not str.
-            TypeError: `input_shape` is a dict, the keys are str, but the values are not list.
-            TypeError: `input_shape` is a dict, the keys are str, the values are list, but the value's elements are not
-                int.
-        """
-        check_input_shape("input_shape", input_shape)
-        self._converter.set_input_shape(input_shape)
-
-    @property
-    def input_format(self):
-        """Get the input format of model."""
-        return format_cxx_py_map.get(self._converter.get_input_format())
-
-    @input_format.setter
-    def input_format(self, input_format):
-        """
-        Set the input format of model.
-
-        Args:
-            input_format (Format): Set the input format of model. Only Valid for 4-dimensional input.The
-                following 2 input formats are supported: Format.NCHW | Format.NHWC. For details,
-                see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
-
-                - Format.NCHW: Store tensor data in the order of batch N, channel C, height H and width W.
-                - Format.NHWC: Store tensor data in the order of batch N, height H, width W and channel C.
-
-        Raises:
-            TypeError: `input_format` is not a Format.
-            ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
-        """
-        check_isinstance("input_format", input_format, Format)
-        if input_format not in [Format.NCHW, Format.NHWC]:
-            raise ValueError(f"input_format must be in [Format.NCHW, Format.NHWC].")
-        self._converter.set_input_format(format_py_cxx_map.get(input_format))
-
-    @property
-    def input_data_type(self):
-        """Get the data type of the quantization model input Tensor."""
-        return data_type_cxx_py_map.get(self._converter.get_input_data_type())
-
-    @input_data_type.setter
-    def input_data_type(self, input_data_type):
-        """
-        Set the data type of the quantization model input Tensor.
-
-        Args:
-            input_data_type (DataType): Set the data type of the quantization model input Tensor. It is only valid when
-                the quantization parameters ( `scale` and `zero point` ) of the model input tensor are available. The
-                following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
-                DataType.UNKNOWN. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
-
-                - DataType.FLOAT32: 32-bit floating-point number.
-                - DataType.INT8:    8-bit integer.
-                - DataType.UINT8:   unsigned 8-bit integer.
-                - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
-
-        Raises:
-            TypeError: `input_data_type` is not a DataType.
-            ValueError: `input_data_type` is not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]
-                when `input_data_type` is a DataType.
-        """
-        check_isinstance("input_data_type", input_data_type, DataType)
-        if input_data_type not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]:
-            raise ValueError(f"input_data_type must be in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, "
-                             f"DataType.UNKNOWN].")
-        self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
-
-    @property
-    def output_data_type(self):
-        """Get the data type of the quantization model output Tensor."""
-        return data_type_cxx_py_map.get(self._converter.get_output_data_type())
-
-    @output_data_type.setter
-    def output_data_type(self, output_data_type):
-        """
-        Set the data type of the quantization model output Tensor.
-
-        Args:
-            output_data_type (DataType): Set the data type of the quantization model output Tensor. It is only valid
-                when the quantization parameters ( `scale` and `zero point` ) of the model output tensor are available.
-                The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
-                DataType.UNKNOWN. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
-
-                - DataType.FLOAT32: 32-bit floating-point number.
-                - DataType.INT8:    8-bit integer.
-                - DataType.UINT8:   unsigned 8-bit integer.
-                - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
-
-        Raises:
-            TypeError: `output_data_type` is not a DataType.
-            ValueError: `output_data_type` is not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]
-                when `output_data_type` is a DataType.
-        """
-        check_isinstance("output_data_type", output_data_type, DataType)
-        if output_data_type not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]:
-            raise ValueError(f"output_data_type must be in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, "
-                             f"DataType.UNKNOWN].")
-        self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
-
-    @property
-    def save_type(self):
-        """GSet the model type needs to be export."""
-        return model_type_cxx_py_map.get(self._converter.get_save_type())
-
-    @save_type.setter
-    def save_type(self, save_type):
-        """
-        Set the model type needs to be export.
-
-        Args:
-            save_type (ModelType): Set the model type needs to be export. Options: ModelType.MINDIR |
-                ModelType.MINDIR_LITE. For details, see
-                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
-
-        Raises:
-            TypeError: `save_type` is not a ModelType.
-        """
-        check_isinstance("save_type", save_type, ModelType)
-        self._converter.set_save_type(model_type_py_cxx_map.get(save_type))
-
-    @property
     def decrypt_key(self):
-        """Get the key used to decrypt the encrypted MindIR file"""
+        """
+        Get the key used to decrypt the encrypted MindIR file.
+
+        Returns:
+            str, the key used to decrypt the encrypted MindIR file, expressed in hexadecimal characters. Only valid when
+            fmk_type is FmkType.MINDIR.
+        """
         return self._converter.get_decrypt_key()
 
     @decrypt_key.setter
@@ -357,7 +186,13 @@ class Converter:
 
     @property
     def decrypt_mode(self):
-        """Get decryption mode for the encrypted MindIR file."""
+        """
+        Get decryption mode for the encrypted MindIR file.
+
+        Returns:
+            str, decryption mode for the encrypted MindIR file. Only valid when dec_key is set. Options: "AES-GCM" |
+            "AES-CBC".
+        """
         return self._converter.get_decrypt_mode()
 
     @decrypt_mode.setter
@@ -379,8 +214,47 @@ class Converter:
         self._converter.set_decrypt_mode(decrypt_mode)
 
     @property
+    def device(self):
+        """
+        Get target device when converter model.
+
+        Returns:
+            str, target device when converter model. Only valid for Ascend. The use case is when on the Ascend device,
+            if you need to the converted model to have the ability to use Ascend backend to perform inference,
+            you can set the parameter. If it is not set, the converted model will use CPU backend to perform
+            inference by default. Options: "Ascend".
+        """
+        return self._converter.get_device()
+
+    @device.setter
+    def device(self, device):
+        """
+        Set target device when converter model.
+
+        Args:
+            device (str): Set target device when converter model. Only valid for Ascend. The use case is when on the
+                Ascend device, if you need to the converted model to have the ability to use Ascend backend to perform
+                inference, you can set the parameter. If it is not set, the converted model will use CPU backend to
+                perform inference by default. Options: "Ascend".
+
+        Raises:
+            TypeError: `device` is not a str.
+            ValueError: `device` is not "Ascend" when it is a str.
+        """
+        check_isinstance("device", device, str)
+        if device not in ["Ascend"]:
+            raise ValueError(f"device must be in [Ascend].")
+        self._converter.set_device(device)
+
+    @property
     def enable_encryption(self):
-        """Get the status whether to encrypt the model when exporting."""
+        """
+        Get the status whether to encrypt the model when exporting.
+
+        Returns:
+            bool, whether to encrypt the model when exporting. Export encryption can protect the integrity of the model,
+            but it will increase the initialization time at runtime.
+        """
         return self._converter.get_enable_encryption()
 
     @enable_encryption.setter
@@ -400,7 +274,13 @@ class Converter:
 
     @property
     def encrypt_key(self):
-        """Get the key used to encrypt the model when exporting, expressed in hexadecimal characters."""
+        """
+        Get the key used to encrypt the model when exporting.
+
+        Returns:
+            str, the key used to encrypt the model when exporting, expressed in hexadecimal characters. Only support
+            when`decrypt_mode` is "AES-GCM", the key length is 16.
+        """
         return self._converter.get_encrypt_key()
 
     @encrypt_key.setter
@@ -420,7 +300,12 @@ class Converter:
 
     @property
     def infer(self):
-        """Get the status whether to do pre-inference after Converter."""
+        """
+        Get the status whether to do pre-inference after Converter.
+
+        Returns:
+            bool, whether to do pre-inference after Converter.
+        """
         return self._converter.get_infer()
 
     @infer.setter
@@ -438,59 +323,184 @@ class Converter:
         self._converter.set_infer(infer)
 
     @property
-    def train_model(self):
-        """Get the status whether the model is going to be trained on device."""
-        if not hasattr(_c_lite_wrapper, "GetTrainModel"):
-            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
-        return self._converter.get_train_model()
-
-    @train_model.setter
-    def train_model(self, train_model):
+    def input_data_type(self):
         """
-        Set whether the model is going to be trained on device.
+        Get the data type of the quantization model input Tensor.
 
-        Note:
-            train_model is not supported to use on MindSpore Lite cloud inference package
+        Returns:
+            DataType, the data type of the quantization model input Tensor. It is only valid when the quantization
+            parameters ( `scale` and `zero point` ) of the model input Tensor are available. The following 4
+            DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN.
+            For details, see
+            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+
+            - DataType.FLOAT32: 32-bit floating-point number.
+            - DataType.INT8:    8-bit integer.
+            - DataType.UINT8:   unsigned 8-bit integer.
+            - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
+
+        """
+        return data_type_cxx_py_map.get(self._converter.get_input_data_type())
+
+    @input_data_type.setter
+    def input_data_type(self, input_data_type):
+        """
+        Set the data type of the quantization model input Tensor.
 
         Args:
-            train_model (bool):   Whether the model is going to be trained on device. The parameter is
+            input_data_type (DataType): Set the data type of the quantization model input Tensor. It is only valid when
+                the quantization parameters ( `scale` and `zero point` ) of the model input Tensor are available. The
+                following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
+                DataType.UNKNOWN. For details, see
+                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+
+                - DataType.FLOAT32: 32-bit floating-point number.
+                - DataType.INT8:    8-bit integer.
+                - DataType.UINT8:   unsigned 8-bit integer.
+                - DataType.UNKNOWN: Set the Same DataType as the model input Tensor.
 
         Raises:
-            TypeError: `train_model` is not a bool.
+            TypeError: `input_data_type` is not a DataType.
+            ValueError: `input_data_type` is not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]
+                when `input_data_type` is a DataType.
         """
-        if hasattr(_c_lite_wrapper, "SetTrainModel"):
-            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
-        check_isinstance("train_model", train_model, bool)
-        self._converter.set_train_model(train_model)
+        check_isinstance("input_data_type", input_data_type, DataType)
+        if input_data_type not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]:
+            raise ValueError(f"input_data_type must be in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, "
+                             f"DataType.UNKNOWN].")
+        self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
+
+    @property
+    def input_format(self):
+        """
+        Get the input format of model.
+
+        Returns:
+            Format, the input format of model. Only Valid for 4-dimensional input. The following 2 input formats are
+            supported: Format.NCHW | Format.NHWC. For details,
+            see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+
+            - Format.NCHW: Store Tensor data in the order of batch N, channel C, height H and width W.
+            - Format.NHWC: Store Tensor data in the order of batch N, height H, width W and channel C.
+
+        """
+        return format_cxx_py_map.get(self._converter.get_input_format())
+
+    @input_format.setter
+    def input_format(self, input_format):
+        """
+        Set the input format of model.
+
+        Args:
+            input_format (Format): Set the input format of model. Only Valid for 4-dimensional input.The
+                following 2 input formats are supported: Format.NCHW | Format.NHWC. For details,
+                see `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+
+                - Format.NCHW: Store Tensor data in the order of batch N, channel C, height H and width W.
+                - Format.NHWC: Store Tensor data in the order of batch N, height H, width W and channel C.
+
+        Raises:
+            TypeError: `input_format` is not a Format.
+            ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
+        """
+        check_isinstance("input_format", input_format, Format)
+        if input_format not in [Format.NCHW, Format.NHWC]:
+            raise ValueError(f"input_format must be in [Format.NCHW, Format.NHWC].")
+        self._converter.set_input_format(format_py_cxx_map.get(input_format))
+
+    @property
+    def input_shape(self):
+        """
+        Get the dimension of the model input.
+
+        Returns:
+            dict{str, list[int]}, the dimension of the model input. The order of input dimensions is consistent with the
+            original model. In the following scenarios, users may need to set the parameter.
+            For example, {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}.
+
+            - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
+              inference, then set the parameter to fixed shape. After setting, when inferring on the converted
+              model, the default input shape is the same as the parameter setting, no need to resize.
+            - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
+              but prepare to use fixed shape for inference, and the performance of the model is expected to be
+              optimized as much as possible, then set the parameter to fixed shape. After setting, the model
+              structure will be further optimized, but the converted model may lose the characteristics of dynamic
+              shape(some operators strongly related to shape will be merged).
+            - Usage 3: When using the converter function to generate code for Micro inference execution, it is
+              recommended to set the parameter to reduce the probability of errors during deployment. When the model
+              contains a Shape ops or the input of the model to be converted is a dynamic shape, you must set the
+              parameter to fixed shape to support the relevant shape optimization and code generation.
+
+        """
+        return self._converter.get_input_shape()
+
+    @input_shape.setter
+    def input_shape(self, input_shape):
+        """
+        Set the dimension of the model input.
+
+        Args:
+            input_shape (dict{str, list[int]}): Set the dimension of the model input. The order of input dimensions is
+                consistent with the original model. In the following scenarios, users may need to set the parameter.
+                For example, {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}.
+
+                - Usage 1:The input of the model to be converted is dynamic shape, but prepare to use fixed shape for
+                  inference, then set the parameter to fixed shape. After setting, when inferring on the converted
+                  model, the default input shape is the same as the parameter setting, no need to resize.
+                - Usage 2: No matter whether the original input of the model to be converted is dynamic shape or not,
+                  but prepare to use fixed shape for inference, and the performance of the model is expected to be
+                  optimized as much as possible, then set the parameter to fixed shape. After setting, the model
+                  structure will be further optimized, but the converted model may lose the characteristics of dynamic
+                  shape(some operators strongly related to shape will be merged).
+                - Usage 3: When using the converter function to generate code for Micro inference execution, it is
+                  recommended to set the parameter to reduce the probability of errors during deployment. When the model
+                  contains a Shape ops or the input of the model to be converted is a dynamic shape, you must set the
+                  parameter to fixed shape to support the relevant shape optimization and code generation.
+
+        Raises:
+            TypeError: `input_shape` is not a dict.
+            TypeError: `input_shape` is a dict, but the keys are not str.
+            TypeError: `input_shape` is a dict, the keys are str, but the values are not list.
+            TypeError: `input_shape` is a dict, the keys are str, the values are list, but the value's elements are not
+                int.
+        """
+        check_input_shape("input_shape", input_shape)
+        self._converter.set_input_shape(input_shape)
 
     @property
     def optimize(self):
-        """Get the status whether avoid fusion optimization."""
-        return self._converter.get_no_fusion()
-
-    @optimize.setter
-    def optimize(self, optimize):
         """
-        Set whether avoid fusion optimization.
+        Get the status whether avoid fusion optimization.
+
+        optimize is used to set the mode of optimization during the offline conversion. If this parameter is set to
+        "none", no relevant graph optimization operations will be performed during the offline conversion phase of
+        the model, and the relevant graph optimization operations will be performed during the execution of the
+        inference phase. The advantage of this parameter is that the converted model can be deployed directly to any
+        CPU/GPU/Ascend hardware backend since it is not optimized in a specific way, while the disadvantage is that
+        the initialization time of the model increases during inference execution. If this parameter is set to
+        "general", general optimization will be performed, such as constant folding and operator fusion (the
+        converted model only supports CPU/GPU hardware backend, not Ascend backend). If this parameter is set to
+        "ascend_oriented", the optimization for Ascend hardware will be performed (the converted model only supports
+        Ascend hardware backend).
 
         Note:
-            optimize is used to set the mode of optimization during the offline conversion. If this parameter is set to
-            "none", no relevant graph optimization operations will be performed during the offline conversion phase of
-            the model, and the relevant graph optimization operations will be performed during the execution of the
-            inference phase. The advantage of this parameter is that the converted model can be deployed directly to any
-            CPU/GPU/Ascend hardware backend since it is not optimized in a specific way, while the disadvantage is that
-            the initialization time of the model increases during inference execution. If this parameter is set to
-            "general", general optimization will be performed, such as constant folding and operator fusion (the
-            converted model only supports CPU/GPU hardware backend, not Ascend backend). If this parameter is set to
-            "ascend_oriented", the optimization for Ascend hardware will be performed (the converted model only supports
-            Ascend hardware backend).
-
             For the MindSpore model, since it is already a `mindir` model, two approaches are suggested:
 
             - Inference is performed directly without offline conversion.
             - Setting `optimize` to "general" in CPU/GPU hardware backend and setting `optimize` to
                "ascend_oriented" in Ascend hardware when using offline conversion. The relevant optimization is done in
                the offline phase to reduce the initialization time of inference execution.
+
+        Returns:
+            str, whether avoid fusion optimization. Options: "none" | "general" | "ascend_oriented". "none" means fusion
+            optimization is not allowed. "general" and "ascend_oriented" means fusion optimization is allowed.
+        """
+        return self._converter.get_no_fusion()
+
+    @optimize.setter
+    def optimize(self, optimize):
+        """
+        Set whether avoid fusion optimization.
 
         Args:
             optimize(str): Whether avoid fusion optimization. Options: "none" | "general" | "ascend_oriented".
@@ -514,31 +524,150 @@ class Converter:
         self._converter.set_no_fusion(no_fusion)
 
     @property
-    def device(self):
-        """Get target device when converter model."""
-        return self._converter.get_device()
-
-    @device.setter
-    def device(self, device):
+    def output_data_type(self):
         """
-        Set target device when converter model.
+        Get the data type of the quantization model output Tensor.
+
+        Returns:
+            DataType, the data type of the quantization model output Tensor. It is only valid when the quantization
+            parameters ( `scale` and `zero point` ) of the model output Tensor are available. The following 4
+            DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN.
+            For details, see
+            `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+
+            - DataType.FLOAT32: 32-bit floating-point number.
+            - DataType.INT8:    8-bit integer.
+            - DataType.UINT8:   unsigned 8-bit integer.
+            - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
+
+        """
+        return data_type_cxx_py_map.get(self._converter.get_output_data_type())
+
+    @output_data_type.setter
+    def output_data_type(self, output_data_type):
+        """
+        Set the data type of the quantization model output Tensor.
 
         Args:
-            device (str): Set target device when converter model. Only valid for Ascend. The use case is when on the
-                Ascend device, if you need to the converted model to have the ability to use Ascend backend to perform
-                inference, you can set the parameter. If it is not set, the converted model will use CPU backend to
-                perform inference by default. Options: "Ascend".
+            output_data_type (DataType): Set the data type of the quantization model output Tensor. It is only valid
+                when the quantization parameters ( `scale` and `zero point` ) of the model output Tensor are available.
+                The following 4 DataTypes are supported: DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 |
+                DataType.UNKNOWN. For details, see
+                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+
+                - DataType.FLOAT32: 32-bit floating-point number.
+                - DataType.INT8:    8-bit integer.
+                - DataType.UINT8:   unsigned 8-bit integer.
+                - DataType.UNKNOWN: Set the Same DataType as the model output Tensor.
 
         Raises:
-            TypeError: `device` is not a str.
-            ValueError: `device` is not "Ascend" when it is a str.
+            TypeError: `output_data_type` is not a DataType.
+            ValueError: `output_data_type` is not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]
+                when `output_data_type` is a DataType.
         """
-        check_isinstance("device", device, str)
-        if device not in ["Ascend"]:
-            raise ValueError(f"device must be in [Ascend].")
-        self._converter.set_device(device)
+        check_isinstance("output_data_type", output_data_type, DataType)
+        if output_data_type not in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, DataType.UNKNOWN]:
+            raise ValueError(f"output_data_type must be in [DataType.FLOAT32, DataType.INT8, DataType.UINT8, "
+                             f"DataType.UNKNOWN].")
+        self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
 
-    def converter(self, fmk_type, model_file, output_file="", weight_file="", config_file=""):
+    @property
+    def save_type(self):
+        """
+        Get the model type needs to be export.
+
+        Returns:
+            ModelType, the model type needs to be export. Options: ModelType.MINDIR |  ModelType.MINDIR_LITE.
+            For details, see
+            `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+        """
+        return model_type_cxx_py_map.get(self._converter.get_save_type())
+
+    @save_type.setter
+    def save_type(self, save_type):
+        """
+        Set the model type needs to be export.
+
+        Args:
+            save_type (ModelType): Set the model type needs to be export. Options: ModelType.MINDIR |
+                ModelType.MINDIR_LITE. For details, see
+                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+
+        Raises:
+            TypeError: `save_type` is not a ModelType.
+        """
+        check_isinstance("save_type", save_type, ModelType)
+        self._converter.set_save_type(model_type_py_cxx_map.get(save_type))
+
+    @property
+    def train_model(self):
+        """
+        Get the status whether the model is going to be trained on device.
+
+        Note:
+            `train_model` is not supported to use on MindSpore Lite cloud inference package.
+
+        Returns:
+            bool, whether the model is going to be trained on device.
+        """
+        if not hasattr(_c_lite_wrapper, "GetTrainModel"):
+            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
+        return self._converter.get_train_model()
+
+    @train_model.setter
+    def train_model(self, train_model):
+        """
+        Set whether the model is going to be trained on device.
+
+        Note:
+            `train_model` is not supported to use on MindSpore Lite cloud inference package.
+
+        Args:
+            train_model (bool):   Whether the model is going to be trained on device.
+
+        Raises:
+            TypeError: `train_model` is not a bool.
+        """
+        if hasattr(_c_lite_wrapper, "SetTrainModel"):
+            raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
+        check_isinstance("train_model", train_model, bool)
+        self._converter.set_train_model(train_model)
+
+    @property
+    def weight_fp16(self):
+        """
+        Get the status whether the model will be saved as the Float16 data type.
+
+        Returns:
+            bool, whether the model will be saved as the Float16 data type. If it is True, the const Tensor of the
+            Float32 in the model will be saved as the Float16 data type during Converter, and the generated model
+            size will be compressed. Then, according to `Context.CPU` 's `precision_mode` parameter determines the
+            inputs' data type to perform inference. The priority of `weight_fp16` is very low. For example, if
+            quantization is enabled, for the weight of the quantized, `weight_fp16` will not take effect again.
+            `weight_fp16` only effective for the const Tensor in Float32 data type.
+        """
+        return self._converter.get_weight_fp16()
+
+    @weight_fp16.setter
+    def weight_fp16(self, weight_fp16):
+        """
+        Set whether the model will be saved as the Float16 data type.
+
+        Args:
+            weight_fp16 (bool): If it is True, the const Tensor of the Float32 in the model will be saved as the Float16
+                data type during Converter, and the generated model size will be compressed. Then, according to
+                `Context.CPU` 's `precision_mode` parameter determines the inputs' data type to perform inference. The
+                priority of `weight_fp16` is very low. For example, if quantization is enabled, for the weight of the
+                quantized, `weight_fp16` will not take effect again. `weight_fp16` only effective for the const Tensor
+                in Float32 data type.
+
+        Raises:
+            TypeError: `weight_fp16` is not a bool.
+        """
+        check_isinstance("weight_fp16", weight_fp16, bool)
+        self._converter.set_weight_fp16(weight_fp16)
+
+    def converter(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
         """
         Perform conversion, and convert the third-party model to the mindspire model.
 
@@ -557,7 +686,8 @@ class Converter:
             weight_file (str, optional): Set the path of input model weight file. Required only when fmk_type is
                 FmkType.CAFFE. The Caffe model is generally divided into two files: 'model.prototxt' is model structure,
                 corresponding to `model_file` parameter; 'model.Caffemodel' is model weight value file, corresponding to
-                `weight_file` parameter. For example, "/home/user/model.caffemodel". Default: "".
+                `weight_file` parameter. For example, "/home/user/model.caffemodel". Default: "", indicating no weight
+                file.
             config_file (str, optional): Set the path of the configuration file of Converter can be used to
                 post-training, offline split op to parallel, disable op fusion ability and set plugin so path.
                 `config_file` uses the `key = value` method to define the related parameters.
@@ -565,7 +695,7 @@ class Converter:
                 `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
                 For the configuration parameters related to extension, please refer to
                 `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
-                For example, "/home/user/model.cfg". Default: "".
+                For example, "/home/user/model.cfg". Default: "", indicating that no configuration file.
 
         Raises:
             TypeError: `fmk_type` is not a FmkType.
