@@ -5,7 +5,7 @@ mindspore.nn.LPPool1d
 
     在一个输入Tensor上应用1D LP池化运算，可被视为组成一个1D输入平面。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C, L_{in})`，输出的shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C, L_{in})`，输出与输入的shape一致，公式如下：
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C_{in}, L_{in})`，输出的shape为 :math:`(N_{out}, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})`，输出与输入的shape一致，公式如下：
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
@@ -21,10 +21,10 @@ mindspore.nn.LPPool1d
         - **ceil_mode** (bool) - 若为True，使用ceil来计算输出shape。若为False，使用floor来计算输出shape。默认值：False。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 或 :math:`(C, L_{in})` 的Tensor。
+        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C_{in}, L_{in})` 的Tensor。
 
     输出：
-        - **output** - LPPool1d的计算结果，shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C, L_{in})` 的Tensor，与输入 `x` 的类型一致。
+        - **output** - LPPool1d的计算结果，shape为 :math:`(N_{out}, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor，与输入 `x` 的类型一致。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

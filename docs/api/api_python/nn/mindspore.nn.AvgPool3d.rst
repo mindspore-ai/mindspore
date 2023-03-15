@@ -36,7 +36,9 @@ mindspore.nn.AvgPool3d
         shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或者 :math:`(C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
 
     异常：
-        - **TypeError** - `kernel_size` ，`stride` 或 `padding` 既不是整数也不是元组。
+        - **TypeError** - `kernel_size` 既不是整数也不是元组。
+        - **TypeError** - `stride` 既不是整数也不是元组。
+        - **TypeError** - `padding` 既不是整数也不是元组/列表。
         - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是布尔类型。
         - **TypeError** - `divisor_override` 不是整数。
         - **ValueError** - `kernel_size` 或者 `stride` 中的数字不是正数。
