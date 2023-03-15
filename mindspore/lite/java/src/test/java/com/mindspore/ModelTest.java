@@ -47,13 +47,14 @@ public class ModelTest {
         TrainCfg cfg = new TrainCfg();
         cfg.init();
         Model liteModel = new Model();
-        boolean isSuccess = liteModel.build(g, context, cfg);
-        assertTrue(isSuccess);
-        isSuccess = liteModel.setLearningRate(1.0f);
-        assertTrue(isSuccess);
-        isSuccess = liteModel.setupVirtualBatch(2,1.0f,0.5f);
-        assertTrue(isSuccess);
+        boolean isBuildSuccess = liteModel.build(g, context, cfg);
+        assertTrue(isBuildSuccess);
+        boolean isSetLearningRateSuccess = liteModel.setLearningRate(1.0f);
+        assertTrue(isSetLearningRateSuccess);
+        boolean isSetupVirtualBatchSuccess = liteModel.setupVirtualBatch(2, 1.0f, 0.5f);
+        assertTrue(isSetupVirtualBatchSuccess);
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -67,6 +68,7 @@ public class ModelTest {
         boolean isSuccess = liteModel.build(g, context, cfg);
         assertFalse(isSuccess);
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -75,12 +77,16 @@ public class ModelTest {
         Graph g = new Graph();
         assertTrue(g.load(modelFile));
         MSContext context = new MSContext();
-        context.init(1,0);
+        context.init(1, 0);
         context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(g, context, null);
         assertTrue(isSuccess);
+        assertEquals(1, context.getThreadNum());
+        assertEquals(0, context.getThreadAffinityMode());
+        assertEquals(false, context.getEnableParallel());
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -92,7 +98,11 @@ public class ModelTest {
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(modelFile, 0, context);
         assertTrue(isSuccess);
+        assertEquals(1, context.getThreadNum());
+        assertEquals(0, context.getThreadAffinityMode());
+        assertEquals(false, context.getEnableParallel());
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -114,6 +124,7 @@ public class ModelTest {
         boolean isSuccess = liteModel.build(byteBuffer, 0, context);
         assertTrue(isSuccess);
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -124,7 +135,11 @@ public class ModelTest {
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(modelFile, 0, context);
         assertFalse(isSuccess);
+        assertEquals(1, context.getThreadNum());
+        assertEquals(0, context.getThreadAffinityMode());
+        assertEquals(false, context.getEnableParallel());
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -139,6 +154,7 @@ public class ModelTest {
         isSuccess = liteModel.predict();
         assertFalse(isSuccess);
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -179,6 +195,7 @@ public class ModelTest {
         assertEquals(1, outputTensors.size());
         assertEquals(outputTensorName, outputTensors.get(0).tensorName());
         liteModel.free();
+        context.free();
     }
 
     @Test
@@ -194,6 +211,8 @@ public class ModelTest {
         System.out.println();
         isSuccess = liteModel.resize(inputs, newShape);
         assertTrue(isSuccess);
+        liteModel.free();
+        context.free();
     }
 
     @Test
@@ -207,12 +226,13 @@ public class ModelTest {
         assertTrue(isSuccess);
         isSuccess = liteModel.export(null, 0, true, null);
         assertFalse(isSuccess);
-        String outputName= "Default/network-WithLossCell/_backbone-LeNet5/conv2-Conv2d/Conv2D-op98";
+        String outputName = "Default/network-WithLossCell/_backbone-LeNet5/conv2-Conv2d/Conv2D-op98";
         List<String> outputTensorNames = new ArrayList<>();
         outputTensorNames.add(outputName);
         isSuccess = liteModel.export("./test.ms", 0, false, outputTensorNames);
         assertFalse(isSuccess);
         liteModel.free();
+        context.free();
     }
 
 
@@ -250,12 +270,13 @@ public class ModelTest {
         }
         newTensor.free();
         liteModel.free();
+        context.free();
     }
 
 
     @Test
-    public void testNewContextInterface(){
-        int val=0;
+    public void testNewContextInterface() {
+        int val = 0;
         MSContext context = new MSContext();
         context.init();
         context.setThreadNum(10);
@@ -263,10 +284,10 @@ public class ModelTest {
         assertEquals(10, val);
         context.setInterOpParallelNum(1);
         val = context.getInterOpParallelNum();
-        assertEquals(1,val);
+        assertEquals(1, val);
         context.setThreadAffinity(2);
         val = context.getThreadAffinityMode();
-        assertEquals(2,val);
+        assertEquals(2, val);
         ArrayList<Integer> core_list = new ArrayList<>();
         core_list.add(1);
         core_list.add(2);
@@ -280,10 +301,15 @@ public class ModelTest {
     }
 
     @Test
-    public void testCppNullPointer(){
+    public void testCppNullPointer() {
         MSContext context = new MSContext();
         context.free();//free before init, output error log.
         context.init();
         context.free();
+    }
+
+    @Test
+    public void testVersion() {
+        System.out.println(Version.version());
     }
 }
