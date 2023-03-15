@@ -566,7 +566,7 @@ def get_bprop_col2im(self):
     dilations = self.dilation
     strides = self.stride
     pads = self.padding
-    im2col = Im2Col(ksizes=ksizes, dilations=dilations, strides=strides, padding_mode="CALCULATED", pads=pads)
+    im2col = Im2Col(ksizes=ksizes, dilations=dilations, strides=strides, pads=pads)
 
     def bprop(x, output_size, out, dout):
         dx = im2col(dout)

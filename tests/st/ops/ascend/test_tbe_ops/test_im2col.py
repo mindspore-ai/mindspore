@@ -25,15 +25,13 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Im2ColNet(nn.Cell):
-    def __init__(self, ksizes, strides=1, dilations=1, padding_mode="CALCULATED", pads=0):
+    def __init__(self, ksizes, strides=1, dilations=1, pads=0):
         super(Im2ColNet, self).__init__()
         self.ksizes = ksizes
         self.strides = strides
         self.dilations = dilations
-        self.padding_mode = padding_mode
         self.pads = pads
-        self.im2col = P.Im2Col(ksizes=self.ksizes, strides=self.strides, dilations=self.dilations,
-                               padding_mode=self.padding_mode, pads=self.pads)
+        self.im2col = P.Im2Col(ksizes=self.ksizes, strides=self.strides, dilations=self.dilations, pads=self.pads)
 
     def construct(self, x):
         output = self.im2col(x)
