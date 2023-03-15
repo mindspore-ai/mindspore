@@ -69,8 +69,8 @@ class ResizeLinear1DGradGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> grad_output_shape_;
   std::vector<int64_t> grad_input_shape_;
 
-  size_t batch_{0};
-  size_t channel_{0};
+  int64_t batch_{0};
+  int64_t channel_{0};
   int64_t in_width_{0};
   int64_t out_width_{0};
   ResizeLinearCoordinateTransformationMode mode_{ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS};
