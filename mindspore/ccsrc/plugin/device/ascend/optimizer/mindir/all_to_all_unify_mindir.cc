@@ -88,8 +88,8 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
 
   common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(split_count), split_v);
-  common::AnfAlgo::SetNodeAttr(kAttrSizeSplits,
-                               MakeValue(std::vector<int64_t>(split_count, shape[LongToSize(split_dim)])), split_v);
+  common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(std::vector<int64_t>(split_count, shape[split_idx])),
+                               split_v);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
   return split_v;
 }
