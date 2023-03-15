@@ -39,10 +39,10 @@ bool GPUMemoryAllocator::Init() {
     MS_LOG(INFO) << "GPU device total memory size " << total_size << ", current free memory size " << free_size
                  << ", set max available memory size " << available_device_memory_ << ".";
   } else {
-    MS_LOG(EXCEPTION)
-      << "The total size or free size or max_device_memory size of GPU memory can't be zero, total memory size "
-      << total_size << ", current free memory size " << free_size << ", set max available memory size "
-      << available_device_memory_ << ".";
+    MS_LOG(EXCEPTION) << "#umsg#GPU memory error:#umsg#The total size or free size or max_device_memory size of GPU "
+                         "memory can't be zero, total memory size "
+                      << total_size << ", current free memory size " << free_size << ", set max available memory size "
+                      << available_device_memory_ << ".";
   }
   // In gpu mode, recommend 1/16 reserved for other cuda functions
   if (available_device_memory_ > total_size) {
@@ -60,9 +60,10 @@ void GPUMemoryAllocator::CheckMaxDeviceMemory() const {
   auto max_device_memory = context_ptr->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
   //  Currently not support modifying the max device memory.
   if (!common::IsFloatEqual(limited_device_memory_, max_device_memory)) {
-    MS_LOG(EXCEPTION)
-      << "Can't change or set context param max_device_memory during running, currently effective max_device_memory("
-      << limited_device_memory_ << "GB), set new max_device_memory(" << max_device_memory << "GB) failed.";
+    MS_LOG(EXCEPTION) << "#umsg#Can't change or set context param max_device_memory during running:#umsg#Currently "
+                         "effective max_device_memory("
+                      << limited_device_memory_ << "GB), set new max_device_memory(" << max_device_memory
+                      << "GB) failed.";
   }
 }
 
@@ -75,17 +76,17 @@ bool GPUMemoryAllocator::AllocBufferQueueMem(size_t size, DeviceMemPtr *addr) {
 
 size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   if (size == 0) {
-    MS_LOG(EXCEPTION) << "The memory alloc size is 0.";
+    MS_LOG(EXCEPTION) << "#umsg#GPU memory error:#umsg#The memory alloc size is 0.";
   }
   auto free_size = free_mem_size();
   if (size > free_size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: current free memory size[" << free_size
+    MS_LOG(EXCEPTION) << "#umsg#Memory not enough:#umsg#Current free memory size[" << free_size
                       << "] is smaller than required size[" << size << "].";
   }
 
   auto alloc_size = CudaDriver::AllocDeviceMem(size, addr);
   if (alloc_size == 0) {
-    MS_LOG(EXCEPTION) << "Alloc device memory[" << size << "] failed.";
+    MS_LOG(EXCEPTION) << "#umsg#Memory not enough:#umsg#Alloc device memory[" << size << "] failed.";
   }
   total_used_device_memory_ += alloc_size;
   available_device_memory_ -= alloc_size;

@@ -392,7 +392,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
     } else if (!IsSkippedLaunch(kernel_, nullptr)) {
       auto ret = LaunchKernel(context);
       if (!ret) {
-        std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
+        std::string error_info = "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
       }
     }
@@ -400,7 +400,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {
       MsException::Instance().SetException();
     }
-    std::string error_info = "Launch kernel exception: " + kernel_->fullname_with_scope();
+    std::string error_info = "#umsg#Kernel error:#umsg#Launch kernel exception: " + kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
 
