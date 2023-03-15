@@ -308,7 +308,9 @@ Status DataQueueOp::SendDataToAscend() {
       RecordProfilingData(is_profiling_enable, false, &connector_size, &connector_capacity, &send_batch);
 #endif
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
-
+#ifndef ENABLE_SECURITY
+      uint64_t batch_fetch_end = ProfilingTime::GetCurMilliSecond();
+#endif
       if (ascend_data_queue_->QueueType() == "Ascend_MBUF") {
         // Queue control logic for mbuf in host, to prevent from hang/exit abnormally
         // case 1: If mbuf queue memory + next row memory < 2G then continue send, else suspend;
@@ -338,6 +340,11 @@ Status DataQueueOp::SendDataToAscend() {
           std::this_thread::sleep_for(std::chrono::microseconds(send_interval));
         }
       }
+#ifndef ENABLE_SECURITY
+      uint64_t queue_wait_end = ProfilingTime::GetCurMilliSecond();
+      // Skip the time looping in the mbuf queue control, FetchNextTensorRow time is what we need
+      batch_record_start = batch_record_start + (queue_wait_end - batch_fetch_end);
+#endif
     }
 
     // send epoch end flag: ACL_TENSOR_DATA_END_OF_SEQUENCE to tdt
