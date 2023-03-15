@@ -30,7 +30,7 @@ namespace storage {
  * A derived class for sparse implementation to manage lookup and update of a huge Embedding Table for Hash Table type.
  */
 template <typename KeyType, typename ValueType, typename Allocator = Allocator<uint8_t>>
-class BACKEND_EXPORT SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Allocator> {
+class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Allocator> {
  public:
   // The cache element type, a key-value pair, key is same the key of this sparse embedding storage, value is
   // meaningless for now.

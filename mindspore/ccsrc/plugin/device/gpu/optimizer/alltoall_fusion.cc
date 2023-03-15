@@ -25,7 +25,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 #ifndef _WIN32
 #include "plugin/device/gpu/kernel/nccl/nccl_gpu_kernel.h"
 #endif

@@ -23,7 +23,7 @@
 #include <random>
 
 #include "include/common/random.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace distributed {

@@ -24,7 +24,7 @@
 #include "utils/log_adapter.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/common/utils/callbacks.h"
 #ifdef ENABLE_DEBUGGER

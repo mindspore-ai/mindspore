@@ -29,7 +29,7 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_context.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #endif
 
 namespace mindspore {

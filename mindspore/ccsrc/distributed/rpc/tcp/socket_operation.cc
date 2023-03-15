@@ -25,7 +25,7 @@
 #include <system_error>
 
 #include "actor/log.h"
-#include "distributed/rpc/tcp/constants.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace distributed {

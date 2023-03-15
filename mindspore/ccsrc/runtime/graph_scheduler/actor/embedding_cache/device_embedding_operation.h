@@ -22,7 +22,7 @@
 #include <utility>
 #include <set>
 #include "runtime/hardware/device_context.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 
 namespace mindspore {

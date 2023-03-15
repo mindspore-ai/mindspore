@@ -23,7 +23,7 @@
 #include <vector>
 #include <utility>
 
-#include "distributed/persistent/storage/storage.h"
+#include "include/backend/distributed/persistent/storage/storage.h"
 #include "distributed/persistent/storage/block.h"
 #include "distributed/persistent/storage/file_io_utils.h"
 #include "distributed/persistent/storage/constants.h"

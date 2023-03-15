@@ -28,12 +28,13 @@
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "ir/anf.h"
 #include "include/backend/kernel_graph.h"
-#include "distributed/cluster/cluster_context.h"
-#include "distributed/rpc/tcp/tcp_client.h"
-#include "distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
+#include "distributed/cluster/actor_route_table_proxy.h"
+#include "include/backend/distributed/rpc/tcp/tcp_client.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
 #include "utils/hash_map.h"
 #include "include/common/random.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 // Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
 // the follow include file and using declaration of ps will be removed.

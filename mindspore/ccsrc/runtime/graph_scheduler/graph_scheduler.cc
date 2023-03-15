@@ -39,7 +39,7 @@
 #include "utils/profile.h"
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -52,12 +52,12 @@
 #endif
 #include "include/backend/debug/profiler/profiling.h"
 #include "include/common/debug/common.h"
-#include "distributed/recovery/recovery_context.h"
-#include "distributed/collective/collective_manager.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/collective/collective_manager.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #else
-#include "distributed/cluster/dummy_cluster_context.h"
+#include "include/backend/distributed/cluster/dummy_cluster_context.h"
 #endif
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/utils/file_utils.h"

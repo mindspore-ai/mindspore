@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_
 
-#include "distributed/collective/collective_manager.h"
+#include "include/backend/distributed/collective/collective_manager.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #else
-#include "distributed/cluster/dummy_cluster_context.h"
+#include "include/backend/distributed/cluster/dummy_cluster_context.h"
 #endif
 #include "include/backend/visible.h"
 
@@ -31,15 +31,15 @@ namespace distributed {
 
 // Initialize and finalize distributed execution.
 BACKEND_EXPORT bool Initialize();
-bool Finalize();
+BACKEND_EXPORT bool Finalize();
 
 // Initialize and finalize the cluster based on MindSpore communication framework.
-bool InitializeCluster();
-bool FinalizeCluster();
+BACKEND_EXPORT bool InitializeCluster();
+BACKEND_EXPORT bool FinalizeCluster();
 
 // Initialize and finalize collective communication for distributed execution.
-bool InitializeCollective();
-bool FinalizeCollective();
+BACKEND_EXPORT bool InitializeCollective();
+BACKEND_EXPORT bool FinalizeCollective();
 
 // Set and get whether this process in cluster exits with exception.
 BACKEND_EXPORT void set_cluster_exit_with_exception();

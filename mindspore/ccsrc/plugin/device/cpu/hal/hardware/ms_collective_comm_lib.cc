@@ -16,8 +16,8 @@
 
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 
-#include "distributed/constants.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/constants.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
 

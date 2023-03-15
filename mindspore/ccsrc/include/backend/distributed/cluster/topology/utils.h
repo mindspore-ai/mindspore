@@ -24,7 +24,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "actor/msg.h"
-#include "distributed/cluster/topology/common.h"
+#include "include/backend/distributed/cluster/topology/common.h"
 
 namespace mindspore {
 namespace distributed {

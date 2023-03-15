@@ -20,7 +20,8 @@
 #include "kernel/common_utils.h"
 #include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
 #include "proto/topology.pb.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_dense_embedding_operation.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_sparse_embedding_operation.h"
 

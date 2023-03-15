@@ -25,6 +25,7 @@
 #include "google/protobuf/util/json_util.h"
 
 #include "proto/anf_ir.pb.h"
+#include "proto/mind_ir.pb.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"

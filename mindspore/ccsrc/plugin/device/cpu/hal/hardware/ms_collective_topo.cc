@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "plugin/device/cpu/hal/hardware/ms_collective_topo.h"
 #include <string>
 #include <memory>
 #include <utility>
-#include "plugin/device/cpu/hal/hardware/ms_collective_topo.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace device {

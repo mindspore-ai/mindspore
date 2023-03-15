@@ -25,7 +25,7 @@
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
-#include "distributed/collective/collective_manager.h"
+#include "include/backend/distributed/collective/collective_manager.h"
 
 using mindspore::profiler::ascend::AscendProfiler;
 #endif

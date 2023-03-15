@@ -27,8 +27,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
-#include "distributed/embedding_cache/embedding_cache_utils.h"
-#include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace parallel {

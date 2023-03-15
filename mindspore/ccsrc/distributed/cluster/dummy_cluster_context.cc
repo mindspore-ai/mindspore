@@ -15,7 +15,7 @@
  */
 
 #include <string>
-#include "distributed/cluster/dummy_cluster_context.h"
+#include "include/backend/distributed/cluster/dummy_cluster_context.h"
 
 namespace mindspore {
 namespace distributed {

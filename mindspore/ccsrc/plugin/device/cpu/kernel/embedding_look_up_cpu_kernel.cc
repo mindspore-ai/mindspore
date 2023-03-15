@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/embedding_look_up_cpu_kernel.h"
 #include "mindspore/core/ops/embedding_lookup.h"
 #include "utils/check_convert_utils.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {

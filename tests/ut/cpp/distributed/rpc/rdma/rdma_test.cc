@@ -25,9 +25,9 @@
 
 #include <gtest/gtest.h>
 #define private public
-#include "distributed/rpc/rdma/rdma_server.h"
-#include "distributed/rpc/rdma/rdma_client.h"
-#include "distributed/rpc/rdma/constants.h"
+#include "include/backend/distributed/rpc/rdma/rdma_server.h"
+#include "include/backend/distributed/rpc/rdma/rdma_client.h"
+#include "include/backend/distributed/rpc/rdma/constants.h"
 #include "common/common_test.h"
 #undef private
 

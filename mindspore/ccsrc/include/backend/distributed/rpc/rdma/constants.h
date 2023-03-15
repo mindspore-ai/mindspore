@@ -24,7 +24,7 @@
 #include <condition_variable>
 
 #include "utils/dlopen_macro.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 
 namespace mindspore {
 namespace distributed {

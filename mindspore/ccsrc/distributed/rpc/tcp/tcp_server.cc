@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#include "distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
+#include "distributed/rpc/tcp/tcp_comm.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+TCPServer::TCPServer(bool enable_ssl) : RPCServerBase(enable_ssl), tcp_comm_(nullptr) {}
+TCPServer::~TCPServer() {}
+
 bool TCPServer::Initialize(const std::string &url, const MemAllocateCallback &allocate_cb) {
   return InitializeImpl(url, allocate_cb);
 }

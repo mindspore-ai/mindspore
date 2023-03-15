@@ -24,13 +24,12 @@
 #include <memory>
 #include <atomic>
 #include <utility>
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
 #include "ps/core/cluster_config.h"
-#include "distributed/cluster/actor_route_table_proxy.h"
-#include "distributed/cluster/topology/node_base.h"
+#include "include/backend/distributed/cluster/topology/node_base.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -38,7 +37,7 @@ namespace distributed {
 namespace cluster {
 // The environment variable name represents the node id of a certain process(compute graph node).
 constexpr char kNodeId[] = "MS_NODE_ID";
-
+class ActorRouteTableProxy;
 // Node role based cluster built by MindSpore communication framework.
 class BACKEND_EXPORT ClusterContext {
  public:
@@ -75,7 +74,7 @@ class BACKEND_EXPORT ClusterContext {
   bool initialized() const;
 
   // Return actor route proxy for AbstractNode.
-  const ActorRouteTableProxyPtr &actor_route_table_proxy() const;
+  const std::shared_ptr<ActorRouteTableProxy> &actor_route_table_proxy() const;
 
   // Get and set whether this process exits with exception.
   void set_cluster_exit_with_exception();
@@ -128,7 +127,7 @@ class BACKEND_EXPORT ClusterContext {
   std::unique_ptr<ps::core::ClusterConfig> cluster_config_;
 
   // The actor route table proxy. It only created in abstract nodes because scheduler does not use proxy.
-  ActorRouteTableProxyPtr actor_route_table_proxy_;
+  std::shared_ptr<ActorRouteTableProxy> actor_route_table_proxy_;
 
   std::pair<uint32_t, uint32_t> port_range_;
 };

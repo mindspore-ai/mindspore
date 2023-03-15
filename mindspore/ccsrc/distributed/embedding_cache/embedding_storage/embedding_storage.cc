@@ -21,7 +21,7 @@
 #include "distributed/persistent/storage/local_file.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/ps_context.h"
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #endif
 #include "utils/file_utils.h"
 

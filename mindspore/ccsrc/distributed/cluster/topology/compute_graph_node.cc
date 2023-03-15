@@ -18,12 +18,13 @@
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
-#include "distributed/cluster/topology/common.h"
-#include "distributed/recovery/recovery_context.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/cluster/topology/common.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/constants.h"
 #include "proto/topology.pb.h"
 #include "ps/ps_context.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace distributed {

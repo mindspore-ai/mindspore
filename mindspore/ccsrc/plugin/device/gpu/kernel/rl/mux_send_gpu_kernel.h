@@ -23,9 +23,9 @@
 #include <utility>
 #include <map>
 #include <memory>
-#include "distributed/rpc/tcp/tcp_client.h"
-#include "distributed/cluster/cluster_context.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/rpc/tcp/tcp_client.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #include "plugin/device/gpu/kernel/rl/mux_base_gpu_kernel.h"
 
 namespace mindspore {

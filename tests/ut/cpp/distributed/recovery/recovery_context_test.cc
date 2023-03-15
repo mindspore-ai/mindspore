@@ -15,7 +15,7 @@
  */
 
 #include "common/common_test.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "utils/ms_utils.h"
 #include "distributed/persistent/storage/file_io_utils.h"
 #include "utils/file_utils.h"

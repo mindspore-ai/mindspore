@@ -24,7 +24,7 @@
 #include <shared_mutex>
 #include "proto/comm.pb.h"
 #include "utils/log_adapter.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 
 namespace mindspore {
 namespace distributed {

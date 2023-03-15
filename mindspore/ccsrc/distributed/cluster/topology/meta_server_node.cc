@@ -22,8 +22,8 @@
 #include "utils/ms_exception.h"
 #include "proto/topology.pb.h"
 #include "ps/ps_context.h"
-#include "distributed/rpc/tcp/constants.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "distributed/recovery/file_configuration.h"
 #include "distributed/cluster/topology/meta_server_node.h"
 

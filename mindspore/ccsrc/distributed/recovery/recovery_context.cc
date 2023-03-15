@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 
 #include <dirent.h>
 #include <algorithm>
@@ -25,11 +25,13 @@
 #include "ps/ps_context.h"
 #include "ps/constants.h"
 #include "utils/file_utils.h"
-#include "distributed/constants.h"
-#include "distributed/cluster/topology/common.h"
+#include "include/backend/distributed/constants.h"
+#include "distributed/persistent/storage/file_io_utils.h"
+#include "distributed/persistent/storage/json_utils.h"
+#include "include/backend/distributed/cluster/topology/common.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-#include "distributed/cluster/cluster_context.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #endif
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/convert_utils_base.h"
@@ -110,8 +112,8 @@ void RecoveryContext::Initialize() {
   }
 
   // 2. Get real recovery path and create config file.
-  if (!FileIOUtils::IsFileOrDirExist(recovery_path_)) {
-    FileIOUtils::CreateDirRecursive(recovery_path_);
+  if (!storage::FileIOUtils::IsFileOrDirExist(recovery_path_)) {
+    storage::FileIOUtils::CreateDirRecursive(recovery_path_);
   }
 
   auto ret = FileUtils::GetRealPath(recovery_path_.c_str());
@@ -121,7 +123,7 @@ void RecoveryContext::Initialize() {
   recovery_path_ = ret.value();
 
   std::string config_file_path = recovery_path_ + kConfigJson;
-  if (!FileIOUtils::IsFileOrDirExist(config_file_path)) {
+  if (!storage::FileIOUtils::IsFileOrDirExist(config_file_path)) {
     CreateConfigFile(config_file_path);
   }
 
@@ -318,7 +320,7 @@ void RecoveryContext::ParseLatestCkptInfo(const std::vector<int> &recv_buffer) {
 }
 
 void RecoveryContext::CreateConfigFile(const std::string &config_file_path) {
-  if (FileIOUtils::IsFileOrDirExist(config_file_path)) {
+  if (storage::FileIOUtils::IsFileOrDirExist(config_file_path)) {
     MS_LOG(WARNING) << "The config file exists, file path: " << config_file_path;
     return;
   }
@@ -373,7 +375,7 @@ void RecoveryContext::CreatePersistentFile() {
   // The directory used to save ckpt is persisted to json file.
   std::string persistent_file_path =
     recovery_path_ + "/" + node_role_ + "_" + std::to_string(global_rank_id_) + "_persistent.json";
-  persistent_json_ = std::make_shared<JsonUtils>(persistent_file_path);
+  persistent_json_ = std::make_shared<storage::JsonUtils>(persistent_file_path);
   if (!persistent_json_->Initialize()) {
     MS_LOG(EXCEPTION) << "Initialize json failed, file path: " << persistent_file_path;
   }
@@ -384,8 +386,8 @@ void RecoveryContext::SetCkptPath(const std::string &path) {
     return;
   }
 
-  if (!FileIOUtils::IsFileOrDirExist(path)) {
-    FileIOUtils::CreateDirRecursive(path);
+  if (!storage::FileIOUtils::IsFileOrDirExist(path)) {
+    storage::FileIOUtils::CreateDirRecursive(path);
   }
 
   auto ret = FileUtils::GetRealPath(path.c_str());
@@ -418,7 +420,7 @@ std::string RecoveryContext::GetCkptPath() {
   return persistent_json_->Get<std::string>(kCkptPath);
 }
 
-const std::shared_ptr<JsonUtils> &RecoveryContext::persistent_json() {
+const std::shared_ptr<storage::JsonUtils> &RecoveryContext::persistent_json() {
   if (persistent_json_ == nullptr) {
     CreatePersistentFile();
   }

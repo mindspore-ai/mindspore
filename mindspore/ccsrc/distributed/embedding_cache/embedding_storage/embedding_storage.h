@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
+#include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "distributed/embedding_cache/allocator.h"
 #include "distributed/embedding_cache/cache_strategy/cache.h"
 #include "include/backend/visible.h"
@@ -36,7 +36,7 @@ namespace storage {
  * is float, you can use the instance as follow: EmbeddingStorage<int, float>.
  */
 template <typename KeyType, typename ValueType, typename Allocator = Allocator<uint8_t>>
-class BACKEND_EXPORT EmbeddingStorage : public AbstractEmbeddingStorage {
+class EmbeddingStorage : public AbstractEmbeddingStorage {
  public:
   // The general Allocator type used allocate host memory.
   using AllocatorType = typename std::allocator_traits<Allocator>::template rebind_alloc<uint8_t>;

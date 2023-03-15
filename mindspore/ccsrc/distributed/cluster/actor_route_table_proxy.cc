@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include "distributed/cluster/actor_route_table_proxy.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace distributed {

@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "ir/anf.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {

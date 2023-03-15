@@ -30,7 +30,7 @@
 
 #include "actor/log.h"
 #include "utils/convert_utils_base.h"
-#include "distributed/rpc/tcp/constants.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace distributed {

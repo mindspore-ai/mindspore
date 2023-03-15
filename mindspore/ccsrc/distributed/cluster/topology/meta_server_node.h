@@ -23,9 +23,9 @@
 #include <thread>
 #include <shared_mutex>
 #include <unordered_map>
-#include "distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
 #include "distributed/recovery/configuration.h"
-#include "distributed/cluster/topology/node_base.h"
+#include "include/backend/distributed/cluster/topology/node_base.h"
 
 namespace mindspore {
 namespace distributed {

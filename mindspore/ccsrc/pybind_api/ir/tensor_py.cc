@@ -23,7 +23,7 @@
 #include "utils/shape_utils.h"
 #include "utils/cache_embedding_hashmap_struct.h"
 #include "include/common/utils/python_adapter.h"
-#include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
+#include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace tensor {

@@ -25,9 +25,9 @@
 #include <mutex>
 #include <condition_variable>
 #include "actor/msg.h"
-#include "distributed/rpc/tcp/tcp_client.h"
-#include "distributed/rpc/tcp/tcp_server.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/rpc/tcp/tcp_client.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace device {

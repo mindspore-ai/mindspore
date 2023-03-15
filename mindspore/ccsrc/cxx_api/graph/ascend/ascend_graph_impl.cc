@@ -28,7 +28,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 
 namespace mindspore {
 API_GRAPH_REG(kAscendDevice, AscendGraphImpl);
