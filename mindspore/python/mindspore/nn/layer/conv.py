@@ -142,7 +142,7 @@ class Conv2d(_Conv):
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
     where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
+    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
     the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
     where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution
@@ -220,17 +220,17 @@ class Conv2d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
             \end{array}
 
         pad_mode is 'valid':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                H_{out} = \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                W_{out} = \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}}} \right \rceil \\
             \end{array}
 
@@ -238,9 +238,9 @@ class Conv2d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
                 \text{dilation[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
                 \text{dilation[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -507,8 +507,8 @@ class Conv3d(_Conv):
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
     where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the :math:`j`-th channel of
+    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
     where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are

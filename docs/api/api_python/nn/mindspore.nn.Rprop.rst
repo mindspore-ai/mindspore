@@ -11,13 +11,13 @@ mindspore.nn.Rprop
 
     .. math::
         \begin{gather*}
-        &\hspace{-10mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\
-        &\hspace{25mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max})  \\
-        &\hspace{0mm}  \textbf{else if}  \:  g_{t-1} g_t < 0                                   \\
-        &\hspace{25mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min})  \\
-        &\hspace{-25mm}  \textbf{else}  \:                                                     \\
-        &\hspace{-5mm}  \Delta_t \leftarrow \Delta_{t-1}                                       \\
-        &\hspace{15mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                 \\
+            &\hspace{-10mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max})  \\
+            &\hspace{0mm}  \textbf{else if}  \:  g_{t-1} g_t < 0                                   \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min})  \\
+            &\hspace{-25mm}  \textbf{else}  \:                                                     \\
+            &\hspace{-5mm}  \Delta_t \leftarrow \Delta_{t-1}                                       \\
+            &\hspace{15mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                 \\
         \end{gather*}
 
     :math:`\Delta_{min/max}` 表示最小或者最大步长， :math:`\eta_{+/-}` 表示加速和减速因子， :math:`g` 表示 `gradients` ， :math:`w` 表示 `params` 。

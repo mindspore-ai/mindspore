@@ -589,7 +589,7 @@ class RNN(_RNNBase):
 
     Here :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
-    previous layer at time `t-1` or the initial hidden state at time `0`.
+    previous layer at time :math:`t-1` or the initial hidden state at time `0`.
     If :attr:`nonlinearity` is ``'relu'``, then :math:`\text{ReLU}` is used instead of :math:`\tanh`.
 
     Args:
@@ -669,7 +669,7 @@ class GRU(_RNNBase):
     Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}`, the update and reset gate at
     time :math:`t` is computed using a gating mechanism. Update gate :math:`z_t` is designed to protect the cell
     from perturbation by irrelevant inputs and past hidden state. Reset gate :math:`r_t` determines how much
-    information should be reset from old hidden state. New memory state :math:`{n}_t` is
+    information should be reset from old hidden state. New memory state :math:`n_t` is
     calculated with the current input, on which the reset gate will be applied. Finally, current hidden state
     :math:`h_{t}` is computed with the calculated update grate and new memory state. The complete
     formulation is as follows:

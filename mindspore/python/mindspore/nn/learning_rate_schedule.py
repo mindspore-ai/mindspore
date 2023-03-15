@@ -273,9 +273,8 @@ class CosineDecayLR(LearningRateSchedule):
     For current step, the formula of computing decayed learning rate is:
 
     .. math::
-        decayed\_learning\_rate = min\_lr + 0.5 * (max\_lr - min\_lr) *
-        (1 + cos(\frac{current\_step}{decay\_steps}\pi))
-
+        decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
+        &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
     Args:
         min_lr (float): The minimum value of learning rate.

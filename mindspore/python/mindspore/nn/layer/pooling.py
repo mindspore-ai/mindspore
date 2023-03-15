@@ -533,8 +533,8 @@ class MaxPool1d(_PoolNd):
     Applies a 1D max pooling over an input Tensor which can be regarded as a composition of 1D planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, MaxPool1d outputs
-    regional maximum in the :math:`(L_{in})`-dimension. Given kernel size
-    :math:`ks = (l_{ker})` and stride :math:`s = (s_0)`, the operation is as follows:
+    regional maximum in the :math:`(L_{in})`-dimension. Given `kernel size`
+    :math:`ks = (l_{ker})` and `stride` :math:`s = (s_0)`, the operation is as follows:
 
     .. math::
         \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}
@@ -567,7 +567,7 @@ class MaxPool1d(_PoolNd):
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C, L_{in})` or :math:`(C_{in}, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
 
     Outputs:
         If `return_indices` is False, output is a Tensor, with shape :math:`(N, C_{out}, L_{out})` or
@@ -1321,11 +1321,11 @@ class AdaptiveMaxPool1d(Cell):
             Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` or `(C_{in}, L_{in})`, with
+        - **input** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or `(C_{in}, L_{in})`, with
           float16 or float32 data type.
 
     Outputs:
-        Tensor of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`, has the same type as `input`.
+        Tensor of shape :math:`(N_{out}, C_{out}, L_{out})` or :math:`(C_{out}, L_{out})`, has the same type as `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.

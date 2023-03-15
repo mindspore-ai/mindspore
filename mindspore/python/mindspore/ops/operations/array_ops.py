@@ -2981,7 +2981,7 @@ class Rint(Primitive):
 class Select(Primitive):
     r"""
     The conditional tensor determines whether the corresponding element in the output must be
-    selected from :math:`x` (if True) or :math:`y` (if False) based on the value of each
+    selected from `x` (if True) or `y` (if False) based on the value of each
     element.
 
     It can be defined as:
@@ -3886,7 +3886,6 @@ class ScatterUpdate(Primitive):
     for each `i, ..., j` in `indices.shape`:
 
     .. math::
-
         \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -3898,7 +3897,7 @@ class ScatterUpdate(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
           If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
@@ -7159,7 +7158,7 @@ class LogSpace(Primitive):
           dtype is float16, float32 or float64(for GPU).
 
     Outputs:
-        Tensor has the shape as (step, ). Its datatype is set by the attr 'dtype'.
+        Tensor has the shape as :math:`(step, )`. Its datatype is set by the attr 'dtype'.
 
     Raises:
         TypeError: If `input` is not a Tensor.
