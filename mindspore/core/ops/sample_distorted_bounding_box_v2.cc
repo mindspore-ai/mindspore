@@ -65,6 +65,13 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   auto min_object_covered_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto min_object_covered_dim = SizeToLong(min_object_covered_shape.size());
+
+  if (IsDynamic(image_size_shape) || IsDynamic(bboxes_shape) || IsDynamic(min_object_covered_shape)) {
+    auto unknown_shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknown_shape, unknown_shape, unknown_shape});
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("image_size dimension", image_size_dim, kEqual, kSize1, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("image_size elements", image_size_shape[kIndex0], kEqual, kSize3, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("bounding_boxes dimension", bboxes_dim, kEqual, kSize3, prim_name);
