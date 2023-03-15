@@ -21,7 +21,9 @@
 #include "src/common/log_util.h"
 #ifdef ENABLE_MINDRT
 #include "thread/actor_threadpool.h"
+#ifndef MS_COMPILE_IOS
 #include "thread/parallel_threadpool.h"
+#endif
 #endif
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
@@ -70,13 +72,17 @@ int InnerContext::CreateThreadPool() {
       actor_thread_num_, inter_op_parallel_num_, thread_num_, bind_mode_, affinity_core_list_, runner_id_);
     if (thread_pool_ == nullptr) {
 #ifdef ENABLE_MINDRT
+#ifndef MS_COMPILE_IOS
       if (inter_op_parallel_num_ > 1) {
         thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
                                                             this->affinity_core_list_, bind_mode_, runner_id_);
       } else {
+#endif
         thread_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num_, this->thread_num_,
                                                          this->affinity_core_list_, bind_mode_);
+#ifndef MS_COMPILE_IOS
       }
+#endif
 #else
       thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
       thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
