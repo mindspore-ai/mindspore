@@ -543,7 +543,7 @@ def argmin(input, axis=None, keepdims=False):
         >>> print(index)
         2
     """
-    if input.shape == ():
+    if not input.shape:
         return Tensor(0)
     is_axis_none = False
     if axis is None:
