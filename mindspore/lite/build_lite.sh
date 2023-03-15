@@ -68,6 +68,7 @@ build_lite_jni_and_jar() {
 
     # copy so
     local is_train=on
+    local is_cloud_infer=off
     cd ${INSTALL_PREFIX}/
 
     rm -rf ${PKG_NAME}
@@ -116,14 +117,21 @@ build_lite_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${PKG_NAME}/runtime/lib/
 
+    if [[ "$MSLITE_ENABLE_CLOUD_FUSION_INFERENCE" == "ON" || "$MSLITE_ENABLE_CLOUD_FUSION_INFERENCE" == "on" ]];then
+      is_cloud_infer=on
+    fi
+    if [[ "$MSLITE_ENABLE_CLOUD_INFERENCE" == "ON" || "$MSLITE_ENABLE_CLOUD_INFERENCE" == "on" ]];then
+      is_cloud_infer=on
+    fi
+
     RUNTIME_LIB_DIR="${BASEPATH}/output/tmp/${PKG_NAME}/runtime/lib"
-    if [ -d ${RUNTIME_LIB_DIR} ]; then
+    if [[ -d ${RUNTIME_LIB_DIR} ]]; then
       if [ "$(ls -A ${RUNTIME_LIB_DIR})" ]; then
         cp ${RUNTIME_LIB_DIR}/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/
       fi
     fi
     CONVERTER_LIB_DIR="${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib"
-    if [ -d ${CONVERTER_LIB_DIR} ]; then
+    if [[ "X$is_cloud_infer" = "Xon" && -d ${CONVERTER_LIB_DIR} ]]; then
       if [ "$(ls -A ${CONVERTER_LIB_DIR})" ]; then
         cp ${CONVERTER_LIB_DIR}/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/
       fi
@@ -132,28 +140,20 @@ build_lite_jni_and_jar() {
     if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_GLOG}`" ]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/libmindspore_glog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libmindspore_glog.so
     fi
-    LIB_JPEG="libjpeg.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG}`" ]; then
-      cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libjpeg.so
-    fi
-    LIB_TURBOJPEG="libturbojpeg.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG}`" ]; then
-      cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libturbojpeg.so
-    fi
     LIB_OPENCV_IMGPROC="libopencv_imgproc.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGPROC}`" ]; then
+    if [[ "X$is_cloud_infer" = "Xon" && -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGPROC}`" ]]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGPROC} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libopencv_imgproc.so
     fi
     LIB_OPENCV_CORE="libopencv_core.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_CORE}`" ]; then
+    if [[ "X$is_cloud_infer" = "Xon" && -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_CORE}`" ]]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_CORE} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libopencv_core.so
     fi
     LIB_OPENCV_IMGCODECS="libopencv_imgcodecs.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGCODECS}`" ]; then
+    if [[ "X$is_cloud_infer" = "Xon" && -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGCODECS}`" ]]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/tools/converter/lib/${LIB_OPENCV_IMGCODECS} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libopencv_imgcodecs.so
     fi
     LIB_DNNL="libdnnl.so*"
-    if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/dnnl/${LIB_DNNL}`" ]; then
+    if [[ "X$is_cloud_infer" = "Xon" && -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/dnnl/${LIB_DNNL}`" ]]; then
       cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/dnnl/${LIB_DNNL} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libdnnl.so
     fi
 

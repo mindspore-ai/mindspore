@@ -54,6 +54,7 @@ class MS_API Context {
   struct Data;
   Context();
   ~Context() = default;
+  Context(const Context &rhs) : data_(rhs.data_) {}
 
   /// \brief Set the number of threads at runtime.
   ///
