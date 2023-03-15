@@ -1,7 +1,7 @@
 mindspore.ops.Im2Col
 ====================
 
-.. py:class:: mindspore.ops.Im2Col(ksizes, strides=1, dilations=1, padding_mode="CALCULATED", pads=0)
+.. py:class:: mindspore.ops.Im2Col(ksizes, strides=1, dilations=1, pads=0)
 
     从一个batch的输入Tensor中提取滑动局部块。
     
@@ -28,17 +28,10 @@ mindspore.ops.Im2Col
         - **ksizes** (Union[int, tuple[int], list[int]]) - 内核的大小，应该是两个整数，分别代表高度和宽度。如果是一个整数，则表示高度等于宽度。必须被指定。
         - **strides** (Union[int, tuple[int], list[int]]，可选) - 窗口的滑动步幅，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值：1。
         - **dilations** (Union[int, tuple[int], list[int]]，可选) - 窗口的扩张系数，应该是高度和宽度两个整数。如果只有一个整数，则表示高度等于宽度。默认值：1。
-        - **padding_mode** (str，可选) - 可选的填充模式，支持"CALCULATED"，"SAME"和"VALID"。默认值："CALCULATED"。
-        
-          - "SAME"，输出的宽度和高度分别与输入的宽高除以 `strides` 后向上取整的值相同。
-          - "VALID"，在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
-          - "CALCULATED"，对输入进行填充，在输入的高度和宽度方向上填充 `pads` 大小的0。
-  
-        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充，必须是1个、2个或4个整数来指定高宽和宽度方向的填充。默认值：0。
+        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充，必须是1个或2个整数来指定高宽和宽度方向的填充。默认值：0。
         
           - 如果是1个整数，则 :math:`pad\_height = pad\_width` 。
           - 如果是2个整数，则 :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]` 。
-          - 如果是4个整数，则 :math:`pads = [pad\_height\_top, pad\_height\_bottom, pad\_width\_left, pad\_width\_right]` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor，只支持4-D Tensor(1个batch的图像Tensor)。支持所有的实数类型。
@@ -50,10 +43,8 @@ mindspore.ops.Im2Col
         - **TypeError** - 如果 `ksizes` 的类型不在Union[int, tuple[int], list[int]]内。
         - **TypeError** - 如果 `strides` 的类型不在Union[int, tuple[int], list[int]]内。
         - **TypeError** - 如果 `dilations` 的类型不在Union[int, tuple[int], list[int]]内。
-        - **TypeError** - 如果 `padding_mode` 的类型不是str。
-        - **TypeError** - 如果 `padding_mode` 为"CALCULATED"时， `pads` 类型不在Union[int, tuple[int], list[int]]内。
+        - **TypeError** - 如果 `pads` 类型不在Union[int, tuple[int], list[int]]内。
         - **ValueError** - 如果 `ksizes` 的值不大于0或其元素数量大于2。
         - **ValueError** - 如果 `strides` 的值不大于0或其元素数量大于2。
         - **ValueError** - 如果 `dilations` 的值不大于0或其元素数量大于2。
-        - **ValueError** - 如果 `padding_mode` 的值不在["SAME", "VALID", "CALCULATED"]范围内。
         - **ValueError** - 如果 `pads` 的值不大于0。
