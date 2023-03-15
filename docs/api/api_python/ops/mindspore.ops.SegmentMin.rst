@@ -6,8 +6,8 @@ mindspore.ops.SegmentMin
     计算Tensor中每个分段的最小值。
 
     具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i=min_j(input\_x_j)` ，其
-    中最小值在满足 :math:`segment\_ids[j] == i` 这个条件的所有的 `j` 对应的元素中取得。
-    如果一个分段中没有元素，则输出Tensor中相应的元素将被设置为零：:math:`output[i] = 0`。
+    中最小值在满足 :math:`segment\_ids[j] == i` 这个条件的所有的 :math:`j` 对应的元素中取得。
+    如果一个分段中没有元素 :math:`i` ，则输出Tensor中相应的元素将被设置为零：:math:`output[i] = 0`。
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。数据类型为实数且秩不小于1的输入Tensor。

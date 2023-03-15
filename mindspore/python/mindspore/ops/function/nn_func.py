@@ -2041,7 +2041,7 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,CPU     |
-    +---------------+-----------+---------------+--------------+----------------+`
+    +---------------+-----------+---------------+--------------+----------------+
 
     - `-` indicates that there is no such parameter.
     - `×` indicates that this parameter is not currently supported.

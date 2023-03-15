@@ -6,12 +6,11 @@ mindspore.nn.MaxPool1d
     在一个输入Tensor上应用1D最大池化运算，该Tensor可被视为一维平面的组合。
 
     通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，MaxPool1d输出 :math:`(L_{in})` 维度区域最大值。
-    给定 `kernel_size` 和 `stride` ，公式如下：
+    给定 `kernel_size` 为 :math:`ks = (l_{ker})` 和 `stride` 为 :math:`s = (s_0)`，公式如下：
 
     .. math::
-        \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, kernel\_size-1}
-        \text{input}(N_i, C_j, stride \times l + n)
-
+        \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times l + n)
 
     参数：
         - **kernel_size** (int) - 指定池化核尺寸大小。默认值：1。

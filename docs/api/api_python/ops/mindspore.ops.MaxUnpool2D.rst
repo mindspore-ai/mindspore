@@ -31,9 +31,10 @@ mindspore.ops.MaxUnpool2D
         
         - **output_shape** (tuple[int]，可选) - 一个可选的输入，指定目标输出的尺寸。默认值：()。
          
-          - 如果 `output_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 计算得到。
+          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 计算得到。
           - 如果 :math:`output\_shape != ()` ，则 `output_shape` 必须为 :math:`(N, C, H, W)` 或 :math:`(N, H, W, C)` ，
-            同时 `output_shape` 必须属于 :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]), (N, C, H_{out} + strides[0], W_{out} + strides[1])]` 。
+            同时 `output_shape` 必须属于 :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
+            (N, C, H_{out} + strides[0], W_{out} + strides[1])]` 。
         
         - **data_format** (str，可选) - 可选的数据格式。当前支持 `NCHW` 和 `NHWC` 。默认值： `NCHW` 。
 

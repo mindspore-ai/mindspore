@@ -21,10 +21,10 @@ mindspore.nn.Dense
         - **activation** (Union[str, Cell, Primitive, None]) - 应用于全连接层输出的激活函数。可指定激活函数名，如'relu'，或具体激活函数，如mindspore.nn.ReLU()。默认值：None。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(*,in\_channels)` 的Tensor。参数中的 `in_channels` 应等于输入中的 :math:`in\_channels` 。
+        - **x** (Tensor) - shape为 :math:`(*, in\_channels)` 的Tensor。参数中的 `in_channels` 应等于输入中的 :math:`in\_channels` 。
 
     输出：
-        shape为 :math:`(*,out\_channels)` 的Tensor。
+        shape为 :math:`(*, out\_channels)` 的Tensor。
 
     异常：
         - **TypeError** - `in_channels` 或 `out_channels` 不是整数。

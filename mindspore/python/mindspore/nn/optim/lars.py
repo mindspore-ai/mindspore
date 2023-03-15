@@ -83,7 +83,7 @@ class LARS(Optimizer):
         \end{array}
 
     :math:`w` represents the network parameters, :math:`g` represents `gradients`,
-    :math:`t` represents the current step, :math:`\delta` represents `weight_decay` in `optimizer`,
+    :math:`t` represents the current step, :math:`\lambda` represents `weight_decay` in `optimizer`,
     :math:`\gamma` represents `learning_rate` in `optimizer`, :math:`\eta` represents `coefficient`.
 
     Args:

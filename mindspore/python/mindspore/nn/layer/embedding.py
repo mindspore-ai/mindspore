@@ -483,7 +483,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final
         output will be zeros if the sum of absolute weight of the field is zero. This class only
         supports ['table_row_slice', 'batch_slice' and 'table_column_slice']. For the operation 'MAX' on
-        device Ascend, there is a constraint where batch_size * (seq_length + field_size) < 3500.
+        device Ascend, there is a constraint where :math:`batch\_size * (seq\_length + field\_size) < 3500`.
 
     Args:
         vocab_size (int): The size of the dictionary of embeddings.
