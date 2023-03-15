@@ -538,6 +538,7 @@ Array操作
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Quantile
     mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
@@ -694,6 +695,7 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
 框架算子
