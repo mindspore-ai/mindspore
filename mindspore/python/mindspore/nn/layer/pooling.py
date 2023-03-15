@@ -1520,7 +1520,7 @@ class AdaptiveMaxPool3d(Cell):
 
 class FractionalMaxPool2d(Cell):
     r"""
-    Applies the 2D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    Applies the 2D FractionalMaxPool operatin over input. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
     `output_size` or `output_ratio` cannot be used at the same time.
 
@@ -1547,27 +1547,27 @@ class FractionalMaxPool2d(Cell):
             Default: None.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
           with float16, float32, float64, int32, int64 data type.
 
     Outputs:
-        - **y** (Tensor) - Has the same type as the `input_x`.
+        - **y** (Tensor) - Has the same type as the `input`.
           Has the shape :math:`(N, C, H, W)`.
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int64 data type. It will output only when `return_indices` is True.
 
     Raises:
-        TypeError: If data type of `input_x` is not one of the following: float16, float32, float64, int32, int64.
+        TypeError: If data type of `input` is not one of the following: float16, float32, float64, int32, int64.
         TypeError: If data type of `_random_samples` is not one of the following: float16, float32, float64.
         ValueError: If `kernel_size` is not a number and `kernel_size` is not a tuple of length 2.
         ValueError: If `output_size` is not a number and `output_size` is not a tuple of length 2.
         ValueError: If the sum of `kernel_size` , `output_size` and -1 is larger than the corresponding
-                    dimension of `input_x`.
+                    dimension of `input`.
         ValueError: If the dimension of `_random_samples` is not 3.
         ValueError: if `output_size` and `output_ratio` are None at the same time.
-        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
-        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 2.
 
     Supported Platforms:
@@ -1579,7 +1579,7 @@ class FractionalMaxPool2d(Cell):
         >>> from mindspore import nn
         >>> from mindspore import Tensor
         >>> import mindspore.common.dtype as mstype
-        >>> input_x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
+        >>> input = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
         ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
         ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
@@ -1587,7 +1587,7 @@ class FractionalMaxPool2d(Cell):
         >>> _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
         >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
         ...                              return_indices=True)
-        >>> y, argmax = net(input_x)
+        >>> y, argmax = net(input)
         >>> y
         [[[[0.9545 0.8764]
            [0.9673 0.9852]]]]
@@ -1596,7 +1596,7 @@ class FractionalMaxPool2d(Cell):
            [16 24]]]]
         >>> net = nn.FractionalMaxPool2d(kernel_size=2, output_ratio=(0.5, 0.5), _random_samples=_random_samples,
         ...                              return_indices=True)
-        >>> y, argmax = net(input_x)
+        >>> y, argmax = net(input)
         >>> print(y)
         [[[[0.9545 0.8764]
            [0.9673 0.9852]]]]
@@ -1614,14 +1614,14 @@ class FractionalMaxPool2d(Cell):
         self.return_indices = return_indices
         self._random_samples = _random_samples
 
-    def construct(self, x):
-        return ops.fractional_max_pool2d(x, self.kernel_size, self.output_size, self.output_ratio, self.return_indices,
-                                         self._random_samples)
+    def construct(self, input):
+        return ops.fractional_max_pool2d(input, self.kernel_size, self.output_size, self.output_ratio,
+                                         self.return_indices, self._random_samples)
 
 
 class FractionalMaxPool3d(Cell):
     r"""
-    Applies the 3D FractionalMaxPool operatin over `input_x`. The output Tensor shape can be determined by either
+    Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
     `output_size` or `output_ratio` cannot be used at the same time.
 
@@ -1650,7 +1650,7 @@ class FractionalMaxPool3d(Cell):
             Supported shape :math:`(N, C, 3)`
 
     Inputs:
-        - **input_x** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
+        - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
           Tensor of data type : float16, float32, double, int32, int64.
           Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
 
@@ -1663,7 +1663,7 @@ class FractionalMaxPool3d(Cell):
           `y` and int32 data type. It will output only when `return_indices` is True.
 
     Raises:
-        TypeError: If `input_x` is not a 4D or 5D tensor.
+        TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
         TypeError: If data type of `imput_x` is not float16, float32, double, int32, int64.
         TypeError: If dtype of `_random_samples` is not float16, float32, double.
@@ -1672,8 +1672,8 @@ class FractionalMaxPool3d(Cell):
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
         ValueError: If numbers in `output_size` or `kernel_size` is not positive.
         ValueError: if `output_size` and `output_ratio` are None at the same time.
-        ValueError: If the first dimension size of `input_x` and `_random_samples` is not equal.
-        ValueError: If the second dimension size of `input_x` and `_random_samples` is not equal.
+        ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
+        ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 3.
 
     Supported Platforms:
@@ -1712,9 +1712,9 @@ class FractionalMaxPool3d(Cell):
         self.return_indices = return_indices
         self._random_samples = _random_samples
 
-    def construct(self, x):
-        return ops.fractional_max_pool3d(x, self.kernel_size, self.output_size, self.output_ratio, self.return_indices,
-                                         self._random_samples)
+    def construct(self, input):
+        return ops.fractional_max_pool3d(input, self.kernel_size, self.output_size, self.output_ratio,
+                                         self.return_indices, self._random_samples)
 
 
 class MaxUnpool1d(Cell):

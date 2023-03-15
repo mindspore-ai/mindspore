@@ -3,7 +3,7 @@ mindspore.nn.FractionalMaxPool2d
 
 .. py:class:: mindspore.nn.FractionalMaxPool2d(kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None)
 
-    在输入 `input_x` 上应用二维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 决定。 `output_size` 和 `output_ratio` 不能同时使用。
+    在输入 `input` 上应用二维分数最大池化。输出Tensor的shape可以由 `output_size` 和 `output_ratio` 其中之一确定，步长由 `_random_samples` 决定。 `output_size` 和 `output_ratio` 不能同时使用。
 
     分数最大池化的详细描述在 `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_ 。
 
@@ -15,20 +15,20 @@ mindspore.nn.FractionalMaxPool2d
         - **_random_samples** (Tensor，可选) - 3D张量，分数最大池化的随机步长。支持的数据类型：float16、float32、double。数值介于0到1之间。shape为 :math:`(N, C, 2)` 的Tensor。默认值：None。
 
     输入：
-        - **input_x** (Tensor) - shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor。支持的数据类型，float16、float32、float64、int32和int64。
+        - **input** (Tensor) - shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor。支持的数据类型，float16、float32、float64、int32和int64。
 
     输出：
         - **y** (Tensor) - 数据类型和输入相同，shape是 :math:`(N, C, H, W)`。
         - **argmax** (Tensor) - 输出的索引，是一个张量。shape和输出 `y` 一致，数据类型是int64。仅当 `return_indices` 为True时，输出最大池化的索引值。
 
     异常：
-        - **TypeError** - `input_x` 不是float16、float32、float64、int32或int64。
+        - **TypeError** - `input` 不是float16、float32、float64、int32或int64。
         - **TypeError** - `_random_samples` 不是float16、float32或float64。
         - **ValueError** - `kernel_size` 不是整数并且不是长度为2的元组。
         - **ValueError** - `output_shape` 不是整数并且不是长度为2的元组。
-        - **ValueError** - `kernel_size`， `output_shape` 与-1的和大于 `input_x` 的对应维度的量。
+        - **ValueError** - `kernel_size`， `output_shape` 与-1的和大于 `input` 的对应维度的量。
         - **ValueError** - `_random_samples` 维度不是3。
         - **ValueError** - `output_size` 和 `output_ratio` 同时为 `None` 。
-        - **ValueError** - `input_x` 和 `_random_samples` 的第一维度大小不相等。
-        - **ValueError** - `input_x` 和 `_random_samples` 第二维度大小不相等。
+        - **ValueError** - `input` 和 `_random_samples` 的第一维度大小不相等。
+        - **ValueError** - `input` 和 `_random_samples` 第二维度大小不相等。
         - **ValueError** - `_random_samples` 第三维度大小不是2。

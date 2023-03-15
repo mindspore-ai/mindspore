@@ -1309,12 +1309,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('logaddexp2')(self, other)
 
-    def logsumexp(self, dim, keepdim=False):
+    def logsumexp(self, axis, keepdims=False):
         r"""
         For details, please refer to :func:`mindspore.ops.logsumexp`.
         """
         self._init_check()
-        return tensor_operator_registry.get('logsumexp')(self, dim, keepdim)
+        return tensor_operator_registry.get('logsumexp')(self, axis, keepdims)
 
     def logdet(self):
         r"""
@@ -1632,16 +1632,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('numel')(self)
 
-    def permute(self, *dims):
+    def permute(self, *axis):
         """
         For details, please refer to :func:`mindspore.ops.permute`.
         """
         self._init_check()
-        if not dims:
-            raise ValueError(f"For Tensor.permute, the dims must not be none.")
-        if len(dims) == 1 and isinstance(dims[0], tuple):
-            return tensor_operator_registry.get("permute")(self, dims[0])
-        return tensor_operator_registry.get("permute")(self, dims)
+        perm = validator.check_transpose_axis(axis, self.ndim)
+        return tensor_operator_registry.get('permute')(self, perm)
 
     def positive(self):
         """
