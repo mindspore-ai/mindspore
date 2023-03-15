@@ -47,7 +47,7 @@ message AttributeProto {
     TYPE_NULL = 36;
     MAP_TENSOR = 37;
   }
-  message TupleInfoProto{
+  message SeqInfoProto{
     optional bool is_dyn_len = 18;                 // store if tuple is dynamic length
     optional AttributeProto tuple_elem_item = 19;  // store the element of tuple dynamic length
   }
@@ -67,8 +67,8 @@ message AttributeProto {
   optional string doc_string = 14;
   optional string ref_attr_name = 15;
   optional AttributeType type = 16;
-  repeated AttributeProto values = 17;          // tuple, list,dict of value
-  optional TupleInfoProto tuple_info = 18;      // tuple, structural info
+  repeated AttributeProto values = 17;          // tuple, list, dict of value
+  optional SeqInfoProto seq_info = 18;       // tuple, list, structural info
 }
 
 

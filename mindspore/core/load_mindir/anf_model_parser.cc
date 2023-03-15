@@ -440,27 +440,9 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
     case mind_ir::AttributeProto_AttributeType_MAP_TENSOR: {
       return BuildAbstractMapTensorFromAttrProto(attr_proto);
     }
+    case mind_ir::AttributeProto_AttributeType_LIST:
     case mind_ir::AttributeProto_AttributeType_TUPLE: {
-      std::vector<abstract::AbstractBasePtr> vec;
-      for (int i = 0; i < attr_proto.values_size(); ++i) {
-        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
-        if (abs == nullptr) {
-          MS_LOG(WARNING) << "Failed to get the tuple's abstract from AttrProto. " << attr_proto.DebugString();
-          return nullptr;
-        }
-        (void)vec.emplace_back(abs);
-      }
-      auto tuple_abs = std::make_shared<abstract::AbstractTuple>(vec);
-      if (attr_proto.has_tuple_info()) {
-        auto tuple_info = attr_proto.tuple_info();
-        tuple_abs->set_dynamic_len(tuple_info.is_dyn_len());
-        if (tuple_info.has_tuple_elem_item()) {
-          auto elem_proto = tuple_info.tuple_elem_item();
-          auto elem_abs = GetNodeAbstractFromAttrProtoWithType(elem_proto);
-          tuple_abs->set_dynamic_len_element_abs(elem_abs);
-        }
-      }
-      return tuple_abs;
+      return BuildAbstractSequence(attr_proto);
     }
     case mind_ir::AttributeProto_AttributeType_UMONAD: {
       return kUMonad->ToAbstract();
@@ -683,6 +665,35 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
   return std::make_shared<abstract::AbstractMapTensor>(map_tensor);
 }
 
+abstract::AbstractSequencePtr MSANFModelParser::BuildAbstractSequence(const mind_ir::AttributeProto &attr_proto) {
+  std::vector<abstract::AbstractBasePtr> vec;
+
+  for (int i = 0; i < attr_proto.values_size(); ++i) {
+    auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+    if (abs == nullptr) {
+      MS_LOG(WARNING) << "Failed to get the tuple's abstract from AttrProto. " << attr_proto.DebugString();
+      return nullptr;
+    }
+    (void)vec.emplace_back(abs);
+  }
+  abstract::AbstractSequencePtr seq_abs;
+  if (attr_proto.type() == mind_ir::AttributeProto_AttributeType_TUPLE) {
+    seq_abs = std::make_shared<abstract::AbstractTuple>(vec);
+  } else {
+    seq_abs = std::make_shared<abstract::AbstractList>(vec);
+  }
+  if (attr_proto.has_seq_info()) {
+    auto seq_info = attr_proto.seq_info();
+    seq_abs->set_dynamic_len(seq_info.is_dyn_len());
+    if (seq_info.has_tuple_elem_item()) {
+      auto elem_proto = seq_info.tuple_elem_item();
+      auto elem_abs = GetNodeAbstractFromAttrProtoWithType(elem_proto);
+      seq_abs->set_dynamic_len_element_abs(elem_abs);
+    }
+  }
+  return seq_abs;
+}
+
 bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &node,
                                                            const mind_ir::MapTensorProto &map_parameter_proto) {
   MS_EXCEPTION_IF_NULL(node);
@@ -847,7 +858,7 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
     node->set_abstract(tensor_info);
     if (tensor_proto.has_ref_key() && top_graph_ != nullptr) {
       auto parameters = top_graph_->parameters();
-      for (auto parameter : parameters) {
+      for (const auto &parameter : parameters) {
         auto parameter_abs = parameter->abstract();
         if (parameter_abs->isa<abstract::AbstractRefTensor>()) {
           auto parameter_abs_value = parameter_abs->cast<abstract::AbstractRefPtr>()->ref_key_value();
