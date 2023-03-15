@@ -3439,7 +3439,7 @@ class MapDataset(UnionBaseDataset):
         if isinstance(op, transforms.py_transforms_util.FuncWrapper):
             try:
                 op_name = op.transform.__name__
-            except (Exception,):
+            except (AttributeError,):
                 op_name = op.transform.__class__.__name__
         else:
             op_name = op.__class__.__name__
@@ -3454,6 +3454,7 @@ class MapDataset(UnionBaseDataset):
         debug_hook_list = _get_debug_hook_list()
         if debug_hook_list:
             for fn in debug_hook_list:
+                # making deep copy to allow each debug hook instance hold unique variables
                 new_fn = copy.deepcopy(fn)
                 new_fn.set_previous_op_name(previous_op_name)
                 inserted_func = transforms.py_transforms_util.FuncWrapper(new_fn)
