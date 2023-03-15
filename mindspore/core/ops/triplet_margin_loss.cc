@@ -143,7 +143,7 @@ AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, cons
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = TripletMarginLossInferType(primitive, input_args);
   auto infer_shape = TripletMarginLossInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated
