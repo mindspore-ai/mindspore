@@ -35,6 +35,7 @@ class LuUnpackCpuKernel : public CpuKernel {
   static uint32_t DataAndTypeCheck(CpuKernelContext &ctx);
   std::map<int, std::map<int, std::function<uint32_t(CpuKernelContext &)>>> calls_;
   void SetMap();
+  void SetOutputShape(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
