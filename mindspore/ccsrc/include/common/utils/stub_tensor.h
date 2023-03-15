@@ -20,6 +20,7 @@
 #include <atomic>
 #include <vector>
 #include <utility>
+#include <exception>
 
 #include "pybind11/pybind11.h"
 #include "base/base.h"
