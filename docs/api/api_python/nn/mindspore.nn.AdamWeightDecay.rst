@@ -35,7 +35,7 @@ mindspore.nn.AdamWeightDecay
             &\hline \\[-1.ex]
         \end{array}
 
-    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`\gamma` 代表 `learning_rate` ，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`t` 代表当前step，:math:`w` 代表 `params` ，:math:`\gamma` 代表 `weight_decay` 。
+    :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表 `gradients` ，:math:`\gamma` 代表 `learning_rate` ，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`t` 代表当前step，:math:`w` 代表 `params` ，:math:`\lambda` 代表 `weight_decay` 。
 
     .. note::
         .. include:: mindspore.nn.optim_note_loss_scale.rst

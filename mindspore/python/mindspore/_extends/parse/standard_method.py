@@ -387,7 +387,17 @@ def minimum(x, y):
     return F.minimum(x, y)
 
 
-def tile(x, multiples):
+def multinomial(input, num_samples, replacement=True, seed=None):
+    r"""
+    Returns a tensor sampled from the multinomial probability distribution located in the corresponding
+    row of the input tensor.
+
+    Refer to :func:`mindspore.ops.multinomial` for more detail.
+    """
+    return F.multinomial(input, num_samples, replacement, seed)
+
+
+def tile(x, reps):
     r"""
     Replicates an input tensor with given multiples times.
 
