@@ -23,7 +23,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import ops
-from mindspore import mutable
+from mindspore import mutable, jit
 
 ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -1252,3 +1252,31 @@ def test_pyexecute_with_func_graph_input():
     ret2 = reduce_user_mul(x2)
     assert ret1 == 6
     assert ret2 == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_anytype():
+    """
+    Feature: Fallback runtime.
+    Description: test ops input is PyExecute out
+    Expectation: No error.
+    """
+
+    @jit
+    def func(x):
+        x = x.asnumpy()
+        x = ms.Tensor(x)
+        x = ops.ReLU()(x)
+        return x
+
+    def func_numpy(x):
+        return np.maximum(x, 0)
+
+    x_np = np.array([1, -1])
+    ms_out = func(ms.Tensor(np.array([1, -1])))
+    np_out = func_numpy(x_np)
+    assert np.allclose(np_out, ms_out.asnumpy())

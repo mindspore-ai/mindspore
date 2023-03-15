@@ -37,6 +37,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
+#include "plugin/device/cpu/optimizer/insert_cast_to_pyexecute.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "plugin/device/cpu/optimizer/softmax_grad_fusion.h"
 #include "backend/common/pass/insert_type_transform_op.h"
@@ -244,6 +245,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::InsertTensorMoveForCommunication>());
   pm->AddPass(std::make_shared<opt::AddTrainingAttr>());
   pm->AddPass(std::make_shared<opt::PrintValueType>("print_value_type"));
+  pm->AddPass(std::make_shared<opt::InsertCastToPyExecute>("insert_cast_for_pyexecute"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();

@@ -170,6 +170,11 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
     bool prev_node_has_getitem = common::AnfAlgo::IsPrevNodeHasTupleGetItem(cnode, input_idx);
     auto prev_abstract = prev_node->abstract();
     auto real_input_type = real_input_types[input_idx];
+    if (IsPrimitiveCNode(prev_node, prim::kPrimPyExecute)) {
+      real_input_type = common::AnfAlgo::GetOutputInferDataType(prev_node, 0);
+      MS_LOG(DEBUG) << "need changed type node:" << cnode->DebugString()
+                    << "Real input type :" << TypeIdToType(real_input_type)->ToString();
+    }
     auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
     auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively,
@@ -188,6 +193,11 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     bool is_real_tuple_output = CheckRealTupleFromCNode(output_obj_types, output_idx);
     auto real_output_type = real_output_types[output_idx];
+    if (IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+      real_output_type = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
+      MS_LOG(DEBUG) << "need changed type node:" << cnode->DebugString()
+                    << "Real output type :" << TypeIdToType(real_output_type)->ToString();
+    }
     auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
     auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively,

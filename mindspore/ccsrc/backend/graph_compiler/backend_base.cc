@@ -351,6 +351,25 @@ bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
   }
   return false;
 }
+
+void SetPyExecuteCastAttr(const CNodePtr &cnode) {
+  if (!AnfUtils::IsRealKernel(cnode)) {
+    return;
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+    return;
+  }
+  auto inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
+      // Frontend PyExecute Primitive is all same pointer
+      auto prim = std::make_shared<Primitive>(*common::AnfAlgo::GetCNodePrimitive(input));
+      prim->set_attr(kAttrNeedCast, MakeValue(true));
+      auto input_node = input->cast_ptr<CNode>();
+      input_node->set_input(0, std::make_shared<ValueNode>(prim));
+    }
+  }
+}
 }  // namespace
 
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
@@ -477,6 +496,8 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
         MS_LOG(INFO) << "Rename op from MakeTuple to RealMakeTuple for op " << cnode->fullname_with_scope()
                      << ", debug name:" << cnode->DebugString();
       }
+
+      SetPyExecuteCastAttr(cnode);
     }
   }
 }
