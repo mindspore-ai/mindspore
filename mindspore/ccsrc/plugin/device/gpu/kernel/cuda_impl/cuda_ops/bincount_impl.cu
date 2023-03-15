@@ -37,6 +37,7 @@ void BincountNoWeight(const int32_t *array, const int32_t *size, T *bins, const 
   cudaMalloc(&d_temp_storage, temp_storage_bytes);
   cub::DeviceHistogram::HistogramEven(d_temp_storage, temp_storage_bytes, d_samples, d_histogram, num_levels,
                                       lower_level, upper_level, num_samples);
+  (void)cudaFree(d_temp_storage);
 }
 
 template <>
