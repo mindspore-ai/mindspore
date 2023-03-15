@@ -227,6 +227,49 @@ Status LargeModelBuildModel(const schema::MetaGraphT &meta_graph, const std::sha
   return ret;
 }
 
+int DumpGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+              const std::string &save_path) {
+  FuncGraphPtr func_graph_clone;
+  if (CloneFuncGraph(func_graph, param, &func_graph_clone) != RET_OK) {
+    MS_LOG(ERROR) << "Clone func_graph failed";
+    return RET_ERROR;
+  }
+  auto meta_graph = Export(func_graph_clone, true, true);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Export to meta_graph failed";
+    return RET_ERROR;
+  }
+
+  // transform
+  GraphDefTransform fb_transform;
+  fb_transform.SetGraphDef(meta_graph);
+  auto status = fb_transform.Transform(param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "FBTransform model failed";
+    delete meta_graph;
+    return RET_ERROR;
+  }
+  meta_graph->version = Version();
+
+  status = UpdateGraphOutputName(meta_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UpdateGraphOutputName failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    delete meta_graph;
+    return RET_ERROR;
+  }
+
+  unsigned char encKey[kEncMaxLen] = {0};
+  size_t keyLen = 0;
+  size_t size;
+  status = MetaGraphSerializer::Save(*meta_graph, save_path, &size, encKey, keyLen, param->encrypt_mode);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Save Large Model Failed: " << status << " " << GetErrorInfo(status);
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<ConverterPara> &param, size_t *size) {
   FuncGraphPtr func_graph_clone;
@@ -554,6 +597,128 @@ int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<Convert
   lite::GetAllFuncGraph(*func_graph_bak, &all_func_graphs);
   for (const auto &graph : all_func_graphs) {
     graph->set_manager(root_func_manager);
+  }
+  return RET_OK;
+}
+
+int MarkOriginDataType(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    TypeId type_id = kTypeUnknown;
+    auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
+      return ret;
+    }
+    if (type_id != kTypeUnknown) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " origin type is " << type_id;
+      cnode->AddAttr("origin_type", MakeValue(static_cast<int>(type_id)));
+    }
+  }
+  return RET_OK;
+}
+
+int ConvertFp16ToFp32(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    auto ret = ConvertCNodeFp16ToFp32(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " convert fp16 To fp32 failed.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
+int ConvertCNodeFp32ToFp16(const CNodePtr &cnode) {
+  for (size_t i = kPrimOffset; i < cnode->size(); ++i) {
+    auto input = cnode->input(i);
+    if (input->isa<Parameter>() && input->cast<ParameterPtr>()->has_default()) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " Parameter.";
+      ParameterPtr param_node;
+      tensor::TensorPtr tensor_info;
+      GetParameterAndTensor(input, &param_node, &tensor_info);
+      CHECK_NULL_RETURN(tensor_info);
+      CHECK_NULL_RETURN(param_node);
+      if (tensor_info->data_type() == kNumberTypeFloat32) {
+        MS_LOG(INFO) << "convert " << input->fullname_with_scope() << " from fp32 to fp16.";
+        auto data = static_cast<float *>(tensor_info->data_c());
+        std::vector<float16> fp16_data(tensor_info->DataSize());
+        for (size_t j = 0; j < tensor_info->DataSize(); j++) {
+          fp16_data[j] = mindspore::Float16(data[j]);
+        }
+        mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+          kNumberTypeFloat16, tensor_info->shape_c(), fp16_data.data(), fp16_data.size() * sizeof(float) / 2);
+        param_node->set_default_param(tensor_ptr);
+        param_node->set_abstract(tensor_ptr->ToAbstract());
+      }
+    } else if (input->isa<ValueNode>()) {
+      auto value_node = input->cast<ValueNodePtr>();
+      DataInfo data_info;
+      auto ret = FetchDataFromValueNode(cnode, i, converter::kFmkTypeMs, false, &data_info, false);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Fetch data from value node failed.";
+        return ret;
+      }
+      std::vector<int64_t> shapes;
+      for (size_t j = 0; j < data_info.shape_.size(); ++j) {
+        shapes.push_back(data_info.shape_.at(j));
+      }
+      int total_size = 0;
+      ret = GetElementNumFromShape(data_info.shape_, &total_size);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "GetElementNumFromShape failed.";
+        return ret;
+      }
+      if (data_info.data_type_ == kNumberTypeFloat32) {
+        MS_LOG(ERROR) << "convert " << input->fullname_with_scope() << " from fp32 to fp16.";
+        auto data = static_cast<float *>(data_info.data_ptr_);
+        std::vector<float16> fp16_data(total_size);
+        for (int j = 0; j < total_size; j++) {
+          fp16_data[j] = mindspore::Float16(data[j]);
+        }
+        mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+          kNumberTypeFloat16, shapes, fp16_data.data(), fp16_data.size() * sizeof(float) / 2);
+        auto values = MakeValue(tensor_ptr);
+        value_node->set_value(values);
+        value_node->set_abstract(tensor_ptr->ToAbstract());
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int ConvertFp32ToFp16(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    ConvertCNodeFp32ToFp16(cnode);
+  }
+  return RET_OK;
+}
+
+int ConvertCNodeFp16ToFp32(const CNodePtr &cnode) {
+  for (size_t i = kPrimOffset; i < cnode->size(); ++i) {
+    auto input = cnode->input(i);
+    if (!input->isa<Parameter>() || !input->cast<ParameterPtr>()->has_default()) {
+      continue;
+    }
+    ParameterPtr param_node;
+    tensor::TensorPtr tensor_info;
+    GetParameterAndTensor(input, &param_node, &tensor_info);
+    CHECK_NULL_RETURN(tensor_info);
+    CHECK_NULL_RETURN(param_node);
+    if (tensor_info->data_type() == kNumberTypeFloat16) {
+      MS_LOG(INFO) << "convert " << input->fullname_with_scope() << " from fp16 to fp32.";
+      auto data = static_cast<float16 *>(tensor_info->data_c());
+      std::vector<float> fp32_data(tensor_info->DataSize());
+      for (size_t j = 0; j < tensor_info->DataSize(); j++) {
+        fp32_data[j] = mindspore::Float16::ToFloat32(data[j]);
+      }
+      mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+        kNumberTypeFloat32, tensor_info->shape_c(), fp32_data.data(), fp32_data.size() * sizeof(float));
+      param_node->set_default_param(tensor_ptr);
+      param_node->set_abstract(tensor_ptr->ToAbstract());
+    }
   }
   return RET_OK;
 }

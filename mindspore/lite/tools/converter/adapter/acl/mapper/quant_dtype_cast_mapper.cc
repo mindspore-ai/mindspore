@@ -19,7 +19,10 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
+#include "ops/op_name.h"
+#include "ops/quant_dtype_cast.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -51,9 +54,16 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
     CHECK_NULL_RETURN(dst_prim);
     dst_prim->AddAttr("scale", MakeValue(static_cast<float>(quant_param.front().scale)));
     dst_prim->AddAttr("offset", MakeValue(static_cast<float>(quant_param.front().zeroPoint)));
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " scale:" << quant_param.front().scale;
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " offset:" << quant_param.front().zeroPoint;
   } else if (cnode->inputs().size() == kDequantInputNum) {
     // map to Dequant.
     dst_prim = std::make_shared<acl::Dequant>();
+    auto dst_type = src_prim->GetAttr(mindspore::ops::kDstT);
+    if (dst_type != nullptr) {
+      auto origin_type = static_cast<TypeId>(opt::CastToInt(dst_type).front());
+      dst_prim->AddAttr("dtype", TypeIdToType(origin_type));
+    }
     CHECK_NULL_RETURN(dst_prim);
   } else {
     MS_LOG(ERROR) << "Invalid input size: " << cnode->inputs().size();

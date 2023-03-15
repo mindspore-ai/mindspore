@@ -17,6 +17,7 @@
 #include "tools/converter/adapter/acl/mapper/cast_mapper.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/common/utils.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 
@@ -35,6 +36,9 @@ STATUS CastMapper::Mapper(const CNodePtr &cnode) {
   // convert last parameter to const value node
   auto to_input = cnode->input(kNameCastInputNum - 1);
   MS_CHECK_TRUE_MSG(to_input != nullptr, lite::RET_ERROR, "to_input is nullptr.");
+  if (to_input->isa<ValueNode>()) {
+    return lite::RET_OK;
+  }
   if (!utils::isa<ParameterPtr>(to_input)) {
     MS_LOG(ERROR) << "The to node is not parameter.";
     return lite::RET_ERROR;

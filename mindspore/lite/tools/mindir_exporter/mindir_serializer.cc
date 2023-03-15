@@ -252,6 +252,12 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
           continue;
         }
         auto parameter_ptr = input->cast<ParameterPtr>();
+        CHECK_NULL_RETURN(parameter_ptr);
+        if (!parameter_ptr->has_default()) {
+          MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have default.";
+          continue;
+        }
+        CHECK_NULL_RETURN(parameter_ptr->default_param());
         auto tensor = parameter_ptr->default_param()->cast<tensor::TensorPtr>();
         auto quant_cluster = quant_params_holder->GetQuantClusters(index);
         if (!quant_cluster.empty()) {
@@ -290,15 +296,15 @@ std::shared_ptr<mindspore::QuantizationParam> MindIRSerializer::ConvertQuantPara
   std::vector<ValuePtr> meanCorr_list;
   std::vector<ValuePtr> numBits_list;
   std::vector<ValuePtr> narrowRange_list;
-  for (auto quantparamt : quant_param) {
-    scale_list.push_back(MakeValue(quantparamt.scale));
-    zeroPoint_list.push_back(MakeValue(quantparamt.zeroPoint));
-    min_list.push_back(MakeValue(quantparamt.min));
-    max_list.push_back(MakeValue(quantparamt.max));
-    varCorr_list.push_back(MakeValue(quantparamt.varCorr));
-    meanCorr_list.push_back(MakeValue(quantparamt.meanCorr));
-    numBits_list.push_back(MakeValue(quantparamt.numBits));
-    narrowRange_list.push_back(MakeValue(quantparamt.narrowRange));
+  for (auto quant : quant_param) {
+    scale_list.push_back(MakeValue(quant.scale));
+    zeroPoint_list.push_back(MakeValue(quant.zeroPoint));
+    min_list.push_back(MakeValue(quant.min));
+    max_list.push_back(MakeValue(quant.max));
+    varCorr_list.push_back(MakeValue(quant.varCorr));
+    meanCorr_list.push_back(MakeValue(quant.meanCorr));
+    numBits_list.push_back(MakeValue(quant.numBits));
+    narrowRange_list.push_back(MakeValue(quant.narrowRange));
   }
   quantization.AddAttr(quant::kScaleList, std::make_shared<ValueList>(scale_list));
   quantization.AddAttr(quant::kZeroPointList, std::make_shared<ValueList>(zeroPoint_list));

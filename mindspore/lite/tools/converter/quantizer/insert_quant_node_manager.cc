@@ -29,6 +29,8 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/fse_decoder.h"
 #include "ops/fse_decode.h"
+#include "ops/op_name.h"
+#include "ir/dtype.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -707,6 +709,20 @@ ValueNodePtr InsertQuantNodeManager::NewFSEDecodePrimitive(int dst_type, uint64_
 }
 
 int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  for (size_t i = 1; i < cnode->size(); i++) {
+    if (cnode->input(i)->isa<CNode>() || IsGraphInput(cnode->input(i))) {
+      auto ret = InsertAscendQuantNode(func_graph, cnode, i);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "InsertAscendQuantNode failed.";
+        return ret;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                  size_t input_index) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
   auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
@@ -716,7 +732,7 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " input quant params " << input_quant_param.size() << " < 2";
     return RET_ERROR;
   }
-  auto x_q_param = input_quant_param.at(0);
+  auto x_q_param = input_quant_param.at(input_index - kPrimOffset);
   if (x_q_param.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param.size() << " != 1";
     return RET_ERROR;
@@ -724,13 +740,13 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   x_q_param.at(0).scale = 1 / x_q_param.at(0).scale;
   ValueNodePtr new_primitive = NewQuantCastPrimitive(kNumberTypeFloat32, kNumberTypeInt8, x_q_param, x_q_param);
 
-  std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->input(1)};
+  std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->input(input_index)};
   auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
-  quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "-quant");
+  quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "-quant-" + std::to_string(input_index));
   // set abstract
-  if (cnode->abstract() != nullptr) {
-    auto abstract = cnode->abstract()->Clone();
+  if (cnode->input(input_index)->abstract() != nullptr) {
+    auto abstract = cnode->input(input_index)->abstract()->Clone();
     quant_cast_cnode->set_abstract(abstract);
     if (quant::UpdateDataType(quant_cast_cnode, kNumberTypeInt8) != RET_OK) {
       MS_LOG(ERROR) << "UpdateDataType failed, cnode name: " << quant_cast_cnode->fullname_with_scope();
@@ -745,7 +761,7 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
     manager = Manage(func_graph, true);
   }
   CHECK_NULL_RETURN(manager);
-  manager->SetEdge(cnode, 1, quant_cast_cnode);
+  manager->SetEdge(cnode, input_index, quant_cast_cnode);
   MS_LOG(INFO) << cnode->fullname_with_scope() << " Insert Ascend QuantNode.";
   return RET_OK;
 }
@@ -779,9 +795,15 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
     u64_deq_scale |= *uint32_deq_scale;
     deq_scales[i] = u64_deq_scale;
   }
+  auto dtype = kNumberTypeFloat32;
+  if (cnode->HasAttr("origin_type")) {
+    auto value = cnode->GetAttr("origin_type");
+    dtype = static_cast<TypeId>(opt::CastToInt(value).front());
+  }
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
   CHECK_NULL_RETURN(prim_c);
-  prim_c->Init(kNumberTypeInt32, kNumberTypeFloat32);
+
+  prim_c->Init(kNumberTypeInt32, dtype);
   auto prim = prim_c->GetPrim();
   auto quant_dtype_cast_primitive = NewValueNode(prim);
   std::vector<AnfNodePtr> op_inputs;
@@ -800,7 +822,7 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
   if (cnode->abstract() != nullptr) {
     auto abstract = cnode->abstract()->Clone();
     quant_cast_cnode->set_abstract(abstract);
-    if (quant::UpdateDataType(quant_cast_cnode, kNumberTypeFloat32) != RET_OK) {
+    if (quant::UpdateDataType(quant_cast_cnode, dtype) != RET_OK) {
       MS_LOG(ERROR) << "UpdateDataType failed, cnode name: " << quant_cast_cnode->fullname_with_scope();
       return RET_ERROR;
     }
@@ -819,6 +841,102 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
     manager->SetEdge(node_user.first, node_user.second, quant_cast_cnode);
   }
   MS_LOG(INFO) << cnode->fullname_with_scope() << " Insert Ascend DeQuant Node.";
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::AdjustTransposeNodeForMatMul(const FuncGraphPtr &func_graph) {
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto &cnode : cnodes) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
+      auto prim_ptr = GetCNodePrimitive(cnode);
+      CHECK_NULL_RETURN(prim_ptr);
+
+      auto transpose_a = prim_ptr->GetAttr(mindspore::ops::kTransposeA);
+      auto transpose_b = prim_ptr->GetAttr(mindspore::ops::kTransposeB);
+
+      if (transpose_a != nullptr && GetValue<bool>(transpose_a)) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " transposeA is true.";
+        return RET_ERROR;
+      }
+      if (transpose_b != nullptr && GetValue<bool>(transpose_b)) {
+        int ret = RET_ERROR;
+        MS_LOG(INFO) << cnode->fullname_with_scope() << ":" << cnode->input(kWeightIndex + kPrimOffset)->type_name();
+        if (cnode->input(kWeightIndex + kPrimOffset)->isa<CNode>()) {
+          ret = InsertTransposeNode(func_graph, cnode, kWeightQuant + kPrimOffset);
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << cnode->fullname_with_scope() << " insert transpose node failed";
+            return ret;
+          }
+        } else if (cnode->input(kWeightIndex + kPrimOffset)->isa<Parameter>()) {
+          auto manager = Manage(func_graph);
+          CHECK_NULL_RETURN(manager);
+          auto users = manager->node_users();
+          if (users[cnode->input(kWeightIndex + kPrimOffset)].size() > 1) {
+            MS_LOG(ERROR) << "Dont support share weight.";
+            return RET_ERROR;
+          }
+          auto weight_input = cnode->input(kWeightIndex + 1);
+          auto dst_prim = GetCNodePrimitive(cnode);
+          MS_LOG(INFO) << cnode->fullname_with_scope() << " transpose_b is true.";
+          dst_prim->AddAttr(mindspore::ops::kTransposeB, MakeValue(false));
+          ParameterPtr param_node;
+          tensor::TensorPtr tensor_info;
+          GetParameterAndTensor(weight_input, &param_node, &tensor_info);
+          if (tensor_info->shape_c().size() != DIMENSION_2D) {
+            MS_LOG(ERROR) << weight_input->fullname_with_scope() << " shape is " << tensor_info->shape_c()
+                          << " is large than 2.";
+            return RET_ERROR;
+          }
+
+          if (tensor_info->data_type_c() == kNumberTypeFloat32) {
+            ret = TransposeData<float>(param_node, tensor_info);
+          } else if (tensor_info->data_type_c() == kNumberTypeFloat16) {
+            ret = TransposeData<Float16>(param_node, tensor_info);
+          } else {
+            MS_LOG(ERROR) << "transpose data only support Float32 or Float16.";
+            return RET_OK;
+          }
+
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << weight_input->fullname_with_scope() << " transposeData failed.";
+            return ret;
+          }
+        } else {
+          MS_LOG(ERROR) << "Dont support type is " << cnode->input(kWeightIndex + kPrimOffset)->type_name();
+          return RET_ERROR;
+        }
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::InsertTransposeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index) {
+  auto prim_ptr = GetCNodePrimitive(cnode);
+  CHECK_NULL_RETURN(prim_ptr);
+  std::vector<int> perm;
+  ShapeVector shape;
+  auto ret = opt::FetchShapeFromAbstract(cnode->input(index)->abstract(), &shape);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch shape from abstract failed.";
+    return RET_OK;
+  }
+  if (shape.size() == DIMENSION_2D) {
+    perm = {1, 0};
+  } else if (shape.size() == DIMENSION_3D) {
+    perm = {0, 2, 1};
+  } else if (shape.size() == DIMENSION_4D) {
+    perm = {0, 1, 3, 2};
+  } else {
+    MS_LOG(ERROR) << shape.size() << " is invalid.";
+    return RET_ERROR;
+  }
+  auto transpose = opt::GenTransposeNode(func_graph, cnode->input(index), perm,
+                                         cnode->input(index)->fullname_with_scope() + "-transpose");
+  auto manager = Manage(func_graph);
+  MS_ASSERT(manager != nullptr);
+  manager->SetEdge(cnode, kWeightIndex + kPrimOffset, transpose);
+  prim_ptr->set_attr(mindspore::ops::kTransposeB, MakeValue(false));
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

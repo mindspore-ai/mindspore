@@ -67,22 +67,6 @@ bool IsGraphOutDTypeCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
 int GetCastNodeType(const FuncGraphPtr &func_graph, const CNodePtr &cnode, CastNodeType *cast_node_type);
 
-template <typename T>
-int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
-                std::vector<T> *dequant_data) {
-  if (quant_params.size() != 1) {
-    MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
-    return RET_ERROR;
-  }
-  auto scale = quant_params[0].scale;
-  auto zp = quant_params[0].zero_point;
-  dequant_data->resize(elements_num);
-  for (int64_t i = 0; i < elements_num; i++) {
-    dequant_data->at(i) = scale * (tensor_data[i] - zp);
-  }
-  return RET_OK;
-}
-
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
@@ -105,5 +89,34 @@ bool CheckControlFlowType(const AnfNodePtr &node);
 
 int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                    FuncGraphPtr *func_graph_bak);
+
+int ConvertFp16ToFp32(const FuncGraphPtr &old_graph);
+
+int ConvertFp32ToFp16(const FuncGraphPtr &old_graph);
+
+int ConvertCNodeFp32ToFp16(const CNodePtr &cnode);
+
+int ConvertCNodeFp16ToFp32(const CNodePtr &cnode);
+
+int MarkOriginDataType(const FuncGraphPtr &func_graph);
+
+int DumpGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+              const std::string &save_path);
+
+template <typename T>
+int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
+                std::vector<T> *dequant_data) {
+  if (quant_params.size() != 1) {
+    MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
+    return RET_ERROR;
+  }
+  auto scale = quant_params[0].scale;
+  auto zp = quant_params[0].zero_point;
+  dequant_data->resize(elements_num);
+  for (int64_t i = 0; i < elements_num; i++) {
+    dequant_data->at(i) = scale * (tensor_data[i] - zp);
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

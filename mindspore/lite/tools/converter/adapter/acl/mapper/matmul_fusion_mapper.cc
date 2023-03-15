@@ -16,8 +16,13 @@
 
 #include "tools/converter/adapter/acl/mapper/matmul_fusion_mapper.h"
 #include <memory>
+#include <vector>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/adapter/acl/common/utils.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "ops/batch_matmul.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
@@ -26,6 +31,10 @@
 namespace mindspore {
 namespace lite {
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
+  auto quant_holder = GetCNodeQuantHolder(cnode);
+  if (quant_holder->quant_type() != quant::QUANT_NONE) {
+    return QuantMapper(cnode);
+  }
   auto src_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
   auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
@@ -51,6 +60,38 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "MatMulFusion mapper failed.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+STATUS MatMulFusionMapper::QuantMapper(const CNodePtr &cnode) {
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get shape of cnode failed.";
+    return RET_ERROR;
+  }
+  std::vector<int64_t> shape_vector;
+  if (acl::GetShapeVectorFromCNode(cnode, &shape_vector) != RET_OK) {
+    MS_LOG(ERROR) << "Get shape of cnode failed.";
+    return RET_ERROR;
+  }
+
+  ops::MatMul mat_mul;
+  auto dst_prim = std::make_shared<acl::BatchMatMulV2>();
+  auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
+  auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
+
+  if (transpose_a != nullptr) {
+    dst_prim->AddAttr("transpose_x1", transpose_a);
+  }
+  if (transpose_b != nullptr) {
+    dst_prim->AddAttr("transpose_x2", transpose_b);
+    if (GetValue<bool>(transpose_b)) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " transpose_b dont support true.";
+      return RET_ERROR;
+    }
+  }
+  value_node->set_value(dst_prim);
   return RET_OK;
 }
 

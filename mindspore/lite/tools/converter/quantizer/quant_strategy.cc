@@ -18,6 +18,7 @@
 
 #include "tools/converter/quantizer/quant_strategy.h"
 #include <set>
+#include <vector>
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
@@ -79,10 +80,91 @@ bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &
   return true;
 }
 
-bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_int8_ops,
+bool QuantStrategy::CheckAscendSpec(const FuncGraphManagerPtr &manager, const CNodePtr &cnode, TypeId type_id,
+                                    int min_quant_weight_channel) {
+  int ret;
+
+  if (type_id == kNumberTypeFloat16) {
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
+      return false;
+    }
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " will update to fp32";
+    ret = lite::quant::ConvertCNodeFp16ToFp32(cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Converter fp16 to fp32 failed.";
+      return false;
+    }
+    ret = UpdateDataType(cnode, kNumberTypeFloat32);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " set new dtype failed.";
+      return false;
+    }
+  } else if (type_id != kNumberTypeFloat32) {
+    MS_LOG(WARNING) << " node name is " << cnode->fullname_with_scope() << ", type_id " << type_id
+                    << " is not float32 and will not be quantified.";
+    return false;
+  }
+
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
+    auto prim_ptr = GetCNodePrimitive(cnode);
+    // Don't support transpose.
+    CHECK_NULL_RETURN(prim_ptr);
+    auto transpose_a = prim_ptr->GetAttr(mindspore::ops::kTransposeA);
+    auto transpose_b = prim_ptr->GetAttr(mindspore::ops::kTransposeB);
+    if (transpose_a != nullptr && GetValue<bool>(transpose_a)) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " transposeA is true.";
+      return false;
+    }
+    if (transpose_b != nullptr && GetValue<bool>(transpose_b)) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " transposeB is true.";
+      return false;
+    }
+
+    auto weight = cnode->input(kWeightIndex + kPrimOffset);
+    // activation
+    if (weight->isa<CNode>()) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " both activation.";
+      return false;
+    } else {
+      // shared weight
+      auto node_map = manager->node_users();
+      auto node_user = node_map[weight];
+      if (node_user.size() > 1) {
+        MS_LOG(INFO) << weight->fullname_with_scope() << " is shared.";
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static const std::set<PrimitivePtr> check_channel_ops = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+
+  size_t min_rank = 3;
+  if (CheckNodeInSet(cnode, check_channel_ops) && cnode->size() >= min_rank) {
+    auto weight = cnode->input(kWeightIndex + kPrimOffset);
+    auto abstract = weight->abstract();
+    MS_CHECK_TRUE_RET(abstract != nullptr, false);
+    std::vector<int64_t> weight_shape;
+    ret = opt::FetchShapeFromAbstract(abstract, &weight_shape);
+    if (ret != RET_OK) {
+      MS_LOG(INFO) << "Dynamic Shape.";
+      return true;
+    }
+    if (weight_shape[0] < static_cast<int>(min_quant_weight_channel)) {
+      MS_LOG(WARNING) << weight->fullname_with_scope() << " preferred_dim shape:" << weight_shape[0]
+                      << " less min_quant_weight_channel_ " << min_quant_weight_channel << " will not quant.";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool QuantStrategy::CanOpFullQuantized(const FuncGraphManagerPtr &manager, const CNodePtr &cnode,
+                                       const std::set<PrimitivePtr> &support_int8_ops,
                                        const std::set<PrimitivePtr> &skip_check_dtype_ops,
                                        const std::set<mindspore::ActivationType> &support_activation) {
   MS_CHECK_TRUE_RET(cnode != nullptr, false);
+  MS_CHECK_TRUE_RET(manager != nullptr, false);
   // The return node does not need to be quantified.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;
@@ -97,19 +179,6 @@ bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<Pri
                  << " not need to check data type.";
     return true;
   }
-  TypeId type_id;
-  auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
-    return false;
-  }
-
-  bool is_data_type_fp32 = type_id == kNumberTypeFloat32;
-  if (!is_data_type_fp32) {
-    MS_LOG(WARNING) << " type:" << type << " node name is " << cnode->fullname_with_scope() << ", type_id " << type_id
-                    << " is not float32 and will not be quantified.";
-    return false;
-  }
 
   // Check Activation
   if (!support_activation.empty() && opt::CheckPrimitiveType(cnode, prim::kPrimActivation)) {
@@ -119,6 +188,25 @@ bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<Pri
     }
     auto activation = mindspore::ActivationType(GetValue<int64_t>(value_ptr));
     if (support_activation.find(activation) == support_activation.end()) {
+      return false;
+    }
+  }
+
+  TypeId type_id;
+  auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
+    return false;
+  }
+
+  // CheckAscendSpec
+  if (target_device_ == ASCEND) {
+    return CheckAscendSpec(manager, cnode, type_id, min_quant_weight_channel_);
+  } else {
+    bool is_data_type_fp32 = type_id == kNumberTypeFloat32;
+    if (!is_data_type_fp32) {
+      MS_LOG(WARNING) << " type:" << type << " node name is " << cnode->fullname_with_scope() << ", type_id " << type_id
+                      << " is not float32 and will not be quantified.";
       return false;
     }
   }

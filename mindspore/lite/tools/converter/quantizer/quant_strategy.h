@@ -24,18 +24,23 @@
 #include "ir/anf.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/check_convert_utils.h"
+#include "ir/manager.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore::lite::quant {
 class QuantStrategy {
  public:
-  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel, std::set<std::string> skip_node)
+  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel, std::set<std::string> skip_node,
+                TargetDevice target_device = CPU)
       : min_quant_weight_size_(min_quant_weight_size),
         min_quant_weight_channel_(min_quant_weight_channel),
-        skip_node_(std::move(skip_node)) {}
+        skip_node_(std::move(skip_node)),
+        target_device_(target_device) {}
 
   ~QuantStrategy() = default;
 
-  bool CanOpFullQuantized(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_int8_ops,
+  bool CanOpFullQuantized(const FuncGraphManagerPtr &manager, const CNodePtr &cnode,
+                          const std::set<PrimitivePtr> &support_int8_ops,
                           const std::set<PrimitivePtr> &skip_check_dtype_ops,
                           const std::set<mindspore::ActivationType> &support_activation);
 
@@ -44,9 +49,13 @@ class QuantStrategy {
   bool IsSkipOp(const std::string &skip_node_name);
 
  private:
+  bool CheckAscendSpec(const FuncGraphManagerPtr &manager, const CNodePtr &cnode, TypeId type_id,
+                       int min_quant_weight_channel);
+
   size_t min_quant_weight_size_ = 0;
   size_t min_quant_weight_channel_ = 0;
   std::set<std::string> skip_node_;
+  TargetDevice target_device_ = CPU;
 };
 }  // namespace mindspore::lite::quant
 
