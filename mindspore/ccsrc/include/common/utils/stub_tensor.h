@@ -74,7 +74,7 @@ class TensorNode : public StubNode {
 
 class SequenceNode : public StubNode {
  public:
-  explicit SequenceNode(size_t size = 0) : elements_(size) {}
+  explicit SequenceNode(size_t size = 0) : elements_(size), is_elements_build_(size > 0) {}
   MS_DECLARE_PARENT(SequenceNode, StubNode);
 
   py::object GetElements();
@@ -88,6 +88,7 @@ class SequenceNode : public StubNode {
 
  private:
   std::vector<StubNodePtr> elements_;
+  std::atomic<bool> is_elements_build_{false};
 };
 using SequenceNodePtr = std::shared_ptr<SequenceNode>;
 
