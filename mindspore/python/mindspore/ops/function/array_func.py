@@ -5925,15 +5925,15 @@ def topk(input, k, dim=None, largest=True, sorted=True):
 
 def expand(input_x, size):
     r"""
-    Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+    Returns a new tensor where the dimension of size is expanded to a larger size.
 
     Note:
-        Passing -1 as the `size` for a dimension means not changing the size of that dimension.
-        Tensor can be also expanded to a larger number of dimensions, and the new ones will be appended at the front.
-        For the new dimensions, the `size` cannot be set to -1.
+        - If the `size` for a dimension is -1, it means no change for the size of that dimension.
+        - When a Tensor is expanded to a larger number of dimensions, the new ones will be appended at
+          the front, and for the new dimensions, the `size` can not be -1.
 
     Args:
-        input_x (Tensor): The shape of tensor is (x_1, x_2, ..., x_R).
+        input_x (Tensor): A Tensor to be expanded. The shape of tensor is (x_1, x_2, ..., x_R).
         size (Tensor): The expanded shape of `input_x`.
 
     Returns:
@@ -5954,13 +5954,13 @@ def expand(input_x, size):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[2], [3], [4]]), mindspore.float32)
         >>> size = Tensor(np.array([3,4]), mindspore.int32)
         >>> y = ops.expand(input_x, size)
         >>> print(y)
-        [[1. 1. 1. 1.]
-         [2. 2. 2. 2.]
-         [3. 3. 3. 3.]]
+        [[2. 2. 2. 2.]
+         [3. 3. 3. 3.]
+         [4. 4. 4. 4.]]
     """
     expand_op = _get_cache_prim(Expand)()
     return expand_op(input_x, size)
@@ -6247,7 +6247,7 @@ def lstsq(input, A):
 
 def mvlgamma(input, p):
     r"""
-    Computes the multivariate log-gamma function with dimension `p` element-wise.
+    Returns the results of the multivariate log-gamma function with dimension `p` element-wise.
 
     The mathematical calculation process of Mvlgamma is shown as follows:
 
@@ -6258,7 +6258,7 @@ def mvlgamma(input, p):
     where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
 
     Args:
-        input (Tensor): The tensor to compute the multivariate log-gamma function,
+        input (Tensor): The input tensor of the multivariate log-gamma function,
           which must be one of the following types: float32, float64.
           The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
           And the value of any element in `input` must be greater than :math:`(p - 1) / 2`.
