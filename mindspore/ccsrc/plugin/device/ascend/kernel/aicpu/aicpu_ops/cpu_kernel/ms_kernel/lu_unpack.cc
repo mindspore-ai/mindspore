@@ -239,6 +239,32 @@ void LuUnpackCpuKernel::SetMap() {
   calls_[DT_UINT8][DT_UINT8] = LuUnpackCompute<uint8_t, uint8_t>;
 }
 
+void LuUnpackCpuKernel::SetOutputShape(CpuKernelContext &ctx) {
+  Tensor *LU_data_ = ctx.Input(0);
+  Tensor *output0 = ctx.Output(0);
+  Tensor *output1 = ctx.Output(1);
+  Tensor *output2 = ctx.Output(2);
+  std::vector<int64_t> LU_data_shape = LU_data_->GetTensorShape()->GetDimSizes();
+  std::vector<int64_t> pivots_shape = LU_data_shape;
+  std::vector<int64_t> L_shape = LU_data_shape;
+  std::vector<int64_t> U_shape = LU_data_shape;
+  int64_t Lu_data_dim1 = LU_data_shape.size() - 2;
+  int64_t Lu_data_dim2 = LU_data_shape.size() - 1;
+  if (LU_data_shape[Lu_data_dim1] != LU_data_shape[Lu_data_dim2]) {
+    pivots_shape[Lu_data_dim2] = LU_data_shape[Lu_data_dim1];
+  }
+  if (LU_data_shape[Lu_data_dim1] < LU_data_shape[Lu_data_dim2]) {
+    L_shape[Lu_data_dim2] = LU_data_shape[Lu_data_dim1];
+  }
+  if (LU_data_shape[Lu_data_dim1] > LU_data_shape[Lu_data_dim2]) {
+    U_shape[Lu_data_dim1] = LU_data_shape[Lu_data_dim2];
+  }
+
+  output0->GetTensorShape()->SetDimSizes(pivots_shape);
+  output1->GetTensorShape()->SetDimSizes(L_shape);
+  output2->GetTensorShape()->SetDimSizes(U_shape);
+}
+
 uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "LuUnpack check input and output number failed.");
   Tensor *LU_data_ = ctx.Input(0);
@@ -275,6 +301,9 @@ uint32_t LuUnpackCpuKernel::Compute(CpuKernelContext &ctx) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
+
+  SetOutputShape(ctx);
+
   DataType LU_data_dtype = static_cast<DataType>(LU_data_->GetDataType());
   bool LU_data_dtype_flag = LU_data_dtype != DT_FLOAT16 && LU_data_dtype != DT_FLOAT && LU_data_dtype != DT_DOUBLE &&
                             LU_data_dtype != DT_INT8 && LU_data_dtype != DT_UINT8 && LU_data_dtype != DT_INT16 &&
