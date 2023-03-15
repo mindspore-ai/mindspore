@@ -42,9 +42,7 @@ class Im2colCpuKernel : public CpuKernel {
   // default value for input attr
   std::vector<int64_t> strides = {1};
   std::vector<int64_t> dilations = {1};
-  std::string padding_mode = "CALCULATED";
   std::vector<int64_t> pads = {0};
-  const std::vector<std::string> padding_modes = {"SAME", "VALID", "CALCULATED"};
 
   bool is_NCHW;
   int64_t input_channel;
@@ -61,8 +59,8 @@ class Im2colCpuKernel : public CpuKernel {
   int64_t dilation_height;
   int64_t dilation_width;
   // pad distance
-  int64_t pad_height_top;
-  int64_t pad_width_left;
+  int64_t pad_height;
+  int64_t pad_width;
 };
 }  // namespace aicpu
 #endif

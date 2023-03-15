@@ -39,7 +39,6 @@ def test_im2col_vmap():
         return P.Im2Col(ksizes=3,
                         strides=1,
                         dilations=1,
-                        padding_mode="CALCULATED",
                         pads=0)(x)
 
     # once vmap
@@ -64,7 +63,6 @@ class NetIm2Col(nn.Cell):
         self.im2col = P.Im2Col(ksizes=2,
                                strides=1,
                                dilations=1,
-                               padding_mode="SAME",
                                pads=0)
 
     def construct(self, x):
@@ -87,19 +85,19 @@ def test_im2col_cpu_dynamic_shape():
     net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 9, 9)
     output = net(Tensor(x, mindspore.float32))
-    expect_shape = (1, 32, 4, 81)
+    expect_shape = (1, 32, 4, 64)
     assert output.asnumpy().shape == expect_shape
 
     x_dyn = Tensor(shape=[1, None, 9, 9], dtype=mindspore.float32)
     net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 9, 9)
     output = net(Tensor(x, mindspore.float32))
-    expect_shape = (1, 32, 4, 81)
+    expect_shape = (1, 32, 4, 64)
     assert output.asnumpy().shape == expect_shape
 
     x_dyn = Tensor(shape=[1, 32, None, None], dtype=mindspore.float32)
     net.set_inputs(x_dyn)
     x = np.random.randn(1, 32, 9, 9)
     output = net(Tensor(x, mindspore.float32))
-    expect_shape = (1, 32, 4, 81)
+    expect_shape = (1, 32, 4, 64)
     assert output.asnumpy().shape == expect_shape
