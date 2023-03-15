@@ -1155,6 +1155,7 @@ constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";
 constexpr auto kAttrForFormatChange = "for_format_change";
+constexpr auto kAttrReplaceRealKernelInBackend = "replace_real_kernel_in_backend";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
