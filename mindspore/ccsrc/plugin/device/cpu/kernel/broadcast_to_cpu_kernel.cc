@@ -99,6 +99,26 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastToCpuKernelMod:
          .AddInputAttr(kNumberTypeInt8)
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddOutputAttr(kNumberTypeInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt8)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt8),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt16)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt16),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt32)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt32),
+       &BroadcastToCpuKernelMod::LaunchKernel<int>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeUInt64)
+         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+         .AddOutputAttr(kNumberTypeUInt64),
        &BroadcastToCpuKernelMod::LaunchKernel<int>}}}};
 
 bool BroadcastToCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
