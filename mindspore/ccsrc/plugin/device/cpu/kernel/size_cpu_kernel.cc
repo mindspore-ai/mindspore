@@ -57,7 +57,7 @@ int SizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   for (size_t i = 0; i < shape_vector.size(); i++) {
     elements *= shape_vector[i];
   }
-  input_elements = elements;
+  input_elements = SizeToLong(elements);
   return KRET_OK;
 }
 
@@ -65,7 +65,7 @@ bool SizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
                               const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSizeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSizeOutputsNum, kernel_name_);
-  auto output_data = reinterpret_cast<int32_t *>(outputs[kIndex0]->addr);
+  auto output_data = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
   MS_EXCEPTION_IF_NULL(output_data);
   output_data[kIndex0] = input_elements;
   return true;
@@ -73,26 +73,26 @@ bool SizeCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 
 std::vector<KernelAttr> SizeCpuKernelMod::GetOpSupport() {
   return {
-    KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeComplex).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt4).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeGLUInt).AddOutputAttr(kNumberTypeInt32),
+    KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeComplex).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt4).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeGLUInt).AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
   };
 }
 
