@@ -1033,22 +1033,22 @@ def tile(input, reps):
     Raises:
         TypeError: If `reps` is not a tuple or its elements are not all int.
         ValueError: If the elements of `reps` are not all greater than 0.
-        ValueError: If the length of `reps` are smaller than the length of dimension in `input_x`.
+        ValueError: If the length of `reps` are smaller than the length of dimension in `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> input = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
         >>> multiples = (2, 3)
-        >>> output = ops.tile(input_x, multiples)
+        >>> output = ops.tile(input, multiples)
         >>> print(output)
         [[1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]
          [1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]]
         >>> multiples = (2, 3, 2)
-        >>> output = ops.tile(input_x, multiples)
+        >>> output = ops.tile(input, multiples)
         >>> print(output)
         [[[1. 2. 1. 2.]
           [3. 4. 3. 4.]
@@ -2259,31 +2259,31 @@ def transpose(input, input_perm):
     then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
 
     Note:
-        On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input_x)`.
+        On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input)`.
         Negative value of `input_perm` is not supported on Ascend.
 
     Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         input_perm (tuple[int]): The permutation to be converted. The elements in `input_perm` are composed of
-            the indexes of each dimension of `input_x`. The length of `input_perm` and the shape of `input_x` must be
-            the same. Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
+            the indexes of each dimension of `input`. The length of `input_perm` and the shape of `input` must be
+            the same. Only constant value is allowed. Must be in the range [-rank(input), rank(input)).
 
     Returns:
-        Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
-        shape of `input_x` and the value of `input_perm`.
+        Tensor, the type of output tensor is the same as `input` and the shape of output tensor is decided by the
+        shape of `input` and the value of `input_perm`.
 
     Raises:
         TypeError: If `input_perm` is not a tuple.
-        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_perm`.
+        ValueError: If length of shape of `input` is not equal to length of shape of `input_perm`.
         ValueError: If the same element exists in `input_perm`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+        >>> input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> input_perm = (0, 2, 1)
-        >>> output = ops.transpose(input_x, input_perm)
+        >>> output = ops.transpose(input, input_perm)
         >>> print(output)
         [[[ 1.  4.]
           [ 2.  5.]
@@ -5603,7 +5603,7 @@ def argmax(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): Input tensor.
-        dim (Union[int, None]): The dimension to reduce. If `dim` is None, the indices of the maximum
+        dim (Union[int, None], optional): The dimension to reduce. If `dim` is None, the indices of the maximum
             value within the flattened input will be returned. Default: None.
         keepdim (bool): Whether the output tensor retains the specified
             dimension. Ignored if `dim` is None. Default: False.
@@ -6322,7 +6322,7 @@ def argwhere(input):
 def column_stack(tensors):
     """
     Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
-    like ops.hstack.
+    like :func:`mindspore.ops.hstack`.
 
     Args:
         tensors (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All

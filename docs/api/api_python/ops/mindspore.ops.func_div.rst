@@ -5,10 +5,11 @@ mindspore.ops.div
 
     逐元素计算第一个输入Tensor除以第二输入Tensor的商。
 
-    `input` 和 `other` 的输入遵循隐式类型转换规则，使数据类型一致。
-    输入必须是两个Tensor，或一个Tensor和一个Scalar。
-    当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。
-    当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
+    .. note::
+        - `input` 和 `other` 的输入遵循隐式类型转换规则，使数据类型一致。
+        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
+        - 当输入是两个Tensor时，它们的数据类型不能同时为bool，它们的shape可以广播。
+        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
 
     .. math::
         out_{i} = input_{i} / other_{i}

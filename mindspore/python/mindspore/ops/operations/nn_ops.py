@@ -204,7 +204,7 @@ class AdaptiveAvgPool2D(Primitive):
 
     For AdaptiveAvgPool2D:
 
-    ..  math::
+    .. math::
         \begin{align}
         h_{start} &= floor(i * H_{in} / H_{out})\\
         h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
@@ -215,9 +215,9 @@ class AdaptiveAvgPool2D(Primitive):
         \end{align}
 
     Args:
-        - output_size (Union[int, tuple]): The target output size is H x W.
-          ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-          which means the output size is the same as the input.
+        output_size (Union[int, tuple]): The target output size is H x W.
+            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
+            which means the output size is the same as the input.
 
     Inputs:
         - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,

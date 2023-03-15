@@ -6,7 +6,6 @@ mindspore.ops.isclose
     返回一个布尔型Tensor，表示 `x1` 的每个元素与 `x2` 的对应元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 
     .. math::
-
         ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
 
     参数：

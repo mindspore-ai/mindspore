@@ -896,7 +896,8 @@ def div(input, other, *, rounding_mode=None):
           consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, dtypes of them cannot be bool at the same time, and the shapes of them
-          could be broadcast. When the inputs are one tensor and one scalar, the scalar could only be a constant.
+          could be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     .. math::
 
@@ -4100,8 +4101,7 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=True):
     is “close” to the corresponding element of `x2`. Closeness is defined as:
 
     .. math::
-
-            ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
+        ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
 
     Args:
         x1 (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
@@ -4618,7 +4618,7 @@ def histc(input, bins=100, min=0., max=0.):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        input (Tensor) - the input tensor, type support list [float16, float32, int32]
+        input (Tensor): the input tensor, type support list [float16, float32, int32]
         bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
         min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
         max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
@@ -4639,7 +4639,7 @@ def histc(input, bins=100, min=0., max=0.):
 
     Examples:
         >>> x = Tensor([1., 2, 1])
-        >>> y = histc(x, bins=4, min=0.0, max=3.0)
+        >>> y = ops.histc(x, bins=4, min=0.0, max=3.0)
         >>> print(y)
         [0 2 1 0]
     """

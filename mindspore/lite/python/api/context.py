@@ -70,8 +70,8 @@ class Context:
         cpu properties:
             - **inter_op_parallel_num** (int) - Set the parallel number of operators at runtime.
               `inter_op_parallel_num` cannot be greater than `thread_num` . Setting `inter_op_parallel_num`
-               to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
-               performance and core num.
+              to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
+              performance and core num.
             - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
 
               - "force_fp16": Force the fp16 precision mode.

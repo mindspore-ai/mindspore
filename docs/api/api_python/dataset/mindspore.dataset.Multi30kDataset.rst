@@ -1,7 +1,7 @@
 mindspore.dataset.Multi30kDataset
 =================================
 
-.. py:class:: mindspore.dataset.Multi30kDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.Multi30kDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, language_pair=None, num_shards=None, shard_id=None, cache=None)
 
     读取和解析Multi30k数据集的源文件构建数据集。
 
