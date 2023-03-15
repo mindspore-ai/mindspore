@@ -21,4 +21,4 @@ mindspore.ops.MultiMarginLoss
         - **weight** (Tensor) - 每个类别的缩放权重，shape为 :math:`(C,)`。数据类型只支持float32、float16或float64。
 
     输出：
-        - **outputs** - (Tensor)，当 `reduction` 为"none"时，shape为 :math:`(N,)`。否则，为标量。类型与 `inputs` 相同。
+        Tensor，当 `reduction` 为"none"时，shape为 :math:`(N,)`。否则，为标量。类型与 `inputs` 相同。

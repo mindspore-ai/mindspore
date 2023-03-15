@@ -8,10 +8,10 @@ mindspore.ops.trace
     .. note::
         输入必须是Tensor，复数类型暂不支持。
 
-    输入：
+    参数：
         - **input** (Tensor) - 二维Tensor。
 
-    输出：
+    返回：
         Tensor，其数据类型与 `input` 一致，含有一个元素。
 
     异常：

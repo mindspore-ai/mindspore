@@ -5519,7 +5519,7 @@ class Meshgrid(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.meshgrid` for more details.
 
     Args:
-        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
+        indexing (str, optional): Cartesian ('xy', default) or
             matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
             for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D

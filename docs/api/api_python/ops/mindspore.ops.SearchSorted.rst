@@ -8,7 +8,7 @@ mindspore.ops.SearchSorted
     更多参考详见 :func:`mindspore.ops.searchsorted`。
 
     参数：
-        - **dtype** (:class:`mindspore.dtype`， 可选) - 输出数据类型。可选值为： `mstype.int32` 和 `mstype.int64` 。默认值： `mstype.int64` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 输出数据类型。可选值为： `mstype.int32` 和 `mstype.int64` 。默认值： `mstype.int64` 。
         - **right** (bool, 可选) - 搜索策略。如果为True，则返回找到的最后一个合适的索引；如果为False，则返回第一个合适的索引。默认值：False。
 
     输入：

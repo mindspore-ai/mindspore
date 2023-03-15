@@ -28,7 +28,7 @@ mindspore.ops.ctc_loss
         - **ValueError** - `targets` 的秩不是2。
         - **ValueError** - `input_lengths` 的shape大小不等于N。N是 `log_probs` 的批次大小。
         - **ValueError** - `target_lengths` 的shape大小不等于N。N是 `log_probs` 的批次大小。
-        - **ValueError** - `targets` 、 `input_lengths` 或 `target_lengths` 的数据类型是不同的。
+        - **TypeError** - `targets` 、 `input_lengths` 或 `target_lengths` 的数据类型是不同的。
         - **ValueError** - `blank` 值不介于0到C之间。C是 `log_probs` 的分类数。
         - **RuntimeError** - `input_lengths` 的值大于T。T是 `log_probs` 的长度。
         - **RuntimeError** - `target_lengths[i]` 的取值范围不在0到 `input_length[i]` 之间。
