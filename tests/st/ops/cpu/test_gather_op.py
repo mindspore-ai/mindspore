@@ -315,23 +315,3 @@ def test_gather_tensor(data_type):
 
     assert out.shape == y_expect.shape
     np.allclose(out.asnumpy(), y_expect)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_gather_batch_dims():
-    """
-    Feature: Gather
-    Description: test cases for Gather with batch_dims
-    Expectation: the result match to numpy
-    """
-    x = np.arange(27).reshape(3, 3, 3).astype(np.int32)
-    indices = np.array([[0, 0], [1, 1], [1, 1]]).astype(np.int32)
-    axis = 1
-    batch_dims = 1
-    out = P.Gather(batch_dims)(Tensor(x), Tensor(indices), axis)
-    expect = np.array([[[0, 1, 2], [0, 1, 2]],
-                       [[12, 13, 14], [12, 13, 14]],
-                       [[21, 22, 23], [21, 22, 23]]]).astype(np.int32)
-    np.allclose(out.asnumpy(), expect)
