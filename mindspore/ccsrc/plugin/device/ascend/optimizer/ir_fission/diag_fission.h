@@ -30,8 +30,10 @@ class DiagFission : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
-  ValueNodePtr CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                const ShapeVector &ori_shape) const;
+  ValueNodePtr CreateAssistNodeForStaticShape(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                              const ShapeVector &ori_shape) const;
+  AnfNodePtr CreateAssistNodeForDynamicShape(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                             const ShapeVector &ori_shape) const;
   bool CheckOpAICoreSupported(const TypeId &type) const;
 };
 }  // namespace opt

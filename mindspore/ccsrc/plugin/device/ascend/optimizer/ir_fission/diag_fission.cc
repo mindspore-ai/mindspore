@@ -40,8 +40,8 @@ void SetAssistTensorData(void *data, const T &value, int64_t dims_size) {
 }
 }  // namespace
 
-ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                           const ShapeVector &ori_shape) const {
+ValueNodePtr DiagFission::CreateAssistNodeForStaticShape(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                         const ShapeVector &ori_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   ShapeVector output_shape(ori_shape);
@@ -77,6 +77,22 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   return assist_value_node;
 }
 
+AnfNodePtr DiagFission::CreateAssistNodeForDynamicShape(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                                        const ShapeVector &ori_shape) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("DynamicShape")),
+                                                  node->inputs()[kIndex1]};
+  auto shape_node = NewCNode(dynamic_shape_inputs, func_graph);
+  MS_EXCEPTION_IF_NULL(shape_node);
+  ShapeVector tensor_shp({static_cast<int64_t>(ori_shape.size())});
+  auto dynamic_shape_abstract =
+    std::make_shared<abstract::AbstractTensor>(kInt64, std::make_shared<abstract::Shape>(tensor_shp));
+  MS_EXCEPTION_IF_NULL(dynamic_shape_abstract);
+  shape_node->set_abstract(dynamic_shape_abstract);
+  return shape_node;
+}
+
 const BaseRef DiagFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto diag_prim = std::make_shared<Primitive>(prim::kPrimDiagD->name());
@@ -86,7 +102,6 @@ const BaseRef DiagFission::DefinePattern() const {
 const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_graph = graph->cast<KernelGraphPtr>();
   auto diag_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(diag_cnode);
 
@@ -95,29 +110,29 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
     MS_LOG(INFO) << "Diag fission failed for aicore, check to aicpu.";
     return nullptr;
   }
-  if (common::AnfAlgo::IsDynamicShape(diag_cnode)) {
-    MS_LOG(EXCEPTION) << "Diag don't support dynamic shape, node: " << diag_cnode->fullname_with_scope();
-  }
+
   if (diag_cnode->size() != kDiagInputNum + 1) {
     MS_LOG(INFO) << "The node " << diag_cnode->DebugString() << " is not equal to " << kDiagInputNum << " inputs";
     return nullptr;
   }
+
   auto input_shape = common::AnfAlgo::GetOutputInferShape(diag_cnode->inputs()[kIndex1], 0);
   if (input_shape.size() > kDiagInputMaxDim) {
     MS_EXCEPTION(ValueError) << "For Diag, rank of input should be less than 5, but got: " << input_shape.size();
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiagD->name()))};
-  auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
   (void)new_inputs.insert(new_inputs.cend(), diag_cnode->inputs().cbegin() + 1, diag_cnode->inputs().cend());
+  AnfNodePtr assist_const = nullptr;
+  if (common::AnfAlgo::IsDynamicShape(diag_cnode)) {
+    assist_const = CreateAssistNodeForDynamicShape(graph, diag_cnode, input_shape);
+  } else {
+    assist_const = CreateAssistNodeForStaticShape(graph, diag_cnode, input_shape);
+  }
   new_inputs.push_back(assist_const);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(diag_cnode->abstract());
   new_cnode->set_scope(diag_cnode->scope());
-  if (kernel_graph != nullptr) {
-    kernel_graph->AddValueNodeToGraph(assist_const);
-    MS_LOG(INFO) << "Add assist tensor for diag op success.";
-  }
   return new_cnode;
 }
 
