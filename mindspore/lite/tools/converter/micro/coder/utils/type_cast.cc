@@ -90,6 +90,8 @@ std::string GetTensorDataType(TypeId type) {
     case kNumberTypeFloat:
     case kNumberTypeFloat32:
       return "float ";
+    case kNumberTypeFloat16:
+      return "uint16_t ";
     case kNumberTypeInt8:
       return "int8_t ";
     case kNumberTypeInt16:

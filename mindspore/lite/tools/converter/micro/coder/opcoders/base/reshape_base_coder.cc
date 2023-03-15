@@ -42,6 +42,7 @@ int ReshapeBaseCoder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeBaseCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat16, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Flatten, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Flatten, CPUOpCoderCreator<ReshapeBaseCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Flatten, CPUOpCoderCreator<ReshapeBaseCoder>)
