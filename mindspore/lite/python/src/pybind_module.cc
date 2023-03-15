@@ -22,6 +22,9 @@ namespace py = pybind11;
 void ContextPyBind(const py::module &m);
 void ConverterPyBind(const py::module &m);
 void ModelPyBind(const py::module &m);
+#ifdef MSLITE_ENABLE_CLOUD_INFERENCE
+void LiteInferPyBind(const py::module &m);
+#endif
 void ModelParallelRunnerPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
 MSTensor create_tensor();
@@ -33,6 +36,9 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   ConverterPyBind(m);
 #endif
   ModelPyBind(m);
+#ifdef MSLITE_ENABLE_CLOUD_INFERENCE
+  LiteInferPyBind(m);
+#endif
   ModelParallelRunnerPyBind(m);
   TensorPyBind(m);
   m.def("create_tensor", &create_tensor);

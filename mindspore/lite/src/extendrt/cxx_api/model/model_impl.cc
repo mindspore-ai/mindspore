@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <set>
 #include <shared_mutex>
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
@@ -266,6 +267,49 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
       MS_LOG(ERROR) << "Create func graph failed from data flow graph.";
       return kLiteError;
     }
+  }
+  ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "compile graph failed.";
+    return ret;
+  }
+  std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
+  return FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
+}
+
+Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
+  if (session_) {
+    MS_LOG(ERROR) << "Model has been called Build";
+    return kLiteError;
+  }
+  SetMsContext();
+  auto thread_num = model_context->GetThreadNum();
+  if (thread_num < 0) {
+    MS_LOG(ERROR) << "Invalid thread num " << thread_num;
+    return kLiteError;
+  }
+  session_ = InferSession::CreateSession(model_context, config_info_);
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Create session failed.";
+    return kLiteError;
+  }
+  auto ret = session_->Init(model_context);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
+    return ret;
+  }
+
+  // get func_graph
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Input func graph is nullptr";
+    return kLiteError;
+  }
+  // convert and optimize func graph to infer
+  ret = ConvertGraphOnline(func_graph, model_context);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "convert graph failed.";
+    return ret;
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   if (ret != kSuccess) {
