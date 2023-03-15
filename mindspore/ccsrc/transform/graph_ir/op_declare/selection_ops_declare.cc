@@ -198,6 +198,12 @@ ATTR_MAP(StridedSliceV2) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64
 OUTPUT_MAP(StridedSliceV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSliceV2, kNameStridedSliceV2, ADPT_DESC(StridedSliceV2))
 
+// SegmentSum
+INPUT_MAP(SegmentSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
+ATTR_MAP(SegmentSum) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SegmentSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SegmentSum, kSegmentSumOpName, ADPT_DESC(SegmentSum))
+
 // UnsortedSegmentSum
 INPUT_MAP(UnsortedSegmentSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};
 ATTR_INPUT_MAP(UnsortedSegmentSum) = {{"num_segments", "num_segments"}};
