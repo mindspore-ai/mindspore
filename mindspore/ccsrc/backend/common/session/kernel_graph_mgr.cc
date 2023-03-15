@@ -254,6 +254,8 @@ void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, con
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->isa<abstract::NoShape>()) {
       abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(type));
+    } else if (shape->isa<abstract::DynamicSequenceShape>()) {
+      return;
     } else {
       abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape->cast<abstract::BaseShapePtr>());
     }
