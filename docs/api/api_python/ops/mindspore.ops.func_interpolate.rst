@@ -6,11 +6,11 @@ mindspore.ops.interpolate
     按照给定的 `size` 或 `scale_factor` 根据 `mode` 设置的插值方式，对输入 `input` 调整大小。
 
     参数：
-        - **input** (Tensor) - 被调整大小的Tensor。输入向量必须为3维，4维或5维，形状为 `(batch, channels, [optional depth], [optional height], width)` ，数据类型为float。
+        - **input** (Tensor) - 被调整大小的Tensor。输入向量必须为三维，四维或五维，shape为 :math:`(N, C, [optional D], [optional H], W)` ，数据类型为float。
         - **size** (Union[int, tuple[int], list[int]], 可选) - 目标大小。如果 `size` 为tuple或list，那么其长度应该和 `input` 维度相同。 `size` 和 `scale_factor` 同时只能指定一个。默认值：None。
         - **scale_factor** (Union[float, tuple[float], list[float]]，可选) - 每个维度的缩放系数。 `scales` 中的数全是正数。 `size` 和 `scale_factor` 同时只能指定一个。默认值：None。
-        - **mode** (str) - 采样算法。以下采样方式的一种，'nearest', 'linear' (仅三维)，'bilinear' (仅四维)，'bicubic' (仅四维)，'trilinear' (仅五维)，'area'，'nearest-exact'(三维和四维)。默认值：'nearest'。
-        - **align_corners** (bool) - 如果为True，缩放比例系数使用 `(new\_height - 1) / (height - 1)` 计算，此种方式调整的数据与原始数据边角对齐。如果为False，缩放系数通过 `new\_height / height` 计算。
+        - **mode** (str) - 采样算法。以下采样方式的一种，'nearest'(三维和四维)， 'linear' (仅三维)，'bilinear' (仅四维)，'bicubic' (仅四维)，'area'，'nearest-exact'(三维和四维)。默认值：'nearest'。
+        - **align_corners** (bool) - 如果为True，缩放比例系数使用 :math:`(new\_height - 1) / (height - 1)` 计算，此种方式调整的数据与原始数据边角对齐。如果为False，缩放系数通过 :math:`new\_height / height` 计算。
 
           .. code-block::
 
@@ -18,8 +18,10 @@ mindspore.ops.interpolate
 
               old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' 为 False
 
-          此选项只对'linear'、'bilinear'、'bicubic'和'trilinear'模式有效。默认值：False。
+          此选项只对'linear'、'bilinear'和'bicubic'模式有效。默认值：False。
         - **recompute_scale_factor** (bool, 可选) - 重计算 `scale_factor` 。如果为True，会使用参数 `scale_factor` 计算参数 `size`，最终使用 `size` 的值进行缩放。如果为False，将使用 `size` 或 `scale_factor` 直接进行插值。默认值：None。
+
+    .. note:: 'nearest-exact'模式与scikit-image和PIL的最近邻插值算法相同。'nearest'模式与OpenCV的INTER_NEAREST插值算法结果相同。
 
     参数支持列表和支持平台：
 
@@ -30,13 +32,9 @@ mindspore.ops.interpolate
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    |               | 5         | \-            | √            | GPU,CPU        |
-    +---------------+-----------+---------------+--------------+----------------+
     | linear        | 3         | √             | ×            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
     | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
-    +---------------+-----------+---------------+--------------+----------------+
-    | trilinear     | 5         | √             | √            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
     | bicubic       | 4         | √             | ×            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
