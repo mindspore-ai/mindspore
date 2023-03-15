@@ -1996,7 +1996,7 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             If size is a tuple or list, size must have the same dimensions as input.
             One and only one of size and scale_factor can be set to None. Default: None.
         mode (str): The sampling algorithm.
-            One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only), 'trilinear' (5D only),
+            One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
             'area', 'nearest-exact'(3D and 4D). Default: 'nearest'.
         align_corners (bool): If True, rescale input by `(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by `new\_height / height`.
@@ -2007,7 +2007,7 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
                 old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-            This is only valid for 'linear', 'bilinear', 'bicubic', or 'trilinear' modes. Default: False.
+            This is only valid for 'linear', 'bilinear', or 'bicubic' modes. Default: False.
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
@@ -2022,13 +2022,9 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
-    |               | 5         | \-            | √            | GPU,CPU        |
-    +---------------+-----------+---------------+--------------+----------------+
     | linear        | 3         | √             | ×            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
     | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
-    +---------------+-----------+---------------+--------------+----------------+
-    | trilinear     | 5         | √             | √            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
     | bicubic       | 4         | √             | ×            | GPU,CPU        |
     +---------------+-----------+---------------+--------------+----------------+
@@ -2143,11 +2139,10 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
     # support_dict "mode":{dim:{"scale_factor", "align_corners"}}
     supported_dict = {
-        "nearest": {3: (), 4: (), 5: ("scale_factor",)},
+        "nearest": {3: (), 4: ()},
         "linear": {3: ("align_corners",)},
         "bilinear": {4: ("align_corners",)},
         "bicubic": {4: ("align_corners",)},
-        "trilinear": {5: ("scale_factor", "align_corners")},
         "area": {3: ("scale_factor",), 4: ("scale_factor",), 5: ("scale_factor",)},
         "nearest-exact": {3: (), 4: ()},
     }
@@ -2229,6 +2224,16 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     else:
         align_corners = False
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
+
+
+def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
+    r"""
+    Alias for :func:`mindspore.ops.interpolate` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return interpolate(input, size, scale_factor, mode, align_corners, recompute_scale_factor)
 
 
 def softsign(x):
@@ -6189,6 +6194,7 @@ __all__ = [
     'flipud',
     'intopk',
     'interpolate',
+    'upsample',
     'log_softmax',
     'mish',
     'lrn',

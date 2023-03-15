@@ -156,6 +156,7 @@ Image Functions
     mindspore.ops.padding
     mindspore.ops.pixel_shuffle
     mindspore.ops.pixel_unshuffle
+    mindspore.ops.upsample
 
 Mathematical Functions
 ----------------------
