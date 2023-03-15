@@ -60,8 +60,15 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (IsDynamic(output_size_shape)) {
+    std::vector<int64_t> out_shape = x_shape;
+    for (int64_t i = out_shape.size() - kOutputSizeNumElem; i < SizeToLong(out_shape.size()); ++i) {
+      out_shape[i] = abstract::Shape::kShapeDimAny;
+    }
+    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
+  }
   const int64_t input_num_dims = SizeToLong(x_shape.size());
-
   const int64_t output_size_dim = SizeToLong(output_size_shape.size());
   CheckAndConvertUtils::CheckInRange("rank of x", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5}, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of output_size", output_size_dim, kEqual, 1, prim_name);

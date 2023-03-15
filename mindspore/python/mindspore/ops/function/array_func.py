@@ -4961,11 +4961,10 @@ def masked_fill(input_x, mask, value):
         >>> print(output)
         [0.5 0.5 3.  0.5]
     """
-    _fill = _get_cache_prim(P.FillV2)()
     if isinstance(value, (float, int)) and isinstance(input_x, Tensor):
         value = scalar_to_tensor_(value, input_x.dtype)
-    masked_value = _fill(input_x.shape, value)
-    return select(mask, masked_value, input_x)
+    masked_fill_ = _get_cache_prim(P.MaskedFill)()
+    return masked_fill_(input_x, mask, value)
 
 
 def diag(input):

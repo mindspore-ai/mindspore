@@ -37,6 +37,9 @@ MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeFloat64)
 MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
                       TensorShapeGpuKernelMod, bool, int32_t)
 
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, int16_t, int64_t)
+
 MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
                       TensorShapeGpuKernelMod, int32_t, int64_t)
 
@@ -72,6 +75,9 @@ MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat64
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
                       TensorShapeGpuKernelMod, bool, int32_t)
+
+MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, int16_t, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
                       TensorShapeGpuKernelMod, int32_t, int64_t)
