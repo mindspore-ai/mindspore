@@ -1328,17 +1328,13 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   // set all gather type
   MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  std::string op_name;
-  if (root->has_flag("training")) {
+  std::string op_name = ALL_GATHER;
+  if (root->has_flag(kTraining)) {
     if (grad_accumulation_step > 1) {
       op_name = MINI_STEP_ALL_GATHER;
     } else if (split_stage_num > 1 && ParameterRequireGrad(parameter)) {
       op_name = MICRO_STEP_ALL_GATHER;
-    } else {
-      op_name = ALL_GATHER;
     }
-  } else {
-    op_name = ALL_GATHER;
   }
 
   // insert all gather
@@ -1350,13 +1346,10 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
     auto cnode = param_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->in_forward_flag() && !IsPrimitiveCNode(cnode, prim::kPrimReceive) &&
-        !IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
+        !(IsPrimitiveCNode(cnode, prim::kPrimDepend) && param_pair.second == INDEX_TWO)) {
       OperatorInfoPtr distribute_operator = cnode->user_data<OperatorInfo>();
       if (distribute_operator == nullptr) {
         MS_LOG(DEBUG) << "Parallel optimizer: " << GetPrimName(cnode) << " 's OperatorInfoPtr is nullptr";
-      } else if (IntToSize(param_pair.second - 1) >= distribute_operator->inputs_tensor_info().size()) {
-        MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (param_pair.second - 1) << ", vector size is  "
-                          << distribute_operator->inputs_tensor_info().size();
       }
 
       if (insert_flag) {
