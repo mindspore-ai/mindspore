@@ -7753,10 +7753,10 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
             False, then the returned P is None. Default: True.
 
     Returns:
-        pivots (Tensor) - The permutation matrix of LU factorization. The shape is `[*, M, M]`, the dtype is
-        same as `LU_data`.
-        L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
-        U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
+        - pivots(Tensor) - The permutation matrix of LU factorization.
+          The shape is `[*, M, M]`, the dtype is same as `LU_data`.
+        - L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
+        - U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
 
     Raises:
         TypeError: If the dtype of `LU_data` is not one of the following: int8, uint8, int16, int32,
