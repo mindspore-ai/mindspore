@@ -6,7 +6,7 @@
     对Tensor进行逐元素的减法。
 
     .. math::
-        output[i] = input[i] - alpha * y[i]
+        output[i] = input[i] - alpha * other[i]
 
     参数：
         - **input** (Union[Tensor, number.Number]) - 参与减法的Tensor或者Number。
