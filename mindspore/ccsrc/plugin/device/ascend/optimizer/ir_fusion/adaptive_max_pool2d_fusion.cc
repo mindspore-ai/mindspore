@@ -129,7 +129,7 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   int64_t width = input_shape.at(kDim3);
   int64_t output_h = (output_size[kDim0] == -1) ? height : output_size[kDim0];
   int64_t output_w = (output_size[kDim1] == -1) ? width : output_size[kDim1];
-  if (output_h <= 0 || output_w <= 0) {
+  if ((output_h != -1 && output_h <= 0) || (output_w != -1 && output_w <= 0)) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size value is invalid.";
   }
   std::vector<int64_t> new_output_size{output_h, output_w};

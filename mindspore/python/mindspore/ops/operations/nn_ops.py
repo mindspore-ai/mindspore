@@ -3682,6 +3682,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         Deprecated
     """
 
+    @deprecated("2.0", "ops.ResizeBilinear", False)
     @prim_attr_register
     def __init__(self, size, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""

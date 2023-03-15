@@ -552,6 +552,8 @@ class MIND_API AGSspaddmmInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SspaddmmInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0, 1, 2, 3, 4, 5, 7, 8}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(Sspaddmm, prim::kPrimSspaddmm, AGSspaddmmInfer, false);
