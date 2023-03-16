@@ -476,14 +476,14 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
   MS_EXCEPTION_IF_NULL(node);
   // The single op does not support the backoff ability.
   if (!AnfAlgo::IsEnableKernelSelectBackoff() || (graph == nullptr) || graph->is_from_single_op()) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first;
+    MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
   }
 
   const auto &kernel_name = common::AnfAlgo::GetCNodeName(node);
   const auto &kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   // CPU also doesn't support the kernel.
   if (kernel_attrs.empty() || kernel::IsKernelObjectTypeNotSupportedError(failure_info.first)) {
-    MS_EXCEPTION(failure_info.second) << failure_info.first;
+    MS_EXCEPTION(failure_info.second) << "#umsg#Kernel select failed:#umsg#" << failure_info.first;
   }
 
   MS_LOG(INFO) << "GPU doesn't support the kernel " << kernel_name << " and will try to backoff on CPU.";
