@@ -296,6 +296,10 @@ void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_i
     MS_LOG(ERROR) << "[KernelDumper] Call rt api rtCpuKernelLaunch Failed, rt_ret = " << rt_ret;
     return;
   }
+  auto rt_sync = rtStreamSynchronize(stream_);
+  if (rt_sync != RT_ERROR_NONE && rt_sync != ACL_ERROR_RT_AICORE_OVER_FLOW) {
+    MS_LOG(WARNING) << "[KernelDumper] Call rt api rtStreamSynchronize Failed, rt_sync = " << rt_sync;
+  }
 }
 
 void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) {
@@ -414,7 +418,11 @@ void KernelDumper::DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::
 
     // device  address data size
     auto address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_index);
-    MS_EXCEPTION_IF_NULL(address);
+    if (address == nullptr) {
+      MS_LOG(INFO) << "[KernelDumper] The output address prev of node: " << kernel->fullname_with_scope()
+                   << " is null.";
+      return;
+    }
     input.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address->GetPtr())));
     input.set_size(address->GetSize());
     MS_EXCEPTION_IF_NULL(task->mutable_input());
