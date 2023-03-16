@@ -46,8 +46,8 @@ mindspore.set_auto_parallel_context
 
         - **auto_parallel_search_mode** (str) - search_mode参数的兼容接口。将在后续的版本中删除。
         - **parameter_broadcast** (bool) - 表示在训练前是否广播参数。在训练之前，为了使所有设备的网络初始化参数值相同，请将设备0上的参数广播到其他设备。不同并行模式下的参数广播不同。在data_parallel模式下，除layerwise_parallel属性为True的参数外，所有参数都会被广播。在hybrid_parallel、semi_auto_parallel和auto_parallel模式下，分段参数不参与广播。默认值：False。
-        - **strategy_ckpt_load_file** (str) - 表示用于加载并行策略checkpoint的路径。默认值： ''。
-        - **strategy_ckpt_save_file** (str) - 表示用于保存并行策略checkpoint的路径。默认值： ''。
+        - **strategy_ckpt_load_file** (str) - 表示用于加载并行策略checkpoint的路径。目前不建议使用该参数，建议使用strategy_ckpt_config来替代它。默认值： ''。
+        - **strategy_ckpt_save_file** (str) - 表示用于保存并行策略checkpoint的路径。目前不建议使用该参数，建议使用strategy_ckpt_config来替代它。默认值： ''。
         - **full_batch** (bool) - 如果在auto_parallel模式下加载整个batch数据集，则此参数应设置为True。默认值：False。目前不建议使用该接口，建议使用dataset_strategy来替换它。
         - **dataset_strategy** (Union[str, tuple]) - 表示数据集分片策略。默认值：data_parallel。dataset_strategy="data_parallel"等于full_batch=False，dataset_strategy="full_batch"等于full_batch=True。对于在静态图模式下执行并且通过模型并列策略加载到网络的数据集，如ds_stra ((1, 8)、(1, 8))，需要使用set_auto_parallel_context(dataset_strategy=ds_stra)。
         - **enable_parallel_optimizer** (bool) - 这是一个开发中的特性，它可以为数据并行训练对权重更新计算进行分片，以节省时间和内存。目前，自动和半自动并行模式支持Ascend和GPU中的所有优化器。数据并行模式仅支持Ascend中的 `Lamb` 和 `AdamWeightDecay` 。默认值：False。
