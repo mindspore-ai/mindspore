@@ -70,11 +70,13 @@ bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   for (size_t i = 0; i < inputs.size(); ++i) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
     auto input_size = inputs[i]->size;
-    auto cp_ret = memcpy_s(output_addr + offset, input_size, input_addr, input_size);
-    if (cp_ret != EOK) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    if (input_size != 0) {
+      auto cp_ret = memcpy_s(output_addr + offset, input_size, input_addr, input_size);
+      if (cp_ret != EOK) {
+        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+      }
+      offset += (input_size / sizeof(T));
     }
-    offset += (input_size / sizeof(T));
   }
   return true;
 }

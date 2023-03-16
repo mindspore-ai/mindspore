@@ -68,7 +68,7 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   if (*index < 0) {
     *index += len;
   }
-  if (tuple_shape_.size() == 1 || tuple_shape_[1] == 0) {
+  if (tuple_shape_.size() == 1) {
     *output_addr = input_addr[*index];
     return true;
   }

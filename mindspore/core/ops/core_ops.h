@@ -278,6 +278,8 @@ constexpr auto kSearchSorted = "SearchSorted";
 
 // Sequence operation
 constexpr auto kListAppend = "ListAppend";
+constexpr auto kListInsert = "ListInsert";
+constexpr auto kListAppendAndInsertGrad = "ListAppendAndInsertGrad";
 constexpr auto kSequenceAdd = "SequenceAdd";
 constexpr auto kSequenceCount = "SequenceCount";
 constexpr auto kSequenceIndex = "SequenceIndex";
@@ -1634,6 +1636,8 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceLen, std::make_shared<Primitive>("sequence_l
 
 // Sequence operations.
 GVAR_DEF(PrimitivePtr, kPrimListAppend, std::make_shared<Primitive>(kListAppend));
+GVAR_DEF(PrimitivePtr, kPrimListInsert, std::make_shared<Primitive>(kListInsert));
+GVAR_DEF(PrimitivePtr, kPrimListAppendAndInsertGrad, std::make_shared<Primitive>(kListAppendAndInsertGrad));
 GVAR_DEF(PrimitivePtr, kPrimSequenceAdd, std::make_shared<Primitive>(kSequenceAdd));
 GVAR_DEF(PrimitivePtr, kPrimSequenceCount, std::make_shared<Primitive>(kSequenceCount));
 GVAR_DEF(PrimitivePtr, kPrimSequenceIndex, std::make_shared<Primitive>(kSequenceIndex));

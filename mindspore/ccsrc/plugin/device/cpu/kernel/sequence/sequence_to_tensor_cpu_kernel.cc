@@ -68,6 +68,10 @@ int SeqToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (ret != 0) {
     return ret;
   }
+  auto tuple_shape = inputs[0]->GetShapeVector();
+  if (tuple_shape.size() != 1 && !tuple_shape.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input_x element must be scalar or noshape tensor";
+  }
   return KRET_OK;
 }
 

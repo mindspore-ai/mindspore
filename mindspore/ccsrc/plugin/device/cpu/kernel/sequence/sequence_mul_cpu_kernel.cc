@@ -63,13 +63,15 @@ bool SequenceMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
   auto input_x_size = inputs[0]->size;
-  size_t offset = 0;
-  for (auto i = 0; i < input_y_addr[0]; ++i) {
-    auto cp_ret = memcpy_s(output_addr + offset, input_x_size, input_x_addr, input_x_size);
-    if (cp_ret != EOK) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  if (input_x_size != 0) {
+    size_t offset = 0;
+    for (auto i = 0; i < input_y_addr[0]; ++i) {
+      auto cp_ret = memcpy_s(output_addr + offset, input_x_size, input_x_addr, input_x_size);
+      if (cp_ret != EOK) {
+        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+      }
+      offset += (input_x_size / sizeof(T));
     }
-    offset += (input_x_size / sizeof(T));
   }
   return true;
 }
