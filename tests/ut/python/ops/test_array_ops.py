@@ -405,17 +405,6 @@ class MaskedFillFunc(Cell):
         return y
 
 
-class CountNonZeroFunc(Cell):
-    def __init__(self, dims):
-        super(CountNonZeroFunc, self).__init__()
-        self.countnonzero_ = ops.function.array_func.count_nonzero
-        self.dims = dims
-
-    def construct(self, x):
-        y = self.countnonzero_(x, self.dims)
-        return y
-
-
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -486,10 +475,6 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32),
                         Tensor(np.array([[True, True, False]]), mstype.bool_),
                         Tensor(5.0, mstype.float32)],
-        'desc_bprop': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32)]}),
-    ('CountNonZero', {
-        'block': CountNonZeroFunc(dims=()),
-        'desc_inputs': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32)],
         'desc_bprop': [Tensor(np.array([[3.0, 2.0, 1.0]]), mstype.float32)]}),
     ('TensorShapeNet', {'block': TensorShapeNet(), 'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]})
 ]

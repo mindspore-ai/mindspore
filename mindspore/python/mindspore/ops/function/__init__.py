@@ -154,7 +154,6 @@ from .array_func import (
     moveaxis,
     searchsorted,
     aminmax,
-    count_nonzero,
     sort
 )
 from .parameter_func import (
