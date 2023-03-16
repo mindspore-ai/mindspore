@@ -37,6 +37,7 @@
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -63,19 +64,17 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     (void)CheckAndConvertUtils::CheckInteger("input1 num", size_shape[0], kEqual, size_num, primitive->name());
   }
 
-  if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto input1_value = input_args[1]->BuildValue();
-    if (!input1_value->isa<tensor::Tensor>()) {
-      MS_LOG(EXCEPTION) << "For ResizeArea, the inputs[1] must be a tensor, but got: " << input1_value->ToString()
-                        << ".";
+  auto input_size_value = input_args[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(input_size_value);
+  auto input_size = GetShapeValue(primitive, input_args[1]);
+  if (IsValueKnown(input_size_value)) {
+    if (std::any_of(input_size.begin(), input_size.end(), [](int64_t x) { return x <= 0; })) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'size' should only contain positive number.";
     }
-    auto input1_shape_ptr = static_cast<int32_t *>(input1_value->cast<tensor::TensorPtr>()->data_c());
-    if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size must be positive "
-                               << ", but got " << input1_shape_ptr[0] << " , " << input1_shape_ptr[1];
-    }
-    output_shape[kInputIndex1] = input1_shape_ptr[kInputIndex0];
-    output_shape[kInputIndex2] = input1_shape_ptr[kInputIndex1];
+  }
+  if (!IsDynamic(input_size)) {
+    output_shape[kInputIndex1] = input_size[kInputIndex0];
+    output_shape[kInputIndex2] = input_size[kInputIndex1];
   }
   return std::make_shared<abstract::Shape>(output_shape);
 }

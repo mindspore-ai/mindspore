@@ -24,6 +24,10 @@
 namespace {
 constexpr uint32_t kInputNum = 2;
 constexpr uint32_t kOutputNum = 1;
+constexpr uint32_t kIndex0 = 0;
+constexpr uint32_t kIndex2 = 2;
+constexpr uint32_t kIndex3 = 3;
+constexpr uint32_t kIndex4 = 4;
 const int64_t kParallelDataNum = 1024 * 1024;
 const char *kResizeArea = "ResizeArea";
 
@@ -37,15 +41,26 @@ const char *kResizeArea = "ResizeArea";
     break;                                                          \
   }
 
-}  // namespace
-
-namespace aicpu {
-
 inline int64_t Bound(int64_t val, int64_t limit) { return std::min(limit - 1, std::max(int64_t{0}, val)); }
 
 float Scaling_(size_t in_size, size_t out_size, bool align_corners) {
   return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
                                          : in_size / static_cast<float>(out_size);
+}
+}  // namespace
+
+namespace aicpu {
+void ResizeAreaSt::CalSt(CpuKernelContext &ctx, std::vector<int64_t> &in_shape1, bool align_corners) {
+  Tensor *input_tensor2 = ctx.Input(1);
+  auto outsize = reinterpret_cast<int32_t *>(input_tensor2->GetData());
+  batch_size = in_shape1[0];
+  channels = in_shape1[kIndex3];
+  in_height = in_shape1[1];
+  in_width = in_shape1[kIndex2];
+  out_height = outsize[0];
+  out_width = outsize[1];
+  height_scale = Scaling_(in_height, out_height, align_corners);
+  width_scale = Scaling_(in_width, out_width, align_corners);
 }
 
 uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -53,7 +68,7 @@ uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = GetInputAndCheck(ctx);
   KERNEL_CHECK_FALSE(res == KERNEL_STATUS_OK, res, "GetInputAndCheck failed.");
   ResizeAreaSt st;
-  st.CalSt(ctx);
+  st.CalSt(ctx, in_shape1, align_corners);
   // compute the weight of pixels in rows
   std::vector<ResizeAreaCachedInterpolation> x_interps(st.out_width);
   for (size_t x = 0; x < st.out_width; x++) {
@@ -69,8 +84,8 @@ uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
     x_interp.end_minus_one_scale = (v + 1 > transit_x1 ? transit_x1 - v : 1.0);
   }
   auto channels_num = -1;
-  if (st.channels == 3) {
-    channels_num = 3;
+  if (st.channels == kIndex3) {
+    channels_num = kIndex3;
   }
 
   switch (dtype_) {
@@ -131,7 +146,7 @@ uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<Resi
           }
           float *output_patch_ptr =
             output_ptr + (b * st.out_height * st.out_width * st.channels + y * st.out_width * st.channels);
-          if (kKnownNumChannels == 3) {
+          if (kKnownNumChannels == kIndex3) {
             for (size_t x = 0; x < st.out_width; ++x) {
               const ResizeAreaCachedInterpolation &x_interp = x_interps[x];
               if (x_interp.needs_bounding) {
@@ -139,7 +154,7 @@ uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<Resi
               } else {
                 ComputePatchSumOf3Channels<false>(scale, st, y_ptrs, y_scales, x_interp, output_patch_ptr);
               }
-              output_patch_ptr += 3;
+              output_patch_ptr += kIndex3;
             }
           } else {
             for (size_t x = 0; x < st.out_width; ++x) {
@@ -180,7 +195,7 @@ uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<Resi
           y_ptrs.push_back(input_ptr + (b * st.in_height * st.in_width * st.channels +
                                         Bound(i, st.in_height) * st.in_width * st.channels));
         }
-        if (kKnownNumChannels == 3) {
+        if (kKnownNumChannels == kIndex3) {
           for (size_t x = 0; x < st.out_width; ++x) {
             const ResizeAreaCachedInterpolation &x_interp = x_interps[x];
             if (x_interp.needs_bounding) {
@@ -188,7 +203,7 @@ uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<Resi
             } else {
               ComputePatchSumOf3Channels<false>(scale, st, y_ptrs, y_scales, x_interp, output_ptr);
             }
-            output_ptr += 3;
+            output_ptr += kIndex3;
           }
         } else {
           for (size_t x = 0; x < st.out_width; ++x) {
@@ -204,6 +219,7 @@ uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st, std::vector<Resi
       }
     }
   }
+  ctx.Output(0)->GetTensorShape()->SetDimSizes(out_shape);
   return KERNEL_STATUS_OK;
 }
 // compute the value of the specific pxiel when the num of channels is 3
@@ -224,20 +240,20 @@ void ResizeAreaCpuKernel::ComputePatchSumOf3Channels(float scale, const ResizeAr
     int64_t offset = 3 * BOUND_IF_NEEDED(x_interp.start, st.in_width);
     float sum_y_0 = static_cast<float>(ptr[offset + 0]) * scale_x;
     float sum_y_1 = static_cast<float>(ptr[offset + 1]) * scale_x;
-    float sum_y_2 = static_cast<float>(ptr[offset + 2]) * scale_x;
+    float sum_y_2 = static_cast<float>(ptr[offset + kIndex2]) * scale_x;
 
     if (x_interp.start + 1 != x_interp.end) {
       for (size_t x = x_interp.start + 1; x < x_interp.end - 1; ++x) {
         int64_t offset = 3 * BOUND_IF_NEEDED(x, st.in_width);
         sum_y_0 += static_cast<float>(ptr[offset + 0]);
         sum_y_1 += static_cast<float>(ptr[offset + 1]);
-        sum_y_2 += static_cast<float>(ptr[offset + 2]);
+        sum_y_2 += static_cast<float>(ptr[offset + kIndex2]);
       }
       scale_x = x_interp.end_minus_one_scale;
       offset = 3 * BOUND_IF_NEEDED(x_interp.end - 1, st.in_width);
       sum_y_0 += static_cast<float>(ptr[offset + 0]) * scale_x;
       sum_y_1 += static_cast<float>(ptr[offset + 1]) * scale_x;
-      sum_y_2 += static_cast<float>(ptr[offset + 2]) * scale_x;
+      sum_y_2 += static_cast<float>(ptr[offset + kIndex2]) * scale_x;
     }
     sum_0 += sum_y_0 * y_scales[i];
     sum_1 += sum_y_1 * y_scales[i];
@@ -246,7 +262,7 @@ void ResizeAreaCpuKernel::ComputePatchSumOf3Channels(float scale, const ResizeAr
 
   output_patch_ptr[0] = sum_0 * scale;
   output_patch_ptr[1] = sum_1 * scale;
-  output_patch_ptr[2] = sum_2 * scale;
+  output_patch_ptr[kIndex2] = sum_2 * scale;
 
 #undef BOUND_IF_NEEDED
 }
@@ -285,21 +301,20 @@ uint32_t ResizeAreaCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 
   Tensor *input_tensor1 = ctx.Input(0);
   Tensor *input_tensor2 = ctx.Input(1);
-  Tensor *output_tensor = ctx.Output(0);
   auto outsize = reinterpret_cast<int32_t *>(input_tensor2->GetData());
   int32_t out_height = static_cast<int32_t>(outsize[0]);
   int32_t out_width = static_cast<int32_t>(outsize[1]);
 
   in_shape1 = input_tensor1->GetTensorShape()->GetDimSizes();
   in_shape2 = input_tensor2->GetTensorShape()->GetDimSizes();
-  out_shape = output_tensor->GetTensorShape()->GetDimSizes();
+  out_shape = std::vector<int64_t>{in_shape1[kIndex0], outsize[0], outsize[1], in_shape1[kIndex3]};
 
-  KERNEL_CHECK_FALSE(in_shape1.size() == 4, KERNEL_STATUS_PARAM_INVALID, "Dim of input[0] must be 4,but got[%zu].",
-                     in_shape1.size());
+  KERNEL_CHECK_FALSE(in_shape1.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
+                     "Dim of input[0] must be 4,but got[%zu].", in_shape1.size());
   KERNEL_CHECK_FALSE(in_shape2.size() == 1, KERNEL_STATUS_PARAM_INVALID, "Dim of input[1] must be 1,but got[%zu].",
                      in_shape2.size());
-  KERNEL_CHECK_FALSE(out_shape.size() == 4, KERNEL_STATUS_PARAM_INVALID, "Dim of output[0] must be 4,but got[%zu].",
-                     out_shape.size());
+  KERNEL_CHECK_FALSE(out_shape.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
+                     "Dim of output[0] must be 4,but got[%zu].", out_shape.size());
   KERNEL_CHECK_FALSE(out_height > 0 && out_width > 0, KERNEL_STATUS_PARAM_INVALID, "outsize must be positive.");
 
   AttrValue *attr_align_corners = ctx.GetAttr("align_corners");
