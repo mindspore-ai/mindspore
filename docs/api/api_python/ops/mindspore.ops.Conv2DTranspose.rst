@@ -18,9 +18,9 @@ mindspore.ops.Conv2DTranspose
         - **data_format** (str) - 输入和输出的数据格式。它应该是'NHWC'或'NCHW'，默认值是'NCHW'。
 
     输入：
-        - **dout** (Tensor) - 卷积操作的输出的梯度Tensor。shape： :math:`(N,C_{out},H_{out},W_{out})` 。
-        - **weight** (Tensor) - 设置卷积核大小为 :math:`(K_1,K_2)` ，然后shape为 :math:`(C_{out},C_{in},K_1,K_2)` 。
-        - **input_size** (Tensor) - 输入的shape，shape的格式为 :math:`(N,C_{in},H_{in},W_{in})` 。
+        - **dout** (Tensor) - 卷积操作的输出的梯度Tensor。shape： :math:`(N, C_{out}, H_{out}, W_{out})` 。
+        - **weight** (Tensor) - 设置卷积核大小为 :math:`(K_1,K_2)` ，然后shape为 :math:`(C_{out}, C_{in}, K_1, K_2)` 。
+        - **input_size** (Tensor) - 输入的shape，shape的格式为 :math:`(N, C_{in}, H_{in}, W_{in})` 。
 
     输出：
         Tensor，卷积操作的输入的梯度Tensor。它的shape与输入相同。

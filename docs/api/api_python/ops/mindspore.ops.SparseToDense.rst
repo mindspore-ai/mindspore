@@ -6,7 +6,7 @@ mindspore.ops.SparseToDense
     将稀疏Tensor转换为密集Tensor。
 
     输入：
-        - **indices** (Tensor) - 二维Tensor，表示元素在稀疏Tensor中的位置。支持int32、int64，每个元素值都应该是非负的。shape是 :math:`(n,2)` 。
+        - **indices** (Tensor) - 二维Tensor，表示元素在稀疏Tensor中的位置。支持int32、int64，每个元素值都应该是非负的。shape是 :math:`(n, 2)` 。
         - **values** (Tensor) - 一维Tensor，表示 `indices` 位置上对应的值。shape为 :math:`(n,)` 。
         - **sparse_shape** (tuple(int)) - 指定稀疏Tensor的shape，由两个正整数组成，表示稀疏Tensor的shape为 :math:`(N, C)` 。
 

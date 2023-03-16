@@ -22,7 +22,7 @@ mindspore.ops.DynamicRNN
     :math:`\sigma` 是sigmoid函数， :math:`*` 是 `Hadamard` 积。
     :math:`W, b` 是公式中输出和输入之间的可学习权重。 
 
-    例如， :math:`W_{ix}和b_{ix}` 是把 :math:`x` 转换为 :math:`i` 的权重和偏置。
+    例如， :math:`W_{ix}, b_{ix}` 是把 :math:`x` 转换为 :math:`i` 的权重和偏置。
 
     参数：
         - **cell_type** (str) - 指定Cell类型。当前仅支持LSTM。默认值：LSTM。

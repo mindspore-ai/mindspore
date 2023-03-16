@@ -19,7 +19,7 @@ mindspore.ops.SparseApplyProximalAdagrad
         - **use_locking** (bool) - 如果为True，则将保护 `var` 和 `accum` 参数不被更新。默认值：False。
 
     输入：
-        - **var** (Parameter) - 公式中的"var"。数据类型必须为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何附加维度。
+        - **var** (Parameter) - 公式中的"var"。数据类型必须为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任何附加维度。
         - **accum** (Parameter) - 公式中的"accum"，与 `var` 的shape和数据类型相同。
         - **lr** (Union[Number, Tensor]) - 学习率，必须为float或为Tensor，其数据类型为float16或float32。必须大于零。
         - **l1** (Union[Number, Tensor]) - l1正则化，必须为float或为Tensor，其数据类型为float16或float32。必须大于等于零。

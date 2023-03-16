@@ -10,7 +10,7 @@ mindspore.ops.Triu
         - **diagonal** (int，可选) - 可选参数指定对角线位置，默认值：0，指定主对角线。
 
     输入：
-        - **x** (Tensor) - 输入Tensor。shape为 :math:`(N, *)` ，其中 * 为任意数量的额外维度。其数据类型为数值型。
+        - **x** (Tensor) - 输入Tensor。shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。其数据类型为数值型。
 
     输出：
         - **y** (Tensor) - 数据类型和shape维度与输入相同。
