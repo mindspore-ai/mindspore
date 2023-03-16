@@ -1160,11 +1160,11 @@ def test_tensor_assign_bool_index_exception():
     u_scalar = 5
     net1 = TensorAssignWithBoolTensorIndex()
     net2 = TensorAssignWithBoolTensorIndex2()
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net1(Ta, Td, Tc, u_tensor)
     with pytest.raises(IndexError):
         net1(Ta, u_tensor, Tc, u_tensor)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net1(Ta, Tb, Td, u_tensor)
     with pytest.raises(IndexError):
         net1(Ta, Tb, Ta, u_tensor)
