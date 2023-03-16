@@ -233,6 +233,7 @@
 
         异常：
             - **KeyError** - 如果子Cell的名称不正确或与其他子Cell名称重复。
+            - **TypeError** - 如果 `child_name` 的类型不为str类型。
             - **TypeError** - 如果子Cell的类型不正确。
 
     .. py:method:: insert_param_to_cell(param_name, param, check_name_contain_dot=True)
