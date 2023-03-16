@@ -674,7 +674,6 @@ Debugging Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
