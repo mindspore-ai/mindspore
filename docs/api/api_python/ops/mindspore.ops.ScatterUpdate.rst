@@ -10,7 +10,7 @@
     若 `indices` 的shape为(i, ..., j)，则
 
     .. math::
-        \text{input_x}[\text{indices}[i, ..., j], :]= \text{updates}[i, ..., j, :]
+        \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
 
     输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为高精度数据类型。当需要转换Parameter的数据类型时，会抛出RuntimeError异常。
 

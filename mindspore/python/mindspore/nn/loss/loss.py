@@ -1992,10 +1992,9 @@ class NLLLoss(LossBase):
     r"""
     Gets the negative log likelihood loss between logits and labels.
 
-    The nll loss with reduction=none can be described as:
+    The nll loss with :math:`reduction = none` can be described as:
 
     .. math::
-
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
         \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}\{c \not= \text{ignore_index}\}
@@ -2516,7 +2515,7 @@ class HingeEmbeddingLoss(LossBase):
         - **labels** (Tensor) - Same shape as the logits, contains -1 or 1.
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
 
     Raises:
         TypeError: If `logits` is not a Tensor.

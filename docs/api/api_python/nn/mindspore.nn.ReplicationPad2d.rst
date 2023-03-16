@@ -12,7 +12,7 @@ mindspore.nn.ReplicationPad2d
           - 如果是tuple，则顺序为 :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`。
 
     输入：
-        - **x** (Tensor) - 维度为3D或4D的Tensor，shape为 :math:`(C, H_{in}, W_{out})` 或 :math:`(N, C, H_{in}, W_{in})` 。
+        - **x** (Tensor) - 维度为3D或4D的Tensor，shape为 :math:`(C, H_{in}, W_{in})` 或 :math:`(N, C, H_{in}, W_{in})` 。
 
     输出：
         Tensor，填充后的Tensor，shape为 :math:`(C, H_{out}, W_{out})` 或 :math:`(N, C, H_{out}, W_{out})`。

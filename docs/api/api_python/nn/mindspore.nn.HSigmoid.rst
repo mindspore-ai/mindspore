@@ -10,7 +10,7 @@ mindspore.nn.HSigmoid
     .. math::
         \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
 
-    其中，:math:`x_i` 是输入Tensor的一个元素。
+    其中，:math:`x_{i}` 是输入Tensor的一个元素。
 
     输入：
         - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。

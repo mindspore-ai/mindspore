@@ -723,7 +723,7 @@ class ReplicationPad2d(_ReplicationPadNd):
             - If `padding` is a tuple, uses :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})` to pad.
 
     Inputs:
-        - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
+        - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,

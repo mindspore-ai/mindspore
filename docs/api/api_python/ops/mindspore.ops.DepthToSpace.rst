@@ -19,10 +19,11 @@ mindspore.ops.DepthToSpace
         - **block_size** (int) - 用于划分深度数据的块大小。其值必须>=2。
 
     输入：
-        - **x** (Tensor) - 输入Tensor。它必须为四维，其shape为 :math:`(N,C_{in},H_{in},W_{in})` ，数据类型为数值型。
+        - **x** (Tensor) - 输入Tensor。它必须为四维，其shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，数据类型为数值型。
 
     输出：
-        Tensor，shape为 :math:`(N, C_{in} / \text{block_size} ^ 2, H_{in} * \text{block_size}, W_{in} * \text{block_size})` 。
+        Tensor，shape为 :math:`(N, C_{in} / \text{block_size} ^ 2, H_{in} * \text{block_size},
+        W_{in} * \text{block_size})` 。
 
     异常：
         - **TypeError** - 如果 `block_size` 不是int。

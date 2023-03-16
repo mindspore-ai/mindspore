@@ -35,7 +35,7 @@ mindspore.ops.Adam
         - **beta1** (float) - 第一个动量矩阵的指数衰减率。论文建议取值为 :math:`0.9` 。
         - **beta2** (float) - 第二个动量矩阵的指数衰减率。论文建议取值为 :math:`0.999` 。
         - **epsilon** (float) - 添加到分母中的值，以提高数值稳定性。
-        - **gradient** (Tensor) - :math:`g` 表示梯度，shape和数据类型与 `var` 相同。
+        - **gradient** (Tensor) - 表示梯度，shape和数据类型与 `var` 相同。
 
     输出：
         3个Tensor的tuple，已更新的参数。
