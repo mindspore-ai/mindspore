@@ -104,7 +104,7 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
     auto *tmp_addr = reinterpret_cast<T *>(input_addr + j * element_index_size);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
-  if (input_flat_shape_list_.size() == 0 || input_flat_shape_list_[0].size() == 0) {
+  if (input_flat_shape_list_.empty() || input_flat_shape_list_[0].empty()) {
     return true;
   }
 

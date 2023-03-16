@@ -50,7 +50,7 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(ret_shape);
   }
 
-  if (queue->elements().size() == 0) {
+  if (queue->elements().empty()) {
     MS_LOG(EXCEPTION) << "For " << op_name << " length should not be 0.";
   }
   const int64_t kOneNum = 1;
@@ -108,7 +108,7 @@ AbstractBasePtr SequenceConcatInferType(const PrimitivePtr &primitive, const std
     return element_abs->Clone();
   }
 
-  if (queue->elements().size() == 0) {
+  if (queue->elements().empty()) {
     MS_LOG(EXCEPTION) << "Sequence length should not be 0.";
   }
   return queue->elements()[0];
