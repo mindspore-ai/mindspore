@@ -590,7 +590,7 @@ class ReduceMean(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1180,7 +1180,7 @@ class ReduceProd(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1446,9 +1446,9 @@ class MatMul(PrimitiveWithCheck):
 
     Inputs:
         - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is True, its shape must be :math:`(N, C)` after transpose.
+          `transpose_a` is True, its shape must be :math:`(C, N)` after transpose.
         - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_b` is True, its shape must be :math:`(C, M)` after transpose.
+          `transpose_b` is True, its shape must be :math:`(M, C)` after transpose.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
@@ -2615,7 +2615,7 @@ class Histogram(Primitive):
         max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
     Inputs:
-        - **x** (Tensor) - the input tensor, type support list [float16, float32, int32]
+        - **x** (Tensor) - the input tensor, type support list :math:`[float16, float32, int32]`.
 
     Outputs:
         Tensor, 1-D Tensor with type int32.
@@ -2661,7 +2661,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - Numeric Tensor. Must be one of the following types: int32, float32, float16.
-        - **range** (Tensor) - Must have the same data type as `x`, and the shape is (2,).
+        - **range** (Tensor) - Must have the same data type as `x`, and the shape is :math:`(2,)`.
           x <= range[0] will be mapped to histogram[0], x >= range[1] will be mapped to histogram[-1].
 
     Outputs:
@@ -3260,7 +3260,7 @@ class TruncateMod(Primitive):
         - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+        - If shape is expressed as :math:`(D1, D2, ..., Dn)`, then :math:`D1*D2... *DN<=1000000,n<=8`.
 
     Inputs:
         - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, or a bool,
@@ -4277,13 +4277,13 @@ class NPUAllocFloatStatus(Primitive):
     """
     Allocates a flag to store the overflow status.
 
-    The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
+    The flag is a tensor whose shape is :math:`(8,)` and data type is `mindspore.dtype.float32`.
 
     Note:
         Please refer to the Examples of :class:`mindspore.ops.NPUGetFloatStatus`.
 
     Outputs:
-        Tensor, has the shape of `(8,)`.
+        Tensor, has the shape of :math:`(8,)`.
 
     Supported Platforms:
         ``Ascend``
@@ -4308,7 +4308,7 @@ class NPUGetFloatStatus(Primitive):
 
 
     Note:
-        The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
+        The flag is a tensor whose shape is :math:`(8,)` and data type is `mindspore.dtype.float32`.
         If the sum of the flag equals to 0, there is no overflow happened. If the sum of the
         flag is bigger than 0, there is overflow happened.
         In addition, there are strict sequencing requirements for use, i.e., before
@@ -4805,7 +4805,7 @@ class Sign(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -5129,7 +5129,7 @@ class BesselI0e(Primitive):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5897,7 +5897,7 @@ class ComplexAbs(Primitive):
 
     .. math::
 
-        y = \sqrt{a^2+b^2}.
+        y = \sqrt{a^2+b^2}
 
     Inputs:
         - **x** (Tensor) - A Tensor, types: complex64, complex128.
@@ -6452,20 +6452,23 @@ class LuSolve(Primitive):
 
     Note:
         The batch dimensions of lu_pivots must match the batch dimensions of lu_data, the size of the dimension and the
-        number of each dimension must be the same. For example, lu_data is (3, 3, 2, 2) lu_pivots is (3, 3, 2),
-        lu_data's batch dimensions is (3, 3), lu_pivots's batch dimensions is (3, 3).
+        number of each dimension must be the same. For example, lu_data is :math:`(3, 3, 2, 2)` lu_pivots is
+        :math:`(3, 3, 2)`,
+        lu_data's batch dimensions is :math:`(3, 3)`, lu_pivots's batch dimensions is :math:`(3, 3)`.
 
         The batch dimensions of lu_data must match the batch dimensions of x, the batch dimensions may have
         different sizes, from right to left, the corresponding dimensions must be equal. For example, lu_data
-        is (3, 3, 2, 2) x is (2, 3, 3, 2, 1), lu_data's batch dimensions is (3, 3), x's batch dimensions is (2, 3, 3).
+        is :math:`(3, 3, 2, 2)` x is :math:`(2, 3, 3, 2, 1)`, lu_data's batch dimensions is
+        :math:`(3, 3)`, x's batch dimensions is :math:`(2, 3, 3)`.
 
     Inputs:
-        - **x** (Tensor) - The input is a tensor of size `(*, m, k)`, where * is batch dimensions, with data type
+        - **x** (Tensor) - The input is a tensor of size :math:`(*, m, k)`, where * is batch dimensions, with data type
           float32, float16.
-        - **lu_data** (Tensor) - The input is a tensor of size `(*, m, m)`, where * is batch dimensions, that can
+        - **lu_data** (Tensor) - The input is a tensor of size :math:`(*, m, m)`, where * is batch dimensions, that can
           be decomposed into an upper
           triangular matrix U and a lower triangular matrix L, with data type float32, float16.
-        - **lu_pivots** (Tensor) - The input is a tensor of size `(*, m)`, where * is batch dimensions, that can
+        - **lu_pivots** (Tensor) - The input is a tensor of size :math:`(*, m)`,
+          where :math:`*` is batch dimensions, that can
           be converted to a permutation matrix P, with data type int32.
 
     Outputs:
@@ -6780,10 +6783,10 @@ class RaggedRange(Primitive):
 
           - if type of the input `starts`, input `limits` and input `deltas`
             are int32 or int64, shape of the output `rt_dense_values` is equal to
-            sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i])),
+            :math:`sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i]))`.
           - if type of the input `starts`, input `limits` and input `deltas`
             are float32 or float64, shape of the output `rt_dense_values` is equal to
-            sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+            :math:`sum(ceil(abs((limits[i] - starts[i]) / deltas[i])))`.
 
     Raises:
         TypeError: If any input is not Tensor.
@@ -6946,15 +6949,14 @@ class SparseSegmentMean(Primitive):
 
 
 class Zeta(Primitive):
-    """
+    r"""
     Compute the Hurwitz zeta function ζ(x,q) of input Tensor.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     .. math::
-
-        \\zeta \\left ( x,q \\right )=  \\textstyle \\sum_{n=0} ^ {\\infty} \\left (  q+n\\right )^{-x}
+        \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
 
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.
@@ -7266,10 +7268,10 @@ class FFTWithSize(Primitive):
         norm (str, optional): The normalization, optional values: ["backward", "forward", "ortho"].
             Default value: "backward".
 
-            - "backward" has the direct transforms unscaled and the inverse transforms scaled by 1/n,
+            - "backward" has the direct transforms unscaled and the inverse transforms scaled by :math:`1/n`,
               where n is the input x's element numbers.
             - "ortho" has both direct and inverse transforms are scaled by :math:`1/\sqrt(n)`.
-            - "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
+            - "forward" has the direct transforms scaled by :math:`1/n` and the inverse transforms unscaled.
 
         onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
         signal_sizes (list, optional): Size of the original signal (the signal before rfft, no batch dimension),

@@ -451,7 +451,7 @@ class Softplus(Primitive):
 
     .. math::
 
-        \text{output} = \log(1 + \exp(\text{x})),
+        \text{output} = \log(1 + \exp(\text{x}))
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
@@ -1147,8 +1147,9 @@ class BatchNorm(PrimitiveWithInfer):
 
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
-    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the mean of x,
-    :math:`variance` is the variance of x.
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon,
+    :math:`mean` is the mean of :math:`x`,
+    :math:`variance` is the variance of :math:`x`.
 
     .. warning::
         - If the operation is used for inference, and outputs "reserve_space_1" and "reserve_space_2" are available,
@@ -2468,8 +2469,8 @@ class Conv2DTranspose(Conv2DBackpropInput):
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
         group (int): Splits input into groups. Default: 1.
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，\
-            default is 'NCHW'.
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
+            Default is 'NCHW'.
 
     Inputs:
         - **dout** (Tensor) - the gradients with respect to the output of the convolution.
@@ -2711,7 +2712,7 @@ class SparseSoftmaxCrossEntropyWithLogits(Primitive):
         TypeError: If `is_grad` is not a bool.
         TypeError: If dtype of `logits` is neither float16 nor float32.
         TypeError: If dtype of `labels` is neither int32 nor int64.
-        ValueError: If logits.shape[0] != labels.shape[0].
+        ValueError: If :math:`logits.shape[0] != labels.shape[0]`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3409,9 +3410,9 @@ class LayerNorm(Primitive):
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
           The input of LayerNorm.
         - **gamma** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
-          The learnable parameter `gamma` as the scale on norm.
+          The learnable parameter :math:`\gamma` as the scale on norm.
         - **beta** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
-          The learnable parameter `beta` as the scale on norm.
+          The learnable parameter :math:`\beta` as the scale on norm.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
@@ -3474,7 +3475,7 @@ class L2Normalize(Primitive):
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
-        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, \ldots)`.
+        - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -3924,7 +3925,7 @@ class PReLU(PrimitiveWithInfer):
 
 
 class LSTM(Primitive):
-    """
+    r"""
     Performs the Long Short-Term Memory (LSTM) on the input.
 
     For detailsed information, please refer to :class:`mindspore.nn.LSTM`.
@@ -3939,20 +3940,20 @@ class LSTM(Primitive):
             LSTM layer except the last layer. The range of dropout is [0.0, 1.0].
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
-          (batch_size, seq_len, `input_size`).
-        - **h** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-        - **c** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **input** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, input\_size)` or
+          :math:`(batch\_size, seq\_len, input\_size)`.
+        - **h** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
+        - **c** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **w** (Tensor) - A weight Tensor.
 
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
 
-        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
-        - **h_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-        - **c_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-        - **reserve** (Tensor) - Tensor of shape (r, 1).
-        - **state** (Tensor) - Random number generator state and its shape is (s, 1).
+        - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)`.
+        - **h_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
+        - **c_n** (Tensor) - Tensor of shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
+        - **reserve** (Tensor) - Tensor of shape :math:`(r, 1)`.
+        - **state** (Tensor) - Random number generator state and its shape is :math:`(s, 1)`.
 
     Raises:
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
@@ -4081,8 +4082,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     and the third method is to calculate the sum of all losses.
 
     This operator will multiply the output by the corresponding weight.
-    The tensor weight assigns different weights to each piece of data in the batch,
-    and the tensor pos_weight adds corresponding weights to the positive examples of each category.
+    The tensor `weight` assigns different weights to each piece of data in the batch,
+    and the tensor `pos_weight` adds corresponding weights to the positive examples of each category.
 
     In addition, it can trade off recall and precision by adding weights to positive examples.
     In the case of multi-label classification the loss can be described as:
@@ -4289,7 +4290,7 @@ class MirrorPad(Primitive):
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
         - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
-          matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
+          matrix(list), and its shape is :math:`(N, 2)`. N is the rank of input data. All elements of paddings
           are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
           to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]
           indicates how many sizes to be extended behind the input tensor in the `D` th dimension. Both
@@ -5350,7 +5351,7 @@ class BinaryCrossEntropy(Primitive):
 
     In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
     and n indicates one batch_size in the 1-N range, :math:`w_n` indicates the
-    weight of nth batch of binary cross entropy. Then,
+    weight of :math:`n`-th batch of binary cross entropy. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -5727,7 +5728,7 @@ class ApplyAdagradV2(Primitive):
     the relatively highest priority data type.
 
     Note:
-        The difference is that `ApplyAdagradV2` has one more small constant value than `ApplyAdagrad`.
+        The difference is that `ApplyAdagradV2` has one more small constant value :math:`\epsilon` than `ApplyAdagrad`.
 
     Args:
         epsilon (float): A small value added for numerical stability.
@@ -5848,7 +5849,7 @@ class SparseApplyAdagradV2(Primitive):
         - **grad** (Tensor) - Gradients has the same data type as `var` and
           :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
-          The type must be int32 and indices.shape[0] = grad.shape[0].
+          The type must be int32 and :math:`indices.shape[0] = grad.shape[0]`.
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -6036,7 +6037,7 @@ class SparseApplyProximalAdagrad(Primitive):
           grad.shape[1:] = var.shape[1:] if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
-          following types: int32, int64 and indices.shape[0] = grad.shape[0].
+          following types: int32, int64 and :math:`indices.shape[0] = grad.shape[0]`.
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -6607,10 +6608,11 @@ class SparseApplyFtrl(Primitive):
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - The linear coefficient to be updated, must be the same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **grad** (Tensor) - A tensor of the same type as `var` and :math:`grad.shape[1:] = var.shape[1:]`
+          if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined.
-          The type must be int32 or int64 and indices.shape[0] = grad.shape[0].
+          The type must be int32 or int64 and :math:`indices.shape[0] = grad.shape[0]`.
 
     Outputs:
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
@@ -7355,7 +7357,7 @@ class LRN(Primitive):
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
-    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to c in feature map;
+    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to :math:`c` in feature map;
     where the :math:`n/2` indicates the `depth_radius`; where the :math:`k` indicates the `bias`;
     where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
@@ -7847,12 +7849,12 @@ class CTCLossV2(Primitive):
         TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
         ValueError: If the rank of `log_probs` is not 3.
         ValueError: If the rank of `targets` is not 2.
-        ValueError: If the shape of `input_lengths` does not match {batch_size|N}.
-        ValueError: If the shape of `target_lengths` does not match {batch_size|N}.
+        ValueError: If the shape of `input_lengths` does not match batch_size :math:`N`.
+        ValueError: If the shape of `target_lengths` does not match batch_size :math:`N`.
         TypeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
         ValueError: If the value of `blank` is not in range [0, num_labels|C).
         RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
-        RuntimeError: If any `target_lengths[i]` is not in range [0, `input_length[i]` ].
+        RuntimeError: If any `target_lengths[i]` is not in range [0, `input_length[i]`].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8332,9 +8334,9 @@ class ApplyAdagradDA(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **gradient_accumulator** (Parameter) - The dict of mutable tensor gradient_accumulator. Must have the same
+        - **gradient_accumulator** (Parameter) - The dict of mutable tensor :math:`grad\_accum`. Must have the same
           shape and dtype as `var`.
-        - **gradient_squared_accumulator** (Parameter) - The dict of mutable tensor gradient_squared_accumulator.
+        - **gradient_squared_accumulator** (Parameter) - The dict of mutable tensor :math:`grad\_squared\_accum`.
           Must have the same shape and dtype as `var`.
         - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
         - **lr** ([Number, Tensor]) - Scaling factor. Must be a scalar. With float32 or float16 data type.
@@ -9455,10 +9457,11 @@ class GridSampler2D(Primitive):
             and output tensors are aligned. When set to False, it is not aligned. Defaults to False.
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of :math:`(N, C,
-          H_{in}, W_{in})`.
-        - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is :math:`(N,
-          H_{out}, W_{out}, 2)`. Used to specify the sampling pixel locations normalized by the input spatial
+        - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of
+          :math:`(N, C, H_{in}, W_{in})`.
+        - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is
+          :math:`(N, H_{out}, W_{out}, 2)`.
+          Used to specify the sampling pixel locations normalized by the input spatial
           dimensions.
 
     Outputs:

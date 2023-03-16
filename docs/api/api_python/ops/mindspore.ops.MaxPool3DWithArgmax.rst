@@ -28,7 +28,7 @@ mindspore.ops.MaxPool3DWithArgmax
     输出：
         包含两个Tensor的tuple，分别表示最大值结果和最大值对应的索引。
 
-        - **output** (Tensor) - 输出的池化后的最大值，其数据类型与 `x` 相同。
+        - **output** (Tensor) - 输出的池化后的最大值，shape为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 。其数据类型与 `x` 相同。
         - **argmax** (Tensor) - 输出的最大值对应的索引，数据类型为int32或者int64。
 
     异常：

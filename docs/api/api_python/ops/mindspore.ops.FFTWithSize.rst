@@ -12,7 +12,7 @@ mindspore.ops.FFTWithSize
             \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
              e^{-j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
 
-    其中， :math:`d` = `signal_ndim` 是信号的维度，:math:`N_i` 则是信号第i个维度的大小。
+    其中， :math:`d` = `signal_ndim` 是信号的维度，:math:`N_i` 则是信号第 :math:`i` 个维度的大小。
     
     对于IFFT，它计算以下表达式：
 
@@ -21,7 +21,7 @@ mindspore.ops.FFTWithSize
             \frac{1}{\prod_{i=1}^d N_i} \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
              e^{\ j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
 
-    其中， :math:`d` = `signal_ndim` 是信号的维度，:math:`N_i` 则是信号第i维的大小。
+    其中， :math:`d` = `signal_ndim` 是信号的维度，:math:`N_i` 则是信号第 :math:`i` 维的大小。
 
     .. note::
         - FFT/IFFT要求complex64或complex128类型的输入，返回complex64或complex128类型的输出。
@@ -47,7 +47,7 @@ mindspore.ops.FFTWithSize
           - "forward"，正向变换按 :math:`1/n` 缩放，逆变换不缩放。
   
         - **onesided** (bool，可选) - 控制输入是否减半以避免冗余。默认值：True。
-        - **signal_sizes** (list，可选) - 原始信号的大小（RFFT变换之前的信号，不包含batch这一维），只有在IRFFT模式下和设置 `onesided=True` 时需要该参数。默认值： :math:`[]` 。
+        - **signal_sizes** (list，可选) - 原始信号的大小（RFFT变换之前的信号，不包含batch这一维），只有在IRFFT模式下和设置 `onesided=True` 时需要该参数。默认值：[] 。
 
     输入：
         - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。

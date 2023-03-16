@@ -17,7 +17,7 @@
             w = w - m_{t+1}
         \end{array}
 
-    其中 :math:`w` 代表 `var` ， :math:`w` 将更新。
+    其中 :math:`w` 代表 `var` ， 将会更新。
     :math:`g_{t+1}` 代表 `mean_gradient` ， :math:`g_{t}` 是上一步的 :math:`g_{t+1}` 。
     :math:`s_{t+1}` 代表 `mean_square` ， :math:`s_{t}` 是上一步的 :math:`s_{t+1}` ，
     :math:`m_{t+1}` 代表 `moment` ， :math:`m_{t}` 是上一步的 :math:`m_{t+1}` 。

@@ -262,7 +262,7 @@ class ExtractGlimpse(Primitive):
 
 
 class CropAndResize(Primitive):
-    """
+    r"""
     Extracts crops from the input image tensor and resizes them.
 
     Note:
@@ -276,9 +276,10 @@ class CropAndResize(Primitive):
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
 
     Inputs:
-        - **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, depth].
+        - **x** (Tensor) - The input image must be a 4-D tensor of shape
+          :math:`(batch, image\_height, image\_width, depth)`.
           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
-        - **boxes** (Tensor) - A 2-D tensor of shape [num_boxes, 4].
+        - **boxes** (Tensor) - A 2-D tensor of shape :math:`(num\_boxes, 4)`.
           The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
           and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
           the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
@@ -286,14 +287,14 @@ class CropAndResize(Primitive):
           crop is an up-down flipped version of the original image. The width dimension is treated similarly.
           Normalized coordinates outside the [0, 1] range are allowed, in which case we use `extrapolation_value` to
           extrapolate the input image values. Types allowed: float32.
-        - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
+        - **box_index** (Tensor) - A 1-D tensor of shape :math:`(num\_boxes)` with int32 values in [0, batch).
           The value of `box_index[i]` specifies the image that the i-th box refers to. Types allowed: int32.
         - **crop_size** (Tuple[int]) - A tuple of two int32 elements: (crop_height, crop_width).
           Only constant value is allowed. All cropped image patches are resized to this size.
           The aspect ratio of the image content is not preserved. Both crop_height and crop_width need to be positive.
 
     Outputs:
-        A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type: float32.
+        A 4-D tensor of shape :math:`(num\_boxes, crop\_height, crop\_width, depth)` with type: float32.
 
     Raises:
         TypeError: If `x` or `boxes` or `box_index` is not a Tensor.
@@ -380,7 +381,7 @@ class NonMaxSuppressionV3(Primitive):
           determining when to remove boxes based on score. The supported data type is float32.
 
     Outputs:
-        A 1-D integer Tensor of shape [M] representing the selected indices from the boxes tensor,
+        A 1-D integer Tensor of shape :math:`(M)` representing the selected indices from the boxes tensor,
         where M <= `max_output_size`.
 
     Raises:
@@ -1026,11 +1027,11 @@ class ScaleAndTranslate(Primitive):
     Inputs:
         - **images** (Tensor) - A 4-D tensor of shape :math:`(batch, image\_height, image\_width, channel)`.
         - **size** (Tensor) - The size of the output image after scale and translate operations. A 1-D tensor with two
-          positive elements whose dtype is int32 and shape must be (2,).
+          positive elements whose dtype is int32 and shape must be :math:`(2,)`.
         - **scale** (Tensor) - Indicates the zoom factor. A 1-D tensor with two positive elements whose dtype is float32
-          and shape must be (2,).
+          and shape must be :math:`(2,)`.
         - **translation** (Tensor) - Translate the pixel value. A 1-D tensor with two elements whose dtype is
-          float32 and shape must be (2,).
+          float32 and shape must be :math:`(2,)`.
 
     Outputs:
         A 4-D tensor with type: float32 and shape :math:`(batch, size[0], size[1], channel)`.
