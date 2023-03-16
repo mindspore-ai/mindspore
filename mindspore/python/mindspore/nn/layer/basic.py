@@ -355,10 +355,26 @@ class Dropout3d(Cell):
 
 class Upsample(Cell):
     r"""
-    Alias for :func:`mindspore.ops.interpolate` .
+    For details, please refer to :func:`mindspore.ops.interpolate`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
+        >>> upsample = nn.Upsample(size=(5, 5))
+        >>> out = upsample(x)
+        >>> print(x.asnumpy())
+        [[[[1. 2. 3. 4.]
+           [5. 6. 7. 8.]]]]
+        >>> print(out.asnumpy())
+        [[[[1. 1. 2. 3. 4.]
+           [1. 1. 2. 3. 4.]
+           [1. 1. 2. 3. 4.]
+           [5. 5. 6. 7. 8.]
+           [5. 5. 6. 7. 8.]]]]
+        >>> print(out.shape)
+        (1, 1, 5, 5)
     """
 
     def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
