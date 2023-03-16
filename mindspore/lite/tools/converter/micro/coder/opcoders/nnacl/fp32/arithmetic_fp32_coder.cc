@@ -27,8 +27,8 @@ std::string wrap_uint8(const std::string &a) { return "(uint8_t *)(" + a + ")"; 
 std::string wrap_offset(const std::string &a, int offset) { return "(" + a + "+" + std::to_string(offset) + ")"; }
 }  // namespace
 
-void ArithmeticFP32Coder::InitRunFunction(int primitive_type) {
-  ARITHMETIC_FUNC_INFO_FP32 fun_table[] = {
+void ArithmeticFP32Coder::InitFunTable() {
+  fun_table_ = {
     {PrimitiveType_MulFusion, schema::ActivationType_RELU, "ElementMulRelu", "ElementMulReluInt", "",
      "ElementOptMulRelu", "ElementOptMulReluInt"},
     {PrimitiveType_MulFusion, schema::ActivationType_RELU6, "ElementMulRelu6", "ElementMulRelu6Int", "",
@@ -63,21 +63,23 @@ void ArithmeticFP32Coder::InitRunFunction(int primitive_type) {
      "ElementOptModInt"},
     {PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION, "ElementSquaredDifference", "", "", "",
      ""}};
+}
 
-  size_t length = sizeof(fun_table) / sizeof(ARITHMETIC_FUNC_INFO_FP32);
-  for (size_t i = 0; i < length; i++) {
-    if (fun_table[i].primitive_type_ == primitive_type &&
-        fun_table[i].activation_type_ == arithmetic_parameter_->activation_type_) {
-      arithmetic_run_ = fun_table[i].func_;
-      arithmetic_run_int_ = fun_table[i].int_func_;
-      arithmetic_run_bool_ = fun_table[i].bool_func_;
-      arithmetic_opt_run_ = fun_table[i].opt_func_;
-      arithmetic_opt_run_int_ = fun_table[i].opt_int_func_;
+void ArithmeticFP32Coder::InitRunFunction(int primitive_type) {
+  InitFunTable();
+  for (size_t i = 0; i < fun_table_.size(); i++) {
+    if (fun_table_[i].primitive_type_ == primitive_type &&
+        fun_table_[i].activation_type_ == arithmetic_parameter_->activation_type_) {
+      arithmetic_run_ = fun_table_[i].func_;
+      arithmetic_run_int_ = fun_table_[i].int_func_;
+      arithmetic_run_bool_ = fun_table_[i].bool_func_;
+      arithmetic_opt_run_ = fun_table_[i].opt_func_;
+      arithmetic_opt_run_int_ = fun_table_[i].opt_int_func_;
     }
   }
   TypeId input_type_id = input_tensor_->data_type();
   data_type_len_ = lite::DataTypeSize(input_tensor_->data_type());
-  if (input_type_id == kNumberTypeFloat32 || input_type_id == kNumberTypeFloat) {
+  if (input_type_id == kNumberTypeFloat32 || input_type_id == kNumberTypeFloat || input_type_id == kNumberTypeFloat16) {
     arithmetic_func_type_ = kArithmeticFuncFloat;
   } else if (input_type_id == kNumberTypeBool) {
     arithmetic_func_type_ = kArithmeticFuncBool;
@@ -122,7 +124,8 @@ int ArithmeticFP32Coder::CheckDataType() {
 }
 
 void ArithmeticFP32Coder::ChooseArithmeticFunc(bool is_opt) {
-  if (input_tensor_->data_type() == kNumberTypeFloat32) {
+  if (input_tensor_->data_type() == kNumberTypeFloat32 || input_tensor_->data_type() == kNumberTypeFloat ||
+      input_tensor_->data_type() == kNumberTypeFloat16) {
     if (is_opt) {
       arithmetic_func_str_ = wrap_void(arithmetic_opt_run_);
     } else {

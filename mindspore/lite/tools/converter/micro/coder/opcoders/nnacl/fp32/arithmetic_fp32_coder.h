@@ -66,7 +66,7 @@ using mindspore::schema::PrimitiveType_Minimum;
 
 using mindspore::schema::PrimitiveType_Mod;
 
-class ArithmeticFP32Coder final : public OperatorCoder {
+class ArithmeticFP32Coder : public OperatorCoder {
   typedef struct {
     int primitive_type_;
     int activation_type_;
@@ -88,14 +88,7 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
   int DoCode(CoderContext *const context) override;
 
- private:
-  int ReSize(CoderContext *const context);
-
-  int ExecuteCode(const std::string &input0, const std::string &input1, const std::string &output, int size,
-                  bool is_opt, CoderContext *const context, NNaclFp32Serializer *const code);
-
-  void InitRunFunction(int primitive_type);
-
+ protected:
   int CheckDataType();
 
   void ChooseArithmeticFunc(bool is_opt);
@@ -107,6 +100,16 @@ class ArithmeticFP32Coder final : public OperatorCoder {
   bool IsBiasCalc();
 
   void FreeConstTileBuff();
+
+  virtual void InitFunTable();
+
+  virtual int ReSize(CoderContext *const context);
+
+  virtual void InitRunFunction(int primitive_type);
+
+ private:
+  int ExecuteCode(const std::string &input0, const std::string &input1, const std::string &output, int size,
+                  bool is_opt, CoderContext *const context, NNaclFp32Serializer *const code);
 
   int ConstTensorBroadCast(CoderContext *const context);
 
@@ -121,7 +124,9 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
   void CollectFilesForFunc(CoderContext *const context);
 
- private:
+ protected:
+  std::vector<ARITHMETIC_FUNC_INFO_FP32> fun_table_;
+
   int break_pos_{0};
 
   int outside_{0};
@@ -148,10 +153,6 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
   Tensor *filter_tensor_{nullptr};
 
-  ArithmeticFuncType arithmetic_func_type_{kArithmeticFuncUnknow};
-
-  ArithmeticWrapperInfo arithmetic_wrapper_info_{};
-
   std::string input0_ptr_str_;
 
   std::string input1_ptr_str_;
@@ -169,6 +170,11 @@ class ArithmeticFP32Coder final : public OperatorCoder {
   std::string arithmetic_run_bool_;
 
   std::string arithmetic_func_str_;
+
+ private:
+  ArithmeticFuncType arithmetic_func_type_{kArithmeticFuncUnknow};
+
+  ArithmeticWrapperInfo arithmetic_wrapper_info_{};
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_ARITHMETIC_FP32_CODER_H_

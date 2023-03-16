@@ -54,11 +54,12 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
       code.CodeArray("x_weights", x_weights.data(), x_weight_len_, true);
 
       int c = input_tensor_->shape().at(kNHWC_C);
-      code << "float *line0 = " << MemoryAllocator::GetInstance()->GetRuntimeAddr(line_buffer_) << ";\n";
-      code << "float *line1 = line0 + " << new_width_ << " * " << c << ";\n";
+      code << "float16_t *line0 = (float16_t *)" << MemoryAllocator::GetInstance()->GetRuntimeAddr(line_buffer_)
+           << ";\n";
+      code << "float16_t *line1 = line0 + " << new_width_ << " * " << c << ";\n";
       code.CodeFunction("ResizeBilinearFp16", input_tensor_, output_tensor_, "input_shape", "output_shape", "y_bottoms",
-                        "y_tops", "x_lefts", "x_rights", "(float16_t *)y_weights", "(float16_t *)x_weights",
-                        "(float16_t *)line0", "(float16_t *)line1", 0, new_height_);
+                        "y_tops", "x_lefts", "x_rights", "(float16_t *)y_weights", "(float16_t *)x_weights", "line0",
+                        "line1", 0, new_height_);
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
@@ -71,13 +72,9 @@ int ResizeFP16Coder::DoCode(CoderContext *const context) {
       code.CodeArray("x_lefts", coordinate_.x_lefts_, x_len_, true);
       code.CodeArray("y_weights", y_weights.data(), y_weight_len_, true);
       code.CodeArray("x_weights", x_weights.data(), x_weight_len_, true);
-      size_t line_buffer_size = sizeof(float) * x_len_ * input_tensor_->Channel() * kTwo * kMaxThreadNumSupported;
-      std::vector<uint16_t> line_buffer(line_buffer_size);
-      Float32ToFp16(line_buffer_, line_buffer.data(), line_buffer_size);
-      code.CodeArray("line_buffer", line_buffer.data(), line_buffer_size, false);
+      auto buffer_str = "(float16_t *)" + MemoryAllocator::GetInstance()->GetRuntimeAddr(line_buffer_);
       code.CodeFunction("ResizeBicubicFp16", input_tensor_, output_tensor_, "input_shape", "output_shape", "y_tops",
-                        "x_lefts", "(float16_t *)y_weights", "(float16_t *)x_weights", "(float16_t *)line_buffer", 0,
-                        new_height_);
+                        "x_lefts", "(float16_t *)y_weights", "(float16_t *)x_weights", buffer_str, 0, new_height_);
       break;
     }
     default: {
