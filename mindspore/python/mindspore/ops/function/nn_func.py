@@ -1988,7 +1988,7 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     Args:
         input (Tensor): Tensor to be resized.
             Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
-            `(batch, channels, [optional depth], [optional height], width)`, with data type of float.
+            :math:`(N, C, [optional D], [optional H], W)` , with data type of float.
         size (Union[int, tuple[int], list[int]], optional): The target size.
             If size is a tuple or list, size must have the same dimensions as input.
             One and only one of size and scale_factor can be set to None. Default: None.
@@ -1998,8 +1998,8 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
         mode (str): The sampling algorithm.
             One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
             'area', 'nearest-exact'(3D and 4D). Default: 'nearest'.
-        align_corners (bool): If True, rescale input by `(new\_height - 1) / (height - 1)`, which exactly
-            aligns the corners of data and resized data. If False, rescale by `new\_height / height`.
+        align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
+            aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
 
             .. code-block::
 
@@ -2012,6 +2012,11 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
             If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: None.
+
+    .. note::
+        The 'nearest-exact' mode is the same as the nearest-neighbor interpolation algorithm used in
+        scikit-image and PIL. The 'nearest' mode produces the same results as the INTER_NEAREST interpolation
+        algorithm used in OpenCV.
 
     Args Support List and Supported Platforms:
 
