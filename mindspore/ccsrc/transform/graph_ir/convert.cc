@@ -1561,9 +1561,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   (void)df_graph_->SetOutputs(graph_outputs_);
 
   IdentityOptimization();
-  if (!training_) {
-    NoOpOptimization();
-  }
+  NoOpOptimization();
 
   compute_sout_ << "}" << endl;
   // For the graph(e.g. eval_subgraph) whose IterNum is 1, donot set NeedIteration flag.
@@ -2334,6 +2332,17 @@ void DfGraphConvertor::NoOpOptimization() {
 bool DfGraphConvertor::IsNoOpRedundant(const ::ge::GNode &node) const {
   auto node_type = GetGNodeType(node);
   if (node_type != kTypeNoOp) {
+    return false;
+  }
+  if (!training_) {
+    return true;
+  }
+  auto out_control_node = node.GetOutControlNodes();
+  auto in_control_node = node.GetInControlNodes();
+  if (out_control_node.size() == 1 || in_control_node.size() == 1) {
+    return true;
+  }
+  if (out_control_node.size() > kNoOpOptThreshold || in_control_node.size() > kNoOpOptThreshold) {
     return false;
   }
   return true;
