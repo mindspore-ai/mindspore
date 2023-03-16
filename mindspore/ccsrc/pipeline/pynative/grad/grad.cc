@@ -394,6 +394,47 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   (void)input_args_info->input_arg_value_vec.emplace_back(ShallowCopyTensorValue(sens_tensor));
   input_args_info->has_sens = true;
 }
+
+std::string GetWeightsObjIdsByWeights(const py::object &weights) {
+  auto is_require_grad = [](const ValuePtr &value) {
+    if (!value->isa<tensor::Tensor>()) {
+      return false;
+    }
+    auto t = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(t);
+    if (t->is_parameter() && t->param_info() != nullptr && t->param_info()->requires_grad()) {
+      return true;
+    }
+    return false;
+  };
+
+  std::string weights_obj_id;
+  auto append_weights_info = [&weights_obj_id, is_require_grad](const py::object &obj) {
+    const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
+    weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v)).append("_");
+    if (is_require_grad(v)) {
+      weights_obj_id.append("1");
+    } else {
+      weights_obj_id.append("0");
+    }
+  };
+
+  if (py::isinstance<py::tuple>(weights)) {
+    const auto &weights_tuple = weights.cast<py::tuple>();
+    for (size_t i = 0; i < weights_tuple.size(); ++i) {
+      append_weights_info(weights_tuple[i]);
+    }
+  } else if (py::isinstance<py::list>(weights)) {
+    const auto &weights_list = weights.cast<py::list>();
+    for (size_t i = 0; i < weights_list.size(); ++i) {
+      append_weights_info(weights_list[i]);
+    }
+  } else if (!py::isinstance<py::none>(weights)) {
+    append_weights_info(weights);
+  }
+
+  return weights_obj_id;
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -1186,15 +1227,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
     grad_hash_id_str = std::string(py::str(grad_hash_id));
   }
 
-  std::string weights_obj_id{"_"};
-  if (!py::isinstance<py::none>(weights)) {
-    const auto &weights_tuple = weights.cast<py::tuple>();
-    for (size_t i = 0; i < weights_tuple.size(); ++i) {
-      const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
-      weights_obj_id += PyNativeAlgo::Common::GetIdByValue(v);
-    }
-  }
-
+  std::string weights_obj_id = GetWeightsObjIdsByWeights(weights);
   grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
                     std::to_string(static_cast<int>(grad->get_by_list_)) +
                     std::to_string(static_cast<int>(grad->sens_param_)) + grad_hash_id_str + weights_obj_id;
