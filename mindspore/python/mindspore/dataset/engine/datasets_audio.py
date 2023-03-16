@@ -50,14 +50,14 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in the config.
+            Default: None, will use value set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: None, expected order behavior shown in the table below.
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
+        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None, no dividing.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
+        shard_id (int, optional): The shard ID within `num_shards` . Default: None, will use 0. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
@@ -70,10 +70,10 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - CMUArctic dataset doesn't support PKSampler.
+        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -185,7 +185,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in the config.
+            Default: None, will use value set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -205,10 +205,10 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - GTZAN doesn't support PKSampler.
+        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -320,7 +320,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all audio.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in the config.
+            Default: None, will use value set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -340,10 +340,10 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
-        - LibriTTS dataset doesn't support PKSampler.
+        - Not support `mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
@@ -464,7 +464,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audios to be included in the dataset.
             Default: None, all audios.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the mindspore.dataset.config.
+            Default: None, number set in the `mindspore.dataset.config` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -485,7 +485,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -605,7 +605,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will read all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in the config.
+            Default: None, will use value set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -625,7 +625,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -735,7 +735,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio samples to be included in the dataset.
             Default: None, all samples.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the config.
+            Default: None, number set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -756,7 +756,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -934,7 +934,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in the config.
+            Default: None, will use value set in `mindspore.dataset.config` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -954,7 +954,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.

@@ -11,7 +11,7 @@ mindspore.dataset.GraphData
 
     参数：
         - **dataset_file** (str) - 数据集文件路径。
-        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **working_mode** (str, 可选) - 设置工作模式，目前支持 'local'/'client'/'server'。默认值：'local'。
 
           - **local**：用于非分布式训练场景。
@@ -21,7 +21,7 @@ mindspore.dataset.GraphData
         - **hostname** (str, 可选) - 图数据集服务器的主机名。该参数仅在工作模式设置为 'client' 或 'server' 时有效。默认值：'127.0.0.1'。
         - **port** (int, 可选) - 图数据服务器的端口，取值范围为1024-65535。此参数仅当工作模式设置为 'client' 或 'server' 时有效。默认值：50051。
         - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效。默认值：1。
-        - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出。默认值：True。
+        - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client`，且没有客户端正在连接时，服务器将自动退出。默认值：True。
 
     异常：
         - **ValueError** - `dataset_file` 路径下数据文件不存在或无效。

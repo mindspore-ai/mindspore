@@ -16,11 +16,11 @@
         - **name** (str, 可选) - 指定读取的数据集子集，可为 'aew'、'ahw'、'aup'、'awb'、'axb'、'bdl'、
           'clb'、'eey'、'fem'、'gka'、'jmk'、'ksp'、'ljm'、'lnh'、'rms'、'rxr'、'slp' 或 'slt'。默认值：None，表示 'aew'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部音频。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None，下表中会展示不同配置的预期行为。
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
-        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
+        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None，不进行分片。指定此参数后， `num_samples` 表示每个分片的最大样本数。
+        - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值：None，将使用0。只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：
@@ -30,10 +30,10 @@
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note::
-        - CMUArcticDataset的 `sampler` 参数不支持指定PKSampler。
+        - 暂不支持指定 `sampler` 参数为 `mindspore.dataset.PKSampler`。
         - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
     .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果

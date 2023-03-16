@@ -5,13 +5,13 @@ mindspore.dataset.RenderedSST2Dataset
 
     读取和解析RenderedSST2数据集的源文件构建数据集。
 
-    生成的数据集有两列 `[image, label]` 。 `image` 列的数据类型为uint8。`label` 列的数据类型为uint32。
+    生成的数据集有两列 `[image, label]`。`image` 列的数据类型为uint8。`label` 列的数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'val'、'test'或'all'。默认值：None，读取全部样本图片。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'val'、'test' 或 'all'。默认值：None，读取全部样本图片。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None，下表中会展示不同配置的预期行为。

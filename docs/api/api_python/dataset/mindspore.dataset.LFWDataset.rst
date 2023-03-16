@@ -15,10 +15,10 @@ mindspore.dataset.LFWDataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **task** (str, 可选) - 指定读取LFW数据集的任务类型，支持 'people' 和 'pairs'。默认值：None，表示 'people'。
-        - **usage** (str, 可选) - 指定数据集的子集，支持 '10fold'，'train'，'test' 和 'all'。默认值：None，将读取 'train' 和 'test' 子集。
-        - **image_set** (str, 可选) - 指定读取子集的 Image Funneling 类型，支持 'original'，'funneled' 或 'deepfunneled'。默认值：None，将读取 'funneled' 子集。
+        - **usage** (str, 可选) - 指定数据集的子集，支持 '10fold'、'train'、'test' 和 'all'。默认值：None，将读取 'train' 和 'test' 子集。
+        - **image_set** (str, 可选) - 指定读取子集的 Image Funneling 类型，支持 'original'、'funneled' 或 'deepfunneled'。默认值：None，将读取 'funneled' 子集。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部图像。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -32,7 +32,7 @@ mindspore.dataset.LFWDataset
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
