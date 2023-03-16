@@ -28,6 +28,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr uint32_t kInputNum = 1;
+constexpr size_t kPadMaxDims = 6;
 const std::vector<std::string> kSupportPlatformPattern = {"Ascend310",  "Ascend610", "BS9SX1A",
                                                           "Ascend310P", "Ascend910", "Ascend910B"};
 const std::vector<std::vector<int64_t>> kBlackShape = {{1, 3200, 256}, {1, 3204, 256}, {1, 3208, 256}, {1, 3216, 256},
@@ -109,6 +110,10 @@ const AnfNodePtr PaddUpdateFusion::Process(const FuncGraphPtr &func_graph, const
     common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(cnode, kAttrPaddings);
   if (paddings.size() < 1 || paddings[0].size() < 1) {
     MS_LOG(EXCEPTION) << "Failed to get paddings value from PadD node";
+  }
+  if (paddings.size() > kPadMaxDims) {
+    // There is a precision problem for Pad when the rank of input is larger than kPadMaxDims.
+    return nullptr;
   }
   MS_LOG(INFO) << "Begin to convert PadD to Pad.";
   ShapeVector const_shape = {SizeToLong(paddings.size()), SizeToLong(paddings[0].size())};

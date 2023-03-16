@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr uint kNumberTwo = 2;
-constexpr uint kNumberThree = 2;
+constexpr uint kNumberThree = 3;
 
 using KernelRunFunc = AdaptiveAvgPool2DKernelMod::KernelRunFunc;
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &AdaptiveAvgPool2DKernelMod::GetFuncList() const {
