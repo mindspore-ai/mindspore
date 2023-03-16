@@ -171,6 +171,11 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "Ms model no need to run const fold pass.";
     return lite::RET_OK;
   }
+  // Quantization dynamic model must set inputShape for calibration.
+  if (is_ascend_quant_ && IsDynamicInput()) {
+    MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
+    return lite::RET_OK;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
     MS_LOG(ERROR) << "Const fold pass failed.";
     return lite::RET_ERROR;
@@ -883,9 +888,9 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
 
-  bool is_ascend_quant = param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
-                         param_->fullQuantParam.target_device == lite::quant::ASCEND;
-  if (is_ascend_quant && Quantization(func_graph) != lite::RET_OK) {
+  is_ascend_quant_ = param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                     param_->fullQuantParam.target_device == lite::quant::ASCEND;
+  if (is_ascend_quant_ && Quantization(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Quantization failed.";
     return false;
   }
