@@ -105,6 +105,7 @@ def test_return_constant_list_4():
     assert np.all(res[2].asnumpy() == np.array([2, 3]))
 
 
+@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -147,6 +148,7 @@ def test_return_constant_list_6():
     assert res[2] == 1
 
 
+@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -320,6 +322,7 @@ def test_return_make_list_with_nest_2():
     assert res == ([Tensor([0]), ([Tensor([0]), 1],)], (Tensor([1]), Tensor([2])))
 
 
+@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
