@@ -4290,3 +4290,17 @@ def qr(input, some=True):
     """
     check_bool_type(some, 'some', 'Tensor.qr')
     return F.qr(input, 'reduced' if some else 'complete')
+
+
+def amax(input, axis=None, keep_dims=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.amax`.
+    """
+    return F.amax(input, axis, keep_dims)
+
+
+def amin(input, axis=None, keep_dims=False):
+    r"""
+    For details, please refer to :func:`mindspore.ops.amin`.
+    """
+    return F.amin(input, axis, keep_dims)
