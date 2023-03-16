@@ -104,6 +104,8 @@ def mutable(input_data, dynamic_len=False):
         >>> from mindspore.common import mutable
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore import Tensor
+        >>> from mindspore import context
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
