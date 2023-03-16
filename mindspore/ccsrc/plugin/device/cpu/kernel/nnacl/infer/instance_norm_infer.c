@@ -23,14 +23,24 @@ int InstanceNormInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   if (parameter == NULL || inputs[0] == NULL || outputs[0] == NULL) {
     return NNACL_NULL_PTR;
   }
-  SetDataTypeFormat(outputs[0], inputs[0]);
-  if (outputs[0]->format_ == Format_NC4HW4) {
-    outputs[0]->format_ = Format_NHWC;
+  TensorC *output = outputs[0];
+  SetDataTypeFormat(output, inputs[0]);
+  if (output->format_ == Format_NC4HW4) {
+    output->format_ = Format_NHWC;
   }
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  SetShapeTensor(outputs[0], inputs[0]);
+  SetShapeTensor(output, inputs[0]);
+  if (inputs[0]->format_ != Format_NC4HW4) {
+    return NNACL_OK;
+  }
+  if (output->shape_size_ <= DIMENSION_2D) {
+    return NNACL_OK;
+  }
+  int channel = output->shape_[1];
+  ShapeErase(output->shape_, &output->shape_size_, 1);
+  ShapePush(output->shape_, &output->shape_size_, channel);
   return NNACL_OK;
 }
 REG_INFER(InstanceNorm, PrimType_InstanceNorm, InstanceNormInferShape)
