@@ -320,7 +320,7 @@ def test_pipeline_split_shared_parameter_stage0_opt_shard():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((16, 1), (1, 1))
+    strategy1 = ((1, 1), (1, 16))
     strategy2 = ((8, 1), (1, 1))
     net = PipelineCell(PipelineSplit2(strategy1, strategy2), 4)
     params = net.network.cell.block[0].trainable_params()
