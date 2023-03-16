@@ -21,9 +21,9 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
 from mindspore.common.api import jit
 from mindspore.ops.functional import vmap
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
@@ -38,20 +38,25 @@ class Net(nn.Cell):
         return self.adaptive_avg_pool2d(x)
 
 
-class GradNet(nn.Cell):
-    def __init__(self):
-        super(GradNet, self).__init__()
-        self.adaptive_avg_pool2d_grad = G.AdaptiveAvgPool2DGrad()
+class AdaptiveAvgPool2dGrad(nn.Cell):
+    def __init__(self, forward):
+        super(AdaptiveAvgPool2dGrad, self).__init__()
+        self.forward = forward
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
 
-    @jit
-    def construct(self, x, dy):
-        return self.adaptive_avg_pool2d_grad(x, dy)
+    def construct(self, x, sens):
+        return self.grad(self.forward)(x, sens)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_normal():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test output_size with tuple.
+    Expectation: Expect correct result.
+    """
     x = np.random.randn(1, 32, 9, 9)
     net = Net((3, 5))
     output = net(Tensor(x, mindspore.float32))
@@ -63,6 +68,11 @@ def test_net_normal():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_single():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test output_size with int.
+    Expectation: Expect correct result.
+    """
     x = np.random.randn(1, 32, 7, 9)
     net = Net(5)
     output = net(Tensor(x, mindspore.float32))
@@ -74,6 +84,11 @@ def test_net_single():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_none():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test output_size with None.
+    Expectation: Expect correct result.
+    """
     x = np.random.randn(1, 32, 7, 9)
     net = Net((None, 5))
     output = net(Tensor(x, mindspore.float32))
@@ -85,6 +100,11 @@ def test_net_none():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_value():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test forward and backward.
+    Expectation: Expect correct result.
+    """
     x = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]])
@@ -106,8 +126,8 @@ def test_net_value():
                           [[0.75, 1.75, 1.0],
                            [2.25, 5.0, 2.75],
                            [1.5, 3.25, 1.75]]])
-    grad_net = GradNet()
-    dx = grad_net(Tensor(x), output)
+    grad_net = AdaptiveAvgPool2dGrad(net)
+    dx = grad_net(Tensor(x), output)[0]
     assert dx.asnumpy().shape == x.shape
     assert (dx.asnumpy() == expect_dx).all
 
@@ -116,6 +136,11 @@ def test_net_value():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph_mode():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test forward and backward in graph mode.
+    Expectation: Expect correct result.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
@@ -138,8 +163,8 @@ def test_net_graph_mode():
                           [[0.75, 1.75, 1.0],
                            [2.25, 5.0, 2.75],
                            [1.5, 3.25, 1.75]]])
-    grad_net = GradNet()
-    dx = grad_net(Tensor(x, mindspore.float16), output)
+    grad_net = AdaptiveAvgPool2dGrad(Net((2, 2)))
+    dx = grad_net(Tensor(x, mindspore.float16), output)[0]
     assert dx.asnumpy().shape == x.shape
     assert (dx.asnumpy() == expect_dx).all
 
@@ -148,6 +173,11 @@ def test_net_graph_mode():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph_mode_fp64():
+    """
+    Feature: Test AdaptiveAvgPool2D op.
+    Description: Test forward and backward in graph mode.
+    Expectation: Expect correct result.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                   [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
@@ -170,8 +200,8 @@ def test_net_graph_mode_fp64():
                           [[0.75, 1.75, 1.0],
                            [2.25, 5.0, 2.75],
                            [1.5, 3.25, 1.75]]])
-    grad_net = GradNet()
-    dx = grad_net(Tensor(x, mindspore.float64), output)
+    grad_net = AdaptiveAvgPool2dGrad(Net((2, 2)))
+    dx = grad_net(Tensor(x, mindspore.float64), output)[0]
     assert dx.asnumpy().shape == x.shape
     assert (dx.asnumpy() == expect_dx).all
 
