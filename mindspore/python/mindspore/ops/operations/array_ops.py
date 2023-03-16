@@ -489,7 +489,7 @@ class Col2Im(Primitive):
 
     .. math::
         L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
-            - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor,
+            - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
 
     where :math:`d` is over all spatial dimensions.
 
@@ -1289,10 +1289,10 @@ class MatrixSetDiagV3(Primitive):
 
     Diagonals shorter than `max_diag_len` need to be padded, where `max_diag_len` is the
     longest diagonal value.
-    The diagonal.shape[-2] must be equal to num_diags calculated by :math:`k[1] - k[0] + 1`.
-    The diagonal.shape[-1] must be
-    equal to the longest diagonal value `max_diag_len` calculated
-    by :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
+    The dimension of `diagonal` is :math:`shape[-2]` must be equal to num_diags calculated by
+    :math:`num\_diags = k[1] - k[0] + 1`.
+    The dimension of `diagonal` is :math:`shape[-1]` must be equal to the longest diagonal value `max_diag_len`
+    calculated by :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))`.
 
     Assume `x` is an n-D Tensor with shape :math:`(d_1, d_2, ..., d_{n-2}, d_{n-1}, d_n)`.
     If `k` is an integer or :math:`k[0] == k[1]`, `diagonal` is an (n-1)-D Tensor with
@@ -1838,8 +1838,8 @@ class Argmax(Primitive):
             Default: `mindspore.dtype.int32`.
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Support data type list as follows:
+        - **input_x** (Tensor) - Input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
+          dimensions. Support data type list as follows:
 
           - Ascend: Float16, Float32.
           - GPU: Float16, Float32.
@@ -1882,7 +1882,7 @@ class Argmin(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
           - Ascend: Float16, Float32, Float64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64.
 
@@ -2916,7 +2916,7 @@ class ReverseV2(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The data type is Number except float64.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3569,9 +3569,9 @@ class DiagPart(PrimitiveWithCheck):
 
     Extracts the diagonal elements from the given Tensor.
 
-    If the input is a Tensor of shape :math:`[D_1,..., D_k, D_1,..., D_k]`, then the
+    If the `input_x` is a Tensor of shape :math:`[D_1,..., D_k, D_1,..., D_k]`, then the
     output will be a Tensor of rank k of shape :math:`[D_1,..., D_k]` where:
-    :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
+    :math:`output[i_1,..., i_k] = input_x[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
         - **input_x** (Tensor) - The rank of input tensor is 2k(k > 0).
@@ -3990,7 +3990,7 @@ class ScatterNdUpdate(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
         - **updates** (Tensor) - N-D(2D or 3D) Tensor The tensor to be updated to the input tensor,
           has the same type as input. The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -4057,7 +4057,7 @@ class ScatterMax(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
@@ -4115,7 +4115,7 @@ class ScatterMin(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
@@ -4176,7 +4176,7 @@ class ScatterAdd(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
@@ -4397,8 +4397,8 @@ class Triu(Primitive):
         diagonal (int, optional): The index of diagonal. Default: 0, indicating the main diagonal.
 
     Inputs:
-        - **x** (Tensor) -  The input tensor with shape :math:`(N,∗)`
-          where ∗ means any number of additional dimensions. The data type is Number.
+        - **x** (Tensor) -  The input tensor with shape :math:`(N, *)`
+          where :math:`*` means any number of additional dimensions. The data type is Number.
 
     Outputs:
         - **y** (Tensor) - A tensor has the same shape and data type as input.
@@ -4477,7 +4477,7 @@ class ScatterMul(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do multiply operation whose data type must be mstype.int32 or
           mstype.int64.
         - **updates** (Tensor) - The tensor doing the multiply operation with `input_x`,
@@ -4566,7 +4566,7 @@ class ScatterDiv(_ScatterOpDynamic):
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    for each `i, ..., j` in `indices.shape`:
+    for each :math:`i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -4582,7 +4582,7 @@ class ScatterDiv(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
         - **indices** (Tensor) - The index to do divide operation whose data type must be mstype.int32 or
           mstype.int64.
         - **updates** (Tensor) - The tensor doing the divide operation with `input_x`,
@@ -5063,7 +5063,7 @@ class SpaceToDepth(Primitive):
 
     Outputs:
         Tensor, the same data type as `x`. It must be a 4-D tensor. Tensor of shape
-        :math:`(N, ( C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
+        :math:`(N, (C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
 
     Raises:
         TypeError: If `block_size` is not an int.
@@ -5235,8 +5235,8 @@ class BatchToSpace(PrimitiveWithInfer):
           product of `block_shape`. The data type is float16 or float32.
 
     Outputs:
-        Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_size
-        and crops. The output shape will be (n', c', h', w'), where
+        Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
+        block_size and crops. The output shape will be :math:`(n', c', h', w')`, where
 
         :math:`n' = n//(block\_size*block\_size)`
 
@@ -5335,9 +5335,11 @@ class SpaceToBatchND(Primitive):
         The shape of the output tensor will be :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`,
         where
 
-        :math:`n' = n*(block\_shape[0]*...*block\_shape[M-1])`
-
-        :math:`w'_i = (w_i+paddings[i-1][0]+paddings[i-1][1])//block\_shape[i-1]`
+        .. math::
+            \begin{array}{ll} \\
+                n' = n*(block\_shape[0]*...*block\_shape[M-1]) \\
+                w'_i = (w_i+paddings[i-1][0]+paddings[i-1][1])//block\_shape[i-1]
+            \end{array}
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
@@ -5501,10 +5503,10 @@ class Meshgrid(PrimitiveWithInfer):
     Args:
         indexing (str, optional): Cartesian ('xy', default) or
             matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
-            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
-            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
+            inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
+            for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
+            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing.
 
     Inputs:
         - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
@@ -5684,7 +5686,7 @@ class EditDistance(Primitive):
         \end{array}\right. &
         \end{array}\right.
 
-    Where the :math:`a` indicates the hypothesis and the :math:`a` indicates the truth. For ease of understanding,
+    Where the :math:`a` indicates the hypothesis and the :math:`b` indicates the truth. For ease of understanding,
     i and j here in may be considered as lengths of a and b.
 
     .. warning::
@@ -5951,8 +5953,8 @@ class IdentityN(Primitive):
     Return a tuple of tensors with the same shapes and contents as the input.
 
     This op can be used to override the gradient for complicated functions. For
-    example, suppose y = f(x) and we wish to apply a custom function g for backprop
-    such that dx = g(dy).
+    example, suppose :math:`y = f(x)` and we wish to apply a custom function g for backprop
+    such that :math:`dx=g(dy)`.
 
     Inputs:
         - **x** (Tensors) - tuple(Tensor) or List(Tensor). The data type is RealNumber.
@@ -6972,9 +6974,9 @@ class Lstsq(Primitive):
         l2_regularizer (float, optional): L2 regularization coefficient. Default: 0.0.
 
     Inputs:
-        - **x** (Tensor) - The m by n matrix `x`. The input tensor whose data type is
+        - **x** (Tensor) - :math:`(m \times n)` matrix `x`. The input tensor whose data type is
           float16, float32 or float64.
-        - **a** (Tensor) - The m by k matrix `a`. The input tensor whose data type is
+        - **a** (Tensor) - :math:`(m \times k)` matrix `a`. The input tensor whose data type is
           float16, float32 or float64.
 
     Outputs:

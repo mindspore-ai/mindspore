@@ -5,7 +5,7 @@ mindspore.ops.Conv2D
 
     二维卷积层。
 
-    对输入Tensor计算二维卷积，该Tensor的常见shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C_{in}` 为通道数， :math:`H_{in}, W_{in}` 分别为特征层的高度和宽度。 :math:`X_i` 为 :math:`i^{th}` 输入值， :math:`b_i` 为 :math:`i^{th}` 输入值的偏置项。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, H_{in}, W_{in})` ，公式定义如下：
+    对输入Tensor计算二维卷积，该Tensor的常见shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C_{in}` 为通道数， :math:`H_{in}` 为特征层的高度，:math:`W_{in}` 为特征层的宽度。 :math:`X_i` 为 :math:`i^{th}` 输入值， :math:`b_i` 为 :math:`i^{th}` 输入值的偏置项。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, H_{in}, W_{in})` ，公式定义如下：
 
     .. math::
         out_j = \sum_{i=0}^{C_{in} - 1} ccor(W_{ij}, X_i) + b_j,

@@ -8,7 +8,7 @@
     公式如下：
 
     .. math::
-        \text{output} = x * \tan(\log(1 + \exp(\text{x})))
+        \text{output} = x * \tanh(\log(1 + \exp(\text{x})))
 
     更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
 

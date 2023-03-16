@@ -18,7 +18,7 @@
     若reduction不为'none'（默认为'mean'），则
 
     .. math::
-        \ell(x, t)=L=\left\{\begin{array}{ll}
+        \ell(x, t)=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.

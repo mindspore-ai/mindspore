@@ -15,7 +15,7 @@ mindspore.ops.BatchMatMul
         - **transpose_b** (bool) - 如果为True，则在乘法之前转置 `y` 的最后两个维度。默认值：False。
 
     输入：
-        - **x** (Tensor) - 输入相乘的第一个Tensor。其shape为 :math:`(*B, N, C)` ，其中 :math:`*B` 表示批处理大小，可以是多维度， :math:`N` 和 :math:`C` 是最后两个维度的大小。如果 `transpose_a` 为True，则其shape必须为 :math:`(*B,C,N)` 。
+        - **x** (Tensor) - 输入相乘的第一个Tensor。其shape为 :math:`(*B, N, C)` ，其中 :math:`*B` 表示批处理大小，可以是多维度， :math:`N` 和 :math:`C` 是最后两个维度的大小。如果 `transpose_a` 为True，则其shape必须为 :math:`(*B, C, N)` 。
         - **y** (Tensor) - 输入相乘的第二个Tensor。Tensor的shape为 :math:`(*B, C, M)` 。如果 `transpose_b` 为True，则其shape必须为 :math:`(*B, M, C)` 。
 
     输出：
