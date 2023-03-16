@@ -680,7 +680,6 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.Assert
     mindspore.ops.HistogramSummary
     mindspore.ops.ImageSummary
     mindspore.ops.ScalarSummary
