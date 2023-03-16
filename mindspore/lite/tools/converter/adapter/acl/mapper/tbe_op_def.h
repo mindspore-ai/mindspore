@@ -62,6 +62,7 @@ ADD_CONVERTER_TBE_OP(TopKV2)
 ADD_CONVERTER_TBE_OP(CommonLSTM)
 ADD_CONVERTER_TBE_OP(BatchMatMulV2)
 ADD_CONVERTER_TBE_OP(MatMulV2)
+ADD_CONVERTER_TBE_OP(Swish)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

@@ -416,6 +416,7 @@ constexpr auto kHSigmoidGradOpName = "HSigmoidGrad";
 constexpr auto kHardSigmoidGradOpName = "HardSigmoidGrad";
 constexpr auto kHammingWindowOpName = "HammingWindow";
 constexpr auto kHSVToRGBOpName = "HSVToRGB";
+constexpr auto kSiLUOpName = "SiLU";
 constexpr auto kHSwishOpName = "HSwish";
 constexpr auto kHardSwishOpName = "HardSwish";
 constexpr auto kHistogramOpName = "Histogram";
