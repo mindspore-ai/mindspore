@@ -21,4 +21,4 @@
         Tensor，和 `input` 具有相同的dtype。
 
     异常：
-        - **ValueError**：如果 `mat1`，`mat2` 不能进行矩阵乘法。
+        - **ValueError** - 如果 `mat1`，`mat2` 不能进行矩阵乘法。
