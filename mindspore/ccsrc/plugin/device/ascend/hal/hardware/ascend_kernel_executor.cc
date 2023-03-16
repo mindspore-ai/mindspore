@@ -197,11 +197,11 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
-  device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
   if (kernel_graph->is_from_single_op()) {
     PreprocessBeforeRunSingleOpGraph(kernel_graph);
   } else {
+    device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
+    device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
     PreprocessBeforeRunGraph(kernel_graph);
   }
 }
