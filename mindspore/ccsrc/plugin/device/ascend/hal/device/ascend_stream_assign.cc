@@ -529,6 +529,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   if (gen_mask_not_fusion) {
     InsertEventForMicroBatchIndependent(graph_ptr);
   }
+
   GetIndependentMaxTarget(graph_ptr);
   InsertCtrlForIndependentParallel(graph_ptr);
   AdjustAtomicAddrCleanOrder(graph_ptr);
@@ -1516,6 +1517,7 @@ void AscendStreamAssign::InsertEventForHcomParallel(const NotNull<KernelGraphPtr
   InsertEventHcomDependCommonBak(graph_ptr);
   InsertEventHcomDependHcom(graph_ptr);
   InsertEventForCallCommSubGraph(graph_ptr);
+  InsertEventForOverflow(graph_ptr);
   MS_LOG(INFO) << "End";
 }
 
@@ -1623,7 +1625,8 @@ void AscendStreamAssign::GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph
   root_graph->set_execution_order(cnodes);
 }
 
-void AscendStreamAssign::GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id) {
+void AscendStreamAssign::GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr,
+                                       std::vector<uint32_t> *graphs_id) const {
   MS_EXCEPTION_IF_NULL(graphs_id);
   if (std::find(graphs_id->begin(), graphs_id->end(), graph_ptr->graph_id()) != graphs_id->end()) {
     return;
@@ -3018,6 +3021,63 @@ void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<Kerne
   graph_ptr->set_execution_order(new_exec_order);
   MS_LOG(INFO) << "Print execution order after inserting event between DropoutDoMask and DropoutGenMask.";
   graph_ptr->PrintGraphExecuteOrder();
+}
+
+void AscendStreamAssign::InsertEventForOverflowInGraph(const NotNull<KernelGraphPtr> &graph_ptr,
+                                                       uint32_t graph_id) const {
+  auto execution_order = graph_ptr->execution_order();
+  std::map<CNodePtr, uint32_t> npu_get_node_graph_id;
+  std::map<string, size_t> group_last_index;
+  auto result = std::find_if(execution_order.begin(), execution_order.end(), [&](const auto &node) {
+    return IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2) && AnfAlgo::GetGraphId(node.get()) == graph_id;
+  });
+  if (result == execution_order.end()) {
+    return;
+  }
+  auto npu_get_node = *result;
+  for (auto iter = execution_order.begin(); iter < result; iter++) {
+    if (IsHcom(*iter) && AnfAlgo::GetGraphId((*iter).get()) == graph_id) {
+      auto group_name = GetHcomGroup(*iter);
+      group_last_index[group_name] = iter - execution_order.begin();
+    }
+  }
+  if (group_last_index.empty()) {
+    return;
+  }
+  std::vector<size_t> hcom_index;
+  std::vector<size_t> event_ids;
+  std::transform(group_last_index.begin(), group_last_index.end(), std::back_inserter(hcom_index),
+                 [](auto const &item) { return item.second; });
+  std::sort(hcom_index.begin(), hcom_index.end(), std::greater<size_t>());
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+  for (auto index : hcom_index) {
+    auto hcom_node = execution_order[index];
+    uint32_t cur_event_id = resource_manager.ApplyNewEvent();
+    (void)event_ids.emplace_back(cur_event_id);
+    CNodePtr send_cnode = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId((hcom_node)));
+    MS_LOG(INFO) << "Insert StreamSend " << cur_event_id << " after node: " << hcom_node->fullname_with_scope();
+    execution_order.insert(execution_order.begin() + index + 1, send_cnode);
+  }
+
+  auto npu_get_iter = std::find_if(execution_order.begin(), execution_order.end(),
+                                   [&](const auto &node) { return node == npu_get_node; });
+  if (npu_get_iter == execution_order.end()) {
+    MS_LOG(EXCEPTION) << "Can not find node in execution order, node: " << npu_get_node->fullname_with_scope();
+  }
+  for (auto event_id : event_ids) {
+    CNodePtr recv_cnode = CreateRecvApplyKernel(graph_ptr, event_id, AnfAlgo::GetStreamId(*npu_get_iter));
+    MS_LOG(INFO) << "Insert StreamRecv " << event_id << " before node: " << (*npu_get_iter)->fullname_with_scope();
+    execution_order.insert(npu_get_iter, recv_cnode);
+  }
+  graph_ptr->set_execution_order(execution_order);
+}
+
+void AscendStreamAssign::InsertEventForOverflow(const NotNull<KernelGraphPtr> &graph_ptr) const {
+  std::vector<uint32_t> graphs_id;
+  GetAllGraphID(graph_ptr, &graphs_id);
+  for (auto graph_id : graphs_id) {
+    InsertEventForOverflowInGraph(graph_ptr, graph_id);
+  }
 }
 }  // namespace ascend
 }  // namespace device
