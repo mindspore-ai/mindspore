@@ -20,7 +20,7 @@ mindspore.nn.GaussianNLLLoss
         - **reduction** (str) - 指定应用于输出结果的计算方式，'none'、'mean'、'sum'，默认值：'mean'。
 
     输入：
-        - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。`*` 代表着任意数量的额外维度。
+        - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。 :math:`*` 代表着任意数量的额外维度。
         - **labels** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `logits` 具有相同shape，或者相同shape但有一个维度为1（以允许广播）。
         - **var** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `logits` 具有相同shape，或者相同shape但有一个维度为1，或者少一个维度（以允许广播）。
 

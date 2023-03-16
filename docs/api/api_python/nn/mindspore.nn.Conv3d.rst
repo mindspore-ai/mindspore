@@ -9,7 +9,7 @@ mindspore.nn.Conv3d
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
-    其中，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入空间维度， :math:`out_{j}` 对应输出的第 :math:`j` 个空间维度，:math:`j` 的范围在 :math:`[0，C_{out}-1]` 内，
+    其中，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入空间维度， :math:`out_{j}` 对应输出的第 :math:`j` 个空间维度，:math:`j` 的范围在 :math:`[0, C_{out}-1]` 内，
     :math:`\text{weight}(C_{\text{out}_j}, k)` 是shape为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` 的卷积核切片，其中 :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}` 和 :math:`\text{kernel_size[2]}` 是卷积核的深度、高度和宽度。 :math:`\text{bias}` 为偏置参数， :math:`\text{X}` 为输入Tensor。
     完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 `group` 是在空间维度上分割输入 `x` 的组数。
     详细介绍请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
@@ -29,7 +29,7 @@ mindspore.nn.Conv3d
           - pad：对输入进行填充。在输入的深度、高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union(int, tuple[int])) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int或包含6个整数的tuple。如果 `padding` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `padding` 。如果 `padding` 是6个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充padding[0]、padding[1]、padding[2]、padding[3]、padding[4]和padding[5]。值应该要大于等于0，默认值：0。
-        - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若取值k > 1，则kernel对每k个元素进行采样。在深度、高度和宽度方向上的取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。当前Ascend后端的深度维度只支持为1。 
+        - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若取值 :math:`k > 1`，则kernel对每k个元素进行采样。在深度、高度和宽度方向上的取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。当前Ascend后端的深度维度只支持为1。 
         - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：1。
         - **has_bias** (bool) - Conv3d层是否添加偏置参数。默认值：False。
         - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选"TruncatedNormal"，"Normal"，"Uniform"，"HeUniform"和"XavierUniform"分布以及常量"One"和"Zero"分布的值，可接受别名"xavier_uniform"，"he_uniform"，"ones"和"zeros"。上述字符串大小写均可。更多细节请参考Initializer的值。默认值："normal"。

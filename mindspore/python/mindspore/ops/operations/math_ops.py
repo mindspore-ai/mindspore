@@ -746,7 +746,7 @@ class ReduceSum(PrimitiveWithCheck):
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions
            when skip_mode is false. Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
 
@@ -973,7 +973,7 @@ class ReduceMax(_Reduce):
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
            Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1057,7 +1057,7 @@ class ReduceMin(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-r, r).
 
@@ -3822,12 +3822,12 @@ class EqualCount(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - The first input tensor. If the data type and shape of `y` are determined, then `x`
           must be the same as `y`, and vice versa.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The second input tensor. If the data type and shape of `x` are determined, then `y`
           must be the same as `x`, and vice versa.
 
     Outputs:
-        Tensor, with the type same as input tensor and shape as (1,).
+        Tensor, with the type same as input tensor and shape as :math:`(1,)`.
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
@@ -4248,10 +4248,10 @@ class FloatStatus(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16, float32 or float64.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, has the shape of `(1,)`, and the dtype is `mindspore.dtype.float32`.
+        Tensor, has the shape of :math:`(1,)`, and the dtype is `mindspore.dtype.float32`.
 
     Raises:
         TypeError: If dtype of `x` is not in [float16, float32, float64].
@@ -4963,7 +4963,7 @@ class SquareSumAll(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **y** (Tensor) - The input tensor has the same type and shape as the `x`.
 
     Outputs:
@@ -6084,18 +6084,18 @@ class TridiagonalMatMul(Primitive):
     Inputs:
         - **superdiag** (Tensor) - Superdiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
-          The shape is [..., 1, M].
+          The shape is :math:`(..., 1, M)`.
           Last element is ignored.
         - **maindiag** (Tensor) - Maindiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
-          The shape is [..., 1, M].
+          The shape is :math:`(..., 1, M)`.
         - **subdiag** (Tensor) - Subdiagonals of Tridiagonal Matrices to the left of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
-          The shape is [..., 1, M].
+          The shape is :math:`(..., 1, M)`.
           First element is ignored.
         - **rhs** (Tensor) - MxN Matrices to the right of multiplication.
           Data types must be: float16, float32, double, complex64, complex128.
-          The shape is [..., M, N].
+          The shape is :math:`(..., 1, M)`.
 
     Outputs:
         Tensor, with the same shape and data type as the `rhs`.

@@ -6704,7 +6704,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         - **grad** (Tensor) - A tensor of the same type as `var` and
           :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
-          The type must be int32 and indices.shape[0] = grad.shape[0].
+          The type must be int32 and :math:`indices.shape[0] = grad.shape[0]`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -9174,13 +9174,13 @@ class NthElement(Primitive):
       these values in a Tensor with shape of `values.shape = input.shape[:-1]`.
 
     Args:
-        reverse (bool, optional): An optional bool. If set to True, it find the nth-largest value
+        reverse (bool, optional): An optional bool. If set to True, it find the :math:`n`-th largest value
           in the vector instead of the nth-smallest. Default: False.
 
     Inputs:
         - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least :math:`n+1`.
         - **n** (Union[int, Tensor]) -  If the `n` is a Tensor, it should be a 0-D Tensor, dtype is int32.
-          Valid range of n is :math:`[0, input.shape[-1])`.
+          Valid range of `n` is :math:`[0, input.shape[-1])`.
 
     Outputs:
         - **values** (Tensor) - Its shape satisfies:  `values`.shape = `input`.shape[:-1].

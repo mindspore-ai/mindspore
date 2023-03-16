@@ -3,7 +3,7 @@ mindspore.nn.Dropout1d
 
 .. py:class:: mindspore.nn.Dropout1d(p=0.5)
 
-    在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些通道归零（对于形状为 `NCL` 的三维Tensor，其通道特征图指的是后一维 `L` 的一维特征图）。
+    在训练期间，以服从伯努利分布的概率 `p` 随机将输入Tensor的某些通道归零（对于形状为 :math:`NCL` 的三维Tensor，其通道特征图指的是后一维 :math:`L` 的一维特征图）。
     例如，在批处理输入中 :math:`i\_th` 批， :math:`j\_th` 通道的 `input[i, j]` `1D` Tensor 是一个待处理数据。
     每个通道将会独立依据伯努利分布概率 `p` 来确定是否被清零。
 

@@ -37,12 +37,12 @@ class Rprop(Optimizer):
     .. math::
         \begin{gather*}
             &\hspace{-10mm}  \textbf{if} \:   g_{t-1} g_t  > 0                                     \\
-            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max}) \\
-            &\hspace{0mm}  \textbf{else if}  \:  g_{t-1} g_t < 0                                 \\
-            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min}) \\
-            &\hspace{-25mm}  \textbf{else}  \:                                                      \\
-            &\hspace{-5mm}  \Delta_t \leftarrow \Delta_{t-1}                                      \\
-            &\hspace{15mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{min}(\Delta_{t-1} \eta_{+}, \Delta_{max})  \\
+            &\hspace{0mm}  \textbf{else if}  \:  g_{t-1} g_t < 0                                   \\
+            &\hspace{25mm}  \Delta_t \leftarrow \mathrm{max}(\Delta_{t-1} \eta_{-}, \Delta_{min})  \\
+            &\hspace{-25mm}  \textbf{else}  \:                                                     \\
+            &\hspace{-5mm}  \Delta_t \leftarrow \Delta_{t-1}                                       \\
+            &\hspace{15mm} w_{t} \leftarrow w_{t-1}- \Delta_{t} \mathrm{sign}(g_t)                 \\
         \end{gather*}
 
     :math:`\Delta_{min/max}` represents the min/max step size, :math:`\eta_{+/-}` represents the factors of

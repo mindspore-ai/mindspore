@@ -169,7 +169,7 @@ class StandardLaplace(Primitive):
     It is defined as:
 
     .. math::
-        \text{f}(x) = \frac{1}{2}\exp(-|x|),
+        \text{f}(x) = \frac{1}{2}\exp(-|x|)
 
     Args:
         seed (int): Random seed. Default: 0.

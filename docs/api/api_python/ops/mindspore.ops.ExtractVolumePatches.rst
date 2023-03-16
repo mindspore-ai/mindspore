@@ -15,7 +15,9 @@ mindspore.ops.ExtractVolumePatches
         - **input_x** (Tensor) - 一个五维的输入Tensor。数据类型必须为float16、float32，shape为 :math:`(x_n、x_c、x_d、x_h、x_w)` 。
 
     输出：
-        Tensor，与输入的类型相同。如果填充为"VALID"，则shape为 :math:`(x_n,k_d*k_h*k_w*x_c,1+(x_d-k_d)/s_d,1+(x_h-k_h)/s_h,1+(x_w-k_w)/s_w)` ；如果填充"SAME"，则shape为 :math:`(x_n,k_d*k_h*k_w*x_c,(x_d+s_d-1)/s_d,(x_h+s_h-1)/s_h,(x_w+s_w-1)/s_w)` 。
+        Tensor，与输入的类型相同。如果填充为"VALID"，则shape为 :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
+        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)` ；如果填充"SAME"，则shape为 :math:`(
+        x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)` 。
 
     异常：
         - **TypeError** - 如果 `kernel_size` 或 `strides` 不是一个list，tuple或int。

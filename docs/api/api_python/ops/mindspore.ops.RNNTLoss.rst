@@ -9,7 +9,7 @@ mindspore.ops.RNNTLoss
         - **blank_label** (int) - 空白标签。默认值：0。
 
     输入：
-        - **acts** (Tensor) - Tensor，shape为 :math:`(B,T,U,V)` 。数据类型必须为float16或float32。
+        - **acts** (Tensor) - Tensor，shape为 :math:`(B, T, U, V)` 。数据类型必须为float16或float32。
         - **labels** (Tensor) - Tensor，shape为 :math:`(B, U-1)` 。数据类型为int32。
         - **input_lengths** (Tensor) - Tensor，shape为 :math:`(B,)` 。数据类型为int32。
         - **label_lengths** (Tensor) - Tensor，shape为 :math:`(B,)` 。数据类型为int32。

@@ -17,7 +17,7 @@ mindspore.nn.AdamOffload
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
         \end{array}
 
-    :math:`m` 代表第一个矩向量 `moment1` ， :math:`v` 代表第二个矩向量 `moment2`，:math:`g` 代表 `gradients`，:math:`l` 代表缩放因子，:math:`\beta_1,\beta_2` 代表 `beta1` 和 `beta2`，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power`，:math:`\alpha` 代表 `learning_rate`，:math:`w` 代表 `params`，:math:`\epsilon` 代表 `eps` 。
+    :math:`m` 代表第一个矩向量 `moment1` ， :math:`v` 代表第二个矩向量 `moment2`，:math:`g` 代表 `gradients`，:math:`l` 代表缩放因子，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2`，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1_power` 和 `beta2_power`，:math:`\alpha` 代表 `learning_rate`，:math:`w` 代表 `params`，:math:`\epsilon` 代表 `eps` 。
 
     .. note::
         此优化器目前仅支持图模式。

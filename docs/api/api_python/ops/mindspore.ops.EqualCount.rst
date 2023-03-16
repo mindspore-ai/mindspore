@@ -8,7 +8,7 @@ mindspore.ops.EqualCount
     两个输入Tensor必须具有相同的数据类型和shape。
 
     输入：
-        - **x** (Tensor) - 第一个输入Tensor。如果确定了 `y` 的数据类型和shape，则 `x` 必须与 `y` 相同，反之亦然。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (Tensor) - 第一个输入Tensor。如果确定了 `y` 的数据类型和shape，则 `x` 必须与 `y` 相同，反之亦然。 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **y** (Tensor) - 第二个输入Tensor。如果确定了 `x` 的数据类型和shape，则 `y` 必须与 `x` 相同，反之亦然。
 
     输出：

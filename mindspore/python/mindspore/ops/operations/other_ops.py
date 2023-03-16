@@ -343,13 +343,13 @@ class CheckValid(Primitive):
     Returns True if the box is within borders specified by `img_metas`, False if not.
 
     Inputs:
-        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). "N" indicates the number of
+        - **bboxes** (Tensor) - Bounding boxes tensor with shape :math:`(N, 4)`. :math:`N` indicates the number of
           bounding boxes, the value "4" indicates "x0", "x1", "y0", and "y1". Data type must be float16 or float32.
         - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio), specifying
           the valid boundary(height * ratio, width * ratio). Data type must be float16 or float32.
 
     Outputs:
-        Tensor, with shape of (N,) and dtype of bool, specifying whether the bounding boxes is in the image.
+        Tensor, with shape of :math:`(N,)` and dtype of bool, specifying whether the bounding boxes is in the image.
         "True" indicates valid, while "False" indicates invalid.
 
     Raises:
