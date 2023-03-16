@@ -355,236 +355,25 @@ class Dropout3d(Cell):
 
 class Upsample(Cell):
     r"""
-    Samples the input tensor to the given `size` or `scale_factor` by using one of the upsampling algorithms.
-
-    Either `size` or `scale_factor` must be spetified, but they cannot be specified at the same time.
-
-    Args:
-        size (Union(int, tuple[int], list[int]), optional): The sample size of the tensor.
-            A tuple or list of 1, 2, or 3 int elements
-            :math:`([new\_depth], [new\_height], new\_width)`.
-            One and only one of `size` and `scale_factor` can be set to None. Default: None.
-        scale_factor (Union(float, tuple[float], list[float]), optional): The scale factor of new size of the tensor.
-            The value should be positive integer.
-            One and only one of `size` and `scale_factor` can be set to None.
-            Currently only None is supported. Default: None.
-        mode (str, optional): Specified upsampling algorithms.
-            Must be one of 'nearest', 'linear' (3D only), 'bilinear', 'bicubic' (4D only) and 'trilinear' (5D only).
-            Default: 'nearest'.
-        align_corners (bool, optional): If true, rescale input by
-            :math:`(new\_height - 1) / (height - 1)`, which exactly
-            aligns the corners of data and resized data. If false, rescale by :math:`new\_height / height`.
-            Default: None, in which case `align_corners` is not specified, Fasle is assign to it.
-
-    Inputs:
-        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 3-D, 4-D, or 5-D. It has a data format:
-          :math:`(batch, channels, depth(4-D or 5-D only), height(5-D only), width)`,
-          with data type of float16 or float32.
-
-    Outputs:
-        Tensor, 3-D, 4-D, or 5-D, the data type is the same as `x`.
-
-    Raises:
-        TypeError: If `x` is not Tensor.
-        TypeError: If `mode` is not one of 'nearest', 'linear', 'bilinear', 'bicubic', nor 'trilinear'.
-        TypeError: If `size` is not one of tuple, list, None.
-        TypeError: If `scale_factor` is neither int nor None.
-        TypeError: If `align_corners` is not a bool.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `size` and `scale_factor` are both None or not None.
-        ValueError: If shape of `x` or `size` and `mode` are not match.
-        ValueError: If `scale_factor` is negative.
-        ValueError: If length of `size` does not match `mode`.
+    Alias for :func:`mindspore.ops.interpolate` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
-        >>> upsample = nn.Upsample(size=(5, 5))
-        >>> out = upsample(x)
-        >>> print(x.asnumpy())
-        [[[[1. 2. 3. 4.]
-           [5. 6. 7. 8.]]]]
-        >>> print(out.asnumpy())
-        [[[[1. 1. 2. 3. 4.]
-           [1. 1. 2. 3. 4.]
-           [1. 1. 2. 3. 4.]
-           [5. 5. 6. 7. 8.]
-           [5. 5. 6. 7. 8.]]]]
-        >>> print(out.shape)
-        (1, 1, 5, 5)
     """
 
-    def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None):
+    def __init__(self, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
         """Initialize Upsample."""
         super(Upsample, self).__init__()
-        self.mode = mode
         self.size = size
         self.scale_factor = scale_factor
-        self.has_align_corners = align_corners is not None
-        self.align_corners = align_corners is not None and align_corners
+        self.mode = mode
+        self.align_corners = align_corners
+        self.recompute_scale_factor = recompute_scale_factor
 
     def construct(self, x):
-        def run_nearest(tensor, ndim, size):
-            shape = tensor.shape
-            if self.has_align_corners:
-                raise ValueError(
-                    "For 'Upsample', 'align_corners' option can only be set with the "
-                    "interpolating modes: linear, bilinear, bicubic, trilinear"
-                )
-            if ndim == 3:
-                if self.scale_factor is not None:
-                    raise ValueError(
-                        "For 'Upsample', 'scale_factor' option cannot currently be set with the "
-                        "interpolating modes: nearest when dim is 3"
-                    )
-                if size is not None:
-                    size = (size[0], 1)
-                reshape = P.Reshape()
-                tensor = reshape(tensor, (shape[0], shape[1], shape[2], 1))
-                upsample = P.ResizeNearestNeighbor(size=size)
-                tensor = upsample(tensor)
-                ushape = tensor.shape
-                tensor = reshape(tensor, (ushape[0], ushape[1], ushape[2] * ushape[3]))
-            if ndim == 4:
-                if self.scale_factor is not None:
-                    raise ValueError(
-                        "For 'Upsample', 'scale_factor' option cannot currently be set with the "
-                        "interpolating modes: nearest when dim is 4"
-                    )
-                upsample = P.ResizeNearestNeighbor(size=size)
-                tensor = upsample(tensor)
-            if ndim == 5:
-                upsample = P.UpsampleNearest3D(
-                    output_size=size, scales=self.scale_factor
-                )
-                tensor = upsample(tensor)
-            return tensor
-
-        def run_linear(tensor, ndim, size):
-            if self.scale_factor is not None:
-                raise ValueError(
-                    "For 'Upsample', 'scale_factor' option cannot currently be set with the "
-                    "interpolating modes: linear"
-                )
-            if ndim == 4:
-                raise ValueError(
-                    "For 'Upsample', linear mode needs 3D input, but got 4D input"
-                )
-            if ndim == 5:
-                raise ValueError(
-                    "For 'Upsample', linear mode needs 3D input, but got 5D input"
-                )
-            if self.has_align_corners and self.align_corners:
-                coordinate_transformation_mode = "align_corners"
-            else:
-                coordinate_transformation_mode = "half_pixel"
-            upsample = P.image_ops.ResizeLinear1D(
-                coordinate_transformation_mode=coordinate_transformation_mode
-            )
-            return upsample(tensor, size)
-
-        def run_bilinear(tensor, ndim, size):
-            if self.scale_factor is not None:
-                raise ValueError(
-                    "For 'Upsample', 'scale_factor' option cannot currently be set with the "
-                    "interpolating modes: bilinear"
-                )
-            if ndim == 3:
-                raise ValueError(
-                    "For 'Upsample', bilinear mode needs 4D input, but got 3D input"
-                )
-            if ndim == 5:
-                raise ValueError(
-                    "For 'Upsample', bilinear mode needs 4D input, but got 5D input"
-                )
-            align_corners = self.align_corners if self.has_align_corners else False
-            upsample = P.ResizeBilinear(
-                size=size,
-                align_corners=align_corners,
-                half_pixel_centers=not align_corners,
-            )
-            return upsample(tensor)
-
-        def run_bicubic(tensor, ndim, size):
-            if self.scale_factor is not None:
-                raise ValueError(
-                    "For 'Upsample', 'scale_factor' option cannot currently be set with the "
-                    "interpolating modes: bicubic"
-                )
-            if ndim == 3:
-                raise ValueError(
-                    "For 'Upsample', bicubic mode needs 4D input, but got 3D input"
-                )
-            if ndim == 5:
-                raise ValueError(
-                    "For 'Upsample', bicubic mode needs 4D input, but got 5D input"
-                )
-            align_corners = self.align_corners if self.has_align_corners else False
-            upsample = P.image_ops.ResizeBicubic(
-                align_corners=align_corners,
-                half_pixel_centers=not align_corners,
-            )
-            tensor = upsample(tensor, Tensor(size, dtype=mstype.int32))
-            return tensor
-
-        def run_trilinear(tensor, ndim, size):
-            if ndim == 3:
-                raise ValueError(
-                    "For 'Upsample', trilinear mode needs 5D input, but got 3D input"
-                )
-            if ndim == 4:
-                raise ValueError(
-                    "For 'Upsample', trilinear mode needs 5D input, but got 4D input"
-                )
-            upsample = P.nn_ops.UpsampleTrilinear3D(
-                output_size=size,
-                scales=self.scale_factor,
-                align_corners=self.align_corners,
-            )
-            return upsample(tensor)
-
-        if not isinstance(x, Tensor):
-            raise TypeError(f"For 'Upsample', 'x' must be a tensor, but got {type(x)}")
-        ndim = x.ndim
-        tensor = x
-        size = self.size
-
-        if size is not None and self.scale_factor is not None:
-            raise ValueError(
-                "For 'Upsample', only one of size or scale_factor should be defined"
-            )
-        if size is not None:
-            if isinstance(size, (list, tuple)):
-                if len(size) != ndim - 2:
-                    raise ValueError(
-                        "For 'Upsample', size shape must match input shape. "
-                        "Input is {}D, size is {}".format(ndim - 2, len(size))
-                    )
-            else:
-                size = [size for _ in range(ndim - 2)]
-        if ndim < 3 or ndim > 5:
-            raise ValueError(
-                "For 'Upsample', Only 3D, 4D and 5D input Tensors supported, "
-                f"but got {ndim}D) for {self.mode} mode"
-            )
-        if self.mode == "nearest":
-            tensor = run_nearest(tensor, ndim, size)
-        elif self.mode == "linear":
-            tensor = run_linear(tensor, ndim, size)
-        elif self.mode == "bilinear":
-            tensor = run_bilinear(tensor, ndim, size)
-        elif self.mode == "bicubic":
-            tensor = run_bicubic(tensor, ndim, size)
-        elif self.mode == "trilinear":
-            tensor = run_trilinear(tensor, ndim, size)
-        else:
-            raise TypeError(
-                "For 'Upsample', 'mode' must be 'nearest', 'linear', 'bilinear', 'bicubic', or 'trilinear', but got "
-                f"{self.mode}"
-            )
-        return tensor
+        out = F.interpolate(x, self.size, self.scale_factor, self.mode,
+                            self.align_corners, self.recompute_scale_factor)
+        return out
 
 
 class Flatten(Cell):
