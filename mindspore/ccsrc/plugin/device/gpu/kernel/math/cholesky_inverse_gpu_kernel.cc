@@ -140,6 +140,5 @@ std::vector<KernelAttr> CholeskyInverseGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, CIfunc> &pair) { return pair.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CholeskyInverse, CholeskyInverseGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

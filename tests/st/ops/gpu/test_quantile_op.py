@@ -34,6 +34,7 @@ class Quantile(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp32():
     """
     Feature: Quantile
@@ -58,6 +59,7 @@ def test_quantile_fp32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp64():
     """
     Feature: Quantile

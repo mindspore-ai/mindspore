@@ -265,7 +265,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.mul
     mindspore.ops.multiply
     mindspore.ops.mvlgamma
-    mindspore.ops.nanquantile
     mindspore.ops.neg
     mindspore.ops.negative
     mindspore.ops.nextafter
@@ -273,7 +272,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.polygamma
     mindspore.ops.positive
     mindspore.ops.pow
-    mindspore.ops.quantile
     mindspore.ops.rad2deg
     mindspore.ops.ravel
     mindspore.ops.real

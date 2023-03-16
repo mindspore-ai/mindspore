@@ -158,6 +158,5 @@ std::vector<KernelAttr> QuantileGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, QuantileFunc> &pair) { return pair.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Quantile, QuantileGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

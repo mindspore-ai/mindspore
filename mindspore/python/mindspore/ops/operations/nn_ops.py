@@ -9951,7 +9951,7 @@ class SparseApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> var = Parameter(Tensor(np.array([[1,2], [1,2]]).astype(np.float32)))
@@ -10128,7 +10128,7 @@ class SparseApplyProximalGradientDescent(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops

@@ -528,7 +528,6 @@ Array操作
     mindspore.ops.MatrixDeterminant
     mindspore.ops.MatrixDiagPartV3
     mindspore.ops.MatrixDiagV3
-    mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
     mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
@@ -538,7 +537,6 @@ Array操作
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
-    mindspore.ops.Quantile
     mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
@@ -592,7 +590,6 @@ Array操作
     mindspore.ops.Unique
     mindspore.ops.UniqueConsecutive
     mindspore.ops.UniqueWithPad
-    mindspore.ops.UnravelIndex
     mindspore.ops.UnsortedSegmentMax
     mindspore.ops.UnsortedSegmentMin
     mindspore.ops.UnsortedSegmentProd
