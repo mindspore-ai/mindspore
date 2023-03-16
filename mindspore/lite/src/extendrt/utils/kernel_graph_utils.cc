@@ -399,8 +399,6 @@ bool KernelGraphUtils::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGr
   std::string fullname;
   if (cnode->input(kAnfPrimitiveIndex)->isa<CNode>()) {
     fullname = cnode->input(kAnfPrimitiveIndex)->fullname_with_scope();
-  } else if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
-    fullname = cnode->input(kFirstDataInputIndex)->fullname_with_scope();
   } else {
     fullname = cnode->fullname_with_scope();
   }

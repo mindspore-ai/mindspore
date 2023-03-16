@@ -25,6 +25,7 @@
 #include "include/transform/graph_ir/utils.h"
 #include "include/backend/device_type.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "src/common/common.h"
 
 namespace mindspore {
 namespace {
@@ -120,12 +121,25 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   return true;
 }
 
-void CreateSessionAndGraphRunner() {
+void CreateSessionAndGraphRunner(const ConfigInfos &config_infos) {
   std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
     transform::SessionOptions options;
     options["ge.trainFlag"] = "0";
     options["ge.enablePrintOpPass"] = "0";
+    if (config_infos.empty() || config_infos.find(lite::kAscendContextSection) == config_infos.end()) {
+      MS_LOG(INFO) << "There is no ascend context info in config infos.";
+    } else {
+      auto ascend_context = config_infos.at(lite::kAscendContextSection);
+      if (ascend_context.find(lite::kGeVariableMemoryMaxSize) != ascend_context.end()) {
+        auto variable_memory_max_size = ascend_context[lite::kGeVariableMemoryMaxSize];
+        options["ge.variableMemoryMaxSize"] = variable_memory_max_size;
+      }
+      if (ascend_context.find(lite::kGeGraphMemoryMaxSize) != ascend_context.end()) {
+        auto graph_memory_max_size = ascend_context[lite::kGeGraphMemoryMaxSize];
+        options["ge.graphMemoryMaxSize"] = graph_memory_max_size;
+      }
+    }
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }
@@ -171,14 +185,15 @@ void RunGeInitGraph(const FuncGraphPtr &anf_graph) {
 }  // namespace
 
 FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
-                                           const transform::TensorOrderMap &init_inputs_map, bool export_air) {
+                                           const transform::TensorOrderMap &init_inputs_map, bool export_air,
+                                           const ConfigInfos config_infos) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
     MS_LOG(ERROR) << "GenConvertor failed";
     return nullptr;
   }
   (void)setenv("GE_TRAIN", "0", 1);
-  CreateSessionAndGraphRunner();
+  CreateSessionAndGraphRunner(config_infos);
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
@@ -198,7 +213,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     return false;
   }
   // opt::GeOptimization(origin_graph);
-  (void)BuildDFGraph(kg, GetParams(kg), false);
+  (void)BuildDFGraph(kg, GetParams(kg), false, config_infos_);
   kg->set_run_mode(device::RunMode::kGraphMode);
   // copy init weight to device
   RunGeInitGraph(kg);
