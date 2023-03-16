@@ -86,6 +86,8 @@ class BpropIRBuilder : public Emitter {
     return Emit("Range", {start, limit, delta}, {{"maxlen", MakeValue(max_len)}});
   }
 
+  NodePtr TupleToTensor(const NodePtr &node, const TypePtr &dtype = kInt64) const;
+
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;
   bool IsGraphMode() const;
