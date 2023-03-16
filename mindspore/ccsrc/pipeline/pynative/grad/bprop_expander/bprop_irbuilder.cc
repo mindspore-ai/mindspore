@@ -26,9 +26,11 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle) {
+NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const DAttr &attrs, const BpropHandle &handle,
+                                const std::string &instance_name) {
   inputs_ptr_ = &inputs;
   attrs_ptr_ = &attrs;
+  instance_name_ = instance_name;
   return handle.func(this);
 }
 

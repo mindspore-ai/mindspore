@@ -574,6 +574,33 @@ void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }
 
 PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
 
+PrimitivePyAdapter::PrimitivePyAdapter(const PrimitivePyAdapter &adapter)
+    : is_const_prim_(adapter.is_const_prim_),
+      backward_hook_fn_key_(adapter.backward_hook_fn_key_),
+      name_(adapter.name_),
+      instance_name_(adapter.instance_name_),
+      prim_type_(adapter.prim_type_),
+      attrs_(adapter.attrs_),
+      const_input_indexes_(adapter.const_input_indexes_),
+      signatures_(adapter.signatures_),
+      backward_hook_fn_(adapter.backward_hook_fn_) {}
+
+PrimitivePyAdapter &PrimitivePyAdapter::operator=(const PrimitivePyAdapter &other) {
+  if (this == &other) {
+    return *this;
+  }
+  is_const_prim_ = other.is_const_prim_;
+  backward_hook_fn_key_ = other.backward_hook_fn_key_;
+  name_ = other.name_;
+  instance_name_ = other.instance_name_;
+  prim_type_ = other.prim_type_;
+  attrs_ = other.attrs_;
+  const_input_indexes_ = other.const_input_indexes_;
+  signatures_ = other.signatures_;
+  backward_hook_fn_ = other.backward_hook_fn_;
+  return *this;
+}
+
 void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
   ValuePtr converted_ret = nullptr;
