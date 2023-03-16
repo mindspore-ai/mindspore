@@ -21,8 +21,8 @@
 #include <memory>
 #include <chrono>
 #include "proto/topology.pb.h"
-#include "distributed/constants.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/constants.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace distributed {

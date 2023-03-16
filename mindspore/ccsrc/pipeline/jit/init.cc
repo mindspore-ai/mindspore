@@ -39,9 +39,9 @@
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"
-#include "distributed/init.h"
-#include "distributed/recovery/recovery_context.h"
-#include "distributed/collective/collective_manager.h"
+#include "include/backend/distributed/init.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/collective/collective_manager.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif

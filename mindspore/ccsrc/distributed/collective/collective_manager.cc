@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "distributed/collective/collective_manager.h"
+#include "include/backend/distributed/collective/collective_manager.h"
 #include <algorithm>
 #include <string>
 #include <numeric>
@@ -23,7 +23,8 @@
 #include <csignal>
 #include <memory>
 #include "utils/ms_context.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
+#include "distributed/persistent/storage/json_utils.h"
 
 namespace mindspore {
 namespace distributed {

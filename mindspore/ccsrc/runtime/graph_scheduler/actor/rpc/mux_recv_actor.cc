@@ -15,7 +15,8 @@
  */
 
 #include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace runtime {

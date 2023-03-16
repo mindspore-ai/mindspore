@@ -23,6 +23,7 @@
 #include <vector>
 #include "utils/hash_map.h"
 #include "utils/convert_utils_base.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
@@ -45,24 +46,9 @@ struct HashMapElement {
 
 // EmbeddingHashMap is used to manage the id -> index mapping of the embedding cache table on the host
 // side. The cache content can be stored on the device or host side.
-class EmbeddingHashMap {
+class BACKEND_EXPORT EmbeddingHashMap {
  public:
-  EmbeddingHashMap(size_t hash_count, size_t hash_capacity)
-      : hash_count_(hash_count),
-        hash_capacity_(hash_capacity),
-        current_pos_(0),
-        current_batch_start_pos_(0),
-        graph_running_index_num_(0),
-        graph_running_index_pos_(0),
-        expired_element_full_(false) {
-    hash_map_elements_.resize(hash_capacity);
-    // In multi-device mode, embedding table are distributed on different devices by id interval,
-    // and ids outside the range of local device will use the front and back positions of the table,
-    // the positions are reserved for this.
-    hash_map_elements_.front().set_step(SIZE_MAX);
-    hash_map_elements_.back().set_step(SIZE_MAX);
-    graph_running_index_ = std::make_unique<int[]>(hash_capacity);
-  }
+  EmbeddingHashMap(size_t hash_count, size_t hash_capacity);
 
   ~EmbeddingHashMap() = default;
 
@@ -72,18 +58,13 @@ class EmbeddingHashMap {
                 const size_t graph_running_step, size_t *const swap_out_size, bool *const need_wait_graph);
 
   // Get the global step of a element in hash map.
-  size_t hash_step(const int hash_index) const { return hash_map_elements_[IntToSize(hash_index)].step_; }
+  size_t hash_step(const int hash_index) const;
   // Set the global step of a element in hash map.
-  void set_hash_step(const int hash_index, const size_t step) {
-    hash_map_elements_[IntToSize(hash_index)].set_step(step);
-  }
-
+  void set_hash_step(const int hash_index, const size_t step);
   // Get the id -> index mapping.
-  const mindspore::HashMap<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
-
+  const mindspore::HashMap<int, int> &hash_id_to_index() const;
   // Get capacity of hash map.
-  size_t hash_capacity() const { return hash_capacity_; }
-
+  size_t hash_capacity() const;
   // Reset the hash map.
   void Reset();
 

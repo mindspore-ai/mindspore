@@ -17,7 +17,7 @@
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include <vector>
 #include <string>
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #include "include/common/utils/anfalgo.h"
 #include "runtime/graph_scheduler/actor/rpc/mux_send_actor.h"
 #include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"

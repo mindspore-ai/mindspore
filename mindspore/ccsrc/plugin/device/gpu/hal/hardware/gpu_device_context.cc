@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/gpu_stream_assign.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_somas.h"
 #include "include/backend/data_queue/data_queue_mgr.h"

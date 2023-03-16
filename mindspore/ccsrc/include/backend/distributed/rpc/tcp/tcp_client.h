@@ -22,18 +22,19 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "distributed/rpc/rpc_client_base.h"
-#include "distributed/rpc/tcp/tcp_comm.h"
+#include "include/backend/distributed/rpc/rpc_client_base.h"
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+class TCPComm;
+
 class BACKEND_EXPORT TCPClient : public RPCClientBase {
  public:
-  explicit TCPClient(bool enable_ssl = false) : RPCClientBase(enable_ssl) {}
-  ~TCPClient() override = default;
+  explicit TCPClient(bool enable_ssl = false);
+  ~TCPClient() override;
 
   // Build or destroy the TCP client.
   bool Initialize() override;
@@ -69,7 +70,7 @@ class BACKEND_EXPORT TCPClient : public RPCClientBase {
 
  private:
   // The basic TCP communication component used by the client.
-  std::unique_ptr<TCPComm> tcp_comm_{nullptr};
+  std::unique_ptr<TCPComm> tcp_comm_;
 
   // The mutex and condition variable used to synchronize the write and read of the received message returned by calling
   // the `ReceiveSync` method.
@@ -77,7 +78,7 @@ class BACKEND_EXPORT TCPClient : public RPCClientBase {
   std::condition_variable wait_msg_cond_;
 
   // The received message from the meta server by calling the method `ReceiveSync`.
-  MessageBase *received_message_{nullptr};
+  MessageBase *received_message_;
 
   DISABLE_COPY_AND_ASSIGN(TCPClient);
 };

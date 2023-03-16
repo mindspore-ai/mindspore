@@ -14,10 +14,41 @@
  * limitations under the License.
  */
 
-#include "distributed/embedding_cache/embedding_hash_map.h"
+#include "include/backend/distributed/embedding_cache/embedding_hash_map.h"
 
 namespace mindspore {
 namespace distributed {
+EmbeddingHashMap::EmbeddingHashMap(size_t hash_count, size_t hash_capacity)
+    : hash_count_(hash_count),
+      hash_capacity_(hash_capacity),
+      current_pos_(0),
+      current_batch_start_pos_(0),
+      graph_running_index_num_(0),
+      graph_running_index_pos_(0),
+      expired_element_full_(false) {
+  hash_map_elements_.resize(hash_capacity);
+  // In multi-device mode, embedding table are distributed on different devices by id interval,
+  // and ids outside the range of local device will use the front and back positions of the table,
+  // the positions are reserved for this.
+  hash_map_elements_.front().set_step(SIZE_MAX);
+  hash_map_elements_.back().set_step(SIZE_MAX);
+  graph_running_index_ = std::make_unique<int[]>(hash_capacity);
+}
+
+size_t EmbeddingHashMap::hash_step(const int hash_index) const {
+  return hash_map_elements_[IntToSize(hash_index)].step_;
+}
+
+void EmbeddingHashMap::set_hash_step(const int hash_index, const size_t step) {
+  hash_map_elements_[IntToSize(hash_index)].set_step(step);
+}
+
+// Get the id -> index mapping.
+const mindspore::HashMap<int, int> &EmbeddingHashMap::hash_id_to_index() const { return hash_id_to_index_; }
+
+// Get capacity of hash map.
+size_t EmbeddingHashMap::hash_capacity() const { return hash_capacity_; }
+
 int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *const swap_out_ids,
                                 const size_t data_step, const size_t graph_running_step, size_t *const swap_out_size,
                                 bool *const need_wait_graph) {

@@ -26,7 +26,7 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"

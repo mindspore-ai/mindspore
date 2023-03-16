@@ -23,6 +23,7 @@
 #include "proto/topology.pb.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 
 namespace mindspore {
 namespace runtime {

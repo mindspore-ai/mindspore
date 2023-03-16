@@ -75,7 +75,7 @@
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/config_manager.h"

@@ -20,21 +20,21 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <mutex>
 #include "utils/ms_utils.h"
-#include "distributed/persistent/storage/file_io_utils.h"
-#include "distributed/persistent/storage/json_utils.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
+namespace storage {
+class FileIOUtils;
+class JsonUtils;
+}  // namespace storage
 namespace recovery {
 constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
 constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
 constexpr char kEnvRecoveryInterval[] = "MS_RECOVERY_INTERVAL";
-
-using distributed::storage::FileIOUtils;
-using distributed::storage::JsonUtils;
 
 bool IsEnableRecovery();
 std::string RecoveryPath();
@@ -99,7 +99,7 @@ class BACKEND_EXPORT RecoveryContext {
   void ObtainGlobalLatestCkptInfo();
 
   // Get the persistent json file pointer.
-  const std::shared_ptr<JsonUtils> &persistent_json();
+  const std::shared_ptr<storage::JsonUtils> &persistent_json();
 
  private:
   inline static std::shared_ptr<RecoveryContext> instance_{};
@@ -160,7 +160,7 @@ class BACKEND_EXPORT RecoveryContext {
 
   std::mutex create_persist_json_mtx_;
   // The persitent json file util, used to persist recovery config.
-  std::shared_ptr<JsonUtils> persistent_json_;
+  std::shared_ptr<storage::JsonUtils> persistent_json_;
 };
 }  // namespace recovery
 }  // namespace distributed

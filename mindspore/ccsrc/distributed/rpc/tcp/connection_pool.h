@@ -22,7 +22,7 @@
 #include <string>
 #include <mutex>
 
-#include "distributed/rpc/tcp/constants.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 #include "distributed/rpc/tcp/connection.h"
 
 namespace mindspore {

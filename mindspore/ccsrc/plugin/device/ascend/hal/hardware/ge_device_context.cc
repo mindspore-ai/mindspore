@@ -40,7 +40,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/config.h"
 #include "runtime/dev.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 
 namespace mindspore {
 namespace device {

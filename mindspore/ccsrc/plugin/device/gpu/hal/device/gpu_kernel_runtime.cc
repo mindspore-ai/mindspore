@@ -24,7 +24,7 @@
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"

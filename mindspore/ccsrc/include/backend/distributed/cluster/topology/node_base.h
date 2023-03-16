@@ -20,8 +20,8 @@
 #include <chrono>
 #include <string>
 #include <memory>
-#include "distributed/cluster/topology/common.h"
-#include "distributed/cluster/topology/utils.h"
+#include "include/backend/distributed/cluster/topology/common.h"
+#include "include/backend/distributed/cluster/topology/utils.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -32,7 +32,7 @@ namespace topology {
 // process. The node abstraction is for the dynamic networking of the distributed computation graph, allowing
 // distributed computation graphs to communicate with each other during runtime and automatic recovery of node
 // processes.
-class BACKEND_EXPORT NodeBase {
+class NodeBase {
  public:
   explicit NodeBase(const std::string &node_id, const std::string &role)
       : node_id_(node_id),

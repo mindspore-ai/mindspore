@@ -24,7 +24,7 @@
 #include <memory>
 #include <functional>
 
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 
 namespace mindspore {
 namespace distributed {

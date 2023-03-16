@@ -23,7 +23,7 @@
 #include <memory>
 #include <atomic>
 #include <vector>
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"

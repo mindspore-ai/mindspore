@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 namespace mindspore {
 namespace device {
 namespace ascend {

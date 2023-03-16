@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include <algorithm>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #endif
 #include "ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_storage/dense_embedding_storage.h"
 #include "distributed/embedding_cache/embedding_storage/sparse_embedding_storage.h"
+#include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 
 namespace mindspore {
 namespace distributed {
@@ -288,6 +289,50 @@ void CreateEmbeddingStorage(std::pair<TypeId, TypeId> key_value_types, int32_t e
                       << ", value type:" << TypeIdToString(key_value_types.second);
   }
   iter->second(embedding_key, embedding_dim, capacity);
+}
+
+EmbeddingDeviceCache::EmbeddingDeviceCache(size_t batch_ids_num, size_t cache_vocab_size)
+    : hash_swap_index_addr_(nullptr), hash_swap_value_addr_(nullptr) {
+  device_to_host_index = std::make_unique<int[]>(batch_ids_num);
+  device_to_host_ids = std::make_unique<int[]>(batch_ids_num);
+  host_to_device_index = std::make_unique<int[]>(batch_ids_num);
+  host_to_device_ids = std::make_unique<int[]>(batch_ids_num);
+  device_hash_map_ = std::make_shared<EmbeddingHashMap>(0, cache_vocab_size);
+}
+
+EmbeddingHostCache::EmbeddingHostCache(size_t batch_ids_num, size_t host_cache_vocab_size) {
+  host_to_server_index = std::make_unique<int[]>(batch_ids_num);
+  host_to_server_ids = std::make_unique<int[]>(batch_ids_num);
+  server_to_host_index = std::make_unique<int[]>(batch_ids_num);
+  server_to_host_ids = std::make_unique<int[]>(batch_ids_num);
+  new_id_index = std::make_unique<int[]>(batch_ids_num);
+  host_to_device_index = std::make_unique<int[]>(batch_ids_num);
+  device_to_host_index = std::make_unique<int[]>(batch_ids_num);
+  host_hash_map_ = std::make_shared<EmbeddingHashMap>(0, host_cache_vocab_size);
+}
+
+void EmbeddingStorageManager::Add(int32_t param_key,
+                                  const std::shared_ptr<storage::AbstractEmbeddingStorage> &embed_storage) {
+  MS_EXCEPTION_IF_NULL(embed_storage);
+  embedding_storages_[param_key] = embed_storage;
+}
+
+std::shared_ptr<storage::AbstractEmbeddingStorage> EmbeddingStorageManager::Get(int32_t param_key) {
+  const auto &iter = embedding_storages_.find(param_key);
+  if (iter != embedding_storages_.end()) {
+    return iter->second;
+  }
+  MS_LOG(EXCEPTION) << "Can not find embedding storage for parameter key[" << param_key << "].";
+}
+
+void EmbeddingStorageManager::Clear() {
+  for (const auto &item : embedding_storages_) {
+    const auto &embedding_storage = item.second;
+    MS_EXCEPTION_IF_NULL(embedding_storage);
+    embedding_storage->Finalize();
+  }
+
+  embedding_storages_.clear();
 }
 }  // namespace distributed
 }  // namespace mindspore

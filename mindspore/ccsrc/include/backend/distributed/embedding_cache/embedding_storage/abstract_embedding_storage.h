@@ -17,7 +17,7 @@
 #ifndef aMINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_ABSTRACT_EMBEDDING_STORAGE_H_
 #define aMINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_ABSTRACT_EMBEDDING_STORAGE_H_
 
-#include "distributed/persistent/storage/storage.h"
+#include "include/backend/distributed/persistent/storage/storage.h"
 #include "include/backend/device_address.h"
 #include "include/backend/visible.h"
 
@@ -34,7 +34,7 @@ using mindspore::device::DeviceAddress;
  * Otherwise, if the host cache has insufficient space, the expired elements will automatically be evicted the to the
  * persistent storage.
  */
-class BACKEND_EXPORT AbstractEmbeddingStorage {
+class AbstractEmbeddingStorage {
  public:
   AbstractEmbeddingStorage() = default;
   virtual ~AbstractEmbeddingStorage() = default;

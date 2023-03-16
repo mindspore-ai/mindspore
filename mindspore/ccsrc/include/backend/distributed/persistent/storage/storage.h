@@ -23,8 +23,6 @@
 #include <tuple>
 #include <utility>
 
-#include "distributed/persistent/storage/block.h"
-
 namespace mindspore {
 namespace distributed {
 namespace storage {

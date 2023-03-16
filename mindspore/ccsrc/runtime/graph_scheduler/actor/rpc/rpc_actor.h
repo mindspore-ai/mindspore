@@ -23,12 +23,13 @@
 #include <memory>
 #include <utility>
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
-#include "distributed/cluster/cluster_context.h"
-#include "distributed/rpc/tcp/tcp_client.h"
-#include "distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
+#include "distributed/cluster/actor_route_table_proxy.h"
+#include "include/backend/distributed/rpc/tcp/tcp_client.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
 #ifdef ENABLE_RDMA
-#include "distributed/rpc/rdma/rdma_client.h"
-#include "distributed/rpc/rdma/rdma_server.h"
+#include "include/backend/distributed/rpc/rdma/rdma_client.h"
+#include "include/backend/distributed/rpc/rdma/rdma_server.h"
 #endif
 #include "proto/rpc.pb.h"
 #include "proto/topology.pb.h"

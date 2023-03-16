@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "ps/core/ps_worker_node.h"
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace ps {

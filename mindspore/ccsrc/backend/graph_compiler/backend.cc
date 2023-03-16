@@ -40,7 +40,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/run_op_helper.h"
 #include "runtime/pynative/graph_adapter.h"
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"

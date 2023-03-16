@@ -29,11 +29,11 @@
 #include "base/base.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #else
-#include "distributed/cluster/dummy_cluster_context.h"
+#include "include/backend/distributed/cluster/dummy_cluster_context.h"
 #endif
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 

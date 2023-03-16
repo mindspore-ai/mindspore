@@ -20,18 +20,19 @@
 #include <string>
 #include <memory>
 
-#include "distributed/rpc/rpc_server_base.h"
-#include "distributed/rpc/tcp/tcp_comm.h"
+#include "include/backend/distributed/rpc/rpc_server_base.h"
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+class TCPComm;
+
 class BACKEND_EXPORT TCPServer : public RPCServerBase {
  public:
-  explicit TCPServer(bool enable_ssl = false) : RPCServerBase(enable_ssl) {}
-  ~TCPServer() override = default;
+  explicit TCPServer(bool enable_ssl = false);
+  ~TCPServer() override;
 
   // Init the tcp server using the specified url.
   bool Initialize(const std::string &url, const MemAllocateCallback &allocate_cb = {}) override;
@@ -53,7 +54,7 @@ class BACKEND_EXPORT TCPServer : public RPCServerBase {
   bool InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb);
 
   // The basic TCP communication component used by the server.
-  std::unique_ptr<TCPComm> tcp_comm_{nullptr};
+  std::unique_ptr<TCPComm> tcp_comm_;
 
   DISABLE_COPY_AND_ASSIGN(TCPServer);
 };

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "distributed/rpc/rdma/rdma_client.h"
+#include "include/backend/distributed/rpc/rdma/rdma_client.h"
 
 #include <string>
 

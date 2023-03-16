@@ -57,7 +57,7 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "ps/scheduler.h"
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #endif
 
 namespace mindspore {

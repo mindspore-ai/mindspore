@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/cluster/cluster_context.h"
 #include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
 
 namespace mindspore {

@@ -23,7 +23,7 @@
 #include <utility>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "distributed/embedding_cache/embedding_cache_utils.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {

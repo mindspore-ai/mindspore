@@ -22,8 +22,8 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "distributed/rpc/rdma/constants.h"
-#include "distributed/rpc/rpc_client_base.h"
+#include "include/backend/distributed/rpc/rdma/constants.h"
+#include "include/backend/distributed/rpc/rpc_client_base.h"
 
 namespace mindspore {
 namespace distributed {

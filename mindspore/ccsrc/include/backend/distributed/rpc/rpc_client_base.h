@@ -20,12 +20,12 @@
 #include <string>
 #include <memory>
 
-#include "distributed/constants.h"
+#include "include/backend/distributed/constants.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-class BACKEND_EXPORT RPCClientBase {
+class RPCClientBase {
  public:
   explicit RPCClientBase(bool enable_ssl) : enable_ssl_(enable_ssl) {}
   virtual ~RPCClientBase() = default;

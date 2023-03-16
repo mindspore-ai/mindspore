@@ -28,7 +28,7 @@ namespace storage {
  * type.
  */
 template <typename KeyType, typename ValueType, typename Allocator = Allocator<uint8_t>>
-class BACKEND_EXPORT DenseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Allocator> {
+class DenseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Allocator> {
  public:
   // The cache element type, a key-value pair, key is same the key of this dense embedding storage, value is the
   // index(line number in embedding table tensor) of the key.

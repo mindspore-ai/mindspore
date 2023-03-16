@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 #include <vector>
 #include <string>
 #include <memory>
-#include "distributed/recovery/recovery_context.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 

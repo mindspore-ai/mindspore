@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "distributed/init.h"
+#include "include/backend/distributed/init.h"
 
 namespace mindspore {
 namespace device {

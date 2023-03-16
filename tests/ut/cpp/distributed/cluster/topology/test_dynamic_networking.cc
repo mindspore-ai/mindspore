@@ -16,9 +16,10 @@
 
 #include <vector>
 #include <gtest/gtest.h>
-#include "distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #include "distributed/cluster/topology/meta_server_node.h"
-#include "distributed/recovery/recovery_context.h"
+#include "distributed/persistent/storage/file_io_utils.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "utils/ms_utils.h"
 #include "common/common_test.h"
 

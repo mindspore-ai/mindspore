@@ -24,9 +24,9 @@
 
 #include <gtest/gtest.h>
 #define private public
-#include "distributed/rpc/tcp/tcp_server.h"
-#include "distributed/rpc/tcp/tcp_client.h"
-#include "distributed/rpc/tcp/constants.h"
+#include "include/backend/distributed/rpc/tcp/tcp_server.h"
+#include "include/backend/distributed/rpc/tcp/tcp_client.h"
+#include "include/backend/distributed/rpc/tcp/constants.h"
 #include "common/common_test.h"
 
 namespace mindspore {
