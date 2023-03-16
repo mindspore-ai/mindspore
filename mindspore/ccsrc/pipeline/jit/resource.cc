@@ -475,6 +475,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"movedim", std::string("movedim")},                                // movedim()
        {"nextafter", std::string("nextafter")},                            // nextafter()
        {"qr", std::string("qr")},                                          // qr()
+       {"amax", std::string("amax")},                                      // amax()
+       {"amin", std::string("amin")},                                      // amin()
      }},
     {kObjectTypeRowTensorType,
      {
