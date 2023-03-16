@@ -59,6 +59,72 @@ std::map<uint32_t, tensor::TensorPtr> CheckValueDependEdge(
 }
 }  // namespace
 
+void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_edge,
+                                     const size_t ori_idx, const std::vector<std::string> &input_names) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto index = AclUtils::GetInputKernelIdxByGraphIdx(node, ori_idx);
+  auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, ori_idx);
+  auto op_runtime_info = input->user_data<runtime::OpRuntimeInfo>();
+
+  ShapeVector ori_shape;
+  ShapeVector input_shape;
+  std::string input_format;
+  std::string ori_format;
+  TypeId input_type;
+  size_t input_size = 0;
+
+  bool host_use = false;
+  auto value_iter = depend_edge.find(ori_idx);
+  if (value_iter != depend_edge.end()) {
+    const_input_list_[index] = value_iter->second;
+    host_use = true;
+  }
+
+  if (op_runtime_info == nullptr) {
+    input_type =
+      host_use ? common::AnfAlgo::GetOutputInferDataType(input, idx) : AnfAlgo::GetOutputDeviceDataType(input, idx);
+    ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
+    input_shape = host_use ? ori_shape : AnfAlgo::GetOutputDeviceShape(input, idx);
+    input_format = AnfAlgo::GetOutputFormat(input, idx);
+    ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+    input_format = host_use ? ori_format : input_format;
+    auto type_size = GetTypeByte(TypeIdToType(input_type));
+    input_size = type_size * SizeOf(input_shape);
+  } else {
+    input_size = op_runtime_info->output_tensor_size(idx);
+    input_type = op_runtime_info->output_type(idx);
+    ori_shape = op_runtime_info->output_infer_shape(idx);
+    input_shape = op_runtime_info->output_device_shape(idx);
+    input_format = op_runtime_info->output_format(idx);
+    ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
+  }
+
+  input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
+  if (input_type == kMetaTypeNone) {
+    return;
+  }
+
+  if (!opt::NeedInsertTransData(ori_shape, input_format)) {
+    MS_LOG_DEBUG << "Set format of " << node->fullname_with_scope() << " to origin format";
+    input_shape = ori_shape;
+    input_format = ori_format;
+  }
+
+  AclUtils::UpdateShape(node, &ori_shape, &input_format);
+  if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
+      op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
+      input_desc_list_[index] != nullptr) {
+    input_desc_list_[index]->SetShape(GeShape(input_shape));
+    input_desc_list_[index]->SetOriginShape(GeShape(ori_shape));
+    return;
+  }
+
+  auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
+  MS_EXCEPTION_IF_NULL(input_desc);
+  input_desc->SetName(input_names[index]);
+  input_desc_list_[index] = input_desc;
+}
+
 int AclKernelMod::UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info,
                               const std::map<uint32_t, tensor::TensorPtr> &value_depend_list) {
   bool need_cache_input_names = node_op_runtime_info != nullptr && node_op_runtime_info->acl_runtime_info_ != nullptr &&
@@ -81,58 +147,7 @@ int AclKernelMod::UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfo
     if (index < 0) {
       continue;
     }
-    auto [input, idx] = common::AnfAlgo::GetPrevNodeOutput(node, i);
-    auto op_runtime_info = input->user_data<runtime::OpRuntimeInfo>();
-
-    ShapeVector ori_shape;
-    ShapeVector input_shape;
-    std::string input_format;
-    TypeId input_type;
-    size_t input_size = 0;
-
-    if (op_runtime_info == nullptr) {
-      input_type = AnfAlgo::GetOutputDeviceDataType(input, idx);
-      ori_shape = common::AnfAlgo::GetOutputInferShape(input, idx);
-      input_shape = AnfAlgo::GetOutputDeviceShape(input, idx);
-      input_format = AnfAlgo::GetOutputFormat(input, idx);
-      auto type_size = GetTypeByte(TypeIdToType(input_type));
-      input_size = type_size * SizeOf(input_shape);
-    } else {
-      input_size = op_runtime_info->output_tensor_size(idx);
-      input_type = op_runtime_info->output_type(idx);
-      ori_shape = op_runtime_info->output_infer_shape(idx);
-      input_shape = op_runtime_info->output_device_shape(idx);
-      input_format = op_runtime_info->output_format(idx);
-    }
-
-    input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
-    if (input_type == kMetaTypeNone) {
-      continue;
-    }
-    auto ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
-    if (!opt::NeedInsertTransData(ori_shape, input_format)) {
-      MS_LOG_DEBUG << "Set format of " << node->fullname_with_scope() << " to origin format";
-      input_shape = ori_shape;
-      input_format = ori_format;
-    }
-    AclUtils::UpdateShape(node, &ori_shape, &input_format);
-    if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
-        op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
-        input_desc_list_[index] != nullptr) {
-      input_desc_list_[index]->SetShape(GeShape(input_shape));
-      input_desc_list_[index]->SetOriginShape(GeShape(ori_shape));
-      continue;
-    }
-
-    auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
-    MS_EXCEPTION_IF_NULL(input_desc);
-    input_desc->SetName(input_names[index]);
-    input_desc_list_[index] = input_desc;
-
-    auto value_iter = depend_edge.find(i);
-    if (value_iter != depend_edge.end()) {
-      const_input_list_[index] = value_iter->second;
-    }
+    SetInputBasicInfo(node, depend_edge, i, input_names);
   }
   return 0;
 }

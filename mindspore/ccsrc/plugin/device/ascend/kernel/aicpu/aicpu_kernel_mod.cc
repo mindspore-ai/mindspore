@@ -423,6 +423,7 @@ void AicpuOpKernelMod::SyncData() {
   if (unknow_type_ != ::ge::UnknowShapeOpType::DEPEND_COMPUTE ||
       common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " update op skip.";
+    FreeExtInfoDeviceAddr();
     return;
   }
   // cppcheck-suppress unreadVariable
@@ -439,6 +440,7 @@ void AicpuOpKernelMod::SyncData() {
 
   MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
   UpdateOutputShapeFromExtInfo(cnode);
+  FreeExtInfoDeviceAddr();
 }
 
 void AicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode) {

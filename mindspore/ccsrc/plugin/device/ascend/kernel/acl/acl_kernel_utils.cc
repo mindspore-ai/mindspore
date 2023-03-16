@@ -44,6 +44,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMaxAttrToInputSize = 1024;
+constexpr size_t KFormatLimitNumber = 2;
 constexpr auto kParamDynamic = "dynamic";
 
 static const std::map<::ge::DataType, aclDataType> kMsTypeToAclType = {
@@ -64,14 +65,17 @@ static const std::map<::ge::Format, aclFormat> kMsFormatToAclFormat = {
 static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatMul", ACL_FORMAT_ND},
                                                                      {"MatMul", ACL_FORMAT_ND}};
 
-static const std::unordered_map<std::string, std::string> kMsNeedPad = {{kTransDataOpName, ""},
-                                                                        {kBNTrainingReduceOpName, kOpFormat_NCHW},
-                                                                        {kBNTrainingUpdateOpName, kOpFormat_NCHW},
-                                                                        {kBNTrainingReduceGradOpName, kOpFormat_NCHW},
-                                                                        {kBNTrainingUpdateGradOpName, kOpFormat_NCHW},
-                                                                        {kBNInferOpName, kOpFormat_NCHW},
-                                                                        {kStridedSliceGradOpName, kOpFormat_NCHW},
-                                                                        {kTensorMoveOpName, kOpFormat_NCHW}};
+static const std::unordered_map<std::string, std::vector<std::string>> kMsNeedPad = {
+  {kTransDataOpName, {"", ""}},
+  {kBNTrainingReduceOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingUpdateOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingReduceGradOpName, {"", kOpFormat_NCHW}},
+  {kBNTrainingUpdateGradOpName, {"", kOpFormat_NCHW}},
+  {kBNInferOpName, {"", kOpFormat_NCHW}},
+  {kStridedSliceGradOpName, {"", kOpFormat_NCHW}},
+  {kTensorMoveOpName, {"", kOpFormat_NCHW}},
+  {kBiasAddOpName, {kOpFormat_NCHW, kOpFormat_NCHW}},
+  {kBiasAddGradOpName, {kOpFormat_NCHW, kOpFormat_NCHW}}};
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
@@ -213,7 +217,10 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
     input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);
     if (const_input_list.find(idx) != const_input_list.end()) {
       const auto &tensor = const_input_list.at(idx);
-      aclSetTensorConst(input_tensor_desc_[idx], tensor->data_c(), tensor->Size());
+      auto const_ret = aclSetTensorConst(input_tensor_desc_[idx], tensor->data_c(), tensor->Size());
+      if (const_ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "ACL set tensor const failed!";
+      }
     }
   }
 
@@ -667,11 +674,15 @@ void AclUtils::UpdateShape(const AnfNodePtr &node, ShapeVector *shape, std::stri
   if (kMsNeedPad.count(node_name) == 0 || shape->size() >= kDim4) {
     return;
   }
-  const auto &default_format = kMsNeedPad.at(node_name);
-  if (!default_format.empty()) {
-    std::string format_pad = (shape->size() < kDim2) ? "" : default_format;
+  const auto &default_format_str = kMsNeedPad.at(node_name);
+  if (!default_format_str.empty()) {
+    if (default_format_str.size() != KFormatLimitNumber) {
+      MS_LOG(EXCEPTION) << "kMsNeedPad's node name:" << node_name << "'s size is invalid";
+    }
+    auto update_format = default_format_str.at(1);
+    std::string format_pad = (shape->size() < kDim2) ? default_format_str.at(0) : update_format;
     *shape = trans::PaddingShape(*shape, *format, format_pad);
-    *format = default_format;
+    *format = update_format.empty() ? kOpFormat_ND : update_format;
   } else if (!IsOneOfNoPaddingFormat(*format)) {
     *shape = trans::PaddingShape(*shape, *format);
   }
