@@ -186,10 +186,12 @@ class AscendStreamAssign {
   vector<CNodePtr> GetInputKernels(const CNodePtr &cnode) const;
 
   bool ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id) const;
-  void GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id);
+  void GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<uint32_t> *graphs_id) const;
   void GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id) const;
 
   void InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr) const;
+  void InsertEventForOverflow(const NotNull<KernelGraphPtr> &graph_ptr) const;
+  void InsertEventForOverflowInGraph(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id) const;
 
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
