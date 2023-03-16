@@ -620,9 +620,9 @@ class UniformInt(Primitive):
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **minval** (Tensor) - The distribution parameter, a.
+        - **minval** (Tensor) - The distribution parameter, :math:`a`.
           It defines the minimum possibly generated value, with int32 data type. Only one number is supported.
-        - **maxval** (Tensor) - The distribution parameter, b.
+        - **maxval** (Tensor) - The distribution parameter, :math:`b`.
           It defines the maximum possibly generated value, with int32 data type. Only one number is supported.
 
     Outputs:
@@ -755,7 +755,7 @@ class RandomChoiceWithMask(Primitive):
 
 
 class RandomCategorical(PrimitiveWithInfer):
-    """
+    r"""
     Generates random samples from a given categorical distribution tensor.
 
     Args:
@@ -763,7 +763,7 @@ class RandomCategorical(PrimitiveWithInfer):
             mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
     Inputs:
-        - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
+        - **logits** (Tensor) - The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
         - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
         - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
 

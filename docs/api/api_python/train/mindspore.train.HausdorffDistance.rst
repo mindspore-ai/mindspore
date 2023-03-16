@@ -12,7 +12,7 @@ mindspore.train.HausdorffDistance
         h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}
         h(B, A) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
 
-    其中h(A, B)表示，对A中的每个点a找到B集合里的最近点，这些最短距离的最大值为从A到B的单向Hausdorff距离，同理，h(B, A)为集合B到集合A中最近点的最大距离。Hausdoff距离是有方向性的，通常情况下h(A, B)不等于h(B, A)。H(A, B)为双向Hausdorff距离。
+    其中 :math:`h(A, B)` 表示，对A中的每个点a找到B集合里的最近点，这些最短距离的最大值为从A到B的单向Hausdorff距离，同理，:math:`h(B, A)` 为集合B到集合A中最近点的最大距离。Hausdoff距离是有方向性的，通常情况下 :math:`h(A, B)` 不等于 :math:`h(B, A)`。:math:`H(A, B)` 为双向Hausdorff距离。
 
     参数：
         - **distance_metric** (string) - 支持如下三种距离计算方法："euclidean"、"chessboard" 或 "taxicab"。默认值："euclidean"。

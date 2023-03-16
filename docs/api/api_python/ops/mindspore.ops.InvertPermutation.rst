@@ -11,7 +11,7 @@ mindspore.ops.InvertPermutation
         这些值必须包括0。不能有重复的值，并且值不能为负值。
 
     输入：
-        - **input_x** (Union(tuple[int], list[int])) - 输入由多个整数构造，即 :math:`(y_1,y_2,...,y_S)` 代表索引。值必须包括0。不能有重复值或负值。只允许常量。最大值必须等于 `input_x` 的长度。
+        - **input_x** (Union(tuple[int], list[int])) - 输入由多个整数构造，即 :math:`(y_1, y_2, ..., y_S)` 代表索引。值必须包括0。不能有重复值或负值。只允许常量。最大值必须等于 `input_x` 的长度。
         
     输出：
         tuple[int]。输出的长度与 `input_x` 相同。

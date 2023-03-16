@@ -6,8 +6,8 @@ mindspore.ops.SegmentSum
     计算Tensor中每个分段所有元素的累加合。
 
     具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i = \sum_j input\_x_j` ，其
-    中累加合是满足 :math:`segment\_ids[j] == i` 这个条件的所有的 `j` 对应的元素相加的结果。
-    如果一个分段中没有元素，则输出Tensor中相应的元素将被设置为零：:math:`output[i] = 0`。
+    中累加合是满足 :math:`segment\_ids[j] == i` 这个条件的所有的 :math:`j` 对应的元素相加的结果。
+    如果一个分段中没有元素 :math:`i` ，则输出Tensor中相应的元素将被设置为零：:math:`output[i] = 0`。
 
     .. warning::
         如果 `input_x` 的数据类型是复数，则不能进行反向求导。

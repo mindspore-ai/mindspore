@@ -18,7 +18,7 @@ mindspore.ops.ApplyProximalGradientDescent
     输入 `var` 和 `delta` 之间必须遵守隐式类型转换规则以保证数据类型的统一。如果数据类型不同，低精度的数据类型将被自动转换到高精度的数据类型。
 
     输入：
-        - **var** (Parameter) - Tensor，公式中的"var"。数据类型为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
+        - **var** (Parameter) - Tensor，公式中的"var"。数据类型为float16或float32。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任何数量的附加维度。
         - **alpha** (Union[Number, Tensor]) - 比例系数，必须为标量。数据类型为float16或float32。
         - **l1** (Union[Number, Tensor]) - l1正则化强度，必须为标量。数据类型为float16或float32。
         - **l2** (Union[Number, Tensor]) - l2正则化强度，必须为标量。数据类型为float16或float32。

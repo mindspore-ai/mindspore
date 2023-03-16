@@ -78,9 +78,10 @@ class HausdorffDistance(Metric):
                 h(B, A) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
         \end{array}
 
-    where h(A,B) is the maximum distance of a set A to the nearest point in the set B, h(B,A) is the maximum distance
+    where :math:`h(A,B)` is the maximum distance of a set A to the nearest point in the set B,
+    :math:`h(B, A)` is the maximum distance
     of a set B to the nearest point in the set A. The distance calculation is oriented, which means that most of times
-    :math:`h(A, B)` is not equal to :math:`h(B, A)`. H(A, B) is the two-way Hausdorff distance.
+    :math:`h(A, B)` is not equal to :math:`h(B, A)`. :math:`H(A, B)` is the two-way Hausdorff distance.
 
     Args:
         distance_metric (string): Three distance measurement methods are supported: "euclidean", "chessboard" or

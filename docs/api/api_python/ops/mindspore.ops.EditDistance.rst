@@ -24,10 +24,10 @@ mindspore.ops.EditDistance
         - **normalize** (bool) - 如果为True，则编辑距离将按真实值长度标准化。默认值：True。
 
     输入：
-        - **hypothesis_indices** (Tensor) - 预测列表的索引。类型为Tensor，数据类型为int64，其shape为 :math:`(N,R)` 。
+        - **hypothesis_indices** (Tensor) - 预测列表的索引。类型为Tensor，数据类型为int64，其shape为 :math:`(N, R)` 。
         - **hypothesis_values** (Tensor) - 预测列表的值。类型为Tensor，必须是长度为N的一维向量。
         - **hypothesis_shape** (Tensor) - 预测列表的shape。类型为Tensor，必须是长度为R的向量，数据类型为int64。只能是常量。
-        - **truth_indices** (Tensor) - 真实列表的索引。类型为Tensor，数据类型为int64，其shape为 :math:`(M,R)` 。
+        - **truth_indices** (Tensor) - 真实列表的索引。类型为Tensor，数据类型为int64，其shape为 :math:`(M, R)` 。
         - **truth_values** (Tensor) - 真实列表的值。类型为Tensor，必须是长度为M的一维向量。
         - **truth_shape** (Tensor) - 真实列表的shape。类型为Tensor，必须是长度为R的向量，数据类型为int64。只能是常量。
 

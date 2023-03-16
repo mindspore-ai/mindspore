@@ -11,8 +11,8 @@ mindspore.ops.SplitV
     `input_x` 的shape为 :math:`(x_1, x_2, ..., x_M, ..., x_R)` 。 `input_x` 的秩为 `R` 。设
     给定的 `split_dim` 为 `M` ，同时 :math:`-R \le M < R` 。设给定的 `num_split` 为 `N` ，给定
     的 `size_splits` 为 :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})` ， :math:`x_M=\sum_{i=1}^Nx_{m_i}` 。
-    输出为list(Tensor)，对于第i个Tensor，其shape为 :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)` ，其中
-    :math:`x_{m_i}` 是第i个Tensor的第M维。那么，输出Tensor的shape为：
+    输出为list(Tensor)，对于第 :math:`i` 个Tensor，其shape为 :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)` ，其中
+    :math:`x_{m_i}` 是第 :math:`i` 个Tensor的第 :math:`M` 维。那么，输出Tensor的shape为：
 
     .. math::
 
@@ -30,7 +30,8 @@ mindspore.ops.SplitV
 
     输出：
         Tensor，包含 `num_split` 个Tensor的list，其shape分别为
-        :math:`((x_1, x_2, ..., x_{m_1}, ..., x_R), (x_1, x_2, ..., x_{m_2}, ..., x_R), ..., (x_1, x_2, ..., x_{m_N}, ..., x_R))` ，
+        :math:`((x_1, x_2, ..., x_{m_1}, ..., x_R),
+        (x_1, x_2, ..., x_{m_2}, ..., x_R), ..., (x_1, x_2, ..., x_{m_N}, ..., x_R))` ，
         其中 :math:`x_M=\sum_{i=1}^Nx_{m_i}` ，数据类型与 `input_x` 相同。
 
     异常：

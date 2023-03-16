@@ -11,7 +11,7 @@ mindspore.ops.BinaryCrossEntropy
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    其中， :math:`L` 表示所有批次的损失， :math:`l` 表示一个批次的损失，n表示1-N范围内的一个批次。则，
+    其中， :math:`L` 表示所有批次的损失， :math:`l` 表示一个批次的损失，n表示1-N范围内的一个批次，:math:`w_n` 表示第 :math:`n` 批二进制交叉熵的权重。则，
 
     .. math::
         \ell(x, y) = \begin{cases}

@@ -13,8 +13,8 @@ mindspore.ops.HammingWindow
     参数：
         - **periodic** (bool，可选) - 一个标志，表示返回的窗口是否修剪掉来自对称窗口的最后一个重复值。默认值：True。
   
-          - 如果为True，则返回的窗口作为周期函数，在上式中， :math:`N = text{length} + 1` 。
-          - 如果为False，则返回一个对称窗口， :math:`N = text{length}` 。
+          - 如果为True，则返回的窗口作为周期函数，在上式中， :math:`N = \text{length} + 1` 。
+          - 如果为False，则返回一个对称窗口， :math:`N = \text{length}` 。
 
         - **alpha** (float，可选) - 加权系数，上式中的 :math:`\alpha` ，默认值：0.54。
         - **beta** (float，可选) - 加权系数，上式中的 :math:`\beta` ，默认值：0.46。

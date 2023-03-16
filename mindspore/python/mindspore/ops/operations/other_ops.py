@@ -118,7 +118,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
 
     Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be (n, 4).
+        - **anchor_box** (Tensor) - Anchor boxes. The shape of anchor_box must be :math:`(n, 4)`.
         - **groundtruth_box** (Tensor) - Ground truth boxes. Which has the same shape with anchor_box.
 
     Outputs:
@@ -168,7 +168,7 @@ class BoundingBoxDecode(Primitive):
         wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
 
     Inputs:
-        - **anchor_box** (Tensor) - Anchor boxes. The shape of `anchor_box` must be (n, 4).
+        - **anchor_box** (Tensor) - Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         - **deltas** (Tensor) - Delta of boxes. Which has the same shape with `anchor_box`.
 
     Outputs:
@@ -246,8 +246,8 @@ class SampleDistortedBoundingBoxV2(Primitive):
             attempts is exceeded without success, the function will return the entire original image.
             Default: 100.
         use_image_if_no_bounding_boxes (bool, optional): Controls behavior if no bounding boxes supplied.
-            If no bounding boxes supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
-            attribute is set True, then assume an implicit bounding box covering the
+            If no bounding boxes supplied (`bounding_boxes` in shape :math:`(0, N, 4)` or :math:`(batch, 0, 4)`), and
+            this attribute is set True, then assume an implicit bounding box covering the
             whole input, else if this attribute is set False, then raise an error. Default: False.
 
     Inputs:
