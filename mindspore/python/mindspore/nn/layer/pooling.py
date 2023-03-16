@@ -767,7 +767,7 @@ class AvgPool3d(_PoolNd):
         ValueError: If `padding` is a tuple/list whose length is neither 1 nor 3.
         ValueError: If element of `padding` is less than 0.
         ValueError: If length of shape of `x` is neither 4 nor 5.
-        ValueError: If `divisor_override` is equal to 0.
+        ValueError: If `divisor_override` is less than or equal to 0.
         ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
@@ -794,8 +794,8 @@ class AvgPool3d(_PoolNd):
         """Initialize AvgPool3d."""
         super(AvgPool3d, self).__init__(kernel_size, stride, pad_mode)
         padding = _cal_padding(padding, self.cls_name, 3)
-        if divisor_override == 0:
-            raise ValueError(f"For '{self.cls_name}', the 'divisor_override' can not be 0.")
+        if divisor_override is not None and divisor_override <= 0:
+            raise ValueError(f"For '{self.cls_name}', the 'divisor_override' must be > 0, but got {divisor_override}.")
         divisor_override = 0 if divisor_override is None else divisor_override
         self.avg_pool = P.AvgPool3D(self.kernel_size, self.stride, pad_mode, padding, ceil_mode, count_include_pad,
                                     divisor_override)
@@ -870,7 +870,7 @@ class AvgPool2d(_PoolNd):
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1 or 2.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
-        ValueError: If `divisor_override` is equal to 0.
+        ValueError: If `divisor_override` is less than or equal to 0.
         ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
@@ -913,8 +913,9 @@ class AvgPool2d(_PoolNd):
                                  f"ceil_mode:{ceil_mode}, count_include_pad:{count_include_pad}, "
                                  f"divisor_override:{divisor_override}.")
             self.is_expand = True
-            if divisor_override == 0:
-                raise ValueError(f"For '{self.cls_name}', the 'divisor_override' can not be 0.")
+            if divisor_override is not None and divisor_override <= 0:
+                raise ValueError(
+                    f"For '{self.cls_name}', the 'divisor_override' must be > 0, but got {divisor_override}.")
             divisor_override = 0 if divisor_override is None else divisor_override
             padding = _cal_padding(padding, self.cls_name, 2)
 
