@@ -87,24 +87,24 @@ class Format(Enum):
     Definition                    Description
     ===========================  ===================================================================================
     `Format.DEFAULT`             default format.
-    `Format.NCHW`                Store tensor data in the order of batch N, channel C, height H and width W.
-    `Format.NHWC`                Store tensor data in the order of batch N, height H, width W and channel C.
+    `Format.NCHW`                Store Tensor data in the order of batch N, channel C, height H and width W.
+    `Format.NHWC`                Store Tensor data in the order of batch N, height H, width W and channel C.
     `Format.NHWC4`               C-axis 4-byte aligned `Format.NHWC` .
-    `Format.HWKC`                Store tensor data in the order of height H, width W, kernel num K and channel C.
-    `Format.HWCK`                Store tensor data in the order of height H, width W, channel C and kernel num K.
-    `Format.KCHW`                Store tensor data in the order of kernel num K, channel C, height H and width W.
-    `Format.CKHW`                Store tensor data in the order of channel C, kernel num K, height H and width W.
-    `Format.KHWC`                Store tensor data in the order of kernel num K, height H, width W and channel C.
-    `Format.CHWK`                Store tensor data in the order of channel C, height H, width W and kernel num K.
-    `Format.HW`                  Store tensor data in the order of height H and width W.
+    `Format.HWKC`                Store Tensor data in the order of height H, width W, kernel num K and channel C.
+    `Format.HWCK`                Store Tensor data in the order of height H, width W, channel C and kernel num K.
+    `Format.KCHW`                Store Tensor data in the order of kernel num K, channel C, height H and width W.
+    `Format.CKHW`                Store Tensor data in the order of channel C, kernel num K, height H and width W.
+    `Format.KHWC`                Store Tensor data in the order of kernel num K, height H, width W and channel C.
+    `Format.CHWK`                Store Tensor data in the order of channel C, height H, width W and kernel num K.
+    `Format.HW`                  Store Tensor data in the order of height H and width W.
     `Format.HW4`                 w-axis 4-byte aligned `Format.HW` .
-    `Format.NC`                  Store tensor data in the order of batch N and channel C.
+    `Format.NC`                  Store Tensor data in the order of batch N and channel C.
     `Format.NC4`                 C-axis 4-byte aligned `Format.NC` .
     `Format.NC4HW4`              C-axis 4-byte aligned and W-axis 4-byte aligned `Format.NCHW` .
-    `Format.NCDHW`               Store tensor data in the order of batch N, channel C, depth D, height H and width W.
-    `Format.NWC`                 Store tensor data in the order of batch N, width W and channel C.
-    `Format.NCW`                 Store tensor data in the order of batch N, channel C and width W.
-    `Format.NDHWC`               Store tensor data in the order of batch N, depth D, height H, width W and channel C.
+    `Format.NCDHW`               Store Tensor data in the order of batch N, channel C, depth D, height H and width W.
+    `Format.NWC`                 Store Tensor data in the order of batch N, width W and channel C.
+    `Format.NCW`                 Store Tensor data in the order of batch N, channel C and width W.
+    `Format.NDHWC`               Store Tensor data in the order of batch N, depth D, height H, width W and channel C.
     `Format.NC8HW8`              C-axis 8-byte aligned and W-axis 8-byte aligned `Format.NCHW` .
     ===========================  ===================================================================================
 
@@ -279,29 +279,16 @@ class Tensor:
         return res
 
     @property
-    def name(self):
+    def data_size(self):
         """
-        Get the name of the Tensor.
+        Get the data size of the Tensor.
+
+        Data size of the Tensor = the element num of the Tensor * size of unit data type of the Tensor.
 
         Returns:
-            str, the name of the Tensor.
+            int, the data size of the Tensor data.
         """
-        return self._tensor.get_tensor_name()
-
-    @name.setter
-    def name(self, name):
-        """
-        Set the name of the Tensor.
-
-        Args:
-            name (str): The name of the Tensor.
-
-        Raises:
-            TypeError: `name` is not a str.
-        """
-        if not isinstance(name, str):
-            raise TypeError(f"name must be str, but got {type(name)}.")
-        self._tensor.set_tensor_name(name)
+        return self._tensor.get_data_size()
 
     @property
     def dtype(self):
@@ -328,6 +315,67 @@ class Tensor:
         if not isinstance(dtype, DataType):
             raise TypeError(f"dtype must be DataType, but got {type(dtype)}.")
         self._tensor.set_data_type(data_type_py_cxx_map.get(dtype))
+
+    @property
+    def element_num(self):
+        """
+        Get the element num of the Tensor.
+
+        Returns:
+            int, the element num of the Tensor data.
+        """
+        return self._tensor.get_element_num()
+
+    @property
+    def format(self):
+        """
+        Get the format of the Tensor.
+
+        Returns:
+            Format, the format of the Tensor.
+        """
+        return format_cxx_py_map.get(self._tensor.get_format())
+
+    @format.setter
+    def format(self, tensor_format):
+        """
+        Set format of the Tensor.
+
+        Args:
+            tensor_format (Format): The format of the Tensor. For details, see
+                `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+
+        Raises:
+            TypeError: `tensor_format` is not a Format.
+        """
+        if not isinstance(tensor_format, Format):
+            raise TypeError(f"format must be Format, but got {type(tensor_format)}.")
+        self._tensor.set_format(format_py_cxx_map.get(tensor_format))
+
+    @property
+    def name(self):
+        """
+        Get the name of the Tensor.
+
+        Returns:
+            str, the name of the Tensor.
+        """
+        return self._tensor.get_tensor_name()
+
+    @name.setter
+    def name(self, name):
+        """
+        Set the name of the Tensor.
+
+        Args:
+            name (str): The name of the Tensor.
+
+        Raises:
+            TypeError: `name` is not a str.
+        """
+        if not isinstance(name, str):
+            raise TypeError(f"name must be str, but got {type(name)}.")
+        self._tensor.set_tensor_name(name)
 
     @property
     def shape(self):
@@ -358,53 +406,29 @@ class Tensor:
                 raise TypeError(f"shape element must be int, but got {type(element)} at index {i}.")
         self._tensor.set_shape(shape)
 
-    @property
-    def format(self):
+    def get_data_to_numpy(self):
         """
-        Get the format of the Tensor.
+        Get the data from the Tensor to the numpy object.
 
         Returns:
-            Format, the format of the Tensor.
+            numpy.ndarray, the numpy object from Tensor data.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> import numpy as np
+            >>> tensor = mslite.Tensor()
+            >>> tensor.shape = [1, 2, 2, 3]
+            >>> tensor.dtype = mslite.DataType.FLOAT32
+            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> tensor.set_data_from_numpy(in_data)
+            >>> data = tensor.get_data_to_numpy()
+            >>> print(data)
+            [[[[ 0.  1.  2.]
+               [ 3.  4.  5.]]
+              [[ 6.  7.  8.]
+               [ 9. 10. 11.]]]]
         """
-        return format_cxx_py_map.get(self._tensor.get_format())
-
-    @format.setter
-    def format(self, tensor_format):
-        """
-        Set format of the Tensor.
-
-        Args:
-            tensor_format (Format): The format of the Tensor. For details, see
-                `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
-
-        Raises:
-            TypeError: `tensor_format` is not a Format.
-        """
-        if not isinstance(tensor_format, Format):
-            raise TypeError(f"format must be Format, but got {type(tensor_format)}.")
-        self._tensor.set_format(format_py_cxx_map.get(tensor_format))
-
-    @property
-    def element_num(self):
-        """
-        Get the element num of the Tensor.
-
-        Returns:
-            int, the element num of the Tensor data.
-        """
-        return self._tensor.get_element_num()
-
-    @property
-    def data_size(self):
-        """
-        Get the data size of the Tensor.
-
-        data size of the Tensor = the element num of the Tensor * size of unit data type of the Tensor.
-
-        Returns:
-            int, the data size of the Tensor data.
-        """
-        return self._tensor.get_data_size()
+        return self._tensor.get_data_to_numpy()
 
     def set_data_from_numpy(self, numpy_obj):
         """
@@ -474,27 +498,3 @@ class Tensor:
                 f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.data_size}")
         self._numpy_obj = numpy_obj.flatten()  # keep reference count of numpy objects
         self._tensor.set_data_from_numpy(self._numpy_obj)
-
-    def get_data_to_numpy(self):
-        """
-        Get the data from the Tensor to the numpy object.
-
-        Returns:
-            numpy.ndarray, the numpy object from Tensor data.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> import numpy as np
-            >>> tensor = mslite.Tensor()
-            >>> tensor.shape = [1, 2, 2, 3]
-            >>> tensor.dtype = mslite.DataType.FLOAT32
-            >>> in_data = np.arange(1 * 2 * 2 * 3, dtype=np.float32)
-            >>> tensor.set_data_from_numpy(in_data)
-            >>> data = tensor.get_data_to_numpy()
-            >>> print(data)
-            [[[[ 0.  1.  2.]
-               [ 3.  4.  5.]]
-              [[ 6.  7.  8.]
-               [ 9. 10. 11.]]]]
-        """
-        return self._tensor.get_data_to_numpy()

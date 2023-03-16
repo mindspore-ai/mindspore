@@ -76,7 +76,7 @@ model_type_cxx_py_map = {
 
 class Model:
     """
-    The Model class is used to define a MindSpore Lite's model, facilitating computational graph management.
+    The `Model` class defines a MindSpore Lite's model, facilitating computational graph management.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -99,8 +99,7 @@ class Model:
 
         Args:
             model_path (str): Path of the input model when build from file. For example, "/home/user/model.ms". Options:
-                MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms". For details, see
-                `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
+                MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms".
             model_type (ModelType): Define The type of input model file. Options: ModelType.MINDIR |
                 ModelType.MINDIR_LITE. For details, see
                 `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
@@ -179,70 +178,23 @@ class Model:
         if not ret.IsOk():
             raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
 
-    def resize(self, inputs, dims):
+    def get_inputs(self):
         """
-        Resizes the shapes of inputs. This method is used in the following scenarios:
+        Obtains all input Tensors of the model.
 
-        1. If multiple inputs of the same size need to predicted, you can set the batch dimension of `dims` to
-           the number of inputs, then multiple inputs can be performed inference at the same time.
-
-        2. Adjust the input size to the specify shape.
-
-        3. When the input is a dynamic shape (a dimension of the shape of the model input contains -1), -1 must be
-           replaced by a fixed dimension through `resize` .
-
-        4. The shape operator contained in the model is dynamic shape (a dimension of the shape operator contains -1).
-
-        Args:
-            inputs (list[Tensor]): A list that includes all input Tensors in order.
-            dims (list[list[int]]): A list that includes the new shapes of input Tensors, should be consistent with
-                input Tensors' shape.
-
-        Raises:
-            TypeError: `inputs` is not a list.
-            TypeError: `inputs` is a list, but the elements are not Tensor.
-            TypeError: `dims` is not a list.
-            TypeError: `dims` is a list, but the elements are not list.
-            TypeError: `dims` is a list, the elements are list, but the element's elements are not int.
-            ValueError: The size of `inputs` is not equal to the size of `dims` .
-            RuntimeError: resize inputs failed.
+        Returns:
+            list[Tensor], the input Tensor list of the model.
 
         Examples:
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE)
             >>> inputs = model.get_inputs()
-            >>> print("Before resize, the first input shape: ", inputs[0].shape)
-            Before resize, the first input shape: [1, 224, 224, 3]
-            >>> model.resize(inputs, [[1, 112, 112, 3]])
-            >>> print("After resize, the first input shape: ", inputs[0].shape)
-            After resize, the first input shape: [1, 112, 112, 3]
         """
-        if not isinstance(inputs, list):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
-        _inputs = []
-        if not isinstance(dims, list):
-            raise TypeError("dims must be list, but got {}.".format(type(dims)))
-        for i, element in enumerate(inputs):
-            if not isinstance(element, Tensor):
-                raise TypeError(f"inputs element must be Tensor, but got "
-                                f"{type(element)} at index {i}.")
-        for i, element in enumerate(dims):
-            if not isinstance(element, list):
-                raise TypeError(f"dims element must be list, but got "
-                                f"{type(element)} at index {i}.")
-            for j, dim in enumerate(element):
-                if not isinstance(dim, int):
-                    raise TypeError(f"dims element's element must be int, but got "
-                                    f"{type(dim)} at {i}th dims element's {j}th element.")
-        if len(inputs) != len(dims):
-            raise ValueError(f"inputs' size does not match dims' size, but got "
-                             f"inputs: {len(inputs)} and dims: {len(dims)}.")
-        for _, element in enumerate(inputs):
-            _inputs.append(element._tensor)
-        ret = self._model.resize(_inputs, dims)
-        if not ret.IsOk():
-            raise RuntimeError(f"resize failed! Error is {ret.ToString()}")
+        inputs = []
+        for _tensor in self._model.get_inputs():
+            inputs.append(Tensor(_tensor))
+        return inputs
 
     def predict(self, inputs):
         """
@@ -332,23 +284,70 @@ class Model:
             predict_outputs.append(Tensor(output))
         return predict_outputs
 
-    def get_inputs(self):
+    def resize(self, inputs, dims):
         """
-        Obtains all input Tensors of the model.
+        Resizes the shapes of inputs. This method is used in the following scenarios:
 
-        Returns:
-            list[Tensor], the input Tensor list of the model.
+        1. If multiple inputs of the same size need to predicted, you can set the batch dimension of `dims` to
+           the number of inputs, then multiple inputs can be performed inference at the same time.
+
+        2. Adjust the input size to the specify shape.
+
+        3. When the input is a dynamic shape (a dimension of the shape of the model input contains -1), -1 must be
+           replaced by a fixed dimension through `resize` .
+
+        4. The shape operator contained in the model is dynamic shape (a dimension of the shape operator contains -1).
+
+        Args:
+            inputs (list[Tensor]): A list that includes all input Tensors in order.
+            dims (list[list[int]]): A list that includes the new shapes of input Tensors, should be consistent with
+                input Tensors' shape.
+
+        Raises:
+            TypeError: `inputs` is not a list.
+            TypeError: `inputs` is a list, but the elements are not Tensor.
+            TypeError: `dims` is not a list.
+            TypeError: `dims` is a list, but the elements are not list.
+            TypeError: `dims` is a list, the elements are list, but the element's elements are not int.
+            ValueError: The size of `inputs` is not equal to the size of `dims` .
+            RuntimeError: resize inputs failed.
 
         Examples:
             >>> import mindspore_lite as mslite
             >>> model = mslite.Model()
             >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE)
             >>> inputs = model.get_inputs()
+            >>> print("Before resize, the first input shape: ", inputs[0].shape)
+            Before resize, the first input shape: [1, 224, 224, 3]
+            >>> model.resize(inputs, [[1, 112, 112, 3]])
+            >>> print("After resize, the first input shape: ", inputs[0].shape)
+            After resize, the first input shape: [1, 112, 112, 3]
         """
-        inputs = []
-        for _tensor in self._model.get_inputs():
-            inputs.append(Tensor(_tensor))
-        return inputs
+        if not isinstance(inputs, list):
+            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
+        _inputs = []
+        if not isinstance(dims, list):
+            raise TypeError("dims must be list, but got {}.".format(type(dims)))
+        for i, element in enumerate(inputs):
+            if not isinstance(element, Tensor):
+                raise TypeError(f"inputs element must be Tensor, but got "
+                                f"{type(element)} at index {i}.")
+        for i, element in enumerate(dims):
+            if not isinstance(element, list):
+                raise TypeError(f"dims element must be list, but got "
+                                f"{type(element)} at index {i}.")
+            for j, dim in enumerate(element):
+                if not isinstance(dim, int):
+                    raise TypeError(f"dims element's element must be int, but got "
+                                    f"{type(dim)} at {i}th dims element's {j}th element.")
+        if len(inputs) != len(dims):
+            raise ValueError(f"inputs' size does not match dims' size, but got "
+                             f"inputs: {len(inputs)} and dims: {len(dims)}.")
+        for _, element in enumerate(inputs):
+            _inputs.append(element._tensor)
+        ret = self._model.resize(_inputs, dims)
+        if not ret.IsOk():
+            raise RuntimeError(f"resize failed! Error is {ret.ToString()}")
 
 
 class ModelParallelRunner:
@@ -420,6 +419,30 @@ class ModelParallelRunner:
             ret = self._model.init(self.model_path_, context.parallel._runner_config)
         if not ret.IsOk():
             raise RuntimeError(f"ModelParallelRunner's build from file failed! Error is {ret.ToString()}")
+
+    def get_inputs(self):
+        """
+        Obtains all input Tensors of the model.
+
+        Returns:
+            list[Tensor], the input Tensor list of the model.
+
+        Examples:
+            >>> # Use case: serving inference.
+            >>> # precondition 1: Building MindSpore Lite serving package by export MSLITE_ENABLE_SERVER_INFERENCE=on.
+            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.target = ["cpu"]
+            >>> context.parallel.workers_num = 4
+            >>> model_parallel_runner = mslite.ModelParallelRunner()
+            >>> model_parallel_runner.build_from_file(model_path="mobilenetv2.ms", context=context)
+            >>> inputs = model_parallel_runner.get_inputs()
+        """
+        inputs = []
+        for _tensor in self._model.get_inputs():
+            inputs.append(Tensor(_tensor))
+        return inputs
 
     def predict(self, inputs):
         """
@@ -532,27 +555,3 @@ class ModelParallelRunner:
         for _output in _outputs:
             predict_outputs.append(Tensor(_output))
         return predict_outputs
-
-    def get_inputs(self):
-        """
-        Obtains all input Tensors of the model.
-
-        Returns:
-            list[Tensor], the input Tensor list of the model.
-
-        Examples:
-            >>> # Use case: serving inference.
-            >>> # precondition 1: Building MindSpore Lite serving package by export MSLITE_ENABLE_SERVER_INFERENCE=on.
-            >>> # precondition 2: install wheel package of MindSpore Lite built by precondition 1.
-            >>> import mindspore_lite as mslite
-            >>> context = mslite.Context()
-            >>> context.target = ["cpu"]
-            >>> context.parallel.workers_num = 4
-            >>> model_parallel_runner = mslite.ModelParallelRunner()
-            >>> model_parallel_runner.build_from_file(model_path="mobilenetv2.ms", context=context)
-            >>> inputs = model_parallel_runner.get_inputs()
-        """
-        inputs = []
-        for _tensor in self._model.get_inputs():
-            inputs.append(Tensor(_tensor))
-        return inputs
