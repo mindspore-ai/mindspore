@@ -6054,10 +6054,9 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
         padding (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be
-            a tuple/list of one or two or four `int` for height and width.
+            a tuple/list of one or two `int` for height and width.
             If one int, pad_height = pad_width.
             If two int, pad_height = padding[0], pad_width = padding[1].
-            If four int, padding = [pad_height_top, pad_height_bottom, pad_width_left, pad_width_right]
             Default: 0.
         stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
@@ -6087,7 +6086,6 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     unfold_op = _get_cache_prim(Im2Col)(ksizes=kernel_size,
                                         strides=stride,
                                         dilations=dilation,
-                                        padding_mode="CALCULATED",
                                         pads=padding)
     return unfold_op(input)
 

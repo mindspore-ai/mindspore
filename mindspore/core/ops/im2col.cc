@@ -56,16 +56,6 @@ std::vector<int64_t> Im2Col::get_dilations() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Im2Col::set_pad_mode(const std::string &pad_mode) { (void)this->AddAttr(kPaddingMode, api::MakeValue(pad_mode)); }
-
-std::string Im2Col::get_pad_mode() const {
-  auto value_ptr = GetAttr(kPaddingMode);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto mode_str = GetValue<std::string>(value_ptr);
-  std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
-  return mode_str;
-}
-
 void Im2Col::set_pads(const std::vector<int64_t> &pads) { (void)this->AddAttr(kPads, api::MakeValue(pads)); }
 
 std::vector<int64_t> Im2Col::get_pads() const {
@@ -100,10 +90,6 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   auto dilations_ptr = primitive->GetAttr(kDilations);
   MS_EXCEPTION_IF_NULL(dilations_ptr);
   auto dilations = GetValue<std::vector<int64_t>>(dilations_ptr);
-
-  auto padding_mode_ptr = primitive->GetAttr(kPaddingMode);
-  MS_EXCEPTION_IF_NULL(padding_mode_ptr);
-  auto padding_mode = GetValue<string>(padding_mode_ptr);
 
   auto pads_ptr = primitive->GetAttr(kPads);
   MS_EXCEPTION_IF_NULL(pads_ptr);
@@ -142,44 +128,30 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t stride_w = strides.back();
   MS_EXCEPTION_IF_ZERO("stride_w", stride_w);
 
-  int64_t effective_filter_h = (filter_h - 1) * dilation_h + 1;
-  int64_t effective_filter_w = (filter_w - 1) * dilation_w + 1;
   int64_t out_h{0}, out_w{0}, total_block{0}, kernel_product{0};
-  int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
-  if (padding_mode == "VALID") {
-    out_h = (in_h - effective_filter_h + stride_h) / stride_h;
-    out_w = (in_w - effective_filter_w + stride_w) / stride_w;
-  } else if (padding_mode == "SAME") {
-    out_h = (in_h + stride_h - 1) / stride_h;
-    out_w = (in_w + stride_w - 1) / stride_w;
-  } else if (padding_mode == "CALCULATED") {
-    (void)CheckAndConvertUtils::CheckPositiveVector(kPads, pads, op_name);
-    if (!pads.empty() && pads.size() <= size_2) {
-      pad_h_top = pad_h_bottom = pads.front();
-      pad_w_before = pad_w_after = pads.back();
-    } else if (!pads.empty() && pads.size() == size_4) {
-      pad_h_top = pads[kInputIndex0];
-      pad_h_bottom = pads[kInputIndex1];
-      pad_w_before = pads[kInputIndex2];
-      pad_w_after = pads[kInputIndex3];
-    } else {
-      MS_EXCEPTION(ValueError) << "For Im2Col, the size of pads must be 1, 2 or 4, but get " << pads.size()
-                               << "elements in pads.";
-    }
-    out_h = (in_h + pad_h_top + pad_h_bottom - (dilation_h * (filter_h - 1) + 1)) / stride_h + 1;
-    out_w = (in_w + pad_w_before + pad_w_after - (dilation_w * (filter_w - 1) + 1)) / stride_w + 1;
+  int64_t pad_h{0}, pad_w{0};
+
+  (void)CheckAndConvertUtils::CheckPositiveVector(kPads, pads, op_name);
+  if (!pads.empty() && (pads.size() <= size_2 || pads.size() == size_4)) {
+    pad_h = pads.front();
+    pad_w = pads.back();
   } else {
-    MS_EXCEPTION(ValueError) << "For Im2Col, the padding_mode only support VALID, SAME and CALCULATED, but get "
-                             << padding_mode << ".";
+    MS_EXCEPTION(ValueError) << "For Im2Col, the size of pads must be 1 or 2, but get " << pads.size()
+                             << "elements in pads.";
   }
+  if (pads.size() == size_4 && (pads[kInputIndex0] != pads[kInputIndex1] || pads[kInputIndex2] != pads[kInputIndex3])) {
+    MS_EXCEPTION(ValueError) << "For Im2Col, the 1st and 2nd / 3rd and 4th padding value should be same, but got "
+                             << pads;
+  }
+  out_h = (in_h + pad_h + pad_h - (dilation_h * (filter_h - 1) + 1)) / stride_h + 1;
+  out_w = (in_w + pad_w + pad_w - (dilation_w * (filter_w - 1) + 1)) / stride_w + 1;
 
   kernel_product = filter_h * filter_w;
   total_block = out_h * out_w;
   if (out_h < 1 || out_w < 1) {
     MS_EXCEPTION(ValueError) << "For Im2Col, given input with spatial size (" << in_n << ", " << in_c << ", " << in_h
                              << ", " << in_w << "), ksizes=(" << filter_h << ", " << filter_w << "), dilation=("
-                             << dilation_h << ", " << dilation_w << "), padding_mode=" << padding_mode << ", pads=("
-                             << pad_h_top << ", " << pad_h_bottom << ", " << pad_w_before << ", " << pad_w_after
+                             << dilation_h << ", " << dilation_w << ", pads=(" << pads
                              << "), calculated shape of output as (" << in_h << ", " << in_c << ", " << kernel_product
                              << ", " << total_block << "), which is too small (non-positive).";
   }

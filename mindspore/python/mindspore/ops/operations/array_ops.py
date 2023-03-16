@@ -407,17 +407,8 @@ class Im2Col(Primitive):
             for height and width. If type is int, it means that height equal with width. Default: 1.
         dilations (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
             for height and width. If type is int, it means that height equal with width. Default: 1.
-        padding_mode (str, optional): The optional value for pad mode, support "CALCULATED", "SAME" and "VALID".
-            Default: "CALCULATED".
-
-            - "SAME", the width and height of the output are the same as the value of the width and height of
-              the input divided by 'strides' rounded up.
-            - "VALID", return a valid calculated output without padding. Excess pixels that do not satisfy
-              the calculation are discarded.
-            - "CALCULATED", pads the input. Padding 'pads' size of zero on both sides of the input.
-
         pads (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be a tuple of
-            one or two or four `int` for height and width. Default: 0.
+            one or two `int` for height and width. Default: 0.
 
             - If one int, :math:`pad\_height = pad\_width`.
             - If two int, :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]`.
@@ -434,13 +425,10 @@ class Im2Col(Primitive):
         TypeError: If `ksizes` data type is not in Union[int, tuple[int], list[int]].
         TypeError: If `strides` data type is not in Union[int, tuple[int], list[int]].
         TypeError: If `dilations` data type is not in Union[int, tuple[int], list[int]].
-        TypeError: If `padding_mode` data type is not str.
         TypeError: If `pads` data type isnot in Union[int, tuple[int], list[int]].
-            when `padding_mode` is "CALCULATED".
         ValueError: If `ksizes` value is not greater than zero or elements number more than 2.
         ValueError: If `strides` value is not greater than zero or elements number more than 2.
         ValueError: If `dilations` value is not greater than zero or elements number more than 2.
-        ValueError: If `padding_mode` value is not in ["SAME", "VALID", "CALCULATED"].
         ValueError: If `pads` value is not greater than zero.
 
     Supported Platforms:
@@ -455,26 +443,19 @@ class Im2Col(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, ksizes, strides=1, dilations=1, padding_mode="CALCULATED", pads=0):
+    def __init__(self, ksizes, strides=1, dilations=1, pads=0):
         """Initialize Im2Col."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
         validator.check_value_type('ksizes', ksizes, [int, tuple, list], self.name)
         validator.check_value_type('strides', strides, [int, tuple, list], self.name)
         validator.check_value_type('dilations', dilations, [int, tuple, list], self.name)
-        validator.check_value_type('padding_mode', padding_mode, [str], self.name)
         validator.check_value_type('pads', pads, [int, tuple, list], self.name)
 
-        self.padding_mode = validator.check_string(
-            padding_mode.upper(), ["SAME", "VALID", "CALCULATED"], 'padding_mode', self.name)
         self.ksizes = (ksizes, ksizes) if isinstance(ksizes, int) else ksizes
         self.strides = (strides, strides) if isinstance(strides, int) else strides
         self.dilations = (dilations, dilations) if isinstance(dilations, int) else dilations
-        self.pads = pads
-        if isinstance(pads, (list, tuple)):
-            if len(pads) == 2:
-                self.pads = (pads[0], pads[0], pads[1], pads[1])
-        self.pads = (pads, pads, pads, pads) if isinstance(pads, int) else self.pads
+        self.pads = (pads, pads) if isinstance(pads, int) else pads
 
         validator.check("ksizes size", len(self.ksizes), "", [1, 2], Rel.IN, self.name)
         validator.check_positive_int_sequence(self.ksizes, "ksizes", self.name)
@@ -482,15 +463,14 @@ class Im2Col(Primitive):
         validator.check_positive_int_sequence(self.strides, "strides", self.name)
         validator.check("dilations size", len(self.dilations), "", [1, 2], Rel.IN, self.name)
         validator.check_positive_int_sequence(self.dilations, "dilations", self.name)
-        if self.padding_mode == "CALCULATED":
-            validator.check("pads size", len(self.pads), "", [1, 2, 4], Rel.IN, self.name)
-            validator.check_non_negative_int_sequence(self.pads, "pads", self.name)
+        validator.check("pads size", len(self.pads), "", [1, 2], Rel.IN, self.name)
+        validator.check_non_negative_int_sequence(self.pads, "pads", self.name)
 
         self.add_prim_attr('ksizes', self.ksizes)
         self.add_prim_attr('strides', self.strides)
         self.add_prim_attr('dilations', self.dilations)
         self.add_prim_attr('pads', self.pads)
-        self.add_prim_attr('padding_mode', self.padding_mode)
+        self.add_prim_attr('padding_mode', "CALCULATED")
 
 
 class Col2Im(Primitive):

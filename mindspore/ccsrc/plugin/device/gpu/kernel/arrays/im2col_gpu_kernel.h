@@ -61,7 +61,6 @@ class Im2ColGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> ksizes_;
   std::vector<int64_t> strides_ = {1};
   std::vector<int64_t> dilations_ = {1};
-  std::string padding_mode_ = "CALCULATED";
   std::vector<int64_t> pads_ = {0};
 };
 }  // namespace kernel

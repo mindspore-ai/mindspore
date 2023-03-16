@@ -66,7 +66,6 @@ bool Im2ColCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   ksizes_ = kernel_ptr->get_ksizes();
   strides_ = kernel_ptr->get_strides();
   dilations_ = kernel_ptr->get_dilations();
-  padding_mode_ = kernel_ptr->get_pad_mode();
   pads_ = kernel_ptr->get_pads();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -129,33 +128,15 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 
   int64_t pad_height = 0, pad_width = 0;
   int64_t y_height{0}, y_width{0};
-  if (padding_mode_ == "VALID") {
-    int64_t effective_filter_h = (kernel_height - 1) * dilation_height + 1;
-    int64_t effective_filter_w = (kernel_width - 1) * dilation_width + 1;
-    y_height = (x_height - effective_filter_h + stride_height) / stride_height;
-    y_width = (x_width - effective_filter_w + stride_width) / stride_width;
-  } else if (padding_mode_ == "SAME") {
-    pad_height = (kernel_height - 1) / kInt64Number2;
-    pad_width = (kernel_width - 1) / kInt64Number2;
-    y_height = (x_height + stride_height - 1) / stride_height;
-    y_width = (x_width + stride_width - 1) / stride_width;
-  } else if (padding_mode_ == "CALCULATED") {
-    int64_t pad_h_top{0}, pad_h_bottom{0}, pad_w_before{0}, pad_w_after{0};
-    if (!pads_.empty() && pads_.size() <= kDim2) {
-      pad_height = pad_h_top = pad_h_bottom = pads_.front();
-      pad_width = pad_w_before = pad_w_after = pads_.back();
-    } else if (!pads_.empty() && pads_.size() == kDim4) {
-      pad_height = pad_h_top = pads_[kIndex0];
-      pad_h_bottom = pads_[kIndex1];
-      pad_width = pad_w_before = pads_[kIndex2];
-      pad_w_after = pads_[kIndex3];
-    } else {
-      MS_EXCEPTION(ValueError) << "For 'Im2Col', the size of pads_ must be 1, 2 or 4, but get " << pads_.size()
-                               << "elements in pads_.";
-    }
-    y_height = (x_height + pad_h_top + pad_h_bottom - (dilation_height * (kernel_height - 1) + 1)) / stride_height + 1;
-    y_width = (x_width + pad_w_before + pad_w_after - (dilation_width * (kernel_width - 1) + 1)) / stride_width + 1;
+  if (!pads_.empty() && (pads_.size() <= kDim2 || pads_.size() == kDim4)) {
+    pad_height = pads_.front();
+    pad_width = pads_.back();
+  } else {
+    MS_EXCEPTION(ValueError) << "For 'Im2Col', the size of pads_ must be 1, 2 or 4, but get " << pads_.size()
+                             << "elements in pads_.";
   }
+  y_height = (x_height + pad_height + pad_height - (dilation_height * (kernel_height - 1) + 1)) / stride_height + 1;
+  y_width = (x_width + pad_width + pad_width - (dilation_width * (kernel_width - 1) + 1)) / stride_width + 1;
 
   if (total_block != y_height * y_width) {
     MS_EXCEPTION(ValueError) << "For 'Im2Col', the output shape's last dim must be equal to y_height * y_width"
