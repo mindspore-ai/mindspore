@@ -107,12 +107,9 @@ class Dropout(Cell):
     r"""
     Dropout layer for the input.
 
-    Randomly set some elements of the input tensor to zero with probability `p` during training
-    using samples from a Bernoulli distribution.
-
-    The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}` during training so
-    that the output layer remains at a similar scale. During inference, this
-    layer returns the same tensor as the `x`.
+    Dropout is a regularization method. The operator randomly sets some neurons output to 0
+    according to the probability of discarding the probability of discarding.
+    During the reasoning, this layer returns the same Tensor as the `x`.
 
     This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
