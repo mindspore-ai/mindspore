@@ -716,7 +716,7 @@ update_submodule()
 {
   git submodule update --init graphengine
   cd "${BASEPATH}/graphengine"
-  git submodule update --init metadef
+  git submodule update --init 910/metadef
   cd "${BASEPATH}"
 }
 

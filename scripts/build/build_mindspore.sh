@@ -62,7 +62,7 @@ build_mindspore()
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_MPI=ON"
     fi
     if [[ "X$ENABLE_D" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON"
+        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON -DASCEND_VERSION=${ASCEND_VERSION}"
     fi
     if [[ "X$ENABLE_GPU" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GPU=ON"

@@ -1,4 +1,4 @@
-include_directories(${TOP_DIR}/graphengine/inc/external)
+include_directories(${TOP_DIR}/graphengine/910/inc/external)
 include_directories(${TOP_DIR}/mindspore)
 include_directories(${TOP_DIR}/mindspore/lite/src)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN/")

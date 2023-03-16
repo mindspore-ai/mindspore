@@ -1,24 +1,5 @@
 message(STATUS "Compiling GraphEngine")
-if(NOT(BUILD_LITE))
-    set(GE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/graphengine)
-else()
-    set(GE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../graphengine)
-endif()
-
 message(STATUS "[ME] build_path: ${BUILD_PATH}")
-
-function(find_submodule_lib module name path)
-    find_library(${module}_LIBRARY_DIR NAMES ${name} NAMES_PER_DIR PATHS ${path}
-            PATH_SUFFIXES lib
-            )
-    if("${${module}_LIBRARY_DIR}" STREQUAL "${module}_LIBRARY_DIR-NOTFOUND")
-        message(FATAL_ERROR "${name} not found in any of following paths: ${path}")
-    endif()
-    add_library(${module} SHARED IMPORTED)
-    set_target_properties(${module} PROPERTIES
-            IMPORTED_LOCATION ${${module}_LIBRARY_DIR}
-            )
-endfunction()
 
 function(ge_protobuf_generate c_var h_var)
     common_protobuf_generate(${CMAKE_BINARY_DIR}/proto/ge/proto ${c_var} ${h_var} ${ARGN})
@@ -26,11 +7,21 @@ function(ge_protobuf_generate c_var h_var)
     set(${h_var} ${${h_var}} PARENT_SCOPE)
 endfunction()
 
+set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910")
+if(DEFINED ASCEND_VERSION)
+    if(${ASCEND_VERSION} STREQUAL "910")
+        add_definitions(-DASCEND_910)
+    elseif(${ASCEND_VERSION} STREQUAL "910b")
+        set(GRAPHENGINE_PATH "${CMAKE_SOURCE_DIR}/graphengine/910b")
+        add_definitions(-DASCEND_910B)
+    endif()
+endif()
+
 if(ENABLE_TESTCASES OR MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
     if(NOT(BUILD_LITE))
-        file(GLOB_RECURSE GE_PROTO_FILE RELATIVE ${CMAKE_SOURCE_DIR} "graphengine/metadef/proto/*.proto")
+        file(GLOB_RECURSE GE_PROTO_FILE ${GRAPHENGINE_PATH}/metadef/proto/*.proto)
     else()
-        file(GLOB_RECURSE GE_PROTO_FILE ${TOP_DIR}/graphengine/metadef/proto/*.proto)
+        file(GLOB_RECURSE GE_PROTO_FILE ${TOP_DIR}/graphengine/910/metadef/proto/*.proto)
     endif()
     set(TMP_FILE_NAME_LIST)
     foreach(file ${GE_PROTO_FILE})
