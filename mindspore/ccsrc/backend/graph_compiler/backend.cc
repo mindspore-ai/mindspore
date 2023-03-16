@@ -49,7 +49,7 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 
 #include "runtime/device/device_address_utils.h"

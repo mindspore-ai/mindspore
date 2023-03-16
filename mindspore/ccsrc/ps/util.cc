@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "ps/util.h"
+#include "include/backend/distributed/ps/util.h"
 #include <vector>
 #include <memory>
 #include "utils/hash_map.h"
-#include "ps/constants.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/constants.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "utils/ms_utils.h"
+#include "distributed/persistent/data.h"
 
 namespace mindspore {
 namespace ps {
@@ -108,31 +109,7 @@ std::map<int64_t, int64_t> Util::AllRankLocalShard(int64_t first_dim, int64_t ra
   return shard_dims;
 }
 
-void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
-                                const size_t first_dim_size, const size_t outer_dim_size,
-                                mindspore::kernel::SparseGradient<int> *unique_sparse_grad) {
-  size_t slice_segment_size = indices_size * segment_size;
-  std::vector<float> workspace_grad(slice_segment_size);
-  std::vector<int> workspace_indices(indices_size);
-
-  MS_EXCEPTION_IF_NULL(gradients);
-  MS_EXCEPTION_IF_NULL(indices);
-
-  mindspore::kernel::SparseGradient<int> workspace_sparse_grad(
-    {workspace_grad.data(), workspace_indices.data(), indices_size});
-  mindspore::kernel::SparseGradient<int> input_sparse_grad({gradients, indices, indices_size});
-  mindspore::kernel::ReduceSparseGradientParam<int> param;
-  param.input_grad_ = &input_sparse_grad;
-  param.workspace_grad_ = &workspace_sparse_grad;
-  param.output_grad_ = unique_sparse_grad;
-  param.max_index_ = first_dim_size;
-  param.value_stride_ = outer_dim_size;
-
-  mindspore::kernel::SparseOptimizerCpuKernelMod::BucketReduceSparseGradient(param);
-}
-
-bool Util::FuseServerCommOps(const pipeline::ResourcePtr &res) {
-  FuncGraphPtr func_graph = res->func_graph();
+bool Util::FuseServerCommOps(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   DoFusion(func_graph, kPullWeightOpName, kFusedPullWeightOpName);
   DoFusion(func_graph, kPushWeightOpName, kFusedPushWeightOpName);

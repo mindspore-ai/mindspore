@@ -18,14 +18,15 @@
 #define MINDSPORE_CCSRC_PS_SCHEDULER_H_
 
 #include <memory>
-#include "ps/core/scheduler_node.h"
-#include "ps/core/ps_scheduler_node.h"
-#include "ps/util.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
+namespace core {
+class SchedulerNode;
+}  // namespace core
 class BACKEND_EXPORT Scheduler {
  public:
   static Scheduler &GetInstance();
@@ -33,13 +34,8 @@ class BACKEND_EXPORT Scheduler {
   void Run();
 
  private:
-  Scheduler() {
-    if (scheduler_node_ == nullptr) {
-      scheduler_node_ = std::make_unique<core::PSSchedulerNode>();
-    }
-  }
-
-  ~Scheduler() = default;
+  Scheduler();
+  ~Scheduler();
   Scheduler(const Scheduler &) = delete;
   Scheduler &operator=(const Scheduler &) = delete;
   std::unique_ptr<core::SchedulerNode> scheduler_node_;

@@ -33,7 +33,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-class BACKEND_EXPORT WorkerNode : public AbstractNode {
+class WorkerNode : public AbstractNode {
  public:
   WorkerNode() = default;
   ~WorkerNode() override = default;

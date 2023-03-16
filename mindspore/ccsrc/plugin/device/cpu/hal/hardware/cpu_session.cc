@@ -47,8 +47,8 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/util.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/graph_recorder.h"

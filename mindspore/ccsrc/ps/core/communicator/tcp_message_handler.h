@@ -28,7 +28,7 @@
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "utils/convert_utils_base.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 
 namespace mindspore {
 namespace ps {

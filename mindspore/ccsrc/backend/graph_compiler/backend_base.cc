@@ -31,7 +31,7 @@
 #include "include/backend/debug/debugger/debugger.h"
 #endif
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 
 namespace mindspore {

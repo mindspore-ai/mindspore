@@ -29,14 +29,14 @@
 #include <condition_variable>
 
 #include "ps/core/cluster_config.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
 #include "ps/core/node_manager.h"
 #include "ps/core/node.h"
 #include "ps/core/communicator/request_process_result_code.h"
 #include "ps/core/communicator/http_message_handler.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/http_server.h"
 #include "ps/core/recovery_base.h"
@@ -47,7 +47,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 using distributed::cluster::ActorRouteTableService;
-class BACKEND_EXPORT SchedulerNode : public Node {
+class SchedulerNode : public Node {
  public:
   SchedulerNode()
       : server_(nullptr),

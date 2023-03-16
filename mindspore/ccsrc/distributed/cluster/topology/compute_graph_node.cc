@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
@@ -22,9 +22,9 @@
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/constants.h"
 #include "proto/topology.pb.h"
-#include "ps/ps_context.h"
-#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/distributed/rpc/tcp/constants.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace distributed {

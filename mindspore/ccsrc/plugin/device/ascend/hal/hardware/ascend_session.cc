@@ -69,7 +69,7 @@
 #include "debug/rdr/graph_recorder.h"
 #endif
 #ifdef WITH_BACKEND
-#include "ps/util.h"
+#include "include/backend/distributed/ps/util.h"
 #endif
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #ifndef ENABLE_SECURITY

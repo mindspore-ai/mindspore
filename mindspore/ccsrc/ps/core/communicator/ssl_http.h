@@ -31,7 +31,7 @@
 
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "ps/core/file_configuration.h"
 
 namespace mindspore {

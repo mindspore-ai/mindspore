@@ -28,7 +28,7 @@
 
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
 #include "ps/core/abstract_node.h"

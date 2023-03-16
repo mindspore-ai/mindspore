@@ -26,12 +26,12 @@
 #include "ps/core/server_node.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/communicator/task_executor.h"
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/tcp_msg_handler.h"
 #include "ps/core/comm_util.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 
 namespace mindspore {
 namespace ps {

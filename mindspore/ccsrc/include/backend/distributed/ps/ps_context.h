@@ -20,9 +20,7 @@
 #include <map>
 #include <string>
 #include <memory>
-#include "ps/constants.h"
-#include "ps/core/cluster_metadata.h"
-#include "ps/core/cluster_config.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -36,9 +34,13 @@ constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
 constexpr size_t kMaxPasswordLen = 1024;
 
+namespace core {
+class ClusterConfig;
+}  // namespace core
+
 class BACKEND_EXPORT PSContext {
  public:
-  ~PSContext() = default;
+  ~PSContext();
   PSContext(PSContext const &) = delete;
   PSContext &operator=(const PSContext &) = delete;
   static std::shared_ptr<PSContext> instance();
@@ -123,27 +125,7 @@ class BACKEND_EXPORT PSContext {
   bool enable_distributed_mindrt() const;
 
  private:
-  PSContext()
-      : ps_enabled_(false),
-        is_worker_(false),
-        is_pserver_(false),
-        is_sched_(false),
-        rank_id_(0),
-        worker_num_(0),
-        server_num_(0),
-        scheduler_host_("0.0.0.0"),
-        scheduler_port_(6667),
-        role_(kEnvRoleOfNotPS),
-        server_mode_(""),
-        cluster_config_(nullptr),
-        scheduler_manage_port_(11202),
-        config_file_path_(""),
-        node_id_(""),
-        enable_ssl_(false),
-        client_password_(),
-        server_password_(),
-        http_url_prefix_(""),
-        instance_name_("") {}
+  PSContext();
 
   bool ps_enabled_;
   bool is_worker_;

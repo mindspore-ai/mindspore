@@ -24,10 +24,10 @@
 #include <vector>
 #include <unordered_map>
 
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/file_configuration.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/recovery_base.h"
 #include "ps/core/scheduler_node.h"
 #include "ps/core/node_info.h"

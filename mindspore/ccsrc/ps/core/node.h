@@ -33,7 +33,7 @@
 
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/node_info.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
@@ -46,7 +46,7 @@ namespace core {
 constexpr int kTimeoutInSeconds = 30;
 constexpr int kCommTimeoutInSeconds = 10;
 constexpr int kCommTimeoutInThreeSeconds = 3;
-class BACKEND_EXPORT Node {
+class Node {
  public:
   Node()
       : is_ready_(false),

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/ps_cache/ps_data/ps_data_channel.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_channel.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

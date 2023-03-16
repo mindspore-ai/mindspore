@@ -21,7 +21,7 @@
 #include <memory>
 #include <atomic>
 #include <condition_variable>
-#include "ps/ps_cache/ps_data/ps_data_channel.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_channel.h"
 
 #define EXPORT __attribute__((visibility("default")))
 

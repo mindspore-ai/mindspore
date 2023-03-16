@@ -38,7 +38,7 @@
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/request_process_result_code.h"
 #include "nlohmann/json.hpp"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 
 namespace mindspore {
 namespace ps {

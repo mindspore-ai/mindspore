@@ -25,12 +25,15 @@
 #include <map>
 #include <string>
 #include <functional>
-
-#include "ps/core/communicator/request_process_result_code.h"
-#include "distributed/persistent/data.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
+namespace distributed::persistent {
+template <typename T>
+class Data;
+template <typename T>
+class PersistentData;
+}  // namespace distributed::persistent
 namespace ps {
 constexpr char kEnvCommType[] = "MS_COMM_TYPE";
 constexpr char kEnvInterface[] = "MS_INTERFACE";

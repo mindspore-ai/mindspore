@@ -27,7 +27,7 @@
 #include <string>
 
 #include "include/backend/visible.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/message.h"
 #include "ps/core/communicator/task_executor.h"
@@ -39,7 +39,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-class BACKEND_EXPORT AbstractNode : public Node {
+class AbstractNode : public Node {
  public:
   AbstractNode()
       : heart_beat_thread_(nullptr),

@@ -50,7 +50,7 @@
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/util.h"
+#include "include/backend/distributed/ps/util.h"
 #endif
 
 namespace mindspore {

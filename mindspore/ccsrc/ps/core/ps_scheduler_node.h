@@ -34,7 +34,7 @@ namespace core {
 // This class is a derived class of SchedulerNode specialized for Parameter Server. It is used to rewrite the specific
 // logic for Parameter Server mode training in SchedulerNode. For example, the Scheduler of Parameter Server will reject
 // the registration request of alive nodes.
-class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
+class PSSchedulerNode : public SchedulerNode {
  public:
   PSSchedulerNode() {
     node_nums_[NodeRole::WORKER] = ps::PSContext::instance()->worker_num();

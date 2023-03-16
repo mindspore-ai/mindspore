@@ -22,12 +22,10 @@
 #include <vector>
 #include <string>
 #include "utils/hash_map.h"
-#include "ps/constants.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
-#include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -45,10 +43,7 @@ class BACKEND_EXPORT Util {
   static bool is_optimizer(const std::string &name);
   static int64_t LocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
   static std::map<int64_t, int64_t> AllRankLocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
-  static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
-                                   const size_t first_dim_size, const size_t outer_dim_size,
-                                   mindspore::kernel::SparseGradient<int> *unique_sparse_grad);
-  static bool FuseServerCommOps(const pipeline::ResourcePtr &res);
+  static bool FuseServerCommOps(const FuncGraphPtr &func_graph);
   static WeightPtr MakeWeightPtr(const std::shared_ptr<std::vector<float>> &data, bool enable_recovery,
                                  const std::shared_ptr<std::vector<int>> &shape = nullptr);
   static std::string GetPrimitiveName(const CNodePtr &cnode);

@@ -22,8 +22,8 @@
 #include <map>
 
 #include "nlohmann/json.hpp"
-#include "ps/ps_context.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/ps_context.h"
+#include "include/backend/distributed/ps/constants.h"
 #include "utils/file_utils.h"
 #include "include/backend/distributed/constants.h"
 #include "distributed/persistent/storage/file_io_utils.h"

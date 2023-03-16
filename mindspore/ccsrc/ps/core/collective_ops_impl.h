@@ -23,7 +23,7 @@
 #include <vector>
 #include <functional>
 #include "proto/ps.pb.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/server_node.h"
 
 namespace mindspore {

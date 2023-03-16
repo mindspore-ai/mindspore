@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 
 namespace mindspore {
 namespace device {

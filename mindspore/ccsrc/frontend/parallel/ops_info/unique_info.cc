@@ -30,8 +30,8 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #endif
 

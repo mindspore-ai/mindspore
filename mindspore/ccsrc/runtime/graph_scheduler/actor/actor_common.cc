@@ -19,7 +19,7 @@
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 
 namespace mindspore {
 namespace runtime {

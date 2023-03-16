@@ -21,7 +21,7 @@
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "include/backend/distributed/cluster/cluster_context.h"
 #endif
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "distributed/embedding_cache/embedding_storage/dense_embedding_storage.h"
 #include "distributed/embedding_cache/embedding_storage/sparse_embedding_storage.h"
 #include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"

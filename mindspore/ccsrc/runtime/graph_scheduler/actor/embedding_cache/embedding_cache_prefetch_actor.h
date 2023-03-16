@@ -38,8 +38,8 @@
 
 // Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
 // the follow include file and using declaration of ps will be removed.
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/ps_context.h"
 using mindspore::ps::PSContext;
 using mindspore::ps::PsDataPrefetch;
 

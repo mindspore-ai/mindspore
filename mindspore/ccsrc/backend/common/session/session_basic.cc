@@ -50,10 +50,10 @@
 #include "include/common/utils/parallel_context.h"
 #include "kernel/oplib/oplib.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/constants.h"
-#include "ps/util.h"
-#include "ps/ps_context.h"
+#include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
+#include "include/backend/distributed/ps/constants.h"
+#include "include/backend/distributed/ps/util.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #include "abstract/abstract_value.h"
 #endif
 #include "backend/common/session/session_factory.h"

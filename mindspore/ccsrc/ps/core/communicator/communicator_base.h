@@ -28,7 +28,7 @@
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/tcp_server.h"
 #include "ps/core/node_info.h"
-#include "ps/constants.h"
+#include "include/backend/distributed/ps/constants.h"
 
 namespace mindspore {
 namespace ps {
