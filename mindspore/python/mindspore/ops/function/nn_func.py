@@ -4974,6 +4974,13 @@ def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
 
 
+@_primexpr
+def _check_pxiel_shuffle_valid(num, factor):
+    if num % factor ** 2 != 0:
+        raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
+                         "by `upscale_factor` squared.")
+
+
 def pixel_shuffle(input, upscale_factor):
     r"""
     Applies the PixelShuffle operation over input `input` which implements sub-pixel convolutions
@@ -5012,15 +5019,13 @@ def pixel_shuffle(input, upscale_factor):
         (3, 2, 1, 12, 12)
     """
     _check_positive_int(upscale_factor, "upscale_factor")
-    idx = input.shape
+    idx = P.Shape()(input)
     length = len(idx)
     if length < 3:
         raise TypeError(f"For pixel_shuffle, the dimension of `input` should be larger than 2, but got {length}.")
     pre = idx[:-3]
     c, h, w = idx[-3:]
-    if c % upscale_factor ** 2 != 0:
-        raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
-                         "by `upscale_factor` squared.")
+    _check_pxiel_shuffle_valid(c, upscale_factor)
     c = c // upscale_factor ** 2
     input_perm = (pre + (c, upscale_factor, upscale_factor, h, w))
     reshape = _get_cache_prim(P.Reshape)()
@@ -5032,6 +5037,13 @@ def pixel_shuffle(input, upscale_factor):
     input = transpose(input, input_perm)
     input = reshape(input, (pre + (c, upscale_factor * h, upscale_factor * w)))
     return input
+
+
+@_primexpr
+def _check_pxiel_unshuffle_valid(num1, num2, factor):
+    if num1 % factor != 0 or num2 % factor != 0:
+        raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
+                         "by downscale_factor.")
 
 
 def pixel_unshuffle(input, downscale_factor):
@@ -5068,15 +5080,13 @@ def pixel_unshuffle(input, downscale_factor):
         (1, 4, 4, 4)
     """
     _check_positive_int(downscale_factor, "downscale_factor")
-    idx = input.shape
+    idx = P.Shape()(input)
     length = len(idx)
     if length < 3:
         raise TypeError(f"For pixel_unshuffle, the dimension of `input` should be larger than 2, but got {length}.")
     pre = idx[:-3]
     c, h, w = idx[-3:]
-    if h % downscale_factor != 0 or w % downscale_factor != 0:
-        raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
-                         "by downscale_factor.")
+    _check_pxiel_unshuffle_valid(h, w, downscale_factor)
     h = h // downscale_factor
     w = w // downscale_factor
     input_perm = (pre + (c, h, downscale_factor, w, downscale_factor))
