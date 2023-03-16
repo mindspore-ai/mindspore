@@ -78,6 +78,7 @@ from .array_func import (
     scatter_nd_max,
     scatter_nd_min,
     tril,
+    triu,
     gather,
     gather_d,
     gather_elements,
