@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ dynamic_shape_op_info = CpuRegOp("DynamicShape") \
     .dtype_format(DataType.U32_Default, DataType.I64_Default) \
     .dtype_format(DataType.U64_Default, DataType.I64_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I64_Default) \
     .get_op_info()
 
 
