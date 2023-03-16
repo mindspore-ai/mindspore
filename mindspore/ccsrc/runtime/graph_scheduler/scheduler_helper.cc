@@ -171,7 +171,10 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   // Update the reference count of from_kernel.
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
-  device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
+  // The superkernel actor is linked by input parameter, maybe the not used parameter.
+  if (to_actor->type() != KernelTransformType::kSuperKernelActor) {
+    device_tensor->ClearFlag(device::kDeviceAddressFlagNotUsed);
+  }
   // The device address of super kernel actor can't be changed, so set the max reference count.
   if (IsControlFlowActor(to_actor->type()) || (from_actor->type_ == KernelTransformType::kSuperKernelActor) ||
       (to_actor->type_ == KernelTransformType::kSuperKernelActor)) {
