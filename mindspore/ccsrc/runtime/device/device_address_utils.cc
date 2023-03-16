@@ -390,12 +390,12 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
       MS_LOG(ERROR) << error_info;
       if (AnfAlgo::IsKernelSelectBackoffOp(origin_pair.first)) {
         const auto &backoff_info = AnfAlgo::GetKernelSelectBackoffInfo(origin_pair.first);
-        MS_EXCEPTION(backoff_info.second) << backoff_info.second;
+        MS_EXCEPTION(backoff_info.second) << "#umsg#Kernel select failed:#umsg#" << backoff_info.second;
       } else if (AnfAlgo::IsKernelSelectBackoffOp(cur_pair.first)) {
         const auto &backoff_info = AnfAlgo::GetKernelSelectBackoffInfo(cur_pair.first);
-        MS_EXCEPTION(backoff_info.second) << backoff_info.second;
+        MS_EXCEPTION(backoff_info.second) << "#umsg#Kernel select failed:#umsg#" << backoff_info.second;
       } else {
-        MS_LOG(EXCEPTION) << error_info;
+        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << error_info;
       }
     }
     MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
