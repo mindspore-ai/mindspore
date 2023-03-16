@@ -576,6 +576,7 @@ Array Operation
     mindspore.ops.tensor_split
     mindspore.ops.tile
     mindspore.ops.tril
+    mindspore.ops.triu
     mindspore.ops.transpose
     mindspore.ops.unbind
     mindspore.ops.unique
