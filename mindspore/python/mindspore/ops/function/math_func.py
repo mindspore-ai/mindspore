@@ -7870,6 +7870,16 @@ def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_na
                               upper_limit, Rel.INC_LEFT, arg_name, prim_name)
 
 
+def _check_logits_tensor(logits):
+    if not isinstance(logits, (Tensor, Tensor_)):
+        raise TypeError("The input logits must be tensor")
+
+
+def _check_logits_shape(logits):
+    if logits.shape == ():
+        raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
+
+
 def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     r"""
     Returns the samples from the Gumbel-Softmax distribution and optionally discretizes. If `hard = True`, the returned
@@ -7902,10 +7912,8 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         >>> print(output.shape)
         (2, 3)
     """
-    if not isinstance(logits, (Tensor, Tensor_)):
-        raise TypeError("The input logits must be tensor")
-    if logits.shape == ():
-        raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
+    _check_logits_tensor(logits)
+    _check_logits_shape(logits)
     logits_dtype = _get_cache_prim(P.DType)()(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
