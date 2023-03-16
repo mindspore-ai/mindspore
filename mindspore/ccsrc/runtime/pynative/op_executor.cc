@@ -120,7 +120,12 @@ bool OpExecutor::ActorInQueue(GraphId graph_id) {
 }
 
 void OpExecutor::WorkerJoin() {
-  Wait();
+  try {
+    GilReleaseWithCheck release_gil;
+    WaitForBuild();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Build tasks run failed, exception:" << e.what();
+  }
   async_queue_.WorkerJoin();
 }
 }  // namespace mindspore::runtime
