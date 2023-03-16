@@ -284,6 +284,20 @@ AnfNodePtr ConvertInterpretedObjForResolve(const AnfNodePtr &origin_node, const 
   return nullptr;
 }
 
+void UpdateRecomputeScope(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+
+  for (const auto &node : nodes) {
+    const auto &origin_scope_name = node->scope()->name();
+    if (node->isa<CNode>() && origin_scope_name.compare(0, strlen(kAttrRecompute), kAttrRecompute) != 0) {
+      std::stringstream scope_name_buffer;
+      scope_name_buffer << kAttrRecompute << "_" << origin_scope_name;
+      node->set_scope(std::make_shared<Scope>(scope_name_buffer.str()));
+    }
+  }
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -326,7 +340,7 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   }
 
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
-    UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
+    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>());
   }
   ConvertLoadedGraph(func_graph, convert_result);
   AnfNodePtr output = NewValueNode(convert_result);
