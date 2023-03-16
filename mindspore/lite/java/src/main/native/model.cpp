@@ -49,13 +49,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByGraph(JNIEnv *
     MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return false;
   }
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "Make context failed";
-    return false;
-  }
-  context.reset(c_context_ptr);
-
+  auto context = std::make_shared<mindspore::Context>(*c_context_ptr);
   auto *c_cfg_ptr = reinterpret_cast<mindspore::TrainCfg *>(cfg_ptr);
   auto cfg = std::make_shared<mindspore::TrainCfg>();
   if (cfg == nullptr) {
@@ -105,12 +99,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv 
     MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return false;
   }
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "Make context failed";
-    return false;
-  }
-  context.reset(c_context_ptr);
+  auto context = std::make_shared<mindspore::Context>(*c_context_ptr);
   mindspore::Status status;
   if (key_str != NULL) {
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
@@ -172,12 +161,7 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
     MS_LOG(ERROR) << "Context pointer from java is nullptr";
     return false;
   }
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "Make context failed";
-    return false;
-  }
-  context.reset(c_context_ptr);
+  auto context = std::make_shared<mindspore::Context>(*c_context_ptr);
   mindspore::Status status;
   if (key_str != NULL) {
     auto key_len = static_cast<size_t>(env->GetArrayLength(key_str));
