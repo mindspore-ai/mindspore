@@ -1334,11 +1334,10 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     grad_fg = ad::Grad(first_grad_fg, opt::Optimizer::MakeEmptyOptimizer(r));
     set_eliminate_forward(true);
   }
-  auto grad_param =
-    std::make_shared<autograd::GradParam>(cnode, input_args, out_value, grad_fg, !top_cell()->is_high_order_top_cell());
+  auto grad_param = std::make_shared<autograd::GradParam>(
+    cnode, input_args, out_value, grad_fg, !top_cell()->is_high_order_top_cell(), use_dynamic_shape_process);
   grad_param->is_not_support_by_expander = is_not_support_by_expander;
   grad_param->graph_cache_key = cur_top_cell_id;
-  grad_param->use_dynamic_shape_process = use_dynamic_shape_process;
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph " << cnode->ToString();
   }
@@ -1759,8 +1758,8 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const CNode
   bool out_is_used = FreeUselessTensors(cnode, cloned_op_args, cloned_out);
 
   auto grad_param = std::make_shared<autograd::GradParam>(cnode, cloned_op_args, cloned_out, nullptr,
-                                                          !top_cell()->is_high_order_top_cell());
-  grad_param->use_dynamic_shape_process = top_cell()->use_dynamic_shape_process();
+                                                          !top_cell()->is_high_order_top_cell(),
+                                                          top_cell()->use_dynamic_shape_process());
   grad_param->out_used_in_bporp_graph = out_is_used;
   auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {

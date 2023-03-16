@@ -28,6 +28,7 @@
 namespace mindspore {
 namespace pipeline {
 struct ExecutorInfo {
+  FuncGraphPtr primal_func_graph{nullptr};
   FuncGraphPtr func_graph;
   // The grad graph of func_graph, it will create in PyNative mode when @jit is used.
   FuncGraphPtr grad_graph;

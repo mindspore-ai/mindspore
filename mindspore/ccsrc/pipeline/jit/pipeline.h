@@ -87,6 +87,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
+  void SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase);
+  FuncGraphPtr GetPrimalFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type, const bool &incremental);

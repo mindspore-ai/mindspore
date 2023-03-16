@@ -45,8 +45,13 @@ struct GradAttr {
 
 struct GradParam {
   GradParam(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, FuncGraphPtr fprop_fg,
-            bool grad_by_value)
-      : cnode(cnode), op_args(op_args), out(out), fg(std::move(fprop_fg)), grad_by_value(grad_by_value) {}
+            bool grad_by_value, bool use_dynamic_shape_process)
+      : cnode(cnode),
+        op_args(op_args),
+        out(out),
+        fg(std::move(fprop_fg)),
+        grad_by_value(grad_by_value),
+        use_dynamic_shape_process(use_dynamic_shape_process) {}
 
   // Primal CNode create by op forward process
   const CNodePtr cnode;
@@ -62,10 +67,10 @@ struct GradParam {
   bool use_dynamic_shape_process{false};
   // Op forward output used in bprop graph
   bool out_used_in_bporp_graph{false};
-  // ms function
-  bool is_ms_function_graph{false};
   // control flow or auto parallel
   bool is_not_support_by_expander{false};
+  // ms function
+  bool is_ms_function_graph{false};
   // For pass graph cache key
   std::string graph_cache_key;
 };

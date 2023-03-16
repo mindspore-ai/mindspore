@@ -938,7 +938,9 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Not exist control flow
   if (!ExistControlFlow(ms_func_graph)) {
+    graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
     auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
+    MS_EXCEPTION_IF_NULL(clone_graph);
     clone_graph->set_flag(kFlagGraphGradByExpander, true);
     graph_executor->SetGradGraph(clone_graph, phase);
     return true;
@@ -951,6 +953,7 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
   auto grad_graph = ad::Grad(ms_func_graph, opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);
+  graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
   graph_executor->SetGradGraph(grad_graph, phase);
   ModifyOutputNode(ms_func_graph);
 

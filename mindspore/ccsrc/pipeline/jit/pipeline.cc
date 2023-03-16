@@ -530,6 +530,23 @@ FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
   return info_[phase]->func_graph;
 }
 
+void GraphExecutorPy::SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
+  MS_EXCEPTION_IF_NULL(primal_func_graph);
+  if (info_.find(phase) == info_.end()) {
+    MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
+    return;
+  }
+  info_[phase]->primal_func_graph = primal_func_graph;
+}
+
+FuncGraphPtr GraphExecutorPy::GetPrimalFuncGraph(const std::string &phase) {
+  if (info_.find(phase) == info_.end()) {
+    MS_LOG(INFO) << "No executor info. found for phase: " << phase;
+    return nullptr;
+  }
+  return info_[phase]->func_graph;
+}
+
 FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
   if (phase.empty()) {
     MS_LOG(EXCEPTION) << "The input phase is empty.";
