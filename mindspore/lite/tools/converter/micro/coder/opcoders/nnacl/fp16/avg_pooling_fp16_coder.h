@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_POOLING_FP32_CODER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_POOLING_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_POOLING_FP16_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_POOLING_FP16_CODER_H_
 
 #include <vector>
-#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/nnacl/fp32/pooling_fp32_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class PoolingFP32Coder : public OperatorCoder {
+class PoolingFP16Coder final : public PoolingFP32Coder {
  public:
-  PoolingFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+  PoolingFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                    const LiteGraph::Node *node, size_t node_index, Target target)
-      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
-  ~PoolingFP32Coder() override = default;
+      : PoolingFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+  ~PoolingFP16Coder() override = default;
 
-  int Prepare(CoderContext *const context) override { return RET_OK; }
+  int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP16_CODER_H_

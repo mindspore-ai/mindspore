@@ -74,6 +74,11 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/pooling_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/reshape_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/softmax_int8_coder.cc
+        #### nnacl fp16 coder
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/activation_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/avg_pooling_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/concat_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/transpose_fp16_coder.cc
         #### nnacl fp32 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/activation_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/addn_fp32_coder.cc

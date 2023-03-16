@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_TRANSPOSE_FP16_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_TRANSPOSE_FP16_CODER_H_
 #include <vector>
 #include <string>
-#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/nnacl/fp32/transpose_fp32_coder.h"
 #include "nnacl/transpose.h"
 namespace mindspore::lite::micro::nnacl {
-class TransposeFp32Coder : public OperatorCoder {
+class TransposeFp16Coder final : public TransposeFp32Coder {
  public:
-  TransposeFp32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+  TransposeFp16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                      const LiteGraph::Node *node, size_t node_index, Target target)
-      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
+      : TransposeFp32Coder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~TransposeFp32Coder() override = default;
+  ~TransposeFp16Coder() override = default;
 
   int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
-
-  int Resize();
-
-  int Init();
 
  private:
   void GetNHNCTransposeFunc();
@@ -47,4 +43,4 @@ class TransposeFp32Coder : public OperatorCoder {
   int dims_{0};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_TRANSPOSE_FP16_CODER_H_

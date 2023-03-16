@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_SPLIT_FP32_CODER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_SPLIT_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ACTIVATION_FP16_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_ACTIVATION_FP16_CODER_H_
 
 #include <vector>
-#include "coder/opcoders/op_coder.h"
-#include "nnacl/split_parameter.h"
+#include "coder/opcoders/nnacl/fp32/activation_fp32_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class SplitFP32Coder : public OperatorCoder {
+class ActivationFP16Coder final : public ActivationFP32Coder {
  public:
-  SplitFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                 const LiteGraph::Node *node, size_t node_index, Target target)
-      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
-  ~SplitFP32Coder() override = default;
+  ActivationFP16Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                      const LiteGraph::Node *node, size_t node_index, Target target)
+      : ActivationFP32Coder(in_tensors, out_tensors, node, node_index, target) {}
+
+  ~ActivationFP16Coder() override = default;
 
   int Prepare(CoderContext *const context) override;
 
   int DoCode(CoderContext *const context) override;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_SPLIT_FP32_CODER_H_
+#endif  // MICRO_CODER_OPCODERS_FP16__CODER_H_

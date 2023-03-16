@@ -49,14 +49,15 @@ std::string EnumNameTarget(Target target);
 template <typename T>
 std::string GetVariableTypeName() {
   std::map<std::type_index, std::string> types_name = {
-    {std::type_index(typeid(int)), "int32_t"},         {std::type_index(typeid(int32_t)), "int32_t"},
-    {std::type_index(typeid(int16_t)), "int16_t"},     {std::type_index(typeid(int8_t)), "int8_t"},
-    {std::type_index(typeid(uint8_t)), "uint8_t"},     {std::type_index(typeid(float)), "float"},
-    {std::type_index(typeid(double)), "double"},       {std::type_index(typeid(::QuantArg)), "QuantArg"},
-    {std::type_index(typeid(void *)), "void *"},       {std::type_index(typeid(std::string)), "float *"},
-    {std::type_index(typeid(int *)), "int32_t *"},     {std::type_index(typeid(int32_t *)), "int32_t *"},
-    {std::type_index(typeid(int16_t *)), "int16_t *"}, {std::type_index(typeid(int8_t *)), "int8_t *"},
-    {std::type_index(typeid(uint8_t *)), "uint8_t *"}, {std::type_index(typeid(float *)), "float *"}};
+    {std::type_index(typeid(int)), "int32_t"},           {std::type_index(typeid(int32_t)), "int32_t"},
+    {std::type_index(typeid(int16_t)), "int16_t"},       {std::type_index(typeid(uint16_t)), "uint16_t"},
+    {std::type_index(typeid(int8_t)), "int8_t"},         {std::type_index(typeid(uint8_t)), "uint8_t"},
+    {std::type_index(typeid(float)), "float"},           {std::type_index(typeid(double)), "double"},
+    {std::type_index(typeid(::QuantArg)), "QuantArg"},   {std::type_index(typeid(void *)), "void *"},
+    {std::type_index(typeid(std::string)), "float *"},   {std::type_index(typeid(int *)), "int32_t *"},
+    {std::type_index(typeid(int32_t *)), "int32_t *"},   {std::type_index(typeid(int16_t *)), "int16_t *"},
+    {std::type_index(typeid(uint16_t *)), "uint16_t *"}, {std::type_index(typeid(int8_t *)), "int8_t *"},
+    {std::type_index(typeid(uint8_t *)), "uint8_t *"},   {std::type_index(typeid(float *)), "float *"}};
   auto item = types_name.find(std::type_index(typeid(T)));
   if (item != types_name.end()) {
     return item->second;

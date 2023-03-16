@@ -21,7 +21,7 @@
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ActivationFP32Coder final : public OperatorCoder {
+class ActivationFP32Coder : public OperatorCoder {
  public:
   ActivationFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const LiteGraph::Node *node, size_t node_index, Target target)

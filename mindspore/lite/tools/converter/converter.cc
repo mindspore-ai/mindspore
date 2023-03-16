@@ -277,7 +277,7 @@ std::shared_ptr<ConverterPara> CreateConvertParam(const std::map<std::string, st
       return nullptr;
     }
     if (parse_funcs[pair.first](pair.second, parm) != RET_OK) {
-      MS_LOG(ERROR) << "In multi-model scenario, " << pair.first << " is not supported";
+      MS_LOG(ERROR) << pair.first << "'value is invalid";
       return nullptr;
     }
   }

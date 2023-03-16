@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #include "nnacl/int8/fixed_point.h"
+#include "nnacl/activation_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
