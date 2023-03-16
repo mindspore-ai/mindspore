@@ -81,6 +81,38 @@ void DumpInit(uint32_t device_id) {
   }
 }
 #endif
+
+void RemovePlaceHolder(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &nodes = graph->execution_order();
+
+  for (const auto &node : nodes) {
+    auto op_name = common::AnfAlgo::GetCNodeName(node);
+    static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
+    auto iter = place_holder_nodes.find(op_name);
+    if (iter != place_holder_nodes.end()) {
+      // keep placeholder for acl_kernel
+      auto is_acl_kernel = AnfAlgo::GetKernelType(node) == KernelType::ACL_KERNEL;
+      if (!is_acl_kernel) {
+        auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+        // Remove seq_length
+        auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+        std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(node)};
+        for (size_t i = 0; i < input_num; ++i) {
+          auto item = std::find(none_index.begin(), none_index.end(), i);
+          if (item == none_index.end()) {
+            auto input_node = common::AnfAlgo::GetInputNode(node, i);
+            new_inputs.emplace_back(input_node);
+          }
+        }
+        (void)node->set_inputs(new_inputs);
+        // update attr
+        common::AnfAlgo::EraseNodeAttr(kAttrPlaceHolderIndex, node);
+        MS_LOG(DEBUG) << "Remove placeholder input and kAttrPlaceHolderIndex for " << op_name;
+      }
+    }
+  }
+}
 }  // namespace
 
 void AscendKernelExecutor::Initialize() {
@@ -182,6 +214,7 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
     if (graph->is_graph_run_mode()) {
       graph_executor_->PreprocessBeforeRun(graph);
     } else if (graph->is_dynamic_shape() && (IsGraphMode() || graph->has_flag(kFlagPyNativeRunInGraph))) {
+      RemovePlaceHolder(graph);
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
       SetAtomicCleanToNodes(graph, node_atomics_);  // graph mode may can do it too, instead of update execorder
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
@@ -227,35 +260,10 @@ void AscendKernelExecutor::DoSomas(const KernelGraphPtr &graph) {
 
 void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  RemovePlaceHolder(graph);
   const auto &nodes = graph->execution_order();
-
   for (const auto &node : nodes) {
-    // Remove placeholder
     auto op_name = common::AnfAlgo::GetCNodeName(node);
-    static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
-    auto iter = place_holder_nodes.find(op_name);
-    if (iter != place_holder_nodes.end()) {
-      // keep placeholder for acl_kernel
-      auto is_acl_kernel = AnfAlgo::GetKernelType(node) == KernelType::ACL_KERNEL;
-      if (!is_acl_kernel) {
-        auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
-        // Remove seq_length
-        auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-        std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(node)};
-        for (size_t i = 0; i < input_num; ++i) {
-          auto item = std::find(none_index.begin(), none_index.end(), i);
-          if (item == none_index.end()) {
-            auto input_node = common::AnfAlgo::GetInputNode(node, i);
-            new_inputs.emplace_back(input_node);
-          }
-        }
-        (void)node->set_inputs(new_inputs);
-        // update attr
-        common::AnfAlgo::EraseNodeAttr(kAttrPlaceHolderIndex, node);
-        MS_LOG(DEBUG) << "Remove placeholder input and kAttrPlaceHolderIndex for " << op_name;
-      }
-    }
-
     // Save the nop_op that needs to be memcpy
     static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), prim::kPrimExpandDims->name(),
                                                         prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
