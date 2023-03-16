@@ -1255,6 +1255,29 @@ class MaxPoolGradWithArgmax(Primitive):
         self.add_prim_attr("strides", self.strides)
 
 
+class MaxPoolGradWithArgmaxV2(Primitive):
+    """Gradients of the MaxPoolWithArgmaxV2 operation."""
+
+    @prim_attr_register
+    def __init__(self, kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mstype.int64):
+        self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['y'])
+        self.kernel_size = _check_positive_int_or_tuple("kernel_size", kernel_size, self.name, allow_four=True,
+                                                        ret_four=True)
+        self.add_prim_attr('kernel_size', self.kernel_size)
+        if strides is None:
+            strides = kernel_size
+        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('strides', self.strides)
+        self.pads = _check_positive_int_or_tuple("pads", pads, self.name, allow_four=True, ret_four=True,
+                                                 strict_positive=False)
+        self.add_prim_attr('pads', self.pads)
+        validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
+        self.add_prim_attr('ceil_mode', self.ceil_mode)
+        self.dilation = _check_positive_int_or_tuple("dilation", dilation, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('dilation', self.dilation)
+        self.add_prim_attr('argmax_type', self.argmax_type)
+
+
 class MaxPool3DGradWithArgmax(Primitive):
     """Gradients of the maxpool3Dwithargmax operation."""
 

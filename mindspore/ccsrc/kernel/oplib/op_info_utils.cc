@@ -637,11 +637,11 @@ void OpInfoUtils::UpdateRefInfo(const OpInfoPtr &op_info_ptr) {
 }
 
 void OpInfoUtils::SetKernelName(const OpInfoPtr &op_info_ptr) {
-  std::string kernel_name = op_info_ptr->op_file();
+  std::string kernel_name = op_info_ptr->op_interface();
   if (kernel_name.empty() || kernel_name == kNull) {
     kernel_name = NormalizeKernelName(op_info_ptr->op_name());
   }
-  op_info_ptr->set_kernel(kernel_name);
+  op_info_ptr->set_op_interface(kernel_name);
 }
 
 std::string OpInfoUtils::NormalizeKernelName(const std::string &op_name) {
