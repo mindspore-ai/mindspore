@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #ifdef WITH_BACKEND
 #include "mindspore/ccsrc/runtime/hardware/device_context_manager.h"
 #endif
+
 namespace mindspore {
 namespace dataset {
 struct MemHdr {
@@ -64,6 +65,7 @@ Status ArenaImpl::Allocate(size_t n, void **p) {
     if (size > reqBlk) {
       tr_.Insert(addr + reqBlk, size - reqBlk);
     }
+    RETURN_UNEXPECTED_IF_NULL(ptr_);
     char *q = static_cast<char *>(ptr_) + addr * ARENA_BLK_SZ;
     MemHdr::setHdr(q, addr, reqBlk);
     *p = get_user_addr(q);
@@ -196,6 +198,7 @@ Status ArenaImpl::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
     // Attempt a block enlarge. No guarantee it is always successful.
     bool success = BlockEnlarge(&addr, hdr.blk_size, req_blk);
     if (success) {
+      RETURN_UNEXPECTED_IF_NULL(ptr_);
       auto *newHdr = static_cast<char *>(ptr_) + addr * ARENA_BLK_SZ;
       MemHdr::setHdr(newHdr, addr, req_blk);
       if (addr != hdr.addr) {
@@ -259,7 +262,13 @@ Status Arena::Init() {
 #else
     ptr_ = std::shared_ptr<void>(::malloc(sz), ::free);
 #endif
+    if (ptr_ == nullptr) {
+      return Status(StatusCode::kMDOutOfMemory);
+    }
     impl_ = std::make_unique<ArenaImpl>(ptr_.get(), sz);
+    if (impl_ == nullptr) {
+      return Status(StatusCode::kMDOutOfMemory);
+    }
   } catch (std::bad_alloc &e) {
     return Status(StatusCode::kMDOutOfMemory);
   }
