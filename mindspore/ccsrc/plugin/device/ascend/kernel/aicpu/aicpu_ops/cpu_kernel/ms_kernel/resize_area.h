@@ -21,12 +21,6 @@
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-
-std::vector<int64_t> in_shape1;
-std::vector<int64_t> in_shape2;
-std::vector<int64_t> out_shape;
-bool align_corners = false;
-
 // weight data of every pixel
 struct ResizeAreaCachedInterpolation {
   size_t start;
@@ -36,24 +30,8 @@ struct ResizeAreaCachedInterpolation {
   bool needs_bounding = true;
 };
 
-inline int64_t Bound(int64_t val, int64_t limit);
-float Scaling_(size_t in_size, size_t out_size, bool align_corners);
-
 struct ResizeAreaSt {
-  void CalSt(CpuKernelContext &ctx) {
-    Tensor *input_tensor1 = ctx.Input(0);
-    Tensor *input_tensor2 = ctx.Input(1);
-    in_shape1 = input_tensor1->GetTensorShape()->GetDimSizes();
-    auto outsize = reinterpret_cast<int32_t *>(input_tensor2->GetData());
-    batch_size = in_shape1[0];
-    channels = in_shape1[3];
-    in_height = in_shape1[1];
-    in_width = in_shape1[2];
-    out_height = outsize[0];
-    out_width = outsize[1];
-    height_scale = Scaling_(in_height, out_height, align_corners);
-    width_scale = Scaling_(in_width, out_width, align_corners);
-  }
+  void CalSt(CpuKernelContext &ctx, std::vector<int64_t> &in_shape1, bool align_corners);
   size_t batch_size;
   size_t channels;
   size_t in_height;
@@ -83,6 +61,10 @@ class ResizeAreaCpuKernel : public CpuKernel {
                        float *&output_patch_ptr);
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
   DataType dtype_ = DT_INT8;
+  std::vector<int64_t> in_shape1;
+  std::vector<int64_t> in_shape2;
+  std::vector<int64_t> out_shape;
+  bool align_corners = false;
 };
 }  // namespace aicpu
 #endif
