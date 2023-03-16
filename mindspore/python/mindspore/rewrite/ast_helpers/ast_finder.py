@@ -160,3 +160,41 @@ class FindConstValueInInit(ast.NodeVisitor):
         self._hit = False
         self.generic_visit(self._context)
         return self._hit
+
+
+class CheckPropertyIsUsed(ast.NodeVisitor):
+    """
+    Check whether a property is used.
+
+    Args:
+        node (ast.AST): An instance of ast node.
+    """
+    def __init__(self, node: ast.AST):
+        self._context = node
+        self._value = ""
+        self._attr = ""
+        self._hit = False
+
+    def visit_Attribute(self, node: ast.Attribute) -> Any:  # pylint: disable=invalid-name
+        """Visit a node of type ast.Attribute."""
+        if isinstance(node.value, ast.Name) and node.value.id == self._value and node.attr == self._attr:
+            self._hit = True
+        return super(CheckPropertyIsUsed, self).generic_visit(node)
+
+    def generic_visit(self, node: ast.AST) -> Any:
+        """
+        An override method, iterating over all nodes and save target ast nodes.
+        """
+        if self._hit:
+            return
+        super(CheckPropertyIsUsed, self).generic_visit(node)
+
+    def check(self, value, attr) -> bool:
+        """
+        Check whether `value` and `attr` exists.
+        """
+        self._value = value
+        self._attr = attr
+        self._hit = False
+        self.generic_visit(self._context)
+        return self._hit

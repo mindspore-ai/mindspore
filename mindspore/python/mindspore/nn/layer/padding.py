@@ -638,7 +638,6 @@ class _ReplicationPadNd(Cell):
         self.padding = padding
         self.padv3 = nn_ops.PadV3(mode="edge")
 
-
     @staticmethod
     @constexpr
     def _need_expend_dim(x):
@@ -648,10 +647,10 @@ class _ReplicationPadNd(Cell):
         need_expend_dims = self._need_expend_dim(x)
         if need_expend_dims:
             x = x.expand_dims(0)
-            x = self.padv3(x, self.padding)
+            x = self.padv3(x, self.padding, None)
             x = x.squeeze(0)
         else:
-            x = self.padv3(x, self.padding)
+            x = self.padv3(x, self.padding, None)
         return x
 
 
