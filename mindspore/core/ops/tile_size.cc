@@ -32,7 +32,7 @@ namespace {
 AbstractBasePtr MakeTuple(int64_t num) {
   abstract::AbstractBasePtrList elems;
   for (int64_t i = 0; i < num; i++) {
-    elems.emplace_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
+    elems.emplace_back(std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64));
   }
 
   return std::make_shared<abstract::AbstractTuple>(elems);

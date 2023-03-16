@@ -193,7 +193,7 @@ abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primiti
   SparseTensorDenseMatmulCheckShape(prim_name, is_dynamic_rank, is_dynamic, indices_shape, values_shape, shape_shape,
                                     x2_shape);
   if (!is_dynamic) {
-    if (x1_shape_value->isa<AnyValue>() || x1_shape_value->isa<None>()) {
+    if (x1_shape_value->isa<ValueAny>() || x1_shape_value->isa<None>()) {
       if (!x1_shape->isa<abstract::AbstractTensor>()) {
         MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input sparse_shape "
                                  << "should be constant.";

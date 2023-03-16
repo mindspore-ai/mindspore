@@ -16,7 +16,7 @@
 
 #include "ops/combined_non_max_suppression.h"
 
-#define IsValue(value_ptr) (!value_ptr->isa<AnyValue>() && !value_ptr->isa<None>())
+#define IsValue(value_ptr) (!value_ptr->isa<ValueAny>() && !value_ptr->isa<None>())
 #include <algorithm>
 #include <set>
 

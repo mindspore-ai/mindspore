@@ -57,7 +57,7 @@ class RankInfer : public abstract::OpInferBase {
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto x_shape = shape_map[kShape];
     if (IsDynamicRank(x_shape)) {
-      return kAnyValue;
+      return kValueAny;
     }
     auto x_shape_rank = SizeToLong(x_shape.size());
     ValuePtr res = MakeValue(x_shape_rank);

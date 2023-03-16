@@ -126,8 +126,8 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(step_abs);
 
   // all value is known
-  if (start_abs->BuildValue() != kAnyValue && end_abs->BuildValue() != kAnyValue &&
-      step_abs->BuildValue() != kAnyValue) {
+  if (start_abs->BuildValue() != kValueAny && end_abs->BuildValue() != kValueAny &&
+      step_abs->BuildValue() != kValueAny) {
     int64_t start_v, end_v, step_v;
     const std::string start_str = "start";
     const std::string end_str = "end";

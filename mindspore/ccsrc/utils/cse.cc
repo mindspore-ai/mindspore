@@ -74,7 +74,7 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   auto node_abs = node->abstract();
   // In testcase: TestOptOpt.CSE, node->abstract() is null.
   if (node_abs == nullptr) {
-    return kAnyValue;
+    return kValueAny;
   }
   if (node_abs->isa<abstract::PrimitiveAbstractClosure>()) {
     // Ignore the tracking_id and prim pointer hash.

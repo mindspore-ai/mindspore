@@ -361,7 +361,7 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
   MS_EXCEPTION_IF_NULL(broaded_args);
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
                        [&broaden_scalar](const AbstractBasePtr &arg) -> AbstractBasePtr {
-                         if (arg->GetValueTrack() != kAnyValue) {
+                         if (arg->GetValueTrack() != kValueAny) {
                            if (broaden_scalar) {
                              return AbstractBroaden(arg);
                            }

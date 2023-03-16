@@ -38,7 +38,7 @@
 #include "utils/hash_map.h"
 
 namespace mindspore {
-TypePtr TypeAnything::DeepCopy() const { return kAnyType; }
+TypePtr TypeAny::DeepCopy() const { return kTypeAny; }
 
 std::string GetExcptionTypeString(TypeId id) {
   static mindspore::HashMap<TypeId, std::string> type_id_to_string = {{kMetaTypeType, "MetaType"},
@@ -89,7 +89,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kNumberTypeComplex64, kComplex64},
                                                                 {kNumberTypeComplex128, kComplex128},
                                                                 {kMetaTypeExternal, kTypeExternal},
-                                                                {kMetaTypeAnything, kAnyType},
+                                                                {kMetaTypeAny, kTypeAny},
                                                                 {kMetaTypeNone, kTypeNone},
                                                                 {kMetaTypeNull, kTypeNull},
                                                                 {kMetaTypeEllipsis, kTypeEllipsis},
@@ -464,7 +464,7 @@ TypePtr StringToType(const std::string &type_name) {
     // Class
     // SymbolicType
     // JTagged
-    // Anything
+    // Any
     // External
     MS_LOG(EXCEPTION) << "Unsupported type name: " << type_name << "!";
   }

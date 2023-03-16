@@ -55,7 +55,7 @@ class OpInferBase {
   ///
   /// \return Inferred Value based on given inputs.
   virtual ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-    return kAnyValue;
+    return kValueAny;
   }
 
   /// \brief Get the indices of infer-depend value.

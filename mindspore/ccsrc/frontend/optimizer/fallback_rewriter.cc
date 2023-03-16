@@ -641,7 +641,7 @@ class AfterOptARewriter : public BaseRewriter {
       if (IsPrimitiveCNode(node, prim::kPrimPyExecute) && abs->isa<abstract::AbstractNone>()) {
         constexpr auto data_type = "__py_execute_no_return_type__";
         if (node->has_user_data(data_type)) {
-          auto type = std::make_shared<TypeAnything>();
+          auto type = std::make_shared<TypeAny>();
           node->set_user_data<Type>(data_type, type);
           set_need_renormalized(true);
         }
@@ -939,7 +939,7 @@ class AfterOptARewriter : public BaseRewriter {
     auto none_type = std::make_shared<TypeNone>();
     none_execute_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
     AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-    res->set_value(kAnyValue);
+    res->set_value(kValueAny);
     none_execute_node->set_abstract(res);
     return none_execute_node;
   }

@@ -36,14 +36,14 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
     auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
     const auto &value = tuple_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<AnyValue>()) {
+    if (value->isa<ValueAny>()) {
       return value;
     }
     return tuple_abs->ElementsBuildValue<ValueTuple>();
   } else if (abs->isa<abstract::AbstractList>()) {
     auto list_abs = abs->cast<abstract::AbstractListPtr>();
     const auto &value = list_abs->BuildValue();
-    if (value->isa<AnyValue>()) {
+    if (value->isa<ValueAny>()) {
       return value;
     }
     return list_abs->ElementsBuildValue<ValueList>();
@@ -54,10 +54,10 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
   } else if (abs->isa<abstract::AbstractCSRTensor>()) {
     return abs->cast<abstract::AbstractCSRTensorPtr>()->BuildValue();
   } else if (abs->isa<abstract::AbstractMapTensor>()) {
-    return kAnyValue;
+    return kValueAny;
   } else {
     MS_LOG(DEBUG) << "Unsupported abstract type for primitive, the abs is " << abs->ToString();
-    return kAnyValue;
+    return kValueAny;
   }
 }
 
@@ -109,7 +109,7 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   // the WhileList ops should be constant fold in Pynative mode.
   if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
     auto value = eval_impl->InferValue(prim, op_run_info->input_abs);
-    if (value != nullptr && !value->isa<AnyValue>()) {
+    if (value != nullptr && !value->isa<ValueAny>()) {
       op_run_info->base_op_run_info.abstract = value->ToAbstract();
       prim->EndRecordAddAttr();
       return;
@@ -226,7 +226,7 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 3: Get infer value from output abstract.
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
   MS_EXCEPTION_IF_NULL(infer_value);
-  if (!infer_value->isa<AnyValue>()) {
+  if (!infer_value->isa<ValueAny>()) {
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
@@ -355,7 +355,7 @@ py::object InferOperation::CallConstantFolding(const py::args &args) const {
   (void)op_run_info->input_abs.emplace_back(v->ToAbstract());
   PynativeInfer(op_run_info);
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
-  if (infer_value->isa<AnyValue>()) {
+  if (infer_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "Can not get value from abstract";
   }
   return PyNativeAlgo::DataConvert::ValueToPyObj(infer_value);

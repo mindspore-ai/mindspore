@@ -132,7 +132,7 @@ class MirrorPadInfer : public abstract::OpInferBase {
     auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     CheckPaddingParam(paddings_shape, x_shape, prim_name);
     // if shape of x is determined and padding value is unknown, return a all -1 shape
-    if (paddings->isa<AnyValue>() || paddings->isa<None>()) {
+    if (paddings->isa<ValueAny>() || paddings->isa<None>()) {
       return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
     auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue(kPaddings, paddings, prim_name);

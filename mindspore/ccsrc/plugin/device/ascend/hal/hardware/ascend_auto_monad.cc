@@ -220,8 +220,8 @@ bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractB
     return CheckAbstractTupleIsCompatible(a1, a2);
   }
   // Consider the following two cases as compatible：
-  // a1: AbstractScalar(Type: Bool, Value: AnyValue, Shape: NoShape)
-  // a2: AbstractTensor(shape: (), element: AbstractScalar(Type: Bool, Value: AnyValue, Shape: NoShape), value:...)
+  // a1: AbstractScalar(Type: Bool, Value: ValueAny, Shape: NoShape)
+  // a2: AbstractTensor(shape: (), element: AbstractScalar(Type: Bool, Value: ValueAny, Shape: NoShape), value:...)
   if (CheckTensorAndScalar(a1, a2) || CheckTensorAndScalar(a2, a1)) {
     return true;
   }

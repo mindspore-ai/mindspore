@@ -70,7 +70,7 @@ class SequenceIndexInfer : public abstract::OpInferBase {
       return nullptr;
     }
     auto target_value = target_abs->BuildValue();
-    if (seq_abs->BuildValue() == kAnyValue || target_value == kAnyValue) {
+    if (seq_abs->BuildValue() == kValueAny || target_value == kValueAny) {
       return nullptr;
     }
     const auto &seq_elements = seq_abs->elements();

@@ -44,7 +44,7 @@ class GraphSplitterTest : public UT::Common {
 
 AbstractBasePtr GraphSplitterTest::CreateAbs() {
   ShapeVector shp = {3, 3};
-  auto ele = std::make_shared<AbstractScalar>(kAnyValue, kFloat64);
+  auto ele = std::make_shared<AbstractScalar>(kValueAny, kFloat64);
   MS_EXCEPTION_IF_NULL(ele);
   auto abs = std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   MS_EXCEPTION_IF_NULL(abs);

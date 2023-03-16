@@ -89,7 +89,7 @@ typedef enum DbgDataType : unsigned int {
   DT_BASE_UINT = 37,   // type generate unsigned int
   DT_BASE_FLOAT = 38,  // type generate float
   DT_TYPE = 39,        // type type
-  DT_ANYTHING = 40,    // type anything
+  DT_ANY = 40,         // type any
   DT_REFKEY = 41,      // type refkey
   DT_REF = 42          // type ref
 } DbgDataType;

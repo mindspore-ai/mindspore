@@ -73,7 +73,7 @@ abstract::ShapePtr SparseSegmentSumInferShape(const PrimitivePtr &prim,
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (!input_args[kInputIndex2]->BuildValue()->isa<AnyValue>() &&
+  if (!input_args[kInputIndex2]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
     auto segment_ids_value_ptr = input_args[kInputIndex2]->BuildValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);

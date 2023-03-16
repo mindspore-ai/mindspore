@@ -82,7 +82,7 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
     auto num_sample_input_type = nun_sample_arg->BuildType();
     auto value = nun_sample_arg->BuildValue();
-    if (value->isa<AnyValue>()) {
+    if (value->isa<ValueAny>()) {
       return;
     }
     if (num_sample_input_type->type_id() == kNumberTypeInt64) {
@@ -128,7 +128,7 @@ void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input
   if (seed_arg->isa<abstract::AbstractScalar>()) {
     auto seed_input_type = seed_arg->BuildType();
     auto value = seed_arg->BuildValue();
-    if (value->isa<AnyValue>()) {
+    if (value->isa<ValueAny>()) {
       return;
     }
     if (seed_input_type->type_id() == kNumberTypeInt64) {

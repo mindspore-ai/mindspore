@@ -32,7 +32,7 @@ TEST_F(TestUtils, test_join) {
   AbstractBasePtr abs_s1 = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtr abs_s2 = FromValue(static_cast<int64_t>(2), false);
   AbstractBasePtr abs_s_anything = FromValue(static_cast<int64_t>(2), true);
-  abs_s_anything->set_value(kAnyValue);
+  abs_s_anything->set_value(kValueAny);
 
   AbstractBasePtr res_s1 = abs_s1->Join(abs_s2);
   ASSERT_EQ(*res_s1, *abs_s_anything);

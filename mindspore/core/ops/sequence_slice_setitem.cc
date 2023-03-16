@@ -58,8 +58,8 @@ AbstractBasePtr SequenceSliceInferInner(const PrimitivePtr &primitive, const std
   auto start_abs = input_args[start_index];
   auto stop_abs = input_args[stop_index];
   auto step_abs = input_args[step_index];
-  if (!sequence_abs->dynamic_len() && !target_abs->dynamic_len() && start_abs->BuildValue() != kAnyValue &&
-      stop_abs->BuildValue() != kAnyValue && step_abs->BuildValue() != kAnyValue) {
+  if (!sequence_abs->dynamic_len() && !target_abs->dynamic_len() && start_abs->BuildValue() != kValueAny &&
+      stop_abs->BuildValue() != kValueAny && step_abs->BuildValue() != kValueAny) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the origin/target sequence should be dynamic length "
                              << "or one of start/stop/step should be variable.";
   }

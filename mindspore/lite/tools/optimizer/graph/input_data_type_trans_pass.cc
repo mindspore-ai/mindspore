@@ -57,7 +57,7 @@ STATUS InputDTypeTransPass::HandleGraphInput(const FuncGraphPtr &graph) {
       auto element = abstract_tensor->element();
       element->set_type(TypeIdToType(kNumberTypeInt32));
       auto new_abstract = abstract->Clone();
-      new_abstract->set_value(std::make_shared<AnyValue>());
+      new_abstract->set_value(std::make_shared<ValueAny>());
       if (GenCastNode(graph, input, input->fullname_with_scope() + "_post_cast",
                       static_cast<TypeId>(src_input_data_type_), new_abstract) == nullptr) {
         MS_LOG(ERROR) << "GenCastNode failed.";

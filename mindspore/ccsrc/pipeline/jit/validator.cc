@@ -31,11 +31,11 @@
 namespace mindspore {
 namespace validator {
 using mindspore::abstract::AbstractBase;
-using mindspore::abstract::AbstractError;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractMapTensor;
+using mindspore::abstract::AbstractProblem;
 using mindspore::abstract::AbstractRefTensor;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
@@ -118,9 +118,9 @@ void ValidateAbstract(const AnfNodePtr &node) {
   if (CheckAbstractScalar(node)) {
     return;
   }
-  if (abstract->isa<AbstractError>()) {
+  if (abstract->isa<AbstractProblem>()) {
     // NOTICE: validate dead code?
-    MS_LOG(DEBUG) << "AbstractError in the graph: " << abstract->ToString();
+    MS_LOG(DEBUG) << "AbstractProblem in the graph: " << abstract->ToString();
     return;
   }
   bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||

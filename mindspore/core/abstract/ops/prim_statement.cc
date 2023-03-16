@@ -71,9 +71,9 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
 
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
-  // If the value of condition is AnyValue or the abstract of condition is AbstractTensor,
+  // If the value of condition is ValueAny or the abstract of condition is AbstractTensor,
   // keeps both true and false branch.
-  if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
+  if (v->isa<ValueAny>() || cond->isa<AbstractTensor>()) {
     MS_EXCEPTION_IF_NULL(tb);
     // Need record two func_graph
     SetVariableFlag(tb);
@@ -226,7 +226,7 @@ AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePt
     MS_LOG(EXCEPTION) << "IsConstant requires args input size = 1";
   }
   ValuePtr v = args_spec_list[0]->BuildValue();
-  return std::make_shared<AbstractScalar>(!v->isa<AnyValue>());
+  return std::make_shared<AbstractScalar>(!v->isa<ValueAny>());
 }
 }  // namespace abstract
 }  // namespace mindspore

@@ -59,7 +59,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
     return seq_abs;
   }
 
-  if (scalar_abs->BuildValue() == kAnyValue) {
+  if (scalar_abs->BuildValue() == kValueAny) {
     auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
     ret->CheckAndConvertToDynamicLenSequence();
     return ret;

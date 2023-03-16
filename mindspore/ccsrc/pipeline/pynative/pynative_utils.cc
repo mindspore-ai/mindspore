@@ -83,7 +83,7 @@ std::string GetFnInfoByPyObj(const py::object &obj) {
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractTensor>()) {
-    abs->set_value(kAnyValue);
+    abs->set_value(kValueAny);
   } else if (abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractList>()) {
     const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
     for (const auto &elem : abs_seq->elements()) {

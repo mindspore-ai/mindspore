@@ -47,7 +47,7 @@
 namespace mindspore {
 namespace transform {
 using ::ge::Operator;
-using mindspore::kAnyValue;
+using mindspore::kValueAny;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;

@@ -142,7 +142,7 @@ class VM : public std::enable_shared_from_this<VM>, public VMImpl {
 
   VectorRef ExportSequence(const VectorRef &seq);
 
-  BaseRef ExportPrimitive(const PrimitivePtr &) const { return kAnyValue; }
+  BaseRef ExportPrimitive(const PrimitivePtr &) const { return kValueAny; }
 
   ClosurePtr ExportClosure(const ClosurePtr &clos);
 

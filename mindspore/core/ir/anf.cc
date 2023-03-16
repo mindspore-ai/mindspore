@@ -415,13 +415,13 @@ bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner) {
 
 // Check if the node is DeadNode.
 bool IsDeadNode(const AnfNodePtr &node) {
-  auto value = GetValuePtr<ErrorValue>(node);
+  auto value = GetValuePtr<ValueProblem>(node);
   return (value != nullptr) && (value->IsDead());
 }
 
 // Check if the node is PolyNode.
 bool IsPolyNode(const AnfNodePtr &node) {
-  auto value = GetValuePtr<ErrorValue>(node);
+  auto value = GetValuePtr<ValueProblem>(node);
   return (value != nullptr) && (value->IsPoly());
 }
 

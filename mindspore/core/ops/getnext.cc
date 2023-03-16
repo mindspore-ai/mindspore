@@ -65,7 +65,7 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
   AbstractBasePtrList output;
   for (size_t i = 0; i < shape.size(); ++i) {
     auto ret_shape = std::make_shared<abstract::Shape>(shape[i]);
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, types[i]);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, types[i]);
     auto tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
     output.push_back(tensor);
   }

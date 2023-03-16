@@ -29,7 +29,7 @@
 namespace mindspore {
 static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Unknown"},
                                                               {kMetaTypeType, "Type"},
-                                                              {kMetaTypeAnything, "Anything"},
+                                                              {kMetaTypeAny, "Any"},
                                                               {kMetaTypeObject, "Object"},
                                                               {kMetaTypeTypeType, "TypeType"},
                                                               {kMetaTypeProblem, "Problem"},

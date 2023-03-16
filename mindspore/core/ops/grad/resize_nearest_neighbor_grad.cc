@@ -70,7 +70,7 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
     std::vector<ValuePtr> size_vec = size_ptr->cast<ValueTuplePtr>()->value();
     (void)std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
                          [](const ValuePtr e) { return GetValue<int64_t>(e); });
-  } else if (size_ptr->isa<AnyValue>()) {
+  } else if (size_ptr->isa<ValueAny>()) {
     size_v.push_back(-1);
     size_v.push_back(-1);
   } else {

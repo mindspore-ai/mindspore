@@ -67,7 +67,7 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_type_element = output_shape_type_id->element();
   MS_EXCEPTION_IF_NULL(output_shape_type_element);
   std::vector<int64_t> y_shape;
-  if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
+  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
     if (indices_shape.size() == 0) {
       if (values_shape.size() != 0 && values_shape[0] != 1) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the indices_shape[0] is 1"

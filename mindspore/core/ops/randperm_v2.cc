@@ -84,7 +84,7 @@ abstract::ShapePtr RandpermV2InferShape(const PrimitivePtr &primitive, const std
   auto n_value = input_args[kInputIndex0]->BuildValue();
   auto seed_value = input_args[kInputIndex1]->BuildValue();
   auto offset_value = input_args[kInputIndex2]->BuildValue();
-  if (!n_value->isa<AnyValue>() && !n_value->isa<None>()) {
+  if (!n_value->isa<ValueAny>() && !n_value->isa<None>()) {
     auto n = CheckAndConvertUtils::CheckTensorIntValue("n", n_value, prim_name)[0];
     auto seed = CheckAndConvertUtils::CheckTensorIntValue("seed", seed_value, prim_name)[0];
     auto offset = CheckAndConvertUtils::CheckTensorIntValue("offset", offset_value, prim_name)[0];

@@ -443,62 +443,62 @@ class MS_CORE_API RefKey final : public StringImm {
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;
 
-/// \brief AnyValue defines a Value class which can be any Value type.
-class MS_CORE_API AnyValue final : public Value {
+/// \brief ValueAny defines a Value class which can be any Value type.
+class MS_CORE_API ValueAny final : public Value {
  public:
-  /// \brief Constructor of AnyValue.
-  AnyValue() = default;
-  /// \brief Destructor of AnyValue.
-  ~AnyValue() override = default;
-  MS_DECLARE_PARENT(AnyValue, Value)
-  /// \brief The hash value of the AnyValue object.
+  /// \brief Constructor of ValueAny.
+  ValueAny() = default;
+  /// \brief Destructor of ValueAny.
+  ~ValueAny() override = default;
+  MS_DECLARE_PARENT(ValueAny, Value)
+  /// \brief The hash value of the ValueAny object.
   ///
   /// \return The hash value.
   std::size_t hash() const override { return tid(); }
-  /// \brief Check whether the input is the current AnyValue object.
+  /// \brief Check whether the input is the current ValueAny object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return Whether the input is the current AnyValue object.
+  /// \return Whether the input is the current ValueAny object.
   bool operator==(const Value &other) const override;
-  /// \brief Get abstract of the AnyValue object.
+  /// \brief Get abstract of the ValueAny object.
   ///
-  /// \return The abstract of the AnyValue object.
+  /// \return The abstract of the ValueAny object.
   abstract::AbstractBasePtr ToAbstract() override;
 };
 
-GVAR_DEF(ValuePtr, kAnyValue, std::make_shared<AnyValue>());
+GVAR_DEF(ValuePtr, kValueAny, std::make_shared<ValueAny>());
 
-enum ErrorValueType : int { kDead = 0, kPoly = 1 };
+enum ValueProblemType : int { kDead = 0, kPoly = 1 };
 
-/// \brief ErrorValue defines a class for DeadNode and PolyNode.
-class MS_CORE_API ErrorValue final : public Value {
+/// \brief ValueProblem defines a class for DeadNode and PolyNode.
+class MS_CORE_API ValueProblem final : public Value {
  public:
-  /// \brief Constructor of ErrorValue.
+  /// \brief Constructor of ValueProblem.
   ///
   /// \param[in] err_type Define the error value type.
-  explicit ErrorValue(ErrorValueType err_type) : err_type_(err_type) {}
+  explicit ValueProblem(ValueProblemType err_type) : err_type_(err_type) {}
   /// \brief Destructor of RefKey.
-  ~ErrorValue() override = default;
-  MS_DECLARE_PARENT(ErrorValue, Value)
-  /// \brief The hash value of the ErrorValue object.
+  ~ValueProblem() override = default;
+  MS_DECLARE_PARENT(ValueProblem, Value)
+  /// \brief The hash value of the ValueProblem object.
   ///
   /// \return The hash value.
   std::size_t hash() const override { return tid(); }
-  /// \brief Check whether the input is the current ErrorValue object.
+  /// \brief Check whether the input is the current ValueProblem object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return Whether the input is the current ErrorValue object.
+  /// \return Whether the input is the current ValueProblem object.
   bool operator==(const Value &other) const override;
-  /// \brief Check whether the input is the current ErrorValue object.
+  /// \brief Check whether the input is the current ValueProblem object.
   ///
-  /// \param[in] other Define a ErrorValue object.
-  /// \return Whether the input is the current ErrorValue object.
-  bool operator==(const ErrorValue &other) const;
-  /// \brief Get abstract of the ErrorValue object.
+  /// \param[in] other Define a ValueProblem object.
+  /// \return Whether the input is the current ValueProblem object.
+  bool operator==(const ValueProblem &other) const;
+  /// \brief Get abstract of the ValueProblem object.
   ///
-  /// \return The abstract of the ErrorValue object.
+  /// \return The abstract of the ValueProblem object.
   abstract::AbstractBasePtr ToAbstract() override {
-    MS_LOG(EXCEPTION) << "ErrorValue(" << ToString() << ") can't be converted to abstract.";
+    MS_LOG(EXCEPTION) << "ValueProblem(" << ToString() << ") can't be converted to abstract.";
   }
   /// \brief Check whether the value belongs to DeadNode.
   ///
@@ -508,15 +508,15 @@ class MS_CORE_API ErrorValue final : public Value {
   ///
   /// \return Whether the value belongs to PolyNode.
   bool IsPoly() const { return err_type_ == kPoly; }
-  /// \brief Show the ErrorValue object.
+  /// \brief Show the ValueProblem object.
   ///
-  /// \return The description of the ErrorValue object.
+  /// \return The description of the ValueProblem object.
   std::string ToString() const override { return IsDead() ? "DeadNode" : "PolyNode"; }
 
  private:
-  ErrorValueType err_type_{kDead};
+  ValueProblemType err_type_{kDead};
 };
-using ErrorValuePtr = std::shared_ptr<ErrorValue>;
+using ValueProblemPtr = std::shared_ptr<ValueProblem>;
 
 /// \brief Monad defines a Value class which is used in side effect.
 class MS_CORE_API Monad : public Value {

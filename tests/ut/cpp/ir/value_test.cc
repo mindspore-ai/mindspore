@@ -66,7 +66,7 @@ TEST_F(TestValue, testToAbstract) {
   ASSERT_TRUE(ret);
   ASSERT_EQ(*(ret), *(sa));
 
-  ValuePtr vv = std::make_shared<AnyValue>();
+  ValuePtr vv = std::make_shared<ValueAny>();
   AbstractBasePtr va = std::make_shared<AbstractScalar>();
   ret = vv->ToAbstract();
   ASSERT_TRUE(ret);

@@ -66,7 +66,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   int64_t num_samples_val = 0;
   if (input_args[1]->isa<abstract::AbstractScalar>()) {
     auto num_samples_value_ptr = input_args[1]->BuildValue();
-    if (num_samples_value_ptr->isa<AnyValue>()) {
+    if (num_samples_value_ptr->isa<ValueAny>()) {
       num_samples_val = -1;
     } else {
       if (!num_samples_value_ptr->isa<Int64Imm>()) {

@@ -128,7 +128,7 @@ TEST_F(TestPynativeExecute, TestInferOperator) {
   infer_operator->DoInfer(op_run_info);
   // Check abstract.
   ASSERT_NE(op_run_info->out_value, nullptr);
-  ASSERT_EQ(op_run_info->out_value->isa<AnyValue>(), true);
+  ASSERT_EQ(op_run_info->out_value->isa<ValueAny>(), true);
   auto output_abs = op_run_info->base_op_run_info.abstract;
   ASSERT_NE(output_abs, nullptr);
   ASSERT_EQ(output_abs->isa<abstract::AbstractTensor>(), true);

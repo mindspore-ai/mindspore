@@ -83,7 +83,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
-  if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
+  if (!input_args[0]->BuildValue()->isa<ValueAny>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
     int64_t shape_m = 1;
     if (input_type_element->type_id() == kNumberTypeInt32) {

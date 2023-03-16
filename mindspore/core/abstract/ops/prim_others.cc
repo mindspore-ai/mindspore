@@ -50,7 +50,7 @@ AbstractBasePtr InferImplEnvironCreate(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list) {
   // args: None.
   CheckArgsSize(primitive->name(), args_spec_list, 0);
-  static const AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  static const AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
   return abs_env;
 }
 
@@ -113,7 +113,7 @@ AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePt
   if (value->isa<AbstractUndetermined>() && !value->isa<AbstractTensor>()) {
     EnvSetSparseResultMgr::GetInstance().Set(true);
   }
-  return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
 }
 
 AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -121,12 +121,12 @@ AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePt
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
   constexpr auto environ_add_input_size = 2;
   CheckArgsSize(primitive->name(), args_spec_list, environ_add_input_size);
-  return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
 }
 
 AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const PrimitivePtr &,
                                            const AbstractBasePtrList &) {
-  return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>());
+  return std::make_shared<abstract::AbstractScalar>(kValueAny, std::make_shared<Bool>());
 }
 
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -140,7 +140,7 @@ AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const Primitive
   if (type->type_id() != kObjectTypeRefKey && type->type_id() != kObjectTypeSymbolicKeyType) {
     MS_LOG(EXCEPTION) << "First input of StateSetItem should be a RefKey or SymbolicKeyType but a " << type->ToString();
   }
-  return std::make_shared<AbstractScalar>(kAnyValue, kBool);
+  return std::make_shared<AbstractScalar>(kValueAny, kBool);
 }
 
 AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -153,7 +153,7 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
   auto dependant_abstract = args_spec_list[1];
   auto dependant_value = dependant_abstract->BuildValue();
   MS_EXCEPTION_IF_NULL(dependant_value);
-  if (dependant_value != kAnyValue) {
+  if (dependant_value != kValueAny) {
     return args_spec_list[0];
   }
   auto depends = args_spec_list[0];
@@ -168,9 +168,9 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   auto depends_abs = depends->Broaden();  // Avoid eliminating the dependent node.
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
-    // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
+    // For scalar, need to set value to kValueAny, because broaden scalar will not change the value.
     if (depends_abs->isa<AbstractScalar>()) {
-      depends_abs->set_value(kAnyValue);
+      depends_abs->set_value(kValueAny);
     }
   }
   return depends_abs;
@@ -462,7 +462,7 @@ AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const Primiti
       MS_EXCEPTION_IF_NULL(cur);
       auto cur_val = cur->BuildValue();
       MS_EXCEPTION_IF_NULL(cur_val);
-      if (cur_val == kAnyValue) {
+      if (cur_val == kValueAny) {
         is_shape_unknown = true;
         break;
       }

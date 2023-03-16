@@ -114,7 +114,7 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   std::ostringstream oss;
   if ((shape != nullptr) && (type != nullptr)) {
     oss << "<" << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       oss << ", value=...";
     }
     if (ref_key != nullptr) {
@@ -124,7 +124,7 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
     oss << ">";
   } else if (type != nullptr) {
     oss << "<" << type;
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       oss << ", value=...";
     }
     if (ref_key != nullptr) {

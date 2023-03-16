@@ -76,7 +76,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
     }
 
     auto x_valueptr = elem->BuildValue();
-    if (x_valueptr == kAnyValue) {
+    if (x_valueptr == kValueAny) {
       return nullptr;
     }
     auto x_type = input_args[0]->BuildType();

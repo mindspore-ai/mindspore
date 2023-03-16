@@ -49,7 +49,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 #define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
 
 abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {

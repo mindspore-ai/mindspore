@@ -74,7 +74,7 @@ abstract::ShapePtr SparseSegmentSqrtNGradInferShape(const PrimitivePtr &prim,
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
+  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
     auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(output_dim0_value);

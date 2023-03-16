@@ -70,7 +70,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
                                                      output_size_valid_types, op_name);
     auto set_shape_value = set_shape_tensor->BuildValue();
     MS_EXCEPTION_IF_NULL(set_shape_value);
-    if (!set_shape_value->isa<None>() && !set_shape_value->isa<AnyValue>()) {
+    if (!set_shape_value->isa<None>() && !set_shape_value->isa<ValueAny>()) {
       auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
       auto value = static_cast<int64_t *>(set_shape_value_tensor->data_c());
       MS_EXCEPTION_IF_NULL(value);

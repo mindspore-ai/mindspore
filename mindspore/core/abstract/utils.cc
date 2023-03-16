@@ -37,7 +37,7 @@ ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2) {
   if (*value1 == *value2) {
     return value1;
   }
-  return kAnyValue;
+  return kValueAny;
 }
 
 TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
@@ -46,7 +46,7 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   if (*type1 == *type2) {
     return type1;
   }
-  return kAnyType;
+  return kTypeAny;
 }
 
 bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
@@ -177,7 +177,7 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
 AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec) {
   auto f_spec = dyn_cast_ptr<AbstractFunction>(spec);
   if (f_spec != nullptr) {
-    return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+    return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
   }
   return spec->Clone();
 }
@@ -235,10 +235,10 @@ AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
   if (type->isa<TensorType>()) {
     auto tensor_type = type->cast_ptr<TensorType>();
     MS_EXCEPTION_IF_NULL(tensor_type);
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
     tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
   } else {
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, type);
     tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
   }
   return tensor;
@@ -262,12 +262,12 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     auto shape_vec = shape->shape();
     // if the size of shape list is empty, return an scalar abstract
     if (shape_vec.empty() && (!type->isa<TensorType>())) {
-      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kValueAny, type);
       return abs_scalar;
     }
     return MakeAbstractTensor(shape, type);
   } else if (base_shape->isa<NoShape>() && type->isa<Number>()) {
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, type);
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, type);
   } else if (base_shape->isa<TupleShape>() && type->isa<Tuple>()) {
     auto shape_tuple = base_shape->cast_ptr<TupleShape>();
     auto type_tuple = type->cast_ptr<Tuple>();

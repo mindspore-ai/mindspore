@@ -106,7 +106,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if (param_abs->BuildValue() == kAnyValue || EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
+    if (param_abs->BuildValue() == kValueAny || EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
       MS_LOG(INFO) << "Remove the " << i << "th parameter, since it's passed a constant argument.";
@@ -142,7 +142,7 @@ bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
                     << " has no abstract, Debug String: " << node->DebugString();
       return false;
     }
-    auto ret = abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kAnyValue;
+    auto ret = abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kValueAny;
     if (ret) {
       auto op_name = common::AnfAlgo::GetCNodeName(node);
       if (op_name == kDependOpName) {
@@ -1511,7 +1511,7 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->GetValueTrack() != kAnyValue) {
+                         if (arg->GetValueTrack() != kValueAny) {
                            return arg->Broaden();
                          }
                          return arg;

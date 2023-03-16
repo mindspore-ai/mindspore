@@ -75,7 +75,7 @@ std::vector<Q> ConvertAnyUtil(const ValuePtr &value, AnyTraits<P>, const AnyTrai
   return data;
 }
 
-GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>);
+GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ValueAny>);
 
 bool IsCustomPrim(const PrimitivePtr &prim);
 bool IsCustomCNode(const AnfNodePtr &node);

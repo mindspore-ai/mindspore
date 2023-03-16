@@ -98,7 +98,7 @@ abstract::TupleShapePtr SparseFillEmptyRowsInferShape(const PrimitivePtr &primit
   auto input_shape_value = input_args[kInputIndex2]->BuildValue();
   MS_EXCEPTION_IF_NULL(input_shape_value);
 
-  if (CheckSparseFillEmptyRowsInputs(input_args, op_name) && !input_shape_value->isa<AnyValue>() &&
+  if (CheckSparseFillEmptyRowsInputs(input_args, op_name) && !input_shape_value->isa<ValueAny>() &&
       !input_shape_value->isa<None>()) {
     auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
     const int64_t input_nnz = indice_shape[0];

@@ -58,7 +58,7 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
   CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
   auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
-  if (!size_value_ptr->isa<AnyValue>() && !size_value_ptr->isa<None>()) {
+  if (!size_value_ptr->isa<ValueAny>() && !size_value_ptr->isa<None>()) {
     if (!size_value_ptr->isa<tensor::Tensor>()) {
       MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the input argument[size]"
                                << " must be a tensor, but got " << size_value_ptr->ToString();

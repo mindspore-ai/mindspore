@@ -29,21 +29,21 @@
 #include "ir/dtype/type.h"
 
 namespace mindspore {
-/// \brief TypeAnything defines a Type class whose type is Anything.
-class MS_CORE_API TypeAnything : public Type {
+/// \brief TypeAny defines a Type class whose type is Any.
+class MS_CORE_API TypeAny : public Type {
  public:
-  /// \brief Default constructor for TypeAnything.
-  TypeAnything() : Type(kMetaTypeAnything) {}
+  /// \brief Default constructor for TypeAny.
+  TypeAny() : Type(kMetaTypeAny) {}
 
-  /// \brief Destructor of TypeAnything.
-  ~TypeAnything() override {}
-  MS_DECLARE_PARENT(TypeAnything, Type)
+  /// \brief Destructor of TypeAny.
+  ~TypeAny() override {}
+  MS_DECLARE_PARENT(TypeAny, Type)
 
-  TypeId generic_type_id() const override { return kMetaTypeAnything; }
+  TypeId generic_type_id() const override { return kMetaTypeAny; }
   TypePtr DeepCopy() const override;
-  std::string DumpText() const override { return "AnythingType"; }
+  std::string DumpText() const override { return "TypeAny"; }
 };
-using TypeAnythingPtr = std::shared_ptr<TypeAnything>;
+using TypeAnyPtr = std::shared_ptr<TypeAny>;
 
 /// \brief TypeNone defines a Type class whose type is None.
 class MS_CORE_API TypeNone : public Type {
@@ -98,7 +98,7 @@ using TypeEllipsisPtr = std::shared_ptr<TypeEllipsis>;
 GVAR_DEF(TypePtr, kTypeNone, std::make_shared<TypeNone>());
 GVAR_DEF(TypePtr, kTypeNull, std::make_shared<TypeNull>());
 GVAR_DEF(TypePtr, kTypeEllipsis, std::make_shared<TypeEllipsis>());
-GVAR_DEF(TypePtr, kAnyType, std::make_shared<TypeAnything>());
+GVAR_DEF(TypePtr, kTypeAny, std::make_shared<TypeAny>());
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_EMPTY_H_

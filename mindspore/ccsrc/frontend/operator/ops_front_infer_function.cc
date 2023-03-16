@@ -238,7 +238,7 @@ bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, cons
     cmp_type = ValueToPyData(cmp_closure_first_input->BuildValue());
   } else {
     auto cmp_value = cmp->BuildValue();
-    if (cmp_value == kAnyValue) {
+    if (cmp_value == kValueAny) {
       return false;
     }
     cmp_type = ValueToPyData(cmp_value);
@@ -412,7 +412,7 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
 
   auto x_value = x->BuildValue();
   // x is variable built-in type.
-  if (x_value == kAnyValue) {
+  if (x_value == kValueAny) {
     auto x_abs_type = std::make_shared<AbstractType>(x->BuildType());
     auto py_x_type = ValueToPyData(x_abs_type->BuildValue());
     result = CheckPythonIsInstance(py_x_type, cmp, mod, false);
@@ -565,7 +565,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(args_spec_list[1]);
 
   auto x_shp_value = shape_x->BuildValue();
-  if (x_shp_value->isa<AnyValue>()) {
+  if (x_shp_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString()
                       << ".";
   }
@@ -585,7 +585,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
 
   auto axis_value = axis->BuildValue();
-  if (axis_value->isa<AnyValue>()) {
+  if (axis_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString()
                       << ".";
   }
@@ -609,14 +609,14 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto div_shp_value = div_shp->BuildValue();
   MS_EXCEPTION_IF_NULL(div_shp_value);
-  if (div_shp_value->isa<AnyValue>()) {
+  if (div_shp_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                       << args_spec_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_x_value);
-  if (shape_x_value->isa<AnyValue>()) {
+  if (shape_x_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                       << args_spec_list[1]->ToString() << ".";
   }
@@ -641,7 +641,7 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
       if (value_type) {
         str_type = value_type->ToString();
       } else {
-        str_type = "AnyValue";
+        str_type = "ValueAny";
       }
       MS_LOG(EXCEPTION) << "The data type of inputs of 'tuple_div' operator should be an int64 number, but got a "
                         << str_type << " number " << div_shape_data[i]->ToString() << ".";
@@ -689,7 +689,7 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
   AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
 
   auto shpx_value = shape_x->BuildValue();
-  if (shpx_value->isa<AnyValue>()) {
+  if (shpx_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The ShapeMul operator shape's data field can't be anything, but got " << shape_x->ToString()
                       << ".";
   }
@@ -743,7 +743,7 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_spec_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<IntegerImm>() || scalar_value == kAnyValue) {
+      if (scalar_value->isa<IntegerImm>() || scalar_value == kValueAny) {
         slice_args.push_back(args_spec_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));

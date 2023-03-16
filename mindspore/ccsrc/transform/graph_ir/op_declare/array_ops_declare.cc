@@ -21,12 +21,12 @@
 namespace mindspore::transform {
 // const
 INPUT_MAP(Const) = EMPTY_INPUT_MAP;
-ATTR_MAP(Const) = {{"value", ATTR_DESC(value, AnyTraits<AnyValue>())}};
+ATTR_MAP(Const) = {{"value", ATTR_DESC(value, AnyTraits<ValueAny>())}};
 OUTPUT_MAP(Const) = {{0, OUTPUT_DESC(y)}};
 
 // Constant
 INPUT_MAP(Constant) = EMPTY_INPUT_MAP;
-ATTR_MAP(Constant) = {{"value", ATTR_DESC(value, AnyTraits<AnyValue>())}};
+ATTR_MAP(Constant) = {{"value", ATTR_DESC(value, AnyTraits<ValueAny>())}};
 OUTPUT_MAP(Constant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Constant, kNameConst, ADPT_DESC(Constant, Const))
 
