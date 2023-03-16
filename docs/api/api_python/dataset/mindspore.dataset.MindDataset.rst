@@ -8,7 +8,7 @@
     参数：
         - **dataset_files** (Union[str, list[str]]) - MindRecord文件路径，支持单文件路径字符串、多文件路径字符串列表。如果 `dataset_files` 的类型是字符串，则它代表一组具有相同前缀名的MindRecord文件，同一路径下具有相同前缀名的其他MindRecord文件将会被自动寻找并加载。如果 `dataset_files` 的类型是列表，则它表示所需读取的MindRecord数据文件。
         - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列。默认值：None，读取所有列。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
@@ -30,7 +30,7 @@
         - **ValueError** - `num_parallel_workers` 参数超过最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

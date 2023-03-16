@@ -58,7 +58,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all images.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the config.
+            Default: None, number set in `mindspore.dataset.config` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -83,7 +83,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Examples:
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
@@ -154,7 +154,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -264,7 +264,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
             decompressions of the same file to obtain the file size.
         num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the config.
+            Default: None, number set in `mindspore.dataset.config` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is False, no shuffling will be performed.
@@ -297,7 +297,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `compression_type` is invalid (other than '', 'GZIP', or 'ZLIB').
         ValueError: If `compression_type` is provided, but the number of dataset files < `num_shards` .
         ValueError: If `num_samples` < 0.
@@ -395,7 +395,7 @@ class OBSMindDataset(GeneratorDataset):
         ValueError: If `columns_list` is invalid.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
+        ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:
         - It's necessary to create a synchronization directory on cloud storage in

@@ -20,7 +20,7 @@ mindspore.dataset.Dataset.batch
           如果为可调用对象，则可以通过自定义行为动态指定每个批处理数据大小，要求该可调用对象接收一个参数BatchInfo，返回一个整形代表批处理大小，用法请参考样例（3）。
         - **drop_remainder** (bool, 可选) - 当最后一个批处理数据包含的数据条目小于 `batch_size` 时，是否将该批处理丢弃，不传递给下一个操作。默认值：False，不丢弃。
         - **num_parallel_workers** (int, 可选) - 指定 `batch` 操作的并发进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。
-          默认值：None，使用mindspore.dataset.config中配置的线程数。
+          默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **\*\*kwargs** - 其他参数。
 
           - per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],..., List[numpy.ndarray])], 可选) - 可调用对象，

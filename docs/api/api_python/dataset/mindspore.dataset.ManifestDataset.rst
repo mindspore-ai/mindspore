@@ -9,9 +9,9 @@
 
     参数：
         - **dataset_file** (str) - 数据集文件的目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、 'eval' 或 'inference'。默认值：'train'。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'eval' 或 'inference'。默认值：'train'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
         - **class_indexing** (dict, 可选) - 指定一个从label名称到label索引的映射，要求映射规则为string到int。索引值从0开始，并且要求每个label名称对应的索引值唯一。默认值：None，不指定。

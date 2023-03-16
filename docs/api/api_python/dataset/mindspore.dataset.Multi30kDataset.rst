@@ -14,7 +14,7 @@ mindspore.dataset.Multi30kDataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test'、'valid' 或 'all'。默认值：None，读取全部样本图片。
         - **language_pair** (Sequence[str, str], 可选) - 源语言与目标语言类别，可取值为 ['en', 'de'] 或 ['de', 'en']。默认值：None，表示 ['en', 'de']。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 是否混洗数据集。默认值：None，表示 Shuffle.GLOBAL 。
           如果输入False，将不进行混洗。
           如果输入True，效果与设置 Shuffle.GLOBAL 相同。
@@ -35,7 +35,7 @@ mindspore.dataset.Multi30kDataset
         - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     **关于Multi30k数据集：**
 
