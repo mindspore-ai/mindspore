@@ -1,26 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:À
-s#get_bprop_gather_d.791:[CNode]792:1#get_bprop_gather_d.791:[CNode]792:1"REF::bprop.793:Default/bprop.793-op630get_bprop_gather_d.791*
-get_bprop_gather_d.791:self*
-get_bprop_gather_d.791:x*
-get_bprop_gather_d.791:dim*
-get_bprop_gather_d.791:index*
-get_bprop_gather_d.791:out*
-get_bprop_gather_d.791:dout2%
-#get_bprop_gather_d.791:[CNode]792:1:@a90d4540e0d53c3f816940b7877c6c1747985297c8e516ad6d45a9e3164706a6J/grad_array_ops.pyB¦
-ºbprop.793:[CNode]794:2bprop.793:[CNode]794:2"@REF::ClassType::mindspore.ops.operations._grad_ops.GatherDGradV2:FDefault/class 'mindspore.ops.operations._grad_ops.GatherDGradV2'-op631
-³
-get_bprop_gather_d.791:x
-get_bprop_gather_d.791:dim
-get_bprop_gather_d.791:index
-get_bprop_gather_d.791:doutbprop.793:dx:3bprop.793:dx:3"REF::bprop.793:[CNode]794:2:632
-­
-get_bprop_gather_d.791:dimbprop.793:[CNode]795:4bprop.793:[CNode]795:4".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op633
-¯
-get_bprop_gather_d.791:indexbprop.793:[CNode]796:5bprop.793:[CNode]796:5".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op634
-©
-bprop.793:dx:3
-bprop.793:[CNode]795:4
-bprop.793:[CNode]796:5bprop.793:[CNode]797:6bprop.793:[CNode]797:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op635	bprop.7932
-bprop.793:[CNode]797:6Pb&
-S-Prim-MakeTuple:7S-Prim-MakeTupleh

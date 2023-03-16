@@ -1,14 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:”
-t%get_bprop_dynamicshape.16:[CNode]17:1%get_bprop_dynamicshape.16:[CNode]17:1"REF::bprop.18:Default/bprop.18-op10get_bprop_dynamicshape.16* 
-get_bprop_dynamicshape.16:self*
-get_bprop_dynamicshape.16:x*
-get_bprop_dynamicshape.16:out* 
-get_bprop_dynamicshape.16:dout2'
-%get_bprop_dynamicshape.16:[CNode]17:1:@0e2cd4880ac70d6ad49ac25a25c9c8d7be74d87a61cc3300392fc4ef41810d12J/grad_array_ops.pyBÊ
-©
-get_bprop_dynamicshape.16:xbprop.18:[CNode]19:2bprop.18:[CNode]19:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op11
-z
-bprop.18:[CNode]19:2bprop.18:[CNode]20:3bprop.18:[CNode]20:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op12bprop.182
-bprop.18:[CNode]20:3Pb&
-S-Prim-MakeTuple:4S-Prim-MakeTupleh

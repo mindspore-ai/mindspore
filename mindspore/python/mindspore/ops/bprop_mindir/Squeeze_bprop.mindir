@@ -1,54 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:î
-j get_bprop_squeeze.37:[CNode]38:1 get_bprop_squeeze.37:[CNode]38:1"REF::bprop.39:Default/bprop.39-op28get_bprop_squeeze.37*
-get_bprop_squeeze.37:self*
-get_bprop_squeeze.37:x*
-get_bprop_squeeze.37:out*
-get_bprop_squeeze.37:Ñ„dout2"
- get_bprop_squeeze.37:[CNode]38:1:@5ea4080e1f189d05653ba505a6a9e0e4e9be103c3bcd5a867ca2f1aaaa82bb49J/grad_array_ops.pyBÃ
-n
-get_bprop_squeeze.37:xbprop.39:shapex:2bprop.39:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op29
-
-bprop.39:shapex:2bprop.39:[CNode]40:4bprop.39:[CNode]40:4"REF::S-Prim-IsShapeUnKnown:5:"Default/S-Prim-IsShapeUnKnown-op30
-h
-bprop.39:[CNode]40:4bprop.39:[CNode]41:6bprop.39:[CNode]41:6"REF::bool_.42:Default/bool_.42-op31
-€
-bprop.39:[CNode]41:6
-âœ“bprop.43
-âœ—bprop.44bprop.39:[CNode]45:7bprop.39:[CNode]45:7"REF::Switch:8:Default/Switch-op32
-Kbprop.39:[CNode]46:9bprop.39:[CNode]46:9"REF::bprop.39:[CNode]45:7:33
-p
-bprop.39:[CNode]46:9bprop.39:[CNode]47:10bprop.39:[CNode]47:10"REF::â†“bprop.48:Default/â†“bprop.48-op34bprop.392
-bprop.39:[CNode]47:10B…
-³â†“bprop.48:49:11â†“bprop.48:49:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op35
-u
-get_bprop_squeeze.37:Ñ„dout
-â†“bprop.48:Ñ„shapexâ†“bprop.48:49:12â†“bprop.48:49:12"REF::â†“bprop.48:49:11:36
-€
-â†“bprop.48:49:12â†“bprop.48:[CNode]50:13â†“bprop.48:[CNode]50:13"REF::S-Prim-MakeTuple:14:Default/S-Prim-MakeTuple-op37â†“bprop.48*
-â†“bprop.48:Ñ„shapex2
-â†“bprop.48:[CNode]50:13B
-after_block€	B"âœ—bprop.442
-bprop.39:shapex:2B¬
-ƒ
-get_bprop_squeeze.37:xâœ“bprop.43:shapex:15âœ“bprop.43:shapex:15"REF::S-Prim-TensorShape:16:Default/S-Prim-TensorShape-op38âœ“bprop.432
-âœ“bprop.43:shapex:15B³
->[ValueNode]51[ValueNode]51"Constant*
-value*__bool__€
-p
-
-bool_.42:x
-[ValueNode]51bool_.42:[CNode]52:17bool_.42:[CNode]52:17"REF::getattr:18:Default/getattr-op39
-Nbool_.42:[CNode]53:19bool_.42:[CNode]53:19"REF::bool_.42:[CNode]52:17:40bool_.42*
-
-bool_.42:x2
-bool_.42:[CNode]53:19Pb
-Switch:8Switchb
-
-getattr:18getattrbm
-S-Prim-TensorShape:16S-Prim-TensorShape
-output_names€ŠZoutput€
-input_names€ŠZinput_x€b'
-S-Prim-MakeTuple:14S-Prim-MakeTupleb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb
-S-Prim-Shape:3S-Prim-Shapeh

@@ -1,24 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:ó
-i!get_bprop_scatter_nd.1:[CNode]2:1!get_bprop_scatter_nd.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-¸get_bprop_scatter_nd.1:op:3get_bprop_scatter_nd.1:op:3";REF::ClassType::mindspore.ops.operations.array_ops.GatherNd:?Default/class 'mindspore.ops.operations.array_ops.GatherNd'-op2get_bprop_scatter_nd.1*
-get_bprop_scatter_nd.1:self* 
-get_bprop_scatter_nd.1:indices*
-get_bprop_scatter_nd.1:x*
-get_bprop_scatter_nd.1:shape*
-get_bprop_scatter_nd.1:out*
-get_bprop_scatter_nd.1:dout2#
-!get_bprop_scatter_nd.1:[CNode]2:1:@51846734a3e6eeae5e9d4d282e94fa1a0f97ae68095cdf5a9a9bce5951b5532bJ/grad_array_ops.pyBœ
-§
-get_bprop_scatter_nd.1:indicesbprop.3:[CNode]4:2bprop.3:[CNode]4:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op1
-Š
-get_bprop_scatter_nd.1:dout
-get_bprop_scatter_nd.1:indicesbprop.3:[CNode]5:4bprop.3:[CNode]5:4" REF::get_bprop_scatter_nd.1:op:3:3
-¥
-get_bprop_scatter_nd.1:shapebprop.3:[CNode]6:5bprop.3:[CNode]6:5".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op4
-›
-bprop.3:[CNode]4:2
-bprop.3:[CNode]5:4
-bprop.3:[CNode]6:5bprop.3:[CNode]7:6bprop.3:[CNode]7:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op5bprop.32
-bprop.3:[CNode]7:6Pb&
-S-Prim-MakeTuple:7S-Prim-MakeTupleh

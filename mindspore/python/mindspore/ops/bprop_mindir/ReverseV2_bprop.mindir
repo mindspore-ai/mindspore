@@ -1,22 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:ë
-w%get_bprop_reverse_v2.919:[CNode]920:1%get_bprop_reverse_v2.919:[CNode]920:1"REF::bprop.921:Default/bprop.921-op744
-<[ValueNode]922[ValueNode]922"Constant*
-value*axis€
-˜
-get_bprop_reverse_v2.919:self
-[ValueNode]922get_bprop_reverse_v2.919:axis:2get_bprop_reverse_v2.919:axis:2"REF::getattr:3:Default/getattr-op745get_bprop_reverse_v2.919*
-get_bprop_reverse_v2.919:self*
-get_bprop_reverse_v2.919:x*
-get_bprop_reverse_v2.919:out*
-get_bprop_reverse_v2.919:dout2'
-%get_bprop_reverse_v2.919:[CNode]920:1:@1a7295ef5c4b93409239e999a8f42dd3caf742f13baa02f8a092ed1bc5e857c7J/grad_array_ops.pyBß
-×
-get_bprop_reverse_v2.919:axis:2bprop.921:reverse_grad:4bprop.921:reverse_grad:4"<REF::ClassType::mindspore.ops.operations.array_ops.ReverseV2:BDefault/class 'mindspore.ops.operations.array_ops.ReverseV2'-op746
-c
-get_bprop_reverse_v2.919:doutbprop.921:dx:5bprop.921:dx:5"REF::bprop.921:reverse_grad:4:747
-y
-bprop.921:dx:5bprop.921:[CNode]923:6bprop.921:[CNode]923:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op748	bprop.9212
-bprop.921:[CNode]923:6Pb
-	getattr:3getattrb&
-S-Prim-MakeTuple:7S-Prim-MakeTupleh

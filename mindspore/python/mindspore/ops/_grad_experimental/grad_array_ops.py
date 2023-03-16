@@ -19,38 +19,27 @@ from __future__ import absolute_import
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
-from mindspore.numpy.array_ops import where
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
 from mindspore.ops._grad.grad_base import bprop_getters, dyn_rank, dyn_fill, dyn_ones, create_tensor_by_element
 from mindspore.ops._grad.grad_base import convert_to_tensor
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import Mvlgamma
-from mindspore.ops.operations.array_ops import Triu
-from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.operations.array_ops import IndexPut
-from mindspore.ops.operations.array_ops import CheckNumerics
-from mindspore.ops.operations.array_ops import ConjugateTranspose
-from mindspore.ops.operations.array_ops import SegmentMax
-from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
-from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.ops.operations.array_ops import ScatterAddWithAxis
 from mindspore.ops.operations.array_ops import Expand
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import AffineGrid
 from mindspore.ops.operations.array_ops import Im2Col
 from mindspore.ops.operations.array_ops import Col2Im
-from mindspore.ops.operations.array_ops import StridedSliceV2
 from mindspore.ops.operations.array_ops import MaskedScatter
 from mindspore.ops.operations.array_ops import MaskedSelect
 from mindspore.ops.operations.array_ops import CountNonZero
-from mindspore.ops.operations._grad_ops import StridedSliceV2Grad
 from mindspore.ops.operations.random_ops import LogNormalReverse
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
 from mindspore.ops.operations import _inner_ops as inner
@@ -92,50 +81,9 @@ def get_bprop_fill_v2(self):
     return bprop
 
 
-@bprop_getters.register(StridedSliceV2)
-def get_bprop_strided_slice_v2(self):
-    """Generate bprop for StridedSliceV2"""
-    shape_op = P.Shape()
-    dyn_shape_op = P.TensorShape()
-    input_grad = StridedSliceV2Grad(self.begin_mask,
-                                    self.end_mask,
-                                    self.ellipsis_mask,
-                                    self.new_axis_mask,
-                                    self.shrink_axis_mask)
-
-    def bprop(x, begin, end, strides, out, dout):
-        x_shape = shape_op(x)
-        if F.is_sequence_value_unknown(x_shape):
-            x_shape = dyn_shape_op(x)
-        dx = input_grad(x_shape, begin, end, strides, dout)
-        dx_all = (dx, zeros_like(begin), zeros_like(end), zeros_like(strides))
-        return dx_all
-
-    return bprop
-
-
 @constexpr
 def _create_tensor(data, dtype):
     return Tensor(data, dtype=dtype)
-
-
-def _segment_min_or_max_grad(segment_sum_op, input_x, segment_ids, output, dout):
-    """Calculate the gradient of SegmentMax or SegmentMin"""
-    gather = P.Gather()
-    equal = P.Equal()
-    cast = P.Cast()
-    divide = P.Div()
-    input_x_type = F.dtype(input_x)
-    input_x = cast(input_x, mstype.float32)
-    output = cast(output, mstype.float32)
-    dout = cast(dout, mstype.float32)
-    zeros = zeros_like(input_x)
-    gathered_outputs = gather(output, segment_ids, 0)
-    is_selected = equal(input_x, gathered_outputs)
-    num_selected = segment_sum_op(cast(is_selected, F.dtype(dout)), segment_ids)
-    weighted_grads = divide(dout, num_selected)
-    gathered_grads = gather(weighted_grads, segment_ids, 0)
-    return cast(where(is_selected, gathered_grads, zeros), input_x_type), zeros_like(segment_ids)
 
 
 @bprop_getters.register(P.MaskedFill)
@@ -226,31 +174,6 @@ def get_bprop_mvlgamma(self):
     return bprop
 
 
-@bprop_getters.register(P.TensorScatterDiv)
-def get_bprop_tensor_scatter_div(self):
-    """Generate bprop for TensorScatterDiv"""
-    gather_nd = P.GatherNd()
-    tensor_scatter_div = P.TensorScatterDiv()
-    neg = P.Neg()
-    div = P.Div()
-    mul = P.Mul()
-
-    def bprop(x, indices, update, out, dout):
-        # (input)' / update
-        in_grad = tensor_scatter_div(dout, indices, update)
-
-        # - (input * (update)') / (update * update)
-        gather_update = gather_nd(dout, indices)
-        gather_x = gather_nd(x, indices)
-        mul_result = mul(update, update)
-        neg_result = neg(mul_result)
-        update_grad = gather_update * div(gather_x, neg_result)
-
-        return in_grad, zeros_like(indices), update_grad
-
-    return bprop
-
-
 @bprop_getters.register(IndexFill)
 def get_bprop_index_fill(self):
     """Generate bprop for IndexFill"""
@@ -310,50 +233,6 @@ def get_bprop_index_put(self):
         if accumulate_grad == 0:
             dout = index_put(dout, zeros_like(x2), indices)
         return dout, values_grad, [zeros_like(item) for item in indices]
-
-    return bprop
-
-
-@bprop_getters.register(P.TensorScatterSub)
-def get_bprop_tensor_scatter_sub(self):
-    """Generate bprop for TensorScatterSub"""
-    gather_nd = P.GatherNd()
-    neg = P.Neg()
-
-    def bprop(x, indices, update, out, dout):
-        update_grad = neg(gather_nd(dout, indices))
-        return dout, zeros_like(indices), update_grad
-
-    return bprop
-
-
-@bprop_getters.register(P.TensorScatterMul)
-def get_bprop_tensor_scatter_mul(self):
-    """Generate bprop for TensorScatterMul"""
-    gather_nd = P.GatherNd()
-    mul_func = P.TensorScatterMul()
-
-    def bprop(x, indices, update, out, dout):
-        gather_update = gather_nd(dout, indices)
-        gather_x = gather_nd(x, indices)
-        dx = mul_func(dout, indices, update)
-        d_update = gather_x * gather_update
-        return dx, zeros_like(indices), d_update
-
-    return bprop
-
-
-@bprop_getters.register(MatrixDiagV3)
-def get_bprop_matrix_diag_v3(self):
-    """Generate bprop for MatrixDiagV3"""
-    align = self.align
-    matrix_diag_part_v3 = MatrixDiagPartV3(align=align)
-    zeros = P.Zeros()
-
-    def bprop(x, k, num_rows, num_cols, padding_value, out, dout):
-        result = (matrix_diag_part_v3(dout, k, zeros((), dout.dtype)), zeros_like(k), zeros_like(num_rows),
-                  zeros_like(num_cols), zeros_like(padding_value))
-        return result
 
     return bprop
 
@@ -474,65 +353,6 @@ def get_bprop_coalesce(self):
     return bprop
 
 
-@bprop_getters.register(ConjugateTranspose)
-def get_bprop_conjugate_transpose(self):
-    """Generate bprop for ConjugateTranspose"""
-    conjugate_transpose = ConjugateTranspose()
-    invert_permutation = P.InvertPermutation()
-
-    def bprop(x, perm, out, dout):
-        return conjugate_transpose(dout, invert_permutation(perm)), zeros_like(perm)
-
-    return bprop
-
-
-@bprop_getters.register(Triu)
-def get_bprop_triu(self):
-    """Grad definition for 'Triu' operation"""
-    diagonal = self.diagonal
-    triu = Triu(diagonal)
-
-    def bprop(x, out, dout):
-        dx = triu(dout)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(CheckNumerics)
-def get_bprop_check_numerics(self):
-    """Generate bprop for CheckNumerics"""
-    check_numerics = CheckNumerics()
-
-    def bprop(x_input, out, dout):
-        return (check_numerics(dout),)
-
-    return bprop
-
-
-@bprop_getters.register(P.SplitV)
-def get_bprop_split_v(self):
-    """Generate bprop for SplitV"""
-    split_dim = self.split_dim
-    concat_op = P.Concat(split_dim)
-
-    def bprop(x_input, output, dout):
-        dx = concat_op(dout)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(IdentityN)
-def get_bprop_identity_n(self):
-    """Generate bprop for IdentityN"""
-
-    def bprop(x, out, dout):
-        return (dout,)
-
-    return bprop
-
-
 @bprop_getters.register(ResizeNearestNeighborV2)
 def get_bprop_resize_nearest_neighbor_v2(self):
     """Generate bprop for ResizeNearestNeighborV2"""
@@ -555,22 +375,6 @@ def get_bprop_resize_nearest_neighbor_v2(self):
 
         dx = grad_op(dout, _create_tensor(grad_in_size, mstype.int32))
         return dx, zeros_like(grad_in_size)
-
-    return bprop
-
-
-@bprop_getters.register(Col2Im)
-def get_bprop_col2im(self):
-    """Generate bprop for Col2Im"""
-    ksizes = self.kernel_size
-    dilations = self.dilation
-    strides = self.stride
-    pads = self.padding
-    im2col = Im2Col(ksizes=ksizes, dilations=dilations, strides=strides, pads=pads)
-
-    def bprop(x, output_size, out, dout):
-        dx = im2col(dout)
-        return dx, zeros_like(output_size)
 
     return bprop
 
@@ -700,19 +504,6 @@ def get_bprop_extract_volume_patches(self):
         jac = matmul(sp_tensor, grad_flat)
         dx = P.Reshape()(jac, (x_d, x_h, x_w, x_n, x_c))
         dx = P.Transpose()(dx, (3, 4, 0, 1, 2))
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Tril)
-def get_bprop_tril(self):
-    """Grad definition for 'Tril' operation"""
-    diagonal = self.diagonal
-    tril = Tril(diagonal)
-
-    def bprop(x, out, dout):
-        dx = tril(dout)
         return (dx,)
 
     return bprop
@@ -969,44 +760,6 @@ def get_bprop_affinegrid(self):
 
     if context.get_context('device_target') == "GPU":
         return bprop_gpu
-
-    return bprop
-
-
-@bprop_getters.register(SegmentMax)
-def get_bprop_segment_max(self):
-    """Generate bprop for SegmentMax"""
-    segment_sum = SegmentSum()
-
-    def bprop(input_x, segment_ids, output, dout):
-        return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
-
-    return bprop
-
-
-@bprop_getters.register(SegmentMin)
-def get_bprop_segment_min(self):
-    """Generate bprop for SegmentMin"""
-    segment_sum = SegmentSum()
-
-    def bprop(input_x, segment_ids, output, dout):
-        return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
-
-    return bprop
-
-
-@bprop_getters.register(TensorScatterElements)
-def get_bprop_tensor_scatter_elements(self):
-    """Generate bprop for TensorScatterElements"""
-    gather_d = P.GatherD()
-    axis = self.axis
-    reduction = self.reduction
-    tensor_scatter_elements = TensorScatterElements(axis, reduction)
-
-    def bprop(x, indices, update, out, dout):
-        x_grad = tensor_scatter_elements(dout, indices, zeros_like(update))
-        update_grad = gather_d(dout, axis, indices)
-        return x_grad, zeros_like(indices), update_grad
 
     return bprop
 

@@ -1,15 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ÿ
-g get_bprop_diag_part.1:[CNode]2:1 get_bprop_diag_part.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-®get_bprop_diag_part.1:op:2get_bprop_diag_part.1:op:2"7REF::ClassType::mindspore.ops.operations.array_ops.Diag:;Default/class 'mindspore.ops.operations.array_ops.Diag'-op1get_bprop_diag_part.1*
-get_bprop_diag_part.1:self*
-get_bprop_diag_part.1:x*
-get_bprop_diag_part.1:out*
-get_bprop_diag_part.1:dout2"
- get_bprop_diag_part.1:[CNode]2:1:@69a7faad8d2e7a5dc7baf95880108a94b60827e6a2301fc651d5021a65886178J/grad_array_ops.pyBþ
-h
-get_bprop_diag_part.1:doutbprop.3:[CNode]4:3bprop.3:[CNode]4:3"REF::get_bprop_diag_part.1:op:2:2
-s
-bprop.3:[CNode]4:3bprop.3:[CNode]5:4bprop.3:[CNode]5:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.32
-bprop.3:[CNode]5:4Pb&
-S-Prim-MakeTuple:5S-Prim-MakeTupleh

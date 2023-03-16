@@ -1,57 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:ˆ
-u$get_bprop_gather_nd.430:[CNode]431:1$get_bprop_gather_nd.430:[CNode]431:1"REF::bprop.432:Default/bprop.432-op362
-Ôget_bprop_gather_nd.430:Ñ„op:11get_bprop_gather_nd.430:Ñ„op:11"<REF::ClassType::mindspore.ops.operations.array_ops.ScatterNd:RDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.ScatterNd'-op369get_bprop_gather_nd.430*
-get_bprop_gather_nd.430:self*
-get_bprop_gather_nd.430:x*#
-!get_bprop_gather_nd.430:Ñ„indices*
-get_bprop_gather_nd.430:out* 
-get_bprop_gather_nd.430:Ñ„dout2&
-$get_bprop_gather_nd.430:[CNode]431:1:@be261fb23b310b5e9235ddf384a7a829659ee107d65085acd9bd525553b5470fJ/grad_array_ops.pyBë
-n
-get_bprop_gather_nd.430:xbprop.432:shp:2bprop.432:shp:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op363
-„
-bprop.432:shp:2bprop.432:[CNode]433:4bprop.432:[CNode]433:4"REF::S-Prim-IsShapeUnKnown:5:#Default/S-Prim-IsShapeUnKnown-op364
-q
-bprop.432:[CNode]433:4bprop.432:[CNode]434:6bprop.432:[CNode]434:6"REF::bool_.435:Default/bool_.435-op365
-‰
-bprop.432:[CNode]434:6
-âœ“bprop.436
-âœ—bprop.437bprop.432:[CNode]438:7bprop.432:[CNode]438:7"REF::Switch:8:Default/Switch-op366
-Rbprop.432:[CNode]439:9bprop.432:[CNode]439:9"REF::bprop.432:[CNode]438:7:367
-y
-bprop.432:[CNode]439:9bprop.432:[CNode]440:10bprop.432:[CNode]440:10"REF::â†“bprop.441:Default/â†“bprop.441-op368	bprop.4322
-bprop.432:[CNode]440:10Bÿ
-º
-!get_bprop_gather_nd.430:Ñ„indices
-get_bprop_gather_nd.430:Ñ„dout
-â†“bprop.441:Ñ„shpâ†“bprop.441:[CNode]442:12â†“bprop.441:[CNode]442:12"$REF::get_bprop_gather_nd.430:Ñ„op:11:370
-¼
-!get_bprop_gather_nd.430:Ñ„indicesâ†“bprop.441:[CNode]443:13â†“bprop.441:[CNode]443:13".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op371
-ª
-â†“bprop.441:[CNode]442:12
-â†“bprop.441:[CNode]443:13â†“bprop.441:[CNode]444:14â†“bprop.441:[CNode]444:14"REF::S-Prim-MakeTuple:15:Default/S-Prim-MakeTuple-op372â†“bprop.441*
-â†“bprop.441:Ñ„shp2
-â†“bprop.441:[CNode]444:14B
-after_block€	B!âœ—bprop.4372
-bprop.432:shp:2B«
-ƒ
-get_bprop_gather_nd.430:xâœ“bprop.436:shp:16âœ“bprop.436:shp:16"REF::S-Prim-TensorShape:17: Default/S-Prim-TensorShape-op373âœ“bprop.4362
-âœ“bprop.436:shp:16BÇ
-@[ValueNode]445[ValueNode]445"Constant*
-value*__bool__€
-w
-bool_.435:x
-[ValueNode]445bool_.435:[CNode]446:18bool_.435:[CNode]446:18"REF::getattr:19:Default/getattr-op374
-Ubool_.435:[CNode]447:20bool_.435:[CNode]447:20"REF::bool_.435:[CNode]446:18:375	bool_.435*
-bool_.435:x2
-bool_.435:[CNode]447:20Pb
-Switch:8Switchb
-
-getattr:19getattrb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb
-S-Prim-Shape:3S-Prim-Shapebm
-S-Prim-TensorShape:17S-Prim-TensorShape
-output_names€ŠZoutput€
-input_names€ŠZinput_x€b'
-S-Prim-MakeTuple:15S-Prim-MakeTupleh

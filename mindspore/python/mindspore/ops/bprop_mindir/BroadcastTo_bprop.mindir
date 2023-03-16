@@ -1,306 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:�
-m#get_bprop_broadcast_to.1:[CNode]2:1#get_bprop_broadcast_to.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-=4949"Constant*)
-value*mindspore.ops._grad.grad_base�"
-:49_4149_41"Constant* 
-value*sum_grad_reduce_axis�#
-r
-49
-49_41get_bprop_broadcast_to.1:49:42get_bprop_broadcast_to.1:49:42"REF::resolve:43:Default/resolve-op33
-?[ValueNode]85[ValueNode]85"Constant*
-value*	keep_dims�
-�
-[ValueNode]85%get_bprop_broadcast_to.1:[CNode]86:81%get_bprop_broadcast_to.1:[CNode]86:81"REF::S-Prim-MakeTuple:82:Default/S-Prim-MakeTuple-op62
-6[ValueNode]87[ValueNode]87"Constant*
-value�	
-�
-[ValueNode]87%get_bprop_broadcast_to.1:[CNode]88:83%get_bprop_broadcast_to.1:[CNode]88:83"REF::S-Prim-MakeTuple:84:Default/S-Prim-MakeTuple-op63
-�
-%get_bprop_broadcast_to.1:[CNode]86:81
-%get_bprop_broadcast_to.1:[CNode]88:83%get_bprop_broadcast_to.1:[CNode]89:85%get_bprop_broadcast_to.1:[CNode]89:85"REF::S-Prim-make_dict:86:Default/S-Prim-make_dict-op64
-K9090"Constant*7
-value*+mindspore.ops.operations.math_ops.ReduceSum�!
-�
-90
-%get_bprop_broadcast_to.1:[CNode]89:85+get_bprop_broadcast_to.1:reduce_keep_dim:87+get_bprop_broadcast_to.1:reduce_keep_dim:87"REF::MetaFuncGraph::unpack_call:Default/unpack_call.91-op65get_bprop_broadcast_to.1*
-get_bprop_broadcast_to.1:self*
-get_bprop_broadcast_to.1:x*
-get_bprop_broadcast_to.1:out*
-get_bprop_broadcast_to.1:dout2%
-#get_bprop_broadcast_to.1:[CNode]2:1:@a4cfb55f3df63a6c0d4df2948c19dc8ce349f1dbfc89aff5d56ae2941f16945fJ/grad_array_ops.pyB�
-u
-get_bprop_broadcast_to.1:xbprop.3:фx_shape:2bprop.3:фx_shape:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op1
-~
-bprop.3:фx_shape:2bprop.3:[CNode]4:4bprop.3:[CNode]4:4"REF::S-Prim-IsShapeUnKnown:5:!Default/S-Prim-IsShapeUnKnown-op2
-_
-bprop.3:[CNode]4:4bprop.3:[CNode]5:6bprop.3:[CNode]5:6"REF::bool_.6:Default/bool_.6-op3
-w
-bprop.3:[CNode]5:6
-
-↰bprop.7
-
-↱bprop.8bprop.3:[CNode]9:7bprop.3:[CNode]9:7"REF::Switch:8:Default/Switch-op4
-Bbprop.3:dynamic:9bprop.3:dynamic:9"REF::bprop.3:[CNode]9:7:5
-�
-bprop.3:dynamic:9bprop.3:[CNode]10:10bprop.3:[CNode]10:10"REF::MetaFuncGraph::logical_not:Default/S-Prim-logical_not-op6
-e
-bprop.3:[CNode]10:10bprop.3:[CNode]11:11bprop.3:[CNode]11:11"REF::bool_.6:Default/bool_.6-op7
-
-bprop.3:[CNode]11:11
-↰bprop.12
-↱bprop.13bprop.3:[CNode]14:12bprop.3:[CNode]14:12"REF::Switch:8:Default/Switch-op8
-Jbprop.3:[CNode]15:13bprop.3:[CNode]15:13"REF::bprop.3:[CNode]14:12:9
-f
-bprop.3:[CNode]15:13bprop.3:[CNode]16:14bprop.3:[CNode]16:14"REF::bool_.6:Default/bool_.6-op10
-�
-bprop.3:[CNode]16:14
-✓bprop.17
-✗bprop.18bprop.3:[CNode]19:15bprop.3:[CNode]19:15"REF::Switch:8:Default/Switch-op11
-Kbprop.3:[CNode]20:16bprop.3:[CNode]20:16"REF::bprop.3:[CNode]19:15:12
-�
-get_bprop_broadcast_to.1:outbprop.3:broadcast_shape:88bprop.3:broadcast_shape:88"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op66
-
-get_bprop_broadcast_to.1:doutbprop.3:dout_shape:100bprop.3:dout_shape:100"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op76bprop.32
-bprop.3:[CNode]20:16B�
-`✗bprop.18:[CNode]21:17✗bprop.18:[CNode]21:17"REF::↓bprop.22:Default/↓bprop.22-op13✗bprop.182
-✗bprop.18:[CNode]21:17B�	
-k
-bprop.3:dynamic:9↓bprop.22:[CNode]23:18↓bprop.22:[CNode]23:18"REF::bool_.6:Default/bool_.6-op14
-�
-↓bprop.22:[CNode]23:18
-↰↓bprop.24
-↱↓bprop.25↓bprop.22:[CNode]26:19↓bprop.22:[CNode]26:19"REF::Switch:8:Default/Switch-op15
-S↓bprop.22:dynamic:20↓bprop.22:dynamic:20"REF::↓bprop.22:[CNode]26:19:16
-�
-↓bprop.22:dynamic:20↓bprop.22:[CNode]27:21↓bprop.22:[CNode]27:21"REF::MetaFuncGraph::logical_not:Default/S-Prim-logical_not-op17
-r
-↓bprop.22:[CNode]27:21↓bprop.22:[CNode]28:22↓bprop.22:[CNode]28:22"REF::bool_.6:Default/bool_.6-op18
-�
-↓bprop.22:[CNode]28:22
-✓↓bprop.29
-✗↓bprop.30↓bprop.22:[CNode]31:23↓bprop.22:[CNode]31:23"REF::Switch:8:Default/Switch-op19
-W↓bprop.22:[CNode]32:24↓bprop.22:[CNode]32:24"REF::↓bprop.22:[CNode]31:23:20
-�
-↓bprop.22:[CNode]32:24↓bprop.22:[CNode]33:25↓bprop.22:[CNode]33:25"REF::↓↓bprop.34:Default/↓↓bprop.34-op21
-;[ValueNode]36[ValueNode]36"Constant*
-value*dtype�
-�
-get_bprop_broadcast_to.1:dout
-[ValueNode]36↓bprop.22:out_type:28↓bprop.22:out_type:28"REF::getattr:29:Default/getattr-op23↓bprop.222
-↓bprop.22:[CNode]33:25B
-after_block�	B�
-�
-↓↓bprop.34:фdx↓↓bprop.34:[CNode]35:26↓↓bprop.34:[CNode]35:26"REF::S-Prim-MakeTuple:27:Default/S-Prim-MakeTuple-op22↓↓bprop.34*
-↓↓bprop.34:фdx2
-↓↓bprop.34:[CNode]35:26B
-after_block�	B�
-@[ValueNode]37[ValueNode]37"Constant*
-valueb
-:value0�
-@[ValueNode]38[ValueNode]38"Constant*
-valueb
-:value0�
-@[ValueNode]39[ValueNode]39"Constant*
-valueb
-:value0�
-�
-[ValueNode]37
-[ValueNode]38
-[ValueNode]39✗↓bprop.30:[CNode]40:30✗↓bprop.30:[CNode]40:30"REF::S-Prim-MakeTuple:31:Default/S-Prim-MakeTuple-op24
-�
-↓bprop.22:out_type:28
-✗↓bprop.30:[CNode]40:30✗↓bprop.30:[CNode]41:32✗↓bprop.30:[CNode]41:32"REF::MetaFuncGraph::in:Default/S-Prim-in-op25
-{
-✗↓bprop.30:[CNode]41:32✗↓bprop.30:[CNode]42:33✗↓bprop.30:[CNode]42:33"REF::bool_.6:Default/bool_.6-op26
-�
-✗↓bprop.30:[CNode]42:33
-✓✗↓bprop.43
-✗✗↓bprop.44✗↓bprop.30:[CNode]45:34✗↓bprop.30:[CNode]45:34"REF::Switch:8:Default/Switch-op27
-`✗↓bprop.30:[CNode]46:35✗↓bprop.30:[CNode]46:35" REF::✗↓bprop.30:[CNode]45:34:28
-�
-✗↓bprop.30:[CNode]46:35✗↓bprop.30:[CNode]47:36✗↓bprop.30:[CNode]47:36"REF::↓✗↓bprop.48:Default/↓✗↓bprop.48-op29
-�
-get_bprop_broadcast_to.1:x✗↓bprop.30:фx_shape:38✗↓bprop.30:фx_shape:38"REF::S-Prim-TensorShape:39:Default/S-Prim-TensorShape-op31
-�✗↓bprop.30:[CNode]50:44✗↓bprop.30:[CNode]50:44"PREF::ClassType::mindspore.ops.operations._inner_ops.DynamicBroadcastGradientArgs:eDefault/MindIRClassType:class 'mindspore.ops.operations._inner_ops.DynamicBroadcastGradientArgs'-op34
-�
-get_bprop_broadcast_to.1:out!✗↓bprop.30:broadcast_shape:45!✗↓bprop.30:broadcast_shape:45"REF::S-Prim-TensorShape:39:Default/S-Prim-TensorShape-op35
-�
-!✗↓bprop.30:broadcast_shape:45
-✗↓bprop.30:фx_shape:38✗↓bprop.30:[CNode]51:46✗↓bprop.30:[CNode]51:46" REF::✗↓bprop.30:[CNode]50:44:36
-6[ValueNode]52[ValueNode]52"Constant*
-value�
-�
-✗↓bprop.30:[CNode]51:46
-[ValueNode]52 ✗↓bprop.30:reduction_axes:47 ✗↓bprop.30:reduction_axes:47"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op37✗↓bprop.302
-✗↓bprop.30:[CNode]47:36B�
-�↓✗↓bprop.48:dx:37↓✗↓bprop.48:dx:37":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op30
-�
- ↓✗↓bprop.48:фreduced_grad
-✗↓bprop.30:фx_shape:38↓✗↓bprop.48:dx:40↓✗↓bprop.48:dx:40"REF::↓✗↓bprop.48:dx:37:32↓✗↓bprop.48*"
- ↓✗↓bprop.48:фreduced_grad2
-↓✗↓bprop.48:dx:40B
-after_block�	B�
-�
-get_bprop_broadcast_to.1:dout
- ✗↓bprop.30:reduction_axes:47✗✗↓bprop.44:[CNode]53:48✗✗↓bprop.44:[CNode]53:48"REF::S-Prim-MakeTuple:49:Default/S-Prim-MakeTuple-op38
-?[ValueNode]54[ValueNode]54"Constant*
-value*	keep_dims�
-�
-[ValueNode]54✗✗↓bprop.44:[CNode]55:50✗✗↓bprop.44:[CNode]55:50"REF::S-Prim-MakeTuple:51:Default/S-Prim-MakeTuple-op39
-6[ValueNode]56[ValueNode]56"Constant*
-value�	
-�
-[ValueNode]56✗✗↓bprop.44:[CNode]57:52✗✗↓bprop.44:[CNode]57:52"REF::S-Prim-MakeTuple:53:Default/S-Prim-MakeTuple-op40
-�
-✗✗↓bprop.44:[CNode]55:50
-✗✗↓bprop.44:[CNode]57:52✗✗↓bprop.44:[CNode]58:54✗✗↓bprop.44:[CNode]58:54"REF::S-Prim-make_dict:55:Default/S-Prim-make_dict-op41
-�
-get_bprop_broadcast_to.1:49:42
-✗✗↓bprop.44:[CNode]53:48
-✗✗↓bprop.44:[CNode]58:54!✗✗↓bprop.44:reduced_grad:56!✗✗↓bprop.44:reduced_grad:56"REF::MetaFuncGraph::unpack_call:Default/unpack_call.59-op42✗✗↓bprop.442#
-!✗✗↓bprop.44:reduced_grad:56B�
-�✓✗↓bprop.43:[CNode]60:57✓✗↓bprop.43:[CNode]60:57"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op43
-�✓✗↓bprop.43:[CNode]61:58✓✗↓bprop.43:[CNode]61:58"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op44
-@[ValueNode]62[ValueNode]62"Constant*
-valueb
-:value0�
-�
-get_bprop_broadcast_to.1:dout
-[ValueNode]62✓✗↓bprop.43:dout:59✓✗↓bprop.43:dout:59"#REF::✓✗↓bprop.43:[CNode]61:58:45
-�
-✓✗↓bprop.43:dout:59
- ✗↓bprop.30:reduction_axes:47✓✗↓bprop.43:[CNode]63:60✓✗↓bprop.43:[CNode]63:60"REF::S-Prim-MakeTuple:61:Default/S-Prim-MakeTuple-op46
-?[ValueNode]64[ValueNode]64"Constant*
-value*	keep_dims�
-�
-[ValueNode]64✓✗↓bprop.43:[CNode]65:62✓✗↓bprop.43:[CNode]65:62"REF::S-Prim-MakeTuple:63:Default/S-Prim-MakeTuple-op47
-6[ValueNode]66[ValueNode]66"Constant*
-value�	
-�
-[ValueNode]66✓✗↓bprop.43:[CNode]67:64✓✗↓bprop.43:[CNode]67:64"REF::S-Prim-MakeTuple:65:Default/S-Prim-MakeTuple-op48
-�
-✓✗↓bprop.43:[CNode]65:62
-✓✗↓bprop.43:[CNode]67:64✓✗↓bprop.43:[CNode]68:66✓✗↓bprop.43:[CNode]68:66"REF::S-Prim-make_dict:67:Default/S-Prim-make_dict-op49
-�
-get_bprop_broadcast_to.1:49:42
-✓✗↓bprop.43:[CNode]63:60
-✓✗↓bprop.43:[CNode]68:66!✓✗↓bprop.43:reduced_grad:68!✓✗↓bprop.43:reduced_grad:68"REF::MetaFuncGraph::unpack_call:Default/unpack_call.69-op50
-�
-!✓✗↓bprop.43:reduced_grad:68
-↓bprop.22:out_type:28!✓✗↓bprop.43:reduced_grad:69!✓✗↓bprop.43:reduced_grad:69"#REF::✓✗↓bprop.43:[CNode]60:57:51✓✗↓bprop.432#
-!✓✗↓bprop.43:reduced_grad:69B�
->[ValueNode]70[ValueNode]70"Constant*
-value*__bool__�
-m
-	bool_.6:x
-[ValueNode]70bool_.6:[CNode]71:70bool_.6:[CNode]71:70"REF::getattr:29:Default/getattr-op52
-Kbool_.6:[CNode]72:71bool_.6:[CNode]72:71"REF::bool_.6:[CNode]71:70:53bool_.6*
-	bool_.6:x2
-bool_.6:[CNode]72:71B�
-@[ValueNode]73[ValueNode]73"Constant*
-valueb
-:value0�
-@[ValueNode]74[ValueNode]74"Constant*
-valueb
-:value0�
-@[ValueNode]75[ValueNode]75"Constant*
-valueb
-:value0�
-�
-[ValueNode]73
-[ValueNode]74
-[ValueNode]75✓↓bprop.29:[CNode]76:72✓↓bprop.29:[CNode]76:72"REF::S-Prim-MakeTuple:73:Default/S-Prim-MakeTuple-op54
-�
-↓bprop.22:out_type:28
-✓↓bprop.29:[CNode]76:72✓↓bprop.29:[CNode]77:74✓↓bprop.29:[CNode]77:74"REF::MetaFuncGraph::in:Default/S-Prim-in-op55
-{
-✓↓bprop.29:[CNode]77:74✓↓bprop.29:[CNode]78:75✓↓bprop.29:[CNode]78:75"REF::bool_.6:Default/bool_.6-op56
-�
-✓↓bprop.29:[CNode]78:75
-✓✓↓bprop.79
-✗✓↓bprop.80✓↓bprop.29:[CNode]81:76✓↓bprop.29:[CNode]81:76"REF::Switch:8:Default/Switch-op57
-`✓↓bprop.29:[CNode]82:77✓↓bprop.29:[CNode]82:77" REF::✓↓bprop.29:[CNode]81:76:58
-�
-✓↓bprop.29:[CNode]82:77✓↓bprop.29:[CNode]83:78✓↓bprop.29:[CNode]83:78"REF::↓✓↓bprop.84:Default/↓✓↓bprop.84-op59
-�
-bprop.3:broadcast_shape:88
-bprop.3:фx_shape:2✓↓bprop.29:[CNode]92:89✓↓bprop.29:[CNode]92:89"$REF::S-Prim-BroadcastGradientArgs:90:)Default/S-Prim-BroadcastGradientArgs-op67
-6[ValueNode]93[ValueNode]93"Constant*
-value�
-�
-✓↓bprop.29:[CNode]92:89
-[ValueNode]93 ✓↓bprop.29:reduction_axes:91 ✓↓bprop.29:reduction_axes:91"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op68✓↓bprop.292
-✓↓bprop.29:[CNode]83:78B�
-�↓✓↓bprop.84:dx:79↓✓↓bprop.84:dx:79":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op60
-�
- ↓✓↓bprop.84:фreduced_grad
-bprop.3:фx_shape:2↓✓↓bprop.84:dx:80↓✓↓bprop.84:dx:80"REF::↓✓↓bprop.84:dx:79:61↓✓↓bprop.84*"
- ↓✓↓bprop.84:фreduced_grad2
-↓✓↓bprop.84:dx:80B
-after_block�	B�
-�
-get_bprop_broadcast_to.1:dout
- ✓↓bprop.29:reduction_axes:91!✗✓↓bprop.80:reduced_grad:92!✗✓↓bprop.80:reduced_grad:92"0REF::get_bprop_broadcast_to.1:reduce_keep_dim:87:69✗✓↓bprop.802#
-!✗✓↓bprop.80:reduced_grad:92B�
-�✓✓↓bprop.79:[CNode]94:93✓✓↓bprop.79:[CNode]94:93"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op70
-�✓✓↓bprop.79:[CNode]95:94✓✓↓bprop.79:[CNode]95:94"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op71
-@[ValueNode]96[ValueNode]96"Constant*
-valueb
-:value0�
-�
-get_bprop_broadcast_to.1:dout
-[ValueNode]96✓✓↓bprop.79:dout:95✓✓↓bprop.79:dout:95"#REF::✓✓↓bprop.79:[CNode]95:94:72
-�
-✓✓↓bprop.79:dout:95
- ✓↓bprop.29:reduction_axes:91!✓✓↓bprop.79:reduced_grad:96!✓✓↓bprop.79:reduced_grad:96"0REF::get_bprop_broadcast_to.1:reduce_keep_dim:87:73
-�
-!✓✓↓bprop.79:reduced_grad:96
-↓bprop.22:out_type:28!✓✓↓bprop.79:reduced_grad:97!✓✓↓bprop.79:reduced_grad:97"#REF::✓✓↓bprop.79:[CNode]94:93:74✓✓↓bprop.792#
-!✓✓↓bprop.79:reduced_grad:97B�
-�
-bprop.3:broadcast_shape:88↱↓bprop.25:[CNode]97:98↱↓bprop.25:[CNode]97:98"REF::S-Prim-IsShapeUnKnown:99:"Default/S-Prim-IsShapeUnKnown-op75↱↓bprop.252
-↱↓bprop.25:[CNode]97:98B%↰↓bprop.242
-bprop.3:dynamic:9B�
-�
-bprop.3:dout_shape:100↱bprop.8:[CNode]98:101↱bprop.8:[CNode]98:101"REF::S-Prim-IsShapeUnKnown:102:"Default/S-Prim-IsShapeUnKnown-op77
-↱bprop.82
-↱bprop.8:[CNode]98:101B"
-↰bprop.72
-bprop.3:[CNode]4:4B�
-�
-get_bprop_broadcast_to.1:dout✓bprop.17:[CNode]99:103✓bprop.17:[CNode]99:103"REF::S-Prim-MakeTuple:104:Default/S-Prim-MakeTuple-op78✓bprop.172
-✓bprop.17:[CNode]99:103B%↱bprop.132
-bprop.3:[CNode]10:10B�
-�
-bprop.3:фx_shape:2
-bprop.3:dout_shape:100↰bprop.12:[CNode]100:105↰bprop.12:[CNode]100:105"REF::MetaFuncGraph::equal:Default/S-Prim-equal-op79↰bprop.122
-↰bprop.12:[CNode]100:105Pb
-Switch:8Switchb
-
-getattr:29getattrb
-
-resolve:43resolveb(
-S-Prim-MakeTuple:104S-Prim-MakeTupleb'
-S-Prim-MakeTuple:27S-Prim-MakeTupleb
-S-Prim-Shape:3S-Prim-Shapebm
-S-Prim-TensorShape:39S-Prim-TensorShape
-output_names��Zoutput�
-input_names��Zinput_x�b'
-S-Prim-MakeTuple:61S-Prim-MakeTupleb'
-S-Prim-make_dict:67S-Prim-make_dictb'
-S-Prim-MakeTuple:63S-Prim-MakeTupleb'
-S-Prim-MakeTuple:65S-Prim-MakeTupleb'
-S-Prim-MakeTuple:51S-Prim-MakeTupleb'
-S-Prim-make_dict:55S-Prim-make_dictb'
-S-Prim-MakeTuple:82S-Prim-MakeTupleb?
-S-Prim-BroadcastGradientArgs:90S-Prim-BroadcastGradientArgsb'
-S-Prim-MakeTuple:73S-Prim-MakeTupleb'
-S-Prim-MakeTuple:31S-Prim-MakeTupleb'
-S-Prim-MakeTuple:49S-Prim-MakeTupleb'
-S-Prim-make_dict:86S-Prim-make_dictb'
-S-Prim-MakeTuple:53S-Prim-MakeTupleb'
-S-Prim-MakeTuple:84S-Prim-MakeTupleb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb2
-S-Prim-IsShapeUnKnown:102S-Prim-IsShapeUnKnownb1
-S-Prim-IsShapeUnKnown:99S-Prim-IsShapeUnKnownh

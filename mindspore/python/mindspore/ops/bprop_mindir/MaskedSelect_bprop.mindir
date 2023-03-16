@@ -1,21 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Å
-o$get_bprop_masked_select.1:[CNode]2:1$get_bprop_masked_select.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-Œget_bprop_masked_select.1:op:2get_bprop_masked_select.1:op:2"CREF::ClassType::mindspore.ops.operations._grad_ops.MaskedSelectGrad:GDefault/class 'mindspore.ops.operations._grad_ops.MaskedSelectGrad'-op1get_bprop_masked_select.1* 
-get_bprop_masked_select.1:self*
-get_bprop_masked_select.1:x* 
-get_bprop_masked_select.1:mask*
-get_bprop_masked_select.1:out* 
-get_bprop_masked_select.1:dout2&
-$get_bprop_masked_select.1:[CNode]2:1:@9a6978625e8b7ef3f5daa55341777da77b6d85cc40ea7fb58e41a065ab71ea2dJ/grad_array_ops.pyBÒ
-°
-get_bprop_masked_select.1:x
-get_bprop_masked_select.1:mask
-get_bprop_masked_select.1:doutbprop.3:dx:3bprop.3:dx:3"#REF::get_bprop_masked_select.1:op:2:2
-ß
-get_bprop_masked_select.1:maskbprop.3:[CNode]4:4bprop.3:[CNode]4:4".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op3
-Å
-bprop.3:dx:3
-bprop.3:[CNode]4:4bprop.3:[CNode]5:5bprop.3:[CNode]5:5"REF::S-Prim-MakeTuple:6:Default/S-Prim-MakeTuple-op4bprop.32
-bprop.3:[CNode]5:5Pb&
-S-Prim-MakeTuple:6S-Prim-MakeTupleh

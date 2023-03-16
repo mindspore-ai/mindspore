@@ -1,23 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:í
-q%get_bprop_space_to_depth.1:[CNode]2:1%get_bprop_space_to_depth.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
->[ValueNode]4[ValueNode]4"Constant*
-value*
-block_size€
-¢
-get_bprop_space_to_depth.1:self
-[ValueNode]4%get_bprop_space_to_depth.1:[CNode]5:2%get_bprop_space_to_depth.1:[CNode]5:2"REF::getattr:3:Default/getattr-op1
-ï
-%get_bprop_space_to_depth.1:[CNode]5:2get_bprop_space_to_depth.1:op:4get_bprop_space_to_depth.1:op:4"?REF::ClassType::mindspore.ops.operations.array_ops.DepthToSpace:CDefault/class 'mindspore.ops.operations.array_ops.DepthToSpace'-op2get_bprop_space_to_depth.1*!
-get_bprop_space_to_depth.1:self*
-get_bprop_space_to_depth.1:x* 
-get_bprop_space_to_depth.1:out*!
-get_bprop_space_to_depth.1:dout2'
-%get_bprop_space_to_depth.1:[CNode]2:1:@3e6c5f08240c11a114e82b82b7a8463fc09abb614b370aad932f63ebbd96fdb4J/grad_array_ops.pyBˆ
-r
-get_bprop_space_to_depth.1:doutbprop.3:[CNode]6:5bprop.3:[CNode]6:5"$REF::get_bprop_space_to_depth.1:op:4:3
-s
-bprop.3:[CNode]6:5bprop.3:[CNode]7:6bprop.3:[CNode]7:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op4bprop.32
-bprop.3:[CNode]7:6Pb
-	getattr:3getattrb&
-S-Prim-MakeTuple:7S-Prim-MakeTupleh

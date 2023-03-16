@@ -1,54 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Î
-j get_bprop_flatten.54:[CNode]55:1 get_bprop_flatten.54:[CNode]55:1"REF::bprop.56:Default/bprop.56-op41
-Ý&get_bprop_flatten.54:Ñ„flatten_grad:11&get_bprop_flatten.54:Ñ„flatten_grad:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op48get_bprop_flatten.54*
-get_bprop_flatten.54:self*
-get_bprop_flatten.54:x*
-get_bprop_flatten.54:out*
-get_bprop_flatten.54:Ñ„dout2"
- get_bprop_flatten.54:[CNode]55:1:@c9fb0a7930c15f748e6e0c0ea7bf44732f93e58d10956672bcbb48d0e70de932J/grad_array_ops.pyBÆ
-p
-get_bprop_flatten.54:xbprop.56:shape_x:2bprop.56:shape_x:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op42
-‚
-bprop.56:shape_x:2bprop.56:[CNode]57:4bprop.56:[CNode]57:4"REF::S-Prim-IsShapeUnKnown:5:"Default/S-Prim-IsShapeUnKnown-op43
-h
-bprop.56:[CNode]57:4bprop.56:[CNode]58:6bprop.56:[CNode]58:6"REF::bool_.59:Default/bool_.59-op44
-€
-bprop.56:[CNode]58:6
-âœ“bprop.60
-âœ—bprop.61bprop.56:[CNode]62:7bprop.56:[CNode]62:7"REF::Switch:8:Default/Switch-op45
-Kbprop.56:[CNode]63:9bprop.56:[CNode]63:9"REF::bprop.56:[CNode]62:7:46
-p
-bprop.56:[CNode]63:9bprop.56:[CNode]64:10bprop.56:[CNode]64:10"REF::â†“bprop.65:Default/â†“bprop.65-op47bprop.562
-bprop.56:[CNode]64:10Bç
-‹
-get_bprop_flatten.54:Ñ„dout
-â†“bprop.65:Ñ„shape_xâ†“bprop.65:dx:12â†“bprop.65:dx:12"+REF::get_bprop_flatten.54:Ñ„flatten_grad:11:49
-€
-â†“bprop.65:dx:12â†“bprop.65:[CNode]66:13â†“bprop.65:[CNode]66:13"REF::S-Prim-MakeTuple:14:Default/S-Prim-MakeTuple-op50â†“bprop.65*
-â†“bprop.65:Ñ„shape_x2
-â†“bprop.65:[CNode]66:13B
-after_block€	B#âœ—bprop.612
-bprop.56:shape_x:2B¯
-…
-get_bprop_flatten.54:xâœ“bprop.60:shape_x:15âœ“bprop.60:shape_x:15"REF::S-Prim-TensorShape:16:Default/S-Prim-TensorShape-op51âœ“bprop.602
-âœ“bprop.60:shape_x:15B³
->[ValueNode]67[ValueNode]67"Constant*
-value*__bool__€
-p
-
-bool_.59:x
-[ValueNode]67bool_.59:[CNode]68:17bool_.59:[CNode]68:17"REF::getattr:18:Default/getattr-op52
-Nbool_.59:[CNode]69:19bool_.59:[CNode]69:19"REF::bool_.59:[CNode]68:17:53bool_.59*
-
-bool_.59:x2
-bool_.59:[CNode]69:19Pb
-Switch:8Switchb
-
-getattr:18getattrb'
-S-Prim-MakeTuple:14S-Prim-MakeTuplebm
-S-Prim-TensorShape:16S-Prim-TensorShape
-output_names€ŠZoutput€
-input_names€ŠZinput_x€b0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb
-S-Prim-Shape:3S-Prim-Shapeh
