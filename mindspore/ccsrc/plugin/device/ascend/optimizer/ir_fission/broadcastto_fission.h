@@ -33,6 +33,19 @@ class BroadcasttoFission : public PatternProcessPass {
   CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
                               const std::vector<int64_t> &broad_shape) const;
 };
+
+class DynamicBroadcastToFission : public PatternProcessPass {
+ public:
+  explicit DynamicBroadcastToFission(bool multigraph = true)
+      : PatternProcessPass("dynamic_broadcastto_fission", multigraph) {}
+  ~DynamicBroadcastToFission() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  CNodePtr AddDynamicBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                     const CNodePtr &input0_node) const;
+};
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BROADCASTTO_FISSION_H_

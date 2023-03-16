@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace opt {
+static const size_t kDynamicBroadcastToInputNum = 2;
 const BaseRef BroadcasttoFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto broadcastto_prim = std::make_shared<Primitive>(prim::kPrimBroadcastTo->name());
@@ -66,6 +67,54 @@ const AnfNodePtr BroadcasttoFission::Process(const FuncGraphPtr &graph, const An
                                  broadcastto_node);
   }
   auto out_node = AddCastNode(graph, kNumberTypeBool, broadcastto_node, false);
+  return out_node;
+}
+
+const BaseRef DynamicBroadcastToFission::DefinePattern() const {
+  VarPtr Xs = std::make_shared<SeqVar>();
+  auto dynamic_broadcastto_prim = std::make_shared<Primitive>(prim::kPrimDynamicBroadcastTo->name());
+  return VectorRef({dynamic_broadcastto_prim, Xs});
+}
+
+CNodePtr DynamicBroadcastToFission::AddDynamicBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                              const CNodePtr &input0_node) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_type = common::AnfAlgo::GetOutputInferDataType(input0_node, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(cnode, 0);
+  std::vector<AnfNodePtr> dynamic_broadcastto_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::kPrimDynamicBroadcastTo->name())), input0_node,
+    cnode->inputs()[kIndex2]};
+
+  CNodePtr broadcastto_node = NewCNode(dynamic_broadcastto_inputs, func_graph);
+  common::AnfAlgo::CopyNodeAttrs(cnode, broadcastto_node);
+  broadcastto_node->set_scope(cnode->scope());
+  broadcastto_node->set_abstract(cnode->abstract());
+  common::AnfAlgo::SetOutputInferTypeAndShape({input_type}, {output_shape}, broadcastto_node.get());
+  return broadcastto_node;
+}
+
+const AnfNodePtr DynamicBroadcastToFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                                    const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto input_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
+  if (input_type != kNumberTypeBool) {
+    return nullptr;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != kDynamicBroadcastToInputNum) {
+    MS_LOG(EXCEPTION) << "DynamicBroadcastTo only support 2 inputs, but got "
+                      << common::AnfAlgo::GetInputTensorNum(cnode) << ", node: " << cnode->fullname_with_scope();
+  }
+  auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
+  auto dynamic_broadcastto_node = AddDynamicBroadCastToNode(graph, cnode, cast_to_node);
+  if (common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue<std::string>(prim::kPrimDynamicBroadcastTo->name()),
+                                 dynamic_broadcastto_node);
+  }
+  auto out_node = AddCastNode(graph, kNumberTypeBool, dynamic_broadcastto_node, false);
   return out_node;
 }
 }  // namespace opt
