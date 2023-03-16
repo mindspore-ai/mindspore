@@ -226,6 +226,10 @@ int ScatterGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape0 = inputs[kIndex0]->GetShapeVector();
+  if (Convert2SizeTClipNeg(inp_shape0).empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input can not be empty";
+  }
+
   std::vector<int64_t> inp_shape1 = inputs[kIndex1]->GetShapeVector();
   std::vector<int64_t> inp_shape2 = inputs[kIndex2]->GetShapeVector();
   std::vector<int64_t> out_shape = outputs[kIndex0]->GetShapeVector();

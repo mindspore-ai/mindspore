@@ -2436,6 +2436,18 @@ def scatter_max(input_x, indices, updates):
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each :math:`i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :]
+        = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+
+    Inputs of `input_x` and `updates` follow the implicit type conversion rules to keep the data types consistent.
+    If they have different data types, the lower priority data type will be converted to the relatively highest
+    priority data type. A RuntimeError will be reported when `updates` does not support conversion to the data type
+    required by `input_x`.
+
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
@@ -2583,17 +2595,17 @@ def scatter_div(input_x, indices, updates):
         input_x (Parameter): The target tensor, with data type of Parameter.
         indices (Tensor): The index to do divide operation whose data type must be mindspore.int32 or
           mindspore.int64.
-        updates (Tensor): The tensor doing the divide operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
+        updates (Tensor): The tensor doing the divide operation with `input_x`, the data type is same as `input_x`,
+          the shape is `indices.shape + input_x.shape[1:]`.
 
     Returns:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `indices` is not an int32 or an int64.
+        TypeError: If the type of `indices` is not one of the following dtype: int32, int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
         RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
                       and `updates` is greater than 8 dimensions.
 

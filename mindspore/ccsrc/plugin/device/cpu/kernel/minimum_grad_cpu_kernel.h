@@ -47,7 +47,7 @@ class MinimumGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
 
  protected:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }

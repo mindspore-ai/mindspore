@@ -19,7 +19,6 @@
 #include <functional>
 #include <vector>
 #include <complex>
-
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -166,7 +165,7 @@ void MulNoNanCPUKernelMod::BcastCompute(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool MulNoNanCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &outputs) {
   size_t input0_elements_nums = inputs[0]->size / sizeof(T);
   size_t input1_elements_nums = inputs[1]->size / sizeof(T);

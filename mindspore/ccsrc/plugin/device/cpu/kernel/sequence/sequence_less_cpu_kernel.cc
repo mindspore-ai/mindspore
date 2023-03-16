@@ -30,12 +30,19 @@ constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 constexpr auto kTupleLe = "tuple_le";
 constexpr auto kTupleLt = "tuple_lt";
+constexpr auto kListLe = "list_le";
+constexpr auto kListLt = "list_lt";
 }  // namespace
 
 template <typename T, typename S>
 bool LessImpl(const T *in_x, const S *in_y, const size_t in_x_size, const size_t in_y_size,
               const bool is_less_equal = true) {
-  size_t max_size = std::max(in_x_size, in_x_size);
+  size_t max_size = std::max(in_x_size, in_y_size);
+  size_t zero_num = 0;
+  if (in_x_size == zero_num && in_y_size > zero_num) {
+    return true;
+  }
+
   for (size_t i = 0; i < max_size; ++i) {
     if (i >= in_x_size) {
       return true;
@@ -79,20 +86,22 @@ int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return ret;
   }
   CHECK_KERNEL_INPUTS_NUM(input_shapes_.size(), kInputsNum, kernel_name_);
-  if (input_shapes_[0].empty() || input_shapes_[1].empty()) {
+  auto input_0_shape = input_shapes_[0];
+  auto input_1_shape = input_shapes_[1];
+  if (input_0_shape.empty() || input_1_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << input_shapes_;
   }
-  x_size_ = input_shapes_[0][0];
-  y_size_ = input_shapes_[1][0];
+  x_size_ = LongToSize(input_0_shape[0]);
+  y_size_ = LongToSize(input_1_shape[0]);
   return KRET_OK;
 }
 
 template <typename T, typename S>
-bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
+bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) {
-  using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const bool, const bool)>;
-  std::unordered_map<std::string, InequalityImplFunc> func_map = {{kTupleLt, LtImpl<T, S>}, {kTupleLe, LeImpl<T, S>}};
+  using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const size_t, const size_t)>;
+  std::unordered_map<std::string, InequalityImplFunc> func_map = {
+    {kTupleLt, LtImpl<T, S>}, {kTupleLe, LeImpl<T, S>}, {kListLt, LtImpl<T, S>}, {kListLe, LeImpl<T, S>}};
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "' don't support. Only support [Le, Lt]";
@@ -119,19 +128,19 @@ bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 const std::vector<std::pair<KernelAttr, SequenceLessCpuKernelMod::KernelRunFunc>>
   &SequenceLessCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceLessCpuKernelMod::KernelRunFunc>> func_list = {
-    ADD_KERNEL(Float32, Float32, float, float), ADD_KERNEL(Float32, Float64, float, double),
-    ADD_KERNEL(Float32, Int32, float, int),     ADD_KERNEL(Float32, Int64, float, int64_t),
-    ADD_KERNEL(Float32, Bool, float, bool),     ADD_KERNEL(Float64, Float32, double, float),
-    ADD_KERNEL(Float64, Bool, double, bool),    ADD_KERNEL(Float64, Float64, double, double),
-    ADD_KERNEL(Float64, Int32, double, int),    ADD_KERNEL(Float64, Int64, double, int64_t),
-    ADD_KERNEL(Int32, Float32, int, float),     ADD_KERNEL(Int32, Float64, int, double),
-    ADD_KERNEL(Int32, Int32, int, int),         ADD_KERNEL(Int32, Int64, int, int64_t),
-    ADD_KERNEL(Int32, Bool, int, bool),         ADD_KERNEL(Int64, Float32, int64_t, float),
-    ADD_KERNEL(Int64, Bool, int64_t, bool),     ADD_KERNEL(Int64, Float64, int64_t, double),
-    ADD_KERNEL(Int64, Int32, int64_t, int),     ADD_KERNEL(Int64, Int64, int64_t, int64_t),
-    ADD_KERNEL(Bool, Int32, bool, int),         ADD_KERNEL(Bool, Int64, bool, int64_t),
-    ADD_KERNEL(Bool, Bool, bool, bool),         ADD_KERNEL(Bool, Float64, bool, double),
-    ADD_KERNEL(Bool, Float32, bool, float)};
+    ADD_KERNEL(Float64, Float32, double, float), ADD_KERNEL(Float64, Float64, double, double),
+    ADD_KERNEL(Float64, Int32, double, int),     ADD_KERNEL(Float64, Int64, double, int64_t),
+    ADD_KERNEL(Float64, Bool, double, bool),     ADD_KERNEL(Float32, Float32, float, float),
+    ADD_KERNEL(Float32, Float64, float, double), ADD_KERNEL(Float32, Int32, float, int),
+    ADD_KERNEL(Float32, Int64, float, int64_t),  ADD_KERNEL(Float32, Bool, float, bool),
+    ADD_KERNEL(Int32, Int32, int, int),          ADD_KERNEL(Int32, Int64, int, int64_t),
+    ADD_KERNEL(Int32, Float32, int, float),      ADD_KERNEL(Int32, Float64, int, double),
+    ADD_KERNEL(Int32, Bool, int, bool),          ADD_KERNEL(Int64, Float32, int64_t, float),
+    ADD_KERNEL(Int64, Float64, int64_t, double), ADD_KERNEL(Int64, Int32, int64_t, int),
+    ADD_KERNEL(Int64, Int64, int64_t, int64_t),  ADD_KERNEL(Int64, Bool, int64_t, bool),
+    ADD_KERNEL(Bool, Int32, bool, int),          ADD_KERNEL(Bool, Int64, bool, int64_t),
+    ADD_KERNEL(Bool, Float64, bool, double),     ADD_KERNEL(Bool, Float32, bool, float),
+    ADD_KERNEL(Bool, Bool, bool, bool)};
   return func_list;
 }
 
