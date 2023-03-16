@@ -19,7 +19,7 @@ import tempfile
 from contextlib import contextmanager
 import pytest
 import numpy as np
-from mindspore import Tensor, jit, context, Parameter
+from mindspore import Tensor, jit, context, Parameter, ops
 from mindspore.nn import Cell
 from mindspore.nn.probability import distribution
 import mindspore.nn as nn
@@ -538,6 +538,7 @@ def test_none_is_input_of_tuple_return_2():
     out_me_pynative = net_pynative(Tensor(probs1_b), Tensor(probs1))
     print("out_me_pynative: ", out_me_pynative)
     assert out_me_graph == out_me_pynative
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.level0
@@ -635,3 +636,81 @@ def test_none_is_return_raise():
         net.set_inputs(dyn_tensor)
         out = net(data)
         assert out == data
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_none_with_variable_control_flow3():
+    """
+    Feature: graph raise none by JIT Fallback.
+    Description: Test raise with none.
+    Expectation: No exception.
+    """
+    def _raise_func(script):
+        raise ValueError(script)
+
+    def check_test(shp, x):
+        if shp[0] > 3:
+            _raise_func(f"ddddd, {x}.")
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            shp = x.shape
+            check_test(shp, x)
+            return x
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+            self.grad = ops.GradOperation()
+
+        def construct(self, x):
+            func = self.grad(self.net)
+            return func(x)
+
+    np_data = np.random.randint(6, size=(4,))
+    data = Tensor(np_data, dtype=ms.float32)
+    dyn_tensor = Tensor(shape=[None], dtype=ms.float32)
+    with pytest.raises(ValueError) as control:
+        net = Net()
+        grad = GradNet(net)
+        grad.set_inputs(dyn_tensor)
+        print(grad(data))
+    assert "('ddddd, ', Tensor(" in str(control.value)
+
+
+@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_none_in_value_list_tuple_dict():
+    """
+    Feature: Support None.
+    Description: Support None in list.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        return list((1, "a", None, [1, "a", None], dict(y=1, u=None)))
+
+    out = foo()
+    assert out == (1, "a", None, [1, "a", None], dict(y=1, u=None))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_none_in_nest_tuple():
+    """
+    Feature: Support None.
+    Description: Support None in nested tuple.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        return None, ("a", None)
+
+    out = foo()
+    assert out == (None, ("a", None))
