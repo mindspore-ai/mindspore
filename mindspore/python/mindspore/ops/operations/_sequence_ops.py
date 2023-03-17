@@ -14,7 +14,8 @@
 # ============================================================================
 """Operations for sequence"""
 
-from mindspore.ops.primitive import Primitive, prim_attr_register
+from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, prim_attr_register
+from mindspore.common import Tensor
 
 
 class ListAppend(Primitive):
@@ -256,7 +257,7 @@ class SequenceAddOffset(Primitive):
         self.init_prim_io_names(inputs=['shape_0', 'shape_1'], outputs=['output'])
 
 
-class TupleToTensor(Primitive):
+class TupleToTensor(PrimitiveWithCheck):
     r"""
     Convert tuple to tensor
 
@@ -285,6 +286,14 @@ class TupleToTensor(Primitive):
     def __init__(self):
         """Initialize TupleToTensor"""
         self.init_prim_io_names(inputs=['input_tuple', 'dtype'], outputs=['output_data'])
+
+    def __call__(self, x, dtype):
+        return self.infer_value(x, dtype)
+
+    def infer_value(self, x, dtype):
+        if x is not None and isinstance(x, tuple):
+            return Tensor(x)
+        return None
 
 
 class ListToTensor(Primitive):

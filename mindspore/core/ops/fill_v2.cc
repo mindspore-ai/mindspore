@@ -89,7 +89,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
       CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
                                          kGreaterThan, kDimZero, prim_name);
     }
-
+    output_shape = GetShapeValue(primitive, input_args[0]);
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
