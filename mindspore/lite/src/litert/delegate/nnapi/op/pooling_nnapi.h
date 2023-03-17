@@ -36,6 +36,8 @@ class NNAPIPooling : public NNAPIOp {
   int AddOpToNNAPIModel(ANeuralNetworksModel *nnapi_model, std::vector<mindspore::MSTensor> *all_tensors) override;
 
  private:
+  int SetPoolingParams(const flatbuffers::Vector<int64_t> *pads, const flatbuffers::Vector<int64_t> *strides,
+                       const flatbuffers::Vector<int64_t> *kernels, bool is_global);
   int act_type_;
   std::vector<int> pad_list_;
   std::vector<int> strides_;

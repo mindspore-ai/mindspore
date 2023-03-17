@@ -21,49 +21,54 @@
 
 namespace mindspore {
 namespace lite {
+int NNAPIPooling::SetPoolingParams(const flatbuffers::Vector<int64_t> *pads,
+                                   const flatbuffers::Vector<int64_t> *strides,
+                                   const flatbuffers::Vector<int64_t> *kernel_size, bool is_global) {
+  MS_ASSERT(pads != nullptr && strides != nullptr && kernel_size != nullptr);
+  MS_CHECK_TRUE_RET(pads->size() == DIMENSION_4D, RET_ERROR);
+  pad_list_.push_back(static_cast<int>(*(pads->begin() + PAD_LEFT)));
+  pad_list_.push_back(static_cast<int>(*(pads->begin() + PAD_RIGHT)));
+  pad_list_.push_back(static_cast<int>(*(pads->begin() + PAD_UP)));
+  pad_list_.push_back(static_cast<int>(*(pads->begin() + PAD_DOWN)));
+
+  MS_CHECK_TRUE_RET(strides->size() == DIMENSION_2D, RET_ERROR);
+  strides_.push_back(static_cast<int>(*(strides->begin() + 1)));
+  strides_.push_back(static_cast<int>(*(strides->begin())));
+  if (is_global) {
+    MS_CHECK_TRUE_RET(in_tensors_.at(0).Shape().size() == DIMENSION_4D, RET_ERROR);
+    kernel_size_.at(0) = in_tensors_.at(0).Shape().at(2);
+    kernel_size_.at(1) = in_tensors_.at(0).Shape().at(1);
+  } else if (kernel_size != nullptr && kernel_size->size() == DIMENSION_2D) {
+    kernel_size_.at(0) = static_cast<int>(*(kernel_size->begin()));
+    kernel_size_.at(1) = static_cast<int>(*(kernel_size->begin() + 1));
+  }
+  return RET_OK;
+}
+
 int NNAPIPooling::InitParams() {
+  bool is_global = false;
+  const flatbuffers::Vector<int64_t> *pads = nullptr;
+  const flatbuffers::Vector<int64_t> *strides = nullptr;
+  const flatbuffers::Vector<int64_t> *kernel_size = nullptr;
   if (type_ == schema::PrimitiveType_AvgPoolFusion) {
     auto pool = op_primitive_->value_as_AvgPoolFusion();
     MS_ASSERT(pool != nullptr);
     act_type_ = pool->activation_type();
-    MS_CHECK_TRUE_RET(pool->pad()->size() == DIMENSION_4D, RET_ERROR);
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_LEFT)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_RIGHT)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_UP)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_DOWN)));
-
-    MS_CHECK_TRUE_RET(pool->strides()->size() == DIMENSION_2D, RET_ERROR);
-    strides_.push_back(static_cast<int>(*(pool->strides()->begin() + 1)));
-    strides_.push_back(static_cast<int>(*(pool->strides()->begin())));
-    if (pool->global()) {
-      MS_CHECK_TRUE_RET(in_tensors_.at(0).Shape().size() == DIMENSION_4D, RET_ERROR);
-      kernel_size_.at(0) = in_tensors_.at(0).Shape().at(2);
-      kernel_size_.at(1) = in_tensors_.at(0).Shape().at(1);
-    } else if (pool->kernel_size() != nullptr && pool->kernel_size()->size() == DIMENSION_2D) {
-      kernel_size_.at(0) = static_cast<int>(*(pool->kernel_size()->begin()));
-      kernel_size_.at(1) = static_cast<int>(*(pool->kernel_size()->begin() + 1));
-    }
+    pads = pool->pad();
+    strides = pool->strides();
+    kernel_size = pool->kernel_size();
+    is_global = pool->global();
   } else {
     auto pool = op_primitive_->value_as_MaxPoolFusion();
     MS_ASSERT(pool != nullptr);
     act_type_ = pool->activation_type();
-    MS_CHECK_TRUE_RET(pool->pad()->size() == DIMENSION_4D, RET_ERROR);
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_LEFT)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_RIGHT)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_UP)));
-    pad_list_.push_back(static_cast<int>(*(pool->pad()->begin() + PAD_DOWN)));
-
-    MS_CHECK_TRUE_RET(pool->strides()->size() == DIMENSION_2D, RET_ERROR);
-    strides_.push_back(static_cast<int>(*(pool->strides()->begin() + 1)));
-    strides_.push_back(static_cast<int>(*(pool->strides()->begin())));
-
-    if (pool->kernel_size() != nullptr && pool->kernel_size()->size() == DIMENSION_2D) {
-      kernel_size_.at(0) = static_cast<int>(*(pool->kernel_size()->begin()));
-      kernel_size_.at(1) = static_cast<int>(*(pool->kernel_size()->begin() + 1));
-    }
+    pads = pool->pad();
+    strides = pool->strides();
+    kernel_size = pool->kernel_size();
+    is_global = pool->global();
   }
 
-  return RET_OK;
+  return SetPoolingParams(pads, strides, kernel_size, is_global);
 }
 
 int NNAPIPooling::AddOpToNNAPIModel(ANeuralNetworksModel *nnapi_model, std::vector<mindspore::MSTensor> *all_tensors) {
