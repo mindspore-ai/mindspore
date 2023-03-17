@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
+import re
 import operator
 import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 from mindspore import dtype as mstype
+from mindspore.common import mutable
+from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -402,3 +405,44 @@ def test_builtin_function_max_with_tensor_elements_in_two_tuple(mode):
     with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
         context.set_context(mode=mode)
         foo()
+
+
+def test_min_mutable():
+    """
+    Feature: Check the arg of min.
+    Description: Test max()/min() in graph mode.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def construct(self, x):
+            out = min(x)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    info = "The input of min() is not tensor, constant, list or tuple, it is not supported currently."
+    with pytest.raises(TypeError, match=re.escape(info)):
+        x = mutable(1)
+        net = Net()
+        out = net(x)
+        print(out)
+
+
+def test_max_mutable():
+    """
+    Feature: Check the arg of max.
+    Description: Test max()/min() in graph mode.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def construct(self, x, y):
+            out = max(x, y)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    info = "The input of max() is not tensor, constant, list or tuple, it is not supported currently."
+    with pytest.raises(TypeError, match=re.escape(info)):
+        x = mutable(1)
+        y = mutable(2)
+        net = Net()
+        out = net(x, y)
+        print(out)

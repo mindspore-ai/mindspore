@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2449,6 +2449,9 @@ def ms_max_one_element(x):
         if exist_tensor(x):
             const_utils.raise_type_error(
                 "max() cannot support tensor in list or tuple nested now.")
+    if not F.isconstant(x):
+        const_utils.raise_type_error("The input of max() is not tensor, constant, list or tuple, "
+                                     "it is not supported currently.")
     return max_(x)
 
 
@@ -2472,6 +2475,10 @@ def ms_max(*data):
         if exist_tensor(data):
             const_utils.raise_value_error(
                 "The truth value of an array with more than one element is ambiguous.")
+    for input_data in data:
+        if not F.isconstant(input_data):
+            const_utils.raise_type_error("The input of max() is not tensor, constant, list or tuple, "
+                                         "it is not supported currently.")
     return max_(*data)
 
 
@@ -2529,6 +2536,9 @@ def ms_min_one_element(x):
         if exist_tensor(x):
             const_utils.raise_type_error(
                 "min() cannot support tensor in list or tuple nested now.")
+    if not F.isconstant(x):
+        const_utils.raise_type_error("The input of min() is not tensor, constant, list or tuple, "
+                                     "it is not supported currently.")
     return min_(x)
 
 
@@ -2552,6 +2562,10 @@ def ms_min(*data):
         if exist_tensor(data):
             const_utils.raise_value_error(
                 "The truth value of an array with more than one element is ambiguous.")
+    for input_data in data:
+        if not F.isconstant(input_data):
+            const_utils.raise_type_error("The input of min() is not tensor, constant, list or tuple, "
+                                         "it is not supported currently.")
     return min_(*data)
 
 
