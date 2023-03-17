@@ -788,7 +788,9 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     } else {
       data_ = tensor.data_;
     }
-    id_ = tensor.id_;
+    if (!is_parameter_) {
+      id_ = tensor.id_;
+    }
     event_ = tensor.event_;
     need_wait_ = tensor.need_wait_;
     sync_status_ = tensor.sync_status_;
