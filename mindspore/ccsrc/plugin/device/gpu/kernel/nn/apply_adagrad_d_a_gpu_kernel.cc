@@ -87,7 +87,6 @@ int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_elements_ = 0;
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != KRET_OK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
     return ret;
   }
   std::vector<int64_t> var_shape = inputs.at(kVarIndex)->GetShapeVector();
@@ -227,7 +226,6 @@ void ApplyAdagradDAGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &
                                             const std::vector<KernelTensorPtr> &outputs) const {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
-  CheckShape(inputs, outputs);
   CheckDType(inputs, outputs);
 }
 
