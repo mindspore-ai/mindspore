@@ -179,6 +179,7 @@ TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<A
   (void)CheckAndConvertUtils::CheckTypeValid("seed", input_args[kInputIndex2]->BuildType(), valid_seed_types,
                                              prim_name);
   auto dtype_value = prim->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For RandomPoisson, the dtype of " + prim_name + " is invalid!";
   }
