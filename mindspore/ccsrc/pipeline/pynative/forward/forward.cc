@@ -139,6 +139,20 @@ void GetSingleOpGraphInfo(const FrontendOpRunInfoPtr &op_run_info, const std::st
   }
   op_run_info->base_op_run_info.graph_info = buf.str();
 }
+
+void UpdateStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &abs = op_run_info->base_op_run_info.abstract;
+  MS_EXCEPTION_IF_NULL(op_run_info->stub_output);
+  auto success = op_run_info->stub_output->SetAbstract(abs);
+  if (!success) {
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                            << PredictOutTypeByName(op_name) << ", infer type is " << abs->BuildType()
+                            << ", the name of operator is [" << op_name
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
+  MS_LOG(DEBUG) << "Update abstract " << abs->ToString() << " for StubNode " << op_run_info->stub_output->id();
+}
 }  // namespace
 
 std::string ForwardExecutor::device_target() const {
@@ -183,23 +197,19 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
   SetCastForInputs(op_run_info);
   // 2.Infer output abstract
   InferOutputAbstract(op_run_info);
-  // Update stub node abstract
-  const auto &abs = op_run_info->base_op_run_info.abstract;
-  auto success = op_run_info->stub_output->SetAbstract(abs);
-  if (!success) {
-    const auto &op_name = op_run_info->base_op_run_info.op_name;
-    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
-                            << PredictOutTypeByName(op_name) << ", infer type is " << abs->BuildType()
-                            << ", the name of operator is [" << op_name
-                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  if (!op_run_info->base_op_run_info.has_dynamic_output) {
+    // Output is dynamic shape, need to SetAbstract after RunOp.
+    UpdateStubNodeAbs(op_run_info);
   }
 
   // 3.Run op with selected backend
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
+  } else {
+    if (op_run_info->stub_output != nullptr) {
+      op_run_info->stub_output->SetValue(op_run_info->out_value);
+    }
   }
-
-  op_run_info->stub_output->SetValue(op_run_info->out_value);
 
   if (!op_run_info->grad_flag) {
     MS_LOG(DEBUG) << "Grad flag is false";
@@ -308,7 +318,13 @@ void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
       op_run_info->out_value = result_v_list->value().front();
     }
   }
-
+  // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
+  if (op_run_info->stub_output != nullptr) {
+    if (op_run_info->base_op_run_info.has_dynamic_output) {
+      UpdateStubNodeAbs(op_run_info);
+    }
+    op_run_info->stub_output->SetValue(op_run_info->out_value);
+  }
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
     op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
