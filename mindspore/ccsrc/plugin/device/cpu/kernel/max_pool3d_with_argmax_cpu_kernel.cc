@@ -158,7 +158,7 @@ bool MaxPool3DWithArgmaxCpuKernelMod::CheckIfLessZero(const std::vector<DATA_T> 
 
 void MaxPool3DWithArgmaxCpuKernelMod::CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height,
                                                      size_t k_depth, size_t p_depth) const {
-  if (k_width / kTwo < p_width && k_height / kTwo < p_height && k_depth / kTwo < p_depth) {
+  if (k_width / kTwo < p_width || k_height / kTwo < p_height || k_depth / kTwo < p_depth) {
     MS_EXCEPTION(ValueError) << "for " << kernel_name_
                              << ", pads should be smaller than or equal to half of kernel size, but the pads is ["
                              << p_depth << ", " << p_height << ", " << p_width << "], the kernel size is [" << k_depth

@@ -107,11 +107,18 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
       out_w--;
     }
   } else {
-    out_d = DoubleToLong(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1));
-    out_h =
-      DoubleToLong(std::floor((in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h) / stride_h + 1));
-    out_w =
-      DoubleToLong(std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
+    auto in_d_with_pad = in_d + pad_list[0] + pad_list[1];
+    auto in_h_with_pad = in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3];
+    auto in_w_with_pad = in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5];
+    if (!IsDynamic(in_shape) && (in_d_with_pad < kernel_d || in_h_with_pad < kernel_h || in_w_with_pad < kernel_w)) {
+      auto kernel_size = {kernel_d, kernel_h, kernel_w};
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << ", size of input with the padding is (D:" << in_d_with_pad
+                        << ", H:" << in_h_with_pad << ", W:" << in_w_with_pad << ") smaller than kernel size "
+                        << kernel_size;
+    }
+    out_d = DoubleToLong(std::floor((in_d_with_pad - kernel_d) / stride_d + 1));
+    out_h = DoubleToLong(std::floor((in_h_with_pad - kernel_h) / stride_h + 1));
+    out_w = DoubleToLong(std::floor((in_w_with_pad - kernel_w) / stride_w + 1));
   }
   if (IsDynamic(in_shape)) {
     out_d = in_d == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny : out_d;
@@ -198,7 +205,8 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   if (!IsDynamic(in_shape) &&
       std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', output shape's all elements must be positive, but got shape: " << out_shape << ".";
+                      << "', output shape's all elements must be positive, but got shape: " << out_shape << "."
+                      << "Please check input parameter!";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
