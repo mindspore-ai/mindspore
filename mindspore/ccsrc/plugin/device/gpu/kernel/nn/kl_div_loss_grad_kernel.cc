@@ -47,6 +47,7 @@ int KLDivLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return ret;
   }
   auto input_shape = inputs[kIndex1]->GetShapeVector();
+  input_size_ = 1;
   input_size_ *= SizeOf(input_shape);
   auto kl_div_loss_grad_ptr = std::dynamic_pointer_cast<ops::KLDivLossGrad>(base_operator);
   string reduction = kl_div_loss_grad_ptr->get_reduction();
