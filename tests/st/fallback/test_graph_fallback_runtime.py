@@ -189,9 +189,8 @@ def test_return_empty_dict_pyexecute():
     def dict_func():
         return {}
 
-    with pytest.raises(RuntimeError):
-        x = dict_func()
-        assert x == {}
+    x = dict_func()
+    assert x == {}
 
 
 @pytest.mark.level0
