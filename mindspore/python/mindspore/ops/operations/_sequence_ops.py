@@ -103,6 +103,67 @@ class ListAppendAndInsertGrad(Primitive):
         self.init_prim_io_names(inputs=['input_data', 'index'], outputs=['output_data'])
 
 
+class ShapeMulGrad(Primitive):
+    r"""
+    shape_mul grad.
+
+    .. note::
+        This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_data** (List) - The list for target to pop. Must be dynamic length sequence
+        - **dout** (Int) - The dout of shape_mul.
+
+    Outputs:
+        Dynamic length tuple.
+
+    Raises:
+        TypeError: The 'input_data' is not dynamic length list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppendAndInsertGrad"""
+        self.init_prim_io_names(inputs=['input_data', 'dout'], outputs=['output_data'])
+
+
+class shape_mul(Primitive):
+    r"""
+    shape_mul.
+
+    .. note::
+        This operation is used for dynamic length list and this it is only for internal used.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **input_data** (List) - The list to shape_mul. Must be dynamic length sequence
+
+    Outputs:
+        Scalar.
+
+    Raises:
+        TypeError: The 'input_data' is not dynamic length list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ListAppendAndInsertGrad"""
+        self.init_prim_io_names(inputs=['input_data'], outputs=['output_data'])
+
+    def __call__(self, input_data):
+        if not isinstance(input_data, tuple):
+            raise ValueError("For primitive [shape_mul], input must be tuple")
+        out = 1
+        for x in input_data:
+            out *= x
+        return out
+
+
 class SequenceSlice(Primitive):
     r"""
     Sequence slice operation.
