@@ -366,7 +366,7 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
 
   NodePtrList args(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
-    if (const_args_indices.find(i) != indices.end()) {
+    if (const_args_indices.find(static_cast<int64_t>(i)) != const_args_indices.end()) {
       args[i] = Value(const_args[i]);
     } else if (indices.find(static_cast<int64_t>(i)) == indices.end()) {
       args[i] = Emit("TensorShape", {inputs[i]});
