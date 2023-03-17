@@ -744,12 +744,12 @@ class Converter:
             raise RuntimeError(f"Converter model failed! Error is {ret.ToString()}")
 
     def get_config_info(self):
-        """
+        r"""
         Get config info of converter.It is used together with `set_config_info` method for online converter.
         Please use `set_config_info` method before `get_config_info` .
 
         Returns:
-            dict{str, dict{str, str}}, the config info which has been set in converter.
+            :obj:`dict{str: dict{str: str}}`, the config info which has been set in converter.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -764,7 +764,7 @@ class Converter:
         return self._converter.get_config_info()
 
     def set_config_info(self, section="", config_info=None):
-        """
+        r"""
         Set config info for Converter.It is used together with `get_config_info` method for online converter.
 
         Args:
@@ -785,7 +785,7 @@ class Converter:
                 - "data_preprocess_param": Data preprocess quantization parameter.
                 - "registry": Extension configuration parameter.
 
-            config_info (dict{str, str}, optional): List of configuration parameters.
+            config_info (:obj:`dict{str: str}`, optional): List of configuration parameters.
                 Set the individual parameters of the configfile together with `section` .
                 For example, for `section` = "common_quant_param", `config_info` = {"quant_type": "WEIGHT_QUANT"}.
                 Default: None, None is equivalent to {}.
