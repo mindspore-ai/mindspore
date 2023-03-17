@@ -4386,43 +4386,44 @@ def maximum(x, y):
     return maximum_(x, y)
 
 
-def fmin(x1, x2):
+def fmin(input, other):
     r"""
     Computes the minimum of input tensors element-wise.
 
     .. math::
-        output_i = min(x1_i, x2_i)
+        output_i = min(input_i, other_i)
 
     Note:
-        - Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
-        - Shapes of `x1` and `x2` should be able to broadcast.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+            consistent.
+        - Shapes of `input` and `other` should be able to broadcast.
         - If one of the elements to be compared is NaN, another element is returned.
 
     Args:
-        x1 (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
-        x2 (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        input (Tensor): The first tensor. The supported dtypes are: float16, float32, float64, int32, int64.
+        other (Tensor): The second tensor. The supported dtypes are: float16, float32, float64, int32, int64.
 
     Returns:
         A Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x1` or `x2` is not Tensor.
-        TypeError: If dtype of `x1` or `x2` is not one of: float16, float32, float64, int32, int64.
-        ValueError: If the shape of  `x1` and `x2` can not broadcast.
+        TypeError: If `input` or `other` is not Tensor.
+        TypeError: If dtype of `input` or `other` is not one of: float16, float32, float64, int32, int64.
+        ValueError: If the shape of  `input` and `other` can not broadcast.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
-        >>> x2 = Tensor(np.array([4.0, 2.0, 6.0]), mstype.float32)
-        >>> output = ops.fmin(x1, x2)
+        >>> input = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
+        >>> other = Tensor(np.array([4.0, 2.0, 6.0]), mstype.float32)
+        >>> output = ops.fmin(input, other)
         >>> print(output)
         [1. 2. 3.]
     """
     fmin_ = Fmin()
-    return fmin_(x1, x2)
+    return fmin_(input, other)
 
 
 def minimum(x, y):
@@ -5283,24 +5284,24 @@ def square(input):
     return square_(input)
 
 
-def outer(x1, x2):
+def outer(input, vec2):
     """
-    Return outer product of `x1` and `x2`. If `x1` is a vector of size :math:`n`
-    and `x2` is a vector of size :math:`m` , then output must be a matrix of shape :math:`(n, m)` .
+    Return outer product of `input` and `vec2`. If `input` is a vector of size :math:`n`
+    and `vec2` is a vector of size :math:`m` , then output must be a matrix of shape :math:`(n, m)` .
 
     Note:
         This function does not broadcast.
 
     Args:
-        x1 (Tensor): 1-D input vector.
-        x2 (Tensor): 1-D input vector.
+        input (Tensor): 1-D input vector.
+        vec2 (Tensor): 1-D input vector.
 
     Returns:
         out (Tensor, optional), 2-D matrix, the outer product of two vectors.
 
     Raises:
-        TypeError: If `x1` or `x2` is not a Tensor.
-        ValueError: If `x1` or `x2` is not an 1-D Tensor.
+        TypeError: If `input` or `vec2` is not a Tensor.
+        ValueError: If `input` or `vec2` is not an 1-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5310,26 +5311,26 @@ def outer(x1, x2):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore import ops
-        >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> x2 = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> out = ops.outer(x1, x2)
+        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> vec2 = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> out = ops.outer(input, vec2)
         >>> print(out)
         [[1 2 3]
          [2 4 6]
          [3 6 9]]
     """
 
-    if not isinstance(x1, (Tensor, Tensor_)):
-        raise TypeError("the input x1 must be Tensor!")
-    if not isinstance(x2, (Tensor, Tensor_)):
-        raise TypeError("the input x2 must be Tensor!")
-    if len(x1.shape) != 1:
-        raise ValueError("the input x1 must be a 1-D vector!")
-    if len(x2.shape) != 1:
-        raise ValueError("the input x2 must be a 1-D vector!")
-    x1 = x1.reshape(-1, 1)
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("the input input must be Tensor!")
+    if not isinstance(vec2, (Tensor, Tensor_)):
+        raise TypeError("the input vec2 must be Tensor!")
+    if len(input.shape) != 1:
+        raise ValueError("the input input must be a 1-D vector!")
+    if len(vec2.shape) != 1:
+        raise ValueError("the input vec2 must be a 1-D vector!")
+    input = input.reshape(-1, 1)
     mul_ops = _get_cache_prim(P.Mul)()
-    y = mul_ops(x1, x2)
+    y = mul_ops(input, vec2)
     return y
 
 
