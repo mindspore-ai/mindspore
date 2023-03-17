@@ -607,8 +607,8 @@ int MarkOriginDataType(const FuncGraphPtr &func_graph) {
     TypeId type_id = kTypeUnknown;
     auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
-      return ret;
+      MS_LOG(INFO) << "CNode data type is unknown.";
+      return RET_OK;
     }
     if (type_id != kTypeUnknown) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " origin type is " << type_id;
