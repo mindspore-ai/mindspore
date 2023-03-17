@@ -29,8 +29,10 @@ import atexit
 import glob
 import json
 import os
+import queue
 import signal
 import stat
+import subprocess
 
 import gc
 import time
@@ -2779,24 +2781,11 @@ class _PythonCallable:
         self.pool = pool
         # Python callable index
         self.idx = idx
-        self.check_interval = get_multiprocessing_timeout_interval()
 
     def __call__(self, *args):
         result = None
-        start_time = time.time()
-        count = 1
         get_data_from_worker_process = False
         while get_data_from_worker_process is False:
-            cost_time = time.time() - start_time
-            if cost_time > (self.check_interval * count):
-                logger.warning("It has been waiting for " + str(cost_time) + "s because the multi "
-                               "workers of map operation cost long time to process next data. "
-                               "Worker process list are: " + str(self.pool.get_pids()) + ", you can use "
-                               "\"py-spy dump -p {PID} -l -s \""
-                               "to dump the worker process stack. You can also set the timeout interval by "
-                               "ds.config.set_multiprocessing_interval to adjust the output frequency of this "
-                               "log.")
-                count += 1
             if self.pool.is_running() and check_iterator_cleanup() is False:
                 try:
                     result = self.pool.execute(self.idx, *args)
@@ -2838,7 +2827,11 @@ class Pipe:
         self.in_queue.put_nowait((func_index, *data))
 
     def master_receive(self):
-        return self.res_queue.get_until(timeout=1, exit_signal=self.eof)
+        if self.eof is None:
+            raise RuntimeError("EOF is none when get data from worker.")
+        if self.eof.is_set():
+            return None
+        return self.res_queue.get(timeout=1)
 
     def master_close(self):
         self.eof.set()
@@ -2921,14 +2914,42 @@ class _MPWorker(multiprocessing.Process):
     def __init__(self, operations, warning_ctl, max_rowsize=16, seed=get_seed()):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
+        self.check_interval = get_multiprocessing_timeout_interval()
         super().__init__(target=worker_target(operations, seed), args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
+        """Acquiring data from a worker in an infinite loop"""
         self.pipe.master_send(idx, args)
-        res = self.pipe.master_receive()
-        if isinstance(res, ExceptionHandler):
-            res.reraise()
-        return res
+        time_s = time.time()
+        wait_count = 1
+        while True:
+            cost_time = time.time() - time_s
+            if cost_time / self.check_interval >= wait_count:
+                wait_count += 1
+                logger.warning("It has been waiting for " + "%.3f" % cost_time + "s because the sub-process "
+                               "worker of the map operation is hanging. "
+                               "Check whether the user defined data transform is too slow or the "
+                               "output data is too large. You can also set the timeout interval by "
+                               "ds.config.set_multiprocessing_timeout_interval to adjust the output frequency "
+                               "of this log.")
+                pid = self.pid
+                logger.warning("Map worker subprocess ID {} is stuck.".format(pid))
+                install_status, _ = subprocess.getstatusoutput("py-spy --version")
+                if install_status == 0:
+                    stack = subprocess.getoutput("py-spy dump -p {} -l".format(pid))
+                    logger.warning("Map worker subprocess stack:\n{}".format(stack))
+                else:
+                    logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
+            try:
+                res = self.pipe.master_receive()
+            except queue.Empty:
+                continue
+            if res is None:
+                # receive finish signal
+                return None
+            if isinstance(res, ExceptionHandler):
+                res.reraise()
+            return res
 
     def close(self):
         try:
