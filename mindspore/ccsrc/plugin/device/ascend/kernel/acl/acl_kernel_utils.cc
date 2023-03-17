@@ -77,7 +77,8 @@ static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
   {prim::kPrimOneHotD->name(), {0, 2, 3}},     {prim::kPrimAvgPool->name(), {0, -1, -1}},
   {prim::kPrimMaximumGrad->name(), {1, 2, 0}}, {prim::kPrimMinimumGrad->name(), {1, 2, 0}},
-  {prim::kPrimInplaceUpdateD->name(), {0, 2}}, {prim::kPrimDeformableOffsets->name(), {0, 1, -1}}};
+  {prim::kPrimInplaceUpdateD->name(), {0, 2}}, {prim::kPrimDeformableOffsets->name(), {0, 1, -1}},
+  {prim::kPrimInplaceAddD->name(), {0, 2}}};
 
 static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
