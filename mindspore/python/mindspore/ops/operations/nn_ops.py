@@ -7691,31 +7691,36 @@ class AvgPool3D(Primitive):
 
 class Conv3D(Primitive):
     r"""
-    3D convolution layer.
-
-    Applies a 3D convolution over an input tensor which is typically of shape
+    Applies a 3D convolution over an input tensor. The input tensor is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
     :math:`D` is depth, :math:`H` is height, :math:`W` is width.
     the formula is defined as:
 
     .. math::
-
         \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
         \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
         \operatorname{input}\left(N_{i}, k\right))
 
-    where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
+    where :math:`k` is kernel,
+    :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
+    :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
+    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    is a convolution kernel slice with shape
+    :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are
+    the depth, height and width of the convolution kernel respectively. :math:`\text{bias}` is the bias parameter
+    and :math:`\text{X}` is the input tensor.
+    The shape of full convolution kernel is
+    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
+    where `group` is the number of groups to split the input `x` in the channel dimension.
 
-    If the 'pad_mode' is set to be "valid", the output depth, height and width will be
-    :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
-    (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
-    (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
-    :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
-    :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
-    :math:`padding` is zero-padding added to both sides of the input.
+    For more details, please refer to the paper `Gradient Based Learning Applied to Document
+    Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ .
+
+    Note:
+        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
+        That is, when `group>1`, condition `C_{in}` = `C_{out}` = `group` must be satisfied.
 
     Args:
         out_channel (int): The number of output channel :math:`C_{out}`.
@@ -7724,10 +7729,10 @@ class Conv3D(Primitive):
             of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
             width of the kernel.
         mode (int): Modes for different convolutions. It is currently not used. Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): Specifies padding mode. The optional values are
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str, optional): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be equal to
@@ -7747,15 +7752,13 @@ class Conv3D(Primitive):
                     head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
-        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-                                      :math:`(dilation_d, dilation_h, dilation_w)`.
-                                      Currently, dilation on depth only supports the case of 1.
-                                      Specifies the dilation rate to use for dilated convolution.
-                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
-                                      for each sampling location. Its value must be greater than or equal to 1 and
-                                      bounded by the height and width of the input. Default: 1.
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by the number of groups. Default: 1. Only 1 is currently supported.
+        dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
+            on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location.
+            Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
+        group (int): group (int, optional):Splits filter into groups, `in_channels` and `out_channels` must be
+            divisible by `group`. Default: 1.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
@@ -7768,6 +7771,39 @@ class Conv3D(Primitive):
 
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+
+        `pad_mode` is 'same':
+
+        .. math::
+            \begin{array}{ll} \\
+                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+            \end{array}
+
+        `pad_mode` is 'valid':
+
+        .. math::
+            \begin{array}{ll} \\
+                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                {\text{stride[0]}} + 1} \right \rfloor \\
+                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                {\text{stride[1]}} + 1} \right \rfloor \\
+                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                {\text{stride[2]}} + 1} \right \rfloor \\
+            \end{array}
+
+        `pad_mode` is 'pad':
+
+        .. math::
+            \begin{array}{ll} \\
+                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
+                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
+                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
+            \end{array}
 
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
