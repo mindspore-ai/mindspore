@@ -179,11 +179,11 @@ uint32_t OneHotCpuKernel::OneHotParamCheck(CpuKernelContext &ctx) {
   auto depth_shape = depth->GetTensorShape();
   auto on_value_shape = on_value->GetTensorShape();
   auto off_value_shape = off_value->GetTensorShape();
-  KERNEL_CHECK_FALSE((depth_shape->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((depth_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "Depth must be a scalar, actual dim num is %d.", depth_shape->GetDims())
-  KERNEL_CHECK_FALSE((on_value_shape->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((on_value_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "On_value must be a scalar, actual dim num is %d.", on_value_shape->GetDims())
-  KERNEL_CHECK_FALSE((off_value_shape->GetDims() == 0), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((off_value_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
                      "Off_value must be a scalar , actual dim num is %d.", off_value_shape->GetDims())
   int32_t output_dims = indices->GetTensorShape()->GetDims() + 1;
   KERNEL_CHECK_FALSE(((axis > -2 && axis < output_dims)), KERNEL_STATUS_PARAM_INVALID,

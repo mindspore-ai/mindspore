@@ -381,9 +381,10 @@ def _create_tensor(x_shape):
 def get_bprop_fractional_avg_pool(self):
     """Grad definition for `FractionalAvgPool` operation."""
     fractional_avg_pool_grad = FractionalAvgPoolGrad(overlapping=self.overlapping)
+    shape_op = P.Shape()
 
     def bprop(x, out, dout):
-        dx = fractional_avg_pool_grad(_create_tensor(x.shape), dout[0], out[1], out[2])
+        dx = fractional_avg_pool_grad(_create_tensor(shape_op(x)), dout[0], out[1], out[2])
         return (dx,)
 
     return bprop

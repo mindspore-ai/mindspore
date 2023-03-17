@@ -80,9 +80,9 @@ uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(CpuKernelConte
                      "Input x dimensions must be equal, but are [%lld] and [%lld].", shape_x[shape_size_x - kIndexTwo],
                      shape_x[shape_size_x - 1])
 
-  KERNEL_CHECK_FALSE((shape_size_sign == shape_size_x - kIndexTwo), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_size_sign <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
                      "Output sign must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_sign)
-  KERNEL_CHECK_FALSE((shape_size_y == shape_size_x - kIndexTwo), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((shape_size_y <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
                      "Output y must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_y)
   for (size_t i = 0; i < shape_size_x - kIndexTwo; i++) {
     KERNEL_CHECK_FALSE((shape_sign[i] == shape_x[i]), KERNEL_STATUS_PARAM_INVALID,
