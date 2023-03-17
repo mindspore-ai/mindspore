@@ -6,7 +6,7 @@ mindspore.ops.BesselK0
     逐元素计算输入数据的BesselK0函数值。
 
     输入：
-        - **x** (Tensor) - 任意维度的Tensor。数据类型应为float16、float32或float64。
+        - **x** (Tensor) - 输入Tensor。数据类型应为float16、float32或float64。
 
     输出：
         Tensor，shape和数据类型与 `x` 相同。

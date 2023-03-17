@@ -5059,8 +5059,7 @@ class BesselI0(Primitive):
     Computes BesselI0 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5090,8 +5089,7 @@ class BesselI1(Primitive):
     Computes BesselI1 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16 or float32.
 
     Outputs:
@@ -5128,8 +5126,7 @@ class BesselI0e(Primitive):
     where bessel_i0 is Bessel function of the first kind with 0 order.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5168,8 +5165,7 @@ class BesselI1e(Primitive):
     where bessel_i1 is Bessel function of the first kind with 1 order.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16 or float32, float64.
 
     Outputs:
@@ -5201,8 +5197,7 @@ class BesselK0(Primitive):
     Computes BesselK0 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
 
     Outputs:
@@ -5232,8 +5227,7 @@ class BesselK1(Primitive):
     Computes BesselK1 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
 
     Outputs:
@@ -5263,8 +5257,7 @@ class BesselK0e(Primitive):
     Computes BesselK0e of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
 
     Outputs:
@@ -5294,8 +5287,7 @@ class BesselK1e(Primitive):
     Computes BesselK1e of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
 
     Outputs:
@@ -5325,8 +5317,7 @@ class BesselJ0(Primitive):
     Computes BesselJ0 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5357,8 +5348,7 @@ class BesselJ1(Primitive):
     Computes BesselJ1 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5389,8 +5379,7 @@ class BesselY0(Primitive):
     Computes BesselY0 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
@@ -5421,8 +5410,7 @@ class BesselY1(Primitive):
     Computes BesselY1 of input element-wise.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
 
     Outputs:
