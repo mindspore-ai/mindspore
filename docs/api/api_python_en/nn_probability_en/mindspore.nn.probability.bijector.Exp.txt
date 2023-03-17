@@ -10,7 +10,7 @@
 
 .. py:method:: forward_log_jacobian(value)
 
-    compute the log value after mapping, namely :math:`\log(d\exp(x) / dx)`.
+    compute the log value after mapping.
 
     Parameters
         - **value** (Tensor) - the value to compute.
@@ -30,7 +30,7 @@
 
 .. py:method:: inverse_log_jacobian(value)
 
-    Compute the log value of the inverse mapping, namely :math:`\log(d\log(x) / dx)`.
+    Compute the log value of the inverse mapping.
 
     Parameters
         - **value** (Tensor) - the value of output after mapping.

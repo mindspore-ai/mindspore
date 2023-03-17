@@ -26,7 +26,7 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Exponential(Distribution):
     r"""
     Exponential Distribution.
-    An Exponential distributio is a continuous distribution with the range :math:`[0, 1]`
+    An Exponential distributio is a continuous distribution with the range :math:`[0, \inf)`
     and the probability density function:
 
     .. math::

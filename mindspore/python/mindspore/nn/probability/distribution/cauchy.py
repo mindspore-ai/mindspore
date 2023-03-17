@@ -26,7 +26,7 @@ from ._utils.custom_ops import exp_generic, log_generic, log1p_generic
 class Cauchy(Distribution):
     r"""
     Cauchy distribution.
-    A Cauchy distributio is a continuous distribution with the range :math:`[0, 1]`
+    A Cauchy distributio is a continuous distribution with the range of all real numbers
     and the probability density function:
 
     .. math::
