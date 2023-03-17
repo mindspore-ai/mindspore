@@ -50,6 +50,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {MAX_POOL_WITH_ARGMAX, OperatorType::kRecPooling},
   {SIMPLE_MEAN, OperatorType::kRecPooling},
   {RESHAPE, OperatorType::kRecReshape},
+  {FLATTEN, OperatorType::kRecReshape},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {LAYER_NORM, OperatorType::kRecBatchNorm},
@@ -279,8 +280,9 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &o
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names) {
   std::shared_ptr<Graph> graph = std::make_shared<Graph>();
-  if (ops.size() > SIZE_MAX / 2) {
-    MS_LOG(EXCEPTION) << "Total number of operators is bigger than " << SIZE_MAX / 2;
+  constexpr size_t MAX_OP_NUM = SIZE_MAX / 2;
+  if (ops.size() > MAX_OP_NUM) {
+    MS_LOG(EXCEPTION) << "Total number of operators is bigger than " << MAX_OP_NUM;
   }
 
   for (size_t iter_ops = 0; iter_ops < ops.size(); iter_ops++) {
