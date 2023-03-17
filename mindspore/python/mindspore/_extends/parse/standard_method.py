@@ -41,7 +41,8 @@ from ...ops.operations import _csr_ops
 from ...ops.operations import _map_tensor_ops
 from ...ops.primitive import constexpr, _primexpr
 from ...common import dtype as mstype
-from ...ops.operations._sequence_ops import ListAppend, ListInsert, SequenceMax, SequenceMin
+from ...ops.operations._sequence_ops import ListAppend, ListInsert, SequenceMax, SequenceMin, \
+    SequenceIndex
 
 __all__ = ['MultitypeFuncGraph', 'env_get',
            'hyper_add', 'zeros_like', 'ones_like']
@@ -3290,6 +3291,15 @@ def renorm(input_x, p, dim, maxnorm):
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
     """
     return F.renorm(input_x, p, dim, maxnorm)
+
+
+def sequence_index(sequence, target, start=None, end=None):
+    """Implementation of `tuple_index`."""
+    if start is None:
+        start = 0
+    if end is None:
+        end = len(sequence)
+    return SequenceIndex()(sequence, target, start, end)
 
 
 def list_bool(x):

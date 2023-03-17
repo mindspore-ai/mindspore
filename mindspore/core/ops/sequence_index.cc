@@ -51,7 +51,7 @@ class SequenceIndexInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    const size_t input_num = 2;
+    const size_t input_num = 4;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     for (const auto &item : input_args) {
@@ -59,6 +59,8 @@ class SequenceIndexInfer : public abstract::OpInferBase {
     }
     constexpr size_t seq_index = 0;
     constexpr size_t target_index = 1;
+    constexpr size_t start_index = 2;
+    constexpr size_t end_index = 3;
     auto input_abs = input_args[seq_index];
     auto target_abs = input_args[target_index];
     if (!input_abs->isa<abstract::AbstractSequence>()) {
@@ -70,14 +72,35 @@ class SequenceIndexInfer : public abstract::OpInferBase {
       return nullptr;
     }
     auto target_value = target_abs->BuildValue();
-    if (seq_abs->BuildValue() == kAnyValue || target_value == kAnyValue) {
+    auto start_build_value = input_args[start_index]->BuildValue();
+    auto end_build_value = input_args[end_index]->BuildValue();
+    if (seq_abs->BuildValue() == kAnyValue || target_value == kAnyValue || start_build_value == kAnyValue ||
+        end_build_value == kAnyValue) {
       return nullptr;
     }
+
+    if (!(start_build_value->isa<Int64Imm>() || end_build_value->isa<Int64Imm>())) {
+      MS_EXCEPTION(TypeError) << "slice indices must be integers";
+    }
+
+    int64_t start_value = GetValue<int64_t>(start_build_value);
+    int64_t end_value = GetValue<int64_t>(end_build_value);
     const auto &seq_elements = seq_abs->elements();
-    for (size_t i = 0; i < seq_elements.size(); ++i) {
+    int64_t seq_len = SizeToLong(seq_elements.size());
+    int64_t zero_num = 0;
+    if (start_value < zero_num) {
+      start_value += seq_len;
+      start_value = std::max(zero_num, start_value);
+    }
+    if (end_value < zero_num) {
+      end_value += seq_len;
+      end_value = std::max(zero_num, end_value);
+    }
+
+    for (int64_t i = start_value; i < std::min(end_value, seq_len); ++i) {
       auto element = seq_elements[i];
       if (CheckAndConvertUtils::CheckValueSame(target_value, element->BuildValue())) {
-        return MakeValue(static_cast<int64_t>(i));
+        return MakeValue(SizeToLong(i));
       }
     }
     MS_EXCEPTION(ValueError) << target_value->ToString() << " is not in " << seq_abs->ToString();

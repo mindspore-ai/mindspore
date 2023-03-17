@@ -81,8 +81,8 @@ def get_bprop_slice(self):
 def get_bprop_index(self):
     """Generate bprop for SequenceIndex"""
 
-    def bprop(x, y, out, dout):
-        return (zeros_like(x), zeros_like(y))
+    def bprop(x, y, start, end, out, dout):
+        return (zeros_like(x), zeros_like(y), zeros_like(start), zeros_like(end))
 
     return bprop
 
@@ -192,7 +192,7 @@ def get_bprop_max_min(self):
     """Generate bprop for SequenceMax and SequenceMax"""
 
     def bprop(x, out, dout):
-        index = seq.SequenceIndex()(x, out)
+        index = x.index(out)
         if isinstance(x, tuple):
             dx = tuple_setitem(zeros_like(x), index, dout)
         else:

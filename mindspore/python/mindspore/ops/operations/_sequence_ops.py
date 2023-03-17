@@ -437,6 +437,8 @@ class SequenceIndex(Primitive):
     Inputs:
         - **sequence** (Union[List, Tuple]) - The sequence to find the index value of the first occurrence.
         - **target** (Any Object) - The target element to find in sequence.
+        - **start** (Integer) - The start index to find in sequence.
+        - **end** (Integer) - The end index to find in sequence.
 
     Outputs:
         Integer, the index value of the first occurrence of the target element.
@@ -450,7 +452,7 @@ class SequenceIndex(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SequenceIndex"""
-        self.init_prim_io_names(inputs=['sequence', 'target'], outputs=['output_data'])
+        self.init_prim_io_names(inputs=['sequence', 'target', 'start', 'end'], outputs=['output_data'])
 
 
 class SequenceMul(Primitive):
