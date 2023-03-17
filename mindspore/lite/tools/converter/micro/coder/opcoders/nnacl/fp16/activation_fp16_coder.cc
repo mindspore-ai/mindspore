@@ -31,6 +31,7 @@ int ActivationFP16Coder::Prepare(CoderContext *const context) {
 int ActivationFP16Coder::DoCode(CoderContext *const context) {
   // attribute
   auto *activation_parameter = reinterpret_cast<ActivationParameter *>(parameter_);
+  MS_CHECK_PTR(activation_parameter);
   int count = input_tensor_->ElementsNum();
   Collect(context,
           {

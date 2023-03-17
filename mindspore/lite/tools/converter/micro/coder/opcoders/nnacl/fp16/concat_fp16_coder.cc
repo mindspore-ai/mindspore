@@ -29,6 +29,7 @@ int ConcatFP16Coder::Prepare(CoderContext *const context) {
     return lite::RET_INPUT_PARAM_INVALID;
   }
   concat_param_ = reinterpret_cast<ConcatParameter *>(parameter_);
+  MS_CHECK_PTR(concat_param_);
   return ReSize();
 }
 

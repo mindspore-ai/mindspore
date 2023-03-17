@@ -35,7 +35,7 @@ int TransposeFp16Coder::Prepare(CoderContext *const context) {
 void TransposeFp16Coder::GetNHNCTransposeFunc() {
   auto out_shape = output_tensor_->shape();
   if (input_tensor_->shape().size() == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kTwo &&
-      param_->perm_[kTwo] == kThree && param_->perm_[kThree] == 1) {
+      param_->perm_[kTwo] == kThree && param_->perm_[kThree] == 1 && out_shape.size() >= kThree) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[1] * out_shape[kTwo];
     nhnc_param_[kTwo] = out_shape[kThree];
@@ -44,7 +44,7 @@ void TransposeFp16Coder::GetNHNCTransposeFunc() {
     }
   }
   if (input_tensor_->shape().size() == DIMENSION_4D && param_->perm_[0] == 0 && param_->perm_[1] == kThree &&
-      param_->perm_[kTwo] == 1 && param_->perm_[kThree] == kTwo) {
+      param_->perm_[kTwo] == 1 && param_->perm_[kThree] == kTwo && out_shape.size() >= kThree) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[kTwo] * out_shape[kThree];
     nhnc_param_[kTwo] = out_shape[1];

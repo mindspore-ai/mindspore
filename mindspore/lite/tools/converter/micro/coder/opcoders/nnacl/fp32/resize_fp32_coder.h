@@ -27,7 +27,7 @@
 #include "src/litert/kernel/cpu/fp32/resize_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ResizeFP32Coder final : public ResizeBaseCoder {
+class ResizeFP32Coder : public ResizeBaseCoder {
  public:
   ResizeFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const LiteGraph::Node *node, size_t node_index, Target target)
@@ -37,12 +37,13 @@ class ResizeFP32Coder final : public ResizeBaseCoder {
   int ReSize();
   int DoCode(CoderContext *const context) override;
 
- private:
+ protected:
   int SelectCalculatorFunc();
   void CalTmpBufferLen();
   int MallocTmpBuffer();
   void FreeTmpBuffer();
   int ResizePrepare();
+  virtual int DataTypeLen() { return sizeof(float); }
 
   ResizeCoordinate coordinate_;
   size_t x_len_{0};
