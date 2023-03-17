@@ -1058,12 +1058,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)
 
-    def ger(self, other):
+    def ger(self, vec2):
         """
         For details, please refer to :func:`mindspore.ops.ger`.
         """
         self._init_check()
-        return tensor_operator_registry.get('ger')(self, other)
+        return tensor_operator_registry.get('ger')(self, vec2)
 
     def gt(self, x):
         """

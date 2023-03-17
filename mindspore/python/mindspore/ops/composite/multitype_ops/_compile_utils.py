@@ -460,7 +460,7 @@ def tensor_index_by_tensor(data, tensor_index):
     if const_utils.check_type_isinstance(F.dtype(tensor_index), mstype.Bool):
         return tensor_index_by_bool_tensor(data, tensor_index)
     exp_msg = const_utils.gen_exception_msg(
-        "The tensor index must be int type, but got {}.", F.dtype(tensor_index))
+        "The tensor index must be int or bool type, but got {}.", F.dtype(tensor_index))
     const_utils.raise_index_error(exp_msg)
     return data
 
@@ -653,7 +653,7 @@ def _tensor_getitem_by_tuple_parse_tensor_index(index, tuple_index_new, tensor_i
             tensor_indexes.append(sub_index)
     else:
         exp_msg = const_utils.gen_exception_msg(
-            "The tensor element in tuple index must be int type, but got {}.", F.dtype(index))
+            "The tensor element in tuple index must be int or bool type, but got {}.", F.dtype(index))
         const_utils.raise_index_error(exp_msg)
     return tuple_index_new, tensor_indexes, tensor_positions_new
 
@@ -775,7 +775,7 @@ def _generate_indices_from_tuple(data, tuple_index, op_name, fancy_position):
             invalid = const_utils.check_type_invalid(F.dtype(index), mstype.int_type)
             if invalid:
                 exp_msg = const_utils.gen_exception_msg(
-                    "The tensor element in tuple index must be int type, but got {}.", F.dtype(index))
+                    "The tensor element in tuple index must be int or bool type, but got {}.", F.dtype(index))
                 const_utils.raise_index_error(exp_msg)
             tensor_index = F.cast(index, mstype.int64)
             tuple_index_new += (tensor_index,)

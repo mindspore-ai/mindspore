@@ -1326,10 +1326,10 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
     return search_sorted_(sorted_sequence, values)
 
 
-def ger(input, other):
+def ger(input, vec2):
     r"""
-    Ger product of `input` and `other`. Calculate the outer product of two arrays. If `input` is a 1D Tensor of
-    shape :math:`(m,)` and `other` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
+    Ger product of `input` and `vec2`. Calculate the outer product of two arrays. If `input` is a 1D Tensor of
+    shape :math:`(m,)` and `vec2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
     :math:`(m, n)`.
 
     Note:
@@ -1337,31 +1337,31 @@ def ger(input, other):
 
     Args:
         input (Tensor): input Tensor, with dtype of float16, float32 or float64.
-        other (Tensor): input Tensor, with dtype of float16, float32 or float64, must have the same dtype as `input`.
+        vec2 (Tensor): input Tensor, with dtype of float16, float32 or float64, must have the same dtype as `input`.
 
     Returns:
         Tensor, output matrix with the same dtype as inputs. With `input` shape :math:`(m,)` and
-        `other` shape of :math:`(n,)`, the `output` has shape :math:`(m, n)`.
+        `vec2` shape of :math:`(n,)`, the `output` has shape :math:`(m, n)`.
 
     Raises:
-        TypeError: If `input` or `other` is not a 1-D Tensor.
-        TypeError: If the dtype of `input` and `other` is not float16, float32 or float64.
-        TypeError: If the dtype of `input` and `other` are not the same.
+        TypeError: If `input` or `vec2` is not a 1-D Tensor.
+        TypeError: If the dtype of `input` and `vec2` is not float16, float32 or float64.
+        TypeError: If the dtype of `input` and `vec2` are not the same.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor([1., 2., 3., 4.], mindspore.float32)
-        >>> other = Tensor([1., 2., 3.], mindspore.float32)
-        >>> output = ops.ger(input, other)
+        >>> vec2 = Tensor([1., 2., 3.], mindspore.float32)
+        >>> output = ops.ger(input, vec2)
         >>> print(output)
         [[ 1.  2.  3.]
          [ 2.  4.  6.]
          [ 3.  6.  9.]
          [ 4.  8. 12.]]
     """
-    return ger_(input, other)
+    return ger_(input, vec2)
 
 
 def size(input_x):  # pylint: disable=redefined-outer-name

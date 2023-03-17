@@ -4474,7 +4474,7 @@ def median(input, axis=-1, keepdims=False):
     return Median(False, axis, keepdims)(input)
 
 
-def orgqr(input, tau):
+def orgqr(input, input2):
     r"""
     Calculates the explicit representation of the orthogonal matrix :math:`Q`
     returned by :class:`mindspore.ops.Geqrf`.
@@ -4497,19 +4497,19 @@ def orgqr(input, tau):
     Args:
         input (Tensor): Tensor of shape :math:`(*, M, N)`, indicating 2D or 3D matrices,
             with float32, float64, complex64 and complex128 data type.
-        tau (Tensor): Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
+        input2 (Tensor): Tensor of shape :math:`(*, K)`, where `K` is less than or equal to `N`, indicating the
             reflecting coefficient in Householder transformation, which have the same type as `input`.
 
     Returns:
         Tensor, has the same shape and data type as `input`.
 
     Raises:
-        TypeError: If `input` or `tau` are not Tensors.
-        TypeError: If dtype of `input` and `tau` is not one of: float64, float32, complex64, complex128.
-        ValueError: If `input` and `tau` have different batch size.
+        TypeError: If `input` or `input2` are not Tensors.
+        TypeError: If dtype of `input` and `input2` is not one of: float64, float32, complex64, complex128.
+        ValueError: If `input` and `input2` have different batch size.
         ValueError: If input.shape[-2] < input.shape[-1].
-        ValueError: If input.shape[-1] < tau.shape[-1].
-        ValueError: If rank(input) - rank(tau) != 1.
+        ValueError: If input.shape[-1] < input2.shape[-1].
+        ValueError: If rank(input) - rank(input2) != 1.
         ValueError: If rank(input) != 2 or 3.
 
     Supported Platforms:
@@ -4518,9 +4518,9 @@ def orgqr(input, tau):
     Examples:
         >>> input = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]),
         ... mindspore.float32)
-        >>> tau = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
+        >>> input2 = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
         >>> net = ops.orgqr()
-        >>> y = net(input, tau)
+        >>> y = net(input, input2)
         >>> print(y)
         [[-0.54999995 -0.2128925   0.8137956 ]
          [ 0.47119996 -0.8752807   0.08240613]
@@ -4528,7 +4528,7 @@ def orgqr(input, tau):
     """
 
     orgqr_ = Orgqr()
-    return orgqr_(x, tau)
+    return orgqr_(input, input2)
 
 
 def hypot(input, other):
