@@ -111,6 +111,11 @@ void BpropExpander::PostProcess() const {
   while (!que.empty()) {
     auto node = que.front();
     que.pop();
+
+    if (IsPrimitiveCNode(node, prim::kPrimShapeCalc)) {
+      MS_LOG(EXCEPTION) << "ShapeCalc donot support in pynative mode.";
+    }
+
     for (size_t i = 1; i < node->size(); ++i) {
       const auto &inp = node->input(i);
       // record parameter's and dout's user
