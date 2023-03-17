@@ -218,6 +218,7 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
       SetAtomicCleanToNodes(graph, node_atomics_);  // graph mode may can do it too, instead of update execorder
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+      graph->PrintGraphExecuteOrder();
       AssignOutputNopNodeDeviceAddress(graph, device_context_);
       LaunchDeviceLibrary();
     } else {
