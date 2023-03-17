@@ -438,15 +438,21 @@ def _tensor_index_by_integer(data, int_index):
     return strided_slice(data, begin_strides, end_strides, step_strides, begin_mask, end_mask, 0, 0, shrink_axis_mask)
 
 
-def tensor_index_by_bool_tensor(data, tensor_index):
-    """Tensor getitem by a bool tensor"""
+@_primexpr
+def _check_dim_shape_valid(data, tensor_index):
+    """check dim and shape of tensor_index for tensor(bool) indexing"""
     if data.ndim < tensor_index.ndim:
         const_utils.raise_index_error(f"The dim of index cannot be greater than indexed data, but got "
                                       f"dim of index:{tensor_index.ndim}, dim of data:{data.ndim}")
-    for dim in range(tensor_index.ndim):
-        if data.shape[dim] != tensor_index.shape[dim]:
-            const_utils.raise_index_error(f"The shape of index {tensor_index.shape} does not match the shape "
-                                          f"of the indexed data {data.shape} at dim {dim}")
+    if data.shape[:tensor_index.ndim] != tensor_index.shape[:]:
+        const_utils.raise_index_error(f"The shape of index {tensor_index.shape} does not match the shape "
+                                      f"of the indexed data {data.shape}")
+    return True
+
+
+def tensor_index_by_bool_tensor(data, tensor_index):
+    """Tensor getitem by a bool tensor"""
+    _check_dim_shape_valid(data, tensor_index)
     tensor_index = tensor_index.nonzero()
     return F.gather_nd(data, tensor_index)
 
@@ -920,13 +926,7 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
 
 def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     """Set a tensor item by a bool tensor with a tensor."""
-    if data.ndim < index.ndim:
-        const_utils.raise_index_error(f"The dim of index cannot be greater than indexed data, but got "
-                                      f"dim of index:{index.ndim}, dim of data:{data.ndim}")
-    for dim in range(index.ndim):
-        if data.shape[dim] != index.shape[dim]:
-            const_utils.raise_index_error(f"The shape of index {index.shape} does not match the shape "
-                                          f"of the indexed data {data.shape} at dim {dim}")
+    _check_dim_shape_valid(data, index)
     value = F.cast(value, F.dtype(data))
     indices = index.nonzero()
     if indices.shape[0] == 0:
