@@ -280,17 +280,9 @@ std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const
 }
 
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim) const {
-  if (shape->isa<ValueNode>() && axis->isa<ValueNode>()) {
-    auto shape_node = shape->get<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(shape_node);
-    auto shape_v = shape_node->value();
-    MS_EXCEPTION_IF_NULL(shape_v);
-    auto shape_value = GetValue<ShapeVector>(shape_v);
-    auto axis_node = axis->get<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(axis_node);
-    auto axis_v = axis_node->value();
-    MS_EXCEPTION_IF_NULL(axis_v);
-    auto axis_value = GetValue<ShapeVector>(axis_v);
+  auto [shape_success, shape_value] = GetIntList(shape);
+  auto [axis_success, axis_value] = GetIntList(axis);
+  if (shape_success && axis_success) {
     return NeedReduce(shape_value, axis_value, keep_dim);
   }
   ShapeVector v;
