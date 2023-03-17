@@ -1112,7 +1112,7 @@ void UpdateInputForHighPrecisionOp(const CNodePtr &kernel_node,
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
-    MS_LOG(INFO) << "No kAttrMutableKernel found, cannot set ACL_KERNEL for " << kernel_node->DebugString();
+    MS_LOG(DEBUG) << "No kAttrMutableKernel found, cannot set ACL_KERNEL for " << kernel_node->DebugString();
     return;
   }
 
@@ -1175,7 +1175,7 @@ void SetDynamicInputSizeAttrBeforeKernelSelect(const CNodePtr &cnode) {
 void RefreshDynamicInputSizeAttr(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    MS_LOG(INFO) << "Node has not set kAttrDynInputSizes yet, node: " << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "Node has not set kAttrDynInputSizes yet, node: " << cnode->fullname_with_scope();
     return;
   }
   std::vector<int64_t> dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
