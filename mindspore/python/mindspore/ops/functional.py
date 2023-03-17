@@ -22,7 +22,7 @@ from mindspore.ops.function import *
 from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
@@ -117,7 +117,7 @@ switch_layer = Primitive('switch_layer')
 # for sum bprop
 reduced_shape = Primitive("reduced_shape")
 # shape_mul:input must be shape multiply elements in tuple(shape)
-shape_mul = Primitive("shape_mul")
+shape_mul = _sequence_ops.shape_mul()
 
 tensor_operator_registry.register('add', P.Add)
 tensor_operator_registry.register('addr', addr)

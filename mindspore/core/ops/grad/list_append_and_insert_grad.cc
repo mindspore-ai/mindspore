@@ -74,12 +74,12 @@ AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
   if (index_value->isa<Int64Imm>()) {
     index = GetValue<int64_t>(index_value);
   } else {
-    index = static_cast<int64_t>(GetValue<int32_t>(index_value));
+    index = IntToLong(GetValue<int32_t>(index_value));
   }
-  if (index < -static_cast<int64_t>(elements.size()) || index >= static_cast<int64_t>(elements.size())) {
+  if (index < -SizeToLong(elements.size()) || index >= SizeToLong(elements.size())) {
     MS_EXCEPTION(ValueError) << "The prim '" << prim_name << "', pop index[" << index << "] out of range.";
   }
-  index = index < 0 ? index + static_cast<int64_t>(elements.size()) : index;
+  index = index < 0 ? index + SizeToLong(elements.size()) : index;
   abs.erase(abs.begin() + index);
   return std::make_shared<abstract::AbstractList>(abs);
 }
