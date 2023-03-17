@@ -54,7 +54,7 @@
 #endif
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
-#include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "external/acl/error_codes/rt_error_codes.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/comm_manager.h"

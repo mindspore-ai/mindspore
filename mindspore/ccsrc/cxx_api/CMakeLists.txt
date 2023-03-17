@@ -25,7 +25,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 if(ENABLE_D OR ENABLE_ACL)
     # build 910 and 310 code into one distro, files needed for 310 mode
     add_compile_definitions(ENABLE_ACL)
-    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
+    include_directories(${GRAPHENGINE_PATH}/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 endif()
 

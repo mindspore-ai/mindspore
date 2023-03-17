@@ -39,6 +39,7 @@ init_default_options()
   export COMPILE_MINDDATA_LITE="lite_cv"
   export ENABLE_MPI="off"
   export CUDA_VERSION="10.1"
+  export ASCEND_VERSION="910"
   export COMPILE_LITE="off"
   export LITE_PLATFORM=""
   export LITE_ENABLE_AAR="off"

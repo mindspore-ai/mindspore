@@ -223,7 +223,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     endif()
 
     if(MSLITE_ENABLE_ACL)
-        include_directories(${TOP_DIR}/graphengine/inc/external)
+        include_directories(${TOP_DIR}/graphengine/910/inc/external)
         add_subdirectory(kernel/ascend)
         add_subdirectory(delegate/ascend_ge)
     endif()

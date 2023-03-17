@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "utils/log_adapter.h"
-#include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "external/acl/error_codes/rt_error_codes.h"
 #include "runtime/event.h"
 #include "runtime/stream.h"
 
