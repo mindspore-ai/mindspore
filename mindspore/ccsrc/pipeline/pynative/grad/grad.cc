@@ -68,15 +68,14 @@ std::string GetCellId(const py::object &obj, const py::args &args, const InputAr
   };
 
   const auto &forward = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor();
-  const auto &node_abs_map = forward->NodeAbsMap();
   bool id_not_exist = (input_args_info == nullptr);
   for (size_t i = 0; i < args.size(); ++i) {
     const auto &arg_id =
       id_not_exist ? PyNativeAlgo::PyParser::GetIdByPyObj(args[i]) : input_args_info->input_arg_id_vec[i];
     // Find in step process
-    const auto it = node_abs_map.find(arg_id);
-    if (it != node_abs_map.end()) {
-      fn(it->second);
+    auto cache_abs = forward->GetNodeAbsById(arg_id);
+    if (cache_abs != nullptr) {
+      fn(cache_abs);
     } else {
       auto abs = PyNativeAlgo::DataConvert::PyObjToValue(args[i], true)->ToAbstract();
       fn(abs);

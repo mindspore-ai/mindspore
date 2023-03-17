@@ -18,6 +18,7 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace pynative {
@@ -162,10 +163,10 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
                                                            const ValueSequencePtr &tuple_value, size_t input_index,
                                                            bool marked_const) {
   if (!marked_const) {
-    auto iter = node_abs_cache_.find(op_run_info->input_value_id[input_index]);
-    if (iter != node_abs_cache_.end()) {
+    auto cache_abs = GetNodeAbsById(op_run_info->input_value_id[input_index]);
+    if (cache_abs != nullptr) {
       MS_LOG(DEBUG) << "The abstract of tuple input " << input_index << " hits cache.";
-      return iter->second;
+      return cache_abs;
     }
   }
   // Create abstract list for tuple input.
@@ -192,10 +193,10 @@ AbstractBasePtr InferOperation::GetInputTupleValueAbstract(const FrontendOpRunIn
 AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t input_index,
                                                    const std::string &input_id, bool marked_const) {
   if (!marked_const) {
-    auto iter = node_abs_cache_.find(input_id);
-    if (iter != node_abs_cache_.end()) {
+    auto cache_abs = GetNodeAbsById(input_id);
+    if (cache_abs != nullptr) {
       MS_LOG(DEBUG) << "The abstract of input " << input_index << " hits cache.";
-      return iter->second;
+      return cache_abs;
     }
   }
   // Get abstract by input value.
@@ -203,7 +204,7 @@ AbstractBasePtr InferOperation::GetAbstractByValue(const ValuePtr &value, size_t
   const auto &abs = value->ToAbstract();
   if (!marked_const) {
     if (value->isa<tensor::Tensor>() || value->isa<mindspore::Type>()) {
-      node_abs_cache_[input_id] = PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs);
+      SetNodeAbsById(input_id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
     }
   }
   return abs;
@@ -305,8 +306,8 @@ std::vector<bool> InferOperation::CheckPrimitiveConstFlag(const FrontendOpRunInf
 }
 
 void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info) {
-  node_abs_cache_[op_run_info->out_value_id] =
-    PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->base_op_run_info.abstract);
+  SetNodeAbsById(op_run_info->out_value_id,
+                 PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->base_op_run_info.abstract));
   // If value is a `value tuple` or `value list`, cache the abstract of each element value.
   if (op_run_info->out_value->isa<ValueSequence>()) {
     const auto &seq_value = op_run_info->out_value->cast<ValueSequencePtr>();
@@ -322,12 +323,13 @@ void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_i
       return;
     }
     for (size_t i = 0; i < num; ++i) {
-      node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_elems[i])] = abs_elems[i];
+      SetNodeAbsById(PyNativeAlgo::Common::GetIdByValue(value_elems[i]), abs_elems[i]);
     }
   }
   // If Just call run op and have no cell or function running, node_abs_cache_ will not be clear.
   // So, set a threshold for clear it.
   if (only_single_op_run_ && node_abs_cache_.size() > kCacheThreshold) {
+    std::unique_lock lock(abs_mutex_);
     node_abs_cache_.clear();
   }
 }
@@ -339,12 +341,28 @@ void InferOperation::SaveSpecifiedOutputToCache(const std::string &op_name, cons
   }
   // BatchNormal forward only use first output
   if (op_name == kBatchNormOpName) {
-    node_abs_cache_[PyNativeAlgo::Common::GetIdByValue(value_list[0])] = abs_list[0];
+    SetNodeAbsById(PyNativeAlgo::Common::GetIdByValue(value_list[0]), abs_list[0]);
   }
 }
 
 void InferOperation::SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs) {
-  node_abs_cache_[id] = PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs);
+  SetNodeAbsById(id, PyNativeAlgo::Common::SetAbstractValueToAnyValue(abs));
+}
+
+AbstractBasePtr InferOperation::GetNodeAbsById(const std::string &id) const {
+  // GetNodeAbsById is used in NewGraph, need to release gil to avoid deadlock.
+  GilReleaseWithCheck release_gil;
+  std::shared_lock lock(abs_mutex_);
+  auto iter = node_abs_cache_.find(id);
+  if (iter == node_abs_cache_.end()) {
+    return nullptr;
+  }
+  return iter->second;
+}
+
+void InferOperation::SetNodeAbsById(const std::string &id, const abstract::AbstractBasePtr &abs) {
+  std::unique_lock lock(abs_mutex_);
+  node_abs_cache_[id] = abs;
 }
 
 py::object InferOperation::CallConstantFolding(const py::args &args) const {
