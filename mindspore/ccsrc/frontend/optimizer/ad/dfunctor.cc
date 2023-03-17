@@ -709,6 +709,7 @@ void DFunctor::MapValueObject() {
     AdjointPtr adjoint = nullptr;
     if (IsValueNode<Primitive>(node)) {  // Primitive.
       auto prim = GetValuePtr<Primitive>(node);
+      MS_EXCEPTION_IF_NULL(prim);
       if ((prim->Hash() == prim::kPrimReturn->hash() && prim->name() == prim::kPrimReturn->name()) ||
           (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) ||
           (prim->Hash() == prim::kPrimCellBackwardHook->Hash() &&

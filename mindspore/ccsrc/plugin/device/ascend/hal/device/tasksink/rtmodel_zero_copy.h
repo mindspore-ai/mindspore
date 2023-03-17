@@ -61,6 +61,7 @@ class ParameterZeroCopyTask : public ZeroCopyTask {
   ParameterZeroCopyTask(const AnfNodeWeakPtr &anf_node, void *args_base, size_t args_offset,
                         const std::string &task_name)
       : ZeroCopyTask(anf_node, args_base, args_offset, task_name) {}
+  ~ParameterZeroCopyTask() override = default;
   void *GetAddressPtr() override;
 };
 
@@ -69,6 +70,7 @@ class ValueNodeZeroCopyTask : public ZeroCopyTask {
   ValueNodeZeroCopyTask(const AnfNodeWeakPtr &anf_node, void *args_base, size_t args_offset,
                         const std::string &task_name)
       : ZeroCopyTask(anf_node, args_base, args_offset, task_name) {}
+  ~ValueNodeZeroCopyTask() override = default;
   void *GetAddressPtr() override;
 };
 

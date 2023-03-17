@@ -132,7 +132,7 @@ struct GlobalWorkspace {
 struct KernelJsonInfo {
   std::string bin_file_name;
   std::string bin_file_suffix;
-  uint32_t block_dim;
+  uint32_t block_dim{0};
   std::string kernel_name;
   std::string magic;
   std::vector<size_t> parameters;
@@ -140,15 +140,15 @@ struct KernelJsonInfo {
   std::vector<size_t> workspaces_type;
   std::vector<size_t> workspaces;
   GlobalWorkspace global_workspace;
-  bool has_kernel_list = false;
-  uint32_t op_para_size;
-  int32_t KBHit;
-  uint32_t mode_in_args_first_field;
-  uint32_t batch_bind_only;
-  uint32_t task_ration;
+  bool has_kernel_list{false};
+  uint32_t op_para_size{0};
+  int32_t KBHit{0};
+  uint32_t mode_in_args_first_field{0};
+  uint32_t batch_bind_only{0};
+  uint32_t task_ration{0};
   std::string core_type;
   std::vector<std::vector<size_t>> args_remap;
-  KernelJsonInfo() : block_dim(0), op_para_size(0) {}
+  KernelJsonInfo() {}
 };
 
 class BACKEND_EXPORT KernelPack {

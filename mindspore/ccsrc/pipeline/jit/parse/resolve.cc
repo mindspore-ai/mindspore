@@ -75,6 +75,11 @@ struct AnfDumpHandlerRegister {
 } callback_register;
 }  // namespace
 
+PyObjectWrapper::~PyObjectWrapper() {
+  py::gil_scoped_acquire acquire_gil;
+  obj_ = nullptr;
+}
+
 abstract::AbstractBasePtr MsClassObject::ToAbstract() {
   py::gil_scoped_acquire acquire;
   auto abs_scalar =
