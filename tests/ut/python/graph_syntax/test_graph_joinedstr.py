@@ -14,10 +14,7 @@
 # ============================================================================
 """ test graph joinedstr """
 import numpy as np
-import mindspore.nn as nn
 from mindspore import Tensor, jit, context
-import mindspore.ops as ops
-import mindspore.ops.operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -93,33 +90,4 @@ def test_joinedstr_inner_tensor():
         return res
 
     out = joined_net()
-    assert str(
-        out) == "x: (1, 2, 3, 4, 5), inner_tensor_1: [1 2 3 4 5], inner_tensor_2: 2"
-
-
-def test_joinedstr_dynamic_shape_scalar():
-    """
-    Feature: Support joinedstr.
-    Description: dynamic shape is scalar in joined str.
-    Expectation: No exception.
-    """
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.unique = P.Unique()
-            self.gather = P.Gather()
-            self.axis = 0
-            self.shape = ops.Shape()
-
-        def construct(self, x, indices):
-            unique_indices, _ = self.unique(indices)
-            x = self.gather(x, unique_indices, self.axis)
-            x_shape = self.shape(x)
-            print(f"x.shape:{x_shape}")
-            return x_shape
-
-    input_np = Tensor(np.random.randn(5, 4).astype(np.float32))
-    indices_np = Tensor(np.random.randint(0, 3, size=3))
-    net = Net()
-    out = net(input_np, indices_np)
-    print("out:", out)
+    assert out == "x: (1, 2, 3, 4, 5), inner_tensor_1: [1 2 3 4 5], inner_tensor_2: 2"

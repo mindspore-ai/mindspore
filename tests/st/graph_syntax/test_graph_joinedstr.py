@@ -15,7 +15,9 @@
 """ test graph joinedstr """
 import pytest
 import numpy as np
-from mindspore import Tensor, jit, context
+from mindspore import Tensor, jit, context, nn
+import mindspore.ops as ops
+import mindspore.ops.operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -37,10 +39,10 @@ def test_joinedstr_basic_variable_gpu():
             res = f"res: {x}"
         return res
 
-    with pytest.raises(RuntimeError, match="Invalid value:res:"):
-        input_x = Tensor(np.array([1, 2, 3, 4, 5]))
-        out = joined_net(input_x, input_x)
-        print("out:", out)
+    input_x = Tensor(np.array([1, 2, 3, 4, 5]))
+    out = joined_net(input_x, input_x)
+    result_tensor = Tensor(np.array([1, 2, 3, 4, 5]))
+    assert out == f"res: {result_tensor}"
 
 
 @pytest.mark.level0
@@ -61,11 +63,11 @@ def test_joinedstr_basic_variable_ascend():
             res = f"res: {x}"
         return res
 
-    with pytest.raises(RuntimeError) as v:
-        input_x = Tensor(np.array([1, 2, 3, 4, 5]))
-        out = joined_net(input_x, input_x)
-        assert out == "x: [1, 2, 3, 4, 5]"
-    assert "Illegal input dtype: String" in str(v.value)
+
+    input_x = Tensor(np.array([1, 2, 3, 4, 5]))
+    out = joined_net(input_x, input_x)
+    assert out == "res: [1 2 3 4 5]"
+
 
 
 @pytest.mark.level0
@@ -89,7 +91,7 @@ def test_joinedstr_basic_variable_2():
 
     input_x = Tensor(np.array([1, 2, 3, 4, 5]))
     out = joined_net(input_x, input_x)
-    assert str(out) == "(Tensor(shape=[5], dtype=Int64, value= [1, 2, 3, 4, 5]),)"
+    assert str(out) == "[1 2 3 4 5]"
 
 
 @pytest.mark.level0
@@ -109,4 +111,40 @@ def test_joinedstr_out_tensor():
 
     input_x = Tensor([1, 2, 3])
     out = joined_net(input_x)
-    assert str(out) == "('x: ', Tensor(shape=[3], dtype=Int64, value= [1, 2, 3]))"
+    assert str(out) == "x: [1 2 3]"
+
+
+@pytest.mark.skip("the print output when I6WM9U has been resolved."
+                  "otherwise the print may cause sync stream error because the data has not been sync to device")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_joinedstr_dynamic_shape_scalar():
+    """
+    Feature: Support joinedstr.
+    Description: dynamic shape is scalar in joined str.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.unique = P.Unique()
+            self.gather = P.Gather()
+            self.axis = 0
+            self.shape = ops.Shape()
+
+        def construct(self, x, indices):
+            unique_indices, _ = self.unique(indices)
+            x = self.gather(x, unique_indices, self.axis)
+            x_shape = self.shape(x)
+            # TODO(@lianliguang): Check the print output when I6WM9U has been resolved
+            print(f"x.shape:{x_shape}")
+            return x_shape
+
+    input_np = Tensor(np.random.randn(5, 4).astype(np.float32))
+    indices_np = Tensor(np.random.randint(0, 3, size=3))
+    net = Net()
+    out = net(input_np, indices_np)
+    print("out:", out)

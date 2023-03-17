@@ -1552,7 +1552,7 @@ GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmap
 GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelect));
 GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>("call"));
 GVAR_DEF(PrimitivePtr, kPrimRaise, std::make_shared<Primitive>("raise"));
-GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("joinedstr"));
+GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("JoinedStr"));
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 
 GVAR_DEF(PrimitivePtr, kPrimMakeTuple, std::make_shared<Primitive>(kMakeTuple));

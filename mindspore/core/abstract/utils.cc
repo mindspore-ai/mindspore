@@ -265,7 +265,7 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
       return abs_scalar;
     }
     return MakeAbstractTensor(shape, type);
-  } else if (base_shape->isa<NoShape>() && type->isa<Number>()) {
+  } else if (base_shape->isa<NoShape>() && type->isa<Type>()) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, type);
   } else if (base_shape->isa<TupleShape>() && type->isa<Tuple>()) {
     auto shape_tuple = base_shape->cast_ptr<TupleShape>();
