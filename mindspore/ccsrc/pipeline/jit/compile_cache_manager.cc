@@ -46,21 +46,8 @@ constexpr char kRolePServer[] = "pserver_";
 constexpr char kRolePScheduler[] = "pscheduler_";
 constexpr char kGroupCkptFileName[] = "group.ckpt";
 
-std::string GetUserDefinedCachePath() {
-  auto user_defined_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
-  if (!user_defined_path.empty()) {
-    user_defined_path += "/";
-    return user_defined_path;
-  }
-  user_defined_path = common::GetEnv("MS_COMPILER_CACHE_PATH");
-  if (!user_defined_path.empty()) {
-    user_defined_path += "/";
-  }
-  return user_defined_path;
-}
-
 std::string GetCompileCacheDir() {
-  static const std::string user_defined_path = GetUserDefinedCachePath();
+  static const std::string user_defined_path = Common::GetUserDefineCachePath();
   static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
   static const std::string compile_cache_dir =
     user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
