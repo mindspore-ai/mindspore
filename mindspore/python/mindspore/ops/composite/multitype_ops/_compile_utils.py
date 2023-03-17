@@ -707,7 +707,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
             slice_indexes.append(slice_ele_list_index)
     tensor_indexes_shapes = hyper_map(F.shape, tensor_indexes)
     broadcast_shape, index_tensor_new_shape, final_shape, fancy_position = \
-        const_utils.generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_indexes_shapes,
+        const_utils.generate_index_info_from_tuple_of_mixed_tensors(tensor_positions_new, tensor_indexes_shapes,
                                                                     slice_shapes, op_name)
 
     tuple_index_len = len(tuple_index)
@@ -1241,24 +1241,22 @@ def format_tuple_indices(tuple_indices):
 
 
 @_primexpr
-def remove_expanded_dims_parse_tensor_index(index_out, indices_out, shapes, has_sequence, cur_dim):
+def remove_expanded_dims_parse_tensor_index(index_out, indices_out, shapes, cur_dim):
     """ Parse tensor_index """
     if index_out.dtype == mstype.bool_:
         index_out = index_out.nonzero()
         if index_out.shape[0] == 0:
-            return cur_dim, has_sequence, None
+            return None, shapes, cur_dim
         for i in range(index_out.shape[1]):
             out = index_out[:, i]
             indices_out += (out,)
             shapes.append(F.shape(out))
             cur_dim += 1
     else:
-        if F.rank(index_out) > 0:
-            has_sequence = True
         indices_out += (index_out,)
         shapes.append(F.shape(index_out))
         cur_dim += 1
-    return cur_dim, has_sequence, indices_out
+    return indices_out, shapes, cur_dim
 
 
 def remove_expanded_dims(tuple_index, data_shape, value):
@@ -1291,11 +1289,12 @@ def remove_expanded_dims(tuple_index, data_shape, value):
                 idx_advanced = 0
             idx_tensor = i
             if isinstance(index_out, Tensor):
-                cur_dim, has_sequence, indices_out = \
-                    remove_expanded_dims_parse_tensor_index(index_out, indices_out,
-                                                            shapes, has_sequence, cur_dim)
+                indices_out, shapes, cur_dim = \
+                    remove_expanded_dims_parse_tensor_index(index_out, indices_out, shapes, cur_dim)
                 if indices_out is None:
                     return False, value, 0
+                if index_out.dtype != mstype.bool_ and F.rank(index_out) > 0:
+                    has_sequence = True
             has_true = has_true or index_out is True
             has_false = has_false or index_out is False
         else:
