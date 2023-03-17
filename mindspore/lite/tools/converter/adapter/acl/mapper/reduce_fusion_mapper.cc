@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr auto kNameReduceMinInputNum = 2;
 constexpr auto kNameReduceInputNum = 3;
 }  // namespace
 
@@ -85,18 +86,31 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   if (mode == static_cast<int64_t>(ReduceMode::Reduce_Mean)) {
     return lite::RET_OK;
   }
-  if (AdjustInput(cnode) != RET_OK) {
+  if (AdjustInput(cnode, dst_prim) != RET_OK) {
     MS_LOG(ERROR) << "Adjust reduce input failed.";
     return lite::RET_ERROR;
   }
   return RET_OK;
 }
 
-STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode) {
-  if (cnode->size() != kNameReduceInputNum) {
-    MS_LOG(ERROR) << "Input size of reduce must be " << kNameReduceInputNum << ", real size: " << cnode->size();
-    return lite::RET_ERROR;
+STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  MS_ASSERT(cnode != nullptr && prim != nullptr);
+  if (cnode->size() == kNameReduceMinInputNum) {
+    auto func_graph = cnode->func_graph();
+    CHECK_NULL_RETURN(func_graph);
+    auto attr_val = prim->GetAttr(ops::kMode);
+    CHECK_NULL_RETURN(attr_val);
+    int64_t mode = GetValue<int64_t>(attr_val);
+    auto attr_name = mode != static_cast<int64_t>(ReduceMode::Reduce_Prod) ? ops::kAxes : ops::kKeepDims;
+    auto ret = mode != static_cast<int64_t>(ReduceMode::Reduce_Prod)
+                 ? AddIntVecAttrToInput(func_graph, cnode, prim, attr_name)
+                 : AddIntAttrToInput(func_graph, cnode, prim, attr_name, true);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Add attr " << attr_name << " failed for cnode: " << cnode->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
   }
+
   auto axes_input = cnode->input(kNameReduceInputNum - 1);
   CHECK_NULL_RETURN(axes_input);
   if (!utils::isa<ParameterPtr>(axes_input)) {
