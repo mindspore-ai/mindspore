@@ -647,7 +647,7 @@ REG_BPROP_BUILDER("IndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib)
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
   auto axis = ib->EmitValue(ib->GetAttr(kAttrAxis));
-  auto dy = ib->Emit(kGatherOpName, {dout, indices, axis});
+  auto dy = ib->Gather(dout, indices, axis);
   return {dout, ib->ZerosLike(indices), dy};
 });
 

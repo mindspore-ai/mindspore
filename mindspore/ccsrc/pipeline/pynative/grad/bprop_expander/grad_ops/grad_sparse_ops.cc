@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ NodePtrList CommonSparseSegmentBpropDefault(const BpropIRBuilder *ib, bool with_
   auto shape_x = ib->GetShape(x);
   auto output_dim0 = ib->Cast(ib->Tensor(shape_x[0]), kInt32);
   segment_ids = ib->Cast(segment_ids, kInt32);
-  auto input0 = ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0, kInt64)});
+  auto input0 = ib->Gather(dout, segment_ids, ib->Tensor(0, kInt64));
   input0 = ib->Cast(input0, kFloat32);
   indices = ib->Cast(indices, kInt32);
   auto dx = ib->Emit("UnsortedSegmentSum", {input0, indices, output_dim0});
@@ -200,13 +200,13 @@ REG_BPROP_BUILDER("SparseTensorDenseMatmul").SetUnusedInputs({i4}).SetBody(BODYF
   auto zero = ib->Value<int64_t>(0);
   NodePtr parts_a = nullptr;
   if (adj_s) {
-    parts_a = ib->Emit("Gather", {dout, cols, zero});
+    parts_a = ib->Gather(dout, cols, zero);
   } else {
-    parts_a = ib->Emit("Gather", {dout, rows, zero});
+    parts_a = ib->Gather(dout, rows, zero);
   }
   NodePtr tmp1 = adj_d ? ib->Transpose(dense, perm) : dense;
   NodePtr tmp2 = adj_s ? rows : cols;
-  auto parts_b = ib->Emit("Gather", {tmp1, tmp2, zero});
+  auto parts_b = ib->Gather(tmp1, tmp2, zero);
   auto values_grad = ib->ReduceSum(parts_a * parts_b, {axis});
   if (is_half) {
     values_grad = ib->Cast(values_grad, kFloat16);
@@ -268,8 +268,8 @@ REG_BPROP_BUILDER("CSRMV").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   auto rows_transposed = ib->Cast(ib->TupleGetItem(sort_res, 0), idx_dtype);
   auto cols_indexing = ib->TupleGetItem(sort_res, 1);
   auto zero = ib->Value<int64_t>(0);
-  auto cols_transposed = ib->Emit("Gather", {rows, cols_indexing, zero});
-  auto values_transposed = ib->Emit("Gather", {values, cols_indexing, zero});
+  auto cols_transposed = ib->Gather(rows, cols_indexing, zero);
+  auto values_transposed = ib->Gather(values, cols_indexing, zero);
   auto dense_shape_vec = GetIntList(dense_shape);
   auto indptr_transposed = ib->Emit("COO2CSR", {rows_transposed, ib->Value(dense_shape_vec.at(1))});
   NodePtr t1 = nullptr;
@@ -277,8 +277,8 @@ REG_BPROP_BUILDER("CSRMV").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   std::tie(t1, t2) = PromoteTensor(ib, values_transposed, dout);
   ShapeVector sh{dense_shape_vec.at(1), dense_shape_vec.at(0)};
   auto dense_grad = ib->Emit("CSRMV", {indptr_transposed, cols_transposed, t1, ib->Value(sh), t2});
-  auto parts_a = ib->Emit("Gather", {dout, rows, zero});
-  auto parts_b = ib->Emit("Gather", {dense, indices, zero});
+  auto parts_a = ib->Gather(dout, rows, zero);
+  auto parts_b = ib->Gather(dense, indices, zero);
   auto values_grad = ib->ReduceSum(parts_a * parts_b, {1});
   return {ib->ZerosLike(indptr), ib->ZerosLike(indices), values_grad, ib->ZerosLike(zero), dense_grad};
 });
@@ -566,10 +566,9 @@ REG_BPROP_BUILDER("SparseReorder").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib
   constexpr int64_t gather_axis = 0;
   auto inverted_permutation = ib->Emit("Sort", {ib->Cast(ib->TupleGetItem(output, 1), kFloat32)},
                                        {{"axis", MakeValue(sort_axis)}, {"descending", MakeValue(false)}});
-  auto res = {
-    ib->ZerosLike(indices),
-    ib->Emit("Gather", {ib->TupleGetItem(dout, 1), ib->TupleGetItem(inverted_permutation, 1), ib->Value(gather_axis)}),
-    ib->ZerosLike(shape)};
+  auto res = {ib->ZerosLike(indices),
+              ib->Gather(ib->TupleGetItem(dout, 1), ib->TupleGetItem(inverted_permutation, 1), ib->Value(gather_axis)),
+              ib->ZerosLike(shape)};
   return res;
 });
 

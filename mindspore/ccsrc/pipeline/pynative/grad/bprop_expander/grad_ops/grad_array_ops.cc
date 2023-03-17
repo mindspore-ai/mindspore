@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
   if (zero_clipped_indices_param == nullptr) {
     zero_clipped_indices = ib->Maximum(ids, ib->ZerosLike(ids));
   }
-  auto gathered = ib->Emit("Gather", {params, zero_clipped_indices, ib->Tensor(0, kInt64)});
+  auto gathered = ib->Gather(params, zero_clipped_indices, 0);
 
   NodePtr is_positive = is_positive_param;
   if (is_positive_param == nullptr) {
@@ -56,11 +56,13 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
         return {res_shape};
       };
       auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-        if (!invalid_indices.empty()) {
+        auto gather = inputs.at(0);
+        auto is_pos = inputs.at(1);
+        if (!invalid_indices.empty() || IsDynamicRank(gather) || IsDynamicRank(is_pos)) {
           return {-1};
         }
-        auto gather_rank = inputs.at(0).size();
-        auto is_pos_rank = inputs.at(1).size();
+        auto gather_rank = gather.size();
+        auto is_pos_rank = is_pos.size();
         return {SizeToLong(std::max(gather_rank, is_pos_rank))};
       };
 
@@ -115,13 +117,13 @@ NodePtrList SegmentMinOrMaxGrad(const BpropIRBuilder *ib) {
     dout = ib->Cast(dout, kFloat32);
   }
   auto zero_value = ib->Value<int64_t>(0);
-  auto gathered_outputs = ib->Emit("Gather", {output, segment_ids, zero_value});
+  auto gathered_outputs = ib->Gather(output, segment_ids, zero_value);
   auto is_selected = ib->Equal(input_x, gathered_outputs);
   const int64_t max_len = 1000000;
   auto num_selected =
     ib->Emit("SegmentSum", {ib->Cast(is_selected, kFloat32), segment_ids}, {{"max_length", MakeValue(max_len)}});
   auto weighted_grads = ib->Div(dout, num_selected);
-  auto gathered_grads = ib->Emit("Gather", {weighted_grads, segment_ids, zero_value});
+  auto gathered_grads = ib->Gather(weighted_grads, segment_ids, zero_value);
   auto dx = ib->Select(is_selected, gathered_grads, ib->ZerosLike(input_x));
   if (input_x_type->type_id() != kNumberTypeFloat32) {
     dx = ib->Cast(dx, input_x_type);
@@ -138,8 +140,8 @@ NodePtrList TensorScatterPossibleReplacement(const BpropIRBuilder *ib) {
   auto x_indicators = ib->Cast(ib->Equal(x, out), kInt32);
   auto possibly_updated = ib->Emit("GatherNd", {out, indices});
   auto out_indicators = ib->Cast(ib->Equal(updates, possibly_updated), kInt32);
-  auto input_shape = ib->GetShape(x);
-  auto scattered_out_indicators = ib->Emit("ScatterNd", {indices, out_indicators, ib->Tensor(input_shape)});
+  auto input_shape = ib->Shape(x, true);
+  auto scattered_out_indicators = ib->Emit("ScatterNd", {indices, out_indicators, input_shape});
   auto indicators = ib->Add(x_indicators, scattered_out_indicators);
   auto dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),
                         (ib->Cast(indicators, ib->GetDtype(dout))));
@@ -177,13 +179,15 @@ ShapeVector RegenerateOutputInferFunc(const ShapeArray &inputs, const std::unord
   constexpr size_t inputs_num = 4;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 4.");
 
-  if (!invalid_indices.empty()) {
+  auto x = inputs.at(0);
+  auto indices = inputs.at(1);
+  auto batch_dims = inputs.at(3);
+  if (!invalid_indices.empty() || IsDynamicRank(x) || IsDynamicRank(indices) || IsDynamicRank(batch_dims)) {
     return {-1};
   }
 
-  auto x_rank = inputs.at(0).size();
-  auto indices_rank = inputs.at(1).size();
-  auto batch_dims = inputs.at(3);
+  auto x_rank = x.size();
+  auto indices_rank = indices.size();
   MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
   auto batch_dims_value = batch_dims[0];
 
@@ -228,7 +232,7 @@ ShapeArray Perm1ShapeFunc(const ShapeArray &inputs) {
 }
 
 ShapeVector PermInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) {
-  if (!invalid_indices.empty()) {
+  if (!invalid_indices.empty() || IsDynamicRank(inputs.at(0))) {
     return {-1};
   }
 
@@ -317,19 +321,24 @@ ShapeVector GatherReshapeInferFunc(const ShapeArray &inputs, const std::unordere
   constexpr size_t inputs_num = 5;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 5.");
 
+  auto values = inputs.at(0);
+  auto indices = inputs.at(1);
+  auto params_grad = inputs.at(2);
+  auto batch_dims = inputs.at(4);
+
   constexpr size_t return_num = 4;
-  if (!invalid_indices.empty()) {
+  if (!invalid_indices.empty() || IsDynamicRank(values) || IsDynamicRank(indices) || IsDynamicRank(params_grad) ||
+      IsDynamicRank(batch_dims)) {
     return ShapeVector(return_num, -1);
   }
 
-  auto batch_dims = inputs.at(4);
   MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
   auto batch_dims_value = batch_dims[0];
 
-  auto values_rank = SizeToLong(inputs.at(0).size()) - batch_dims_value + 1;
-  auto indices_rank = SizeToLong(inputs.at(1).size()) - batch_dims_value + 1;
+  auto values_rank = SizeToLong(values.size()) - batch_dims_value + 1;
+  auto indices_rank = SizeToLong(indices.size()) - batch_dims_value + 1;
   auto delta_rank = indices_rank;
-  auto params_grad_rank = SizeToLong(inputs.at(2).size());
+  auto params_grad_rank = SizeToLong(params_grad.size());
 
   ShapeVector res = {values_rank, indices_rank, delta_rank, params_grad_rank};
   return res;
@@ -569,7 +578,7 @@ REG_BPROP_BUILDER("GatherDGrad").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) 
   auto i_after = ib->Mul(i, ib->Tensor(dim_at_axis_output * dim_after_axis, index_type));
   auto read_id = ib->Add((ib->Add(i_after, (ib->Mul(j_read_reshape, ib->Tensor(dim_after_axis, index_type))))), k);
   auto dout_reshape = ib->Reshape(dout, {-1});
-  auto dx = ib->Emit("Gather", {dout_reshape, read_id, ib->Tensor(0)});
+  auto dx = ib->Gather(dout_reshape, read_id, ib->Tensor(0));
   dx = ib->Reshape(dx, ib->GetShape(x));
   return {ib->ZerosLike(index), dx};
 });
@@ -607,7 +616,7 @@ REG_BPROP_BUILDER("GatherDGradV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib
   auto i_after = ib->Mul(i, ib->Tensor(dim_at_axis_output * dim_after_axis, index_type));
   auto read_id = ib->Add((ib->Add(i_after, (ib->Mul(j_read, ib->Tensor(dim_after_axis, index_type))))), k);
   dout = ib->Reshape(dout, {-1});
-  auto dx = ib->Emit("Gather", {dout, read_id, 0});
+  auto dx = ib->Gather(dout, read_id, 0);
   dx = ib->Reshape(dx, ib->GetShape(x));
   return {ib->ZerosLike(index), dx};
 });
@@ -674,11 +683,12 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs.at(0);
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return {1, -1, -1};
     }
 
-    auto x_rank = SizeToLong(inputs[0].size());
+    auto x_rank = SizeToLong(x.size());
     return {1, x_rank, x_rank};
   };
 
@@ -867,10 +877,11 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BOD
     };
 
     auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-      if (!invalid_indices.empty()) {
+      auto x = inputs.at(0);
+      if (!invalid_indices.empty() || IsDynamicRank(x)) {
         return {-1};
       }
-      auto rank = SizeToLong(inputs[0].size());
+      auto rank = SizeToLong(x.size());
       return {rank > 2 ? (rank - 2) : 0};
     };
 
@@ -1029,11 +1040,12 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    auto x = inputs.at(0);
     auto input_num = inputs.size();
-    if (!invalid_indices.empty()) {
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return ShapeVector(input_num, -1);
     }
-    return ShapeVector(input_num, SizeToLong(inputs[0].size()));
+    return ShapeVector(input_num, SizeToLong(x.size()));
   };
 
   NodePtrList x_tuple;
@@ -1109,7 +1121,7 @@ REG_BPROP_BUILDER("IndexFill").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   if (ib->GetShape(x).empty()) {
     value_grad = dout;
   } else {
-    auto tmp = ib->Emit("Gather", {dout, indices, dim});
+    auto tmp = ib->Gather(dout, indices, dim);
     value_grad = ib->ReduceSum(tmp, ShapeVector());
   }
   return {x_grad, ib->ZerosLike(dim), ib->ZerosLike(indices), value_grad};
@@ -1173,8 +1185,8 @@ REG_BPROP_BUILDER("UnsortedSegmentProd").SetBody(BODYFUNC(ib) {
   }
   auto non_zero_prod = ib->Emit("UnsortedSegmentProd", {non_zero_data, segment_ids, num_segments});
   auto zero_clipped_indices = ib->Maximum(segment_ids, ib->ZerosLike(segment_ids));
-  auto gathered_prod = ib->Emit("Gather", {out, zero_clipped_indices, ib->Tensor(0, kInt64)});
-  auto gathered_non_zero_prod = ib->Emit("Gather", {non_zero_prod, zero_clipped_indices, ib->Tensor(0, kInt64)});
+  auto gathered_prod = ib->Gather(out, zero_clipped_indices, 0);
+  auto gathered_non_zero_prod = ib->Gather(non_zero_prod, zero_clipped_indices, 0);
 
   NodePtr prod_divided_by_x = nullptr;
   if (x_dtype_id == kNumberTypeUInt32 || x_dtype_id == kNumberTypeUInt64) {
@@ -1280,19 +1292,19 @@ REG_BPROP_BUILDER("DepthToSpace").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib)
 REG_BPROP_BUILDER("ScatterMax").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->ZerosLike(indices), ib->Emit("Gather", {dout, indices, ib->Tensor(0, kInt64)})};
+  return {dout, ib->ZerosLike(indices), ib->Gather(dout, indices, 0)};
 });
 
 REG_BPROP_BUILDER("ScatterMin").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->ZerosLike(indices), ib->Emit("Gather", {dout, indices, ib->Tensor(0, kInt64)})};
+  return {dout, ib->ZerosLike(indices), ib->Gather(dout, indices, 0)};
 });
 
 REG_BPROP_BUILDER("ScatterUpdate").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->ZerosLike(indices), ib->Emit("Gather", {dout, indices, ib->Tensor(0, kInt64)})};
+  return {dout, ib->ZerosLike(indices), ib->Gather(dout, indices, 0)};
 });
 
 REG_BPROP_BUILDER("Fills").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -1362,10 +1374,11 @@ REG_BPROP_BUILDER("Transpose").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs.at(0);
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return {-1};
     }
-    return {SizeToLong(inputs[0].size())};
+    return {SizeToLong(x.size())};
   };
 
   auto res_perm = ib->ShapeCalc({perm}, shape_func, infer_func, {0})[0];
@@ -1406,11 +1419,13 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs.at(0);
+    auto multiples = inputs.at(1);
+    if (!invalid_indices.empty() || IsDynamicRank(x) || IsDynamicRank(multiples)) {
       return {-1, -1};
     }
-    auto x_sz = static_cast<int64_t>(inputs.at(0).size());
-    auto multiples_sz = static_cast<int64_t>(inputs.at(1).size());
+    auto x_sz = static_cast<int64_t>(x.size());
+    auto multiples_sz = static_cast<int64_t>(multiples.size());
     auto max_sz = x_sz > multiples_sz ? x_sz : multiples_sz;
     return {2 * max_sz, max_sz};
   };
@@ -1466,11 +1481,30 @@ REG_BPROP_BUILDER("MatrixDiagPartV3").SetUnusedInputs({i0, i2, i3}).SetBody(BODY
   auto padding_value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shape = ib->GetShape(x);
-  auto row = x_shape[x_shape.size() - 2];
-  auto col = x_shape[x_shape.size() - 1];
-  auto diag = ib->Emit("MatrixDiagV3",
-                       {dout, k, ib->Tensor(row, kInt32), ib->Tensor(col, kInt32), ib->Tensor(0, ib->GetDtype(dout))},
-                       {{"align", align}});
+  bool is_dynamic_case = IsDynamicRank(x_shape);
+  ShapeVector sub_shape;
+  if (!is_dynamic_case) {
+    size_t begin = (x_shape.size() < 2) ? 0 : (x_shape.size() - 2);
+    for (; begin < x_shape.size(); ++begin) {
+      sub_shape.push_back(x_shape[begin]);
+    }
+    is_dynamic_case = IsDynamic(sub_shape);
+  }
+
+  NodePtr diag = nullptr;
+  if (!is_dynamic_case) {
+    if (sub_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For gradient of MatrixDiagPartV3, rank should be greater than 2";
+    }
+    auto row = x_shape[x_shape.size() - 2];
+    auto col = x_shape[x_shape.size() - 1];
+    diag = ib->Emit("MatrixDiagV3",
+                    {dout, k, ib->Tensor(row, kInt32), ib->Tensor(col, kInt32), ib->Tensor(0, ib->GetDtype(dout))},
+                    {{"align", align}});
+  } else {
+    diag = ib->Emit("MatrixSetDiagV3", {ib->ZerosLike(x), dout, k},
+                    {{"align", align}, {"max_length", MakeValue<int64_t>(diag_max_length)}});
+  }
   return {diag, ib->ZerosLike(k), ib->ZerosLike(padding_value)};
 });
 
@@ -1483,9 +1517,16 @@ REG_BPROP_BUILDER("MatrixSetDiagV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYF
   auto diagonal_cal = ib->Emit("MatrixDiagPartV3", {dout, k, ib->Tensor(0, ib->GetDtype(dout))},
                                {{"align", align}, {"max_length", max_length}});
   auto diagonal_shape = ib->GetShape(diagonal);
-  auto x_cal =
-    ib->Emit("MatrixSetDiagV3", {dout, ib->Fill(static_cast<int64_t>(0), diagonal_shape, ib->GetDtypeId(dout)), k},
-             {{"align", align}, {"max_length", max_length}});
+  NodePtr x_cal;
+  auto dout_type = ib->GetDtypeId(dout);
+  if (IsDynamic(diagonal_shape)) {
+    auto diagonal_temp = ib->Cast(diagonal, dout_type);
+    x_cal = ib->Emit("MatrixSetDiagV3", {dout, ib->ZerosLike(diagonal_temp), k},
+                     {{"align", align}, {"max_length", max_length}});
+  } else {
+    x_cal = ib->Emit("MatrixSetDiagV3", {dout, ib->Fill(static_cast<int64_t>(0), diagonal_shape, dout_type), k},
+                     {{"align", align}, {"max_length", max_length}});
+  }
   return {x_cal, diagonal_cal, ib->ZerosLike(k)};
 });
 
@@ -1551,7 +1592,15 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
   auto dvalue = ib->Mul(dout, mask);
   auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
-  dvalue = ib->ReduceSum(bout[1]);
+
+  auto dvalue_shape = dvalue->shape();
+  if (IsDynamicRank(dvalue_shape)) {
+    auto axis_node = ib->Range(ib->Shape(dvalue, true));
+    dvalue = ib->ReduceSum(bout[1], axis_node);
+  } else {
+    dvalue = ib->ReduceSum(bout[1]);
+  }
+
   dinput = ib->Cast(bout[0], ib->GetDtype(input_data));
   if (value->isa<ValueNode>()) {
     dvalue = ib->ZerosLike(value);
@@ -1603,17 +1652,30 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i2}).SetBo
   auto data_format = GetValue<std::string>(ib->GetAttr("format"));
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  auto x_shape = ib->GetShape(x);
-  ShapeVector grad_in_size(x_shape.begin() + 1, x_shape.begin() + 3);
-  if (data_format == "NCHW") {
-    ShapeVector tmp(x_shape.begin() + 2, x_shape.begin() + 4);
-    grad_in_size = tmp;
+
+  bool is_nchw = (data_format == "NCHW");
+  auto shape_func = [is_nchw](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    ShapeVector grad_in_size = GetShapeByRange(x_shape, 1, 3);
+    if (is_nchw) {
+      grad_in_size = GetShapeByRange(x_shape, 2, 4);
+    }
+    const size_t kTwo = 2;
+    if (grad_in_size.size() != kTwo) {
+      MS_LOG(EXCEPTION) << "For ResizeNearestNeighborV2Grad, size's rank should be 2, but got " << grad_in_size.size();
+    }
+    return {grad_in_size};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {2}; };
+  auto grad_in_size = ib->ShapeCalc({x}, shape_func, infer_func)[0];
+  if (grad_in_size->isa<ValueNode>()) {
+    grad_in_size = ib->Tensor(GetIntList(grad_in_size), kInt64);
   }
-  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, ib->Tensor(grad_in_size, kInt32)},
+  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size},
                      {{"align_corners", MakeValue(align_corners)},
                       {"half_pixel_centers", MakeValue(half_pixel_centers)},
                       {"format", MakeValue(data_format)}});
-  return {dx, ib->ZerosLike(ib->Value<ShapeVector>(grad_in_size))};
+  return {dx, ib->ZerosLike(grad_in_size)};
 });
 
 REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -1634,7 +1696,7 @@ REG_BPROP_BUILDER("SegmentSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   if (dout_type->type_id() == TypeId::kNumberTypeFloat64) {
     dout = ib->Cast(dout, kFloat32);
   }
-  return {ib->Cast(ib->Emit("Gather", {dout, segment_ids, ib->Tensor(0)}), dout_type), ib->ZerosLike(segment_ids)};
+  return {ib->Cast(ib->Gather(dout, segment_ids, ib->Tensor(0)), dout_type), ib->ZerosLike(segment_ids)};
 });
 
 REG_BPROP_BUILDER("EmbeddingLookup").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
@@ -1890,17 +1952,46 @@ REG_BPROP_BUILDER("SegmentMean").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto segment_ids = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto x_rank = inputs.at(0).size();
+    auto segment_ids_shape = inputs.at(1);
+    ShapeVector ones_shape(segment_ids_shape.begin(), segment_ids_shape.end());
+    if (x_rank < 1) {
+      MS_LOG(EXCEPTION) << "For SegmentMean's gradient, the rank of input x should be greater or equal to one, but got "
+                        << x_rank;
+    }
+    ShapeVector rank_shape(x_rank - 1, 1LL);
+    ones_shape.insert(ones_shape.end(), rank_shape.begin(), rank_shape.end());
+    return {ones_shape};
+  };
+
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    auto x = inputs.at(0);
+    auto segment_ids = inputs.at(1);
+    if (!invalid_indices.empty() || IsDynamicRank(x) || IsDynamicRank(segment_ids)) {
+      return {-1};
+    }
+    auto x_rank = x.size();
+    if (x_rank < 1) {
+      MS_LOG(EXCEPTION) << "For SegmentMean's gradient, the rank of input x should be greater or equal to one, but got "
+                        << x_rank;
+    }
+    auto segment_ids_rank = segment_ids.size();
+    return {SizeToLong(x_rank - 1 + segment_ids_rank)};
+  };
+
+  auto ones_shape = ib->ShapeCalc({input_x, segment_ids}, shape_func, infer_func, {})[0];
+  auto ones = ib->Fill(1.0, ones_shape, TypeId::kNumberTypeFloat32);
+
   auto input_x_type = ib->GetDtype(input_x);
   if (input_x_type->type_id() != kNumberTypeFloat32) {
     input_x = ib->Cast(input_x, kFloat32);
     dout = ib->Cast(dout, kFloat32);
   }
-  auto x_rank = ib->GetShape(input_x).size();
-  auto ones_shape = ib->GetShape(segment_ids) + ShapeVector(x_rank - 1, 1LL);
-  auto ones = ib->Fill(1.0, ones_shape, TypeId::kNumberTypeFloat32);
   const int64_t max_len = 1000000;
   auto scaled_grad = ib->Div(dout, ib->Emit("SegmentSum", {ones, segment_ids}, {{"max_length", MakeValue(max_len)}}));
-  auto dx = ib->Emit("Gather", {scaled_grad, segment_ids, ib->Value<int64_t>(0)});
+  auto dx = ib->Gather(scaled_grad, segment_ids, 0);
   if (input_x_type->type_id() != kNumberTypeFloat32) {
     dx = ib->Cast(dx, input_x_type);
   }

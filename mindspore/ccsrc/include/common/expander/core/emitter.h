@@ -149,6 +149,9 @@ class COMMON_EXPORT Emitter {
     }
   }
 
+  NodePtr Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims = 0) const;
+  NodePtr Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims = 0) const;
+
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) const {

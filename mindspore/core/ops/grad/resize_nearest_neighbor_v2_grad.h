@@ -35,7 +35,9 @@ class MIND_API ResizeNearestNeighborV2Grad : public BaseOperator {
   MIND_API_BASE_MEMBER(ResizeNearestNeighborV2Grad);
 
   /// \brief Constructor.
-  ResizeNearestNeighborV2Grad() : BaseOperator(kNameResizeNearestNeighborV2Grad) {}
+  ResizeNearestNeighborV2Grad() : BaseOperator(kNameResizeNearestNeighborV2Grad) {
+    InitIOName({"grads", "size"}, {"y"});
+  }
 
   bool get_align_corners() const;
   bool get_half_pixel_centers() const;

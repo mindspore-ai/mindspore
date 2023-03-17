@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -709,5 +709,14 @@ ShapeVector ConvToNHWC(const ShapeVector &v) {
   new_v[kIndex2] = v[kIndex3];
   new_v[kIndex3] = 1;
   return new_v;
+}
+
+ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin, int64_t end) {
+  // Get range [begin, end) in v.
+  auto rank = SizeToLong(v.size());
+  auto real_begin = std::min((begin < 0) ? (rank + begin) : begin, rank);
+  auto real_end = std::min((end < 0) ? (rank + end) : end, rank);
+  ShapeVector res(v.begin() + real_begin, v.begin() + real_end);
+  return res;
 }
 }  // namespace mindspore::expander::bprop

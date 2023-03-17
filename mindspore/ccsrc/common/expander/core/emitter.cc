@@ -317,6 +317,16 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
   return ReduceSum(x, Value<ShapeVector>(real_axis), keep_dims, false);
 }
 
+NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims) const {
+  MS_EXCEPTION_IF_NULL(params);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(axis);
+  return Emit(kGatherOpName, {params, indices, axis}, {{kAttrBatchDims, MakeValue(batch_dims)}});
+}
+NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) const {
+  return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
+}
+
 NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &shape_func,
                                const ops::InferFunc &infer_func,
                                const std::vector<int64_t> &value_depend_indices) const {
