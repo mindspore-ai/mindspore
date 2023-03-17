@@ -277,6 +277,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicBroadcastToFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
@@ -479,6 +480,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFission>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<BroadcasttoFission>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicBroadcastToFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistFission>());
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
