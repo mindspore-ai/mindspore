@@ -165,7 +165,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_kernel.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_mul.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_atomic_clean.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_transdata.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_graph_kernel.cc"
         "../../../mindspore/ccsrc/runtime/device/convert_tensor_utils.cc"
