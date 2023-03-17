@@ -444,6 +444,7 @@ from .nn_func import (
     is_floating_point,
     intopk,
     interpolate,
+    upsample,
     kl_div,
     log_softmax,
     lrn,
