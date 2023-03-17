@@ -634,8 +634,9 @@ class TBERegOp(RegOp):
         Reshape type of operator.
 
         Args:
-            reshape_type (str): Value of reshape type. For example, if the input shape is (2,3) and `reshape_type`
-                is set to "CH", then the new shape is (1,2,3,1). "CH" means the C and H dimensions are kept and
+            reshape_type (str): Value of reshape type. For example, if the input shape is :math:`(2, 3)`
+                and `reshape_type` is set to "CH", then the new shape is :math:`(1, 2, 3, 1)`.
+                "CH" means the C and H dimensions are kept and
                 new dimensions are added for N and W dimension.
         """
         self._is_string(reshape_type)

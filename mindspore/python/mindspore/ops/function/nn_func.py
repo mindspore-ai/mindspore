@@ -2653,7 +2653,7 @@ def pdist(input, p=2.0):
     Args:
         input (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
             dtype: float16, float32 or float64.
-        p (float): The order of norm distance, :math:`p∈[0,∞)`. Default: 2.0.
+        p (float): The order of norm distance, :math:`p∈[0, ∞)`. Default: 2.0.
 
     Returns:
         Tensor, has the same dtype as `input`.

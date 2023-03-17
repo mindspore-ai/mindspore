@@ -34,8 +34,8 @@ mindspore.train.Fbeta
 
         参数：
             - **inputs** - `y_pred` 和 `y` 。`y_pred` 和 `y` 支持Tensor、list或numpy.ndarray类型。
-              通常情况下， `y_pred` 是0到1之间的浮点数列表，shape为 :math:`(N, C)` ，其中 :math:`N` 是样本数， :math:`C` 是类别数。
-              `y` 是整数值，如果使用one-hot编码，则shape为 :math:`(N,C)` ；如果使用类别索引，shape是 :math:`(N,)` 。
+              通常情况下， `y_pred` 是 :math:`[0, 1]` 之间的浮点数列表，shape为 :math:`(N, C)` ，其中 :math:`N` 是样本数， :math:`C` 是类别数。
+              `y` 是整数值，如果使用one-hot编码，则shape为 :math:`(N, C)` ；如果使用类别索引，shape是 :math:`(N,)` 。
 
         异常：
             - **ValueError** - 当前输入的 `y_pred` 和历史 `y_pred` 类别数不匹配。
