@@ -62,6 +62,27 @@ def _get_cache_path():
     return cache_path
 
 
+def _get_cuda_bare_metal_version():
+    """
+    Automatically get the cuda version.
+
+    Returns:
+        tuple(str), the version of cuda of the platform.ss
+    """
+    raw_output = subprocess.check_output(["nvcc", "-V"],
+                                         universal_newlines=True)
+    output = raw_output.split()
+    release_idx = output.index("release") + 1
+    release = output[release_idx].split(".")
+    version_major = release[0]
+    version_idx = release_idx + 1
+    version = output[version_idx].split(".")
+    version_middle = version[1] if len(version) > 1 else 0
+    version_minor = version[2] if len(version) > 2 else 0
+
+    return int(version_major), int(version_middle), int(version_minor)
+
+
 def _compile_aot(file):
     """
     Automatically compile the source file for custom aot
@@ -105,20 +126,6 @@ def _compile_aot(file):
             cmd += ["--shared", "-Xcompiler", "-fPIC", "-O3", "-gencode", "arch=compute_70, code=sm_70"]
             cmd += ["--use_fast_math", "--expt-relaxed-constexpr"]
             cmd += ["-D_GLIBCXX_USE_CXX11_ABI=0"]
-
-            def _get_cuda_bare_metal_version():
-                raw_output = subprocess.check_output(["nvcc", "-V"],
-                                                     universal_newlines=True)
-                output = raw_output.split()
-                release_idx = output.index("release") + 1
-                release = output[release_idx].split(".")
-                version_major = release[0]
-                version_idx = release_idx + 1
-                version = output[version_idx].split(".")
-                version_middle = version[1] if len(version) > 1 else 0
-                version_minor = version[2] if len(version) > 2 else 0
-
-                return int(version_major), int(version_middle), int(version_minor)
 
             v_major, v_mid, v_minor = _get_cuda_bare_metal_version()
             if v_major >= 11:
@@ -480,19 +487,9 @@ class Custom(ops.PrimitiveWithInfer):
             self.add_prim_attr("fn_id", func_id)
 
         self.out_shape = out_shape
-        if self.out_shape is None and self.func_type == "aot":
-            self.add_prim_attr("cpp_infer_shape", True)
         self.out_dtype = out_dtype
         self.bprop = bprop
-        self.fake_output = False
-        self.single_scalar_output = False
-        if not self.out_dtype:
-            self.fake_output = True
-        elif not self.out_shape:
-            self.single_scalar_output = True
-        self.add_prim_attr("fake_output", self.fake_output)
-        self.add_prim_attr("single_scalar_output", self.single_scalar_output)
-
+        self._update_op_attr()
         # Register info
         self._register_info(reg_info)
 
@@ -513,6 +510,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._update_attr()
 
     def __infer__(self, *args):
+        """Infer function of the custom op"""
         if callable(self.out_shape):
             infer_shape = self.out_shape(*(x["shape"] for x in args))
         else:
@@ -572,7 +570,21 @@ class Custom(ops.PrimitiveWithInfer):
         return out
 
     def get_bprop(self):
+        """Get the bprop of the custom op"""
         return self.bprop
+
+    def _update_op_attr(self):
+        """Update the attrs of the custom op"""
+        if self.out_shape is None and self.func_type == "aot":
+            self.add_prim_attr("cpp_infer_shape", True)
+        self.fake_output = False
+        self.single_scalar_output = False
+        if not self.out_dtype:
+            self.fake_output = True
+        elif not self.out_shape:
+            self.single_scalar_output = True
+        self.add_prim_attr("fake_output", self.fake_output)
+        self.add_prim_attr("single_scalar_output", self.single_scalar_output)
 
     def _check_julia_func(self):
         """Check the validity of julia func"""
@@ -646,13 +658,13 @@ class Custom(ops.PrimitiveWithInfer):
             logger.info("The file of {} has already been checked good to be imported.".format(self.func_name))
             return file_path
 
-        if not file_path in Custom.tbe_path_failed:
+        if file_path not in Custom.tbe_path_failed:
             # As a single file might include multiply functions
             # we will not try the file path which already failed in previous trials
+            mod_spec = importlib.util.spec_from_file_location(
+                self.func_name, file_path)
+            custom_mod = importlib.util.module_from_spec(mod_spec)
             try:
-                mod_spec = importlib.util.spec_from_file_location(
-                    self.func_name, file_path)
-                custom_mod = importlib.util.module_from_spec(mod_spec)
                 mod_spec.loader.exec_module(custom_mod)
             except (ImportError, RecursionError):
                 Custom.tbe_path_failed.append(file_path)
@@ -736,7 +748,7 @@ class Custom(ops.PrimitiveWithInfer):
                     continue
                 if isinstance(reg_info_item, str):
                     reg_info_item = json.loads(reg_info_item)
-                prefix = prefix + "_" + reg_info_item.get("op_name", "")
+                prefix = "_".join([prefix, reg_info_item.get("op_name", "")])
             self.uniq_name = prefix + "_" + self.func_name
         else:
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
