@@ -35,7 +35,6 @@
 #include "ir/tensor.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
-#include "mindapi/base/type_id.h"
 #include "mindapi/ir/value.h"
 #include "ops/core_ops.h"
 #include "ops/op_name.h"
