@@ -52,7 +52,7 @@ class MaxPoolWithArgmaxV2CpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
   template <typename DATA_T, typename INDICES_T>
-  void MaxPoolWithArgmaxV2SingleCompute(DATA_T *input, DATA_T *output_y, INDICES_T *output_argmax, int i,
+  void MaxPoolWithArgmaxV2SingleCompute(DATA_T *input, DATA_T *output_y, INDICES_T *output_argmax, int64_t i,
                                         int64_t in_channel, int64_t iH, int64_t iW, int64_t oH, int64_t oW, int64_t kH,
                                         int64_t kW, int64_t sH, int64_t sW, int64_t pH, int64_t pW, int64_t dH,
                                         int64_t dW) const;

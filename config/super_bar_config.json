@@ -65,6 +65,10 @@
       "ksize": "kernel_size",
       "padding": "pad_mode"
     },
+    "MaxPoolWithArgmaxV2": {
+      "ksize": "kernel_size",
+      "dtype": "argmax_type"
+    },
     "SoftmaxGradExt": {
       "axes": "axis",
       "keep_dims": "keepdims"

@@ -36,14 +36,15 @@ __global__ void MaxPoolWithArgmaxV2(const T *input, T *output, S *index, const i
     start_h = max(start_h, 0);
     start_w = max(start_w, 0);
     S input_start = pos_n * inputC * inputH * inputW;
-    S max_idx = pos_c * inputH * inputW + start_h * inputW + start_w;
+    S stride = pos_c * inputH * inputW;
+    S max_idx = stride + start_h * inputW + start_w;
     T max_data = input[input_start + max_idx];
     for (int cur_h = start_h; cur_h < end_h; cur_h++) {
       for (int cur_w = start_w; cur_w < end_w; cur_w++) {
-        S input_idx = pos_c * inputH * inputW + cur_h * inputW + cur_w;
+        S input_idx = stride + cur_h * inputW + cur_w;
         T input_data = input[input_start + input_idx];
         if (input_data > max_data) {
-          max_idx = input_idx - pos_c * inputH * inputW;
+          max_idx = input_idx - stride;
           max_data = input_data;
         }
       }
