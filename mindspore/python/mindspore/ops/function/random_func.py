@@ -896,18 +896,18 @@ def rand(*size, dtype=None, seed=None):
 
 
 @_function_forbid_reuse
-def rand_like(x, seed=None, *, dtype=None):
+def rand_like(input, seed=None, *, dtype=None):
     r"""
     Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given shape and dtype.
 
     Args:
-        x (Tensor): Input Tensor to specify the output shape and its default dtype.
+        input (Tensor): Input Tensor to specify the output shape and its default dtype.
         seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
-            the same dtype of `x` will be applied. Default: None.
+            the same dtype of `input` will be applied. Default: None.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
@@ -930,10 +930,10 @@ def rand_like(x, seed=None, *, dtype=None):
     """
 
     if dtype is None:
-        dtype = x.dtype
+        dtype = input.dtype
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
-    shape = x.shape
+    shape = input.shape
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'rand_like')
     rand_op = P.UniformReal(seed1, seed2)
@@ -986,13 +986,13 @@ def randn(*size, dtype=None, seed=None):
 
 
 @_function_forbid_reuse
-def randn_like(x, seed=None, *, dtype=None):
+def randn_like(input, seed=None, *, dtype=None):
     r"""
     Returns a new Tensor with given shape and dtype, filled with a sample (or samples) from the standard normal
     distribution.
 
     Args:
-        x (Tensor): Input Tensor to specify the output shape and its default dtype.
+        input (Tensor): Input Tensor to specify the output shape and its default dtype.
         seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
 
     Keyword Args:
@@ -1019,10 +1019,10 @@ def randn_like(x, seed=None, *, dtype=None):
          [-0.4287376   1.3054721   0.64747655]]
     """
     if dtype is None:
-        dtype = x.dtype
+        dtype = input.dtype
     elif dtype not in mstype.float_type:
         raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
-    shape = x.shape
+    shape = input.shape
     cast_ = P.Cast()
     seed1, seed2 = _get_seed(seed, 'randn_like')
     rand_op = P.StandardNormal(seed1, seed2)
@@ -1083,13 +1083,13 @@ def randint(low, high, size, seed=None, *, dtype=None):
 
 
 @_function_forbid_reuse
-def randint_like(x, low, high, seed=None, *, dtype=None):
+def randint_like(input, low, high, seed=None, *, dtype=None):
     r"""
-    Returns a tensor with the same shape as Tensor `x` whose elements are random integers in the range
+    Returns a tensor with the same shape as Tensor `input` whose elements are random integers in the range
     of [ `low` , `high` ) .
 
     Args:
-        x (Tensor): Input Tensor to specify the output shape and its default dtype.
+        input (Tensor): Input Tensor to specify the output shape and its default dtype.
         low(int): Start value of interval.
         high(int): End value of interval.
         seed (int, optional): Random seed, must be greater or equal to 0. Default: None, and 0 will be used.
@@ -1118,12 +1118,12 @@ def randint_like(x, low, high, seed=None, *, dtype=None):
         [9 1 2]]
     """
     if dtype is None:
-        dtype = x.dtype
+        dtype = input.dtype
     elif dtype not in mstype.int_type:
         raise ValueError(f"For 'randint_like', the 'dtype' must be an int type, but got {dtype}.")
     if not isinstance(low, int) or not isinstance(high, int):
         raise TypeError(f"For 'randint_like', 'low' and 'high' must be an int, but got {type(low)} and {type(high)}.")
-    size = x.shape
+    size = input.shape
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)
     cast_ = P.Cast()
