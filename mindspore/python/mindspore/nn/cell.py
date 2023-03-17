@@ -1035,8 +1035,12 @@ class Cell(Cell_):
 
         Raises:
             KeyError: Child Cell's name is incorrect or duplicated with the other child name.
+            TypeError: If type of `child_name` is not str.
             TypeError: Child Cell's type is incorrect.
         """
+        if not isinstance(child_name, str):
+            raise TypeError(f"For 'insert_child_to_cell', the type of parameter 'child_name' must be str, "
+                            f"but got {type(child_name)}.")
         if not child_name or '.' in child_name:
             raise KeyError("For 'insert_child_to_cell', the parameter 'child_name' can not be None and "
                            "can not contain '.'")
