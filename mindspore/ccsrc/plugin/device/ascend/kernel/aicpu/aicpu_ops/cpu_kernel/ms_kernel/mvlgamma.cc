@@ -16,7 +16,6 @@
 #include "mvlgamma.h"
 
 #include "cpu_kernel_utils.h"
-#include "igamma_utils.cc"
 #include "igamma_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
