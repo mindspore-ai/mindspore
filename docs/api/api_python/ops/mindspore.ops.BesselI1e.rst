@@ -13,7 +13,7 @@ mindspore.ops.BesselI1e
     其中bessel_i1是第一类1阶的Bessel函数。
 
     输入：
-        - **x** (Tensor) - 任意维度的Tensor。数据类型应为float16，float32或float64。
+        - **x** (Tensor) - 输入Tensor。数据类型应为float16，float32或float64。
 
     输出：
         Tensor，shape和数据类型与 `x` 相同。
