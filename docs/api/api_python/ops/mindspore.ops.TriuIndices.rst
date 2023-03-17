@@ -3,7 +3,7 @@ mindspore.ops.TriuIndices
 
 .. py:class:: mindspore.ops.TriuIndices(row, col, offset=0, dtype=mstype.int32)
 
-    返回一个包含 `row` * `col` 的矩阵的上三角形部分的索引的Tensor。Tensor的shape为 :math:`(2, tril\_size)` ，其中， `tril_size` 为上三角矩阵的元素总数。第一行包含所有索引的行坐标，第二行包含列坐标。索引按行排序，然后按列排序。
+    计算 `row` * `col` 行列矩阵的上三角元素的索引，并将它们作为一个 2xN 的Tensor返回。
 
     更多参考详见 :func:`mindspore.ops.triu_indices`。
 

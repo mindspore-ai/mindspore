@@ -14,7 +14,8 @@ mindspore.nn.MultilabelMarginLoss
     其中 :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
     :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
     :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
-    并且 :math:`i \neq y[j]` 对于所有 :math:`i` and :math:`j` 。
+    并且对于所有 :math:`i` 和 :math:`j` ， :math:`i` 不等于 :math:`y[j]` 。
+
     :math:`y` 和 :math:`x` shape必须相同。
 
     .. note::

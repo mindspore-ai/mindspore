@@ -6,7 +6,7 @@ mindspore.ops.MatrixTriangularSolve
     返回一个新Tensor，其为含上三角矩阵或下三角矩阵的线性方程组的解。
 
     .. note::
-        在GPU上支持广播机制。
+        仅在GPU上支持广播机制。
 
     参数：
         - **lower** (bool，可选) - 如果为True， `matrix` 的最内矩阵为下三角矩阵。默认值：True。
@@ -14,7 +14,7 @@ mindspore.ops.MatrixTriangularSolve
   
     输入：
         - **matrix** (Tensor) - Tensor，其shape为 :math:`(*, M, M)` ，类型支持float32、float64、complex64和complex128。
-        - **rhs** (Tensor) - Tensor，其shape为 :math:`(*, M, M)` ，类型支持float32、float64、complex64和complex128。
+        - **rhs** (Tensor) - Tensor，其shape为 :math:`(*, M, N)` ，类型支持float32、float64、complex64和complex128。
 
     输出：
         Tensor，其shape为 :math:`(*, M, N)` ，数据类型与 `matrix` 相同。

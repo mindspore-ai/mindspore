@@ -196,7 +196,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.ComputeAccidentalHits
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
-    mindspore.ops.UpsampleNearest3D
     
 图像处理
 ^^^^^^^^^^

@@ -3972,7 +3972,8 @@ class Greater(PrimitiveWithCheck):
 
 class GreaterEqual(PrimitiveWithCheck):
     r"""
-    Computes the boolean value of :math:`x >= y` element-wise.
+    Given two Tensors, compares them element-wise to check if each element in the first
+    Tensor is greater than or equal to the corresponding element in the second Tensor.
 
     Refer to :func:`mindspore.ops.ge` for more details.
 

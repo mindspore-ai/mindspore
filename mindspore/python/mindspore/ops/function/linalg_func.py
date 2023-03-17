@@ -82,13 +82,14 @@ def geqrf(input):
             with dtype of float32, float64, complex64, complex128.
 
     Returns:
-        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `x`.
-        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+        - **y** (Tensor) - Tensor of shape :math:`(*, m, n)`, has the same dtype as the `input`.
+        - **tau** (Tensor) - Tensor of shape :math:`(*, p)` and :math:`p = min(m, n)`,
+          has the same dtype as the `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If the dtype of `input` is neither float32, float64, complex64, complex128.
-        ValueError: If `input` dimension is less than 2
+        ValueError: If `input` dimension is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
