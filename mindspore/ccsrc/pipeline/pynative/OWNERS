@@ -1,5 +1,15 @@
 approvers:
-- chujinjin
-- jjfeing
+- chujinjin #
 - kisnwang
 - hwcaifubi
+- baochong
+- gaoxiong1
+
+reviewers:
+- zjun3021
+- wangch1009
+- luochao60
+- nomindcarry
+
+options:
+    no_parent_owners: true
