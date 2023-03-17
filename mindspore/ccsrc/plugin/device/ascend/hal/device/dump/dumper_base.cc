@@ -36,7 +36,8 @@ namespace ascend {
 #ifndef ENABLE_SECURITY
 bool KernelNeedDump(const CNodePtr &kernel) {
   if (AnfAlgo::GetKernelType(kernel) != TBE_KERNEL && AnfAlgo::GetKernelType(kernel) != AICPU_KERNEL &&
-      AnfAlgo::GetKernelType(kernel) != AKG_KERNEL && AnfAlgo::GetKernelType(kernel) != HCCL_KERNEL) {
+      AnfAlgo::GetKernelType(kernel) != AKG_KERNEL && AnfAlgo::GetKernelType(kernel) != HCCL_KERNEL &&
+      AnfAlgo::GetKernelType(kernel) != ACL_KERNEL) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(kernel);
