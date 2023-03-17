@@ -9,10 +9,10 @@ mindspore.nn.probability.distribution.Gamma
     .. math::
         f(x, \alpha, \beta) = \beta^\alpha / \Gamma(\alpha) x^{\alpha - 1} \exp(-\beta x).
 
-    其中 :math:`G` 为 Gamma 函数。
+    其中 :math:`G` 为 Gamma 函数，:math:`\alpha` 和 :math:`\beta` 为分别 Gamma 函数的浓度参数和逆尺度参数。
 
     参数：
-        - **concentration** (int, float, list, numpy.ndarray, Tensor) - 浓度，也被称为伽马分布的alpha。默认值：None。
+        - **concentration** (int, float, list, numpy.ndarray, Tensor) - 浓度参数，也被称为伽马分布的alpha。默认值：None。
         - **rate** (int, float, list, numpy.ndarray, Tensor) - 逆尺度参数，也被称为伽马分布的beta。默认值：None。
         - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
         - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。

@@ -40,7 +40,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     .. py:method:: forward(value)
 
-        正映射，计算输入随机变量 :math:`X = value` 经过映射后的值 :math:`Y = g(value)`。
+        正映射，计算输入随机变量经过映射后的值。
 
         参数：
             - **value** (Tensor) - 输入随机变量的值。
@@ -50,7 +50,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     .. py:method:: forward_log_jacobian(value)
 
-        计算正映射导数的对数值，即 :math:`\log(dg(x) / dx)`。
+        计算正映射导数的对数值。
 
         参数：
             - **value** (Tensor) - 输入随机变量的值。
@@ -60,7 +60,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     .. py:method:: inverse(value)
 
-        正映射，计算输出随机变量 :math:`Y = value` 时对应的输入随机变量的值 :math:`X = g(value)`。
+        正映射，计算输出随机变量对应的输入随机变量的值。
 
         参数：
             - **value** (Tensor) - 输出随机变量的值。
@@ -70,7 +70,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     .. py:method:: inverse_log_jacobian(value)
 
-        计算逆映射导数的对数值，即 :math:`\log(dg^{-1}(x) / dx)`。
+        计算逆映射导数的对数值。
 
         参数：
             - **value** (Tensor) - 输出随机变量的值。
