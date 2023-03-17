@@ -63,9 +63,11 @@ bool TensorToSeqCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << inputs[0]->size
                       << "} is not equal to the size of output: {" << outputs[0]->size << "}";
   }
-  auto cp_ret = memcpy_s(output_addr, output_size, input_addr, input_size);
-  if (cp_ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+  if (input_size != 0) {
+    auto cp_ret = memcpy_s(output_addr, output_size, input_addr, input_size);
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    }
   }
   return true;
 }

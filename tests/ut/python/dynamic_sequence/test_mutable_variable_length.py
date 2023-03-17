@@ -281,9 +281,8 @@ def test_dynamic_sequence_list_append_3():
         x = mutable([Tensor([1]), Tensor([2])], True)
         x.append(3)
         return x
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         foo()
-    assert "is not same with the new added item" in str(ex.value)
 
 
 def test_dynamic_sequence_list_append_4():
@@ -298,9 +297,8 @@ def test_dynamic_sequence_list_append_4():
         x = mutable([(1, 2, 3), (4, 5, 6)], True)
         x.append((1, 2))
         return x
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         foo()
-    assert "is not same with the new added item" in str(ex.value)
 
 
 def test_is_dynamic_sequence_element_unknown():

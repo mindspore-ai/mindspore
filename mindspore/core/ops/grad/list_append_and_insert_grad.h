@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_IN_SEQUENCE_H_
-#define MINDSPORE_CORE_OPS_IN_SEQUENCE_H_
+#ifndef MINDSPORE_CORE_OPS_LIST_APPEND_AND_INSERT_GRAD_H_
+#define MINDSPORE_CORE_OPS_LIST_APPEND_AND_INSERT_GRAD_H_
 
 #include "ops/base_operator.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief InSequence integer operation.
-class MIND_API InSequence : public BaseOperator {
+/// \brief List pop operation 'input_data.pop(index)'.
+class MIND_API ListAppendAndInsertGrad : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(InSequence);
+  MIND_API_BASE_MEMBER(ListAppendAndInsertGrad);
   /// \brief Constructor.
-  InSequence() : BaseOperator(prim::kInSequence) {}
+  ListAppendAndInsertGrad() : BaseOperator(prim::kListAppendAndInsertGrad) {
+    InitIOName({"input_data", "index"}, {"output_data"});
+  }
   /// \brief Init function.
   void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_IN_SEQUENCE_H_
+#endif  // MINDSPORE_CORE_OPS_LIST_APPEND_AND_INSERT_GRAD_H_

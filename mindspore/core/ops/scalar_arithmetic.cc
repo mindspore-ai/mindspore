@@ -134,7 +134,9 @@ ValuePtr FloorDivImpl(const ValuePtr &x_value, const ValuePtr &y_value, const st
                                << ", y: " << std::to_string(y) << ".";
     }
   }
-  T res = std::floor(x / y);
+  T n = std::floor(static_cast<float>(x) / static_cast<float>(y));
+  T mod = x - n * y;
+  T res = (x - mod) / y;
   return MakeValue(res);
 }
 

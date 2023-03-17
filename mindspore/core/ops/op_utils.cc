@@ -823,6 +823,9 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
   if (x_iter->second < y_iter->second) {
     return x_type;
   }
+  if (x_iter->second == y_iter->second && x_iter->first == kNumberTypeBool) {
+    return kInt32;
+  }
   return y_type;
 }
 
