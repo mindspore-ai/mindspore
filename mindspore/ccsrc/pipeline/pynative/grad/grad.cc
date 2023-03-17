@@ -397,6 +397,7 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
 
 std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   auto is_require_grad = [](const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
     if (!value->isa<tensor::Tensor>()) {
       return false;
     }
@@ -411,11 +412,8 @@ std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   std::string weights_obj_id;
   auto append_weights_info = [&weights_obj_id, is_require_grad](const py::object &obj) {
     const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
-    weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v)).append("_");
     if (is_require_grad(v)) {
-      weights_obj_id.append("1");
-    } else {
-      weights_obj_id.append("0");
+      weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v));
     }
   };
 
