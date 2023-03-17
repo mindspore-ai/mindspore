@@ -377,8 +377,7 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
   auto out = Emit(ops::kNameShapeCalc, args,
                   {{ops::kAttrShapeFunc, std::make_shared<ops::ShapeFunction>(shape_func)},
                    {ops::kAttrInferFunc, std::make_shared<ops::InferFunction>(infer_func)},
-                   {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)},
-                   {kAttrPrimitiveTarget, MakeValue("CPU")}});
+                   {ops::kAttrValueDependIndices, MakeValue(value_depend_indices)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
