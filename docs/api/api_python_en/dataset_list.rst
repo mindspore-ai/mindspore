@@ -319,8 +319,6 @@ Pre-processing Operation
     mindspore.dataset.Dataset.split
     mindspore.dataset.Dataset.take
     mindspore.dataset.Dataset.zip
-    mindspore.dataset.TextBaseDataset.build_sentencepiece_vocab
-    mindspore.dataset.TextBaseDataset.build_vocab
 
 Batch
 ------------------------
