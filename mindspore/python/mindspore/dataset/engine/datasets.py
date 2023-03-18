@@ -1937,22 +1937,6 @@ class TextBaseDataset(Dataset):
 
         Returns:
             Vocab, vocab built from the dataset.
-
-        Examples:
-            >>> import numpy as np
-            >>>
-            >>> def gen_corpus():
-            ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
-            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
-            ...     for k, v in corpus.items():
-            ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1"]
-            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-            >>> dataset = dataset.build_vocab(columns=["column1"],
-            ...                               freq_range=(1, 10), top_k=5,
-            ...                               special_tokens=["<pad>", "<unk>"],
-            ...                               special_first=True)
-
         """
         warnings.warn("mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0 "
                       "and will be removed in a future version. "
@@ -1980,13 +1964,6 @@ class TextBaseDataset(Dataset):
 
         Returns:
             SentencePieceVocab, vocab built from the dataset.
-
-        Examples:
-            >>> from mindspore.dataset.text import SentencePieceModel
-            >>>
-            >>> # You can construct any text dataset as source, take TextFileDataset as example.
-            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
-            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
         """
         warnings.warn("mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0 "
                       "and will be removed in a future version. "
