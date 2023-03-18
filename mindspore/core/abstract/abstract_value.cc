@@ -1975,6 +1975,16 @@ AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_
   set_shape(std::make_shared<mindspore::abstract::Shape>(shape));
 }
 
+AbstractMapTensor &AbstractMapTensor::operator=(const AbstractMapTensor &other) {
+  this->ref_key_value_ = other.ref_key_value();
+  this->default_value_ = other.default_value();
+  this->permit_filter_value_ = other.permit_filter_value();
+  this->evict_filter_value_ = other.evict_filter_value();
+  this->value_shape_ = other.value_shape_;
+  this->set_shape(other.shape());
+  return *this;
+}
+
 AbstractBasePtr AbstractMapTensor::Clone() const { return std::make_shared<AbstractMapTensor>(*this); }
 
 AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {

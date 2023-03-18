@@ -213,7 +213,7 @@ class MS_CORE_API AnfNode : public Base {
   /// \return The shape of the element.
   BaseShapePtr Shape() const;
 
-  std::size_t hash() const final { return PointerHash<AnfNode>{}(this); }
+  std::size_t hash() const override final { return PointerHash<AnfNode>{}(this); }
 
   /// \brief Obtain detailed information about scope namespace.
   ///
