@@ -20,12 +20,14 @@
 #include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 // The minimum unit size (8MB) of memory block used for dynamic extend in graph run mode.
 static const size_t ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE = 8 << 20;
+constexpr char kGlobalOverflowWorkspace[] = "GLOBAL_OVERFLOW_WORKSPACE";
 
 void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   auto ms_context = MsContext::GetInstance();
@@ -108,6 +110,23 @@ size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
     MS_LOG(EXCEPTION) << "Alloc device memory pool address is nullptr, failed to alloc memory pool resource!";
   }
   return size;
+}
+
+DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_persistent_mem) {
+  size_t align_size = AlignMemorySize(size);
+  std::lock_guard<std::mutex> locker(mutex_);
+  auto iter = overflow_memory_info_map_.find(kGlobalOverflowWorkspace);
+  if (iter != overflow_memory_info_map_.cend()) {
+    return iter->second;
+  }
+  DeviceMemPtr overflow_memory_ptr = AllocTensorMem(align_size, from_persistent_mem);
+  MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
+  auto acl_ret = aclrtMemset(overflow_memory_ptr, align_size, 0, align_size);
+  if (acl_ret != ACL_RT_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Clear overflow memory failed, aclrtMemset size = " << align_size << ", ret = " << acl_ret;
+  }
+  (void)overflow_memory_info_map_.emplace(kGlobalOverflowWorkspace, overflow_memory_ptr);
+  return overflow_memory_ptr;
 }
 
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {

@@ -74,9 +74,6 @@ class AscendMemAdapter {
   // Support multi-thread.
   std::mutex mutex_;
 
-  // Support overflow case.
-  std::mutex overflow_mutex_;
-
   // rts Memory INFO
   size_t device_hbm_total_size_{0};
   size_t device_hbm_free_size_{0};
@@ -94,9 +91,6 @@ class AscendMemAdapter {
   uint64_t static_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
   static size_t GetRoundDownAlignSize(size_t input_size);
-
-  // overflow memory info, key is kernel, val is memory ptr
-  mindspore::HashMap<std::string, uint8_t *> overflow_memory_info_map_;
 };
 }  // namespace ascend
 }  // namespace device
