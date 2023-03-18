@@ -26,11 +26,8 @@ from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
 from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
 from .sparse_concat import _sparse_concat_aicpu
-from .sparse_apply_proximal_gradient_descent import _sparse_apply_proximal_gradient_descent_aicpu
 from .sparse_apply_momentum import _sparse_apply_momentum_aicpu
 from .sparse_apply_centered_rms_prop import _sparse_apply_centered_rms_prop_aicpu
-from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
-from .sparseaddmm import _sparse_addmm_aicpu
 from .broadcast_to import _broadcast_to_aicpu
 from .blackman_window import _blackman_window_aicpu
 from .bincount import _bincount_aicpu
@@ -240,7 +237,6 @@ from .adaptive_avg_pool_2d import _adaptive_avg_pool_2d_aicpu
 from .adaptive_avg_pool_2d_grad import _adaptive_avg_pool_2d_grad_aicpu
 from .fill_v2 import _fill_v2_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
-from .quantile import _quantile_aicpu
 from .multinomial import _multinomial_aicpu
 from .fft_with_size import _fft_with_size_aicpu
 from .histogram import _histogram_aicpu
@@ -337,9 +333,7 @@ from .logit_grad import _logit_grad_aicpu
 from .log_normal_reverse import _log_normal_reverse_aicpu
 from .lower_bound import _lower_bound_aicpu
 from .lstsq import _lstsq_aicpu
-from .lu_unpack import _lu_unpack_aicpu
 from .lu_unpack_grad import _lu_unpack_grad_aicpu
-from .matrix_exp import _matrix_exp_aicpu
 from .pad_v3_grad import _pad_v3_grad_aicpu
 from .pad_v3 import _pad_v3_aicpu
 from .cholesky import _cholesky_aicpu

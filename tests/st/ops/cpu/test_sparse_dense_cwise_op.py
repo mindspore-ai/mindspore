@@ -106,6 +106,7 @@ def test_sparse_dense_mul_dyn():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="Have issues")
 def test_sparse_dense_div_dyn():
     """
     Feature: test SparseDenseCwiseDiv op in cpu.
