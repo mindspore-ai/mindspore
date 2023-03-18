@@ -46,10 +46,6 @@ class AllReduceInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    const int64_t input_num = 1;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                             prim_name);
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
@@ -84,6 +80,17 @@ class AllReduceInfer : public abstract::OpInferBase {
     }
 
     return x_type;
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    const int64_t input_num = 1;
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
+    auto type = InferType(primitive, input_args);
+    auto shape = InferShape(primitive, input_args);
+    return abstract::MakeAbstract(shape, type);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(AllReduce, prim::kPrimAllReduce, AllReduceInfer, false);
