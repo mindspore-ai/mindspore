@@ -9,8 +9,7 @@
         - **keep_dims** (bool，可选) - 如果为True，被规约的轴保留为1，如果为False，不保留给定的这些轴，默认值：False。
 
     输入：
-        - **x** (Tensor) - 输入Tensor，数据类型为：float16、float32、float64、int8、int16、
-          int32、int64、complex64、complex128、uint8、uint16、uint32、uint64。
+        - **x** (Tensor) - 输入Tensor。
         - **axes** (Tensor) - 指定进行规约计算的维度。数据类型为：int32、int64。取值范围为： `[-rank(x), rank(x))` 。
 
     输出：

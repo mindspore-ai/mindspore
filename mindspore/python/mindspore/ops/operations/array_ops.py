@@ -266,17 +266,17 @@ class DType(Primitive):
 
 class CheckNumerics(Primitive):
     """
-    Checks a tensor for NaN and Inf values.
+    Checks a tensor for NaN and Inf values. A runtime error is raised if input has NaN or Inf values.
 
     Inputs:
         - **x** (Tensor) - Input Tensor of any dimension. The data type is float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape and data type as `x` if `x` has no nan or inf values.
+        Tensor, has the same shape and data type as `x` if `x` has no NaN or Inf values.
 
     Raises:
         TypeError: If `x` data type is not float16, float32, float64.
-        RuntimeError: If `x` has nan or inf values.
+        RuntimeError: If `x` has NaN or Inf values.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -475,7 +475,9 @@ class Im2Col(Primitive):
 
 class Col2Im(Primitive):
     r"""
-    Combines an array of sliding local blocks into a large containing tensor.
+    Combines an array of sliding local blocks into a large containing tensor. It is
+    usually used to reconstruct an image from a set of image patches(or sliding local blocks)
+    that were generated using the :class:`mindspore.ops.Im2Col` operation.
 
     Consider a batched :attr:`input` tensor containing sliding local blocks,
     e.g., patches of images, of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,
@@ -490,23 +492,8 @@ class Col2Im(Primitive):
         L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
             - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
 
-    where :math:`d` is over all spatial dimensions.
-
-    :attr:`output_size` describes the spatial shape of the large containing
-    tensor of the sliding local blocks. It is useful to resolve the ambiguity
-    when multiple input shapes map to same number of sliding blocks, e.g.,
-    with ``stride > 0``.
-
-    The :attr:`padding`, :attr:`stride` and :attr:`dilation` arguments specify
-    how the sliding blocks are retrieved.
-
-    :attr:`stride` controls the stride for the sliding blocks.
-
-    :attr:`padding` controls the amount of implicit zero-paddings on both
-    sides for :attr:`padding` number of points for each dimension before
-    reshaping.
-
-    :attr:`dilation` controls the spacing between the kernel points.
+    where :math:`d` is over all spatial dimensions. The :attr:`padding`, :attr:`stride`
+    and :attr:`dilation` arguments specify how the sliding blocks are retrieved.
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
@@ -783,10 +770,8 @@ class ConjugateTranspose(Primitive):
     """
     Calculate the conjugate matrix of input x which has been transposed according to input perm.
 
-    The type and rank of the output y is the same as the input x. And the shape and value of the input x
-    and the output y satisfy:
-    y.shape[i] == x.shape[perm[i]] for i in [0, 1, ..., rank(x) - 1]
-    y[i,j,k,...,s,t,u] == conj(x[perm[i], perm[j], perm[k],...,perm[s], perm[t], perm[u]])
+    .. math::
+        y[i,j,k,...,s,t,u] == conj(x[perm[i], perm[j], perm[k],...,perm[s], perm[t], perm[u]])
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -796,7 +781,12 @@ class ConjugateTranspose(Primitive):
 
     Outputs:
         Tensor, the type of output tensor is the same as `x` and the shape of output tensor is decided by the
-        shape of `x` and the value of `Conj(perm)`.
+        shape of `x` and the value of `Conj(perm)`:
+
+        .. math::
+            y.shape[i] = x.shape[perm[i]]
+
+        where i is in range [0, rank(x) - 1].
 
     Raises:
         TypeError: If `perm` is not a tuple.
@@ -2857,7 +2847,7 @@ class Coalesce(Primitive):
 
     Inputs:
         - **x_indices** (Tensor) - A 2-D Tensor, represents the indices of the nonzero elements of the sparse tensor.
-          Supported data type is int64. It's elements should be non-negative. The shape is :math:`(y, x)`.
+          Supported data type is int64. Its elements should be non-negative. The shape is :math:`(y, x)`.
         - **x_values** (Tensor) - A 1-D Tensor, represents the values corresponding to the indices in `x_indices`.
           Supported data types are float16 and float32. The shape is :math:`(x,)`.
         - **x_shape** (Tensor) - A 1-D Tensor, specifies the shape of the sparse tensor.

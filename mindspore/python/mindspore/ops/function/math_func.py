@@ -6497,7 +6497,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
         >>> print(output)
         [[1 2 2 3 3 3]
-        [0 0 1 0 1 2]]
+         [0 0 1 0 1 2]]
         >>> print(output.dtype)
         Int64
     """
@@ -7765,25 +7765,23 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     from the LU decomposition of a matrix.
 
     Args:
-        LU_data (Tensor): The packed LU factorization data. A tensor of size [*, M, N], where * is batch
-          dimensions, with data type int8, uint8, int16, int32, int64, float16, float32, float64. The dims of LU_data
-          must be equal to or greater than 2.
-        LU_pivots (Tensor): The packed LU factorization pivots. A tensor of size [*, min(M, N)], where * is
+        LU_data (Tensor): The packed LU factorization data. A Tensor of shape :math:`(*, M, N)`, where * is batch
+          dimensions. The dim of `LU_data` must be equal to or greater than 2.
+        LU_pivots (Tensor): The packed LU factorization pivots. A Tensor of shape :math:`(*, min(M, N))`, where * is
           batch dimensions, with data type int8, uint8, int16, int32, int64.
-        unpack_data (bool): A flag indicating if the LU_data should be unpacked. If False, then the returned L and U
+        unpack_data (bool): A flag indicating if the `LU_data` should be unpacked. If False, then the returned L and U
             are None. Default: True.
-        unpack_pivots (bool): A flag indicating if the LU_pivots should be unpacked into a permutation matrix P. If
+        unpack_pivots (bool): A flag indicating if the `LU_pivots` should be unpacked into a permutation matrix P. If
             False, then the returned P is None. Default: True.
 
     Returns:
         - pivots(Tensor) - The permutation matrix of LU factorization.
-          The shape is `[*, M, M]`, the dtype is same as `LU_data`.
+          The shape is :math:`(*, M, M)`, the dtype is same as `LU_data`.
         - L (Tensor) - The L matrix  of LU factorization. The dtype is same as `LU_data`.
         - U (Tensor) - The U matrix  of LU factorization. The dtype is same as `LU_data`.
 
     Raises:
-        TypeError: If the dtype of `LU_data` is not one of the following: int8, uint8, int16, int32,
-                   int64, float16, float32, float64.
+        TypeError: If the dtype of `LU_data` is int, uint or float.
         TypeError: If the dtype of `LU_pivots` is not one of the following: int8, uint8, int16, int32, int64.
         ValueError: If the dimension of `LU_data` is less than 2.
         ValueError: If the dimension of `LU_pivots` is less than 1.
@@ -7797,7 +7795,6 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
         ...                             [-0.1287,  0.6508, -0.2396],
         ...                             [ 0.2583,  0.5239,  0.6902]],

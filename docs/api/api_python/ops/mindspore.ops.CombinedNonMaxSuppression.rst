@@ -19,8 +19,8 @@
           - 如果为True，则将输出填充到 `max_size_per_class` * `num_classes` 的最大长度，如果超 `过max_total_size` 则剪裁。
 
     输入：
-        - **boxes** (Tensor) - 边界框坐标，是一个float32类型的Tensor，shape为 :math:`(batch_size, num_boxes, q, 4)` 。如果q为1，则所有类别都使用相同的边界框。否则，如果q等于类的数量，则对于每一类都使用特定的边界框。
-        - **scores** (Tensor) - 表示对应于每个Bounding Boxes( `boxes` 的每一行)的单个分数，数据类型必须为float32，其shape可表示为： :math:`(batch_size, num_boxes, num_classes)` 。
+        - **boxes** (Tensor) - 边界框坐标，是一个float32类型的Tensor，shape为 :math:`(batch\_size, num\_boxes, q, 4)` 。其中 `q` 决定边框和类的对应关系。如果 `q` 为1，则所有类别都使用相同的边界框。否则，如果 `q` 等于类的数量，则对于每一类都使用特定的边界框。
+        - **scores** (Tensor) - 3D Tensor。表示对应于每个Bounding Boxes( `boxes` 的每一行)的单个分数，数据类型必须为float32，其shape可表示为： :math:`(batch\_size, num\_boxes, num\_classes)` 。
         - **max_output_size_per_class** (Tensor) - 0D Tensor，表示每个类中由非极大抑制法（non-max suppression）选择的Bounding Boxes数目的上限。数据类型：int32。
         - **max_total_size** (Tensor) - 0D Tensor，表示在所有类中可保留的Bounding Boxes数目的上限。数据类型：int32。
         - **iou_threshold** (Tensor) - 0D Tensor，判断Bounding Boxes是否与IOU重叠过多的阈值，取值必须在[0,1]区间内。数据类型：float32。

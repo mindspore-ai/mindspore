@@ -76,8 +76,8 @@ def adaptive_avg_pool2d(input, output_size):
     Args:
         input (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor,
             with float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The target output size is H x W.
-            `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
             If it is None, it means the output size is the same as the input size.
 
     Returns:
@@ -655,10 +655,9 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
     Args:
         input (Tensor): A 3D or 4D tensor,
             with float16, float32 or float64 data type.
-
-        output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-            which means the output size is the same as the input.
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
+            If it is None, it means the output size is the same as the input size.
 
         return_indices (bool): If `return_indices` is ``True`` , the indices of max value would be output.
             Default: ``False`` .
@@ -722,8 +721,7 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
 
     Args:
-        input (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
-            int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
+        input (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
         output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
             height and width, or a tuple of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer. If it is None, the output size and input size of the corresponding
@@ -739,8 +737,7 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
     Raises:
         TypeError: If `input` is not a Tensor.
         ValueError: If the dimensions number of `input` is not 4 or 5.
-        TypeError: If dtype of `input` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
-                   float16, float32 or float64.
+        TypeError: If dtype of `input` is not int or float.
         ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
     Supported Platforms:

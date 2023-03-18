@@ -1409,10 +1409,9 @@ class AdaptiveMaxPool2d(Cell):
         Ascend platform only supports float16 type for input.
 
     Args:
-        output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-            which means the output size is the same as the input.
-
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
+            If it is None, it means the output size is the same as the input size.
         return_indices (bool): If `return_indices` is True, the indices of max value would be output.
             Default: False.
 
@@ -1498,7 +1497,7 @@ class AdaptiveMaxPool3d(Cell):
             Otherwise, the indices will not be returned. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` .
+        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .

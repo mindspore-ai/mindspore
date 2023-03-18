@@ -4345,6 +4345,8 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
 
     Case 1: If the value of the target shape in the dimension is -1, the value of the
     output shape in the dimension is the value of the corresponding input shape in the dimension.
+    With an input shape :math:`(3, 3)`, target
+    shape :math:`(-1, 3)`, the output shape is :math:`(3, 3)`.
 
     Case 2: If the value of target shape in the dimension is not -1, but the corresponding
     value in the input shape is 1, then the corresponding value of the output shape
@@ -4368,8 +4370,7 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
     input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 
     Args:
-        input (Tensor): The input tensor.
-                    The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        input (Tensor): The input Tensor. Supported types are: float16, float32, int32, int8, uint8, bool.
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
                        where it will be substituted by the input tensor's shape in that position, see example.
 

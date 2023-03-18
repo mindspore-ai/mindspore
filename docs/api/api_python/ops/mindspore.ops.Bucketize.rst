@@ -6,7 +6,7 @@ mindspore.ops.Bucketize
     根据 `boundaries` 对 `input` 进行桶化。
 
     参数：
-        - **boundaries** (list[float]) - 浮点数的排序列表给出了存储桶的边界，没有默认值。
+        - **boundaries** (list[float]) - 一个浮点数的有序列表，给出各个存储桶的边界。
 
     输入：
         - **input** (Tensor) - 包含搜索值的Tensor。
