@@ -222,6 +222,7 @@ mindspore.Tensor
     mindspore.Tensor.nelement
     mindspore.Tensor.new_ones
     mindspore.Tensor.new_zeros
+    mindspore.Tensor.nextafter
     mindspore.Tensor.numel
     mindspore.Tensor.numpy
     mindspore.Tensor.nonzero
@@ -232,6 +233,7 @@ mindspore.Tensor
     mindspore.Tensor.pow
     mindspore.Tensor.prod
     mindspore.Tensor.ptp
+    mindspore.Tensor.qr
     mindspore.Tensor.rad2deg
     mindspore.Tensor.random_categorical
     mindspore.Tensor.ravel

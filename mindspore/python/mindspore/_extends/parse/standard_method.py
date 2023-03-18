@@ -1526,6 +1526,8 @@ def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
         >>> print(x.trace())
         3.0
     """
+    if offset == 0 and axis1 == 0 and axis2 == 1 and dtype is None:
+        return F.trace(x)
     d = x.diagonal(offset, axis1=axis1, axis2=axis2)
     shape = d.shape
     if dtype is None:
@@ -3158,6 +3160,7 @@ empty_compile = validator.empty_compile
 check_type_support = constexpr(validator.check_type_support)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
+check_bool_type = constexpr(validator.check_bool)
 
 
 def tensor_bool(x):
@@ -4230,3 +4233,18 @@ def movedim(x, source, destination):
     For details, please refer to :func:`mindspore.ops.movedim`.
     """
     return F.movedim(x, source, destination)
+
+
+def nextafter(input, other):
+    r"""
+    For details, please refer to :func:`mindspore.ops.nextafter`.
+    """
+    return F.nextafter(input, other)
+
+
+def qr(input, some=True):
+    r"""
+    For details, please refer to :func:`mindspore.ops.qr`.
+    """
+    check_bool_type(some, 'some', 'Tensor.qr')
+    return F.qr(input, 'reduced' if some else 'complete')

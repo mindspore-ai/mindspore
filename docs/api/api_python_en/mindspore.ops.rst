@@ -268,6 +268,7 @@ Element-wise Operations
     mindspore.ops.nanquantile
     mindspore.ops.neg
     mindspore.ops.negative
+    mindspore.ops.nextafter
     mindspore.ops.polar
     mindspore.ops.polygamma
     mindspore.ops.positive
@@ -418,6 +419,8 @@ Linear Algebraic Functions
     mindspore.ops.tensor_dot
     mindspore.ops.logdet
     mindspore.ops.slogdet
+    mindspore.ops.qr
+    mindspore.ops.trace
 
 Spectral Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
