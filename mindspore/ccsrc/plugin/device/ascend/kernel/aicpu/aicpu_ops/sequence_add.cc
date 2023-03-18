@@ -18,8 +18,8 @@
 #include "proto/aicpu_tensor.pb.h"
 
 namespace aicpu {
-constexpr size_t kSequenceAddInputNum = 2;
-constexpr size_t kSequenceAddOutputNum = 1;
+constexpr auto kSequenceAddInputNum = 2;
+constexpr auto kSequenceAddOutputNum = 1;
 constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 constexpr auto kDim2 = 2;
@@ -83,7 +83,7 @@ uint32_t SequenceAddKernel::DoCompute() {
     case aicpuops::DataType::MS_FLOAT64:
       return SequenceAddTask<double>();
     default:
-      AICPU_LOGE("SequenceAdd kernel data type [%s] not support.", input_0_data_type_);
+      AICPU_LOGE("SequenceAdd kernel data type [%s] not support.", static_cast<int>(input_0_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }
