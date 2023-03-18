@@ -719,6 +719,11 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (tuple_ptr->size() == 0) {
+      if (tuple_ptr->dynamic_len() && tuple_ptr->dynamic_element_type() != nullptr) {
+        MS_LOG(INFO) << "Dynamic empty tuple type has an dynamic element type:"
+                     << tuple_ptr->dynamic_element_type()->type_id();
+        return tuple_ptr->dynamic_element_type()->type_id();
+      }
       return kTypeUnknown;
     }
     if (tuple_ptr->dynamic_len()) {
@@ -743,6 +748,11 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     auto list_ptr = type_ptr->cast<ListPtr>();
     MS_EXCEPTION_IF_NULL(list_ptr);
     if (list_ptr->size() == 0) {
+      if (list_ptr->dynamic_len() && list_ptr->dynamic_element_type() != nullptr) {
+        MS_LOG(INFO) << "Dynamic empty list type has an dynamic element type:"
+                     << list_ptr->dynamic_element_type()->type_id();
+        return list_ptr->dynamic_element_type()->type_id();
+      }
       return kTypeUnknown;
     }
     if (list_ptr->dynamic_len()) {
