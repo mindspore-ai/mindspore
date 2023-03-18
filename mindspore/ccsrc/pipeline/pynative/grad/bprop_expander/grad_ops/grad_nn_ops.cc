@@ -782,6 +782,7 @@ REG_BPROP_BUILDER("MaxPool3D").SetBody(BODYFUNC(ib) {
   auto dx = ib->Emit("MaxPool3DGrad", {x, out, dout},
                      {{"kernel_size", ib->GetAttr("kernel_size")},
                       {"strides", ib->GetAttr("strides")},
+                      {"ceil_mode", ib->GetAttr("ceil_mode")},
                       {"pad_mode", ib->GetAttr("pad_mode")},
                       {"pad_list", ib->GetAttr("pad_list")},
                       {"format", ib->GetAttr("format")}});
