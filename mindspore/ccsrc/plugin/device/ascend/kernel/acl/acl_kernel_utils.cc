@@ -440,7 +440,6 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
       new_type = kNumberTypeInt32;
       real_size = sizeof(int32_t);
     }
-    shape.push_back(1);
     ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, &val, real_size, ACL_MEMCPY_HOST_TO_HOST);
   }
   if (ret != ACL_SUCCESS) {
