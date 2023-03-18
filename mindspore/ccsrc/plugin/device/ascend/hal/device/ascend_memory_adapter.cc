@@ -147,15 +147,14 @@ bool AscendMemAdapter::DeInitialize() {
 uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   size = GetRoundUpAlignSize(size);
-  auto new_static_offset = static_mem_offset_ - size;
-  if (new_static_offset < max_dynamic_mem_offset_) {
+  if (static_mem_offset_ < size || (static_mem_offset_ - size) < max_dynamic_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Out of Memory!!! Request memory size: " << size
                       << ", Memory Statistic:" << DevMemStatistics()
                       << "\nPlease try to reduce 'batch_size' or check whether exists extra large shape. For more "
                          "details, please refer to 'Out of Memory' at https://www.mindspore.cn .";
   }
-
+  auto new_static_offset = static_mem_offset_ - size;
   auto memory_block_ptr = device_mem_base_addr_ + new_static_offset;
   static_mem_offset_ = new_static_offset;
   static_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
@@ -180,20 +179,6 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   dynamic_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
 
   return memory_block_ptr;
-}
-
-uint8_t *AscendMemAdapter::MallocOverflowMem() {
-  std::lock_guard<std::mutex> locker(overflow_mutex_);
-  if (overflow_memory_info_map_.find(kGlobalOverflowWorkspace) != overflow_memory_info_map_.cend()) {
-    auto addr = overflow_memory_info_map_.find(kGlobalOverflowWorkspace);
-    return addr->second;
-  } else {
-    auto overflow_memory_ptr = MallocStaticDevMem(kOverflowAddrSize, "global overflow memory ptr");
-    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    (void)aclrtMemset(overflow_memory_ptr, kOverflowAddrSize, 0, kOverflowAddrSize);
-    (void)overflow_memory_info_map_.emplace(kGlobalOverflowWorkspace, overflow_memory_ptr);
-    return overflow_memory_ptr;
-  }
 }
 
 void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }

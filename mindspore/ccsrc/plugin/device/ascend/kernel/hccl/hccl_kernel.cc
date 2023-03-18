@@ -23,8 +23,8 @@
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
@@ -305,11 +305,12 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
     }
 
     std::vector<void *> global_workspace_addr;
-    auto overflow_memory_ptr = device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem();
+    auto overflow_memory_ptr =
+      device::ascend::AscendMemoryManager().MallocOverflowMemFromMemFromMemPool(kOverflowAddrSize, false);
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    global_workspace_addr.push_back(reinterpret_cast<void *>(overflow_memory_ptr));
+    global_workspace_addr.push_back(overflow_memory_ptr);
     MS_LOG(DEBUG) << "Assign overflow memory for node " << anf_node->fullname_with_scope() << ", addr is "
-                  << reinterpret_cast<void *>(overflow_memory_ptr);
+                  << overflow_memory_ptr;
 
     HcclTaskInfoPtr hcclTaskInfo =
       std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
