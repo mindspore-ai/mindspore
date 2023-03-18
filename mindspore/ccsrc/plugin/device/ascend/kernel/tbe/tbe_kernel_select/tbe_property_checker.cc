@@ -98,6 +98,20 @@ static bool CheckTopK(const CNodePtr &cnode) {
   MS_LOG(EXCEPTION) << "For 'TopK', it should be have attribute 'sorted'." << trace::DumpSourceLines(cnode);
 }
 
+static bool CheckScatterNdUpdate(const CNodePtr &cnode) {
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
+    return true;
+  }
+  return false;
+}
+
+static bool CheckScatterNd(const CNodePtr &cnode) {
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
+    return true;
+  }
+  return false;
+}
+
 static bool CheckKLDivLoss(const CNodePtr &cnode) {
   if (common::AnfAlgo::HasNodeAttr(kAttrReduction, cnode)) {
     auto reduction = common::AnfAlgo::GetNodeAttr<string>(cnode, kAttrReduction);
@@ -111,6 +125,8 @@ bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   static std::map<std::string, CheckSupportFun> tbe_property_checker = {{kStridedSliceOpName, CheckStridedSlice},
                                                                         {kStridedSliceGradOpName, CheckStridedSlice},
                                                                         {kTopKOpName, CheckTopK},
+                                                                        {kScatterNdUpdateOpName, CheckScatterNdUpdate},
+                                                                        {kScatterNdOpName, CheckScatterNd},
                                                                         {kKLDivLossOpName, CheckKLDivLoss}};
   auto cnode_type = common::AnfAlgo::GetCNodeName(cnode);
   auto find_iter = tbe_property_checker.find(cnode_type);
