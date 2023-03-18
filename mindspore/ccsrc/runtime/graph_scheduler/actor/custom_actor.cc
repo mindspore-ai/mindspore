@@ -66,7 +66,9 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
       std::string error_info = "BindDevice to current thread failed: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
     }
+    MS_LOG(DEBUG) << "Start Launch Custom actor: " << AnfUtils::GetCustomActorName(kernel_.lock());
     custom_func(&input_device_tensors_);
+    MS_LOG(DEBUG) << "End Launch Custom actor: " << AnfUtils::GetCustomActorName(kernel_.lock());
 
     // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
     // maybe changed.
