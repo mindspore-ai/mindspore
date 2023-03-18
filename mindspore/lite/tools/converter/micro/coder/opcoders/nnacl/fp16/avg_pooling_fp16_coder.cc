@@ -35,6 +35,7 @@ int PoolingFP16Coder::Prepare(CoderContext *const context) {
 int PoolingFP16Coder::DoCode(CoderContext *const context) {
   // attribute
   auto pooling_parameter = reinterpret_cast<PoolingParameter *>(parameter_);
+  MS_CHECK_PTR(pooling_parameter);
   // init struct PoolingParameters
   pooling_parameter->input_batch_ = input_tensor_->Batch();
   pooling_parameter->input_channel_ = input_tensor_->Channel();
