@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "include/common/utils/python_fallback_running.h"
-#include "ops/tuple_get_item.h"
-#include "ops/primitive_c.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 ScopedFallbackRunning::ScopedFallbackRunning() { on_ = true; }

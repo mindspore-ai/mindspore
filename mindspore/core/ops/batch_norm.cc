@@ -141,7 +141,7 @@ class BatchNormInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     const auto prim_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
     auto scale_shape_ptr = input_args[kInputIndex1]->BuildShape();
@@ -199,7 +199,7 @@ class BatchNormInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const auto prim_name = prim->name();
-    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterThan, 0, prim_name);
     const std::set valid_types = {kFloat16, kFloat32};
     auto x_type = input_args[0]->BuildType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
