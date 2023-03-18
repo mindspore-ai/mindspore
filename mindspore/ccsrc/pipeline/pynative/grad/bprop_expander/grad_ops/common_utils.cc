@@ -167,6 +167,9 @@ NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, c
 
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis) {
   auto rank = input_shape.size();
+  if (rank == 0) {
+    return {};
+  }
   std::set<int64_t> reduction_indices_set;
   ShapeVector perm;
   int64_t reduced_num = 1;
@@ -238,6 +241,9 @@ std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<i
 }
 
 std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis) {
+  if (x.empty()) {
+    return {};
+  }
   std::vector<int64_t> out;
   if (axis.empty()) {
     return std::vector<int64_t>(x.size(), 1LL);
