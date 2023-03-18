@@ -847,7 +847,5 @@ void TripletMarginLossCPUKernelMod::complextype_swap(size_t start, std::vector<T
     calc_swap_sum += calculate_swap_float;
   }
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TripletMarginLoss, TripletMarginLossCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
