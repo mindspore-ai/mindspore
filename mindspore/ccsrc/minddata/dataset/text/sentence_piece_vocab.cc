@@ -21,9 +21,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/include/dataset/constants.h"

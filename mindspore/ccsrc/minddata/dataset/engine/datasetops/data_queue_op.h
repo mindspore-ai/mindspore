@@ -147,7 +147,7 @@ class DataQueueOp : public PipelineOp {
   Status CreateDynamicDataQueue();
   double CalMbufQueueMemory(size_t realtime_queue_size);
   void RecordProfilingData(bool is_profiling_enable, bool end_of_epoch, int32_t *connector_size,
-                           int32_t *connector_capacity, int64_t *send_batch);
+                           int32_t *connector_capacity, const int64_t *send_batch) const;
 
   QueueList<TensorRow> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;

@@ -155,7 +155,6 @@ class RenderedSST2Op : public MappableLeafOp {
 
   std::string folder_path_;  // directory of image folder
   std::string usage_;
-  bool recursive_;
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed
   std::map<std::string, uint32_t> class_index_;

@@ -131,7 +131,7 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
 
   /// Check whether the target number of samples has been retrieved when eoe is hit.
   /// \return Status The status code returned
-  Status CheckNumSamples();
+  Status CheckNumSamples() const;
 };
 
 #ifndef _MSC_VER
