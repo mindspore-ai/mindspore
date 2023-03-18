@@ -207,6 +207,18 @@ bool MulAddFusion::MulInputAnodeIsInferred(const AnfNodePtr &mul_input_anode) co
   return is_inferred;
 }
 
+bool MulAddFusion::CopyNodeFormat(CNodePtr node, mindspore::ops::PrimitiveCPtr prim) const {
+  auto src_prim = GetValueNode<PrimitiveCPtr>(node->input(0));
+  if (src_prim->GetAttr(mindspore::ops::kFormat) != nullptr) {
+    auto value = src_prim->GetAttr(mindspore::ops::kFormat);
+    if (value->isa<mindspore::Int64Imm>()) {
+      auto format = GetValue<int64_t>(value);
+      prim->AddAttr(mindspore::ops::kFormat, MakeValue(format));
+    }
+  }
+  return true;
+}
+
 AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
                                  const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   if (func_graph == nullptr || node == nullptr) {
@@ -274,6 +286,11 @@ AnfNodePtr MulAddFusion::Process(const std::string &pattern_name, const mindspor
     return nullptr;
   }
   scale_primitive->set_axis(-(static_cast<int64_t>(bias_tensor_->shape_c().size() + axis_offset)));
+
+  // copy the format of add node to scale node
+  if (CopyNodeFormat(add_cnode, scale_primitive_c)) {
+    MS_LOG(WARNING) << "Copy original node format failed";
+  }
 
   // create scale op
   auto scale_node = func_graph->NewCNode(scale_primitive_c, {mul_input_anode, mul_const_anode_, add_const_anode_});
