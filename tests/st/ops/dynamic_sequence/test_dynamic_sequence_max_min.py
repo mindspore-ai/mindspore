@@ -118,3 +118,21 @@ def test_seq_min_grad():
     net = MinNet()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
     print("grad=:", grad_func(x, dout))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_seq_min_grad_mutable():
+    """
+    Feature: test sequence min grad op
+    Description: two inputs are dynamic sequence
+    Expectation: the result match with tuple result
+    """
+    x = (mutable(1), 2, 3)
+    dout = mutable(2)
+    net = MinNet()
+    grad_func = GradOperation(get_all=True, sens_param=True)(net)
+    print("grad=:", grad_func(x, dout))

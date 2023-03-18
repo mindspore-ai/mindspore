@@ -62,7 +62,7 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   auto len = static_cast<int64_t>(tuple_shape_[0]);
   if (*index >= len || *index < -len) {
-    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " < =index < " << len << ", but got " << *index
+    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " <= index < " << len << ", but got " << *index
                              << ".";
   }
   if (*index < 0) {

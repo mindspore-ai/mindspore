@@ -74,3 +74,9 @@ def test_seqence_make_range_grad():
     dout = mutable((1, 1), True)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
     print("grad out1 = ", grad_func(input_x, input_y, input_z, dout))
+    input_x = 10
+    input_y = 100
+    input_z = 30
+    dout = (1, 1, 1)
+    grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
+    print("grad out1 = ", grad_func(input_x, input_y, input_z, dout))
