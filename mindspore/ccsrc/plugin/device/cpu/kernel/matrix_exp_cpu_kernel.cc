@@ -169,7 +169,5 @@ const std::vector<std::pair<KernelAttr, MatrixExpCpuKernelMod::KernelRunFunc>> &
      &MatrixExpCpuKernelMod::LaunchKernel<std::complex<double>>}};
   return func_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixExp, MatrixExpCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

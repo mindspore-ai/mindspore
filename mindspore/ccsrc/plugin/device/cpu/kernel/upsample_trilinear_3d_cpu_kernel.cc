@@ -172,6 +172,5 @@ std::vector<KernelAttr> UpsampleTrilinear3DCpuKernelMod::GetOpSupport() {
 
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpsampleTrilinear3D, UpsampleTrilinear3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

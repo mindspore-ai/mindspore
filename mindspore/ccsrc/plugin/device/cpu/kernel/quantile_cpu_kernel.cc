@@ -325,7 +325,5 @@ const std::vector<std::pair<KernelAttr, QuantileCpuKernelMod::KernelRunFunc>> &Q
      &QuantileCpuKernelMod::LaunchKernel<double>}};
   return func_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Quantile, QuantileCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

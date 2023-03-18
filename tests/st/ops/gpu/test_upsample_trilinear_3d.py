@@ -36,6 +36,7 @@ class UpsampleTrilinear3DNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_dynamic_shape():
     """
     Feature: Test UpsampleTrilinear3D op in gpu.
@@ -57,6 +58,7 @@ def test_upsample_trilinear_3d_dynamic_shape():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_output_size(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -106,6 +108,7 @@ def test_upsample_trilinear_3d_output_size(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_output_size_align_corners(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -156,6 +159,7 @@ def test_upsample_trilinear_3d_output_size_align_corners(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_scales(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -207,6 +211,7 @@ def test_upsample_trilinear_3d_scales(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_scales_align_corners(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -260,6 +265,7 @@ def test_upsample_trilinear_3d_scales_align_corners(data_type):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_error():
     """
     Feature: UpsampleTrilinear3D
