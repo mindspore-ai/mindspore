@@ -77,6 +77,8 @@ bool GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksiz
   LiteMat kx, ky;
   kx.Init(ksize[0], 1, 1, LDataType::FLOAT32);
   ky.Init(1, ksize[1], 1, LDataType::FLOAT32);
+  RETURN_FALSE_IF_LITEMAT_EMPTY(kx);
+  RETURN_FALSE_IF_LITEMAT_EMPTY(ky);
 
   GetGaussianKernel(kx, ksize[0], sigmaX);
   GetGaussianKernel(ky, ksize[1], sigmaY);

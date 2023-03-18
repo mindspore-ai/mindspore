@@ -162,7 +162,7 @@ void BindShardWriter(py::module *m) {
                for (auto i = start; i < end; i++) {
                  char *buffer = nullptr;
                  ssize_t length = 0;
-                 if (PYBIND11_BYTES_AS_STRING_AND_SIZE(blob_data[i].ptr(), &buffer, &length)) {
+                 if (PYBIND11_BYTES_AS_STRING_AND_SIZE(blob_data[i].ptr(), &buffer, &length) != 0) {
                    MS_LOG(ERROR) << "Unable to extract bytes contents!";
                    return FAILED;
                  }

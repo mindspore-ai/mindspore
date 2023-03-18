@@ -142,7 +142,7 @@ Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) 
   return Status::OK();
 }
 
-Status GeneratorOp::CheckNumSamples() {
+Status GeneratorOp::CheckNumSamples() const {
   if (num_rows_sampled_ != -1 && num_rows_sampled_ != generator_counter_) {
     if (generator_counter_ == 0) {
       std::string msg =
