@@ -144,7 +144,7 @@ class IrExportBuilder {
   bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
   bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
@@ -1213,7 +1213,8 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
   return true;
 }
 
-bool IrExportBuilder::SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) {
+bool IrExportBuilder::SetNamedValueToAttributeProto(const ValuePtr &value,
+                                                    mind_ir::AttributeProto *const attr_proto) const {
   if (value->isa<None>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
