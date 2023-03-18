@@ -25,6 +25,10 @@
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/util/status.h"
 
+constexpr int64_t size_two = 2;
+constexpr int64_t size_three = 3;
+constexpr int64_t size_four = 4;
+
 namespace mindspore {
 namespace dataset {
 // Helper function to validate probability
@@ -46,7 +50,7 @@ Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::str
 template <typename T>
 Status ValidateScalar(const std::string &op_name, const std::string &scalar_name, const T scalar,
                       const std::vector<T> &range, bool left_open_interval = false, bool right_open_interval = false) {
-  if (range.empty() || range.size() > 2) {
+  if (range.empty() || range.size() > size_two) {
     std::string err_msg = op_name + ": expecting range size 1 or 2, but got: " + std::to_string(range.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_SYNTAX_ERROR(err_msg);
@@ -58,7 +62,7 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
     MS_LOG(ERROR) << err_msg;
     RETURN_SYNTAX_ERROR(err_msg);
   }
-  if (range.size() == 2) {
+  if (range.size() == size_two) {
     if ((right_open_interval && scalar >= range[1]) || (!right_open_interval && scalar > range[1])) {
       std::string left_bracket = left_open_interval ? "(" : "[";
       std::string right_bracket = right_open_interval ? ")" : "]";

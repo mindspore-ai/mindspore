@@ -173,8 +173,10 @@ Status DBToAmplitude(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   std::shared_ptr<Tensor> out;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), &out));
   auto itr_out = out->begin<T>();
+  constexpr int64_t pow_factor_x = 10;
+  constexpr double pow_factor_y = 0.1;
   for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
-    *itr_out = ref * pow(pow(10, (*itr_in) * 0.1), power);
+    *itr_out = ref * pow(pow(pow_factor_x, (*itr_in) * pow_factor_y), power);
     itr_out++;
   }
   *output = out;
@@ -808,13 +810,15 @@ Status Overdrive(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   RETURN_IF_NOT_OK(input->Reshape(to_shape));
   // apply dB2Linear on gain, 20dB is expect to gain.
   float gain_ex = exp(gain * log(10) / 20.0);
-  color = color / 200;
+  constexpr int64_t translation_factor = 200;
+  color = color / translation_factor;
   // declare the array used to store the input.
   std::vector<T> input_vec;
   // out_vec is used to save the result of applying overdrive.
   std::vector<T> out_vec;
   // store intermediate results of input.
   std::vector<T> temp;
+  constexpr double temp_factor = 3.0;
   // scale and pan the input two-dimensional sound wave array to a certain extent.
   for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
     // store the value of traverse the input.
@@ -826,12 +830,12 @@ Status Overdrive(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     // 0.5 + 2/3 * 0.75 = 1, zoom and shift the sound.
     if (temp_fp2 < -1) {
       // -2.0 / 3.0 is -2/3 in the formula.
-      temp.push_back(-2.0 / 3.0);
+      temp.push_back(-2.0 / temp_factor);
     } else if (temp_fp2 > 1) {
       // 2.0 / 3.0 is 2/3 in the formula.
-      temp.push_back(2.0 / 3.0);
+      temp.push_back(2.0 / temp_factor);
     } else {
-      temp.push_back(temp_fp2 - temp_fp2 * temp_fp2 * temp_fp2 / 3.0);
+      temp.push_back(temp_fp2 - temp_fp2 * temp_fp2 * temp_fp2 / temp_factor);
     }
   }
   // last_in and last_out are the intermediate values for processing each moment.
@@ -1165,9 +1169,10 @@ Status Phaser(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   Modulation modulation = sinusoidal ? Modulation::kSinusoidal : Modulation::kTriangular;
   // create and compute mod buffer
   std::shared_ptr<Tensor> mod_buf_tensor;
+  auto PI_factor = 2;
   RETURN_IF_NOT_OK(GenerateWaveTable(&mod_buf_tensor, DataType(DataType::DE_INT32), modulation, mod_buf_len,
                                      static_cast<float>(1.0f), static_cast<float>(delay_buf_len),
-                                     static_cast<float>(PI / 2)));
+                                     static_cast<float>(PI / PI_factor)));
   // tensor mod_buf convert to vector
   std::vector<int> mod_buf;
   for (auto itr = mod_buf_tensor->begin<int>(); itr != mod_buf_tensor->end<int>(); itr++) {
@@ -1339,7 +1344,8 @@ Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out
   delay_gain = delay_gain * (1 - abs(feedback_gain));
 
   int delay_buf_length = static_cast<int>((delay_min + delay_depth) * sample_rate + 0.5);
-  delay_buf_length = delay_buf_length + 2;
+  auto delay_buf_length_factor = 2;
+  delay_buf_length = delay_buf_length + delay_buf_length_factor;
 
   int lfo_length = static_cast<int>(sample_rate / speed);
 
@@ -1372,8 +1378,9 @@ Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out
   for (int i = 0; i < time; i++) {
     delay_buf_pos = (delay_buf_pos + delay_buf_length - 1) % delay_buf_length;
     for (int j = 0; j < n_channels; j++) {
+      auto channel_phase_factor = 0.5;
       // get current channel phase
-      cur_channel_phase[j] = static_cast<int>(j * lfo_length * channel_phase + 0.5);
+      cur_channel_phase[j] = static_cast<int>(j * lfo_length * channel_phase + channel_phase_factor);
       // through the current channel phase and lfo arrays to get the delay
       auto iter_lfo = lfo->begin<float>();
       delay_tensor[j] = *(iter_lfo + static_cast<ptrdiff_t>((lfo_pos + cur_channel_phase[j]) % lfo_length));
