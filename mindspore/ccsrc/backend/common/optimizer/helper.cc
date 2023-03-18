@@ -834,6 +834,22 @@ std::pair<AbstractBasePtr, int> RectifyAbstractFromStructuralAttr(const ValuePtr
   }
 }
 
+AbstractBasePtr RectifyEmptyTupleAbstract(const ValuePtr &structural) {
+  if (!structural->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "input abstract is out of range.";
+  }
+
+  auto value_tuple = structural->cast_ptr<ValueTuple>();
+  std::vector<AbstractBasePtr> abs_list;
+
+  for (size_t i = 0; i < value_tuple->size(); ++i) {
+    auto item = (*value_tuple)[i];
+    (void)abs_list.emplace_back(RectifyEmptyTupleAbstract(item));
+  }
+
+  return std::make_shared<abstract::AbstractTuple>(abs_list);
+}
+
 AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tuple_structural,
                                                             const AbstractBasePtrList &input_abstract) {
   if (tuple_structural == nullptr) {
@@ -846,7 +862,9 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tupl
   for (size_t i = 0; i < tuple_structural_value->size(); ++i) {
     auto item = (*tuple_structural_value)[i];
     if (input_abstract.size() <= input_index) {
-      MS_LOG(EXCEPTION) << "input abstract is out of range.";
+      // The Ori  Node : Oper(a, b, ())  ==> Oper(a, b)  with structural --> (-1, -1 , ())
+      // The abstract size will be smaller than the attr of tuple input structural.
+      (void)rectifyed_abs_list.emplace_back(RectifyEmptyTupleAbstract(item));
     }
     auto [abs, offset] =
       RectifyAbstractFromStructuralAttr(item, (input_abstract.begin() + input_index), (input_abstract.cend()));
