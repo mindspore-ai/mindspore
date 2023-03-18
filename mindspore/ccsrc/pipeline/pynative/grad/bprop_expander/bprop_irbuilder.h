@@ -71,6 +71,9 @@ class BpropIRBuilder : public Emitter {
   NodePtr DynSize(const NodePtr &node, const TypePtr &type) const { return Cast(DynSize(node), type); }
   NodePtr DynSize(const NodePtr &node, TypeId type_id) const { return Cast(DynSize(node), type_id); }
   NodePtr DynSize(const NodePtr &node) const {
+    if (!IsDynamic(GetShape(node))) {
+      return Value(GetSize(node));
+    }
     auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
       auto shape = inputs.at(0);
       int64_t size = 1;
