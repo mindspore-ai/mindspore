@@ -4613,7 +4613,7 @@ def histc(input, bins=100, min=0., max=0.):
     The elements are sorted into equal width bins between `min` and `max`.
     If `min` and `max` are both zero, the minimum and maximum values of the data are used.
 
-    Elements lower than min and higher than max are ignored.
+    Elements lower than min or higher than max are ignored.
 
     Args:
         input (Tensor): the input tensor, type support list [float16, float32, int32]

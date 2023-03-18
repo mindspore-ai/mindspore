@@ -44,7 +44,7 @@ def eig(A):
         - **eigen_values** (Tensor) - Shape :math:`(*, N)`. eigenvalues of
           the corresponding matrix. The eigenvalues may not have an order.
         - **eigen_vectors** (Tensor) - Shape :math:`(*, N, N)`,columns of eigen vectors represent
-          normalized (unit length) eigenvectors of corresponding eigenvalues.
+        - **normalized** (unit length) eigenvectors of corresponding eigenvalues.
 
     Raises:
         TypeError: If dtype of `A` is not one of: float64, float32, complex64 or complex128.

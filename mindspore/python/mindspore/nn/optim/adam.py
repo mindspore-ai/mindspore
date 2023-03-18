@@ -972,7 +972,7 @@ class AdamWeightDecay(Optimizer):
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`\gamma` represents `learning_rate`,
     :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents the current step,
-    :math:`w` represents `params`, :math:`\gamma` represents `weight_decay`.
+    :math:`w` represents `params`, :math:`\lambda` represents `weight_decay`.
 
     Note:
         There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
