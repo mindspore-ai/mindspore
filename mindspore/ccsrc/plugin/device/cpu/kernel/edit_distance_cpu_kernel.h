@@ -67,13 +67,18 @@ inline size_t LevenshteinDistance(const std::vector<T> &s, const std::vector<T> 
     return std::max(s_size, t_size);
   }
   std::vector<std::vector<size_t>> dis(s_size + 1, std::vector<size_t>(t_size + 1, 0));
-  for (size_t i = 0; i <= t_size; i++) dis[0][i] = i;
-  for (size_t i = 0; i <= s_size; i++) dis[i][0] = i;
-  for (size_t i = 1; i <= s_size; i++)
+  for (size_t i = 0; i <= t_size; i++) {
+    dis[0][i] = i;
+  }
+  for (size_t i = 0; i <= s_size; i++) {
+    dis[i][0] = i;
+  }
+  for (size_t i = 1; i <= s_size; i++) {
     for (size_t j = 1; j <= t_size; j++) {
       dis[i][j] =
         std::min({dis[i - 1][j] + 1, dis[i][j - 1] + 1, dis[i - 1][j - 1] + (cmp(s[i - 1], t[j - 1]) ? 0 : 1)});
     }
+  }
   return dis[s_size][t_size];
 }
 

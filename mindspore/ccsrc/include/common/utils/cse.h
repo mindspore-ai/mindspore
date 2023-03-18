@@ -50,7 +50,7 @@ class COMMON_EXPORT CSE {
 
  private:
   bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager);
-  bool CalReplaceNodes(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
+  bool CalReplaceNodes(const std::vector<std::size_t> &order_group,
                        mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups);
   void AddReplicatedNode(const AnfNodePtr &node, const AnfNodePtr &main);
   bool IsHiddenSideEffectCall(const AnfNodePtr &node);
