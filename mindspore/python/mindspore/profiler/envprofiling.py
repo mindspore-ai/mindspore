@@ -33,7 +33,7 @@ def get_profiling_options():
     return options
 
 
-def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e7):
+def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e6):
     """Parse platform support parameters."""
     device_target = context.get_context("device_target").upper()
     op_time = final_options.get("op_time")
@@ -43,7 +43,7 @@ def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e7
         if param not in support_list and param in list(origin_options.keys()):
             logger.warning(f"[Profiler]'{param}' is an invalid param which doesn't work.")
         if param in support_list:
-            if not op_time and origin_options.get(param) and param not in ALWAYS_VALID_PARAM:
+            if not op_time and param in origin_options.keys() and param not in ALWAYS_VALID_PARAM:
                 logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")
         if param not in support_list and final_options.get(param):
             support_dict.pop(param)
