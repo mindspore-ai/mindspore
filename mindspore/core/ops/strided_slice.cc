@@ -351,7 +351,7 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice");
       *slice_len = (*slice_value).size();
     } else {
-      // slice is AnyValue
+      // slice is ValueAny
       is_dynamic = true;
       auto slice_shape = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
       if (slice_shape->shape().size() != 1) {

@@ -143,7 +143,7 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
   y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_max);
   y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_max);
 
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<AnyValue>() &&
+  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
       !input_args[0]->BuildValue()->isa<None>()) {
     auto dense_shape_value = input_args[0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(dense_shape_value);

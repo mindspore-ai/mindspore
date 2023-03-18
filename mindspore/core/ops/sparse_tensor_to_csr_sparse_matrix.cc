@@ -110,7 +110,7 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   abstract::ShapePtr y_row_pointers_shape_list;
 
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-      !input_args[kInputIndex2]->BuildValue()->isa<AnyValue>() &&
+      !input_args[kInputIndex2]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex2]->BuildValue()->isa<None>()) {
     auto dense_shape = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     auto dense_shape_ptr = dense_shape->BuildValue();

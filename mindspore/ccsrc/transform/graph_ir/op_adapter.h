@@ -494,7 +494,7 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   // convert any value to tensor
-  static GeTensor ConvertAny(const ValuePtr &value, const AnyTraits<AnyValue> anyTraitsValue) {
+  static GeTensor ConvertAny(const ValuePtr &value, const AnyTraits<ValueAny> anyTraitsValue) {
     return ConvertAnyUtil(value, anyTraitsValue);
   }
 

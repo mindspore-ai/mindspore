@@ -56,7 +56,7 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
       axis.emplace_back(GetValue<int64_t>(input_value));
     } else if (input_value->isa<Int32Imm>()) {
       axis.emplace_back(static_cast<int64_t>(GetValue<int32_t>(input_value)));
-    } else if (input_value->isa<AnyValue>()) {
+    } else if (input_value->isa<ValueAny>()) {
       ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
     } else {

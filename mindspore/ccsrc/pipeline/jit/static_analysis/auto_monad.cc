@@ -537,7 +537,7 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(cond_abs);
     auto cond_abs_val = cond_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(cond_abs_val);
-    if (cond_abs_val == kAnyValue) {
+    if (cond_abs_val == kValueAny) {
       return nullptr;
     }
     auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);

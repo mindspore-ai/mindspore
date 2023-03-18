@@ -58,7 +58,7 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int64 scalar but got "
                               << element->ToString();
     }
-    if (!has_variable && element->BuildValue() == kAnyValue) {
+    if (!has_variable && element->BuildValue() == kValueAny) {
       has_variable = true;
     }
   }
@@ -115,7 +115,7 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   bool has_variable = CheckMakeRangeInput(args_spec_list, prim_name);
   if (has_variable) {
     // If the input to make_range has variable input, the output abs should be dynamic length sequence.
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
     auto ret = std::make_shared<abstract::AbstractTuple>(AbstractBasePtrList{element});
     ret->CheckAndConvertToDynamicLenSequence();
     return ret;

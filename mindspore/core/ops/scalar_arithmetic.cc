@@ -293,7 +293,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
 
     auto x_value = elem_x->BuildValue();
     auto y_value = elem_y->BuildValue();
-    if (x_value == kAnyValue || y_value == kAnyValue) {
+    if (x_value == kValueAny || y_value == kValueAny) {
       return nullptr;
     }
     auto x_type = input_args[x_index]->BuildType();

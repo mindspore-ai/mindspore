@@ -497,7 +497,7 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
   std::vector<int64_t> out_shape;
   for (auto element : abs_seq->elements()) {
     auto element_val = element->BuildValue();
-    if (element_val == kAnyValue) {
+    if (element_val == kValueAny) {
       out_shape.push_back(abstract::Shape::kShapeDimAny);
     } else if (element_val->isa<Int64Imm>()) {
       (void)out_shape.emplace_back(GetValue<ShapeValueDType>(element_val));
@@ -679,13 +679,13 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(element_type);
   AbstractBasePtrList abs_list;
   if (IsDynamic(x_shape)) {
-    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, element_type));
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
     auto abs = std::make_shared<T>(abs_list);
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
   for (int64_t i = 0; i < x_shape[0]; i++) {
-    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, element_type));
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
   }
   auto abs = std::make_shared<T>(abs_list);
   return abs;
@@ -729,7 +729,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kAnyValue) {
+  if (index_value == kValueAny) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.
@@ -831,8 +831,8 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 
 bool IsValueKnown(const ValuePtr &value) {
   // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
-  // the BuildValue returns AnyValue if any one of the elements' value is AnyValue
-  if (value->isa<AnyValue>() || value->isa<None>()) {
+  // the BuildValue returns ValueAny if any one of the elements' value is ValueAny
+  if (value->isa<ValueAny>() || value->isa<None>()) {
     return false;
   }
 

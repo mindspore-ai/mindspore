@@ -118,7 +118,7 @@ ValuePtr AbstractBase::BuildValue() const {
 AbstractBasePtr AbstractBase::Broaden() const {
   AbstractBasePtr clone = Clone();
   MS_EXCEPTION_IF_NULL(clone);
-  clone->set_value(kAnyValue);
+  clone->set_value(kValueAny);
   return clone;
 }
 
@@ -147,12 +147,12 @@ std::string AbstractBase::ToString(bool verbose) const {
   auto type = BuildType();
   if (shape != nullptr && type != nullptr) {
     buffer << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       buffer << ", value=...";
     }
   } else if (type != nullptr) {
     buffer << type;
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       buffer << ", value=...";
     }
   }
@@ -183,7 +183,7 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   const auto &type_self = GetTypeTrack();
   const auto &type_other = other->GetTypeTrack();
   TypePtr res_type = TypeJoin(type_self, type_other);
-  if (res_type == kAnyType) {
+  if (res_type == kTypeAny) {
     TypeJoinLogging(type_self, type_other, shared_from_base<AbstractBase>(), other);
   }
   const auto &value_self = GetValueTrack();
@@ -229,7 +229,7 @@ std::string AbstractType::ToString() const {
   return buffer.str();
 }
 
-std::string AbstractError::ToString() const {
+std::string AbstractProblem::ToString() const {
   std::ostringstream buffer;
   auto value_track = GetValueTrack();
   MS_EXCEPTION_IF_NULL(value_track);
@@ -656,7 +656,7 @@ bool AbstractSequence::PurifyElements() {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
       const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
-      if (elements_[i]->isa<AbstractError>()) {
+      if (elements_[i]->isa<AbstractProblem>()) {
         unuse_node_none->set_type(std::make_shared<Problem>());
       }
       elements_[i] = unuse_node_none;
@@ -773,8 +773,8 @@ ValuePtr AbstractSequence::ElementsBuildValue() const {
     }
     element_value = element->BuildValue();
     MS_EXCEPTION_IF_NULL(element_value);
-    if (element_value->isa<AnyValue>()) {
-      return kAnyValue;
+    if (element_value->isa<ValueAny>()) {
+      return kValueAny;
     }
     element_value_list.push_back(element_value);
   }
@@ -925,7 +925,7 @@ AbstractBasePtr AbstractTuple::PartialBroaden() const {
 
 ValuePtr AbstractTuple::RealBuildValue() const {
   if (dynamic_len_) {
-    return kAnyValue;
+    return kValueAny;
   }
   return ElementsBuildValue<ValueTuple>();
 }
@@ -966,7 +966,7 @@ bool AbstractTuple::ContainsAllConstants() const {
     MS_EXCEPTION_IF_NULL(element_value);
     // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
     if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
-          (element->isa<abstract::AbstractTensor>() && element_value != kAnyValue) ||
+          (element->isa<abstract::AbstractTensor>() && element_value != kValueAny) ||
           element->isa<abstract::AbstractTuple>())) {
       return false;
     }
@@ -1040,7 +1040,7 @@ AbstractBasePtr AbstractList::PartialBroaden() const {
 
 ValuePtr AbstractList::RealBuildValue() const {
   if (dynamic_len_) {
-    return kAnyValue;
+    return kValueAny;
   }
   return ElementsBuildValue<ValueList>();
 }
@@ -1150,8 +1150,8 @@ ValuePtr AbstractSlice::RealBuildValue() const {
   ValuePtr start = start_->BuildValue();
   ValuePtr stop = stop_->BuildValue();
   ValuePtr step = step_->BuildValue();
-  if (start->isa<AnyValue>() || stop->isa<AnyValue>() || step->isa<AnyValue>()) {
-    return kAnyValue;
+  if (start->isa<ValueAny>() || stop->isa<ValueAny>() || step->isa<ValueAny>()) {
+    return kValueAny;
   }
   return std::make_shared<ValueSlice>(start, stop, step);
 }
@@ -1249,11 +1249,11 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   MS_EXCEPTION_IF_NULL(v1);
   MS_EXCEPTION_IF_NULL(v2);
   // Check if both point to same specific value.
-  if (!v1->isa<AnyValue>()) {
+  if (!v1->isa<ValueAny>()) {
     return v1 == v2;
   }
-  // Check if both are AnyValue.
-  if (!v2->isa<AnyValue>()) {
+  // Check if both are ValueAny.
+  if (!v2->isa<ValueAny>()) {
     return false;
   }
   // Check element type.
@@ -1302,7 +1302,7 @@ AbstractBasePtr AbstractTensor::Broaden() const {
   auto shp = shape();
   MS_EXCEPTION_IF_NULL(shp);
   broaden->set_shape(shp->Clone());
-  broaden->set_value(kAnyValue);
+  broaden->set_value(kValueAny);
   broaden->set_is_adapter(is_adapter());
   return broaden;
 }
@@ -1314,7 +1314,7 @@ AbstractBasePtr AbstractTensor::BroadenWithShape() const {
   MS_EXCEPTION_IF_NULL(shp);
   shp->Broaden();
   broaden->set_shape(shp);
-  broaden->set_value(kAnyValue);
+  broaden->set_value(kValueAny);
   broaden->set_is_adapter(is_adapter());
   return broaden;
 }
@@ -1421,8 +1421,8 @@ ValuePtr AbstractDictionary::RealBuildValue() const {
     auto value_element_value = item.second->BuildValue();
     MS_EXCEPTION_IF_NULL(key_element_value);
     MS_EXCEPTION_IF_NULL(value_element_value);
-    if (value_element_value->isa<AnyValue>()) {
-      return kAnyValue;
+    if (value_element_value->isa<ValueAny>()) {
+      return kValueAny;
     }
     key_values.emplace_back(key_element_value, value_element_value);
   }
@@ -1470,8 +1470,8 @@ AbstractRefTensor::AbstractRefTensor(const AbstractTensorPtr &ref_value, const V
   set_type(std::make_shared<RefType>());
   set_is_adapter(ref_value->is_adapter());
   MS_EXCEPTION_IF_NULL(ref_key_value);
-  if (ref_key_value != kAnyValue && !ref_key_value->isa<RefKey>()) {
-    MS_LOG(EXCEPTION) << "ref_key_value must be kAnyValue or RefKey, but got:" << ref_key_value->ToString();
+  if (ref_key_value != kValueAny && !ref_key_value->isa<RefKey>()) {
+    MS_LOG(EXCEPTION) << "ref_key_value must be kValueAny or RefKey, but got:" << ref_key_value->ToString();
   }
 }
 
@@ -1642,8 +1642,8 @@ ValuePtr AbstractKeywordArg::RealBuildValue() const {
   MS_EXCEPTION_IF_NULL(arg_value_);
   ValuePtr value = arg_value_->BuildValue();
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<AnyValue>()) {
-    return kAnyValue;
+  if (value->isa<ValueAny>()) {
+    return kValueAny;
   }
   return std::make_shared<KeywordArg>(arg_name_, value);
 }
@@ -1774,7 +1774,7 @@ AbstractRowTensorPtr AbstractRowTensor::MakeAbstract(const BaseShapePtr &shp) co
   MS_EXCEPTION_IF_NULL(element());
   auto broaden = std::make_shared<AbstractRowTensor>(element()->Broaden());
   broaden->set_shape(shp);
-  broaden->set_value(kAnyValue);
+  broaden->set_value(kValueAny);
   MS_EXCEPTION_IF_NULL(indices_);
   MS_EXCEPTION_IF_NULL(values_);
   MS_EXCEPTION_IF_NULL(dense_shape_);
@@ -1936,14 +1936,14 @@ const AbstractTensorPtr AbstractCSRTensor::values() const {
 AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor)
     : AbstractBase(map_tensor, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
                    std::make_shared<Shape>(map_tensor->shape())),
-      ref_key_value_(kAnyValue),
+      ref_key_value_(kValueAny),
       default_value_(map_tensor->default_value()),
       permit_filter_value_(map_tensor->permit_filter_value()),
       evict_filter_value_(map_tensor->evict_filter_value()),
       value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
 
 AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
-    : AbstractBase(kAnyValue, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
+    : AbstractBase(kValueAny, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
                    std::make_shared<Shape>(map_tensor->shape())),
       ref_key_value_(ref_key_value),
       default_value_(map_tensor->default_value()),
@@ -1992,7 +1992,7 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
 
   // Join type.
   auto joined_type = TypeJoin(GetTypeTrack(), other_abs->GetTypeTrack());
-  if (joined_type == kAnyType) {
+  if (joined_type == kTypeAny) {
     TypeJoinLogging(GetTypeTrack(), other_abs->GetTypeTrack(), shared_from_base<AbstractBase>(), other);
   }
 
@@ -2003,28 +2003,28 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
   }
 
   // Join value.
-  auto joined_value = (GetValueTrack() == other_abs->GetValueTrack() ? GetValueTrack() : kAnyValue);
+  auto joined_value = (GetValueTrack() == other_abs->GetValueTrack() ? GetValueTrack() : kValueAny);
 
   // Join the ref_key_value.
   auto joined_ref_key = ValueJoin(ref_key_value_, other_abs->ref_key_value_);
 
   // Join the default_value.
   auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
-  if (joined_default_value == kAnyValue) {
+  if (joined_default_value == kValueAny) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
                              << " != " << other_abs->default_value_->ToString();
   }
 
   // Join the permit_filter_value.
   auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
-  if (joined_permit_filter_value == kAnyValue) {
+  if (joined_permit_filter_value == kValueAny) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
                              << " != " << other_abs->permit_filter_value_->ToString();
   }
 
   // Join the evict_filter_value.
   auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
-  if (joined_evict_filter_value == kAnyValue) {
+  if (joined_evict_filter_value == kValueAny) {
     MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
                              << " != " << other_abs->evict_filter_value_->ToString();
   }
@@ -2046,11 +2046,11 @@ bool AbstractMapTensor::operator==(const AbstractBase &other) const {
   MS_EXCEPTION_IF_NULL(v1);
   MS_EXCEPTION_IF_NULL(v2);
   // Check if both point to same specific value.
-  if (!v1->isa<AnyValue>()) {
+  if (!v1->isa<ValueAny>()) {
     return v1 == v2;
   }
-  // Check if both are AnyValue.
-  if (!v2->isa<AnyValue>()) {
+  // Check if both are ValueAny.
+  if (!v2->isa<ValueAny>()) {
     return false;
   }
   const auto &other_map_tensor = dynamic_cast<const AbstractMapTensor &>(other);

@@ -42,7 +42,7 @@ void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::Typ
 
 void CheckIfValidType(const TypePtr &type, debugger::TypeProto *const type_proto) {
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
-        type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
+        type->isa<List>() || type->isa<TypeAny>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<SymbolicKeyType>() ||
         type->isa<MapTensorType>() || type->isa<UMonadType>() || type->isa<IOMonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
@@ -78,12 +78,12 @@ void SetListTypeProto(const TypePtr &type, debugger::TypeProto *type_proto) {
 }
 
 static TypeInfoToProtoTypeMap type_info_to_proto_type = {
-  {TensorType::kTypeId, debugger::DT_TENSOR},     {Tuple::kTypeId, debugger::DT_TUPLE},
-  {TypeType::kTypeId, debugger::DT_TYPE},         {List::kTypeId, debugger::DT_LIST},
-  {TypeAnything::kTypeId, debugger::DT_ANYTHING}, {RefKeyType::kTypeId, debugger::DT_REFKEY},
-  {RefType::kTypeId, debugger::DT_REF},           {Function::kTypeId, debugger::DT_GRAPH},
-  {TypeNone::kTypeId, debugger::DT_NONE},         {String::kTypeId, debugger::DT_STRING},
-  {UMonadType::kTypeId, debugger::DT_UMONAD},     {IOMonadType::kTypeId, debugger::DT_IOMONAD}};
+  {TensorType::kTypeId, debugger::DT_TENSOR}, {Tuple::kTypeId, debugger::DT_TUPLE},
+  {TypeType::kTypeId, debugger::DT_TYPE},     {List::kTypeId, debugger::DT_LIST},
+  {TypeAny::kTypeId, debugger::DT_ANY},       {RefKeyType::kTypeId, debugger::DT_REFKEY},
+  {RefType::kTypeId, debugger::DT_REF},       {Function::kTypeId, debugger::DT_GRAPH},
+  {TypeNone::kTypeId, debugger::DT_NONE},     {String::kTypeId, debugger::DT_STRING},
+  {UMonadType::kTypeId, debugger::DT_UMONAD}, {IOMonadType::kTypeId, debugger::DT_IOMONAD}};
 
 void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::TypeProto *type_proto) {
   if (type_proto == nullptr) {

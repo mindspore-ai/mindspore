@@ -41,7 +41,7 @@ const TypePtr kTupleTensor9 = std::make_shared<Tuple>(TypePtrList{
   kTensorType, kTensorType, kTensorType, kTensorType, kTensorType, kTensorType, kTensorType, kTensorType, kTensorType});
 
 // If Abstract of the operator is constant, please add the type kTypeNone, such as "Size".
-// If Abstract of the operator is Tensor and Tuple[Tensor], please add the type kAnyType, such as "Eigh".
+// If Abstract of the operator is Tensor and Tuple[Tensor], please add the type kTypeAny, such as "Eigh".
 inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4},
                                                        {"Adam", kTupleTensor3},
                                                        {"AdamApplyOne", kTupleTensor3},
@@ -96,7 +96,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"CudnnGRU", kTupleTensor4},
                                                        {"Cummax", kTupleTensor2},
                                                        {"Cummin", kTupleTensor2},
-                                                       {"Custom", kAnyType},
+                                                       {"Custom", kTypeAny},
                                                        {"DSDGrad", kTupleTensor3},
                                                        {"DeformableOffsetsGrad", kTupleTensor2},
                                                        {"DenseToCSRSparseMatrix", kTupleTensor5},
@@ -110,7 +110,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"DynamicGRUV2Grad", kTupleTensor6},
                                                        {"DynamicRNN", kTupleTensor8},
                                                        {"Eig", kTupleTensor2},
-                                                       {"Eigh", kAnyType},
+                                                       {"Eigh", kTypeAny},
                                                        {"FakeLearnedScaleQuantPerChannelGradD", kTupleTensor2},
                                                        {"FakeLearnedScaleQuantPerLayerGradD", kTupleTensor2},
                                                        {"FakeQuantWithMinMaxVarsGradient", kTupleTensor3},
@@ -188,7 +188,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"NLLLoss", kTupleTensor2},
                                                        {"NMSWithMask", kTupleTensor3},
                                                        {"PReLUGrad", kTupleTensor2},
-                                                       {"PSROIPooling", kAnyType},
+                                                       {"PSROIPooling", kTypeAny},
                                                        {"PriorityReplayBufferSample", kTuple},
                                                        {"Qr", kTupleTensor2},
                                                        {"RNNTLoss", kTupleTensor2},

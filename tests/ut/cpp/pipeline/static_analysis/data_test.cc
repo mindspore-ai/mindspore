@@ -41,10 +41,10 @@ TEST_F(TestData, test_build_value) {
   // assert build_value(S(1)) == 1
   AbstractScalar s1 = AbstractScalar(static_cast<int64_t>(1));
   ASSERT_EQ(1, s1.BuildValue()->cast<Int64ImmPtr>()->value());
-  // assert build_value(S(t=ty.Int[64]), default=ANYTHING) is ANYTHING
-  s1 = AbstractScalar(kAnyValue, kInt64);
-  ASSERT_TRUE(s1.BuildValue()->isa<AnyValue>());
-  ASSERT_TRUE(s1.BuildValue()->isa<AnyValue>());
+  // assert build_value(S(t=ty.Int[64]), default=ANY) is ANY
+  s1 = AbstractScalar(kValueAny, kInt64);
+  ASSERT_TRUE(s1.BuildValue()->isa<ValueAny>());
+  ASSERT_TRUE(s1.BuildValue()->isa<ValueAny>());
 
   // assert build_value(T([S(1), S(2)])) == (1, 2)
   AbstractBasePtr base1 = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
@@ -60,7 +60,7 @@ TEST_F(TestData, test_build_value) {
     ASSERT_EQ(*tup[i], *value_list[i]);
   }
 
-  // BuildValue(AbstractFunction) should return kAnyValue.
+  // BuildValue(AbstractFunction) should return kValueAny.
   AbstractBasePtr abs_f1 = FromValue(prim::kPrimReturn, false);
   ValuePtr abs_f1_built = abs_f1->BuildValue();
   ASSERT_EQ(abs_f1_built, prim::kPrimReturn);
@@ -68,20 +68,20 @@ TEST_F(TestData, test_build_value) {
   FuncGraphPtr fg1 = std::make_shared<FuncGraph>();
   AbstractBasePtr abs_fg1 = FromValue(fg1, false);
   ValuePtr abs_fg1_built = abs_fg1->BuildValue();
-  ASSERT_EQ(abs_fg1_built, kAnyValue);
+  ASSERT_EQ(abs_fg1_built, kValueAny);
 
-  // BuildValue(Tuple(AbstractFunction)) should return kAnyValue;
+  // BuildValue(Tuple(AbstractFunction)) should return kValueAny;
   AbstractBasePtr abs_f2 = FromValue(prim::kPrimScalarAdd, false);
   AbstractBasePtr abs_func_tuple = std::make_shared<AbstractTuple>(AbstractBasePtrList({abs_f1, abs_f2}));
   ValuePtr func_tuple_built = abs_func_tuple->BuildValue();
   ASSERT_EQ(*func_tuple_built, ValueTuple(std::vector<ValuePtr>{prim::kPrimReturn, prim::kPrimScalarAdd}));
 
-  // BuildValue(List(AbstractFunction)) should return kAnyValue;
+  // BuildValue(List(AbstractFunction)) should return kValueAny;
   AbstractBasePtr abs_func_list = std::make_shared<AbstractList>(AbstractBasePtrList({abs_f1, abs_f2}));
   ValuePtr func_list_built = abs_func_list->BuildValue();
   ASSERT_EQ(*func_list_built, ValueList(std::vector<ValuePtr>{prim::kPrimReturn, prim::kPrimScalarAdd}));
 
-  // BuildValue(Tuple(AnyAbstractBase, AbstractFunction)) should return kAnyValue
+  // BuildValue(Tuple(AnyAbstractBase, AbstractFunction)) should return kValueAny
   abs_func_tuple = std::make_shared<AbstractTuple>(AbstractBasePtrList({base1, abs_f2}));
   func_tuple_built = abs_func_tuple->BuildValue();
   ASSERT_EQ(*func_tuple_built, ValueTuple(std::vector<ValuePtr>{std::make_shared<Int64Imm>(1), prim::kPrimScalarAdd}));

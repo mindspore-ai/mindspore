@@ -313,7 +313,7 @@ AnfNodePtr CastFusionPass::CastNotEqualFusion(const FuncGraphPtr &func_graph, co
     auto abstract = param_node->abstract();
     MS_CHECK_TRUE_RET(abstract != nullptr, nullptr);
     auto new_abstract = abstract->Clone();
-    new_abstract->set_value(std::make_shared<AnyValue>());
+    new_abstract->set_value(std::make_shared<ValueAny>());
     if (GenCastNode(func_graph, param_node, param_node->fullname_with_scope() + "_post_cast",
                     static_cast<TypeId>(kNumberTypeInt32), new_abstract) == nullptr) {
       MS_LOG(ERROR) << "GenCastNode failed.";

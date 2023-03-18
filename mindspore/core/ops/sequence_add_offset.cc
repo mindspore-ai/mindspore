@@ -43,8 +43,8 @@ AbstractBasePtr SequenceAddOffsetInferInner(const PrimitivePtr &primitive,
   constexpr size_t input_len = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
   abstract::AbstractBasePtrList abs{};
-  abs.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
-  abs.push_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
+  abs.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64));
+  abs.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64));
   auto ret = std::make_shared<abstract::AbstractTuple>(abs);
   return ret;
 }

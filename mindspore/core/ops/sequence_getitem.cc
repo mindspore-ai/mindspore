@@ -54,7 +54,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
 
   // For list/tuple with dynamic len, getitem can not be folded.
   if (queue->dynamic_len()) {
-    // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
+    // The value of dynamic_len_element_abs is kValueAny, do not need to Broaden.
     auto element_abs = queue->dynamic_len_element_abs();
     if (element_abs == nullptr) {
       MS_LOG(EXCEPTION) << "Getitem can not get element from an empty dynamic length sequence.";
@@ -69,7 +69,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
   }
   // Input or index is variable, items shape and type should be same.
-  if (index_value == kAnyValue) {
+  if (index_value == kValueAny) {
     const auto &elements = queue->elements();
     CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
     auto ret = elements[0];

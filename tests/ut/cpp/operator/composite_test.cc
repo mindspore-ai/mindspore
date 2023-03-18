@@ -67,7 +67,7 @@ void TestComposite::TearDown() {
 class UTCompositeUtils {
  public:
   static AbstractTensorPtr ArrayInt32Of(std::initializer_list<int64_t> shp) {
-    auto ele = std::make_shared<AbstractScalar>(kAnyValue, kInt64);
+    auto ele = std::make_shared<AbstractScalar>(kValueAny, kInt64);
     return std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   }
   static FuncGraphPtr MakeFuncGraph(const MetaFuncGraphPtr &metaFuncGraphPtr, size_t nparam) {

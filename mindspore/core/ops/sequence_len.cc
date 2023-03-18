@@ -44,7 +44,7 @@ AbstractBasePtr SequenceLenInferInner(const PrimitivePtr &primitive, const std::
   auto arg = input_args[0];
   auto seq_abs = arg->cast<abstract::AbstractSequencePtr>();
   if (seq_abs->dynamic_len()) {
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
   }
   const auto &seq_elements = seq_abs->elements();
   return std::make_shared<abstract::AbstractScalar>(SizeToLong(seq_elements.size()));

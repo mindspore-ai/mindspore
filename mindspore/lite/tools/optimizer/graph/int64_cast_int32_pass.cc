@@ -123,7 +123,7 @@ bool Int64CastInt32Pass::Run(const FuncGraphPtr &graph) {
         cast_cnode->set_abstract(abstract->Clone());
         auto cast_abstract = cast_cnode->abstract();
         MS_ASSERT(cast_abstract != nullptr);
-        cast_abstract->set_value(std::make_shared<AnyValue>());
+        cast_abstract->set_value(std::make_shared<ValueAny>());
 
         auto manager = Manage(graph);
         auto input_node = cnode->input(index);

@@ -62,13 +62,13 @@ AbstractBasePtr InSequenceInferInner(const PrimitivePtr &primitive, const std::v
     CheckAndConvertUtils::CheckAbstractTypeAndShapeSame({data_element_abs, ele_abs},
                                                         "For " + prim::kPrimInSequence->ToString(),
                                                         "mutable list existing item", "new added item");
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
   const auto &elements = seq_abs->elements();
   auto first_element = elements[0];
   CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(
     {first_element, ele_abs}, "For " + prim::kPrimInSequence->ToString(), "list existing item", "new added item");
-  return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+  return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
 }
 }  // namespace
 

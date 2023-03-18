@@ -123,7 +123,7 @@ static inline AnfNodePtr NewEnviron(const FuncGraphPtr &fg) {
 static inline bool IsNewEnvironNode(const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimEnvironCreate); }
 
 static inline abstract::AbstractBasePtr MakeEnvironAbstract() {
-  return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
+  return std::make_shared<abstract::AbstractScalar>(kValueAny, std::make_shared<EnvType>());
 }
 }  // namespace mindspore
 

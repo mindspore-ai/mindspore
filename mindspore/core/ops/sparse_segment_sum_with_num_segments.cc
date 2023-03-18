@@ -69,7 +69,7 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<AnyValue>() &&
+  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
     if (num_segments_shape.size() == kInputIndex1) {
       if (num_segments_shape[kInputIndex0] != kInputIndex1) {

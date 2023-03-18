@@ -61,7 +61,7 @@ AbstractBasePtr InferInner(const PrimitivePtr &primitive, const std::vector<Abst
                        [](int64_t item) -> std::shared_ptr<abstract::AbstractScalar> {
                          auto ret = std::make_shared<abstract::AbstractScalar>(item);
                          if (item == abstract::Shape::kShapeRankAny || item == abstract::Shape::kShapeDimAny) {
-                           ret->set_value(kAnyValue);
+                           ret->set_value(kValueAny);
                          }
                          return ret;
                        });

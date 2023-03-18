@@ -33,8 +33,8 @@ def test_nest_range_transpose():
             out1 += (transpose1(layers_tuple[m], (1, 0)),)
         # Both for loop will the same range symbol as phi node, when range primitive is converted
         # to DoSigature MetaFuncGraph, that MetaFuncGraph will take 2 and 5 as argument, so there is
-        # 2 entries in that MetaFuncGraphEvaluator, that will make Specialier try to use AnyValue to
-        # FindGeneralized for S-make_range MetaFuncGraph but it will fail as AnyValue is not constant.
+        # 2 entries in that MetaFuncGraphEvaluator, that will make Specialier try to use ValueAny to
+        # FindGeneralized for S-make_range MetaFuncGraph but it will fail as ValueAny is not constant.
         for i in range(batch_size):
             out1 += (transpose1(batch_tuple[i], (1, 0)),)
             for j in range(num_layers):

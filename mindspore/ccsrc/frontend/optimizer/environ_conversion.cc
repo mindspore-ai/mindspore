@@ -141,7 +141,7 @@ void InsertEnvironDestroyAll(const FuncGraphPtr &func_graph) {
   auto depend1 = func_graph->NewCNode({NewValueNode(prim::kPrimDepend), u, output});
   depend1->set_abstract(kUMonad->ToAbstract());
   auto environ_destroy_all = func_graph->NewCNode({NewValueNode(prim::kPrimEnvironDestroyAll), depend1});
-  environ_destroy_all->set_abstract(std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>()));
+  environ_destroy_all->set_abstract(std::make_shared<abstract::AbstractScalar>(kValueAny, std::make_shared<Bool>()));
   auto depend2 = func_graph->NewCNode({NewValueNode(prim::kPrimDepend), output, environ_destroy_all});
   depend2->set_abstract(output->abstract());
   func_graph->set_output(depend2);
@@ -150,7 +150,7 @@ void InsertEnvironDestroyAll(const FuncGraphPtr &func_graph) {
 
 bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   SymbolicKeyConversionMap symbolic_key_map;
-  static AbstractBasePtr scalar_abs = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
+  static AbstractBasePtr scalar_abs = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
   static const AbstractBasePtr tensor_abs = std::make_shared<abstract::AbstractTensor>(scalar_abs);
   static const std::string attr_name = "value_type";
   const int kPrimitiveOffset = 0;

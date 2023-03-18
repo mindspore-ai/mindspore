@@ -81,7 +81,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the size shape must be 2. But got " << shape1[0];
   }
 
-  if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
+  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
     auto value_ptr = input_args[kInputIndex1]->BuildValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("size", value_ptr, prim_name);

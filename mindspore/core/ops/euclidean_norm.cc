@@ -118,7 +118,7 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
   auto input_rank = static_cast<int64_t>(input_shape.size());
   CheckAndConvertUtils::CheckInteger("the rank of axes", SizeToLong(axes_shape.size()), kEqual, axes_dim, prim_name);
 
-  if (!input_args[kInputIndex1]->BuildValue()->isa<AnyValue>() &&
+  if (!input_args[kInputIndex1]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex1]->BuildValue()->isa<None>()) {
     auto axes_value = input_args[kInputIndex1]->BuildValue();
     auto axes = CheckAndConvertUtils::CheckTensorIntValue("axes", axes_value, prim_name);

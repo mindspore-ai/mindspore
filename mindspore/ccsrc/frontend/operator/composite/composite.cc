@@ -734,7 +734,7 @@ bool EnableGradForScalar(const AbstractBasePtr &abs) {
 bool CanGradArgument(const AbstractTuplePtr &tuple_arg, size_t pos) {
   MS_EXCEPTION_IF_NULL(tuple_arg);
   return tuple_arg->size() > pos && (*tuple_arg)[pos] != nullptr &&
-         ((*tuple_arg)[pos]->BuildValue() == kAnyValue || EnableGradForScalar((*tuple_arg)[pos]));
+         ((*tuple_arg)[pos]->BuildValue() == kValueAny || EnableGradForScalar((*tuple_arg)[pos]));
 }
 
 void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr &tuple_arg, const AbstractTuplePtr &pos,

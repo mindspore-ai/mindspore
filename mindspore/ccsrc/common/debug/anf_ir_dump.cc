@@ -82,7 +82,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   TypePtr type = dyn_cast<Type>(node->Type());
   if ((shape != nullptr) && (type != nullptr)) {
     buffer << "<" << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
@@ -92,7 +92,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
     buffer << ">";
   } else if (type != nullptr) {
     buffer << "<" << type;
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {

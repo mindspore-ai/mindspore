@@ -263,7 +263,7 @@ FuncGraphPtr VmapMatchOutAxis::GenerateFuncGraph(const AbstractBasePtrList &args
                       << inputs_abstract->ToString() << ".";
   }
   auto out_axes_abstract_value = out_axes_abstract->BuildValue();
-  if (out_axes_abstract_value == nullptr || out_axes_abstract_value == kAnyValue) {
+  if (out_axes_abstract_value == nullptr || out_axes_abstract_value == kValueAny) {
     MS_LOG(EXCEPTION) << "The second input to VmapMatchOutAxis is out_axes and should be a constant value.";
   }
   auto axis_size_value = axis_size_abstract->BuildValue();

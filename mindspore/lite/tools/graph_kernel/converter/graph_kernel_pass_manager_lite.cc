@@ -64,13 +64,13 @@ void PrintNodeOutputType(std::ostringstream &dumpbuf, const AnfNodePtr &nd) {
   TypePtr type = dyn_cast<Type>(nd->Type());
   if ((shape != nullptr) && (type != nullptr)) {
     dumpbuf << "<" << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       dumpbuf << ", value=...";
     }
     dumpbuf << ">";
   } else if (type != nullptr) {
     dumpbuf << "<" << type;
-    if (tensor_value != nullptr && tensor_value != kAnyValue) {
+    if (tensor_value != nullptr && tensor_value != kValueAny) {
       dumpbuf << ", value=...";
     }
     dumpbuf << ">";

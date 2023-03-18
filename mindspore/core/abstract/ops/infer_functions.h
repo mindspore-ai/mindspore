@@ -238,7 +238,7 @@ AbstractBasePtr InferTupleOrListOrDictLen(const std::string &op_name, const Abst
   auto abs = dyn_cast<AbstractSequence>(args_spec_list[0]);
   if (abs != nullptr && abs->dynamic_len()) {
     // If the sequence is dynamic length, return any value scalar.
-    return std::make_shared<AbstractScalar>(kAnyValue, kInt64);
+    return std::make_shared<AbstractScalar>(kValueAny, kInt64);
   }
   return std::make_shared<AbstractScalar>(SizeToLong(arg->size()));
 }

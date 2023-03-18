@@ -126,7 +126,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got: " << elem->ToString();
     }
     auto elem_value = elem->BuildValue();
-    if (elem_value == kAnyValue) {
+    if (elem_value == kValueAny) {
       return nullptr;
     }
     if (!elem_value->isa<Scalar>()) {

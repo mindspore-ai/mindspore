@@ -55,7 +55,7 @@ class SizeInfer : public abstract::OpInferBase {
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape) || IsDynamicShape(input_shape)) {
-      return kAnyValue;
+      return kValueAny;
     }
     size_t elements = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {

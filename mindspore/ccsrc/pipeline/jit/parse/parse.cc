@@ -418,7 +418,7 @@ void Parser::TransformParallelCall() {
       MS_LOG(DEBUG) << "All middle func graph's output contain const scalar, cannot transform to Parallel_If.";
       continue;
     }
-    // After Join, Value in Abstract of PyInterpret CNode will be kAnyValue, it cannot be PyInterpreted again, so
+    // After Join, Value in Abstract of PyInterpret CNode will be kValueAny, it cannot be PyInterpreted again, so
     // ignore the transformation.
     bool is_middle_graphs_output_py_interpret = CheckMiddleGraphOutputPyInterpret(parallel_call_vec);
     if (is_middle_graphs_output_py_interpret) {

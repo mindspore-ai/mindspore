@@ -48,8 +48,8 @@ AbstractBasePtr SequenceIsGreater(const AbstractBasePtrList &seqx_elements, cons
       MS_EXCEPTION(TypeError) << "For primitive tupel_equal, the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
-    if (x_element->BuildValue() == kAnyValue || y_element->BuildValue() == kAnyValue) {
-      return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+    if (x_element->BuildValue() == kValueAny || y_element->BuildValue() == kValueAny) {
+      return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
     auto x = GetScalarValue<double>(prim_name, x_element->BuildValue());
     auto y = GetScalarValue<double>(prim_name, y_element->BuildValue());
@@ -82,7 +82,7 @@ AbstractBasePtr SequenceGreaterInferInner(const PrimitivePtr &primitive, const s
   auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
   auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
   if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len()) {
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
   const auto &seqx_elements = seqx_abs->elements();
   const auto &seqy_elements = seqy_abs->elements();

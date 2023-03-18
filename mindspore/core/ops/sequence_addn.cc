@@ -44,7 +44,7 @@ AbstractBasePtr SequenceAddNInferInner(const PrimitivePtr &primitive, const std:
   abstract::CheckArgsSize(op_name, input_args, args_spec_size);
   auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
 
-  // The value of dynamic_len_element_abs is kAnyValue, do not need to Broaden.
+  // The value of dynamic_len_element_abs is kValueAny, do not need to Broaden.
   if (queue->dynamic_len()) {
     auto element_abs = queue->dynamic_len_element_abs();
     MS_EXCEPTION_IF_NULL(element_abs);

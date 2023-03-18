@@ -33,7 +33,7 @@ AbstractBasePtr FindMaxOrMin(const AbstractBasePtrList &seq_elements, const bool
   std::vector<T> values;
   for (size_t i = 0; i < seq_elements.size(); ++i) {
     auto element = seq_elements[i];
-    if (element->BuildValue() == kAnyValue) {
+    if (element->BuildValue() == kValueAny) {
       return element->Clone();
     }
     values.push_back(element->BuildValue()->cast<G>()->value());
@@ -61,7 +61,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
     } else {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "' is not supported" << seq_type->ToString() << '.';
     }
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, type == nullptr ? kAnyType : type);
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, type == nullptr ? kTypeAny : type);
   }
   const auto &seq_elements = seq_abs->elements();
   auto type = seq_elements[0]->BuildType();

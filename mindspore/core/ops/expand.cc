@@ -124,7 +124,7 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
+  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
     std::vector<int64_t> output_shape;
     if (shape_type_element->type_id() == kNumberTypeInt16) {
       output_shape = ExpandInferOutShape<int16_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor,

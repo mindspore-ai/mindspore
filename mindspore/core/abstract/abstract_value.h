@@ -54,9 +54,9 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Constructor of AbstractBase.
   ///
   /// \param[in] value The real value (if any) of an anf node. Default: nullptr.
-  /// \param[in] type The type of an anf node. Default: kAnyType.
+  /// \param[in] type The type of an anf node. Default: kTypeAny.
   /// \param[in] shape The dimension of an anf node. Default: kNoShape.
-  explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kAnyType,
+  explicit AbstractBase(const ValuePtr &value = nullptr, const TypePtr &type = kTypeAny,
                         const BaseShapePtr &shape = kNoShape)
       : value_(value), type_(type), shape_(shape) {}
 
@@ -137,7 +137,7 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Try to build a real value from an abstract value.
   ///
-  /// \note If the value cannot be built, a default value (AnyValue) is returned.
+  /// \note If the value cannot be built, a default value (ValueAny) is returned.
   ///
   /// \return A pointer to the Value.
   ValuePtr BuildValue() const;
@@ -181,7 +181,7 @@ class MS_CORE_API AbstractBase : public Base {
   ///
   /// \return A pointer to the combined abstract.
   virtual AbstractBasePtr Join(const AbstractBasePtr &other) { return shared_from_base<AbstractBase>(); }
-  bool IsBroaden() const { return value_ == kAnyValue; }
+  bool IsBroaden() const { return value_ == kValueAny; }
 
   /// \brief Write the abstract's string to the std::ostream.
   ///
@@ -275,7 +275,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Build a value when value is not set.
   ///
   /// \return A pointer to the Value.
-  virtual ValuePtr RealBuildValue() const { return kAnyValue; }
+  virtual ValuePtr RealBuildValue() const { return kValueAny; }
   std::string name_;
 
  private:
@@ -290,7 +290,7 @@ class MS_CORE_API AbstractBase : public Base {
 class MS_CORE_API AbstractScalar final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScalar.
-  AbstractScalar() : AbstractBase(kAnyValue, kAnyType) {}
+  AbstractScalar() : AbstractBase(kValueAny, kTypeAny) {}
 
   /// \brief Constructor of AbstractScalar.
   ///
@@ -336,7 +336,7 @@ class MS_CORE_API AbstractScalar final : public AbstractBase {
   /// \brief Constructor of AbstractScalar, inited with a type.
   ///
   /// \param[in] type The type.
-  explicit AbstractScalar(const TypePtr &type) : AbstractBase(kAnyValue, type) {}
+  explicit AbstractScalar(const TypePtr &type) : AbstractBase(kValueAny, type) {}
 
   /// \brief Destructor of AbstractScalar.
   ~AbstractScalar() override = default;
@@ -394,35 +394,35 @@ class MS_CORE_API AbstractType final : public AbstractBase {
 };
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
-/// \brief Class AbstractError describes the abstract value from an error.
-class MS_CORE_API AbstractError final : public AbstractBase {
+/// \brief Class AbstractProblem describes the abstract value from an error.
+class MS_CORE_API AbstractProblem final : public AbstractBase {
  public:
-  /// \brief Constructor of AbstractError.
+  /// \brief Constructor of AbstractProblem.
   ///
   /// \param[in] err the error string.
   /// \param[in] node the binding anf node.
-  AbstractError(const ErrorValuePtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
+  AbstractProblem(const ValueProblemPtr &err, const AnfNodePtr &node) : AbstractBase(err), node_(node) {
     if (err == nullptr || node == nullptr) {
       MS_LOG(EXCEPTION) << "err or node is nullptr";
     }
   }
 
-  /// \brief Destructor of AbstractError.
-  ~AbstractError() override = default;
-  MS_DECLARE_PARENT(AbstractError, AbstractBase)
+  /// \brief Destructor of AbstractProblem.
+  ~AbstractProblem() override = default;
+  MS_DECLARE_PARENT(AbstractProblem, AbstractBase)
 
   TypePtr BuildType() const override { return std::make_shared<Problem>(); }
 
   AbstractBasePtr Broaden() const override { return Clone(); }
 
   AbstractBasePtr Clone() const override {
-    return std::make_shared<AbstractError>(GetValueTrack()->cast<ErrorValuePtr>(), node_);
+    return std::make_shared<AbstractProblem>(GetValueTrack()->cast<ValueProblemPtr>(), node_);
   }
 
   std::string ToString() const override;
 
  private:
-  // Origin node been specialized to AbstractError, for debug purpose only.
+  // Origin node been specialized to AbstractProblem, for debug purpose only.
   const AnfNodePtr node_;
 };
 
@@ -430,7 +430,7 @@ class MS_CORE_API AbstractError final : public AbstractBase {
 class MS_CORE_API AbstractScript final : public AbstractBase {
  public:
   /// \brief Constructor of AbstractScript.
-  AbstractScript() : AbstractBase(kAnyValue, kAnyType) {}
+  AbstractScript() : AbstractBase(kValueAny, kTypeAny) {}
 
   /// \brief Constructor of AbstractScript.
   ///
@@ -616,7 +616,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   /// \brief Constructor of AbstractUndetermined.
   ///
   /// Shape and type are all unknown.
-  AbstractUndetermined() : AbstractBase(kAnyValue) {}
+  AbstractUndetermined() : AbstractBase(kValueAny) {}
 
   /// \brief Constructor of AbstractUndetermined.
   ///
@@ -625,7 +625,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   /// \param[in] element The abstract which is undetermined.
   /// \param[in] shape The dimension of value.
   explicit AbstractUndetermined(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractBase(kAnyValue), element_(element) {
+      : AbstractBase(kValueAny), element_(element) {
     if (element == nullptr) {
       MS_LOG(EXCEPTION) << "element is nullptr";
     }
@@ -644,7 +644,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   /// \param[in] element_type A type of the undetermined abstract.
   /// \param[in] shape A vector of shape.
   AbstractUndetermined(const TypePtr &element_type, const ShapeVector &shape)
-      : AbstractBase(kAnyValue), element_(std::make_shared<AbstractScalar>(kAnyValue, element_type)) {
+      : AbstractBase(kValueAny), element_(std::make_shared<AbstractScalar>(kValueAny, element_type)) {
     if (element_type == nullptr) {
       MS_LOG(EXCEPTION) << "element_type is nullptr";
     }
@@ -656,7 +656,7 @@ class MS_CORE_API AbstractUndetermined : public AbstractBase {
   /// \param[in] element_type A type of the undetermined abstract.
   /// \param[in] shape A shape of the undetermined abstract.
   explicit AbstractUndetermined(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>())
-      : AbstractBase(kAnyValue), element_(std::make_shared<AbstractScalar>(kAnyValue, element_type)) {
+      : AbstractBase(kValueAny), element_(std::make_shared<AbstractScalar>(kValueAny, element_type)) {
     if (element_type == nullptr) {
       MS_LOG(EXCEPTION) << "element_type is nullptr";
     }
@@ -805,6 +805,24 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;
+
+/// \brief Class AbstractAny describes a type, whose shape and value is unknown.
+///
+/// AbstractAny is even not a Tensor type, but any type.
+class MS_CORE_API AbstractAny : public AbstractTensor {
+ public:
+  /// \brief Constructor of AbstractAny.
+  ///
+  /// \param[in] element The abstract to be wrapper as a abstract tensor.
+  /// \param[in] shape The dimension of abstract tensor.
+  AbstractAny() : AbstractTensor(kFloat64, std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}))) {}
+
+  /// \brief Destructor of AbstractAny.
+  ~AbstractAny() override = default;
+  MS_DECLARE_PARENT(AbstractAny, AbstractTensor)
+};
+using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
+using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;
 
 /// \brief Class AbstractSequence describes the abstract value of a tuple or list.
 class MS_CORE_API AbstractSequence : public AbstractBase {
@@ -1381,7 +1399,7 @@ class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
   AbstractBasePtr PartialBroaden() const override;
 
  private:
-  // ref_key_value is the reference key of AbstractRef, the value can be a string value or kAnyValue
+  // ref_key_value is the reference key of AbstractRef, the value can be a string value or kValueAny
   ValuePtr ref_key_value_;
 };
 using AbstractRefPtr = std::shared_ptr<AbstractRefTensor>;
@@ -1656,7 +1674,7 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   std::string ToString() const override;
 
  private:
-  // The reference key value, can be a string value or kAnyValue.
+  // The reference key value, can be a string value or kValueAny.
   ValuePtr ref_key_value_;
   // The default value, a scalar or string with initializer name.
   ValuePtr default_value_;

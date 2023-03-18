@@ -1627,7 +1627,7 @@ bool MSANFModelParser::SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_p
         auto abs = cnode_ptr->input(index)->abstract();
         if (abs != nullptr) {
           if (abs->GetValueTrack() == nullptr) {
-            abs->set_value(kAnyValue);
+            abs->set_value(kValueAny);
           }
           elem.push_back(abs);
         }

@@ -46,9 +46,9 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   }
   auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
   auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
-  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->BuildValue() == kAnyValue ||
-      seqy_abs->BuildValue() == kAnyValue) {
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->BuildValue() == kValueAny ||
+      seqy_abs->BuildValue() == kValueAny) {
+    return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
   return std::make_shared<abstract::AbstractScalar>(*seqx_abs->BuildValue() == *seqy_abs->BuildValue());
 }

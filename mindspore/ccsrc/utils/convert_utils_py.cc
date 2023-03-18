@@ -361,10 +361,10 @@ static ValueNameToConverterVector value_name_to_converter = {
    }},
   // None
   {None::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
-  // AnyValue
-  {AnyValue::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
-  // ErrorValue
-  {ErrorValue::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
+  // ValueAny
+  {ValueAny::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
+  // ValueProblem
+  {ValueProblem::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // FuncGraph
   {FuncGraph::kTypeId, [](const ValuePtr &, const AbstractBasePtr &) -> py::object { return py::none(); }},
   // Primitive

@@ -587,7 +587,7 @@ typedef enum TypeIdC {
   kTypeUnknown = 0,
   kMetaTypeBegin = kTypeUnknown,
   kMetaTypeType,  // Type
-  kMetaTypeAnything,
+  kMetaTypeAny,
   kMetaTypeObject,
   kMetaTypeTypeType,  // TypeType
   kMetaTypeProblem,

@@ -86,7 +86,7 @@ AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::v
     abs.push_back(data_abs->elements()[i]);
   }
   ValuePtr index_value = index_abs->BuildValue();
-  if (index_value == kAnyValue) {
+  if (index_value == kValueAny) {
     abs.push_back(target_abs);
     auto new_abs = std::make_shared<abstract::AbstractList>(abs);
     return CheckAndConvertUtils::BroadenAllSequenceElements(new_abs);

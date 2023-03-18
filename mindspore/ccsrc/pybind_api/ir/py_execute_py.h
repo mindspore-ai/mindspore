@@ -119,7 +119,7 @@ class PyExecuteInitializer {
     constexpr auto number_two = 2;
     const auto &values_tuple_abs = input_args[number_two];
     const auto &values_tuple = values_tuple_abs->BuildValue();
-    if (values_tuple == kAnyValue) {
+    if (values_tuple == kValueAny) {
       MS_LOG(EXCEPTION) << "Value tuple should not be anyvalue.";
     }
     const auto &values = dyn_cast<ValueSequence>(values_tuple);

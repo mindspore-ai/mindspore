@@ -254,7 +254,7 @@ AbstractBasePtr SampleInfer(const abstract::AnalysisEnginePtr &, const Primitive
   for (size_t i = 0; i < shapes.size(); ++i) {
     auto shape = shapes[i];
     (void)shape.emplace(shape.begin(), batch_size);
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, types[i]);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, types[i]);
     auto tensor = std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(shape));
     (void)output.emplace_back(tensor);
   }

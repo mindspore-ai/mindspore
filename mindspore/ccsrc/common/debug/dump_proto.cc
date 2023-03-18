@@ -114,7 +114,7 @@ void CheckIfValidType(const TypePtr &type) {
     return;
   }
   if (!(type->isa<Number>() || IsKindOfTensorType(type) || type->isa<Tuple>() || type->isa<TypeType>() ||
-        type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
+        type->isa<List>() || type->isa<TypeAny>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<UndeterminedType>() ||
         type->isa<SymbolicKeyType>() || type->isa<MonadType>() || type->isa<Dictionary>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
@@ -163,8 +163,8 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
     for (const auto &elem_type : list_type->elements()) {
       SetNodeOutputType(elem_type, nullptr, type_proto->mutable_sequence_type()->add_elem_types());
     }
-  } else if (type->isa<TypeAnything>()) {
-    type_proto->set_data_type(irpb::DT_ANYTHING);
+  } else if (type->isa<TypeAny>()) {
+    type_proto->set_data_type(irpb::DT_ANY);
   } else if (type->isa<RefKeyType>()) {
     type_proto->set_data_type(irpb::DT_REFKEY);
   } else if (type->isa<RefType>()) {

@@ -63,8 +63,8 @@ AbstractBasePtr SliceGradInferInner(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(end_abs);
   auto step_abs = input_args[step_index];
   MS_EXCEPTION_IF_NULL(step_abs);
-  if (start_abs->BuildValue() != kAnyValue && end_abs->BuildValue() != kAnyValue &&
-      step_abs->BuildValue() != kAnyValue) {
+  if (start_abs->BuildValue() != kValueAny && end_abs->BuildValue() != kValueAny &&
+      step_abs->BuildValue() != kValueAny) {
     return seq_abs->Clone();
   }
   auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();

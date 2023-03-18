@@ -142,7 +142,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
         continue;
       }
       ValuePtr element_value = sequence_value->value()[pos];
-      auto element_err_value = element_value->cast_ptr<ErrorValue>();
+      auto element_err_value = element_value->cast_ptr<ValueProblem>();
       if (element_err_value == nullptr || !element_err_value->IsDead()) {
         continue;
       }
@@ -170,7 +170,7 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->GetValueTrack() != kAnyValue) {
+                         if (arg->GetValueTrack() != kValueAny) {
                            return arg->Broaden();
                          }
                          return arg;
@@ -678,7 +678,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   for (size_t i = 0; i < sequence_value_size; ++i) {
     ValuePtr old_sequence_value = sequence_value->value()[i];
-    auto old_sequence_err_value = old_sequence_value->cast_ptr<ErrorValue>();
+    auto old_sequence_err_value = old_sequence_value->cast_ptr<ValueProblem>();
     if (old_sequence_err_value != nullptr && old_sequence_err_value->IsDead()) {
       MS_LOG(DEBUG) << "Collect for erasing elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
                     << ", which is inputs[" << index << "] of " << cnode->DebugString();
@@ -948,14 +948,14 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNode(const CNodePtr &cnode, con
       return nullptr;
     }
     if (errcode == kSpecializeDead) {
-      const auto err_dead_value = std::make_shared<ErrorValue>(ErrorValueType::kDead);
-      const auto err_dead_abstract = std::make_shared<AbstractError>(err_dead_value, func);
+      const auto err_dead_value = std::make_shared<ValueProblem>(ValueProblemType::kDead);
+      const auto err_dead_abstract = std::make_shared<AbstractProblem>(err_dead_value, func);
       repl = BuildValueNode(err_dead_value, err_dead_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "DEAD for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
     } else if (errcode == kSpecializePoly) {
-      const auto error_poly_value = std::make_shared<ErrorValue>(ErrorValueType::kPoly);
-      const auto error_poly_abstract = std::make_shared<AbstractError>(error_poly_value, func);
+      const auto error_poly_value = std::make_shared<ValueProblem>(ValueProblemType::kPoly);
+      const auto error_poly_abstract = std::make_shared<AbstractProblem>(error_poly_value, func);
       repl = BuildValueNode(error_poly_value, error_poly_abstract);
       constexpr auto recursive_level = 2;
       MS_LOG(DEBUG) << "POLY for func: " << func->DebugString(recursive_level) << ", abstract: " << abs->ToString();
@@ -1487,7 +1487,7 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     return BuildValueNodeForAbstractFunction(origin_node, ival, attrs, cnode, abs);
   } else {
     ValuePtr val = ival->BuildValue();
-    if (val->isa<AnyValue>()) {
+    if (val->isa<ValueAny>()) {
       return nullptr;
     }
     // If node is an AutoMonad node, don't convert the node to value node `U` or `IO` to avoid side-effect op miss.

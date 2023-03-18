@@ -82,7 +82,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   }
   // Dynamic Shape
   if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      (input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() ||
+      (input_args[kInputIndex0]->BuildValue()->isa<ValueAny>() ||
        input_args[kInputIndex0]->BuildValue()->isa<None>())) {
     ShapeVector dense_shape;
     auto shape_size = d_shape_shape[kZero];

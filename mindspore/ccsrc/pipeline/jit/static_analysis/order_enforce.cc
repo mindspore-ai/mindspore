@@ -450,7 +450,7 @@ class OrderEnforcer {
     AppendLoads(loads_map2, &need_insert_loads);
     AppendLoads(loads_map3, &need_insert_loads);
     AppendLoads(loads_map4, &need_insert_loads);
-    // Add call node will output is a AbstractRefTensor and ref_key is kAnyValue.
+    // Add call node will output is a AbstractRefTensor and ref_key is kValueAny.
     for (const auto &call_node : call_nodes) {
       if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_node) == need_insert_loads.end()) {
         need_insert_loads.push_back(call_node);

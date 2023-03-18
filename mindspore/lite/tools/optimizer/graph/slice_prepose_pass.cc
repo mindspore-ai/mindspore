@@ -186,7 +186,7 @@ void SlicePreposePass::ClearCNodeAbstractValue(const CNodePtr &cnode) {
   if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
     MS_LOG(DEBUG) << "Abstract of cnode is not abstract tensor, " << cnode->fullname_with_scope();
   }
-  abstract->set_value(std::make_shared<AnyValue>());
+  abstract->set_value(std::make_shared<ValueAny>());
 }
 
 STATUS SlicePreposePass::SwapSliceWithPreceed(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,

@@ -88,7 +88,7 @@ Status AclModelMulti::Build() {
                          MS_EXCEPTION_IF_NULL(n);
                          auto abstract = n->abstract();
                          MS_EXCEPTION_IF_NULL(abstract);
-                         if (abstract->GetValueTrack() != kAnyValue) {
+                         if (abstract->GetValueTrack() != kValueAny) {
                            return abstract->Broaden();
                          }
                          return abstract;

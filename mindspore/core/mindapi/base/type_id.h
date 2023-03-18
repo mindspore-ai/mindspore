@@ -26,7 +26,7 @@ enum TypeId : int {
   //
   kMetaTypeBegin = kTypeUnknown,
   kMetaTypeType,  // Type
-  kMetaTypeAnything,
+  kMetaTypeAny,
   kMetaTypeObject,
   kMetaTypeTypeType,  // TypeType
   kMetaTypeProblem,

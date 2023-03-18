@@ -80,7 +80,7 @@ void Range::Init(const int64_t d_type, const int64_t start, const int64_t limit,
 
 namespace {
 #define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
 template <typename T>
 int64_t RangeCalculateShape(const tensor::TensorPtr start_ptr, const tensor::TensorPtr limit_ptr,
                             const tensor::TensorPtr delta_ptr) {

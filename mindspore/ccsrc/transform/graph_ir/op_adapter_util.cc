@@ -224,7 +224,7 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
   }
 }
 
-GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AnyValue>) {
+GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ValueAny>) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<MeTensor>()) {
     // convert me tensor to ge tensor

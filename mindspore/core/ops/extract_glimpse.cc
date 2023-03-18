@@ -94,7 +94,7 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   int32_t g_width = -1;
   int64_t batch_cnt = input_shape[0];
   int64_t channels = input_shape.back();
-  if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
+  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
     auto size_value = input_args[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(size_value);
     auto size_value_tensor = size_value->cast<tensor::TensorPtr>();

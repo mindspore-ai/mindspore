@@ -93,7 +93,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   // check scale greater than zero
   auto scale_v = input_args[kInputIndex2]->BuildValue();
   MS_EXCEPTION_IF_NULL(scale_v);
-  if (!scale_v->isa<AnyValue>() && !scale_v->isa<None>()) {
+  if (!scale_v->isa<ValueAny>() && !scale_v->isa<None>()) {
     if (scale_v == nullptr) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
                                << " value is nullptr.";
@@ -118,7 +118,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   auto size_v = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_v);
   std::vector<int64_t> size_value;
-  if (!size_v->isa<AnyValue>() && !size_v->isa<None>()) {
+  if (!size_v->isa<ValueAny>() && !size_v->isa<None>()) {
     size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
     // check scale greater than zero
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("size", size_value, prim_name);

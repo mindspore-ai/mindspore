@@ -773,7 +773,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
   } else {
     auto value = abs_base->BuildValue();
     MS_EXCEPTION_IF_NULL(value);
-    if ((*value == *kAnyValue)) {
+    if ((*value == *kValueAny)) {
       auto value_desc = abs_base->value_desc();
       MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
                               << " for python primitive." << abs_base->ToString();
@@ -898,7 +898,7 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
     MS_EXCEPTION_IF_NULL(res_dtype);
     // if the size of shape list is empty, return an scalar abstract
     if (res_vec.empty() && (!res_dtype->isa<TensorType>())) {
-      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, res_dtype);
+      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kValueAny, res_dtype);
       return abs_scalar;
     }
     return MakePyInferRes2AbstractTensor(shape_obj, type_obj, output);
@@ -1136,7 +1136,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
     MS_EXCEPTION_IF_NULL(abs);
     auto value = abs->BuildValue();
-    return (value != nullptr && !value->isa<AnyValue>() && !value->isa<None>() && !value->isa<Monad>() &&
+    return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>() && !value->isa<Monad>() &&
             !value->isa<FuncGraph>());
   });
 
@@ -1252,7 +1252,7 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
   }
 
   ValuePtr evaluated_value = RunImpl(value_list);
-  if (!(*evaluated_value == *kAnyValue)) {
+  if (!(*evaluated_value == *kValueAny)) {
     res_value_type = evaluated_value->type();
   }
   // for comparison primitives , return type shall have be specified to be bool.
@@ -1266,13 +1266,13 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
 
 ValuePtr UniformPrimEvaluator::RunImpl(const ValuePtrList &args) const {
   if (!eval_value_) {
-    return kAnyValue;
+    return kValueAny;
   } else {
     if (std::any_of(args.begin(), args.end(), [](const ValuePtr &arg) {
           MS_EXCEPTION_IF_NULL(arg);
-          return arg->isa<AnyValue>();
+          return arg->isa<ValueAny>();
         })) {
-      return kAnyValue;
+      return kValueAny;
     }
     return impl_(args);
   }
@@ -1692,8 +1692,8 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-bool IsPyExecuteCNodeData(const AbstractBasePtr &data_abstract) {
-  if (data_abstract->has_user_data("__py_execute_cnode_flag__")) {
+bool IsPyExecuteData(const AbstractBasePtr &data_abstract) {
+  if (data_abstract->isa<abstract::AbstractAny>()) {
     return true;
   }
   return false;
@@ -1759,7 +1759,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
         MS_LOG(DEBUG) << "Evaluate " << data_type->ToString() << " attribute: " << item_name
                       << ".\nnode: " << out_conf->node()->DebugString(recursive_level) << "\n"
                       << trace::GetDebugInfo(out_conf->node()->debug_info());
-        if (!IsPyExecuteCNodeData(data_args)) {  // Not check if the data is PyExecute CNode.
+        if (!IsPyExecuteData(data_args)) {  // Not check if the data is from PyExecute CNode.
           CheckObjAttrValid(data_type, item_name, data_args);
         }
         auto res = InterpretGetAttrNode(args_abs_list, out_conf);
@@ -1867,7 +1867,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
   ScopeGuard scope_guard(scope);
   MS_EXCEPTION_IF_NULL(item_value);
-  if (item_value->isa<AnyValue>()) {
+  if (item_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
@@ -1912,8 +1912,8 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   }
   // Try to search method map, if not found, the data_type should be External type.
   TypePtr data_type = data_args->BuildType();
-  // Not check if the data is PyExecute CNode, since its Tensor output is pseud.
-  if (!IsPyExecuteCNodeData(data_args) && pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
+  // Not check if the data is from PyExecute CNode, since its Tensor output is pseud.
+  if (!IsPyExecuteData(data_args) && pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_abs_list, data_conf, out_conf);
   }
   return GetEvaluatedValueForNameSpace(args_abs_list, out_conf);
@@ -2070,29 +2070,23 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     auto type = current_interpret_node->user_data<Type>(data_type);
     if (type->isa<TypeNone>()) {
       AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-      res->set_value(kAnyValue);
+      res->set_value(kValueAny);
       auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
       return infer_result;
     }
   }
-  TypePtr type = kFloat64;
-  if (current_interpret_node->has_user_data("__py_execute_tensor_type__")) {
-    type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
+  AbstractBasePtr res = nullptr;
+  if (current_interpret_node->has_user_data("__py_execute_tensor_type__") &&
+      current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
+    const auto &type = current_interpret_node->user_data<Type>("__py_execute_tensor_type__");
     MS_LOG(DEBUG) << "type: " << type->ToString();
-  }
-  BaseShapePtr shape;
-  if (current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
-    shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
+    const auto &shape = current_interpret_node->user_data<BaseShape>("__py_execute_tensor_shape__");
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
+    res = std::make_shared<AbstractTensor>(type, shape);
   } else {
-    ShapeVector shp;
-    (void)shp.emplace_back(Shape::kShapeRankAny);
-    shape = std::make_shared<Shape>(shp);
+    res = std::make_shared<AbstractAny>();
   }
-  AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
-  // User data '__py_execute_cnode_flag__' is used by 'IsPyExecuteCNodeData' to check forward PyExecute CNode.
-  res->set_user_data("__py_execute_cnode_flag__", std::make_shared<bool>(true));
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;
@@ -2519,7 +2513,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       const auto &local_abs_val = local_abs->BuildValue();
       MS_EXCEPTION_IF_NULL(local_abs_val);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
-      if (local_abs_val == kAnyValue) {
+      if (local_abs_val == kValueAny) {
         static const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
         if (support_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
@@ -2661,10 +2655,11 @@ class PartialEvaluator : public Evaluator {
     MS_EXCEPTION_IF_NULL(arg0_value);
     AbstractBasePtrList args_abs_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
-    if (arg0_value->isa<AbstractError>()) {
+    if (arg0_value->isa<AbstractProblem>()) {
       MS_EXCEPTION_IF_NULL(arg0_value->GetValueTrack());
-      auto res = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<ErrorValuePtr>(), out_conf->node());
-      MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
+      const auto &value_problem = arg0_value->GetValueTrack()->cast<ValueProblemPtr>();
+      auto res = std::make_shared<AbstractProblem>(value_problem, out_conf->node());
+      MS_LOG(DEBUG) << "AbstractProblem for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
       auto eval_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
@@ -2852,7 +2847,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
         auto &element = arg_tuple_elements[index];
         CheckHasVariable(element);
       }
-    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
+    } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
       has_variable_ = true;
     }
   }
@@ -2891,7 +2886,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractSequence>()) {
       return GetTupleOrListString(arg, input, node, need_comma, need_symbol);
-    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
+    } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       num_str_ += 1;
       if (need_symbol) {
@@ -2941,7 +2936,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto cnode = input->cast_ptr<CNode>();
     bool not_variable = !has_variable_;
     if (has_variable_) {
-      not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+      not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
     }
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
       auto &element = arg_tuple_elements[index];
@@ -3138,7 +3133,7 @@ class JoinedStrEvaluator : public TransitionPrimEvaluator {
     bool exist_tensor = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &arg) {
       auto arg_value = arg->BuildValue();
       MS_EXCEPTION_IF_NULL(arg_value);
-      return arg_value->isa<AnyValue>();
+      return arg_value->isa<ValueAny>();
     });
     AnfNodePtr new_node = nullptr;
     if (exist_tensor) {

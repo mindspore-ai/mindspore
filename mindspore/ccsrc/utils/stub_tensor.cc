@@ -48,7 +48,7 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
       node->SetElement(i, elem);
     }
     return node;
-  } else if (type == kAnyType) {
+  } else if (type == kTypeAny) {
     return std::make_shared<AnyTypeNode>();
   } else if (type == kTypeNone) {
     return std::make_shared<NoneTypeNode>();
@@ -182,7 +182,7 @@ py::object TensorNode::GetDtype() {
 
 bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
   if (!abs->isa<abstract::AbstractTensor>() && !abs->isa<abstract::AbstractMapTensor>()) {
-    if (!abs->isa<abstract::AbstractScalar>() || abs->BuildValue() != kAnyValue) {
+    if (!abs->isa<abstract::AbstractScalar>() || abs->BuildValue() != kValueAny) {
       return false;
     }
   }

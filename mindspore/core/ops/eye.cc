@@ -65,10 +65,10 @@ abstract::ShapePtr EyeInferShape(const PrimitivePtr &primitive, const std::vecto
 
 void EyeCheck(const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractScalar>()) {
-    MS_EXCEPTION(TypeError) << "For Eye, 'n' must be int, but got AnyValue!";
+    MS_EXCEPTION(TypeError) << "For Eye, 'n' must be int, but got ValueAny!";
   }
   if (!input_args[1]->isa<abstract::AbstractScalar>()) {
-    MS_EXCEPTION(TypeError) << "For Eye, 'm' must be int, but got AnyValue!";
+    MS_EXCEPTION(TypeError) << "For Eye, 'm' must be int, but got ValueAny!";
   }
   auto n_ptr_ = input_args[0]->BuildValue();
   auto m_ptr_ = input_args[1]->BuildValue();

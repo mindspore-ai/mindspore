@@ -66,7 +66,7 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
     auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
     auto input_value = input_a_ptr->BuildValue();
-    if (input_value->isa<AnyValue>()) {
+    if (input_value->isa<ValueAny>()) {
       return std::make_shared<abstract::Shape>(x_shape);
     }
     input_a = GetValue<int64_t>(input_value);
