@@ -80,6 +80,22 @@ void CudaDriver::FreeHostPinnedMem(void *addr) {
   }
 }
 
+void CudaDriver::CudaHostRegister(void *addr, size_t alloc_size) {
+  MS_EXCEPTION_IF_NULL(addr);
+  auto ret = cudaHostRegister(addr, alloc_size, cudaHostRegisterPortable);
+  if (ret != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "cudaHostRegister failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+  }
+}
+
+void CudaDriver::CudaHostUnregister(void *addr) {
+  MS_EXCEPTION_IF_NULL(addr);
+  auto ret = cudaHostUnregister(addr);
+  if (ret != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "cudaHostUnregister failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+  }
+}
+
 bool CudaDriver::CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) {
   auto ret = cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
   if (ret != cudaSuccess) {

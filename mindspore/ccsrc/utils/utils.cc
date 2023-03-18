@@ -19,7 +19,12 @@
 #include <set>
 #include <string>
 
+#include "utils/convert_utils_base.h"
 namespace mindspore {
+namespace {
+constexpr size_t kKBToByte = 1024;
+constexpr size_t kLineMaxSize = 1024;
+}  // namespace
 bool IsOneOfPosteriorOperator(const std::string &name) {
   static const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
@@ -217,5 +222,45 @@ bool IsOneOfDynRankNeedPadShape(const std::string &format) {
                                             kOpFormat_NDC1HWC0,     kOpFormat_C1HWNCoC0,     kOpFormat_NC1HWC0_C04,
                                             kOpFormat_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_C04, kOpFormat_NCDHW};
   return kOpFormats.find(format) != kOpFormats.end();
+}
+
+size_t GetSystemMemorySize(const std::string &key) {
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
+  return SIZE_MAX;
+#else
+  FILE *file = fopen("/proc/meminfo", "r");
+  if (file == nullptr) {
+    MS_LOG(ERROR) << "Get system meminfo failed.";
+    return 0;
+  }
+
+  size_t mem_size = 0;
+  char buf[kLineMaxSize] = {0};
+  while (fgets(buf, kLineMaxSize, file)) {
+    // Get mem title.
+    std::string line(buf);
+    auto title_end_pos = line.find(":");
+    auto title = line.substr(0, title_end_pos);
+    // Get mem size.
+    if (title == key) {
+      auto mem_size_end_pos = line.find_last_of(" ");
+      auto mem_size_begin_pos = line.find_last_of(" ", mem_size_end_pos - 1);
+      if ((mem_size_end_pos != std::string::npos) && (mem_size_begin_pos != std::string::npos)) {
+        auto mem_size_string = line.substr(mem_size_begin_pos, mem_size_end_pos - mem_size_begin_pos);
+        mem_size = LongToSize(std::atol(mem_size_string.c_str()));
+      }
+      break;
+    }
+    if (memset_s(buf, kLineMaxSize, 0, kLineMaxSize) != EOK) {
+      MS_LOG(ERROR) << "Set system meminfo failed.";
+      (void)fclose(file);
+      return 0;
+    }
+  }
+  (void)fclose(file);
+
+  MS_LOG(INFO) << "Get system memory(" << key << "): " << mem_size << " kB";
+  return mem_size * kKBToByte;
+#endif
 }
 }  // namespace mindspore

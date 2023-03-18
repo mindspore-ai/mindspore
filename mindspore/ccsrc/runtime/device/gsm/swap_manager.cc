@@ -22,8 +22,8 @@
 namespace mindspore {
 namespace device {
 SwapManager::SwapManager(size_t stream_id, mindspore::device::DynamicMemPoolBestFit *device_memory_pool,
-                         HostMemPoolPtr host_mem_pool)
-    : stream_id_(stream_id), device_memory_pool_(device_memory_pool), host_memory_pool_(std::move(host_mem_pool)) {
+                         PinMemPool *pin_mem_pool)
+    : stream_id_(stream_id), device_memory_pool_(device_memory_pool), pin_mem_pool_(pin_mem_pool) {
   io_handle_ = std::make_shared<IOHandle>();
 }
 
@@ -91,8 +91,8 @@ void SwapManager::FreeDeviceMemory(void *ptr) {
 }
 
 void *SwapManager::AllocHostMemorySimply(const size_t &size) {
-  MS_EXCEPTION_IF_NULL(host_memory_pool_);
-  return host_memory_pool_->Malloc(size);
+  MS_EXCEPTION_IF_NULL(pin_mem_pool_);
+  return pin_mem_pool_->AllocTensorMem(size);
 }
 
 void *SwapManager::AllocHostMemory(size_t size) {
@@ -107,8 +107,8 @@ void *SwapManager::AllocHostMemory(size_t size) {
 }
 
 void SwapManager::FreeHostMemory(void *ptr) {
-  MS_EXCEPTION_IF_NULL(host_memory_pool_);
-  host_memory_pool_->Free(ptr);
+  MS_EXCEPTION_IF_NULL(pin_mem_pool_);
+  pin_mem_pool_->FreeTensorMem(ptr);
 }
 
 bool SwapManager::CreateFile(const std::string &file_name) {

@@ -36,6 +36,10 @@ class CudaDriver {
   static size_t AllocHostPinnedMem(size_t size, void **addr);
   static void FreeHostPinnedMem(void *addr);
 
+  static void CudaHostRegister(void *addr, size_t alloc_size);
+
+  static void CudaHostUnregister(void *addr);
+
   static bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size);
   static bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size);
   static bool CopyHostMemToHost(const DeviceMemPtr &dst, const void *src, size_t size);
