@@ -36,6 +36,7 @@ std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior},
                                                      {"ms", kMsBackendMsPrior},
                                                      {"ge_only", kMsBackendGeOnly},
                                                      {"vm_prior", kMsBackendVmPrior}};
+constexpr auto kDeviceTargetSize2 = 2;
 }  // namespace
 std::atomic<bool> thread_1_must_end(false);
 
@@ -232,7 +233,7 @@ std::map<std::string, std::string> &MsContext::PluginPathMap() {
 }
 
 void MsContext::RegisterInitFunc(const std::string &name, MsContext::InitDeviceTargetAndPolicy func) {
-  InitFuncMap().emplace(name, func);
+  (void)InitFuncMap().emplace(name, func);
   if (GetInstance() != nullptr) {
     GetInstance()->SetDefaultDeviceTarget();
   }
@@ -255,7 +256,7 @@ void MsContext::RegisterInitFunc(const std::string &name, MsContext::InitDeviceT
   }
   plugin_path = std::string(sz_path);
 #endif
-  PluginPathMap().emplace(name, plugin_path);
+  (void)PluginPathMap().emplace(name, plugin_path);
 }
 
 void MsContext::ResisterLoadPluginErrorFunc(MsContext::LoadPluginError func) { load_plugin_error_ = func; }
@@ -277,7 +278,7 @@ void MsContext::SetDefaultDeviceTarget() {
   if (InitFuncMap().size() == 1) {
     // when only cpu in map
     cpu_iter->second(inst_context_.get());
-  } else if (InitFuncMap().size() == 2) {
+  } else if (InitFuncMap().size() == kDeviceTargetSize2) {
     // when cpu and another in map
     for (auto [name, func] : InitFuncMap()) {
       if (name != kCPUDevice) {
