@@ -37,7 +37,8 @@ AutoContrastOperation::~AutoContrastOperation() = default;
 std::string AutoContrastOperation::Name() const { return kAutoContrastOperation; }
 
 Status AutoContrastOperation::ValidateParams() {
-  if (cutoff_ < 0 || cutoff_ > 100) {
+  constexpr int64_t max_cutoff = 100;
+  if (cutoff_ < 0 || cutoff_ > max_cutoff) {
     std::string err_msg = "AutoContrast: 'cutoff' has to be between 0 and 100, got: " + std::to_string(cutoff_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

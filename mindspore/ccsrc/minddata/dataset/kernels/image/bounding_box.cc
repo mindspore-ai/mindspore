@@ -46,7 +46,8 @@ Status BoundingBox::ReadFromTensor(const TensorPtr &bbox_tensor, dsize_t index_o
 }
 
 Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
-  if (image_and_bbox.size() != 2) {
+  constexpr int64_t input_size = 2;
+  if (image_and_bbox.size() != input_size) {
     RETURN_STATUS_ERROR(StatusCode::kMDBoundingBoxInvalidShape,
                         "BoundingBox: invalid input, size of input data should be 2 "
                         "(including image and bounding box), but got: " +

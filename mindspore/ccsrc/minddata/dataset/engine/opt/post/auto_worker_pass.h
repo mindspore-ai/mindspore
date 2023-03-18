@@ -42,8 +42,7 @@ class AutoWorkerPass : public IRTreePass {
     {{"MappableSource", 8}, {"NonMappableSource", 8}, {kBatchNode, 4}, {kMapNode, 8}},  // config6 leaf:batch:map=2:1:2
     {{"MappableSource", 4}, {"NonMappableSource", 4}, {kBatchNode, 8}, {kMapNode, 8}},  // config7 leaf:batch:map=1:2:2
   };
-  AutoWorkerPass()
-      : min_num_workers_(1), max_num_workers_(8), thread_cnt_(GlobalContext::config_manager()->num_cpu_threads()) {}
+  AutoWorkerPass() : min_num_workers_(1), thread_cnt_(GlobalContext::config_manager()->num_cpu_threads()) {}
 
   /// \brief destructor, by doing "= default", compiler will automatically generate the correct destructor
   ~AutoWorkerPass() override = default;
@@ -77,9 +76,9 @@ class AutoWorkerPass : public IRTreePass {
     std::vector<std::pair<std::shared_ptr<DatasetNode>, float>> parallel_ops_;  // first: node second: weight
   };
 
-  const int32_t min_num_workers_;  // minimum number of threads allowed for each op
-  const int32_t max_num_workers_;  // maximum number of threads allowed for each op
-  const int32_t thread_cnt_;       // thread cnt of current CPU, obtained through config manager
+  const int32_t min_num_workers_;      // minimum number of threads allowed for each op
+  const int32_t max_num_workers_ = 8;  // maximum number of threads allowed for each op
+  const int32_t thread_cnt_;           // thread cnt of current CPU, obtained through config manager
 };
 }  // namespace dataset
 }  // namespace mindspore

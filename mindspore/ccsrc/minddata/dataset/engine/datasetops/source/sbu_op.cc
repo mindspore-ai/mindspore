@@ -197,7 +197,8 @@ Status SBUOp::GetAvailablePairs(std::ifstream &url_file_reader, std::ifstream &c
 }
 
 Status SBUOp::ParsePair(const std::string &url, const std::string &caption) {
-  CHECK_FAIL_RETURN_UNEXPECTED(url.length() > 23, "Invalid url in " + url_path_.ToString() + ": " + url);
+  constexpr int64_t max_url_length = 23;
+  CHECK_FAIL_RETURN_UNEXPECTED(url.length() > max_url_length, "Invalid url in " + url_path_.ToString() + ": " + url);
   std::string image_name = url.substr(23);
   RETURN_IF_NOT_OK(this->ReplaceAll(&image_name, "/", "_"));
 

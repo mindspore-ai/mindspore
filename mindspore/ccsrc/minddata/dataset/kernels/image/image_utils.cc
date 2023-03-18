@@ -719,14 +719,15 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
 
 Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Tensor> *input, int x, int y,
                       int crop_width, int crop_height, ImageFormat image_format) {
+  constexpr int64_t input_shape = 2;
   if (image_format == ImageFormat::HWC) {
-    if (CheckTensorShape(*input, 2)) {
+    if (CheckTensorShape(*input, input_shape)) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "input shape doesn't match <H,W,C> format, got shape:" +
         (*input)->shape().ToString());
     }
-    if (CheckTensorShape(sub_mat, 2)) {
+    if (CheckTensorShape(sub_mat, input_shape)) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "sub_mat shape doesn't match <H,W,C> format, got shape:" +

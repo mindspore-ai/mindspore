@@ -43,7 +43,7 @@ Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::str
 }
 
 Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uint8_t> &fill_value) {
-  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != 3)) {
+  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != size_three)) {
     std::string err_msg =
       op_name + ": fill_value expecting size 1 or 3, got fill_value.size(): " + std::to_string(fill_value.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -55,7 +55,7 @@ Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uin
 
 Status ValidateVectorColorAttribute(const std::string &op_name, const std::string &attr_name,
                                     const std::vector<float> &attr, const std::vector<float> &range) {
-  if (attr.empty() || attr.size() > 2) {
+  if (attr.empty() || attr.size() > size_two) {
     std::string err_msg = op_name + ":" + attr_name + " expecting size 1 or 2, but got: " + std::to_string(attr.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -97,8 +97,9 @@ Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float
 }
 
 Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &value) {
+  constexpr int64_t divided_two = 2;
   for (int i = 0; i < value.size(); i++) {
-    if (value[i] % 2 != 1) {
+    if (value[i] % divided_two != 1) {
       std::string err_msg = op_name + ":" + vec_name + " must be odd value, got: " + vec_name + "[" +
                             std::to_string(i) + "]=" + std::to_string(value[i]);
       MS_LOG(ERROR) << err_msg;
@@ -109,7 +110,7 @@ Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name
 }
 
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding) {
-  if (padding.empty() || padding.size() == 3 || padding.size() > 4) {
+  if (padding.empty() || padding.size() == size_three || padding.size() > size_four) {
     std::string err_msg = op_name + ": padding expecting size 1, 2 or 4, got size: " + std::to_string(padding.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -139,7 +140,7 @@ Status ValidateVectorNonNegative(const std::string &op_name, const std::string &
 }
 
 Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma) {
-  if (sigma.empty() || sigma.size() > 2) {
+  if (sigma.empty() || sigma.size() > size_two) {
     std::string err_msg = op_name + ": sigma expecting size 2, got sigma.size(): " + std::to_string(sigma.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -151,7 +152,7 @@ Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> 
 }
 
 Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t> &size) {
-  if (size.empty() || size.size() > 2) {
+  if (size.empty() || size.size() > size_two) {
     std::string err_msg = op_name + ": size expecting size 2, got size.size(): " + std::to_string(size.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -163,7 +164,7 @@ Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t>
 }
 
 Status ValidateVectorScale(const std::string &op_name, const std::vector<float> &scale) {
-  if (scale.size() != 2) {
+  if (scale.size() != size_two) {
     std::string err_msg = op_name + ": scale expecting size 2, got scale.size(): " + std::to_string(scale.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -179,7 +180,7 @@ Status ValidateVectorScale(const std::string &op_name, const std::vector<float> 
 }
 
 Status ValidateVectorRatio(const std::string &op_name, const std::vector<float> &ratio) {
-  if (ratio.size() != 2) {
+  if (ratio.size() != size_two) {
     std::string err_msg = op_name + ": ratio expecting size 2, got ratio.size(): " + std::to_string(ratio.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

@@ -76,7 +76,8 @@ Status MixUpBatchOp::ComputeLabels(const std::shared_ptr<Tensor> &label, std::sh
 }
 
 Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
-  if (input.size() < 2) {
+  constexpr int64_t input_size = 2;
+  if (input.size() < input_size) {
     RETURN_STATUS_UNEXPECTED("MixUpBatch: size of input data should be 2 (including images or labels), but got: " +
                              std::to_string(input.size()) + ", check 'input_columns' when call this operator.");
   }
