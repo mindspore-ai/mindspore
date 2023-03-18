@@ -441,6 +441,7 @@ constexpr auto kInplaceSubOpName = "InplaceSub";
 constexpr auto kInplaceSubDOpName = "InplaceSubD";
 constexpr auto kInplaceUpdateOpName = "InplaceUpdate";
 constexpr auto kInplaceUpdateDOpName = "InplaceUpdateD";
+constexpr auto kInplaceUpdateV2OpName = "InplaceUpdateV2";
 constexpr auto kInstanceNorm = "InstanceNorm";
 constexpr auto kInstanceNormGradOpName = "InstanceNormGrad";
 constexpr auto kInstanceNormV2OpName = "InstanceNormV2";
