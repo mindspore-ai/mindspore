@@ -303,7 +303,8 @@ def eye(n, m=None, dtype=None):
         m (int): The number of columns of returned tensor. Constant value only.
             Default: if None, the number of columns is as the same as n.
         dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
-            The data type can be Number. Default: if None, the data type of the returned tensor is mindspore.float32.
+            The data type can be bool or Number.
+            Default: None, the data type of the returned tensor is mindspore.float32.
 
     Returns:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
@@ -550,7 +551,7 @@ def matrix_band_part(x, lower, upper):
         ValueError: If the shape of `upper` is not equal to 0D.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
@@ -4206,8 +4207,8 @@ def meshgrid(*inputs, indexing='xy'):
             The length of inputs should be greater than 1. The data type is Number.
 
     Keyword Args:
-        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
-            matrix ('ij') indexing of output. In the 2-D case with
+        indexing (str, optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
             for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape

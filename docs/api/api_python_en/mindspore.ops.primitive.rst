@@ -84,8 +84,6 @@ Neural Network
     mindspore.ops.PadV3
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
-    mindspore.ops.UpsampleNearest3D
-    mindspore.ops.UpsampleTrilinear3D
 
 Loss Function
 ^^^^^^^^^^^^^
@@ -531,7 +529,6 @@ Array Operation
     mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixExp
     mindspore.ops.MatrixLogarithm
-    mindspore.ops.MatrixPower
     mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
     mindspore.ops.MatrixTriangularSolve
@@ -540,6 +537,7 @@ Array Operation
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Quantile
     mindspore.ops.RaggedRange
     mindspore.ops.Range
     mindspore.ops.Rank
@@ -569,7 +567,6 @@ Array Operation
     mindspore.ops.Sort
     mindspore.ops.SpaceToBatchND
     mindspore.ops.SpaceToDepth
-    mindspore.ops.SparseSlice
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
     mindspore.ops.SplitV
@@ -693,7 +690,7 @@ Sparse Operator
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
-    
+
     mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 

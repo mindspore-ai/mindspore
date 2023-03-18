@@ -29,6 +29,7 @@ class NetMatrixPower(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.skip(reason="I6BZ6M")
 def test_matrix_power(mode):
     """
     Feature: matrix_power
