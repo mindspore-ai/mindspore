@@ -55,6 +55,7 @@ using mindspore::abstract::AbstractSequence;
 using mindspore::abstract::AbstractSequencePtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
+using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 
 namespace {
 static constexpr size_t kMaxSeqRecursiveDepth = 6;
@@ -1024,9 +1025,48 @@ class AfterOptARewriter : public BaseRewriter {
     }
   }
 
+  // Convert ValueNode<ClassType> to PyExecute("type", ("None"), ("None")).
+  AnfNodePtr ClassTypeConvertPyExecute(const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto str_type = std::make_shared<StringImm>("type");
+    auto str_value = std::make_shared<StringImm>("None");
+    auto script_node = NewValueNode(str_type);
+
+    std::vector<ValuePtr> type_value{str_value};
+    const auto type_tuple = std::make_shared<ValueTuple>(type_value);
+    auto type_tuple_node = NewValueNode(type_tuple);
+
+    AnfNodePtr type_execute_node =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, type_tuple_node, type_tuple_node});
+    MS_LOG(DEBUG) << "type_execute_node:" << type_execute_node->DebugString();
+
+    return type_execute_node;
+  }
+
+  void CheckCNodeInputsHasClassType(const CNodePtr &cnode) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
+    if (!support_fallback_runtime) {
+      return;
+    }
+    const auto &inputs = cnode->inputs();
+    const auto &cur_func = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(cur_func);
+    for (auto &input : inputs) {
+      auto class_type = GetValueNode<ClassTypePtr>(input);
+      if (class_type == nullptr) {
+        continue;
+      }
+      auto type_py_execute = ClassTypeConvertPyExecute(cur_func);
+      manager_->Replace(input, type_py_execute);
+      set_need_renormalized(true);
+    }
+  }
+
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
     // Process None in CNode with JIT Fallback: convert ValueNode<None> to PyExecute("None", (), ()).
     CheckCNodeInputsHasNone(cnode);
+    CheckCNodeInputsHasClassType(cnode);
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);
     if (iter == converters_.end()) {
