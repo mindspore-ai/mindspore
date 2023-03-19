@@ -84,8 +84,7 @@ int AdderCPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
   CHECK_NULL_RETURN(origin_weight);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
-  packed_weight_ = lite::PackWeightManager::GetInstance()->GetPackData(
-    in_tensors_[1]->data(), pack_weight_size * sizeof(float), &weight_is_packed_);
+  packed_weight_ = GetConvPackWeightData(pack_weight_size * sizeof(float));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
     return RET_ERROR;
