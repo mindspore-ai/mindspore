@@ -124,7 +124,7 @@ int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
     return RET_INFER_INVALID;
   } else if (result != NNACL_OK) {
     if (result == NNACL_FORMAT_ERROR) {
-      MS_LOG(ERROR) << "Unexpected input format " << inputs[0]->format();
+      MS_LOG(WARNING) << "Unexpected input format " << inputs[0]->format();
     }
     return RET_INFER_ERR;
   }
