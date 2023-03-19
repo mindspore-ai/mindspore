@@ -45,7 +45,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
 
-  MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
+  MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, keep_dims);
   if (reduce_op->get_mode() == ReduceMode::Reduce_L2) {
     // x^2
     auto *pow2_layer =
@@ -71,6 +71,14 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
   nvinfer1::ITensor *out_tensor = layer->getOutput(0);
   CHECK_NULL_RETURN(out_tensor);
+  bool is_tensor = out_tensor->getDimensions().nbDims != 0;
+  if (!is_tensor) {
+    auto squeeze = ctx->network()->addShuffle(*out_tensor);
+    CHECK_NULL_RETURN(squeeze);
+    squeeze->setName((op_name_ + "_squeeze_out").c_str());
+    squeeze->setReshapeDimensions(nvinfer1::Dims{1, {1}});
+    out_tensor = squeeze->getOutput(0);
+  }
 
   if (reduce_op->get_mode() == ReduceMode::Reduce_L2) {
     auto sqrt_layer = ctx->network()->addUnary(*out_tensor, nvinfer1::UnaryOperation::kSQRT);
@@ -78,7 +86,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     sqrt_layer->setName((op_name_ + "_sqrt").c_str());
     out_tensor = sqrt_layer->getOutput(0);
   }
-  auto output_helper = ITensorHelper{out_tensor, out_format_, true};
+  auto output_helper = ITensorHelper{out_tensor, out_format_, true, is_tensor};
   ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;

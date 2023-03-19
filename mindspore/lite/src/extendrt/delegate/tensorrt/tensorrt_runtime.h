@@ -29,7 +29,7 @@ namespace mindspore::lite {
 class TensorRTLogger : public nvinfer1::ILogger {
   void log(Severity severity, const char *msg) noexcept override {
     if (severity == Severity::kINTERNAL_ERROR || severity == Severity::kERROR) {
-      MS_LOG(ERROR) << msg;
+      MS_LOG(WARNING) << msg;
     } else if (severity == Severity::kWARNING) {
       MS_LOG(WARNING) << msg;
     } else if (severity == Severity::kINFO) {
