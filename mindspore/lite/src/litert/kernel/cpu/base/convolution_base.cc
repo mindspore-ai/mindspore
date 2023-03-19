@@ -553,4 +553,25 @@ int ConvolutionBaseCPUKernel::CheckAndGetWeightParam(int32_t *batch, int32_t *he
   }
   return RET_OK;
 }
+
+void *ConvolutionBaseCPUKernel::GetConvPackWeightData(size_t data_size) {
+  void *data = nullptr;
+  if (reinterpret_cast<ConvParameter *>(op_parameter_)->group_ > 1 ||
+      (in_tensors_[1]->category() != lite::CONST_TENSOR && in_tensors_[1]->category() != lite::CONST_SCALAR)) {
+    if (data_size == 0) {
+      MS_LOG(ERROR) << "data size is zero.";
+      return nullptr;
+    }
+    data = malloc(data_size);
+    weight_is_packed_ = false;
+    is_sharing_pack_ = false;
+  } else {
+    data = lite::PackWeightManager::GetInstance()->GetPackData(in_tensors_[1]->data(), data_size, &weight_is_packed_);
+  }
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "pack weight is nullptr.";
+    return nullptr;
+  }
+  return data;
+}
 }  // namespace mindspore::kernel

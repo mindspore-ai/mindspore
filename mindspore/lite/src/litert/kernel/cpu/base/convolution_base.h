@@ -70,6 +70,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   bool CheckParamsValid() const override;
 
   int CheckAndGetWeightParam(int32_t *batch, int32_t *height, int32_t *width) const;
+  void *GetConvPackWeightData(size_t data_size);
 
  protected:
   int InitConvWeightBias();
