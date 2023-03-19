@@ -30,23 +30,28 @@
 #include "src/fastertransformer/utils/cuda_utils.h"
 #include "src/fastertransformer/utils/allocator.h"
 #include "src/fastertransformer/kernels/layernorm_kernels.h"
+#include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
 namespace {
 constexpr std::size_t kTwo = 2;
-constexpr std::size_t kThree = 3;
 }  // namespace
 
-// Multi Head Attention TensorRT op
 int EncoderTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
-  if (in_tensors.size() != C14NUM) {
+  if (in_tensors.size() != C14NUM && in_tensors.size() != C11NUM && in_tensors.size() != C9NUM &&
+      in_tensors.size() != C10NUM && in_tensors.size() != C13NUM) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
+    return RET_ERROR;
+  }
+  if (out_tensors.size() != 1) {
+    MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
   return RET_OK;
 }
-nvinfer1::ITensor *EncoderTensorRT::castTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor,
+
+nvinfer1::ITensor *EncoderTensorRT::CastTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor,
                                                const std::string &op_name) {
   if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "context or network is null for ConvertConstantTensor";
@@ -64,7 +69,7 @@ nvinfer1::ITensor *EncoderTensorRT::castTensor(TensorRTContext *ctx, const Tenso
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data(), ms_tensor.ElementNum()};
-  if (data_type == nvinfer1::DataType::kFLOAT && is_ffn_fp16_) {
+  if (data_type == nvinfer1::DataType::kFLOAT && runtime_->GetTransformerFfnFp16()) {
     void *data_float16 = malloc(ms_tensor.ElementNum() * sizeof(float));
     if (data_float16 == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -87,57 +92,114 @@ nvinfer1::ITensor *EncoderTensorRT::castTensor(TensorRTContext *ctx, const Tenso
   return tensor_ptr;
 }
 
-int EncoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx == nullptr || ctx->network() == nullptr) {
-    MS_LOG(ERROR) << "context or network is invalid";
-    return RET_ERROR;
+int EncoderTensorRT::AddVsl(int encoder_input_idx, int input_number, TensorRTContext *ctx,
+                            nvinfer1::ITensor **inputTensors, const char *name) {
+  if (runtime_->GetVslEncoderPluginId() == -1) {
+    auto vsl_plugin = std::make_shared<VslCompressPlugin>(name, device_id_);
+    CHECK_NULL_RETURN(vsl_plugin);
+    nvinfer1::ITensor *inputVsl = ctx->network()->getInput(encoder_input_idx);
+    auto vsl_compress_layer = ctx->network()->addPluginV2(&inputVsl, C1NUM, *vsl_plugin);
+    if (vsl_compress_layer == nullptr) {
+      MS_LOG(ERROR) << " create vsl compress layer failed for: ";
+      return RET_ERROR;
+    }
+    auto plugin_id = static_cast<int>(ctx->network()->getNbLayers() - 1);
+    runtime_->SetVslEncoderPluginId(plugin_id);
+    vsl_compress_layer->setName("plugin_vsl_compress");
+    nvinfer1::ITensor *vsl_output_tensor = vsl_compress_layer->getOutput(0);
+    ctx->RegisterTensor(ITensorHelper{vsl_output_tensor, Format::NCHW, true}, "vsl_compress_output");
+    inputTensors[input_number] = vsl_output_tensor;
+  } else {
+    auto vsl_compress_layer = ctx->network()->getLayer(runtime_->GetVslEncoderPluginId());
+    inputTensors[input_number] = vsl_compress_layer->getOutput(0);
   }
+  return RET_OK;
+}
+
+int EncoderTensorRT::InitParam(fastertransformer::encoderParamRun *params) {
   auto encoder_op = AsOps<ops::EncoderLayer>();
   if (encoder_op == nullptr) {
     MS_LOG(ERROR) << "op action convert failed";
     return RET_ERROR;
   }
-  fastertransformer::encoderParamT params;
-  memset_s(&params, sizeof(params), 0, sizeof(params));
-  params.head_num = encoder_op->get_head_num();
-  params.head_size = encoder_op->get_head_size();
-  params.layernorm_post = encoder_op->get_post_layernorm();
-  params.eps1 = encoder_op->get_eps_layernorm1();
-  params.eps2 = encoder_op->get_eps_layernorm2();
-  params.ffn_hidden_size = encoder_op->get_ffn_hidden_size();
-  params.is_cross = false;
-  params.ffn_fp16 = is_ffn_fp16_;
-  params.position_bias = encoder_op->get_position_bias();
-  params.cublas_handle = GetCublasHandle();
-  params.qkv_bias = !params.position_bias;
-  params.projection_bias = !params.position_bias;
-  params.hidden_size = params.head_num * params.head_size;
-  auto compute_type = runtime_->GetRuntimePrecisionMode();
-  if (is_ffn_fp16_) {
-    size_t start_fp16 = (params.layernorm_post) ? C7NUM : C9NUM;
-    size_t end_fp16 = (params.layernorm_post) ? C11NUM : C13NUM;
-    for (size_t i = 0; i < in_tensors_.size(); i++) {
-      auto in_tensor = input(ctx, i);
-      if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
-        if (i > start_fp16 && i < end_fp16) {
-          in_tensor.trt_tensor_ = castTensor(ctx, in_tensors_[i], op_name_);
-          ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
-        } else {
-          in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
-          ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
-        }
+  cublasHandle_t cublas_handle = GetCublasHandle();
+  // update commonparam
+  params->common_param.eft = false;
+  params->common_param.cublas_handle = cublas_handle;
+  params->common_param.head_num = encoder_op->get_head_num();
+  params->common_param.head_size = encoder_op->get_head_size();
+  params->common_param.hidden_size = params->common_param.head_num * params->common_param.head_size;
+  // connect commonparam to attention and ffn
+  // update encoder_param_
+  params->encoder.is_layernorm = encoder_op->get_layer_norm();
+  params->encoder.layernorm_post = encoder_op->get_post_layernorm();
+  params->encoder.eps1 = encoder_op->get_eps_layernorm1();
+  params->encoder.eps2 = encoder_op->get_eps_layernorm2();
+  params->encoder.eps3 = encoder_op->get_eps_layernorm3();
+  params->ffn_param.ffn_param.ffn_hidden_size = encoder_op->get_ffn_hidden_size();
+  params->ffn_param.ffn_param.ffn_fp16 = runtime_->GetTransformerFfnFp16();
+  params->attn.attn.is_cross = false;
+  params->attn.attn.position_bias = encoder_op->get_position_bias();
+  params->attn.attn.projection_bias = !params->attn.attn.position_bias;
+  params->attn.attn.qkv_bias = !params->attn.attn.position_bias;
+  params->encoder.has_beta = !params->attn.attn.position_bias;
+  params->ffn_param.ffn_param.ffn_bias = !params->attn.attn.position_bias;
+  params->attn.attn.mask = true;
+  params->ffn_param.ffn_param.act_type = (fastertransformer::ActType)(encoder_op->get_act_type());
+  params->attn.attn.scale = encoder_op->get_scale();
+  return RET_OK;
+}
+
+void EncoderTensorRT::CastFfnTensors(fastertransformer::encoderParamRun *params, TensorRTContext *ctx) {
+  size_t start_fp16 = (params->encoder.layernorm_post) ? C7NUM : C9NUM;
+  size_t end_fp16 = (params->encoder.layernorm_post) ? C11NUM : C13NUM;
+  if (params->attn.attn.position_bias) {
+    start_fp16 = C6NUM;
+    end_fp16 = C9NUM;
+  }
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    auto in_tensor = input(ctx, i);
+    if (in_tensors_[i].IsConst() || in_tensor.trt_tensor_ == nullptr) {
+      if (i > start_fp16 && i < end_fp16) {
+        in_tensor.trt_tensor_ = CastTensor(ctx, in_tensors_[i], op_name_);
+        ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
+      } else {
+        in_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx, in_tensors_[i], op_name_);
+        ctx->RegisterTensor(in_tensor, in_tensors_[i].Name());
       }
     }
   }
+}
+
+int EncoderTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
+    return RET_ERROR;
+  }
+  fastertransformer::encoderParamRun params;
+  if (InitParam(&params) != RET_OK) {
+    MS_LOG(ERROR) << "Init param in encoder tensorrt failed.";
+    return RET_ERROR;
+  }
+  int encoder_input_idx = runtime_->GetTransformerEncoderInputIdx();
+  if (IsWeightInputHanledInner()) {
+    CastFfnTensors(&params, ctx);
+  }
   nvinfer1::ITensor *input_tensor = input(ctx, 0).trt_tensor_;
-  auto plugin =
-    std::make_shared<EncoderPlugin>(input_tensor->getName(), compute_type, params, GetCublasLtHandle(), device_id_);
   const int input_number = inputs().size();
-  nvinfer1::ITensor *inputTensors[input_number];
+  const int vsl_input_number = (encoder_input_idx == -1) ? 0 : 1;
+  nvinfer1::ITensor *inputTensors[input_number + vsl_input_number];
   for (int i = 0; i < input_number; i++) {
     inputTensors[i] = input(ctx, i).trt_tensor_;
   }
-  nvinfer1::IPluginV2Layer *encoder_layer = ctx->network()->addPluginV2(inputTensors, input_number, *plugin);
+  if (encoder_input_idx != -1) {
+    params.common_param.eft = true;
+    AddVsl(encoder_input_idx, input_number, ctx, inputTensors, input_tensor->getName());
+  }
+  auto compute_type = runtime_->GetRuntimePrecisionMode();
+  auto plugin = std::make_shared<EncoderPlugin>(input_tensor->getName(), compute_type, params, device_id_);
+  nvinfer1::IPluginV2Layer *encoder_layer =
+    ctx->network()->addPluginV2(inputTensors, input_number + vsl_input_number, *plugin);
   if (encoder_layer == nullptr) {
     MS_LOG(ERROR) << "add encoder op failed for TensorRT.";
     return RET_ERROR;
@@ -172,14 +234,12 @@ template <typename T>
 int EncoderPlugin::RunCudaEncoder(const nvinfer1::PluginTensorDesc *inputDesc,
                                   const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
                                   void *const *outputs, void *workspace, cudaStream_t stream, cublasGemmAlgo_t algoId) {
-  params_.stream = stream;
-  params_.algo = algoId;
-  void *inputs_forward[] = {
-    const_cast<void *>(inputs[0]),  const_cast<void *>(inputs[1]),  const_cast<void *>(inputs[2]),
-    const_cast<void *>(inputs[3]),  const_cast<void *>(inputs[4]),  const_cast<void *>(inputs[5]),
-    const_cast<void *>(inputs[6]),  const_cast<void *>(inputs[7]),  const_cast<void *>(inputs[8]),
-    const_cast<void *>(inputs[9]),  const_cast<void *>(inputs[10]), const_cast<void *>(inputs[11]),
-    const_cast<void *>(inputs[12]), const_cast<void *>(inputs[13])};
+  params_.common_param.algo = algoId;
+  params_.common_param.stream = stream;
+  void *inputs_forward[num_of_inputs_];
+  for (int i = 0; i < num_of_inputs_; i++) {
+    inputs_forward[i] = const_cast<void *>(inputs[i]);
+  }
   void *outputs_forward[] = {outputs[0]};
   fastertransformer::forwardEncoder<T>(inputs_forward, num_of_inputs_, outputs_forward, num_of_outputs_, &params_,
                                        workspace);
@@ -189,20 +249,22 @@ int EncoderPlugin::RunCudaEncoder(const nvinfer1::PluginTensorDesc *inputDesc,
 bool EncoderPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc *tensorsDesc, int nbInputs,
                                               int nbOutputs) noexcept {
   auto type = (compute_type_ == RuntimePrecisionMode_FP16) ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
-  for (int i = 0; i < pos; i++) {
-    if (tensorsDesc[pos].type != tensorsDesc[i].type) return false;
+  if (params_.common_param.eft && pos == (nbInputs - 1)) {
+    bool res = (tensorsDesc[pos].type == nvinfer1::DataType::kINT32) ? true : false;
+    return res;
   }
   bool res = (tensorsDesc[pos].format == nvinfer1::TensorFormat::kLINEAR) && (tensorsDesc[pos].type == type);
   return res;
 }
+
 void EncoderPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int nbInputs,
                                     const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
   const int request_batch_size = static_cast<const int>(in[0].desc.dims.d[0]);
   const int request_src_seq_len = static_cast<const int>(in[0].desc.dims.d[1]);
   const int request_tgt_seq_len = request_src_seq_len;
-  params_.batch_size = request_batch_size;
-  params_.src_seq_len = request_src_seq_len;
-  params_.tgt_seq_len = request_tgt_seq_len;
+  params_.common_param.batch_size = request_batch_size;
+  params_.common_param.src_seq_len = request_src_seq_len;
+  params_.common_param.tgt_seq_len = request_tgt_seq_len;
   num_of_inputs_ = nbInputs;
   num_of_outputs_ = nbOutputs;
 }
@@ -221,13 +283,8 @@ nvinfer1::DimsExprs EncoderPlugin::getOutputDimensions(int32_t index, const nvin
   if (index == 0) {
     int num_dims = inputs[0].nbDims;
     dims.nbDims = num_dims;
-    if (num_dims == INPUT_SIZE2) {
-      dims.d[0] = exprBuilder.constant(inputs[0].d[0]->getConstantValue());
-      dims.d[1] = exprBuilder.constant(inputs[0].d[1]->getConstantValue());
-    } else if (num_dims == INPUT_SIZE3) {
-      dims.d[0] = exprBuilder.constant(inputs[0].d[0]->getConstantValue());
-      dims.d[1] = exprBuilder.constant(inputs[0].d[1]->getConstantValue());
-      dims.d[kTwo] = exprBuilder.constant(inputs[0].d[kTwo]->getConstantValue());
+    for (int i = 0; i < num_dims; i++) {
+      dims.d[i] = exprBuilder.constant(inputs[index].d[i]->getConstantValue());
     }
   }
   return dims;
@@ -240,16 +297,18 @@ nvinfer1::IPluginV2DynamicExt *EncoderPlugin::clone() const noexcept {
     return nullptr;
   }
   plugin->setPluginNamespace(name_space_.c_str());
+  plugin->params_.attn.common_param = &plugin->params_.common_param;
+  plugin->params_.ffn_param.common_param = &plugin->params_.common_param;
   return plugin;
 }
 
 size_t EncoderPlugin::getSerializationSize() const noexcept {
-  return sizeof(int) + sizeof(fastertransformer::encoderParamT);
+  return sizeof(int) + sizeof(fastertransformer::encoderParamRun);
 }
 
 void EncoderPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &compute_type_, sizeof(int));
-  SerializeValue(&buffer, &params_, sizeof(fastertransformer::encoderParamT));
+  SerializeValue(&buffer, &params_, sizeof(fastertransformer::encoderParamRun));
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameEncoderLayer, EncoderTensorRT)
 }  // namespace mindspore::lite

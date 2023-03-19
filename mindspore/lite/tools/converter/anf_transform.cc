@@ -52,6 +52,7 @@
 #include "tools/optimizer/fusion/tensor_dot_fusion.h"
 #include "tools/optimizer/fusion/multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/encoder_layer_fusion.h"
+#include "tools/optimizer/fusion/decoder_layer_fusion.h"
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
@@ -328,6 +329,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
   if (param->optimize_transformer) {
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
     fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
+    fusions.push_back(std::make_shared<opt::DecoderLayerFusion>());
   }
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);

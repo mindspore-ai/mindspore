@@ -45,20 +45,27 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   virtual bool Init() const;
 
  private:
+  const std::string kPatternEncoderLayerPreNormAlpha = "PatternEncoderLayerPreNormAlpha";
   const std::string kPatternEncoderLayerPost = "PatternTEncoderLayerPost";
   const std::string kPatternEncoderLayerPre = "PatternTEncoderLayerPre";
   const std::string kPatternEncoderLayerPostNorm = "PatternTEncoderLayerPostNorm";
   const std::string kPatternEncoderLayerPreNorm = "PatternTEncoderLayerPreNorm";
-  const std::string kPatternEncoderLayerT5 = "PatternEncoderLayerT5";
-  VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_) const;
+  const std::string kPatternEncoderLayerT5Post = "PatternEncoderLayerT5Post";
+  const std::string kPatternEncoderLayerT5Pre = "PatternEncoderLayerT5Pre";
+  const std::string kPatternEncoderLayerNormT5Pre = "PatternEncoderLayerNormT5Pre";
+
+  VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_, bool mask,
+                                      bool is_layer_norm, bool alpha) const;
   VectorRef getTuple(bool post_layernorm, bool layernorm_fusion, bool is_position_bias) const;
-  VectorRef DefineLayerNorm(bool is_position_bias, VectorRef input, VarPtr gamma, VarPtr beta) const;
+  VectorRef DefineLayerNorm(bool is_position_bias, VectorRef input, VarPtr gamma, VarPtr beta, VarPtr eps) const;
   CNodePtr CreateMaskedEncoderLayerFusionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                              const AnfNodePtr &node, bool post_layernorm) const;
+                                              const AnfNodePtr &node, bool post_layernorm = true,
+                                              bool mask = true) const;
   AnfNodePtr GetAttribute(const FuncGraphPtr &func_graph, const EquivPtr &equiv, VarPtr node_name) const;
   bool IsActGELU(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const VarPtr &input_prim) const;
+  lite::STATUS GetEps(const EquivPtr &equiv, VarPtr node_name, float *eps) const;
   lite::STATUS CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &equiv, int *head_num, int *head_size,
-                            float *eps1, float *eps2) const;
+                            float *eps1, float *eps2, float *eps3, float *scale) const;
   std::shared_ptr<ops::EncoderLayer> CreatePrim(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                                 bool post_layernorm, int64_t ffn_hidden_size) const;
 
@@ -69,6 +76,8 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   mutable VarPtr gamma1_{nullptr};
   mutable VarPtr beta2_{nullptr};
   mutable VarPtr gamma2_{nullptr};
+  mutable VarPtr beta3_{nullptr};
+  mutable VarPtr gamma3_{nullptr};
   mutable VarPtr weight_attn_qkv_{nullptr};
   mutable VarPtr weight_attn_qkv_cross_{nullptr};
   mutable VarPtr weight_attn_o_{nullptr};
@@ -83,7 +92,14 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   mutable VarPtr is_layernorm1_{nullptr};
   mutable VarPtr is_layernorm2_{nullptr};
   mutable bool is_position_bias_{false};
+  mutable bool is_layernorm_fusion_{false};
+  mutable ActType act_type_{ActType::ActType_No};
   mutable VarPtr is_act_{nullptr};
+  mutable VarPtr eps1_{nullptr};
+  mutable VarPtr eps2_{nullptr};
+  mutable VarPtr eps3_{nullptr};
+  mutable bool is_layernorm_{false};
+  mutable bool alpha_{false};
 };
 }  // namespace opt
 }  // namespace mindspore

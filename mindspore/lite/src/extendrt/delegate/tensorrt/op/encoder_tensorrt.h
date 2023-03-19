@@ -22,7 +22,9 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
-#include "src/fastertransformer/layers/encoder_layers/encoder.h"
+#include "src/fastertransformer/layers/ms_layers/encoder.h"
+#include "src/extendrt/delegate/tensorrt/op/vsl_compress_tensorrt.h"
+
 namespace mindspore::lite {
 class EncoderTensorRT : public TensorRTOp {
  public:
@@ -31,41 +33,47 @@ class EncoderTensorRT : public TensorRTOp {
       : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~EncoderTensorRT() override = default;
-  bool IsWeightInputHanledInner() const override { return is_ffn_fp16_; }
+  bool IsWeightInputHanledInner() const override {
+    return (runtime_->GetTransformerFfnFp16() && runtime_->GetRuntimePrecisionMode() == RuntimePrecisionMode_FP32);
+  }
   int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                 const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  nvinfer1::ITensor *castTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
-  bool is_ffn_fp16_ = false;
+  nvinfer1::ITensor *CastTensor(TensorRTContext *ctx, const TensorInfo &ms_tensor, const std::string &op_name);
+  int AddVsl(int encoder_input_idx, int input_number, TensorRTContext *ctx, nvinfer1::ITensor **inputTensors,
+             const char *name);
+  int InitParam(fastertransformer::encoderParamRun *params);
+  void CastFfnTensors(fastertransformer::encoderParamRun *params, TensorRTContext *ctx);
 };
-
 constexpr auto ENCODER_PLUGIN_NAME{"EncoderPlugin"};
 class EncoderPlugin : public TensorRTPlugin {
  public:
-  EncoderPlugin(const std::string name, int compute_type, fastertransformer::encoderParamT params,
-                cublasLtHandle_t cublaslt_handle, uint32_t device_id)
-      : TensorRTPlugin(name, std::string(ENCODER_PLUGIN_NAME), device_id),
-        compute_type_(compute_type),
-        params_(params),
-        cublaslt_handle_(cublaslt_handle) {}
+  EncoderPlugin(const std::string name, int compute_type, fastertransformer::encoderParamRun params, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(ENCODER_PLUGIN_NAME), device_id), compute_type_(compute_type) {
+    params_ = params;
+    params_.attn.common_param = &params_.common_param;
+    params_.ffn_param.common_param = &params_.common_param;
+  }
 
   EncoderPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     compute_type_ = static_cast<const int *>(fields[0].data)[0];
-    params_ = static_cast<const fastertransformer::encoderParamT *>(fields[1].data)[0];
-    cublaslt_handle_ = static_cast<const cublasLtHandle_t *>(fields[2].data)[0];
+    params_ = static_cast<const fastertransformer::encoderParamRun *>(fields[1].data)[0];
+    params_.attn.common_param = &params_.common_param;
+    params_.ffn_param.common_param = &params_.common_param;
   }
 
   EncoderPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(ENCODER_PLUGIN_NAME)) {
     DeserializeValue(&serialData, &serialLength, &compute_type_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::encoderParamT));
+    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::encoderParamRun));
+    params_.attn.common_param = &params_.common_param;
+    params_.ffn_param.common_param = &params_.common_param;
   }
-
   EncoderPlugin() = delete;
 
   ~EncoderPlugin() override {}
@@ -85,11 +93,9 @@ class EncoderPlugin : public TensorRTPlugin {
                                  int nbOutputs) noexcept override;
 
  private:
-  const std::string layer_name_;
   std::string name_space_;
   int compute_type_;
-  mutable fastertransformer::encoderParamT params_;
-  cublasLtHandle_t cublaslt_handle_;
+  mutable fastertransformer::encoderParamRun params_;
   int num_of_inputs_;
   int num_of_outputs_;
 

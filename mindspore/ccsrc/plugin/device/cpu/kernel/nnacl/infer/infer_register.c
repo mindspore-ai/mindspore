@@ -43,6 +43,8 @@
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/infer/concat_infer.h"
 #include "nnacl/infer/constant_of_shape_infer.h"
+#include "nnacl/infer/decoder_layer_infer.h"
+
 #ifdef MSLITE_ENABLE_CONTROLFLOW
 #include "nnacl/infer/control/tensor_array_infer.h"
 #include "nnacl/infer/control/tensor_array_read_infer.h"
@@ -407,6 +409,7 @@ void RegAllInferFunc5() {
 #ifndef RUNTIME_PASS_CLIP
   g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;
   g_inner_op_infer_func[PrimType_Inner_EncoderLayer - PrimType_InnerOpMin] = EncoderLayerInferShape;
+  g_inner_op_infer_func[PrimType_Inner_DecoderLayer - PrimType_InnerOpMin] = DecoderLayerInferShape;
   g_inner_op_infer_func[PrimType_Inner_FseDecode - PrimType_InnerOpMin] = FseDecoderInferShape;
 #endif
   g_inner_op_infer_func[PrimType_Inner_ToFormat - PrimType_InnerOpMin] = NULL;

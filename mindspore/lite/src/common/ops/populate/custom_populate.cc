@@ -107,6 +107,16 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     memset(param, 0, sizeof(OpParameter));
     param->type_ = PrimType_Inner_EncoderLayer;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "DecoderLayer") {
+    std::cout << "DecoderLayer populate" << std::endl;
+    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc DecoderLayer failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(OpParameter));
+    param->type_ = PrimType_Inner_DecoderLayer;
+    return reinterpret_cast<OpParameter *>(param);
   } else if (type == "FSEDecode") {
     auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
     if (param == nullptr) {

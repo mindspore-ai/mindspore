@@ -350,6 +350,11 @@ bool TensorRTExecutor::Init() {
     MS_LOG(ERROR) << "Parse input ranges failed.";
     return false;
   }
+  ret = ParseTransformerProfile();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse transformer failed.";
+    return false;
+  }
   return true;
 }
 
@@ -373,6 +378,40 @@ int TensorRTExecutor::ParseOptimizationProfile() {
     device_info_->SetPrecisionMode(precision_mode);
   }
   serialize_path_ = ProfileParser::GetOption(gpu_context, lite::kMSCacheSerializePathKey);
+  return RET_OK;
+}
+
+int TensorRTExecutor::ParseTransformerProfile() {
+  auto transformer_context_it = config_infos_.find(kTransformerSection);
+  if (transformer_context_it == config_infos_.end()) {
+    MS_LOG(INFO) << "do not have input ranges config.";
+    return RET_OK;
+  }
+
+  auto &transformer_context = transformer_context_it->second;
+  int encoder_input = -1;
+  int decoder_input = -1;
+  try {
+    encoder_input = std::stoi(ProfileParser::GetOption(transformer_context, lite::kEncoderInputKey, "-1").c_str());
+  } catch (...) {
+    MS_LOG(ERROR) << "The value of encoder_input must be int.";
+  }
+  runtime_->SetTransformerEncoderInputIdx(encoder_input);
+  try {
+    decoder_input = std::stoi(ProfileParser::GetOption(transformer_context, lite::kDecoderInputKey, "-1").c_str());
+  } catch (...) {
+    MS_LOG(ERROR) << "The value of decoder_input must be int.";
+  }
+  runtime_->SetTransformerDecoderInputIdx(decoder_input);
+  auto is_ffn_f16 = ProfileParser::GetOption(transformer_context, lite::kFfnFp16Key, "true");
+  if (is_ffn_f16 == "true") {
+    runtime_->SetTransformerFfnFp16(true);
+  } else if (is_ffn_f16 == "false") {
+    runtime_->SetTransformerFfnFp16(false);
+  } else {
+    MS_LOG(ERROR) << "The value of ffn_f16 must be true or false.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

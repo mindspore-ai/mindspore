@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_GRAPH_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_GRAPH_EXECUTOR_H_
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -62,6 +62,8 @@ class TensorRTExecutor : public LiteGraphExecutor {
  private:
   int ParseOptimizationProfile();
 
+  int ParseTransformerProfile();
+
   Status BuildSubGraph(const KernelGraphPtr &graph);
 
   TensorRTOp *FindTensorRTOp(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
@@ -103,4 +105,4 @@ class TensorRTExecutor : public LiteGraphExecutor {
   KernelGraphUtilsPtr kernel_graph_utils_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_GRAPH_EXECUTOR_H_

@@ -263,6 +263,8 @@
 #include "ops/format_transpose.h"
 #include "ops/gather_d.h"
 #include "ops/tensor_scatter_add.h"
+#include "ops/decoder_layer.h"
+#include "ops/encoder_layer.h"
 #include "ops/scatter_elements.h"
 #include "ops/triu.h"
 #include "ops/tril.h"

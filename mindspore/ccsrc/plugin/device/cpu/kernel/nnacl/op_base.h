@@ -41,9 +41,15 @@
 #define C12NUM 12
 #define C13NUM 13
 #define C14NUM 14
+#define C15NUM 15
 #define C16NUM 16
+#define C17NUM 17
+#define C18NUM 18
+#define C19NUM 19
 #define C20NUM 20
 #define C21NUM 21
+#define C22NUM 22
+#define C23NUM 23
 #define C24NUM 24
 #define C28NUM 28
 #define C32NUM 32
@@ -552,6 +558,7 @@ enum PrimType {
   PrimType_Inner_SplitReduceConcatFusion = 10005,
   PrimType_Inner_EncoderLayer = 10006,
   PrimType_Inner_FseDecode = 10007,
+  PrimType_Inner_DecoderLayer = 10008,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

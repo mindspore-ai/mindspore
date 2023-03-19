@@ -401,6 +401,7 @@ table Attention {
     head_num: long;
     head_size: long;
     cross: bool;
+    scale: float;
 }
 
 table Conv2DBackpropFilterFusion {

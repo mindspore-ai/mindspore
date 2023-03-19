@@ -71,18 +71,22 @@ int MhaTensorRT::AddInnerOp(TensorRTContext *ctx) {
   bool is_cross = mha_op->get_cross();
   bool is_position_bias = mha_op->get_position_bias();
   nvinfer1::ITensor *input_tensor = input(ctx, 0).trt_tensor_;
-  fastertransformer::encoderParamT params;
+  fastertransformer::attentionParamRun params;
+  fastertransformer::CommonParam common_param;
+  memset_s(&common_param, sizeof(common_param), 0, sizeof(common_param));
   memset_s(&params, sizeof(params), 0, sizeof(params));
-  params.head_num = head_number;
-  params.head_size = head_size;
-  params.hidden_size = head_number * head_size;
-  params.cublas_handle = GetCublasHandle();
-  params.qkv_bias = !is_position_bias;
-  params.projection_bias = !is_position_bias;
-  params.is_cross = is_cross;
-  params.position_bias = is_position_bias;
-  auto plugin =
-    std::make_shared<MhaPlugin>(input_tensor->getName(), compute_type, params, GetCublasLtHandle(), device_id_);
+  cublasHandle_t cublas_handle = GetCublasHandle();
+  common_param.cublas_handle = cublas_handle;
+  common_param.head_num = head_number;
+  common_param.head_size = head_size;
+  common_param.hidden_size = head_number * head_size;
+  params.attn.qkv_bias = !is_position_bias;
+  params.attn.projection_bias = !is_position_bias;
+  params.attn.is_cross = is_cross;
+  params.attn.position_bias = is_position_bias;
+  params.attn.scale = mha_op->get_scale();
+  params.attn.mask = true;
+  auto plugin = std::make_shared<MhaPlugin>(input_tensor->getName(), compute_type, params, common_param, device_id_);
   const int input_number = inputs().size();
   nvinfer1::ITensor *inputTensors[input_number];
   for (int i = 0; i < input_number; i++) {
@@ -95,39 +99,8 @@ int MhaTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   mha_layer->setName((op_name_ + "plugin_attention").c_str());
   nvinfer1::ITensor *attn_tensor = mha_layer->getOutput(0);
-#ifndef TEST_
   ctx->RegisterTensor(ITensorHelper{attn_tensor, Format::NCHW, true}, out_tensors_[0].Name());
-#else  /* TEST_ */
-  ctx->RegisterTensor(ITensorHelper{attn_tensor, Format::NCHW, true}, out_tensors_[0].Name() + "attn");
-#endif /* TEST_ */
   this->layer_ = mha_layer;
-#ifdef TEST_
-  auto weight_projection = input(ctx, 4).trt_tensor_;
-  auto bias_projection = input(ctx, 6).trt_tensor_;
-#endif /* TEST_ */
-
-#ifdef TEST_
-  auto matmul_layer = ctx->network()->addMatrixMultiply(*attn_tensor, nvinfer1::MatrixOperation::kNONE,
-                                                        *weight_projection, nvinfer1::MatrixOperation::kNONE);
-  if (matmul_layer == nullptr) {
-    MS_LOG(ERROR) << "failed to add matmul layer";
-    return RET_ERROR;
-  }
-  matmul_layer->setName((op_name_ + "_matmul").c_str());
-  auto matmul_tensor = matmul_layer->getOutput(0);
-  auto shuffle_layer = ctx->network()->addShuffle(*bias_projection);
-  const auto size = bias_projection->getDimensions().d[0];
-  shuffle_layer->setReshapeDimensions(nvinfer1::Dims{2, {1, size}});
-  auto shuffle_tensor = shuffle_layer->getOutput(0);
-  auto addbias = ctx->network()->addElementWise(*matmul_tensor, *shuffle_tensor, nvinfer1::ElementWiseOperation::kSUM);
-  if (addbias == nullptr) {
-    MS_LOG(ERROR) << "failed to add bias layer";
-    return RET_ERROR;
-  }
-  addbias->setName((op_name_ + "_bias").c_str());
-  auto bias_out = addbias->getOutput(0);
-  ctx->RegisterTensor(ITensorHelper{bias_out, Format::NCHW, true}, out_tensors_[0].Name());
-#endif /* TEST_ */
   return RET_OK;
 }
 
@@ -152,36 +125,36 @@ template <typename T>
 int MhaPlugin::RunCudaMha(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                           const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream,
                           cublasGemmAlgo_t algoId) {
-  int cross_tensor_offset = (params_.is_cross) ? 1 : 0;
+  int cross_tensor_offset = (params_.attn.is_cross) ? 1 : 0;
   const int weight_projection_tensor_idx = 4 + cross_tensor_offset;
   const int bias_projection_tensor_idx = 6 + cross_tensor_offset;
   const int attn_mask_tensor_idx = 7 + cross_tensor_offset;
   const int bias_qkv_tensor_idx = 5 + cross_tensor_offset;
   const int weight_qkv_tensor_idx = 3;
-  const int position_bias_tensor_idx = 6 + cross_tensor_offset;
-  params_.stream = stream;
-  params_.algo = algoId;
+  const int position_bias_tensor_idx = 5 + cross_tensor_offset;
+  common_param_.algo = algoId;
+  common_param_.stream = stream;
   void *inputs_attn[num_of_inputs_];
   int index = 0;
   inputs_attn[index++] = const_cast<void *>(inputs[0]);
-  if (params_.is_cross) {
+  if (params_.attn.is_cross) {
     inputs_attn[index++] = const_cast<void *>(inputs[1]);
     inputs_attn[index++] = const_cast<void *>(inputs[weight_qkv_tensor_idx]);
     inputs_attn[index++] = const_cast<void *>(inputs[weight_qkv_tensor_idx + 1]);
   } else {
     inputs_attn[index++] = const_cast<void *>(inputs[weight_qkv_tensor_idx]);
   }
-  if (params_.qkv_bias) {
+  if (params_.attn.qkv_bias) {
     inputs_attn[index++] = const_cast<void *>(inputs[bias_qkv_tensor_idx]);
   }
-  if (params_.position_bias) {
+  if (params_.attn.position_bias) {
+    inputs_attn[index++] = const_cast<void *>(inputs[attn_mask_tensor_idx - C1NUM]);
     inputs_attn[index++] = const_cast<void *>(inputs[position_bias_tensor_idx]);
-    inputs_attn[index++] = const_cast<void *>(inputs[attn_mask_tensor_idx - C2NUM]);
   } else {
     inputs_attn[index++] = const_cast<void *>(inputs[attn_mask_tensor_idx]);
   }
   inputs_attn[index++] = const_cast<void *>(inputs[weight_projection_tensor_idx]);
-  if (params_.projection_bias) {
+  if (params_.attn.projection_bias) {
     inputs_attn[index++] = const_cast<void *>(inputs[bias_projection_tensor_idx]);
   }
   void *outputs_attn[] = {outputs[0]};
@@ -204,15 +177,19 @@ void MhaPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc *in, int
                                 const nvinfer1::DynamicPluginTensorDesc *out, int nbOutputs) noexcept {
   int cross_tensor_offset = 0;
   int position_bias_tensor_offsets = 0;
-  if (params_.is_cross) cross_tensor_offset = 1;
-  if (params_.position_bias) position_bias_tensor_offsets = 1;
+  if (params_.attn.is_cross) cross_tensor_offset = 1;
+  if (params_.attn.position_bias) position_bias_tensor_offsets = 1;
   const int attn_mask_tensor_idx = 7 + cross_tensor_offset - position_bias_tensor_offsets;
   const int request_batch_size = static_cast<const int>(in[attn_mask_tensor_idx].desc.dims.d[0]);
   const int request_src_seq_len = static_cast<const int>(in[attn_mask_tensor_idx].desc.dims.d[1]);
   const int request_tgt_seq_len = static_cast<const int>(in[attn_mask_tensor_idx].desc.dims.d[2]);
-  params_.batch_size = request_batch_size;
-  params_.src_seq_len = request_src_seq_len;
-  params_.tgt_seq_len = request_tgt_seq_len;
+  common_param_.batch_size = request_batch_size;
+  common_param_.src_seq_len = request_src_seq_len;
+  common_param_.tgt_seq_len = request_tgt_seq_len;
+  common_param_.h_token_num = common_param_.batch_size * common_param_.src_seq_len;
+  common_param_.h_token_num2 = common_param_.batch_size * common_param_.tgt_seq_len;
+  params_.attn.padding_offset = nullptr;
+  params_.attn.padding_offset2 = nullptr;
   num_of_inputs_ = nbInputs;
   num_of_outputs_ = nbOutputs;
 }
@@ -230,34 +207,26 @@ nvinfer1::DimsExprs MhaPlugin::getOutputDimensions(int32_t index, const nvinfer1
                                                    nvinfer1::IExprBuilder &exprBuilder) noexcept {
   nvinfer1::DimsExprs dims;
   if (index == 0) {
-#ifndef TEST_
     int num_dims = inputs[0].nbDims;
     dims.nbDims = num_dims;
     if (num_dims == INPUT_SIZE2) {
       dims.d[0] = exprBuilder.constant(inputs[nbInputDims - 1].d[0]->getConstantValue() *
                                        inputs[nbInputDims - 1].d[1]->getConstantValue());
-      auto hidden_size = exprBuilder.constant(params_.head_size * params_.head_num);
+      auto hidden_size = exprBuilder.constant(common_param_.head_size * common_param_.head_num);
       dims.d[1] = hidden_size;
     } else if (num_dims == INPUT_SIZE3) {
       dims.d[0] = inputs[nbInputDims - 1].d[0];  // batch
       dims.d[1] = inputs[nbInputDims - 1].d[(inputs[nbInputDims - 1].nbDims) - 1];
-      auto hidden_size = exprBuilder.constant(params_.head_size * params_.head_num);
+      auto hidden_size = exprBuilder.constant(common_param_.head_size * common_param_.head_num);
       dims.d[kTwo] = hidden_size;
     }
   } else {
     dims.nbDims = INPUT_SIZE4;
     dims.d[0] = inputs[nbInputDims - 1].d[0];  // batch
-    dims.d[1] = exprBuilder.constant(params_.head_num);
+    dims.d[1] = exprBuilder.constant(common_param_.head_num);
     dims.d[kTwo] = inputs[nbInputDims - 1].d[(inputs[nbInputDims - 1].nbDims) - 1];
-    dims.d[kThree] = exprBuilder.constant(params_.head_size);
+    dims.d[kThree] = exprBuilder.constant(common_param_.head_size);
   }
-#else
-    dims.nbDims = C2NUM;
-    dims.d[0] = inputs[nbInputDims - 1].d[(inputs[nbInputDims - 1].nbDims) - 1];
-    auto hidden_size = exprBuilder.constant(head_size_ * head_number_);
-    dims.d[1] = hidden_size;
-  }
-#endif
   return dims;
 }
 
@@ -268,6 +237,7 @@ nvinfer1::IPluginV2DynamicExt *MhaPlugin::clone() const noexcept {
     return nullptr;
   }
   plugin->setPluginNamespace(name_space_.c_str());
+  plugin->params_.common_param = &plugin->common_param_;
   return plugin;
 }
 
@@ -276,12 +246,13 @@ int MhaPlugin::initialize() noexcept { return 0; }
 void MhaPlugin::terminate() noexcept {}
 
 size_t MhaPlugin::getSerializationSize() const noexcept {
-  return sizeof(int) + sizeof(fastertransformer::encoderParamT);
+  return sizeof(int) + sizeof(fastertransformer::attentionParamRun) + sizeof(fastertransformer::CommonParam);
 }
 
 void MhaPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &compute_type_, sizeof(int));
-  SerializeValue(&buffer, &params_, sizeof(fastertransformer::encoderParamT));
+  SerializeValue(&buffer, &params_, sizeof(fastertransformer::attentionParamRun));
+  SerializeValue(&buffer, &common_param_, sizeof(fastertransformer::CommonParam));
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameAttention, MhaTensorRT)
 }  // namespace mindspore::lite

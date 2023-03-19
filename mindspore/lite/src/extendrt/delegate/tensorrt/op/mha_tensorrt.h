@@ -22,7 +22,8 @@
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cudnn_utils.h"
-#include "src/fastertransformer/layers/encoder_layers/encoder.h"
+#include "src/fastertransformer/layers/ms_layers/attention.h"
+#include "src/fastertransformer/layers/ms_layers/param.h"
 
 namespace mindspore::lite {
 class MhaTensorRT : public TensorRTOp {
@@ -43,24 +44,28 @@ class MhaTensorRT : public TensorRTOp {
 constexpr auto MHA_PLUGIN_NAME{"AttentionPlugin"};
 class MhaPlugin : public TensorRTPlugin {
  public:
-  MhaPlugin(const std::string name, int compute_type, fastertransformer::encoderParamT params,
-            cublasLtHandle_t cublaslt_handle, uint32_t device_id)
-      : TensorRTPlugin(name, std::string(MHA_PLUGIN_NAME), device_id),
-        compute_type_(compute_type),
-        params_(params),
-        cublaslt_handle_(cublaslt_handle) {}
+  MhaPlugin(const std::string name, int compute_type, fastertransformer::attentionParamRun params,
+            fastertransformer::CommonParam common_param, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(MHA_PLUGIN_NAME), device_id), compute_type_(compute_type) {
+    params_ = params;
+    common_param_ = common_param;
+  }
 
   MhaPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(MHA_PLUGIN_NAME)) {
     const nvinfer1::PluginField *fields = fc->fields;
     compute_type_ = static_cast<const int *>(fields[0].data)[0];
-    params_ = static_cast<const fastertransformer::encoderParamT *>(fields[1].data)[0];
+    params_ = static_cast<const fastertransformer::attentionParamRun *>(fields[1].data)[0];
+    common_param_ = static_cast<const fastertransformer::CommonParam *>(fields[2].data)[0];
+    params_.common_param = &common_param_;
   }
 
   MhaPlugin(const char *name, const void *serialData, size_t serialLength)
       : TensorRTPlugin(std::string(name), std::string(MHA_PLUGIN_NAME)) {
     DeserializeValue(&serialData, &serialLength, &compute_type_, sizeof(int));
-    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::encoderParamT));
+    DeserializeValue(&serialData, &serialLength, &params_, sizeof(fastertransformer::attentionParamRun));
+    DeserializeValue(&serialData, &serialLength, &common_param_, sizeof(fastertransformer::CommonParam));
+    params_.common_param = &common_param_;
   }
 
   MhaPlugin() = delete;
@@ -91,8 +96,9 @@ class MhaPlugin : public TensorRTPlugin {
   const std::string layer_name_;
   std::string name_space_;
   int compute_type_;
-  mutable fastertransformer::encoderParamT params_;
-  cublasLtHandle_t cublaslt_handle_;
+  mutable fastertransformer::attentionParamRun params_;
+  mutable fastertransformer::CommonParam common_param_;
+  cublasLtHandle_t *cublaslt_handle_;
   int num_of_inputs_;
   int num_of_outputs_;
 };

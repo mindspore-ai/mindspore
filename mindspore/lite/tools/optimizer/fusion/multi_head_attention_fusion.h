@@ -48,7 +48,7 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
  private:
   // define patterns
   VectorRef DefineMPWithMaskPattern(bool mask = true) const;
-  VectorRef DefineMPWithMaskPatternPA() const;
+  VectorRef DefineMPWithMaskPatternPA(bool mask = true) const;
   VectorRef DefineMPWithMaskPatternT5() const;
   VectorRef DefineMPWithMaskPatternT5New(bool transpose = true, bool no_div_flag = false) const;
   VectorRef DefineMPPatternSwin(bool flag = true) const;
@@ -60,7 +60,7 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
 
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                              const std::string &base_name, bool mask = true) const;
+                                              const mindspore::AnfNodePtr &node, bool mask = true) const;
   // check pattern
   bool CheckPattern(const EquivPtr &equiv, int *head_num, int *head_size) const;
   CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, const int item_index) const;
@@ -91,7 +91,7 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   const std::string kMPAWithMaskTransposePatternNameT5New = "MPAWithMaskTransposePatternT5New";
   const std::string kMPAPatternNameSwin1 = "MPAPatternNameSwin1";
   const std::string kMPAPatternNameSwin2 = "MPAPatternNameSwin2";
-
+  const std::string kMPAPatternNamePA = "kMPAPatternNamePA";
   mutable VarPtr input_q_{nullptr};
   mutable VarPtr input_k_{nullptr};
   mutable VarPtr input_v_{nullptr};
@@ -120,6 +120,7 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   mutable VarPtr k_transpose_{nullptr};
 
   mutable bool t5_x_{false};
+  mutable float scale_{true};
 };
 }  // namespace opt
 }  // namespace mindspore
