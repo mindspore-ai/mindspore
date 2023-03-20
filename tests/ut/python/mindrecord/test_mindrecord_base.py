@@ -1438,9 +1438,10 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
     writer.add_schema(cv_schema_json, "img_schema")
     writer.add_index(["file_name", "label"])
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as e:
         writer.write_raw_data(data[0:2], True)
         writer.write_raw_data(data[0:2])
+    assert "The parameter `parallel_writer` must be consistent during use" in str(e)
 
     # without write_raw_data
     remove_multi_files(file_name, FILES_NUM)
@@ -1470,3 +1471,15 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
     with pytest.raises(RuntimeError):
         writer.write_raw_data([], True)
         writer.commit()
+
+    # write_raw_data parameter parallel_writers is not bool
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
+    data = get_data("../data/mindrecord/testImageNetData/")
+    cv_schema_json = {"file_name": {"type": "string"},
+                      "label": {"type": "int64"}, "data": {"type": "bytes"}}
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    with pytest.raises(TypeError) as e:
+        writer.write_raw_data([], 18)
+    assert "The parameter `parallel_writer` must be bool." in str(e)
