@@ -73,7 +73,7 @@ function Run_TensorRT() {
                 continue
             fi
             use_parallel_predict="false"
-            if [[ ${mode} == "parallel_predict" ]]; then
+            if [[ ${mode} =~ "parallel_predict" ]]; then
               use_parallel_predict="true"
             fi
             echo "Benchmarking ${model_name} ......"
@@ -107,13 +107,13 @@ function Run_TensorRT() {
             CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU
 
             if [ $? = 0 ]; then
-                if [[ ${mode} == "parallel_predict" ]]; then
+                if [[ ${mode} =~ "parallel_predict" ]]; then
                   run_result='TensorRT: '${model_name}' parallel_pass'; echo ${run_result} >> ${run_benchmark_result_file}
                 else
                   run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
                 fi
             else
-                if [[ ${mode} == "parallel_predict" ]]; then
+                if [[ ${mode} =~ "parallel_predict" ]]; then
                   run_result='TensorRT: '${model_name}' parallel_failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
                 else
                   run_result='TensorRT: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1

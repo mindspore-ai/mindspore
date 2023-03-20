@@ -16,7 +16,8 @@ function Run_python_ST() {
   fi
   mindspore_lite_whl=`ls ${whl_path}/*.whl`
   if [[ -f "${mindspore_lite_whl}" ]]; then
-    pip install ${mindspore_lite_whl} --force-reinstall --user || exit 1
+    pip uninstall mindspore_lite -y || exit 1
+    pip install ${mindspore_lite_whl} --user || exit 1
     echo "install python whl success."
   else
     echo "not find python whl.."
