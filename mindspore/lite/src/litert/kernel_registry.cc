@@ -32,7 +32,7 @@
 #include "src/common/utils.h"
 #endif
 #include "src/common/tensor_util.h"
-#include "src/litert/kernel/cpu/nnacl_kernel.h"
+#include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
 #include "nnacl/kernel.h"
 
 using mindspore::kernel::kBuiltin;
@@ -219,7 +219,7 @@ kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &i
     return nullptr;
   }
 
-  auto *lite_kernel = NnaclKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
+  auto *lite_kernel = nnacl::NnaclKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
   if (lite_kernel == nullptr) {
     MS_LOG(ERROR) << "Registry cpu kernel failed:  " << parameter->name_;
     return nullptr;

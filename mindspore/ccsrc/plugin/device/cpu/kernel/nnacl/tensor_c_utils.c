@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/tensor_c_utils.h"
+#include "nnacl/nnacl_common.h"
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter) {
@@ -379,6 +380,12 @@ void SetChannel(TensorC *tensor, int channel) {
     default:
       return;
   }
+}
+
+int GetSize(const TensorC *tensor) {
+  int element_num = GetElementNum(tensor);
+  int data_type_size = DataTypeCSize(tensor->data_type_);
+  return element_num * data_type_size;
 }
 
 int GetElementNum(const TensorC *tensor) {

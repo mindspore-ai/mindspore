@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "src/litert/kernel/cpu/nnacl_kernel.h"
+#include "nnacl/nnacl_kernel.h"
 #include "src/tensor.h"
 #include "common/tensor_util.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-namespace mindspore::kernel {
+namespace mindspore::nnacl {
 NnaclKernel::~NnaclKernel() {
   if (in_ != nullptr) {
     free(in_);
@@ -103,7 +103,7 @@ int NnaclKernel::InferShape() {
   return kernel_->infershape(kernel_);
 }
 
-int NnaclKernel::InitKernel(const KernelKey &key, const lite::InnerContext *ctx) {
+int NnaclKernel::InitKernel(const kernel::KernelKey &key, const lite::InnerContext *ctx) {
   CHECK_NULL_RETURN(ctx);
 
   in_size_ = in_tensors_.size();
@@ -133,25 +133,4 @@ int NnaclKernel::InitKernel(const KernelKey &key, const lite::InnerContext *ctx)
   }
   return RET_OK;
 }
-
-NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                 const KernelKey &key) {
-  auto *lite_kernel = new (std::nothrow) kernel::NnaclKernel(parameter, inputs, outputs, ctx);
-  if (lite_kernel == nullptr) {
-    MS_LOG(ERROR) << "Create cpu kernel failed:  " << parameter->name_;
-    return nullptr;
-  }
-
-  auto ret = lite_kernel->InitKernel(key, ctx);
-  if (ret != RET_OK) {
-    MS_LOG(WARNING) << "Init cpu kernel failed:  " << parameter->name_;
-    lite_kernel->set_parameter(nullptr);  // Do not free parameter here, free where it was malloced.
-    delete lite_kernel;
-    lite_kernel = nullptr;
-    return nullptr;
-  }
-
-  return lite_kernel;
-}
-}  // namespace mindspore::kernel
+}  // namespace mindspore::nnacl
