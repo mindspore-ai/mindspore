@@ -33,7 +33,17 @@ if(ENABLE_GPU)
     else()
     target_compile_options(cuda_common_obj PRIVATE "/std:c++17")
     endif()
-    cuda_add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
+    if(WIN32)
+        list(JOIN CUDA_NVCC_FLAGS " " tmp_nvcc_flags)
+        # CUDA_NVCC_FLAGS is not valid for add_library(), use CMAKE_CUDA_FLAGS instead.
+        string(APPEND CMAKE_CUDA_FLAGS " ${tmp_nvcc_flags}")
+        add_compile_definitions(_ENABLE_EXTENDED_ALIGNED_STORAGE)
+        # cuda_add_library() doesn't support ccache or sccache and it is deprecated for cmake v3.10+
+        add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
+    else()
+        cuda_add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
+    endif()
+
     if(NOT BUILD_LITE)
       set_target_properties(cuda_ops PROPERTIES SOVERSION ${CUDA_VERSION_MAJOR})
     endif()
