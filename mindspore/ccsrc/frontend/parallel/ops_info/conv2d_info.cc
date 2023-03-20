@@ -177,16 +177,16 @@ Status Conv2DInfo::GetAttrs() {
 
 Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const {
   if (outputs_shape_[0][2] % h_strategy != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": Do not support to split 2th dimension when out_shape of 2th dimension is not"
-                                     " divisible by strategy of 2th dimension";
+    MS_LOG(WARNING) << name_
+                    << ": Do not support to split 2th dimension when out_shape of 2th dimension is not"
+                       " divisible by strategy of 2th dimension";
     return FAILED;
   }
 
   if (outputs_shape_[0][3] % w_strategy != 0) {
-    FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": Do not support to split 3th dimension when out_shape of 3th dimension is not"
-                                     " divisible by strategy of 3th dimension";
+    MS_LOG(WARNING) << name_
+                    << ": Do not support to split 3th dimension when out_shape of 3th dimension is not"
+                       " divisible by strategy of 3th dimension";
     return FAILED;
   }
 
@@ -199,14 +199,14 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
 
   if ((kernel_size_use_dilation_[0] > stride_[2] && h_strategy > 1) ||
       (kernel_size_use_dilation_[1] > stride_[3] && w_strategy > 1)) {
-    FILTER_LOG(is_auto_parallel_) << name_
-                                  << ": The 'valid' mode do not support to split 2th or 3th dimension when"
-                                     " kernel_size_use_dilation_ > stride";
+    MS_LOG(WARNING) << name_
+                    << ": The 'valid' mode do not support to split 2th or 3th dimension when"
+                       " kernel_size_use_dilation_ > stride";
     return FAILED;
   }
 
   if (kernel_size_use_dilation_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
-    FILTER_LOG(is_auto_parallel_)
+    MS_LOG(WARNING)
       << name_
       << ": The 'valid' mode do not support to split 2th when kernel_size_use_dilation_ <= stride but slice shape is "
          "not divisible by stride ";
@@ -214,7 +214,7 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   }
 
   if (kernel_size_use_dilation_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
-    FILTER_LOG(is_auto_parallel_)
+    MS_LOG(WARNING)
       << name_
       << ": The 'valid' mode do not support to split 3th when kernel_size_use_dilation_ <= stride but slice shape is "
          "not divisible by stride ";
@@ -247,13 +247,13 @@ Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t d
   // kernel size <= stride, no need to exchange
   if (h_or_w_kernel_size <= h_or_w_stride) {
     if (pad_all != 0) {
-      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
-                                    << "th dimension when kernel_size <= stride and pad != 0";
+      MS_LOG(WARNING) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                      << "th dimension when kernel_size <= stride and pad != 0";
       return FAILED;
     }
     if ((h_or_w_input_shape / strategy) % h_or_w_stride != 0) {
-      FILTER_LOG(is_auto_parallel_) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
-                                    << "th dimension when kernel_size <= stride and input's slice % stride != 0";
+      MS_LOG(WARNING) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
+                      << "th dimension when kernel_size <= stride and input's slice % stride != 0";
       return FAILED;
     }
     return SUCCESS;
@@ -261,14 +261,14 @@ Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t d
 
   // kernel_size > stride, need to exchange
   if ((h_or_w_input_shape + pad_all - h_or_w_kernel_size) % h_or_w_stride != 0) {
-    FILTER_LOG(is_auto_parallel_)
+    MS_LOG(WARNING)
       << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
       << "th dimension when kernel_size > stride and input_shape + pad_all - k is not divisible by stride";
     return FAILED;
   }
 
   if ((h_or_w_output_shape * h_or_w_stride - h_or_w_input_shape) % strategy != 0) {
-    FILTER_LOG(is_auto_parallel_)
+    MS_LOG(WARNING)
       << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
       << "th dimension when kernel_size > stride and output_shape * s - input_shape is not divisible by stride";
     return FAILED;
@@ -1158,8 +1158,7 @@ Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_st
   }
 
   if (pad_mode_ != 0 && pad_mode_ != 1) {  // only support pad mode and same mode
-    FILTER_LOG(is_auto_parallel_) << name_ << ": Do not support the pad mode " << pad_mode_
-                                  << " when split H or W dimension";
+    MS_LOG(WARNING) << name_ << ": Do not support the pad mode " << pad_mode_ << " when split H or W dimension";
     return FAILED;
   }
 

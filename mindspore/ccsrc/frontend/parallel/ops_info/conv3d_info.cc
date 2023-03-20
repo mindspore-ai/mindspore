@@ -104,9 +104,8 @@ Status Conv3DInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   if (input_strategy[4] != 1) {
-    MS_LOG(ERROR) << name_
-                  << ": Do not support to split the last dimension of input, but the strategy for this dimension is ("
-                  << input_strategy[4];
+    MS_LOG(ERROR) << name_ << ": Do not support to split the last dimension of input, but the strategy for input is "
+                  << input_strategy;
     return FAILED;
   }
 
@@ -213,7 +212,7 @@ void Conv3DInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   Shape s2 = {s[4], s[0], s[1], s[2] + recv_lens_[0] + recv_lens_[1], s[3] + recv_lens_[2] + recv_lens_[3]};
   auto reshape_2 = gen_g_.PushBack({gen_g_.NewOpInst(RESHAPE), neighbor_exchange_v2, CreateTuple(s2)});
 
-  // transopse-2
+  // transpose-2
   std::vector<int64_t> t2 = {1, 2, 3, 4, 0};
   auto transpose_2 = gen_g_.PushBack({gen_g_.NewOpInst(TRANSPOSE), reshape_2, CreateTuple(t2)});
 
