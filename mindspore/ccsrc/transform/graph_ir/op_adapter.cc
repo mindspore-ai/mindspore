@@ -416,8 +416,9 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   if (is_custom_op) {
     output_size = GetCustomOpOutputSize(std::dynamic_pointer_cast<CustomOperator>(op));
   } else {
-    output_size =
-      output_map_.empty() ? op->GetDynamicOutputNum(dyn_output_map_.begin()->second.name) : output_map_.size();
+    output_size = output_map_.empty()
+                    ? static_cast<size_t>(op->GetDynamicOutputNum(dyn_output_map_.begin()->second.name))
+                    : output_map_.size();
   }
 
   if (output_size == 0) {
@@ -451,7 +452,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
       if (it != output_map_.end()) {
         it->second.update_out_desc(op, *desc);
       } else if (!dyn_output_map_.empty()) {
-        dyn_output_map_.begin()->second.update_dyn_output_desc(op, i, *desc);
+        dyn_output_map_.begin()->second.update_dyn_output_desc(op, static_cast<unsigned int>(i), *desc);
       }
     }
   }
@@ -700,7 +701,7 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(op);
   for (auto &it : attr_map_) {
-    if (attr_input_map_.count(it.first)) {
+    if (attr_input_map_.count(it.first) != 0) {
       MS_LOG(WARNING) << "Attr: " << it.first << " will convert to input, please del it from ATTR_MAP.";
       continue;
     }
