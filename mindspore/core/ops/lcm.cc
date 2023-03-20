@@ -56,7 +56,7 @@ AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, lcm_input_num, primitive->name());
   auto shape = LcmInferShape(primitive, input_args);
   auto type = LcmInferType(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  return abstract::MakeAbstractTensor(shape, type);
 }
 MIND_API_OPERATOR_IMPL(Lcm, BaseOperator);
 
