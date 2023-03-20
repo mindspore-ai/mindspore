@@ -328,7 +328,6 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
       return value;
     }
   }
-  return nullptr;
 }
 
 tensor::TensorPtr MSANFModelParser::GetIncTensor(const std::string &tensor_name) {
@@ -1705,7 +1704,10 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 
   // Set Abstract and prim attr for CNode
   SetCNodePrimAttrAndAbstract(node_proto, cnode_ptr);
-  BuildAttrForCNode(cnode_ptr, node_proto);
+  if (!BuildAttrForCNode(cnode_ptr, node_proto)) {
+    MS_LOG(ERROR) << "Failed build attr for node: " << cnode_ptr->DebugString()
+                  << ", proto: " << node_proto.DebugString();
+  }
   return cnode_ptr;
 }
 
