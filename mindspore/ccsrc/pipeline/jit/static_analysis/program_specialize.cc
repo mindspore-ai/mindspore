@@ -1308,7 +1308,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   return true;
 }
 
-bool FuncGraphSpecializer::ParentNotSpecialized(const AnalysisContextPtr &context) {
+bool FuncGraphSpecializer::ParentNotSpecialized(const AnalysisContextPtr &context) const {
   auto parent_context = context->parent();
   auto parent_specializer = specializer_->GetFuncGraphSpecializer(parent_context);
   // If can't get specializer of parent and parent is not DummyContext, it means parent not specialized.

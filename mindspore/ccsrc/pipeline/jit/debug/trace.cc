@@ -126,7 +126,7 @@ void TraceGraphEval() {
 
 class AnalyzeFailExporter : public AnfExporter {
  public:
-  AnalyzeFailExporter() : AnfExporter(true, false) {}
+  AnalyzeFailExporter() : AnfExporter(true, false) { is_top_graph = false; }
   ~AnalyzeFailExporter() override = default;
 
   bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);

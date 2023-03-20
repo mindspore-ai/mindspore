@@ -390,6 +390,7 @@ void GetGradAbstract(const AbstractBasePtr &grads_abs, const std::string &para_n
   auto abs0 = grad_abs_tuple->elements()[0];
   if (abs0->isa<AbstractScalar>()) {
     auto buildptr = abs0->cast_ptr<AbstractScalar>();
+    MS_EXCEPTION_IF_NULL(buildptr);
     auto build_value = buildptr->BuildValue();
     size_t expect_size = 2;
     if (grad_abs_tuple->elements().size() >= expect_size) {

@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_FALLBACK_H_
-#include <string>
 
 #include "include/common/visible.h"
 #include "pybind11/pybind11.h"
