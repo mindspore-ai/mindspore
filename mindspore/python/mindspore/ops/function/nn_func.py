@@ -550,32 +550,33 @@ def _check_adaptive_max_pool1d_output_size(output_size):
     validator.check_value_type('output_size', output_size, [int], 'adaptive_max_pool1d')
 
 
-def adaptive_max_pool1d(input, output_size, return_indices=False):
+def adaptive_max_pool1d(input, output_size):
     r"""
-    Apply 1D adaptive max pooling to a 1-D signal with batch and channel dimensions.
+    Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
+    a composition of 1D input planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
-    The output is of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`,
-    where :math:`L_{out}` is defined by `output_size`.
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    adaptive_max_pool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
+    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        Ascend platform does not support the `return_indices` parameter.
+        :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})` or :math:`(N, C_{in}, L_{in})`.
+        input (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
         output_size (int): the target output size :math:`L_{out}`.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
 
     Returns:
-        Tensor of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`, has the same type as `input`.
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input`.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
+        TypeError: If `input` is neither float16 nor float32.
         TypeError: If `output_size` is not an int.
-        TypeError: If `return_indices` is not a bool.
         ValueError: If `output_size` is less than 1.
-        ValueError: If dimension of `input` is not equal to 3 or 2.
+        ValueError: If the last dimension of `input` is smaller than `output_size`.
+        ValueError: If the last dimension of `input` is not divisible by `output_size`.
+        ValueError: If length of shape of `input` is not equal to 3.
+
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -586,28 +587,42 @@ def adaptive_max_pool1d(input, output_size, return_indices=False):
         >>> print(output.shape)
         (1, 3, 2)
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For adaptive_max_pool1d, the type of 'input' must be Tensor, but got {type(input)}.")
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("For adaptive_max_pool1d, the input input must be tensor")
+
     _check_adaptive_max_pool1d_output_size(output_size)
-    _check_value_type("return_indices", return_indices, bool, "adaptive_max_pool1d")
-    dim = input.ndim
-    if dim not in (2, 3):
-        raise ValueError("For adaptive_max_pool1d input must have 2 or 3 dim, but got {}.".format(dim))
-    output_size = (output_size, 1)
-    input = input.unsqueeze(-1)
-    if dim == 2:
-        input = input.unsqueeze(0)
-    _adaptive_max_pool2d = _get_cache_prim(NN_OPS.AdaptiveMaxPool2D)(output_size)
-    out, indices = _adaptive_max_pool2d(input)
-    out = out.squeeze(-1)
-    if dim == 2:
-        out = out.squeeze(0)
-    if return_indices:
-        indices = indices.squeeze(-1)
-        if dim == 2:
-            indices = indices.squeeze(0)
-        out = (out, indices)
-    return out
+
+    x_in_shape = input.shape
+    x_dtype = _get_cache_prim(P.DType)()(input)
+
+    if len(x_in_shape) != 3:
+        raise ValueError("For adaptive_max_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
+    if x_in_shape[2] < output_size:
+        raise ValueError("For adaptive_max_pool1d input's last dimension must be greater or equal to "
+                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+    if x_in_shape[2] % output_size != 0:
+        raise ValueError("For adaptive_max_pool1d input's last dimension must be divisible by "
+                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
+    if x_dtype not in [mstype.float16, mstype.float32]:
+        raise TypeError("For adaptive_max_pool1d, the input dtype must be float16 or float32, "
+                        "but got {}.".format(x_dtype))
+
+    expand_ = _get_cache_prim(P.ExpandDims)()
+    squeeze_ = _get_cache_prim(P.Squeeze)(2)
+
+    width = x_in_shape[2]
+    stride = width // output_size
+    kernel_size = width - (output_size - 1) * stride
+
+    stride = (1, stride)
+    kernel_size = (1, kernel_size)
+
+    max_pool_ = _get_cache_prim(P.MaxPool)(kernel_size=kernel_size, strides=stride)
+    input = expand_(input, 2)
+    input = max_pool_(input)
+    input = squeeze_(input)
+
+    return input
 
 
 @constexpr

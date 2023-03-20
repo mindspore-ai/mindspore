@@ -1309,31 +1309,30 @@ class AdaptiveMaxPool1d(Cell):
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`,
-    The output is of shape :math:`(N_{in}, C_{in}, L_{out})` or :math:`(C_{in}, L_{out})`,
-    where :math:`L_{out}` is defined by `output_size`.
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    AdaptiveMaxPool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
+    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        Ascend platform does not support the `return_indices` parameter.
+        :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
         output_size (int): the target output size :math:`L_{out}`.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or `(C_{in}, L_{in})`, with
-          float16 or float32 data type.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
 
     Outputs:
-        Tensor of shape :math:`(N_{out}, C_{out}, L_{out})` or :math:`(C_{out}, L_{out})`, has the same type as `input`.
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
+        TypeError: If `x` is neither float16 nor float32.
         TypeError: If `output_size` is not an int.
-        TypeError: If `return_indices` is not a bool.
         ValueError: If `output_size` is less than 1.
-        ValueError: If dimension of `input` is not equal to 2 or 3.
+        ValueError: If the last dimension of `x` is smaller than `output_size`.
+        ValueError: If the last dimension of `x` is not divisible by `output_size`.
+        ValueError: If length of shape of `x` is not equal to 3.
+
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1343,22 +1342,40 @@ class AdaptiveMaxPool1d(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> pool = nn.AdaptiveMaxPool1d(output_size=3)
-        >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
-        >>> output = pool(input)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = pool(x)
         >>> result = output.shape
         >>> print(result)
         (1, 3, 3)
     """
 
-    def __init__(self, output_size, return_indices=False):
+    def __init__(self, output_size):
         """Initialize AdaptiveMaxPool1d."""
         super(AdaptiveMaxPool1d, self).__init__()
+        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_value_type('output_size', output_size, [int], self.cls_name)
+        self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(2)
         self.output_size = output_size
-        self.return_indices = return_indices
+        self.shape = F.shape
+        self.dtype = P.DType()
 
-    def construct(self, input):
-        input = ops.adaptive_max_pool1d(input, self.output_size, self.return_indices)
-        return input
+    def construct(self, x):
+        _adaptive_dtype_check(self.dtype(x), self.cls_name)
+
+        _, _, width = self.shape(x)
+        stride = width // self.output_size
+        kernel_size = width - (self.output_size - 1) * stride
+
+        stride = (1, width // self.output_size)
+        kernel_size = (1, kernel_size)
+
+        max_pool = P.MaxPool(kernel_size=kernel_size, strides=stride)
+        x = self.expand(x, 2)
+        x = max_pool(x)
+        x = self.squeeze(x)
+
+        return x
 
 
 class AdaptiveMaxPool2d(Cell):
