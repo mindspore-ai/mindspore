@@ -2449,15 +2449,17 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   FunctionBlockPtr list_header_block =
     GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
 
-  // Create hasNext apply.
-  AnfNodePtr op_hasnext = top_block->MakeResolveOperation(NAMED_PRIMITIVE_HASNEXT);
+  // Create hasNext apply with dynamic input check.
+  const py::function dyn_len_check = python_adapter::GetPyFn(kStandardMethodModelName, kMsLenWithListCompCheck);
+  auto dyn_len_check_fg = ParsePythonCode(dyn_len_check);
+  auto op_dyn_len_check = NewValueNode(dyn_len_check_fg);
   MS_EXCEPTION_IF_NULL(list_header_block->func_graph());
   ParameterPtr iter_param = list_header_block->func_graph()->add_parameter();
   constexpr auto iter_param_name = "iter";
   iter_param->set_name(iter_param_name);
   MS_EXCEPTION_IF_NULL(iter_param->debug_info());
   iter_param->debug_info()->set_name(iter_param_name);
-  CNodePtr cond_apply = list_header_block->func_graph()->NewCNodeInOrder({op_hasnext, iter_param});
+  CNodePtr cond_apply = list_header_block->func_graph()->NewCNodeInOrder({op_dyn_len_check, iter_param});
 
   // Call the header graph with iter.
   ParameterPtr list_param = list_header_block->func_graph()->add_parameter();

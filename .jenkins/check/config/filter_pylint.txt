@@ -37,6 +37,7 @@
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "broad-except"
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "protected-access"
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "eval-used"
+"mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "bad-continuation"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "protected-access"
 "mindspore/mindspore/python/mindspore/nn/optim/ftrl.py"                                                                  "unused-import"
 "mindspore/mindspore/python/mindspore/train/amp.py"                                                                      "protected-access"
