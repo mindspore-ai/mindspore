@@ -1701,13 +1701,13 @@ class DynamicGRUV2Grad(Primitive):
         - **dw_hidden** (Tensor) - A Tensor has the same shape as `weight_hidden`.
           Has the same type with input `x`.
         - **db_input** (Tensor) - A Tensor of shape :math:`(3 x hidden\_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init\_h`.
         - **db_hidden** (Tensor) - A Tensor of shape :math:`(3 x hidden\_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init\_h`.
         - **dx** (Tensor) - A Tensor of shape :math:`(num\_step, batch\_size, hidden\_size)`.
           Has the same type with input `x`.
         - **dh_prev** (Tensor) - A Tensor of shape :math:`(batch\_size, hidden\_size)`.
-          Has the same type with input `x`.
+          Has the same type with input `init\_h`.
     """
 
     @prim_attr_register
