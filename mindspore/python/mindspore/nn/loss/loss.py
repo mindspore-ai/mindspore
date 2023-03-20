@@ -1293,7 +1293,7 @@ class MultiMarginLoss(LossBase):
     output :math:`y` is:
 
     .. math::
-        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p}{\text{x.size}(0)}
 
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
     and :math:`i \neq y`.
@@ -1305,8 +1305,8 @@ class MultiMarginLoss(LossBase):
         p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
         margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
         reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-        weight(Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
-          support float32, float16 or float64. Default: None.
+        weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
+            support float32, float16 or float64. Default: None.
 
     Inputs:
         - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
