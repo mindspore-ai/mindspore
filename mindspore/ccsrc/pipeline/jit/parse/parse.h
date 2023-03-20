@@ -52,6 +52,7 @@ enum ParseStatusCode : int64_t {
 
 constexpr char kStandardMethodModelName[] = "mindspore._extends.parse.standard_method";
 constexpr char kMsLenWithCheck[] = "ms_len_with_iterable_check";
+constexpr char kMsLenWithListCompCheck[] = "ms_next_with_dyn_input_check";
 
 // Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 // will be sunk(i.e. not unrolled)
