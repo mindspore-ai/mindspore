@@ -135,31 +135,6 @@ void DisableMindRT(const ResourcePtr &resource) {
     return;
   }
 #endif
-
-  if (common::GetEnv("DISABLE_SUBGRAPH_SINK") != "1") {
-    return;
-  }
-
-  auto func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  auto parallel_mode = parallel_context->parallel_mode();
-  const bool is_parallel_mode =
-    parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-  const bool task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  const bool use_old_vm_for_control_parallel =
-    func_graph->exist_multi_target() && ExistControlFlow(func_graph) && is_parallel_mode && task_sink;
-  if (use_old_vm_for_control_parallel) {
-    MS_LOG(INFO) << "Disable mindRT in the heterogeneous + control flow + parallel scenario.";
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-    // Async update the backend.
-    resource->SetBackendAsync([]() {
-      auto new_backend = compile::CreateBackend();
-      new_backend->SetDebugger();
-      return new_backend;
-    });
-  }
 }
 
 void TaskEmitActionForMindRT(const ResourcePtr &resource) {
@@ -1140,7 +1115,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func;
   if (exist_func) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    if (common::GetEnv("DISABLE_SUBGRAPH_SINK") != "1" && (!pynative_mode)) {
+    if (!pynative_mode) {
       set_ctx(true, false, false);
     } else {
       set_ctx(false, false, false);
@@ -1152,7 +1127,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
   if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    if (common::GetEnv("DISABLE_SUBGRAPH_SINK") != "1" && (!pynative_mode)) {
+    if (!pynative_mode) {
       set_ctx(true, false, false);
     } else {
       set_ctx(false, false, false);
@@ -1163,7 +1138,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // Multiple device targets scenario.
   if (func_graph->exist_multi_target()) {
     // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-    if (exist_control_flow && (common::GetEnv("DISABLE_SUBGRAPH_SINK") == "1" || pynative_mode)) {
+    if (exist_control_flow && pynative_mode) {
       MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
       set_ctx(false, false, false);
       return;
