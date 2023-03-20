@@ -7,6 +7,9 @@
 
     更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
 
+    .. note::
+        当前在Ascend平台上仅支持正数，其余场景计算结果未定义。
+
     参数：
         - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
 
