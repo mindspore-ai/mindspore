@@ -218,7 +218,11 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
     auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
     MS_CHECK_TRUE_MSG(origin_data != nullptr, lite::RET_NULL_PTR, "origin_data is nullptr");
     for (size_t i = 0; i < data_count; ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+      if (origin_data[i] == INT64_MAX) {
+        tensor_data[i] = INT32_MAX;
+      } else if (origin_data[i] == INT64_MIN) {
+        tensor_data[i] = INT32_MIN;
+      } else if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
         MS_LOG(WARNING) << "int64 data " << origin_data[i] << " cannot fit into int32";
         tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
       } else {
