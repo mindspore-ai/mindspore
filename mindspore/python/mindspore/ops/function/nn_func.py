@@ -19,7 +19,6 @@ from math import pi, log, floor
 import numpy as np
 
 import mindspore.ops as ops
-import mindspore.nn as nn
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
@@ -2116,8 +2115,7 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
     def run_area(x, size, align_corners=None, scale_factor=None):
         if x.ndim == 3:
-            resize = nn.AdaptiveAvgPool1d(output_size=size[0])
-            x = resize(x)
+            x = ops.adaptive_avg_pool1d(x, size[0])
         elif x.ndim == 4:
             x = ops.adaptive_avg_pool2d(x, tuple(size))
         else:
@@ -4609,6 +4607,13 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     return _get_loss(loss, reduction, "huber_loss")
 
 
+@constexpr
+def _check_adaptive_avg_pool1d_output_size(output_size):
+    """Check the output_size value in adaptive_avg_pool1d op."""
+    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_avg_pool1d')
+    validator.check_value_type('output_size', output_size, [int], 'adaptive_avg_pool1d')
+
+
 def adaptive_avg_pool1d(input, output_size):
     r"""
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
@@ -4651,8 +4656,7 @@ def adaptive_avg_pool1d(input, output_size):
     x_in_shape = input.shape
     x_dtype = _get_cache_prim(P.DType)()(input)
 
-    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_avg_pool1d')
-    validator.check_value_type('output_size', output_size, [int], 'adaptive_avg_pool1d')
+    _check_adaptive_avg_pool1d_output_size(output_size)
 
     if len(x_in_shape) != 3:
         raise ValueError("For adaptive_avg_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
