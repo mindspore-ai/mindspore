@@ -1186,6 +1186,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
   MS_LOG(INFO) << "Enter SetRtDevice, current initialize device number:" << initialized_device_set_.size();
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
     MS_LOG(INFO) << "Device " << device_id << " has been set";
+    return;
   }
 
   int device_count = 0;

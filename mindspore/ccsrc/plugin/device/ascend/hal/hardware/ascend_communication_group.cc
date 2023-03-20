@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/hal/hardware/ascend_communication_group.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "mindspore/core/utils/ms_context.h"
+#include "runtime/rt.h"
 
 namespace mindspore {
 namespace device {
@@ -32,6 +34,10 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
     return false;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  rtSetDevice(device_id);
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
@@ -41,6 +47,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     return false;
   }
   initialized_ = true;
+  rtDeviceReset(device_id);
   return true;
 }
 
