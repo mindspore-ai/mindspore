@@ -5276,6 +5276,62 @@ def tril(input, diagonal=0): # pylint: disable=redefined-outer-name
     return tril_(input)
 
 
+def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
+    r"""
+    Returns the upper triangle part of 'input' (elements that contain the diagonal and below),
+    and set the other elements to zeros.
+
+    Args:
+        input (Tensor): The input tensor with shape :math:`(N,∗)` where ∗ means any number of additional dimensions.
+        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
+            indicating the main diagonal.
+
+    Returns:
+        Tensor, a tensor has the same shape and data type as input.
+
+    Raises:
+        TypeError: If `diagonal` is not an int.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If length of shape of input is less than 1.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.triu(x)
+        >>> print(result)
+        [[ 1  2  3  4]
+         [ 0  6  7  8]
+         [ 0  0 12 13]
+         [ 0  0  0 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.triu(x, diagonal=1)
+        >>> print(result)
+        [[ 0  2  3  4]
+         [ 0  0  7  8]
+         [ 0  0  0 13]
+         [ 0  0  0  0]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> result = ops.triu(x, diagonal=-1)
+        >>> print(result)
+        [[ 1  2  3  4]
+         [ 5  6  7  8]
+         [ 0 11 12 13]
+         [ 0  0 16 17]]
+    """
+    return _get_cache_prim(P.Triu)(diagonal)(input)
+
+
 @constexpr
 def _canonicalize_axis(axis, ndim):
     """
@@ -6929,6 +6985,7 @@ __all__ = [
     'scatter_update',
     'select',
     'tril',
+    'triu',
     'nonzero',
     'matrix_diag',
     'matrix_diag_part',

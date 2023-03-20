@@ -3341,11 +3341,11 @@ def true_divide(divident, divisor):
 
 
 # pylint: disable=redefined-outer-name
-def triu(x, diagonal=0):
+def triu(input, diagonal=0):
     r"""
     Returns the triangular matrix based on the diagonal.
     """
-    return F.Triu(diagonal)(x)
+    return F.triu(input, diagonal)
 
 
 #############
