@@ -483,6 +483,7 @@ from .nn_func import (
     ctc_loss,
     dropout,
     conv3d_transpose,
+    conv1d,
     conv2d,
     sigmoid,
     logsigmoid,
