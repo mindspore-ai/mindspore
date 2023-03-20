@@ -50,7 +50,8 @@ int64_t SplitTupleInputsForInsertType(const FuncGraphPtr &graph, const AnfNodePt
       auto dyn_input_node = common::AnfAlgo::GetInputNode(make_tuple, j);
       MS_EXCEPTION_IF_NULL(dyn_input_node);
       // Handle tuple nested scenes.
-      if (dyn_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple)) {
+      if (dyn_input_node->isa<CNode>() && (common::AnfAlgo::CheckPrimitiveType(dyn_input_node, prim::kPrimMakeTuple) ||
+                                           common::AnfAlgo::IsTupleOutput(dyn_input_node))) {
         int64_t dyn_input_size = SplitTupleInputsForInsertType(graph, dyn_input_node, plant_inputs);
         input_size += LongToSize(dyn_input_size);
         continue;
