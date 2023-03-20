@@ -31,19 +31,19 @@ namespace pynative {
 namespace {
 const char kAddedValue[] = "added_value";
 const mindspore::HashSet<std::string> kNotRealOP{
-  prim::kPrimMakeTuple->name(),
-  prim::kPrimTupleGetItem->name(),
-  prim::kPrimStopGradient->name(),
-  prim::kPrimUpdateState->name(),
-  prim::kPrimLoad->name(),
-  prim::kPrimDepend->name(),
-  prim::kPrimReturn->name(),
-  prim::kPrimNPUAllocFloatStatus->name(),
-  prim::kPrimNPUGetFloatStatus->name(),
-  prim::kPrimNPUClearFloatStatus->name(),
-  prim::kPrimMirror->name(),
-  prim::kPrimPyExecute->name(),
-  prim::kPrimPyInterpret->name(),
+  kMakeTupleOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOPName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kPyExecuteOpName,
+  kPyInterpretOpName,
 };
 
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
@@ -201,8 +201,8 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple,
 }
 
 void MsFunction::ReplaceAddedCnodeActualOutput(const GradExecutor *grad_executor, const ValuePtr &added_out,
-                                               const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                               const FrontendOpRunInfoPtr &op_run_info) const {
+                                               const FuncGraphPtr &ms_func_graph,
+                                               const FuncGraphPtr &grad_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Get added forward nodes.
   auto merge_node = ms_func_graph->output();
@@ -380,7 +380,7 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   // Step 1: Replace added cnode forward with actual output
-  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph, op_run_info);
+  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph);
 
   // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();

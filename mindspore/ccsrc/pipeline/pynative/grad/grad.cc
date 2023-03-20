@@ -734,7 +734,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
 void GradExecutor::UpdateInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj,
                                        const py::object &out, const py::args &args) {
   MS_EXCEPTION_IF_NULL(input_args_info);
-  GetCustomBpropPrim(obj, args, out, input_args_info);
+  GetCustomBpropPrim(obj, args, input_args_info);
   // Used at master thread, change its at master thread
   if (input_args_info->is_grad_topest_cell) {
     grad_flag_ = false;
@@ -829,7 +829,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   SaveOutputNodeMap(out_id, op_run_info, cnode);
 }
 
-void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &args, const py::object &out,
+void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &args,
                                       const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (!input_args_info->has_custom_bprop) {
@@ -1119,7 +1119,6 @@ std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_pos
     const auto &tuple = grad_position.cast<py::tuple>();
     (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(pos_args),
                          [](const py::handle &elem) { return elem.cast<int64_t>(); });
-    // Return the gradient;
     if (pos_args.empty()) {
       MS_LOG(EXCEPTION) << "grad_position should not be empty when grad by position!";
     }
@@ -1129,7 +1128,7 @@ std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_pos
 }
 
 void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &ir_abs,
-                                          const abstract::AbstractBasePtr &input_abs) {
+                                          const abstract::AbstractBasePtr &input_abs) const {
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ir_abs);
   MS_EXCEPTION_IF_NULL(input_abs);
@@ -1422,7 +1421,7 @@ void GradExecutor::SwitchTopCell() {
   set_top_cell(outer_top_cell);
 }
 
-void GradExecutor::ClearGlobalRes() {
+void GradExecutor::ClearGlobalRes() const {
   abstract::AnalysisContext::ClearContext();
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();

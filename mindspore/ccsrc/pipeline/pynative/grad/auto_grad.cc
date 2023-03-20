@@ -43,11 +43,11 @@ namespace autograd {
 namespace {
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
 const size_t kContainerRatio = 2;
-const PrimitiveSet kGradBlackList{
-  prim::kPrimMakeTuple,           prim::kPrimTupleGetItem,      prim::kPrimStopGradient,       prim::kPrimUpdateState,
-  prim::kPrimNPUAllocFloatStatus, prim::kPrimNPUGetFloatStatus, prim::kPrimNPUClearFloatStatus};
+const mindspore::HashSet<std::string> kGradBlackList{
+  kMakeTupleOpName,           kTupleGetItemOpName,      kStopGradientOpName,       kUpdateStateOpName,
+  kNPUAllocFloatStatusOpName, kNPUGetFloatStatusOpName, kNPUClearFloatStatusOpName};
 
-const PrimitiveSet kMonadPrim = {prim::kPrimLoad, prim::kPrimDepend, prim::kPrimUpdateState};
+const mindspore::HashSet<std::string> kMonadOp = {kLoadOPName, kDependOpName, kUpdateStateOpName};
 
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
 
@@ -68,7 +68,10 @@ void ClearDeviceAddress(const ValuePtr &value) {
   }
 }
 
-inline bool IsPrimNeedGrad(const PrimitivePtr &prim) { return kGradBlackList.find(prim) == kGradBlackList.end(); }
+inline bool IsPrimNeedGrad(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return kGradBlackList.find(prim->name()) == kGradBlackList.end();
+}
 
 ValueNodePtr CreateValueNodeByClonedValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
@@ -257,7 +260,7 @@ bool IsValidTensorInput(const abstract::AbstractBasePtr &abs) {
 
 bool IsMonadPrim(const PrimitivePtr &prim, const CNodePtr &cnode, const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(prim);
-  if (kMonadPrim.find(prim) != kMonadPrim.end()) {
+  if (kMonadOp.find(prim->name()) != kMonadOp.end()) {
     MS_LOG(DEBUG) << "Get monad cnode " << cnode->DebugString();
     return true;
   }
@@ -469,7 +472,7 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     bprop_cnode = GetBpropGraphCNode(grad_param, args_node_list, &dout);
   } else {
     k_node = BuildKNode(grad_param, false);
-    BuildKNodeListFromPrimalCNode(grad_param->cnode, grad_param->op_args, &args_node_list);
+    BuildKNodeListFromPrimalCNode(grad_param->cnode, &args_node_list);
     bprop_cnode = GetBpropGraphCNode(grad_param, args_node_list, &dout);
   }
   auto fn = std::make_shared<FunctionNode>(ad_param()->tape_, dout);
@@ -588,7 +591,9 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
 
   if (ad_param()->last_node_ != nullptr) {
     // Set dout parameter
-    if (kMonadPrim.find(GetCNodePrimitive(ad_param()->last_node_)) != kMonadPrim.end()) {
+    const auto last_prim = GetCNodePrimitive(ad_param()->last_node_);
+    MS_EXCEPTION_IF_NULL(last_prim);
+    if (kMonadOp.find(last_prim->name()) != kMonadOp.end()) {
       ad_param()->last_node_ = common::AnfAlgo::VisitKernelWithReturnType(
                                  ad_param()->last_node_, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple})
                                  .first;
@@ -633,17 +638,17 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
   bool ms_function_by_value = grad_param->is_ms_function_graph && grad_param->grad_by_value;
 
   const auto &order = TopoSort(grad_param->fg->output());
-  for (const auto &node : order) {
-    if (node == nullptr || !node->isa<CNode>()) {
+  for (const auto &item : order) {
+    if (item == nullptr || !item->isa<CNode>()) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
+    auto cnode = item->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitive(cnode);
     if (prim == nullptr) {
       MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
     }
-    ad_param()->last_node_ = node;
+    ad_param()->last_node_ = item;
     if (IsMonadPrim(prim, cnode, grad_param) || IsPrimitiveEquals(prim, prim::kPrimStopGradient)) {
       continue;
     }
@@ -657,7 +662,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     }
 
     std::vector<AnfNodePtr> cnode_inputs{std::make_shared<ValueNode>(prim)};
-    auto op_args = GetInputArgs(grad_param, cnode, &cnode_inputs);
+    auto op_args = GetInputArgs(cnode, &cnode_inputs);
     AnfNodePtr k_node = nullptr;
     if (IsPrimitiveEquals(prim, prim::kPrimMirror)) {
       k_node = ad_param()->anfnode_to_variable_adjoint_.at(cnode->input(kIndex1))->k_node();
@@ -690,22 +695,22 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     std::vector<CNodePtr> outputs;
     auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node);
     if (!ret || outputs.empty()) {
-      MS_LOG(DEBUG) << "Expander has no bprop of this node: " << input_node->DebugString();
+      MS_LOG(DEBUG) << "Expander has no bprop of this item: " << input_node->DebugString();
       BuildCustomBpropCNode(input_node, prim, &outputs);
     }
     if (outputs.empty()) {
-      MS_LOG(DEBUG) << "Build fake bprop for this node: " << input_node->DebugString();
+      MS_LOG(DEBUG) << "Build fake bprop for this item: " << input_node->DebugString();
       BuildFakeBpropCNode(input_node, &outputs);
       variable_adjoint->set_is_fake_bprop(true);
       variable_adjoint->set_fake_prim_name(prim->name());
     }
-    // Create current op node din edge
+    // Create current op item din edge
     UpdateNextEdges(variable_adjoint, cnode, outputs, op_args);
-    (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(node, variable_adjoint));
+    (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(item, variable_adjoint));
   }
 }
 
-void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) {
+void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) const {
   auto &graph_parameters = grad_param->fg->parameters();
   if (graph_parameters.size() != grad_param->op_args.size()) {
     MS_LOG(EXCEPTION) << "Parameters size " << graph_parameters.size() << " is not equal to graph input size "
@@ -733,8 +738,7 @@ void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) {
   }
 }
 
-ValuePtrList AutoGradCellImpl::GetInputArgs(const GradParamPtr &grad_param, const CNodePtr &cnode,
-                                            std::vector<AnfNodePtr> *cnode_inputs) {
+ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   ValuePtrList op_args;
@@ -813,7 +817,7 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
     (void)node_list.emplace_back(out_node);
   } else {
     // Input is a Parameter or cnode, not a value node
-    BuildKNodeListFromPrimalCNode(grad_param->cnode, grad_param->op_args, &node_list);
+    BuildKNodeListFromPrimalCNode(grad_param->cnode, &node_list);
     // Set out
     MS_EXCEPTION_IF_NULL(variable_adjoint);
     (void)node_list.emplace_back(variable_adjoint->k_node());
@@ -825,8 +829,8 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
   return input_node;
 }
 
-void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
-                                                     std::vector<AnfNodePtr> *const node_list) {
+void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const CNodePtr &cnode,
+                                                     std::vector<AnfNodePtr> *const node_list) const {
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     if (cnode->input(i)->isa<CNode>()) {
@@ -1254,7 +1258,7 @@ void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has
   }
 }
 
-OrderedMap<AnfNodePtr, VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeReverseIter() {
+OrderedMap<AnfNodePtr, VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeReverseIter() const {
   for (auto iter = ad_param()->anfnode_to_variable_adjoint_.rbegin();
        iter != ad_param()->anfnode_to_variable_adjoint_.rend(); ++iter) {
     if (!iter->first->isa<CNode>()) {
@@ -1311,7 +1315,7 @@ void AutoGradCellImpl::BackPropagate() {
   ad_param()->tape_->set_flag(kPrimCPrimPyMixed, has_primc && need_do_manager_replace_);
 }
 
-AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtr &grad_node) {
+AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtr &grad_node) const {
   MS_EXCEPTION_IF_NULL(grad_node);
   const auto &input_adjoint_iter = ad_param()->anfnode_to_variable_adjoint_.find(grad_node);
   if (grad_node->isa<Parameter>()) {
