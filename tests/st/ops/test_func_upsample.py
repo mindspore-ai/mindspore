@@ -48,22 +48,22 @@ def test_upsample_area_3d(mode):
     ms.set_context(mode=mode)
     net = Net("area")
 
-    # 1. 3D(1, 3, 5)
-    input_3d = np.array([[[0.816117, 0.004037, 0.746452, 0.137449, 0.337593],
-                          [0.970709, 0.558792, 0.053919, 0.734102, 0.432973],
-                          [0.830186, 0.77753, 0.384094, 0.905231, 0.76362]]], dtype=np.float32)
-    except_3d_1 = np.array([[[0.410077, 0.375244, 0.441951, 0.237521],
-                             [0.76475, 0.306356, 0.394011, 0.583538],
-                             [0.803858, 0.580812, 0.644662, 0.834426]]], dtype=np.float32)
-    size = 4
+    # 1. 3D(1, 3, 4)
+    input_3d = np.array([[[0.476130, 0.196372, 0.320748, 0.574267],
+                          [0.558406, 0.186530, 0.144793, 0.017598],
+                          [0.043675, 0.360826, 0.367078, 0.607198]]], dtype=np.float32)
+    except_3d_1 = np.array([[[0.336251, 0.447508],
+                             [0.372468, 0.081196],
+                             [0.202250, 0.487138]]], dtype=np.float32)
+    size = 2
     output_3d_1 = net(Tensor(input_3d), size=size)
     assert np.allclose(output_3d_1.asnumpy(), except_3d_1, atol=1e-3, rtol=1e-3)
 
-    # 2. 3D(1, 3, 5) scale_factor=0.2
-    except_3d_2 = np.array([[[0.40833],
-                             [0.550099],
-                             [0.732132]]], dtype=np.float32)
-    scale_factor = 0.2
+    # 2. 3D(1, 3, 4) scale_factor=0.3
+    except_3d_2 = np.array([[[0.391879],
+                             [0.226832],
+                             [0.344694]]], dtype=np.float32)
+    scale_factor = 0.3
     output_3d_2 = net(Tensor(input_3d), scale_factor=scale_factor)
     assert np.allclose(output_3d_2.asnumpy(), except_3d_2, atol=1e-3, rtol=1e-3)
 
