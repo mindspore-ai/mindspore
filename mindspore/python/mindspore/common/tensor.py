@@ -3992,6 +3992,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('inner')(self, other)
 
+    def multinomial(self, num_samples, replacement=True, seed=None):
+        r"""
+        For details, please refer to :func:`mindspore.ops.multinomial`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('multinomial')(self, num_samples, replacement, seed)
+
     def matrix_power(self, n):
         r"""
         For details, please refer to :func:`mindspore.ops.matrix_power`.

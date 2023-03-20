@@ -107,6 +107,9 @@ class LossScaler(ABC):
     to scale and unscale the loss value and gradients to avoid overflow, `adjust` is used to update the
     loss scale value.
 
+    For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/zh-CN/master/advanced/
+    mixed_precision.html#%E6%8D%9F%E5%A4%B1%E7%BC%A9%E6%94%BE>`_。
+
     Note:
         This is an experimental interface that is subject to change or deletion.
     """

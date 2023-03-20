@@ -41,10 +41,10 @@ def eig(A):
           with float32, float64, complex64 or complex128 data type.
 
     Returns:
-        eigen_values (Tensor) - Shape :math:`(*, N)`. eigenvalues of
+        - **eigen_values** (Tensor) - Shape :math:`(*, N)`. eigenvalues of
           the corresponding matrix. The eigenvalues may not have an order.
-        eigen_vectors (Tensor) - Shape :math:`(*, N, N)`,columns of eigen vectors represent
-        normalized (unit length) eigenvectors of corresponding eigenvalues.
+        - **eigen_vectors** (Tensor) - Shape :math:`(*, N, N)`,columns of eigen vectors represent
+        - **normalized** (unit length) eigenvectors of corresponding eigenvalues.
 
     Raises:
         TypeError: If dtype of `A` is not one of: float64, float32, complex64 or complex128.
@@ -89,7 +89,7 @@ def geqrf(input):
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If the dtype of `input` is neither float32, float64, complex64, complex128.
-        ValueError: If `input` dimension is less than 2
+        ValueError: If `input` dimension is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

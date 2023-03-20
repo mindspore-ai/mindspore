@@ -471,6 +471,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"frac", std::string("frac")},                                      // frac()
        {"argwhere", std::string("argwhere")},                              // argwhere()
        {"moveaxis", std::string("moveaxis")},                              // moveaxis()
+       {"multinomial", std::string("multinomial")},                        // multinomial()
        {"movedim", std::string("movedim")},                                // movedim()
        {"nextafter", std::string("nextafter")},                            // nextafter()
        {"qr", std::string("qr")},                                          // qr()
