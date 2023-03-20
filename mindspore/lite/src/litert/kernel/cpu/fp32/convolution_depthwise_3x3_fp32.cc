@@ -141,8 +141,7 @@ int ConvolutionDepthwise3x3CPUKernel::MallocWeightBiasData() {
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
       CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
-      packed_weight_ = lite::PackWeightManager::GetInstance()->GetPackData(
-        in_tensors_[1]->data(), pack_weight_size * sizeof(float), &weight_is_packed_);
+      packed_weight_ = GetConvPackWeightData(pack_weight_size * sizeof(float));
       if (packed_weight_ == nullptr) {
         MS_LOG(ERROR) << "Malloc buffer failed.";
         return RET_ERROR;
