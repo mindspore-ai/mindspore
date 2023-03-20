@@ -12,7 +12,7 @@ if(MODE_ASCEND_ACL)
     string(STRIP "${PY3_LIBG}" PY3_LIBG)
     message("Python3 general library = " ${PY3_LIBG})
 endif()
-# build mindspore_shared_lib
+# build mslite_shared_lib
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 
