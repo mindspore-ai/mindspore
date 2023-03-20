@@ -299,8 +299,9 @@ bool ValueDictionary::operator==(const ValueDictionary &other) const {
   }
   for (size_t index = 0; index < key_values_.size(); index++) {
     if (!(*key_values_[index].first == *other.key_values_[index].first) ||
-        !(*key_values_[index].second == *other.key_values_[index].second))
+        !(*key_values_[index].second == *other.key_values_[index].second)) {
       return false;
+    }
   }
   return true;
 }
