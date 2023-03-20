@@ -537,9 +537,9 @@ class COOTensor(COOTensor_):
             >>> print(out)
             COOTensor(shape=[3, 4], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int64, value=
             [[0 0]
-            [0 1]
-            [1 1]
-            [1 2]]), values=Tensor(shape[4], dtype=Int32, value=[3 1 4 2]))
+             [0 1]
+             [1 1]
+             [1 2]]), values=Tensor(shape[4], dtype=Int32, value=[3 1 4 2]))
         """
         return tensor_operator_registry.get('coo_add')(self, other, thresh)
 
