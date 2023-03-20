@@ -1682,14 +1682,14 @@ class FractionalMaxPool3d(Cell):
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...            .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        >>> net = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), output_size=(1, 1, 3),
+        >>> net = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_size=(1, 1, 3),
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)
         [[[[[13. 14. 16.]]]]]
         >>> print(argmax)
         [[[[[12 13 15]]]]]
-        >>> net = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+        >>> net = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
         ...                              _random_samples=_random_samples, return_indices=True)
         >>> output, argmax = net(x)
         >>> print(output)

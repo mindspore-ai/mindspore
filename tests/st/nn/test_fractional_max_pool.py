@@ -78,9 +78,9 @@ class FractionalMaxPool3dNet(nn.Cell):
     def __init__(self):
         super(FractionalMaxPool3dNet, self).__init__()
         _random_samples = Tensor(np.array([0.0, 0.0, 0.0]).reshape([1, 1, 3]), mstype.float32)
-        self.pool1 = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), _random_samples=_random_samples,
+        self.pool1 = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), _random_samples=_random_samples,
                                             output_size=(1, 1, 2), return_indices=True)
-        self.pool2 = nn.FractionalMaxPool3d(kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+        self.pool2 = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
                                             _random_samples=_random_samples, return_indices=True)
 
     def construct(self, x):
