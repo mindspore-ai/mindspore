@@ -110,6 +110,7 @@ constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kSequenceAdd = "SequenceAdd";
 constexpr auto kSequenceAddN = "SequenceAddN";
 constexpr auto kSequenceAddOffset = "SequenceAddOffset";
+constexpr auto kSequenceConcat = "SequenceConcat";
 constexpr auto kSparseToDenseV2 = "SparseToDenseV2";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossEntropyWithLogitsV2";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
@@ -301,6 +302,7 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kSequenceAdd,
                                               kSequenceAddN,
                                               kSequenceAddOffset,
+                                              kSequenceConcat,
                                               kSliceGrad,
                                               kRandomShuffle,
                                               kRange,

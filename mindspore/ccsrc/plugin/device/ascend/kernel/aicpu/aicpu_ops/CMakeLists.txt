@@ -53,6 +53,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/sequence_add.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sequence_addn.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sequence_add_offset.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/sequence_concat.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/slice_grad_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/random_shuffle_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/range_kernel.cc
