@@ -110,7 +110,14 @@ AnfNodePtr ArithmeticSimplify2::operator()(const OptimizerPtr &, const AnfNodePt
   PatternNode x, y;
   PConstant zero_(node, false, 0);
 
-  // Multiply by zero
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto shape = abs->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->IsDynamic()) {
+    return nullptr;
+  }
+
   MATCH_REPLACE_IF(node, x * zero_, zero_.WithShapeAs(node),
                    !zero_.CheckFunc(IsParam, node) && !x.CheckFunc(IsLoad, node) &&
                      x.GetNode(node)->func_graph() == node->func_graph());
