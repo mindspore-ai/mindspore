@@ -76,10 +76,14 @@ def test_addcdiv_float64_pynative_value(type_s=np.float64):
         ).astype(type_s)
     )
     x2 = Tensor(np.array([[0.73312728], [0.50139652]]).astype(type_s))
-    value = np.array([
-        [0.6975477, 0.89641169, -0.16985319, -0.6640372],
-        [0.79931823, -1.65808474, 0.17895249, -1.41405968],
-    ])
+    value = Tensor(
+        np.array(
+            [
+                [0.6975477, 0.89641169, -0.16985319, -0.6640372],
+                [0.79931823, -1.65808474, 0.17895249, -1.41405968],
+            ]
+        ).astype(type_s)
+    )
     addcdiv = P.Addcdiv()
     output = addcdiv(input_data, x1, x2, value)
     output_ms = output.asnumpy()
