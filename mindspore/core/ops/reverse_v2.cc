@@ -62,6 +62,8 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
         reverse_shape[realdim] = true;
       }
     }
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of input tensor is 0";
   }
   return std::make_shared<abstract::Shape>(x_shape);
 }
