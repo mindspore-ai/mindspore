@@ -7746,15 +7746,13 @@ class Conv3D(Primitive):
                     head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
-        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-                                      :math:`(dilation_d, dilation_h, dilation_w)`.
-                                      Currently, dilation on depth only supports the case of 1.
-                                      Specifies the dilation rate to use for dilated convolution.
-                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
-                                      for each sampling location. Its value must be greater than or equal to 1 and
-                                      bounded by the height and width of the input. Default: 1.
-        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
-            divisible by the number of groups. Default: 1. Only 1 is currently supported.
+        dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
+            on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location.
+            Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
+        group (int, optional):Splits filter into groups, `in_channels` and `out_channels` must be
+            divisible by `group`. Default: 1.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
