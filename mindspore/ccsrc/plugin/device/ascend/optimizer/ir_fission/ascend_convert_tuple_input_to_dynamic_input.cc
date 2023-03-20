@@ -15,7 +15,6 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 
-#include <algorithm>
 #include <memory>
 #include <vector>
 

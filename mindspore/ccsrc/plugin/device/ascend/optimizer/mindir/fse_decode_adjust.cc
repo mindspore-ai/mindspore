@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
-#include "ops/op_name.h"
 
 namespace mindspore {
 namespace opt {
