@@ -262,6 +262,14 @@ AnfNodePtr BuildAvgPoolGrad(const PatternMap &m, const AnfNodePtr &new_node) {
 }
 }  // namespace
 
+bool AvgPoolGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    return false;
+  }
+  return true;
+}
+
 void AvgPoolGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
   (*src_pattern).AddVar(kX1).AddVar(kX2).AddVar(kG).AddCNode(kMAvgPoolGrad, {prim::kPrimAvgPoolGrad, kX1, kX2, kG});
 }
