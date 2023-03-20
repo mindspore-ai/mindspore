@@ -217,83 +217,7 @@ def _auto_black_list(network, black_list):
         network.cell_list = list(network.cells())
 
 
-def _custom_list_check(custom_list: {str: list}):
-    """
-    check whether custom_list is valid
-
-    Raises:
-        TypeError: The type of parameter custom_list is not dict.
-        TypeError: The type of key in custom_list is not string.
-        TypeError: The type of value in custom_list is not list.
-        TypeError: The subclass of value in white_list is not one of ['Cell', 'Primitive'].
-        TypeError: The subclass of value in black_list is not one of ['Cell', 'Primitive'].
-        ValueError: The key in custom_list is not one of ['white_list', 'black_list'].
-        ValueError: The white list and the black list have the same element.
-    """
-    if custom_list is None:
-        return
-
-    if not isinstance(custom_list, dict):
-        raise TypeError(f"The type of parameter custom_list should be dict, but got {type(custom_list)}")
-
-    for key, value in custom_list.items():
-        if key not in ("white_list", "black_list"):
-            raise ValueError(f"The key in custom_list should be one of 'white_list' and 'black_list', but got {key}")
-        if value is None:
-            # internal list will be used if value is None
-            continue
-        if not isinstance(value, list):
-            raise TypeError(f"The type of value in custom_list should be list, but got {type(value)}")
-        if key == "white_list":
-            for elem in value:
-                if not issubclass(elem, nn.Cell) and not issubclass(elem, Primitive):
-                    raise TypeError(f"The subclass of value in white_list should be one of 'Cell' and 'Primitive', "
-                                    f"but got {elem}")
-        elif key == "black_list":
-            for elem in value:
-                if not issubclass(elem, nn.Cell) and not issubclass(elem, Primitive):
-                    raise TypeError(f"The subclass of value in black_list should be one of 'Cell' and 'Primitive', "
-                                    f"but got {elem}")
-    if 'white_list' in custom_list and 'black_list' in custom_list:
-        elem_intersction = list(set(custom_list['white_list']).intersection(custom_list['black_list']))
-        if elem_intersction:
-            raise ValueError(f"{elem_intersction} cannot be in white list and black list at the same time")
-
-
-def _get_amp_lists(amp_level, custom_list: {str: list}):
-    """ get amp black list and white list from custom lists and default lists """
-    white_list_updated = False
-    black_list_updated = False
-    white_list = AMP_WHITE_LIST
-    black_list = AMP_BLACK_LIST
-
-    if custom_list is None:
-        return white_list, black_list
-
-    if 'white_list' in custom_list and custom_list['white_list'] is not None:
-        white_list = custom_list['white_list']
-        white_list_updated = True
-    if 'black_list' in custom_list and custom_list['black_list'] is not None:
-        black_list = custom_list['black_list']
-        black_list_updated = True
-
-    if amp_level in ('O0', 'O3'):
-        if white_list_updated or black_list_updated:
-            logger.warning(f"amp_level is {amp_level}, custom_list will not be used.")
-    elif amp_level == 'O1' and black_list_updated:
-        logger.warning(f"amp_level is {amp_level}, black_list in custom_list will not be used.")
-    elif amp_level == 'O2':
-        if white_list_updated:
-            logger.warning(f"amp_level is {amp_level}, white_list in custom_list will not be used.")
-        if black_list_updated:
-            for elem in AMP_BLACK_LIST:
-                if elem not in custom_list['black_list']:
-                    logger.warning(f"{elem} is removed from internal black list.")
-
-    return white_list, black_list
-
-
-def auto_mixed_precision(network, amp_level="O0", custom_list: {str: list}=None):
+def auto_mixed_precision(network, amp_level="O0"):
     """
     auto mixed precision function.
 
@@ -305,20 +229,6 @@ def auto_mixed_precision(network, amp_level="O0", custom_list: {str: list}=None)
             - "O1": Cast the operators in white_list to float16, the remaining operators are kept in float32.
             - "O2": Cast network to float16, keep operators in black_list run in float32,
             - "O3": Cast network to float16.
-
-        custom_list (dict[str, list]): Use custom amp black list and amp white list instead of default lists.
-            The type of key in custom_list is string, and supported keys are ["white_list", "black_list"].
-
-            - "white_list": The white list of auto mixed precision. Used when amp_level is O1.
-            - "black_list": The black list of auto mixed precision. Used when amp_level is O2.
-
-            if custom_list is None, default white list and black list will be used.
-            if custom_list["white_list"] is None, default white list will be used.
-            if custom_list["black_list"] is None, default black list will be used.
-            Format: custom_list = {"white_list":[Primitive or Cell], "black_list":[Primitive or Cell]}
-            It is not recommended to delete members in the default black list.
-            Default blacklist: [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm]
-            Default: None.
 
     Raises:
         ValueError: If amp level is not supported.
@@ -332,15 +242,12 @@ def auto_mixed_precision(network, amp_level="O0", custom_list: {str: list}=None)
     if not isinstance(network, nn.Cell):
         raise TypeError("The network type should be Cell.")
 
-    _custom_list_check(custom_list)
-    white_list, black_list = _get_amp_lists(amp_level, custom_list)
-
     if amp_level == "O0":
         pass
     elif amp_level == "O1":
-        return _auto_white_list(network, white_list)
+        return _auto_white_list(network, AMP_WHITE_LIST)
     elif amp_level == "O2":
-        _auto_black_list(network, black_list)
+        _auto_black_list(network, AMP_BLACK_LIST)
     elif amp_level == "O3":
         network.to_float(mstype.float16)
     else:
@@ -453,8 +360,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
     return network
 
 
-def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0',
-                        custom_list=None, **kwargs):
+def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_level='O0', **kwargs):
     """
     Build the mixed precision training cell automatically.
 
@@ -499,19 +405,6 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         loss_scale_manager (Union[None, LossScaleManager]): If not None, must be subclass of
             :class:`mindspore.amp.LossScaleManager` for scaling the loss. If set, the `level` setting will
             take no effect on this property.
-        custom_list (dict[str, list]): Use custom amp black list and amp white list instead of default lists.
-            The type of key in custom_list is string, and supported keys are ["white_list", "black_list"].
-
-            - "white_list": The white list of auto mixed precision. Used when amp_level is O1.
-            - "black_list": The black list of auto mixed precision. Used when amp_level is O2.
-
-            if custom_list is None, default white list and black list will be used.
-            if custom_list["white_list"] is None, default white list will be used.
-            if custom_list["black_list"] is None, default black list will be used.
-            Format: custom_list = {"white_list":[Primitive or Cell], "black_list":[Primitive or Cell]}
-            It is not recommended to delete members in the default black list.
-            Default blacklist: [nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm]
-            Default: None.
 
     Raises:
         ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
@@ -543,7 +436,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
         pass
     else:
-        network = auto_mixed_precision(network, level, custom_list)
+        network = auto_mixed_precision(network, level)
 
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
@@ -576,3 +469,117 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     else:
         network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network
+
+
+def get_white_list():
+    """
+    Provide a copy of internal white list used by auto mixed precision.
+
+    .. note::
+
+        - This is an experimental interface that is subject to change or deletion.
+
+    Returns:
+        list, A copy of internal white list.
+    """
+    white_list = AMP_WHITE_LIST.copy()
+    return white_list
+
+
+def get_black_list():
+    """
+    Provide a copy of internal black list used by auto mixed precision.
+
+    .. note::
+
+        - This is an experimental interface that is subject to change or deletion.
+
+    Returns:
+        list, A copy of internal black list.
+    """
+    black_list = AMP_BLACK_LIST.copy()
+    return black_list
+
+
+def custom_mixed_precision(network, *, white_list=None, black_list=None):
+    """
+    Custom mixed precision by setting whitelist or blacklist.
+    When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
+    When the `black_list` is provided, primitives and cells that are not in `black_list` will perform the pereision
+    conversion.
+    Only one of `white_list` and `black_list` should be provided.
+
+    .. note::
+
+        - This is an experimental interface that is subject to change or deletion.
+        - `custom_mixed_precision` should not be used at the same time as `auto_mixed_precision` . When both
+          `build_train_network` and `custom_mixed_precision` are used, `build_train_network` need to be called with
+          `level='O0'` before call `custom_mixed_precision` .
+        - Primitives for blacklist is not support yet.
+
+    Args:
+        network (Cell): Definition of the network.
+        white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: None, means
+            white list is not used.
+        black_list (list[Primitive, Cell], optional): Black list of custom mixed precision. Defaults: None, means
+            black list is not used.
+
+    Raises:
+        TypeError: The network type is not Cell.
+        ValueError: Neither `white_list` nor `black_list` is provided.
+        ValueError: Both `white_list` and `black_list` are provided.
+
+    Returns:
+        network (Cell), A network supporting mixed precision.
+
+    Examples:
+        >>> from mindspore import amp
+        >>> net = MyNet()
+        >>> custom_white_list = amp.get_white_list()
+        >>> custom_white_list.append(nn.Tanhshrink)
+        >>> net = amp.custom_mixed_precision(net, white_list=custom_white_list)
+    """
+    if not isinstance(network, nn.Cell):
+        raise TypeError("The network type should be Cell.")
+
+    if white_list is None and black_list is None:
+        raise ValueError("For custom_mixed_precision, one of white_list and black_list must be provided.")
+
+    if white_list is not None and black_list is not None:
+        raise ValueError("For custom_mixed_precision, the white_list or black_list cannot be provided "
+                         "at the same time, please provide one or the other.")
+
+    if white_list is not None:
+        _list_check(white_list, "white_list")
+        return _auto_white_list(network, white_list)
+
+    _list_check(black_list, "black_list")
+    _auto_black_list(network, black_list)
+    network = _OutputTo32(network)
+    return network
+
+
+def _list_check(custom_list: list, list_name: str):
+    """
+    check whether custom list is valid
+
+    Raises:
+        TypeError: The type of custom_list is not list.
+        TypeError: The element in custom_list is not a class.
+        TypeError: The subclass of element in custom_list is not one of ['Cell', 'Primitive'].
+    """
+    if not isinstance(custom_list, list):
+        raise TypeError(f"The type of {list_name} should be list, but got {type(custom_list)}")
+
+    for elem in custom_list:
+        if not isinstance(elem, type):
+            raise TypeError(f"The element in {list_name} should be a class, but got {elem}")
+
+        if not issubclass(elem, nn.Cell) and not issubclass(elem, Primitive):
+            raise TypeError(f"The subclass of element in {list_name} should be one of 'Cell' and 'Primitive', "
+                            f"but got {elem}")
+
+    if list_name == 'black_list':
+        for elem in AMP_BLACK_LIST:
+            if elem not in custom_list:
+                logger.warning(f"{elem} is removed from internal black list.")
