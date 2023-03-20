@@ -32,7 +32,7 @@ mindspore.train.Dice
         更新内部评估结果 `y_pred` 和 `y` 。
 
         参数：
-            - **inputs** (tuple) - 输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。 `y_pred` 和 `y` 的shape都是 `(N, ...)`。
+            - **inputs** (tuple) - 输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。 `y_pred` 和 `y` 的shape都是 :math:`(N, ...)`。
 
         异常：
             - **ValueError** - 输入参数的数量不等于2。

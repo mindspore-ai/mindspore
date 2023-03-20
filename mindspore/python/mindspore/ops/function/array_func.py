@@ -1034,11 +1034,11 @@ def tile(input_x, multiples):
         the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
 
         - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
+          the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_S)`.
         - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
           lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_S*y_R)`.
+          :math:`(1*y_1, ..., x_S*y_S)`.
 
     Raises:
         TypeError: If `multiples` is not a tuple or its elements are not all int.
@@ -2265,8 +2265,8 @@ def transpose(input_x, input_perm):
     To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
     For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
     their order indicates how the axes are permuted (see Examples).
-    If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
-    then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
+    If axes are not provided and a.shape is :math:`(i[0], i[1], ... i[n-2], i[n-1])`,
+    then a.transpose().shape is :math:`(i[n-1], i[n-2], ... i[1], i[0])`.
 
     Note:
         On GPU and CPU, if the value of `input_perm` is negative, its actual value is `input_perm[i] + rank(input_x)`.

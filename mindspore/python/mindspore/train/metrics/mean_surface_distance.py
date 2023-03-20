@@ -54,7 +54,7 @@ class MeanSurfaceDistance(Metric):
         symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math:`AvgSurDis({y\_pred} \rightarrow y)`,
                           otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
-                          :math:`MeanSurDis(y_{pred} \leftrightarrow y)`, will be returned. Default: False.
+                          :math:`MeanSurDis(y\_pred \leftrightarrow y)`, will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

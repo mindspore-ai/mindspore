@@ -4614,10 +4614,10 @@ def histc(input, bins=100, min=0., max=0.):
     Elements lower than min and higher than max are ignored.
 
     Args:
-        input (Tensor) - the input tensor, type support list [float16, float32, int32]
+        input (Tensor): the input tensor, type support list [float16, float32, int32]
         bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
-        min (float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
-        max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+        min (int, float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
+        max (int, float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
     Returns:
         Tensor, 1-D Tensor with type int32.
@@ -7768,7 +7768,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore import ops
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
         ...                             [-0.1287,  0.6508, -0.2396],
         ...                             [ 0.2583,  0.5239,  0.6902]],
@@ -7777,7 +7777,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         ...                             [ 0.1015, -0.5363,  0.6165]]]), mstype.float64)
         >>> LU_pivots = Tensor(np.array([[1, 3, 3],
         ...                              [2, 3, 3]]), mstype.int32)
-        >>> pivots, L, U = F.lu_unpack(LU_data, LU_pivots)
+        >>> pivots, L, U = ops.lu_unpack(LU_data, LU_pivots)
         >>> print(pivots)
         [[[1. 0. 0.]
           [0. 0. 1.]

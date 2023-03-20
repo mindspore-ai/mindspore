@@ -16,4 +16,4 @@ mindspore.ops.swapaxes
     异常：
         - **TypeError** - `input` 不是Tensor类型。
         - **TypeError** - `axis0` 或 `axis1` 不是整数。
-        - **ValueError** - `axis0` 或 `axis1` 不在 `[-ndim, ndim-1]` 范围内。
+        - **ValueError** - `axis0` 或 `axis1` 不在 :math:`[-ndim, ndim-1]` 范围内。
