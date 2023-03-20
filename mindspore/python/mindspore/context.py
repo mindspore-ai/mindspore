@@ -1050,7 +1050,7 @@ def set_context(**kwargs):
             the compile cache is loaded. Note that only limited automatic detection for the changes of
             python scripts is supported by now, which means that there is a correctness risk. Default: False.
             This is an experimental prototype that is subject to change and/or deletion.
-        compile_cache_path (str): Path to save the cache of the graph compiled by front-end. Default: ".".
+        compile_cache_path (str): Path to save the compile cache. Default: ".".
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
