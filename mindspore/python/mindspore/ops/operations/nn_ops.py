@@ -7761,7 +7761,7 @@ class Conv3D(Primitive):
             on Ascend backend. Specifies the dilation rate to use for dilated convolution. If set :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             Its value must be greater than or equal to 1 and bounded by the height and width of the input. Default: 1.
-        group (int): group (int, optional):Splits filter into groups, `in_channels` and `out_channels` must be
+        group (int, optional):Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: 1.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 

@@ -1,7 +1,7 @@
 mindspore.dataset.SQuADDataset
 ==============================
 
-.. py:class:: mindspore.dataset.SQuADDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.SQuADDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
     读取和解析SQuAD 1.1或SQuAD 2.0数据集的源文件构建数据集。
 
