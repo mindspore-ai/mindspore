@@ -3680,8 +3680,6 @@ def less(x, y):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3741,8 +3739,6 @@ def le(x, y):
     .. note::
         - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be both bool , and the shapes of them can be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
