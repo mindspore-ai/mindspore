@@ -25,7 +25,7 @@ AnfNodePtr InplaceNodePass::Run(const FuncGraphPtr &, const AnfNodePtr &node) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto inputs = cnode->inputs();
-    pre_inputs.insert(pre_inputs.end(), inputs.begin(), inputs.end());
+    (void)pre_inputs.insert(pre_inputs.end(), inputs.begin(), inputs.end());
   }
   bool ret = Process(node);
   if (node->isa<CNode>()) {

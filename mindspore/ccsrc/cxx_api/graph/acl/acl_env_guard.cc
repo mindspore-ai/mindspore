@@ -15,6 +15,7 @@
  */
 #include "cxx_api/graph/acl/acl_env_guard.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_utils.h"
 #include "acl/acl.h"
 
 namespace mindspore {
@@ -64,7 +65,8 @@ AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullpt
 }
 
 AclEnvGuard::~AclEnvGuard() {
-  errno_ = AclInitAdapter::GetInstance().AclFinalize();
+  TRY_AND_CATCH_WITH_EXCEPTION(errno_ = AclInitAdapter::GetInstance().AclFinalize(),
+                               "AclInitAdapter GetInstance failed");
   if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_FINALIZE) {
     MS_LOG(ERROR) << "Execute AclFinalize failed.";
   }

@@ -16,11 +16,11 @@
 #ifndef MINDSPORE_CCSRC_CXX_API_ANY_UTILS_H_
 #define MINDSPORE_CCSRC_CXX_API_ANY_UTILS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <any>
+#include <vector>
 #include <string>
 #include <map>
-#include <vector>
 #include "include/api/visible.h"
 #include "include/api/data_type.h"
 

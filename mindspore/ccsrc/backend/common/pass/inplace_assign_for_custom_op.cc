@@ -102,7 +102,7 @@ CNodePtr InplaceAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CN
 
 std::vector<std::string> InplaceAssignForCustomOp::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimCustom->name());
+  (void)ret.emplace_back(prim::kPrimCustom->name());
   return ret;
 }
 

@@ -122,7 +122,7 @@ void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
   }
 }
 
-AnfNodePtr BuildCustom(const PatternMap &m, const AnfNodePtr &default_node) {
+AnfNodePtr BuildCustom(const PatternMap &m, const AnfNodePtr &) {
   auto cnode = m.Get(kMCustom)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
@@ -167,11 +167,11 @@ bool CustomOpRegInfoToAttr::CheckMatchedDAG(const PatternMap &, const FuncGraphP
 }
 
 void CustomOpRegInfoToAttr::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddSeqVar(kXs).AddCNode(kMCustom, {prim::kPrimCustom, kXs});
+  (void)(*src_pattern).AddSeqVar(kXs).AddCNode(kMCustom, {prim::kPrimCustom, kXs});
 }
 
 void CustomOpRegInfoToAttr::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRCustom, {prim::kPrimCustom, kXs}, BuildCustom);
+  (void)(*dst_pattern).AddCNode(kRCustom, {prim::kPrimCustom, kXs}, BuildCustom);
 }
 }  // namespace opt
 }  // namespace mindspore

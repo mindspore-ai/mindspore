@@ -58,11 +58,11 @@ bool ConvertDynamicBroadcastTo::CheckMatchedDAG(const PatternMap &, const FuncGr
 }
 
 void ConvertDynamicBroadcastTo::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kA).AddSeqVar(kVs).AddCNode(kMBroadcastTo, {prim::kPrimDynamicBroadcastTo, kA, kVs});
+  (void)(*src_pattern).AddVar(kA).AddSeqVar(kVs).AddCNode(kMBroadcastTo, {prim::kPrimDynamicBroadcastTo, kA, kVs});
 }
 
 void ConvertDynamicBroadcastTo::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimBroadcastTo, kA}, BuildBroadcastTo);
+  (void)(*dst_pattern).AddCNode(kRBroadcastTo, {prim::kPrimBroadcastTo, kA}, BuildBroadcastTo);
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-bool AlwaysReturnTrue(const BaseRef &n) { return true; }
+bool AlwaysReturnTrue(const BaseRef &) { return true; }
 
 bool PatternMap::Contains(const std::string &name) const { return name_set_.count(name) > 0; }
 
@@ -69,7 +69,7 @@ bool PatternMap::Emplace(const std::string &name, const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Var Key: " << name << " should not be in SeqVarMap.";
   }
 
-  opt_scope_.insert(node);
+  (void)opt_scope_.insert(node);
 
   auto iter = node_map_.find(name);
   if (iter == node_map_.end()) {
@@ -91,7 +91,7 @@ bool PatternMap::Emplace(const std::string &name, const std::vector<AnfNodePtr> 
   }
 
   for (const auto &node : v) {
-    opt_scope_.insert(node);
+    (void)opt_scope_.insert(node);
   }
 
   auto iter = seq_map_.find(name);
@@ -397,7 +397,7 @@ DstPattern &DstPattern::AddValueNode(const string &name, const BuildValueFunc &b
     fail_ = true;
   }
   dst_set_.insert(name);
-  m_->Emplace(name, node);
+  (void)m_->Emplace(name, node);
   root_ = node;
   return *this;
 }
@@ -495,7 +495,7 @@ void DeleteCNode(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const Fu
     if (cnode_set_iter == cnode_set.end()) {
       MS_LOG(EXCEPTION) << "ProcessFastPass Error, name_to_cnode_ can't find node: " << node->fullname_with_scope();
     }
-    cnode_set.erase(cnode_set_iter);
+    (void)cnode_set.erase(cnode_set_iter);
     ModifyOutputAndCallerToMap(node->cast<CNodePtr>(), sub_graph, &func_graph_index->subgraph_out_caller_map_, false);
   }
 }
@@ -509,13 +509,13 @@ void AppendChild(const AnfNodePtr &node, const FuncGraphPtr &fg,
     auto const_func_graph = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(const_func_graph);
     if (!const_func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-      anf_q->emplace(const_func_graph->output(), const_func_graph);
+      (void)anf_q->emplace(const_func_graph->output(), const_func_graph);
     }
   } else if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (const auto &input_node : cnode->inputs()) {
-      anf_q->emplace(input_node, fg);
+      (void)anf_q->emplace(input_node, fg);
     }
   }
 }
@@ -546,7 +546,7 @@ bool DelSrcPattern(const std::pair<AnfNodePtr, FuncGraphPtr> &top, const AnfNode
     }
   }
   if (opt_scope.find(node) == opt_scope.end()) {
-    (*need_delete).insert({node, fg});
+    (void)(*need_delete).insert({node, fg});
     return false;
   }
 
@@ -567,7 +567,7 @@ bool AddDstPattern(const std::pair<AnfNodePtr, FuncGraphPtr> &top, const AnfNode
   MS_EXCEPTION_IF_NULL(fg);
   if (node->isa<CNode>()) {
     ModifyOutputAndCallerToMap(node->cast<CNodePtr>(), fg, &func_graph_index->subgraph_out_caller_map_);
-    func_graph_index->name_to_cnode_[GetCNodeKey(node)].insert(node);
+    (void)func_graph_index->name_to_cnode_[GetCNodeKey(node)].insert(node);
     func_graph_index->node_to_fg_[node] = fg;
   }
 
@@ -583,7 +583,7 @@ bool AddDstPattern(const std::pair<AnfNodePtr, FuncGraphPtr> &top, const AnfNode
     }
   }
   if (opt_scope.find(node) == opt_scope.end()) {
-    (*need_delete).erase({node, fg});
+    (void)(*need_delete).erase({node, fg});
     return false;
   }
   return true;
@@ -623,7 +623,7 @@ void BFS(const AnfNodePtr &root, const FuncGraphPtr &sub_graph, const mindspore:
   std::queue<std::pair<AnfNodePtr, FuncGraphPtr>> anf_q;
 
   if (stage == kStageZero || stage == kStageOne) {
-    anf_q.emplace(root, sub_graph);
+    (void)anf_q.emplace(root, sub_graph);
   } else if (stage == kStageTwo) {
     for (const auto &p : (*need_delete)) {
       anf_q.push(p);

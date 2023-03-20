@@ -29,7 +29,7 @@ constexpr auto kXs = "Xs";
 constexpr auto kMConv2dTrans = "m_conv2d_trans";
 constexpr auto kRConv2dBp = "r_conv2d_bp";
 
-AnfNodePtr BuildConv2DBackpropInput(const PatternMap &m, const AnfNodePtr &default_node) {
+AnfNodePtr BuildConv2DBackpropInput(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMConv2dTrans);
   auto conv_transpose = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv_transpose);
@@ -53,11 +53,11 @@ bool ConvTransposeToConvBackpropInputPass::CheckMatchedDAG(const PatternMap &, c
 }
 
 void ConvTransposeToConvBackpropInputPass::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddSeqVar(kXs).AddCNode(kMConv2dTrans, {prim::kPrimConv2DTranspose, kXs});
+  (void)(*src_pattern).AddSeqVar(kXs).AddCNode(kMConv2dTrans, {prim::kPrimConv2DTranspose, kXs});
 }
 
 void ConvTransposeToConvBackpropInputPass::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRConv2dBp, {prim::kPrimConv2DBackpropInput, kXs}, BuildConv2DBackpropInput);
+  (void)(*dst_pattern).AddCNode(kRConv2dBp, {prim::kPrimConv2DBackpropInput, kXs}, BuildConv2DBackpropInput);
 }
 }  // namespace opt
 }  // namespace mindspore

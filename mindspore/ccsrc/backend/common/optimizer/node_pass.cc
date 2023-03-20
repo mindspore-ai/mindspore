@@ -80,19 +80,19 @@ void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
     auto switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     MS_EXCEPTION_IF_NULL(switch_subgraph);
     if (is_add) {
-      (*out_caller_map)[switch_subgraph->output()].insert(cnode);
+      (void)(*out_caller_map)[switch_subgraph->output()].insert(cnode);
       UpdateCallerAbstract(cnode, fg, switch_subgraph);
     } else {
-      (*out_caller_map)[switch_subgraph->output()].erase(cnode);
+      (void)(*out_caller_map)[switch_subgraph->output()].erase(cnode);
     }
   } else if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
     auto call_subgraph = GetValueNode<FuncGraphPtr>(inputs.at(kCallArgsIndex));
     MS_EXCEPTION_IF_NULL(call_subgraph);
     if (is_add) {
-      (*out_caller_map)[call_subgraph->output()].insert(cnode);
+      (void)(*out_caller_map)[call_subgraph->output()].insert(cnode);
       UpdateCallerAbstract(cnode, fg, call_subgraph);
     } else {
-      (*out_caller_map)[call_subgraph->output()].erase(cnode);
+      (void)(*out_caller_map)[call_subgraph->output()].erase(cnode);
     }
   }
 }
@@ -105,7 +105,7 @@ void UpdateSubGraphCaller(const AnfNodePtr &origin_output, const FuncGraphPtr &f
   auto find_iter = (*out_caller_map).find(origin_output);
   if (find_iter != (*out_caller_map).end()) {
     auto call_node_list = find_iter->second;
-    (*out_caller_map).erase(find_iter);
+    (void)(*out_caller_map).erase(find_iter);
     for (auto &call_node : call_node_list) {
       auto fg_iter = node_to_fg.find(call_node);
       if (fg_iter == node_to_fg.end()) {
@@ -170,7 +170,7 @@ void GenIndex(const FuncGraphPtr &func_graph, const FuncGraphIndexPtr &func_grap
       degree_iter->second++;
     }
     if (node->isa<CNode>()) {
-      func_graph_index->name_to_cnode_[GetCNodeKey(node)].insert(node);
+      (void)func_graph_index->name_to_cnode_[GetCNodeKey(node)].insert(node);
     }
 
     if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
@@ -261,10 +261,10 @@ bool NodePass::ProcessFastPass(const FuncGraphPtr &func_graph, const FuncGraphIn
     if (cnode_iter == func_graph_index->name_to_cnode_.end()) {
       return false;
     }
-    std::copy(cnode_iter->second.begin(), cnode_iter->second.end(), std::back_inserter(cand_node));
+    (void)std::copy(cnode_iter->second.begin(), cnode_iter->second.end(), std::back_inserter(cand_node));
   } else {
     for (const auto &kv : func_graph_index->name_to_cnode_) {
-      std::copy(kv.second.begin(), kv.second.end(), std::back_inserter(cand_node));
+      (void)std::copy(kv.second.begin(), kv.second.end(), std::back_inserter(cand_node));
     }
   }
   for (const auto &node : cand_node) {
