@@ -2763,6 +2763,9 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     }
     std::string exception_string;
     if (args_abs_list.size() == 1 && !has_variable_) {
+      if (!cur_graph->is_tensor_condition_branch()) {
+        RaiseConstant(exception_type);
+      }
       // Process raise ValueError()
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
@@ -2792,6 +2795,9 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       exception_string = "(" + exception_string + ")";
     }
     if (keys_.size() <= 1 && !has_variable_) {
+      if (!cur_graph->is_tensor_condition_branch()) {
+        RaiseConstant(exception_type, exception_string);
+      }
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
       (void)values_.emplace_back(NewValueNode(std::make_shared<StringImm>(exception_string)));
@@ -2849,6 +2855,20 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       }
     } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
       has_variable_ = true;
+    }
+  }
+  void RaiseConstant(const std::string &type, const std::string &exception_string = "") {
+    auto iter = exception_types_map.find(type);
+    if (iter == exception_types_map.end()) {
+      MS_LOG(EXCEPTION) << "Unsupported exception type: " << type
+                        << ". Raise only support some Python standard exception types: "
+                        << SupportedExceptionsToString();
+    }
+    ExceptionType error_type = iter->second;
+    if (exception_string == "") {
+      MS_EXCEPTION(error_type);
+    } else {
+      MS_EXCEPTION(error_type) << exception_string;
     }
   }
   bool CheckNeedSymbol(const AnfNodePtr &, const AbstractBasePtr &abs) const {
