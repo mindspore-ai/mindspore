@@ -107,6 +107,8 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
   // Check input data type
   size_t kernel_input_index = 0;
   size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  bool is_fold_node = !(fold_input_tensor_num == kernel_build_info->GetInputNum());
+
   for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
     std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
     for (size_t i = 0; i < inputs_type.size(); ++i) {
@@ -116,6 +118,11 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
       if (kernel_build_info->GetInputDeviceType(kernel_input_index) != inputs_type[i]) {
         return false;
       }
+      if (is_fold_node) {
+        ++kernel_input_index;
+      }
+    }
+    if (!is_fold_node) {
       ++kernel_input_index;
     }
   }
@@ -366,6 +373,10 @@ bool MatchObjectType(const kernel::KernelObjectType &node_object, const kernel::
     return true;
   }
 
+  if (node_object == kernel::TUPLE && kernel_object == kernel::TENSOR) {
+    return true;
+  }
+
   MS_LOG(INFO) << "Object mismatch. node object type : " << node_object << ", kernel object type: " << kernel_object;
   return false;
 }
@@ -379,11 +390,13 @@ bool MatchObjectType(const CNodePtr &cnode, const std::shared_ptr<kernel::Kernel
   auto kernel_inputs_object_type = kernel_build_info->GetAllInputKernelObjectTypes();
   auto node_inputs_object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(cnode));
 
+  bool is_fold_node = !(common::AnfAlgo::GetInputTensorNum(cnode) == kernel_build_info->GetInputNum());
+
   size_t kernel_input_index = 0;
   std::vector<kernel::KernelObjectType> new_input_object_types = {};
   for (size_t input_index = 0; input_index < node_inputs_object_type.size(); ++input_index) {
     if (kernel_inputs_object_type[kernel_input_index] != kernel::KernelObjectType::TUPLE &&
-        node_inputs_object_type[input_index] == kernel::KernelObjectType::TUPLE) {
+        node_inputs_object_type[input_index] == kernel::KernelObjectType::TUPLE && is_fold_node) {
       // tuple_unfold condition
       std::vector<KernelWithIndex> index_inputs = common::AnfAlgo::GetRealPrevNodesOutput(cnode, input_index);
       for (size_t i = 0; i < index_inputs.size(); ++i) {
@@ -1167,12 +1180,23 @@ void RefreshDynamicInputSizeAttr(const CNodePtr &cnode) {
   }
   std::vector<int64_t> dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
   auto input_obj_types = AnfAlgo::GetInputKernelObjectTypes(cnode);
-  size_t input_num = cnode->inputs().size() - 1;
-  for (size_t i = 0; i < input_num; ++i) {
+  auto node_inputs_object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(cnode));
+  // For the condition node is tuple & kernel is tensor
+  if (node_inputs_object_type.size() == input_obj_types.size()) {
+    for (size_t i = 0; i < input_obj_types.size(); ++i) {
+      if (input_obj_types[i] == kernel::KernelObjectType::TENSOR &&
+          node_inputs_object_type[i] == kernel::KernelObjectType::TUPLE) {
+        dyn_input_sizes[i] = -1;
+      }
+    }
+  }
+  // For the condition kernel is tuple
+  for (size_t i = 0; i < input_obj_types.size(); ++i) {
     if (input_obj_types[i] == kernel::KernelObjectType::TUPLE) {
       dyn_input_sizes[i] = -1;
     }
   }
+
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
   } else {

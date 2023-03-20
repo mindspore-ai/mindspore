@@ -53,10 +53,14 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     MS_EXCEPTION_IF_NULL(kernel_info);
     bool is_fold = kernel::IsFoldKernelBuildInfo(kernel_info);
     if (is_fold) {
-      bool is_match = true;
       if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, kernel_node)) {
         if (kernel_info->GetInputNum() != fold_input_tensor_num) {
-          is_match = false;
+          buffer << "Kernel [ " << info_index << " ] [Fold]: Kernel build info's input size ["
+                 << kernel_info->GetInputNum() << "] cannot match the node's input size [" << fold_input_tensor_num
+                 << "]\n";
+          buffer << "\n kernel info:" << kernel_info->ToString();
+          info_index++;
+          continue;
         }
       } else {
         // compare input num
@@ -71,38 +75,37 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
           }
         }
         if (kernel_info->GetInputNum() != real_input_num) {
-          is_match = false;
+          buffer << "Kernel [ " << info_index << " ] [Fold]: Kernel build info's input size ["
+                 << kernel_info->GetInputNum() << "] cannot match the node's input size [" << real_input_num << "]\n";
+          buffer << "\n kernel info:" << kernel_info->ToString();
+          info_index++;
+          continue;
         }
       }
 
-      if (is_match) {
-        // compare output num
-        size_t real_output_num = unfold_output_tensor_num;
-        if (kernel_info->GetOutputKernelObjectType(0) == kernel::KernelObjectType::TUPLE) {
-          real_output_num = 1;
-        }
-
-        if (kernel_info->GetOutputNum() != real_output_num) {
-          is_match = false;
-        }
+      // compare output num
+      size_t real_output_num = unfold_output_tensor_num;
+      if (kernel_info->GetOutputKernelObjectType(0) == kernel::KernelObjectType::TUPLE) {
+        real_output_num = fold_output_tensor_num;
       }
 
-      if (is_match) {
-        (void)filtered_list.emplace_back(kernel_info);
-      } else {
-        buffer << "Kernel [ " << info_index << " ] [Fold]:";
-        if (kernel_info->GetOutputNum() != fold_output_tensor_num) {
-          buffer << "Kernel build info's output size [" << kernel_info->GetOutputNum() << "]"
-                 << " cannot match the node's output size [" << fold_output_tensor_num << "]\n";
-        } else {
-          buffer << "Kernel build info's input size [" << kernel_info->GetInputNum() << "]"
-                 << " cannot match the node's input size [" << fold_input_tensor_num << "]\n";
-        }
+      if (kernel_info->GetOutputNum() != real_output_num) {
+        buffer << "Kernel [ " << info_index << " ] [Fold]: Kernel build info's output size ["
+               << kernel_info->GetOutputNum() << "] cannot match the node's output size [" << real_output_num << "]\n";
         buffer << "\n kernel info:" << kernel_info->ToString();
+        info_index++;
+        continue;
       }
+
+      (void)filtered_list.emplace_back(kernel_info);
     } else {
       if ((kernel_info->GetInputNum() == unfold_input_tensor_num) &&
           (kernel_info->GetOutputNum() == unfold_output_tensor_num)) {
+        (void)filtered_list.emplace_back(kernel_info);
+      } else if ((kernel_info->GetInputNum() == fold_input_tensor_num) &&
+                 (kernel_info->GetOutputNum() == unfold_output_tensor_num)) {
+        // For the condition that node input is tuple and kernel input is tensor, and this condition will insert
+        // TupleToTensor after kernel_select
         (void)filtered_list.emplace_back(kernel_info);
       } else {
         buffer << "Kernel [ " << info_index << " ] [Unfold]:";
@@ -156,6 +159,85 @@ void CheckKernelInfoListEmpty(const std::vector<std::shared_ptr<kernel::KernelBu
   }
 }
 
+abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto found = abstract::GetPrimitiveInferImpl(primitive);
+  if (!found.has_value()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+  }
+
+  std::vector<AbstractBasePtr> input_args;
+  std::for_each(input_list.begin(), input_list.end(),
+                [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
+  auto infer_impl = found.value();
+  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
+  return abs;
+}
+
+AnfNodePtr ConvertAllTupleInputsToTensor(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
+    return nullptr;
+  }
+
+  if (common::AnfAlgo::HasDynamicTupleInput(cnode_ptr)) {
+    MS_LOG(INFO) << "Node " << cnode_ptr->fullname_with_scope()
+                 << " has dynamic tuple input, can't convert. Node debug string:" << cnode_ptr->DebugString();
+    return nullptr;
+  }
+
+  if (!common::AnfAlgo::HasTupleInput(cnode_ptr)) {
+    return nullptr;
+  }
+
+  size_t input_num = cnode_ptr->inputs().size() - 1;
+  std::vector<AnfNodePtr> new_inputs;
+  new_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (common::AnfAlgo::IsTupleOutput(input_node)) {
+      auto prim = NewValueNode(std::make_shared<Primitive>(prim::kTupleToTensor));
+      MS_EXCEPTION_IF_NULL(prim);
+      AnfNodePtrList inputs = {prim, input_node};
+      CNodePtr tuple_to_tensor = graph->NewCNode(inputs);
+      MS_EXCEPTION_IF_NULL(tuple_to_tensor);
+      // attr dtype
+      auto data_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+      common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
+
+      // set abstract
+      auto abs = GenerateAbsByOpInfer(GetCNodePrimitive(tuple_to_tensor), {input_node});
+      MS_EXCEPTION_IF_NULL(abs);
+      MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
+      tuple_to_tensor->set_abstract(abs);
+      new_inputs.push_back(tuple_to_tensor);
+    } else {
+      new_inputs.push_back(input_node);
+    }
+  }
+
+  auto new_cnode = opt::NewCNode({new_inputs}, graph, {cnode_ptr});
+  new_cnode->set_abstract(cnode_ptr->abstract());
+  new_cnode->set_scope(cnode_ptr->scope());
+  new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());
+  new_cnode->set_attrs(cnode_ptr->attrs());
+
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, new_cnode)) {
+    common::AnfAlgo::EraseNodeAttr(kAttrDynInputSizes, new_cnode);
+  }
+
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph != nullptr) {
+    kernel_graph->FrontBackendlMapUpdate(cnode_ptr, new_cnode);
+  }
+  return new_cnode;
+}
+
 void KernelQueryAll(const CNodePtr &kernel_node,
                     std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -166,6 +248,7 @@ void KernelQueryAll(const CNodePtr &kernel_node,
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(select_cnode, kAttrDynInputSizes);
   }
 
+  // unfold  all tuple inputs and select
   auto tuple_unfold_node = opt::ConvertMakeTupleInputToPlantInputs(kernel_node->func_graph(), kernel_node);
   if (tuple_unfold_node != nullptr) {
     auto tuple_unfold_cnode = tuple_unfold_node->cast<CNodePtr>();
@@ -178,6 +261,22 @@ void KernelQueryAll(const CNodePtr &kernel_node,
   }
 
   TbeMetadataInfo(select_cnode, kernel_info_list);
+
+  if (kernel_info_list->empty()) {
+    // convert all tuple inputs to tensor and select
+    auto tensor_input_node = ConvertAllTupleInputsToTensor(kernel_node->func_graph(), kernel_node);
+    if (tensor_input_node != nullptr) {
+      auto tensor_input_cnode = tensor_input_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_input_cnode);
+      auto select_cnode2 = tensor_input_cnode;
+      select_cnode2->set_fullname_with_scope(kernel_node->fullname_with_scope());
+      MS_LOG(INFO) << "Create all tensor inputs node " << tensor_input_cnode->fullname_with_scope()
+                   << ", debug string [" << tensor_input_cnode->DebugString() << "] from "
+                   << kernel_node->fullname_with_scope() << ", debug string [" << kernel_node->DebugString() << "].";
+      TbeMetadataInfo(select_cnode2, kernel_info_list);
+      CheckKernelInfoListEmpty(kernel_info_list, "TBE_Kernel");
+    }
+  }
   if (kernel_info_list->empty()) {
     GetRtKelInfo(select_cnode, kernel_info_list);
     CheckKernelInfoListEmpty(kernel_info_list, "RT_Kernel");
