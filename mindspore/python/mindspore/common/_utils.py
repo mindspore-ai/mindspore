@@ -82,5 +82,6 @@ def dict_setitem(dic, key, val):
     return dic
 
 
-def raise_func(type, script):
-    raise type(script)
+def raise_func(type_name, script):
+    """raise function for jit fallback."""
+    raise type_name(script)
