@@ -213,8 +213,8 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << " param_key:" << param_key << ", embedding table name:" << param_name
                  << ", vocab size:" << vocab_size << ", embedding size:" << embedding_size
                  << ", device cache size:" << cache_vocab_size << ", host cache size:" << host_cache_vocab_size
-                 << ", device cache address:" << reinterpret_cast<void *>(item.second.address.addr)
-                 << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
+                 << ", device cache address:" << item.second.address.addr
+                 << ", host cache address:" << item.second.host_address.get();
   }
 }
 

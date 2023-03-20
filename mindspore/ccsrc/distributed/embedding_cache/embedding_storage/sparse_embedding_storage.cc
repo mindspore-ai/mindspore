@@ -35,6 +35,7 @@ void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const Dev
 template <typename KeyType, typename ValueType, typename Allocator>
 void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
   hash_table_ = nullptr;
+  EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize();
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
@@ -53,7 +54,7 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const ConstDataW
   // 1. Query cache to analyse the information of cache hit and miss keys, update the positions of cache hit elements in
   // the cache (cache refresh).
   size_t cache_miss_cnt = 0;
-  int *cache_miss_offsets = this->template AllocateMemory<int>(sizeof(int) * key_num);
+  size_t *cache_miss_offsets = this->template AllocateMemory<size_t>(sizeof(size_t) * key_num);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   bool *cache_hit = this->template AllocateMemory<bool>(sizeof(bool) * key_num);
   MS_EXCEPTION_IF_NULL(cache_hit);
@@ -103,7 +104,7 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataW
   // 1. Query cache to analyse the information of cache hit and miss keys, update the positions of cache hit elements in
   // the cache (cache refresh).
   size_t cache_miss_cnt = 0;
-  int *cache_miss_offsets = this->template AllocateMemory<int>(sizeof(int) * key_num);
+  size_t *cache_miss_offsets = this->template AllocateMemory<size_t>(sizeof(size_t) * key_num);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   bool *cache_hit = this->template AllocateMemory<bool>(sizeof(bool) * key_num);
   MS_EXCEPTION_IF_NULL(cache_hit);
@@ -138,8 +139,8 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataW
 
 template <typename KeyType, typename ValueType, typename Allocator>
 void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const KeyType *keys, size_t key_num,
-                                                                       int *cache_miss_offsets, size_t *cache_miss_cnt,
-                                                                       bool *cache_hit) const {
+                                                                       size_t *cache_miss_offsets,
+                                                                       size_t *cache_miss_cnt, bool *cache_hit) const {
   MS_EXCEPTION_IF_NULL(keys);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   MS_EXCEPTION_IF_NULL(cache_miss_cnt);
@@ -217,7 +218,7 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t rese
 
 template <typename KeyType, typename ValueType, typename Allocator>
 bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromStorage(const KeyType *keys,
-                                                                                       const int *cache_miss_offsets,
+                                                                                       const size_t *cache_miss_offsets,
                                                                                        size_t cache_miss_cnt,
                                                                                        ValueType *values) {
   MS_EXCEPTION_IF_NULL(keys);
@@ -269,7 +270,7 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromS
 
 template <typename KeyType, typename ValueType, typename Allocator>
 bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromMemory(const KeyType *keys,
-                                                                                      const int *cache_miss_offsets,
+                                                                                      const size_t *cache_miss_offsets,
                                                                                       size_t cache_miss_cnt,
                                                                                       const ValueType *values) {
   MS_EXCEPTION_IF_NULL(keys);

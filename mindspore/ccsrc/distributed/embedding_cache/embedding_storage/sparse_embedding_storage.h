@@ -85,7 +85,7 @@ class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloc
    * @param[out] `cache_hit`: The array records cache hit/miss for each key.
    * keys.
    */
-  void QueryCache(const KeyType *keys, size_t key_num, int *cache_miss_offsets, size_t *cache_miss_cnt,
+  void QueryCache(const KeyType *keys, size_t key_num, size_t *cache_miss_offsets, size_t *cache_miss_cnt,
                   bool *cache_hit) const;
 
   /**
@@ -105,7 +105,7 @@ class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloc
    * @param[out] `values`: The output embeddings.
    * @return Whether the function was successfully executed.
    */
-  bool InsertMissCacheFromStorage(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+  bool InsertMissCacheFromStorage(const KeyType *keys, const size_t *cache_miss_offsets, size_t cache_miss_cnt,
                                   ValueType *values);
 
   /**
@@ -116,7 +116,7 @@ class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloc
    * @param[in] `values`: Embeddings corresponding to all keys need to be updated.
    * @return Whether the function was successfully executed.
    */
-  bool InsertMissCacheFromMemory(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+  bool InsertMissCacheFromMemory(const KeyType *keys, const size_t *cache_miss_offsets, size_t cache_miss_cnt,
                                  const ValueType *values);
 
   // The base pointer to the hash table of the embedding table parameter.

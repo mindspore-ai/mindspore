@@ -80,6 +80,14 @@ class DeviceEmbeddingOperation {
   virtual void GetRemoteEmbeddingSliceBound(size_t vocab_size, size_t server_num,
                                             std::vector<std::pair<size_t, size_t>> *remote_embedding_slice_bounds) = 0;
 
+  // Async copy host memory to device.
+  static bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
+                                      size_t stream_id);
+
+  // Async copy device memory to host.
+  static bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
+                                      size_t stream_id);
+
  protected:
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
   bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
@@ -94,14 +102,6 @@ class DeviceEmbeddingOperation {
   // Build a CNode of embedding cache update kernel, which is used to update local
   // device embedding cache.
   virtual void BuildEmbeddingCacheUpdateKernel() = 0;
-
-  // Async copy host memory to device.
-  static bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
-                                      size_t stream_id);
-
-  // Async copy device memory to host.
-  static bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
-                                      size_t stream_id);
 
   static ParameterPtr NewParameter(const KernelGraphPtr &graph, TypePtr type, const ShapeVector &shape);
 

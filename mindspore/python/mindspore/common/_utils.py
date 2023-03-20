@@ -52,12 +52,16 @@ def get_slice_num(dtype, shape):
     if not need_split:
         return slice_num
 
-    if not "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE" in os.environ:
+    if "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE" not in os.environ:
         return slice_num
 
     num_element = functools.reduce(lambda x, y: x * y, shape, 1)
     data_size = num_element * mstype.type_size_in_bytes(dtype)
     remote_cache_size = int(os.getenv("MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE")) << 30
+    if remote_cache_size == 0:
+        raise ValueError("The remote cache size set by env variable[MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE]"
+                         " should be greater than 0.")
+
     if data_size <= remote_cache_size:
         return slice_num
 
@@ -72,6 +76,8 @@ def get_slice_shape(dtype, shape):
         return shape
 
     new_shape = list(shape)
+    if slice_num == 0:
+        raise ValueError("The slice num is at least 1, but got 0")
     slice_first_dim = math.ceil(new_shape[0] / slice_num)
     new_shape[0] = slice_first_dim
     return tuple(new_shape)

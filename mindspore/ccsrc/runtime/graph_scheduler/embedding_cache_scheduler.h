@@ -47,7 +47,7 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   void SetDataSetChannel(const std::string &actor_id, const std::vector<KernelGraphPtr> &graphs);
 
   // Initialize all embedding storage instances.
-  void InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters);
+  void InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) const;
 
   // 1. Build network connection between local and remote cache for embedding cache prefetch actor.
   // 2. Schedule and Run embedding cache prefetch actor.
@@ -73,7 +73,7 @@ class BACKEND_EXPORT EmbeddingCacheScheduler {
   void ParseBatchIdsNum(const KernelGraphPtr &graph);
 
   // Allocate device and local host memory for embedding cache table.
-  void AllocMemForEmbeddingCacheTable(const DeviceContext *device_context, const KernelGraphPtr &graph);
+  void AllocMemForEmbeddingCacheTable(const DeviceContext *device_context);
 
   // Embedding cache prefetch actor.
   std::shared_ptr<EmbeddingCachePrefetchActor> embedding_cache_prefetch_actor_;

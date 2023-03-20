@@ -82,7 +82,7 @@ class DenseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloca
    * @param[out] `indices_in_cache`: The array records the indices in the embedding table tensor of each cache hit
    * keys.
    */
-  void QueryCache(const KeyType *keys, size_t key_num, int *cache_miss_offsets, size_t *cache_miss_cnt,
+  void QueryCache(const KeyType *keys, size_t key_num, size_t *cache_miss_offsets, size_t *cache_miss_cnt,
                   int *indices_in_cache) const;
 
   /**
@@ -102,7 +102,7 @@ class DenseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloca
    * @param[out] `values`: The output embeddings.
    * @return Whether the function was successfully executed.
    */
-  bool InsertMissCacheFromStorage(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+  bool InsertMissCacheFromStorage(const KeyType *keys, const size_t *cache_miss_offsets, size_t cache_miss_cnt,
                                   ValueType *values);
 
   /**
@@ -113,7 +113,7 @@ class DenseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloca
    * @param[in] `values`: Embeddings corresponding to all keys need to be updated.
    * @return Whether the function was successfully executed.
    */
-  bool InsertMissCacheFromMemory(const KeyType *keys, const int *cache_miss_offsets, size_t cache_miss_cnt,
+  bool InsertMissCacheFromMemory(const KeyType *keys, const size_t *cache_miss_offsets, size_t cache_miss_cnt,
                                  const ValueType *values);
 
   // The base pointer to embedding table parameter, all embeddings in host cache is recorded in
