@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Watchpoints test script for dump analyze_fail.dat when infer failed.
+Watchpoints test script for dump analyze_fail.ir when infer failed.
 """
 # pylint: disable=too-many-function-args
 import os
@@ -45,10 +45,10 @@ class Net(nn.Cell):
 
 
 @security_off_wrap
-def test_infer_fail_generate_analyze_fail_dat1():
+def test_infer_fail_generate_analyze_fail_ir1():
     """
-    Feature: test dump analyze_fail.dat.
-    Description: test dump analyze_fail.dat if infer failed.
+    Feature: test dump analyze_fail.ir.
+    Description: test dump analyze_fail.ir if infer failed.
     Expectation: success.
     """
 
@@ -58,26 +58,26 @@ def test_infer_fail_generate_analyze_fail_dat1():
 
     with pytest.raises(TypeError) as excinfo:
         net(input1, input2)
-    assert "rank_0/om/analyze_fail.dat" in str(excinfo.value)
-    assert os.path.exists("./rank_0/om/analyze_fail.dat") is True
+    assert "rank_0/om/analyze_fail.ir" in str(excinfo.value)
+    assert os.path.exists("./rank_0/om/analyze_fail.ir") is True
 
 
 @security_off_wrap
-def test_infer_fail_generate_analyze_fail_dat2():
+def test_infer_fail_generate_analyze_fail_ir2():
     """
-    Feature: test dump analyze_fail.dat.
-    Description: test dump analyze_fail.dat if infer failed.
+    Feature: test dump analyze_fail.ir.
+    Description: test dump analyze_fail.ir if infer failed.
     Expectation: success.
     """
 
     input1 = Tensor(3, mindspore.float32)
     input2 = Tensor(2, mindspore.float32)
     net = Net()
-    os.environ["MS_OM_PATH"] = "./analyze_fail_dat2"
+    os.environ["MS_OM_PATH"] = "./analyze_fail_ir2"
     with pytest.raises(TypeError) as excinfo:
         net(input1, input2)
-    assert "analyze_fail_dat2/rank_0/om/analyze_fail.dat" in str(excinfo.value)
-    assert os.path.exists("./analyze_fail_dat2/rank_0/om/analyze_fail.dat") is True
+    assert "analyze_fail_ir2/rank_0/om/analyze_fail.ir" in str(excinfo.value)
+    assert os.path.exists("./analyze_fail_ir2/rank_0/om/analyze_fail.ir") is True
 
-    shutil.rmtree("analyze_fail_dat2")
+    shutil.rmtree("analyze_fail_ir2")
     del os.environ['MS_OM_PATH']
