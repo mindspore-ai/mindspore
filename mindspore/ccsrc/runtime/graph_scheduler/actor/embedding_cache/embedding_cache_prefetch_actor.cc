@@ -132,7 +132,7 @@ void EmbeddingCachePrefetchActor::Initialize() {
 
   const double mean = 0.0;
   const double sigma = 0.01;
-  rnd_gen_->Initialize(mean, sigma);
+  (void)rnd_gen_->Initialize(mean, sigma);
 
   // Get embedding cache table info.
   local_host_cache_size_ = embedding_cache_table_manager.host_cache_size_;

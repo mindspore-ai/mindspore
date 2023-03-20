@@ -110,7 +110,7 @@ bool CPUHashTable<Key, Value>::Erase(const Key *keys, size_t key_num, void *) {
     const auto &key = keys[i];
     if (values_.find(key) != values_.end()) {
       auto value = values_[keys[i]];
-      values_.erase(keys[i]);
+      (void)values_.erase(keys[i]);
 
       // Return the memory of value to the pool.
       MS_EXCEPTION_IF_NULL(value);
@@ -155,7 +155,7 @@ bool CPUHashTable<Key, Value>::GetKeysAndValues(Key *keys, Value *values, void *
 }
 
 template <typename Key, typename Value>
-bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
+bool CPUHashTable<Key, Value>::Import(const DataLenPair &) {
   return true;
 }
 
@@ -213,7 +213,7 @@ bool CPUHashTable<Key, Value>::Clear() {
     if (value != nullptr) {
       FreeMemory(value);
     }
-    values_.erase(key);
+    (void)values_.erase(key);
   }
   return true;
 }
