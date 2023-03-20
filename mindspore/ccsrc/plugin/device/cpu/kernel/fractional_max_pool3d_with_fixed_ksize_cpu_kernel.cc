@@ -187,8 +187,7 @@ int FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr 
 }
 
 template <typename random_sample_t>
-static std::vector<int> generate_intervals(random_sample_t random_sample, int input_size, int output_size,
-                                           float kernel_size) {
+std::vector<int> generate_intervals(random_sample_t random_sample, int input_size, int output_size, int kernel_size) {
   std::vector<int> sequence(output_size);
   if (output_size > 1) {
     random_sample_t alpha =
@@ -199,7 +198,23 @@ static std::vector<int> generate_intervals(random_sample_t random_sample, int in
                                static_cast<int>(random_sample * alpha);
     }
   }
-  sequence[IntToSize(output_size) - 1] = FloatToInt(input_size - kernel_size);
+  sequence[IntToSize(output_size) - 1] = input_size - kernel_size;
+
+  return sequence;
+}
+
+template <>
+std::vector<int> generate_intervals(float16 random_sample, int input_size, int output_size, int kernel_size) {
+  std::vector<int> sequence(output_size);
+  if (output_size > 1) {
+    float alpha = static_cast<float>(input_size - kernel_size) / static_cast<float>(output_size - 1);
+
+    for (int i = 0; i < output_size - 1; ++i) {
+      sequence[IntToSize(i)] = static_cast<int>((static_cast<float>(i) + static_cast<float>(random_sample)) * alpha) -
+                               static_cast<int>(static_cast<float>(random_sample) * alpha);
+    }
+  }
+  sequence[IntToSize(output_size) - 1] = input_size - kernel_size;
 
   return sequence;
 }
@@ -252,8 +267,8 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::ComputeTemplate(const std::v
 template <typename scalar_t, typename random_sample_t, typename argmax_t>
 bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixedKsizeCompute(
   scalar_t *inputForPlane, random_sample_t *random_samplesForPlane, argmax_t *argmaxForPlane, scalar_t *outputForPlane,
-  int64_t outputD_, int64_t outputH_, int64_t outputW_, float_t kernelsizeD_, float_t kernelsizeH_,
-  float_t kernelsizeW_, int64_t inputC_, int64_t inputD_, int64_t inputH_, int64_t inputW_) {
+  int64_t outputD_, int64_t outputH_, int64_t outputW_, int64_t kernelsizeD_, int64_t kernelsizeH_,
+  int64_t kernelsizeW_, int64_t inputC_, int64_t inputD_, int64_t inputH_, int64_t inputW_) {
   // Generate interval sequence
   auto sequenceT = generate_intervals<random_sample_t>(random_samplesForPlane[0], inputD_, outputD_, kernelsizeD_);
   auto sequenceH = generate_intervals<random_sample_t>(random_samplesForPlane[1], inputH_, outputH_, kernelsizeH_);

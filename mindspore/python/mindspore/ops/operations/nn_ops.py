@@ -9000,7 +9000,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        ksize (Union[float, tuple]): The target ksize is D x H x W.
+        ksize (Union[int, tuple]): The target ksize is D x H x W.
             ksize can be a tuple, or a single K for K x K x K.
             specifying the window size (D, H, W) of the input tensor.
         output_shape (Union[int, tuple]): The target output_shape is D x H x W.
@@ -9045,7 +9045,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        >>> ksize = (1.0, 1.0, 1.0)
+        >>> ksize = (1, 1, 1)
         >>> output_shape = (1, 1, 2)
         >>> net = ops.FractionalMaxPool3DWithFixedKsize(ksize = ksize, output_shape = output_shape)
         >>> output, argmax = net(x, random_samples)
@@ -9059,15 +9059,15 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
     def __init__(self, ksize, output_shape, data_format="NCDHW"):
         """Initialize FractionalMaxPool3DWithFixedKsize."""
         self.init_prim_io_names(inputs=["x", "random_samples"], outputs=["y", "argmax"])
-        validator.check_value_type("ksize", ksize, [float, tuple], self.name)
+        validator.check_value_type("ksize", ksize, [int, tuple], self.name)
         self.ksize = ksize
-        if isinstance(self.ksize, float):
+        if isinstance(self.ksize, int):
             self.ksize = (ksize, ksize, ksize)
         if len(self.ksize) != 3:
-            raise ValueError(f"For '{self.name}', attr 'ksize' must be an positive float number or a tuple of "
-                             f"three float numbers, but got {len(self.ksize)} numbers.")
+            raise ValueError(f"For '{self.name}', attr 'ksize' must be an positive int number or a tuple of "
+                             f"three int numbers, but got {len(self.ksize)} numbers.")
         for item in self.ksize:
-            validator.check_positive_float(item, 'ksize item', self.name)
+            validator.check_positive_int(item, 'ksize item', self.name)
         self.output_shape = validator.check_value_type("output_shape", output_shape, [int, tuple], self.name)
         self.data_format = validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
         self.output_shape = _check_3d_int_or_tuple("output_shape", output_shape,

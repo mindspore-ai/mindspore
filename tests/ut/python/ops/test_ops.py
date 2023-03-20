@@ -2720,7 +2720,7 @@ test_case_nn_ops = [
                         ([9], {'dtype': np.int64})],
         'skip': ['backward']}),
     ('FractionalMaxPool3DWithFixedKsize', {
-        'block': FractionalMaxPool3DWithFixedKsize(ksize=(1.0, 1.0, 2.0), output_shape=(2, 2, 3)),
+        'block': FractionalMaxPool3DWithFixedKsize(ksize=(1, 1, 2), output_shape=(2, 2, 3)),
         'desc_inputs': [([1, 1, 4, 4, 7], {'dtype': np.int64}),
                         ([1, 1, 3], {'dtype': np.float32})],
         'desc_bprop': [([1, 1, 2, 2, 3], {'dtype': np.int64}),
