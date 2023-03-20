@@ -334,6 +334,20 @@ class VmapOperation : public MetaFuncGraph {
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 };
 using VmapOperationPtr = std::shared_ptr<VmapOperation>;
+
+class ZerosLike : public MetaFuncGraph {
+ public:
+  explicit ZerosLike(const std::string &name, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr)
+      : MetaFuncGraph(name), fn_leaf_(fn_leaf) {}
+  ~ZerosLike() override = default;
+  MS_DECLARE_PARENT(ZerosLike, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const ZerosLike &lhs, const ZerosLike &rhs) { return lhs.name_ == rhs.name_; }
+
+ private:
+  MultitypeFuncGraphPtr fn_leaf_;
+};
+using ZerosLikePtr = std::shared_ptr<ZerosLike>;
 }  // namespace prim
 }  // namespace mindspore
 

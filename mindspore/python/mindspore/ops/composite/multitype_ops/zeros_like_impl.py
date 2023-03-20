@@ -183,11 +183,16 @@ def _zeros_like_env_type(x):
     return F.environ_create()
 
 
-zeros_like_ = base.HyperMap(zeros_like_leaf)
+class _ZerosLike(base.ZerosLike_):
+    def __init__(self, name, fn_leaf):
+        """Initialize _ZerosLike."""
+        base.ZerosLike_.__init__(self, name, fn_leaf)
+        self.fn_leaf = fn_leaf
+
+    def __call__(self, x):
+        if isinstance(x, (tuple, list)) and F.is_sequence_shape_unknown(x):
+            return seq.SequenceZerosLike()(x)
+        return self.fn_leaf(x)
 
 
-def zeros_like(x):
-    """`zeros_like` is an object that will generate graph of `zero_like` operation for different type."""
-    if isinstance(x, (tuple, list)) and F.is_sequence_shape_unknown(x):
-        return seq.SequenceZerosLike()(x)
-    return zeros_like_(x)
+zeros_like = _ZerosLike('zeros_like', zeros_like_leaf)
