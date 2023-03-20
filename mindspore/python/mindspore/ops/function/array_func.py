@@ -5293,7 +5293,7 @@ def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
     Raises:
         TypeError: If `diagonal` is not an int.
         TypeError: If `input` is not a Tensor.
-        ValueError: If length of shape of input is less than 1.
+        ValueError: If length of shape of `input` is less than 1.
 
     Supported Platforms:
         ``GPU`` ``CPU``
