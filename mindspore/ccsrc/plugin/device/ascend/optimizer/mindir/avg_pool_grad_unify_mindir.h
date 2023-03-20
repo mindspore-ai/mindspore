@@ -28,6 +28,7 @@ class AvgPoolGradUnifyMindIR : public PatternToPatternPass {
 
   void DefineSrcPattern(SrcPattern *src_pattern) override;
   void DefineDstPattern(DstPattern *dst_pattern) override;
+  bool CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
