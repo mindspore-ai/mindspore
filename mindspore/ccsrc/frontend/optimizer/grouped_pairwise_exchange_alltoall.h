@@ -45,9 +45,9 @@ class GroupedPairwiseExchangeAllToAllInfo {
     SetReshapeScaleAxisVec();
   }
   ~GroupedPairwiseExchangeAllToAllInfo() = default;
-  int64_t GetGroupNum() { return gpea_num_; }
-  int64_t GetRanksPerGroup() { return ranks_per_group_; }
-  int64_t GetGroupRank() { return group_rank_; }
+  int64_t GetGroupNum() const { return gpea_num_; }
+  int64_t GetRanksPerGroup() const { return ranks_per_group_; }
+  int64_t GetGroupRank() const { return group_rank_; }
   std::vector<int64_t> GetSendRankIds(int64_t step_id) { return total_send_rank_ids_[step_id]; }
   std::vector<int64_t> GetRecvRankIds(int64_t step_id) { return total_recv_rank_ids_[step_id]; }
   std::vector<int64_t> GetSendGroupRanks() { return send_group_ranks_; }
@@ -82,13 +82,14 @@ class GroupedPairwiseExchangeAllToAllInfo {
     std::string gpea_num_str = common::GetEnv("GPEA_NUM");
     gpea_num_ = 1;
     if (!gpea_num_str.empty()) {
-      gpea_num_ = atoi(gpea_num_str.c_str());
+      const int decimal = 10;
+      gpea_num_ = std::strtol(gpea_num_str.c_str(), nullptr, decimal);
     }
   }
 
-  void SetRanksPerGroup() { ranks_per_group_ = GetDeviceNum() / gpea_num_; }
+  void SetRanksPerGroup() { ranks_per_group_ = SizeToLong(GetDeviceNum()) / gpea_num_; }
 
-  void SetGroupRank() { group_rank_ = GetGlobalRankID() / ranks_per_group_; }
+  void SetGroupRank() { group_rank_ = SizeToLong(GetGlobalRankID()) / ranks_per_group_; }
 
   void SetTotalSendRankIds() {
     for (int64_t step = 0; step < gpea_num_; step++) {
@@ -120,7 +121,7 @@ class GroupedPairwiseExchangeAllToAllInfo {
   }
 
   template <typename T>
-  std::vector<int64_t> sort_indexes(const std::vector<T> &v) {
+  std::vector<int64_t> sort_indexes(const std::vector<T> &v) const {
     std::vector<int64_t> idx(v.size());
     for (size_t i = 0; i < idx.size(); ++i) {
       idx[i] = SizeToLong(i);

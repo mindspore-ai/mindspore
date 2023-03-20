@@ -51,7 +51,7 @@ AnfNodePtrList ExpandMultiJ(const FuncGraphVector &func_graphs, const OptimizerP
 }
 }  // namespace internal
 
-void ExpandJPrim::CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs) {
+void ExpandJPrim::CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs) const {
   MS_EXCEPTION_IF_NULL(func_graphs);
   size_t func_graphs_size = func_graphs->size();
   for (size_t i = 0; i < func_graphs_size; ++i) {

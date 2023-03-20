@@ -17,10 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_CONSTEXPR_OPS_H
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_BPROP_MINDIR_GET_CONSTEXPR_OPS_H
 
-#include <utility>
 #include <string>
-#include <vector>
-#include <algorithm>
 #include <memory>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"

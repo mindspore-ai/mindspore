@@ -114,17 +114,7 @@ class InlinerBase : public AnfVisitor {
     auto &inputs = cnode->inputs();
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
-        fg->stub()) {
-      return nullptr;
-    }
-    // Defer inlining in the case of pipeline.
-    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
-    if (fg->stage() != -1 && stage_num > 1) {
-      return nullptr;
-    }
-    // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
-    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (!CheckFlag(fg)) {
       return nullptr;
     }
 
@@ -178,6 +168,23 @@ class InlinerBase : public AnfVisitor {
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
   }
 
+  bool CheckFlag(const FuncGraphPtr &fg) {
+    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
+        fg->stub()) {
+      return false;
+    }
+    // Defer inlining in the case of pipeline.
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (fg->stage() != -1 && stage_num > 1) {
+      return false;
+    }
+    // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
+    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+      return false;
+    }
+    return true;
+  }
+
   bool IsRecursive(const FuncGraphPtr &fg) {
     // The user guarantees that fg has no recursive.
     if (no_recursive_) {
@@ -191,7 +198,7 @@ class InlinerBase : public AnfVisitor {
     return is_recursive_;
   }
 
-  bool no_recursive() { return no_recursive_; }
+  bool no_recursive() const { return no_recursive_; }
 
  private:
   AnfNodePtr InlineMove(const AnfNodePtr &node, const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &args,
@@ -309,7 +316,7 @@ class InlinerBase : public AnfVisitor {
     return ret_node;
   }
 
-  bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) {
+  bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) const {
     // When branch has dead node or poly node, do not perform inline.
     if (IsDeadNode(sw_inputs[kSwitchTrueBranchIndex]) || IsPolyNode(sw_inputs[kSwitchTrueBranchIndex]) ||
         IsDeadNode(sw_inputs[kSwitchFalseBranchIndex]) || IsPolyNode(sw_inputs[kSwitchFalseBranchIndex])) {
