@@ -315,7 +315,7 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return false;
   }
-  auto real_path = CreatePrefixPath(filename);
+  auto real_path = CreatePrefixPath(filename, true);
   if (!real_path.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << filename;
     return false;
@@ -348,15 +348,17 @@ std::string Common::GetUserDefineCachePath() {
   if (config_path != "") {
     return config_path;
   }
-  const char *value = ::getenv(kCOMPILER_CACHE_PATH);
-  if (value == nullptr) {
+  config_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
+  if (config_path.empty()) {
+    config_path = common::GetEnv(kCOMPILER_CACHE_PATH);
+  }
+  if (config_path.empty()) {
     config_path = "./";
   } else {
-    config_path = std::string(value);
-    (void)FileUtils::CreateNotExistDirs(config_path);
-    if (config_path[config_path.length() - 1] != '/') {
-      config_path += "/";
-    }
+    (void)FileUtils::CreateNotExistDirs(config_path, true);
+  }
+  if (config_path[config_path.length() - 1] != '/') {
+    config_path += "/";
   }
   return config_path;
 }
@@ -380,7 +382,7 @@ std::string Common::GetKernelMetaTempDir() {
     rank_id_str = "0";
   }
   auto kernel_meta_temp_dir = cache_path + +"rank_" + rank_id_str + "/kernel_meta_temp_dir/";
-  (void)FileUtils::CreateNotExistDirs(kernel_meta_temp_dir);
+  (void)FileUtils::CreateNotExistDirs(kernel_meta_temp_dir, true);
   return kernel_meta_temp_dir;
 }
 
