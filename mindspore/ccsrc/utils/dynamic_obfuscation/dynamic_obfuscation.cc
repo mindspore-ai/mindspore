@@ -385,7 +385,7 @@ mindspore::CNodePtr add_stride_slice_node(FuncGraphPtr func_graph, ShapeVector b
   return slice_c_node;
 }
 
-CNodePtr DynamicObfuscator::CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node) {
+CNodePtr DynamicObfuscator::CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node) const {
   mindspore::PrimitivePtr reshape_prim = mindspore::prim::kPrimReshape;
   reshape_prim->set_attr("is_load", MakeValue(true));
   mindspore::ValueNodePtr reshape_v_node = std::make_shared<mindspore::ValueNode>(reshape_prim);
@@ -581,7 +581,7 @@ mindspore::CNodePtr DynamicObfuscator::CheckInputNodes(const mindspore::CNodePtr
 
 mindspore::CNodePtr DynamicObfuscator::BuildOneInputNoWeightNode(const FuncGraphPtr &fg,
                                                                  const mindspore::AnfNodePtr &input_node,
-                                                                 const mindspore::PrimitivePtr prim_node) {
+                                                                 const mindspore::PrimitivePtr prim_node) const {
   if (input_node == nullptr) {
     MS_LOG(ERROR) << "Build Node failed: input node is nullptr.";
     return nullptr;
@@ -620,7 +620,7 @@ mindspore::CNodePtr DynamicObfuscator::BuildOneInputNoWeightNode(const FuncGraph
 mindspore::CNodePtr DynamicObfuscator::BuildOneInputWithWeightNode(const FuncGraphPtr &fg,
                                                                    const mindspore::AnfNodePtr &input_node,
                                                                    const mindspore::CNodePtr &node,
-                                                                   const mindspore::AnfNodePtr &weights) {
+                                                                   const mindspore::AnfNodePtr &weights) const {
   if (node == nullptr) {
     MS_LOG(ERROR) << "Build one input with weight node failed: node is nullptr.";
     return nullptr;
