@@ -27,6 +27,8 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 
+constexpr int64_t queue = 10;
+
 namespace mindspore {
 namespace dataset {
 class DatasetNode;
@@ -51,7 +53,7 @@ using ChangeRequestPtr = std::shared_ptr<ChangeRequest>;
 class ChangeNumWorkersRequest : public ChangeRequest {
  public:
   /// Constructor
-  /// \param num_workers number of workeres to be added to the opertor. Default to 1.
+  /// \param num_workers number of workeres to be added to the operator. Default to 1.
   explicit ChangeNumWorkersRequest(int32_t num_workers = 1) : num_workers_(num_workers) {}
   virtual ~ChangeNumWorkersRequest() = default;
 
@@ -64,7 +66,7 @@ class ChangeNumWorkersRequest : public ChangeRequest {
   int32_t num_workers_;
 };
 
-/// ChangeRequest to change the size of the oupout connector of an operator.
+/// ChangeRequest to change the size of the oupout connector of an operators.
 class ResizeConnectorRequest : public ChangeRequest {
  public:
   /// Constructor
@@ -84,11 +86,11 @@ class ResizeConnectorRequest : public ChangeRequest {
   int32_t new_size_;
 };
 
-/// A callback class used by Aututune to queue changes for opertors
+/// A callback class used by Aututune to queue changes for operators
 class AutotuneCallback : public DSCallback {
  public:
   AutotuneCallback(int32_t step_size, DatasetOp *op)
-      : DSCallback(step_size), op_(op), change_request_queue_(std::make_unique<Queue<ChangeRequestPtr>>(10)) {}
+      : DSCallback(step_size), op_(op), change_request_queue_(std::make_unique<Queue<ChangeRequestPtr>>(queue)) {}
   virtual ~AutotuneCallback() = default;
 
   Status DSNStepBegin(const CallbackParam &cb_param) override;

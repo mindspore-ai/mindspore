@@ -66,10 +66,14 @@ Status CVTensor::CreateFromMat(const cv::Mat &mat, const dsize_t rank, CVTensorP
 }
 
 std::pair<std::array<int, 2>, int> CVTensor::IsValidImage(const TensorShape &shape, const DataType &type) {
-  std::array<int, 2> size = {1, 1};
-  if (shape.Rank() <= 2 || (shape.Rank() == 3 && shape[2] <= CV_CN_MAX)) {
+  constexpr int64_t array_size = 2;
+  constexpr int64_t rank_two = 2;
+  constexpr int64_t rank_three = 3;
+  constexpr int64_t index = 2;
+  std::array<int, array_size> size = {1, 1};
+  if (shape.Rank() <= rank_two || (shape.Rank() == rank_three && shape[index] <= CV_CN_MAX)) {
     uint16_t ch = 1;
-    if (shape.Rank() == 3) {
+    if (shape.Rank() == rank_three) {
       ch = static_cast<uint16_t>(shape[2]);
     }
     if (shape.Rank() > 0) {

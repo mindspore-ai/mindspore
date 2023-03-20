@@ -1697,7 +1697,8 @@ template <typename T>
 Status ISTFT(const Eigen::MatrixXcd &stft_matrix, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t hop_length,
              int32_t win_length, WindowType window_type, bool center, int32_t length) {
   // check input
-  CHECK_FAIL_RETURN_UNEXPECTED(n_fft == ((stft_matrix.rows() - 1) * 2),
+  constexpr int64_t transform_size = 2;
+  CHECK_FAIL_RETURN_UNEXPECTED(n_fft == ((stft_matrix.rows() - 1) * transform_size),
                                "GriffinLim: the frequency of the input should equal to n_fft / 2 + 1");
 
   // window
@@ -2073,7 +2074,10 @@ Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr
                            int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                            float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum,
                            NormType norm, MelType mel_type, std::mt19937 rnd) {
-  f_max = f_max == 0 ? static_cast<T>(std::floor(sample_rate / 2)) : f_max;
+  constexpr int32_t sample_rate_factor = 2;
+  f_max = std::fabs(f_max) <= std::numeric_limits<float>::epsilon()
+            ? static_cast<T>(std::floor(sample_rate / sample_rate_factor))
+            : f_max;
   // create fb mat <freq, n_mels>
   std::shared_ptr<Tensor> freq_bin_mat;
   RETURN_IF_NOT_OK(CreateFbanks<T>(&freq_bin_mat, n_stft, f_min, f_max, n_mels, sample_rate, norm, mel_type));

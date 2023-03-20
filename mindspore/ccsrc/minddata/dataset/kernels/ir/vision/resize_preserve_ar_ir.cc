@@ -32,7 +32,8 @@ ResizePreserveAROperation::~ResizePreserveAROperation() = default;
 std::string ResizePreserveAROperation::Name() const { return kResizePreserveAROperation; }
 
 Status ResizePreserveAROperation::ValidateParams() {
-  if (img_orientation_ < 1 || img_orientation_ > 8) {
+  constexpr int64_t max_img_orientation = 8;
+  if (img_orientation_ < 1 || img_orientation_ > max_img_orientation) {
     std::string err_msg =
       "ResizePreserveAR: img_orientation must be in range of [1, 8], got: " + std::to_string(img_orientation_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

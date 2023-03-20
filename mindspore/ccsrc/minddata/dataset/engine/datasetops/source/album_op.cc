@@ -405,8 +405,9 @@ Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann:
 }
 
 void AlbumOp::Print(std::ostream &out, bool show_all) const {
+  constexpr int64_t field_width = 2;
   // Always show the id and name as first line regardless if this summary or detailed print
-  out << "(" << std::setw(2) << operator_id_ << ") <AlbumOp>:";
+  out << "(" << std::setw(field_width) << operator_id_ << ") <AlbumOp>:";
   if (!show_all) {
     // Call the super class for displaying any common 1-liner info
     ParallelOp::Print(out, show_all);

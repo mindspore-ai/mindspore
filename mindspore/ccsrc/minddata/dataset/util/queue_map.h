@@ -77,12 +77,13 @@ class QueueMap {
     out << "Number of elements: " << qm.num_rows_ << "\n";
     out << "Dumping internal info:\n";
     int64_t k = 0;
+    constexpr int64_t line_breaks_number = 6;
     for (auto &it : qm.all_) {
       auto key = it.first;
       const RequestQueue *rq = it.second.GetPointer();
       out << "(k:" << key << "," << *rq << ") ";
       ++k;
-      if (k % 6 == 0) {
+      if (k % line_breaks_number == 0) {
         out << "\n";
       }
     }

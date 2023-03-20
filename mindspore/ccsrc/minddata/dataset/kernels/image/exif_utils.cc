@@ -120,24 +120,28 @@ int parseExif(const uint8_t *buf, uint32_t len) {
 }
 
 int ExifInfo::parseOrientation(const unsigned char *data, unsigned len) {
-  if (!data || len < 4) return UNKNOW_ORIENTATION;
+  constexpr int64_t len_size = 4;
+  constexpr int64_t len_min = 2;
+  constexpr int64_t offset_factor = 4;
+  constexpr int64_t section_length_min = 16;
+  if (!data || len < len_size) return UNKNOW_ORIENTATION;
 
   if (data[0] != 0xFF || data[1] != 0xD8) return UNKNOW_ORIENTATION;
 
-  while (len > 2) {
+  while (len > len_min) {
     if (data[len - 1] == 0xD9 && data[len - 2] == 0xFF) break;
     len--;
   }
-  if (len <= 2) return UNKNOW_ORIENTATION;
+  if (len <= len_min) return UNKNOW_ORIENTATION;
 
   unsigned int offset = 0;
   for (; offset < len - 1; offset++) {
     if (data[offset] == 0xFF && data[offset + 1] == 0xE1) break;
   }
-  if (offset + 4 > len) return UNKNOW_ORIENTATION;
+  if (offset + offset_factor > len) return UNKNOW_ORIENTATION;
   offset += 2;
   uint16_t section_length = parse_bytes<uint16_t>(data + offset, false);
-  if (offset + section_length > len || section_length < 16) return UNKNOW_ORIENTATION;
+  if (offset + section_length > len || section_length < section_length_min) return UNKNOW_ORIENTATION;
   offset += 2;
 
   return parseExif(data + offset, len - offset);

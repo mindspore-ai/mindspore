@@ -42,7 +42,8 @@ inline std::mt19937 GetRandomDevice() {
   std::mt19937 random_device{static_cast<uint32_t>(number)};
 #else
   int i = 0;
-  while (i < 5) {
+  constexpr int64_t retry_times = 5;
+  while (i < retry_times) {
     try {
       std::mt19937 random_device{std::random_device("/dev/urandom")()};
       return random_device;

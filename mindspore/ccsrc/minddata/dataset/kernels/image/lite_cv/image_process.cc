@@ -843,6 +843,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
 }
 
 static int PadFromPos(int p, int len, PaddBorderType pad_type) {
+  constexpr auto pixel_factor = 2;
   if (p >= 0 && p < len) {
     return p;
   }
@@ -850,7 +851,7 @@ static int PadFromPos(int p, int len, PaddBorderType pad_type) {
     return p < 0 ? 0 : len - 1;
   } else {
     // calculate the position of pixel in reflect mode like edcb|abcdef|edcb
-    return p < 0 ? -p : 2 * len - p - 2;
+    return p < 0 ? -p : pixel_factor * len - p - pixel_factor;
   }
 }
 
@@ -974,7 +975,9 @@ inline void MergeImpl(const std::vector<LiteMat> &mv, T *dst_ptr, int height, in
 }
 
 bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
-  if (mv.size() != 1 && mv.size() != 3 && mv.size() != 4) {
+  constexpr int64_t mv_size_three = 3;
+  constexpr int64_t mv_size_four = 4;
+  if (mv.size() != 1 && mv.size() != mv_size_three && mv.size() != mv_size_four) {
     return false;
   }
 
@@ -1114,7 +1117,8 @@ std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config) {
 
 void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std::vector<float>> &default_boxes,
                   const BoxesConfig config) {
-  if (boxes.size() != default_boxes.size() || config.prior_scaling.size() != 2) {
+  constexpr int64_t prior_scaling_size = 2;
+  if (boxes.size() != default_boxes.size() || config.prior_scaling.size() != prior_scaling_size) {
     boxes = {};
     return;
   }
@@ -1256,7 +1260,8 @@ bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_
 }
 
 bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, FLOAT32_C3 borderValue) {
-  if (src.channel_ == 3 && src.data_type_ == LDataType::FLOAT32) {
+  constexpr int64_t channel = 3;
+  if (src.channel_ == channel && src.data_type_ == LDataType::FLOAT32) {
     return ImplementAffine(src, out_img, M, dsize, borderValue);
   } else {
     return false;
