@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common._decorator import deprecated
@@ -121,38 +122,15 @@ class ReduceLogSumExp(Cell):
 
 class Range(Cell):
     r"""
-    Creates a sequence of numbers in range [start, limit) with step size delta.
-
-    The size of output is :math:`\left \lfloor \frac{limit-start}{delta}  \right \rfloor + 1` and `delta` is the gap
-    between two values in the tensor.
-
-    .. math::
-
-        out_{i+1} = out_{i} +delta
-
-    Args:
-        start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
-            defaults to `0`. Otherwise, it acts as first entry in the range.
-        limit (Union[int, float]): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
-            while set the first entry of the range to `0`. It can not be equal to `start`. Default: None.
-        delta (Union[int, float]): Increment of the range. It can not be equal to zero. Default: 1.
-
-    Outputs:
-        Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> net = nn.Range(1, 8, 2)
-        >>> output = net()
-        >>> print(output)
-        [1 3 5 7]
+    The Range class will be deprecated in the future,
+    this function can be replaced by :func:`ops.range`
     """
 
     def __init__(self, start, limit=None, delta=1):
         """Initialize Range."""
         super(Range, self).__init__()
+        logger.warning("The Range class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.range`")
         if delta == 0:
             raise ValueError(f"For '{self.cls_name}', the 'delta' can not be zero.")
         data = np.arange(start, limit, delta)
@@ -925,70 +903,15 @@ class CosineSimilarity(Cell):
 
 class Moments(Cell):
     """
-    Calculate the mean and variance of the input `x` along the specified `axis`.
-
-    Args:
-        axis (Union[int, tuple(int), None]): Calculates the mean and variance along the specified axis.
-            When the value is None, it means to calculate the mean and variance of all values of `x`. Default: None.
-        keep_dims (Union[bool, None]): If True, the calculation result will retain the dimension of `axis`,
-            and the dimensions of the mean and variance are the same as the input. If False or None,
-            the dimension of `axis` will be reduced. Default: None.
-
-    Inputs:
-        - **x** (Tensor) - Tensor of any dimension used to calculate the mean and variance.
-          Only float16 and float32 are supported.
-
-    Outputs:
-        - **mean** (Tensor) - The mean value of `x` on `axis`, with the same data type as input `x`.
-        - **variance** (Tensor) - The variance of `x` on `axis`, with the same data type as input `x`.
-
-    Raises:
-        TypeError: If `axis` is not one of int, tuple, None.
-        TypeError: If `keep_dims` is neither bool nor None.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> # case1: axis = 0, keep_dims=True
-        >>> x = Tensor(np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]), mindspore.float32)
-        >>> net = nn.Moments(axis=0, keep_dims=True)
-        >>> output = net(x)
-        >>> print(output)
-        (Tensor(shape=[1, 2, 2], dtype=Float32, value=
-        [[[ 3.00000000e+00, 4.00000000e+00],
-          [ 5.00000000e+00, 6.00000000e+00]]]), Tensor(shape=[1, 2, 2], dtype=Float32, value=
-        [[[ 4.00000000e+00, 4.00000000e+00],
-          [ 4.00000000e+00, 4.00000000e+00]]]))
-        >>> # case2: axis = 1, keep_dims=True
-        >>> net = nn.Moments(axis=1, keep_dims=True)
-        >>> output = net(x)
-        >>> print(output)
-        (Tensor(shape=[2, 1, 2], dtype=Float32, value=
-        [[[ 2.00000000e+00, 3.00000000e+00]],
-         [[ 6.00000000e+00, 7.00000000e+00]]]), Tensor(shape=[2, 1, 2], dtype=Float32, value=
-        [[[ 1.00000000e+00, 1.00000000e+00]],
-         [[ 1.00000000e+00, 1.00000000e+00]]]))
-        >>> # case3: axis = 2, keep_dims=None(default)
-        >>> net = nn.Moments(axis=2)
-        >>> output = net(x)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.50000000e+00, 3.50000000e+00],
-         [ 5.50000000e+00, 7.50000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.50000000e-01, 2.50000000e-01],
-         [ 2.50000000e-01, 2.50000000e-01]]))
-        >>> # case4: axis = None(default), keep_dims=None(default)
-        >>> net = nn.Moments()
-        >>> output = net(x)
-        >>> print(output)
-        (Tensor(shape=[], dtype=Float32, value= 4.5), Tensor(shape=[], dtype=Float32, value= 5.25))
+    The Moments class will be deprecated in the future,
+    this function can be replaced by :func:`ops.var_mean`
     """
 
     def __init__(self, axis=None, keep_dims=None):
         """Initialize Moments."""
         super(Moments, self).__init__()
+        logger.warning("The Moments class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.var_mean`")
         if axis is None:
             axis = ()
         if isinstance(axis, tuple):

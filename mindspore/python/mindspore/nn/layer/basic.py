@@ -677,65 +677,15 @@ class ClipByNorm(Cell):
 
 class Norm(Cell):
     r"""
-    Computes the norm of vectors, currently including Euclidean norm, i.e., :math:`L_2`-norm.
-
-    .. math::
-
-        norm(x) = \sqrt{\sum_{i=1}^{n} (x_i^2)}
-
-    Args:
-        axis (Union[tuple, int]): The axis over which to compute vector norms. Default: ().
-        keep_dims (bool): If true, the axis indicated in `axis` are kept with size 1. Otherwise,
-                   the dimensions in `axis` are removed from the output shape. Default: False.
-
-    Inputs:
-        - **x** (Tensor) - Tensor which is not empty. The data type should be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, output tensor with dimensions in 'axis' reduced to 1 will be returned if 'keep_dims' is True;
-        otherwise a Tensor with dimensions in 'axis' removed is returned. The data type is the same with `x`.
-
-    Raises:
-        TypeError: If `axis` is neither an int nor a tuple.
-        TypeError: If `keep_dims` is not a bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> net = nn.Norm(axis=0)
-        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
-        >>> print(x.shape)
-        (2, 4)
-        >>> output = net(x)
-        >>> print(output)
-        [4.472136 4.1231055 9.486833 6.0827627]
-        >>> print(output.shape)
-        (4,)
-        >>> net = nn.Norm(axis=0, keep_dims=True)
-        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
-        >>> print(x.shape)
-        (2, 4)
-        >>> output = net(x)
-        >>> print(output)
-        [4.472136 4.1231055 9.486833 6.0827627]
-        >>> print(output.shape)
-        (1, 4)
-        >>> net = nn.Norm(axis=1)
-        >>> x = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
-        >>> print(x.shape)
-        (2, 4)
-        >>> output = net(x)
-        >>> print(output)
-        [10.677078 7.071068]
-        >>> print(output.shape)
-        (2,)
+    The Norm class will be deprecated in the future,
+    this function can be replaced by :func:`ops.norm`
     """
 
     def __init__(self, axis=(), keep_dims=False):
         """Initialize Norm."""
         super(Norm, self).__init__()
+        logger.warning("The Norm class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.norm`")
         Validator.check_value_type(
             "keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
@@ -757,122 +707,15 @@ class Norm(Cell):
 
 class OneHot(Cell):
     """
-    Returns a one-hot tensor.
-
-    The locations represented by indices in argument `indices` take value on_value,
-    while all other locations take value off_value.
-
-    Note:
-        If the input indices is rank :math:`N`, the output will have rank :math:`N+1`. The new
-        axis is created at dimension `axis`.
-
-    If `indices` is a scalar, the output shape will be a vector of length `depth`.
-
-    If `indices` is a vector of length `features`, the output shape will be:
-
-    .. code-block::
-
-        features * depth if axis == -1
-
-        depth * features if axis == 0
-
-    If `indices` is a matrix with shape `[batch, features]`, the output shape will be:
-
-    .. code-block::
-
-        batch * features * depth if axis == -1
-
-        batch * depth * features if axis == 1
-
-        depth * batch * features if axis == 0
-
-    Args:
-        axis (int): Features x depth if axis is -1, depth x features
-                    if axis is 0. Default: -1.
-        depth (int): A scalar defining the depth of the one hot dimension. Default: 1.
-        on_value (float): A scalar defining the value to fill in output[i][j]
-                          when indices[j] = i. Default: 1.0.
-        off_value (float): A scalar defining the value to fill in output[i][j]
-                           when indices[j] != i. Default: 0.0.
-        dtype (:class:`mindspore.dtype`): Data type of 'on_value' and 'off_value', not the
-                                          data type of indices. Default: mindspore.float32.
-
-    Inputs:
-        - **indices** (Tensor) - A tensor of indices with data type of int32 or int64.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, the one-hot tensor of data type `dtype` with dimension at `axis` expanded to `depth` and filled with
-        on_value and off_value. The dimension of the `Outputs` is equal to the dimension of the `indices` plus one.
-
-    Raises:
-        TypeError: If `axis` or `depth` is not an int.
-        TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If `axis` is not in range [-1, len(indices_shape)].
-        ValueError: If `depth` is less than 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> # 1st sample: add new coordinates at axis 1
-        >>> net = nn.OneHot(depth=4, axis=1)
-        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
-        >>> output = net(indices)
-        >>> print(output)
-        [[[0. 0.]
-          [1. 0.]
-          [0. 0.]
-          [0. 1.]]
-         [[1. 0.]
-          [0. 0.]
-          [0. 1.]
-          [0. 0.]]]
-        >>> # The results are shown below:
-        >>> print(output.shape)
-        (2, 4, 2)
-        >>> # 2nd sample: add new coordinates at axis 0
-        >>> net = nn.OneHot(depth=4, axis=0)
-        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
-        >>> output = net(indices)
-        >>> print(output)
-        [[[0. 0.]
-          [1. 0.]]
-         [[1. 0.]
-          [0. 0.]]
-         [[0. 0.]
-          [0. 1.]]
-         [[0. 1.]
-          [0. 0.]]]
-        >>> # The results are shown below:
-        >>> print(output.shape)
-        (4, 2, 2)
-        >>> # 3rd sample: add new coordinates at the last dimension.
-        >>> net = nn.OneHot(depth=4, axis=-1)
-        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
-        >>> output = net(indices)
-        >>> # The results are shown below:
-        >>> print(output)
-        [[[0. 1. 0. 0.]
-          [0. 0. 0. 1.]]
-         [[1. 0. 0. 0.]
-          [0. 0. 1. 0.]]]
-        >>> print(output.shape)
-        (2, 2, 4)
-        >>> indices = Tensor([1, 3, 0, 2], dtype=mindspore.int32)
-        >>> output = net(indices)
-        >>> print(output)
-        [[0. 1. 0. 0.]
-         [0. 0. 0. 1.]
-         [1. 0. 0. 0.]
-         [0. 0. 1. 0.]]
-        >>> print(output.shape)
-        (4, 4)
+    The OneHot class will be deprecated in the future,
+    this function can be replaced by :func:`ops.one_hot`
     """
 
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
         """Initialize OneHot."""
         super(OneHot, self).__init__()
+        logger.warning("The OneHot class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.one_hot`")
         self.onehot = P.OneHot(axis)
         self.depth = depth
         self.dtype = dtype
@@ -1233,88 +1076,15 @@ def tril(x_shape, x_dtype, k):
 
 class Tril(Cell):
     """
-    Returns a tensor, the elements above the specified main diagonal are set to zero.
-
-    Divide the matrix elements into upper and lower triangles along the main diagonal (including diagonals).
-
-    The parameter `k` controls the choice of diagonal.
-    If `k` = 0, split along the main diagonal and keep all the elements of the lower triangle.
-    If `k` > 0, select the diagonal `k` along the main diagonal upwards, and keep all the elements of the lower
-    triangle.
-    If `k` < 0, select the diagonal `k` along the main diagonal down, and keep all the elements of the lower
-    triangle.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **k** (Int) - The index of diagonal. Default: 0. If the dimensions of the input matrix are d1 and d2,
-          the range of k should be in [-min(d1, d2)+1, min(d1, d2)-1], and the output value will be the same as the
-          input `x` when `k` is out of range.
-
-    Outputs:
-        Tensor, has the same shape and type as input `x`.
-
-    Raises:
-        TypeError: If `k` is not an int.
-        ValueError: If length of shape of `x` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> # case1: k = 0
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = nn.Tril()
-        >>> result = tril(x)
-        >>> print(result)
-        [[ 1  0  0  0]
-         [ 5  6  0  0]
-         [10 11 12  0]
-         [14 15 16 17]]
-        >>> # case2: k = 1
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = nn.Tril()
-        >>> result = tril(x, 1)
-        >>> print(result)
-        [[ 1  2  0  0]
-         [ 5  6  7  0]
-         [10 11 12 13]
-         [14 15 16 17]]
-        >>> # case3: k = 2
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = nn.Tril()
-        >>> result = tril(x, 2)
-        >>> print(result)
-        [[ 1  2  3  0]
-         [ 5  6  7  8]
-         [10 11 12 13]
-         [14 15 16 17]]
-        >>> # case4: k = -1
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = nn.Tril()
-        >>> result = tril(x, -1)
-        >>> print(result)
-        [[ 0  0  0  0]
-         [ 5  0  0  0]
-         [10 11  0  0]
-         [14 15 16  0]]
+    The Tril class will be deprecated in the future,
+    this function can be replaced by :func:`ops.tril`
     """
 
     def __init__(self):
         """Initialize Tril."""
         super(Tril, self).__init__()
+        logger.warning("The Tril class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.tril`")
         self.dtype = P.DType()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -1333,79 +1103,15 @@ def triu(x_shape, x_dtype, k):
 
 class Triu(Cell):
     """
-    Returns a tensor with elements below the kth diagonal zeroed.
-
-    The upper triangular part of the matrix is defined as the elements on and above the diagonal.
-
-    The parameter `k` controls the diagonal to be considered. If `k` = 0, all elements on and above the main diagonal
-    are retained. Positive values do not include as many diagonals above the main diagonal. Similarly,
-    negative values include as many diagonals below the main diagonal.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. The data type is Number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **k** (Int) - The index of diagonal. Default: 0
-
-    Outputs:
-        Tensor, has the same type and shape as input `x`.
-
-    Raises:
-        TypeError: If `k` is not an int.
-        ValueError: If length of shape of `x` is less than 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = nn.Triu()
-        >>> result = triu(x)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 0  6  7  8]
-         [ 0  0 12 13]
-         [ 0  0  0 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = nn.Triu()
-        >>> result = triu(x, 1)
-        >>> print(result)
-        [[ 0  2  3  4]
-         [ 0  0  7  8]
-         [ 0  0  0 13]
-         [ 0  0  0  0]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = nn.Triu()
-        >>> result = triu(x, 2)
-        >>> print(result)
-        [[ 0  0  3  4]
-         [ 0  0  0  8]
-         [ 0  0  0  0]
-         [ 0  0  0  0]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = nn.Triu()
-        >>> result = triu(x, -1)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 5  6  7  8]
-         [ 0 11 12 13]
-         [ 0  0 16 17]]
+    The Triu class will be deprecated in the future,
+    this function can be replaced by :func:`ops.triu`
     """
 
     def __init__(self):
         """Initialize Triu."""
         super(Triu, self).__init__()
+        logger.warning("The Triu class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.triu`")
         self.dtype = P.DType()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -1444,68 +1150,15 @@ def _get_matrix_diag_part_assist(x_shape, x_dtype):
 
 class MatrixDiag(Cell):
     r"""
-    Returns a batched diagonal tensor with a given batched diagonal values.
-
-    Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
-    :math:`k+1` with dimensions :math:`[I, J, K, ..., N, N]` where:
-    :math:`output[i, j, k, ..., m, n] = 1\{m=n\} * x[i, j, k, ..., n]`.
-
-    Inputs:
-        - **x** (Tensor) - The diagonal values. It can be one of the following data types:
-          float32, float16, int32, int8, and uint8.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same type as input `x`. The shape must be x.shape + (x.shape[-1], ).
-
-    Raises:
-        TypeError: If dtype of `x` is not one of float32, float16, int32, int8 or uint8.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> x = Tensor(np.array([1, -1]), mindspore.float32)
-        >>> matrix_diag = nn.MatrixDiag()
-        >>> output = matrix_diag(x)
-        >>> print(x.shape)
-        (2,)
-        >>> print(output)
-        [[ 1.  0.]
-         [ 0. -1.]]
-        >>> print(output.shape)
-        (2, 2)
-        >>> x = Tensor(np.array([[1, -1], [1, -1]]), mindspore.float32)
-        >>> matrix_diag = nn.MatrixDiag()
-        >>> output = matrix_diag(x)
-        >>> print(x.shape)
-        (2, 2)
-        >>> print(output)
-        [[[ 1.  0.]
-          [ 0. -1.]]
-         [[ 1.  0.]
-          [ 0. -1.]]]
-        >>> print(output.shape)
-        (2, 2, 2)
-        >>> x = Tensor(np.array([[1, -1, 1], [1, -1, 1]]), mindspore.float32)
-        >>> matrix_diag = nn.MatrixDiag()
-        >>> output = matrix_diag(x)
-        >>> print(x.shape)
-        (2, 3)
-        >>> print(output)
-        [[[ 1.  0.  0.]
-          [ 0. -1.  0.]
-          [ 0.  0.  1.]]
-         [[ 1.  0.  0.]
-          [ 0. -1.  0.]
-          [ 0.  0.  1.]]]
-        >>> print(output.shape)
-        (2, 3, 3)
+    The MatrixDiag class will be deprecated in the future,
+    this function can be replaced by :func:`ops.diag`
     """
 
     def __init__(self):
         """Initialize MatrixDiag."""
         super(MatrixDiag, self).__init__()
+        logger.warning("The MatrixDiag class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.diag`")
         self.matrix_diag = inner.MatrixDiag()
         self.dtype = P.DType()
 
@@ -1519,50 +1172,15 @@ class MatrixDiag(Cell):
 
 class MatrixDiagPart(Cell):
     r"""
-    Returns the batched diagonal part of a batched tensor.
-
-    Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
-    :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N)]` where:
-    :math:`output[i, j, k, ..., n] = x[i, j, k, ..., n, n]`.
-
-    Inputs:
-        - **x** (Tensor) - The batched tensor. It can be one of the following data types:
-          float32, float16, int32, int8, and uint8.
-
-    Outputs:
-        Tensor, has the same type as input `x`. The shape must be x.shape[:-2] + [min(x.shape[-2:])].
-
-    Raises:
-        TypeError: If dtype of `x` is not one of float32, float16, int32, int8 or uint8.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> x = Tensor([[[-1, 0], [0, 1]],
-        ...             [[-1, 0], [0, 1]],
-        ...             [[-1, 0], [0, 1]]], mindspore.float32)
-        >>> matrix_diag_part = nn.MatrixDiagPart()
-        >>> output = matrix_diag_part(x)
-        >>> print(output)
-        [[-1.  1.]
-         [-1.  1.]
-         [-1.  1.]]
-        >>> x = Tensor([[-1, 0, 0, 1],
-        ...             [-1, 0, 0, 1],
-        ...             [-1, 0, 0, 1],
-        ...             [-1, 0, 0, 1]], mindspore.float32)
-        >>> matrix_diag_part = nn.MatrixDiagPart()
-        >>> output = matrix_diag_part(x)
-        >>> print(output)
-        [-1.  0.  0.  1.]
+    The MatrixDiagPart class will be deprecated in the future,
+    this function can be replaced by :func:`ops.diagonal`
     """
 
     def __init__(self):
         """Initialize MatrixDiagPart."""
         super(MatrixDiagPart, self).__init__()
+        logger.warning("The MatrixDiagPart class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.diagonal`")
         self.matrix_diag_part = inner.MatrixDiagPart()
         self.dtype = P.DType()
 
@@ -1640,52 +1258,15 @@ def _check_input_dim(axis, dim, cls_name):
 
 class Roll(Cell):
     """
-    Rolls the elements of a tensor along an axis.
-
-    The elements are shifted positively (towards larger indices) by the offset of `shift` along the dimension of `axis`.
-    Negative `shift` values will shift elements in the opposite direction. Elements that roll passed the last position
-    will wrap around to the first and vice versa. Multiple shifts along multiple axes may be specified.
-
-    Args:
-        shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-            positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
-            in the opposite direction.
-        axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
-
-    Inputs:
-        - **input_x** (Tensor) - Input tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `shift` is not an int, a tuple or a list.
-        TypeError: If `axis` is not an int, a tuple or a list.
-        TypeError: If element of `shift` is not an int.
-        TypeError: If element of `axis` is not an int.
-        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
-        ValueError: If length of shape of `shift` is not equal to length of shape of `axis`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
-    Examples:
-        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-        >>> op = nn.Roll(shift=2, axis=0)
-        >>> output = op(input_x)
-        >>> print(output)
-        [3. 4. 0. 1. 2.]
-        >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
-        >>> op = nn.Roll(shift=[1, -2], axis=[0, 1])
-        >>> output = op(input_x)
-        >>> print(output)
-        [[7. 8. 9. 5. 6.]
-         [2. 3. 4. 0. 1.]]
+    The Roll class will be deprecated in the future,
+    this function can be replaced by :func:`ops.roll`
     """
 
     def __init__(self, shift, axis):
         """Initialize Roll"""
         super(Roll, self).__init__()
+        logger.warning("The Roll class will be deprecated in the future,"
+                       "this function can be replaced by :func:`ops.roll`")
         Validator.check_value_type(
             "shift", shift, [int, tuple, list], self.cls_name)
         Validator.check_value_type(

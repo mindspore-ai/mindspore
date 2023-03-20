@@ -393,13 +393,3 @@ Dynamic LR函数
     mindspore.nn.Flatten
     mindspore.nn.Identity
     mindspore.nn.Unflatten
-
-数学运算
-----------
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Moments
