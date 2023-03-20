@@ -4577,8 +4577,7 @@ def orgqr(input, input2):
         >>> input = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]),
         ... mindspore.float32)
         >>> input2 = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
-        >>> net = ops.orgqr()
-        >>> y = net(input, input2)
+        >>> y = ops.orgqr(input, input2)
         >>> print(y)
         [[-0.54999995 -0.2128925   0.8137956 ]
          [ 0.47119996 -0.8752807   0.08240613]
@@ -5357,13 +5356,13 @@ def outer(input, vec2):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore import ops
-        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> vec2 = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> input = Tensor(np.array([7, 8, 9]), mindspore.int32)
+        >>> vec2 = Tensor(np.array([7, 10, 11]), mindspore.int32)
         >>> out = ops.outer(input, vec2)
         >>> print(out)
-        [[1 2 3]
-         [2 4 6]
-         [3 6 9]]
+        [[49 70 77]
+         [56 80 88]
+         [63 90 99]]
     """
 
     if not isinstance(input, (Tensor, Tensor_)):
@@ -8630,11 +8629,11 @@ def quantile(input, q, axis=None, keepdims=False):
 
 
     Examples:
-        >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
-        >>> q = Tensor(np.array([0, 0.5, 1]), mindspore.float32)
+        >>> x = Tensor(np.array([-0.7832, 0.8003, 0.8111]), mindspore.float32)
+        >>> q = Tensor(np.array([0.1, 0.7, 0.9]), mindspore.float32)
         >>> output = ops.quantile(x, q)
         >>> print(output.asnumpy())
-        [-0.5446  0.07  0.9214]
+        [-0.4665 0.80462 0.80894]
     """
 
     if axis is not None:
@@ -8687,11 +8686,11 @@ def nanquantile(input, q, axis=None, keepdims=False):
 
 
     Examples:
-        >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
-        >>> q = Tensor(np.array([0, 0.5, 1]), mindspore.float32)
+        >>> x = Tensor(np.array([float('nan'), 0.8003, 0.8111]), mindspore.float32)
+        >>> q = Tensor(np.array([0.1, 0.7, 0.9]), mindspore.float32)
         >>> output = ops.nanquantile(x, q)
         >>> print(output.asnumpy())
-        [-0.5446  0.07  0.9214]
+        [0.80138 0.80786 0.81002]
     """
 
     if axis is not None:

@@ -1499,6 +1499,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis = ()
         return tensor_operator_registry.get('amax')(self, axis, keepdims, initial=initial, where=where)
 
+    def aminmax(self, *, axis=0, keepdims=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.aminmax`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('aminmax')(self, axis=axis, keepdims=keepdims)
+
     def reverse_sequence(self, seq_lengths, seq_dim=0, batch_dim=0):
         """
         For details, please refer to :func:`mindspore.ops.reverse_sequence`.
@@ -1652,6 +1659,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('dot')(self, other)
 
+    def outer(self, vec2):
+        r"""
+        For details, please refer to :func:`mindspore.ops.outer`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('outer')(self, vec2)
+
     def rad2deg(self):
         r"""
         For details, please refer to :func:`mindspore.ops.rad2deg`.
@@ -1715,6 +1729,20 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get('float_power')(self, other)
+
+    def fmax(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.fmax`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fmax')(self, other)
+
+    def fmin(self, other):
+        r"""
+        For details, please refer to :func:`mindspore.ops.fmin`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fmin')(self, other)
 
     def fmod(self, other):
         r"""
@@ -4255,6 +4283,26 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('imag')(self)
 
+    def quantile(self, q, axis=None, keepdims=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.quantile`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('quantile')(self, q, axis, keepdims)
+
+    def nanquantile(self, q, axis=None, keepdims=False):
+        """
+        For details, please refer to :func:`mindspore.ops.nanquantile`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nanquantile')(self, q, axis, keepdims)
+
+    def orgqr(self, input2):
+        r"""
+        For details, please refer to :func:`mindspore.ops.orgqr`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('orgqr')(self, input2)
 
     def nextafter(self, other):
         r"""
@@ -4262,7 +4310,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get('nextafter')(self, other)
-
 
     def qr(self, some=True):
         r"""
