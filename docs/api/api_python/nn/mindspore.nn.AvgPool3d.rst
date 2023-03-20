@@ -46,5 +46,5 @@ mindspore.nn.AvgPool3d
         - **ValueError** - `padding` 为一个tuple/list时，长度不为1或者3。
         - **ValueError** - `padding` 的元素小于0。
         - **ValueError** - `x` 的shape长度不等于4或5。
-        - **ValueError** - `divisor_override` 为0。
+        - **ValueError** - `divisor_override` 小于等于0。
         - **ValueError** -  `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
