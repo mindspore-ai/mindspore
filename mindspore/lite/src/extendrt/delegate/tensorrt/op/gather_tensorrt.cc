@@ -31,7 +31,8 @@ int GatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(ERROR) << "invalid output tensor size: " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors[1].DataType() != DataType::kNumberTypeInt32) {
+  if (in_tensors[1].DataType() != DataType::kNumberTypeInt32 &&
+      in_tensors[1].DataType() != DataType::kNumberTypeInt64) {
     MS_LOG(ERROR) << "Gather indices only support Int32";
     return RET_ERROR;
   }

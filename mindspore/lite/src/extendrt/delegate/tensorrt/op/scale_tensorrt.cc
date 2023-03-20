@@ -114,7 +114,7 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(nvinfer1::ITensor *input, int64_
   } else if (input_weight_shape.size() == 1 && input_weight_shape[0] == total) {
     mode = nvinfer1::ScaleMode::kELEMENTWISE;
   } else {
-    MS_LOG(ERROR) << "ScaleMode create failed: " << op_name_;
+    MS_LOG(WARNING) << "ScaleMode create failed: " << op_name_;
     return mode;
   }
   MS_LOG(DEBUG) << op_name_ << " ScaleMode(UNIFORM 0, CHANNEL 1, ELEMENTWISE 2): " << static_cast<int>(mode);
