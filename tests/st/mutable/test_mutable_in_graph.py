@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -645,6 +645,9 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
     assert compare(output, expect)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_grad_mutable_in_primal():
     """
     Feature: Support mutable in graph.
@@ -679,3 +682,24 @@ def test_grad_mutable_in_primal():
     expect_output = np.array([[1.4100001, 1.5999999, 6.6],
                               [1.4100001, 1.5999999, 6.6]]).astype(np.float32)
     assert np.allclose(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_mutable_empty_list():
+    """
+    Feature: Support mutable in graph.
+    Description: Support empty list with mutable.
+    Expectation: Get the correct gradients.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, index):
+            list_out = x[:index]
+            return list_out
+
+    x = mutable([])
+    index = mutable(3)
+    net = Net()
+    out = net(x, index)
+    assert out == []
