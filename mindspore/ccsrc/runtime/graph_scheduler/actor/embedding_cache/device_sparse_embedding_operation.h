@@ -66,14 +66,14 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Look up feature weights on Device Embedding Cache.
   bool LookupDeviceCache(const DeviceAddress *embed_device_address, void *ids, void *embedding_cache, size_t ids_num,
-                         size_t cache_size, size_t embedding_size, void *outputs);
+                         size_t embedding_size, void *outputs);
 
   // Update feature weights on Device Embedding Cache.
-  bool UpdateDeviceCache(void *ids, void *update_value, size_t indices_num, size_t cache_size, size_t embedding_size,
-                         void *embedding_cache, DeviceAddress *embed_device_address);
+  bool UpdateDeviceCache(void *ids, void *update_value, size_t indices_num, size_t embedding_size,
+                         void *embedding_cache, const DeviceAddress *embed_device_address);
 
   // Erase feature embeddings on device embedding cache.
-  bool EraseDeviceCache(void *ids, size_t ids_num, void *embedding_cache, DeviceAddress *embed_device_address);
+  bool EraseDeviceCache(void *ids, size_t ids_num, void *embedding_cache, const DeviceAddress *embed_device_address);
 
   // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
   // slice corresponding to the process.

@@ -90,7 +90,10 @@ void EmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAdd
 
 template <typename KeyType, typename ValueType, typename Allocator>
 void EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
+  MS_EXCEPTION_IF_NULL(cache_);
   cache_ = nullptr;
+  MS_EXCEPTION_IF_NULL(storage_);
+  storage_->Finalize();
   storage_ = nullptr;
 }
 

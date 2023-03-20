@@ -20,6 +20,8 @@
 #include <tuple>
 #include <utility>
 #include <memory>
+#include <functional>
+#include "include/backend/device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_hash_table.h"
 
 namespace mindspore {

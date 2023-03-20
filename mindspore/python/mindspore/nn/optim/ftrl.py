@@ -48,6 +48,42 @@ def _tensor_run_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_powe
     return success
 
 
+def _apply_map_tensor_ftrl(l1, l2, lr_power, learning_rate, linear, weight, moment, indices, values):
+    """Apllpy ftrl optimizer for map parameter"""
+    success = True
+    linear_slice = linear.get(indices)
+    moment_slice = moment.get(indices)
+    weight_slice = weight.get(indices)
+
+    op_pow = P.Pow()
+    op_sign = P.Sign()
+    op_greater = P.Greater()
+    op_select = P.Select()
+    op_abs = P.Abs()
+
+    lr_power_val = -lr_power
+    accu_pow = op_pow(moment_slice, lr_power_val)
+    moment_slice = F.depend(moment_slice, accu_pow)
+    cur_accu = moment_slice + values * values
+    cur_accu_pow = op_pow(cur_accu, lr_power_val)
+    sigma = (cur_accu_pow - accu_pow) / learning_rate
+
+    linear_slice = linear_slice + values - sigma * weight_slice
+
+    update_weight_cond = op_greater(op_abs(linear_slice), l1)
+    updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate + 2 * l2)
+    zeros = zeros_like(weight_slice)
+
+    weight_slice = op_select(update_weight_cond, updated_weight, zeros)
+    moment_slice = cur_accu
+
+    moment.put(indices, moment_slice)
+    linear.put(indices, linear_slice)
+    weight.put(indices, weight_slice)
+
+    return success
+
+
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "MapTensor",
                     "MapTensor", "MapTensor", "MapTensor", "Bool", "Bool",
                     "Function", "Bool", "Function", "Bool")
@@ -62,35 +98,7 @@ def _run_map_tensor_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_
         success = F.depend(success, distributed_sparse_opt(weight, moment, linear, values, indices))
     elif cache_enable:
         # PS Cache mode.
-        linear_slice = linear.get(indices)
-        moment_slice = moment.get(indices)
-        weight_slice = weight.get(indices)
-
-        op_pow = P.Pow()
-        op_sign = P.Sign()
-        op_greater = P.Greater()
-        op_select = P.Select()
-        op_abs = P.Abs()
-
-        lr_power_val = -lr_power
-        accu_pow = op_pow(moment_slice, lr_power_val)
-        moment_slice = F.depend(moment_slice, accu_pow)
-        cur_accu = moment_slice + values * values
-        cur_accu_pow = op_pow(cur_accu, lr_power_val)
-        sigma = (cur_accu_pow - accu_pow) / learning_rate
-
-        linear_slice = linear_slice + values - sigma * weight_slice
-
-        update_weight_cond = op_greater(op_abs(linear_slice), l1)
-        updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate + 2 * l2)
-        zeros = zeros_like(weight_slice)
-
-        weight_slice = op_select(update_weight_cond, updated_weight, zeros)
-        moment_slice = cur_accu
-
-        moment.put(indices, moment_slice)
-        linear.put(indices, linear_slice)
-        weight.put(indices, weight_slice)
+        _apply_map_tensor_ftrl(l1, l2, lr_power, learning_rate, linear, weight, moment, indices, values)
     else:
         raise Exception("Unexpected mode for distributed optimizer.")
     return success
@@ -139,37 +147,7 @@ def _run_map_tensor_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices, values = gradient.get_data()
-
-    linear_slice = linear.get(indices)
-    moment_slice = moment.get(indices)
-    weight_slice = weight.get(indices)
-
-    op_pow = P.Pow()
-    op_sign = P.Sign()
-    op_greater = P.Greater()
-    op_select = P.Select()
-    op_abs = P.Abs()
-
-    lr_power_val = -lr_power
-    accu_pow = op_pow(moment_slice, lr_power_val)
-    moment_slice = F.depend(moment_slice, accu_pow)
-    cur_accu = moment_slice + values * values
-    cur_accu_pow = op_pow(cur_accu, lr_power_val)
-    sigma = (cur_accu_pow - accu_pow) / learning_rate
-
-    linear_slice = linear_slice + values - sigma * weight_slice
-
-    update_weight_cond = op_greater(op_abs(linear_slice), l1)
-    updated_weight = (l1 * op_sign(linear_slice) - linear_slice) / (cur_accu_pow / learning_rate + 2 * l2)
-    zeros = zeros_like(weight_slice)
-
-    weight_slice = op_select(update_weight_cond, updated_weight, zeros)
-    moment_slice = cur_accu
-
-    moment.put(indices, moment_slice)
-    linear.put(indices, linear_slice)
-    weight.put(indices, weight_slice)
-
+    _apply_map_tensor_ftrl(l1, l2, lr_power, learning_rate, linear, weight, moment, indices, values)
     return success
 
 
@@ -188,10 +166,13 @@ def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate,
     return success
 
 
-def _check_param(initial_accum, lr_power, l1, l2, use_locking, prim_name=None):
+def _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, prim_name=None):
     """Check param."""
     validator.check_value_type("initial_accum", initial_accum, [float], prim_name)
     validator.check_number("initial_accum", initial_accum, 0.0, Rel.GE, prim_name)
+
+    validator.check_value_type("learning_rate", learning_rate, [float], prim_name)
+    validator.check_positive_float(learning_rate, "learning_rate", prim_name)
 
     validator.check_value_type("lr_power", lr_power, [float], prim_name)
     validator.check_number("lr_power", lr_power, 0.0, Rel.LE, prim_name)
@@ -344,7 +325,7 @@ class FTRL(Optimizer):
             raise ValueError(f"For 'FTRL', dynamic learning rate and group learning rate are currently not supported "
                              f"in FTRL, they should all be false, but got dynamic learning rate {self.dynamic_lr} and"
                              f" group learning rate {self.is_group_lr}.")
-        _check_param(initial_accum, lr_power, l1, l2, use_locking, self.cls_name)
+        _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, self.cls_name)
         self.moments = self._parameters.clone(prefix="moments", init=initial_accum)
         self.linear = self._parameters.clone(prefix="linear", init='zeros')
         self.l1 = l1
