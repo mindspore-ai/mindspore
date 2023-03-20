@@ -981,16 +981,21 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   }
 }
 
-void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
-                              const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
+void MindRTBackend::RunOpImplCheckInput(const OpCompilerInfoPtr &op_compiler_info,
+                                        const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
+  MS_EXCEPTION_IF_NULL(op_compiler_info->graph_);
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  MS_EXCEPTION_IF_NULL(outputs);
+}
+
+void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
+                              const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
+  RunOpImplCheckInput(op_compiler_info, op_run_info, outputs);
   // Fetch outputs.
   const auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &output_nodes = op_compiler_info->graph_output_nodes_;
-  MS_EXCEPTION_IF_NULL(outputs);
 
   auto device_context = op_compiler_info->device_context_;
   auto &op_executor = runtime::OpExecutor::GetInstance();
@@ -1034,22 +1039,16 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
 
 void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                                      const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  RunOpImplCheckInput(op_compiler_info, op_run_info, outputs);
   // Fetch outputs.
   const auto &graph = op_compiler_info->graph_;
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
   const auto &output_nodes = op_compiler_info->graph_output_nodes_;
-  MS_EXCEPTION_IF_NULL(outputs);
-
-  auto device_context = op_compiler_info->device_context_;
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
   MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
   if (!op_executor.RunQueueEmpty()) {
     WaitTaskFinish();
   }
+  auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(graph, device_context);
   }
@@ -1063,6 +1062,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   UpdateOutput(output_nodes, outputs);
   ClearGraphDeviceAddressDynamic(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddressDynamic(graph, device_context);
+  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
   if (is_dynamic_shape) {
     UpdateOutputAbstract(*outputs, op_run_info);
   }
