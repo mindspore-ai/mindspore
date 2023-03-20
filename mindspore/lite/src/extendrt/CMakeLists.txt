@@ -177,9 +177,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     add_subdirectory(${LITE_DIR}/src/executor unified_executor)
 
-    add_dependencies(mindspore-extendrt lite-unified-executor)
-    target_link_libraries(mindspore-extendrt lite-unified-executor)
-    target_link_libraries(mindspore-extendrt_static lite-unified-executor)
+    # add_dependencies(mindspore-extendrt lite-unified-executor)
+    # target_link_libraries(mindspore-extendrt lite-unified-executor)
+    # target_link_libraries(mindspore-extendrt_static lite-unified-executor)
 
     if(NOT PLATFORM_ARM)
     set(KERNEL_MOD_DEPEND_SRC
