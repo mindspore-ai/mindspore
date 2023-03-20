@@ -510,6 +510,15 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
 
   // 4 Other.
   if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimTupleGetItem)) {
+    if (real_node->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend) && real_node->abstract() != nullptr) {
+      size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(real_node->abstract());
+      MS_LOG(INFO) << "Fetch an tuple get item with repalce flag:" << real_node->DebugString()
+                   << " output num:" << output_num;
+      for (size_t i = 0; i < output_num; ++i) {
+        (void)results.emplace_back(real_node, i);
+      }
+      return results;
+    }
     std::vector<size_t> index_stack;
     auto get_item_src_node = common::AnfAlgo::GetTupleIndexes(real_node, &index_stack);
     MS_EXCEPTION_IF_NULL(get_item_src_node);

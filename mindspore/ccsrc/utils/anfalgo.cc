@@ -252,6 +252,10 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   MS_EXCEPTION_IF_NULL(cnode);
   // TupleGetItem and SparseGetAttr needs to find real input
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+    if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
+      MS_LOG(INFO) << "cnode:" << cnode->DebugString() << " has replace flag";
+      return KernelWithIndex(anf_node, index);
+    }
     abstract::AbstractBasePtr abs = nullptr;
     auto item_with_index_tmp = VisitKernelWithReturnType(
       GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
@@ -886,12 +890,15 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
     const auto &sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(sequence_abs);
     MS_LOG(DEBUG) << "Check abs:" << sequence_abs->ToString();
-    if (sequence_abs->dynamic_len_element_abs() != nullptr &&
-        sequence_abs->dynamic_len_element_abs()->isa<AbstractTensor>()) {
+    // Fetch element type by dynamic len element abs in dynamic sequence and fetch element type by first element in
+    // static tuple.
+    if ((sequence_abs->dynamic_len_element_abs() != nullptr &&
+         sequence_abs->dynamic_len_element_abs()->isa<AbstractTensor>()) ||
+        ((!sequence_abs->dynamic_len()) && sequence_abs->size() > 0 && sequence_abs->elements()[0] != nullptr &&
+         sequence_abs->elements()[0]->isa<AbstractTensor>())) {
       if (shapes.empty()) {
         MS_LOG(EXCEPTION) << "Invalid shape for node:" << node->fullname_with_scope();
       }
-      MS_LOG(DEBUG) << "Check dynmiac len element abs:" << sequence_abs->dynamic_len_element_abs()->ToString();
       for (size_t i = 0; i < types.size(); ++i) {
         ShapeVector shape = shapes[0];
         auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), shape);

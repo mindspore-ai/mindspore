@@ -86,6 +86,13 @@ AnfNodePtr CreateNewNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &i
   new_cnode->set_attrs(origin_node->attrs());
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   if (kernel_graph != nullptr) {
+    const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(origin_node);
+    if (front_node != nullptr && front_node->isa<CNode>()) {
+      const auto front_cnode = front_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(front_cnode);
+      MS_LOG(INFO) << "Add replace real kernel flag for front node:" << front_node->DebugString();
+      front_cnode->AddAttr(kAttrReplaceRealKernelInBackend, MakeValue(true));
+    }
     kernel_graph->FrontBackendlMapUpdate(origin_node, new_cnode);
   }
 
