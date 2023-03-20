@@ -48,6 +48,8 @@ class ScalarDiv(Primitive):
         """Initialize ScalarDiv"""
 
     def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('The divisor could not be zero. But the divisor is zero now.')
         return x / y
 
 
@@ -83,6 +85,8 @@ class ScalarFloordiv(Primitive):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('The divisor could not be zero. But the divisor is zero now.')
         return x // y
 
 
@@ -348,6 +352,8 @@ class ScalarMod(Primitive):
         """Initialize ScalarMod"""
 
     def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('Cannot perform modulo operation on zero.')
         return x % y
 
 

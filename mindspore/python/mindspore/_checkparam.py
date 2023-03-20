@@ -276,20 +276,6 @@ def check_axis_valid(axes, ndim):
     return (axes % ndim,)
 
 
-def infer_out_shape(*shapes):
-    """
-    Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
-    """
-    shape_out = list()
-    max_len = ms_max([len(it) for it in shapes])
-    for i in range(max_len):
-        items = [it[i-(max_len-len(it))] if i - (max_len - len(it))
-                 >= 0 else 1 for it in shapes]
-        max_size = 0 if 0 in items else ms_max(items)
-        shape_out.append(max_size)
-    return tuple(shape_out)
-
-
 def check_and_canonicalize_axes(axes, ndim):
     """Check whether the types and values of input axes are valid."""
     axes = axes if isinstance(axes, tuple) else (axes,)
@@ -298,14 +284,6 @@ def check_and_canonicalize_axes(axes, ndim):
         ax = ax if ax >= 0 else ax + ndim
         new_axes += (ax,)
     return new_axes
-
-
-def get_log2_size(size):
-    """Get log2 size"""
-    log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
-    ceil_res = F.ceil(log2_res)
-    cast_res = F.cast(ceil_res, mstype.int64)
-    return cast_res
 
 
 def is_stub_tensor(tensor):

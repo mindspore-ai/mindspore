@@ -54,8 +54,7 @@ int SequenceGetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
+bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index = GetDeviceAddress<int64_t>(inputs, 1);
@@ -74,7 +73,7 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   }
   auto output_size = output_size_list_[0];
   size_t element_index_size =
-    std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>());
+    static_cast<size_t>(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
   size_t input_addr_offset = element_index_size * (*index);
   auto cp_ret = memcpy_s(output_addr, output_size, input_addr + input_addr_offset, element_index_size * sizeof(T));
   if (cp_ret != EOK) {
@@ -87,26 +86,6 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
 const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFunc>>
   &SequenceGetItemCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat32),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat64),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt32),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<int>},
-    {KernelAttr()
-       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
-     &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
     {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
@@ -126,6 +105,26 @@ const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFu
        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat32),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat64),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt32),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<int>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
      &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>}};
   return func_list;
 }

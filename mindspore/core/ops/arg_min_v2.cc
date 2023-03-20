@@ -56,7 +56,7 @@ abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::
     return std::make_shared<abstract::Shape>(out_shape);
   }
   if (axis_is_dynamic) {
-    out_shape = ReduceFuncCalShapeAxisDyn(input_shape, axis_shape);
+    out_shape = ReduceFuncCalShapeAxisDyn(input_shape);
     return std::make_shared<abstract::Shape>(out_shape);
   }
   out_shape = ReduceFuncCalShapeInferImpl(primitive, input_shape, axis_value);

@@ -120,11 +120,11 @@ void FloorDivImpl(const T *in_x, const S *in_y, N *out) {
   N y = static_cast<N>(*in_y);
   N zero = 0;
   if (y == zero) {
-    MS_EXCEPTION(ValueError) << "The divisor could not be zero. But the divisor is zero now.";
+    MS_EXCEPTION(ValueError) << "The floor divisor could not be zero. But the divisor is zero now.";
   }
   if constexpr (std::is_integral<N>::value && std::is_signed<N>::value) {
     if (x == std::numeric_limits<N>::min() && static_cast<int64_t>(y) == -1) {
-      MS_EXCEPTION(ValueError) << "For prim ScalarDiv Overflow of the div of two signed number x: " << std::to_string(x)
+      MS_EXCEPTION(ValueError) << "For prim FloorDiv Overflow of the div of two signed number x: " << std::to_string(x)
                                << ", y: " << std::to_string(y) << ".";
     }
   }
@@ -227,8 +227,7 @@ int ScalarArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S, typename N>
-bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                const std::vector<AddressPtr> &workspace,
+bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                 const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);

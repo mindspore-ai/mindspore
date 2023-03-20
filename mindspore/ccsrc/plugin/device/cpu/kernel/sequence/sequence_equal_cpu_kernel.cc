@@ -58,8 +58,7 @@ int SequenceEqualCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T, typename S>
-bool SequenceEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
+bool SequenceEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
   const auto x_addr = GetDeviceAddress<T>(inputs, 0);
   const auto y_addr = GetDeviceAddress<S>(inputs, 1);
@@ -68,7 +67,7 @@ bool SequenceEqualCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     *output_addr = false;
     return true;
   }
-  for (size_t i = 0; i < x_size_; ++i) {
+  for (int64_t i = 0; i < x_size_; ++i) {
     if (static_cast<double>(x_addr[i]) != static_cast<double>(y_addr[i])) {
       *output_addr = false;
       return true;
