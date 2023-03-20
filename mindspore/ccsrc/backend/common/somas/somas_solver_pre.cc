@@ -124,8 +124,8 @@ void FindBest(size_t total_sol, const vector<std::shared_ptr<SomasSolverCore>> &
 }
 Status SomasSolverPre::Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
                                const std::vector<DynamicBitSet> *pConstraints,
-                               const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool ball,
-                               SortingType sorting, FittingType fitting, AlgorithmType algorithm) {
+                               const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool, SortingType,
+                               FittingType, AlgorithmType) {
   Status ret = SUCCESS;
   try {
     TensorsDescMap &tensors = *ptensors;

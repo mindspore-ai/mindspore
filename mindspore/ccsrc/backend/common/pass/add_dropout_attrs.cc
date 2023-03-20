@@ -71,7 +71,7 @@ const AnfNodePtr AddDropoutAttrs::Process(const FuncGraphPtr &func_graph, const 
 
 std::vector<std::string> AddDropoutAttrs::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimDropout->name());
+  (void)ret.emplace_back(prim::kPrimDropout->name());
   return ret;
 }
 
