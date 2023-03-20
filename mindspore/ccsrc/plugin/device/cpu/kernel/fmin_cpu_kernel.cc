@@ -276,7 +276,5 @@ std::vector<KernelAttr> FminCpuKernelMod::GetOpSupport() {
   };
   return kernel_attr_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Fmin, FminCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

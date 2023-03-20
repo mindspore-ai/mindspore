@@ -3754,7 +3754,7 @@ class Quantile(Primitive):
     Refer to :func:`mindspore.ops.quantile` and :func:`mindspore.ops.nanquantile` for more details.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+
 
     Examples:
         >>> quantile = ops.Quantile()
@@ -5732,7 +5732,7 @@ class MatrixDeterminant(Primitive):
     Refer to :func:`mindspore.ops.det` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -5756,7 +5756,7 @@ class LogMatrixDeterminant(Primitive):
     Refer to :func:`mindspore.ops.slogdet` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -6346,7 +6346,7 @@ class MatrixExp(Primitive):
     Refer to :func:`mindspore.ops.matrix_exp` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+
 
     Examples:
         >>> matrix_exp = ops.MatrixExp()
@@ -6574,7 +6574,7 @@ class LuUnpack(Primitive):
     Refer to :func:`mindspore.ops.lu_unpack` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],
@@ -6747,7 +6747,7 @@ class CholeskyInverse(Primitive):
     Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
@@ -7731,7 +7731,7 @@ class Fmin(Primitive):
     Refer to :func:`mindspore.ops.fmin` for more detail.
 
     Supported Platforms:
-        ``CPU``
+
 
     Examples:
         >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)

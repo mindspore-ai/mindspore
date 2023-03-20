@@ -38,6 +38,7 @@ def matrix_exp_test(is_dyn_rank):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
+@pytest.mark.skip(reason="I69UYY")
 def test_matrix_exp_dyn_shape():
     """
     Feature: MatrixExp Grad DynamicShape.
@@ -53,6 +54,7 @@ def test_matrix_exp_dyn_shape():
 @pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
+@pytest.mark.skip(reason="I69UYY")
 def test_matrix_exp_dyn_rank():
     """
     Feature: MatrixExp Grad DynamicRank.

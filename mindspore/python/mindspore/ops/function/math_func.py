@@ -8409,7 +8409,7 @@ def quantile(input, q, axis=None, keepdims=False):
         ValueError: If the `axis` values out of range.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)
@@ -8466,7 +8466,7 @@ def nanquantile(input, q, axis=None, keepdims=False):
         ValueError: If the `axis` values out of range.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+
 
     Examples:
         >>> x = Tensor(np.array([0.0700, -0.5446,  0.9214]), mindspore.float32)

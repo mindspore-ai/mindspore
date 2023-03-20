@@ -156,6 +156,5 @@ std::vector<KernelAttr> UpsampleNearest3DCpuKernelMod::GetOpSupport() {
 
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UpsampleNearest3D, UpsampleNearest3DCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

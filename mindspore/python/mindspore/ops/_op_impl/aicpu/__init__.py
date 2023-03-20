@@ -14,7 +14,6 @@
 
 """aicpu ops"""
 from .adaptive_max_pool_3d_grad import _adaptive_max_pool_3d_grad_aicpu
-from .adaptive_max_pool_3d import _adaptive_max_pool_3d_aicpu
 from .adaptive_max_pool_2d_grad import _adaptive_max_pool_2d_grad_aicpu
 from .adaptive_avg_pool_3d_grad import _adaptiveavgpool3d_grad_aicpu
 from .adaptive_avg_pool_3d import _adaptiveavgpool3d_aicpu
@@ -26,11 +25,8 @@ from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
 from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
 from .sparse_concat import _sparse_concat_aicpu
-from .sparse_apply_proximal_gradient_descent import _sparse_apply_proximal_gradient_descent_aicpu
 from .sparse_apply_momentum import _sparse_apply_momentum_aicpu
 from .sparse_apply_centered_rms_prop import _sparse_apply_centered_rms_prop_aicpu
-from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
-from .sparseaddmm import _sparse_addmm_aicpu
 from .broadcast_to import _broadcast_to_aicpu
 from .blackman_window import _blackman_window_aicpu
 from .bincount import _bincount_aicpu
@@ -156,7 +152,6 @@ from .split import _split_aicpu
 from .transpose import _transpose_aicpu
 from .tril_indices import _tril_indices_aicpu
 from .triu_indices import _triu_indices_aicpu
-from .triplet_margin_loss import _triplet_margin_loss_aicpu
 from .unravel_index import _unravel_index_aicpu
 from .xlogy import _xlogy_aicpu
 from .xdivy import _xdivy_aicpu
@@ -240,12 +235,10 @@ from .adaptive_avg_pool_2d import _adaptive_avg_pool_2d_aicpu
 from .adaptive_avg_pool_2d_grad import _adaptive_avg_pool_2d_grad_aicpu
 from .fill_v2 import _fill_v2_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
-from .quantile import _quantile_aicpu
 from .multinomial import _multinomial_aicpu
 from .fft_with_size import _fft_with_size_aicpu
 from .histogram import _histogram_aicpu
 from .matrix_determinant import _matrix_determinant_aicpu
-from .matrix_logarithm import _matrix_logarithm_aicpu
 from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
 from .nan_to_num import _nan_to_num_aicpu
 from .qr import _qr_aicpu
@@ -312,7 +305,6 @@ from .diagonal import _diagonal_aicpu
 from .diag_part import _diag_part_aicpu
 from .eig import _eig_aicpu
 from .eye import _eye_aicpu
-from .fmax import _fmax_aicpu
 from .fmin import _fmin_aicpu
 from .fractional_avg_pool import _fractional_avg_pool_aicpu
 from .fractional_avg_pool_grad import _fractional_avg_pool_grad_aicpu
@@ -337,9 +329,7 @@ from .logit_grad import _logit_grad_aicpu
 from .log_normal_reverse import _log_normal_reverse_aicpu
 from .lower_bound import _lower_bound_aicpu
 from .lstsq import _lstsq_aicpu
-from .lu_unpack import _lu_unpack_aicpu
 from .lu_unpack_grad import _lu_unpack_grad_aicpu
-from .matrix_exp import _matrix_exp_aicpu
 from .pad_v3_grad import _pad_v3_grad_aicpu
 from .pad_v3 import _pad_v3_aicpu
 from .cholesky import _cholesky_aicpu
@@ -389,9 +379,6 @@ from .pow import _pow_aicpu
 from .random_poisson import _random_poisson_aicpu
 from .real import _real_aicpu
 from .resize_area import _resize_area_aicpu
-from .segment_mean import _segment_mean_aicpu
-from .segment_min import _segment_min_aicpu
-from .segment_prod import _segment_prod_aicpu
 from .segment_sum import _segment_sum_aicpu
 from .set_size import _set_size_aicpu
 from .slice import _slice_aicpu

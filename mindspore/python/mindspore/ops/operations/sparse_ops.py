@@ -167,7 +167,7 @@ class SparseDenseCwiseDiv(Primitive):
         ValueError: If `x1_indices` proceed to cross the border the interview.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
       >>> from mindspore.common.tensor import Tensor
@@ -1010,7 +1010,7 @@ class SparseAddmm(Primitive):
         RuntimeError: If `x1_shape`, shape of `x2`, shape of `x3` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
