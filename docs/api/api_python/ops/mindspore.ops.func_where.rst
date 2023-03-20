@@ -10,7 +10,7 @@ mindspore.ops.where
         output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
 
     参数：
-        - **condition** (Tensor[Bool]) - 如果是True，选取 `x` 中的元素，否则选取 `y` 中的元素。
+        - **condition** (Tensor[bool]) - 如果是True，选取 `x` 中的元素，否则选取 `y` 中的元素。
         - **x** (Union[Tensor, Scalar]) - 在 `condition` 为True的索引处选择的值。
         - **y** (Union[Tensor, Scalar]) - 当 `condition` 为False的索引处选择的值。
 

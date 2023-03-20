@@ -15,7 +15,7 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from tests.st.numpy_native.utils import to_tensor
+from mindspore import Tensor
 
 
 class Net(nn.Cell):
@@ -39,7 +39,7 @@ def test_tensor_swapaxes(mode):
     """
     ms.set_context(mode=mode)
     lst = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-    tensor_list = to_tensor(lst)
+    tensor_list = Tensor(lst)
     net = Net()
     with pytest.raises(TypeError):
         tensor_list = net(tensor_list, 0, (1,))
