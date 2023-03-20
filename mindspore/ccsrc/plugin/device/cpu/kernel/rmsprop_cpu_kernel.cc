@@ -274,9 +274,9 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     float *moment = reinterpret_cast<float *>(inputs[kNumberTwo]->addr);
     float *learning_rate = reinterpret_cast<float *>(inputs[kNumberThree]->addr);
     float *gradients = reinterpret_cast<float *>(inputs[kNumberFour]->addr);
-    float *decay = reinterpret_cast<float *>(inputs[kNumberFive]->addr);
-    float *momentum = reinterpret_cast<float *>(inputs[kNumberSix]->addr);
-    float *epsilon = reinterpret_cast<float *>(inputs[kNumberSeven]->addr);
+    float *decay = GetDeviceAddress<float>(inputs, kNumberFive);
+    float *momentum = GetDeviceAddress<float>(inputs, kNumberSix);
+    float *epsilon = GetDeviceAddress<float>(inputs, kNumberSeven);
 
     size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;

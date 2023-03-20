@@ -980,7 +980,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
   if (attr->isa<ValueTuple>() || attr->isa<ValueList>()) {
     auto attr_vec =
       attr->isa<ValueTuple>() ? attr->cast<ValueTuplePtr>()->value() : attr->cast<ValueListPtr>()->value();
-    if (!attr_vec.size()) {
+    if (attr_vec.empty()) {
       return result;
     }
     is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {

@@ -49,8 +49,7 @@ int SequenceLenCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceLenCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
+bool SequenceLenCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs) {
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
 

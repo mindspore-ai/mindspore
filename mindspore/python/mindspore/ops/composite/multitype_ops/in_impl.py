@@ -20,7 +20,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops import functional as F
 from mindspore.ops.composite import base
-from ...operations._sequence_ops import InSequence
+from mindspore.ops.operations._sequence_ops import InSequence
 
 in_ = base.MultitypeFuncGraph("in", True)
 """

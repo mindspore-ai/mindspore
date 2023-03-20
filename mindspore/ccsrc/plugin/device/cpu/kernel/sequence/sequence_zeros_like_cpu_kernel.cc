@@ -47,8 +47,7 @@ int SequenceZerosLikeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
+bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   size_t output_size = outputs[0]->size / sizeof(T);

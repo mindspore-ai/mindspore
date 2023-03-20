@@ -58,8 +58,7 @@ int MakeRangeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 template <typename T>
-bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
   auto start = inputs.size() == 1 ? 0 : GetDeviceAddress<T>(inputs, 0)[0];
   auto limit = inputs.size() == 1 ? GetDeviceAddress<T>(inputs, 0)[0] : GetDeviceAddress<T>(inputs, 1)[0];

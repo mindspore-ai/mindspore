@@ -58,8 +58,7 @@ int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
+bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   const auto data_addr = GetDeviceAddress<T>(inputs, kDataIndex);
   const auto idx_addr = GetDeviceAddress<int64_t>(inputs, kIdxIndex);

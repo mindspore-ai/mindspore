@@ -43,6 +43,17 @@ T BitwiseImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::strin
 
 class ScalarBitwiseInfer : public abstract::OpInferBase {
  public:
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_type = input_args[0]->BuildType();
+    auto y_type = input_args[kIndex1]->BuildType();
+    std::set<TypePtr> check_types = {kInt32, kInt64, kBool};
+    (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
+    (void)CheckAndConvertUtils::CheckSubClass("y_dtype", y_type, check_types, prim_name);
+    return HighPriorityType(x_type, y_type, prim_name);
+  }
+
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
@@ -58,17 +69,6 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     return abstract::kNoShape;
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    auto x_type = input_args[0]->BuildType();
-    auto y_type = input_args[kIndex1]->BuildType();
-    std::set<TypePtr> check_types = {kInt32, kInt64, kBool};
-    (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
-    (void)CheckAndConvertUtils::CheckSubClass("y_dtype", y_type, check_types, prim_name);
-    return HighPriorityType(x_type, y_type, prim_name);
-  }
-
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
     constexpr size_t input_num = 2;
@@ -79,15 +79,15 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     }
     constexpr size_t x_index = 0;
     constexpr size_t y_index = 1;
-    auto elem_x = input_args[x_index];
-    auto elem_y = input_args[y_index];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_y->isa<abstract::AbstractScalar>()) {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
-                              << " and y: " << elem_y->ToString();
+    auto x_elem = input_args[x_index];
+    auto y_elem = input_args[y_index];
+    if (!x_elem->isa<abstract::AbstractScalar>() && !y_elem->isa<abstract::AbstractScalar>()) {
+      MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << x_elem->ToString()
+                              << " and y: " << y_elem->ToString();
     }
 
-    auto x_value = elem_x->BuildValue();
-    auto y_value = elem_y->BuildValue();
+    auto x_value = x_elem->BuildValue();
+    auto y_value = y_elem->BuildValue();
     if (x_value == kValueAny || y_value == kValueAny) {
       return nullptr;
     }

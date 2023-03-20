@@ -54,8 +54,7 @@ int SequenceSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T, typename D0, typename D1, typename D2>
-bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
+bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
   const auto seq_addr = GetDeviceAddress<T>(inputs, 0);
   const auto start_addr = GetDeviceAddress<D0>(inputs, 1);

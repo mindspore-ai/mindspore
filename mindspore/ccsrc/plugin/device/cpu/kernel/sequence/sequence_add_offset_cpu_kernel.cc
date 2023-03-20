@@ -56,8 +56,7 @@ int SequenceAddOffsetCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
+bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
   auto input_0_size = inputs[0]->size / sizeof(T);

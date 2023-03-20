@@ -48,8 +48,7 @@ int SequenceMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool SequenceMaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
+bool SequenceMaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);

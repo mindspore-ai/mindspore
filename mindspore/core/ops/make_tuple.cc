@@ -33,24 +33,23 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MakeTuple, BaseOperator);
 MIND_API_OPERATOR_IMPL(RealMakeTuple, BaseOperator);
-AbstractBasePtr MakeTupleInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr MakeTupleInnerInfer(const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTuple>(input_args);
 }
 
 class MakeTupleInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args)->BuildShape();
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MakeTupleInnerInfer(input_args)->BuildShape();
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args)->BuildType();
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MakeTupleInnerInfer(input_args)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeTupleInnerInfer(primitive, input_args);
+    return MakeTupleInnerInfer(input_args);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeTuple, prim::kPrimMakeTuple, MakeTupleInfer, false);

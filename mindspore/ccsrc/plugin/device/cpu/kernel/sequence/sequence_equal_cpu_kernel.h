@@ -55,8 +55,8 @@ class SequenceEqualCpuKernelMod : public NativeCpuKernelMod,
                     const std::vector<AddressPtr> &outputs);
 
  private:
-  size_t x_size_ = 0;
-  size_t y_size_ = 0;
+  int64_t x_size_ = 0;
+  int64_t y_size_ = 0;
   bool is_inputs_type_diff_ = false;
 };
 }  // namespace kernel

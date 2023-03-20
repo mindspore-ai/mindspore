@@ -34,7 +34,7 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitSplitNum(const std::vector<kernel:
   if (split_num <= 0 || split_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
   }
-  if (input_shape_[0] % split_num_ != 0) {
+  if (input_shape_[0] % static_cast<int64_t>(split_num_) != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the first dimension value of input must be multiple of "
                          "'split_num', but got 'split_num': "

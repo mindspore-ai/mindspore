@@ -56,15 +56,14 @@ int SequenceSliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T>
-bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
+bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
   const auto dout_addr = GetDeviceAddress<T>(inputs, 0);
   const auto start_addr = GetDeviceAddress<int64_t>(inputs, 2);
   const auto stop_addr = GetDeviceAddress<int64_t>(inputs, 3);
   const auto step_addr = GetDeviceAddress<int64_t>(inputs, 4);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-  int64_t len = inputs[1]->size;
+  int64_t len = static_cast<int64_t>(inputs[1]->size);
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
   int64_t step = step_addr[0];
@@ -110,7 +109,7 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     if (start <= stop) {
       return true;
     }
-    int64_t idx = inputs[0]->size;
+    size_t idx = inputs[0]->size;
     for (int64_t i = start; i > stop; i += step) {
       idx--;
       output_addr[i + len] = dout_addr[idx];
