@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -251,6 +251,9 @@ def _handle_arg(obj, arg):
     elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
         return arg
     elif hasattr(arg, "__ms_mutable__") and getattr(arg, "__ms_mutable__"):
+        # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
+        if isinstance(arg, list) and not arg:
+            return None
         return arg
     elif context.get_context("grad_for_scalar") and isinstance(arg, (int, float)):
         return arg
