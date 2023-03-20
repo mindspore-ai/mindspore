@@ -30,6 +30,7 @@ from mindspore.nn import Dense, TrainOneStepCell, WithLossCell, ForwardValueAndG
 from mindspore.train import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.train import Model, LossMonitor
 from mindspore.common.initializer import TruncatedNormal
 
@@ -254,6 +255,7 @@ def test_train_lenet_with_new_interface(num_classes=10, epoch=20, batch_size=32)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
         loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)
     assert losses[-1].asnumpy() < 0.01
@@ -285,6 +287,7 @@ def test_train_lenet_with_new_interface_tuple(num_classes=10, epoch=20, batch_si
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
         loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)
     assert losses[-1].asnumpy() < 0.01
@@ -316,6 +319,7 @@ def test_train_lenet_with_new_interface_list(num_classes=10, epoch=20, batch_siz
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
         loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)
     assert losses[-1].asnumpy() < 0.01
