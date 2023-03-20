@@ -700,6 +700,28 @@ TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_lis
 }
 }  // namespace
 
+void UnknownAbstract(const AbstractBasePtr &abs_base) {
+  auto value = abs_base->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  if ((*value == *kAnyValue)) {
+    auto value_desc = abs_base->value_desc();
+    MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
+                            << " for python primitive." << abs_base->ToString();
+  }
+  if (abs_base->isa<AbstractKeywordArg>()) {
+    std::stringstream ss;
+    ss << "For example: \n";
+    ss << "x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32)) \n";
+    ss << "reduce_sum = ops.ReduceSum(True) \n";
+    ss << "output = reduce_sum(x, 2)";
+    ss << "#Try to use reduce_sum(x, 2) instead of reduce_sum(x, axis=2). ";
+    MS_EXCEPTION(TypeError) << "Only supported positional parameter type for python primitive, "
+                            << "but got keyword parameter type. " << ss.str();
+  }
+  MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
+                          << value->ToString();
+}
+
 py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_convert_value) {
   MS_EXCEPTION_IF_NULL(abs_base);
   auto dic = py::dict();
@@ -771,25 +793,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     dic[ATTR_DTYPE] = abs_base->BuildType();
     dic[ATTR_VALUE] = py::none();
   } else {
-    auto value = abs_base->BuildValue();
-    MS_EXCEPTION_IF_NULL(value);
-    if ((*value == *kAnyValue)) {
-      auto value_desc = abs_base->value_desc();
-      MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
-                              << " for python primitive." << abs_base->ToString();
-    }
-    if (abs_base->isa<AbstractKeywordArg>()) {
-      std::stringstream ss;
-      ss << "For example: \n";
-      ss << "x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32)) \n";
-      ss << "reduce_sum = ops.ReduceSum(True) \n";
-      ss << "output = reduce_sum(x, 2)";
-      ss << "#Try to use reduce_sum(x, 2) instead of reduce_sum(x, axis=2). ";
-      MS_EXCEPTION(TypeError) << "Only supported positional parameter type for python primitive, "
-                              << "but got keyword parameter type. " << ss.str();
-    }
-    MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
-                            << value->ToString();
+    UnknownAbstract(abs_base);
   }
   return dic;
 }
@@ -1623,8 +1627,7 @@ EvalResultPtr GetEvaluatedValueForFuncGraphAttrOrMethod(const AbstractBasePtrLis
 }
 
 EvalResultPtr GetEvaluatedValueForPrimitiveAttr(const AbstractBasePtrList &args_abs_list,
-                                                const AbstractFunctionPtr &data_args,
-                                                const AnfNodeConfigPtr &out_conf) {
+                                                const AbstractFunctionPtr &data_args) {
   MS_EXCEPTION_IF_NULL(data_args);
   if (!data_args->isa<PrimitiveAbstractClosure>()) {
     return nullptr;
@@ -1845,7 +1848,7 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
       return res;
     }
   }
-  return GetEvaluatedValueForPrimitiveAttr(args_abs_list, data_args, out_conf);
+  return GetEvaluatedValueForPrimitiveAttr(args_abs_list, data_args);
 }
 
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
@@ -2930,6 +2933,19 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     return exception_str;
   }
 
+  std::string GetVariable(const AnfNodePtr &input, const bool need_symbol, std::string exception_str) {
+    std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
+    num_str_ += 1;
+    if (need_symbol) {
+      exception_str = exception_str + "'+f'{" + key + "}'+'";
+    } else {
+      exception_str = exception_str + key;
+    }
+    (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
+    (void)values_.emplace_back(input);
+    return exception_str;
+  }
+
   std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &input, const AnfNodePtr &node,
                                    bool need_comma, bool need_symbol = false) {
     MS_EXCEPTION_IF_NULL(arg);
@@ -2940,16 +2956,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(arg_tuple);
     const auto &arg_tuple_elements = arg_tuple->elements();
     if (!input->isa<CNode>() && has_variable_) {
-      std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
-      num_str_ += 1;
-      if (need_symbol) {
-        exception_str = exception_str + "'+f'{" + key + "}'+'";
-      } else {
-        exception_str = exception_str + key;
-      }
-      (void)keys_.emplace_back(NewValueNode(std::make_shared<StringImm>(key)));
-      (void)values_.emplace_back(input);
-      return exception_str;
+      return GetVariable(input, need_symbol, exception_str);
     }
     if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {
       if (is_tuple) {

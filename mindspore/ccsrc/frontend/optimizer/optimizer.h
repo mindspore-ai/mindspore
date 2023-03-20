@@ -149,6 +149,27 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     return optimizer;
   }
 
+  void DumpStep(FuncGraphPtr func_graph, const int counter, const int index) {
+    static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
+      auto fg_name = "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(index) + "_" +
+                     pass_names_[index];
+      MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[index] << " end.";
+      static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
+      if (switch_order) {
+        ExportIR(fg_name + ".ir", func_graph);
+      } else {
+        DumpIR(fg_name + ".ir", func_graph);
+      }
+      if (context->CanDump(kFully)) {
+        draw::Draw(fg_name + ".dot", func_graph);
+      }
+      MS_LOG(DEBUG) << "Dump " << pass_names_[index] << " func graph.";
+    }
+  }
+
   FuncGraphPtr step(FuncGraphPtr func_graph, bool use_profile = true) {
     if (!is_enable_) {
       return func_graph;
@@ -202,24 +223,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           };
           use_profile ? ProfileExecute(MsProfile::GetProfile()->Step(pass_names_[i]), opt_func) : opt_func();
 #ifdef ENABLE_DUMP_IR
-          static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
-          auto context = MsContext::GetInstance();
-          MS_EXCEPTION_IF_NULL(context);
-          if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
-            auto fg_name =
-              "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
-            MS_LOG(DEBUG) << "The opt " << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
-            static const auto switch_order = (common::GetEnv("MS_DEV_SAVE_GRAPHS_SORT_MODE") == "1");
-            if (switch_order) {
-              ExportIR(fg_name + ".ir", func_graph);
-            } else {
-              DumpIR(fg_name + ".ir", func_graph);
-            }
-            if (context->CanDump(kFully)) {
-              draw::Draw(fg_name + ".dot", func_graph);
-            }
-            MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
-          }
+          DumpStep(func_graph, counter, i);
 #endif
         }
       };

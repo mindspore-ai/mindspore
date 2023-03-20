@@ -84,7 +84,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
                    abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
-  std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value);
+  std::pair<py::object, bool> GetPyExecuteOutputFromAddress(const py::object &res, const BaseRef &value) const;
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);

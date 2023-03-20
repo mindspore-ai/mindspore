@@ -525,7 +525,7 @@ class SideEffectFinder {
     return GetGraphsFromTuple(func_tuple);
   }
 
-  FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) {
+  FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) const {
     auto node = cnode->inputs()[0];
     MS_EXCEPTION_IF_NULL(node);
     if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {

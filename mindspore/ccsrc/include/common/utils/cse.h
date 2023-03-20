@@ -20,7 +20,6 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CSE_H_
 
 #include <vector>
-#include <utility>
 #include <map>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
