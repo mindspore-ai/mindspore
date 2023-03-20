@@ -11,7 +11,7 @@ mindspore.ops.binary_cross_entropy
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    其中，:math:`L` 表示所有batch_size的loss值，:math:`l` 表示一个batch_size的loss值，n表示在1-N范围内的一个batch_size。
+    其中，:math:`L` 表示所有batch_size的loss值，:math:`l` 表示一个batch_size的loss值，:math:`n` 表示在 :math:`1-N` 范围内的一个batch_size。
 
     .. math::
         \ell(x, y) = \begin{cases}

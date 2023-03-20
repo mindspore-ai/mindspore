@@ -94,7 +94,7 @@ class ROC(Metric):
             inputs: Input `y_pred` and `y`. `y_pred` and `y` are `Tensor`, list or numpy.ndarray.
                 In most cases (not strictly), y_pred is a list of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
-                is the number of categories. y contains values of integers. The shape is :math:`(N,C)` if one-hot
+                is the number of categories. y contains values of integers. The shape is :math:`(N, C)` if one-hot
                 encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:

@@ -12,9 +12,9 @@ mindspore.ops.histc
 
     参数：
         - **input** (Tensor) - 输入Tensor，类型支持： :math:`[float16, float32, int32]` 。
-        - **bins** (int) - 直方图箱的数量，可选。默认值：100。若指定，则必须为正数。
-        - **min** (int, float) - 范围下端（含）的可选浮点数。默认值：0.。
-        - **max** (int, float) - 范围上限（含）的可选浮点数。默认值：0.。
+        - **bins** (int, 可选) - 直方图箱的数量，可选。默认值：100。若指定，则必须为正数。
+        - **min** (int, float, 可选) - 范围下端（含）的可选浮点数。默认值：0.。
+        - **max** (int, float, 可选) - 范围上限（含）的可选浮点数。默认值：0.。
 
     返回：
         Tensor，类型为int32的1-D Tensor。
