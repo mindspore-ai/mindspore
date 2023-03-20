@@ -349,7 +349,7 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool need_renor
 }
 
 void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
-                       VectorRef *const arg_list, bool has_sens) {
+                       VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
   std::transform(input_vec.begin(), input_vec.end(), std::back_inserter(*arg_list),
                  [](const ValuePtr &v) { return v; });
@@ -543,13 +543,13 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     } else if (input_args_info->is_high_order_top_cell) {
       MS_LOG(DEBUG) << "Nested grad graph existed in construct";
       MakeNewTopGraph(input_args_info);
-      // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
-      // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
-      // error.
-      {
-        py::gil_scoped_release gil_release;
-        async_executor_->Wait();
-      }
+    }
+    // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
+    // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
+    // error.
+    {
+      GilReleaseWithCheck gil_release;
+      async_executor_->Wait();
     }
   }
 
@@ -1263,9 +1263,8 @@ py::object GradExecutor::RunGradGraph() {
   const auto &resource = top_cell()->resource();
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Run cell id " << top_input_args_info_->cell_id << ", resource ptr " << resource.get();
-  bool has_sens = top_input_args_info_->has_sens;
   VectorRef arg_list;
-  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, &arg_list, has_sens);
+  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
                 << arg_list.size();
   compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();

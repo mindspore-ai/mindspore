@@ -246,7 +246,6 @@ FuncGraphPtr MsFunctionBpropGraphPass(const ResourcePtr &resource, bool need_ren
   auto graph_opt = opt::Optimizer::MakeOptimizer("ms_function_bprop_graph_opt", resource, map);
   func_graph = graph_opt->step(func_graph, false);
   func_graph = LiftingClone(func_graph);
-  //  Validate(func_graph);
   return func_graph;
 }
 
@@ -265,7 +264,6 @@ FuncGraphPtr FinalBpropGraphPass(const ResourcePtr &resource) {
   auto func_graph = resource->func_graph();
   auto graph_opt = opt::Optimizer::MakeOptimizer("final_bprop_graph_opt", resource, map);
   return graph_opt->step(func_graph, false);
-  //  Validate(func_graph);
 }
 
 namespace {

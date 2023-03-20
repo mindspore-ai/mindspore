@@ -282,7 +282,7 @@ void DumpParamterInOperand(const AnfNodePtr &node, const AnfNodePtr &in,
   MS_EXCEPTION_IF_NULL(in);
   MS_EXCEPTION_IF_NULL(gsub);
   if (in->func_graph() == nullptr) {
-    MS_LOG(ERROR) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
+    MS_LOG(INFO) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
   }
   if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
     gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
