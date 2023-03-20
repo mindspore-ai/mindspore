@@ -280,6 +280,10 @@ STATUS ToFormatBase::DealConv2dTransposeFusionNode(const FuncGraphPtr &func_grap
       cnode->inputs().size() < kInputSizeIndex + 1) {  // no input_size
     return lite::RET_OK;
   }
+  if (func_graph->has_attr(lite::kIsDynamicShape) && GetValue<bool>(func_graph->get_attr(lite::kIsDynamicShape))) {
+    MS_LOG(DEBUG) << "Dynamic input shape does not need Conv2dTransposeFusion format conversion";
+    return lite::RET_OK;
+  }
   auto gather_input = cnode->input(kInputSizeIndex);
   MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather input is nullptr");
   auto abstract = gather_input->abstract();
