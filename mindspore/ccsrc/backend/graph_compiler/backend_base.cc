@@ -562,7 +562,20 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) {
   const std::map<std::string, std::string> kOpListToTupleNames = {{prim::kMakeListNew, prim::kMakeTuple},
                                                                   {prim::kListGetItem, prim::kTupleGetItem},
                                                                   {prim::kListSetItem, prim::kTupleSetItem}};
-
+  // When the input is an empty sequence, the number of inputs will be recorded as 0, and the tensor cannot be
+  // expressed, so the empty sequence is set to dynamic len.
+  for (const auto &parameter : root_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(parameter);
+    const auto &abs = parameter->abstract();
+    if (abs != nullptr && abs->isa<abstract::AbstractSequence>()) {
+      const auto &sequence_abs = abs->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abs);
+      if ((!sequence_abs->dynamic_len()) && sequence_abs->size() == 0) {
+        MS_LOG(INFO) << "Set dynamic len flag for empty sequence input:" << parameter->DebugString();
+        sequence_abs->set_dynamic_len(true);
+      }
+    }
+  }
   FuncGraphSet graphs = root_graph->manager()->func_graphs();
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
