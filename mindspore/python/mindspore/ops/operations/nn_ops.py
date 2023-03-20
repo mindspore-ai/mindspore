@@ -6630,6 +6630,10 @@ class ApplyFtrl(Primitive):
 
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
+    Note:
+        Currently, only positive numbers are supported on the Ascend platform,
+        and the calculation results for other scenarios are not defined.
+
     Args:
         use_locking (bool): Use locks for updating operation if true . Default: False.
 
