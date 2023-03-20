@@ -1114,11 +1114,13 @@ def get_bppro_gru_v2(self):
         self.bidirectional,
         self.dropout
     )
+
     def bpro(x, hx, w, seq_length, out, dout):
         y, hy, reverse, _ = out
         dy, dhy, _, _ = dout
         dx, dhx, dw = gru_grad_v2(x, hx, w, seq_length, y, hy, dy, dhy, reverse)
         return dx, dhx, dw, (0)
+
     return bpro
 
 
