@@ -60,6 +60,12 @@ class _OffloadContext:
         self._context_handle = OffloadContext.get_instance()
 
     def check_context_handle(self):
+        """
+        Check context handle.
+
+        Raises:
+            ValueError: If the context handle is none.
+        """
         if self._context_handle is None:
             raise ValueError("Context handle is none in context!!!")
 
@@ -162,6 +168,7 @@ _OFFLOAD_CONTEXT = None
 
 
 def offload_context():
+    """Get offload_context. if it is not created, create a new one."""
     global _OFFLOAD_CONTEXT
     if _OFFLOAD_CONTEXT is None:
         _OFFLOAD_CONTEXT = _OffloadContext()
