@@ -29,6 +29,7 @@ class LiteTensorExtractor {
  public:
   LiteTensorExtractor() = default;
   ~LiteTensorExtractor() = default;
+  static int GetCNodeInputAbstractLists(const CNodePtr &cnode, AbstractBasePtrList *abs_list);
   static int GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs, converter::FmkType fmk_type,
                                   bool train_flag, bool copy_data);
   static int GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *outputs, bool train_flag);
