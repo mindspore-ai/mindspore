@@ -77,9 +77,14 @@ def test_addcmul_float64_pynative_value(type_s=np.float64):
         ).astype(type_s)
     )
     x2 = Tensor(np.array([[0.67554175], [0.25244115]]).astype(type_s))
-    value = np.array([
-        [-0.99526738, -2.57715965, -0.73273605, 0.02546449],
-        [1.34531189, -0.97279591, 2.4665573, -1.18791833],])
+    value = Tensor(
+        np.array(
+            [
+                [-0.99526738, -2.57715965, -0.73273605, 0.02546449],
+                [1.34531189, -0.97279591, 2.4665573, -1.18791833],
+            ]
+        ).astype(type_s)
+    )
     addcmul = P.Addcmul()
     output = addcmul(input_data, x1, x2, value)
     output_ms = output.asnumpy()
