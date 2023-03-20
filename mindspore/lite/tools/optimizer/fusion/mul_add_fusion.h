@@ -48,6 +48,7 @@ class MulAddFusion : public MultiplePatternProcessPass {
   bool ScaleInputShapeValid(size_t *axis_offset) const;
   bool MulInputAnodeIsInferred(const AnfNodePtr &mul_input_anode) const;
   bool AdjustScaleBiasTensorShape(size_t *axis_offset) const;
+  bool CopyNodeFormat(CNodePtr node, mindspore::ops::PrimitiveCPtr prim) const;
 
  private:
   mutable ShapeVector mul_input_shape_;
