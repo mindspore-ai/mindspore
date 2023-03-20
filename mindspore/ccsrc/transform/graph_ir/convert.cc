@@ -1566,7 +1566,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   }
 
   compute_sout_ << "}" << endl;
-  // For the graph(e.g. eval_subgraph) whose IterNum is 1, donot set NeedIteration flag.
+  // For the graph(e.g. eval_subgraph) whose IterNum is 1, do not set NeedIteration flag.
   if (ConfigManager::GetInstance().iter_num() > 1) {
     df_graph_->SetNeedIteration(true);
   }
@@ -2689,11 +2689,18 @@ void DfGraphConvertor::ConvertReshape(const CNodePtr &node) {
   // get shape form attr
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto value = primitive->GetAttr("shape");
-  std::vector<int64_t> list;
-  list = CastToInt(value);
-
-  (void)op->SetAttr("shape", list);
+  if (primitive->HasAttr("shape")) {
+    auto value = primitive->GetAttr("shape");
+    auto list = CastToInt(value);
+    (void)op->SetAttr("shape", list);
+  }
+  if (primitive->HasAttr("allowzero")) {
+    auto value = primitive->GetAttr("allowzero");
+    auto list = CastToInt(value);
+    if (list.size() == 1) {
+      (void)op->SetAttr("allowzero", list[0]);
+    }
+  }
   op_cache_[node.get()] = op;
 }
 

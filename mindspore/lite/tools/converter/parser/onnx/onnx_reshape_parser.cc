@@ -40,6 +40,13 @@ PrimitiveCPtr OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const
       }
     }
   }
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "allowzero") {
+      int allowzero = onnx_node_attr.i();
+      (void)prim_c->AddAttr("allowzero", MakeValue(allowzero));
+    }
+  }
 
   return prim->GetPrim();
 }

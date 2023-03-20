@@ -47,6 +47,7 @@ class AclPassImpl {
   STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
+  STATUS RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph);
 
  private: /* map func graph */
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
