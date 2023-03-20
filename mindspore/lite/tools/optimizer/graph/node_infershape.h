@@ -39,11 +39,19 @@ class NodeInferShape {
     train_flag_ = train_flag;
   }
   STATUS InferShape(const CNodePtr &cnode);
+  STATUS OpsInferShape(const PrimitivePtr &anf_prim, const AbstractBasePtrList &abs_list, AbstractBasePtr *result,
+                       bool invalid);
+  STATUS InferShapeByOps(const CNodePtr &cnode, bool invalid);
+  STATUS InferShapeByNNACL(const CNodePtr &cnode);
   bool JudgeOpSupportInfer(const CNodePtr &cnode);
   std::vector<int> GetInputShape(const CNodePtr &cnode, size_t index);
   std::vector<int> GetIntVecInput(const CNodePtr &cnode, size_t index);
 
  protected:
+  STATUS ConvertAbstractListToNCOrNH(const CNodePtr &cnode, AbstractBasePtrList abs_list, FormatTransNodeType perm,
+                                     bool *changed);
+  STATUS SetCNodeAbstractByConvert(const CNodePtr &cnode, const AbstractBasePtr &abstract, STATUS infer_ret,
+                                   bool change, FormatTransNodeType perm);
   STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs, int status);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);

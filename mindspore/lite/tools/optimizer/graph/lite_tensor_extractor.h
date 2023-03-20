@@ -36,6 +36,8 @@ class LiteTensorExtractor {
                                 converter::FmkType fmk_type, bool train_flag, bool copy_data);
   static int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs,
                               converter::FmkType fmk_type);
+  static int GetCNodeConstInputToAbstract(const CNodePtr &cnode, const AbstractBasePtrList &abs_list,
+                                          converter::FmkType fmk_type, bool train_flag);
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -148,6 +148,64 @@ TensorPtr GetCNodeTensorListVarInput(const lite::DataInfo &data_info) {
 }
 }  // namespace
 
+int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, const AbstractBasePtrList &abs_list,
+                                                      converter::FmkType fmk_type, bool train_flag) {
+  MS_ASSERT(cnode != nullptr && const_ms_inputs != nullptr);
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    if (utils::isa<CNodePtr>(cnode->input(i))) {
+      continue;
+    }
+    STATUS status;
+    lite::DataInfo data_info;
+    if (utils::isa<ParameterPtr>(cnode->input(i))) {
+      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, &data_info, true);
+    } else {
+      status = lite::FetchDataFromValueNode(cnode, i, fmk_type, train_flag, &data_info, true);
+    }
+    if (status == lite::RET_NO_CHANGE) {
+      continue;
+    }
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "fetch const input data failed.";
+      return status;
+    }
+
+    auto abstract = abs_list[i - 1];
+    if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+      MS_LOG(ERROR) << "abstract is not a AbstractTensor";
+      return RET_ERROR;
+    }
+    auto shape_value = abstract->BuildValue();
+    if (!shape_value->isa<tensor::Tensor>()) {
+      if (SetAbstractTensorInfo(abstract) != RET_OK) {
+        MS_LOG(ERROR) << "SetAbstractTensorInfo failed";
+        return lite::RET_ERROR;
+      }
+      shape_value = abstract->BuildValue();
+    }
+    auto input_tensor = shape_value->cast<tensor::TensorPtr>();
+    MS_CHECK_FALSE(input_tensor == nullptr, RET_ERROR);
+    if (input_tensor->data().const_data() != nullptr) {
+      MS_LOG(WARNING) << "abstract already have const data.";
+      return RET_OK;
+    }
+
+    if (input_tensor->Size() == data_info.data_.size()) {
+      if (EOK != common::huge_memcpy(reinterpret_cast<uint8_t *>(input_tensor->data_c()), input_tensor->Size(),
+                                     data_info.data_.data(), data_info.data_.size())) {
+        MS_LOG(ERROR) << "memcpy_s failed.";
+        return RET_ERROR;
+      }
+    } else if (data_info.data_.size() != 0) {
+      MS_LOG(ERROR) << "the size of tensor data: {" << input_tensor->Size() << "} is not equal to the size of node: {"
+                    << data_info.data_.size() << "}";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+  return RET_OK;
+}
+
 int LiteTensorExtractor::GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_inputs,
                                             converter::FmkType fmk_type, bool train_flag, bool copy_data) {
   MS_ASSERT(cnode != nullptr && const_ms_inputs != nullptr);

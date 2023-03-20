@@ -154,9 +154,6 @@ class MIND_API Resize : public BaseOperator {
   /// \return  the rule to get nearest pixel.
   NearestMode get_nearest_mode() const;
 };
-
-MIND_API abstract::AbstractBasePtr ResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

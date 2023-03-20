@@ -43,6 +43,7 @@ class InferShapePass : public Pass {
  private:
   bool JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph);
   STATUS InferProcess(const FuncGraphPtr &func_graph);
+  STATUS InferProcessSubGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   STATUS SetSubGraphOutput(const FuncGraphPtr &sub_graph);
   STATUS SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
