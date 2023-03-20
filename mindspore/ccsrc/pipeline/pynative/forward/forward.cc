@@ -435,7 +435,7 @@ bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_ru
   return false;
 }
 
-void ForwardExecutor::ExecuteLazyTask() {
+void ForwardExecutor::ExecuteLazyTask() const {
   GilReleaseWithCheck gil_release;
   runtime::OpExecutor::GetInstance().WaitAll();
 }
@@ -448,7 +448,7 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
   MS_LOG(DEBUG) << str << " run python function " << py::getattr(obj, "__name__").cast<std::string>();
 }
 
-void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
+void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj) {
   bool is_cell = py::isinstance<Cell>(obj);
   if (is_cell) {
     PushForwardCell(obj);
@@ -499,7 +499,7 @@ void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) 
   PrintPyObjInfo(obj, kEnd, is_cell);
 }
 
-std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) {
+std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
   const auto &attr_map = op_prim->attrs();
   auto iter = attr_map.find("primitive_target");

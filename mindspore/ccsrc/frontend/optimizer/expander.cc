@@ -37,25 +37,24 @@ namespace mindspore {
 namespace opt {
 namespace {
 const std::map<std::string, std::vector<std::string>> op2attrs = {
-  {prim::kPrimBroadcastTo->name(), {kAttrShape}},
-  {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
-  {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
-  {prim::kPrimReduceSum->name(), {kAttrKeepDims}},
-  {prim::kPrimMatMul->name(), {kTransposeA, kTransposeB}},
-  {prim::kPrimConcat->name(), {kAttrAxis}},
-  {prim::kPrimSqueeze->name(), {kAttrAxis}},
-  {prim::kPrimOneHot->name(), {kAttrAxis}},
-  {prim::kPrimSoftmax->name(), {kAttrAxis}},
-  {prim::kPrimSplit->name(), {kAttrAxis}},
-  {prim::kPrimLayerNorm->name(), {kAttrBeginNormAxis, kAttrBeginParamsAxis, kAttrEpsilon}},
-  {prim::kPrimStridedSlice->name(),
-   {kAttrBeginMask, kAttrEndMask, kAttrEllipsisMask, kAttrNewAxisMask, kAttrShrinkAxisMask}},
-  {prim::kPrimLayerNormGrad->name(), {kAttrBeginNormAxis, kAttrBeginParamsAxis}},
-  {prim::kPrimLayerNormGradGrad->name(), {kAttrBeginNormAxis, kAttrBeginParamsAxis}},
-  {prim::kPrimBiasAdd->name(), {kAttrDataFormat}},
-  {prim::kPrimBiasAddGrad->name(), {kAttrDataFormat}},
-  {prim::kPrimStack->name(), {kAttrAxis}},
-  {prim::kPrimBatchMatMul->name(), {kTransposeA, kTransposeB}}};
+  {kBroadcastOpName, {kAttrShape}},
+  {kReduceMaxOpName, {kAttrKeepDims}},
+  {kReduceMinOpName, {kAttrKeepDims}},
+  {kReduceSumOpName, {kAttrKeepDims}},
+  {kMatMulOpName, {kTransposeA, kTransposeB}},
+  {kConcatOpName, {kAttrAxis}},
+  {kSqueezeOpName, {kAttrAxis}},
+  {kOneHotOpName, {kAttrAxis}},
+  {kSoftmaxOpName, {kAttrAxis}},
+  {kSplitOpName, {kAttrAxis}},
+  {kLayerNormOpName, {kAttrBeginNormAxis, kAttrBeginParamsAxis, kAttrEpsilon}},
+  {kStridedSliceOpName, {kAttrBeginMask, kAttrEndMask, kAttrEllipsisMask, kAttrNewAxisMask, kAttrShrinkAxisMask}},
+  {kLayerNormGradOpName, {kAttrBeginNormAxis, kAttrBeginParamsAxis}},
+  {kLayerNormGradGradOpName, {kAttrBeginNormAxis, kAttrBeginParamsAxis}},
+  {kBiasAddOpName, {kAttrDataFormat}},
+  {kBiasAddGradOpName, {kAttrDataFormat}},
+  {kStackOpName, {kAttrAxis}},
+  {kBatchMatMulOpName, {kTransposeA, kTransposeB}}};
 }  // namespace
 
 ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {

@@ -165,7 +165,7 @@ void TopCellInfo::Clear() {
   cnode_hash_with_op_index_.clear();
 }
 
-void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) {
+void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->input_params.erase(id);
