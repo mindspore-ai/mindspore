@@ -194,8 +194,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::MallocWeightBiasData() {
   int pack_weight_size = oc_algin * oc_tile_ * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
-    packed_weight_ = lite::PackWeightManager::GetInstance()->GetPackData(
-      in_tensors_[kWeightIndex]->data(), pack_weight_size * sizeof(float), &weight_is_packed_);
+    packed_weight_ = GetConvPackWeightData(pack_weight_size * sizeof(float));
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc packed_weight_ is failed!";
       return RET_NULL_PTR;
