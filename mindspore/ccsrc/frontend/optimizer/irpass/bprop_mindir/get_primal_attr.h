@@ -38,6 +38,7 @@ class GetPrimalAttr : public AnfVisitor {
       return nullptr;
     }
     auto prim_py = prim_->cast_ptr<PrimitivePy>();
+    MS_EXCEPTION_IF_NULL(prim_py);
     py::object attr_obj = py::getattr(prim_py->GetPyObj(), attr_.c_str());
     ValuePtr convert_result = nullptr;
     if (!parse::ConvertData(attr_obj, &convert_result)) {

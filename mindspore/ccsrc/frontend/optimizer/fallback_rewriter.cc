@@ -57,6 +57,10 @@ using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 
+constexpr auto kInternalDictSelfStr = "__internal_dict_self__";
+constexpr auto kInternalDictKeyStr = "__internal_dict_key__";
+constexpr auto kInternalDictValueStr = "__internal_dict_value__";
+
 namespace {
 static constexpr size_t kMaxSeqRecursiveDepth = 6;
 void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
@@ -724,16 +728,14 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(func_graph);
 
     // Script
-    constexpr auto internal_dict_self_str = "__internal_dict_self__";
-    constexpr auto internal_dict_key_str = "__internal_dict_key__";
     std::stringstream script_buffer;
-    script_buffer << internal_dict_self_str << "[" << internal_dict_key_str << "]";
+    script_buffer << kInternalDictSelfStr << "[" << kInternalDictKeyStr << "]";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
 
     // Pack local parameters keys.
-    const auto script_dict_self_name = std::make_shared<StringImm>(internal_dict_self_str);
-    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_key_str);
+    const auto script_dict_self_name = std::make_shared<StringImm>(kInternalDictSelfStr);
+    const auto script_dict_key_name = std::make_shared<StringImm>(kInternalDictKeyStr);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_names_list.emplace_back(NewValueNode(script_dict_self_name));
     (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));
@@ -790,19 +792,16 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(func_graph);
 
     // Script
-    constexpr auto internal_dict_self_str = "__internal_dict_self__";
-    constexpr auto internal_dict_key_str = "__internal_dict_key__";
-    constexpr auto internal_dict_value_str = "__internal_dict_value__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils.dict_setitem(" << internal_dict_self_str << ", "
-                  << internal_dict_key_str << ", " << internal_dict_value_str << ")";
+    script_buffer << "__import__('mindspore').common._utils.dict_setitem(" << kInternalDictSelfStr << ", "
+                  << kInternalDictKeyStr << ", " << kInternalDictValueStr << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
 
     // Pack local parameters keys.
-    const auto script_dict_self_name = std::make_shared<StringImm>(internal_dict_self_str);
-    const auto script_dict_key_name = std::make_shared<StringImm>(internal_dict_key_str);
-    const auto script_dict_value_name = std::make_shared<StringImm>(internal_dict_value_str);
+    const auto script_dict_self_name = std::make_shared<StringImm>(kInternalDictSelfStr);
+    const auto script_dict_key_name = std::make_shared<StringImm>(kInternalDictKeyStr);
+    const auto script_dict_value_name = std::make_shared<StringImm>(kInternalDictValueStr);
     std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_names_list.emplace_back(NewValueNode(script_dict_self_name));
     (void)key_value_names_list.emplace_back(NewValueNode(script_dict_key_name));

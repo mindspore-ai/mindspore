@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#include <utility>
 #include "ir/anf.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"

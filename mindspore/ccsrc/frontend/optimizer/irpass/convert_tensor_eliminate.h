@@ -69,7 +69,7 @@ class ConvertTensorEliminate : public AnfVisitor {
   }
 
  private:
-  bool IsAdapterTensor(const AnfNodePtr &node) {
+  bool IsAdapterTensor(const AnfNodePtr &node) const {
     auto abs = node->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     auto abs_tensor = dyn_cast<abstract::AbstractTensor>(abs);

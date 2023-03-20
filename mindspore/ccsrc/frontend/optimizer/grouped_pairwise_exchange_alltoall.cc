@@ -186,7 +186,7 @@ CNodePtr NewSplitNode(const AnfNodePtr &input_node, size_t split_dim, size_t spl
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   std::vector<TypeId> dtypes(split_num, dtype);
   auto shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  shape[split_dim] /= split_num;
+  shape[split_dim] /= SizeToLong(split_num);
   std::vector<ShapeVector> shapes(split_num, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
 
@@ -231,7 +231,7 @@ CNodePtr NewConcatNode(const AnfNodePtr &input_node, size_t concat_dim, size_t i
 
   std::vector<TypeId> dtypes = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
   auto shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  shape[concat_dim] *= input_num;
+  shape[concat_dim] *= SizeToLong(input_num);
   std::vector<ShapeVector> shapes(1, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
 
@@ -517,7 +517,7 @@ CNodePtr CreateReplaceGraph(const FuncGraphManagerPtr &manager, const std::vecto
   if (split_num == 0) {
     MS_LOG(EXCEPTION) << "split_num should not be zero.";
   }
-  back_input_shape[back_split_dim] /= split_num;
+  back_input_shape[back_split_dim] /= SizeToLong(split_num);
   auto back_input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(back_alltoall, 0);
   std::vector<int64_t> send_group_ranks = gpea_info->GetSendGroupRanks();
   std::vector<std::vector<AnfNodePtr>> front_comm_branches;
