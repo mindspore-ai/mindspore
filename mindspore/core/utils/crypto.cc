@@ -184,7 +184,7 @@ int InitCipherCtxAES(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const 
 }
 
 int InitCipherCtxSM4(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std::string &work_mode, const Byte *key,
-                     const Byte *iv, int iv_len, bool is_encrypt) {
+                     const Byte *iv, bool is_encrypt) {
   int32_t ret = 0;
 
   if (work_mode == "CBC") {
@@ -216,7 +216,7 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
   if (alg_mode == "AES") {
     return InitCipherCtxAES(ctx, funcPtr, work_mode, key, iv, iv_len, is_encrypt);
   } else if (alg_mode == "SM4") {
-    return InitCipherCtxSM4(ctx, funcPtr, work_mode, key, iv, iv_len, is_encrypt);
+    return InitCipherCtxSM4(ctx, funcPtr, work_mode, key, iv, is_encrypt);
   }
 
   return 1;

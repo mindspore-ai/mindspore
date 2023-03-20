@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,7 @@ class MS_CORE_API ProcessStatus {
   ~ProcessStatus() = default;
   static ProcessStatus &GetInstance();
   // Get current process status by a key. Only useful for Linux.
-  int64_t GetMemoryCost(const std::string &key);
+  int64_t GetMemoryCost(const std::string &key) const;
   // Start to record memory increase info. It must be used with RecordEnd().
   // If previous record not end, the next record will have indent when printed.
   void RecordStart(const std::string &step_name);
