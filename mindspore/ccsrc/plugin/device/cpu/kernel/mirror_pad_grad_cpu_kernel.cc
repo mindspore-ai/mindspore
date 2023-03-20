@@ -59,6 +59,7 @@ int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   dims_ = int64_t(input_shape_.size());
+  input_size_ = 1;
   for (auto x : input_shape_) {
     input_size_ *= x;
   }
@@ -67,6 +68,7 @@ int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   num_paddings_ = padding_shape[0];
 
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  output_size_ = 1;
   for (auto x : output_shape_) {
     output_size_ *= x;
   }
