@@ -20,33 +20,51 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
-  auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(MakeValue(x_shape.back())),
-                              ib->EmitValue(x_dtype)});
+static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const NodePtr &x) {
+  auto x_dtype = ib->GetDtype(x);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    ShapeVector shape2(x_shape.begin(), x_shape.end() - 1);
+    auto shape3 = x_shape;
+    shape3.push_back(x_shape.back());
+    return {{x_shape.back()}, shape2, shape3};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    auto rank1 = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 1;
+    auto rank2 = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 1;
+    return {1, rank1, rank2};
+  };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  auto eye = ib->Emit("Eye", {res[0], res[0], ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
-  ShapeVector shape2(x_shape.begin(), x_shape.end() - 1);
-  auto tile = ib->Tile(base_eye, shape2);
-  auto shape3 = x_shape;
-  shape3.push_back(x_shape.back());
-  return ib->Reshape(tile, shape3);
+  auto tile = ib->Tile(base_eye, res[1]);
+  return ib->Reshape(tile, res[kIndex2]);
 }
 
-static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
-  auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape[x_shape.size() - kDim2])),
-                              ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(x_dtype)});
+static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const NodePtr &x) {
+  auto x_dtype = ib->GetDtype(x);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
+    return {{x_shape[x_shape.size() - kDim2]}, {x_shape.back()}, shape2};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    return {1, 1, IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size() - kDim2)};
+  };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  auto eye = ib->Emit("Eye", {res[0], res[1], ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
-  ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
-  auto tile = ib->Tile(base_eye, shape2);
-  return ib->Reshape(tile, x_shape);
+  auto tile = ib->Tile(base_eye, res[kIndex2]);
+  return ib->Reshape(tile, ib->Shape(x));
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
 REG_BPROP_BUILDER("MatrixDiag").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto shape = ib->GetShape(dout);
-  auto dtype = ib->GetDtype(dout);
-  auto assist = GetMatrixDiagPartAssist(ib, shape, dtype);
+  auto assist = GetMatrixDiagPartAssist(ib, dout);
   auto dx = ib->Emit("MatrixDiagPart", {dout, assist});
   return {dx, ib->ZerosLike(y)};
 });
@@ -57,12 +75,10 @@ REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(i
   auto dout = ib->GetInput(kIndex3);
   auto shape = ib->GetShape(x);
   if (shape[shape.size() - kDim2] == shape.back()) {
-    auto shape = ib->GetShape(dout);
-    auto dtype = ib->GetDtype(dout);
-    auto assist = GetMatrixDiagAssist(ib, shape, dtype);
+    auto assist = GetMatrixDiagAssist(ib, dout);
     return {ib->Emit("MatrixDiag", {dout, assist}), ib->ZerosLike(y)};
   }
-  auto assist1 = GetMatrixDiagPartAssist(ib, ib->GetShape(x), ib->GetDtype(x));
+  auto assist1 = GetMatrixDiagPartAssist(ib, x);
   return {ib->Emit("MatrixSetDiag", {ib->ZerosLike(x), dout, assist1}), ib->ZerosLike(y)};
 });
 
@@ -70,15 +86,20 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BOD
   auto x = ib->GetInput(kIndex0);
   auto z = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto input_shape = ib->GetShape(x);
-  auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - kDim2);
-  diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - 1]));
-  auto grad_shape = ib->GetShape(dout);
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - kDim2);
+    diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - 1]));
+    return {diag_shape};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 1};
+  };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {})[0];
   auto grad_dtype = ib->GetDtype(dout);
-  auto assist = GetMatrixDiagPartAssist(ib, grad_shape, grad_dtype);
-  auto dx =
-    ib->Emit("MatrixSetDiag",
-             {dout, ib->Emit("Zeros", {ib->EmitValue(MakeValue(diag_shape)), ib->EmitValue(grad_dtype)}), assist});
+  auto assist = GetMatrixDiagPartAssist(ib, dout);
+  auto dx = ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {res, ib->EmitValue(grad_dtype)}), assist});
   auto dy = ib->Emit("MatrixDiagPart", {dout, assist});
   auto dz = ib->ZerosLike(z);
   return {dx, dy, dz};
@@ -178,7 +199,11 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   if (type_list.count(dout_type) > 0) {
     dout = ib->Cast(dout, kFloat32);
   }
-  auto dvalue = ib->ReduceSum(dout);
+  std::vector<int64_t> axis{};
+  for (int64_t i = 0; i < static_cast<int64_t>(dout->shape().size()); ++i) {
+    axis.push_back(i);
+  }
+  auto dvalue = ib->ReduceSum(dout, axis);
   return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
@@ -214,14 +239,19 @@ REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i0, i1, i2}).
   auto inputs = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto shp = ib->GetShape(inputs);
-  std::vector<int64_t> new_shp;
-  for (size_t i = 2; i < shp.size(); i++) {
-    new_shp.push_back(shp[i]);
-  }
-  return {
-    ib->Emit("ResizeNearestNeighborGrad", {dout, ib->Value(shp)}, {{"align_corners", ib->GetAttr("align_corners")}}),
-    ib->ZerosLike(size)};
+  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+    auto x_shape = inputs.at(0);
+    ShapeVector shape2(x_shape.begin() + 2, x_shape.end());
+    return {shape2};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto new_shape = inputs.at(0);
+    auto rank = IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) - 2;
+    return {rank};
+  };
+  auto res = ib->ShapeCalc({inputs}, shape_func, infer_func, {})[0];
+  return {ib->Emit("ResizeNearestNeighborGrad", {dout, res}, {{"align_corners", ib->GetAttr("align_corners")}}),
+          ib->ZerosLike(size)};
 });
 
 REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
