@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops
 from mindspore.ops.operations.math_ops import Median
-from mindspore.ops.operations.array_ops import UniqueConsecutive, Triu
+from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm, dot
@@ -142,7 +142,7 @@ tensor_operator_registry.register('chunk', chunk)
 tensor_operator_registry.register('sqrt', sqrt)
 tensor_operator_registry.register('square', square)
 tensor_operator_registry.register('sub', sub)
-tensor_operator_registry.register('triu', Triu)
+tensor_operator_registry.register('triu', triu)
 tensor_operator_registry.register('tan', P.Tan)
 tensor_operator_registry.register('t', t)
 tensor_operator_registry.register('acos', acos)

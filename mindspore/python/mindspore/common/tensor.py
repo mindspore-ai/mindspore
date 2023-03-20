@@ -848,25 +848,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def triu(self, diagonal=0):
         r"""
-        Returns a triangular matrix based on the diagonal. Default is the main diagonal.
-
-        Args:
-            diagonal (int): The index of diagonal. Default: 0.
-
-        Returns:
-            Tensor, a tensor has the same shape and data type as input.
-
-        Raises:
-            TypeError: If `diagonal` is not an int.
-            TypeError: If `x` is not an Tensor.
-            ValueError: If length of shape of x is less than 1.
-
-        Supported Platforms:
-            ``GPU`` ``CPU``
+        For details, please refer to :func:`mindspore.ops.triu`.
         """
         self._init_check()
         validator.check_value_type('diagonal', diagonal, [int], 'triu')
-        return tensor_operator_registry.get('triu')(diagonal)(self)
+        return tensor_operator_registry.get('triu')(self, diagonal)
 
     def addbmm(self, batch1, batch2, *, beta=1, alpha=1):
         r"""
