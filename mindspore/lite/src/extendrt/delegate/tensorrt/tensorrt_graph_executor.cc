@@ -532,7 +532,13 @@ std::shared_ptr<TensorRTSubGraph> TensorRTExecutor::CreateTensorRTGraph(const st
   return tensorrt_graph;
 }
 
-bool TensorRTExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
+bool TensorRTExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
+                                    uint32_t *graph_id) {
+  if (graph == nullptr || graph_id == nullptr) {
+    MS_LOG(ERROR) << "Input param graph or graph id is nullptr";
+    return false;
+  }
+  *graph_id = 0;
   TensorRtOptimizer optimizer;
   optimizer.RunOptimizer(graph);
 
@@ -548,7 +554,7 @@ bool TensorRTExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<st
   return true;
 }
 
-bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
+bool TensorRTExecutor::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) {
   if (inputs.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Graph inputs size " << inputs_.size() << " != execute outputs size " << inputs.size();
@@ -612,7 +618,7 @@ bool TensorRTExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<ten
   return true;
 }
 
-bool TensorRTExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+bool TensorRTExecutor::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
                               const std::vector<std::vector<int64_t>> &new_shapes) {
   if (tensorrt_graph_ == nullptr) {
     MS_LOG(ERROR) << "TensorRT subgraph is nullptr.";
@@ -621,7 +627,7 @@ bool TensorRTExecutor::Resize(const FuncGraphPtr &, const std::vector<tensor::Te
   return tensorrt_graph_->Resize(inputs, new_shapes) == RET_OK;
 }
 
-std::vector<tensor::Tensor> TensorRTExecutor::GetInputInfos(const FuncGraphPtr &) {
+std::vector<tensor::Tensor> TensorRTExecutor::GetInputInfos(uint32_t) {
   std::vector<tensor::Tensor> tensors;
   for (auto &tensor_info : inputs_) {
     auto type_id = static_cast<enum TypeId>(tensor_info.DataType());
@@ -631,7 +637,7 @@ std::vector<tensor::Tensor> TensorRTExecutor::GetInputInfos(const FuncGraphPtr &
   return tensors;
 }
 
-std::vector<tensor::Tensor> TensorRTExecutor::GetOutputInfos(const FuncGraphPtr &) {
+std::vector<tensor::Tensor> TensorRTExecutor::GetOutputInfos(uint32_t) {
   std::vector<tensor::Tensor> tensors;
   for (auto &tensor_info : outputs_) {
     auto type_id = static_cast<enum TypeId>(tensor_info.DataType());

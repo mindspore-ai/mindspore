@@ -59,7 +59,8 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] size (Deprecated), need delete.
   ///
   /// \return Status.
-  virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) = 0;
+  virtual Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
+                              uint32_t *graph_id = nullptr) = 0;
 
   /// \brief Run Model Graph to inference.
   ///
@@ -67,7 +68,8 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
   ///
   /// \return Status.
-  virtual Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) = 0;
+  virtual Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                          std::vector<tensor::Tensor> *outputs) = 0;
 
   /// \brief Run Model Graph to inference.
   ///
@@ -77,8 +79,9 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] after CallBack after predict.
   ///
   /// \return Status.
-  virtual Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                          const MSKernelCallBack &before, const MSKernelCallBack &after) = 0;
+  virtual Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                          std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+                          const MSKernelCallBack &after) = 0;
 
   /// \brief Resize model inputs shape and memory from specified dims.
   ///
@@ -86,39 +89,40 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
   /// \param[in] dims Define dst resize shapes.
   ///
   /// \return Status.
-  virtual Status Resize(const std::vector<tensor::Tensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
+  virtual Status Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                        const std::vector<std::vector<int64_t>> &dims) {
     return kSuccess;
   }
 
   /// \brief Obtains all output tensors of the model.
   ///
   /// \return The vector that includes all output tensors.
-  virtual std::vector<MutableTensorImplPtr> GetOutputs() = 0;
+  virtual std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) = 0;
 
   /// \brief Obtains all input tensors of the model.
   ///
   /// \return The vector that includes all input tensors.
-  virtual std::vector<MutableTensorImplPtr> GetInputs() = 0;
+  virtual std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) = 0;
 
   /// \brief Obtains all output tensors' name of the model.
   ///
   /// \return The vector that includes all output tensors' name.
-  virtual std::vector<std::string> GetOutputNames() = 0;
+  virtual std::vector<std::string> GetOutputNames(uint32_t graph_id) = 0;
 
   /// \brief Obtains all input tensors' name of the model.
   ///
   /// \return The vector that includes all input tensors' name.
-  virtual std::vector<std::string> GetInputNames() = 0;
+  virtual std::vector<std::string> GetInputNames(uint32_t graph_id) = 0;
 
   /// \brief Obtains the output tensor of the model by name.
   ///
   /// \return The output tensor with the given name, if the name is not found, an invalid tensor is returned.
-  virtual MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) = 0;
+  virtual MutableTensorImplPtr GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) = 0;
 
   /// \brief Obtains the input tensor of the model by name.
   ///
   /// \return The input tensor with the given name, if the name is not found, an invalid tensor is returned.
-  virtual MutableTensorImplPtr GetInputByTensorName(const std::string &name) = 0;
+  virtual MutableTensorImplPtr GetInputByTensorName(uint32_t graph_id, const std::string &name) = 0;
 
  protected:
   /// \brief Handle session according to context.

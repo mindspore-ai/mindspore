@@ -50,14 +50,15 @@ class TensorRTExecutor : public LiteGraphExecutor {
 
   bool Init();
 
-  bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
-  bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
-                std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
+  bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
+                    uint32_t *graph_id) override;
+  bool RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
+                const std::map<string, string> &compile_options) override;
 
-  bool Resize(const FuncGraphPtr &, const std::vector<tensor::Tensor> &inputs,
+  bool Resize(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
               const std::vector<std::vector<int64_t>> &new_shapes) override;
-  std::vector<tensor::Tensor> GetInputInfos(const FuncGraphPtr &) override;
-  std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
+  std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
+  std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
 
  private:
   int ParseOptimizationProfile();

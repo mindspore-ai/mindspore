@@ -30,14 +30,16 @@ class LiteInferSession : public InferSession {
   explicit LiteInferSession(const std::shared_ptr<Context> &context) : context_(context) {}
   virtual ~LiteInferSession() = default;
   Status Init(const std::shared_ptr<Context> &context) override;
-  Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0) override;
-  Status RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) override;
-  std::vector<MutableTensorImplPtr> GetOutputs() override;
-  std::vector<MutableTensorImplPtr> GetInputs() override;
-  std::vector<std::string> GetOutputNames() override;
-  std::vector<std::string> GetInputNames() override;
-  MutableTensorImplPtr GetOutputByTensorName(const std::string &tensorName) override;
-  MutableTensorImplPtr GetInputByTensorName(const std::string &name) override;
+  Status CompileGraph(FuncGraphPtr graph, const void *data = nullptr, size_t size = 0,
+                      uint32_t *graph_id = nullptr) override;
+  Status RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                  std::vector<tensor::Tensor> *outputs) override;
+  std::vector<MutableTensorImplPtr> GetOutputs(uint32_t graph_id) override;
+  std::vector<MutableTensorImplPtr> GetInputs(uint32_t graph_id) override;
+  std::vector<std::string> GetOutputNames(uint32_t graph_id) override;
+  std::vector<std::string> GetInputNames(uint32_t graph_id) override;
+  MutableTensorImplPtr GetOutputByTensorName(uint32_t graph_id, const std::string &tensorName) override;
+  MutableTensorImplPtr GetInputByTensorName(uint32_t graph_id, const std::string &name) override;
 
  private:
   std::shared_ptr<lite::LiteSession> CreateLiteSession(const std::shared_ptr<lite::InnerContext> &context);

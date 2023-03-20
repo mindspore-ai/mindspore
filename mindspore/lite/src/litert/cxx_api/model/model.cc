@@ -257,6 +257,14 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
 #endif
 }
 
+std::vector<std::shared_ptr<Model>> Model::Build(const std::vector<char> &model_path,
+                                                 const std::vector<char> &inc_model_path, ModelType model_type,
+                                                 const std::shared_ptr<Context> &model_context,
+                                                 const std::vector<char> &config_file) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return {};
+}
+
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
   {
@@ -425,7 +433,7 @@ Model::Model() : impl_(nullptr) {}
 
 Model::~Model() {}
 
-bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type) {
+bool Model::CheckModelSupport(DeviceType device_type, ModelType model_type) {
   if (device_type == kCPU) {
     return true;
   }

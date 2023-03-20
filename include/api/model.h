@@ -71,6 +71,11 @@ class MS_API Model {
   inline Status Build(const std::string &model_path, ModelType model_type,
                       const std::shared_ptr<Context> &model_context = nullptr);
 
+  inline static std::vector<std::shared_ptr<Model>> Build(const std::string &model_path,
+                                                          const std::string &inc_model_path, ModelType model_type,
+                                                          const std::shared_ptr<Context> &model_context = nullptr,
+                                                          const std::string &config_file = "");
+
   /// \brief Build a model from model buffer so that it can run on a device.
   ///
   /// \param[in] model_data Define the buffer read from a model file.
@@ -290,7 +295,7 @@ class MS_API Model {
 
   /// \brief Initialize object with metrics.
   ///
-  /// \param[in] metrics A verctor of metrics objects.
+  /// \param[in] metrics A vector of metrics objects.
   ///
   /// \return 0 on success or -1 in case of error
   Status InitMetrics(std::vector<Metrics *> metrics);
@@ -387,6 +392,11 @@ class MS_API Model {
                const std::vector<char> &cropto_lib_path);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                const Key &dec_key, const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path);
+
+  static std::vector<std::shared_ptr<Model>> Build(const std::vector<char> &model_path,
+                                                   const std::vector<char> &inc_model_path, ModelType model_type,
+                                                   const std::shared_ptr<Context> &model_context,
+                                                   const std::vector<char> &config_file);
   std::shared_ptr<ModelImpl> impl_;
 };
 
@@ -428,6 +438,13 @@ Status Model::Build(const std::string &model_path, ModelType model_type, const s
 Status Model::Build(const std::string &model_path, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
   return Build(StringToChar(model_path), model_type, model_context);
+}
+
+std::vector<std::shared_ptr<Model>> Model::Build(const std::string &model_path, const std::string &inc_model_path,
+                                                 ModelType model_type, const std::shared_ptr<Context> &model_context,
+                                                 const std::string &config_file) {
+  return Model::Build(StringToChar(model_path), StringToChar(inc_model_path), model_type, model_context,
+                      StringToChar(config_file));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

@@ -52,7 +52,7 @@ Status DefaultInferSession::Init(const std::shared_ptr<Context> &context) {
 
   return kSuccess;
 }
-Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size) {
+Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
 
   MS_LOG(DEBUG) << "DefaultInferSession::CompileGraph Compile Graph Begin";
@@ -84,8 +84,9 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph, const void *data, s
   return kSuccess;
 }
 
-Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs,
-                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
+Status DefaultInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor> &inputs,
+                                     std::vector<tensor::Tensor> *outputs, const MSKernelCallBack &before,
+                                     const MSKernelCallBack &after) {
   MS_LOG(DEBUG) << "DefaultInferSession::RunGraph Execute ExecutionPlan Begin";
   auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
@@ -121,16 +122,17 @@ Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, 
   return kSuccess;
 }
 
-Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std::vector<tensor::Tensor> *outputs) {
-  return RunGraph(inputs, outputs, nullptr, nullptr);
+Status DefaultInferSession::RunGraph(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
+                                     std::vector<tensor::Tensor> *outputs) {
+  return RunGraph(graph_id, inputs, outputs, nullptr, nullptr);
 }
 
-Status DefaultInferSession::Resize(const std::vector<tensor::Tensor> &inputs,
+Status DefaultInferSession::Resize(uint32_t, const std::vector<tensor::Tensor> &inputs,
                                    const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
 
-std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() {
+std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs(uint32_t) {
   auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
@@ -141,7 +143,7 @@ std::vector<MutableTensorImplPtr> DefaultInferSession::GetOutputs() {
   return AbstractTensorsToTensorImpls(lite_outputs);
 }
 
-std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs() {
+std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs(uint32_t) {
   auto runtime = this->GetGraphRuntime();
   if (runtime_ == nullptr) {
     MS_LOG(ERROR) << "DefaultInferSession::GetOutputs Runtime in Infer Session is null";
@@ -152,10 +154,12 @@ std::vector<MutableTensorImplPtr> DefaultInferSession::GetInputs() {
   return AbstractTensorsToTensorImpls(lite_inputs);
 }
 
-std::vector<std::string> DefaultInferSession::GetOutputNames() { return std::vector<std::string>(); }
-std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vector<std::string>(); }
-MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
-MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
+std::vector<std::string> DefaultInferSession::GetOutputNames(uint32_t) { return std::vector<std::string>(); }
+std::vector<std::string> DefaultInferSession::GetInputNames(uint32_t) { return std::vector<std::string>(); }
+MutableTensorImplPtr DefaultInferSession::GetOutputByTensorName(uint32_t, const std::string &tensorName) {
+  return nullptr;
+}
+MutableTensorImplPtr DefaultInferSession::GetInputByTensorName(uint32_t, const std::string &name) { return nullptr; }
 
 Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Tensor> &tensors,
                                                    std::vector<infer::abstract::Tensor *> inner_tensors) {

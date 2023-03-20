@@ -78,6 +78,10 @@ class ModelImpl {
   /// \return Status.
   Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context);
 
+  static Status Build(const std::vector<std::shared_ptr<ModelImpl>> &model_impls,
+                      const std::vector<std::string> &model_paths, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context);
+
   /// \brief Resize model inputs shape and memory from specified dims.
   ///
   /// \param[in] inputs Define dst inputs tensors.
@@ -179,7 +183,7 @@ class ModelImpl {
   /// \return value of config as string type.
   std::string GetConfig(const std::string &section, const std::string &key);
 
-  static bool CheckModelSupport(enum DeviceType device_type, ModelType model_type);
+  static bool CheckModelSupport(DeviceType device_type, ModelType model_type);
 
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
@@ -195,6 +199,9 @@ class ModelImpl {
   Status BuildByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
                            const std::shared_ptr<Context> &model_context, const std::string &model_path = "");
 
+  FuncGraphPtr LoadGraphByBufferImpl(const void *model_data, size_t data_size, ModelType model_type,
+                                     const std::shared_ptr<Context> &model_context, const std::string &model_path);
+
   /// \brief Compare and optimize model online.
   ///
   /// \param[in] func_graph load from a model file.
@@ -203,10 +210,12 @@ class ModelImpl {
   /// \return value of config as string type.
   Status ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context);
 
+  Status Warmup();
+
   /// \brief Set Mindspore Context.
   /// This is used for load mindir file for model, turn off the infer shape flow
   ///
-  void SetMsContext();
+  static void SetMsContext();
 
   friend class Model;
   friend class Serialization;
@@ -221,6 +230,7 @@ class ModelImpl {
   ConfigInfos config_info_;
   std::map<std::string, TypeId> execution_plan_;
   std::recursive_mutex mutex_;
+  uint32_t graph_id_ = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

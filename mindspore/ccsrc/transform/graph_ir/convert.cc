@@ -453,6 +453,12 @@ void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broa
 
 void DfGraphConvertor::InitParamWithConst(const TensorOrderMap &tensors) {
   std::vector<Operator> init_input;
+  auto manager = Manage(anf_graph_, true);
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "manager is nullptr.";
+    return;
+  }
+  const auto &node_users = manager->node_users();
   for (auto it : tensors) {
     std::string name = it.first;
     auto node_itor = params_.find(name);
@@ -475,16 +481,39 @@ void DfGraphConvertor::InitParamWithConst(const TensorOrderMap &tensors) {
     if (adpt_const == nullptr) {
       continue;
     }
-    auto const_op = adpt_const->generate(name + "_const");
-    (void)adpt_const->setAttr(const_op, "value", it.second);
-
     auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
     if (desc == nullptr) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
-    (void)std::static_pointer_cast<Constant>(const_op)->update_output_desc_y(*desc);
-    if (!training_) {
+    OperatorPtr const_op = nullptr;
+    if (convert_context_ != nullptr) {
+      auto const_it = convert_context_->const_op_map.find(name);
+      if (const_it != convert_context_->const_op_map.end()) {
+        const_op = const_it->second.lock();
+      }
+    }
+    if (const_op == nullptr) {
+      auto const_op_new = adpt_const->generate(name + "_const");
+      (void)adpt_const->setAttr(const_op_new, "value", it.second);
+      (void)std::static_pointer_cast<Constant>(const_op_new)->update_output_desc_y(*desc);
+      if (convert_context_ != nullptr) {
+        convert_context_->const_op_map[name] = const_op_new;
+      }
+      const_op = const_op_new;
+    }
+
+    bool will_be_update = false;
+    auto user_it = node_users.find(node);
+    if (user_it != node_users.end()) {
+      auto &users = user_it->second;
+      for (auto &user_node : users) {
+        if (user_node.first && IsPrimitiveCNode(user_node.first, prim::kPrimAssign)) {
+          will_be_update = true;
+        }
+      }
+    }
+    if (!training_ && !will_be_update) {
       const_op_to_value_[const_op] = it.second;
       vars_[name] = const_op;
       op_itor->second = const_op;

@@ -42,3 +42,4 @@ target_link_libraries(ascend_ge_plugin ${ge_graph} ${ge_compiler} ${acl_retr} ${
                       ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
                       ${libaicpu_engine_common} ${acl} ${ge_runner} mindspore_converter mindspore_core)
 
+target_link_libraries(ascend_ge_plugin mindspore-extendrt)

@@ -22,6 +22,12 @@
 namespace mindspore::lite {
 namespace py = pybind11;
 
+std::vector<std::shared_ptr<Model>> BuildMultiModels(const std::string &model_path, const std::string &inc_model_path,
+                                                     ModelType model_type, const std::shared_ptr<Context> &context,
+                                                     const std::string &config_file) {
+  return Model::Build(model_path, inc_model_path, model_type, context, config_file);
+}
+
 void ModelPyBind(const py::module &m) {
   (void)py::enum_<ModelType>(m, "ModelType")
     .value("kMindIR", ModelType::kMindIR)
@@ -62,9 +68,12 @@ void ModelPyBind(const py::module &m) {
   (void)py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
     .def("build_from_buff",
-         py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
+         py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &>(&Model::Build),
+         py::call_guard<py::gil_scoped_release>())
     .def("build_from_file",
-         py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
+         py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &>(&Model::Build),
+         py::call_guard<py::gil_scoped_release>())
+    .def_static("build_multi_models", &BuildMultiModels, py::call_guard<py::gil_scoped_release>())
     .def("build_from_buff_with_decrypt",
          py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
@@ -73,8 +82,10 @@ void ModelPyBind(const py::module &m) {
                            const std::string &, const std::string &>(&Model::Build))
     .def("load_config", py::overload_cast<const std::string &>(&Model::LoadConfig))
     .def("resize", &Model::Resize)
-    .def("predict", py::overload_cast<const std::vector<MSTensor> &, std::vector<MSTensor> *, const MSKernelCallBack &,
-                                      const MSKernelCallBack &>(&Model::Predict))
+    .def("predict",
+         py::overload_cast<const std::vector<MSTensor> &, std::vector<MSTensor> *, const MSKernelCallBack &,
+                           const MSKernelCallBack &>(&Model::Predict),
+         py::call_guard<py::gil_scoped_release>())
     .def("get_inputs", &Model::GetInputs)
     .def("get_outputs", &Model::GetOutputs)
     .def("get_input_by_tensor_name",

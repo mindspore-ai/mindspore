@@ -93,6 +93,48 @@ class Model:
         res = f"model_path: {self.model_path_}."
         return res
 
+    @staticmethod
+    def init_distributed(rank_table_file, rank_id, device_id, provider="ge"):
+        """Init distributed env"""
+        os.environ["RANK_ID"] = str(rank_id)
+        os.environ["DEVICE_ID"] = str(device_id)
+        os.environ["ASCEND_DEVICE_ID"] = str(device_id)
+        os.environ["ASCEND_BACK_POLICY"] = provider
+        os.environ["MS_ENABLE_HCCL"] = "1"
+        os.environ["RANK_TABLE_FILE"] = rank_table_file
+
+    @staticmethod
+    def build_multi_models(model_path0, model_path1, model_type, context, config_path=""):
+        """Load models share weights"""
+        check_isinstance("model_path", model_path0, str)
+        check_isinstance("model_path", model_path1, str)
+        check_isinstance("model_type", model_type, ModelType)
+        if context is None:
+            context = Context()
+        check_isinstance("context", context, Context)
+        check_isinstance("config_path", config_path, str)
+        model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
+        if model_type is ModelType.MINDIR:
+            model_type_ = _c_lite_wrapper.ModelType.kMindIR
+
+        if config_path:
+            if not os.path.exists(config_path):
+                raise RuntimeError(f"build_from_file failed, config_path does not exist!")
+        else:
+            config_path = ""
+        models_ = _c_lite_wrapper.ModelBind.build_multi_models(model_path0, model_path1, model_type_,
+                                                               context._context._inner_context, config_path)
+        if not models_:
+            raise RuntimeError(f"build_from_file failed! model_path0: {model_path0}, model_path1: {model_path1}, "
+                               f"config_file: {config_path}")
+        model0 = Model()
+        model0._model = models_[0]
+        model0.model_path_ = model_path0
+        model1 = Model()
+        model1._model = models_[1]
+        model1.model_path_ = model_path1
+        return model0, model1
+
     def build_from_file(self, model_path, model_type, context=None, config_path=""):
         """
         Load and build a model from file.

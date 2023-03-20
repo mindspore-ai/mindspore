@@ -79,9 +79,15 @@ class GeOpConvertor {
   static std::map<int, std::string> GetAclDynamicOutputNames(const AnfNodePtr &node);
 };
 
+struct DfGraphConvertContext {
+  mindspore::HashMap<std::string, std::weak_ptr<::ge::Operator>> const_op_map;
+};
+
 class DfGraphConvertor {
  public:
-  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
+  explicit DfGraphConvertor(const AnfGraphPtr &anf_graph,
+                            const std::shared_ptr<DfGraphConvertContext> &context = nullptr)
+      : anf_graph_(anf_graph), convert_context_(context) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
     auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
@@ -306,6 +312,8 @@ class DfGraphConvertor {
   mindspore::HashMap<OperatorPtr, std::shared_ptr<tensor::Tensor>> const_op_to_value_;
   AnfNodePtr prev_while_node_ = nullptr;
   size_t prev_while_node_out_size_ = 0;
+
+  std::shared_ptr<DfGraphConvertContext> convert_context_ = nullptr;
 
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> while_graph_cache_;
   mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<OutHandler>>> call_input_handle_cache_;

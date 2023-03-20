@@ -27,7 +27,9 @@ void ContextPyBind(const py::module &m) {
     .value("kKirinNPU", DeviceType::kKirinNPU)
     .value("kAscend", DeviceType::kAscend);
 
-  (void)py::class_<DeviceInfoContext, std::shared_ptr<DeviceInfoContext>>(m, "DeviceInfoContextBind");
+  (void)py::class_<DeviceInfoContext, std::shared_ptr<DeviceInfoContext>>(m, "DeviceInfoContextBind")
+    .def("set_provider", py::overload_cast<const std::string &>(&DeviceInfoContext::SetProvider))
+    .def("get_provider", &DeviceInfoContext::GetProvider);
 
   (void)py::class_<CPUDeviceInfo, DeviceInfoContext, std::shared_ptr<CPUDeviceInfo>>(m, "CPUDeviceInfoBind")
     .def(py::init<>())
