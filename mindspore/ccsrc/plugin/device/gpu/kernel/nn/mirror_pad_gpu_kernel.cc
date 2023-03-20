@@ -78,6 +78,7 @@ int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   input_size_ = 1;
+  input_shape_.clear();
   for (auto in_shape : input_shape) {
     input_size_ *= LongToSizeClipNeg(in_shape);
     input_shape_.push_back(LongToInt(in_shape));
@@ -93,6 +94,7 @@ int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                       << "got the " << output_shape.size();
   }
   output_size_ = out_type_size_;
+  output_shape_.clear();
   for (auto x : output_shape) {
     output_size_ *= LongToSizeClipNeg(x);
     output_shape_.push_back(LongToInt(x));
