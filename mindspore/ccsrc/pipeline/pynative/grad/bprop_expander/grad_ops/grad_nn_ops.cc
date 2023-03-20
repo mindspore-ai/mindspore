@@ -1475,7 +1475,7 @@ REG_BPROP_BUILDER("CeLU").SetBody(BODYFUNC(ib) {
   auto greater = ib->GreaterEqual(x, ib->Tensor(0.0, x_dtype));
 
   auto dx =
-    ib->Mul(dout, ib->Select(greater, ib->Fill(1.0, ib->GetShape(x), x_dtype->type_id()),
+    ib->Mul(dout, ib->Select(greater, ib->Fill(1.0, ib->Shape(x), x_dtype->type_id()),
                              ib->Add((ib->RealDiv(out, ib->Tensor(alpha, x_dtype))), ib->Tensor(1.0, x_dtype))));
   return {dx};
 });
@@ -1656,13 +1656,10 @@ REG_BPROP_BUILDER("FractionalAvgPool").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto x_shape = ib->GetShape(x);
-
+  auto x_shape = ib->Shape(x, true);
   auto dx = ib->Emit("FractionalAvgPoolGrad",
-                     {ib->Cast(ib->Tensor(x_shape), kInt64), ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1),
-                      ib->TupleGetItem(out, 2)},
+                     {x_shape, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2)},
                      {{"overlapping", ib->GetAttr("overlapping")}, {"max_length", MakeValue<int64_t>(1000000)}});
-
   return {dx};
 });
 
@@ -1675,8 +1672,12 @@ REG_BPROP_BUILDER("PSROIPooling").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib)
   auto dout = ib->GetInput(kIndex3);
   auto shape = ib->GetShape(x);
   ShapeVector input_size;
-  for (size_t i = 2; i < shape.size(); i++) {
-    input_size.push_back(shape[i]);
+  if (IsDynamicRank(shape)) {
+    input_size = shape;
+  } else {
+    for (size_t i = 2; i < shape.size(); i++) {
+      input_size.push_back(shape[i]);
+    }
   }
   auto dx = ib->Emit("PSROIPoolingGrad", {dout, rois},
                      {
