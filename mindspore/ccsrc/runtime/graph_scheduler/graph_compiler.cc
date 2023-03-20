@@ -293,10 +293,6 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   if (is_parallel_mode) {
     return false;
   }
-
-  if (common::GetEnv("DISABLE_ZERO_COPY") == "1") {
-    return false;
-  }
   return true;
 }
 }  // namespace
