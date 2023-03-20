@@ -3329,7 +3329,6 @@ class SGD(PrimitiveWithCheck):
         validator.check_int(len(learning_rate_shape), 0, Rel.GE, f'learning rate rank', self.name)
         validator.check_int(len(momentum_shape), 0, Rel.GE, f'momentum rank', self.name)
         validator.check_int(len(stat_shape), 0, Rel.GE, f'stat rank', self.name)
-        validator.check("gradient shape", gradient_shape, "stat shape", stat_shape, Rel.EQ, self.name)
 
     def check_dtype(self, parameters_dtype, gradient_dtype, learning_rate_dtype,
                     accum_dtype, momentum_dtype, stat_dtype):
