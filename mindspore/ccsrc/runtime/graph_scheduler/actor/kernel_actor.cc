@@ -49,7 +49,9 @@ void KernelActor::Init() {
   real_input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info_);
-  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_);
+  kernel_mod_ = kernel_info_->MutableKernelMod();
+  MS_EXCEPTION_IF_NULL(kernel_mod_);
+  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
   if (is_dynamic_shape_ && IsSomasEnable(somas_info_)) {
     MS_LOG(EXCEPTION) << "Not support the somas for the dynamic shape: " << GetAID().Name();
   }
@@ -187,9 +189,8 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
 void KernelActor::FetchWorkspaceDeviceTensor() {
   MS_LOG(DEBUG) << "Start FetchWorkspaceDeviceTensor.";
   MS_EXCEPTION_IF_NULL(kernel_);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+  MS_EXCEPTION_IF_NULL(kernel_mod_);
+  auto workspace_sizes = kernel_mod_->GetWorkspaceSizeList();
   // Resize of workspace_device_tensors_, memory_alloc_list_, memory_free_list_ and launch_info_.workspaces_, because of
   // the dynamic size of workspace.
   if (launch_info_.workspaces_.size() > workspace_sizes.size()) {
@@ -479,7 +480,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   auto &new_device_tensor = copy_input_device_tensors_[input_data_index];
   MS_EXCEPTION_IF_NULL(new_device_tensor);
   // Dynamic shape need update size.
-  if (IsDynamic(real_input_info->shape_) || common::AnfAlgo::IsDynamicSequence(kernel_)) {
+  if (is_dynamic_shape_) {
     new_device_tensor->SetSize(input_data->data_->GetSize());
   }
   // Update the input device tensor.
@@ -554,9 +555,8 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
 void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(kernel_info_);
   auto &output_addresses = kernel_info_->output_address_list();
-  const auto &kernel_mod = kernel_info_->kernel_mod();
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  const auto &output_size_list = kernel_mod->GetOutputSizeList();
+  MS_EXCEPTION_IF_NULL(kernel_mod_);
+  const auto &output_size_list = kernel_mod_->GetOutputSizeList();
 
   // May exist in the kernel which does not support the dynamic shape.
   if (output_addresses.size() != output_size_list.size()) {
@@ -600,8 +600,7 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
 }
 
 void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
+  MS_EXCEPTION_IF_NULL(kernel_mod_);
 
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
@@ -609,7 +608,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
     launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
     if (input_device_tensors_[i]->user_data() != nullptr) {
-      kernel_mod->set_input_user_data(input_device_tensors_[i]->user_data().get(), i);
+      kernel_mod_->set_input_user_data(input_device_tensors_[i]->user_data().get(), i);
     }
   }
 
@@ -619,7 +618,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
     launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
     launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
     if (output_device_tensors_[i]->user_data() != nullptr) {
-      kernel_mod->set_output_user_data(output_device_tensors_[i]->user_data().get(), i);
+      kernel_mod_->set_output_user_data(output_device_tensors_[i]->user_data().get(), i);
     }
   }
 

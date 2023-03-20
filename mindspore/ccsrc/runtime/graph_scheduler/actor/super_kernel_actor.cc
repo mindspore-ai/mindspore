@@ -74,11 +74,13 @@ void SuperKernelActor::Init() {
   }
 
   // Check whether the parameter needs to be copied out.
+  node_device_tensors_.resize(graph_->input_nodes().size());
   is_parameters_need_copy_.resize(graph_->input_nodes().size());
   copy_input_device_tensors_.resize(graph_->input_nodes().size());
   for (size_t i = 0; i < graph_->input_nodes().size(); ++i) {
     const auto &input_node = graph_->input_nodes()[i];
     MS_EXCEPTION_IF_NULL(input_node);
+    node_device_tensors_[i] = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     if (!common::AnfAlgo::HasAbstractRef(input_node)) {
       is_parameters_need_copy_[i] = false;
       continue;
@@ -203,12 +205,9 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
   for (auto item : ref_node_addr_map_) {
     MS_EXCEPTION_IF_NULL(item.first);
     MS_EXCEPTION_IF_NULL(item.second);
-    auto formal_param_addr = AnfAlgo::GetMutableOutputAddr(item.first, 0, false);
-    MS_EXCEPTION_IF_NULL(formal_param_addr);
-    MS_LOG(INFO) << "The input ref_node: " << item.first->DebugString()
-                 << " need copy back, from address: " << formal_param_addr->GetPtr()
+    MS_LOG(INFO) << "The input ref node copy back from address: " << item.first->GetPtr()
                  << " to address: " << item.second->GetPtr() << ".";
-    if (!Copy(item.second, formal_param_addr.get())) {
+    if (!Copy(item.second, item.first)) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
     }
   }
@@ -234,15 +233,13 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(graph_);
   auto &input_nodes = graph_->input_nodes();
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    if (i >= input_nodes.size()) {
-      MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << input_nodes.size() << ".";
+    if (i >= node_device_tensors_.size()) {
+      MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << node_device_tensors_.size() << ".";
       return false;
     }
-    auto input_node = input_nodes[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    auto node_device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    auto &node_device_tensor = node_device_tensors_[i];
     MS_EXCEPTION_IF_NULL(node_device_tensor);
-    auto input_device_tensor = input_device_tensors_[i];
+    auto &input_device_tensor = input_device_tensors_[i];
     if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) || (input_device_tensor == nullptr) ||
         (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
       continue;
@@ -289,17 +286,18 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       copy_device_tensor = node_device_tensor;
     }
     MS_EXCEPTION_IF_NULL(copy_device_tensor);
-    MS_LOG(INFO) << "The input data of node:" << input_node->DebugString()
+    MS_LOG(INFO) << "The input data of node:" << input_nodes[i]->DebugString()
                  << " need copy from address:" << input_device_tensor->GetPtr()
                  << ", type:" << input_device_tensor->GetDeviceType() << " to address:" << copy_device_tensor->GetPtr()
-                 << ", type:" << copy_device_tensor->GetDeviceType() << ".";
+                 << ", type:" << copy_device_tensor->GetDeviceType()
+                 << ", is ref node need copy back:" << is_parameters_need_copy_[i];
     if (!Copy(copy_device_tensor.get(), input_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";
       continue;
     }
 
-    if (is_parameters_need_copy_[i] && ref_node_addr_map_.count(input_node) == 0) {
-      ref_node_addr_map_[input_node] = input_device_tensor;
+    if (is_parameters_need_copy_[i]) {
+      ref_node_addr_map_[copy_device_tensor.get()] = input_device_tensor;
     }
   }
   return true;
