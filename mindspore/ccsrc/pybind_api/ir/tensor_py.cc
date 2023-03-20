@@ -156,26 +156,29 @@ static bool IsCContiguous(const py::array &input) {
 // TensorDataNumpy implements TensorData using numpy array.
 class TensorDataNumpy : public TensorData {
  public:
-  explicit TensorDataNumpy(py::buffer_info &&buffer) : buffer_(std::move(buffer)) {}
+  explicit TensorDataNumpy(py::buffer_info &&buffer) : buffer_(std::make_unique<py::buffer_info>(std::move(buffer))) {}
 
-  ~TensorDataNumpy() override = default;
+  ~TensorDataNumpy() override {
+    py::gil_scoped_acquire acquire;
+    buffer_.reset();
+  }
 
   /// Total number of elements.
-  ssize_t size() const override { return buffer_.size; }
+  ssize_t size() const override { return buffer()->size; }
 
   /// Byte size of a single element.
-  ssize_t itemsize() const override { return buffer_.itemsize; }
+  ssize_t itemsize() const override { return buffer()->itemsize; }
 
   /// Total number of bytes.
-  ssize_t nbytes() const override { return buffer_.itemsize * buffer_.size; }
+  ssize_t nbytes() const override { return buffer()->itemsize * buffer()->size; }
 
   /// Number of dimensions.
-  ssize_t ndim() const override { return buffer_.ndim; }
+  ssize_t ndim() const override { return buffer()->ndim; }
 
   /// Data pointer.
   void *data() override { return buffer_data(); }
 
-  const void *const_data() const override { return buffer_.ptr; }
+  const void *const_data() const override { return buffer()->ptr; }
 
   bool is_sub_data() const override { return false; }
 
@@ -183,7 +186,7 @@ class TensorDataNumpy : public TensorData {
 
   bool is_from_numpy() const override { return true; }
 
-  const std::vector<ssize_t> &shape() const { return buffer_.shape; }
+  const std::vector<ssize_t> &shape() const { return buffer()->shape; }
 
   /// To string.
   std::string ToString(const TypeId, const ShapeVector &, bool use_comma) const override {
@@ -202,14 +205,19 @@ class TensorDataNumpy : public TensorData {
 
   /// py::array object. by default, use py::str() as the dummy owner to prevent data copy.
   py::array py_array(const py::handle &owner = py::str()) const {
-    return py::array(py::dtype(buffer_), buffer_.shape, buffer_.strides, buffer_.ptr, owner);
+    py::gil_scoped_acquire acquire;
+    return py::array(py::dtype(*buffer()), buffer()->shape, buffer()->strides, buffer()->ptr, owner);
   }
 
  private:
-  void *buffer_data() const { return buffer_.ptr; }
+  void *buffer_data() const { return buffer_->ptr; }
+  std::unique_ptr<py::buffer_info> const &buffer() const {
+    MS_EXCEPTION_IF_NULL(buffer_);
+    return buffer_;
+  }
 
   // The internal buffer.
-  py::buffer_info buffer_;
+  std::unique_ptr<py::buffer_info> buffer_;
 };
 
 // This class is uesd to get huge tensor data from persistent storage. Tensor data can be got by slice.
@@ -251,6 +259,7 @@ class PersistentTensorDataNumpy : public TensorDataNumpy {
 };
 
 TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) {
+  py::gil_scoped_acquire acquire;
   // Get input buffer info.
   py::buffer_info buf = input.request();
   // Check data types.
@@ -293,6 +302,7 @@ TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) 
 
 /// Creates a Tensor from a numpy array without copy
 TensorPtr TensorPy::MakeTensorOfNumpy(const py::array &input) {
+  py::gil_scoped_acquire acquire;
   // Check format.
   if (!IsCContiguous(input)) {
     MS_LOG(EXCEPTION) << "Array should be C contiguous.";
@@ -313,6 +323,7 @@ TensorPtr TensorPy::MakeTensorOfNumpy(const py::array &input) {
 
 /// Creates a Tensor from a numpy array without copy, use persistent tensor data
 TensorPtr TensorPy::MakePersistentDataTensorOfNumpy(const py::array &input, const py::int_ slice_num) {
+  py::gil_scoped_acquire acquire;
   // Check format.
   if (!IsCContiguous(input)) {
     MS_LOG(EXCEPTION) << "Array should be C contiguous.";
@@ -457,6 +468,7 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   // Use TensorData as the owner to prevent use-after-free problem.
   // We can NOT use Tensor as the owner since its TensorData may change
   // by other operations such as AssignValue().
+  py::gil_scoped_acquire acquire;
   py::object owner = py::cast(tensor.data_ptr());
   auto data_numpy = dynamic_cast<const TensorDataNumpy *>(&tensor.data());
   if (data_numpy != nullptr) {
@@ -469,6 +481,7 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
 }
 
 py::array TensorPy::AsNumpyOfSlice(const Tensor &tensor, const int32_t param_key, const int slice_index) {
+  py::gil_scoped_acquire acquire;
   py::object owner = py::cast(tensor.data_ptr());
   auto data_numpy = std::dynamic_pointer_cast<PersistentTensorDataNumpy>(tensor.data_ptr());
   MS_EXCEPTION_IF_NULL(data_numpy);
