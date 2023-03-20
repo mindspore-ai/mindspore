@@ -27,7 +27,8 @@ from .common.api import jit_class, jit
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager
-from .train.amp import build_train_network, auto_mixed_precision
+from .train.amp import build_train_network, auto_mixed_precision, custom_mixed_precision,\
+    get_white_list, get_black_list
 
 
 _hypermap = ops.HyperMap()
@@ -309,5 +310,6 @@ class DynamicLossScaler(LossScaler):
 __all__ = [
     "DynamicLossScaleManager", "LossScaleManager", "FixedLossScaleManager",
     "build_train_network", "DynamicLossScaler", "StaticLossScaler", "LossScaler",
-    "auto_mixed_precision", "all_finite"
+    "auto_mixed_precision", "all_finite", "custom_mixed_precision",
+    "get_white_list", "get_black_list"
 ]
