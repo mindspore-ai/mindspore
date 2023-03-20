@@ -50,11 +50,7 @@ abstract::ShapePtr NPUGetFloatStatusInferShape(const PrimitivePtr &, const std::
   }
   // dynamic shape
   if (IsDynamic(input_shape)) {
-    ShapeVector out_shape_dyn;
-    for (size_t i = 0; i < input_shape.size(); ++i) {
-      out_shape_dyn.push_back(abstract::Shape::kShapeDimAny);
-    }
-    return std::make_shared<abstract::Shape>(out_shape_dyn);
+    return std::make_shared<abstract::Shape>(ShapeVector(abstract::Shape::kShapeDimAny, input_shape.size()));
   }
   const int64_t normal_shape_size = 1;
   const int64_t normal_shape_len = 8;
