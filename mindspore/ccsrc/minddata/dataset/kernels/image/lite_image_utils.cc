@@ -34,6 +34,10 @@
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 #endif
+
+constexpr int64_t hw_shape = 2;
+constexpr int64_t hwc_rank = 3;
+
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
 namespace mindspore {
 namespace dataset {
@@ -591,7 +595,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, int32_t img_orientation,
                       TensorRow *outputs) {
-  outputs->resize(3);
+  constexpr int64_t size = 3;
+  outputs->resize(size);
   CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0,
                                "Invalid input, should be greater than 0, but got " + std::to_string(inputs.size()));
   std::shared_ptr<Tensor> input = inputs[0];
@@ -630,7 +635,7 @@ Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, in
 }
 
 Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  if (input->Rank() != 3) {
+  if (input->Rank() != hwc_rank) {
     RETURN_STATUS_UNEXPECTED("RgbToBgr: input image is not in shape of <H,W,C>");
   }
   if (input->type() != DataType::DE_UINT8) {
@@ -891,7 +896,7 @@ static bool IsMirror(int orientation) {
 }
 // rotate the image by EXIF orientation
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation) {
-  if (input->Rank() != 2 && input->Rank() != 3) {
+  if (input->Rank() != hw_shape && input->Rank() != hwc_rank) {
     RETURN_STATUS_UNEXPECTED("Rotate: input image is not in shape of <H,W,C> or <H,W>");
   }
 

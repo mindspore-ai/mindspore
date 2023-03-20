@@ -104,8 +104,9 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
   // clear the shard_sample_count_, because it will be insert when Launch func
   shard_sample_count_.clear();
 
+  constexpr int64_t get_index = 3;
   for (const auto &rg : row_group_summary) {
-    num_rows_ += std::get<3>(rg);
+    num_rows_ += std::get<get_index>(rg);
   }
 
   if (num_rows_ > LAZY_LOAD_THRESHOLD) {
@@ -451,17 +452,18 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
 
 Status ShardReader::ConvertJsonValue(const std::vector<std::string> &label, const std::vector<std::string> &columns,
                                      const json &schema, json *value) {
+  constexpr int64_t index = 3;
   for (unsigned int j = 0; j < columns.size(); ++j) {
     if (schema[columns[j]]["type"] == "int32") {
-      (*value)[columns[j]] = StringToNum<int32_t>(label[j + 3]);
+      (*value)[columns[j]] = StringToNum<int32_t>(label[j + index]);
     } else if (schema[columns[j]]["type"] == "int64") {
-      (*value)[columns[j]] = StringToNum<int64_t>(label[j + 3]);
+      (*value)[columns[j]] = StringToNum<int64_t>(label[j + index]);
     } else if (schema[columns[j]]["type"] == "float32") {
-      (*value)[columns[j]] = StringToNum<float>(label[j + 3]);
+      (*value)[columns[j]] = StringToNum<float>(label[j + index]);
     } else if (schema[columns[j]]["type"] == "float64") {
-      (*value)[columns[j]] = StringToNum<double>(label[j + 3]);
+      (*value)[columns[j]] = StringToNum<double>(label[j + index]);
     } else {
-      (*value)[columns[j]] = std::string(label[j + 3]);
+      (*value)[columns[j]] = std::string(label[j + index]);
     }
   }
   return Status::OK();

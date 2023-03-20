@@ -30,6 +30,14 @@
 #include "minddata/dataset/util/services.h"
 #include "minddata/dataset/util/sig_handler.h"
 
+constexpr int64_t field_width_ten = 10;
+constexpr int64_t field_width_eleven = 11;
+constexpr int64_t field_width_twelve = 12;
+constexpr int64_t field_width_thirteen = 13;
+constexpr int64_t field_width_fourteen = 14;
+constexpr int64_t field_width_sixteen = 16;
+constexpr int64_t field_width_eighteen = 18;
+
 namespace mindspore {
 namespace dataset {
 const char CachePerfRun::kCachePipelineBinary[] = "cache_pipeline";
@@ -343,15 +351,18 @@ CachePerfRun::~CachePerfRun() {
 }
 
 void CachePerfRun::PrintEpochSummary() const {
-  std::cout << std::setw(12) << "Pipeline #" << std::setw(10) << "worker id" << std::setw(11) << "min (μs)"
-            << std::setw(11) << "max (μs)" << std::setw(11) << "avg (μs)" << std::setw(14) << "median (μs)"
-            << std::setw(14) << "buffer count" << std::setw(18) << "Elapsed time (s)" << std::endl;
+  std::cout << std::setw(field_width_twelve) << "Pipeline #" << std::setw(field_width_ten) << "worker id"
+            << std::setw(field_width_eleven) << "min (μs)" << std::setw(field_width_eleven) << "max (μs)"
+            << std::setw(field_width_eleven) << "avg (μs)" << std::setw(field_width_fourteen) << "median (μs)"
+            << std::setw(field_width_fourteen) << "buffer count" << std::setw(field_width_eighteen)
+            << "Elapsed time (s)" << std::endl;
   for (auto &it : epoch_results_) {
     auto epoch_worker_summary = it.second;
-    std::cout << std::setw(12) << (epoch_worker_summary.pipeline() + 1) << std::setw(10)
-              << epoch_worker_summary.worker() << std::setw(10) << epoch_worker_summary.min() << std::setw(10)
-              << epoch_worker_summary.max() << std::setw(10) << epoch_worker_summary.avg() << std::setw(13)
-              << epoch_worker_summary.med() << std::setw(14) << epoch_worker_summary.cnt() << std::setw(18)
+    std::cout << std::setw(field_width_twelve) << (epoch_worker_summary.pipeline() + 1) << std::setw(field_width_ten)
+              << epoch_worker_summary.worker() << std::setw(field_width_ten) << epoch_worker_summary.min()
+              << std::setw(field_width_ten) << epoch_worker_summary.max() << std::setw(field_width_ten)
+              << epoch_worker_summary.avg() << std::setw(field_width_thirteen) << epoch_worker_summary.med()
+              << std::setw(field_width_fourteen) << epoch_worker_summary.cnt() << std::setw(field_width_eighteen)
               << epoch_worker_summary.elapse() << std::endl;
   }
 }
@@ -559,8 +570,9 @@ Status CachePerfRun::Run() {
   RETURN_IF_NOT_OK(cc_->GetStat(&stat));
 
   std::cout << "Get statistics for this session:\n";
-  std::cout << std::setw(12) << "Mem cached" << std::setw(12) << "Disk cached" << std::setw(16) << "Avg cache size"
-            << std::setw(10) << "Numa hit" << std::endl;
+  std::cout << std::setw(field_width_twelve) << "Mem cached" << std::setw(field_width_twelve) << "Disk cached"
+            << std::setw(field_width_sixteen) << "Avg cache size" << std::setw(field_width_ten) << "Numa hit"
+            << std::endl;
   std::string stat_mem_cached = (stat.num_mem_cached == 0) ? "n/a" : std::to_string(stat.num_mem_cached);
   std::string stat_disk_cached = (stat.num_disk_cached == 0) ? "n/a" : std::to_string(stat.num_disk_cached);
   std::string stat_avg_cached = (stat.avg_cache_sz == 0) ? "n/a" : std::to_string(stat.avg_cache_sz);
