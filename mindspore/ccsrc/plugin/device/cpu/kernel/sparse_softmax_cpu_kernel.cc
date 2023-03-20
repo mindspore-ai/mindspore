@@ -109,7 +109,7 @@ void SparseSoftmaxCpuKernelMod::QuickSortIndicesAndValues(I *__restrict indices_
       }
     }
   }
-  free(indices_buff);
+  delete[] indices_buff;
 }
 
 bool SparseSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

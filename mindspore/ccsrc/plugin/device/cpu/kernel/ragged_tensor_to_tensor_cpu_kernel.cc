@@ -74,7 +74,7 @@ int RaggedTensorToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
                       << ", 'values' rank: " << values_shape_.size();
   }
   row_partition_shape_list_.clear();
-  for (int i = 0; i < ragged_rank_; ++i) {
+  for (int i = 0; i < SizeToLong(row_partition_types_.size()); ++i) {
     row_partition_shape_list_.emplace_back(inputs[kFirstPartitionInputIndex + i]->GetShapeVector());
   }
   return KRET_OK;
