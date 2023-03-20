@@ -174,8 +174,7 @@ class WithGradCell(Cell):
         self.network = network
         self.loss_fn = loss_fn
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = C.GradOperation(
-            get_by_list=True, sens_param=(sens is not None))
+        self.grad = C.GradOperation(get_by_list=True, sens_param=(sens is not None))
         self.sens = sens
         if loss_fn is None:
             self.network_with_loss = network
@@ -190,8 +189,7 @@ class WithGradCell(Cell):
         if self.sens is None:
             grads = self.grad(self.network_with_loss, weights)(*inputs)
         else:
-            grads = self.grad(self.network_with_loss,
-                              weights)(*inputs, self.sens)
+            grads = self.grad(self.network_with_loss, weights)(*inputs, self.sens)
         return grads
 
 
@@ -284,8 +282,7 @@ class ForwardValueAndGrad(Cell):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        self.grad = C.GradOperation(
-            get_all=self.get_all, get_by_list=self.get_by_list, sens_param=self.sens_param)
+        self.grad = C.GradOperation(get_all=self.get_all, get_by_list=self.get_by_list, sens_param=self.sens_param)
         if isinstance(network, Cell) and network.jit_config_dict:
             self._jit_config_dict = network.jit_config_dict
 
@@ -362,10 +359,10 @@ class TrainOneStepCell(Cell):
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
-        self.grad_reducer = self.identity
+        self.grad_reducer = F.identity
         self.parallel_mode = _get_parallel_mode()
         self.reducer_flag = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL) or \
-            _is_pynative_parallel()
+                            _is_pynative_parallel()
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()
@@ -375,14 +372,12 @@ class TrainOneStepCell(Cell):
                 from mindspore.communication.management import get_group_size, create_group, get_rank
                 group_number = get_group_size() // 8
                 self.degree = int(self.degree / group_number)
-                group_list = [list(range(x * self.degree, (x + 1) * self.degree))
-                              for x in range(group_number)]
+                group_list = [list(range(x * self.degree, (x + 1) * self.degree)) for x in range(group_number)]
                 current_index = get_rank() // 8
                 server_group_name = "allreduce_" + str(current_index)
                 create_group(server_group_name, group_list[current_index])
                 group = server_group_name
-            self.grad_reducer = DistributedGradReducer(
-                self.weights, self.mean, self.degree, group=group)
+            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=group)
         if isinstance(network, Cell) and network.jit_config_dict:
             self._jit_config_dict = network.jit_config_dict
 
@@ -393,9 +388,6 @@ class TrainOneStepCell(Cell):
         grads = self.grad_reducer(grads)
         loss = F.depend(loss, self.optimizer(grads))
         return loss
-
-    def identity(self, x):
-        return x
 
 
 class GetNextSingleOp(Cell):
@@ -437,8 +429,7 @@ class GetNextSingleOp(Cell):
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):
         super(GetNextSingleOp, self).__init__()
-        self.get_next = P.GetNext(
-            dataset_types, dataset_shapes, len(dataset_types), queue_name)
+        self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
 
     def construct(self):
         return self.get_next()
@@ -482,7 +473,6 @@ class _MicroBatch(Cell):
     Args:
        params (micro_size): The number of micro-batch.
     """
-
     def __init__(self, micro_size):
         super(_MicroBatch, self).__init__()
         self.shape = P.Shape()
@@ -503,8 +493,7 @@ class _MicroBatch(Cell):
                 strided_slice_strides += (1,)
             strided_slice_end = (micro_batch_end,)
             strided_slice_end += input_shape[1:]
-            micro_input = self.strided_slice(
-                each_input, strided_slice_begin, strided_slice_end, strided_slice_strides)
+            micro_input = self.strided_slice(each_input, strided_slice_begin, strided_slice_end, strided_slice_strides)
             micro_inputs += (micro_input,)
         return micro_inputs
 
@@ -537,7 +526,6 @@ class MicroBatchInterleaved(Cell):
         >>> net = Net()
         >>> net = MicroBatchInterleaved(net, 2)
     """
-
     def __init__(self, network, interleave_num=2):
         super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
         if not isinstance(interleave_num, int):
@@ -552,10 +540,8 @@ class MicroBatchInterleaved(Cell):
         self.add = P.Add().add_prim_attr("micro_interleaved_add_flag", True)
         for _ in range(interleave_num):
             interleave_data = _MicroBatch(interleave_num)
-            interleave_data.strided_slice.add_prim_attr(
-                "strided_slice_flag", True)
-            interleave_data.strided_slice.add_prim_attr(
-                "interleave_num", interleave_num)
+            interleave_data.strided_slice.add_prim_attr("strided_slice_flag", True)
+            interleave_data.strided_slice.add_prim_attr("interleave_num", interleave_num)
             self.interleave_inputs.append(interleave_data)
         if isinstance(network, Cell) and network.jit_config_dict:
             self._jit_config_dict = network.jit_config_dict
@@ -586,7 +572,6 @@ class PipelineCell(Cell):
         >>> net = Net()
         >>> net = PipelineCell(net, 4)
     """
-
     def __init__(self, network, micro_size):
         super(PipelineCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -623,10 +608,8 @@ class _TrainPipelineAccuStepCell(TrainOneStepCell):
     """
     Wraps the network with an optimizer in pipeline mode.
     """
-
     def __init__(self, network, optimizer, sens=1.0):
-        super(_TrainPipelineAccuStepCell, self).__init__(
-            network, optimizer, sens)
+        super(_TrainPipelineAccuStepCell, self).__init__(network, optimizer, sens)
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
@@ -671,8 +654,7 @@ class VirtualDatasetCellTriple(Cell):
 
     def __init__(self, backbone):
         super(VirtualDatasetCellTriple, self).__init__(auto_prefix=False)
-        logger.warning(
-            "WARN_DEPRECATED: The usage of VirtualDatasetCellTriple is deprecated.")
+        logger.warning("WARN_DEPRECATED: The usage of VirtualDatasetCellTriple is deprecated.")
         self._backbone = backbone
         if isinstance(backbone, Cell) and backbone.jit_config_dict:
             self._jit_config_dict = backbone.jit_config_dict
@@ -717,8 +699,7 @@ class WithEvalCell(Cell):
         super(WithEvalCell, self).__init__(auto_prefix=False)
         self._network = network
         self._loss_fn = loss_fn
-        self.add_cast_fp32 = validator.check_value_type(
-            "add_cast_fp32", add_cast_fp32, [bool], self.cls_name)
+        self.add_cast_fp32 = validator.check_value_type("add_cast_fp32", add_cast_fp32, [bool], self.cls_name)
         if isinstance(network, Cell) and network.jit_config_dict:
             self._jit_config_dict = network.jit_config_dict
 
@@ -772,8 +753,7 @@ class ParameterUpdate(Cell):
     def __init__(self, param):
         super(ParameterUpdate, self).__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
-            raise TypeError(
-                "For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(type(param)))
+            raise TypeError("For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(type(param)))
         self._param = param
 
     def construct(self, x):
@@ -805,8 +785,7 @@ class _BroadCastCell(Cell):
 
     def construct(self):
         datatypes = self.map_(F.partial(_get_datatype), self.params)
-        params = self.map_(
-            F.partial(_cast_datatype, mstype.float32), self.params)
+        params = self.map_(F.partial(_cast_datatype, mstype.float32), self.params)
         params = self.broadcast(params)
         new_params = self.map_(F.partial(_cast_datatype), datatypes, params)
         return new_params

@@ -693,6 +693,29 @@ class Pull(PrimitiveWithInfer):
         return mstype.float32
 
 
+class identity(Primitive):
+    """
+    Makes a identify primitive, used for pynative mode.
+
+    Inputs:
+        - **x** (Any) - identity input value.
+
+    Outputs:
+        The same as input.
+    """
+
+    # Side effect will propagated from the first argument to return value.
+    side_effect_propagate = 1
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize identity."""
+        self.add_prim_attr('side_effect_propagate', 1)
+
+    def __call__(self, x):
+        return x
+
+
 class PyInterpret(Primitive):
     r"""
     Interpret Python expression.
