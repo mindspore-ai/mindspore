@@ -869,6 +869,7 @@ constexpr auto kSoftsignOpName = "Softsign";
 constexpr auto kScalarToTensorOpName = "ScalarToTensor";
 constexpr auto kTupleToTensorOpName = "TupleToTensor";
 constexpr auto kListToTensorOpName = "ListToTensor";
+constexpr auto kScalarCastOpName = "ScalarCast";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
