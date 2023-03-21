@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace parallel {
-void HandleGroupInfo(const FuncGraphPtr &root) {
+void HandleGroupInfo() {
   if (g_device_manager == nullptr) {
     return;
   }

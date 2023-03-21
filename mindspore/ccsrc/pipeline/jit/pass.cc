@@ -680,7 +680,7 @@ bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
 
 bool HandleGroupInfoPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  parallel::HandleGroupInfo(resource->func_graph());
+  parallel::HandleGroupInfo();
   return true;
 }
 

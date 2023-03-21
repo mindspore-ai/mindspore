@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace parallel {
 // Handle hccl group info.
-void HandleGroupInfo(const FuncGraphPtr &graph);
+void HandleGroupInfo();
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
