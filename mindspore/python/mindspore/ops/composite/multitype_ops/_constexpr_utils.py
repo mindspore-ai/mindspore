@@ -213,7 +213,6 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
 tensor_operator_registry.register('make_tensor', make_tensor)
 
 
-@constexpr
 def judge_data_dim(data_dim, min_data_dim=0, max_data_dim=8):
     """Judges whether the data dim is valid."""
     if data_dim < min_data_dim or data_dim > max_data_dim:
