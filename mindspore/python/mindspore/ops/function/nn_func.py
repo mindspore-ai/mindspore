@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from math import pi, log, floor
 import numpy as np
 
+from mindspore import log as logger
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -2409,6 +2410,15 @@ def softshrink(x, lambd=0.5):
     """
     soft_shrink_op = _get_cache_prim(P.SoftShrink)(lambd)
     return soft_shrink_op(x)
+
+
+def soft_shrink(input, lambd=0.5):
+    r"""
+    `soft_shrink` is deprecated, please use `softshrink` instead.
+    """
+    logger.warning("`soft_shrink` is deprecated, please use `softshrink` instead.")
+    soft_shrink_op = _get_cache_prim(P.SoftShrink)(lambd)
+    return soft_shrink_op(input)
 
 
 def silu(x):
@@ -6233,6 +6243,7 @@ __all__ = [
     'huber_loss',
     'softsign',
     'softshrink',
+    'soft_shrink',
     'selu',
     'silu',
     'softmax',
