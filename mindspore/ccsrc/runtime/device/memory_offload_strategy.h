@@ -38,7 +38,7 @@ struct MemEvent {
   MemEventType type;
   size_t index{0};
   size_t mem_size{0};
-  Key key;
+  Key key{nullptr};
 };
 
 template <typename Key>

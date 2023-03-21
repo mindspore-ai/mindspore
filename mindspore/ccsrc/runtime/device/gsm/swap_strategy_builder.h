@@ -40,7 +40,7 @@ class BACKEND_EXPORT SwapStrategyBuilder {
   };
 
   struct SpanCmp {
-    bool operator()(const std::shared_ptr<Span> &left, const std::shared_ptr<Span> &right) {
+    bool operator()(const std::shared_ptr<Span> &left, const std::shared_ptr<Span> &right) const {
       if (left == nullptr || right == nullptr) {
         return true;
       }
@@ -73,7 +73,8 @@ class BACKEND_EXPORT SwapStrategyBuilder {
   void SpanToTensorAction();
   void RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t last_index, size_t current_index,
                   bool output_span = false);
-  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used, size_t total_mem_size);
+  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
+                          size_t total_mem_size) const;
   void AddTensorAction(SwapActionType action_type, size_t tensor_id, size_t kernel_id);
   std::shared_ptr<SwapStrategy> BuildStrategy(const KernelGraphPtr &graph);
 };
