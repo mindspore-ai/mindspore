@@ -180,7 +180,7 @@ def test_call_other_object_method():
     z = np.array([[8, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net1(y, y1)
-    with pytest.raises(NotImplementedError):  # NotImplementedError: PyExecute, should move to ST.
+    with pytest.raises(RuntimeError):  # RuntimeErrorError: PyExecute node can not be used in multitype funcgraph.
         output = net.construct(x)
         result = output.asnumpy()
         print(result)
@@ -226,7 +226,7 @@ def test_call_no_self_other_object_method():
     z = np.array([[6, 9, 12], [3, 4, 7]]).astype(np.int32)
 
     net = Net2(y)
-    with pytest.raises(NotImplementedError):  # NotImplementedError: PyExecute, should move to ST.
+    with pytest.raises(RuntimeError):  # RuntimeErrorError: PyExecute node can not be used in multitype funcgraph.
         output = net.construct(x)
         result = output.asnumpy()
         print(result)
