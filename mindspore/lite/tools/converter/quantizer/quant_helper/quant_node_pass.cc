@@ -101,12 +101,6 @@ int QuantNodePass::QuantFilter(const AnfNodePtr &parameter_node, const tensor::T
   return RET_OK;
 }
 
-bool QuantNodePass::IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params,
-                                       const tensor::TensorPtr &weight, int preferred_dim) {
-  auto dims = weight->shape();
-  return (static_cast<int>(quant_params.size()) == dims[preferred_dim]);
-}
-
 int QuantNodePass::CheckNodeDType(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
   TypeId type_id = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
