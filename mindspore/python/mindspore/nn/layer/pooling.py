@@ -359,6 +359,7 @@ class MaxPool3d(_PoolNd):
                                                   dilation=dilation, ceil_mode=ceil_mode)
         else:
             self.only_pad = False
+            ceil_mode = None if not ceil_mode else True
             self.max_pool = P.MaxPool3D(kernel_size=kernel_size, strides=stride, pad_mode=pad_mode, pad_list=padding,
                                         ceil_mode=ceil_mode)
 
