@@ -344,14 +344,14 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
         grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
         grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
-        # apply grad reducer on grads
-        grads = self.grad_reducer(grads)
 
         # get the overflow buffer
         cond = self.get_overflow_status(status, grads)
         overflow = self.process_loss_scale(cond)
         # if there is no overflow, do optimize
         if not overflow:
+            # apply grad reducer on grads
+            grads = self.grad_reducer(grads)
             loss = F.depend(loss, self.optimizer(grads))
         return loss, cond, scaling_sens
 
