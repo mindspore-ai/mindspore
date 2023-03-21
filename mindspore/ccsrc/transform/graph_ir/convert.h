@@ -205,7 +205,7 @@ class DfGraphConvertor {
   std::vector<int64_t> CastToInt(const ValuePtr &value) const;
   void TransDataType(const FuncGraphPtr &anf_graph) const;
   void TransInputDataType(const CNodePtr &node, std::string node_name) const;
-  void TransAttrDataType(const CNodePtr &node, std::string node_name) const;
+  void TransAttrDataType(const CNodePtr &node, const std::string &node_name) const;
   bool CheckCNode(const std::string &name, const CNodePtr node);
   void SetNodeInput(AnfNodePtr node);
   void UpdateOpDesc(AnfNodePtr node);
