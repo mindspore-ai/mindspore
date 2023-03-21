@@ -62,12 +62,6 @@ enum class State {
   Y_ONE,
 };
 
-struct SlideInfo {
-  int64_t start;
-  int64_t step;
-  int64_t stop;
-};
-
 void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector<int64_t> &reverse_y,
                         std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
   MS_EXCEPTION_IF_NULL(grad_x_reduce_idx);
@@ -176,7 +170,7 @@ AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &pr
     MS_EXCEPTION(TypeError) << "Function lower should be call using a string type but got:" << type->ToString();
   }
   auto str = input->cast<StringImmPtr>()->value();
-  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+  (void)std::transform(str.begin(), str.end(), str.begin(), ::tolower);
   auto new_str = MakeValue(str);
   return new_str->ToAbstract();
 }

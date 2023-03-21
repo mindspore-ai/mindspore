@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_MANAGER_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_UTILS_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_UTILS_H_
 
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/jit/resource.h"
@@ -35,4 +35,4 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
                       const CNodePtr &cnode = nullptr);
 }  // namespace ad
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_UTILS_H_

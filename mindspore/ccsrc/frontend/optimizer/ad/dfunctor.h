@@ -147,7 +147,7 @@ class KPrim {
   FuncGraphPtr KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
 
   bool CheckCustomVjp(const FuncGraphPtr &bprop_fg) const;
-  FuncGraphPtr GetCustomVjpBprop(const FuncGraphPtr &bprop_fg);
+  FuncGraphPtr GetCustomVjpBprop(const FuncGraphPtr &bprop_fg) const;
   void clear() {
     bprop_registry_meta_.clear();
     bprop_registry_.clear();

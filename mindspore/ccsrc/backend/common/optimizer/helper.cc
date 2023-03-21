@@ -805,17 +805,17 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   return CreateCNodeWithGraph(input_nodes, graph);
 }
 
-std::pair<AbstractBasePtr, int> RectifyAbstractFromStructuralAttr(const ValuePtr &value,
-                                                                  AbstractBasePtrList::const_iterator begin_iter,
-                                                                  AbstractBasePtrList::const_iterator end_iter) {
+std::pair<AbstractBasePtr, size_t> RectifyAbstractFromStructuralAttr(const ValuePtr &value,
+                                                                     AbstractBasePtrList::const_iterator begin_iter,
+                                                                     AbstractBasePtrList::const_iterator end_iter) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<ValueSequence>()) {
-    int offset = 0;
+    size_t offset = 0;
     std::vector<AbstractBasePtr> abs_list;
     auto seq_value = value->cast_ptr<ValueSequence>();
     for (size_t i = 0; i < seq_value->size(); ++i) {
       auto [abs, offset_inner] = RectifyAbstractFromStructuralAttr((*seq_value)[i], begin_iter + offset, end_iter);
-      abs_list.emplace_back(abs);
+      (void)abs_list.emplace_back(abs);
       offset += offset_inner;
     }
     (void)std::for_each(begin_iter, begin_iter + offset, [](AbstractBasePtr abs) -> void {
@@ -869,7 +869,7 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tupl
     auto [abs, offset] =
       RectifyAbstractFromStructuralAttr(item, (input_abstract.begin() + input_index), (input_abstract.cend()));
     input_index += offset;
-    rectifyed_abs_list.emplace_back(abs);
+    (void)rectifyed_abs_list.emplace_back(abs);
     MS_LOG(DEBUG) << "Rectify abs :" << item->ToString() << ", from structural " << abs->ToString();
   }
 

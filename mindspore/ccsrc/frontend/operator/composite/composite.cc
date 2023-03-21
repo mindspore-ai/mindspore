@@ -87,7 +87,8 @@ HyperMap::HyperMap(const HyperMap &h)
   Init();
 }
 
-AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+AnfNodePtr HyperMap::FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
+                              const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> inputs;
   if (fn_arg != nullptr) {
@@ -121,7 +122,7 @@ std::pair<std::string, std::string> HyperMap::GetHyperMapInputIndex(size_t num) 
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
-                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
@@ -181,7 +182,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph,
-                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
@@ -248,7 +249,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Dictionary> &type, const FuncGraphPtr &func_graph,
-                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
@@ -304,7 +305,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Dictionary> &type, const Fun
   return func_graph->NewCNodeInOrder(inputs);
 }
 
-AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
+AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const {
   bool is_leaf = false;
   TypeId id = kObjectTypeEnd;
   std::pair<AnfNodePtr, TypePtr> pair;
@@ -662,7 +663,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   constexpr size_t min_input_size = 1;
   constexpr size_t max_input_size = 2;
-  int64_t input_size = SizeToLong(args_spec_list.size());
+  auto input_size = args_spec_list.size();
   if (input_size != min_input_size && input_size != max_input_size) {
     MS_LOG(EXCEPTION) << "The number of input to mutable must be " << min_input_size << " or " << max_input_size
                       << ", but got: " << input_size;
@@ -675,7 +676,7 @@ FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_
 
   std::vector<AnfNodePtr> params;
   params.push_back(NewValueNode(prim::kPrimMutable));
-  for (int64_t i = 0; i < input_size; ++i) {
+  for (size_t i = 0; i < input_size; ++i) {
     params.push_back(fg->add_parameter());
   }
 
