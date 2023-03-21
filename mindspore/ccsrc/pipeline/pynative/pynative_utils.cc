@@ -100,6 +100,26 @@ AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
   return abs;
 }
 
+AnfNodePtr Common::ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, const FuncGraphPtr &func_graph) {
+  auto node_abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(node_abs);
+  if (!node_abs->isa<abstract::AbstractSequence>()) {
+    return node;
+  }
+  auto value_sequence = GetValueNode<ValueSequencePtr>(node);
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (auto value : value_sequence->value()) {
+    auto value_node = NewValueNode(value);
+    auto abs = Common::SetAbstractValueToAnyValue(value->ToAbstract());
+    value_node->set_abstract(abs);
+    auto tuple_node = ConvertValueSequenceToMakeTuple(value_node, func_graph);
+    (void)inputs.emplace_back(tuple_node);
+  }
+  auto make_tuple_node = func_graph->NewCNode(inputs);
+  make_tuple_node->set_abstract(node_abs);
+  return make_tuple_node;
+}
+
 std::string Common::GetIdByValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<stub::StubNode>()) {
@@ -298,7 +318,8 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
     auto v_node = cnode->forward().first;
     bprop_graph->AddValueNode(v_node);
     MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node;
-    tr.Replace(forward_node, v_node);
+    auto converted_node = ConvertValueSequenceToMakeTuple(v_node, bprop_graph);
+    tr.Replace(forward_node, converted_node);
   }
   tr.Commit();
   bprop_graph->ClearUsedForwardNodes();

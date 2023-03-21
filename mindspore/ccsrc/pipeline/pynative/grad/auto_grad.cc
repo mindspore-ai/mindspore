@@ -27,6 +27,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/ad/adjoint.h"
+#include "frontend/optimizer/ad/dfunctor.h"
 #include "utils/info.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/pynative/grad/bprop_expander/bprop.h"
@@ -35,13 +36,12 @@
 #include "include/common/utils/primitive_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pass.h"
+#include "pybind_api/gil_scoped_long_running.h"
 namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
-const std::map<SpecialType, std::shared_ptr<Primitive>> kValueType{{SpecialType::kZerosLikeType, prim::kPrimZerosLike},
-                                                                   {SpecialType::kOnesLikeType, prim::kPrimOnesLike}};
 const size_t kContainerRatio = 2;
 const mindspore::HashSet<std::string> kGradBlackList{
   kMakeTupleOpName,           kTupleGetItemOpName,      kStopGradientOpName,       kUpdateStateOpName,
@@ -50,6 +50,15 @@ const mindspore::HashSet<std::string> kGradBlackList{
 const mindspore::HashSet<std::string> kMonadOp = {kLoadOPName, kDependOpName, kUpdateStateOpName};
 
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
+
+inline PrimitivePtr GetValueType(const SpecialType &type) {
+  if (type == SpecialType::kZerosLikeType) {
+    return prim::kPrimZerosLike;
+  } else if (type == SpecialType::kOnesLikeType) {
+    return prim::kPrimOnesLike;
+  }
+  return nullptr;
+}
 
 void ClearDeviceAddress(const ValuePtr &value) {
   std::vector<tensor::TensorPtr> tensors;
@@ -125,7 +134,7 @@ AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value
     auto vlaue_node = NewValueNode(value);
     auto value_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
     vlaue_node->set_abstract(value_abs);
-    auto primitive = kValueType.at(type);
+    auto primitive = GetValueType(type);
     MS_EXCEPTION_IF_NULL(primitive);
     auto special_like_value = tape->NewCNode({NewValueNode(primitive), vlaue_node});
     special_like_value->set_abstract(value_abs);
@@ -214,44 +223,6 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
   auto after_opt_bg = pipeline::MsFunctionBpropGraphPass(resource, true);
   pynative::PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
   return after_opt_bg;
-}
-
-// Handle bprob of op which input dtype is real number and output dtype is complex number.
-// If the dtype of a gradient(din) is complex number and the input of that is real number,
-// only the real part of the gradient make sense in back propagate. So we handle it by
-// insert a Real() ops after the gradient.
-// input: AnfNode with input of op which input dtype is real number and output dtype is complex number.
-// din: CNodePtr with gradient of input.
-// tape: Funcgraph witch input and din belong to.
-// return: New din with inserted real op if necessarily.
-AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const AnfNodePtr &din, const FuncGraphPtr &tape) {
-  MS_EXCEPTION_IF_NULL(din);
-  TypePtr din_type = din->Type();
-  if (din_type == nullptr || !din_type->isa<TensorType>()) {
-    return din;
-  }
-  din_type = din_type->cast_ptr<TensorType>()->element();
-  MS_EXCEPTION_IF_NULL(din_type);
-  if (din_type->type_id() != kNumberTypeComplex64 && din_type->type_id() != kNumberTypeComplex128) {
-    return din;
-  }
-
-  MS_EXCEPTION_IF_NULL(input);
-  TypePtr input_type = input->Type();
-  if (input_type == nullptr || !input_type->isa<TensorType>()) {
-    return din;
-  }
-  input_type = input_type->cast_ptr<TensorType>()->element();
-  MS_EXCEPTION_IF_NULL(input_type);
-  if (input_type->type_id() == kNumberTypeComplex64 || input_type->type_id() == kNumberTypeComplex128) {
-    return din;
-  }
-
-  AnfNodePtr new_din = tape->NewCNode({NewValueNode(prim::kPrimReal), din});
-  AbstractBasePtr abs = std::make_shared<abstract::AbstractTensor>(
-    abstract::AbstractTensor(input_type, input->abstract()->GetShapeTrack()));
-  new_din->set_abstract(abs);
-  return new_din;
 }
 
 bool IsOutputBothEmpty(const AnfNodePtr &inputs_grad, const AnfNodePtr &weights_grad) {
@@ -387,7 +358,7 @@ void FunctionNode::ReplaceEdges() {
 AnfNodePtr VariableAdjoint::RealDout() {
   MS_EXCEPTION_IF_NULL(out_value_);
   auto &tape = fn()->tape();
-  if (MS_UNLIKELY(IsZerosLikeNode(fn()->accumulate_dout()))) {
+  if (static_cast<bool>(MS_UNLIKELY(IsZerosLikeNode(fn()->accumulate_dout())))) {
     fn()->set_accumulate_dout(BuildZerosLikeNode(fn()->tape(), out_value_));
   }
   const auto &accumulate_dout = fn()->accumulate_dout();
@@ -1045,7 +1016,7 @@ void AutoGradCellImpl::UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePt
     if (!it->second->is_need_grad()) {
       return;
     }
-    auto real_din = HandleRealToComplex(input_node, din, fn->tape());
+    auto real_din = ad::HandleRealToComplex(input_node, din->cast<CNodePtr>(), fn->tape());
     auto new_din = TraceShape(fn, it->second->out_value(), input_arg, real_din);
     fn->AddNextEdge(input_node, new_din);
   } else if (input_node->isa<CNode>()) {
@@ -1187,9 +1158,11 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
       (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
     }
   }
+  // Only custom op need add this attr, hook function not need.
   if (prim->HasAttr("custom_op_bprop")) {
     (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
   }
+  (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
   // Create gradient outputs cnode
   std::vector<AnfNodePtr> inputs{NewValueNode(bprop_cut)};
   // Get input, get output, get dout
@@ -1221,29 +1194,26 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
   MS_LOG(DEBUG) << "Try build custom bprop: " << prim->name();
   {
     py::gil_scoped_acquire gil;
-    py::function fn;
-    if (prim->is_base()) {
-      fn = GetBpropFunction(prim->name());
-    } else {
-      fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
-      if (py::isinstance<py::none>(fn)) {
-        fn = GetBpropFunction(prim->name());
-      }
-    }
-    if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Fail to find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+    auto prim_py = prim->cast_ptr<PrimitivePy>();
+    if (prim_py == nullptr) {
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name();
       return;
     }
-    auto prim_py = prim->cast<PrimitivePyPtr>();
-    MS_EXCEPTION_IF_NULL(prim_py);
-    prim_py->AddBackwardHookFn(0, fn);
-    prim_py->AddAttr("custom_op_bprop", MakeValue(True));
-    prim_py->AddAttr("custom_op_name", MakeValue(cnode->fullname_with_scope()));
+    py::function fn = prim_py->GetBpropFunction();
+    if (py::isinstance<py::none>(fn)) {
+      fn = GetBpropFunction(prim->name());
+    }
+    if (!fn || py::isinstance<py::none>(fn)) {
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      return;
+    }
+    (void)prim_py->AddBackwardHookFn(0, fn);
+    prim_py->AddAttr("custom_op_bprop", MakeValue(true));
   }
   BuildBPropCutCNode(cnode, prim, outputs);
 }
 
-void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) {
+void AutoGradCellImpl::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs) const {
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
     MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
@@ -1328,7 +1298,7 @@ void AutoGradCellImpl::BackPropagate() {
     }
     const auto &fn = variable->fn();
     // If zeroslike not used in funcgraph, we need replace the zeroslike placeholder with real zeroslike value.
-    if (MS_UNLIKELY(IsZerosLikeNode(fn->accumulate_dout()))) {
+    if (static_cast<bool>(MS_UNLIKELY(IsZerosLikeNode(fn->accumulate_dout())))) {
       fn->set_accumulate_dout(BuildZerosLikeNode(fn->tape(), variable->out_value()));
     }
     // Replace real dout to fake dout, update replace result to eliminate tuplegetitem
@@ -1355,19 +1325,19 @@ void AutoGradCellImpl::BackPropagate() {
 AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtr &grad_node) const {
   MS_EXCEPTION_IF_NULL(grad_node);
   const auto &input_adjoint_iter = ad_param()->anfnode_to_variable_adjoint_.find(grad_node);
-  if (input_adjoint_iter == ad_param()->anfnode_to_variable_adjoint_.end()) {
+  if (grad_node->isa<Parameter>()) {
+    auto tensor = pynative::PyNativeAlgo::Common::GetTensorFromParam(grad_node);
     // If weight is not used in the forward network, just return zeros_like() as dout.
-    if (grad_node->isa<Parameter>()) {
+    if (input_adjoint_iter == ad_param()->anfnode_to_variable_adjoint_.end()) {
+      MS_EXCEPTION_IF_NULL(tensor);
       MS_LOG(INFO) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
-      auto w = grad_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(w);
-      auto default_param = w->default_param();
-      MS_EXCEPTION_IF_NULL(default_param);
-      return BuildZerosLikeNode(ad_param()->tape_, default_param);
+      return BuildZerosLikeNode(ad_param()->tape_, tensor);
     }
-    // If input is not used in the forward network, just return zeros_like() as dout.
-    MS_LOG(EXCEPTION) << "Input does not participate in forward calculation, input: " << grad_node->DebugString();
-    return nullptr;
+    // If weight used in the forward network, but requires_grad is false, return zero like.
+    if (tensor != nullptr && tensor->param_info() != nullptr && !tensor->param_info()->requires_grad()) {
+      MS_LOG(INFO) << "weight participate in forward calculation, but requires_grad is false";
+      return BuildZerosLikeNode(ad_param()->tape_, tensor);
+    }
   }
   return input_adjoint_iter->second->RealDout();
 }

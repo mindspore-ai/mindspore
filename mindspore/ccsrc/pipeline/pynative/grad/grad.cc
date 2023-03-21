@@ -88,14 +88,17 @@ void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const p
   MS_EXCEPTION_IF_NULL(input_args_info);
   input_args_info->has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
   bool is_top_cell = input_args_info->is_grad_topest_cell || input_args_info->is_high_order_top_cell;
-  input_args_info->obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-  input_args_info->input_size = args.size();
-  for (size_t i = 0; i < input_args_info->input_size; ++i) {
-    const auto &id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
-    (void)input_args_info->input_arg_id_vec.emplace_back(id);
-  }
-  // Only the top cell requires value conversion
   if (is_top_cell || input_args_info->grad_is_running) {
+    pipeline::CheckArgsValid(obj, args);
+  }
+  // Only the top cell or custom bprop cell requires value conversion
+  if (is_top_cell || input_args_info->grad_is_running || input_args_info->has_custom_bprop) {
+    input_args_info->obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
+    input_args_info->input_size = args.size();
+    for (size_t i = 0; i < input_args_info->input_size; ++i) {
+      const auto &id = PyNativeAlgo::PyParser::GetIdByPyObj(args[i]);
+      (void)input_args_info->input_arg_id_vec.emplace_back(id);
+    }
     for (size_t i = 0; i < input_args_info->input_size; ++i) {
       input_args_info->input_args_id += input_args_info->input_arg_id_vec[i] + "_";
       if (py::isinstance<py::list>(args[i])) {
@@ -105,11 +108,10 @@ void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const p
         (void)input_args_info->input_arg_value_vec.emplace_back(PyNativeAlgo::DataConvert::PyObjToValue(args[i]));
       }
     }
-    pipeline::CheckArgsValid(obj, args);
+    input_args_info->cell_id = GetCellId(obj, args, input_args_info);
+    input_args_info->obj_order_id = input_args_info->cell_id + '_' + std::to_string(input_args_info->obj_order);
+    MS_LOG(DEBUG) << "Cell_id is " << input_args_info->cell_id << ", is grad top cell " << is_top_cell;
   }
-  input_args_info->cell_id = GetCellId(obj, args, input_args_info);
-  input_args_info->obj_order_id = input_args_info->cell_id + '_' + std::to_string(input_args_info->obj_order);
-  MS_LOG(DEBUG) << "Cell_id is " << input_args_info->cell_id << ", is grad top cell " << is_top_cell;
 }
 
 AnfNodePtr GetNonTensorInput(const ValuePtr &v, const std::string &obj_id) {
@@ -366,7 +368,7 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool need_renor
 }
 
 void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
-                       VectorRef *const arg_list, bool has_sens) {
+                       VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
   std::transform(input_vec.begin(), input_vec.end(), std::back_inserter(*arg_list),
                  [](const ValuePtr &v) { return v; });
@@ -544,36 +546,34 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
-  if (input_args_info->is_grad_topest_cell || input_args_info->grad_order > 1) {
-    forward()->WaitForwardTask();
-    if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
-      MS_LOG(DEBUG) << "Make new topest graph";
-      MakeNewTopGraph(input_args_info);
-    } else if (input_args_info->grad_is_running && IsBpropGraph(input_args_info->cell_id)) {
-      MS_LOG(DEBUG) << "Run custom bprop cell";
-      auto fg = std::make_shared<FuncGraph>();
-      top_cell()->set_fg(fg);
-      auto graph_info_cg = std::make_shared<GraphInfo>();
-      top_cell()->SetGraphInfoMap(fg, graph_info_cg);
-      HandleInputArgsForTopCell(input_args_info, true);
-      bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
-    } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
-      MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
-      MakeNewTopGraph(input_args_info);
-      bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
-    } else if (input_args_info->is_high_order_top_cell) {
-      MS_LOG(DEBUG) << "Nested grad graph existed in construct";
-      MakeNewTopGraph(input_args_info);
-      // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
-      // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
-      // error.
-      {
-        py::gil_scoped_release gil_release;
-        async_executor_->Wait();
-      }
-    }
+  forward()->WaitForwardTask();
+  if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
+    MS_LOG(DEBUG) << "Make new topest graph";
+    MakeNewTopGraph(input_args_info);
+  } else if (input_args_info->grad_is_running && IsBpropGraph(input_args_info->cell_id)) {
+    MS_LOG(DEBUG) << "Run custom bprop cell";
+    auto fg = std::make_shared<FuncGraph>();
+    top_cell()->set_fg(fg);
+    auto graph_info_cg = std::make_shared<GraphInfo>();
+    top_cell()->SetGraphInfoMap(fg, graph_info_cg);
+    HandleInputArgsForTopCell(input_args_info, true);
+    bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
+  } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
+    MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
+    MakeNewTopGraph(input_args_info);
+    bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
+  } else if (input_args_info->is_high_order_top_cell) {
+    MS_LOG(DEBUG) << "Nested grad graph existed in construct";
+    MakeNewTopGraph(input_args_info);
   }
 
+  // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
+  // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
+  // error.
+  {
+    GilReleaseWithCheck gil_release;
+    async_executor_->Wait();
+  }
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
     forward()->WaitForwardTask();
@@ -588,9 +588,12 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
 void GradExecutor::NewGraphInner(const py::object &obj, const py::args &args) {
   const auto input_args_info = GetInputArgsInfo(obj, args);
   PushInputArgsInfoStack(input_args_info);
-
-  // May be can async here
-  NewGraphImpl(input_args_info);
+  MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << ", cell_id " << GetCellId(obj, args, nullptr)
+                << ", input args info ptr " << input_args_info.get();
+  // Make top graph and init resource
+  if (input_args_info->is_grad_topest_cell || input_args_info->grad_order > 1) {
+    InitResourceAndDfBuilder(input_args_info);
+  }
 }
 
 InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py::args &args) {
@@ -609,26 +612,11 @@ InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py:
       IncreaseGradOrder();
     }
     input_args_info->already_run_cell_id = GetAlreadyRunCellId(input_args_info->cell_id);
+    // top_input_args_info_ indicate current running cell info
+    top_input_args_info_ = input_args_info;
   }
   input_args_info->grad_order = grad_order_;
-  // top_input_args_info_ indicate current running cell info
-  top_input_args_info_ = input_args_info;
   return input_args_info;
-}
-
-void GradExecutor::NewGraphImpl(const InputArgsInfoPtr &input_args_info) {
-  MS_EXCEPTION_IF_NULL(input_args_info);
-  const auto &cell_id = input_args_info->cell_id;
-  MS_LOG(DEBUG) << "NewGraphInner start " << input_args_info->input_size << ", cell_id " << cell_id
-                << ", input args info ptr " << input_args_info.get();
-  // Make top graph and init resource
-  InitResourceAndDfBuilder(input_args_info);
-}
-
-void GradExecutor::AsyncNewGraphImpl(const InputArgsInfoPtr &input_args_info) {
-  const auto fn = [this, input_args_info]() { this->NewGraphImpl(input_args_info); };
-  auto task = std::make_shared<BpropTask>(fn);
-  async_executor_->Push(task);
 }
 
 bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info,
@@ -1289,9 +1277,8 @@ py::object GradExecutor::RunGradGraph() {
   const auto &resource = top_cell()->resource();
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Run cell id " << top_input_args_info_->cell_id << ", resource ptr " << resource.get();
-  bool has_sens = top_input_args_info_->has_sens;
   VectorRef arg_list;
-  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, &arg_list, has_sens);
+  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
                 << arg_list.size();
   compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
