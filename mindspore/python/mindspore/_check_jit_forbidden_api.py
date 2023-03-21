@@ -24,11 +24,12 @@ _jit_forbidden_method = set()
 
 
 def jit_forbidden_register(fn):
-    """use @jit_forbidden_register to decoratore the api which is not supported in GRAPH_MODE."""
+    """Use @jit_forbidden_register to decoratore the api which is not supported in GRAPH_MODE."""
     setattr(fn, '__jit_forbidden__', True)
     if isinstance(fn, types.FunctionType):
         fn_info = fn.__module__ + '.' + fn.__qualname__
         add_jit_forbidden_method(fn_info)
+
         @wraps(fn)
         def jit_forbidden(*args, **kwargs):
             return fn(*args, **kwargs)
@@ -39,31 +40,37 @@ def jit_forbidden_register(fn):
 
 
 def add_jit_forbidden_module(jit_forbidden_module):
+    """Add the jit forbidden module."""
     logger.debug(f'add jit_forbidden_module_set: {_jit_forbidden_module}')
     return _jit_forbidden_module.add(jit_forbidden_module)
 
 
 def remove_jit_forbidden_module(jit_forbidden_module):
+    """Remove the jit forbidden module."""
     logger.debug(f'remove jit_forbidden_module_set: {_jit_forbidden_module}')
     return _jit_forbidden_module.remove(jit_forbidden_module)
 
 
 def get_jit_forbidden_module():
+    """Get the jit forbidden module."""
     logger.debug(f'get jit_forbidden_module_set: {_jit_forbidden_module}')
     return _jit_forbidden_module
 
 
 def add_jit_forbidden_method(jit_forbidden_method):
+    """Add the jit forbidden method."""
     logger.debug(f'add jit_forbidden_method_set: {_jit_forbidden_method}')
     return _jit_forbidden_method.add(jit_forbidden_method)
 
 
 def remove_jit_forbidden_method(jit_forbidden_method):
+    """Remove the jit forbidden method."""
     logger.debug(f'remove jit_forbidden_method_set: {_jit_forbidden_method}')
     return _jit_forbidden_method.remove(jit_forbidden_method)
 
 
 def get_jit_forbidden_method():
+    """Get the jit forbidden method."""
     logger.debug(f'get jit_forbidden_module_set: {_jit_forbidden_method}')
     return _jit_forbidden_method
 
@@ -85,7 +92,7 @@ def is_jit_forbidden_module(obj_module):
 
 
 def is_invalid_or_jit_forbidden_method(obj, obj_type, attr):
-    #check obj has attribute or method
+    """Check obj has attribute or method."""
     if not hasattr(obj, attr):
         raise AttributeError(f"{obj_type} object has no attribute: {attr}")
     method = getattr(obj, attr)

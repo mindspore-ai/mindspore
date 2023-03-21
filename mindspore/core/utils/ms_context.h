@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,8 +166,8 @@ class MS_CORE_API MsContext {
   void Refresh();
 
   bool enable_dump_ir() const;
-  std::string GetSaveGraphsPath();
-  bool CanDump(const int &level);
+  std::string GetSaveGraphsPath() const;
+  bool CanDump(const int &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend

@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -555,6 +555,7 @@ def get_class_member_namespace_symbol(obj):
 def get_obj_defined_from_obj_type(obj_type):
     """Get the class defined from object type which is in BuiltInMap."""
     logger.debug("get the object type: %r", obj_type)
+
     def foo():
         pass
 
@@ -806,8 +807,8 @@ def _convert_stub_tensor(data):
         return tuple(_convert_stub_tensor(x) for x in data)
     if isinstance(data, list):
         # Keep the list object not change.
-        for i in range(len(data)):
-            data[i] = _convert_stub_tensor(data[i])
+        for input_data in enumerate(data):
+            input_data = _convert_stub_tensor(input_data)
         return data
     if isinstance(data, dict):
         return dict((_convert_stub_tensor(key), _convert_stub_tensor(value)) for key, value in data.items())
@@ -852,20 +853,24 @@ def get_script_ids(script):
 
 
 def merge_global_params(global_dict):
+    """Merge the global parameter."""
     logger.debug(f'merge global_dict: {global_dict}')
     _global_params.update(global_dict)
 
 
 def get_global_params():
+    """Get the global parameter."""
     logger.debug(f'get global_dict: {_global_params}')
     return _global_params
 
 
 def set_local_variable(name, value):
+    """Set the local variable with name and value."""
     _local_value_nodes[name] = value
 
 
 def get_local_variable(name):
+    """Get the local variable according name."""
     return _local_value_nodes.get(name)
 
 

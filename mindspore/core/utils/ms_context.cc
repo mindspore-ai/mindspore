@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ void MsContext::CheckEnv(const std::string &device) {
   check_env_(device, "");
 }
 
-std::string MsContext::GetSaveGraphsPath() {
+std::string MsContext::GetSaveGraphsPath() const {
   std::string path = common::GetEnv("MS_DEV_SAVE_GRAPHS_PATH");
   if (!path.empty()) {
     return path;
@@ -373,7 +373,7 @@ std::string MsContext::GetSaveGraphsPath() {
   }
 }
 
-bool MsContext::CanDump(const int &level) {
+bool MsContext::CanDump(const int &level) const {
   int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
   std::string save_env = common::GetEnv("MS_DEV_SAVE_GRAPHS");
   if (save_env.size() == 1) {
