@@ -355,7 +355,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
     (void)new_nodes.emplace_back(std::move(return_node));
   }
 
-  func_graphs_index_.emplace(func_graph, std::make_shared<FuncGraphPassIndex>());
+  (void)func_graphs_index_.emplace(func_graph, std::make_shared<FuncGraphPassIndex>());
 
   // Acquire all nodes from func_graph.
   AcquireNodes(std::move(new_nodes));

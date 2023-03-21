@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,8 @@ void CheckBatchMatmulInputSize(const std::string &op_name, const std::string &in
 
 void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVector &x_shape,
                                           const ShapeVector &y_shape, bool transpose_a, bool transpose_b) {
-  ShapeVector x_mat_shape(x_shape.end() - kMatSize, x_shape.end());
-  ShapeVector y_mat_shape(y_shape.end() - kMatSize, y_shape.end());
+  ShapeVector x_mat_shape(x_shape.end() - SizeToLong(kMatSize), x_shape.end());
+  ShapeVector y_mat_shape(y_shape.end() - SizeToLong(kMatSize), y_shape.end());
   int64_t x_col = x_mat_shape[static_cast<size_t>(!transpose_a)];
   int64_t y_row = y_mat_shape[static_cast<size_t>(transpose_b)];
   if (std::find(x_shape.begin(), x_shape.end(), -1) == x_shape.end() &&
@@ -103,8 +103,8 @@ void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVe
 
 void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const ShapeVector &x_shape,
                                                 const ShapeVector &y_shape) {
-  ShapeVector x_batch(x_shape.begin(), x_shape.end() - kMatSize);
-  ShapeVector y_batch(y_shape.begin(), y_shape.end() - kMatSize);
+  ShapeVector x_batch(x_shape.begin(), x_shape.end() - SizeToLong(kMatSize));
+  ShapeVector y_batch(y_shape.begin(), y_shape.end() - SizeToLong(kMatSize));
   if (x_batch == y_batch) {
     return;
   }
@@ -129,7 +129,7 @@ void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const S
   }
 #endif
   size_t min_size = std::min(x_batch.size(), y_batch.size());
-  for (size_t i = 0; i < min_size; ++i) {
+  for (int64_t i = 0; i < SizeToLong(min_size); ++i) {
     auto x = *(x_batch.rbegin() + i);
     auto y = *(y_batch.rbegin() + i);
     if (x != 1 && y != 1 && x != y) {

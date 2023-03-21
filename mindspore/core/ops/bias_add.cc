@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                              << "', NCDHW format only supports 5-D input on Ascend or CPU, but got a "
                              << input_shape.size() << "-D input.";
   }
-  if (IsNHWCorNCHW(data_format) && IsShapeSizeOutOfRange(input_shape.size())) {
+  if (IsNHWCorNCHW(data_format) && IsShapeSizeOutOfRange(SizeToLong(input_shape.size()))) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of 'input_x' tensor must be 2D-5D when data_format is "
                              << attr_value_str << ".";
