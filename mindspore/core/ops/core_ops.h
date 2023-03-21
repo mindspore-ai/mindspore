@@ -89,6 +89,7 @@ constexpr auto kTupleEqual = "tuple_equal";
 constexpr auto kListEqual = "list_equal";
 constexpr auto kScalarBitwiseAnd = "bit_and";
 constexpr auto kScalarBitwiseOr = "bit_or";
+constexpr auto kScalarCast = "ScalarCast";
 constexpr auto kTupleLt = "tuple_lt";
 constexpr auto kListLt = "list_lt";
 constexpr auto kTupleLe = "tuple_le";
@@ -520,6 +521,7 @@ GVAR_DEF(PrimitivePtr, kPrimScalarTrunc, std::make_shared<Primitive>(kScalarTrun
 GVAR_DEF(PrimitivePtr, kPrimScalarFloor, std::make_shared<Primitive>(kScalarFloor));
 GVAR_DEF(PrimitivePtr, kPrimScalarUadd, std::make_shared<Primitive>(kScalarUadd));
 GVAR_DEF(PrimitivePtr, kPrimScalarUsub, std::make_shared<Primitive>(kScalarUsub));
+GVAR_DEF(PrimitivePtr, kPrimScalarCast, std::make_shared<Primitive>(kScalarCast));
 GVAR_DEF(PrimitivePtr, kPrimScalarExp, std::make_shared<Primitive>("scalar_exp"));
 GVAR_DEF(PrimitivePtr, kPrimScalarLog, std::make_shared<Primitive>("scalar_log"));
 GVAR_DEF(PrimitivePtr, kPrimScalarSin, std::make_shared<Primitive>("scalar_sin"));

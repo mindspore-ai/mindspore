@@ -41,7 +41,7 @@ def _number_in_tuple(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
-    if F.is_sequence_shape_unknown(y):
+    if F.is_sequence_shape_unknown(y) or not F.isconstant(x):
         return InSequence()(x, y)
     return const_utils.scalar_in_sequence(x, y)
 
@@ -58,7 +58,7 @@ def _number_in_list(x, y):
     Returns:
        bool, if x in y return true, x not in y return false.
    """
-    if F.is_sequence_shape_unknown(y):
+    if F.is_sequence_shape_unknown(y) or not F.isconstant(x):
         return InSequence()(x, y)
     return const_utils.scalar_in_sequence(x, y)
 
