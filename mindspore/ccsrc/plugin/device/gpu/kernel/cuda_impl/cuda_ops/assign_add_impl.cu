@@ -27,38 +27,48 @@ __global__ void AssignAdd(const size_t size, T *ref, const T *value, T *output) 
 }
 
 template <typename T>
-cudaError_t CalAssignAdd(const size_t size, T *ref, const T *value, T *output, cudaStream_t cuda_stream) {
-  AssignAdd<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, ref, value, output);
+cudaError_t CalAssignAdd(const size_t size, T *ref, const T *value, T *output, const uint32_t &device_id,
+                         cudaStream_t cuda_stream) {
+  int thread_num = size > 512 ? 512 : size;
+  AssignAdd<<<CUDA_BLOCKS_CAL(device_id, size, thread_num), thread_num, 0, cuda_stream>>>(size, ref, value, output);
 
   CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<float>(const size_t size, float *ref, const float *value,
-                                                         float *output, cudaStream_t cuda_stream);
+                                                         float *output, const uint32_t &device_id,
+                                                         cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<half>(const size_t size, half *ref, const half *value, half *output,
-                                                        cudaStream_t cuda_stream);
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<double>(const size_t size, double *ref, const double *value,
-                                                          double *output, cudaStream_t cuda_stream);
+                                                          double *output, const uint32_t &device_id,
+                                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<char>(const size_t size, char *ref, const char *value, char *output,
-                                                        cudaStream_t cuda_stream);
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<unsigned char>(const size_t size, unsigned char *ref,
                                                                  const unsigned char *value, unsigned char *output,
-                                                                 cudaStream_t cuda_stream);
+                                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<int16_t>(const size_t size, int16_t *ref, const int16_t *value,
-                                                           int16_t *output, cudaStream_t cuda_stream);
+                                                           int16_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<uint16_t>(const size_t size, uint16_t *ref, const uint16_t *value,
-                                                            uint16_t *output, cudaStream_t cuda_stream);
+                                                            uint16_t *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<int>(const size_t size, int *ref, const int *value, int *output,
-                                                       cudaStream_t cuda_stream);
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<uint32_t>(const size_t size, uint32_t *ref, const uint32_t *value,
-                                                            uint32_t *output, cudaStream_t cuda_stream);
+                                                            uint32_t *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<int64_t>(const size_t size, int64_t *ref, const int64_t *value,
-                                                           int64_t *output, cudaStream_t cuda_stream);
+                                                           int64_t *output, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<uint64_t>(const size_t size, uint64_t *ref, const uint64_t *value,
-                                                            uint64_t *output, cudaStream_t cuda_stream);
+                                                            uint64_t *output, const uint32_t &device_id,
+                                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<Complex<float>>(const size_t size, Complex<float> *ref,
                                                                   const Complex<float> *value, Complex<float> *output,
-                                                                  cudaStream_t cuda_stream);
+                                                                  const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t CalAssignAdd<Complex<double>>(const size_t size, Complex<double> *ref,
                                                                    const Complex<double> *value,
-                                                                   Complex<double> *output, cudaStream_t cuda_stream);
+                                                                   Complex<double> *output, const uint32_t &device_id,
+                                                                   cudaStream_t cuda_stream);
