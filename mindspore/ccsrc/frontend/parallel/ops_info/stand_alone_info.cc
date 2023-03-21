@@ -93,10 +93,20 @@ Status StandAloneInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status StandAloneInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SUCCESS; }
+Status StandAloneInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> StandAloneInfo::GenerateOpStrategies(int64_t stage_id) {
+  StrategyPtr sp;
+  Strategies strategy;
+  ComputeBatchSplitFlagList();
+  for (size_t i = 0; i < inputs_shape_.size(); i++) {
+    Shape temp(inputs_shape_[i].size(), 1);
+    strategy.push_back(temp);
+  }
+  sp = std::make_shared<Strategy>(stage_id, strategy);
   std::vector<StrategyPtr> sp_vector;
+  sp_vector.push_back(sp);
+
   return sp_vector;
 }
 

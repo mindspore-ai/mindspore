@@ -22,6 +22,7 @@
 #include <vector>
 #include "ir/value.h"
 #include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
@@ -30,7 +31,7 @@ class StandAloneInfo : public OperatorInfo {
  public:
   StandAloneInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                  const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, nullptr) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
 
   ~StandAloneInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
