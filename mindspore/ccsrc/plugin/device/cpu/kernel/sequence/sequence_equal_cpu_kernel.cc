@@ -106,5 +106,6 @@ const std::vector<std::pair<KernelAttr, SequenceEqualCpuKernelMod::KernelRunFunc
   return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, tuple_equal, SequenceEqualCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, list_equal, SequenceEqualCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
