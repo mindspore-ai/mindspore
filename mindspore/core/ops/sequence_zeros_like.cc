@@ -21,6 +21,7 @@
 #include <string>
 
 #include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/op_infer.h"
@@ -35,13 +36,29 @@
 
 namespace mindspore {
 namespace ops {
-template <typename T>
-AbstractBasePtr MakeZeros(const size_t &len) {
-  abstract::AbstractBasePtrList abs;
-  for (size_t i = 0; i < len; i++) {
-    abs.push_back(std::make_shared<abstract::AbstractScalar>(T(0)));
+AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) {
+  if (seq_abs->dynamic_len()) {
+    return seq_abs;
   }
-  return std::make_shared<abstract::AbstractTuple>(abs);
+  abstract::AbstractBasePtrList abs;
+  const auto &seq_elements = seq_abs->elements();
+  for (const auto &seq_element : seq_elements) {
+    if (seq_element->isa<abstract::AbstractTensor>()) {
+      (void)abs.emplace_back(TensorConstructUtils::CreateOnesTensor(
+                               seq_element->BuildType(), seq_element->BuildShape()->cast<abstract::ShapePtr>()->shape())
+                               ->ToAbstract());
+    } else if (seq_element->isa<abstract::AbstractScalar>()) {
+      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->BuildType()));
+    } else if (seq_element->isa<abstract::AbstractTuple>() || seq_element->isa<abstract::AbstractList>()) {
+      (void)abs.emplace_back(MakeSequenceZeros(seq_element->cast<abstract::AbstractSequencePtr>()));
+    } else {
+      MS_EXCEPTION(TypeError) << "For 'SequenceZerosLike' is not supported " << seq_abs->BuildType()->ToString() << '.';
+    }
+  }
+  if (seq_abs->isa<abstract::AbstractTuple>()) {
+    return std::make_shared<abstract::AbstractTuple>(abs);
+  }
+  return std::make_shared<abstract::AbstractList>(abs);
 }
 
 AbstractBasePtr SequenceZerosLikeInferInner(const PrimitivePtr &primitive,
@@ -57,23 +74,7 @@ AbstractBasePtr SequenceZerosLikeInferInner(const PrimitivePtr &primitive,
                             << "', the first input should be tuple or list but got: " << first_abs->ToString();
   }
   auto seq_abs = first_abs->cast<abstract::AbstractSequencePtr>();
-  if (seq_abs->dynamic_len()) {
-    return seq_abs;
-  }
-  const auto &seq_elements = seq_abs->elements();
-  const auto &len = seq_elements.size();
-  auto type = seq_elements[0]->BuildType();
-  if (type->type_id() == kInt64->type_id()) {
-    return MakeZeros<int64_t>(len);
-  } else if (type->type_id() == kInt32->type_id()) {
-    return MakeZeros<int>(len);
-  } else if (type->type_id() == kFloat32->type_id()) {
-    return MakeZeros<float>(len);
-  } else if (type->type_id() == kFloat64->type_id()) {
-    return MakeZeros<double>(len);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "' is not supported" << type->ToString() << '.';
-  }
+  return MakeSequenceZeros(seq_abs);
 }
 
 MIND_API_OPERATOR_IMPL(SequenceZerosLike, BaseOperator);

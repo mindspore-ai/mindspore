@@ -100,3 +100,20 @@ def test_seq_mul_grad():
     net = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
     grad_func(x, y, dout)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu
+@pytest.mark.env_onecard
+def test_seq_mul_grad_mutable_scalar():
+    """
+    Feature: test sequence_mul grad op
+    Description: two inputs are dynamic sequence
+    Expectation: the result match with tuple result
+    """
+    x = (1, mutable(2), 3)
+    y = mutable(2)
+    dout = mutable((4, 5, 6, 7, 8, 9), True)
+    net = Net()
+    grad_func = GradOperation(get_all=True, sens_param=True)(net)
+    grad_func(x, y, dout)
