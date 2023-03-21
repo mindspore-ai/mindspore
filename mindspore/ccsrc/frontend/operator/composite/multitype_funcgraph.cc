@@ -113,8 +113,8 @@ std::string IntToNumber(const std::string &v) {
 std::vector<mindspore::TypePtrList> GetSortedCache(const TypeListMap<py::function> &fn_cache_py_,
                                                    const TypePtrList &types, size_t match_max_idx) {
   std::vector<mindspore::TypePtrList> cache_vec;
-  std::transform(fn_cache_py_.begin(), fn_cache_py_.end(), back_inserter(cache_vec),
-                 [](const auto &fcp) { return fcp.first; });
+  (void)std::transform(fn_cache_py_.begin(), fn_cache_py_.end(), back_inserter(cache_vec),
+                       [](const auto &fcp) { return fcp.first; });
 
   for (auto it = cache_vec.begin(); it != cache_vec.end();) {
     if (GetTypesPrefixMatchedNum(types, *it) != match_max_idx) {
@@ -206,7 +206,7 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
     oss << "<";
     for (size_t i = 0; i < item.size(); ++i) {
       std::string item_str = item[i]->ToString();
-      item_str.erase(std::remove(item_str.begin(), item_str.end(), ' '), item_str.end());
+      (void)item_str.erase(std::remove(item_str.begin(), item_str.end(), ' '), item_str.end());
       if (i != item.size() - 1) {
         oss << item_str << ", ";
       } else {

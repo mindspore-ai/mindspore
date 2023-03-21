@@ -374,7 +374,7 @@ std::string MsContext::GetSaveGraphsPath() const {
   }
 }
 
-bool MsContext::CanDump(const int &level) const {
+bool MsContext::CanDump(const DumpLevel &level) const {
   int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
   std::string save_env = common::GetEnv("MS_DEV_SAVE_GRAPHS");
   if (save_env.size() == 1) {

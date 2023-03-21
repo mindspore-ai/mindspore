@@ -593,14 +593,14 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
 
 bool KPrim::CheckCustomVjp(const FuncGraphPtr &bprop_fg) const {
   MS_EXCEPTION_IF_NULL(bprop_fg);
-  int parameters_size = bprop_fg->parameters().size();
+  auto parameters_size = bprop_fg->parameters().size();
   if (bprop_fg->has_flag("custom_vjp") && parameters_size == 1) {
     return true;
   }
   return false;
 }
 
-FuncGraphPtr KPrim::GetCustomVjpBprop(const FuncGraphPtr &bprop_fg) {
+FuncGraphPtr KPrim::GetCustomVjpBprop(const FuncGraphPtr &bprop_fg) const {
   MS_EXCEPTION_IF_NULL(bprop_fg);
   auto bprop_fg_output = dyn_cast<CNode>(bprop_fg->output());
   MS_EXCEPTION_IF_NULL(bprop_fg_output);

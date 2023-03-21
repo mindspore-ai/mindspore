@@ -37,7 +37,7 @@ enum MsBackendPolicy {
   kMsBackendUnknown = 5,
 };
 
-enum level : int {
+enum DumpLevel : int {
   kIntroductory = 1,
   kAdvanced,
   kFully,
@@ -167,7 +167,7 @@ class MS_CORE_API MsContext {
 
   bool enable_dump_ir() const;
   std::string GetSaveGraphsPath() const;
-  bool CanDump(const int &level) const;
+  bool CanDump(const DumpLevel &level) const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend

@@ -88,7 +88,9 @@ bool ConvertToTensor(const AnfNodePtr &node) {
   if (!node->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The node " << node->DebugString() << " should have been set abstract.";
   }
-  abs = node->cast_ptr<ValueNode>()->value()->ToAbstract();
+  auto value = node->cast_ptr<ValueNode>()->value();
+  MS_EXCEPTION_IF_NULL(value);
+  abs = value->ToAbstract();
   return abs->isa<abstract::AbstractTensor>();
 }
 }  // namespace graph_bprop

@@ -183,7 +183,7 @@ void EliminateParameterSelf(const FuncGraphPtr &func_graph, const pipeline::Reso
   auto mng = resources->manager();
   MS_EXCEPTION_IF_NULL(mng);
   mng->AddFuncGraph(func_graph);
-  mng->Replace(parameters[0], NewValueNode(prim));
+  (void)mng->Replace(parameters[0], NewValueNode(prim));
   std::vector<AnfNodePtr> new_parameters;
   (void)std::copy(parameters.begin() + 1, parameters.end(), std::back_inserter(new_parameters));
   func_graph->set_parameters(new_parameters);
@@ -217,7 +217,7 @@ FuncGraphPtr LiftParameter(const FuncGraphPtr &func_graph) {
   for (auto &p : bprop_fg->parameters()) {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(p->debug_info()));
     auto new_p = func_graph->add_parameter();
-    mng->Replace(p, new_p);
+    (void)mng->Replace(p, new_p);
   }
   bprop_fg->set_parameters({});
   auto call_bprop = func_graph->NewCNode({func_graph->output()});

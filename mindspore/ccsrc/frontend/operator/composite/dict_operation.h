@@ -67,7 +67,7 @@ class DictUpdate : public MetaFuncGraph {
   }
   friend bool operator==(const DictUpdate &lhs, const DictUpdate &rhs) { return lhs.name_ == rhs.name_; }
   void AddNodeToLists(const AbstractBasePtr &arg, const FuncGraphPtr &ret, AnfNodePtrList *keys, AnfNodePtrList *values,
-                      std::vector<std::pair<ValuePtr, size_t>> *key_place_map);
+                      std::vector<std::pair<ValuePtr, size_t>> *key_place_map) const;
 };
 using DictUpdatePtr = std::shared_ptr<DictUpdate>;
 
@@ -82,7 +82,7 @@ class DictFromKeys : public MetaFuncGraph {
     return os;
   }
   friend bool operator==(const DictFromKeys &lhs, const DictFromKeys &rhs) { return lhs.name_ == rhs.name_; }
-  abstract::AbstractBasePtrList ParseIterableObject(const abstract::AbstractBasePtr &arg_key);
+  abstract::AbstractBasePtrList ParseIterableObject(const abstract::AbstractBasePtr &arg_key) const;
 };
 using DictFromKeysPtr = std::shared_ptr<DictFromKeys>;
 }  // namespace prim
