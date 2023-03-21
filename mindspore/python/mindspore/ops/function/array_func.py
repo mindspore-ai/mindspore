@@ -5683,9 +5683,9 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         [0.7] [3]
     """
     if input.shape == ():
-        return (input, Tensor(0))
+        return (input, Tensor(0, dtype=input.dtype))
     if axis is None:
-        return (reduce_max(input), Tensor(0))
+        return (reduce_max(input), Tensor(0, dtype=input.dtype))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
