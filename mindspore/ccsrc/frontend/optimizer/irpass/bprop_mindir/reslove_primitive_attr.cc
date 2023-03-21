@@ -28,6 +28,7 @@ inline CNode *GetCallNode(const AnfNodePtr &node) {
     return nullptr;
   }
   auto apply_node = dyn_cast_ptr<CNode>(node);
+  MS_EXCEPTION_IF_NULL(apply_node);
   if (apply_node->inputs().empty()) {
     MS_LOG(DEBUG) << " CNode input is empty!";
     return nullptr;

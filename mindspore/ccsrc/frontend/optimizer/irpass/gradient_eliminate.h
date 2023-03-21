@@ -38,7 +38,7 @@ class ExpandJPrim : public ExpandMetaFgPrim {
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
 
  private:
-  void CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs);
+  void CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncGraphVector *func_graphs) const;
 };
 using ExpandJPrimPtr = std::shared_ptr<ExpandJPrim>;
 }  // namespace irpass
