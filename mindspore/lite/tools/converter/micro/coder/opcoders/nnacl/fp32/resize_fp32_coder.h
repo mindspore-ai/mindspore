@@ -53,7 +53,7 @@ class ResizeFP32Coder : public ResizeBaseCoder {
 
   float *y_weights_{nullptr};
   float *x_weights_{nullptr};
-  float *line_buffer_{nullptr};
+  void *line_buffer_{nullptr};
   CalculateOriginalCoordinate calculate_{nullptr};
   std::string calculate_str_;
 };
