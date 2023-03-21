@@ -68,7 +68,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                const py::object &grad_position, const py::args &args) const;
   py::object GradMsFunction(const py::object &out, const py::args &args) const;
-  void SetDynamicInput(const py::object &cell, const py::args &args) const;
+  void SetDynamicInput(const py::object &cell) const;
 
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                              const py::object &grad_hash_id, const py::args &args) const;
