@@ -433,7 +433,7 @@ def where(condition, x, y):
 
     Examples:
         >>> a = Tensor(np.arange(4).reshape((2, 2)), mstype.float32)
-        >>> b = Tensor(np.ones((2, 2)), mstype.float16)
+        >>> b = Tensor(np.ones((2, 2)), mstype.float32)
         >>> condition = a < 3
         >>> output = ops.where(condition, a, b)
         >>> print(output)
