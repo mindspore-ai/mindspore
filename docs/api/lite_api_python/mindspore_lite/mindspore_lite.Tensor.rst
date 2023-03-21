@@ -45,6 +45,13 @@ mindspore_lite.Tensor
         返回：
             Format，Tensor的格式。
 
+    .. py:method:: get_data_to_numpy()
+
+        从Tensor获取数据传给numpy对象。
+
+        返回：
+            numpy.ndarray，Tensor数据中的numpy对象。
+
     .. py:method:: name
         :property:
 
@@ -52,21 +59,6 @@ mindspore_lite.Tensor
 
         返回：
             str，Tensor的名称。
-
-    .. py:method:: shape
-        :property:
-
-        获取Tensor的shape。
-
-        返回：
-            list[int]，Tensor的shape。
-
-    .. py:method:: get_data_to_numpy()
-
-        从Tensor获取数据传给numpy对象。
-
-        返回：
-            numpy.ndarray，Tensor数据中的numpy对象。
 
     .. py:method:: set_data_from_numpy(numpy_obj)
 
@@ -79,3 +71,11 @@ mindspore_lite.Tensor
             - **TypeError** - `numpy_obj` 不是numpy.ndarray类型。
             - **RuntimeError** - `numpy_obj` 的数据类型与Tensor的数据类型不等价。
             - **RuntimeError** - `numpy_obj` 的数据大小与Tensor的数据大小不相等。
+
+    .. py:method:: shape
+        :property:
+
+        获取Tensor的shape。
+
+        返回：
+            list[int]，Tensor的shape。

@@ -5670,7 +5670,7 @@ def argmax(input, dim=None, keepdim=False):
         input (Tensor): Input tensor.
         dim (Union[int, None]): The dimension to reduce. If `dim` is None, the indices of the maximum
             value within the flattened input will be returned. Default: None.
-        keepdim (bool): Whether the output tensor retains the specified
+        keepdim (bool, optional): Whether the output tensor retains the specified
             dimension. Ignored if `dim` is None. Default: False.
 
     Returns:

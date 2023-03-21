@@ -13,4 +13,3 @@ mindspore.ops.positive
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 的dtype是bool。
