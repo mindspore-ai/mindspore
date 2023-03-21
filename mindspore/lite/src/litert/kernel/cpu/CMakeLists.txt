@@ -1,7 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 
 file(GLOB KERNEL_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/nnacl/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/base/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/online_fusion/*.cc
