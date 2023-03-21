@@ -1115,6 +1115,5 @@ BaseRef KernelGraphUtils::CreateNodeOutputTensor(
   tensor->SetIsGraphOutput();
   (*tensor_to_node)[tensor] = node_output_pair;
   return tensor;
-  // return BaseRef();
 }
 }  // namespace mindspore

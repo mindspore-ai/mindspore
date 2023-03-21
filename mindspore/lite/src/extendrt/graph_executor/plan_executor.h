@@ -29,7 +29,6 @@ namespace mindspore::infer {
 class PlanExecutor : public mindspore::infer::abstract::Executor {
  public:
   PlanExecutor();
-  //   explicit FlowExecutor(const std::string &name);
   explicit PlanExecutor(const std::string &name);
   virtual ~PlanExecutor() = default;
 
@@ -39,7 +38,7 @@ class PlanExecutor : public mindspore::infer::abstract::Executor {
 
   Status Execute() override;
 
-  int Resize(const std::vector<abstract::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int Resize(const std::vector<abstract::Tensor *> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
  private:
   std::string name_;
