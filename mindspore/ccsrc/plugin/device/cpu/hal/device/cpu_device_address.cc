@@ -135,10 +135,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
     MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
     return true;
   }
-  if (ptr_ == nullptr) {
-    MS_LOG(ERROR) << "The pointer ptr_ is null!";
-    return false;
-  }
+  MS_EXCEPTION_IF_NULL(ptr_);
   if (host_ptr == ptr_) {
     MS_LOG(DEBUG) << "host_ptr is equal to ptr_, request ignored.";
     return true;
