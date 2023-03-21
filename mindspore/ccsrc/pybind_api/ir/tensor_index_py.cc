@@ -94,6 +94,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<TensorIndex> &t
   stream << ")";
   return stream;
 }
+
 inline void TensorIndex::CheckGetItemIndex(const ShapeVector &data_shape, const TensorIndexType &index_data_type) {
   if (data_shape.empty()) {
     MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
@@ -104,11 +105,12 @@ inline void TensorIndex::CheckGetItemIndex(const ShapeVector &data_shape, const 
      TensorIndexType::Integer, TensorIndexType::Tuple, TensorIndexType::Ellipsis, TensorIndexType::None});
   if (!valid) {
     MS_EXCEPTION(IndexError)
-      << "only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
+      << "Only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
          "tuple as index, but got "
       << TensorIndex::py_index_handle_ << " with type " << TensorIndex::py_index_handle_.get_type();
   }
 }
+
 inline void TensorIndex::CheckSetItemIndex(const ShapeVector &data_shape, const TensorIndexType &index_data_type,
                                            const TensorIndexType &value_data_type) {
   CheckGetItemIndex(data_shape, index_data_type);
@@ -116,7 +118,7 @@ inline void TensorIndex::CheckSetItemIndex(const ShapeVector &data_shape, const 
     value_data_type, {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean,
                       TensorIndexType::Tensor, TensorIndexType::List, TensorIndexType::Tuple});
   if (!valid) {
-    MS_EXCEPTION(TypeError) << "only support numbers, Tensor, tuple, list as value, but got "
+    MS_EXCEPTION(TypeError) << "Only support numbers, Tensor, tuple, list as value, but got "
                             << TensorIndex::py_value_handle_ << "with type" << TensorIndex::py_value_handle_;
   }
 }
@@ -164,7 +166,7 @@ inline TensorIndex TensorIndex::SequenceToTensor(const T &sequence, const int64_
   if (std::all_of(sequence.begin(), sequence.end(), [](auto &x) { return py::isinstance<py::bool_>(x); })) {
     int64_t seq_size = SizeToLong(sequence.size());
     if (seq_size != dim_size) {
-      MS_EXCEPTION(IndexError) << "dimension is " << dim_size << " but corresponding boolean dimension is " << seq_size;
+      MS_EXCEPTION(IndexError) << "Dimension is " << dim_size << " but corresponding boolean dimension is " << seq_size;
     }
     py::list new_range_dim_size;
     for (size_t i = 0; i < sequence.size(); i++) {
@@ -412,7 +414,6 @@ inline std::tuple<int64_t, py::object, ShapeVector> TensorIndex::GetValueTransfe
 }
 
 // ***********************************************for get_item*******************************************
-// GetitemByTuple
 py::tuple TensorIndex::GenerateNonZeroIndex(const ShapeVector &data_shape, const TensorPtr &tensor_index) {
   const int64_t data_dim = SizeToLong(data_shape.size());
   const int64_t index_dims = tensor_index->DataDim();
@@ -596,7 +597,7 @@ py::array TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, const
     if (index.IsInteger()) {
       int64_t int_index = index.integer();
       if (int_index >= dim_size || int_index < -dim_size) {
-        MS_EXCEPTION(IndexError) << "index " << int_index << " is out of bounds for dimension with size " << dim_size;
+        MS_EXCEPTION(IndexError) << "Index " << int_index << " is out of bounds for dimension with size " << dim_size;
       }
       int_index = CheckRange(int_index, dim_size);
       TensorPtr tensor_index = std::make_shared<Tensor>(int_index);
@@ -698,7 +699,6 @@ TensorIndex TensorIndex::FormatList(const TensorIndex &tensor_index, const int64
   return TensorIndex(DeepList(tensor_index.list_, length).cast<py::tuple>());
 }
 
-// SetItemByNumber
 TensorPtr TensorIndex::IntToTensor(const int64_t &int_index, const ShapeVector &shape) {
   int64_t dim_size = shape[0];
   auto out_i = static_cast<int32_t>(CheckRange(int_index, dim_size));
@@ -724,7 +724,7 @@ TensorPtr TensorIndex::IntToTensor(const int64_t &int_index, const ShapeVector &
   py::object output_index = TensorIndex::np_module_.attr("stack")(index, -1);
   return TensorPy::MakeTensor(TensorIndex::np_module_.attr("array")(output_index));
 }
-// SetItemByTuple
+
 py::array TensorIndex::GenerateIndicesFromTupleOfTensor(const std::vector<TensorIndex> &tuple_index) {
   std::vector<ShapeVector> tensor_index_shape;
   std::vector<TensorPtr> tuple_index_vector;
@@ -885,14 +885,14 @@ std::pair<std::vector<TensorIndex>, ShapeVector> TensorIndex::RemoveExpandedDims
         has_false |= !bool_index_out;
       }
     } else {
-      MS_EXCEPTION(IndexError) << "invalid index type, index: " << TensorIndex::py_index_handle_;
+      MS_EXCEPTION(IndexError) << "Invalid index type, index: " << TensorIndex::py_index_handle_;
     }
   }
 
   ShapeVector broadcast_shape = BroadCastShape(shapes);
   if (has_false) {
     if (std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<>()) != 1) {
-      MS_EXCEPTION(IndexError) << "unable to broadcast indices " << broadcast_shape;
+      MS_EXCEPTION(IndexError) << "Unable to broadcast indices " << broadcast_shape;
     }
     *by_pass = true;
     return std::make_pair(std::vector<TensorIndex>(), ShapeVector());
@@ -928,7 +928,7 @@ py::array TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
     if (index.IsInteger()) {
       int64_t int_index = index.integer();
       if (int_index >= dim_size || int_index < -dim_size) {
-        MS_EXCEPTION(IndexError) << "index " << int_index << " is out of bounds for dimension with size " << dim_size;
+        MS_EXCEPTION(IndexError) << "Index " << int_index << " is out of bounds for dimension with size " << dim_size;
       }
       int_index = CheckRange(int_index, dim_size);
       TensorPtr tensor_index = std::make_shared<Tensor>(int_index);
@@ -1098,7 +1098,6 @@ py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, 
                         py::make_tuple(static_cast<int>(tensor_update_type)), py::make_tuple(py::none()));
 }
 
-// SetItemBySlice
 py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, const TensorIndex &slice_index,
                                                  std::vector<int64_t> *value_transfer_types,
                                                  std::vector<py::object> *value_transfer_args) {
@@ -1147,7 +1146,6 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
                         py::make_tuple(static_cast<int>(tensor_update_type)), py::make_tuple(py::none()));
 }
 
-// SetItemByTensorByBool
 py::array TensorIndex::SetItemByTensorByBool(const ShapeVector &data_shape, const TensorIndexType &py_value_type,
                                              const TensorPtr &index, const int64_t &data_dims,
                                              const py::array &np_index, std::vector<int64_t> *value_transfer_types,
@@ -1187,8 +1185,6 @@ py::array TensorIndex::SetItemByTensorByBool(const ShapeVector &data_shape, cons
 }
 
 // ***********************************************get get_item info*******************************************
-
-// GetItemByTensor
 py::object TensorIndex::GetItemByTensor(const ShapeVector &data_shape, const TensorPtr &index) {
   MS_LOG(DEBUG) << "In branch get item by tensor, data_shape: " << data_shape
                 << " tensor_indexes: " << index->ToString();
@@ -1220,7 +1216,6 @@ py::object TensorIndex::GetItemByTensor(const ShapeVector &data_shape, const Ten
   return output;
 }
 
-// GetItemByList
 py::object TensorIndex::GetItemByList(const ShapeVector &data_shape, const TensorIndex &tensor_index) {
   MS_LOG(DEBUG) << "In branch get item by List, data_shape: " << data_shape << " tensor_index: " << tensor_index;
   constexpr int min_data_dim = 1;
@@ -1240,7 +1235,6 @@ py::object TensorIndex::GetItemByList(const ShapeVector &data_shape, const Tenso
   return GetItemByTuple(data_shape, tensor_index.ExpandToVector());
 }
 
-// GetItemByTuple
 py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std::vector<TensorIndex> &tensor_indexes) {
   MS_LOG(DEBUG) << "In branch get item by tuple, data_shape: " << data_shape << " tensor_indexes: " << tensor_indexes;
   std::vector<int64_t> data_transfer_types;
@@ -1280,7 +1274,6 @@ py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std:
   return TensorGetitemByTuple(new_data_shape, new_tuple_indexes, &data_transfer_types, &data_transfer_args);
 }
 
-// GetItemByBool
 py::object TensorIndex::GetItemByBool(const ShapeVector &data_shape, const bool &index) {
   MS_LOG(DEBUG) << "In branch get item by bool, data_shape: " << data_shape << " tensor_indexes: " << index;
   constexpr int min_data_dim = 0;
@@ -1294,7 +1287,6 @@ py::object TensorIndex::GetItemByBool(const ShapeVector &data_shape, const bool 
                         py::make_tuple(py::int_(0)));
 }
 
-// GetItemByNumber
 py::object TensorIndex::GetItemByNumber(const ShapeVector &data_shape, const int64_t &index) {
   MS_LOG(DEBUG) << "In branch get item by number, data_shape: " << data_shape << " tensor_indexes: " << index;
   constexpr int min_data_dim = 0;
@@ -1338,7 +1330,6 @@ py::object TensorIndex::GetItemByNumber(const ShapeVector &data_shape, const int
                         py::make_tuple(py::make_tuple(stride_info, mask_info)));
 }
 
-// GetItemBySlice
 py::object TensorIndex::GetItemBySlice(const ShapeVector &data_shape, const TensorIndex &py_index) {
   MS_LOG(DEBUG) << "In branch get item by slice, data_shape: " << data_shape << " tensor_indexes: " << py_index;
   constexpr int min_data_dim = 1;
@@ -1419,7 +1410,7 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
     }
     default: {
       MS_EXCEPTION(TypeError)
-        << "only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
+        << "Only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
            "tuple as index, but got "
         << TensorIndex::py_index_handle_ << " with type " << TensorIndex::py_index_handle_.get_type();
     }
@@ -1428,8 +1419,6 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
 }
 
 // ***********************************************get set_item info*******************************************
-
-// SetItemByNumber
 py::object TensorIndex::SetItemByNumber(const ShapeVector &data_shape, const TypePtr &data_type,
                                         const bool &is_parameter, const TensorIndex &tensor_index,
                                         const TensorIndexType &py_value_type) {
@@ -1448,7 +1437,7 @@ py::object TensorIndex::SetItemByNumber(const ShapeVector &data_shape, const Typ
   int64_t dim_size = data_shape[0];
   int64_t index = tensor_index.integer();
   if (index < -dim_size || index >= dim_size) {
-    MS_EXCEPTION(IndexError) << "index " << index << " is out of bounds for axis 0 with size " << dim_size;
+    MS_EXCEPTION(IndexError) << "Index " << index << " is out of bounds for axis 0 with size " << dim_size;
   }
   TensorPtr new_index = std::make_shared<Tensor>();
   if (SizeToLong(data_shape.size()) < max_dim_size && data_shape.back() <= max_dim) {
@@ -1472,7 +1461,6 @@ py::object TensorIndex::SetItemByNumber(const ShapeVector &data_shape, const Typ
                         py::make_tuple(static_cast<int>(data_transfer_type)), py::make_tuple(py::none()));
 }
 
-// SetItemByTensor
 py::object TensorIndex::SetItemByTensor(const ShapeVector &data_shape, const bool &is_parameter,
                                         const TensorIndex &tensor_index, const TensorIndexType &py_value_type) {
   MS_LOG(DEBUG) << "In branch Set item by tensor, data_shape: " << data_shape << " tensor_indexes: " << tensor_index
@@ -1548,7 +1536,6 @@ py::object TensorIndex::SetItemByTensor(const ShapeVector &data_shape, const boo
                         py::make_tuple(static_cast<int>(tensor_update_type)), py::make_tuple(py::none()));
 }
 
-// SetItemByTuple
 py::object TensorIndex::SetItemByTuple(const ShapeVector &data_shape, const TypePtr &data_type,
                                        const TensorIndex &py_index, const TensorIndexType &py_value_type) {
   MS_LOG(DEBUG) << "In branch Set item by tuple, data_shape: " << data_shape << " tensor_indexes: " << py_index
@@ -1556,7 +1543,7 @@ py::object TensorIndex::SetItemByTuple(const ShapeVector &data_shape, const Type
   if (!CheckTypeIsInstance<TensorIndexType>(py_value_type,
                                             {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean,
                                              TensorIndexType::Tensor, TensorIndexType::List, TensorIndexType::Tuple})) {
-    MS_EXCEPTION(TypeError) << "only support int, float, bool, Tensor, list, tuple as value, but got "
+    MS_EXCEPTION(TypeError) << "Only support int, float, bool, Tensor, list, tuple as value, but got "
                             << TensorIndex::py_value_handle_.get_type();
   }
 
@@ -1578,7 +1565,6 @@ py::object TensorIndex::SetItemByTuple(const ShapeVector &data_shape, const Type
                                   &value_transfer_args);
 }
 
-// SetItemBySlice
 py::object TensorIndex::SetItemBySlice(const ShapeVector &data_shape, const TypePtr &data_type,
                                        const TensorIndex &tensor_index, const TensorIndexType &py_value_type) {
   MS_LOG(DEBUG) << "In branch Set item by slice, data_shape: " << data_shape << " tensor_indexes: " << tensor_index
@@ -1586,7 +1572,7 @@ py::object TensorIndex::SetItemBySlice(const ShapeVector &data_shape, const Type
   if (!CheckTypeIsInstance<TensorIndexType>(py_value_type,
                                             {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean,
                                              TensorIndexType::Tensor, TensorIndexType::List, TensorIndexType::Tuple})) {
-    MS_EXCEPTION(TypeError) << "only support int, float, bool, Tensor, list, tuple as value, but got "
+    MS_EXCEPTION(TypeError) << "Only support int, float, bool, Tensor, list, tuple as value, but got "
                             << TensorIndex::py_value_handle_.get_type();
   }
 
@@ -1658,7 +1644,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
     }
     default: {
       MS_EXCEPTION(TypeError)
-        << "only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
+        << "Only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor, int, list and "
            "tuple as index, but got "
         << TensorIndex::py_index_handle_ << "with type " << TensorIndex::py_index_handle_.get_type();
     }
