@@ -30,9 +30,8 @@ def test_fallback_int_with_input_tensor():
     @jit
     def foo(x):
         return int(x)
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(ValueError):
         foo(Tensor([1, 2, 4]))
-    assert "int() does not support non-constant input." in str(ex.value)
 
 
 def test_fallback_int_with_input_tensor_2():
@@ -218,9 +217,8 @@ def test_fallback_float_with_input_tensor_2():
     @jit
     def foo(x):
         return float(x)
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(ValueError):
         foo(Tensor([1, 2, 4]))
-    assert "float() does not support non-constant input." in str(ex.value)
 
 
 def test_fallback_float_with_input_tensor_3():

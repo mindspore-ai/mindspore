@@ -24,7 +24,7 @@ from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Prim
 from mindspore.ops import signature as sig
 
 
-class ScalarCast(PrimitiveWithInfer):
+class ScalarCast(Primitive):
     """
     Casts the input scalar to another type.
 

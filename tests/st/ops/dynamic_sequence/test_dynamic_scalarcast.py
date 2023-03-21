@@ -15,10 +15,8 @@
 import pytest
 
 import mindspore.nn as nn
-import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
 from mindspore.common import mutable
-from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
 from sequence_help import context_prepare
@@ -29,7 +27,7 @@ context_prepare()
 
 class Net(nn.Cell):
     def construct(self, x, y):
-        return F.scalar_cast(x, mstype.int32), F.scalar_cast(y, mstype.float32)
+        return int(x), float(y)
 
 
 @pytest.mark.level0
@@ -86,14 +84,14 @@ def test_cast_grad():
     Expectation: the result match with tuple result
     """
     class Net0(Cell):
-        def construct(self, x, dtype):
-            return F.scalar_cast(x, dtype)
+        def construct(self, x):
+            return int(x)
 
     net_ms = Net0()
     input_x = mutable(2.2)
     dout = mutable(1)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
-    print("grad out = ", grad_func(input_x, mstype.int64, dout))
+    print("grad out = ", grad_func(input_x, dout))
 
 
 @pytest.mark.level0
@@ -108,11 +106,11 @@ def test_cast_grad1():
     Expectation: the result match with tuple result
     """
     class Net1(Cell):
-        def construct(self, y, dtype):
-            return F.scalar_cast(y, dtype)
+        def construct(self, y):
+            return float(y)
 
     net_ms = Net1()
     input_x = mutable(Tensor(2))
     dout = mutable(1.0)
     grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
-    print("grad out1 = ", grad_func(input_x, mstype.float32, dout))
+    print("grad out1 = ", grad_func(input_x, dout))

@@ -2293,6 +2293,11 @@ def int_func(*data):
     if data_len == 0:
         return 0
     target = data[0]
+    base = 10
+    if data_len == 2:
+        base = data[1]
+    if isinstance(target, (Tensor, Tensor_, int, float, bool)) and base == 10 and not F.isconstant(target):
+        return F.scalar_cast(target, mstype.int64)
     if not F.isconstant(target):
         const_utils.raise_type_error(
             "int() does not support non-constant input.")
@@ -2317,6 +2322,8 @@ def float_func(*data):
     if data_len == 0:
         return 0.0
     data = data[0]
+    if isinstance(data, (Tensor, Tensor_, int, float, bool)) and not F.isconstant(data):
+        return F.scalar_cast(data, mstype.float32)
     if not F.isconstant(data):
         const_utils.raise_type_error(
             "float() does not support non-constant input.")
