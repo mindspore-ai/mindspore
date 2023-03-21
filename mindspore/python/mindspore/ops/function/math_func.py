@@ -5717,7 +5717,8 @@ def lerp(input, end, weight):
 
 def bernoulli(input, p=0.5, seed=None):
     r"""
-    Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
+    Randomly set the elements of output to 0 or 1 with the probability of `p`
+    which follows the Bernoulli distribution.
 
     .. math::
         out_{i} \sim Bernoulli(p_{i})
@@ -5725,9 +5726,8 @@ def bernoulli(input, p=0.5, seed=None):
     Args:
         input (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
                         type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
-        p (Union[Tensor, float], optional): The shape of p need to be broadcast. Data type must be float32 or float64.
-                                            The elements of p represent the probability of setting 1 for the
-                                            corresponding broadcast position of the current Tensor. The value of `p`
+        p (Union[Tensor, float], optional): Success probability, representing the probability of setting 1 for the
+                                            corresponding position of the current Tensor. The value of `p`
                                             must be in the range `[0, 1]`. Default: 0.5.
         seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
                                            positive integer, and -1 means using the current timestamp. Default: None,

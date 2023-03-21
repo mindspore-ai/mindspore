@@ -41,7 +41,7 @@ class Softplus(Bijector):
         TypeError: When the dtype of the sharpness is not float.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
