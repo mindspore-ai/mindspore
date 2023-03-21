@@ -164,7 +164,37 @@ bool AclPassImpl::IsDynamicInput() {
   return !user_options_cfg_.dynamic_image_size.empty() || !user_options_cfg_.dynamic_batch_size.empty();
 }
 
+STATUS AclPassImpl::RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph) {
+  auto manager = Manage(func_graph, true);
+  if (manager == nullptr) {
+    MS_LOG(ERROR) << "Failed to get func graph manager";
+    return lite::RET_ERROR;
+  }
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    auto cnode = node->cast<CNodePtr>();
+    if (!cnode) {
+      continue;
+    }
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimConcat)) {
+      continue;
+    }
+    if (cnode->size() != kInputSize1) {
+      continue;
+    }
+    auto src_node = cnode->input(kIndex1);
+    if (src_node && src_node->abstract() && !src_node->abstract()->isa<abstract::AbstractSequence>()) {
+      manager->Replace(cnode, src_node);
+    }
+  }
+  return RET_OK;
+}
+
 STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
+  if (RemoveSingleInputConcatNode(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "Remove single input concat node failed.";
+    return lite::RET_ERROR;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
