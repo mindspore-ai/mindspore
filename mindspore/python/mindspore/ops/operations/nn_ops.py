@@ -10084,7 +10084,7 @@ class SparseApplyMomentum(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.ops.operations.nn_ops as nn_ops
