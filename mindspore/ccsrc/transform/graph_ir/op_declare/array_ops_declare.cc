@@ -44,6 +44,7 @@ REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
 // Data
 INPUT_MAP(Data) = EMPTY_INPUT_MAP;
 ATTR_MAP(Data) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Data) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Data, kNameParam, ADPT_DESC(Data))
 
 // Shape
