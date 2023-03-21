@@ -101,14 +101,14 @@ class ReLUV2Infer : public abstract::OpInferBase {
                                << "', the dims of 'input_x' must be greater than 4, but got a "
                                << std::to_string(input_shape.size()) << "-D tensor.";
     }
-
+    auto type_id = x_dtype->type_id();
     for (size_t i = 0; i < input_shape.size(); i++) {
       if (i == 1) {
         if (input_shape[1] < 0) {
           mask_shape.push_back(-1);
           continue;
         }
-        if (x_dtype == kUInt8 || x_dtype == kInt8) {
+        if (type_id == kNumberTypeInt8 || type_id == kNumberTypeUInt8) {
           mask_shape.push_back(UlongToLong(ceil((input_shape[1] + kFill31) / kRound32)));
         } else {
           mask_shape.push_back(UlongToLong(ceil((input_shape[1] + kFill15) / kRound16)));
@@ -119,7 +119,7 @@ class ReLUV2Infer : public abstract::OpInferBase {
     }
     const int64_t shape_end_4d = 4;
     const int64_t shape_end_2d = 2;
-    if (x_dtype == kUInt8 || x_dtype == kInt8) {
+    if (type_id == kNumberTypeInt8 || type_id == kNumberTypeUInt8) {
       (void)mask_shape.insert(mask_shape.end(), shape_end_4d);
     } else {
       (void)mask_shape.insert(mask_shape.end(), shape_end_2d);

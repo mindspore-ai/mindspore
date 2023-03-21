@@ -167,6 +167,12 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F32_NCDHW, DataType.F32_NDC1HWC0) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NCDHW) \
     .dtype_format(DataType.F32_NCDHW, DataType.F32_NDC1HWC0) \
+    .dtype_format(DataType.I8_Default, DataType.I8_5HD) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_5HD) \
+    .dtype_format(DataType.U8_5HD, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_5HD) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_Default) \
     .get_op_info()
 
 
