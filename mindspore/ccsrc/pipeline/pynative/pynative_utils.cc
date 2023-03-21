@@ -508,15 +508,13 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
 }
 
 bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                               size_t input_index, const PrimitivePtr &op_prim,
-                                               const mindspore::HashSet<size_t> &input_attrs) {
+                                               size_t input_index, const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
-  MS_EXCEPTION_IF_NULL(op_prim);
   if (input_attrs.find(input_index) == input_attrs.end()) {
     return false;
   }
-  const auto &input_names_value = op_prim->GetAttr(kAttrInputNames);
+  const auto &input_names_value = op_run_info->op_prim->GetAttr(kAttrInputNames);
   if (input_names_value == nullptr) {
     return false;
   }
@@ -531,15 +529,14 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
       return false;
     }
   }
-  (void)op_prim->AddAttr(input_name, v);
+  (void)op_run_info->op_prim->AddAttr(input_name, v);
   return true;
 }
 
 void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                           const PrimitivePtr &op_prim, size_t index) {
+                                           size_t index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
-  MS_EXCEPTION_IF_NULL(op_prim);
   for (const auto &v : value_seq->value()) {
     if (!v->isa<tensor::Tensor>()) {
       MS_LOG(EXCEPTION) << "The input object is not a tensor!";
@@ -553,19 +550,19 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
     (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
   }
-  if (op_prim->HasAttr(kAttrDynInputSizes)) {
+  if (op_run_info->op_prim->HasAttr(kAttrDynInputSizes)) {
     int64_t elem_size = SizeToLong(value_seq->size());
-    auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
+    auto dyn_v = GetValue<const std::vector<int64_t>>(op_run_info->op_prim->GetAttr(kAttrDynInputSizes));
     if (dyn_v.size() != op_run_info->input_size) {
       for (size_t i = dyn_v.size(); i < index; ++i) {
         (void)dyn_v.emplace_back(-1);
       }
       (void)dyn_v.emplace_back(elem_size);
-      (void)op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+      (void)op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
     } else {
       if (dyn_v[index] != elem_size) {
         dyn_v[index] = elem_size;
-        op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+        op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
       }
     }
   } else {
@@ -574,7 +571,10 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
       (void)dyn_v.emplace_back(-1);
     }
     (void)dyn_v.emplace_back(SizeToLong(value_seq->size()));
-    op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
+    // Like addn, prim define in python, but number of inputs change, so the value of kAttrDynInputSizes
+    // changed too.
+    ClonePrim(op_run_info);
+    op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
   }
 }
 
@@ -594,13 +594,11 @@ void DataConvert::ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_i
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor_ptr);
 }
 
-void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
-                                   const PrimitivePtr &op_prim) {
+void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(map_tensor);
   constexpr int input_num = 1;
-  const auto input_names = op_prim->GetAttr(kAttrInputNames);
+  const auto input_names = op_run_info->op_prim->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     MS_LOG(DEBUG) << "input_names are nullptr";
     return;
@@ -611,12 +609,11 @@ void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, cons
 }
 
 void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
-                                               const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim) {
+                                               const tensor::CSRTensorPtr &csr_tensor) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(csr_tensor);
   constexpr int input_num = 3;
-  const auto input_names = op_prim->GetAttr(kAttrInputNames);
+  const auto input_names = op_run_info->op_prim->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     MS_LOG(DEBUG) << "input_names are nullptr";
     return;
@@ -626,15 +623,14 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   (void)op_run_info->base_op_run_info.input_tensor.emplace_back(csr_tensor->GetValues());
   const auto it = op_run_info->base_op_run_info.input_mask.end();
   (void)op_run_info->base_op_run_info.input_mask.insert(it, input_num, kParameterDataTensorMask);
-  op_prim->set_attr("is_csr", MakeValue(true));
-  op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
+  op_run_info->op_prim->set_attr("is_csr", MakeValue(true));
+  op_run_info->op_prim->set_attr("dense_shape", MakeValue(csr_tensor->shape()));
 }
 
 void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                            const PrimitivePtr &op_prim, size_t index) {
+                                            size_t index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
-  MS_EXCEPTION_IF_NULL(op_prim);
 
   const auto &tuple_inputs = value_seq->value();
   if (tuple_inputs.empty()) {
@@ -644,22 +640,20 @@ void DataConvert::ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_i
     return;
   }
   if (tuple_inputs[0]->isa<tensor::Tensor>()) {
-    PlantTensorTupleToVector(op_run_info, value_seq, op_prim, index);
+    PlantTensorTupleToVector(op_run_info, value_seq, index);
   } else {
     ConvertValueTupleToTensor(op_run_info, value_seq);
     (void)op_run_info->base_op_run_info.input_mask.emplace_back(kValueNodeTensorMask);
   }
 }
 
-void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
-                                       const PrimitivePtr &op_prim) {
+void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v);
-  MS_EXCEPTION_IF_NULL(op_prim);
   tensor::TensorPtr tensor_ptr = nullptr;
   int64_t tensor_mask = kParameterDataTensorMask;
   if (v->isa<tensor::MapTensor>()) {
-    ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), op_prim);
+    ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>());
     return;
   } else if (v->isa<tensor::Tensor>()) {
     tensor_ptr = v->cast<tensor::TensorPtr>();
@@ -675,8 +669,8 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     tensor_mask = kValueNodeTensorMask;
   } else if (v->isa<IntegerImm>()) {
     int64_t input = v->cast<Int64ImmPtr>()->value();
-    if (op_prim->name() == prim::kPrimCSRReduceSum->name()) {
-      op_prim->set_attr("axis", MakeValue(input));
+    if (op_run_info->op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+      op_run_info->op_prim->set_attr("axis", MakeValue(input));
       return;
     }
     tensor_ptr = std::make_shared<tensor::Tensor>(input, kInt64);
@@ -692,10 +686,10 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     tensor_ptr = std::make_shared<tensor::Tensor>(kObjectTypeString, shape, value_string.data(), value_string.size());
     tensor_mask = kValueNodeTensorMask;
   } else if (v->isa<ValueSequence>()) {
-    ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), op_prim, index);
+    ConvertTupleValueToTensor(op_run_info, v->cast<ValueSequencePtr>(), index);
     return;
   } else if (v->isa<tensor::CSRTensor>()) {
-    ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), op_prim);
+    ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>());
     return;
   } else if (v->isa<None>() || v->isa<Monad>()) {
     return;
@@ -798,34 +792,25 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     // Prim may be changed attr
     ClonePrim(op_run_info);
   }
-  const auto &op_prim = op_run_info->op_prim;
 
   // Get input tensors.
-  op_prim->BeginRecordAddAttr();
+  op_run_info->op_prim->BeginRecordAddAttr();
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->input_value[index];
     // convert const input to attr
-    if (need_convert_input_to_attr &&
-        RunOpConvertConstInputToAttr(op_run_info, input_object, index, op_prim, input_to_attr)) {
+    if (need_convert_input_to_attr && RunOpConvertConstInputToAttr(op_run_info, input_object, index, input_to_attr)) {
       continue;
     }
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
-    ConvertValueToTensor(op_run_info, input_object, index, op_prim);
+    ConvertValueToTensor(op_run_info, input_object, index);
     // -1 indicates input_object is not a dynInput
-    if (op_prim->HasAttr(kAttrDynInputSizes)) {
-      if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
-        // Like addn, prim define in python, but number of inputs change, so the value of kAttrDynInputSizes
-        // changed too. In async, do opgrad may be not complete.
-        ClonePrim(op_run_info);
-      }
-      if (!input_object->isa<ValueSequence>()) {
-        auto dyn_v = GetValue<const std::vector<int64_t>>(op_prim->GetAttr(kAttrDynInputSizes));
-        (void)dyn_v.emplace_back(-1);
-        op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
-      }
+    if (op_run_info->op_prim->HasAttr(kAttrDynInputSizes) && !input_object->isa<ValueSequence>()) {
+      auto dyn_v = GetValue<const std::vector<int64_t>>(op_run_info->op_prim->GetAttr(kAttrDynInputSizes));
+      (void)dyn_v.emplace_back(-1);
+      op_run_info->op_prim->set_attr(kAttrDynInputSizes, MakeValue(dyn_v));
     }
   }
-  op_prim->EndRecordAddAttr();
+  op_run_info->op_prim->EndRecordAddAttr();
   ReplaceValueNodeWithParameter(op_run_info, device_target);
   ReplaceReduceAxis(op_run_info);
 }
