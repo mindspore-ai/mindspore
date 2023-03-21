@@ -27,10 +27,10 @@ class FusionBuildTbeJsonCreator : public TbeJsonCreator {
   ~FusionBuildTbeJsonCreator() override = default;
   bool GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) override;
   bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
+  bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  protected:
   bool GenOpListJson(const FusionScopeInfo &fusion_scope_info, std::vector<nlohmann::json> *fusion_json);
-  bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) const;
   void GenReusedOutputDesc(const AnfNodePtr &anf_node, size_t index, size_t output_index, nlohmann::json *output_desc,
                            size_t out_size) const;

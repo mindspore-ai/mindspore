@@ -71,11 +71,11 @@ class TbeJsonCreator {
   std::string GetJsonName() { return json_name_; }
   size_t GetJsonHash() const { return json_hash_; }
   virtual bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
+  virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
 
  protected:
   static std::string GetCoreType(const AnfNodePtr &node);
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
-  virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
   void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const;
   void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const;
   virtual void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {}
