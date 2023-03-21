@@ -3232,8 +3232,8 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         n = inputs.shape[0]
         c = inputs.shape[1]
         out_size = (n,) + inputs.shape[2:]
-        inputs = inputs.view(n, c, 1, -1)
-        target = target.view(n, 1, -1)
+        inputs = inputs.view((n, c, 1, -1))
+        target = target.view((n, 1, -1))
         if reduction != 'none':
             ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
         else:
@@ -5829,7 +5829,6 @@ def _in_projection(q, k, v, w_q, w_k, w_v, b_q=None, b_k=None, b_v=None):
     """in projection function"""
     Eq, Ek, Ev = q.shape[-1], k.shape[-1], v.shape[-1]
     w_q_shape, w_k_shape, w_v_shape = w_q.shape, w_k.shape, w_v.shape
-    b_q_shape, b_k_shape, b_v_shape = b_q.shape, b_k.shape, b_v.shape
 
     if w_q_shape != (Eq, Eq):
         raise ValueError(f"Expecting query weights shape of {(Eq, Eq)}, but got {w_q_shape}")
@@ -5837,12 +5836,18 @@ def _in_projection(q, k, v, w_q, w_k, w_v, b_q=None, b_k=None, b_v=None):
         raise ValueError(f"Expecting key weights shape of {(Eq, Ek)}, but got {w_k_shape}")
     if w_v_shape != (Eq, Ev):
         raise ValueError(f"Expecting value weights shape of {(Eq, Ev)}, but got {w_v_shape}")
-    if b_q is not None and b_q_shape != (Eq,):
-        raise ValueError(f"Expecting query bias shape of {(Eq,)}, but got {b_q_shape}")
-    if b_k is not None and b_k_shape != (Eq,):
-        raise ValueError(f"Expecting key bias shape of {(Eq,)}, but got {b_k_shape}")
-    if b_v is not None and b_v_shape != (Eq,):
-        raise ValueError(f"Expecting value bias shape of {(Eq,)}, but got {b_v_shape}")
+    if b_q is not None:
+        b_q_shape = b_q.shape
+        if b_q_shape != (Eq,):
+            raise ValueError(f"Expecting query bias shape of {(Eq,)}, but got {b_q_shape}")
+    if b_k is not None:
+        b_k_shape = b_k.shape
+        if b_k_shape != (Eq,):
+            raise ValueError(f"Expecting key bias shape of {(Eq,)}, but got {b_k_shape}")
+    if b_v is not None:
+        b_v_shape = b_v.shape
+        if b_v_shape != (Eq,):
+            raise ValueError(f"Expecting value bias shape of {(Eq,)}, but got {b_v_shape}")
     return linear(q, w_q, b_q), linear(k, w_k, b_k), linear(v, w_v, b_v)
 
 
@@ -5889,50 +5894,74 @@ def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_ca
     return (output, attn)
 
 
-def _mha_shape_check(query, key, value, key_padding_mask, attn_mask, num_heads):
-    """
-    Check the expected shape for `query, `key`, `value`, `key_padding_mask` and `attn_mask`
-    and returns whether the input is batched.
-    """
+@constexpr
+def _check_qkv_shape(query_ndim, key_ndim, value_ndim):
+    """Check the expected shape for `query, `key`, `value` and returns whether the input is batched."""
     # Shape check.
-    if query.ndim == 3:
+    if query_ndim == 3:
         # Batched Inputs
         is_batched = True
-        if key.ndim != 3 or value.ndim != 3:
+        if key_ndim != 3 or value_ndim != 3:
             raise ValueError(f"For batched `query`, the `key` and `value` must be 3D tensor, "
-                             f"but got `key` with {key.ndim}D and `value` with {value.ndim}D.")
-        if key_padding_mask is not None and key_padding_mask.ndim != 2:
-            raise ValueError(f"For batched `query`, the `key_padding_mask` must be `None` or 2D, "
-                             f"but got `key_padding_mask` with {key_padding_mask.ndim}D.")
-        if attn_mask is not None and attn_mask.ndim not in (2, 3):
-            raise ValueError(f"For batched `query`, the `attn_mask` must be `None`, 2-D or 3-D, "
-                             f"but got `attn_mask` with{attn_mask.ndim}D.")
-    elif query.ndim == 2:
+                             f"but got `key` with {key_ndim}D and `value` with {value_ndim}D.")
+    elif query_ndim == 2:
         # Unbatched Inputs
         is_batched = False
-        if key.ndim != 2 or value.ndim != 2:
-            raise ValueError(f"For batched `query`, the `key` and `value` must be 2D tensor, "
-                             f"but got `key` with {key.ndim}D and `value` with {value.ndim}D.")
-
-        if key_padding_mask is not None and key_padding_mask.ndim != 1:
-            raise ValueError(f"For batched `query`, the `key_padding_mask` must be `None` or 1D, "
-                             f"but got `key_padding_mask` with {key_padding_mask.ndim}D.")
-
-        if attn_mask is not None:
-            if attn_mask.ndim not in (2, 3):
-                raise ValueError(f"For batched `query`, the `attn_mask` must be `None`, 2-D or 3-D, "
-                                 f"but got `attn_mask` with{attn_mask.ndim}D.")
-
-            if attn_mask.ndim == 3:
-                expected_shape = (num_heads, query.shape[0], key.shape[0])
-                if attn_mask.shape != expected_shape:
-                    raise ValueError(f"The shape of `attn_mask` must to be {expected_shape}, "
-                                     f"but got {attn_mask.shape}.")
+        if key_ndim != 2 or value_ndim != 2:
+            raise ValueError(f"For unbatched `query`, the `key` and `value` must be 2D tensor, "
+                             f"but got `key` with {key_ndim}D and `value` with {value_ndim}D.")
     else:
         raise ValueError(f"The `query` should be unbatched 2D or batched 3D tensor, "
-                         f"but got `query` with {query.ndim}D.")
+                         f"but got `query` with {query_ndim}D.")
 
     return is_batched
+
+
+@constexpr
+def _check_kpm_shape(query_ndim, kmp_ndim):
+    """check key_padding_mask shape"""
+    if query_ndim == 3:
+        if kmp_ndim != 2:
+            raise ValueError(f"For batched `query`, the `key_padding_mask` must be `None` or 2D, "
+                             f"but got `key_padding_mask` with {kmp_ndim}D.")
+
+    elif query_ndim == 2:
+        if kmp_ndim != 1:
+            raise ValueError(f"For unbatched `query`, the `key_padding_mask` must be `None` or 1D, "
+                             f"but got `key_padding_mask` with {kmp_ndim}D.")
+
+
+@constexpr
+def _check_attn_mask_shape(query_ndim, query_shape, key_shape, attn_mask_ndim,
+                           attn_mask_shape, num_heads):
+    """
+    Check the expected shape for `attn_mask`.
+    """
+    # Shape check.
+    if query_ndim == 3:
+        if attn_mask_ndim not in (2, 3):
+            raise ValueError(f"For batched `query`, the `attn_mask` must be `None`, 2-D or 3-D, "
+                             f"but got `attn_mask` with{attn_mask_ndim}D.")
+    elif query_ndim == 2:
+        if attn_mask_ndim not in (2, 3):
+            raise ValueError(f"For unbatched `query`, the `attn_mask` must be `None`, 2-D or 3-D, "
+                             f"but got `attn_mask` with{attn_mask_ndim}D.")
+
+        if attn_mask_ndim == 3:
+            expected_shape = (num_heads, query_shape[0], key_shape[0])
+            if attn_mask_shape != expected_shape:
+                raise ValueError(f"The shape of `attn_mask` must to be {expected_shape}, "
+                                 f"but got {attn_mask_shape}.")
+
+
+def _inner_pad(x, padding, value=None):
+    """inner pad function for bool type."""
+    x_dtype = x.dtype
+    if x_dtype == mstype.bool_:
+        x = x.astype(mstype.int32)
+    x = pad(x, padding, value=value)
+    x = x.astype(x_dtype)
+    return x
 
 
 def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_heads, in_proj_weight,
@@ -5942,7 +5971,12 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
                                  v_proj_weight=None, static_k=None, static_v=None, average_attn_weights=True,
                                  is_causal=False, k_is_v=False, q_is_k=False):
     """multi head attetion forward function"""
-    is_batched = _mha_shape_check(query, key, value, key_padding_mask, attn_mask, num_heads)
+    is_batched = _check_qkv_shape(query.ndim, key.ndim, value.ndim)
+    if key_padding_mask is not None:
+        _check_kpm_shape(query.ndim, key_padding_mask.ndim)
+    if attn_mask is not None:
+        _check_attn_mask_shape(query.ndim, query.shape, key.shape, attn_mask.ndim,
+                               attn_mask.shape, num_heads)
 
     if not is_batched:
         query = query.expand_dims(1)
@@ -6019,20 +6053,20 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
             raise ValueError("The bias_k cannot be added to static_k.")
         if static_v is not None:
             raise ValueError("The bias_v cannot be added to static_v.")
-        k = ops.cat([k, bias_k.repeat(1, bsz, 1)])
-        v = ops.cat([v, bias_v.repeat(1, bsz, 1)])
+        k = ops.cat([k, bias_k.tile((1, bsz, 1))])
+        v = ops.cat([v, bias_v.tile((1, bsz, 1))])
         if attn_mask is not None:
-            attn_mask = ops.pad(attn_mask, (0, 1))
+            attn_mask = _inner_pad(attn_mask, (0, 1))
         if key_padding_mask is not None:
-            key_padding_mask = ops.pad(key_padding_mask, (0, 1))
+            key_padding_mask = _inner_pad(key_padding_mask, (0, 1))
     else:
         if bias_k is not None or bias_v is not None:
             raise ValueError("The bias_k and bias_v should be ``None``"
                              "at the same time.")
 
-    q = q.view(tgt_len, bsz * num_heads, head_dim).swapaxes(0, 1)
+    q = q.view((tgt_len, bsz * num_heads, head_dim)).swapaxes(0, 1)
     if static_k is None:
-        k = k.view(k.shape[0], bsz * num_heads, head_dim).swapaxes(0, 1)
+        k = k.view((k.shape[0], bsz * num_heads, head_dim)).swapaxes(0, 1)
     else:
         if static_k.shape[0] != bsz * num_heads:
             raise ValueError(f"The shape[0] of `static_k` should be {bsz * num_heads}, "
@@ -6042,7 +6076,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
                              f"but got {static_k.shape[2]}")
         k = static_k
     if static_v is None:
-        v = v.view(v.shape[0], bsz * num_heads, head_dim).swapaxes(0, 1)
+        v = v.view((v.shape[0], bsz * num_heads, head_dim)).swapaxes(0, 1)
     else:
         if static_v.shape[0] != bsz * num_heads:
             raise ValueError(f"The shape[0] of `static_v` should be {bsz * num_heads}, "
@@ -6057,9 +6091,9 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         k = ops.cat([k, ops.zeros(zero_attn_shape, dtype=k.dtype)], axis=1)
         v = ops.cat([v, ops.zeros(zero_attn_shape, dtype=v.dtype)], axis=1)
         if attn_mask is not None:
-            attn_mask = ops.pad(attn_mask, (0, 1))
+            attn_mask = _inner_pad(attn_mask, (0, 1))
         if key_padding_mask is not None:
-            key_padding_mask = ops.pad(key_padding_mask, (0, 1))
+            key_padding_mask = _inner_pad(key_padding_mask, (0, 1))
 
     src_len = k.shape[1]
 
@@ -6068,14 +6102,14 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
             raise ValueError(f"The shape of `key_padding_mask` should be {(bsz, src_len)}, "
                              f"but got {key_padding_mask.shape}.")
 
-        key_padding_mask = key_padding_mask.view(bsz, 1, 1, src_len). \
-            expand(-1, num_heads, -1, -1).reshape(bsz * num_heads, 1, src_len)
+        key_padding_mask = key_padding_mask.view((bsz, 1, 1, src_len)). \
+            tile((1, num_heads, 1, 1)).reshape(bsz * num_heads, 1, src_len)
         if attn_mask is None:
             attn_mask = key_padding_mask
         elif attn_mask.dtype == mstype.bool_:
             attn_mask = attn_mask.logical_or(key_padding_mask)
         else:
-            attn_mask = attn_mask.masked_fill(key_padding_mask, float("-inf"))
+            attn_mask = attn_mask + key_padding_mask
 
     if attn_mask is not None and attn_mask.dtype == mstype.bool_:
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
@@ -6086,20 +6120,20 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         if attn_mask.shape[0] == 1:
             attn_mask = attn_mask.expand_dims(0)
         else:
-            attn_mask = attn_mask.view(bsz, num_heads, -1, src_len)
+            attn_mask = attn_mask.view((bsz, num_heads, -1, src_len))
 
-    q = q.view(bsz, num_heads, tgt_len, head_dim)
-    k = k.view(bsz, num_heads, src_len, head_dim)
-    v = v.view(bsz, num_heads, src_len, head_dim)
+    q = q.view((bsz, num_heads, tgt_len, head_dim))
+    k = k.view((bsz, num_heads, src_len, head_dim))
+    v = v.view((bsz, num_heads, src_len, head_dim))
 
     attn_output, attn_output_weights = _scaled_dot_product_attention(
         q, k, v, attn_mask, dropout_p, is_causal, training)
-    attn_output = attn_output.transpose(2, 0, 1, 3).view(bsz * tgt_len, embed_dim)
+    attn_output = attn_output.transpose(2, 0, 1, 3).view((bsz * tgt_len, embed_dim))
 
     attn_output = linear(attn_output, out_proj_weight, out_proj_bias)
-    attn_output = attn_output.view(tgt_len, bsz, attn_output.shape[1])
+    attn_output = attn_output.view((tgt_len, bsz, attn_output.shape[1]))
 
-    attn_output_weights = attn_output_weights.view(bsz, num_heads, tgt_len, src_len)
+    attn_output_weights = attn_output_weights.view((bsz, num_heads, tgt_len, src_len))
     if average_attn_weights:
         attn_output_weights = attn_output_weights.sum(axis=1) / num_heads
 
