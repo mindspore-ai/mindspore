@@ -65,7 +65,7 @@ class FractionalMaxPool3DWithFixedKsizeAttr : public GpuKernelAttrBase {
  public:
   FractionalMaxPool3DWithFixedKsizeAttr() = default;
   ~FractionalMaxPool3DWithFixedKsizeAttr() override = default;
-  std::vector<float> ksize;
+  std::vector<int64_t> ksize;
   std::vector<int64_t> output_shape;
   std::string data_format;
 };
@@ -263,7 +263,7 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
   }
 
  private:
-  std::vector<float> ksize_;
+  std::vector<int64_t> ksize_;
   std::vector<int64_t> output_shape_attr_;
   std::string data_format_;
   int64_t outputD_{1};
