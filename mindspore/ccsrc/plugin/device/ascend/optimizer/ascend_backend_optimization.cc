@@ -506,6 +506,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   other_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
+  other_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -550,6 +551,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
   other_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   other_pm->AddPass(std::make_shared<opt::AICpuLibSelectPass>());
+  other_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

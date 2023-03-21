@@ -27,7 +27,12 @@ trans_data_op_info = AiCPURegOp("TransData") \
     .dtype_format(DataType.U16_5HD, DataType.U16_Default) \
     .dtype_format(DataType.I64_5HD, DataType.I64_Default) \
     .dtype_format(DataType.I32_5HD, DataType.I32_Default) \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_Default) \
+    .dtype_format(DataType.F32_FracZ, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_FracZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_FracZ) \
     .get_op_info()
+
 
 @op_info_register(trans_data_op_info)
 def _trans_data_aicpu():
