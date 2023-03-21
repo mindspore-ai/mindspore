@@ -14,7 +14,7 @@
 # ============================================================================
 """Double relu operators"""
 from mindspore import nn, Tensor
-from mindspore.ops import operations as P
+from mindspore import ops as P
 from mindspore.hypercomplex.utils import get_x_and_y as get_u1_and_u2, \
                                 to_2channel as to_double
 
@@ -64,13 +64,12 @@ class J1J2ReLU(nn.Cell):
     def __init__(self):
         """Initialize J1J2ReLU."""
         super(J1J2ReLU, self).__init__()
-        self.relu = P.ReLU()
 
     def construct(self, u: Tensor) -> Tensor:
         u = u / 2
         u1, u2 = get_u1_and_u2(u)
-        x = self.relu(u1 + u2)
-        y = self.relu(u1 - u2)
+        x = P.relu(u1 + u2)
+        y = P.relu(u1 - u2)
         out1 = x + y
         out2 = x - y
         out = to_double(out1, out2)

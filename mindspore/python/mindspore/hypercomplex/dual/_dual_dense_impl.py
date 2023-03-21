@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Dual Dense Implementation"""
-from typing import Callable, Tuple
+from typing import Tuple
 
+from mindspore import ops as P
 from mindspore.common.tensor import Tensor
 from mindspore.hypercomplex.hypercomplex._hc_dense_impl import _BaseDenseImpl as BaseDenseImpl
 
@@ -57,13 +58,12 @@ class _DenseImpl(BaseDenseImpl):
     """
 
     def construct(self,
-                  matmul_op: Callable,
                   real: Tensor,
                   dual: Tensor) -> Tuple[Tensor, Tensor]:
 
-        out_r = matmul_op(real, self.weight_x)
-        out_rd = matmul_op(real, self.weight_y)
-        out_dr = matmul_op(dual, self.weight_x)
+        out_r = P.matmul(real, self.weight_x.transpose())
+        out_rd = P.matmul(real, self.weight_y.transpose())
+        out_dr = P.matmul(dual, self.weight_x.transpose())
 
         out_d = out_rd + out_dr
         return out_r, out_d

@@ -61,15 +61,22 @@ class _ConvImpl(BaseConvImpl):
     """
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  double: Tensor) -> Tuple[Tensor, Tensor]:
+                  double: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
 
         u1 = real + double
         u2 = real - double
 
-        out1 = conv_op(u1, self.weight_x)
-        out2 = conv_op(u2, self.weight_y)
+        out1 = conv_fn(u1, self.weight_x, pad_mode=pad_mode, padding=padding,
+                       stride=stride, dilation=dilation, group=group)
+        out2 = conv_fn(u2, self.weight_y, pad_mode=pad_mode, padding=padding,
+                       stride=stride, dilation=dilation, group=group)
 
         out_r = out1 + out2
         out_d = out1 - out2
@@ -116,11 +123,18 @@ class _J1J2ConvImpl(BaseConvImpl):
     """
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   u1: Tensor,
-                  u2: Tensor) -> Tuple[Tensor, Tensor]:
+                  u2: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
 
-        out1 = conv_op(u1, self.weight_x)
-        out2 = conv_op(u2, self.weight_y)
+        out1 = conv_fn(u1, self.weight_x, pad_mode=pad_mode, padding=padding,
+                       stride=stride, dilation=dilation, group=group)
+        out2 = conv_fn(u2, self.weight_y, pad_mode=pad_mode, padding=padding,
+                       stride=stride, dilation=dilation, group=group)
 
         return out1, out2

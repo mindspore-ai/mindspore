@@ -21,7 +21,7 @@ from mindspore._checkparam import Rel, Validator as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
-from mindspore.ops import operations as P
+from mindspore import ops as P
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D, AdaptiveMaxPool2D
 from mindspore.hypercomplex.utils import get_x_and_y, to_2channel, \
                                 _size_1_t, _size_2_t, _size_3_t
@@ -178,7 +178,7 @@ class MaxPool2d(_PoolNd):
 
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, H_{in}, W_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, H_{in}, W_{in})`, with complex64 data type.
+          :math:`(N, C, H_{in}, W_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, H_{out}, W_{out})`,
@@ -259,9 +259,10 @@ class MaxPool1d(_PoolNd):
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
 
+
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, L_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, L_{in})`, with complex64 data type.
+          :math:`(N, C, L_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, L_{out})`, with float16 or float32
@@ -308,10 +309,6 @@ class MaxPool1d(_PoolNd):
         self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
                                   pad_mode=self.pad_mode)
-        self.shape = F.shape
-        self.reduce_mean = P.ReduceMean(keep_dims=True)
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(2)
 
     def _shape_check(self, in_shape: tuple):
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
@@ -322,14 +319,14 @@ class MaxPool1d(_PoolNd):
     def _construct(self,
                    x: Tensor,
                    y: Tensor) -> Tuple[Tensor, Tensor]:
-        self._shape_check(self.shape(x))
-        self._shape_check(self.shape(y))
-        x = self.expand(x, 2)
-        y = self.expand(y, 2)
+        self._shape_check(P.shape(x))
+        self._shape_check(P.shape(y))
+        x = P.expand_dims(x, 2)
+        y = P.expand_dims(y, 2)
         out_x = self.max_pool(x)
         out_y = self.max_pool(y)
-        out_x = self.squeeze(out_x)
-        out_y = self.squeeze(out_y)
+        out_x = P.squeeze(out_x, 2)
+        out_y = P.squeeze(out_y, 2)
         return out_x, out_y
 
 
@@ -376,7 +373,7 @@ class AvgPool2d(_PoolNd):
 
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, H_{in}, W_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, H_{in}, W_{in})`, with complex64 data type.
+          :math:`(N, C, H_{in}, W_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, H_{out}, W_{out})`, with float16
@@ -464,7 +461,7 @@ class AvgPool1d(_PoolNd):
 
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, L_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, L_{in})`, with complex64 data type.
+          :math:`(N, C, L_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, L_{out})`, with float16 or float32
@@ -511,11 +508,7 @@ class AvgPool1d(_PoolNd):
         self.avg_pool = P.AvgPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
                                   pad_mode=self.pad_mode)
-        self.shape = F.shape
-        self.reduce_mean = P.ReduceMean(keep_dims=True)
-        self.slice = P.Slice()
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(2)
+
 
     def _shape_check(self, in_shape: tuple):
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
@@ -526,24 +519,24 @@ class AvgPool1d(_PoolNd):
     def _construct(self,
                    x: Tensor,
                    y: Tensor) -> Tuple[Tensor, Tensor]:
-        x = F.depend(x, self._shape_check(self.shape(x)))
-        y = F.depend(y, self._shape_check(self.shape(y)))
-        batch, channel, width = self.shape(x)
+        x = F.depend(x, self._shape_check(P.shape(x)))
+        y = F.depend(y, self._shape_check(P.shape(y)))
+        batch, channel, width = P.shape(x)
         if width == self.kernel_size[1]:
-            x = self.reduce_mean(x, 2)
-            y = self.reduce_mean(y, 2)
+            x = P.mean(x, 2, keep_dims=True)
+            y = P.mean(y, 2, keep_dims=True)
         elif width - self.kernel_size[1] < self.stride[1]:
-            x = self.slice(x, (0, 0, 0), (batch, channel, self.kernel_size[1]))
-            y = self.slice(y, (0, 0, 0), (batch, channel, self.kernel_size[1]))
-            x = self.reduce_mean(x, 2)
-            y = self.reduce_mean(y, 2)
+            x = P.slice(x, (0, 0, 0), (batch, channel, self.kernel_size[1]))
+            y = P.slice(y, (0, 0, 0), (batch, channel, self.kernel_size[1]))
+            x = P.mean(x, 2, keep_dims=True)
+            y = P.mean(y, 2, keep_dims=True)
         else:
-            x = self.expand(x, 2)
-            y = self.expand(y, 2)
+            x = P.expand_dims(x, 2)
+            y = P.expand_dims(y, 2)
             x = self.avg_pool(x)
             y = self.avg_pool(y)
-            x = self.squeeze(x)
-            y = self.squeeze(y)
+            x = P.squeeze(x, 2)
+            y = P.squeeze(y, 2)
         return x, y
 
 
@@ -638,7 +631,7 @@ class AdaptiveAvgPool1d(_AdaptivePoolNd):
 
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, L_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, L_{in})`, with complex64 data type.
+          :math:`(N, C, L_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, L_{out})`, with float16 or float32
@@ -672,35 +665,31 @@ class AdaptiveAvgPool1d(_AdaptivePoolNd):
         super(AdaptiveAvgPool1d, self).__init__(output_size)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
-        self.shape = F.shape
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(2)
-        self.dtype = P.DType()
 
     def _construct(self,
                    x: Tensor,
                    y: Tensor) -> Tuple[Tensor, Tensor]:
-        self._adaptive_shape_check(self.shape(x))
-        self._adaptive_shape_check(self.shape(y))
-        self._adaptive_dtype_check(self.dtype(x))
-        self._adaptive_dtype_check(self.dtype(y))
+        self._adaptive_shape_check(P.shape(x))
+        self._adaptive_shape_check(P.shape(y))
+        self._adaptive_dtype_check(x.dtype)
+        self._adaptive_dtype_check(y.dtype)
 
-        _, _, width = self.shape(x)
+        _, _, width = P.shape(x)
         stride = width // self.output_size
         kernel_size = width - (self.output_size - 1) * stride
 
         stride = (1, width // self.output_size)
         kernel_size = (1, kernel_size)
 
-        x = self.expand(x, 2)
-        y = self.expand(y, 2)
+        x = P.expand_dims(x, 2)
+        y = P.expand_dims(y, 2)
 
         avg_pool = P.AvgPool(kernel_size=kernel_size, strides=stride)
 
         out_x = avg_pool(x)
         out_y = avg_pool(y)
-        out_x = self.squeeze(out_x)
-        out_y = self.squeeze(out_y)
+        out_x = P.squeeze(out_x, 2)
+        out_y = P.squeeze(out_y, 2)
 
         return out_x, out_y
 
@@ -868,7 +857,7 @@ class AdaptiveMaxPool1d(_AdaptivePoolNd):
 
     Inputs:
         - **inp** (Tensor) - Tensor of shape :math:`(2, N, C, L_{in})`, with float16 or float32 data type, or
-        :math:`(N, C, L_{in})`, with complex64 data type.
+          :math:`(N, C, L_{in})`, with complex64 data type.
 
     Outputs:
         Tensor of the same data type as `inp` and of shape :math:`(2, N, C, L_{out})`, with float16 or float32
@@ -902,35 +891,31 @@ class AdaptiveMaxPool1d(_AdaptivePoolNd):
         super(AdaptiveMaxPool1d, self).__init__(output_size)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
-        self.shape = F.shape
-        self.expand = P.ExpandDims()
-        self.squeeze = P.Squeeze(2)
-        self.dtype = P.DType()
 
     def _construct(self,
                    x: Tensor,
                    y: Tensor) -> Tuple[Tensor, Tensor]:
-        self._adaptive_shape_check(self.shape(x))
-        self._adaptive_shape_check(self.shape(y))
-        self._adaptive_dtype_check(self.dtype(x))
-        self._adaptive_dtype_check(self.dtype(y))
+        self._adaptive_shape_check(P.shape(x))
+        self._adaptive_shape_check(P.shape(y))
+        self._adaptive_dtype_check(x.dtype)
+        self._adaptive_dtype_check(y.dtype)
 
-        _, _, width = self.shape(x)
+        _, _, width = P.shape(x)
         stride = width // self.output_size
         kernel_size = width - (self.output_size - 1) * stride
 
         stride = (1, width // self.output_size)
         kernel_size = (1, kernel_size)
 
-        x = self.expand(x, 2)
-        y = self.expand(y, 2)
+        x = P.expand_dims(x, 2)
+        y = P.expand_dims(y, 2)
 
         max_pool = P.MaxPool(kernel_size=kernel_size, strides=stride)
 
         out_x = max_pool(x)
         out_y = max_pool(y)
-        out_x = self.squeeze(out_x)
-        out_y = self.squeeze(out_y)
+        out_x = P.squeeze(out_x, 2)
+        out_y = P.squeeze(out_y, 2)
 
         return out_x, out_y
 

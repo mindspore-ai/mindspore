@@ -30,7 +30,7 @@ from mindspore.hypercomplex.complex._complex_conv_impl import _ReImConvImpl as C
 from mindspore.hypercomplex.hypercomplex.hc_dense import Dense as HDense
 from mindspore.hypercomplex.complex._complex_dense_impl import _DenseImpl as DenseImpl, \
     _KaratsubaDenseImpl as KaratsubaDenseImpl
-
+# ReLU
 from mindspore.hypercomplex.hypercomplex.uniform_operator import _UniformOperator
 
 from mindspore.hypercomplex.utils import _size_1_t, _size_2_t, _size_3_t

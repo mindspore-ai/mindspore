@@ -14,7 +14,6 @@
 # ============================================================================
 """Utils"""
 from typing import Tuple, Union
-
 import mindspore
 from mindspore import ops as P
 
@@ -22,27 +21,23 @@ from mindspore import ops as P
 to_complex = P.Complex()
 get_real = P.Real()
 get_imag = P.Imag()
-unstack = P.Unstack(0)
-cat = P.Concat(0)
 
 
 def get_x_and_y(tensor):
     if tensor.dtype == mindspore.complex64:
         return get_real(tensor), get_imag(tensor)
-    return unstack(tensor)
+    return P.unstack(tensor, 0)
 
 
 def to_2channel(real, imag, dtype=None):
-    '''Convert to 2 channel format'''
     if dtype is not None and dtype == mindspore.complex64:
         return to_complex(real, imag)
     if dtype is not None and (dtype != real.dtype or dtype != imag.dtype):
         raise ValueError("dtype must match with data type of the input tensors, but got: "
                          f"dtype={dtype}, real.dtype={real.dtype}, imag.dtype={imag.dtype}")
-    expand_dims = P.ExpandDims()
-    real = expand_dims(real, 0)
-    imag = expand_dims(imag, 0)
-    return cat((real, imag))
+    real = P.expand_dims(real, 0)
+    imag = P.expand_dims(imag, 0)
+    return P.concat((real, imag), 0)
 
 
 _size_1_t = Union[int, Tuple[int]]

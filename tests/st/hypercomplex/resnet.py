@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.tensor import Tensor
+
 import mindspore.hypercomplex.dual as ops
 from mindspore.hypercomplex.utils import get_x_and_y, to_2channel
 

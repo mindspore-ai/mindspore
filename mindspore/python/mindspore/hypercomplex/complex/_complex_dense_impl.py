@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """complex dense implementation"""
-from typing import Callable, Tuple
+from typing import Tuple
 
+from mindspore import ops as P
 from mindspore.common.tensor import Tensor
 from mindspore.hypercomplex.hypercomplex._hc_dense_impl import _BaseDenseImpl as BaseDenseImpl
 
@@ -56,13 +57,12 @@ class _DenseImpl(BaseDenseImpl):
     """
 
     def construct(self,
-                  matmul_op: Callable,
                   real: Tensor,
                   imag: Tensor) -> Tuple[Tensor, Tensor]:
-        out_rr = matmul_op(real, self.weight_x)
-        out_ii = matmul_op(imag, self.weight_y)
-        out_ri = matmul_op(real, self.weight_y)
-        out_ir = matmul_op(imag, self.weight_x)
+        out_rr = P.matmul(real, self.weight_x.transpose())
+        out_ii = P.matmul(imag, self.weight_y.transpose())
+        out_ri = P.matmul(real, self.weight_y.transpose())
+        out_ir = P.matmul(imag, self.weight_x.transpose())
 
         out_r = out_rr - out_ii
         out_i = out_ri + out_ir
@@ -112,12 +112,11 @@ class _KaratsubaDenseImpl(BaseDenseImpl):
     """
 
     def construct(self,
-                  matmul_op: Callable,
                   real: Tensor,
                   imag: Tensor) -> Tuple[Tensor, Tensor]:
-        l1 = matmul_op(real, self.weight_x)
-        l2 = matmul_op(imag, self.weight_y)
-        l3 = matmul_op(real + imag, self.weight_x + self.weight_y)
+        l1 = P.matmul(real, self.weight_x.transpose())
+        l2 = P.matmul(imag, self.weight_y.transpose())
+        l3 = P.matmul(real + imag, (self.weight_x + self.weight_y).transpose())
 
         out_r = l1 - l2
         out_i = l3 - l1 - l2

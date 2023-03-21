@@ -62,13 +62,21 @@ class _ConvImpl(BaseConvImpl):
     """
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  dual: Tensor) -> Tuple[Tensor, Tensor]:
+                  dual: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
 
-        out_r = conv_op(real, self.weight_x)
-        out_rd = conv_op(real, self.weight_y)
-        out_dr = conv_op(dual, self.weight_x)
+        out_r = conv_fn(real, self.weight_x, pad_mode=pad_mode, padding=padding,
+                        stride=stride, dilation=dilation, group=group)
+        out_rd = conv_fn(real, self.weight_y, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
+        out_dr = conv_fn(dual, self.weight_x, pad_mode=pad_mode, padding=padding,
+                         stride=stride, dilation=dilation, group=group)
 
         out_d = out_rd + out_dr
         return out_r, out_d
@@ -120,19 +128,27 @@ class _ReDuConvImpl(BaseConvImpl):
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
         super(_ReDuConvImpl, self).__init__(weight_init, weight_shape, **factory_kwargs)
-        data_format = factory_kwargs.get('data_format', 'nchw')
-        c_idx = data_format.lower().find('c')
-        if c_idx < 0:
+        data_format = factory_kwargs.get('data_format')
+        if data_format is None:
+            data_format = "NCHW"
+        self.c_idx = data_format.lower().find('c')
+        if self.c_idx < 0:
             raise ValueError(f"Data format {data_format} is unsupported")
-        self.concat = P.Concat(c_idx)
 
     def construct(self,
-                  conv_op: Callable,
+                  conv_fn: Callable,
                   real: Tensor,
-                  imag: Tensor) -> Tuple[Tensor, Tensor]:
+                  dual: Tensor,
+                  pad_mode: str,
+                  padding: Tuple[int, ...],
+                  stride: Tuple[int, ...],
+                  dilation: Tuple[int, ...],
+                  group: int) -> Tuple[Tensor, Tensor]:
 
-        out_r = conv_op(real, self.weight_x)
-        inp = self.concat([real, imag])
-        w = self.concat([self.weight_y, self.weight_x])
-        out_d = conv_op(inp, w)
+        out_r = conv_fn(real, self.weight_x, pad_mode=pad_mode, padding=padding,
+                        stride=stride, dilation=dilation, group=group)
+        inp = P.concat([real, dual], axis=self.c_idx)
+        w = P.concat([self.weight_y, self.weight_x], axis=self.c_idx)
+        out_d = conv_fn(inp, w, pad_mode=pad_mode, padding=padding,
+                        stride=stride, dilation=dilation, group=group)
         return out_r, out_d
