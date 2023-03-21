@@ -124,6 +124,20 @@ FuncGraphPtr ConverterFuncGraph::Load(const std::shared_ptr<ConverterPara> &para
   return func_graph;
 }
 
+void SetIsGraphDynamicShapeAttr(const FuncGraphPtr &func_graph) {
+  bool dyn_shape_value = false;
+  for (auto input : func_graph->get_inputs()) {
+    if (input->Shape()->IsDynamic()) {
+      dyn_shape_value = true;
+    }
+  }
+  if (func_graph->has_attr(lite::kIsDynamicShape)) {
+    func_graph->set_attr(lite::kIsDynamicShape, MakeValue(dyn_shape_value));
+  } else {
+    func_graph->attrs().emplace(lite::kIsDynamicShape, MakeValue(dyn_shape_value));
+  }
+}
+
 FuncGraphPtr ConverterFuncGraph::Build(const std::shared_ptr<ConverterPara> &param) {
   FuncGraphPtr func_graph = nullptr;
   ConverterInnerContext::GetInstance()->SetTargetDevice(param->device);
@@ -135,6 +149,9 @@ FuncGraphPtr ConverterFuncGraph::Build(const std::shared_ptr<ConverterPara> &par
   } else {
     func_graph = Load3rdModelToFuncgraph(param);
   }
+
+  // Add attribute "isDynamicShape" to the func_graph to mark if the graph has dynamic input shapes.
+  SetIsGraphDynamicShapeAttr(func_graph);
 
   return func_graph;
 }

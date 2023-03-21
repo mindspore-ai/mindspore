@@ -54,6 +54,7 @@ static const char CALIB_NORM[] = "NORM";
 static const int32_t DIM_DEFAULT_SIZE = 4;
 static const char *const kIsOptimized = "isOptimized";
 static const char *const kInputFormat = "inputFormat";
+static const char *const kIsDynamicShape = "isDynamicShape";
 // ms cache
 static const char *const kMSCacheSection = "ms_cache";
 static const char *const kMSCacheModelPathKey = "cache_model_path";
