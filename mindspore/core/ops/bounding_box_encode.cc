@@ -16,7 +16,6 @@
 
 #include "ops/bounding_box_encode.h"
 
-#include <set>
 #include <map>
 #include <memory>
 
