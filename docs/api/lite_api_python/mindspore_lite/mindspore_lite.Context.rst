@@ -38,7 +38,7 @@ mindspore_lite.Context
 
         获取Context的目标设备信息列表。
 
-        当前支持的target选项：["cpu"] | ["gpu"] | ["ascend"]。
+        当前支持的target选项有["cpu"] | ["gpu"] | ["ascend"]。
 
         .. note::
             - gpu添加到target后，将自动地添加cpu作为备份target。因为当检测到gpu不支持某一算子时，系统将尝试cpu是否支持它。此时，需要切换到具有cpu的上下文。
@@ -46,10 +46,10 @@ mindspore_lite.Context
 
         Context.cpu属性：
             - **inter_op_parallel_num** (int) - 设置运行时算子的并行数。 `inter_op_parallel_num` 不能大于 `thread_num` 。将 `inter_op_parallel_num` 设置为0表示 `inter_op_parallel_num` 将基于计算机性能和核心数自动调整。
-            - **precision_mode** (str) - 设置混合精度模式。选项： "must_keep_origin_dtype" 和 "force_fp16"。
+            - **precision_mode** (str) - 设置混合精度模式。选项有 "preferred_fp16" 和 "enforce_fp32"。
 
-              - **must_keep_origin_dtype** - 保持原有精度的数据类型。
-              - **force_fp16** - 强制设置fp16精度。
+              - **preferred_fp16** - 优先使用fp16。
+              - **enforce_fp32** - 强制设置fp32。
 
             - **thread_num** (int) - 设置运行时的线程数。 `thread_num` 不能小于 `inter_op_parallel_num` 。将 `thread_num` 设置为0表示 `thread_num` 将基于计算机性能和核心数自动调整。
             - **thread_affinity_mode** (int) - 设置运行时的CPU绑核策略模式。支持以下 `thread_affinity_mode` 。
@@ -63,21 +63,22 @@ mindspore_lite.Context
         Context.gpu属性：
             - **device_id** (int) - 设置设备id。
             - **group_size** (int) - 集群数量，仅获取，不可设置。
-            - **precision_mode** (str) - 设置混合精度模式。选项： "must_keep_origin_dtype" 和 "force_fp16"。
+            - **precision_mode** (str) - 设置混合精度模式。选项有 "preferred_fp16" 和 "enforce_fp32"。
 
-              - **must_keep_origin_dtype** - 保持原有精度的数据类型。
-              - **force_fp16** - 强制设置fp16精度。
+              - **preferred_fp16** - 优先使用fp16。
+              - **enforce_fp32** - 强制设置fp32。
 
             - **rank_id** (int) - 当前设备在集群中的ID，固定从0开始编号。仅获取，不可设置。
 
         Context.ascend属性：
             - **device_id** (int) - 设备id。
-            - **precision_mode** (str) - 设置混合精度模式。选项： "force_fp16"、 "allow_fp32_to_fp16"、 "must_keep_origin_dtype" 和 "allow_mix_precision"。
+            - **precision_mode** (str) - 设置混合精度模式。选项有 "enforce_fp32"、 "preferred_fp32"、 "enforce_fp16"、 "enforce_origin" 和 "preferred_optimal"。
 
-              - **force_fp16** - 强制设置fp16精度。
-              - **allow_fp32_to_fp16** - 允许fp32精度转换为fp16精度。
-              - **must_keep_origin_dtype** - 保持原有精度的数据类型。
-              - **allow_mix_precision** - 允许混合精度。
+              - **enforce_fp32** - 对应ACL选项为force_fp3，强制使用fp32。
+              - **preferred_fp32** - 对应ACL选项为force_fp32，优先使用fp32。
+              - **enforce_fp16** - 对应ACL选项为force_fp116，强制使用fp16。
+              - **enforce_origin** - 对应ACL选项为must_keep_origin_dtype，强制使用原始类型。
+              - **preferred_optimal** - 对应ACL选项为allow_mix_precision，优先使用fp16+精度权衡。
 
         返回：
             int，Context的目标设备信息。
