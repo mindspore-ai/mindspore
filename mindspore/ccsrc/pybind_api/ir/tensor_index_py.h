@@ -143,7 +143,7 @@ class Slice final {
       return new_index;
     }
     if (new_index < 0) {
-      MS_EXCEPTION_IF_ZERO("dim_size", dim_size);
+      MS_EXCEPTION_IF_ZERO("DimsSize should not be zero", dim_size);
       return new_index < -dim_size ? 0 : (dim_size + (new_index % dim_size)) % dim_size;  // NOLINT
     }
     return new_index < dim_size ? new_index : dim_size;
@@ -159,7 +159,7 @@ class Slice final {
       return new_index;
     }
     if (new_index < 0) {
-      MS_EXCEPTION_IF_ZERO("dim_size", dim_size);
+      MS_EXCEPTION_IF_ZERO("DimsSize should not be zero", dim_size);
       return new_index < -dim_size ? 0 : (dim_size + (new_index % dim_size)) % dim_size;  // NOLINT
     }
     return new_index < dim_size ? new_index : dim_size;
@@ -200,36 +200,28 @@ class Slice final {
 
 class TensorIndex final {
  public:
-  // Case 1: `at::indexing::None`
   explicit TensorIndex(const py::none &) : type_(TensorIndexType::None) {}
 
-  // Case 2: "..." / `at::indexing::Ellipsis`
   explicit TensorIndex(const py::ellipsis &) : type_(TensorIndexType::Ellipsis) {}
 
-  // Case 3: Integer value
   explicit TensorIndex(int64_t integer) : integer_(integer), type_(TensorIndexType::Integer) {}
   explicit TensorIndex(int integer) : TensorIndex((int64_t)integer) {}
   explicit TensorIndex(const py::int_ &integer) : TensorIndex(integer.cast<int64_t>()) {}
 
-  // Case 4: Boolean value
   template <class T, class = typename std::enable_if<std::is_same<bool, T>::value>::type>
   explicit TensorIndex(T boolean) : boolean_(boolean), type_(TensorIndexType::Boolean) {}
   explicit TensorIndex(const py::bool_ &boolean) : TensorIndex(py::cast<bool>(boolean)) {}
 
-  // Case 5: Slice represented in `at::indexing::Slice` form
   explicit TensorIndex(Slice slice) : slice_(slice), type_(TensorIndexType::Slice) {}
   explicit TensorIndex(const py::slice &py_slice)
       : TensorIndex(Slice(py_slice.attr("start"), py_slice.attr("stop"), py_slice.attr("step"))) {}
 
-  // Case 6: Tensor value
   explicit TensorIndex(TensorPtr tensor) : tensor_(std::move(tensor)), type_(TensorIndexType::Tensor) {}
   explicit TensorIndex(py::array py_array) : array_(std::move(py_array)), type_(TensorIndexType::Array) {}
 
-  // Case 7: Sequence value
   explicit TensorIndex(py::list py_list) : list_(std::move(py_list)), type_(TensorIndexType::List) {}
   explicit TensorIndex(py::tuple py_tuple) : tuple_(std::move(py_tuple)), type_(TensorIndexType::Tuple) {}
 
-  // Case 8: Float value
   explicit TensorIndex(float float_input) : float_(float_input), type_(TensorIndexType::Float) {}
   explicit TensorIndex(const py::float_ &float_input) : TensorIndex(float_input.cast<float>()) {}
 
@@ -556,9 +548,7 @@ class TensorIndex final {
   // "mindspore/python/mindspore/ops/composite/multitype_ops/_compile_utils.py"
   // Convert list indices to array or list indices based on its contents.
   static TensorIndex FormatList(const TensorIndex &tensor_index, const int64_t &length);
-  // SetItemByNumber
   static inline TensorPtr IntToTensor(const int64_t &i, const ShapeVector &shape);
-  // SetItemByTuple
   static py::array GenerateIndicesFromTupleOfTensor(const std::vector<TensorIndex> &tuple_index);
   static void RemNotExpandedDims(int64_t *idx_advanced, const bool &expand_true, const int64_t &tensor_index_ndim,
                                  const int64_t &rem_ndim, std::vector<bool> *not_expanded_dim);
@@ -597,11 +587,10 @@ class TensorIndex final {
                                              const ShapeVector &value_shape, std::vector<int64_t> *value_transfer_type,
                                              std::vector<py::object> *value_transfer_args);
 
-  // SetItemBySlice
   static py::object SetitemBySliceWithTensor(const ShapeVector &data_shape, const TensorIndex &slice_index,
                                              std::vector<int64_t> *value_transfer_type,
                                              std::vector<py::object> *value_transfer_args);
-  // SetItemByTensor
+
   static py::array SetItemByTensorByBool(const ShapeVector &data_shape, const TensorIndexType &py_value_type,
                                          const TensorPtr &index, const int64_t &data_dims, const py::array &np_index,
                                          std::vector<int64_t> *value_transfer_types,
