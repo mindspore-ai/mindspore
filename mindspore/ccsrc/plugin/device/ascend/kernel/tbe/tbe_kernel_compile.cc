@@ -911,10 +911,15 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   if (!json_creator->GenInputsJson(node, &compute_json)) {
     MS_LOG(ERROR) << "update inputs json failed, node full name:" << node->fullname_with_scope();
   }
+  auto outputs_json_tmp = compute_json[kJOutputDesc];
+  if (!json_creator->GenOutputsJson(node, &compute_json)) {
+    MS_LOG(ERROR) << "update outputs json failed, node full name:" << node->fullname_with_scope();
+  }
   nlohmann::json check_json;
   JsonAssemble(kCheckSupport, *kernel_json, &check_json);
   auto check_ret = DispatchCompileTask(check_json);
   compute_json[kJInputDesc] = inputs_json_tmp;
+  compute_json[kJOutputDesc] = outputs_json_tmp;
   auto json_ret = TurnStrToJson(check_ret);
   if (json_ret.at(kStatus) == kFailed) {
     MS_LOG(DEBUG) << "Call check supported api failed, result info: " << check_ret;
