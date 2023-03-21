@@ -48,7 +48,7 @@ class MaxPoolGradWithArgmaxV2CpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr);
+  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr) const;
 
   template <typename DATA_T>
   void OutPutInitKernel(DATA_T *output, size_t length) const;

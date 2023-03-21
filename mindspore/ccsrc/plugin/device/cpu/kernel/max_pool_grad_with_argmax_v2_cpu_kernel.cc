@@ -72,7 +72,7 @@ int MaxPoolGradWithArgmaxV2CpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   return KRET_OK;
 }
 
-std::vector<int64_t> MaxPoolGradWithArgmaxV2CpuKernelMod::GetValidAttr(const std::vector<int64_t> &src_attr) {
+std::vector<int64_t> MaxPoolGradWithArgmaxV2CpuKernelMod::GetValidAttr(const std::vector<int64_t> &src_attr) const {
   if (src_attr.size() == DIM_SIZE_1) {
     return {src_attr[kZero], src_attr[kZero]};
   } else if (src_attr.size() == DIM_SIZE_4) {
@@ -122,7 +122,7 @@ void MaxPoolGradWithArgmaxV2CpuKernelMod::MaxPoolGradWithArgmaxV2SingleCompute(
     for (size_t j = 0; j < oW; j++) {
       /* retrieve position of max */
       size_t index = i * oW + j;
-      size_t maxp = argmax[index];
+      size_t maxp = static_cast<size_t>(argmax[index]);
 
       if (maxp != -kOne) {
         /* update gradient */
