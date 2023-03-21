@@ -147,7 +147,7 @@ void SwapStrategyBuilder::BuildSpans() {
 }
 
 bool SwapStrategyBuilder::EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
-                                             size_t total_mem_size) {
+                                             size_t total_mem_size) const {
   MS_EXCEPTION_IF_NULL(span);
   MS_EXCEPTION_IF_NULL(mem_used);
   CheckVectorIndex(*mem_used, kernel_num_ - 1);
