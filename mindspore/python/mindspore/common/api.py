@@ -461,7 +461,7 @@ class _MindsporeFunctionExecutor:
                                    f"be 'sens' and added it to compile args.")
                     self.input_signature.append(args_list[-1])
                 compile_args = tuple(self.input_signature)
-                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
+                _pynative_executor.set_dynamic_input(self.obj)
             else:
                 if not verify_inputs_signature(self.input_signature, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
@@ -1193,18 +1193,17 @@ class _PyNativeExecutor:
         """
         self._executor.set_ms_function_compile_status(status, phase)
 
-    def set_dynamic_input(self, obj, *args):
+    def set_dynamic_input(self, obj):
         """
         Set dynamic shape tensor of input arguments.
 
         Args:
             obj (Function/Cell): The function or cell instance.
-            args (tuple): Function or cell dynamic input arguments.
 
         Return:
             None.
         """
-        self._executor.set_dynamic_input(obj, *args)
+        self._executor.set_dynamic_input(obj)
 
     def is_first_cell(self):
         """

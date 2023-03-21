@@ -74,7 +74,7 @@ class TopCellInfo {
   inline void set_sub_cell_hook_changed(const std::string &sub_cell) { (void)sub_cell_hook_changed_.emplace(sub_cell); }
   inline const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
-  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info);
+  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
@@ -146,7 +146,7 @@ class TopCellInfo {
   void ClearDeviceMemory() const;
   void Clear();
 
-  inline bool use_dynamic_shape_process() { return use_dynamic_shape_process_; }
+  inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }

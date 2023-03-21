@@ -903,7 +903,7 @@ class Cell(Cell_):
         if self._dynamic_shape_inputs:
             ds.config.set_dynamic_shape(True)
         if context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+            _pynative_executor.set_dynamic_input(self)
 
     def get_inputs(self):
         """
