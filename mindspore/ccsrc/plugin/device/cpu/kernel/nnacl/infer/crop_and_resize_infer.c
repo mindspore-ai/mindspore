@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,16 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   }
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
-  if (inputs[1]->data_ != NULL) {
+  if (GetBatch(input) == 0) {
+    ShapePush(output_shape, &output_shape_size, 0);
+  } else if (inputs[1]->data_ != NULL) {
     const TensorC *boxes_tensor = inputs[1];
     if (boxes_tensor->shape_size_ < 1) {
       return NNACL_INPUT_TENSOR_ERROR;
     }
     ShapePush(output_shape, &output_shape_size, boxes_tensor->shape_[0]);
   } else {
-    ShapePush(output_shape, &output_shape_size, GetBatch(input));
+    return NNACL_INFER_INVALID;
   }
 
   const TensorC *shape_tensor = inputs[3];

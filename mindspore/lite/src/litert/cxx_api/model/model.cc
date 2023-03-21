@@ -104,9 +104,15 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       if (pid < 0) {
         return kLiteError;
       } else if (pid == 0) {  // child process
-        ret = impl_->BuildAndRun(model_data, data_size, model_type, model_context);
-        int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
-        exit(ret_code);
+        auto impl = std::make_shared<ModelImpl>();
+        if (impl != nullptr) {
+          (void)impl->BuildAndRun(model_data, data_size, model_type, model_context);
+          impl.reset();
+          const_cast<std::shared_ptr<Context> &>(model_context).reset();
+        } else {
+          MS_LOG(WARNING) << "new ModelImpl failed, pre inference failed.";
+        }
+        exit(lite::kProcessSuccess);
       }
       ret = lite::CheckPidStatus(pid);
       if (ret != kSuccess) {
@@ -149,9 +155,15 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
     if (pid < 0) {
       return kLiteError;
     } else if (pid == 0) {  // child process
-      ret = impl_->BuildAndRun(model_data, data_size, model_type, model_context);
-      int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
-      exit(ret_code);
+      auto impl = std::make_shared<ModelImpl>();
+      if (impl != nullptr) {
+        (void)impl->BuildAndRun(model_data, data_size, model_type, model_context);
+        impl.reset();
+        const_cast<std::shared_ptr<Context> &>(model_context).reset();
+      } else {
+        MS_LOG(WARNING) << "new ModelImpl failed, pre inference failed.";
+      }
+      exit(lite::kProcessSuccess);
     }
     ret = lite::CheckPidStatus(pid);
     if (ret != kSuccess) {
@@ -215,9 +227,15 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
       if (pid < 0) {
         return kLiteError;
       } else if (pid == 0) {  // child process
-        ret = impl_->BuildAndRun(CharToString(model_path), model_type, model_context);
-        int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
-        exit(ret_code);
+        auto impl = std::make_shared<ModelImpl>();
+        if (impl != nullptr) {
+          (void)impl->BuildAndRun(CharToString(model_path), model_type, model_context);
+          impl.reset();
+          const_cast<std::shared_ptr<Context> &>(model_context).reset();
+        } else {
+          MS_LOG(WARNING) << "new ModelImpl failed, pre inference failed.";
+        }
+        exit(lite::kProcessSuccess);
       }
       ret = lite::CheckPidStatus(pid);
       if (ret != kSuccess) {
@@ -261,9 +279,15 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
     if (pid < 0) {
       return kLiteError;
     } else if (pid == 0) {  // child process
-      ret = impl_->BuildAndRun(CharToString(model_path), model_type, model_context);
-      int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
-      exit(ret_code);
+      auto impl = std::make_shared<ModelImpl>();
+      if (impl != nullptr) {
+        (void)impl->BuildAndRun(CharToString(model_path), model_type, model_context);
+        impl.reset();
+        const_cast<std::shared_ptr<Context> &>(model_context).reset();
+      } else {
+        MS_LOG(WARNING) << "new ModelImpl failed, pre inference failed.";
+      }
+      exit(lite::kProcessSuccess);
     }
     ret = lite::CheckPidStatus(pid);
     if (ret != kSuccess) {
@@ -306,18 +330,24 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
     MS_LOG(ERROR) << err_msg.str();
     return Status(kLiteNullptr, err_msg.str());
   }
-  impl_->SetContext(model_context);
-  impl_->SetGraph(graph.GetGraph());
-  impl_->SetConfig(train_cfg);
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
   if (lite::GetNumThreads() == lite::kSingleThread && impl_->IsEnablePreInference()) {
     pid_t pid = fork();
     if (pid < 0) {
       return kLiteError;
     } else if (pid == 0) {  // child process
-      auto ret = impl_->BuildAndRun();
-      int ret_code = ret == kSuccess ? lite::kProcessSuccess : lite::kProcessFailed;
-      exit(ret_code);
+      auto impl = std::make_shared<ModelImpl>();
+      if (impl != nullptr) {
+        impl->SetContext(model_context);
+        impl->SetGraph(graph.GetGraph());
+        impl->SetConfig(train_cfg);
+        (void)impl->BuildAndRun();
+        impl.reset();
+        const_cast<std::shared_ptr<Context> &>(model_context).reset();
+      } else {
+        MS_LOG(WARNING) << "new ModelImpl failed, pre inference failed.";
+      }
+      exit(lite::kProcessSuccess);
     }
     auto ret = lite::CheckPidStatus(pid);
     if (ret != kSuccess) {
@@ -326,6 +356,9 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
     }
   }
 #endif
+  impl_->SetContext(model_context);
+  impl_->SetGraph(graph.GetGraph());
+  impl_->SetConfig(train_cfg);
   return impl_->Build();
 }
 
