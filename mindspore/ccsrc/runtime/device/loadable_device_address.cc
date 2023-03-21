@@ -108,12 +108,14 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
       swap_manager->AddSwappingTensor(this);
       status_ = DeviceAddressStatus::kInFileToHost;
     } else {
-      swap_manager->DeleteFile(storage_info_.file_name_);
+      if (!swap_manager->DeleteFile(storage_info_.file_name_)) {
+        MS_LOG(WARNING) << "Deleting file " << storage_info_.file_name_ << " failed.";
+      }
       storage_info_.file_name_ = "";
       status_ = DeviceAddressStatus::kInHost;
     }
   } else {
-    if (!CopyDeviceToHost(storage_info_.host_ptr_, ptr_, size_, async, stream_id)) {
+    if (!MoveDeviceToHost(storage_info_.host_ptr_, ptr_, size_, async, stream_id)) {
       MS_LOG(WARNING) << "Copy data from device to host failed.";
       return false;
     }
@@ -142,7 +144,7 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   }
   ptr_ = swap_manager->AllocDeviceMemory(size_);
   MS_EXCEPTION_IF_NULL(ptr_);
-  if (!CopyHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
+  if (!MoveHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
     MS_LOG(WARNING) << "Copy data from host to device failed.";
     return false;
   }
@@ -279,7 +281,9 @@ bool LoadableDeviceAddress::Wait() const {
     MS_LOG(WARNING) << "Device address is in moving, but no valid swap event can be found.";
   }
   if (status_ == DeviceAddressStatus::kInFileToHost) {
-    swap_manager->DeleteFile(storage_info_.file_name_);
+    if (!swap_manager->DeleteFile(storage_info_.file_name_)) {
+      MS_LOG(WARNING) << "Deleting file " << storage_info_.file_name_ << " failed.";
+    }
     status_ = DeviceAddressStatus::kInHost;
   } else if (status_ == DeviceAddressStatus::kInDeviceToHost) {
     swap_manager->FreeDeviceMemory(ptr_);

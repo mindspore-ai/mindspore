@@ -24,9 +24,9 @@ namespace device {
 class HostMemPool {
  public:
   explicit BACKEND_EXPORT HostMemPool(size_t max_size) : max_size_(max_size) {}
-  ~HostMemPool() = default;
-  virtual void *Malloc(size_t size) { return nullptr; }
-  virtual void Free(const void *ptr) {}
+  virtual ~HostMemPool() = default;
+  virtual void *Malloc(size_t) { return nullptr; }
+  virtual void Free(const void *) {}
 
  protected:
   size_t max_size_;
