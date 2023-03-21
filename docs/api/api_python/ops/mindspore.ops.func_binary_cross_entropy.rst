@@ -22,7 +22,6 @@ mindspore.ops.binary_cross_entropy
 
     .. warning::
         - `x` 的值必须要在0-1范围内。
-        - `y` 的值必须是 `0` 或者 `1` 。
 
     参数：
         - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。

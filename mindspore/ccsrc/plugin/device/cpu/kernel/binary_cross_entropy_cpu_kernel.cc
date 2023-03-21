@@ -48,6 +48,16 @@ void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const
 }
 
 template <typename T>
+inline void CheckInput(T x) {
+  auto zero = static_cast<T>(0);
+  auto one = static_cast<T>(1);
+  if (x > one || x < zero) {
+    MS_LOG(EXCEPTION) << "For 'BinaryCrossEntropy', the value of 'input_x' must be between 0 and 1, but got value: "
+                      << x;
+  }
+}
+
+template <typename T>
 void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &outputs) {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
@@ -63,6 +73,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     if (weight_defined_) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
+          CheckInput(input_x[i]);
           auto value = static_cast<T>(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) +
                                                     (one - input_y[i]) * log(one - input_x[i] + epsilon)));
           loss[i] = value;
@@ -71,6 +82,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     } else {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
+          CheckInput(input_x[i]);
           auto value = static_cast<T>(
             -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
           loss[i] = value;
@@ -81,6 +93,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     if (weight_defined_) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
+          CheckInput(input_x[i]);
           auto value = static_cast<T>(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) +
                                                     (one - input_y[i]) * log(one - input_x[i] + epsilon)));
           tmp_loss[i] = value;
@@ -89,6 +102,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     } else {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
+          CheckInput(input_x[i]);
           auto value = static_cast<T>(
             -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
           tmp_loss[i] = value;

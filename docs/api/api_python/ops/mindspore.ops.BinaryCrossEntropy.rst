@@ -22,7 +22,6 @@ mindspore.ops.BinaryCrossEntropy
 
     .. warning::
         - :math:`x` 的值必须在0到1之间。
-        - :math:`y` 的值必须为0或1。
 
     参数：
         - **reduction** (str) - 指定输出的计算方式。取值为'none'、'mean'或'sum'。默认值：'mean'。
