@@ -108,6 +108,17 @@ def get_bprop_seq_equal(self):
     return bprop
 
 
+@bprop_getters.register("shape_mul")
+def get_bprop_shape_mul(self):
+    """Generate bprop for tuple_equal and list_equal"""
+
+    def bprop(x, out, dout):
+        dx = seq.ShapeMulGrad()(x, dout)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register("tuple_setitem")
 def get_bprop_tuple_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""

@@ -680,33 +680,6 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
   return ret;
 }
 
-AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple
-  // example: tuple = (1, 2, 3), shape_mul(tuple) = 1*2*3 = 6
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-
-  auto shpx_value = shape_x->BuildValue();
-  if (shpx_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The ShapeMul operator shape's data field can't be anything, but got " << shape_x->ToString()
-                      << ".";
-  }
-
-  auto shpx_data = shpx_value->cast<ValueTuplePtr>()->value();
-
-  int64_t result = 1;
-  for (size_t i = 0; i < shpx_data.size(); i++) {
-    int64_t value = GetValue<int64_t>(shpx_data[i]);
-    result = IntMulWithOverflowCheck(result, value);
-  }
-
-  auto result_v = MakeValue(result);
-  MS_LOG(DEBUG) << "The infer result of ShapeMul is " << result_v->ToString();
-  return std::make_shared<AbstractScalar>(result_v, result_v->type());
-}
-
 AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   auto op_name = primitive->name();
@@ -1081,7 +1054,6 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
 // Shape
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ReducedShape, prim::kPrimReducedShape, InferImplReduceShape, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ShapeMul, prim::kPrimShapeMul, InferImplShapeMul, nullptr);
 // Auto-Grad
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StopGradient, prim::kPrimStopGradient, InferImplStopGradient, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFakeBprop, nullptr);
@@ -1134,8 +1106,6 @@ void RegPrimitiveFrontEval() {
   // Shape
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimReducedShape,
                                                 InferImplReduceShape, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimShapeMul,
-                                                InferImplShapeMul, nullptr);
   // Auto-Grad
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStopGradient,
                                                 InferImplStopGradient, nullptr);

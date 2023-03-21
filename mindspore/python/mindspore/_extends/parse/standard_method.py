@@ -3451,7 +3451,7 @@ def list_append(self_, list_item):
 
 def list_insert(self_, index, obj):
     """Insert into list"""
-    if F.is_sequence_shape_unknown(self_):
+    if F.is_sequence_shape_unknown(self_) or not F.isconstant(index) or not F.isconstant(obj):
         return ListInsert()(self_, index, obj)
     return _insert(self_, index, obj)
 
