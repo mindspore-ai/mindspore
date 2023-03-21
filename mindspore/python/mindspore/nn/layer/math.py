@@ -25,6 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
+from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 
 __all__ = ['ReduceLogSumExp',
            'Range',
@@ -843,12 +844,8 @@ class MatMul(Cell):
             x2_shape = self.shape_op(x2)
 
         x1_broadcast_shape, x2_broadcast_shape = get_broadcast_matmul_shape(x1_shape, x2_shape)
-        x1_broadcast_to = P.BroadcastTo(x1_broadcast_shape)
-        x2_broadcast_to = P.BroadcastTo(x2_broadcast_shape)
-        if x1_broadcast_shape != x1_shape:
-            x1 = x1_broadcast_to(x1)
-        if x2_broadcast_shape != x2_shape:
-            x2 = x2_broadcast_to(x2)
+        x1 = DynamicBroadcastTo()(x1, x1_broadcast_shape)
+        x2 = DynamicBroadcastTo()(x2, x2_broadcast_shape)
 
         matmul_broadcast = matmul_op(x1, x2)
 
