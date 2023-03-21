@@ -111,7 +111,7 @@ class Strategy {
     internal_size_++;
   }
 
-  std::string ToString() {
+  std::string ToString() const {
     std::ostringstream oss;
     for (size_t i = 0; i < this->GetInputNumber(); ++i) {
       oss << "[";
