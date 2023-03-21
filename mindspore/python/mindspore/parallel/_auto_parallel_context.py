@@ -15,6 +15,7 @@
 """Context of auto parallel"""
 from __future__ import absolute_import
 import os
+import copy
 import threading
 from mindspore import context
 import mindspore.log as logger
@@ -118,7 +119,7 @@ class _AutoParallelContext:
             KeyError: When key of comm_fusion is not 'allreduce'.
         """
         self.check_context_handle()
-        config = config.copy()
+        config = copy.deepcopy(config)
         if _ParallelFusionConfig.OPENSTATE not in config.keys():
             config[_ParallelFusionConfig.OPENSTATE] = True
         for key in list(config.keys()):
@@ -900,6 +901,7 @@ class _AutoParallelContext:
         return self._context_handle.get_optimizer_weight_shard_aggregated_save()
 
     def get_full_batch_is_set(self):
+        """Get full batch attr"""
         self.check_context_handle()
         return self._context_handle.get_full_batch_is_set()
 

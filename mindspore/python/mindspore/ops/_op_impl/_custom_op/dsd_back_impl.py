@@ -88,16 +88,12 @@ def dsdbpropimpl(w1_gm, w2_gm, v_gm, a_gm, d_a_gm, d_w1_gm={}, d_w2_gm={}, d_v_g
                             16, seq_len // 16, 16, 16),
                            name='a_gm',
                            scope=tik.scope_gm)
-    local_gm = a_gm
-    global_gm = a_gm
     # zN
     d_a_gm = tik_inst.Tensor('float16',
                              (batch_size, head, v_embedding //
                               16, seq_len // 16, 16, 16),
                              name='d_a_gm',
                              scope=tik.scope_gm)
-    d_local_gm = d_a_gm
-    d_global_gm = d_a_gm
 
     # output
     # w-zN

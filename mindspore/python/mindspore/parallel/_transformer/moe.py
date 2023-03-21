@@ -270,8 +270,8 @@ class MoE(Cell):
         pad_size = 0
         if self.group_wise_a2a:
             # If capacity can't div by mp, pad for mp shard.
-            if capacity%self.mp != 0:
-                pad_size = self.mp-(capacity%self.mp)
+            if capacity % self.mp != 0:
+                pad_size = self.mp-(capacity % self.mp)
             if pad_size != 0:
                 capacity += pad_size
                 pad_tensor = self.stride_slice_dp(expert_input, (0, 0, 0, 0),
@@ -327,8 +327,8 @@ class MoE(Cell):
         """
         # Pad capacity for comp_comm_parallel_degree split.
         pad_size = 0
-        if capacity%self.comp_comm_parallel_degree != 0:
-            pad_size = self.comp_comm_parallel_degree-(capacity%self.comp_comm_parallel_degree)
+        if capacity % self.comp_comm_parallel_degree != 0:
+            pad_size = self.comp_comm_parallel_degree-(capacity % self.comp_comm_parallel_degree)
             capacity += pad_size
             pad_tensor = self.stride_slice_dp(expert_input, (0, 0, 0, 0),
                                               (self.expert_dim, self.dp_group, pad_size, self.hidden_size),

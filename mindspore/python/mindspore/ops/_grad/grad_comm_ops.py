@@ -288,6 +288,7 @@ def get_bprop_mini_step_all_gather(self):
                 dx = F.depend(dx, z)
         else:
             dx = dout
+
         return (dx, zeros_like(z))
 
     return bprop

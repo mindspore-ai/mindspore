@@ -161,7 +161,6 @@ class _LayerInputCheck:
         Check the input shape's is equal to the expected shape, the value on 0-th is viewed as batch, and the
         batch size will not be checked.
         """
-        target_shape = target_shape
         length, hidden = target_shape
         if isinstance(input_shape, tuple):
             input_shape = list(input_shape)
