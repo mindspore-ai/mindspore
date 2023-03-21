@@ -1582,6 +1582,8 @@ class Ones(Primitive):
 
 class Zeros(Primitive):
     r"""
+    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
+
     Creates a tensor filled with value zeros.
 
     Creates a tensor with shape described by the first argument and
@@ -1600,7 +1602,7 @@ class Zeros(Primitive):
         TypeError: If `shape` is a tuple whose elements are not all int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> zeros = ops.Zeros()
@@ -1614,6 +1616,10 @@ class Zeros(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Zeros"""
+        logger.warning(
+            "WARN_DEPRECATED: Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros`."
+        )
+
 
 
 class OnesLike(Primitive):

@@ -9258,7 +9258,7 @@ def zeros_like_except(y, dim):
     _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
     sizes = y.shape[:dim] + y.shape[dim + 1:]
-    zeros = P.Zeros()(sizes, y.dtype)
+    zeros = F.zeros(sizes, y.dtype)
     return zeros
 
 
