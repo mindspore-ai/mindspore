@@ -73,21 +73,18 @@ struct DataConvert {
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
-                                           const tensor::CSRTensorPtr &csr_tensor, const PrimitivePtr &op_prim);
-  static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
-                               const PrimitivePtr &op_prim);
+                                           const tensor::CSRTensorPtr &csr_tensor);
+  static void ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor);
   static void ConvertValueTupleToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                       const PrimitivePtr &op_prim, size_t index);
+                                       size_t index);
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
-                                        const PrimitivePtr &op_prim, size_t index);
-  static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
-                                   const PrimitivePtr &op_prim);
+                                        size_t index);
+  static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index);
   static bool NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
                                           mindspore::HashSet<size_t> *input_to_attr_ptr);
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                           size_t input_index, const PrimitivePtr &op_prim,
-                                           const mindspore::HashSet<size_t> &input_attrs);
+                                           size_t input_index, const mindspore::HashSet<size_t> &input_attrs);
 };
 };  // namespace PyNativeAlgo
 }  // namespace pynative
