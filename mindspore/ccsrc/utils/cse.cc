@@ -135,7 +135,7 @@ bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphMana
       groups[h].push_back(node);
     }
   }
-  return CalReplaceNodes(manager, order_group, &groups);
+  return CalReplaceNodes(order_group, &groups);
 }
 
 void CSE::DoReplace(const FuncGraphManagerPtr &manager) {
@@ -269,7 +269,7 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) {
   return false;
 }
 
-bool CSE::CalReplaceNodes(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
+bool CSE::CalReplaceNodes(const std::vector<std::size_t> &order_group,
                           mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> *groups) {
   bool changes = false;
   std::set<size_t> clear_set;
