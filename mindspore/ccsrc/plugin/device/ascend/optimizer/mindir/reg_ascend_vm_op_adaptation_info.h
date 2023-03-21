@@ -370,12 +370,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kRpnProposalsOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "listInt");
 
-// index mismatch 2 vs 1 in cann
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kScatterNdOpName)
-  .set_target_op_name(kScatterNdDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(2, "listInt");
-
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSpaceToBatchOpName)
   .set_target_op_name(kSpaceToBatchDOpName)
   .set_need_tbe_check_supported(true)
