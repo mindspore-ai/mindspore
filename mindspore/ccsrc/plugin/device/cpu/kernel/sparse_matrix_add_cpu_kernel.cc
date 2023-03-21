@@ -195,7 +195,7 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
     };
     ParallelLaunchAutoSearch(task, row_, this, &parallel_search_info_);
   }
-  c_batch[1] = c_idx;
+  c_batch[1] = static_cast<T>(c_idx);
   // Update output shape and type
   std::vector<int64_t> out_indptr_shape;
   std::vector<int64_t> out_indices_shape;
