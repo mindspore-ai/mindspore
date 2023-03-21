@@ -40,6 +40,9 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/random_choice_with_mask_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/gather_grad_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/expand_dims_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/flatten_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/reshape_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/squeeze_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/environ/aicpu_environ_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_create.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_set.cc
