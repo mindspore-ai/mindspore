@@ -84,7 +84,8 @@ bool SetDefaultFormatForSpecialAclOp(const KernelGraphPtr &graph) {
   auto exec_nodes = graph->execution_order();
   bool need_change_format = false;
   for (auto &node : exec_nodes) {
-    if (kDefaultFormatAclOps.count(common::AnfAlgo::GetCNodeName(node))) {
+    auto op_name = common::AnfAlgo::GetCNodeName(node);
+    if (kDefaultFormatAclOps.find(op_name) != kDefaultFormatAclOps.end()) {
       need_change_format = true;
       auto new_builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));

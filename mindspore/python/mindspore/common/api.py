@@ -318,8 +318,8 @@ class _MindsporeFunctionExecutor:
         args_list = args
         if self.obj is not None:
             args_list = args_list[1:]
+        phase = ""
         try:
-            phase = ""
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 _pynative_executor.set_ms_function_compile_status(True, phase)
                 phase = self.compile(self.fn.__name__, *args_list, **kwargs)
@@ -1002,7 +1002,6 @@ class _PyNativeExecutor:
         self._executor = PyNativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self._optimizer = None
         self._top_cell = None
 
     def __call__(self):
@@ -1228,14 +1227,6 @@ class _PyNativeExecutor:
         """
         self._executor.set_hook_changed(cell)
 
-    def get_optimizer(self):
-        """
-        Get the optimizer.
-
-        Return:
-            The optimizer.
-        """
-        return self._optimizer
 
     def get_top_cell(self):
         """
@@ -1246,17 +1237,6 @@ class _PyNativeExecutor:
         """
         return self._top_cell
 
-    def get_shape(self, *args):
-        """
-        Get shape of input arguments.
-
-        Args:
-            args (Tensor/tuple(Tensor)): Input arguments.
-
-        Return:
-            tuple(int), the shape of input arguments.
-        """
-        return self._executor.get_shape(*args)
 
     def constant_folding(self, *args):
         """

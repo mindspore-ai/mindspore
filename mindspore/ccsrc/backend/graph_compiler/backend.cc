@@ -199,8 +199,7 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
   }
 }
 
-void ClearGraphDeviceAddressDynamic(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                                    bool is_gradient_out) {
+void ClearGraphDeviceAddressDynamic(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->execution_order()) {
     auto output_address_num = AnfAlgo::GetOutputAddressNum(node);
@@ -843,7 +842,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
 }
 
 void MindRTBackend::CompileSingleOpGraphs(
-  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) {
+  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) const {
   if (build_tasks.empty()) {
     return;
   }
@@ -884,8 +883,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
     ReleaseForwardOutput(context->op_run_info()->base_op_run_info.input_tensor);
   }
   if (use_dynamic_shape_process) {
-    ClearGraphDeviceAddressDynamic(context->graph(), context->device_context(),
-                                   context->op_run_info()->is_gradient_out);
+    ClearGraphDeviceAddressDynamic(context->graph());
     ClearInputDeviceAddressDynamic(context->graph(), context->device_context());
   } else {
     ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info()->is_gradient_out);
@@ -1061,7 +1059,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
   }
   UpdateOutput(output_nodes, outputs);
-  ClearGraphDeviceAddressDynamic(graph, device_context, op_run_info->is_gradient_out);
+  ClearGraphDeviceAddressDynamic(graph);
   ClearInputDeviceAddressDynamic(graph, device_context);
   if (is_dynamic_shape) {
     UpdateOutputAbstract(*outputs, op_run_info);
