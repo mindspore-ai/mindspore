@@ -20,7 +20,8 @@ The high-level components(Cells) used to construct the neural network.
 from __future__ import absolute_import
 
 from mindspore.nn.layer import activation, normalization, container, conv, basic, embedding, pooling, \
-    image, math, combined, timedistributed, thor_layer, rnns, rnn_cells, padding, dense, transformer
+    image, math, combined, timedistributed, thor_layer, rnns, rnn_cells, padding, dense, transformer, \
+    channel_shuffle
 from mindspore.nn.layer.activation import *
 from mindspore.nn.layer.normalization import *
 from mindspore.nn.layer.container import *
