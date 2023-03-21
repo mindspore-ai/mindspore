@@ -23,7 +23,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -57,6 +56,7 @@ class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
   bool is_null_input_{false};
 };
 
+using LaunchFunc = std::function<bool(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 class IdentityCpuKernelMod : public NativeCpuKernelMod {
  public:
   IdentityCpuKernelMod() = default;
@@ -70,19 +70,15 @@ class IdentityCpuKernelMod : public NativeCpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    return kernel_func_(this, inputs, workspace, outputs);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
+    return kernel_func_(inputs, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using IdentityFunc = std::function<bool(IdentityCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IdentityFunc>> func_list_;
-  IdentityFunc kernel_func_;
+  LaunchFunc kernel_func_;
   bool is_null_input_{false};
 };
 }  // namespace kernel
