@@ -140,15 +140,17 @@ void EmbeddingCachePrefetchActor::Initialize() {
   local_embedding_slice_bounds_ = embedding_cache_table_manager.local_embedding_slice_bounds_;
   local_device_cache_bounds_ = embedding_cache_table_manager.local_device_cache_bounds_;
 
-  // Get the id range of each server's embedding table slice.
-  GetRemoteEmbeddingSliceBound();
-
   // Initialize CPU device context. The origin device context for embedding cache prefetch actor is GPU or NPU. But we
   // still need the CPU device context to allocate host memory.
   device::DeviceContextKey host_key = {"CPU", 0};
   cpu_device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(cpu_device_context_);
   cpu_device_context_->Initialize();
+
+  server_num_ = PSContext::instance()->server_num();
+  if (server_num_ == 0) {
+    MS_LOG(EXCEPTION) << "The number of servers is at least 1, but get 0";
+  }
 
   // Build and link rpc operators.
   BuildRpcOperators();
@@ -166,6 +168,9 @@ void EmbeddingCachePrefetchActor::Initialize() {
   if (!emb_ops_->Initialize()) {
     MS_LOG(ERROR) << "Failed to initialize the device embedding operation.";
   }
+
+  // Get the id range of each server's embedding table slice.
+  emb_ops_->GetRemoteEmbeddingSliceBound(vocab_size_, server_num_, &remote_embedding_slice_bounds_);
 
   initialized_ = true;
 }
@@ -657,32 +662,6 @@ bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(int32_t param_key, cons
   }
 
   return true;
-}
-
-void EmbeddingCachePrefetchActor::GetRemoteEmbeddingSliceBound() {
-  server_num_ = PSContext::instance()->server_num();
-  if (server_num_ == 0) {
-    MS_LOG(EXCEPTION) << "The server num is 0";
-  }
-  size_t average_slice_size = vocab_size_ / server_num_;
-  std::vector<size_t> remote_embedding_slice_sizes = std::vector<size_t>(server_num_, average_slice_size);
-  size_t rest_vocab_size = vocab_size_ % server_num_;
-  for (size_t i = 0; i < rest_vocab_size; i++) {
-    remote_embedding_slice_sizes[i] += 1;
-  }
-
-  size_t begin;
-  size_t end;
-  for (size_t i = 0; i < server_num_; i++) {
-    if (i == 0) {
-      begin = 0;
-      end = remote_embedding_slice_sizes[0] - 1;
-    } else {
-      begin = remote_embedding_slice_bounds_[i - 1].second + 1;
-      end = begin + remote_embedding_slice_sizes[i] - 1;
-    }
-    (void)remote_embedding_slice_bounds_.emplace_back(begin, end);
-  }
 }
 
 bool EmbeddingCachePrefetchActor::PartitionIds(const int *ids, size_t ids_num,

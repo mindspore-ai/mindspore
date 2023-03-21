@@ -54,8 +54,7 @@ TEST_F(TestEmbeddingCache, test_embedding_cache) {
   EXPECT_NO_THROW(
     embedding_cache_manager.InsertHashTableSize(param_name, vocab_cache_size, embedding_size, vocab_size, param_key));
 
-  EXPECT_NO_THROW(
-    embedding_cache_manager.ReInsertHashTableSize(new_param_name, param_name, vocab_cache_size, embedding_size));
+  EXPECT_NO_THROW(embedding_cache_manager.ReInsertHashTableSize(new_param_name, param_name));
 
   EXPECT_NO_THROW(embedding_cache_manager.CloneHashTable(accu_param_name, accu_param_key, new_param_name, param_key));
 

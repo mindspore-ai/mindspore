@@ -113,7 +113,7 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
     }
 
     const std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
-    if (kernel_name != kGatherOpName && kernel_name != kSparseGatherV2OpName) {
+    if (kernel_name != kGatherOpName && kernel_name != kSparseGatherV2OpName && kernel_name != kMapTensorGetOpName) {
       return;
     }
 
@@ -128,6 +128,7 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
     if (rank_id_attr == rank_id_ && node_role_attr == node_role_) {
       auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
       shapes_to_nodes_[shape] = node;
+      MS_LOG(INFO) << "The shape: " << shape << " for node: " << node->fullname_with_scope();
     }
   });
 }
@@ -604,13 +605,13 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStorages() {
       MS_LOG(EXCEPTION) << "Can not find cnode for parameter(key[" << key << "]) with shape: " << shape;
     }
     AnfNodePtr node = iter->second;
-    const size_t param_index = 0;
+    const size_t output_index0 = 0;
     const size_t key_index = 1;
 
     TypeId key_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, key_index);
-    TypeId param_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, param_index);
+    TypeId value_type = common::AnfAlgo::GetOutputInferDataType(node, output_index0);
     // Create dense or sparse embedding storage and add into embedding storage manager.
-    distributed::CreateEmbeddingStorage(std::make_pair(key_type, param_type), key, emb_dim, capacity);
+    distributed::CreateEmbeddingStorage(std::make_pair(key_type, value_type), key, emb_dim, capacity);
     MS_LOG(INFO) << "Add a new embedding storage, key: " << key << ", emb_dim: " << emb_dim
                  << ", capacity: " << capacity << ", origin emb_dim:" << origin_emb_dim
                  << ", origin capacity: " << origin_capacity;

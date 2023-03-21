@@ -65,9 +65,10 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
   MS_EXCEPTION_IF_NULL(first_cache_size);
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
+    const std::unordered_set<std::string> kNeedCheckNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
+                                                             kGatherV2DOpName, kMapTensorGetOpName};
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name != kGatherOpName && kernel_name != kSparseGatherV2OpName && kernel_name != kGatherV2OpName &&
-        kernel_name != kGatherV2DOpName) {
+    if (kNeedCheckNodes.find(kernel_name) == kNeedCheckNodes.end()) {
       continue;
     }
     auto input_param = common::AnfAlgo::GetPrevNodeOutput(kernel, 0, true);
@@ -122,8 +123,8 @@ void CheckSparseModeForEmbeddingCache(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(pre_node.first);
   }
   if (!(pre_node.first->isa<CNode>()) || (common::AnfAlgo::GetCNodeName(pre_node.first) != kUniqueOpName)) {
-    FinalizeEmbeddingCachePrefetch(
-      "The input_indices of kernel[SparseGatherV2] must be unique in parameter server cache mode");
+    FinalizeEmbeddingCachePrefetch(std::string("The input_indices of kernel[") + node->DebugString() +
+                                   "] must be unique in parameter server cache mode");
   }
 
   pre_node = common::AnfAlgo::GetPrevNodeOutput(pre_node.first, 0, true);
@@ -149,7 +150,7 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
     const std::set<std::string> kNeedCacheNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
-                                                   kGatherV2DOpName};
+                                                   kGatherV2DOpName, kMapTensorGetOpName};
     if (kNeedCacheNodes.count(kernel_name) == 0) {
       continue;
     }
@@ -323,7 +324,10 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
   }
 
   // Graph valid check.
-  CheckGraphValidForEmbeddingCache(*graph);
+  // The sparse mode does not perform graph structure verification currently.
+  if (!embedding_cache_table_manager.is_sparse_format()) {
+    CheckGraphValidForEmbeddingCache(*graph);
+  }
 
   // 2. Set parameter device address to embedding cache table.
   for (const auto &node : input_nodes) {

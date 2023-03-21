@@ -59,8 +59,7 @@ class BACKEND_EXPORT PSContext {
   uint32_t ps_rank_id() const;
   void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                            size_t vocab_size, int32_t param_key) const;
-  void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
-                             size_t cache_vocab_size, size_t embedding_size) const;
+  void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name) const;
   void InsertAccumuInitInfo(const std::string &param_name, float init_val) const;
   void CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key, const std::string &src_param_name,
                       int32_t src_param_key) const;

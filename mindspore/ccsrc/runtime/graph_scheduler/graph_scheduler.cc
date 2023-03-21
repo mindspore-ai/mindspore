@@ -2622,6 +2622,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     new_device_tensor->SetNodeIndex(backend_node, index);
     new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());
     new_device_tensor->set_from_persistent_mem(true);
+    new_device_tensor->set_user_data(sub_device_tensor->user_data());
     SchedulerHelper::AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);
     MS_LOG(INFO) << "Add device tensor store by root graph parameter:" << root_graph_parameter->fullname_with_scope()
                  << ", backend node:" << backend_node->DebugString() << ", type:" << device_context->GetDeviceType();

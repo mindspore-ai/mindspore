@@ -180,8 +180,8 @@ def _insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size, 
     ps_context().insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size, param_key)
 
 
-def _reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_size):
-    ps_context().reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_size)
+def _reinsert_hash_table_size(new_name, cur_name):
+    ps_context().reinsert_hash_table_size(new_name, cur_name)
 
 
 def _insert_accumu_init_info(name, init_val):

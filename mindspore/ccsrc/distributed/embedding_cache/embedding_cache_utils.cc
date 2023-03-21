@@ -65,11 +65,7 @@ void EmbeddingCacheTableManager::InsertHashTableSize(const std::string &param_na
 }
 
 void EmbeddingCacheTableManager::ReInsertHashTableSize(const std::string &new_param_name,
-                                                       const std::string &cur_param_name, size_t cache_vocab_size,
-                                                       size_t embedding_size) {
-  if (cache_vocab_size == 0 || embedding_size == 0) {
-    MS_LOG(EXCEPTION) << "The size of hash table can not equal to zero.";
-  }
+                                                       const std::string &cur_param_name) {
   if (new_param_name.empty() || cur_param_name.empty()) {
     MS_LOG(EXCEPTION) << "Parameter name can not be empty.";
   }
@@ -77,13 +73,11 @@ void EmbeddingCacheTableManager::ReInsertHashTableSize(const std::string &new_pa
     return;
   }
   auto iter = hash_tables_.find(cur_param_name);
-  if (iter != hash_tables_.end()) {
-    (void)hash_tables_.emplace(new_param_name, iter->second);
-    (void)hash_tables_.erase(iter);
-  } else {
-    hash_tables_[new_param_name].cache_vocab_size = cache_vocab_size;
-    hash_tables_[new_param_name].embedding_size = embedding_size;
+  if (iter == hash_tables_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find parameter[" << cur_param_name << "] in hash table.";
   }
+  (void)hash_tables_.emplace(new_param_name, iter->second);
+  (void)hash_tables_.erase(iter);
 }
 
 void EmbeddingCacheTableManager::InsertAccumuInitInfo(const std::string &param_name, float init_val) {

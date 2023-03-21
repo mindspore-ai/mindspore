@@ -19,6 +19,7 @@
 #include <map>
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "runtime/device/device_address_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
@@ -408,6 +409,17 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
       (void)types.emplace_back(type_id);
     }
     builder->SetOutputsDeviceType(types);
+  }
+
+  const auto &abstract =
+    common::AnfAlgo::GetNodeAbstractByIndex(front_node_with_index.first, front_node_with_index.second);
+  bool is_map_parameter = abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>();
+  if (is_map_parameter) {
+    DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(device_context, front_node_with_index.first,
+                                                           front_node_with_index.second);
+    UpdateRefCount(AnfAlgo::GetMutableOutputAddr(front_node_with_index.first, front_node_with_index.second).get(),
+                   true);
+    return;
   }
 
   // Fetch mem size by shape, the shape is first obtained from the abstract to deal with the scenario where
@@ -1581,7 +1593,10 @@ NodeWithIndexToContext ControlNodeParser::FetchBackendParameterWithContextByFron
   for (const auto &node_with_index_to_context : iter->second) {
     const auto &node = node_with_index_to_context.first.first;
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfAlgo::GetOutputTensorMemSize(node, node_with_index_to_context.first.second) != 0) {
+    const auto &abstract =
+      common::AnfAlgo::GetNodeAbstractByIndex(front_parameter_with_index.first, front_parameter_with_index.second);
+    bool is_map_parameter = abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>();
+    if (AnfAlgo::GetOutputTensorMemSize(node, node_with_index_to_context.first.second) != 0 || is_map_parameter) {
       return node_with_index_to_context;
     }
     MS_LOG(DEBUG) << "Backend node:" << node->DebugString()
