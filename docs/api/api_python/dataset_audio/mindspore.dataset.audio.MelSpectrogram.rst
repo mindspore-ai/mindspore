@@ -14,14 +14,14 @@ mindspore.dataset.audio.MelSpectrogram
         - **f_max** (float, 可选) - 最大频率，不能小于0。默认值：None, 会被设置为 `sample_rate // 2` 。
         - **pad** (int, 可选) - 信号两端的填充长度，不能小于0。默认值：0。
         - **n_mels** (int, 可选) - 梅尔滤波器组的数量，不能小于0。默认值：128。
-        - **window** (WindowType, 可选) - 作用于每一帧的窗口函数。默认值：WindowType.HANN。
+        - **window** (:class:`mindspore.dataset.audio.WindowType` , 可选) - 作用于每一帧的窗口函数。默认值：WindowType.HANN。
         - **power** (float, 可选) - 幅值谱图的指数，应该大于0，例如，1表示能量，2表示功率，等等。默认值：2.0。
         - **normalized** (bool, 可选) - 是否在stft之后按幅度执行标准化。默认值：False。
         - **center** (bool, 可选) - 是否同时在波形两端进行填充。默认值：True。
         - **pad_mode** (BorderType, 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、BorderType.EDGE、BorderType.SYMMETRIC。默认值：BorderType.REFLECT。
         - **onesided** (bool, 可选) - 控制是否只返回一半波形，以避免冗余。默认值：True。
-        - **norm** (NormType, 可选) - 如果为‘slaney’，则将三角形梅尔权重除以梅尔带的宽度（区域归一化）。默认值：NormType.NONE。
-        - **mel_scale** (MelType, 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
+        - **norm** (:class:`mindspore.dataset.audio.NormType` , 可选) - 如果为 'slaney' ，则将三角形梅尔权重除以梅尔带的宽度（区域归一化）。默认值：NormType.NONE，不使用标准化。
+        - **mel_scale** (:class:`mindspore.dataset.audio.MelType` , 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
 
     异常：
         - **TypeError** - 如果 `sample_rate` 的类型不为int。

@@ -57,8 +57,9 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             is not provided, infers the column_names from the first row of CSV file.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all images.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -117,8 +118,10 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             a file name of one component of a mindrecord source, other files with identical source
             in the same path will be found and loaded automatically. If dataset_file is a list,
             it represents for a list of dataset files to be read directly.
-        columns_list (list[str], optional): List of columns to be read. Default: None.
-        num_parallel_workers (int, optional): The number of readers. Default: None.
+        columns_list (list[str], optional): List of columns to be read. Default: None, read all columns.
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: None, performs global shuffle. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -132,7 +135,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             - Shuffle.INFILE: Keep the file sequence the same but shuffle the data within each file.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
-            When this argument is specified, 'num_samples' reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -263,8 +266,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             It is highly recommended to provide `num_samples` or numRows (parsed from `schema` )
             when `compression_type` is "GZIP" or "ZLIB" to avoid performance degradation due to multiple
             decompressions of the same file to obtain the file size.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If `shuffle` is False, no shuffling will be performed.
@@ -384,11 +388,11 @@ class OBSMindDataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: None.
         shard_id (int, optional): The shard ID within num_shards. Default: None. This
-            argument can only be specified when num_shards is also specified.
+            argument can only be specified when `num_shards` is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards. Default: True. If shard_equal_rows
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
             When the number of samples of per MindRecord file are not equal, it is suggested to set to true.
-            This argument should only be specified when num_shards is also specified.
+            This argument should only be specified when `num_shards` is also specified.
 
     Raises:
         RuntimeError: If `sync_obs_path` do not exist.

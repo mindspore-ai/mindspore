@@ -15,8 +15,8 @@ mindspore.dataset.audio.InverseMelScale
         - **tolerance_loss** (float, 可选) - 当达到损失值时停止优化。默认值：1e-5。
         - **tolerance_change** (float, 可选) - 指定损失差异，当达到损失差异时停止优化。默认值：1e-8。
         - **sgdargs** (dict, 可选) - SGD优化器的参数。默认值：None，将设置为{'sgd_lr': 0.1, 'sgd_momentum': 0.9}。
-        - **norm** (NormType, 可选) - 标准化方法，可以是NormType.SLANEY或NormType.NONE。默认值：NormType.NONE。
-        - **mel_type** (MelType, 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
+        - **norm** (:class:`mindspore.dataset.audio.NormType` , 可选) - 标准化方法，可以是NormType.SLANEY或NormType.NONE。默认值：NormType.NONE，不使用标准化。
+        - **mel_type** (:class:`mindspore.dataset.audio.MelType` , 可选) - 要使用的Mel比例，可以是MelType.SLAN或MelType.HTK。默认值：MelType.HTK。
 
     异常：
         - **TypeError** - 如果 `n_fft` 的类型不为int。

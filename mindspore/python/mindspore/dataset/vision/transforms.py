@@ -101,8 +101,6 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the brightness of the input image.
 
-    The input image is expected to be in shape of [H, W, C].
-
     Args:
         brightness_factor (float): How much to adjust the brightness, must be non negative.
             0 gives a black image, 1 gives the original image,
@@ -147,8 +145,6 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the contrast of the input image.
 
-    The input image is expected to be in shape of [H, W, C].
-
     Args:
         contrast_factor (float): How much to adjust the contrast, must be non negative.
             0 gives a solid gray image, 1 gives the original image,
@@ -191,7 +187,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
 
 class AdjustGamma(ImageTensorOperation, PyTensorOperation):
     r"""
-    Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
+    Apply gamma correction on input image. Input image is expected to be in <..., H, W, C> or <H, W> format.
 
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
@@ -249,8 +245,6 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the hue of the input image.
 
-    The input image is expected to be in shape of [H, W, C].
-
     Args:
         hue_factor (float): How much to add to the hue channel,
             must be in range of [-0.5, 0.5].
@@ -293,8 +287,6 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the saturation of the input image.
-
-    The input image is expected to be in shape of [H, W, C].
 
     Args:
         saturation_factor (float): How much to adjust the saturation, must be non negative.
@@ -339,8 +331,6 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 class AdjustSharpness(ImageTensorOperation):
     """
     Adjust the sharpness of the input image.
-
-    The input image is expected to be in shape of [H, W, C] or [H, W].
 
     Args:
         sharpness_factor (float): How much to adjust the sharpness, must be
@@ -1196,8 +1186,8 @@ class HsvToRgb(PyTensorOperation):
     Convert the input numpy.ndarray images from HSV to RGB.
 
     Args:
-        is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
-            Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
+        is_hwc (bool): If True, means the input image is in shape of <H, W, C> or <N, H, W, C>.
+            Otherwise, it is in shape of <C, H, W> or <N, C, H, W>. Default: False.
 
     Raises:
         TypeError: If `is_hwc` is not of type bool.
@@ -1239,7 +1229,7 @@ class HsvToRgb(PyTensorOperation):
 
 class HWC2CHW(ImageTensorOperation):
     """
-    Transpose the input image from shape (H, W, C) to (C, H, W).
+    Transpose the input image from shape <H, W, C> to <C, H, W>.
     If the input image is of shape <H, W>, it will remain unchanged.
 
     Note:
@@ -1355,7 +1345,7 @@ class LinearTransformation(PyTensorOperation):
         Execute method.
 
         Args:
-            np_img (numpy.ndarray): Image in shape of (C, H, W) to be linearly transformed.
+            np_img (numpy.ndarray): Image in shape of <C, H, W> to be linearly transformed.
 
         Returns:
             numpy.ndarray, linearly transformed image.
@@ -1499,7 +1489,7 @@ class Normalize(ImageTensorOperation):
         TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `std` is not in range (0.0, 255.0].
-        RuntimeError: If given tensor format is not <H, W> or <...,H, W, C>.
+        RuntimeError: If given tensor format is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -1785,7 +1775,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
 
 class Posterize(ImageTensorOperation):
     """
-    Posterize the input image by reducing the number of bits for each color channel.
+    Reduce the bit depth of the color channels of image to create a high contrast and vivid color effect,
+    similar to that seen in posters or printed materials.
 
     Args:
         bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
@@ -2592,7 +2583,7 @@ class RandomErasing(PyTensorOperation):
         Execute method.
 
         Args:
-            np_img (numpy.ndarray): image in shape of (C, H, W) to be randomly erased.
+            np_img (numpy.ndarray): image in shape of <C, H, W> to be randomly erased.
 
         Returns:
             numpy.ndarray, erased image.
@@ -2875,6 +2866,9 @@ class RandomPerspective(PyTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
+    Reduce the bit depth of the color channels of image with a given probability
+    to create a high contrast and vivid color image.
+
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
@@ -3693,8 +3687,8 @@ class RgbToHsv(PyTensorOperation):
     Convert the input numpy.ndarray images from RGB to HSV.
 
     Args:
-        is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
-            Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
+        is_hwc (bool): If True, means the input image is in shape of <H, W, C> or <N, H, W, C>.
+            Otherwise, it is in shape of <C, H, W> or <N, C, H, W>. Default: False.
 
     Raises:
         TypeError: If `is_hwc` is not of type bool.
@@ -3813,7 +3807,7 @@ class SlicePatches(ImageTensorOperation):
     Args:
         num_height (int, optional): The number of patches in vertical direction, which must be positive. Default: 1.
         num_width (int, optional): The number of patches in horizontal direction, which must be positive. Default: 1.
-        slice_mode (Inter, optional): A mode represents pad or drop. Default: SliceMode.PAD.
+        slice_mode (SliceMode, optional): A mode represents pad or drop. Default: SliceMode.PAD.
             It can be any of [SliceMode.PAD, SliceMode.DROP].
         fill_value (int, optional): The border width in number of pixels in
             right and bottom direction if slice_mode is set to be SliceMode.PAD.
@@ -3865,7 +3859,7 @@ class Solarize(ImageTensorOperation):
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
             be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
-            If min=max, then invert all pixel values above min(max).
+            If a single value is provided or min=max, then invert all pixel values above min(max).
 
     Raises:
         TypeError: If `threshold` is not of type float or Sequence[float, float].
@@ -4033,7 +4027,7 @@ class ToPIL(PyTensorOperation):
 class ToTensor(ImageTensorOperation):
     """
     Convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype, rescale the pixel value
-    range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
+    range from [0, 255] to [0.0, 1.0] and change the shape from <H, W, C> to <C, H, W>.
 
     Args:
         output_type (Union[mindspore.dtype, numpy.dtype], optional): The desired dtype of the output image.

@@ -552,7 +552,7 @@ def read_image(filename, mode=ImageReadMode.UNCHANGED):
 
     Args:
         filename(str): The path to the image file to be read.
-        mode(int, optional): The mode used for decoding the image. It can be any of
+        mode(ImageReadMode, optional): The mode used for decoding the image. It can be any of
             [ImageReadMode.UNCHANGED, ImageReadMode.GRAYSCALE, IMageReadMode.COLOR]. Default: ImageReadMode.UNCHANGED.
 
             - ImageReadMode.UNCHANGED, remain the output in the original format.

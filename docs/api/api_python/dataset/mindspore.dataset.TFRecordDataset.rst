@@ -18,7 +18,7 @@ mindspore.dataset.TFRecordDataset
           `num_samples` 或numRows字段（由参数 `schema` 定义）将是为每个分片从压缩文件中读取的行数。
           强烈建议在 `compression_type` 为 "GZIP" 或 "ZLIB" 时提供 `num_samples` 或numRows字段（由参数 `schema` 定义）以避免为了获取文件大小对同一个文件进行多次解压而导致性能下降的问题。
 
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：

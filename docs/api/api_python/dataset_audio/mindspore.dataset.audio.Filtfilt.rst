@@ -7,9 +7,9 @@ mindspore.dataset.audio.Filtfilt
 
     参数：
         - **a_coeffs** (Sequence[float]) - 不同维度的差分方程分母系数。低维的延迟系数在前，例如[a0, a1, a2, ...]。
-          维度必须与 `b_coeffs` 相同（根据需要填充0值）。
+          序列长度必须与 `b_coeffs` 相同（根据需要填充0值）。
         - **b_coeffs** (Sequence[float]) - 不同维度的差分方程分子系数。低维的延迟系数在前，例如[b0, b1, b2, ...]。
-          维度必须与 `a_coeffs` 相同（根据需要填充0值）。
+          序列长度必须与 `a_coeffs` 相同（根据需要填充0值）。
         - **clamp** (bool, 可选) - 如果为True，将输出信号截断在[-1, 1]范围内。默认值：True。
 
     异常：

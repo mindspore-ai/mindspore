@@ -6,7 +6,7 @@ mindspore.dataset.audio.linear_fbanks
     创建一个线性三角滤波器组。
 
     参数：
-        - **n_freqs** (int) - 欲加强/作用的频率数。
+        - **n_freqs** (int) - 要突出显示/应用的频率数。
         - **f_min** (float) - 最小频率，单位赫兹。
         - **f_max** (float) - 最大频率，单位赫兹
         - **n_filter** (int) - 线性三角滤波器数目。

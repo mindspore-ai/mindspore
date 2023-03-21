@@ -18,4 +18,4 @@ mindspore.dataset.audio.HighpassBiquad
         - **TypeError** - 当 `cutoff_freq` 的类型不为float。
         - **TypeError** - 当 `Q` 的类型不为float。
         - **ValueError** - 当 `Q` 取值不在(0, 1]范围内。
-        - **RuntimeError** - 当输入音频的shape不为(..., time)。
+        - **RuntimeError** - 当输入音频的shape不为<..., time>。

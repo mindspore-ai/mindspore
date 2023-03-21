@@ -11,7 +11,7 @@ mindspore.dataset.NumpySlicesDataset
         - **column_names** (list[str], 可选) - 指定数据集生成的列名。默认值：None，不指定。
           如果未指定该参数，且当输入数据的类型是dict时，输出列名称将被命名为dict的键名，否则它们将被统一命名为column_0，column_1...。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数。默认值：1。
         - **shuffle** (bool, 可选) - 是否混洗数据集。
           只有输入的 `data` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值：None。下表中会展示不同配置的预期行为。
         - **sampler** (Union[Sampler, Iterable], 可选) - 指定从数据集中选取样本的采样器。

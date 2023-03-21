@@ -15,9 +15,9 @@ mindspore.dataset.audio.Flanger
         - **width** (float, 可选) - 期望的延迟增益，单位为dB，取值范围为[0, 100]。默认值：71.0。
         - **speed** (float, 可选) - 调制速度，单位为Hz，取值范围为[0.1, 10]。默认值：0.5。
         - **phase** (float, 可选) - 各通道的相位偏移百分比，取值范围为[0, 100]。默认值：25.0。
-        - **modulation** (Modulation, 可选) - 调制方法，可为Modulation.SINUSOIDAL或Modulation.TRIANGULAR。
+        - **modulation** (:class:`mindspore.dataset.audio.Modulation` , 可选) - 调制方法，可为Modulation.SINUSOIDAL或Modulation.TRIANGULAR。
           默认值：Modulation.SINUSOIDAL。
-        - **interpolation** (Interpolation, 可选) - 插值方法，可为Interpolation.LINEAR或Interpolation.QUADRATIC。
+        - **interpolation** (:class:`mindspore.dataset.audio.Interpolation` , 可选) - 插值方法，可为Interpolation.LINEAR或Interpolation.QUADRATIC。
           默认值：Interpolation.LINEAR。
 
     异常：

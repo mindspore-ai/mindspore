@@ -3,7 +3,7 @@ mindspore.dataset.LibriTTSDataset
 
 .. py:class:: mindspore.dataset.LibriTTSDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析LibriTTS数据集的源文件构建数据集。
+    LibriTTS数据集。
 
     生成的数据集有七列 `[waveform, sample_rate, original_text, normalized_text, speaker_id, chapter_id, utterance_id]` 。
     `waveform` 列的数据类型为float32。
@@ -18,7 +18,7 @@ mindspore.dataset.LibriTTSDataset
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'dev-clean'、'dev-other'、'test-clean'、'test-other'、'train-clean-100'、'train-clean-360'、'train-other-500' 或 'all'。默认值：None，表示读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部音频。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None，下表中会展示不同配置的预期行为。
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。

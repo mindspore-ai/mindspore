@@ -97,7 +97,9 @@ class AddToken(TextTensorOperation):
 
     Args:
         token (str): The token to be added.
-        begin (bool, optional): Whether to insert token at start or end of sequence. Default: True.
+        begin (bool, optional): Choose the position where the token is inserted. If True,
+            the token will be inserted at the beginning of the sequence. Otherwise, it will
+            be inserted at the end of the sequence. Default: True.
 
     Raises:
         TypeError: If `token` is not of type string.

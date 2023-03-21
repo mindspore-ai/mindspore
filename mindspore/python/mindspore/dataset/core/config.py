@@ -813,7 +813,7 @@ def get_dynamic_shape():
 def set_fast_recovery(fast_recovery):
     """
     Set whether dataset pipeline should recover in fast mode during failover
-    (yet with slightly different random augmentations).
+    (In fast mode, random augmentations may not get same results as before the failure occurred).
 
     Args:
         fast_recovery (bool): Whether the dataset pipeline recovers in fast mode. System default: True.
@@ -902,10 +902,11 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
         4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
         >>> # the debug hook is added after `Decode` operation.
-        >>> dataset = dataset.map([Decode(), CustomizedHook(), CenterCrop()])
+        >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop()])
     """
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
@@ -986,8 +987,8 @@ def set_error_samples_mode(error_samples_mode):
 
     Note:
         - This error samples feature is only applicable to the Map operation in a dataset pipeline.
-        - For replacement mode, a cache of internally determined samples will be used.
-        - If skip mode is used in a distributed setting, beware to manually ensure the
+        - For 'ErrorSamplesMode.REPLACE' mode, a cache of other samples will be used.
+        - If 'ErrorSamplesMode.SKIP' mode is used in a distributed setting, beware to manually ensure the
           number of valid samples are the same for each shard (otherwise one may encounter hangs).
           One technique is to manually concat a dataset of all valid samples plus a
           take operation for the number of skipped erroneous samples.
@@ -999,7 +1000,7 @@ def set_error_samples_mode(error_samples_mode):
 
             - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
 
-            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an correct sample.
 
             - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
 
@@ -1015,7 +1016,7 @@ def set_error_samples_mode(error_samples_mode):
 
 def get_error_samples_mode():
     """
-    Get the current configuration for method for processing erroneous samples in a dataset pipeline.
+    Get the current configuration for strategy for processing erroneous samples in a dataset pipeline.
 
     Returns:
         ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.
