@@ -1,7 +1,7 @@
 mindspore.nn.Dropout
 ====================
 
-.. py:class:: mindspore.nn.Dropout(keep_prob=0.5, p=None)
+.. py:class:: mindspore.nn.Dropout(keep_prob=0.5, p=None, dtype=mstype.float32))
 
     随机丢弃层。
 
@@ -12,10 +12,12 @@ mindspore.nn.Dropout
     .. note::
         - 训练过程中每步对同一通道（或神经元）独立进行丢弃。
         - `keep_prob` 参数会在未来版本删除，请使用 `p` 参数代替它。`p` 表示输入Tensor中元素设置成0的概率。
+        - `dtype` 参数会在未来版本删除。不建议使用这个参数。
 
     参数：
         - **keep_prob** (float) - 废弃。输入神经元保留率，数值范围介于(0, 1]之间。例如，`keep_prob` =0.9，删除10%的神经元。默认值：0.5。
         - **p** (Union[float, int, None]) - 输入神经元丢弃率，数值范围介于[0, 1)之间。例如，`p` =0.9，删除90%的神经元。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`) - `input` 的数据类型。默认值：mindspore.float32。
 
     输入：
         - **x** (Tensor) - Dropout的输入，任意维度的Tensor。数据类型必须为float16或float32。

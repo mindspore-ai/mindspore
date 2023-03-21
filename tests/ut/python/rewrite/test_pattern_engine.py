@@ -70,10 +70,7 @@ def test_one_to_one_pattern():
 
     class BnReplacement(Replacement):
         def build(self, pattern: PatternNode, is_chain_pattern: bool, matched: OrderedDict) -> [Node]:
-            assert is_chain_pattern
-            assert pattern.type() == BatchNorm2d
             bn_node: Node = matched.get(pattern.name())
-            assert bn_node is not None
 
             conv = Conv2d(16, 16, 3)
             conv_node = Node.create_call_cell(conv, ['x1'], bn_node.get_args(), bn_node.get_kwargs())

@@ -1203,6 +1203,7 @@ def dropout(input, p=0.5, training=True):
         >>> print(output.shape)
         (2, 2)
     """
+    check_bool_const(training, "training", "dropout")
     if training is False:
         return input
     keep_prob = 1 - p
@@ -1299,7 +1300,7 @@ def dropout1d(input, p=0.5, training=True):
 
     if not isinstance(input, Tensor):
         raise TypeError(f"For dropout1d, 'input' must be Tensor, but got type {type(input)}.")
-
+    check_bool_const(training, "training", "dropout1d")
     if training is False:
         return input
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
@@ -1364,6 +1365,7 @@ def dropout2d(input, p=0.5, training=True):
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
+    check_bool_const(training, "training", "dropout2d")
     if training is False:
         return input
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
@@ -1412,6 +1414,7 @@ def dropout3d(input, p=0.5, training=True):
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
+    check_bool_const(training, "training", "dropout3d")
     if training is False:
         return input
     dropout_3d_op = NN_OPS.Dropout3D(1.0 - p)
