@@ -30,23 +30,25 @@
 namespace mindspore {
 namespace ops {
 namespace {
+bool IsValueUnKnown(const AbstractBasePtr &arg) {
+  if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
+    return true;
+  }
+  return false;
+}
+
 int64_t GetTensorValue(const AbstractBasePtr &arg, const std::string &prim_name, const std::string &arg_name) {
   if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
   constexpr int64_t number_one = 1;
-  auto abstract_tensor = arg->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(abstract_tensor);
-  auto tensor_value_ptr = abstract_tensor->BuildValue();
-  MS_EXCEPTION_IF_NULL(tensor_value_ptr);
-  auto specified_tensor = tensor_value_ptr->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(specified_tensor);
-  int64_t tensor_val_size = SizeToLong(specified_tensor->DataSize());
+  auto value_ptr = arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto tensor_val = CheckAndConvertUtils::CheckTensorIntValue(arg_name, value_ptr, prim_name);
+  int64_t tensor_val_size = SizeToLong(tensor_val.size());
   MS_EXCEPTION_IF_CHECK_FAIL(tensor_val_size == number_one,
                              prim_name + " infers failed when initializing value of '" + arg_name + "'.");
-  auto tensor_ptr = reinterpret_cast<int *>(specified_tensor->data_c());
-  int64_t tensor_val = static_cast<int64_t>(*tensor_ptr);
-  return tensor_val;
+  return tensor_val[kInputIndex0];
 }
 
 ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_diag_index, int64_t upper_diag_index,
@@ -108,55 +110,67 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
 
 abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto row_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto col_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+
   auto x_rank = SizeToLong(x_shape.size());
   auto k_rank = SizeToLong(k_shape.size());
   auto row_rank = SizeToLong(row_shape.size());
   auto col_rank = SizeToLong(col_shape.size());
   auto padding_value_rank = SizeToLong(padding_shape.size());
+
   constexpr int64_t number_one = 1;
   constexpr int64_t number_two = 2;
+
   if (IsDynamicRank(x_shape)) {
     ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, number_one}, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'padding_value'", padding_value_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_one, prim_name);
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
-    auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(k);
-    auto k_value_ptr = k->BuildValue();
-    MS_EXCEPTION_IF_NULL(k_value_ptr);
-    auto k_tensor = k_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(k_tensor);
-    auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
-    int64_t k_val_size = SizeToLong(k_tensor->DataSize());
-    CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {number_one, number_two},
-                                                prim_name);
-    int64_t lower_diag_index = static_cast<int64_t>(k_val[0]);
-    int64_t upper_diag_index = lower_diag_index;
-    if (k_val_size == number_two) {
-      upper_diag_index = static_cast<int64_t>(k_val[1]);
-    }
-    int64_t row_val = GetTensorValue(input_args[kInputIndex2], prim_name, "num_rows");
-    int64_t col_val = GetTensorValue(input_args[kInputIndex3], prim_name, "num_cols");
-    (void)GetTensorValue(input_args[kInputIndex4], prim_name, "padding_value");
 
-    auto out_shape = GetOutputShape(x_shape, lower_diag_index, upper_diag_index, row_val, col_val, prim_name);
-    return std::make_shared<abstract::Shape>(out_shape);
-  } else {
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_one, prim_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, number_one}, prim_name);
+
+  std::vector<ShapeVector> check_shapes = {row_shape, col_shape, padding_shape};
+  auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamic);
+  if (!is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'padding_value'", padding_value_rank, kEqual, 0, prim_name);
+  }
+
+  std::vector<AbstractBasePtr> depend_args = {input_args[kInputIndex1], input_args[kInputIndex2],
+                                              input_args[kInputIndex3]};
+  auto is_value_un_known = std::any_of(depend_args.begin(), depend_args.end(),
+                                       [&](const AbstractBasePtr &arg) { return IsValueUnKnown(arg); });
+  if (IsDynamic(x_shape) || IsDynamic(k_shape) || is_value_un_known) {
     // Since the real output shape relies on the value of 'k', 'num_cols' and 'num_rows',
     // the out_shape is set to {-2} meaning that even the dimension can not be determined.
-    ShapeVector out_shape = {-2};
+    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else {
+    auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
+    MS_EXCEPTION_IF_NULL(k_val_ptr);
+    auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
+    int64_t k_val_size = SizeToLong(k_val.size());
+    CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {number_one, number_two},
+                                                prim_name);
+
+    int64_t lower_diag_index = k_val[0];
+    int64_t upper_diag_index = lower_diag_index;
+    if (k_val_size == number_two) {
+      upper_diag_index = k_val[1];
+    }
+
+    int64_t row_val = GetTensorValue(input_args[kInputIndex2], prim_name, "num_rows");
+    int64_t col_val = GetTensorValue(input_args[kInputIndex3], prim_name, "num_cols");
+
+    auto out_shape = GetOutputShape(x_shape, lower_diag_index, upper_diag_index, row_val, col_val, prim_name);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 }
@@ -233,10 +247,13 @@ class MIND_API AGMatrixDiagV3Infer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return MatrixDiagV3InferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return MatrixDiagV3Infer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2, 3}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MatrixDiagV3, prim::kPrimMatrixDiagV3, AGMatrixDiagV3Infer, false);

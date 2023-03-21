@@ -48,6 +48,7 @@ constexpr auto kUseImage = "use_image_if_no_bounding_boxes";
 
 abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePtr &primitive,
                                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const constexpr int64_t kIndex0 = 0;
   const constexpr int64_t kIndex1 = 1;
@@ -60,27 +61,32 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   auto image_size_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto image_size_dim = SizeToLong(image_size_shape.size());
+
   auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto bboxes_dim = SizeToLong(bboxes_shape.size());
+
   auto min_object_covered_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto min_object_covered_dim = SizeToLong(min_object_covered_shape.size());
 
-  if (IsDynamic(image_size_shape) || IsDynamic(bboxes_shape) || IsDynamic(min_object_covered_shape)) {
-    auto unknown_shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{unknown_shape, unknown_shape, unknown_shape});
+  std::vector<ShapeVector> check_shapes = {image_size_shape, bboxes_shape, min_object_covered_shape};
+  auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamic);
+  auto is_dyn_rank = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamicRank);
+  if (!is_dyn_rank) {
+    (void)CheckAndConvertUtils::CheckInteger("image_size dimension", image_size_dim, kEqual, kSize1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("bounding_boxes dimension", bboxes_dim, kEqual, kSize3, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("min_object_covered dimension", min_object_covered_dim, kEqual, kSize1,
+                                             prim_name);
   }
 
-  (void)CheckAndConvertUtils::CheckInteger("image_size dimension", image_size_dim, kEqual, kSize1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("image_size elements", image_size_shape[kIndex0], kEqual, kSize3, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("bounding_boxes dimension", bboxes_dim, kEqual, kSize3, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("elements of each bounding box in bounding_boxes", bboxes_shape[kIndex2],
-                                           kEqual, kSize4, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("min_object_covered dimension", min_object_covered_dim, kEqual, kSize1,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("min_object_covered elements", min_object_covered_shape[kIndex0], kEqual,
-                                           kSize1, prim_name);
+  if (!is_dynamic) {
+    (void)CheckAndConvertUtils::CheckInteger("image_size elements", image_size_shape[kIndex0], kEqual, kSize3,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("elements of each bounding box in bounding_boxes", bboxes_shape[kIndex2],
+                                             kEqual, kSize4, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("min_object_covered elements", min_object_covered_shape[kIndex0], kEqual,
+                                             kSize1, prim_name);
+  }
 
   auto aspect_ratio_range = GetValue<std::vector<float>>(primitive->GetAttr(kAspectRatioRange));
   auto aspect_ratio_range_dim = aspect_ratio_range.size();
@@ -108,22 +114,18 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   }
 
   auto use_image_if_no_bounding_boxes = GetValue<bool>(primitive->GetAttr(kUseImage));
-  if (!use_image_if_no_bounding_boxes) {
-    if (bboxes_shape[kIndex0] == 0 || bboxes_shape[kIndex1] == 0) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', batch or N in bounding_boxes whose shape is [batch, N, 4] equals 0, which means "
-                               << "no bounding boxes provided as input. Set use_image_if_no_bounding_boxes=True if you"
-                               << " wish to not provide any bounding boxes.";
-    }
+  if (!use_image_if_no_bounding_boxes && (bboxes_shape[kIndex0] == 0 || bboxes_shape[kIndex1] == 0)) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', batch or N in bounding_boxes whose shape is [batch, N, 4] equals 0, which means "
+                             << "no bounding boxes provided as input. Set use_image_if_no_bounding_boxes=True if you"
+                             << " wish to not provide any bounding boxes.";
   }
 
-  std::vector<int64_t> shape, shape_box;
-  shape.push_back(kSize3);
-  shape_box.push_back(kSize1);
-  shape_box.push_back(kSize1);
-  shape_box.push_back(kSize4);
+  std::vector<int64_t> shape = {kSize3};
+  std::vector<int64_t> shape_box = {kSize1, kSize1, kSize4};
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
   abstract::ShapePtr out_shape_box = std::make_shared<abstract::Shape>(shape_box);
+
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_shape, out_shape, out_shape_box});
 }

@@ -47,19 +47,33 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1L, prim_name);
+
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, prim_name);
+
   auto split_dim = GetValue<int64_t>(primitive->GetAttr("split_dim"));
-  CheckAndConvertUtils::CheckInRange("split_dim", split_dim, kIncludeLeft, {-x_rank, x_rank}, prim_name);
-  if (split_dim < 0) {
-    split_dim += x_rank;
-  }
-  auto shape_of_split_dim = x_shape[LongToSize(split_dim)];
   auto num_split = GetValue<int64_t>(primitive->GetAttr("num_split"));
   (void)CheckAndConvertUtils::CheckInteger("num_split", num_split, kGreaterEqual, 1, prim_name);
   auto size_splits = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSizeSplits));
   CheckAndConvertUtils::Check("num_split", num_split, kEqual, SizeToLong(size_splits.size()), prim_name);
+
+  if (IsDynamic(x_shape)) {
+    std::vector<abstract::BaseShapePtr> out_shape_tuple;
+    for (int64_t i = 0; i < num_split; i++) {
+      auto shape = std::vector<int64_t>{abstract::Shape::kShapeRankAny};
+      abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
+      out_shape_tuple.push_back(out_shape);
+    }
+    return std::make_shared<abstract::TupleShape>(out_shape_tuple);
+  }
+
+  CheckAndConvertUtils::CheckInRange("split_dim", split_dim, kIncludeLeft, {-x_rank, x_rank}, prim_name);
+  if (split_dim < 0) {
+    split_dim += x_rank;
+  }
+
+  auto shape_of_split_dim = x_shape[LongToSize(split_dim)];
   auto default_idx = std::find(size_splits.begin(), size_splits.end(), -1);
   if (default_idx == size_splits.end()) {
     int64_t sum_of_size_splits = 0;
@@ -86,6 +100,7 @@ abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
       (void)size_splits.insert(default_idx, default_value);
     }
   }
+
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (int64_t i = 0; i < num_split; i++) {
     auto shape = x_shape;
