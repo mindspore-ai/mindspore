@@ -3,7 +3,7 @@ mindspore.dataset.Food101Dataset
 
 .. py:class:: mindspore.dataset.Food101Dataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析Food101数据集的源文件构建数据集。
+    Food101数据集。
 
     生成的数据集有两列: `[image, label]` 。 `image` 列的数据类型为uint8。 `label` 列的数据类型为string。
 
@@ -12,7 +12,7 @@ mindspore.dataset.Food101Dataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'all'。
           取值为 'train' 时将会读取75,750个训练样本，取值为 'test' 时将会读取25,250个测试样本，取值为 'all' 时将会读取全部101,000个样本。默认值：None，读取全部样本图片。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None，下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None，下表中会展示不同配置的预期行为。
@@ -61,7 +61,7 @@ mindspore.dataset.Food101Dataset
 
     **关于Food101数据集：**
     
-    Food101是一个具有挑战性的数据集，包含101种食品类别，共101000张图片。每一个类别有250张测试图片和750张训练图片。所有图像都被重新缩放，最大边长为512像素。
+    Food101是一个包含101种食品类别的数据集，共101000张图片。每一个类别有250张测试图片和750张训练图片。所有图像都被重新缩放，最大边长为512像素。
 
     以下为原始Food101数据集的结构，您可以将数据集文件解压得到如下的文件结构，并通过MindSpore的API进行读取。
 

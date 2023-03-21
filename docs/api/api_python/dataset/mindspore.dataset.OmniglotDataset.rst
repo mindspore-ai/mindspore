@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.dataset.OmniglotDataset(dataset_dir, background=None, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析Omniglot数据集的源文件构建数据集。
+    Omniglot数据集。
 
     生成的数据集有两列: `[image, label]` 。
     `image` 列的数据类型为uint8。
@@ -11,9 +11,9 @@
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **background** (bool, 可选) - 是否使用 'background 集来创建数据集，否则使用 'evaluation' 集创建数据集。默认值：None，将被设为True。
+        - **background** (bool, 可选) - 是否使用 'background' 集来创建数据集，否则使用 'evaluation' 集创建数据集。默认值：None，将被设为True。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。

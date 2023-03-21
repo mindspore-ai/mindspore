@@ -38,7 +38,7 @@ from ..core.validator_helpers import replace_none
 
 class AGNewsDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses AG News datasets.
+    AG News dataset.
 
     The generated dataset has three columns: :py:obj:`[index, title, description]` ,
     and the data type of three columns is string type.
@@ -47,8 +47,9 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include 'train', 'test' and 'all'. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, reads the full dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If `shuffle` is False, no shuffling will be performed.
@@ -130,7 +131,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
 
 class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses Amazon Review Polarity and Amazon Review Full datasets.
+    Amazon Review Polarity and Amazon Review Full datasets.
 
     The generated dataset has three columns: :py:obj:`[label, title, content]` ,
     and the data type of three columns is string.
@@ -146,8 +147,9 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
             'test' will read from 650,000 test samples,
             'all' will read from all 3,650,000 samples. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to be read. Default: None, reads the full dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If `shuffle` is False, no shuffling will be performed.
@@ -225,7 +227,7 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
 
 class CLUEDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses CLUE datasets.
+    CLUE(Chinese Language Understanding Evaluation) dataset.
     Supported CLUE classification tasks: 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
 
     Args:
@@ -236,8 +238,9 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         usage (str, optional): Specify the 'train', 'test' or 'eval' part of dataset. Default: 'train'.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all images.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: Shuffle.GLOBAL. Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -460,7 +463,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
 
 class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses CoNLL2000 chunking dataset.
+    CoNLL-2000(Conference on Computational Natural Language Learning) chunking dataset.
 
     The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]` .
     The tensors of column :py:obj:`word` , column :py:obj:`pos_tag` ,
@@ -486,8 +489,9 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard. Default: None.
         shard_id (int, optional): The shard ID within `num_shards` . This
             argument can only be specified when `num_shards` is also specified. Default: None.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -550,7 +554,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
 class DBpediaDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses the DBpedia dataset.
+    DBpedia dataset.
 
     The generated dataset has three columns :py:obj:`[class, title, content]` ,
     and the data type of three columns is string.
@@ -563,8 +567,9 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
             'all' will read from all 630,000 samples. Default: None, all samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all text.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
@@ -647,7 +652,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
 class EnWik9Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses EnWik9 datasets.
+    EnWik9 dataset.
 
     The generated dataset has one column :py:obj:`[text]` with type string.
 
@@ -655,8 +660,9 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: True.
             If shuffle is False, no shuffling will be performed.
@@ -730,7 +736,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
 
 class IMDBDataset(MappableDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses Internet Movie Database (IMDb).
+    IMDb(Internet Movie Database) dataset.
 
     The generated dataset has two columns: :py:obj:`[text, label]` .
     The tensor of column :py:obj:`text` is of the string type.
@@ -742,8 +748,9 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
             Default: None, will read all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will include all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -872,7 +879,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
 
 class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses IWSLT2016 datasets.
+    IWSLT2016(International Workshop on Spoken Language Translation) dataset.
 
     The generated dataset has two columns: :py:obj:`[text, translation]` .
     The tensor of column :py:obj: `text` is of the string type.
@@ -905,8 +912,9 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -1000,7 +1008,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
 
 class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses IWSLT2017 datasets.
+    IWSLT2017(International Workshop on Spoken Language Translation) dataset.
 
     The generated dataset has two columns: :py:obj:`[text, translation]` .
     The tensor of column :py:obj:`text` and :py:obj:`translation` are of the string type.
@@ -1027,8 +1035,9 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -1097,7 +1106,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
 
 class Multi30kDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses Multi30k dataset.
+    Multi30k dataset.
 
     The generated dataset has two columns :py:obj:`[text, translation]` .
     The tensor of column :py:obj:`text` is of the string type.
@@ -1111,8 +1120,9 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
             Default: None, means ['en', 'de'].
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: None, means Shuffle.GLOBAL.
             If False is provided, no shuffling will be performed.
             If True is provided, it is the same as setting to mindspore.dataset.Shuffle.GLOBAL.
@@ -1198,7 +1208,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
 class PennTreebankDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses PennTreebank datasets.
+    PennTreebank dataset.
 
     The generated dataset has one column :py:obj:`[text]` .
     The tensor of column :py:obj:`text` is of the string type.
@@ -1211,8 +1221,9 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             'valid' will read from 3,761 test samples of string type,
             'all' will read from all 49,199 samples of string type. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, reads the full dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
@@ -1224,7 +1235,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
@@ -1295,7 +1306,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
 
 class SogouNewsDataset(SourceDataset, TextBaseDataset):
     r"""
-    A source dataset that reads and parses Sogou News dataset.
+    Sogou News dataset.
 
     The generated dataset has three columns: :py:obj:`[index, title, content]` ,
     and the data type of three columns is string.
@@ -1319,8 +1330,9 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -1381,7 +1393,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
 
 class SQuADDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses SQuAD 1.1 and SQuAD 2.0 datasets.
+    SQuAD 1.1 and SQuAD 2.0 datasets.
 
     The generated dataset with different versions and usages has the same output columns:
     :py:obj:`[context, question, text, answer_start]` .
@@ -1396,8 +1408,9 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         usage (str, optional): Specify the 'train', 'dev' or 'all' part of dataset. Default: None, all samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Whether to shuffle the dataset. Default: Shuffle.GLOBAL.
             If False is provided, no shuffling will be performed.
             If True is provided, it is the same as setting to mindspore.dataset.Shuffle.GLOBAL.
@@ -1494,7 +1507,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
 
 class SST2Dataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses the SST2 dataset.
+    SST2(Stanford Sentiment Treebank v2) dataset.
 
     The generated dataset's train.tsv and dev.tsv have two columns :py:obj:`[sentence, label]` .
     The generated dataset's test.tsv has one column :py:obj:`[sentence]` .
@@ -1507,8 +1520,9 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
             all 872 samples. Default: None, will read train samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all text.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed;
@@ -1601,8 +1615,9 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
             pattern of files. The list will be sorted in a lexicographical order.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all images.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Default: `Shuffle.GLOBAL` . Bool type and Shuffle enum are both supported to pass in.
             If shuffle is False, no shuffling will be performed.
@@ -1648,7 +1663,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
 
 class UDPOSDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses UDPOS dataset.
+    UDPOS(Universal Dependencies dataset for Part of Speech) dataset.
 
     The generated dataset has three columns: :py:obj:`[word, universal, stanford]` ,
     and the data type of three columns is string.
@@ -1673,8 +1688,9 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
@@ -1724,7 +1740,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
 class WikiTextDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses WikiText2 and WikiText103 datasets.
+    WikiText2 and WikiText103 datasets.
 
     The generated dataset has one column :py:obj:`[text]` , and
     the tensor of column `text` is of the string type.
@@ -1733,8 +1749,9 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Acceptable usages include 'train', 'test', 'valid' and 'all'. Default: None, all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: None, reads the full dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
@@ -1746,7 +1763,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
@@ -1811,7 +1828,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
 
 class YahooAnswersDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses the YahooAnswers dataset.
+    YahooAnswers dataset.
 
     The generated dataset has four columns :py:obj:`[class, title, content, answer]` , whose data type is string.
 
@@ -1822,8 +1839,9 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
             all 1,460,000 samples. Default: None, all samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will include all text.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: `Shuffle.GLOBAL` .
             If shuffle is False, no shuffling will be performed.
@@ -1905,7 +1923,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
 class YelpReviewDataset(SourceDataset, TextBaseDataset):
     """
-    A source dataset that reads and parses Yelp Review Polarity and Yelp Review Full dataset.
+    Yelp Review Polarity and Yelp Review Full datasets.
 
     The generated dataset has two columns: :py:obj:`[label, text]` , and the data type of two columns is string.
 
@@ -1930,8 +1948,9 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
