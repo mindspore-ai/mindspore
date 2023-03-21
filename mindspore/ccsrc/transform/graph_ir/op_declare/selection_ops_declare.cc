@@ -41,7 +41,7 @@ INPUT_ATTR_MAP(CumprodD) = {{2, ATTR_DESC(axis, AnyTraits<int64_t>())}};
 ATTR_MAP(CumprodD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                       {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Cumprod, kNameCumProd, ADPT_DESC(CumprodD))
+REG_ADPT_DESC(Cumprod, kNameCumprod, ADPT_DESC(CumprodD))
 
 // Cumprod
 INPUT_MAP(Cumprod) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
@@ -49,7 +49,7 @@ ATTR_INPUT_MAP(Cumprod) = {{"axis", "axis"}};
 ATTR_MAP(Cumprod) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                      {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(Cumprod) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CumprodD, kNameCumProdD, ADPT_DESC(Cumprod))
+REG_ADPT_DESC(CumprodD, kNameCumprodD, ADPT_DESC(Cumprod))
 
 INPUT_MAP(Tile) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(multiples)}};
 ATTR_INPUT_MAP(Tile) = {{"multiples", "multiples"}};
