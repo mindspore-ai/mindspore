@@ -910,6 +910,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
 
   source_ = py::cast<std::string>(py::str(source));
   phase_ = py::cast<std::string>(phase);
+  if (phase_.find("export") != std::string::npos) {
+    common::SetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME", "0");
+  }
   PhaseManager::GetInstance().set_phase(phase_);
   auto obj_desc = GetObjDesc(source);
   MS_LOG(INFO) << "Start compiling, phase: " << phase_;
