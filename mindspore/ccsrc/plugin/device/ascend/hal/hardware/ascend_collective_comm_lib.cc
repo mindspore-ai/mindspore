@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 
@@ -102,6 +103,13 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   if (initialized_) {
     return false;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
+  (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
   try {
     if (!common::UseHostCollective()) {
       return InitializeHccl();
@@ -112,8 +120,6 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
     MS_LOG(EXCEPTION) << "Ascend collective communication initialization failed.#dmsg#Framework Error Message:#dmsg#"
                       << e.what();
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;

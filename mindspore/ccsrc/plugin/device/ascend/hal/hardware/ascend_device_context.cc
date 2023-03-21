@@ -54,13 +54,6 @@ void AscendDeviceContext::Initialize() {
 #ifndef ENABLE_SECURITY
   runtime_instance_->PreInit();
 #endif
-  // OpenTsd when enable hccl, keep consistent with before
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    MS_EXCEPTION_IF_NULL(GetDeprecatedInterface());
-    GetDeprecatedInterface()->OpenTsd(MsContext::GetInstance());
-  }
-  runtime_instance_->SetRtDevice(device_id);
-
   // enable hccl and init hccl not done, skip the rest step.
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) &&
       !distributed::collective::CollectiveManager::instance()->initialized()) {
