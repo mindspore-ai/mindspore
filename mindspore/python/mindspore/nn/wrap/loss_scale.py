@@ -389,10 +389,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
               cleared before executing the computation.
 
         Returns:
-            Tuple[object, object], the first value is False for GPU backend, while it is an instance of
-            NPUAllocFloatStatus for other backend. The status is used to detect overflow during `get_overflow_status`.
-            The second value is the same as the input of `compute_input`, but contains some information about the
-            execution order.
+            Tuple[object, object], the first output is used to control the execution sequence. To ensure that the
+            `start_overflow_check` is executed before get_overflow_status after compilation optimization is performed.
+            This value should be used as the first input of get_overflow_status. The second output is the same as
+            the input of compute_input, used to control the execution sequence, and make ensure that the overflow flag
+            is cleaned up when the function returns.
         """
         status = Tensor([0] * 8, mstype.int32)
         if not self.gpu_target:
@@ -411,10 +412,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         based on this class can also call this interface to process the overflow.
 
         Args:
-            status (object): A status instance used to detect the overflow.
-            compute_output: Overflow detection should be performed on a certain computation. Set `compute_output`
-              as the output of the computation, to ensure overflow `status` is acquired before executing the
-              computation.
+            status (object): To control the execution sequence with start_overflow_check, it should be set as the first
+              output of start_overflow_check.
+            compute_output: Overflow detection should be performed in a certain computation process. Set
+              `compute_output` as the output of the computation process.
 
         Returns:
             bool, whether the overflow occurs or not.
