@@ -43,11 +43,6 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
-
   template <typename DATA_T>
   bool CheckIfLessOne(const std::vector<DATA_T> &inputs) const;
 
@@ -65,6 +60,11 @@ class MaxPool3DWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
                                         int64_t iH, int64_t iW, int64_t oD, int64_t oH, int64_t oW, int64_t kD,
                                         int64_t kH, int64_t kW, int64_t sD, int64_t sH, int64_t sW, int64_t pD,
                                         int64_t pH, int64_t pW, int64_t dD, int64_t dH, int64_t dW) const;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

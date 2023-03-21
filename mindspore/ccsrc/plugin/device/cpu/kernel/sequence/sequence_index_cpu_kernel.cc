@@ -83,7 +83,9 @@ bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   int64_t index = -1;
   for (int64_t i = start_value; i < std::min(end_value, elem_num); ++i) {
-    if (seq_addr[i] == target_addr[0]) {
+    double seq_value = static_cast<double>(seq_addr[i]);
+    double target_value = static_cast<double>(target_addr[0]);
+    if (seq_value == target_value) {
       index = i;
       break;
     }

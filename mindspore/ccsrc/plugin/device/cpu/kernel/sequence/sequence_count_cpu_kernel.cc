@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -66,7 +66,9 @@ bool SequenceCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   int64_t count = 0;
   size_t elem_num = seq_size / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
-    if (seq_addr[i] == target_addr[0]) {
+    double seq_value = static_cast<double>(seq_addr[i]);
+    double target_value = static_cast<double>(target_addr[0]);
+    if (seq_value == target_value) {
       ++count;
     }
   }

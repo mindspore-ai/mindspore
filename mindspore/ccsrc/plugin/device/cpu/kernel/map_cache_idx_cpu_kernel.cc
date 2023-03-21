@@ -108,7 +108,7 @@ int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
 template <typename T>
 bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
+                                           const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->addr);
   auto input_indices = reinterpret_cast<T *>(inputs[1]->addr);

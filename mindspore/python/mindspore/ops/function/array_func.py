@@ -2557,17 +2557,17 @@ def scatter_div(input_x, indices, updates):
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do divide operation whose data type must be mindspore.int32 or
           mindspore.int64.
-        updates (Tensor): The tensor doing the divide operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
+        updates (Tensor): The tensor doing the divide operation with `input_x`, the data type is same as `input_x`,
+          the shape is `indices.shape + input_x.shape[1:]`.
 
     Returns:
-        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+        Tensor, the updated `input_x`, has the same type and shape as `input_x`.
 
     Raises:
-        TypeError: If `indices` is not an int32 or an int64.
+        TypeError: If the type of `indices` is not one of the following dtype: int32, int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
         RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
                       and `updates` is greater than 8 dimensions.
 

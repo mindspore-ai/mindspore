@@ -116,8 +116,8 @@ const std::vector<std::pair<KernelAttr, MedianCpuKernelMod::KernelRunFunc>> &Med
 }
 
 template <typename T>
-bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+const bool MedianCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                            const std::vector<AddressPtr> &outputs) {
   if (is_null_input_) {
     return true;
   }
