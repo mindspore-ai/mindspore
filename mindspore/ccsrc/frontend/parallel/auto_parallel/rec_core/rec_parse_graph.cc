@@ -170,7 +170,10 @@ const std::map<std::string, OperatorType> DictOpType{
   {"AssignAdd", OperatorType::kRecElmWiseOp},
   {DROPOUT_DO_MASK, OperatorType::kRecElmWiseOp},
   {DROPOUT, OperatorType::kRecElmWiseOp},
-  {STACK, OperatorType::kRecElmWiseOp}};
+  {STACK, OperatorType::kRecElmWiseOp},
+  {"Select", OperatorType::kRecElmWiseOp},
+  {"Concat", OperatorType::kRecElmWiseOp},
+  {"Tile", OperatorType::kRecElmWiseOp}};
 
 Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   Graph::NodeType NewOp;
@@ -180,7 +183,7 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   auto op_type = ops[iter_ops]->type();
   auto idx = DictOpType.find(op_type);
   if (idx == DictOpType.end()) {
-    NewOp.apply.op_type = OperatorType::kRecUnkownType;
+    NewOp.apply.op_type = OperatorType::kRecUnknownType;
     MS_LOG(INFO) << ops[iter_ops]->name() << ": Unknown operator type " << op_type;
   } else {
     NewOp.apply.op_type = DictOpType.at(op_type);
@@ -277,7 +280,8 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &o
 }
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                  const std::vector<std::vector<std::string>> &input_tensor_names) {
+                                  const std::vector<std::vector<std::string>> &input_tensor_names,
+                                  const FuncGraphPtr &root) {
   std::shared_ptr<Graph> graph = std::make_shared<Graph>();
   if (ops.size() > SIZE_MAX / 2) {
     MS_LOG(EXCEPTION) << "Total number of operators is bigger than " << SIZE_MAX / 2;
@@ -315,7 +319,7 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
   return SIZE_MAX;
 }
 
-void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
+void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
                    const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list) {
   std::vector<size_t> eli;
   eli.push_back(node_index);
@@ -329,8 +333,12 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(incoming_outputs->begin(), incoming_outputs->end(), node_index);
     if (it != incoming_outputs->end()) {
       it = incoming_outputs->erase(it);
-      (void)incoming_outputs->insert(it, graph->nodes[node_index].node_out.cbegin(),
-                                     graph->nodes[node_index].node_out.cend());
+      for (auto outgoing_index : graph->nodes[node_index].node_out) {
+        it = find(incoming_outputs->begin(), incoming_outputs->end(), outgoing_index);
+        if (it == incoming_outputs->end()) {
+          incoming_outputs->push_back(outgoing_index);
+        }
+      }
     }
   }
 
@@ -339,27 +347,91 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(aux_incoming_outputs->begin(), aux_incoming_outputs->end(), node_index);
     if (it != aux_incoming_outputs->end()) {
       it = aux_incoming_outputs->erase(it);
-      (void)aux_incoming_outputs->insert(it, graph->nodes[node_index].node_out.cbegin(),
-                                         graph->nodes[node_index].node_out.cend());
+      for (auto outgoing_index : graph->nodes[node_index].node_out) {
+        it = find(aux_incoming_outputs->begin(), aux_incoming_outputs->end(), outgoing_index);
+        if (it == aux_incoming_outputs->end()) {
+          aux_incoming_outputs->push_back(outgoing_index);
+        }
+      }
     }
   }
+  Eliminate_Aux_Outgoing(node_index, graph);
+}
 
+void Eliminate_Aux_Outgoing(size_t node_index, const std::shared_ptr<Graph> &graph) {
   for (size_t i = 0; i < graph->nodes[node_index].node_out.size(); i++) {
     auto *outgoing_inputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in;
     auto it = find(outgoing_inputs->begin(), outgoing_inputs->end(), node_index);
     if (it != outgoing_inputs->end()) {
       if (graph->nodes[node_index].node_in.size() > 0) {
+        auto exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
+                                                graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
+                                                graph->nodes[node_index].node_in[0]);
+        if (exist_in_outgoing_auxinputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+          (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.erase(exist_in_outgoing_auxinputs);
+        }
         outgoing_inputs->at(LongToSize(std::distance(outgoing_inputs->begin(), it))) =
           graph->nodes[node_index].node_in[0];
         for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
-          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(graph->nodes[node_index].node_in[j]);
+          exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
+                                             graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
+                                             graph->nodes[node_index].node_in[j]);
+          if (exist_in_outgoing_auxinputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(
+              graph->nodes[node_index].node_in[j]);
+          }
         }
-        for (size_t j = 1; j < graph->nodes[node_index].node_in_aux.size(); j++) {
-          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(
-            graph->nodes[node_index].node_in_aux[j]);
+        for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
+          exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
+                                             graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
+                                             graph->nodes[node_index].node_in_aux[j]);
+          if (exist_in_outgoing_auxinputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(
+              graph->nodes[node_index].node_in_aux[j]);
+          }
         }
       } else {
         (void)outgoing_inputs->erase(it);
+      }
+    }
+
+    auto *outgoing_auxinputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux;
+    it = find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), node_index);
+    if (it != outgoing_auxinputs->end()) {
+      if (graph->nodes[node_index].node_in.size() > 0) {
+        auto exist_in_outgoing_inputs =
+          find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
+               graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[0]);
+        if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
+          (void)outgoing_auxinputs->erase(it);
+        } else {
+          outgoing_auxinputs->at(LongToSize(std::distance(outgoing_auxinputs->begin(), it))) =
+            graph->nodes[node_index].node_in[0];
+        }
+        for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
+          exist_in_outgoing_inputs =
+            find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
+                 graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[j]);
+          if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
+            (void)outgoing_auxinputs->erase(
+              find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]));
+          } else {
+            outgoing_auxinputs->push_back(graph->nodes[node_index].node_in[j]);
+          }
+        }
+        for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
+          exist_in_outgoing_inputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
+                                          graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(),
+                                          graph->nodes[node_index].node_in_aux[j]);
+          if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
+            (void)outgoing_auxinputs->erase(
+              find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]));
+          } else {
+            outgoing_auxinputs->push_back(graph->nodes[node_index].node_in_aux[j]);
+          }
+        }
+      } else {
+        (void)outgoing_auxinputs->erase(it);
       }
     }
   }
@@ -401,6 +473,15 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
         (void)node_in->erase(node_in->cbegin() + SizeToLong(j) - 1);
       } else {
         node_in->at(j - 1) = index_list->at(node_in->at(j - 1));
+      }
+    }
+    auto *node_in_aux = &new_graph->nodes[index_list->at(i)].node_in_aux;
+    for (size_t j = node_in_aux->size(); j > 0; j--) {
+      bool IsEliminated = (index_list->at(node_in_aux->at(j - 1)) == SIZE_MAX);
+      if (IsEliminated) {
+        (void)node_in_aux->erase(node_in_aux->begin() + SizeToLong(j) - 1);
+      } else {
+        node_in_aux->at(j - 1) = index_list->at(node_in_aux->at(j - 1));
       }
     }
     auto *node_out = &new_graph->nodes[index_list->at(i)].node_out;

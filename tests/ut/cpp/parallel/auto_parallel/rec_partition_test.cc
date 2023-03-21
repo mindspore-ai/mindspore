@@ -222,7 +222,8 @@ TEST_F(TestPartition, test_PartitionNode) {
   // node 2 is the first kRecMatMul Operator
   Graph::NodeType node2 = graph->nodes[2];
   std::vector<std::pair<std::string, StrategyRec>> nameToStrategy;
-  StrategyRec str = PartitionNode(node2, nameToStrategy, graph);
+  bool isTraining = true;
+  StrategyRec str = PartitionNode(node2, nameToStrategy, graph, isTraining);
   ASSERT_EQ(str.outputTensor.str_h, 0.5);
   ASSERT_EQ(str.outputTensor.str_w, 1);
 }
@@ -230,27 +231,31 @@ TEST_F(TestPartition, test_PartitionNode) {
 TEST_F(TestPartition, test_PartitionForAllDevices) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
-  ASSERT_EQ(PartitionForAllDevices(1024, device_memory, graph), SUCCESS);
+  bool isTraining = true;
+  ASSERT_EQ(PartitionForAllDevices(1024, device_memory, graph, isTraining), SUCCESS);
 }
 
 TEST_F(TestPartition, test_PartitionForAllDevices2) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
-  ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph), SUCCESS);
+  bool isTraining = true;
+  ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph, isTraining), SUCCESS);
 }
 
 // Negative case: partition on 0 device
 TEST_F(TestPartition, test_PartitionForAllDevices0) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
+  bool isTraining = true;
   // Throw Exception "Number of devices can't be 0"
-  EXPECT_ANY_THROW(PartitionForAllDevices(0, device_memory, graph));
+  EXPECT_ANY_THROW(PartitionForAllDevices(0, device_memory, graph, isTraining));
 }
 
 TEST_F(TestPartition, test_ApplyStrToTensor) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   std::vector<std::pair<std::string, StrategyRec>> nameToStrategy;
-  graph->nodes[4].apply.str = PartitionNode(graph->nodes[4], nameToStrategy, graph);
+  bool isTraining = true;
+  graph->nodes[4].apply.str = PartitionNode(graph->nodes[4], nameToStrategy, graph, isTraining);
   auto h_str = graph->nodes[4].apply.str.outputTensor.str_h;
   auto w_str = graph->nodes[4].apply.str.outputTensor.str_w;
 
