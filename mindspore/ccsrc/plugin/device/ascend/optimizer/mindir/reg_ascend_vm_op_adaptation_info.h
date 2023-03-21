@@ -149,7 +149,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName).set_backend_op_name(kArgMinOpName);
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kArgminV2OpName).set_need_tbe_check_supported(true).set_backend_op_name(kArgMinOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kAvgPoolGradOpName)
   .set_target_op_name(kAvgPoolGradDOpName)
@@ -235,12 +235,12 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kConv3DTransposeOpName)
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCropAndResizeOpName)
   .set_target_op_name(kCropAndResizeDOpName)
-  .set_need_tbe_check_supported(true)
   .set_input_attr_info(3, "listInt");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCumProdOpName)
   .set_backend_op_name(kCumprodOpName)
   .set_target_op_name(kCumprodDOpName)
+  .set_need_tbe_check_supported(true)
   .set_input_attr_info(1, "int");
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kCumSumOpName)
@@ -289,11 +289,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kGatherOpName).set_backend_op_name(kGatherV2OpN
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseGatherV2OpName)
   .set_backend_op_name(kGatherV2OpName)
   .set_target_op_name(kGatherV2DOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(2, "int");
-
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kHistogramFixedWidthOpName)
-  .set_target_op_name(kHistogramFixedWidthDOpName)
   .set_need_tbe_check_supported(true)
   .set_input_attr_info(2, "int");
 
@@ -397,11 +392,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlOpName).set_backend_op_name(kSp
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlV2OpName).set_backend_op_name(kSparseApplyFtrlV2DOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyRMSPropOpName)
-  .set_target_op_name(kSparseApplyRMSPropDOpName)
-  .set_input_attr_info(4, "float")
-  .set_input_attr_info(5, "float")
-  .set_input_attr_info(6, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyRMSPropOpName).set_backend_op_name(kSparseApplyRMSPropDOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSplitOpName).set_backend_op_name(kSplitDOpName);
 
