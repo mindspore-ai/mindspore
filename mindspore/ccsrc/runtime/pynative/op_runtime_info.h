@@ -46,7 +46,7 @@ class AclRuntimeInfo {
     output_names_ = std::move(output_names);
   }
 
-  bool use() { return use_; }
+  bool use() const { return use_; }
   bool is_dynamic_input_size() {
     CheckInUse();
     return is_dynamic_input_size_;

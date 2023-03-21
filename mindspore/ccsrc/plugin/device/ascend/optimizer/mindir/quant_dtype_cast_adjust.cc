@@ -23,7 +23,6 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
-#include "ops/op_name.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
