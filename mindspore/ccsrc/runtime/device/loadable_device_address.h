@@ -26,43 +26,31 @@
 namespace mindspore {
 namespace device {
 struct SwapEvent {
-  bool NeedWait() {
+  bool NeedWait() const {
     return aio_token_ != kInvalidAsyncIOToken || (device_event_ != nullptr && device_event_->NeedWait());
   }
   AsyncIOToken aio_token_{kInvalidAsyncIOToken};
-  std::shared_ptr<DeviceEvent> device_event_;
+  std::shared_ptr<DeviceEvent> device_event_{nullptr};
 };
 using SwapEventPtr = std::shared_ptr<SwapEvent>;
 
 // LoadableDeviceAddress provide the ability to offload data on device to ddr or disk and load it back later.
 class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
  public:
-  LoadableDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+  LoadableDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   LoadableDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
-      : DeviceAddress(ptr, size, format, type_id) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+      : DeviceAddress(ptr, size, format, type_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const KernelWithIndex &node_index)
-      : DeviceAddress(ptr, size, format, type_id, node_index) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+      : DeviceAddress(ptr, size, format, type_id, node_index) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+      : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, device_name, device_id) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+      : DeviceAddress(ptr, size, device_name, device_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
-      : DeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {
-    swap_event_ = std::make_shared<SwapEvent>();
-  }
+      : DeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
 
   bool mem_offloaded() const final { return mem_offloaded_; }
 
@@ -90,16 +78,19 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   // Load first if data is offloaded and return the device ptr.
   void *GetValidPtr(size_t stream_id) final;
 
-  void HandOver(DeviceAddress *other) override;
+  void Swap(DeviceAddress *other) override;
+
+  virtual void set_swappable(bool swappable) { swappable_ = swappable; }
+  virtual bool swappable() { return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr); }
 
  protected:
   DeviceContext *GetDeviceContext() const {
     return DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   }
 
-  bool MoveToDevice(bool async, size_t stream_id) const;
-  bool MoveToHost(bool async, size_t stream_id) const;
-  bool MoveToFile(bool async, size_t stream_id) const;
+  bool MoveToDevice(bool async, size_t stream_id = kDefaultStreamIndex) const;
+  bool MoveToHost(bool async, size_t stream_id = kDefaultStreamIndex) const;
+  bool MoveToFile(bool async, size_t stream_id = kDefaultStreamIndex) const;
 
   virtual bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
     return false;
@@ -110,13 +101,16 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   virtual bool CopyHostToFile(const std::string &dst, const void *src, size_t size, bool async) const;
   virtual bool CopyFileToHost(void *dst, const std::string &src, size_t size, bool async) const;
 
+  void ReleaseResource();
+
   std::string GetSwapFileName() const;
   size_t GetFileAlignSize() const;
 
   bool mem_offloaded_{false};
   void *offload_ptr_{nullptr};
-  SwapEventPtr swap_event_{nullptr};
+  mutable SwapEvent swap_event_;
   mutable StorageInfo storage_info_;
+  bool swappable_{false};
 };
 }  // namespace device
 }  // namespace mindspore

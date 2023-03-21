@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
 #include "plugin/device/gpu/hal/device/gpu_hash_table_util.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/hal/device/gpu_event.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -61,6 +62,7 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
+  MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (mem_offloaded()) {
     MS_EXCEPTION_IF_NULL(offload_ptr_);
@@ -88,9 +90,8 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
   }
 
   // Bind device by device name and device id on the current thread.
-  if (device_name_ != "") {
-    auto device_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  if (!device_name_.empty()) {
+    auto device_context = GetDeviceContext();
     auto gpu_device_context = dynamic_cast<GPUDeviceContext *>(device_context);
     MS_EXCEPTION_IF_NULL(gpu_device_context);
     if (!gpu_device_context->device_res_manager_->BindDeviceToCurrentThread(false)) {
@@ -98,6 +99,7 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
     }
   }
 
+  MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (mem_offloaded()) {
     MS_EXCEPTION_IF_NULL(offload_ptr_);
@@ -151,6 +153,7 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
     return SyncUserDataToDevice(user_data_, host_ptr, size);
   }
 
+  MoveToDevice(false);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
@@ -209,6 +212,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
     return false;
   }
 
+  MoveToDevice(false);
   MS_EXCEPTION_IF_NULL(src_ptr);
   MS_EXCEPTION_IF_NULL(ptr_);
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
@@ -228,6 +232,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
 bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
                                          size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
+  MoveToDevice(false);
   MS_ERROR_IF_NULL(ptr_);
   const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
@@ -240,6 +245,7 @@ bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeI
 bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr,
                                          size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
+  MoveToDevice(false);
   MS_ERROR_IF_NULL(ptr_);
   const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);
@@ -288,7 +294,42 @@ void GPUDeviceAddress::ClearUserData() {
   }
 }
 
-GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
+GPUDeviceAddress::~GPUDeviceAddress() {
+  ClearDeviceMemory();
+  LoadableDeviceAddress::ReleaseResource();
+}
+
+bool GPUDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
+                                             bool host_to_device) const {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
+  const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  MS_ERROR_IF_NULL(stream);
+  if (host_to_device) {
+    CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(dst, src, size, stream),
+                                "CopyHostMemToDeviceAsync failed");
+  } else {
+    CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(dst, src, size, stream),
+                                "CopyDeviceMemToHostAsync failed");
+  }
+  if (async) {
+    auto record_event = std::make_shared<GpuEvent>();
+    record_event->set_record_stream(stream);
+    record_event->RecordEvent();
+    swap_event_.device_event_ = record_event;
+  } else {
+    GPUDeviceManager::GetInstance().SyncStream(stream);
+  }
+  return true;
+}
+
+bool GPUDeviceAddress::CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
+  return CopyBetweenHostDevice(dst, src, size, async, stream_id, false);
+}
+
+bool GPUDeviceAddress::CopyHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
+  return CopyBetweenHostDevice(dst, src, size, async, stream_id, true);
+}
 
 /*
  * Feature group: Dump, Online debugger.

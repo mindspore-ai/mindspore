@@ -73,6 +73,10 @@ bool LoadableDeviceAddress::MoveTo(mindspore::device::StorageType dst, bool asyn
     MS_LOG(WARNING) << "Wait swapping DeviceAddress failed. Status: " << status_;
     return false;
   }
+  if (status_ == DeviceAddressStatus::kInDevice && ptr_ == nullptr) {
+    MS_LOG(INFO) << "Skip move empty device address.";
+    return true;
+  }
   if (dst == StorageType::kDevice) {
     if (!MoveToDevice(async, stream_id)) {
       MS_LOG(WARNING) << "Move data to device failed.";
@@ -97,6 +101,7 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(device_context);
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
   MS_EXCEPTION_IF_NULL(storage_info_.host_ptr_);
   if (status_ == DeviceAddressStatus::kInFile) {
@@ -137,10 +142,13 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(device_context);
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (status_ == DeviceAddressStatus::kInFile && !MoveToHost(false, stream_id)) {
     return false;
   }
-  ptr_ = swap_manager->AllocDeviceMemory(size_);
+  if (ptr_ == nullptr) {
+    ptr_ = swap_manager->AllocDeviceMemory(size_);
+  }
   MS_EXCEPTION_IF_NULL(ptr_);
   if (!CopyHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
     MS_LOG(WARNING) << "Copy data from host to device failed.";
@@ -165,6 +173,7 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(device_context);
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (status_ == DeviceAddressStatus::kInDevice && !MoveToHost(false, stream_id)) {
     return false;
   }
@@ -201,8 +210,7 @@ bool LoadableDeviceAddress::CopyHostToFile(const std::string &dst, const void *s
     return ret;
   }
   if (async) {
-    MS_EXCEPTION_IF_NULL(swap_event_);
-    swap_event_->aio_token_ = token;
+    swap_event_.aio_token_ = token;
   }
   return ret;
 }
@@ -220,10 +228,26 @@ bool LoadableDeviceAddress::CopyFileToHost(void *dst, const std::string &src, si
     return ret;
   }
   if (async) {
-    MS_EXCEPTION_IF_NULL(swap_event_);
-    swap_event_->aio_token_ = token;
+    swap_event_.aio_token_ = token;
   }
   return true;
+}
+
+void LoadableDeviceAddress::ReleaseResource() {
+  if (status_ == DeviceAddressStatus::kInDevice) {
+    return;
+  }
+  auto device_context = GetDeviceContext();
+  if (device_context != nullptr) {
+    const auto swap_manager = device_context->device_res_manager_->swap_manager();
+    MS_EXCEPTION_IF_NULL(swap_manager);
+    if (!storage_info_.file_name_.empty()) {
+      swap_manager->DeleteFile(storage_info_.file_name_);
+    }
+    if (storage_info_.host_ptr_ != nullptr) {
+      swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+    }
+  }
 }
 
 size_t LoadableDeviceAddress::GetFileAlignSize() const {
@@ -248,30 +272,38 @@ void LoadableDeviceAddress::SetStorageInfo(const mindspore::device::StorageInfo 
   }
 }
 
-void LoadableDeviceAddress::HandOver(mindspore::device::DeviceAddress *other) {
-  DeviceAddress::HandOver(other);
+void LoadableDeviceAddress::Swap(mindspore::device::DeviceAddress *other) {
+  DeviceAddress::Swap(other);
+  if (other == this) {
+    return;
+  }
   auto loadable_device_address = reinterpret_cast<LoadableDeviceAddress *>(other);
   if (loadable_device_address != nullptr) {
-    loadable_device_address->SetStorageInfo(storage_info_);
-    loadable_device_address->set_status(status_);
+    loadable_device_address->storage_info_ = storage_info_;
+    loadable_device_address->status_ = status_;
+    loadable_device_address->offload_ptr_ = offload_ptr_;
+    loadable_device_address->mem_offloaded_ = mem_offloaded_;
     storage_info_.host_ptr_ = nullptr;
     storage_info_.file_name_ = "";
     status_ = DeviceAddressStatus::kInDevice;
+    offload_ptr_ = nullptr;
+    mem_offloaded_ = false;
   }
 }
 
 bool LoadableDeviceAddress::Wait() const {
-  if (swap_event_ == nullptr || !swap_event_->NeedWait()) {
+  if (!swap_event_.NeedWait()) {
     return true;
   }
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   const auto device_context = GetDeviceContext();
   MS_EXCEPTION_IF_NULL(device_context);
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
-  if (swap_event_->device_event_ != nullptr && swap_event_->device_event_->NeedWait()) {
-    swap_event_->device_event_->WaitEvent();
-  } else if (swap_event_->aio_token_ != kInvalidAsyncIOToken) {
-    if (!swap_manager->WaitAsyncIO(swap_event_->aio_token_)) {
+  if (swap_event_.device_event_ != nullptr && swap_event_.device_event_->NeedWait()) {
+    swap_event_.device_event_->WaitEvent();
+  } else if (swap_event_.aio_token_ != kInvalidAsyncIOToken) {
+    if (!swap_manager->WaitAsyncIO(swap_event_.aio_token_)) {
       MS_LOG(WARNING) << "Wait aio failed.";
       return false;
     }
@@ -309,7 +341,8 @@ void *LoadableDeviceAddress::GetOffloadPtr() const {
 // Return whether DeviceAddress has a valid ptr.
 bool LoadableDeviceAddress::IsPtrValid() const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  return ptr_ != nullptr || offload_ptr_ != nullptr;
+  return ptr_ != nullptr || offload_ptr_ != nullptr || storage_info_.host_ptr_ != nullptr ||
+         !storage_info_.file_name_.empty();
 }
 
 // Load first if data is offloaded and return the device ptr.
@@ -317,6 +350,10 @@ void *LoadableDeviceAddress::GetValidPtr(size_t stream_id) {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (mem_offloaded() && !Load(stream_id)) {
     MS_LOG(EXCEPTION) << "Load offloaded memory failed";
+  }
+  if (!MoveToDevice(false)) {
+    MS_LOG(ERROR) << "Move data to device failed.";
+    return nullptr;
   }
   return ptr_;
 }

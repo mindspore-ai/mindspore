@@ -136,6 +136,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_ptr(void *ptr) {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     ptr_ = ptr;
+    if (ptr != nullptr) {
+      status_ = DeviceAddressStatus::kInDevice;
+    }
   }
   size_t GetSize() const { return size_; }
   void SetSize(size_t size) { size_ = size; }
@@ -228,16 +231,20 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   virtual void SetStorageInfo(const StorageInfo &) {}
 
-  virtual void HandOver(DeviceAddress *other) {
+  virtual void Swap(DeviceAddress *other) {
     MS_EXCEPTION_IF_NULL(other);
     if (other == this) {
       return;
     }
-    other->set_ptr(GetMutablePtr());
-    other->set_from_mem_pool(from_mem_pool());
-    set_ptr(nullptr);
-    set_from_mem_pool(false);
+    other->ptr_ = ptr_;
+    other->from_mem_pool_ = from_mem_pool_;
+    other->set_deleter(deleter());
+    ptr_ = nullptr;
+    from_mem_pool_ = false;
   }
+
+  virtual void set_swappable(bool) {}
+  virtual bool swappable() { return false; }
 
   // Free the ptr in user data when the ref count is 0.
   virtual void ClearUserData() {}

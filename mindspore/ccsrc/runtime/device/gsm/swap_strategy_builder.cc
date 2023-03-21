@@ -18,6 +18,7 @@
 #include <queue>
 #include <set>
 #include <functional>
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/gsm/swap_strategy.h"
 #include "runtime/device/gsm/mem_usage_analyzer.h"
 #include "include/backend/kernel_graph.h"
@@ -88,8 +89,14 @@ void SwapStrategyBuilder::RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &
 
   bool offload_param = context_->offload_param_to_ddr_ || context_->offload_param_to_disk_;
   bool offload_checkpoint = context_->offload_checkpoint_to_ddr_ || context_->offload_checkpoint_to_disk_;
-  if (offload_param && info->node_ != nullptr && !info->node_->isa<CNode>()) {
-    (void)offload_param_spans_.emplace_back(span);
+  if (offload_param && info->node_ != nullptr && info->node_->isa<Parameter>()) {
+    const auto parameter = info->node_->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(parameter);
+    if (common::AnfAlgo::IsParameterWeight(parameter)) {
+      (void)offload_param_spans_.emplace_back(span);
+    } else {
+      span_queue_.emplace(span);
+    }
   } else if (offload_checkpoint && info->node_ != nullptr && info->node_->isa<CNode>()) {
     auto cnode = info->node_->cast<CNodePtr>();
     if (cnode != nullptr && cnode->HasAttr("checkpoint")) {

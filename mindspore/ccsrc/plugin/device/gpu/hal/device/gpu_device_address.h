@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,6 @@ class GPUDeviceAddress : public LoadableDeviceAddress {
                           const std::string &format) const override;
 
   void ClearDeviceMemory() override;
-  void set_status(DeviceAddressStatus status) { status_ = status; }
-  DeviceAddressStatus status() const { return status_; }
   DeviceType GetDeviceType() const override { return DeviceType::kGPU; }
 
 #ifdef ENABLE_DEBUGGER
@@ -70,8 +68,13 @@ class GPUDeviceAddress : public LoadableDeviceAddress {
   bool AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr, size_t stream_id) const override;
   void ClearUserData() override;
 
+ protected:
+  bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
+  bool CopyHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const override;
+
  private:
-  DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
+  bool CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
+                             bool host_to_device) const;
 };
 }  // namespace gpu
 }  // namespace device

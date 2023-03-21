@@ -229,12 +229,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       }
     } else {
       // Move the device ptr from input_device_tensor to new_device_tensor.
-      new_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
-      new_device_tensor->set_from_mem_pool(input_device_tensor->from_mem_pool());
-      new_device_tensor->SetOffloadPtr(input_device_tensor->GetOffloadPtr());
-      input_device_tensor->set_ptr(nullptr);
-      input_device_tensor->set_from_mem_pool(false);
-      input_device_tensor->SetOffloadPtr(nullptr);
+      input_device_tensor->Swap(new_device_tensor.get());
     }
     MS_LOG(DEBUG) << GetAID().Name() << " creates the dynamic ref device address:" << new_device_tensor.get()
                   << ", ptr:" << new_device_tensor->GetPtr()

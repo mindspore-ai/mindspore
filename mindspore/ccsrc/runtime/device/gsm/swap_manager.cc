@@ -16,15 +16,36 @@
 
 #include "runtime/device/gsm/swap_manager.h"
 
+#include <functional>
 #include <string>
 #include <utility>
 
+#include "include/common/utils/offload_context.h"
+#include "utils/file_utils.h"
+
 namespace mindspore {
 namespace device {
+constexpr char kLinuxAioLibName[] = "liblinux_aio.so";
+constexpr char kLinuxAioInstanceFuncName[] = "linux_aio_instance";
+constexpr size_t kFirstSizeLevel = 0xFFFFFFFFFFFFFFFF << 24;  // 16M
 SwapManager::SwapManager(size_t stream_id, mindspore::device::DynamicMemPoolBestFit *device_memory_pool,
                          PinMemPool *pin_mem_pool)
     : stream_id_(stream_id), device_memory_pool_(device_memory_pool), pin_mem_pool_(pin_mem_pool) {
-  io_handle_ = std::make_shared<IOHandle>();
+  const auto &offload_context = OffloadContext::GetInstance();
+  if (offload_context != nullptr) {
+    const auto real_path = FileUtils::GetRealPath(offload_context->offload_path().c_str());
+    if (!real_path.has_value()) {
+      MS_LOG(EXCEPTION) << "Invalid offload path[" << offload_context->offload_path()
+                        << "]. Please check offload_path configuration.";
+    }
+    io_handle_ = std::make_shared<IOHandle>();
+    io_handle_->set_swap_path(real_path.value() + '/');
+    if (offload_context->enable_aio()) {
+      io_handle_->LoadAio(kLinuxAioLibName, kLinuxAioInstanceFuncName);
+    }
+    max_file_size_ = offload_context->offload_disk_size();
+  }
+  swappable_tensors_.resize(size_level_num_ + 1);
 }
 
 template <class Input, class Output>
@@ -52,6 +73,49 @@ bool SwapManager::TryAllocate(std::queue<const DeviceAddress *> queue, const Inp
   return false;
 }
 
+template <class Input, class Output>
+bool SwapManager::SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> &swap_type, size_t total_size,
+                              const Input &input,
+                              Output (mindspore::device::SwapManager::*allocate_func)(const Input &),
+                              const std::function<bool(Output)> &success, Output *output) {
+  MS_EXCEPTION_IF_NULL(allocate_func);
+  MS_EXCEPTION_IF_NULL(output);
+  const auto target_device_address_status = swap_type.first;
+  const auto swap_out_to = swap_type.second;
+  const auto size_level = GetSizeLevel(total_size);
+  const auto swap_temp_func = [&](const DeviceAddressPtr &candidate) -> bool {
+    if (!candidate->swappable() || candidate->status() != target_device_address_status) {
+      return false;
+    }
+    if (candidate->status() == DeviceAddressStatus::kInDevice && candidate->GetPtr() == nullptr) {
+      return false;
+    }
+    candidate->MoveTo(swap_out_to, false, kDefaultStreamIndex);
+    (*output) = (this->*allocate_func)(input);
+    return success(*output);
+  };
+  for (size_t sl = size_level; sl <= size_level_num_; ++sl) {
+    const auto &candidates = swappable_tensors_[sl];
+    for (const auto &swappable_tensor : candidates) {
+      if (swappable_tensor->GetSize() < total_size) {
+        continue;
+      }
+      if (swap_temp_func(swappable_tensor)) {
+        return true;
+      }
+    }
+  }
+  for (auto riter = swappable_tensors_.crbegin(); riter != swappable_tensors_.crend(); ++riter) {
+    const auto &candidates = *riter;
+    for (const auto &swappable_tensor : candidates) {
+      if (swap_temp_func(swappable_tensor)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void *SwapManager::AllocDeviceMemorySimply(const size_t &size) {
   MS_EXCEPTION_IF_NULL(device_memory_pool_);
   return device_memory_pool_->AllocTensorMem(size);
@@ -62,7 +126,9 @@ void *SwapManager::AllocDeviceMemory(size_t size) {
   void *(SwapManager::*allocate_func)(const size_t &) = &SwapManager::AllocDeviceMemorySimply;
   std::function<bool(void *)> success = [](void *ptr) { return ptr != nullptr; };
   std::lock_guard<std::mutex> lock(swapping_tensors_device_mutex_);
-  if (!TryAllocate(swapping_tensors_device_, size, allocate_func, success, &ret)) {
+  if (!TryAllocate(swapping_tensors_device_, size, allocate_func, success, &ret) &&
+      !SwapOutTemp(std::make_pair(DeviceAddressStatus::kInDevice, StorageType::kHost), size, size, allocate_func,
+                   success, &ret)) {
     MS_LOG(WARNING) << "Allocate device memory failed, size: " << size;
   }
   return ret;
@@ -80,7 +146,11 @@ std::vector<void *> SwapManager::AllocDeviceContinuousMem(const std::vector<size
   std::function<bool(std::vector<void *>)> success = [](const std::vector<void *> &ptrs) { return !ptrs.empty(); };
   std::lock_guard<std::mutex> lock(swapping_tensors_device_mutex_);
   if (!TryAllocate(swapping_tensors_device_, size_list, allocate_func, success, &ret)) {
-    MS_LOG(WARNING) << "Allocate continuous device mem failed, size list: " << size_list;
+    const size_t total_size = std::accumulate(size_list.begin(), size_list.end(), size_t(1), std::multiplies<>());
+    if (!SwapOutTemp(std::make_pair(DeviceAddressStatus::kInDevice, StorageType::kHost), total_size, size_list,
+                     allocate_func, success, &ret)) {
+      MS_LOG(WARNING) << "Allocate continuous device mem failed, size list: " << size_list;
+    }
   }
   return ret;
 }
@@ -100,7 +170,9 @@ void *SwapManager::AllocHostMemory(size_t size) {
   void *(SwapManager::*allocate_func)(const size_t &) = &SwapManager::AllocHostMemorySimply;
   std::function<bool(void *)> success = [](void *ptr) { return ptr != nullptr; };
   std::lock_guard<std::mutex> lock(swapping_tensors_host_mutex_);
-  if (!TryAllocate(swapping_tensors_host_, size, allocate_func, success, &ret)) {
+  if (!TryAllocate(swapping_tensors_host_, size, allocate_func, success, &ret) &&
+      !SwapOutTemp(std::make_pair(DeviceAddressStatus::kInHost, StorageType::kFile), size, size, allocate_func, success,
+                   &ret)) {
     MS_LOG(WARNING) << "Allocate host memory failed, size: " << size;
   }
   return ret;
@@ -167,8 +239,24 @@ bool SwapManager::WaitAsyncIO(mindspore::device::AsyncIOToken sync_token) {
   return io_handle_->Wait(sync_token);
 }
 
+size_t SwapManager::GetSizeLevel(size_t size) const {
+  size_t mask = kFirstSizeLevel;
+  for (size_t i = 0; i < size_level_num_; i += 1) {
+    if ((size & mask) == 0) {
+      return i;
+    }
+    mask = mask << 1;
+  }
+  return size_level_num_;
+}
+
 void SwapManager::AddSwappableTensor(const DeviceAddressPtr &device_address) {
-  swappable_tensors_.push(device_address);
+  if (all_swappable_tensors_.count(device_address) != 0) {
+    return;
+  }
+  size_t size_level = GetSizeLevel(device_address->GetSize());
+  swappable_tensors_[size_level].emplace_back(device_address);
+  all_swappable_tensors_.insert(device_address);
 }
 
 void SwapManager::AddSwappingTensor(const mindspore::device::DeviceAddress *device_address) {

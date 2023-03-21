@@ -87,6 +87,16 @@ TEST_F(TestSwapStrategyBuilder, test_swap_strategy_with_offload_param) {
 
   context->ddr_mem_size_ = 10000;
   context->hbm_mem_size_ = 10000;
+  for (const auto &kernel : kernel_graph->execution_order()) {
+    for (const auto &input : kernel->inputs()) {
+      if (!input->isa<Parameter>()) {
+        continue;
+      }
+      const auto &parameter = std::dynamic_pointer_cast<Parameter>(input);
+      EXPECT_NE(parameter, nullptr);
+      parameter->set_default_param(MakeValue(1));
+    }
+  }
   std::vector<std::vector<size_t>> inputs = {{true, false}, {false, true}, {true, true}};
   std::vector<std::vector<size_t>> expects = {{5, 2, 5, 5, 15, 10}, {5, 2, 5, 5, 15, 10}, {5, 2, 5, 5, 15, 10}};
   for (size_t i = 0; i < 3; ++i) {

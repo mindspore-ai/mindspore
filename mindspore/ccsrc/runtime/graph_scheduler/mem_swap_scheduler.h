@@ -39,23 +39,27 @@ class MemSwapScheduler {
   void Link(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set) const;
 
  private:
-  void GetRealParameters(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
-                         HashMap<AnfNodePtr, size_t> *real_parameters);
+  void GetRealParameters(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser);
 
   void BuildSwapActorForGraph(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                               const DeviceContext *device_context, std::vector<MemSwapActorPtr> *actors);
   AbstractActor *GetActorForLink(size_t id, const std::shared_ptr<device::SwapStrategy> &strategy,
                                  const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                                  ActorSet *actor_set) const;
+  void AddSwappableTensors(const DeviceContext *device_context, const std::shared_ptr<device::SwapStrategy> &strategy,
+                           const KernelGraphPtr &graph);
+  void AddSwappableRootParameter(const GraphCompilerInfo &graph_compiler_info);
 
  private:
   const AID *recorder_aid_;
+  // Real parameter - output index of EntranceActor
+  HashMap<size_t, HashMap<AnfNodePtr, size_t>> real_parameters_;
   // KernelGraph id - SwapStrategy
   HashMap<size_t, std::shared_ptr<device::SwapStrategy>> graph_strategy_map_;
   // SwapAction id - MemSwapActor
-  HashMap<size_t, MemSwapActorPtr> action_actor_map_;
+  HashMap<size_t, HashMap<size_t, MemSwapActorPtr>> action_actor_map_;
   // MemSwapActorPtr - output index of EntranceActor for data dependency
-  HashMap<MemSwapActorPtr, std::vector<size_t>> data_dependency_;
+  HashMap<size_t, HashMap<MemSwapActorPtr, std::vector<size_t>>> data_dependency_;
 };
 }  // namespace runtime
 }  // namespace mindspore
