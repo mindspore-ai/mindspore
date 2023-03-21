@@ -25,6 +25,7 @@
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore::lite {
 void OnnxQuantizeLinearAdjust::RemoveDequantizeLinear(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
@@ -48,27 +49,8 @@ void OnnxQuantizeLinearAdjust::RemoveDequantizeLinear(const FuncGraphPtr &func_g
   }
 }
 
-QuantParamHolderPtr OnnxQuantizeLinearAdjust::GetQuantHolder(const PrimitivePtr &primitive) {
-  MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  QuantParamHolderPtr quant_params_holder = nullptr;
-  auto quant_params_valueptr = primitive->GetAttr("quant_params");
-  if (quant_params_valueptr == nullptr) {
-    quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
-    MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-    primitive->AddAttr("quant_params", quant_params_holder);
-  } else {
-    quant_params_holder = quant_params_valueptr->cast<QuantParamHolderPtr>();
-    if (quant_params_holder == nullptr) {
-      quant_params_holder = std::make_shared<QuantParamHolder>(0, 0);
-      MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
-      primitive->AddAttr("quant_params", quant_params_holder);
-    }
-  }
-  return quant_params_holder;
-}
-
-bool OnnxQuantizeLinearAdjust::SetInputQuantParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_param_holder,
-                                                  size_t index) {
+bool OnnxQuantizeLinearAdjust::SetQuantParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_param_holder,
+                                             bool is_next_node, size_t index) {
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, false, "Primitive quant params holder nullptr.");
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   auto scale_value = primitive->GetAttr("scale");
@@ -84,7 +66,11 @@ bool OnnxQuantizeLinearAdjust::SetInputQuantParam(const CNodePtr &cnode, const Q
   quant_param.zeroPoint = zero_point;
   quant_param.inited = true;
   quant_params.push_back(quant_param);
-  quant_param_holder->set_input_quant_param(index, quant_params);
+  if (is_next_node) {
+    quant_param_holder->set_input_quant_param(index, quant_params);
+  } else {
+    quant_param_holder->set_output_quant_param(index, quant_params);
+  }
   return true;
 }
 
@@ -99,10 +85,24 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
     RemoveDequantizeLinear(func_graph, cnode);
   }
 
+  // fold quant params to input/output tensor
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     if (!opt::CheckPrimitiveType(cnode, std::make_shared<Primitive>(lite::kNameQuantizeLinear))) {
       continue;
     }
+    for (size_t i = 1; i < cnode->size(); i++) {
+      auto input_cnode = cnode->input(i);
+      MS_CHECK_TRUE_RET(input_cnode != nullptr, false);
+      if (IsGraphInput(input_cnode) || !input_cnode->isa<mindspore::CNode>()) {
+        continue;
+      }
+      auto previous_quant_holder = GetCNodeQuantHolder(input_cnode->cast<CNodePtr>());
+      if (!SetQuantParam(cnode, previous_quant_holder, false, 0)) {
+        MS_LOG(ERROR) << "Set output quant param failed.";
+        return false;
+      }
+    }
+
     auto manager = func_graph->manager();
     if (manager == nullptr) {
       manager = Manage(func_graph, true);
@@ -111,29 +111,108 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
     auto node_users = manager->node_users()[cnode];
     for (auto &node_user : node_users) {
       auto next_quant_holder = GetCNodeQuantHolder(node_user.first->cast<CNodePtr>());
-      auto ret = SetInputQuantParam(cnode, next_quant_holder, (node_user.second - kPrimOffset));
-      if (!ret) {
-        MS_LOG(ERROR) << "Set quant param failed.";
+      if (!SetQuantParam(cnode, next_quant_holder, true, (node_user.second - kPrimOffset))) {
+        MS_LOG(ERROR) << "Set input quant param failed.";
         return false;
       }
       manager->SetEdge(node_user.first, node_user.second, cnode->inputs()[kIndex1]);
     }
   }
 
-  // check quant param
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    MS_LOG(DEBUG) << "check cnode name: " << cnode->fullname_with_scope();
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
-    auto input_quant_params = primitive_quant_holder->get_input_quant_params();
-    for (size_t i = 0; i < input_quant_params.size(); i++) {
-      auto quant_params = input_quant_params.at(i);
-      if (!quant_params.empty()) {
-        auto quant_param = quant_params.front();
-        MS_LOG(DEBUG) << "scale: " << quant_param.scale << " zp: " << quant_param.zeroPoint << " index: " << i;
+  auto nodes = func_graph->GetOrderedCnodes();
+  for (auto const &cnode : nodes) {
+    auto quant_param_holder = GetCNodeQuantHolder(cnode);
+    CHECK_NULL_RETURN(quant_param_holder);
+    // weight constant folding
+    for (size_t i = 1; i < cnode->inputs().size(); i++) {
+      auto input_node = cnode->input(i);
+      CHECK_NULL_RETURN(input_node);
+      if (IsGraphInput(input_node) || input_node->isa<mindspore::CNode>()) {
+        continue;
+      }
+      if (input_node->isa<mindspore::Parameter>()) {
+        auto ret = DoParameterQuantDeQuant(cnode, input_node->cast<ParameterPtr>(), i, quant_param_holder);
+        if (ret != RET_OK && ret != RET_NO_CHANGE) {
+          MS_LOG(ERROR) << input_node->fullname_with_scope() << " parameter quant dequant failed.";
+          return RET_ERROR;
+        }
       }
     }
   }
   return true;
+}
+
+int OnnxQuantizeLinearAdjust::DoParameterQuantDeQuant(const CNodePtr &cnode, const ParameterPtr &input_node,
+                                                      size_t input_index,
+                                                      const QuantParamHolderPtr &quant_param_holder) {
+  CHECK_NULL_RETURN(cnode);
+  CHECK_NULL_RETURN(input_node);
+  if (input_index == THIRD_INPUT + 1 && quant::CheckNodeInSet(cnode, quant::kHasBiasOperator)) {
+    return RET_NO_CHANGE;
+  }
+  auto tensor_info = input_node->default_param()->cast<tensor::TensorPtr>();
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " can not get value";
+    return RET_NULL_PTR;
+  }
+  if (tensor_info->data_type() != kNumberTypeFloat32) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant dequant.";
+    return RET_OK;
+  }
+  int preferred_dim =
+    quant::GetPreferredDim(cnode, input_index - 1, quant::ConvertShapeVectorToInt32(tensor_info->shape()));
+  MS_CHECK_GT(static_cast<int>(quant_param_holder->get_input_quant_params().size()), static_cast<int>(input_index) - 1,
+              RET_ERROR);
+  auto quant_params = quant_param_holder->get_input_quant_params().at(input_index - 1);
+  MS_CHECK_FALSE_MSG(quant_params.empty(), RET_ERROR, "quant_params is empty.");
+
+  auto status = QuantDeQuantFilter(input_node, tensor_info, quant_params, preferred_dim);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "QuantFilter failed : " << status;
+    return status;
+  }
+  return RET_OK;
+}
+
+// quant and dequant weight params
+int OnnxQuantizeLinearAdjust::QuantDeQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                                                 const std::vector<schema::QuantParamT> &quant_params,
+                                                 int preferred_dim) {
+  size_t elem_count = weight->DataSize();
+  auto raw_datas = static_cast<float *>(weight->data_c());
+  std::vector<float> new_datas(elem_count);
+  auto dims = quant::ConvertShapeVectorToInt32(weight->shape());
+  MS_CHECK_FALSE_MSG(raw_datas == nullptr, RET_ERROR, "raw_data is nullptr.");
+
+  size_t bit_num = quant_params.front().numBits;
+  int quant_min = QuantMin(bit_num, false, false);
+  int quant_max = QuantMax(bit_num, false);
+  if (quant::IsPerchannelWeight(quant_params, weight, preferred_dim)) {
+    auto count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
+    MS_CHECK_FALSE_MSG(static_cast<size_t>(count) != elem_count, RET_ERROR, "element != count.");
+    CHECK_LESS_RETURN(dims.size(), static_cast<size_t>(preferred_dim + 1));
+    // Do quant and dequant
+    for (size_t i = 0; i < elem_count; i++) {
+      float raw_data = raw_datas[i];
+      auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
+      auto quant_param = quant_params.at(bucket_index);
+      auto new_data = quant::QuantDeQuantData<float>(raw_data, &quant_param, quant_max, quant_min);
+      new_datas[i] = new_data;
+    }
+  } else {
+    // Do quant and dequant
+    auto quant_param = quant_params.front();
+    for (uint32_t i = 0; i < elem_count; i++) {
+      float raw_data = raw_datas[i];
+      auto new_data = quant::QuantDeQuantData<float>(raw_data, &quant_param, quant_max, quant_min);
+      new_datas[i] = new_data;
+    }
+  }
+  auto new_size = new_datas.size() * sizeof(float);
+  if (memcpy_s(weight->data_c(), new_size, new_datas.data(), new_size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace mindspore::lite

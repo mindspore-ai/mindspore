@@ -34,12 +34,11 @@
 #include "include/errorcode.h"
 namespace mindspore::lite::quant {
 STATUS QATTransform::DoSingleGraphQATTransform(const FuncGraphPtr &func_graph) {
-  if (param_->fullQuantParam.target_device == TargetDevice::DSP &&
-      param_->commonQuantParam.quant_type != quant::QUANT_ALL) {
+  if (param_->transformQuantParam.precision_mode == quant::PrecisionMode::FLOAT32) {
     auto remove_quant_param_pass = RemoveQuantParam(func_graph);
     auto ret = remove_quant_param_pass.Remove();
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "remove unused quant param failed.";
+      MS_LOG(ERROR) << "remove quant param failed.";
       return RET_ERROR;
     }
   }
