@@ -783,4 +783,28 @@ ValuePtr PyStubNodeCast(const py::handle &obj) {
   }
   return stub;
 }
+
+ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor_value = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    auto shallow_tensor = std::make_shared<tensor::Tensor>(*tensor_value);
+    shallow_tensor->set_base_shape(tensor_value->base_shape_ptr());
+    return shallow_tensor;
+  } else if (value->isa<ValueSequence>()) {
+    std::vector<ValuePtr> values;
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+    (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(values),
+                         [](const ValuePtr &elem) { return ShallowCopyTensorValue(elem); });
+    return std::make_shared<ValueTuple>(values);
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    return ShallowCopyTensorValue(stub_node->WaitValue());
+  } else {
+    return value;
+  }
+}
 }  // namespace mindspore
