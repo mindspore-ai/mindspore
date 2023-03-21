@@ -31,16 +31,15 @@ Status CheckPidStatus(pid_t pid) {
   if (w < 0) {
     return kLiteError;
   }
-  if (WIFEXITED(status)) {  // normal exit
-    if (WEXITSTATUS(status) != kProcessSuccess) {
+  if (WIFEXITED(status)) {                         // normal exit
+    if (WEXITSTATUS(status) != kProcessSuccess) {  // caused by asan
       return kLiteGraphFileError;
     } else {
+      MS_LOG(INFO) << "Pre build and run for death test passed.";
       return kSuccess;
     }
-  } else if (WIFSIGNALED(status)) {  // abnormal exit, such as process killed
-    return kLiteGraphFileError;
   }
-  return kLiteGraphFileError;  // other signal, such as WIFSTOPPED, WIFCONTINUED
+  return kLiteGraphFileError;  // abnormal exit, such as process killed or other signal, WIFSTOPPED, WIFCONTINUED
 }
 
 int GetNumThreads() {
