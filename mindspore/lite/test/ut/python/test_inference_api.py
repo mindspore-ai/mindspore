@@ -75,8 +75,8 @@ def test_context_cpu_precision_mode_value_error():
 
 def test_context_cpu_precision_mode():
     context = mslite.Context()
-    context.cpu.precision_mode = "force_fp16"
-    assert "precision_mode: force_fp16" in str(context.cpu)
+    context.cpu.precision_mode = "preferred_fp16"
+    assert "precision_mode: preferred_fp16" in str(context.cpu)
 
 
 def test_context_cpu_thread_num_type_error():
@@ -170,8 +170,8 @@ def test_context_gpu_precision_mode_value_error():
 
 def test_context_gpu_precision_mode():
     context = mslite.Context()
-    context.gpu.precision_mode = "force_fp16"
-    assert "precision_mode: force_fp16" in str(context.gpu)
+    context.gpu.precision_mode = "preferred_fp16"
+    assert "precision_mode: preferred_fp16" in str(context.gpu)
 
 
 def test_context_gpu_device_id_type_error():
@@ -203,8 +203,8 @@ def test_context_ascend_precision_mode_value_error():
 
 def test_context_ascend_precision_mode():
     context = mslite.Context()
-    context.ascend.precision_mode = "force_fp16"
-    assert "precision_mode: force_fp16" in str(context.ascend)
+    context.ascend.precision_mode = "enforce_fp32"
+    assert "precision_mode: enforce_fp32" in str(context.ascend)
 
 
 def test_context_ascend_device_id_type_error():

@@ -66,11 +66,16 @@ class FmkType(Enum):
 
 class Converter:
     r"""
-    Constructs a `Converter` class. The usage scenarios are: 1. Convert the third-party model into MindSpore model or
-    MindSpore Lite model; 2. Convert MindSpore model into MindSpore Lite model.
+    Constructs a `Converter` class.
+
+    Used in the following scenarios:
+
+    1. Convert the third-party model into MindSpore model or MindSpore Lite model.
+
+    2. Convert MindSpore model into MindSpore Lite model.
 
     Note:
-        Please construct the `Converter` class first, and then generate the model by executing the Converter.converter()
+        Please construct the `Converter` class first, and then generate the model by executing the Converter.convert()
         method.
 
         The encryption and decryption function is only valid when it is set to `MSLITE_ENABLE_MODEL_ENCRYPTION=on` at
@@ -85,7 +90,7 @@ class Converter:
         >>> # testcase 1 based on cloud inference package without train_model.
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter()
-        >>> # The ms model may be generated only after converter.converter() is executed after the class is constructed.
+        >>> # The ms model may be generated only after converter.convert() is executed after the class is constructed.
         >>> converter.weight_fp16 = True
         >>> converter.input_shape = {"inTensor1": [1, 3, 32, 32]}
         >>> converter.input_format = mslite.Format.NHWC
@@ -107,25 +112,33 @@ class Converter:
         >>> print(converter)
         config_info: {'common_quant_param': {'quant_type': 'WEIGHT_QUANT'}},
         weight_fp16: True,
-        input_shape: {"inTensor1": [1, 3, 32, 32]},
+        input_shape: {'inTensor1': [1, 3, 32, 32]},
         input_format: Format.NHWC,
         input_data_type: DataType.FLOAT32,
         output_data_type: DataType.FLOAT32,
         save_type: ModelType.MINDIR_LITE,
-        decrypt_key: "30313233343637383939414243444546",
+        decrypt_key: 30313233343637383939414243444546,
         decrypt_mode: AES-GCM,
         enable_encryption: True,
-        encrypt_key: "30313233343637383939414243444546",
+        encrypt_key: 30313233343637383939414243444546,
         infer: True,
         optimize: general,
-        device: "Ascend".
+        device: Ascend.
+        >>> # testcase 2 based on lite inference package with train_model.
+        >>> import mindspore_lite as mslite
+        >>> converter = mslite.Converter()
+        >>> # The ms model may be generated only after converter.convert() is executed after the class is constructed.
+        >>> converter.train_model = True
+        >>> print(converter.train_model)
+        True
     """
 
     def __init__(self):
         self._converter = _c_lite_wrapper.ConverterBind()
+        self.optimize_user_defined = "general"
 
     def __str__(self):
-        if not hasattr(_c_lite_wrapper, "GetTrainModel"):
+        if not hasattr(_c_lite_wrapper.ConverterBind, "get_train_model"):
             res = f"config_info: {self.get_config_info()},\n" \
                   f"weight_fp16: {self.weight_fp16},\n" \
                   f"input_shape: {self.input_shape},\n" \
@@ -190,7 +203,7 @@ class Converter:
         Get decryption mode for the encrypted MindIR file.
 
         Returns:
-            str, decryption mode for the encrypted MindIR file. Only valid when dec_key is set. Options: "AES-GCM" |
+            str, decryption mode for the encrypted MindIR file. Only valid when dec_key is set. Options are "AES-GCM" |
             "AES-CBC".
         """
         return self._converter.get_decrypt_mode()
@@ -202,7 +215,7 @@ class Converter:
 
         Args:
             decrypt_mode (str): Set decryption mode for the encrypted MindIR file. Only valid when dec_key is set.
-                Options: "AES-GCM" | "AES-CBC".
+                Options are "AES-GCM" | "AES-CBC".
 
         Raises:
             TypeError: `decrypt_mode` is not a str.
@@ -210,7 +223,7 @@ class Converter:
         """
         check_isinstance("decrypt_mode", decrypt_mode, str)
         if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
-            raise ValueError(f"decrypt_mode must be in [AES-GCM, AES-CBC].")
+            raise ValueError(f"decrypt_mode must be in [AES-GCM, AES-CBC], but got {decrypt_mode}.")
         self._converter.set_decrypt_mode(decrypt_mode)
 
     @property
@@ -222,7 +235,7 @@ class Converter:
             str, target device when converter model. Only valid for Ascend. The use case is when on the Ascend device,
             if you need to the converted model to have the ability to use Ascend backend to perform inference,
             you can set the parameter. If it is not set, the converted model will use CPU backend to perform
-            inference by default. Options: "Ascend".
+            inference by default. Option is "Ascend".
         """
         return self._converter.get_device()
 
@@ -235,7 +248,7 @@ class Converter:
             device (str): Set target device when converter model. Only valid for Ascend. The use case is when on the
                 Ascend device, if you need to the converted model to have the ability to use Ascend backend to perform
                 inference, you can set the parameter. If it is not set, the converted model will use CPU backend to
-                perform inference by default. Options: "Ascend".
+                perform inference by default. Option is "Ascend".
 
         Raises:
             TypeError: `device` is not a str.
@@ -243,7 +256,7 @@ class Converter:
         """
         check_isinstance("device", device, str)
         if device not in ["Ascend"]:
-            raise ValueError(f"device must be in [Ascend].")
+            raise ValueError(f"device must be in [Ascend], but got {device}.")
         self._converter.set_device(device)
 
     @property
@@ -278,8 +291,8 @@ class Converter:
         Get the key used to encrypt the model when exporting.
 
         Returns:
-            str, the key used to encrypt the model when exporting, expressed in hexadecimal characters. Only support
-            when`decrypt_mode` is "AES-GCM", the key length is 16.
+            str, the key used to encrypt the model when exporting, expressed in hexadecimal characters. Only support to
+            use it when `decrypt_mode` is "AES-GCM", the key length is 16.
         """
         return self._converter.get_encrypt_key()
 
@@ -301,20 +314,20 @@ class Converter:
     @property
     def infer(self):
         """
-        Get the status whether to do pre-inference after Converter.
+        Get the status whether to perform pre-inference at the completion of the conversion.
 
         Returns:
-            bool, whether to do pre-inference after Converter.
+            bool, whether to perform pre-inference at the completion of the conversion.
         """
         return self._converter.get_infer()
 
     @infer.setter
     def infer(self, infer):
         """
-        Set whether to do pre-inference after Converter.
+        Set whether to perform pre-inference at the completion of the conversion.
 
         Args:
-            infer (bool): Whether to do pre-inference after Converter.
+            infer (bool): whether to perform pre-inference at the completion of the conversion.
 
         Raises:
             TypeError: `infer` is not a bool.
@@ -483,19 +496,19 @@ class Converter:
         "ascend_oriented", the optimization for Ascend hardware will be performed (the converted model only supports
         Ascend hardware backend).
 
-        Note:
-            For the MindSpore model, since it is already a `mindir` model, two approaches are suggested:
+        For the MindSpore model, since it is already a `mindir` model, two approaches are suggested:
 
-            - Inference is performed directly without offline conversion.
-            - Setting `optimize` to "general" in CPU/GPU hardware backend and setting `optimize` to
-               "ascend_oriented" in Ascend hardware when using offline conversion. The relevant optimization is done in
-               the offline phase to reduce the initialization time of inference execution.
+        1. Inference is performed directly without offline conversion.
+
+        2. Setting `optimize` to "general" in CPU/GPU hardware backend and setting `optimize` to "ascend_oriented" in
+        Ascend hardware when using offline conversion. The relevant optimization is done in the offline phase to reduce
+        the initialization time of inference execution.
 
         Returns:
-            str, whether avoid fusion optimization. Options: "none" | "general" | "ascend_oriented". "none" means fusion
-            optimization is not allowed. "general" and "ascend_oriented" means fusion optimization is allowed.
+            str, whether avoid fusion optimization. Options are "none" | "general" | "ascend_oriented". "none" means
+            fusion optimization is not allowed. "general" and "ascend_oriented" means fusion optimization is allowed.
         """
-        return self._converter.get_no_fusion()
+        return self.optimize_user_defined
 
     @optimize.setter
     def optimize(self, optimize):
@@ -503,7 +516,7 @@ class Converter:
         Set whether avoid fusion optimization.
 
         Args:
-            optimize(str): Whether avoid fusion optimization. Options: "none" | "general" | "ascend_oriented".
+            optimize(str): Whether avoid fusion optimization. Options are "none" | "general" | "ascend_oriented".
                 "none" means fusion optimization is not allowed. "general" and "ascend_oriented" means fusion
                 optimization is allowed.
 
@@ -512,16 +525,18 @@ class Converter:
             ValueError: `optimize` is not in ["none", "general", "ascend_oriented"] when it is a str.
         """
         check_isinstance("optimize", optimize, str)
-        no_fusion = True
         if optimize == "none":
-            no_fusion = True
+            self._converter.set_no_fusion(True)
+            self.optimize_user_defined = "none"
         elif optimize == "general":
-            no_fusion = False
+            self._converter.set_no_fusion(False)
+            self.optimize_user_defined = "general"
         elif optimize == "ascend_oriented":
-            no_fusion = False
+            self._converter.set_no_fusion(False)
+            self.device = "Ascend"
+            self.optimize_user_defined = "ascend_oriented"
         else:
-            raise ValueError(f"optimize must be 'general', 'none' or 'ascend_oriented'.")
-        self._converter.set_no_fusion(no_fusion)
+            raise ValueError(f"optimize must be 'none', 'general' or 'ascend_oriented'.")
 
     @property
     def output_data_type(self):
@@ -577,7 +592,7 @@ class Converter:
         Get the model type needs to be export.
 
         Returns:
-            ModelType, the model type needs to be export. Options: ModelType.MINDIR |  ModelType.MINDIR_LITE.
+            ModelType, the model type needs to be export. Options are ModelType.MINDIR |  ModelType.MINDIR_LITE.
             For details, see
             `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
         """
@@ -589,7 +604,7 @@ class Converter:
         Set the model type needs to be export.
 
         Args:
-            save_type (ModelType): Set the model type needs to be export. Options: ModelType.MINDIR |
+            save_type (ModelType): Set the model type needs to be export. Options are ModelType.MINDIR |
                 ModelType.MINDIR_LITE. For details, see
                 `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
 
@@ -610,7 +625,7 @@ class Converter:
         Returns:
             bool, whether the model is going to be trained on device.
         """
-        if not hasattr(_c_lite_wrapper, "GetTrainModel"):
+        if not hasattr(_c_lite_wrapper.ConverterBind, "get_train_model"):
             raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
         return self._converter.get_train_model()
 
@@ -628,7 +643,7 @@ class Converter:
         Raises:
             TypeError: `train_model` is not a bool.
         """
-        if hasattr(_c_lite_wrapper, "SetTrainModel"):
+        if not hasattr(_c_lite_wrapper.ConverterBind, "set_train_model"):
             raise RuntimeError(f"train_model is not supported to use on MindSpore Lite cloud inference package")
         check_isinstance("train_model", train_model, bool)
         self._converter.set_train_model(train_model)
@@ -667,16 +682,16 @@ class Converter:
         check_isinstance("weight_fp16", weight_fp16, bool)
         self._converter.set_weight_fp16(weight_fp16)
 
-    def converter(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
+    def convert(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
         """
-        Perform conversion, and convert the third-party model to the mindspire model.
+        Perform conversion, and convert the third-party model to the MindSpore model.
 
         Args:
-            fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE |
+            fmk_type (FmkType): Input model framework type. Options are FmkType.TF | FmkType.CAFFE |
                 FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH. For details, see
                 `FmkType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.FmkType.html>`_ .
-            model_file (str): Set the path of the input model when converter. For example, "/home/user/model.prototxt".
-                Options:TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
+            model_file (str): Set the path of the input model when convert. For example, "/home/user/model.prototxt".
+                Options are TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" |
                 TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth".
             output_file (str): Set the path of the output model. The suffix .ms or .mindir can be automatically
                 generated. If set `save_type` to ModelType.MINDIR, then MindSpore's model will be generated, which uses
@@ -706,12 +721,12 @@ class Converter:
             RuntimeError: `model_file` does not exist.
             RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
             RuntimeError: `config_file` is not "", but `config_file` does not exist.
-            RuntimeError: converter model failed.
+            RuntimeError: convert model failed.
 
         Examples:
             >>> import mindspore_lite as mslite
             >>> converter = mslite.Converter()
-            >>> converter.converter(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
+            >>> converter.convert(mslite.FmkType.TFLITE, "./mobilenetv2/mobilenet_v2_1.0_224.tflite",
             ...                     "mobilenet_v2_1.0_224.tflite")
             CONVERT RESULT SUCCESS:0
             >>> # mobilenet_v2_1.0_224.tflite.ms model will be generated.
@@ -722,13 +737,13 @@ class Converter:
         check_isinstance("weight_file", weight_file, str)
         check_isinstance("config_file", config_file, str)
         if not os.path.exists(model_file):
-            raise RuntimeError(f"Perform converter method failed, model_file does not exist!")
+            raise RuntimeError(f"Perform convert method failed, model_file does not exist!")
         if weight_file != "":
             if not os.path.exists(weight_file):
-                raise RuntimeError(f"Perform converter method failed, weight_file does not exist!")
+                raise RuntimeError(f"Perform convert method failed, weight_file does not exist!")
         if config_file != "":
             if not os.path.exists(config_file):
-                raise RuntimeError(f"Perform converter method failed, config_file does not exist!")
+                raise RuntimeError(f"Perform convert method failed, config_file does not exist!")
             self._converter.set_config_file(config_file)
 
         fmk_type_py_cxx_map = {
@@ -739,12 +754,12 @@ class Converter:
             FmkType.TFLITE: _c_lite_wrapper.FmkType.kFmkTypeTflite,
             FmkType.PYTORCH: _c_lite_wrapper.FmkType.kFmkTypePytorch,
         }
-        ret = self._converter.converter(fmk_type_py_cxx_map.get(fmk_type), model_file, output_file, weight_file)
+        ret = self._converter.convert(fmk_type_py_cxx_map.get(fmk_type), model_file, output_file, weight_file)
         if not ret.IsOk():
-            raise RuntimeError(f"Converter model failed! Error is {ret.ToString()}")
+            raise RuntimeError(f"Converter model failed! model_file is {model_file}, error is {ret.ToString()}")
 
     def get_config_info(self):
-        """
+        r"""
         Get config info of converter.It is used together with `set_config_info` method for online converter.
         Please use `set_config_info` method before `get_config_info` .
 
