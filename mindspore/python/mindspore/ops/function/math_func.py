@@ -2271,7 +2271,7 @@ def asin(x):
         >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
         >>> output = ops.asin(x)
         >>> print(output)
-        [0.8330704  0.04001067 0.30469266 0.5943858 ]
+        [0.8330704  0.04001067  0.30469266  0.5943858 ]
     """
     return asin_(x)
 
