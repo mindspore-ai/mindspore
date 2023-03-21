@@ -1702,6 +1702,7 @@ class Fill(PrimitiveWithCheck):
         Deprecated
     """
 
+    @deprecated("2.2", "ops.FillV2", False)
     @prim_attr_register
     def __init__(self):
         """Initialize Fill"""
@@ -1802,14 +1803,15 @@ class FillV2(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['shape', 'value'], outputs=['y'])
 
     def infer_value(self, dims, x):
+        if dims is None or x is None or \
+            (isinstance(dims, (tuple, list)) and None in dims):
+            return None
         if isinstance(dims, (Tensor, Tensor_)):
             dims = dims.asnumpy()
         if isinstance(x, (Tensor, Tensor_)):
             x = x.asnumpy()
-        if dims is not None and None not in dims and x is not None:
-            ret = np.full(dims, x)
-            return Tensor(ret)
-        return None
+        ret = np.full(dims, x)
+        return Tensor(ret)
 
 
 class Ones(Primitive):

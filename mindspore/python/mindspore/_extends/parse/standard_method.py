@@ -1908,8 +1908,6 @@ def fill(x, value):
             const_utils.raise_type_error("If None is used as value, the original Tensor's dtype must be float.")
         value = nan_tensor
         return F.tile(value, x.shape).astype(x.dtype)
-    if not isinstance(value, (int, float, bool)):
-        const_utils.raise_type_error("input value must be a scalar.")
     return F.fill(x.dtype, x.shape, value)
 
 
