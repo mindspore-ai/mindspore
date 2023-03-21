@@ -6473,7 +6473,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         x = ops.Concat(axis)((x, append))
     elif prepend is not None:
         x = ops.Concat(axis)((prepend, x))
-    a = ops.make_range(x.shape[axis])
+    a = ops.make_range(0, x.shape[axis], 1)
     a1 = x.gather(TupleToTensor()(a[:-1], mstype.int64), axis)
     a2 = x.gather(TupleToTensor()(a[1:], mstype.int64), axis)
     return a2 - a1
