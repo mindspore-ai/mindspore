@@ -143,7 +143,7 @@ def pattern_replace(stree):
             return [conv_node]
 
     class BnReplace(PatternEngine):
-        # Replace node of type nn.MaxPool2d in the network
+        """Replace node of type nn.MaxPool2d in the network"""
         def __init__(self):
             super().__init__([nn.MaxPool2d], ConvReplacement())
 

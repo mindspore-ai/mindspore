@@ -66,8 +66,8 @@ class OpAdapterImpl {
   ~OpAdapterImpl() {}
   bool IsCustomOp(const OperatorPtr &op) const;
   std::string GetCustomOpType(const PrimitivePtr &prim) const;
-  Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
-  Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) const;
+  Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
+  Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
   OperatorPtr GenerateCustomOp(const AnfNodePtr anf);
   Status SetOpSubgraphFunc(const OperatorPtr &op, const std::shared_ptr<std::vector<DfGraph>> &subgraphs);
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches);
