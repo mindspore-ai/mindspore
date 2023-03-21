@@ -75,13 +75,6 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
     w_buf_size += weight_h_size;
     init_code.CodeFunction("PackLstmWeight", weight_h_ptr_, weight_h, weight_batch_, lstm_param_->hidden_size_,
                            lstm_param_->hidden_size_, lstm_param_->state_col_align_, "NULL");
-  } else {
-    size_t weight_h_size = weight_h->Size();
-    weight_h_ptr_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, weight_h->Size(), kOfflinePackWeight));
-    MS_CHECK_PTR(weight_h_ptr_);
-    MS_CHECK_RET_CODE(memcpy_s(weight_h_ptr_, weight_h_size, weight_h->data(), weight_h_size),
-                      "copy weight h data failed");
   }
 
   state_bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
@@ -214,8 +207,15 @@ int LstmFP32Coder::DoCode(CoderContext *context) {
   code.CodeArray("buffer", buffers_addr.data(), buffers_addr.size(), false);
   code.CodeFunction("memcpy", output_hidden_state, hidden_state, hidden_state->Size());
   code.CodeFunction("memcpy", output_cell_state, cell_state, cell_state->Size());
-  code.CodeFunction("Lstm", output_tensor_, input_tensor_, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
-                    output_hidden_state, output_cell_state, "buffer", "&lstm_param");
+  if (weight_h_ptr_ != nullptr) {
+    code.CodeFunction("Lstm", output_tensor_, input_tensor_, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
+                      output_hidden_state, output_cell_state, "buffer", "&lstm_param");
+  } else {
+    auto *weight_h_tensor = input_tensors().at(kInputSize1);
+    auto weight_h = allocator_->GetRuntimeAddr(weight_h_tensor, weight_h_tensor->IsConst());
+    code.CodeFunction("Lstm", output_tensor_, input_tensor_, weight_i_ptr_, weight_h, input_bias_, state_bias_,
+                      output_hidden_state, output_cell_state, "buffer", "&lstm_param");
+  }
   context->AppendCode(code.str());
   return RET_OK;
 }

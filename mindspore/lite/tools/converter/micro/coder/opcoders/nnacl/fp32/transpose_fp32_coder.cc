@@ -48,10 +48,6 @@ int TransposeFp32Coder::Resize() {
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
 
-  out_shape_ =
-    reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, out_shape.size() * sizeof(int), kOfflinePackWeight));
-  MS_CHECK_PTR(out_shape_);
-  memcpy(out_shape_, out_shape.data(), in_shape.size() * sizeof(int));
   return RET_OK;
 }
 
@@ -141,7 +137,9 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   }
 
   code.CodeStruct("trans_param", *param_);
-  dims_ = output_tensor_->shape().size();
+  auto out_shape = output_tensor_->shape();
+  dims_ = static_cast<int>(out_shape.size());
+  code.CodeArray("output_shape", out_shape.data(), dims_, true);
   if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
     int *dim_size = reinterpret_cast<int *>(malloc(dims_ * sizeof(int)));
     if (dim_size == nullptr) {
@@ -149,7 +147,7 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
     }
     *(dim_size + dims_ - 1) = 1;
     for (int i = dims_ - 1; i > 0; --i) {
-      *(dim_size + i - 1) = *(dim_size + i) * out_shape_[i];
+      *(dim_size + i - 1) = *(dim_size + i) * out_shape[i];
     }
     code.CodeArray("dim_size", dim_size, dims_);
     int *position = reinterpret_cast<int *>(malloc(dims_ * thread_num_ * sizeof(int)));
@@ -158,12 +156,12 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
       return RET_NULL_PTR;
     }
     code.CodeArray("position", position, dims_ * thread_num_);
-    code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, out_shape_, "dim_size", "position",
+    code.CodeFunction("TransposeDimsFp32", input_tensor_, output_tensor_, "output_shape", "dim_size", "position",
                       "&trans_param", kDefaultTaskId, thread_num_);
     free(dim_size);
     free(position);
   } else {
-    code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, out_shape_, "&trans_param");
+    code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, "output_shape", "&trans_param");
   }
   context->AppendCode(code.str());
   return RET_OK;

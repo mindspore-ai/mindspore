@@ -41,7 +41,6 @@ class TransposeFp32Coder : public OperatorCoder {
   void GetNHNCTransposeFunc();
 
   TransposeParameter *param_{nullptr};
-  int *out_shape_{nullptr};
   std::string NHNCTransposeFunc_;
   int nhnc_param_[3];
   int dims_{0};
