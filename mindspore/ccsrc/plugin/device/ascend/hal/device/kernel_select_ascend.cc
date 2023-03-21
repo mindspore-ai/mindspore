@@ -1165,7 +1165,7 @@ void SetDynamicInputSizeAttrBeforeKernelSelect(const CNodePtr &cnode) {
   size_t input_num = cnode->inputs().size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
     auto input_node = common::AnfAlgo::GetInputNode(cnode, i);
-    dyn_input_sizes.emplace_back(kernel::CalOutputTupleSize(input_node));
+    (void)dyn_input_sizes.emplace_back(kernel::CalOutputTupleSize(input_node));
   }
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);

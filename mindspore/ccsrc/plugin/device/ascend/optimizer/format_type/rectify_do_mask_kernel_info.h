@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_RECTIFY_DO_MASK_KERNEL_INFO_H
 #include <map>
 #include <string>
-#include <vector>
 #include <memory>
 
 #include "include/backend/optimizer/optimizer.h"
