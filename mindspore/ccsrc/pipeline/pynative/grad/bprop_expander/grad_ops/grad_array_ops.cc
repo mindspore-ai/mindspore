@@ -366,6 +366,35 @@ NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const No
   return params_grad;
 }
 
+int64_t RecorrectAxis(int64_t axis, size_t rank) {
+  auto rank_i = SizeToLong(rank);
+  if (rank == 0 || axis < -rank_i || axis >= rank_i) {
+    MS_EXCEPTION(ValueError) << "Rank can not be 0 and 'axis' must be in range [-" << rank_i << ", " << rank_i
+                             << "), but got " << axis;
+  }
+  return (axis < 0) ? (axis + rank_i) : axis;
+}
+
+bool IsMutable(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->get());
+  ValuePtr value_ptr = nullptr;
+  if (node->isa<ValueNode>()) {
+    value_ptr = node->get<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+  } else {
+    auto abstract = node->abstract();
+    if (abstract != nullptr) {
+      value_ptr = abstract->BuildValue();
+    }
+  }
+  if (value_ptr != nullptr &&
+      (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::Tensor>())) {
+    return false;
+  }
+  return true;
+}
+
 NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   auto batch_dims = ib->GetAttr<int64_t>(kAttrBatchDims);
   auto x = ib->GetInput(kIndex0);
@@ -394,7 +423,7 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
     batch_dims += SizeToLong(ind_shp.size());
   }
 
-  if (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)) {
+  if (IsMutable(axis) && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp))) {
     auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
       indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
@@ -419,6 +448,10 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
     return {x_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
   }
 
+  if (IsDynamicRank(x_shp) || IsDynamicRank(ind_shp) || IsDynamicRank(out_shp)) {
+    MS_LOG(EXCEPTION) << "For Gather's gradient, the shapes of x, indices and output should not be dynamic rank!";
+  }
+
   if (ind_shp.empty()) {
     indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
     ind_shp = ib->GetShape(indices);
@@ -432,20 +465,22 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   if (batch_dims > 0) {
     x_grad = CalBatchGather(ib, values_transpose, indices, x, axis_v, batch_dims);
   } else {
-    x_grad = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, ib->Value<int64_t>(x_shp[axis_v])});
+    auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
+      auto x_shp = inputs.at(0);
+      auto axis_v = inputs.at(1)[0];
+      axis_v = RecorrectAxis(axis_v, x_shp.size());
+      return {{x_shp[LongToSize(axis_v)]}};
+    };
+    auto rank_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {1}; };
+    auto num_segment = ib->ShapeCalc({x, axis}, shape_func, rank_func, {1})[0];
+    if (num_segment->isa<ValueNode>()) {
+      num_segment = ib->Tensor(GetIntList(num_segment), kInt64);
+    }
+    x_grad = ib->Emit("UnsortedSegmentSum", {values_transpose, indices, num_segment});
   }
   auto perm_2 = GenerateInverseIndex(x_shp, axis_v, batch_dims);
   auto params_grad = ib->Transpose(x_grad, perm_2);
   return {params_grad, ib->ZerosLike(indices), ib->ZerosLike(axis)};
-}
-
-int64_t RecorrectAxis(int64_t axis, size_t rank) {
-  auto rank_i = SizeToLong(rank);
-  if (rank == 0 || axis < -rank_i || axis >= rank_i) {
-    MS_EXCEPTION(ValueError) << "Rank can not be 0 and 'axis' must be in range [-" << rank_i << ", " << rank_i
-                             << "), but got " << axis;
-  }
-  return (axis < 0) ? (axis + rank_i) : axis;
 }
 
 ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
