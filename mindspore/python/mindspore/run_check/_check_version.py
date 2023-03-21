@@ -95,7 +95,7 @@ class GPUEnvChecker(EnvChecker):
             version_match = True
         if not version_match:
             if self.v == "0":
-                logger.warning("Can not found cuda libs, please confirm that the correct "
+                logger.warning("Can not found cuda libs. Please confirm that the correct "
                                "cuda version has been installed, you can refer to the "
                                "installation guidelines: https://www.mindspore.cn/install")
             else:
@@ -106,17 +106,17 @@ class GPUEnvChecker(EnvChecker):
         nvcc_version = self._get_nvcc_version(False)
         if nvcc_version and (nvcc_version not in self.version):
             logger.warning(f"MindSpore version {__version__} and nvcc(cuda bin) version {nvcc_version} "
-                           "does not match, please refer to the installation guide for version matching "
+                           "does not match. Please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install")
         cudnn_version = self._get_cudnn_version()
         if cudnn_version and int(cudnn_version) < 760:
             logger.warning(f"MindSpore version {__version__} and cudDNN version {cudnn_version} "
-                           "does not match, please refer to the installation guide for version matching "
+                           "does not match. Please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
                            "CUDA10.1 with cuDNN7.6.x, CUDA11.1 with cuDNN8.0.x and CUDA11.6 with cuDNN8.5.x.")
         if cudnn_version and int(cudnn_version) < 800 and int(str(self.v).split('.')[0]) > 10:
             logger.warning(f"CUDA version {self.v} and cuDNN version {cudnn_version} "
-                           "does not match, please refer to the installation guide for version matching "
+                           "does not match. Please refer to the installation guide for version matching "
                            "information: https://www.mindspore.cn/install. The recommended version is "
                            "CUDA11.1 with cuDNN8.0.x or CUDA11.6 with cuDNN8.5.x.")
 
@@ -212,7 +212,7 @@ class GPUEnvChecker(EnvChecker):
         try:
             real_path = self.library_path
             if real_path is None or real_path == []:
-                logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
+                logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found. Please "
                              f"confirm that libmindspore_gpu.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
@@ -223,10 +223,10 @@ class GPUEnvChecker(EnvChecker):
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
                 if path.lower().find("not found") > 0:
-                    logger.error(f"Cuda {self.version} version({lib_name}*.so need by mindspore-gpu) is not found, "
-                                 "please confirm that the path of cuda is set to the env LD_LIBRARY_PATH, or check "
+                    logger.error(f"Cuda {self.version} version({lib_name}*.so need by mindspore-gpu) is not found. "
+                                 "Please confirm that the path of cuda is set to the env LD_LIBRARY_PATH, or check "
                                  "whether the CUDA version in wheel package and the CUDA runtime in current device "
-                                 "matches, please refer to the installation guidelines: "
+                                 "matches. Please refer to the installation guidelines: "
                                  "https://www.mindspore.cn/install")
                     continue
                 path = path.partition(lib_name)[0]
@@ -234,8 +234,8 @@ class GPUEnvChecker(EnvChecker):
                     path_list.append(os.path.abspath(path.strip() + "../"))
             return np.unique(path_list)
         except subprocess.TimeoutExpired:
-            logger.warning("Failed to check cuda version due to the ldd command timeout, please confirm that "
-                           "the correct cuda version has been installed, you can refer to the "
+            logger.warning("Failed to check cuda version due to the ldd command timeout. Please confirm that "
+                           "the correct cuda version has been installed. You can refer to the "
                            "installation guidelines: https://www.mindspore.cn/install")
             return path_list
 
@@ -317,8 +317,8 @@ class AscendEnvChecker(EnvChecker):
     def check_version(self):
         if not Path(self.fwk_version).is_file():
             logger.warning("Using custom Ascend AI software package (Ascend Data Center Solution) path, package "
-                           "version checking is skipped, please make sure Ascend AI software package (Ascend Data "
-                           "Center Solution) version is supported, you can reference to the installation guidelines "
+                           "version checking is skipped. Please make sure Ascend AI software package (Ascend Data "
+                           "Center Solution) version is supported, you can refer to the installation guidelines "
                            "https://www.mindspore.cn/install")
             return
 
@@ -327,7 +327,7 @@ class AscendEnvChecker(EnvChecker):
             v_list = str([x for x in self.version])
             logger.warning(f"MindSpore version {__version__} and Ascend AI software package (Ascend Data Center "
                            f"Solution)version {v} does not match, the version of software package expect one of "
-                           f"{v_list}, please reference to the match info on: https://www.mindspore.cn/install")
+                           f"{v_list}. Please refer to the match info on: https://www.mindspore.cn/install")
 
     def check_deps_version(self):
         """
@@ -344,20 +344,20 @@ class AscendEnvChecker(EnvChecker):
             if v not in supported_version:
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
-                               "match, reference to the match info on: https://www.mindspore.cn/install")
+                               "match, refer to the match info on: https://www.mindspore.cn/install")
             from hccl import sys_version as hccl_version
             v = '.'.join(hccl_version.__sys_version__.split('.')[0:2])
             if v not in supported_version:
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
-                               "match, reference to the match info on: https://www.mindspore.cn/install")
+                               "match, refer to the match info on: https://www.mindspore.cn/install")
         # DO NOT modify exception type to any other, you DO NOT know what kind of exceptions the te will throw.
         # pylint: disable=broad-except
         except Exception as e:
             logger.error("CheckFailed:", e.args)
             logger.error("MindSpore relies on whl packages of \"te\" and \"hccl\" in the \"latest\" "
-                         "folder of the Ascend AI software package (Ascend Data Center Solution), please check whether"
-                         " they are installed correctly or not, reference to the match info on: "
+                         "folder of the Ascend AI software package (Ascend Data Center Solution). Please check whether"
+                         " they are installed correctly or not, refer to the match info on: "
                          "https://www.mindspore.cn/install")
         if attention_warning:
             warning_countdown = 3
@@ -387,7 +387,7 @@ class AscendEnvChecker(EnvChecker):
                 os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
             else:
                 logger.error(
-                    f"No such directory: {self.tbe_path}, Please check if Ascend AI software package (Ascend Data "
+                    f"No such directory: {self.tbe_path}. Please check if Ascend AI software package (Ascend Data "
                     "Center Solution) is installed correctly.")
                 return
 
@@ -406,7 +406,7 @@ class AscendEnvChecker(EnvChecker):
             os.environ['TBE_IMPL_PATH'] = self.op_impl_path
         else:
             logger.error(
-                f"No such directory: {self.op_impl_path}, Please check if Ascend AI software package (Ascend Data "
+                f"No such directory: {self.op_impl_path}. Please check if Ascend AI software package (Ascend Data "
                 "Center Solution) is installed correctly.")
             return
 
@@ -414,7 +414,7 @@ class AscendEnvChecker(EnvChecker):
             os.environ['PATH'] = self.cce_path + ":" + os.environ['PATH']
         else:
             logger.error(
-                f"No such directory: {self.cce_path}, Please check if Ascend AI software package (Ascend Data Center "
+                f"No such directory: {self.cce_path}. Please check if Ascend AI software package (Ascend Data Center "
                 "Solution) is installed correctly.")
             return
 
@@ -424,7 +424,7 @@ class AscendEnvChecker(EnvChecker):
             os.environ['ASCEND_OPP_PATH'] = self.op_path
         else:
             logger.error(
-                f"No such directory: {self.op_path}, Please check if Ascend AI software package (Ascend Data Center "
+                f"No such directory: {self.op_path}. Please check if Ascend AI software package (Ascend Data Center "
                 "Solution) is installed correctly.")
             return
 
@@ -434,32 +434,32 @@ class AscendEnvChecker(EnvChecker):
             os.environ['ASCEND_AICPU_PATH'] = self.aicpu_path
         else:
             logger.error(
-                f"No such directory: {self.aicpu_path}, Please check if Ascend AI software package (Ascend Data Center"
+                f"No such directory: {self.aicpu_path}. Please check if Ascend AI software package (Ascend Data Center"
                 " Solution) is installed correctly.")
             return
 
     def _check_env(self):
         """ascend dependence path check"""
         if self.path is None or self.path_check not in self.path:
-            logger.warning("Can not find ccec_compiler(need by mindspore-ascend), please check if you have set env "
-                           "PATH, you can reference to the installation guidelines https://www.mindspore.cn/install")
+            logger.warning("Can not find ccec_compiler(need by mindspore-ascend). Please check if you have set env "
+                           "PATH, you can refer to the installation guidelines https://www.mindspore.cn/install")
 
         if self.python_path is None or self.python_path_check not in self.python_path:
             logger.warning(
-                "Can not find tbe op implement(need by mindspore-ascend), please check if you have set env "
-                "PYTHONPATH, you can reference to the installation guidelines "
+                "Can not find the tbe operator implementation(need by mindspore-ascend). Please check if you have set "
+                "env PYTHONPATH, you can refer to the installation guidelines "
                 "https://www.mindspore.cn/install")
 
         if self.ld_lib_path is None or not (self.ld_lib_path_check_fwk in self.ld_lib_path and
                                             self.ld_lib_path_check_addons in self.ld_lib_path):
-            logger.warning("Can not find driver so(need by mindspore-ascend), please check if you have set env "
-                           "LD_LIBRARY_PATH, you can reference to the installation guidelines "
+            logger.warning("Can not find driver so(need by mindspore-ascend). Please check if you have set env "
+                           "LD_LIBRARY_PATH, you can refer to the installation guidelines "
                            "https://www.mindspore.cn/install")
 
         if self.ascend_opp_path is None or self.ascend_opp_path_check not in self.ascend_opp_path:
             logger.warning(
-                "Can not find opp path (need by mindspore-ascend), please check if you have set env ASCEND_OPP_PATH, "
-                "you can reference to the installation guidelines https://www.mindspore.cn/install")
+                "Can not find opp path (need by mindspore-ascend). Please check if you have set env ASCEND_OPP_PATH, "
+                "you can refer to the installation guidelines https://www.mindspore.cn/install")
 
     def _read_version(self, file_path):
         """get ascend version info"""
@@ -517,7 +517,7 @@ def check_version_and_env_config():
             import ctypes
             ctypes.cdll.LoadLibrary("libgomp.so.1")
         except OSError:
-            logger.warning("Pre-Load Lirary libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
+            logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, you can find a solution in FAQ in "
                            "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
         if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
