@@ -88,6 +88,14 @@ bool DumpJsonParser::IsDumpEnabled() {
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    MS_LOG(EXCEPTION) << "In GPU or CPU, Dump is disabled in PyNative mode. Please set mode to GRAPH_MODE in context.";
+  }
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && e2e_dump_enabled_) {
+    MS_LOG(EXCEPTION) << "Dump is only support asynchronous for Ascend in PyNative mode.";
+  }
   return true;
 }
 
