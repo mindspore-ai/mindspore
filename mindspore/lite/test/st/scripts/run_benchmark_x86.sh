@@ -141,14 +141,15 @@ function Run_x86_java() {
         echo $LD_LIBRARY_PATH >> "${run_x86_java_log_file}"
         echo ${model_name} >> "${run_x86_java_log_file}"
         echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
-        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1 2>&1 | tee ${run_x86_java_log_file}
+        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1 >> ${run_x86_java_log_file}
+        cat ${run_x86_java_log_file}
         if [ $? = 0 ]; then
-            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+          run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
-            if [[ $x86_fail_not_return != "ON" ]]; then
-                return 1
-            fi
+          run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+          if [[ $x86_fail_not_return != "ON" ]]; then
+            return 1
+          fi
         fi
         sleep 1
     done < ${models_tflite_config}

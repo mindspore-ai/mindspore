@@ -23,9 +23,8 @@ target_link_libraries(mslite_converter_plugin mindspore::glog)
 add_dependencies(mslite_converter_plugin fbs_src)
 add_dependencies(mslite_converter_plugin fbs_inner_src)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows" OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-    target_link_libraries(mslite_converter_plugin
-            mindspore_core)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows" OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    target_link_libraries(mslite_converter_plugin mindspore_core)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND (NOT WIN32))
