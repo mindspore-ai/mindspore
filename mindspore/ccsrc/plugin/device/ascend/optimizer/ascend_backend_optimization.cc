@@ -263,7 +263,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
@@ -473,7 +472,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFission>());
