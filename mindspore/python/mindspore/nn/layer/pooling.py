@@ -233,7 +233,7 @@ def _check_maxpool_padding(padding, nd, cls_name):
         validator.check_non_negative_int_sequence(padding, "padding", cls_name)
         if len(padding) != nd:
             raise ValueError(f"For {cls_name}, the length of padding must equal to {nd}, but got {len(padding)}.")
-        return (0,) * (3 - nd) + padding
+        return (0,) * (3 - nd) + tuple(padding)
     return padding
 
 
@@ -246,6 +246,8 @@ def _cal_dilation(dilation, nd, cls_name):
             return dilation[0]
         if len(dilation) == nd:
             return (3 - nd) * (1,) + dilation
+        if nd == 1:
+            raise ValueError(f"For {cls_name}, the length of 'dilation' must be 1, but got {len(dilation)}.")
         raise ValueError(f"For {cls_name}, the length of 'dilation' must be 1 or {nd}, but got {len(dilation)}.")
     raise ValueError(f"For {cls_name}, the 'dilation' must be int or tuple, but got {type(dilation)}.")
 
@@ -349,6 +351,7 @@ class MaxPool3d(_PoolNd):
         """Initialize MaxPool3d."""
         super(MaxPool3d, self).__init__(kernel_size, stride, pad_mode)
         self.return_indices = return_indices
+        padding = _check_maxpool_padding(padding, 3, self.cls_name)
         _check_3d_int_or_tuple("padding", padding, self.cls_name, greater_zero=False, ret_five=False)
         if dilation != 1 or return_indices:
             self.only_pad = True
@@ -490,7 +493,7 @@ class MaxPool2d(_PoolNd):
             elif isinstance(self.stride, int):
                 stride = (1, self.stride, self.stride)
             self.padding = _check_maxpool_padding(padding, 2, self.cls_name)
-            dilation = _cal_dilation(dilation, 1, self.cls_name)
+            dilation = _cal_dilation(dilation, 2, self.cls_name)
             self.max_pool = P.MaxPool3DWithArgmax(ksize=kernel_size, strides=stride, pads=self.padding,
                                                   dilation=dilation, ceil_mode=ceil_mode)
         else:
@@ -561,7 +564,8 @@ class MaxPool1d(_PoolNd):
             padding can only be an integer or a tuple/list containing a single integer, in which case padding times or
             padding[0] times are padded on both sides of the input.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
-            used to increase the receptive field of the pooling operation. Default: 1.
+            used to increase the receptive field of the pooling operation. If it is a tuple, its length can only be 1.
+            Default: 1.
         return_indices (bool): If True, the function will return both the result of max pooling and the indices of the
             max elements. Default: False.
         ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
