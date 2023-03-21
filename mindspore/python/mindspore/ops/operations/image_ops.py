@@ -701,6 +701,8 @@ class ResizeBilinearV2(Primitive):
 
     The resizing only affects the lower two dimensions which represent the height and width.
 
+    note:
+        Dynamic shape feature is not supported for now.
 
     Args:
         align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
