@@ -134,8 +134,8 @@ mindspore_lite.Converter
         .. note::
             针对MindSpore模型，由于已经是mindir模型，建议两种做法：
 
-              - 不需要经过离线转换，直接进行推理执行。
-              - 使用离线转换，CPU/GPU后端设置optimize为"general"，NPU后端设置optimize为"ascend_oriented"，在离线阶段完成相关优化，减少推理执行的初始化时间。
+            - 不需要经过离线转换，直接进行推理执行。
+            - 使用离线转换，CPU/GPU后端设置optimize为"general"，NPU后端设置optimize为"ascend_oriented"，在离线阶段完成相关优化，减少推理执行的初始化时间。
 
         返回：
             str，是否融合优化。选项："none" | "general" | "ascend_oriented"。"none" 表示不允许融合优化。 "general" 和 "ascend_oriented" 表示允许融合优化。
