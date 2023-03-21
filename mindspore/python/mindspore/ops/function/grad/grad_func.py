@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 from functools import partial
 import numpy as np
-from mindspore.common import jit
+from mindspore.common import jit, mutable
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
@@ -739,9 +739,9 @@ def jvp(fn, inputs, v, has_aux=False):
         if isinstance(outputs, tuple):
             u = ()
             for item in outputs:
-                u = u + (oneslike(item),)
+                u = u + (mutable(oneslike(item)),)
         else:
-            u = oneslike(outputs)
+            u = mutable(oneslike(outputs))
         if len(jvp_inputs) == 1:
             second_grad_net = _grad_single(grad_single)
             gradient_outputs = second_grad_net(u, jvp_inputs, vectors)
@@ -1107,9 +1107,9 @@ def jacfwd(fn, grad_position=0, has_aux=False):
             if isinstance(outputs, tuple):
                 u = ()
                 for item in outputs:
-                    u = u + (oneslike(item),)
+                    u = u + (mutable(oneslike(item)),)
             else:
-                u = oneslike(outputs)
+                u = mutable(oneslike(outputs))
             if len(jvp_inputs) == 1:
                 second_grad_net = _grad_single(grad_single)
             else:
@@ -1119,7 +1119,7 @@ def jacfwd(fn, grad_position=0, has_aux=False):
 
         def inner_aux_fn(jvp_inputs, vectors):
             outputs = aux_fn(*jvp_inputs)
-            u = oneslike(outputs)
+            u = mutable(oneslike(outputs))
             if len(jvp_inputs) == 1:
                 second_grad_net = _grad_single(grad_single)
             else:

@@ -192,9 +192,11 @@ abstract::ShapePtr MaxPool3DInferShape(const PrimitivePtr &primitive, const std:
   if (!IsDynamicRank(in_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
   }
+
   if (IsDynamic(in_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(k5DInputDims, abstract::Shape::kShapeDimAny));
   }
+
   std::vector<int64_t> kernel_size;
   std::vector<int64_t> strides;
   std::vector<int64_t> pad_list;

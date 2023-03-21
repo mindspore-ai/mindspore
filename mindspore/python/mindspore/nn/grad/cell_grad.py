@@ -23,6 +23,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
 from mindspore.common._decorator import deprecated
+from mindspore.common import mutable
 
 
 class _FirstGrad(Cell):
@@ -95,9 +96,9 @@ class Jvp(Cell):
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
             for _, element in enumerate(output):
-                u = u + self.make_tuple(self.oneslike(element))
+                u = u + self.make_tuple(mutable(self.oneslike(element)))
         else:
-            u = self.oneslike(output)
+            u = mutable(self.oneslike(output))
 
         if len(jvp_input) == 1:
             second_gradient_net = self.second_grad_op(self.first_grad_single_value)
@@ -131,9 +132,9 @@ class _JvpInner(Cell):
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
             for _, element in enumerate(output):
-                u = u + self.make_tuple(self.oneslike(element))
+                u = u + self.make_tuple(mutable(self.oneslike(element)))
         else:
-            u = self.oneslike(output)
+            u = mutable(self.oneslike(output))
 
         if len(jvp_input) == 1:
             second_gradient_net = self.second_grad_op(self.first_grad_single_value)

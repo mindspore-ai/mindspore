@@ -47,10 +47,21 @@ AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
+  auto shape_vec = shape_ptr->shape();
   auto infer_type = OnesLikeInferType(primitive, input_args);
-  auto infer_shape = OnesLikeInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  if (IsDynamic(shape_vec)) {
+    return abstract::MakeAbstract(shape_ptr, infer_type);
+  }
+
+  auto tensor_ptr = TensorConstructUtils::CreateOnesTensor(infer_type, shape_vec, true);
+  if (tensor_ptr == nullptr) {
+    return abstract::MakeAbstract(shape_ptr, infer_type);
+  }
+
+  return tensor_ptr->ToAbstract();
 }
 
 // AG means auto generated
@@ -67,22 +78,6 @@ class MIND_API AGOnesLikeInfer : public abstract::OpInferBase {
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return OnesLikeInfer(engine, primitive, input_args);
-  }
-
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    if (input_args.empty()) {
-      return nullptr;
-    }
-
-    auto op_name = primitive->name();
-    auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
-    auto shape_vec = shape_ptr->shape();
-    if (IsDynamic(shape_vec)) {
-      return nullptr;
-    }
-
-    auto infer_type = input_args[0]->BuildType();
-    return TensorConstructUtils::CreateOnesTensor(infer_type, shape_vec);
   }
 };
 
