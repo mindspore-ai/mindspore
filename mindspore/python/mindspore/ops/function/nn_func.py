@@ -5333,8 +5333,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
         >>> input = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
         >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
         >>> loss = ops.multilabel_soft_margin_loss(input, target, reduction='mean')
-        >>> out = loss(input, target)
-        >>> print(out.asnumpy())
+        >>> print(loss.asnumpy())
         0.84693956
     """
     cls_name = "multilabel_soft_margin_loss"
