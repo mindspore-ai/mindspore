@@ -200,7 +200,7 @@ Status MappableLeafOp::GetNextRowPullMode(TensorRow *const row) {
 
 Status MappableLeafOp::ResetAndUpdateRepeat() {
   if (!IsLastIteration()) {
-    RETURN_IF_NOT_OK(Reset());
+    RETURN_IF_NOT_OK(MappableLeafOp::Reset());
     TensorRow sample_row;
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     CHECK_FAIL_RETURN_UNEXPECTED(sample_row.size() > 0, "GetNextRowPullMode: Expect at least one sample in sampler.");

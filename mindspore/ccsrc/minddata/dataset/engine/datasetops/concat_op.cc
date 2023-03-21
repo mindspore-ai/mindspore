@@ -211,6 +211,8 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
 
 Status ConcatOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  // Reset TensorRow (both vector and flags)
+  row->reset();
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {

@@ -116,12 +116,14 @@ def test_pipeline_debug_mode_minddata():
     Expectation: Successful.
     """
     logger.info("test_pipeline_debug_mode_minddata")
-    data = ds.MindDataset("../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+    data = ds.MindDataset("../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0",
+                          num_parallel_workers=1)
+    data = data.repeat(2)
     data_lst = []
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert len(item) == 3
         data_lst.append(item["data"].copy())
-    assert len(data_lst) == 20
+    assert len(data_lst) == 40
 
 
 def test_pipeline_debug_mode_numpy_slice_dataset():
@@ -247,6 +249,14 @@ def generator_md():
     Create a dataset with [0-9]
     """
     for i in range(10):
+        yield (np.array([i]),)
+
+
+def generator_ten_to_twelve():
+    """
+    Create a dataset with [10-12]
+    """
+    for i in range(10, 13):
         yield (np.array([i]),)
 
 
@@ -831,6 +841,38 @@ def test_pipeline_debug_mode_dataset_sink_not_support():
            "Please manually turn off sink mode" in str(error_info.value)
 
 
+@pytest.mark.parametrize("num_epochs", (1, 3))
+def test_pipeline_debug_mode_batch_concat(num_epochs):
+    """
+    Feature: Dataset Debug Mode
+    Description: Test batch before concat
+    Expectation: Success
+    """
+    data1 = ds.GeneratorDataset(generator_md, ["col1"])
+    data2 = ds.GeneratorDataset(generator_ten_to_twelve, ["col1"])
+
+    data1 = data1.batch(5)
+    data2 = data2.batch(3)
+
+    data3 = data1 + data2
+    expects = [[[0], [1], [2], [3], [4]], [[5], [6], [7], [8], [9]], [[10], [11], [12]]]
+    outputs = []
+    iter1 = data3.create_tuple_iterator(num_epochs=num_epochs, output_numpy=True)
+    epoch_count = 0
+    sample_count = 0
+
+    for _ in range(num_epochs):
+        outputs = []
+        for i, row_item in enumerate(iter1):
+            assert len(row_item[0]) == len(expects[i])
+            outputs.append(row_item[0])
+        epoch_count += 1
+        sample_count += len(outputs)
+        np.testing.assert_equal(expects, outputs)
+    assert epoch_count == num_epochs
+    assert sample_count == 3 * num_epochs
+
+
 if __name__ == '__main__':
     setup_function()
     test_pipeline_debug_mode_tuple()
@@ -861,4 +903,6 @@ if __name__ == '__main__':
     test_pipeline_debug_mode_batch_map_get_epoch_batch_num()
     test_pipeline_debug_mode_batch_map_get_epoch_num()
     test_pipeline_debug_mode_dataset_sink_not_support()
+    test_pipeline_debug_mode_batch_concat(1)
+    test_pipeline_debug_mode_batch_concat(3)
     teardown_function()
