@@ -17,8 +17,8 @@ mindspore.ops.min
         - **keepdims** (bool) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。默认值：False。
 
     关键字参数：
-        - **initial** (scalar, 可选) - 输出元素的最大值。如果对空切片进行计算，则该参数必须设置。默认值：None。
-        - **where** (Tensor[bool], 可选) - 一个bool数组，被广播以匹配数组维度，如果值为True则选择该元素，如果为False则设置为initial。如果传递了一个非默认值，则必须提供初始值。默认值：None，表示默认为True。
+        - **initial** (scalar, 可选) - 输出元素的最大值。如果 `input` 为空，则该参数必须设置。默认值：None。
+        - **where** (Tensor[bool], 可选) - 表示是否需要将 `input` 中的原始值替换为 `initial` 值的Tensor。若为True则不替换，若为False则替换。`where` 中为False的位置，必须提供对应的 `initial` 值。默认值：None，表示默认为True。
 
     返回：
         tuple (Tensor)，表示2个Tensor组成的tuple，包含对应的索引和输入Tensor的最小值。
@@ -27,7 +27,7 @@ mindspore.ops.min
         - **index** (Tensor) - 输入Tensor最小值的索引，其数据类型为int32。如果 `keepdims` 为True，则输出Tensor的shape为 :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1}, ..., input_N)` 。否则，shape为 :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1}, ..., input_N)` 。
 
     异常：
-        - **TypeError** - `input_x` 不是Tensor。
+        - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `keepdims` 不是bool。
         - **TypeError** - `axis` 不是int。
         - **TypeError** - `initial` 不是scalar。

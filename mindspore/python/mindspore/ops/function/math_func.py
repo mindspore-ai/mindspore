@@ -7132,9 +7132,9 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            and selects elements to include in the reduction. If non-default value is passed,
-            initial must also be provided. Default: True.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
+            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
+            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -7233,9 +7233,9 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            and selects elements to include in the reduction. If non-default value is passed,
-            initial must also be provided. Default: True.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
+            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
+            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
 
     Returns:
         Tensor, has the same data type as input tensor.

@@ -5650,9 +5650,9 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            select this element if it is True, and set it to initial if it is False. If non-default value is passed,
-            initial must also be provided. Default: None, means True.
+        where (Tensor[bool], optional): A Tensor indicating whether you need to replace the primitive value in 'input'
+            with the initial value. If True, do not replace, if False, replace. The 'where' position is False and the
+            corresponding 'initial' value must be provided. Default value: None, which indicates True by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
@@ -5664,7 +5664,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
 
     Raises:
-        TypeError: If `x` is not Tensor.
+        TypeError: If `input` is not Tensor.
         TypeError: If `keepdims` is not a bool.
         TypeError: If `axis` is not an int.
         TypeError: If `initial` is not a number.
@@ -5755,9 +5755,9 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     Keyword Args:
         initial (scalar, optional): The maximum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            select this element if it is True, and set it to initial if it is False. If non-default value is passed,
-            initial must also be provided. Default: None, means True.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
+            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
+            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
