@@ -1495,8 +1495,9 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
       auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
       if (SchedulerHelper::HasMonadControl(input_node, graph)) {
+        std::set<AnfNodePtr> checked_nodes;
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_,
-                                    cnode_to_monad_inputs);
+                                    cnode_to_monad_inputs, &checked_nodes);
       }
       if (HasAbstractMonad(input_node)) {
         (void)auto_monad_actors->emplace_back(kernel_actor);
@@ -1766,7 +1767,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
 void GraphScheduler::LinkControlArrowByAutoMonad(
   AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
-  const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs) {
+  const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs,
+  std::set<AnfNodePtr> *checked_nodes) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1781,11 +1783,20 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   if (input_anfnode->isa<CNode>()) {
     input_cnode = input_anfnode->cast<CNodePtr>();
   }
+
+  if (checked_nodes != nullptr) {
+    if (checked_nodes->find(input_cnode) != checked_nodes->end()) {
+      return;
+    } else {
+      checked_nodes->emplace(input_cnode);
+    }
+  }
+
   // Make tuple node needs to be expanded.
   if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
-      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser, cnode_to_monad_inputs);
+      LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser, cnode_to_monad_inputs, checked_nodes);
     }
     return;
   }
@@ -1854,7 +1865,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
 
     // The monad node and make tuple node need recursion.
     if (IsOneOfPrimitiveCNode(real_depend_kernel, recursion_prims)) {
-      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser, cnode_to_monad_inputs);
+      LinkControlArrowByAutoMonad(to_actor, real_depend_kernel, graph, parser, cnode_to_monad_inputs, checked_nodes);
       continue;
     }
 
