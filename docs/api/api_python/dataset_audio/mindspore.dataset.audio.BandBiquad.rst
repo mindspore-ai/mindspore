@@ -9,7 +9,7 @@ mindspore.dataset.audio.BandBiquad
 
     接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
 
-    .. note:: 待处理音频维度需为(..., time)。
+    .. note:: 待处理音频shape需为<..., time>。
 
     参数：
         - **sample_rate** (int) - 采样频率（单位：Hz），不能为零。

@@ -11,7 +11,7 @@ mindspore.dataset.vision.TrivialAugmentWide
 
     参数：
         - **num_magnitude_bins** (int, 可选) - 不同变换幅值的个数，需不小于2 。默认值：31。
-        - **interpolation** (Inter, 可选) - 图像插值方式。默认值：Inter.NEAREST。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` , 可选) - 图像插值方式。默认值：Inter.NEAREST。
           可为 Inter.NEAREST、Inter.BILINEAR、Inter.BICUBIC、Inter.AREA。
 
           - **Inter.NEAREST** - 最近邻插值。

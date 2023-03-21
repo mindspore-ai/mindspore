@@ -12,7 +12,7 @@ mindspore.dataset.audio.PitchShift
         - **n_fft** (int, 可选) - FFT的大小，创建 `n_fft // 2 + 1` 个频段。默认值：512。
         - **win_length** (int, 可选) - 窗口大小。默认值：None，将会设置为 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值：None，则将设置为 `win_length // 4` 。
-        - **window** (WindowType, 可选) - 作用于每一帧的窗口函数。默认值：WindowType.HANN。
+        - **window** (:class:`mindspore.dataset.audio.WindowType` , 可选) - 作用于每一帧的窗口函数。默认值：WindowType.HANN。
       
     异常：
         - **TypeError** - 如果 `sample_rate` 的类型不为int。

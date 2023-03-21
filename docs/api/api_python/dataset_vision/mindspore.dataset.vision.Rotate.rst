@@ -7,7 +7,7 @@ mindspore.dataset.vision.Rotate
 
     参数：
         - **degrees** (Union[int, float]) - 旋转角度。
-        - **resample** (Inter, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] 中的任何一个。默认值：Inter.NEAREST。
+        - **resample** (:class:`mindspore.dataset.vision.Inter` , 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] 中的任何一个。默认值：Inter.NEAREST。
 
           - Inter.BILINEAR，双线性插值。
           - Inter.NEAREST，最近邻插值。

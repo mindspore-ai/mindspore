@@ -3,7 +3,7 @@ mindspore.dataset.vision.AdjustGamma
 
 .. py:class:: mindspore.dataset.vision.AdjustGamma(gamma, gain=1)
 
-    对输入图像应用伽马校正。输入图片shape应该为 [..., H, W, C]或[H, W]。
+    对输入图像应用伽马校正。输入图片shape应该为 <..., H, W, C>或<H, W>。
 
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}

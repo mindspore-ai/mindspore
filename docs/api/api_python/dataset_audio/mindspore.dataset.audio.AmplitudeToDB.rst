@@ -5,10 +5,10 @@ mindspore.dataset.audio.AmplitudeToDB
 
     将输入音频从振幅/功率标度转换为分贝标度。
 
-    .. note:: 待处理音频维度需为(..., freq, time)。
+    .. note:: 待处理音频shape需为<..., freq, time>。
 
     参数：
-        - **stype** (ScaleType, 可选) - 输入音频的原始标度，取值可为ScaleType.MAGNITUDE或ScaleType.POWER。默认值：ScaleType.POWER。
+        - **stype** (:class:`mindspore.dataset.audio.ScaleType` , 可选) - 输入音频的原始标度，取值可为ScaleType.MAGNITUDE或ScaleType.POWER。默认值：ScaleType.POWER。
         - **ref_value** (float, 可选) - 系数参考值。默认值：1.0，用于计算分贝系数 `db_multiplier` ，公式为
           :math:`\text{db_multiplier} = Log10(max(\text{ref_value}, amin))` 。
 

@@ -10,12 +10,12 @@ mindspore.dataset.audio.Spectrogram
         - **win_length** (int, 可选) - 窗口大小。默认值：None，将使用 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值：None，将使用 `win_length//2` 。
         - **pad** (int, 可选) - 信号两端的填充长度。默认值：0。
-        - **window** (WindowType, 可选) - 作用于每一帧的窗口函数，可为WindowType.BARTLETT、WindowType.BLACKMAN、
+        - **window** (:class:`mindspore.dataset.audio.WindowType` , 可选) - 作用于每一帧的窗口函数，可为WindowType.BARTLETT、WindowType.BLACKMAN、
           WindowType.HAMMING、WindowType.HANN或WindowType.KAISER。当前，在macOS上暂不支持Kaiser窗。默认值：WindowType.HANN。
         - **power** (float, 可选) - 幅度谱图的指数，必须非负，例如1代表能量谱，2代表功率谱等。默认值：2.0。
         - **normalized** (bool, 可选) - 是否在stft之后按幅度执行标准化。默认值：False。
         - **center** (bool, 可选) - 是否同时在波形两端进行填充。默认值：True。
-        - **pad_mode** (BorderType, 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、
+        - **pad_mode** (:class:`mindspore.dataset.audio.BorderType` , 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、
           BorderType.EDGE、BorderType.SYMMETRIC。默认值：BorderType.REFLECT。
         - **onesided** (bool, 可选) - 控制是否只返回一半波形，以避免冗余。默认值：True。
 

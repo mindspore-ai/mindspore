@@ -3,7 +3,7 @@ mindspore.dataset.vision.Posterize
 
 .. py:class:: mindspore.dataset.vision.Posterize(bits)
 
-    通过减少输入图像每个颜色通道的位数海报化输入图像。
+    减少图像的颜色通道的比特位数，使图像变得高对比度和颜色鲜艳，类似于海报或印刷品的效果。
 
     参数：
         - **bits** (int) - 每个颜色通道保留的位数，取值需在 [0, 8] 范围内。
