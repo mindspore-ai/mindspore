@@ -189,7 +189,7 @@ Status ScatterNdOpsInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
-  auto anf_node_list = PrepareReplaceGraph(cnode);
+  auto anf_node_list = PrepareReplaceGraph();
   // {indices_sub, mul, div, dtype};
   auto indices_sub = anf_node_list[0];
   auto mul = anf_node_list[1];
@@ -224,7 +224,7 @@ Status ScatterNdMulDivBaseInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
-  auto anf_node_list = PrepareReplaceGraph(cnode);
+  auto anf_node_list = PrepareReplaceGraph();
   // {indices_sub, mul, div, dtype};
   auto indices_sub = anf_node_list[0];
   auto mul = anf_node_list[1];
@@ -255,13 +255,13 @@ Status ScatterNdMulDivBaseInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 // the look dim of indices whose value (x, y) should satisfy '0 <= x < A, 0 <= y < B'
 // The shape of updates: [Q, W, C, D], the strategy of updates: (1, 1, c, d)
 // when splitting [A, B], doing replace graph
-std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph(const CNodePtr &cnode) {
+std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph() {
   auto rank_in_stage = g_device_manager->rank_index_in_stage();
   MS_LOG(INFO) << name_ << ": The rank is " << rank_in_stage;
   auto input_slice_shape = inputs_tensor_info_[0].slice_shape();
   Shape indices_slice_value;
-  std::copy(input_slice_shape.begin(), input_slice_shape.begin() + static_cast<different_type>(gather_dims_size_),
-            std::back_inserter(indices_slice_value));
+  (void)std::copy(input_slice_shape.begin(), input_slice_shape.begin() + static_cast<different_type>(gather_dims_size_),
+                  std::back_inserter(indices_slice_value));
   auto indices_slice_value_tensor = std::make_shared<mindspore::tensor::Tensor>(indices_slice_value, kInt32);
   Shape indices_shape_size(inputs_shape_[1].size(), 1);
   indices_shape_size[indices_shape_size.size() - 1] = -1;
@@ -270,16 +270,16 @@ std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph(const CNodePtr &cn
                      NewValueNode(MakeValue(indices_shape_size))});
   auto div = gen_g_.PushBack({gen_g_.NewOpInst(FLOORDIV), gen_g_.virtual_input_node(), reshape_indices_slice});
   Shape dev_accum_shape;
-  ShapeToAccumulateProductReverse(dev_matrix_shape_, &dev_accum_shape);
+  (void)ShapeToAccumulateProductReverse(dev_matrix_shape_, &dev_accum_shape);
   MS_LOG(INFO) << "The dev_matrix is :" << dev_matrix_shape_ << ", dev_accum_shape is :" << dev_accum_shape;
   size_t gather_begin_position = 0;
   if (repeated_calc_num_ > 1 && !repeated_num_in_dev_matrix_right_) {
     gather_begin_position = 1;
   }
   Shape accum_value;
-  std::copy(dev_accum_shape.begin() + static_cast<different_type>(gather_begin_position),
-            dev_accum_shape.begin() + static_cast<different_type>(gather_begin_position + gather_dims_size_),
-            std::back_inserter(accum_value));
+  (void)std::copy(dev_accum_shape.begin() + static_cast<different_type>(gather_begin_position),
+                  dev_accum_shape.begin() + static_cast<different_type>(gather_begin_position + gather_dims_size_),
+                  std::back_inserter(accum_value));
   auto delta_value =
     std::accumulate(dev_accum_shape.begin() + static_cast<different_type>(gather_begin_position + gather_dims_size_),
                     dev_accum_shape.end(), 0, std::plus<int64_t>());

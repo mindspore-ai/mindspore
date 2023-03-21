@@ -60,7 +60,7 @@ void StrategyCheckpointInfo::from_json(const nlohmann::json &stra_ckpt_info_j) {
       }
     }
     tensor_info_map_[parameter_name] = std::make_shared<TensorLayout>();
-    tensor_info_map_[parameter_name]->InitFromVector(dev_matrix, tensor_map, tensor_shape);
+    (void)tensor_info_map_[parameter_name]->InitFromVector(dev_matrix, tensor_map, tensor_shape);
     tensor_info_map_[parameter_name]->set_opt_weight_shard_size(opt_weight_shard_size);
     tensor_info_map_[parameter_name]->set_opt_weight_shard_step(opt_weight_shard_step);
     tensor_info_map_[parameter_name]->set_field_size(field);
