@@ -409,26 +409,6 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
   }
 }
 
-ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor_value = value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor_value);
-    auto shallow_tensor = std::make_shared<tensor::Tensor>(*tensor_value);
-    shallow_tensor->set_base_shape(tensor_value->base_shape_ptr());
-    return shallow_tensor;
-  } else if (value->isa<ValueSequence>()) {
-    std::vector<ValuePtr> values;
-    auto value_tuple = value->cast<ValueSequencePtr>();
-    MS_EXCEPTION_IF_NULL(value_tuple);
-    (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
-                         [](const ValuePtr &elem) { return ShallowCopyTensorValue(elem); });
-    return std::make_shared<ValueTuple>(values);
-  } else {
-    return value;
-  }
-}
-
 size_t CountValueNum(const ValueSequencePtr &value_sequence) {
   MS_EXCEPTION_IF_NULL(value_sequence);
   size_t cnt = 0;
