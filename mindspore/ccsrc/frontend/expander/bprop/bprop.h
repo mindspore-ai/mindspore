@@ -34,7 +34,7 @@ class BpropExpander {
   BpropExpander(CNodePtrList *outputs, UserType *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
   bool Run(const CNodePtr &cnode);
-  const std::vector<size_t> &GetUnusedInputs(const CNodePtr &cnode) const;
+  const std::vector<size_t> &GetUnusedInputs(const PrimitivePtr &prim) const;
 
  protected:
   bool RunBprop(const CNodePtr &cnode);

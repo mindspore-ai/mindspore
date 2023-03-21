@@ -339,6 +339,51 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
   PyNativeAlgo::Common::DumpGraphIR("replace_cnode_with_valuenode.ir", bprop_graph);
 }
 
+ValuePtr Common::InitGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, const TensorGradType &grad_type,
+                              size_t op_index) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor_value = value->cast<tensor::TensorPtr>();
+    auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
+    if (auto_grad_meta_data == nullptr) {
+      auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+      tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
+    }
+    if (grad_type != TensorGradType::kConstant) {
+      auto_grad_meta_data->set_grad_type(grad_type);
+    }
+    if (tensor_value->is_parameter()) {
+      auto_grad_meta_data->set_grad_type(TensorGradType::kParameter);
+    }
+    if (auto_grad_meta_data->grad_type() == TensorGradType::kParameter ||
+        auto_grad_meta_data->grad_type() == TensorGradType::kInput) {
+      if (top_cell != nullptr) {
+        top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
+      }
+    }
+    if (op_index != 0) {
+      auto_grad_meta_data->set_op_index(op_index);
+    }
+
+    auto shallow_tensor = std::make_shared<tensor::Tensor>(*tensor_value);
+    shallow_tensor->set_base_shape(tensor_value->base_shape_ptr());
+    return shallow_tensor;
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    std::vector<ValuePtr> values;
+    (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(values),
+                         [top_cell, grad_type, op_index](const ValuePtr &elem) {
+                           return InitGradInfo(elem, top_cell, grad_type, op_index);
+                         });
+    return std::make_shared<ValueTuple>(values);
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    return InitGradInfo(stub_node->WaitValue(), top_cell, grad_type, op_index);
+  }
+  return value;
+}
+
 ValuePtr StubNodeToValueInner(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (utils::isa<stub::StubNode>(v)) {
@@ -423,6 +468,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
 void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs, bool stub) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_size = op_inputs.size();
+  op_run_info->input_abs.resize(op_run_info->input_size);
   op_run_info->input_value.resize(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     op_run_info->input_value[i] = PyNativeAlgo::DataConvert::PyObjToValue(op_inputs[i], stub);

@@ -108,7 +108,6 @@ struct InputArgsInfo {
   // Cell unique id, cell_id + cell_order;
   std::string obj_order_id;
   size_t input_size = 0;
-  size_t custom_bprop_cell_count = 0;
   size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;
   std::vector<ValuePtr> input_arg_value_vec;
