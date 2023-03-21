@@ -43,6 +43,7 @@
 #include "wrapper/base/affine_wrapper.h"
 #include "wrapper/fp32/conv_winograd_fp32_wrapper.h"
 #include "nnacl/instance_norm_parameter.h"
+#include "nnacl/layer_norm_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -72,6 +73,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const ActivationParameter &activation_parameter);
   void CodeStruct(const std::string &name, const OpParameter &op_param);
   void CodeStruct(const std::string &name, const SplitParameter &split_parameter);
+  void CodeStruct(const std::string &name, const LayerNormParameter &param);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
  private:

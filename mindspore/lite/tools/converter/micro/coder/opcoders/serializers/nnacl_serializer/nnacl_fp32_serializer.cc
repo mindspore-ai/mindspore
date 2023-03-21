@@ -187,6 +187,14 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const OpParameter 
                         op_param.is_train_session_, op_param.is_zero_shape_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const LayerNormParameter &op_param) {
+  CodeBaseStruct<false>("LayerNormParameter", name, op_param.op_parameter_, op_param.epsilon_,
+                        op_param.elementwise_mode_, op_param.elementwise_affine_, op_param.begin_norm_axis_,
+                        op_param.begin_params_axis_, op_param.norm_inner_size_, op_param.norm_outer_size_,
+                        op_param.params_inner_size_, op_param.params_outer_size_, op_param.normalized_dims_,
+                        ToString(op_param.normalized_shape_), op_param.thread_count_, op_param.thread_outsize_);
+}
+
 void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
   std::vector<std::string> tensor_names;
   int size = tensor.size();
