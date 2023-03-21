@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SEQUENCE_ZEROS_LIKE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SEQUENCE_ZEROS_LIKE_CPU_KERNEL_H_
 
-#include <complex>
 #include <vector>
 #include <utility>
 #include <map>

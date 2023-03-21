@@ -997,7 +997,7 @@ void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBase
 }
 
 template <typename TM>
-tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) {
+tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) const {
   constexpr size_t input_index = 0;
   constexpr size_t begin_index = 1;
   constexpr size_t end_index = 2;

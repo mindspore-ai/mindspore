@@ -356,7 +356,7 @@ class StridedSliceOnnxOp : public OpaqueOp {
 
  protected:
   template <typename TM>
-  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &);
+  tensor::TensorPtr CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) const;
   std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override {
     return GetValue<std::vector<DShape>>(attrs.find("output_shape")->second);
   }

@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/sequence_add_offset_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -62,7 +61,7 @@ bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
   auto input_0_size = inputs[0]->size / sizeof(T);
   output_addr[0] = 0;
-  output_addr[1] = input_0_size;
+  output_addr[1] = SizeToLong(input_0_size);
   return true;
 }
 
