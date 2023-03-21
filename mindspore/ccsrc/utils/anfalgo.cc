@@ -41,8 +41,6 @@ constexpr size_t kNopNodeRealInputIndex = 1;
 const PrimitiveSet expand_prims = {prim::kPrimMakeTuple};
 const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
-enum class ShapeType { kMaxShape, kMinShape };
-
 void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::vector<KernelWithIndex> *inputs) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>() || node->isa<Parameter>()) {
@@ -611,10 +609,10 @@ std::vector<KernelWithIndex> AnfAlgo::GetRealPrevNodesOutput(const AnfNodePtr &a
     auto maketuple_input_num = GetInputTensorNum(input_node);
     for (size_t i = 0; i < maketuple_input_num; ++i) {
       auto inputs_i = GetRealPrevNodesOutput(input_node, i, skip_nop_node);
-      res.insert(res.end(), inputs_i.begin(), inputs_i.end());
+      (void)res.insert(res.end(), inputs_i.begin(), inputs_i.end());
     }
   } else {
-    res.emplace_back(GetPrevNodeOutput(cnode, input_idx, skip_nop_node));
+    (void)res.emplace_back(GetPrevNodeOutput(cnode, input_idx, skip_nop_node));
   }
   return res;
 }
@@ -688,8 +686,8 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
                    << " is a TupleShape:" << base_shape->ToString();
       return ShapeVector();
     } else if (b_shp->isa<abstract::DynamicSequenceShape>()) {
-      const auto &base_shape = GetDynamicSequenceShape(node, output_idx);
-      return GetOutputInferShape(node, base_shape, 0);
+      const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
+      return GetOutputInferShape(node, base_seq_shape, 0);
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
@@ -699,8 +697,8 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
   } else if (base_shape->isa<abstract::NoShape>()) {
     return ShapeVector();
   } else if (base_shape->isa<abstract::DynamicSequenceShape>()) {
-    const auto &base_shape = GetDynamicSequenceShape(node, output_idx);
-    return GetOutputInferShape(node, base_shape, 0);
+    const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
+    return GetOutputInferShape(node, base_seq_shape, 0);
   }
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);

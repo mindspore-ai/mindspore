@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 #include <set>
 #include <utility>
 #include <map>
-#include <type_traits>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"

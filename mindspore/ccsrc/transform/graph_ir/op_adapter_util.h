@@ -35,7 +35,7 @@ inline ValuePtr GetRealValue<GeDataType>(const GeDataType &value) {
 }
 
 template <>
-inline ValuePtr GetRealValue<GeTensor>(const GeTensor &value) {
+inline ValuePtr GetRealValue<GeTensor>(const GeTensor &) {
   return nullptr;
 }
 
