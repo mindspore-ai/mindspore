@@ -72,6 +72,10 @@ FuncGraphPtr ConverterFuncGraph::Load3rdModelToFuncgraph(const std::shared_ptr<C
     MS_LOG(ERROR) << "Unsupported to converter models with fmk: " << param->fmk_type;
     return nullptr;
   }
+  if (!param->decrypt_key.empty()) {
+    MS_LOG(ERROR) << "The 3rd model do not support decrypt.";
+    return nullptr;
+  }
   converter::ConverterParameters converter_parameters;
   converter_parameters.fmk = param->fmk_type;
   converter_parameters.save_type = param->save_type;
