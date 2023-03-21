@@ -46,20 +46,7 @@ bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
 }  // namespace
 
 namespace aicpu {
-template <typename T_in, typename T_out>
-uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&input_count, Tensor *&input_state, Tensor *&output,
-                  CpuKernelContext &ctx) {
-  const auto &input_shape = input_0->GetTensorShape();
-  const auto input_rank = input_shape->GetDims();
-  int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
-  int64_t num_classes = input_shape->GetDimSize(input_rank - 1);
-  int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
-  // count the execution times of the op
-  uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
-  // seed of the op, passed between executions, which make op stateful
-  int64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
-
-  // setup seed
+int64_t GetSeed(const CpuKernelContext &ctx, uint64_t count, int64_t state) {
   int64_t final_seed = 0;
   auto attr_seed = ctx.GetAttr("seed");
   auto attr_seed2 = ctx.GetAttr("seed2");
@@ -73,16 +60,33 @@ uint32_t Generate(Tensor *&input_0, Tensor *&input_1, Tensor *&input_count, Tens
     std::random_device r;
     final_seed = r();
   }
+  return final_seed;
+}
+
+template <typename T_in, typename T_out>
+uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *input_count, Tensor *input_state, Tensor *output,
+                  const CpuKernelContext &ctx) {
+  const auto &input_shape = input_0->GetTensorShape();
+  const auto input_rank = input_shape->GetDims();
+  int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
+  int64_t num_classes = input_shape->GetDimSize(input_rank - 1);
+  int32_t num_samples = *(reinterpret_cast<int32_t *>(input_1->GetData()));
+  // count the execution times of the op
+  uint64_t count = *(reinterpret_cast<uint64_t *>(input_count->GetData()));
+  // seed of the op, passed between executions, which make op stateful
+  int64_t state = *(reinterpret_cast<int64_t *>(input_state->GetData()));
+
   // setup random engine
   RNG_Engine rng;
-  rng.seed(final_seed);
+  auto seed = GetSeed(ctx, count, state);
+  rng.seed(seed);
   auto count_ptr = reinterpret_cast<uint64_t *>(input_count->GetData());
   ++count_ptr[0];
   if (count_ptr[0] == 0) {
     ++count_ptr[0];
   }
   auto state_ptr = reinterpret_cast<int64_t *>(input_state->GetData());
-  state_ptr[0] = rng();
+  state_ptr[0] = static_cast<int64_t>(rng());
 
   auto input_0_data = reinterpret_cast<T_in *>(input_0->GetData());
   auto output_data = reinterpret_cast<T_out *>(output->GetData());
@@ -239,7 +243,8 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   SetMap();
-  calls_[input0_datatype][data_type](input_0, input_1, input_count, input_state, output, ctx);
+  calls_[static_cast<int>(input0_datatype)][static_cast<int>(data_type)](input_0, input_1, input_count, input_state,
+                                                                         output, ctx);
   calls_.clear();
   return KERNEL_STATUS_OK;
 }

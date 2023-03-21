@@ -18,8 +18,8 @@
 #include "proto/aicpu_tensor.pb.h"
 
 namespace aicpu {
-constexpr size_t kSequenceAddOffsetInputNum = 2;
-constexpr size_t kSequenceAddOffsetOutputNum = 1;
+constexpr auto kSequenceAddOffsetInputNum = 2;
+constexpr auto kSequenceAddOffsetOutputNum = 1;
 constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 constexpr auto kDim2 = 2;
@@ -42,15 +42,16 @@ uint32_t SequenceAddOffsetKernel::ParseKernelParam() {
   aicpuops::Tensor input_1_tensor = node_def_.inputs(kDim1);
   auto input_1_data_type = static_cast<aicpuops::DataType>(input_1_tensor.tensor_type());
   if (input_0_data_type_ != input_1_data_type) {
-    AICPU_LOGE("For 'SequenceAddOffset', inputs data type must be same, but got %d and %d", input_0_data_type_,
-               input_1_data_type);
+    AICPU_LOGE("For 'SequenceAddOffset', inputs data type must be same, but got %d and %d",
+               static_cast<int>(input_0_data_type_), static_cast<int>(input_1_data_type));
     return kAicpuKernelStateInvalid;
   }
 
   aicpuops::Tensor output_tensor = node_def_.outputs(kDim0);
   auto output_data_type = static_cast<aicpuops::DataType>(output_tensor.tensor_type());
   if (output_data_type != aicpuops::DataType::MS_INT64) {
-    AICPU_LOGE("For 'SequenceAddOffset', output data type must be int64, but got %d", output_data_type);
+    AICPU_LOGE("For 'SequenceAddOffset', output data type must be int64, but got %d",
+               static_cast<int>(output_data_type));
     return kAicpuKernelStateInvalid;
   }
   return kAicpuKernelStateSucess;
@@ -60,7 +61,7 @@ template <typename T>
 uint32_t SequenceAddOffsetKernel::SequenceAddOffsetTask() {
   auto output_addr = reinterpret_cast<int64_t *>(io_addrs_[kDim2]);
   output_addr[0] = 0;
-  output_addr[1] = input_0_data_size_ / sizeof(T);
+  output_addr[1] = static_cast<int64_t>(input_0_data_size_ / sizeof(T));
   return kAicpuKernelStateSucess;
 }
 
@@ -75,7 +76,7 @@ uint32_t SequenceAddOffsetKernel::DoCompute() {
     case aicpuops::DataType::MS_FLOAT64:
       return SequenceAddOffsetTask<double>();
     default:
-      AICPU_LOGE("SequenceAddOffset kernel data type [%s] not support.", input_0_data_type_);
+      AICPU_LOGE("SequenceAddOffset kernel data type [%s] not support.", static_cast<int>(input_0_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }
