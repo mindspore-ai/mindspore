@@ -1553,8 +1553,7 @@ class Ones(Primitive):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-          Only constant positive int is allowed.
-        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor. Only constant value is allowed.
+        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
 
     Outputs:
         Tensor, has the same type and shape as input shape value.
@@ -1589,8 +1588,7 @@ class Zeros(Primitive):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-          Only constant positive int is allowed.
-        - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
+        - **type** (mindspore.dtype) - The specified type of output tensor.
 
     Outputs:
         Tensor, has the same type and shape as input shape value.

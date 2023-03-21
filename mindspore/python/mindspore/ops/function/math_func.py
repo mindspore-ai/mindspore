@@ -3338,7 +3338,7 @@ def matrix_exp(input):
         ValueError: If the last two dimensions of `input` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+
 
     Examples:
         >>> input = Tensor(np.array([[1, 2], [0, 1]]), mindspore.float32)
@@ -5064,7 +5064,7 @@ def real(input):
        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -10173,7 +10173,7 @@ def imag(input):
        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
