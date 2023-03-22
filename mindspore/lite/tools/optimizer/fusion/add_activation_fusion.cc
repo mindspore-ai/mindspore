@@ -24,6 +24,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 
 namespace mindspore::opt {
 const BaseRef AddActivationFusion::DefinePattern() const {
@@ -59,6 +60,28 @@ const AnfNodePtr AddActivationFusion::Process(const FuncGraphPtr &func_graph, co
   auto add_prim = ops::GetOperator<ops::AddFusion>(add_cnode->input(0));
   MS_CHECK_TRUE_RET(add_prim != nullptr, nullptr);
   (void)add_prim->AddAttr(ops::kActivationType, api::MakeValue<int64_t>(static_cast<int64_t>(type)));
+
+  // copy the output quant params of activation to add node
+  auto add_primitive = GetValueNode<PrimitivePtr>(add_cnode->input(0));
+  auto act_primitive = GetValueNode<PrimitivePtr>(act_cnode->input(0));
+  MS_CHECK_TRUE_RET(add_primitive != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(act_primitive != nullptr, nullptr);
+  auto act_quant_params_valueptr = act_primitive->GetAttr("quant_params");
+  if (act_quant_params_valueptr != nullptr) {
+    auto act_quant_param_holder = act_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
+    if (act_quant_param_holder->IsOutputExistInited()) {
+      auto quant_params = act_quant_param_holder->get_output_quant_params();
+      auto add_quant_params_valueptr = add_primitive->GetAttr("quant_params");
+      if (add_quant_params_valueptr != nullptr) {
+        auto add_quant_params_holder = add_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
+        add_quant_params_holder->set_output_quant_param(0, quant_params[0]);
+      } else {
+        auto add_quant_params_holder = std::make_shared<lite::QuantParamHolder>(0, 0);
+        add_quant_params_holder->set_output_quant_param(0, quant_params[0]);
+        add_primitive->AddAttr("quant_params", add_quant_params_holder);
+      }
+    }
+  }
   return add_cnode;
 }
 

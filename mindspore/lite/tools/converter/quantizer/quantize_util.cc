@@ -722,4 +722,10 @@ int ConvertCNodeFp16ToFp32(const CNodePtr &cnode) {
   }
   return RET_OK;
 }
+
+bool IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params, const tensor::TensorPtr &weight,
+                        int preferred_dim) {
+  auto dims = weight->shape();
+  return (static_cast<int>(quant_params.size()) == dims[preferred_dim]);
+}
 }  // namespace mindspore::lite::quant

@@ -286,7 +286,8 @@ int InsertQuantNodeManager::InsertForwardQuantNode(const FuncGraphPtr &graph, co
     input_quant_params = input_primitive_quant_param_holder->get_output_quant_params()[0];
     std::copy(input_quant_params.cbegin(), input_quant_params.cend(), std::back_inserter(output_quant_params));
   }
-  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params);
+  ValueNodePtr new_primitive =
+    NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params, 0, false);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
@@ -357,7 +358,8 @@ int InsertQuantNodeManager::InsertBackwardDeQuantNode(const FuncGraphPtr &graph,
       quant_param.zeroPoint += kU8ZeroPointOffset;
     }
   }
-  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params);
+  ValueNodePtr new_primitive =
+    NewQuantCastPrimitive(src_dtype, dst_dtype, input_quant_params, output_quant_params, 0, false);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->cast<AnfNodePtr>()};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   MS_CHECK_TRUE_MSG(quant_cast_cnode != nullptr, RET_NULL_PTR, "quant_cast_cnode is nullptr.");

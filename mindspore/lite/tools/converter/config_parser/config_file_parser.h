@@ -108,6 +108,10 @@ struct CpuOptionCfgString {
   std::string instruction;
 };
 
+struct TransformQuantString {
+  std::string export_precision_mode;
+};
+
 class ConfigFileParser {
  public:
   int ParseConfigFile(const std::string &config_file_path,
@@ -124,6 +128,7 @@ class ConfigFileParser {
   AclOptionCfgString GetAclOptionCfgString() { return this->acl_option_cfg_string_; }
   MicroParamString GetMicroParamString() { return this->micro_param_string_; }
   CpuOptionCfgString GetCpuOptionCfgString() { return this->cpu_option_cfg_string_; }
+  TransformQuantString GetTransformQuantString() const { return this->transform_quant_string_; }
 
  private:
   int ParseDataPreProcessString(const std::map<std::string, std::map<std::string, std::string>> &maps);
@@ -137,6 +142,7 @@ class ConfigFileParser {
                  const std::map<std::string, std::string &> &parse_map, const std::string &section);
   int ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseCpuOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  int ParseTransformQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
 
  private:
   DataPreProcessString data_pre_process_string_;
@@ -148,6 +154,7 @@ class ConfigFileParser {
   AclOptionCfgString acl_option_cfg_string_;
   MicroParamString micro_param_string_;
   CpuOptionCfgString cpu_option_cfg_string_;
+  TransformQuantString transform_quant_string_;
 };
 
 }  // namespace lite

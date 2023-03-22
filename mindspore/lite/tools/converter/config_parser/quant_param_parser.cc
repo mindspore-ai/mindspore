@@ -279,5 +279,31 @@ int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_str
   }
   return RET_OK;
 }
+
+int QuantParamParser::ParseExportPrecisionMode(const std::string &precision_modeL_str,
+                                               quant::PrecisionMode *precision_mode) {
+  if (precision_modeL_str == "QUANT") {
+    (*precision_mode) = quant::QUANT;
+    return RET_OK;
+  } else if (precision_modeL_str == "FLOAT32") {
+    (*precision_mode) = quant::FLOAT32;
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: export_precision_mode must be QUANT or FLOAT32.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+}
+
+int QuantParamParser::ParseTransformQuant(const TransformQuantString &transform_quant_string,
+                                          quant::TransformQuantParam *transform_quant) {
+  if (!transform_quant_string.export_precision_mode.empty()) {
+    auto ret = ParseExportPrecisionMode(transform_quant_string.export_precision_mode, &transform_quant->precision_mode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Parse precision mode failed.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

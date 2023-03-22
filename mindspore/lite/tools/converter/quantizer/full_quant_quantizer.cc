@@ -284,6 +284,9 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
 
   auto cnodes = func_graph->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+      continue;
+    }
     auto op_name = cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
@@ -447,60 +450,7 @@ void FullQuantQuantizer::InitDSPConfig() {
   init_param_.activation_symmetric_ = false;
   init_param_.weight_channel_symmetric_ = true;
   init_param_.weight_layer_symmetric_ = false;
-  // support 52 operators
-  support_int8_ops_ = {prim::kPrimAbs,
-                       prim::kPrimActivation,
-                       prim::kPrimAddFusion,
-                       prim::kPrimArgMaxFusion,
-                       prim::kPrimAvgPoolFusion,
-                       prim::kPrimBatchNorm,
-                       prim::kPrimBatchToSpace,
-                       prim::kPrimBatchToSpaceND,
-                       prim::kPrimCeil,
-                       prim::kPrimConcat,
-                       prim::kPrimConv2DFusion,
-                       prim::kPrimConv2dTransposeFusion,
-                       prim::kPrimDepthToSpace,
-                       prim::kPrimDivFusion,
-                       prim::kPrimExpFusion,
-                       prim::kPrimFloor,
-                       prim::kPrimFullConnection,
-                       prim::kPrimGather,
-                       prim::kPrimInstanceNorm,
-                       prim::kPrimLeakyRelu,
-                       prim::kPrimMatMulFusion,
-                       prim::kPrimMaximum,
-                       prim::kPrimMaxPoolFusion,
-                       prim::kPrimMinimum,
-                       prim::kPrimMulFusion,
-                       prim::kPrimNeg,
-                       prim::kPrimPadFusion,
-                       prim::kPrimPReLUFusion,
-                       prim::kPrimReduceFusion,
-                       prim::kPrimReduceMax,
-                       prim::kPrimReduceMean,
-                       prim::kPrimReduceMin,
-                       prim::kPrimReduceSum,
-                       prim::kPrimReduceMax,
-                       prim::kPrimReshape,
-                       prim::kPrimResize,
-                       prim::kPrimResizeBilinear,
-                       prim::kPrimResizeNearestNeighbor,
-                       prim::kPrimRound,
-                       prim::kPrimScaleFusion,
-                       prim::kPrimSoftmax,
-                       prim::kPrimSpaceToBatch,
-                       prim::kPrimSpaceToBatchND,
-                       prim::kPrimSpaceToDepth,
-                       prim::kPrimSplit,
-                       prim::kPrimSqrt,
-                       prim::kPrimSqueeze,
-                       prim::kPrimStridedSlice,
-                       prim::kPrimStack,
-                       prim::kPrimSubFusion,
-                       prim::kPrimTileFusion,
-                       prim::kPrimTranspose,
-                       prim::kPrimUnsqueeze};
+  support_int8_ops_ = {};
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
   support_activation_ = {RELU, RELU6, SIGMOID, TANH};
