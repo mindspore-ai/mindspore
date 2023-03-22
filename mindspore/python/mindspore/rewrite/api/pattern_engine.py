@@ -481,13 +481,12 @@ class PatternEngine:
                 subtree = node.symbol_tree
                 self.apply(SymbolTree(subtree))
                 continue
-            else:
-                matched, matched_dict = self._match(self._pattern, Node(node))
-                if not matched:
-                    continue
-                new_nodes = []
-                if self._replacement is not None:
-                    new_nodes = self._replacement(self._pattern, self._is_chain, matched_dict)
-                if not new_nodes:  # if replacement is empty, do nothing
-                    continue
-                PatternEngine._multi_replace_cellcontainer(stree, cellcontainer, node, matched_dict, new_nodes)
+            matched, matched_dict = self._match(self._pattern, Node(node))
+            if not matched:
+                continue
+            new_nodes = []
+            if self._replacement is not None:
+                new_nodes = self._replacement(self._pattern, self._is_chain, matched_dict)
+            if not new_nodes:  # if replacement is empty, do nothing
+                continue
+            PatternEngine._multi_replace_cellcontainer(stree, cellcontainer, node, matched_dict, new_nodes)
