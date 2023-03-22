@@ -1040,7 +1040,7 @@ def tile(input, reps):
         - If `input.dim < d`, fill in multiple 1 in the length of the shape of `input` until their
           lengths are consistent. Such as set the shape of `input` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
-          :math:`(1*y_1, ..., x_S*y_S)`.
+          :math:`(1*y_1, ..., x_R*y_R, x_S*y_S)`.
 
     Raises:
         TypeError: If `reps` is not a tuple or its elements are not all int.
@@ -1714,7 +1714,7 @@ def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
 def select(cond, x, y):
     r"""
     The conditional tensor determines whether the corresponding element in the output must be
-    selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each element.
+    selected from `x` (if true) or `y` (if false) based on the value of each element.
 
     It can be defined as:
 
@@ -2791,7 +2791,6 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the addition operation with `input_x`,
@@ -3818,8 +3817,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
     and after division, the output tensor's spatial dimension is the corresponding number of blocks.
     The output tensor's batch dimension is the product of the original batch and the product of `block_size`.
     Before division, the spatial dimensions of the input are zero padded according to paddings if necessary.
-    Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
-    :math:`block\_size` and :math:`paddings`, then the shape of the output tensor will be
+    Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, then the shape of the output tensor will be
     :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
 
     .. math::
