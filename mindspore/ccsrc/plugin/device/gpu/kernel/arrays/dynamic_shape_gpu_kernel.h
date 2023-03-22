@@ -59,16 +59,19 @@ class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    auto shape = inputs.at(kIndex0)->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+    if (is_null_input_) {
+      input_size_list_.clear();
+      output_size_list_.clear();
+      input_size_list_.push_back(0);
+      output_size_list_.push_back(0);
+      return KRET_OK;
+    }
     if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();
-    auto shape = inputs.at(kIndex0)->GetShapeVector();
-    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
     input_size_ = SizeOf(shape);
     for (auto x : shape) {
       prev_node_output_shape_.push_back(static_cast<S>(x));
