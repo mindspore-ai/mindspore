@@ -21,6 +21,7 @@ median_op_info = AiCPURegOp("Median") \
     .attr("global_median", "bool")\
     .attr("axis", "int", "0")\
     .attr("keep_dims", "bool", "False")\
+    .attr("ignore_nan", "bool", "False") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
     .output(1, "indices", "optional") \

@@ -4467,7 +4467,46 @@ def median(input, axis=-1, keepdims=False):
         (Tensor(shape=[3], dtype=Float32, value= [ 3.79999995e-01,  1.59999996e-01,  4.39999998e-01]),
         Tensor(shape=[3], dtype=Int64, value= [1, 2, 2]))
     """
-    return Median(False, axis, keepdims)(input)
+    median_ = _get_cache_prim(Median)(global_median=False, axis=axis, keep_dims=keepdims, ignore_nan=False)
+    return median_(x)
+
+
+def nanmedian(x, axis=-1, keepdims=False):
+    r"""
+    Computes the median and indices of input tensor, ignoring NaN.
+
+    Args:
+        x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
+        axis (int, optional): The dimension need to reduce. Default: -1.
+        keepdims (bool, optional): Whether the output tensor needs to retain `axis` dimension or not. Default: False.
+
+    Returns:
+        Tensor, has the same dtype as `x`. If `keepdims` is true,
+        has the same shape as `x` with dimension `axis` being 1.
+        Otherwise, dimension `axis` is reduced.
+
+        indices (Tensor), has the same shape as the `y`, but dtype is int64.
+
+    Raises:
+        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
+        TypeError: If input `x` is not a Tensor.
+        TypeError: If `axis` is not a int.
+        TypeError: If `keepdims` is not a bool.
+        ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[0.5, -1.1, float('nan')], [3.4, float('nan'), 0.7]]).astype(np.float32))
+        >>> y, indices = ops.nanmedian(x, axis=0, keepdims=False)
+        >>> print(y)
+        [ 0.5 -1.1  0.7]
+        >>> print(indices)
+        [0 0 1]
+    """
+    nanmedian_ = _get_cache_prim(Median)(global_median=False, axis=axis, keep_dims=keepdims, ignore_nan=True)
+    return nanmedian_(x)
 
 
 def orgqr(input, input2):

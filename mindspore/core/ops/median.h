@@ -35,11 +35,14 @@ class MIND_API Median : public BaseOperator {
   /// \brief Constructor.
   Median() : BaseOperator(kNameMedian) { InitIOName({"x"}, {"y", "indices"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Median for the inputs.
-  void Init(const bool global_median = false, const int64_t axis = 0, const bool keep_dims = false);
+  void Init(const bool global_median = false, const int64_t axis = 0, const bool keep_dims = false,
+            const bool ignore_nan = false);
   /// \brief Set global_median.
   void set_global_median(const bool global_median);
   /// \brief Set keep_dims.
   void set_keep_dims(const bool keep_dims);
+  /// \brief Set ignore_nan.
+  void set_ignore_nan(const bool ignore_nan);
   /// \brief Set axis.
   void set_axis(const int64_t &axis);
   /// \brief Get global_median.
@@ -50,6 +53,10 @@ class MIND_API Median : public BaseOperator {
   ///
   /// \return keep_dims.
   bool get_keep_dims() const;
+  /// \brief Get ignore_nan.
+  ///
+  /// \return ignore_nan.
+  bool get_ignore_nan() const;
   /// \brief Get axis.
   ///
   /// \return axis.
