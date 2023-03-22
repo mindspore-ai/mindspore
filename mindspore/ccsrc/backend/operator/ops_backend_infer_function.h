@@ -15,8 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPERATE_OPS_BACKEND_INFER_FUNCTION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPERATE_OPS_BACKEND_INFER_FUNCTION_H_
-#include <string>
-#include <vector>
 #include <optional>
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
