@@ -33,7 +33,7 @@ OpParameter *PopulateScatterElementsParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc ScatterElements Parameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(ScatterElementsParameter));
+  (void)memset(param, 0, sizeof(ScatterElementsParameter));
   param->op_parameter_.type_ = primitive->value_type();
   param->axis_ = static_cast<int>(value->axis());
   return reinterpret_cast<OpParameter *>(param);
