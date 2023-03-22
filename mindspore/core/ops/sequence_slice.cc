@@ -92,7 +92,8 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
     for (int64_t i = start; i > end; i += step) {
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[i]->BuildValue(), elems[i]->BuildType()));
+      abs.push_back(
+        std::make_shared<abstract::AbstractScalar>(elems[i + len]->BuildValue(), elems[i + len]->BuildType()));
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
   }
@@ -124,6 +125,17 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(end_abs);
   auto step_abs = input_args[step_index];
   MS_EXCEPTION_IF_NULL(step_abs);
+
+  // whether element is tensor with a scalar or a scalar
+  for (auto elem : seq_abs->elements()) {
+    if (!elem->isa<abstract::AbstractScalar>() &&
+        (elem->isa<abstract::AbstractTensor>() &&
+         elem->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() > 1)) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name
+                              << "', the element in the input should be a scalar or a tensor with one scalar, but got "
+                              << elem->ToString();
+    }
+  }
 
   // all value is known
   if (start_abs->BuildValue() != kAnyValue && end_abs->BuildValue() != kAnyValue &&

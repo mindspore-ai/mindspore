@@ -105,7 +105,7 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
     int64_t idx = 0;
     for (int64_t i = start; i > stop; i += step) {
-      output_addr[idx] = seq_addr[i];
+      output_addr[idx] = seq_addr[i + len];
       idx++;
     }
     return true;
