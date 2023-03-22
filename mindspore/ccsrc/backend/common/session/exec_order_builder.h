@@ -16,14 +16,11 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_COMMON_SESSION_EXEC_ORDER_BUILDER_H
 #define MINDSPORE_CCSRC_BACKEND_COMMON_SESSION_EXEC_ORDER_BUILDER_H
 
-#include <string>
 #include <vector>
 #include <stack>
 #include <queue>
 #include <deque>
-#include <map>
 #include <set>
-#include <algorithm>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
@@ -43,6 +40,8 @@ class ExecOrderBuilder {
   void BuildLinkInfo();
 
   void FindIndependentNodes();
+
+  bool CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input, mindspore::HashSet<AnfNodePtr> *visited);
 
   std::vector<CNodePtr> Build();
 
