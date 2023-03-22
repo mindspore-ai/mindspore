@@ -104,7 +104,7 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
       batch_strides_[dim_indices_last - 1] = input_shapes_[dim_indices_last - 1];
       batch_indices_[dim_indices_last - 1] = dims_[1];
     }
-    for (size_t i = dim_indices_last - 1; i > 0; --i) {
+    for (int i = static_cast<int>(dim_indices_last) - 1; i > 0; --i) {
       batch_strides_[i - 1] = input_shapes_[i - 1];
       batch_indices_[i - 1] = batch_indices_[i] * input_shapes_[i];
     }
