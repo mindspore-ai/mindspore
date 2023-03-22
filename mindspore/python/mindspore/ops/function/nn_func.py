@@ -2158,7 +2158,6 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             x = resize(x, size)
         return x
 
-    # support_dict "mode":{dim:{"scale_factor", "align_corners"}}
     supported_dict = {
         "nearest": {3: (), 4: ()},
         "linear": {3: ("align_corners",)},

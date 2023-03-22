@@ -516,7 +516,7 @@ class AssignParser(Parser):
             args.append(AssignParser._create_scopedvalue(ast_node.left))
             for idx, ast_op in enumerate(ast_node.ops):
                 op = type(ast_op).__name__
-                name = name + '_' + op
+                name = f'{name}_{op}'
                 ops[str(idx)] = ScopedValue.create_naming_value(op)
                 args.append(AssignParser._create_scopedvalue(ast_node.comparators[idx]))
         name = name.lower()

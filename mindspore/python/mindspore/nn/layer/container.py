@@ -304,7 +304,7 @@ class SequentialCell(Cell):
             if self._auto_prefix:
                 tmp_cell = self._cells[str(length-1)]
                 for _, param in tmp_cell.parameters_and_names():
-                    param.name = prefix + str(length) + "." + ".".join(param.name.split(".")[key_index+1:])
+                    param.name = f'{prefix}{str(length)}{"."}{".".join(param.name.split(".")[key_index+1:])}'
             self._cells[str(length)] = self._cells[str(length - 1)]
             length -= 1
         self._cells[str(idx)] = cell
