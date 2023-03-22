@@ -18,6 +18,7 @@ import stat
 import time
 import json
 import glob
+import subprocess
 from enum import Enum
 
 from mindspore import log as logger, context
@@ -809,17 +810,23 @@ class Profiler:
 
     def _ascend_graph_msadvisor_analyse(self, job_id):
         """Call MSAdvisor function."""
+        logger.info("MSAdvisor starts running.")
+        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
         try:
-            msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
-            logger.info("MSAdvisor starts running.")
             msadvisor.analyse()
-        except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
-            else:
-                logger.warning("MSAdvisor running failed. %s", err)
+        except FileNotFoundError as err:
+            logger.warning("MSAdvisor: command not found,"
+                           "please check if installed ascend-toolkit and set environment path correctly. %s", err)
+        except OSError as err:
+            logger.warning("Cannot execute binary file: Exec format error. %s", err)
+        except subprocess.CalledProcessError:
+            logger.warning("MSAdvisor running failed, please check MSAdvisor running log.")
+        except (ValueError, ProfilerFileNotFoundException) as err:
+            logger.warning("MSAdvisor running failed. %s", err)
         finally:
             pass
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
 
     def _ascend_graph_op_analyse(self, source_path):
         """
@@ -884,40 +891,21 @@ class Profiler:
             MinddataParser.execute(source_path, self._output_path, store_id)
 
         # parse minddata pipeline operator and queue
-        pipeline_parser = None
         try:
-            pipeline_parser = MinddataPipelineParser(self._output_path, store_id, self._output_path)
+            MinddataPipelineParser(self._output_path, store_id, self._output_path).parse()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-
-        if pipeline_parser:
-            logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
-            try:
-                pipeline_parser.parse()
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
 
         # Analyze minddata information
-        md_analyzer = None
+        logger.info("Profiling: analyzing the minddata information.")
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path)
+            MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path).analyze()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-
-        if md_analyzer:
-            logger.info("Profiling: analyzing the minddata information.")
-            try:
-                md_analyzer.analyze()
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
 
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""

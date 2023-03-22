@@ -94,7 +94,7 @@ class HWTSLogParser:
                 if HWTSLogParser.GRAPH_MODE_MAX_TASKID < last_task_stream_map.get(stream_id, task_id) \
                         and task_id < last_task_stream_map.get(stream_id, task_id):
                     flip_times += 1
-                task_id_str = str(stream_id) + "_" + str(task_id + flip_times * task_id_threshold)
+                task_id_str = ("%s_%s" % (str(stream_id), str(task_id + flip_times * task_id_threshold)))
                 result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" % (log_type[int(ms_type, 2)], cnt, core_id,
                                                                           blk_id, task_id_str, syscnt, stream_id))
                 last_task_stream_map[stream_id] = task_id
