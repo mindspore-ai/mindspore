@@ -33,9 +33,6 @@ static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,  
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 Status DefaultInferSession::Init(const std::shared_ptr<Context> &context) {
   MS_LOG(INFO) << "DefaultInferSession::Init";
-  // context_ = context;
-
-  // Set MSContext::GetInstance param?
 
   // init compiler and runtime according to context
   compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context_);
@@ -93,8 +90,6 @@ Status DefaultInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs, 
     return kLiteNullptr;
   }
   // Convert tensor::Tensor to lite::Tensor, see litert cxx_api model
-  // auto inner_inputs = xxx(inputs);
-  // auto inner_outputs = xxx(outputs);
   auto inner_inputs = runtime->GetInputs();
   auto inner_outputs = runtime->GetOutputs();
   auto status = CopyDataToInnerTensors(inputs, inner_inputs);
@@ -168,12 +163,10 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
     auto &user_input = tensors.at(i);
     auto input = inner_tensors.at(i);
     if (user_input.data_type() != input->data_type()) {
-      // ResetTensorData(old_data, input_tensors);
       MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has a different data type from input"
                         << input->tensor_name() << ".";
     }
     if (user_input.data_c() == nullptr) {
-      // ResetTensorData(old_data, input_tensors);
       MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has no data.";
     }
     old_data.push_back(input->data());
@@ -181,7 +174,6 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
       std::vector<int32_t> shape =
         TruncateShape(user_input.shape_c(), input->data_type(), user_input.DataSize(), false);
       if (shape.empty() && !(user_input.shape_c().empty())) {
-        // ResetTensorData(old_data, input_tensors);
         MS_LOG(EXCEPTION) << "Input dims of tensor " << user_input.id() << " is invalid.";
       }
       input->set_shape(shape);
@@ -189,7 +181,6 @@ Status DefaultInferSession::CopyDataToInnerTensors(const std::vector<tensor::Ten
     } else {
       if (user_input.data_c() != input->data()) {
         if (input->Size() != user_input.Size()) {
-          // ResetTensorData(old_data, input_tensors);
 #ifndef ENABLE_LITE_ACL
           MS_LOG(EXCEPTION) << "Tensor " << user_input.id() << " has wrong data size.";
 #else

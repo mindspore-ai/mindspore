@@ -447,12 +447,6 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
 #endif
 
   auto &device_list = context->MutableDeviceInfo();
-  // if (flags_->device_ == "Auto") {
-  //   std::shared_ptr<AutoDeviceInfo> auto_device_info = std::make_shared<AutoDeviceInfo>();
-  //   device_list.push_back(auto_device_info);
-  //   device_list = auto_device_info->MutableDeviceInfo();
-  // }
-
   if (flags_->device_ == "GPU" || flags_->device_ == "Auto") {
     std::shared_ptr<GPUDeviceInfo> gpu_device_info = std::make_shared<GPUDeviceInfo>();
     gpu_device_info->SetEnableFP16(flags_->enable_fp16_);

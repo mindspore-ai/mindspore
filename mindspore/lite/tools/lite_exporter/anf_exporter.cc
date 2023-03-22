@@ -515,18 +515,6 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
   for (const auto &item : convert_items) {
     auto prim = item.prim_;
     auto cnode = item.cnode_;
-    // auto &node = const_cast<std::unique_ptr<schema::CNodeT> &>(item.dst_node_);
-    // auto prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
-    // if (prim == nullptr) {
-    //   MS_LOG(ERROR) << "get prim from value node failed.";
-    //   return RET_ERROR;
-    // }
-
-    // auto node = std::make_unique<schema::CNodeT>();
-    // if (node == nullptr) {
-    //   MS_LOG(ERROR) << "object failed to be constructed";
-    //   return RET_MEMORY_FAILED;
-    // }
     std::unique_ptr<schema::CNodeT> node(item.dst_node_);
     std::unique_ptr<schema::PrimitiveT> primT;
 
@@ -562,7 +550,6 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       break;
     }
     // set all call op to non tail call
-    // SetNonTailCall(cnode, node.get());
     if (opt::CheckPrimitiveType(cnode, prim::kPrimCall)) {
       node->primitive->value.AsCall()->is_tail_call = false;
       call_node_map_[cnode] = node.get();
@@ -579,12 +566,6 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       break;
     }
-
-    // auto status = SetPostTrainOutputTensorType(meta_graphT, prim, node);
-    // if (status != RET_OK) {
-    //   MS_LOG(ERROR) << "Set quant output tensor data type failed";
-    //   break;
-    // }
 
     fb_graph_node_mutex_.lock();
     meta_graphT->nodes.push_back(std::move(node));
