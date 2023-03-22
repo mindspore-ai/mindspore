@@ -265,13 +265,13 @@ class SamplerFn:
                                        "thread/process of the generator generates data had been hung by gil lock. "
                                        "Check whether the source of generator has an infinite loop operation or the "
                                        "output data is too large. You can also set the timeout interval by "
-                                       "ds.config.set_multiprocessing_interval to adjust the output frequency of this "
-                                       "log.")
+                                       "ds.config.set_multiprocessing_timeout_interval to adjust the output "
+                                       "frequency of this log.")
                         pid = self.workers[i % self.num_worker].pid
                         logger.warning("Generator subprocess ID {} is stuck.".format(pid))
                         install_status, _ = subprocess.getstatusoutput("py-spy --version")
                         if install_status == 0:
-                            stack = subprocess.getoutput("py-spy dump -p {} -l -s".format(pid))
+                            stack = subprocess.getoutput("py-spy dump -p {} -l".format(pid))
                             logger.warning("Generator subprocess stack:\n{}".format(stack))
                         else:
                             logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
