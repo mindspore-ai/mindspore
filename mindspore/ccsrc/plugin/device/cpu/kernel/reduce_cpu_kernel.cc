@@ -185,6 +185,8 @@ void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator 
 
 template <typename T>
 void ReduceCpuKernelFunc<T>::SpecialExcute() {
+  // reset simple_execute_
+  simple_execute_ = false;
   // special accelerate for axis = 1 and input has 2 dims
   if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
       axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == kDim2) {
