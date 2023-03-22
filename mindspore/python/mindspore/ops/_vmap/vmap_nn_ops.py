@@ -1333,10 +1333,9 @@ def get_adam_rule(prim, axis_size):
         epsilon, epsilon_dim = epsilon_bdim
         grad, grad_dim = grad_bdim
 
+        all_dim = [m_dim, v_dim, beta1_power_dim, beta2_power_dim, lr_dim, beta1_dim, beta2_dim, epsilon_dim, grad_dim]
         if var_dim is None:
-            if any(dim is not None for dim in [m_dim, v_dim, beta1_power_dim,
-                                               beta2_power_dim, lr_dim, beta1_dim,
-                                               beta2_dim, epsilon_dim, grad_dim]):
+            if any(dim is not None for dim in all_dim):
                 raise ValueError("The source axis of `var` is None, "
                                  "but the source axis of `m/v/vhat/beta1_power/beta2_power/lr/beta1/beta2/epsilon grad"
                                  " is not None. The execution of operator `{}` cannot be guaranteed.".format(prim_name))
