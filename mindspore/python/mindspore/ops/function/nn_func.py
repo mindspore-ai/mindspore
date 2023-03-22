@@ -243,8 +243,8 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
-        kernel_size (int): The size of kernel window used to take the average value, Default: 1.
-        stride (int): The distance of kernel moving, an int number that represents the height and
+        kernel_size (int): The size of kernel window used to take the average value. Default: 1.
+        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents the height and
             width of movement are both strides, or a tuple of two int numbers that represent height and width of
             movement respectively. Default: 1.
         padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
@@ -486,20 +486,20 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Currently support float16 and
             float32 data type.
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value, is an int number
-            that represents depth, height and width are both `kernel_size`, or a tuple of three int numbers that
+        kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value, is an int
+            number that represents depth, height and width are both `kernel_size`, or a tuple of three int numbers that
             represent depth, height and width respectively. Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the depth,
-            height and width of movement are both stride, or a tuple of three int numbers that represent depth, height
-            and width of movement respectively. Default: 1.
-        padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the addings of head,
-            tail, top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of six integers, the
-            padding of head, tail, top, bottom, left and right equal to padding[0], padding[1], padding[2],
-            padding[3], padding[4] and padding[5] correspondingly. Default: 0
-        ceil_mode (bool): If True, ceil instead of floor to compute the output shape. Default: False.
-        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
-        divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
-            `kernel_size` will be used. Default: 0.
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents the
+            depth, height and width of movement are both stride, or a tuple of three int numbers that represent depth,
+            height and width of movement respectively. Default: 1.
+        padding (Union(int, tuple[int]), optional): The pad value to be filled. If `padding` is an integer, the addings
+            of head, tail, top, bottom, left and right are the same, equal to pad. If `padding` is a tuple of six
+            integers, the padding of head, tail, top, bottom, left and right equal to padding[0], padding[1],
+            padding[2], padding[3], padding[4] and padding[5] correspondingly. Default: 0
+        ceil_mode (bool, optional): If True, ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad (bool, optional): If True, averaging calculation will include the zero-padding. Default: True.
+        divisor_override (int, optional): If specified, it will be used as divisor in the averaging calculation,
+            otherwise `kernel_size` will be used. Default: 0.
 
     Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
@@ -4729,8 +4729,6 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     mean of `input_x`, :math:`variance` is the variance of `input_x`.
 
     .. warning::
-        - If this operation is used for inferring and output "reserve_space_1" and "reserve_space_2" are usable,
-          then "reserve_space_1" and "reserve_space_2" have the same value as "mean" and "variance" respectively.
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.
 
     Note:
@@ -4743,12 +4741,12 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         running_var (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
         weight (Union[Tensor, Parameter]): The shape :math:`(C,)`, with float16 or float32 data type.
         bias (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
-        training (bool): If `training` is `True`, `mean` and `variance` are computed during training.
+        training (bool, optional): If `training` is `True`, `mean` and `variance` are computed during training.
             If `training` is `False`, they're loaded from checkpoint during inference. Default: False.
-        momentum (float): The hyper parameter to compute moving average for `running_mean` and `running_var`
+        momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
             (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Momentum value must be `[0, 1]`. Default: 0.1.
-        eps (float): A small value added for numerical stability. Default: 1e-5.
+        eps (float, optional): A small value added for numerical stability. Default: 1e-5.
 
     Returns:
         output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
@@ -4763,15 +4761,15 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
-        >>> running_mean = Tensor(np.ones([2]), mindspore.float32)
-        >>> running_var = Tensor(np.ones([2]), mindspore.float32)
-        >>> weight = Tensor(np.ones([2]), mindspore.float32)
-        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> input_x = Tensor([[1.0, 2.0], [3.0, 4.0]], dtype.float32)
+        >>> running_mean = Tensor([0.5, 1.5], dtype.float32)
+        >>> running_var = Tensor([0.1, 0.2], dtype.float32)
+        >>> weight = Tensor([2.0, 2.0], dtype.float32)
+        >>> bias = Tensor([-1.0, -1.0], dtype.float32)
         >>> output = ops.batch_norm(input_x, running_mean, running_var, weight, bias)
         >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
+        [[ 2.1621194  1.2360122]
+         [14.810596  10.180061 ]]
     """
     batch_norm_op = _get_cache_prim(P.BatchNorm)(is_training=training, epsilon=eps, momentum=momentum)
     output = batch_norm_op(input_x, weight, bias, running_mean, running_var)
@@ -4811,7 +4809,8 @@ def bias_add(input_x, bias):
 
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     r"""
-    Computes the binary cross entropy between predictive value `logits` and target value `labels`.
+    Computes the binary cross entropy(Measure the difference information between two probability distributions) between
+    predictive value `logits` and target value `labels`.
 
     Set `logits` as :math:`x`, `labels` as :math:`y`, output as :math:`\ell(x, y)`, the
     weight of nth batch of binary cross entropy is :math:`w_n`.
@@ -4839,9 +4838,13 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         labels (Tensor): The target value which has the same shape and data type as `logits`.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `logits` and `labels`.
-            And it must have the same shape and data type as `logits`. Default: None.
-        reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean' or 'sum', not case-sensitive. Default: 'mean'.
+            And it must have the same shape and data type as `logits`. Default: None. If set to None, the loss function
+            will not consider any sample weights, and each sample will be treated as having equal importance
+            when calculating the loss.
+        reduction (str, optional): Specify the protocol calculation method used to output the results.
+            Its value must be one of 'none', 'mean' or 'sum', respectively indicate that no calculation method is
+            specified, using the average value for calculation, and using summation for calculation, not case-sensitive.
+            Default: 'mean'.
 
     Returns:
         Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
