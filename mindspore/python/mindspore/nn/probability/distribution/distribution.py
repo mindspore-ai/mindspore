@@ -102,7 +102,7 @@ class Distribution(Cell):
         self.device_target = context.get_context('device_target')
         self.checktuple = CheckTuple()
 
-        @constexpr
+        @constexpr(check=False)
         def _check_tensor(x, name):
             CheckTensor()(x, name)
             return x

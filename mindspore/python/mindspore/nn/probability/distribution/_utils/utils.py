@@ -230,7 +230,7 @@ def probs_to_logits(probs, is_binary=False):
     return P.Log()(ps_clamped)
 
 
-@constexpr
+@constexpr(check=False)
 def raise_none_error(name):
     raise TypeError(f"the type {name} must be subclass of Tensor."
                     f" It can not be None since it is not specified during initialization.")
@@ -241,31 +241,31 @@ def raise_broadcast_error(shape_a, shape_b):
     raise ValueError(f"Shape {shape_a} and {shape_b} is not broadcastable.")
 
 
-@constexpr
+@constexpr(check=False)
 def raise_not_impl_error(name):
     raise ValueError(
         f"{name} function must be implemented for non-linear transformation")
 
 
-@constexpr
+@constexpr(check=False)
 def raise_not_implemented_util(func_name, obj, *args, **kwargs):
     raise NotImplementedError(
         f"{func_name} is not implemented for {obj} distribution.")
 
 
-@constexpr
+@constexpr(check=False)
 def raise_type_error(name, cur_type, required_type):
     raise TypeError(
         f"For {name} , the type must be or be subclass of {required_type}, but got {cur_type}")
 
 
-@constexpr
+@constexpr(check=False)
 def raise_not_defined(func_name, obj, *args, **kwargs):
     raise ValueError(
         f"{func_name} is undefined for {obj} distribution.")
 
 
-@constexpr
+@constexpr(check=False)
 def check_distribution_name(name, expected_name):
     if name is None:
         raise ValueError(

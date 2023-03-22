@@ -98,6 +98,7 @@ ATTR_MAP(SpaceToBatchND) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SpaceToBatchND) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatchND, kNameSpaceToBatchND, ADPT_DESC(SpaceToBatchND))
 REG_ADPT_DESC(SpaceToBatchTF, kNameSpaceToBatchTF, ADPT_DESC(SpaceToBatchND))
+REG_ADPT_DESC(SpaceToBatchNDD, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchND))
 
 // BatchToSpaceD
 INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
