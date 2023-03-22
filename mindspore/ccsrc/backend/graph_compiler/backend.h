@@ -100,6 +100,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void BatchBuildCallback();
 
   // Run op or dispatch  build task and run task.
+  void RunOpImplCheckInput(const OpCompilerInfoPtr &op_compiler_info, const session::BackendOpRunInfoPtr &op_run_info,
+                           VectorRef *outputs) const;
   void RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
                  const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
   void RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerInfoPtr &op_compiler_info,
