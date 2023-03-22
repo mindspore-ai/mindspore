@@ -4846,6 +4846,13 @@ def tensor_scatter_div(input_x, indices, updates):
     return tensor_scatter_div_(input_x, indices, updates)
 
 
+def scalar_to_array(input_x):
+    """
+    The  interface is deprecated. Please use the :func:`mindspore.ops.scalar_to_tensor` instead.
+    """
+    return P.ScalarToArray()(input_x)
+
+
 def scalar_to_tensor(input_x, dtype=mstype.float32):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.
@@ -6948,6 +6955,7 @@ __all__ = [
     'unstack',
     'is_tensor',
     'scalar_cast',
+    'scalar_to_array',
     'scalar_to_tensor',
     'space_to_batch_nd',
     'batch_to_space_nd',
