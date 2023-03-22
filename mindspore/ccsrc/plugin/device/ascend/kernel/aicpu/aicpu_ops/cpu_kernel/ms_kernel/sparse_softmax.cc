@@ -117,7 +117,7 @@ void QuickSortIndicesAndValues(int64_t *__restrict indices_addr, T *__restrict v
       }
     }
   }
-  free(indices_buff);
+  delete[] indices_buff;
 }
 }  // namespace
 
