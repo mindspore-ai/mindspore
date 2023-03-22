@@ -5642,8 +5642,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     Also see: :class:`mindspore.ops.ArgMaxWithValue`.
 
     Args:
-        input (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(input_1, input_2, ..., input_N)`.
+        input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
         axis (int): The dimension to reduce. Default: 0.
         keepdims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
             the output will reduce dimension if false. Default: False.
@@ -5651,9 +5650,9 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            and selects elements to include in the reduction. If non-default value is passed,
-            initial must also be provided. Default: True.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
+            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
+            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
@@ -5665,7 +5664,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
           Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
 
     Raises:
-        TypeError: If `x` is not Tensor.
+        TypeError: If `input` is not Tensor.
         TypeError: If `keepdims` is not a bool.
         TypeError: If `axis` is not an int.
         TypeError: If `initial` is not a number.
@@ -5748,8 +5747,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Args:
-        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` .Complex tensor is not supported.
+        x (Tensor) - The input tensor, can be any dimension. Complex tensor is not supported for now.
         axis (int): The dimension to reduce. Default: 0.
         keepdims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
             the output will reduce dimension if false. Default: False.
@@ -5757,9 +5755,9 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
     Keyword Args:
         initial (scalar, optional): The maximum value of an output element. Must be present to allow computation
             on empty slice. Default: None.
-        where (bool Tensor, optional): A boolean tensor which is broadcasted to match the dimensions of array,
-            and selects elements to include in the reduction. If non-default value is passed,
-            initial must also be provided. Default: True.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
+            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
+            the corresponding value in `initial` must be assigned. Default: None, which indicates True by default.
 
     Returns:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
