@@ -279,13 +279,14 @@ INPUT_MAP(ArgMaxD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(ArgMaxD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                      {"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxD))
 REG_ADPT_DESC(ArgMaxD, kArgMaxDOpName, ADPT_DESC(ArgMaxD))
 
 // ArgMaxV2
 INPUT_MAP(ArgMaxV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
+ATTR_INPUT_MAP(ArgMaxV2) = {{"axis", "dimension"}};
 ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxV2))
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
 
 // ArgMaxWithValue
