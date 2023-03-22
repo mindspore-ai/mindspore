@@ -4030,8 +4030,7 @@ class Lerp(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, name="Lerp"):
-        super().__init__(name)
+    def __init__(self):
         self.init_prim_io_names(inputs=['start', 'end', 'weight'], outputs=['output'])
 
 
