@@ -19,7 +19,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.adaptive_avg_pool3d
     mindspore.ops.adaptive_max_pool1d
     mindspore.ops.adaptive_max_pool2d
-    mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool1d
     mindspore.ops.avg_pool2d
     mindspore.ops.avg_pool3d
@@ -401,9 +400,9 @@ Reduction函数
     mindspore.ops.ger
     mindspore.ops.kron
     mindspore.ops.lstsq
+    mindspore.ops.lu_unpack
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
-    mindspore.ops.matrix_exp
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag

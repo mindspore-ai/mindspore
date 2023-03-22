@@ -12,7 +12,7 @@ mindspore.ops.fold
         - **input** (Tensor) - 四维Tensor，支持数据类型为float16和float32。
         - **output_size** (Tensor) - 一维Tensor，包含两个元素，均为整数类型。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小。如果是两个int，则分别为滑窗的高度和宽度；如果是一个int，则高度和宽度均为这个int值。是一个必要参数。
-        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率，如果是两个int，则分别作用于滑窗的高度和宽度；如果是一个int，则这个值作用于化窗的高度和宽度。默认值：1。
+        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率，如果是两个int，则分别作用于滑窗的高度和宽度；如果是一个int，则这个值作用于滑窗的高度和宽度。默认值：1。
         - **padding** (Union[int, tuple[int], list[int]]，可选) - 滑窗的隐式零填充量。如果是两个int，则分别为滑窗的高度和宽度方向的填充量；如果是一个int，则高度和宽度方向的填充量均为这个int值。默认值：0。
         - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长，如果是两个int，则分别为滑窗的高度和宽度方向上的步长；如果是一个int，则高度和宽度方向上的步长均为这个int值。默认值：1。
 

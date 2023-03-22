@@ -25,7 +25,6 @@ from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
 from .sparse_dense_cwise_div import _sparse_dense_cwise_div_aicpu
 from .sparse_dense_cwise_add import _sparse_dense_cwise_add_aicpu
 from .sparse_concat import _sparse_concat_aicpu
-from .sparse_apply_momentum import _sparse_apply_momentum_aicpu
 from .sparse_apply_centered_rms_prop import _sparse_apply_centered_rms_prop_aicpu
 from .broadcast_to import _broadcast_to_aicpu
 from .blackman_window import _blackman_window_aicpu
@@ -376,14 +375,12 @@ from .mvlgamma_grad import _mvlgamma_grad_aicpu
 from .nextafter import _nextafter_aicpu
 from .non_deterministic_ints import _non_deterministic_ints_aicpu
 from .pow import _pow_aicpu
-from .random_poisson import _random_poisson_aicpu
 from .real import _real_aicpu
 from .resize_area import _resize_area_aicpu
 from .segment_sum import _segment_sum_aicpu
 from .set_size import _set_size_aicpu
 from .slice import _slice_aicpu
 from .sparse_cross import _sparse_cross_aicpu
-from .sparse_reorder import _sparse_reorder_aicpu
 from .sparse_slice import _sparse_slice_aicpu
 from .sparse_softmax import _sparse_softmax_aicpu
 from .sparse_tensor_dense_add import _sparse_tensor_dense_add_aicpu
