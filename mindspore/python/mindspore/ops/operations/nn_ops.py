@@ -1268,10 +1268,12 @@ class Conv2D(Primitive):
     Where :math:`dilation` is Spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
 
-
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
-    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
-    http://cs231n.github.io/convolutional-networks/.
+    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
+
+    Note:
+        On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
+        That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
 
     Args:
         out_channel (int): The number of output channel :math:`C_{out}`.
@@ -8044,7 +8046,8 @@ class CTCLossV2(Primitive):
         blank (int, optional): The blank label. Default: 0.
         reduction (str, optional): Apply specific reduction method to the output. Currently only support 'none',
             not case sensitive. Default: "none".
-        zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to zero. Default: False.
+        zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
+            and its correlated gradient to zero. Default: False.
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
@@ -9211,9 +9214,10 @@ class FractionalMaxPool(Primitive):
 
 class FractionalMaxPool3DWithFixedKsize(Primitive):
     r"""
-    This operator applies a 3D fractional max pooling over an input signal composed of several input planes.
-    The max-pooling operation is applied in kD x kH x kW regions by a stochastic step size determined
-    by the target output size.
+    Applies a 3D fractional max pooling to an input signal composed of multiple input planes.
+    The max-pooling operation is applied in :math:`(kD, kH, kW)` regions by a stochastic step size determined by
+    the target output size `output_shape`.
+
     The number of output features is equal to the number of input planes.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
@@ -9222,13 +9226,11 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        ksize (Union[int, tuple]): The target ksize is D x H x W.
-            ksize can be a tuple, or a single K for K x K x K.
-            specifying the window size (D, H, W) of the input tensor.
-        output_shape (Union[int, tuple]): The target output_shape is D x H x W.
-            output_shape can be a tuple, or a single H for H x H x H.
-            specifying the size (D, H, W) of the output tensor.
-        data_format (str, optional) : The optional value for data format.
+        ksize (Union[float, tuple]): Size of the pooling window. `ksize` can be a tuple of three values specify a
+            shape :math:`(k_D, k_H, k_W)`, or a single int `K` for :math:`(K, K, K)`.
+        output_shape (Union[int, tuple]): The target output shape. `output_shape` can be a tuple of three values
+            specify a shape :math:`(D_{out}, H_{out}, W_{out})`, or a single float `S` for :math:`(S, S, S)`.
+        data_format (str, optional): The optional value for data format.
             Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
 
     Inputs:
@@ -9662,7 +9664,7 @@ class DeformableOffsets(Primitive):
 
 class GridSampler2D(Primitive):
     """
-    This operation samples 2d input_x by using interpolation based on flow field grid,
+    This operation samples 2d `input_x` by using interpolation based on flow field grid,
     which is usually gennerated by :func:`mindspore.ops.affine_grid`.
 
     Args:
@@ -9670,8 +9672,14 @@ class GridSampler2D(Primitive):
             The optional values are
             "bilinear" or "nearest". Default: "bilinear".
         padding_mode (str, optional): An optional string specifying the pad method.
-            The optional values are "zeros", "border" or
-            "reflection". Default: "zeros".
+            The optional values are "zeros", "border" or "reflection". Default: "zeros".
+            When the sampling grid is outside input's bounds, effects of various padding modes are as follows:
+
+            - "zeros": Pads the input tensor with zeros.
+            - "border": Pads the input tensor with the values of the pixels on the border of the tensor.
+            - "reflection": Pads the input tensor by reflecting the values of the pixels at the
+              boundary of the tensor.
+
         align_corners (bool, optional): An optional bool. When set to True,
             the centers of the corner pixels of the input
             and output tensors are aligned. When set to False, it is not aligned. Defaults to False.
@@ -10273,19 +10281,18 @@ class GLU(Primitive):
 class FractionalMaxPoolWithFixedKsize(Primitive):
     r"""
     Applies a 2D fractional max pooling to an input signal composed of multiple input planes.
-    The max-pooling operation is applied in kH × kW regions by a stochastic step size determined by
-    the target output size. For any input size, the size of the specified output is H x W. The number
-    of output features is equal to the number of input planes.
+    The max-pooling operation is applied in :math:`(kH, kW)` regions by a stochastic step size determined by
+    the target output size `output_shape`.
+
+    The number of output features is equal to the number of input planes.
 
     Fractional MaxPooling is described in the paper `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_.
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel window used to take the maximum value.
-            The target ksize is H x W. ksize can be a tuple, or a single K for K x K.
-            specifying the window size (H, W) of the input tensor.
-        output_shape (Union[int, tuple[int]]): The target output size is H x W.
-            output_shape can be a tuple, or a single H for H x H.
-            specifying the size (H, W) of the output tensor.
+        ksize (Union[int, tuple[int]]): Size of the pooling window. `ksize` can be a tuple of two values
+          specify a shape :math:`(k_H, k_W)`, or a single int `K` for :math:`(K, K)`.
+        output_shape (Union[int, tuple[int]]): The target output shape. `output_shape` can be a
+          tuple of two values specify a shape :math:`(H_{out}, W_{out})`, or a single float `S` for :math:`(S, S)`.
         data_format (str, optional): The optional value for data format, is 'NCHW'.
             Default: "NCHW".
 
@@ -10297,7 +10304,7 @@ class FractionalMaxPoolWithFixedKsize(Primitive):
 
     Outputs:
         - **y** (Tensor) - Has the same type as the `input_x`.
-          Has the shape :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`.
+          Has the shape :math:`(N, C, H_{out}, W_{out})`.
         - **argmax** (Tensor) -A tensor whose data type must be int64. Has the same shape as the `y`.
 
     Raises:

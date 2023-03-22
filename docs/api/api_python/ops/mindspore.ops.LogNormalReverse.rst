@@ -6,7 +6,9 @@ mindspore.ops.LogNormalReverse
     用给定均值和标准差初始化对数正态分布，并以此填充输入Tensor的元素。
 
     .. math::
-        \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
+        \text{f}(x;\mu,\delta)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
+
+    其中 \mu， \delta 分别是对数正态分布的均值和标准差。
 
     参数：
         - **mean** (float，可选) - 正态分布的均值，float类型。默认值：1.0。

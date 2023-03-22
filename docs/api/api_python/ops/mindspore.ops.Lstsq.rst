@@ -10,7 +10,7 @@ mindspore.ops.Lstsq
     .. math::
 
        \begin{array}{ll}
-       \min_y & \|xy-a\|_2.
+       \min_y \& \|xy-a\|_2
        \end{array}
 
     若 :math:`m < n` ， `Lstsq` 解决最小范数问题：
@@ -18,14 +18,14 @@ mindspore.ops.Lstsq
     .. math::
 
        \begin{array}{llll}
-       \min_y & \|y\|_2 & \text{subject to} & xy = a.
+       \min_y & \|y\|_2 \& \text{subject to} & xy = a
        \end{array}
 
     参数：
         - **fast** (bool，可选) - 使用的算法。默认值：True。
   
           - 如果 `fast` 为True，则使用Cholesky分解求解正态方程来计算解。
-          - 如果 `fast` 为False，则基于数值鲁棒的完全正交分解的算法被使用。
+          - 如果 `fast` 为False，则使用基于数值稳定的完全正交分解算法。
   
         - **l2_regularizer** (float，可选) - L2正则化系数。默认值：0.0。
   

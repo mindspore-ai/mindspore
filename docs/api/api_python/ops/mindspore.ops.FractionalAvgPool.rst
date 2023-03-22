@@ -12,7 +12,7 @@ mindspore.ops.FractionalAvgPool
         `pooling_ratio` 当前只支持行和列轴，并行大于1.0，第一个和最后一个元素必须为1.0，因为我们不允许对batch和通道轴进行池化。
 
     参数：
-        - **pooling_ratio** (list(float)) - 决定了输出的shape，数据类型是floats的列表，长度大于等于4。其值为每个维度的池化比率，目前仅支持行和列维度，
+        - **pooling_ratio** (list(float)) - 决定了输出的shape，是一个元素值为float的列表，长度大于等于4。其值为每个维度的池化比率，目前仅支持行和列维度，
           应该大于等于0。第一个和最后一个元素必须为1.0，不支持对batch和通道轴进行池化。
         - **pseudo_random** (bool，可选) - 控制序列生成机制是随机或伪随机。当设置为True时，以伪随机方式生成池序列，为False时，以随机方式生成池序列。默认值：False。
           参考 Benjamin Graham 的论文 `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_ 以了解伪随机和随机池化之间的差异。

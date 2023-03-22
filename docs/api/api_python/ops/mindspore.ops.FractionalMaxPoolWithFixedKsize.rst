@@ -3,20 +3,19 @@ mindspore.ops.FractionalMaxPoolWithFixedKsize
 
 .. py:class:: mindspore.ops.FractionalMaxPoolWithFixedKsize(ksize, output_shape, data_format="NCHW")
 
-    此运算对由多个输入平面组成的输入信号进行2D分数最大池化。最大池化操作通过由目标输出大小确定的随机步长在 `kH x kW` 区域中进行。
+    此运算对由多个输入平面组成的输入信号进行2D分数最大池化。
+    最大池化操作在 :math:`(kH, kW)` 区域中进行。其步长是随机的，大小由 `output_shape` 决定。
 
-    对于任何输入大小，指定输出的大小为 `H x W` 。输出特征的数量等于输入平面的数量。
+    输出特征的数量等于输入平面的数量。
 
     详细内容请参考论文 `Fractional Max-Pooling <https://arxiv.org/pdf/1412.6071>`_ 。
 
     参数：
-        - **ksize** (Union[int, tuple[int]]) - 用于取最大值的内核窗口的大小。目标 ksize 为 `H x W` 。ksize 可以是元组，也可以是 `K x K` 的单个K。
-          指明了输入Tensor的窗口大小 `(H, W)` 。
+        - **ksize** (Union[int, tuple[int]]) - 池化窗口大小，可以是一个二元组，表示shape为 :math:`(k_H, k_W)` ，或者是一个单独的 `K` 表示shape为 :math:`(K, K)` 。
 
-        - **output_shape** (Union[int, tuple[int]]) - 目标输出shape为 `H x W` ，输出shape可以是一个元组，或者 `H x H` 的单个H。
-          指明了输出tensor的大小 `(H, W)` 。
+        - **output_shape** (Union[int, tuple[int]]) - 目标输出shape，可以是一个二元组，表示shape为 :math:`(H_{out}, W_{out})` ，或者是一个单独的 `S` 表示shape为 :math:`(S, S)` 。
 
-        - **data_format** (str，可选) - 可选的数据格式值，当前支持 `NCHW` ，默认为 `NCHW` 。
+        - **data_format** (str，可选) - 可选的数据格式值，当前支持“NCHW”，默认值：“NCHW”。
 
     输入：
         - **input_x** (Tensor) - Tensor的shape :math:`(N, C, H_{in}, W_{in})` ，数据类型为：float16、float32、float64、int32、int64。
@@ -24,7 +23,7 @@ mindspore.ops.FractionalMaxPoolWithFixedKsize
         - **random_samples** (Tensor) - Tensor的shape为 :math:`(N, C, 2)` ，数据类型为：float16、float32、float64。
 
     输出：
-        - **y** (Tensor) - 一个Tensor，与 `input_x` 具有相同的dtype，shape为 :math:`(N, C, output\underline{~}shape{H}, output\underline{~}shape{W})`。
+        - **y** (Tensor) - 一个Tensor，与 `input_x` 具有相同的dtype，shape为 :math:`(N, C, H_{out}, W_{out})`。
 
         - **argmax** (Tensor) - 一个Tensor，数据类型必须为int64，与 `y` 具有相同的shape。
 

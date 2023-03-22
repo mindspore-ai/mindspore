@@ -182,10 +182,11 @@ class AdjustHue(Primitive):
 
 class ExtractGlimpse(Primitive):
     """
-    Extracts glimpse from the input image tensor and return a window.
+    Extracts glimpses(usually subarea of rectangle) from the input image Tensor and return as windows.
 
     Note:
-        If the window and input image tensor not overlap, random noise is filled.
+        If extracted windows and the input image only partially overlap,
+        random noise is filled in those non overlapping areas.
 
     Args:
         centered (bool, optional): An optional `bool`. Indicates if the offset coordinates
@@ -195,16 +196,17 @@ class ExtractGlimpse(Primitive):
         normalized (bool, optional): An optional `bool`. indicates if the offset
             coordinates are normalized. Defaults to `True`.
         uniform_noise (bool, optional): An optional `bool`. indicates if the noise should be
-            generated using a uniform distribution or a Gaussian distribution. Defaults to `True`.
-        noise (str, optional): An optional string. The value can be 'uniform', 'gaussian'
-            and 'zero'. The window is determined by size and offsets.
-            When the window and input image tensor not overlap, random noise is filled.
-            The result is variable when noise is equal to 'uniform' and 'gaussian'.
-            When noise is equal to 'zero', the value of uniform_noise must be 'False' and the
-            filling noise will be zero so that the result is fixed.
-            When uniform_noise is 'True', the value of noise only can be 'uniform'.
-            When uniform_noise is 'False', the value of noise can be 'uniform', 'gaussian' and 'zero'.
-            Defaults to `uniform`.
+            generated using a uniform distribution(aka. Gaussian distribution). Defaults to `True`.
+        noise (str, optional): An optional string specifies the type of noise to fill.
+            The window is determined by size and offsets.
+            When the window and input image tensor don't not overlap, random noise is filled.
+            The value can be 'uniform', 'gaussian' and 'zero'. Default: `uniform`.
+
+            - When `noise` is 'uniform' and 'gaussian', the result is variable.
+            - When `noise` is 'zero', the value of `uniform_noise` must be 'False' and the
+              filling noise will be zero so that the result is fixed.
+            - When `uniform_noise` is 'True', the value of `noise` only can be 'uniform'.
+              When `uniform_noise` is 'False', the value of `noise` can be 'uniform', 'gaussian' and 'zero'.
 
     Inputs:
         - **x** (Tensor) - A 4-D float tensor of shape [batch_size, height, width, channels].
@@ -506,6 +508,7 @@ class HSVToRGB(Primitive):
     Transform one single or a batch of images from HSV to RGB color space.
     Each pixel's HSV value is converted to its corresponding RGB value.
     Note that the function is only well-defined for input pixel values in the range [0, 1].
+    Image format should be "NHWC".
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape
