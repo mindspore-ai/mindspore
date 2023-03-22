@@ -14,7 +14,7 @@ mindspore.shard
 
     参数：
         - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor或Parameter。
-          如果fn是Cell类型且含有参数，则fn必须是一个实例化的对象，否则无法访问到其内部参数。
+          如果 `fn` 是Cell类型且含有参数，则 `fn` 必须是一个实例化的对象，否则无法访问到其内部参数。
         - **in_strategy** (tuple) - 指定各输入的切分策略，输入元组的每个元素可以为元组或None，元组即具体指定输入每一维的切分策略，None则会默认以数据并行执行。
         - **out_strategy** (Union[tuple, None]) - 指定各输出的切分策略，用法同 `in_strategy`，目前未使能。默认值：None。
         - **parameter_plan** (Union[dict, None]) - 指定各参数的切分策略，传入字典时，键是str类型的参数名，值是一维整数tuple表示相应的切分策略，
@@ -26,17 +26,12 @@ mindspore.shard
         Function, 返回一个在自动并行流程下执行的函数。
 
     异常：
-        - **AssertionError** -
-
-          - 如果执行模式不是"PYNATIVE_MODE"。
-          - 如果并行模式不是"auto_parallel"。
-          - 如果策略搜索模式不是"sharding_propagation"。
-          - 如果后端不是"Ascend"或"GPU"。
-
-        - **TypeError** -
-
-          - 如果 `in_strategy` 不是tuple。
-          - 如果 `out_strategy` 不是tuple。
-          - 如果 `parameter_plan` 不是dict或None。
-          - 如果 `parameter_plan` 里的任何一个键值类型不是str。
-          - 如果 `parameter_plen` 里的任何一个值类型不是tuple。
+        - **AssertionError** - 如果执行模式不是"PYNATIVE_MODE"。
+        - **AssertionError** - 如果并行模式不是"auto_parallel"。
+        - **AssertionError** - 如果策略搜索模式不是"sharding_propagation"。
+        - **AssertionError** - 如果后端不是"Ascend"或"GPU"。
+        - **TypeError** - 如果 `in_strategy` 不是tuple。
+        - **TypeError** - 如果 `out_strategy` 不是tuple。
+        - **TypeError** - 如果 `parameter_plan` 不是dict或None。
+        - **TypeError** - 如果 `parameter_plan` 里的任何一个键值类型不是str。
+        - **TypeError** - 如果 `parameter_plen` 里的任何一个值类型不是tuple。

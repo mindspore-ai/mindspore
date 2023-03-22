@@ -867,8 +867,8 @@ def jit_class(cls):
         Class.
 
     Raises:
-        TypeError: If jit_class is used for non-class types or nn.Cell.
-        AttributeError: If the private attributes or magic methods of the class decorated with jit_class is called.
+        TypeError: If `jit_class` is used for non-class types or nn.Cell.
+        AttributeError: If the private attributes or magic methods of the class decorated with `jit_class` is called.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
