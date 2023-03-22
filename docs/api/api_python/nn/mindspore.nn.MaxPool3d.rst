@@ -42,3 +42,4 @@ mindspore.nn.MaxPool3d
         - **ValueError** - `kernel_size` 或者 `stride` 小于1。
         - **ValueError** - `padding` 不为int也不为长度为3的tuple。
         - **ValueError** - `pad_mode` 不为 'pad' 模式时，`return_indices` 设为了True或者 `dilation` 不为1。
+        - **ValueError** - `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
