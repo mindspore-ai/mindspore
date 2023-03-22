@@ -739,7 +739,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       auto tuple_get_idx = common::AnfAlgo::GetTupleGetItemOutIndex(tuple_get_node);
       auto info = kernel_graph_partial_map_[sub_kernel_graph.get()];
       call_node->set_abstract(info.abstract);
-      cnode_inputs.emplace_back(info.sub_graph);
+      (void)cnode_inputs.emplace_back(info.sub_graph);
       if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
         // call_graph and info.sub_graph need inline when cell reuse.
         sub_kernel_graph->set_need_inline(true);
@@ -765,7 +765,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
         std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(call_node, i)};
         auto shapes = {common::AnfAlgo::GetOutputInferShape(call_node, i)};
         common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
-        cnode_inputs.emplace_back(getitem);
+        (void)cnode_inputs.emplace_back(getitem);
       }
       return cnode_inputs;
     }
@@ -895,7 +895,7 @@ void KernelGraphMgr::FlattenTuple(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(sub_kernel_graph);
     auto iter = kernel_graph_partial_map_.find(sub_kernel_graph.get());
     if (iter != kernel_graph_partial_map_.end() && iter->second.multi_tuple != 0) {
-      need_flatten_.insert(node);
+      (void)need_flatten_.insert(node);
     }
   } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     auto input = node->input(kFirstIndex);
@@ -959,88 +959,89 @@ void KernelGraphMgr::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &pa
 void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
-    constexpr auto kReturnInputIdx = 1;
-    auto return_node = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(return_node);
-    graph->set_return(return_node);
-    auto graph_output = return_node->input(kReturnInputIdx);
-    MS_EXCEPTION_IF_NULL(graph_output);
+  if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+    return;
+  }
+  constexpr auto kReturnInputIdx = 1;
+  auto return_node = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(return_node);
+  graph->set_return(return_node);
+  auto graph_output = return_node->input(kReturnInputIdx);
+  MS_EXCEPTION_IF_NULL(graph_output);
 
-    // If return's input is value node, then the graph has no kernel, and the pass 'trans tuple to make_tuple' cannot
-    // match this pattern because that pass begin with output node but return node. So we add transform value tuple
-    // to make_tuple here.
-    if (common::AnfAlgo::IsTupleOutput(graph_output) && graph_output->isa<ValueNode>()) {
-      return_node->set_input(kReturnInputIdx, graph->TransTupleToMakeTuple(graph_output));
-    }
+  // If return's input is value node, then the graph has no kernel, and the pass 'trans tuple to make_tuple' cannot
+  // match this pattern because that pass begin with output node but return node. So we add transform value tuple
+  // to make_tuple here.
+  if (common::AnfAlgo::IsTupleOutput(graph_output) && graph_output->isa<ValueNode>()) {
+    return_node->set_input(kReturnInputIdx, graph->TransTupleToMakeTuple(graph_output));
+  }
 
-    // inline partial to call graph
-    auto return_tuple = return_node->input(kReturnInputIdx);
-    MS_EXCEPTION_IF_NULL(return_tuple);
-    if (return_tuple->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(return_tuple, prim::kPrimMakeTuple)) {
-      auto make_tuple = return_tuple->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(make_tuple);
-      size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
-      // only support the last return node is a partial func now
-      auto last_input_node = common::AnfAlgo::GetInputNode(make_tuple, tuple_input_num - 1);
-      MS_EXCEPTION_IF_NULL(last_input_node);
-      if (last_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(last_input_node, prim::kPrimPartial)) {
-        size_t multi_tuple = 0;
-        auto partial_node = last_input_node->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(partial_node);
-        size_t partial_input_num = common::AnfAlgo::GetInputTensorNum(partial_node);
-        std::vector<AnfNodePtr> make_tuple_inputs;
-        make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-        // skip last return node (is a partial)
-        size_t param_begin = 0;
-        for (size_t i = 0; i < tuple_input_num - 1; i++) {
-          auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
-          auto node_abs = input->abstract();
-          MS_EXCEPTION_IF_NULL(node_abs);
-          if (node_abs->isa<abstract::AbstractSequence>()) {
-            MS_EXCEPTION_IF_CHECK_FAIL(
-              i == 0, "Input index: " + std::to_string(i) + " is a make tuple, input node: " + input->DebugString());
-            MS_LOG(DEBUG) << "Flatten the make tuple, input node: " << input->DebugString()
-                          << ", output num: " << AnfUtils::GetOutputTensorNum(input);
-            // flatten the make tuple
-            for (size_t j = 0; j < AnfUtils::GetOutputTensorNum(input); j++) {
-              auto idx = NewValueNode(SizeToLong(j));
-              MS_EXCEPTION_IF_NULL(idx);
-              auto imm = std::make_shared<Int64Imm>(j);
-              idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
-              auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, idx});
-              std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(input, j)};
-              auto shapes = {common::AnfAlgo::GetOutputInferShape(input, j)};
-              common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
-              param_begin++;
-              multi_tuple++;
-              make_tuple_inputs.emplace_back(getitem);
-            }
-          } else {
+  // inline partial to call graph
+  auto return_tuple = return_node->input(kReturnInputIdx);
+  MS_EXCEPTION_IF_NULL(return_tuple);
+  if (return_tuple->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(return_tuple, prim::kPrimMakeTuple)) {
+    auto make_tuple = return_tuple->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(make_tuple);
+    // only support the last return node is a partial func now
+    auto last_input_node = common::AnfAlgo::GetInputNode(make_tuple, tuple_input_num - 1);
+    MS_EXCEPTION_IF_NULL(last_input_node);
+    if (last_input_node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(last_input_node, prim::kPrimPartial)) {
+      size_t multi_tuple = 0;
+      auto partial_node = last_input_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_node);
+      size_t partial_input_num = common::AnfAlgo::GetInputTensorNum(partial_node);
+      std::vector<AnfNodePtr> make_tuple_inputs;
+      (void)make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+      // skip last return node (is a partial)
+      size_t param_begin = 0;
+      for (size_t i = 0; i < tuple_input_num - 1; i++) {
+        auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
+        auto node_abs = input->abstract();
+        MS_EXCEPTION_IF_NULL(node_abs);
+        if (node_abs->isa<abstract::AbstractSequence>()) {
+          MS_EXCEPTION_IF_CHECK_FAIL(
+            i == 0, "Input index: " + std::to_string(i) + " is a make tuple, input node: " + input->DebugString());
+          MS_LOG(DEBUG) << "Flatten the make tuple, input node: " << input->DebugString()
+                        << ", output num: " << AnfUtils::GetOutputTensorNum(input);
+          // flatten the make tuple
+          for (size_t j = 0; j < AnfUtils::GetOutputTensorNum(input); j++) {
+            auto idx = NewValueNode(SizeToLong(j));
+            MS_EXCEPTION_IF_NULL(idx);
+            auto imm = std::make_shared<Int64Imm>(j);
+            idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
+            auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, idx});
+            std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(input, j)};
+            auto shapes = {common::AnfAlgo::GetOutputInferShape(input, j)};
+            common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
             param_begin++;
-            make_tuple_inputs.emplace_back(input);
+            multi_tuple++;
+            (void)make_tuple_inputs.emplace_back(getitem);
           }
+        } else {
+          param_begin++;
+          (void)make_tuple_inputs.emplace_back(input);
         }
-        // skip partial graph
-        for (size_t i = kFirstIndex; i < partial_input_num; i++) {
-          make_tuple_inputs.emplace_back(common::AnfAlgo::GetInputNode(partial_node, i));
-        }
-        auto g_output = graph->NewCNode(make_tuple_inputs);
-        MS_EXCEPTION_IF_NULL(g_output);
-        std::vector<AbstractBasePtr> abstract_list;
-        for (size_t i = kFirstIndex; i < make_tuple_inputs.size(); ++i) {
-          auto inputs_node = make_tuple_inputs[i];
-          MS_EXCEPTION_IF_NULL(inputs_node);
-          abstract_list.emplace_back(inputs_node->abstract());
-        }
-        auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
-        MS_EXCEPTION_IF_NULL(g_output);
-        g_output->set_abstract(abstract);
-        graph->set_output(g_output);
-
-        kernel_graph_partial_map_[graph] = {abstract, common::AnfAlgo::GetInputNode(partial_node, 0), param_begin,
-                                            common::AnfAlgo::GetInputTensorNum(g_output), multi_tuple};
       }
+      // skip partial graph
+      for (size_t i = kFirstIndex; i < partial_input_num; i++) {
+        (void)make_tuple_inputs.emplace_back(common::AnfAlgo::GetInputNode(partial_node, i));
+      }
+      auto g_output = graph->NewCNode(make_tuple_inputs);
+      MS_EXCEPTION_IF_NULL(g_output);
+      std::vector<AbstractBasePtr> abstract_list;
+      for (size_t i = kFirstIndex; i < make_tuple_inputs.size(); ++i) {
+        auto inputs_node = make_tuple_inputs[i];
+        MS_EXCEPTION_IF_NULL(inputs_node);
+        (void)abstract_list.emplace_back(inputs_node->abstract());
+      }
+      auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
+      MS_EXCEPTION_IF_NULL(g_output);
+      g_output->set_abstract(abstract);
+      graph->set_output(g_output);
+
+      kernel_graph_partial_map_[graph] = {abstract, common::AnfAlgo::GetInputNode(partial_node, 0), param_begin,
+                                          common::AnfAlgo::GetInputTensorNum(g_output), multi_tuple};
     }
   }
 }

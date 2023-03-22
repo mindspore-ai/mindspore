@@ -64,7 +64,7 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
     if (input_num <= kSingleNum) {
       continue;
     }
-    communication_op_list.emplace_back(communication_op);
+    (void)communication_op_list.emplace_back(communication_op);
     for (size_t i = 0; i < input_num; ++i) {
       auto input = common::AnfAlgo::GetInputNode(communication_op, i);
       // Need to insert TensorMove in these cases:
@@ -94,7 +94,7 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
   // Need to insert TensorMove if the output of CommunicationOp is RefNode
   std::set<AnfNodePtr> ref_origin_set;
   for (auto &kv : kernel_graph->GetRefMap()) {
-    ref_origin_set.insert(kv.second.first);
+    (void)ref_origin_set.insert(kv.second.first);
   }
   for (auto &communication_op : communication_op_list) {
     auto used_node_list = GetRealNodeUsedList(graph, communication_op);
@@ -105,7 +105,7 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
       auto tensor_move = CreateTensorMoveOp(graph, used_node.first);
       FuncGraphManagerPtr manager = graph->manager();
       MS_EXCEPTION_IF_NULL(manager);
-      manager->Replace(used_node.first, tensor_move);
+      (void)manager->Replace(used_node.first, tensor_move);
     }
   }
 

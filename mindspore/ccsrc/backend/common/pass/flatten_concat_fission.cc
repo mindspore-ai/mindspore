@@ -141,7 +141,7 @@ void ExpandFlattenConcatTupleInput(const FuncGraphPtr &graph, const CNodePtr &cn
 
 std::vector<std::string> FlattenConcatFission::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimFlattenConcat->name());
+  (void)ret.emplace_back(prim::kPrimFlattenConcat->name());
   return ret;
 }
 

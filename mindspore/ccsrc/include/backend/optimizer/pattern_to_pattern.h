@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace opt {
-bool BACKEND_EXPORT AlwaysReturnTrue(const BaseRef &n);
+bool BACKEND_EXPORT AlwaysReturnTrue(const BaseRef &);
 
 class BACKEND_EXPORT PatternMap {
  public:

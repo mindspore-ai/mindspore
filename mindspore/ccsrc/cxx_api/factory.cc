@@ -27,7 +27,7 @@ GraphImplFactory &GraphImplFactory::Instance() {
 
 void GraphImplFactory::Register(const std::string &device_name, GraphImplCreator &&creator) {
   MS_LOG(DEBUG) << "Start register graph impl for " << device_name;
-  creators_.emplace_back(std::move(creator));
+  (void)creators_.emplace_back(std::move(creator));
 }
 
 std::shared_ptr<GraphCell::GraphImpl> GraphImplFactory::Create(enum DeviceType device_type) {
@@ -54,7 +54,7 @@ ModelImplFactory &ModelImplFactory::Instance() {
 
 void ModelImplFactory::Register(const std::string &device_name, ModelImplCreator &&creator) {
   MS_LOG(DEBUG) << "Start register model for " << device_name;
-  creators_.emplace_back(std::move(creator));
+  (void)creators_.emplace_back(std::move(creator));
 }
 
 std::shared_ptr<ModelImpl> ModelImplFactory::Create(enum DeviceType device_type) {
