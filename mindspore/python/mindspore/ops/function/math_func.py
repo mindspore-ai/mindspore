@@ -5915,7 +5915,6 @@ def bessel_k1e(x):
     return bessel_k1e_(x)
 
 
-# TODO: remove comment
 @constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
@@ -7917,19 +7916,16 @@ def renorm(input, p, axis, maxnorm):
     return renorm_(input)
 
 
-# TODO: remove comment
 @constexpr
 def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-# TODO: remove comment
 @constexpr
 def _check_positive_float(arg_value, arg_name, cls_name):
     validator.check_positive_float(arg_value, arg_name, cls_name)
 
 
-# TODO: remove comment
 @constexpr
 def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     validator.check_int_range(arg_value, lower_limit,
@@ -8173,14 +8169,12 @@ def _check_same_type(dtype1, dtype2):
     return dtype1 == dtype2
 
 
-# TODO: remove comment
 @constexpr
 def _max(*args):
     """Returns the maximum value."""
     return max(*args)
 
 
-# TODO: remove comment
 @constexpr
 def _min(*args):
     """Returns the minimum value."""

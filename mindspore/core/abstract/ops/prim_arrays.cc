@@ -45,11 +45,6 @@
 namespace mindspore {
 namespace abstract {
 namespace {
-const int kInputIndex0 = 0;
-const int kInputIndex1 = 1;
-const int kInputIndex2 = 2;
-#define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
 // Get 3rd argument for UnsortedSegmentOps' inferImpl function
 int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name) {
   int64_t num_segments_value = 0;
