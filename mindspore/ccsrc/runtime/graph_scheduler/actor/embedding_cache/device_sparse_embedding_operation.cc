@@ -379,7 +379,7 @@ bool DeviceSparseEmbeddingOperation::EraseDeviceCache(void *ids, size_t ids_num,
 }
 
 bool DeviceSparseEmbeddingOperation::CheckCacheHit(const int *batch_ids, const size_t batch_ids_num, bool *in_device,
-                                                   size_t data_step) {
+                                                   size_t data_step) const {
   MS_ERROR_IF_NULL(batch_ids);
   MS_ERROR_IF_NULL(in_device);
 
@@ -413,7 +413,8 @@ bool DeviceSparseEmbeddingOperation::CheckCacheHit(const int *batch_ids, const s
 }
 
 bool DeviceSparseEmbeddingOperation::CheckCacheHitFunc(const int *batch_ids, const size_t batch_ids_num,
-                                                       bool *in_device, size_t *hash_hit_count, size_t data_step) {
+                                                       bool *in_device, size_t *hash_hit_count,
+                                                       size_t data_step) const {
   MS_ERROR_IF_NULL(batch_ids);
   MS_ERROR_IF_NULL(in_device);
   MS_ERROR_IF_NULL(hash_hit_count);
