@@ -12,7 +12,7 @@ mindspore.ops.equal
             \end{cases}
 
     .. note::
-        - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
+        - `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
         - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
         - 当输入是两个Tensor时，它们的shape可以广播。
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。

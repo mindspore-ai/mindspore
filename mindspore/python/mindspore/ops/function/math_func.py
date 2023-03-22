@@ -3878,7 +3878,7 @@ def equal(input, other):
             \end{cases}
 
     Note:
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, the shapes of them could be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.

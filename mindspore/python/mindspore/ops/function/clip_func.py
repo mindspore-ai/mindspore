@@ -175,9 +175,8 @@ def clamp(input, min=None, max=None):
         - The data type of `input`, `min` and `max` should support implicit type conversion and cannot be bool type.
 
     Args:
-          input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
-                                                         The shape of Tensor is :math:`(N,*)` where :math:`*` means,
-                                                         any number of additional dimensions.
+          input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
+            Tensor. The shape of Tensor is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
           min (Union(Tensor, float, int)): The minimum value. Default: None.
           max (Union(Tensor, float, int)): The maximum value. Default: None.
 
