@@ -87,16 +87,22 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
   return iter->second;
 }
 
-std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(const std::string &op_type) const {
-  std::map<std::string, std::string> attrs;
-  static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
-    {"ArgMaxWithValue", {{"axis", "dimension"}}},
-    {"ArgMinWithValue", {{"axis", "dimension"}}},
-    {"DepthToSpace", {{"block_size", "block_size"}}},
-    {"Conv2D", {{"pad_list", "pads"}, {"dilation", "dilations"}, {"stride", "strides"}}},
-    {"BatchMatMul", {{"transpose_x1", "adj_x1"}, {"transpose_x2", "adj_x2"}}}};
+ValuePtr OpTilingCalculateAdapter::GetAttrDefaultValue(const std::string &op_type, const std::string &attr_name) const {
+  static const std::map<std::string, std::map<std::string, ValuePtr>> op_type_map = {
+    {"Iou", {{"aligned", std::make_shared<BoolImm>(false)}}},
+    {"NLLLoss", {{"ignore_index", std::make_shared<Int64Imm>(-100)}}}};
   auto iter = op_type_map.find(op_type);
-  return iter == op_type_map.end() ? attrs : iter->second;
+  if (iter == op_type_map.end()) {
+    return nullptr;
+  } else {
+    auto attrs_map = iter->second;
+    auto ret = attrs_map.find(attr_name);
+    if (ret == attrs_map.end()) {
+      return nullptr;
+    } else {
+      return ret->second;
+    }
+  }
 }
 
 std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t index) {
@@ -226,7 +232,7 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
   if (primitive == nullptr || SkipOpConvert(primitive->name())) {
     return;
   }
-  auto to_convert_attr = GetConvertAttr(primitive->name());
+
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   for (const auto &attr : op_info_ptr->attrs_ptr()) {
@@ -234,8 +240,11 @@ void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPt
     auto ms_attr_name = kernel::SuperBar::GetSBMSAttrByKernelAttr(primitive->name(), kernel_attr_name);
     auto value = primitive->GetAttr(ms_attr_name);
     if (value == nullptr) {
-      MS_LOG(DEBUG) << "kernel attr: " << kernel_attr_name << ", ms attr: " << ms_attr_name << "s value is empty!";
-      continue;
+      value = GetAttrDefaultValue(primitive->name(), kernel_attr_name);
+      if (value == nullptr) {
+        MS_LOG(DEBUG) << "kernel attr: " << kernel_attr_name << ", ms attr: " << ms_attr_name << "s value is empty!";
+        continue;
+      }
     }
 
     MS_EXCEPTION_IF_NULL(value);
