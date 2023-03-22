@@ -106,6 +106,11 @@ enum DequantStrategy {
   ON_THE_FLY,
 };
 
+enum PrecisionMode {
+  QUANT,
+  FLOAT32,
+};
+
 struct CommonQuantParam {
   QuantType quant_type = QUANT_NONE;
   int bit_num = 8;
@@ -137,6 +142,10 @@ struct FullQuantParam {
   bool bias_correction = true;
   bool per_channel = true;
   TargetDevice target_device = CPU;
+};
+
+struct TransformQuantParam {
+  PrecisionMode precision_mode = QUANT;
 };
 }  // namespace mindspore::lite::quant
 

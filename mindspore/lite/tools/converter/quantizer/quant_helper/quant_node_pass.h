@@ -39,8 +39,6 @@ class QuantNodePass {
 
  private:
   int DoWeightQuant(const CNodePtr &cnode);
-  bool IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params, const tensor::TensorPtr &weight,
-                          int preferred_dim);
   int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                   const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
   int DoFullQuant(const CNodePtr &cnode);

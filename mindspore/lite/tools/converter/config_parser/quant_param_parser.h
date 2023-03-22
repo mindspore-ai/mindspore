@@ -28,6 +28,8 @@ class QuantParamParser {
                                       quant::MixedBitWeightQuantParam *mixed_bit_weight_quant);
   static int ParseFullQuant(const FullQuantString &full_quant_string, quant::FullQuantParam *full_quant);
   static int ParseWeightQuant(const WeightQuantString &weight_quant_string, quant::WeightQuantParam *weight_quant);
+  static int ParseTransformQuant(const TransformQuantString &transform_quant_string,
+                                 quant::TransformQuantParam *transform_quant);
 
  private:
   static int ParseQuantType(const std::string &quant_type_str, quant::QuantType *quant_type);
@@ -38,6 +40,7 @@ class QuantParamParser {
   static int ParseFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
   static int ParseBitNum(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
   static int ParseEnableEncode(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant);
+  static int ParseExportPrecisionMode(const std::string &precision_modeL_str, quant::PrecisionMode *precision_mode);
 };
 }  // namespace lite
 }  // namespace mindspore

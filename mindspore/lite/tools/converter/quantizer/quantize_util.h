@@ -83,6 +83,29 @@ int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<min
   return RET_OK;
 }
 
+// quant and dequant
+// quant_data = std::round(origin_data / scale + zero_point)
+// new_data = scale * (quant_data - zero_point)
+template <typename T>
+T QuantDeQuantData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min) {
+  MS_ASSERT(quant_param != nullptr);
+  MS_ASSERT(quant_param->inited);
+  const auto scale = quant_param->scale;
+  const int zero_point = quant_param->zeroPoint;
+  if (scale <= SCALE_THREASHOLD) {
+    return 0;
+  }
+  return [quant_max, quant_min, zero_point, scale, origin_data] {
+    auto quant_data = std::round(origin_data / scale + zero_point);
+    if (quant_data > quant_max) {
+      quant_data = quant_max;
+    } else if (quant_data < quant_min) {
+      quant_data = quant_min;
+    }
+    return static_cast<T>(scale * (quant_data - zero_point));
+  }();
+}
+
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
@@ -105,5 +128,8 @@ bool CheckControlFlowType(const AnfNodePtr &node);
 
 int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                    FuncGraphPtr *func_graph_bak);
+
+bool IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params, const tensor::TensorPtr &weight,
+                        int preferred_dim);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

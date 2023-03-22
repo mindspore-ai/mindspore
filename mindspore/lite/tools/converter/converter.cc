@@ -495,7 +495,12 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     MS_LOG(ERROR) << "Parse micro param failed.";
     return ret;
   }
-
+  ret =
+    lite::QuantParamParser::ParseTransformQuant(config_parser.GetTransformQuantString(), &param->transformQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse transform quant param failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
