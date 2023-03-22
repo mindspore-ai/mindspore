@@ -1349,7 +1349,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
       executor_running_ = false;
     },
     [this]() { executor_running_ = false; }, [this]() { executor_running_ = false; },
-    [this]() { executor_running_ = false; });
+    [this]() { executor_running_ = false; }, nullptr, true);
   return res;
 }
 
