@@ -298,6 +298,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Floor
     mindspore.ops.FloorDiv
     mindspore.ops.FloorMod
+    mindspore.ops.Geqrf
     mindspore.ops.Imag
     mindspore.ops.Inv
     mindspore.ops.Invert
@@ -312,6 +313,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Mul
     mindspore.ops.MulNoNan
     mindspore.ops.Neg
+    mindspore.ops.NextAfter
     mindspore.ops.Polar
     mindspore.ops.Pow
     mindspore.ops.Real
@@ -469,6 +471,7 @@ Array操作
     mindspore.ops.DepthToSpace
     mindspore.ops.Diag
     mindspore.ops.DType
+    mindspore.ops.Eig
     mindspore.ops.Expand
     mindspore.ops.ExpandDims
     mindspore.ops.FFTWithSize
@@ -510,6 +513,7 @@ Array操作
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Qr
     mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Renorm
@@ -518,6 +522,7 @@ Array操作
     mindspore.ops.ReverseSequence
     mindspore.ops.ReverseV2
     mindspore.ops.RightShift
+    mindspore.ops.Roll
     mindspore.ops.ScatterAddWithAxis
     mindspore.ops.ScatterNd
     mindspore.ops.ScatterNdDiv
@@ -549,6 +554,7 @@ Array操作
     mindspore.ops.TensorScatterUpdate
     mindspore.ops.TensorShape
     mindspore.ops.Tile
+    mindspore.ops.Trace
     mindspore.ops.Transpose
     mindspore.ops.Tril
     mindspore.ops.TrilIndices

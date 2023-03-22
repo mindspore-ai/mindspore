@@ -574,7 +574,7 @@ class RandomPoisson(Primitive):
         ValueError: If `shape` elements are negative.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)

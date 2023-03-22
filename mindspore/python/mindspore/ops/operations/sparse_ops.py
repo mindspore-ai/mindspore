@@ -390,7 +390,7 @@ class SparseReorder(Primitive):
         ValueError: If `shape` the first dimension length is not equal the second dimension length of 'indices'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.common.dtype as ms
