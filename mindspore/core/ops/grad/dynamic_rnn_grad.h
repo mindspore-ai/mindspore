@@ -34,7 +34,7 @@ class MIND_API DynamicRNNGrad : public BaseOperator {
     InitIOName({"x", "w", "b", "y", "init_h", "init_c", "h", "c", "dy", "dh", "dc", "i", "j", "f", "o", "tanhct"},
                {"dw", "db", "dx", "dh_prev", "dc_prev"});
   }
-  void Init() {}
+  void Init() const {}
 };
 
 MIND_API abstract::AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &,
