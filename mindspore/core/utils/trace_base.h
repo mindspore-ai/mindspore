@@ -39,6 +39,7 @@ MS_CORE_API std::string DumpSourceLines(const AnfNodePtr &node, bool has_title =
 MS_CORE_API std::string DumpSourceLines(AnfNode *node, bool has_title = true);
 // Generate the call stack of python source code to a vector
 MS_CORE_API std::vector<std::string> GetSourceLineList(const AnfNodePtr &node);
+MS_CORE_API std::vector<std::string> GetSourceLineList(const DebugInfoPtr &debug_info);
 // Get the locations of the call stack of python source code
 std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr &node);
 // Generate the call stack of python source code with relevant trace info

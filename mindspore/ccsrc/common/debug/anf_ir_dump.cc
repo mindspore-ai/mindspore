@@ -455,20 +455,43 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
   gsub->buffer << std::endl;
 }
 
+void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  auto dump_debug_info = debug_info;
+  std::list<DebugInfoPtr> need_dump_debug_infos;
+  while (dump_debug_info != nullptr) {
+    need_dump_debug_infos.push_front(dump_debug_info);
+    if (dump_debug_info->trace_info() == nullptr) {
+      break;
+    }
+    dump_debug_info = dump_debug_info->trace_info()->debug_info();
+  }
+  HashSet<std::string> visited_locations;
+  for (const auto &cur_debug_info : need_dump_debug_infos) {
+    if (cur_debug_info->location() != nullptr) {
+      auto prefix = cur_debug_info->inlined() ? "      # inlined:" : "      # ";
+      auto debug_info_str = trace::GetDebugInfo(cur_debug_info, "", kSourceLineTipDiscard);
+      if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
+        gsub->buffer << prefix << debug_info_str << "\n";
+        (void)visited_locations.insert(debug_info_str);
+      }
+    }
+  }
+}
+
 void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   MS_EXCEPTION_IF_NULL(node);
   auto primal_debug_infos = node->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
-    std::string lines;
     for (const auto &primal_debug_info : primal_debug_infos) {
+      std::string lines;
       auto debug_info_str = trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard);
       if (!debug_info_str.empty()) {
         lines += debug_info_str + "\n";
       }
-    }
-    if (!lines.empty()) {
       gsub->buffer << "      # Corresponding forward node candidate:\n";
-      gsub->buffer << lines;
+      if (!lines.empty()) {
+        gsub->buffer << lines;
+      }
     }
   }
 }
@@ -479,16 +502,16 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
   if (dump_location == kTopStack) {
     auto fused_debug_infos = node->fused_debug_infos();
     if (!fused_debug_infos.empty()) {
-      std::string lines;
       for (const auto &debug_info : fused_debug_infos) {
+        std::string lines;
+        gsub->buffer << "      # Corresponding code candidate:\n";
         auto debug_info_str = trace::GetDebugInfo(debug_info, "      # ", kSourceLineTipDiscard);
         if (!debug_info_str.empty()) {
           lines += debug_info_str + "\n";
         }
-      }
-      if (!lines.empty()) {
-        gsub->buffer << "      # Corresponding code candidate:\n";
-        gsub->buffer << lines;
+        if (!lines.empty()) {
+          gsub->buffer << lines;
+        }
       }
     } else {
       auto debug_info_str = trace::GetDebugInfo(node->debug_info(), "      # ", kSourceLineTipDiscard);
@@ -496,12 +519,24 @@ void DumpDebugInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &
         gsub->buffer << debug_info_str << "\n";
       }
     }
-
     DumpPrimalDebugInfos(node, gsub);
   } else if (dump_location == kWholeStack) {
-    auto traces = mindspore::trace::GetSourceLineList(node);
-    for (auto &trace : traces) {
-      gsub->buffer << "      # " << trace;
+    auto fused_debug_infos = node->fused_debug_infos();
+    if (!fused_debug_infos.empty()) {
+      for (const auto &debug_info : fused_debug_infos) {
+        gsub->buffer << "      # Corresponding code candidate:\n";
+        DumpLocationInCurrentScope(debug_info, gsub);
+      }
+    } else {
+      DumpLocationInCurrentScope(node->debug_info(), gsub);
+    }
+    // Print whole stack primal infos
+    auto primal_debug_infos = node->primal_debug_infos();
+    if (!primal_debug_infos.empty()) {
+      for (const auto &primal_debug_info : primal_debug_infos) {
+        gsub->buffer << "      # Corresponding forward node candidate:\n";
+        DumpLocationInCurrentScope(primal_debug_info, gsub);
+      }
     }
   }
 }

@@ -150,7 +150,7 @@ class InlinerBase : public AnfVisitor {
       if (IsUniqueUse(nullptr, fg, nullptr)) {
         return InlineMove(node, fg, args, inputs);
       }
-      return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
+      return InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
     }
 
     if (IsUniqueUse(nullptr, fg, nullptr)) {
@@ -175,7 +175,7 @@ class InlinerBase : public AnfVisitor {
     }
     // Or, just make a clone for not single used fg.
     MS_LOG(DEBUG) << "Run InlineClone in inline pass, subgraph number may increase.";
-    return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
+    return InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
   }
 
   bool IsRecursive(const FuncGraphPtr &fg) {
@@ -200,7 +200,7 @@ class InlinerBase : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(mng);
     ReplaceParams(mng, args, fg);
     auto out_node = fg->output();
-    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
+    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope());
     return out_node;
   }
 

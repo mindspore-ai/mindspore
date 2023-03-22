@@ -48,7 +48,7 @@ class Location {
         column_end_(column_end),
         expr_src_(expr) {}
   ~Location() = default;
-  std::string ToString(SourceLineTip tip = kSourceLineTipNextLine) const;
+  MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine) const;
   std::string file_name() const { return file_name_; }
   int line() const { return line_; }
   int line_end() const { return line_end_; }
@@ -248,6 +248,12 @@ class MS_CORE_API DebugInfo {
   /// \return The python function name that this DebugInfo belongs to.
   virtual std::string get_python_func_belonged() { return ""; }
 
+  virtual DebugInfoPtr Copy();
+
+  bool inlined() { return inlined_; }
+
+  static DebugInfoPtr UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info, const DebugInfoPtr &debug_info);
+
  protected:
   static int64_t gen_unique_id() {
     static int64_t cur_unique_id = 0;
@@ -256,9 +262,11 @@ class MS_CORE_API DebugInfo {
 
   mutable int64_t id_ = 0;
   int64_t unique_id_;
+  int64_t through_copy_unique_id_{-1};
   TraceInfoPtr trace_info_;
   LocationPtr location_;
   std::string name_;
+  bool inlined_{false};
 };
 
 /// \brief NodeDebugInfo defines debug information for a node.
@@ -308,6 +316,8 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
   void set_py_func_belonged(const std::string &name) { py_func_belonged_ = name; }
 
   std::string get_python_func_belonged() override { return py_func_belonged_; }
+
+  DebugInfoPtr Copy() override;
 
  private:
   AnfNodeWeakPtr node_;
