@@ -28,6 +28,7 @@
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
+#include "runtime/pynative/op_runtime_info.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
@@ -440,6 +441,11 @@ void AicpuOpKernelMod::SyncData() {
 
   MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
   UpdateOutputShapeFromExtInfo(cnode);
+  // update runtime cache
+  auto op_runtime_info = node->user_data<runtime::OpRuntimeInfo>();
+  if (op_runtime_info != nullptr) {
+    op_runtime_info->Resize(node);
+  }
   FreeExtInfoDeviceAddr();
 }
 
