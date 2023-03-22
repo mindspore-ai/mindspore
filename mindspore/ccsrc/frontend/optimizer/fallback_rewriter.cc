@@ -951,6 +951,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto &elements = abs_seq->elements();
     std::vector<AnfNodePtr> new_inputs;
     MS_EXCEPTION_IF_NULL(input->abstract());
+    bool has_none = false;
     if (input->abstract()->isa<abstract::AbstractTuple>()) {
       new_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     } else if (input->abstract()->isa<abstract::AbstractList>()) {
@@ -959,6 +960,7 @@ class AfterOptARewriter : public BaseRewriter {
     for (size_t pos = 0; pos < sequence_value->value().size(); ++pos) {
       ValuePtr element_value = sequence_value->value()[pos];
       if (element_value->isa<None>()) {
+        has_none = true;
         auto inner_none_py_execute = NoneConvertPyExecute(func);
         new_inputs.push_back(inner_none_py_execute);
       } else if (element_value->isa<ValueSequence>()) {
@@ -966,34 +968,21 @@ class AfterOptARewriter : public BaseRewriter {
         MS_EXCEPTION_IF_NULL(elements[pos]);
         new_ele_node->set_abstract(elements[pos]);
         auto seq_node = ConvertNoneInSequence(new_ele_node, func);
-        new_inputs.push_back(seq_node);
+        if (seq_node != nullptr) {
+          new_inputs.push_back(seq_node);
+        } else {
+          new_inputs.push_back(new_ele_node);
+        }
       } else {
         new_inputs.push_back(NewValueNode(element_value));
       }
     }
-    auto new_seq = func->NewCNode(new_inputs);
-    manager_->Replace(input, new_seq);
-    return new_seq;
-  }
-
-  bool SequenceHasNone(const AbstractBasePtr &abs) {
-    if (abs == nullptr) {
-      return false;
+    if (has_none) {
+      auto new_seq = func->NewCNode(new_inputs);
+      manager_->Replace(input, new_seq);
+      return new_seq;
     }
-    auto abs_seq = abs->cast<AbstractSequencePtr>();
-    if (abs_seq != nullptr && !abs_seq->dynamic_len()) {
-      const auto &elements = abs_seq->elements();
-      for (auto ele : elements) {
-        if (ele->isa<abstract::AbstractNone>()) {
-          return true;
-        } else if (ele->isa<abstract::AbstractSequence>()) {
-          if (SequenceHasNone(ele)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return nullptr;
   }
 
   void CheckCNodeInputsHasNone(const CNodePtr &cnode) {
@@ -1009,11 +998,13 @@ class AfterOptARewriter : public BaseRewriter {
     const auto &cur_func = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(cur_func);
     for (auto &input : inputs) {
-      if (IsValueNode<ValueSequence>(input) && SequenceHasNone(input->abstract())) {
+      if (IsValueNode<ValueSequence>(input)) {
         auto seq_node = ConvertNoneInSequence(input, cur_func);
-        manager_->Replace(input, seq_node);
-        set_need_renormalized(true);
-        continue;
+        if (seq_node != nullptr) {
+          manager_->Replace(input, seq_node);
+          set_need_renormalized(true);
+          continue;
+        }
       }
       if (!IsValueNode<None>(input)) {
         continue;
