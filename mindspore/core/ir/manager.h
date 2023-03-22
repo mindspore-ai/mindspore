@@ -320,7 +320,8 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node);
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
   void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
-  void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const ScopePtr &scope);
+  void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const AnfNodePtr &call_node,
+                             const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
   void CommitChanges(std::vector<change::ChangePtr> &&changes);

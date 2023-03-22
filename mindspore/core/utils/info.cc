@@ -22,6 +22,7 @@
 #include "ir/func_graph.h"
 #include "utils/convert_utils_base.h"
 #include "utils/file_utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace {
@@ -110,12 +111,157 @@ int64_t DebugInfo::get_id() const {
 
 int64_t DebugInfo::unique_id_through_copy() const {
   auto info = trace_info();
+  auto final_unique_id = through_copy_unique_id_ == -1 ? unique_id_ : through_copy_unique_id_;
   if (info != nullptr) {
     if (info->isa<TraceCopy>() && info->debug_info() != nullptr) {
-      return info->debug_info()->unique_id_through_copy();
+      final_unique_id = info->debug_info()->unique_id_through_copy();
     }
   }
-  return unique_id();
+  const_cast<DebugInfo *>(this)->through_copy_unique_id_ = final_unique_id;
+  return final_unique_id;
+}
+
+DebugInfoPtr DebugInfo::Copy() {
+  auto new_debug_info = std::make_shared<NodeDebugInfo>();
+  new_debug_info->location_ = location_;
+  new_debug_info->trace_info_ = trace_info_;
+  new_debug_info->id_ = id_;
+  new_debug_info->name_ = name_;
+  new_debug_info->unique_id_ = unique_id_;
+  new_debug_info->through_copy_unique_id_ = through_copy_unique_id_;
+  new_debug_info->inlined_ = inlined_;
+  return new_debug_info;
+}
+
+HashSet<DebugInfoPtr> GetDebugInfos(const DebugInfoPtr &debug_info) {
+  HashSet<DebugInfoPtr> debug_infos;
+  auto cur_debug_info = debug_info;
+  while (cur_debug_info != nullptr) {
+    (void)debug_infos.insert(cur_debug_info);
+    if (cur_debug_info->trace_info() == nullptr) {
+      break;
+    }
+    cur_debug_info = cur_debug_info->trace_info()->debug_info();
+  }
+  return debug_infos;
+}
+
+namespace {
+std::pair<DebugInfoPtr, DebugInfoPtr> GetConcatDebugInfo(const DebugInfoPtr &start, const DebugInfoPtr &end,
+                                                         const DebugInfoPtr &call) {
+  auto call_debug_infos = GetDebugInfos(call);
+  auto cur = start;
+  DebugInfoPtr prev = nullptr;
+  while (cur != end) {
+    // Repeat debug info exist, use repeat and prev as concat debug infos.If prev is nullptr, no need concat.
+    if (call_debug_infos.find(cur) != call_debug_infos.cend()) {
+      return {prev, cur};
+    }
+    prev = cur;
+    cur = cur->trace_info()->debug_info();
+  }
+  // No repeat debug info exist. Need find the first debug info which has location.
+  return {end, call};
+}
+
+DebugInfoPtr GetFirstNotInlineDebugInfo(const DebugInfoPtr &info) {
+  auto cur_debug_info = info;
+  while (cur_debug_info != nullptr) {
+    if (!cur_debug_info->inlined() && cur_debug_info->location() != nullptr) {
+      break;
+    }
+    if (cur_debug_info->trace_info() == nullptr) {
+      MS_LOG(DEBUG) << "Get null trace info, but first not inline debug info not found.";
+      return nullptr;
+    }
+    cur_debug_info = cur_debug_info->trace_info()->debug_info();
+  }
+  if (cur_debug_info == nullptr) {
+    MS_LOG(DEBUG) << "All debug infos are inlined.";
+  }
+  return cur_debug_info;
+}
+
+std::vector<DebugInfoPtr> CopyDebugInfoLink(const DebugInfoPtr &start, const DebugInfoPtr &end) {
+  auto cur_debug_info = start;
+  std::vector<DebugInfoPtr> copy_debug_infos;
+  (void)start->unique_id_through_copy();
+  while (True) {
+    MS_EXCEPTION_IF_NULL(cur_debug_info);
+    copy_debug_infos.push_back(cur_debug_info->Copy());
+    if (cur_debug_info == end) {
+      break;
+    }
+
+    if (cur_debug_info->trace_info() == nullptr) {
+      MS_LOG(EXCEPTION) << "Reach nullptr but not found end.";
+    }
+    cur_debug_info = cur_debug_info->trace_info()->debug_info();
+  }
+  for (size_t index = 0; index + 1 < copy_debug_infos.size(); ++index) {
+    auto new_trace_info = copy_debug_infos[index]->trace_info()->clone();
+    new_trace_info->set_debug_info(copy_debug_infos[index + 1]);
+    copy_debug_infos[index]->set_trace_info(new_trace_info);
+  }
+  return copy_debug_infos;
+}
+
+DebugInfoPtr GetFirstHasLocationDebugInfo(const DebugInfoPtr &debug_info) {
+  auto first_debug_info = debug_info;
+  if (debug_info == nullptr) {
+    return nullptr;
+  }
+  while (first_debug_info->location() == nullptr) {
+    // The original debug info is null.
+    if (first_debug_info->trace_info() == nullptr) {
+      return nullptr;
+    }
+    first_debug_info = first_debug_info->trace_info()->debug_info();
+    if (debug_info == nullptr) {
+      return nullptr;
+    }
+  }
+  return first_debug_info;
+}
+}  // namespace
+
+DebugInfoPtr DebugInfo::UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info,
+                                                   const DebugInfoPtr &debug_info) {
+  static auto enable_fix_code_line = (common::GetEnv("MS_DEV_ENABLE_FIX_CODE_LINE") != "0");
+  if (!enable_fix_code_line) {
+    return debug_info;
+  }
+  MS_EXCEPTION_IF_NULL(debug_info);
+  MS_LOG(DEBUG) << "Origin source lines:\n" << mindspore::ToString(trace::GetSourceLineList(debug_info));
+  MS_LOG(DEBUG) << "call_debug_info source lines:\n" << mindspore::ToString(trace::GetSourceLineList(call_debug_info));
+  auto call_first_location_debug_info = GetFirstHasLocationDebugInfo(call_debug_info);
+  // If call has no location info , do nothing.
+  if (call_first_location_debug_info == nullptr) {
+    return debug_info;
+  }
+  auto first_not_inlined_info = GetFirstNotInlineDebugInfo(debug_info);
+  if (first_not_inlined_info == nullptr) {
+    return debug_info;
+  }
+  MS_LOG(DEBUG) << "first_not_inlined_info debug info source lines:\n"
+                << mindspore::ToString(trace::GetSourceLineList(first_not_inlined_info));
+  auto [concat_pre, concat] = GetConcatDebugInfo(debug_info, first_not_inlined_info, call_first_location_debug_info);
+  MS_LOG(DEBUG) << "concat_pre debug info source lines:\n" << mindspore::ToString(trace::GetSourceLineList(concat_pre));
+  MS_LOG(DEBUG) << "concat debug info source lines:\n" << mindspore::ToString(trace::GetSourceLineList(concat));
+  if (concat_pre == nullptr) {
+    MS_LOG(DEBUG) << "Origin debug info exist in call debug info, no need concat.";
+    return debug_info;
+  }
+  auto copy_debug_infos = CopyDebugInfoLink(debug_info, concat_pre);
+  std::for_each(copy_debug_infos.cbegin(), copy_debug_infos.cend(),
+                [](const DebugInfoPtr &info) { info->inlined_ = true; });
+  auto debug_info_copy = copy_debug_infos.front();
+  auto concat_pre_copy = copy_debug_infos.back();
+  MS_LOG(DEBUG) << "debug_info_copy source lines:\n" << mindspore::ToString(trace::GetSourceLineList(debug_info_copy));
+  MS_LOG(DEBUG) << "concat_pre_copy source lines:\n" << mindspore::ToString(trace::GetSourceLineList(concat_pre_copy));
+  concat_pre_copy->set_trace_info(std::make_shared<TraceOpt>(concat));
+  MS_LOG(DEBUG) << "New debug info source lines:\n" << mindspore::ToString(trace::GetSourceLineList(debug_info_copy));
+  return debug_info_copy;
 }
 
 std::string NodeDebugInfo::debug_name() {
@@ -130,6 +276,19 @@ std::string NodeDebugInfo::debug_name() {
   }
   name_ = prefix + std::to_string(get_id());
   return name_;
+}
+
+DebugInfoPtr NodeDebugInfo::Copy() {
+  auto new_debug_info = std::make_shared<NodeDebugInfo>();
+  new_debug_info->node_ = node_;
+  new_debug_info->location_ = location_;
+  new_debug_info->trace_info_ = trace_info_;
+  new_debug_info->id_ = id_;
+  new_debug_info->name_ = name_;
+  new_debug_info->unique_id_ = unique_id_;
+  new_debug_info->through_copy_unique_id_ = through_copy_unique_id_;
+  new_debug_info->inlined_ = inlined_;
+  return new_debug_info;
 }
 
 std::string GraphDebugInfo::debug_name() {

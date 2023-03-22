@@ -17,6 +17,7 @@
 #include "ir/func_graph_cloner.h"
 
 #include <algorithm>
+#include <set>
 
 #include "ir/manager.h"
 #include "ir/param_info.h"
@@ -28,11 +29,12 @@
 #include "ir/graph_utils.h"
 #include "utils/parallel_node_check.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "utils/trace_base.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
 namespace {
-NodeDebugInfoPtr CloneNodeDebugInfo(const NodeDebugInfoPtr &debug_info, const TraceInfoPtr &relation) {
+NodeDebugInfoPtr CloneNodeDebugInfo(const DebugInfoPtr &debug_info, const TraceInfoPtr &relation) {
   auto trace_info = relation->clone();
   trace_info->set_debug_info(debug_info);
   return std::make_shared<NodeDebugInfo>(std::move(trace_info));
@@ -110,14 +112,24 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   auto old_node = node->cast<CNodePtr>();
   AnfNodePtrList inputs;
   inputs.reserve(old_node->size());
-  NodeDebugInfoPtr debug_info;
+  DebugInfoPtr debug_info;
   if (this->update_info() != nullptr && this->update_info()->debug_info_ != nullptr) {
     debug_info = this->update_info()->debug_info_;
   } else {
     debug_info = node->debug_info();
   }
+
+  if (inline_call_node_debug_info_ != nullptr) {
+    MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
+    debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(inline_call_node_debug_info_, debug_info);
+  }
   auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
   CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
+  new_node->debug_info()->set_node(new_node);
+  auto node_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(debug_info);
+  if (node_debug_info != nullptr) {
+    node_debug_info->set_node(new_node);
+  }
   new_node->CloneCNodeInfo(old_node);
   ScopePtr scope;
   if (this->update_info() != nullptr && this->update_info()->scope_ != nullptr) {
@@ -842,13 +854,15 @@ FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, 
 }
 
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                       const AnfNodePtrList &func_graph_args, const ScopePtr &scope) {
+                       const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
+                       const NodeDebugInfoPtr &call_debug_info) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   Cloner cloner({}, false);
   if (scope != nullptr) {
     cloner.set_scope(scope);
   }
+  cloner.set_inline_call_node_debug_info(call_debug_info);
   cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);

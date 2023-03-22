@@ -83,6 +83,11 @@ class MS_CORE_API Cloner {
   void set_update_info(const UpdateInfoPtr &update_info) { update_info_ = update_info; }
   const UpdateInfoPtr update_info() const { return update_info_; }
 
+  // set call node debug info of InlineClone.
+  void set_inline_call_node_debug_info(const NodeDebugInfoPtr &call_debug_info) {
+    inline_call_node_debug_info_ = call_debug_info;
+  }
+
  private:
   void CloneNodes();
   void LinkEdges();
@@ -129,6 +134,7 @@ class MS_CORE_API Cloner {
   FuncGraphSet graph_set_;
   ScopePtr scope_;
   UpdateInfoPtr update_info_;
+  NodeDebugInfoPtr inline_call_node_debug_info_{nullptr};
   CloneType type_;
   std::vector<CloneInfo> todo_;
   mindspore::HashMap<FuncGraphPtr, bool> status_;
@@ -138,7 +144,8 @@ class MS_CORE_API Cloner {
 };
 
 MS_CORE_API AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                                   const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr);
+                                   const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr,
+                                   const NodeDebugInfoPtr &call_debug_info = nullptr);
 
 MS_CORE_API FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph);
 MS_CORE_API FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs);
