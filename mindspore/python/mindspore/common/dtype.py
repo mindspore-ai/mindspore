@@ -20,7 +20,6 @@ from __future__ import absolute_import
 import enum
 from inspect import isfunction
 import numpy as np
-from mindspore import log as logger
 from mindspore._c_expression import typing
 from mindspore._c_expression.typing import Type
 
