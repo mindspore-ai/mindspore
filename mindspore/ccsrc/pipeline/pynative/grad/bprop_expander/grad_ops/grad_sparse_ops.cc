@@ -614,5 +614,15 @@ REG_BPROP_BUILDER("SparseDenseCwiseDiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(
   NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
   return d_all;
 });
+
+REG_BPROP_BUILDER("RaggedTensorToSparse").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto rt_nested_splits = ib->GetInput(kIndex0);
+  auto rt_dense_values = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto re_nested_spilts_shape = ib->GetShape(rt_dense_values);
+  auto ragged_values_grad = ib->Reshape(ib->TupleGetItem(dout, 1), re_nested_spilts_shape);
+  NodePtrList d_all = {ib->ZerosLike(rt_nested_splits), ragged_values_grad};
+  return d_all;
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
