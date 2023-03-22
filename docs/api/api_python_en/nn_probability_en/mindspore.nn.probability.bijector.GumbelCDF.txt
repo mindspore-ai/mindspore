@@ -16,7 +16,7 @@
 
 .. py:method:: forward(value)
 
-    forward mapping, compute the value after mapping as :math:`Y = g(X)`.
+    forward mapping, compute the value after mapping.
 
     Parameters
         - **value** (Tensor) - the value to compute.
@@ -26,7 +26,7 @@
 
 .. py:method:: forward_log_jacobian(value)
 
-    compute the log value after mapping, namely :math:`\log(dg(x) / dx)`.
+    compute the log value after mapping.
 
     Parameters
         - **value** (Tensor) - the value to compute.
@@ -36,7 +36,7 @@
 
 .. py:method:: inverse(value)
 
-    Inverse mapping, compute the value after inverse mapping as :math:`X = g(X)`.
+    Inverse mapping, compute the value after inverse mapping.
 
     Parameters
         - **value** (Tensor) - the value of output after mapping.
@@ -46,7 +46,7 @@
 
 .. py:method:: inverse_log_jacobian(value)
 
-    Compute the log value of the inverse mapping, namely :math:`\log(dg^{-1}(x) / dx)`.
+    Compute the log value of the inverse mapping.
 
     Parameters
         - **value** (Tensor) - the value of output after mapping.

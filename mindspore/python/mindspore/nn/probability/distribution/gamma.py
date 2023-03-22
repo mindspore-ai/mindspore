@@ -27,7 +27,7 @@ from ._utils.custom_ops import log_generic
 class Gamma(Distribution):
     r"""
     Gamma distribution.
-    A Gamma distributio is a continuous distribution with the range :math:`[0, 1]`
+    A Gamma distributio is a continuous distribution with the range :math:`(0, \inf)`
     and the probability density function:
 
     .. math::

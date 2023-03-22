@@ -4,7 +4,7 @@ mindspore.nn.probability.distribution.Gumbel
 .. py:class:: mindspore.nn.probability.distribution.Gumbel(loc, scale, seed=0, dtype=mstype.float32, name='Gumbel')
 
     Gumbel分布（Gumbel distribution）。
-    连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
+    连续随机分布，取值范围为所有实数 ，概率密度函数为
 
     .. math:: 
         f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).

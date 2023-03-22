@@ -4,7 +4,7 @@ mindspore.nn.probability.distribution.Logistic
 .. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Logistic')
 
     Logistic分布（Logistic distribution）。
-    连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
+    连续随机分布，取值范围为 :math:`(-\inf, \inf)` ，概率密度函数为
 
     .. math::
         f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
