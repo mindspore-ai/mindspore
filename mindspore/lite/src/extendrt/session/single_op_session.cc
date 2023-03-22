@@ -269,7 +269,7 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::Tensor> &inputs,
     MS_LOG(ERROR) << "outputs cannot be nullptr";
     return kLiteError;
   }
-  MS_LOG(INFO) << "SingleOpInferSession::RunGraph with input and outputs";
+  MS_LOG(DEBUG) << "SingleOpInferSession::RunGraph with input and outputs";
   std::vector<ShapeVector> new_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_shapes), [](auto &t) { return t.shape_c(); });
   auto ret = OnNewInputShapes(new_shapes);
