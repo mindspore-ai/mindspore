@@ -1820,20 +1820,23 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto mode = GetValue<std::string>(ib->GetAttr("mode"));
   NodePtr dx;
-  auto pad = paddings->abstract()->BuildValue();
-  MS_EXCEPTION_IF_NULL(pad);
-  std::vector<int64_t> pad_value;
-  if (pad->isa<tensor::Tensor>()) {
-    pad_value = CheckAndConvertUtils::CheckTensorIntValue("paddings value", pad, "PadV3");
-  } else {
-    pad_value = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", pad, "PadV3");
-  }
+
   if (mode == "constant") {
+    MS_EXCEPTION_IF_NULL(paddings);
+    MS_EXCEPTION_IF_NULL(paddings->abstract());
+    auto pad = paddings->abstract()->BuildValue();
+    MS_EXCEPTION_IF_NULL(pad);
+    std::vector<int64_t> pad_value;
+    if (pad->isa<tensor::Tensor>()) {
+      pad_value = CheckAndConvertUtils::CheckTensorIntValue("paddings value", pad, "PadV3");
+    } else {
+      pad_value = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", pad, "PadV3");
+    }
     (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
     dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
   } else {
-    dx = ib->Emit("PadV3Grad", {dout, ib->Tensor(pad_value)},
+    dx = ib->Emit("PadV3Grad", {dout, paddings},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
   }
   return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};

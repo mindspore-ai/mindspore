@@ -659,7 +659,7 @@ struct LoopConditionInfo {
     while i < end
         ...
         i += step
-  To enable proper support for arbitrary while loop contitions, condition calculation should be duplicated inside the
+  To enable proper support for arbitrary while loop conditions, condition calculation should be duplicated inside the
   Loop supgraph. But exporting the same ops twice with different names is not currently supported.
  */
 LoopConditionInfo TraceLoopConditionInfo(const CNodePtr &start_node, const CNodePtr &cond_node,
@@ -4352,7 +4352,7 @@ void AddGRUOp(const std::vector<std::string> &inputs, const std::vector<std::str
 void UnsqueezeInputOfGRU(std::string *in_name, const std::string &node_name, const std::string &suffix, int64_t axis,
                          onnx::GraphProto *graph_proto) {
   auto out_name = node_name + suffix;
-  AddUnsqueezeOp(*in_name, out_name, 0, graph_proto);
+  AddUnsqueezeOp(*in_name, out_name, axis, graph_proto);
   *in_name = out_name;
 }
 
