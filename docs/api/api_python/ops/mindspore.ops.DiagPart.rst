@@ -18,4 +18,4 @@ mindspore.ops.DiagPart
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
         - **ValueError** - 如果 `input` 的秩不是偶数，或为零。
-        - **ValueError** - 如果 `input` 的shape不满足：`input_shape[i] == input_shape[i + len(input_shape)/2]`。
+        - **ValueError** - 如果 `input` 的shape不满足：`input_shape[i] = input_shape[i + len(input_shape)/2]`。

@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Col2Im(kernel_size, dilation=1, padding=0, stride=1)
 
-    将一组通过滑窗获得的数组组合成一个大的Tensor。其中 `dilation` 、 `padding` 和 `stride` 决定了滑窗如何滑动与检索元素。
+    将一组通过滑窗获得的数组组合成一个大的Tensor。通常用于从一组图像补丁（或滑动局部块）中重建图像，这些图像补丁是使用 :class:`mindspore.ops.Im2Col` 操作生成的。
 
     假设输入为一个包含多个滑窗的Tensor，例如，图像的补丁，其shape为 :math:`(N, C, \prod(\text{kernel_size}), L)` ，:math:`N` 代表Batch数量，:math:`C` 代表Channel数量，:math:`\prod(\text{kernel_size})` 代表滑窗大小，:math:`L` 代表滑窗总数。Col2Im通过对这些滑窗重叠的部分进行加和来将输入组合成shape为 :math:`(N, C, \text{output_size}[0], \text{output_size}[1], \dots)` 的Tensor作为输出。
 
@@ -13,7 +13,7 @@
         L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
             - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor
 
-    式中d代表高度与宽度上两个维度。
+    式中d代表高度与宽度上两个维度， :math:`dilation` 、 :math:`padding` 和 :math:`stride` 决定了滑窗如何滑动与检索元素。
 
     参数：
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小，由两个正整数组成，分别代表滑窗的高度与宽度。如果数据类型为int，代表不同方向上的填充大小相等。取值必须由用户指定。

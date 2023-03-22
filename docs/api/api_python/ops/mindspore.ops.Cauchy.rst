@@ -3,7 +3,8 @@ mindspore.ops.Cauchy
 
 .. py:class:: mindspore.ops.Cauchy(size, sigma=1.0, median=0.0)
 
-    从柯西分布中提取的随机数创建shape由 `size` 决定的Tensor。
+    根据柯西分布生成随机数Tensor，其shape由 `size` 决定。
+    柯西分布定义如下：
 
     .. math::
         f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}

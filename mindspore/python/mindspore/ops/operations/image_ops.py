@@ -34,8 +34,11 @@ class AdjustSaturation(Primitive):
 
     Inputs:
         - **image** (Tensor) - Images to adjust. Must be one of the following types: float16, float32.
-          At least 3-D.The last dimension is interpreted as channels, and must be three.
-        - **scale** (Tensor) - A float scale to add to the saturation. A Tensor of type float32. Must be 0-D.
+          At least 3-D. The last dimension is interpreted as channels, and must be three.
+        - **scale** (Tensor) - A scale factor determines the amount of saturation adjustment to
+          apply to the image. A value greater than 1.0 increases the saturation, while a value less than
+          1.0 decreases the saturation. A value of 1.0 leaves the saturation unchanged.
+          Must be 0-D Tensor of type float32.
 
     Outputs:
         Adjusted image(s), same shape and dtype as `image`.
@@ -131,8 +134,9 @@ class AdjustHue(Primitive):
         It is recommended to minimize the number of redundant transformations when several adjustments are chained.
 
     Inputs:
-        - **image** (Tensor): RGB image or images. The size of the last dimension must be 3.
-          the dtype is float16 or float32. At least 3-D.
+        - **image** (Tensor): RGB image or images, a Tensor has at least 3-D.
+          The last dimension is interpreted as channels whose size must be three.
+          the dtype is float16 or float32.
         - **delta** (Tensor): How much to add to the hue channel, the dtype is float32. Must be 0-D.
 
     Outputs:
@@ -1101,8 +1105,9 @@ class CombinedNonMaxSuppression(Primitive):
     Inputs:
         - **boxes** (Tensor) - A float32 Tensor with shape :math:`(batch_size, num_boxes, q, 4)`
           representing the bounding box coordinates.
-          `q` can be 1, indicating that all classes use the same bounding box, or the number of classes,
-          indicating that class-specific boxes are applied.
+          `q` indicates mapping relationship between boxes and classes.
+          If `q` is 1, all classes use the same bounding box. If `q` is equal to the number of classes,
+          class-specific boxes are applied.
         - **scores** (Tensor) - A 3-D Tensor of float32 type with the shape
           :math:`(batch_size, num_boxes, num_classes)`. It contains a score value for each box,
           with each row of `boxes` represented by a single score.

@@ -21,7 +21,7 @@ mindspore.nn.AdaptiveMaxPool2d
         Ascend平台input输入仅支持float16类型。
 
     参数：
-        - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以为一个int值，代表相同H和W，或None，如果是None，则意味着输出大小与输入相同。
+        - **output_size** (Union[int, tuple]) - 输出特征图的size。 `ouput_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。H、W可以是int或None，如果是None，则意味着输出的size与输入相同。
         - **return_indices** (bool) - 如果为True，输出最大值的索引，默认值为False。
 
     输入：
