@@ -965,6 +965,7 @@ class SymbolTree(Observer, Observable):
         self.set_node_arg(real_dst_node, arg_idx, new_arg)
 
     def print_node_tabulate(self):
+        """Print node tabulate."""
         try:
             from tabulate import tabulate
         except ImportError:

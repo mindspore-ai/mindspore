@@ -204,7 +204,6 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
 
-# pylint: disable=too-many-function-args
 def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
     """Execute the process of saving checkpoint into file."""
     try:

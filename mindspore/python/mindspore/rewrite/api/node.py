@@ -99,6 +99,7 @@ class Node:
                                             args, kwargs, name, is_sub_net))
 
     def get_handler(self) -> NodeImpl:
+        """Get handler."""
         return self._node
 
     def get_inputs(self) -> ['Node']:

@@ -3308,7 +3308,6 @@ def lerp(start, end, weight):
 
 
 # pylint: disable=redefined-builtin
-# pylint: disable=invalid-name
 def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     """Returns the matrix norm or vector norm of a given tensor."""
     return F.norm(A, ord, dim, keepdim, dtype=dtype)

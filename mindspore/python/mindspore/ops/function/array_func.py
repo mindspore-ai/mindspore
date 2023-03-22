@@ -1367,7 +1367,7 @@ def ger(input, vec2):
     return ger_(input, vec2)
 
 
-def size(input_x):  # pylint: disable=redefined-outer-name
+def size(input_x):
     r"""
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
     Tensor.
