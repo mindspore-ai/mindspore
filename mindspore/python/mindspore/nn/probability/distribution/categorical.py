@@ -30,9 +30,9 @@ from ._utils.custom_ops import exp_generic, log_generic, broadcast_to
 
 
 class Categorical(Distribution):
-    """
+    r"""
     Categorical distribution.
-    A Categorical Distribution is a discrete distribution with the range {1, 2, ..., k}
+    A Categorical Distribution is a discrete distribution with the range :math:`\{1, 2, ..., k\}`
     and the probability mass function as :math:`P(X = i) = p_i, i = 1, ..., k`.
 
     Args:
@@ -238,7 +238,7 @@ class Categorical(Distribution):
         """
         probs = self._check_param_type(probs)
         logits = self.log(probs)
-        return self.squeeze(-self.reduce_sum(logits * probs, -1))
+        return self.squeeze(P.Neg()(self.reduce_sum(logits * probs, -1)))
 
     def _kl_loss(self, dist, probs_b, probs=None):
         """

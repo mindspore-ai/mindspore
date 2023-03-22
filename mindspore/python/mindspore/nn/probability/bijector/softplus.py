@@ -51,7 +51,7 @@ class Softplus(Bijector):
         >>>
         >>> # To initialize a Softplus bijector of sharpness 2.0.
         >>> softplus = msb.Softplus(2.0)
-        >>> # To use a ScalarAffine bijector in a network.
+        >>> # To use a Softplus bijector in a network.
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = softplus.forward(value)
         >>> print(ans1.shape)

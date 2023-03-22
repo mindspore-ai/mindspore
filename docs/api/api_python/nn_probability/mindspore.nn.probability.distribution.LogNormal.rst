@@ -7,9 +7,9 @@ mindspore.nn.probability.distribution.LogNormal
     连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
 
     .. math:: 
-        f(x, a, b) = 1 / xb\sqrt{2\pi} \exp(-(\ln(x) - a)^2 / 2b^2).
+        f(x, \mu, \sigma) = 1 / x\sigma\sqrt{2\pi} \exp(-(\ln(x) - \mu)^2 / 2\sigma^2).
 
-    其中 :math:`a, b` 为分别为基础正态分布的平均值和标准差。
+    其中 :math:`\mu, \sigma` 为分别为基础正态分布的平均值和标准差。
     服从对数正态分布的随机变量的对数服从正态分布。它被构造为正态分布的指数变换。
 
     参数：
