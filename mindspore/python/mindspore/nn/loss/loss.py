@@ -2306,15 +2306,17 @@ class KLDivLoss(LossBase):
 
 class CTCLoss(LossBase):
     """
-    Calculates the CTC (Connectionist Temporal Classification) loss.
+    Calculates the CTC (Connectionist Temporal Classification) loss. It's mainly used to calculate the loss between
+    the continuous, unsegemented time series and the target series.
 
     For the CTC algorithm, refer to `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ .
 
     Args:
-        blank (int): The blank label. Default: 0.
-        reduction (str): Implements the reduction method to the output with 'none', 'mean', or 'sum'. Default: 'mean'.
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
+        blank (int, optional): The blank label. Default: 0.
+        reduction (str, optional): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+        zero_infinity (bool, optional): Whether to set infinite loss and the associated gradient to 0. Default: False.
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, N, C)` or :math:`(T, C)`, where T is length of input,
