@@ -3193,6 +3193,27 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('hypot')(self, other)
 
+    def soft_shrink(self, lambd=0.5):
+        r"""
+        For details, please refer to :func:`mindspore.ops.soft_shrink`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('soft_shrink')(self, lambd)
+
+    def matrix_determinant(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.matrix_determinant`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_determinant')(self)
+
+    def log_matrix_determinant(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.log_matrix_determinant`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log_matrix_determinant')(self)
+
     def to_coo(self):
         """
         Convert a Tensor to COOTensor.
