@@ -19,9 +19,11 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include "base/base.h"
 #include "include/errorcode.h"
 #include "ir/anf.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -54,6 +56,12 @@ class PrimitiveMapper {
   STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) const;
 
   STATUS AdjustAttrFormat(const PrimitivePtr &prim, const std::string &name) const;
+
+  CNodePtr NewCNode(const CNodePtr &cnode, const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs,
+                    const abstract::AbstractBasePtr &abstract, const std::string &name) const;
+
+  CNodePtr NewCNode(const CNodePtr &cnode, const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs,
+                    const ShapeVector &shape, TypeId type_id, const std::string &name) const;
 
  private:
   void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim) const;
