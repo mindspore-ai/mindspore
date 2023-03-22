@@ -141,7 +141,7 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto template_one = static_cast<T>(1);
   auto template_zero = static_cast<T>(0);
   if (is_scalar_input_) {
-    *output = is_p_zero_ ? template_one : input[0];
+    *output = is_p_zero_ ? template_one : std::abs(input[0]);
     return true;
   }
   // If p equal to zero, we reset output to one and sum it, which means (x)^0 == (1)^1.
