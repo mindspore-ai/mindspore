@@ -33,6 +33,7 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "utils/profile.h"
 #include "include/common/utils/primitive_utils.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pass.h"
 namespace mindspore {
 namespace pynative {
