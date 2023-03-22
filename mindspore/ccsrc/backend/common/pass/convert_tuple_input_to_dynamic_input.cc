@@ -15,7 +15,6 @@
  */
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
 
-#include <algorithm>
 #include <memory>
 
 #include "include/backend/optimizer/helper.h"
