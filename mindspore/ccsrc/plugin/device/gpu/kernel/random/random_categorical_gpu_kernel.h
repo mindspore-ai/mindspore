@@ -100,7 +100,8 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(kernel_ptr);
 
     size_t input_num = inputs.size();
-    if (input_num != 3) {
+    const size_t kRandomCategoricalInputSize = 3;
+    if (input_num != kRandomCategoricalInputSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }
     size_t output_num = outputs.size();
@@ -111,7 +112,8 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     seed_ = kernel_ptr->get_seed();
 
     auto logits_shape = inputs[0]->GetShapeVector();
-    if (logits_shape.size() != 2) {
+    const size_t kLogitsShapeSize = 2;
+    if (logits_shape.size() != kLogitsShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits should be 2, but got "
                         << logits_shape.size();
     }

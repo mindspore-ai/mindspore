@@ -45,7 +45,7 @@ DfGraphManager::~DfGraphManager() {
 }
 
 DfGraphManager &DfGraphManager::GetInstance() {
-  static DfGraphManager instance;
+  static DfGraphManager instance{};
   return instance;
 }
 
