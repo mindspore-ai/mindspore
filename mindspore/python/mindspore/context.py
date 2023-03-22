@@ -1093,7 +1093,8 @@ def set_context(**kwargs):
                 to the built-in optimization strategy, automatically reduces the precision of some operators
                 to float16 or bfloat16.
               - must_keep_origin_dtype: Keep the accuracy of the original drawing.
-              - force_fp32: When the operator supports both float16 and float32, select float32 directly.
+              - force_fp32: When the input of the matrix calculation operator is float16 and the output supports
+                float16 and float32, output is forced to float32.
               - force_lowerprecision: When the operator supports both float16 or bfloat16 and float32, select
                 float16 or bfloat16 directly.
               - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
