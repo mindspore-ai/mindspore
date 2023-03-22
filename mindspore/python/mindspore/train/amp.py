@@ -91,9 +91,48 @@ class _OutputTo32(nn.Cell):
         return F.mixed_precision_cast(mstype.float32, out)
 
 
-def _insert_cast_operator(stree, white_list):
+def _insert_cast_operator_process(node, stree):
     """insert cast for operators in white_list."""
     new_cast_node = None
+    in_white_list = False
+    # insert cast before the primitive operators in white_list
+    if issubclass(node.get_instance_type(), Primitive):
+        in_white_list = True
+        for idx in range(len(node.get_inputs())):
+            position = stree.before(node)
+            new_node = P.Cast()
+            arg = ms.rewrite.ScopedValue.create_name_values([node.get_inputs()[idx].get_targets()[0].value,
+                                                             "mindspore.float16"])
+            new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
+                                                             targets=['x_cast_{}'.format(node.get_name())],
+                                                             args=arg,
+                                                             name='incast_{}{}'.format(node.get_name(), idx))
+            stree.insert(position, new_cast_node)
+            node.set_arg_by_node(idx, new_cast_node)
+    # insert cast before the Cell operators in white_list
+    elif issubclass(node.get_instance_type(), nn.Cell):
+        in_white_list = True
+        node.get_instance().to_float(mstype.float16)
+
+    # insert cast after the operators in white_list
+    if in_white_list:
+        position = stree.after(node)
+        new_node = P.Cast()
+        arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
+                                                         "mindspore.float32"])
+        new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
+                                                         targets=['x_cast_{}'.format(node.get_name())],
+                                                         args=arg,
+                                                         name='outcast_{}'.format(node.get_name()))
+        for i in range(len(node.get_users())):
+            follow_node = node.get_users()[i]
+            stree.insert(position, new_cast_node)
+            idx = follow_node.get_args().index(node.get_targets()[0])
+            follow_node.set_arg_by_node(idx, new_cast_node)
+
+
+def _insert_cast_operator(stree, white_list):
+    """insert cast for operators in white_list."""
     for node in stree.nodes():
         if node.get_targets() is None:
             continue
@@ -104,44 +143,11 @@ def _insert_cast_operator(stree, white_list):
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
             _insert_cast_operator(substree, white_list)
+        elif node.get_instance_type() in white_list:
+            _insert_cast_operator_process(node, stree)
         else:
-            if node.get_instance_type() not in white_list:
-                continue
-            in_white_list = False
-            # insert cast before the primitive operators in white_list
-            if issubclass(node.get_instance_type(), Primitive):
-                in_white_list = True
-                for idx in range(len(node.get_inputs())):
-                    position = stree.before(node)
-                    new_node = P.Cast()
-                    arg = ms.rewrite.ScopedValue.create_name_values([node.get_inputs()[idx].get_targets()[0].value,
-                                                                     "mindspore.float16"])
-                    new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                                     targets=['x_cast_{}'.format(node.get_name())],
-                                                                     args=arg,
-                                                                     name='incast_{}{}'.format(node.get_name(), idx))
-                    stree.insert(position, new_cast_node)
-                    node.set_arg_by_node(idx, new_cast_node)
-            # insert cast before the Cell operators in white_list
-            elif issubclass(node.get_instance_type(), nn.Cell):
-                in_white_list = True
-                node.get_instance().to_float(mstype.float16)
-
-            # insert cast after the operators in white_list
-            if in_white_list:
-                position = stree.after(node)
-                new_node = P.Cast()
-                arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
-                                                                 "mindspore.float32"])
-                new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                                 targets=['x_cast_{}'.format(node.get_name())],
-                                                                 args=arg,
-                                                                 name='outcast_{}'.format(node.get_name()))
-                for i in range(len(node.get_users())):
-                    follow_node = node.get_users()[i]
-                    stree.insert(position, new_cast_node)
-                    idx = follow_node.get_args().index(node.get_targets()[0])
-                    follow_node.set_arg_by_node(idx, new_cast_node)
+            # type of node not in white list
+            continue
 
 
 def _removed_cast_pair(node):
