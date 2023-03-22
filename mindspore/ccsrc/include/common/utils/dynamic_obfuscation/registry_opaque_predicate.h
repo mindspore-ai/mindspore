@@ -26,8 +26,6 @@
 #include <unordered_map>
 #include <list>
 
-#include "pybind11/pybind11.h"
-#include <Python.h>
 #include "pybind11/numpy.h"
 #include "include/common/visible.h"
 

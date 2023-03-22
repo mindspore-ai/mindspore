@@ -22,16 +22,20 @@ registered_func_name = OpaquePredicateRegistry()
 
 
 def add_opaque_predicate(fn_name, func):
+    """restore opaque predicate functions"""
     registered_func_name.register(fn_name, func)
 
 
 def get_opaque_predicate(fn_name):
+    """get opaque predicate function by their name"""
     return registered_func_name.get(fn_name)
 
 
 def get_func_names():
+    """get function names"""
     return registered_func_name.func_names
 
 
 def clean_funcs():
+    """clean restored functions"""
     registered_func_name.func_names = []
