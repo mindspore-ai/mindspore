@@ -137,12 +137,13 @@ bool IsBroadCast(ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector *broad_
     broad_cast_x2_shape->insert(broad_cast_x2_shape->begin(), 1);
   }
   for (size_t i = 0; i < max_size; i++) {
-    if (broad_cast_x1_shape[i] != broad_cast_x2_shape[i] && broad_cast_x1_shape->at(i) != 1 &&
+    if (broad_cast_x1_shape->at(i) != broad_cast_x2_shape->at(i) && broad_cast_x1_shape->at(i) != 1 &&
         broad_cast_x2_shape->at(i) != 1) {
-      MS_EXCEPTION(NotSupportError) << "input shape is not match, x1 shape: " << x1_shape
-                                    << " , x2 shape: " << x2_shape;
+      MS_EXCEPTION(NotSupportError) << "input shape is not match, x1 shape: " << x1_shape << " , x2 shape: " << x2_shape
+                                    << " , broad_cast_x1_shape: " << *broad_cast_x1_shape << " , broad_cast_x2_shape"
+                                    << *broad_cast_x2_shape;
     }
-    if (broad_cast_x1_shape[i] != broad_cast_x2_shape[i]) {
+    if (broad_cast_x1_shape->at(i) != broad_cast_x2_shape->at(i)) {
       need_broad_cast = true;
     }
   }
