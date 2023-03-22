@@ -75,6 +75,8 @@ class ExitActor : public ControlActor {
   // In exit actor, we need to copy a new device tensor for the output of the kernel actor, but parameter is not
   // needed. This mark is used to record whether it need to be copied.
   std::vector<bool> is_need_copy_device_tensors_;
+  // Cache the dynamic shape flag to optimize the running performance.
+  std::vector<bool> is_dynamic_shapes_;
   // Output data.
   //  The output branch data corresponds to the output_data_arrows_ one by one.
   mindspore::HashMap<int, std::vector<std::pair<size_t, OpDataUniquePtr<DeviceTensor>>>> output_branch_data_;

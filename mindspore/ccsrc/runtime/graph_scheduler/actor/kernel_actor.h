@@ -37,6 +37,7 @@ using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
 using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelMod;
 using mindspore::session::SomasInfo;
 using mindspore::tensor::TensorPtr;
 
@@ -105,6 +106,7 @@ class KernelActor : public DebugAwareActor {
   CNodePtr kernel_;
   bool is_dynamic_shape_;
   KernelInfo *kernel_info_;
+  KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
 

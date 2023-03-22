@@ -164,9 +164,11 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     return;
   }
   if (input_device_tensors_.size() != is_need_copy_device_tensors_.size() ||
+      input_device_tensors_.size() != is_dynamic_shapes_.size() ||
       input_device_tensors_.size() != device_contexts_.size()) {
     std::string error_info = "Invalid input device tensor size:" + std::to_string(input_device_tensors_.size()) +
                              " need tensor size:" + std::to_string(is_need_copy_device_tensors_.size()) +
+                             " need dynamic shape size:" + std::to_string(is_dynamic_shapes_.size()) +
                              " need context size:" + std::to_string(device_contexts_.size()) +
                              " for actor:" + GetAID().Name();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -180,13 +182,6 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       continue;
     }
 
-    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
-    MS_EXCEPTION_IF_NULL(node_with_index.first);
-    if (common::AnfAlgo::HasAbstractRef(node_with_index.first)) {
-      (void)new_device_tensors.emplace_back(input_device_tensor);
-      continue;
-    }
-
     // Update the real used device context by the input data.
     auto &device_context = device_contexts_[i];
     MS_EXCEPTION_IF_NULL(device_context);
@@ -196,17 +191,23 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       MS_LOG(INFO) << "Update device context type to:" << device_context->GetDeviceType();
     }
 
-    auto host_shape = input_device_tensor->host_shape();
-    if (common::AnfAlgo::IsDynamicShape(node_with_index.first)) {
+    const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
+    MS_EXCEPTION_IF_NULL(node_with_index.first);
+    // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
+    DeviceTensorPtr new_device_tensor = nullptr;
+    if (!is_dynamic_shapes_[i]) {
+      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
+        input_device_tensor->host_shape());
+    } else {
       // If there is a dynamic shape, the shape in the kernel should be used.
       MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
                     << " for actor:" << GetAID();
-      host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
+      const auto &host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
+      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
+        host_shape);
     }
-    // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
-    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-      host_shape);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
