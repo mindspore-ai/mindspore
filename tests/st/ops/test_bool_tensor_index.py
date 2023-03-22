@@ -295,7 +295,7 @@ def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
-    index = [Tensor(index0, dtype=mstype.float32).astype(mstype.bool_), 0]
+    index = [Tensor(index0), 0]
     get_item_net = BoolTensorIndexGetItem()
     y_ms = get_item_net(x_ms, index)
     # numpy
@@ -323,7 +323,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
-    index = [Tensor(index0, dtype=mstype.float32).astype(mstype.bool_), 0]
+    index = [Tensor(index0), 0]
     value = -1
     set_item_net = BoolTensorIndexSetItem()
     x_ms = set_item_net(x_ms, index, value)
@@ -352,7 +352,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_3(mode):
     index0 = np.array([True, False])
     # Mindspore
     x_ms = Tensor(x0, dtype=mstype.float32)
-    index = [Tensor(index0, dtype=mstype.float32).astype(mstype.bool_), 0]
+    index = [Tensor(index0), 0]
     value = [-1]
     set_item_net = BoolTensorIndexSetItem()
     x_ms = set_item_net(x_ms, index, value)
