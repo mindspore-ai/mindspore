@@ -83,6 +83,9 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
   auto data_shape = data->GetTensorShape();
   auto segment_ids_shape = segment_ids->GetTensorShape();
   auto output_data = reinterpret_cast<T1 *>(output->GetData());
+  auto output_data_shape_sizes = data_shape->GetDimSizes();
+  output_data_shape_sizes[0] = segment_ids_data[segment_ids_len - 1] + 1;
+  output->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   uint64_t output_len = output->NumElements();
   uint64_t len2 = data_len / data_shape->GetDimSize(0);
   uint64_t _8k = 8 * 1024, _2k = 2 * 1024;

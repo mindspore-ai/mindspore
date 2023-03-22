@@ -113,10 +113,14 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(CpuKernelContext &ctx) {
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   int64_t input_data_num = input_data->NumElements();
   Tensor *segment_ids_data = ctx.Input(1);
+  auto segment_ids_len = segment_ids_data->NumElements();
   auto segment_ids_data_addr = reinterpret_cast<T2 *>(segment_ids_data->GetData());
   int64_t segment_ids_data_num = segment_ids_data->NumElements();
   Tensor *output_data = ctx.Output(0);
   auto output_data_addr = reinterpret_cast<T1 *>(output_data->GetData());
+  auto output_data_shape_sizes = input_data->GetTensorShape()->GetDimSizes();
+  output_data_shape_sizes[0] = segment_ids_data_addr[segment_ids_len - 1] + 1;
+  output_data->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   int64_t output_data_num = output_data->NumElements();
   for (int64_t i = 0; i < output_data_num; i++) {
     output_data_addr[i] = static_cast<T1>(0);
@@ -226,10 +230,14 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute_Complex(CpuKernelContext &ctx)
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   int64_t input_data_num = input_data->NumElements();
   Tensor *segment_ids_data = ctx.Input(1);
+  auto segment_ids_len = segment_ids_data->NumElements();
   auto segment_ids_data_addr = reinterpret_cast<T2 *>(segment_ids_data->GetData());
   int64_t segment_ids_data_num = segment_ids_data->NumElements();
   Tensor *output_data = ctx.Output(0);
   auto output_data_addr = reinterpret_cast<T1 *>(output_data->GetData());
+  auto output_data_shape_sizes = input_data->GetTensorShape()->GetDimSizes();
+  output_data_shape_sizes[0] = segment_ids_data_addr[segment_ids_len - 1] + 1;
+  output_data->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   int64_t output_data_num = output_data->NumElements();
   for (int64_t i = 0; i < output_data_num; i++) {
     output_data_addr[i] = static_cast<T1>(0);

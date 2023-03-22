@@ -96,6 +96,9 @@ uint32_t SegmentSumCpuKernel::SegmentSumCompute(CpuKernelContext &ctx) {
   input_x_dims[0] = segment_ids_data_addr[segment_ids_data_num - 1] + 1;
   Tensor *output_data = ctx.Output(0);
   auto output_data_addr = reinterpret_cast<T1 *>(output_data->GetData());
+  auto output_data_shape_sizes = input_x_data->GetTensorShape()->GetDimSizes();
+  output_data_shape_sizes[0] = segment_ids_data_addr[segment_ids_data_num - 1] + 1;
+  output_data->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   auto output_data_shape = output_data->GetTensorShape();
   if (output_data_shape->GetDimSize(0) < input_x_dims[0]) {
     KERNEL_LOG_ERROR("The number of segments of the segmentation result of segment_ids is too large.");
