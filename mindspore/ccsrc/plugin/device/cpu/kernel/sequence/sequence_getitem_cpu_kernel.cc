@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/sequence_getitem_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
