@@ -82,11 +82,11 @@ class DeviceSparseEmbeddingOperation : public DeviceEmbeddingOperation {
 
   // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
   // slice corresponding to the process.
-  bool CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, bool *in_device, size_t data_step);
+  bool CheckCacheHit(const int *batch_ids, const size_t batch_ids_len, bool *in_device, size_t data_step) const;
 
   // Thread execution function of method 'CheckCacheHitOrOutRange'.
   bool CheckCacheHitFunc(const int *batch_ids, const size_t batch_ids_len, bool *in_device, size_t *hash_hit_count,
-                         size_t data_step);
+                         size_t data_step) const;
 
   // Parse the hit and swap information of the currently preprocessed id in the device cache.
   bool ParseDeviceData(int id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, size_t data_step,

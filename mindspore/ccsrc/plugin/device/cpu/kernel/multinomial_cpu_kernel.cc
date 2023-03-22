@@ -127,14 +127,14 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   MS_EXCEPTION_IF_NULL(output);
   MS_EXCEPTION_IF_NULL(cumulative_value);
 
-  int64_t num_row = 1;
+  size_t num_row = 1;
   size_t num_shape = 2;
   if (input_shape_.size() == num_shape) {
     num_row = input_shape_[0];
   }
-  int64_t num_col = input_shape_[input_shape_.size() - 1];
+  size_t num_col = static_cast<size_t>(input_shape_[input_shape_.size() - 1]);
 
-  for (int64_t i = 0; i < num_row; ++i) {
+  for (size_t i = 0; i < num_row; ++i) {
     // Compute the cumulative array.
     cumulative_value[i * num_col] = input_tensor[i * num_col];
     for (size_t j = 1; j < IntToSize(num_col); ++j) {
