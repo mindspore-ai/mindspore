@@ -162,7 +162,6 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
                                            SizeToLong(slice_len), primitive->name());
-
   size_t num = 0;
   for (size_t n = j + 1; n < slice_len; n++) {
     if (new_axis_pos[n] == 1) {

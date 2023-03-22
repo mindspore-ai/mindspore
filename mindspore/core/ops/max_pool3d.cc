@@ -188,17 +188,13 @@ abstract::ShapePtr MaxPool3DInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input size", int64_t(input_args.size()), kEqual, 1, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  if (IsDynamic(in_shape)) {
-    return std::make_shared<abstract::Shape>(
-      std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                           abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny});
+  if (!IsDynamicRank(in_shape)) {
+    (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
-
+  if (IsDynamic(in_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>(k5DInputDims, abstract::Shape::kShapeDimAny));
+  }
   std::vector<int64_t> kernel_size;
   std::vector<int64_t> strides;
   std::vector<int64_t> pad_list;
@@ -236,8 +232,12 @@ TypePtr MaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<Abst
 
 AbstractBasePtr MaxPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input size", int64_t(input_args.size()), kEqual, 1, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be tensor.";
   }
