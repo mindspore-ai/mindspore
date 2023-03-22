@@ -158,7 +158,7 @@ static std::string GetCmdResult(const std::string &cmd) {
     // Filter with 'kTAG' and '\n'
     if (start) {
       bool line_end = buf[len - 1] == '\n';
-      result.append(buf, line_end ? len - 1 : len);
+      (void)result.append(buf, line_end ? len - 1 : len);
       if (line_end) {
         break;
       }

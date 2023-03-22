@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {

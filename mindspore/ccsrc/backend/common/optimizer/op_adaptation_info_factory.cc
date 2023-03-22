@@ -40,7 +40,7 @@ OpAdaptationInfo &OpAdaptationInfo::set_need_tbe_check_supported(bool need_tbe_c
   return *this;
 }
 
-OpAdaptationInfo &OpAdaptationInfo::set_input_attr_info(size_t input_index, std::string attr_data_type) {
+OpAdaptationInfo &OpAdaptationInfo::set_input_attr_info(size_t input_index, const std::string &attr_data_type) {
   auto find = input_attr_map_.find(input_index);
   if (find != input_attr_map_.end()) {
     MS_LOG(ERROR) << "This input index (" << input_index << ")"
@@ -71,7 +71,7 @@ std::map<std::string, OpAdaptationInfo *> &OpAdaptationInfoRegister::GetOpInfoMa
   return op_info_map;
 }
 
-void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) {
+void OpAdaptationInfoRegister::RegOpAdaptationInfo(OpAdaptationInfo *reg_info) const {
   MS_EXCEPTION_IF_NULL(reg_info);
   auto key = GenerateKey(reg_info->me_op_name(), reg_info->device_name(), reg_info->flag());
   auto find = GetOpInfoMap().find(key);

@@ -40,10 +40,10 @@ std::vector<MSTensor> ParseVectorMsTensorRef(const VectorRef &args) {
   for (const auto &arg : args) {
     if (utils::isa<VectorRef>(arg)) {
       auto ret = ParseVectorMsTensorRef(utils::cast<VectorRef>(arg));
-      ms_tensors.insert(ms_tensors.end(), ret.begin(), ret.end());
+      (void)ms_tensors.insert(ms_tensors.end(), ret.begin(), ret.end());
     } else if (utils::isa<MSTensorRef>(arg)) {
       auto wrapper = utils::cast<MSTensorRef>(arg);
-      ms_tensors.emplace_back(wrapper.GetTensor());
+      (void)ms_tensors.emplace_back(wrapper.GetTensor());
     } else {
       MS_LOG(EXCEPTION) << "Invalid item " << arg.ToString();
     }

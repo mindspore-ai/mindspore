@@ -45,7 +45,7 @@ class BACKEND_EXPORT OpAdaptationInfo {
   OpAdaptationInfo &set_target_op_name(const std::string &target_op_name);
   OpAdaptationInfo &set_pre_check_func(std::function<bool(CNodePtr)> pre_check_func);
   OpAdaptationInfo &set_need_tbe_check_supported(bool need_tbe_check_supported);
-  OpAdaptationInfo &set_input_attr_info(size_t input_index, std::string attr_data_type = "");
+  OpAdaptationInfo &set_input_attr_info(size_t input_index, const std::string &attr_data_type = "");
 
   const std::string &me_op_name() const { return me_op_name_; }
   const std::string &backend_op_name() const { return backend_op_name_; }
@@ -70,7 +70,7 @@ class BACKEND_EXPORT OpAdaptationInfo {
 class BACKEND_EXPORT OpAdaptationInfoRegister {
  public:
   static OpAdaptationInfoRegister &GetInstance();
-  void RegOpAdaptationInfo(OpAdaptationInfo *reg_info);
+  void RegOpAdaptationInfo(OpAdaptationInfo *reg_info) const;
   [[nodiscard]] OpAdaptationInfo *GetOpAdaptationInfo(const std::string &me_op_name, const std::string &device_name,
                                                       bool flag) const;
 
