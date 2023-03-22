@@ -70,11 +70,15 @@ class SuperKernelActor : public DebugAwareActor {
 
   KernelGraphPtr graph_;
 
+  // The device tensors of graph input parameter, which used to compare the recv input data.
+  std::vector<DeviceTensorPtr> node_device_tensors_;
+
   // In the scheduler, check whether the parameters need to be copied after lunch. Only when the parameter has
   // the ref attribute and is directly used by the kernel in the graph, it needs to be copied.
   std::vector<bool> is_parameters_need_copy_;
 
-  std::map<AnfNodePtr, DeviceAddress *> ref_node_addr_map_;
+  // Record the address map of ref node to copy back when running finished.
+  std::map<DeviceAddress *, DeviceAddress *> ref_node_addr_map_;
 
   // The device tensors for memory alloc.
   std::vector<DeviceTensor *> memory_alloc_list_;
