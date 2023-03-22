@@ -7541,6 +7541,12 @@ def _check_dtype(d1, d2):
     raise ValueError('the dtype is not supported.')
 
 
+@_primexpr
+def _check_last_dim_shape_eq(a, b):
+    if a.shape[-1] != b.shape[-1]:
+        raise ValueError('shapes are not aligned')
+
+
 def dot(a, b):
     """dot function"""
     res_dtype = _check_dtype(a.dtype, b.dtype)
@@ -7552,8 +7558,7 @@ def dot(a, b):
         perm = perm[:-2] + (perm[-1],) + (perm[-2],)
         b = ops.transpose(b, perm)
 
-    if a.shape[-1] != b.shape[-1]:
-        raise ValueError('shapes are not aligned')
+    _check_last_dim_shape_eq(a, b)
     a_aligned = a.reshape(-1, a.shape[-1]).astype(mstype.float32)
     output_aligned = b.reshape(-1, b.shape[-1]).astype(mstype.float32)
 
@@ -7700,11 +7705,11 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             if ord == 1:
                 if col_axis > row_axis:
                     col_axis -= 1
-                ret = A.abs().sum(row_axis).max(axis=col_axis)
+                ret = ops.max(A.abs().sum(row_axis), axis=col_axis)[0]
             elif ord == -1:
                 if col_axis > row_axis:
                     col_axis -= 1
-                ret = A.abs().sum(row_axis).min(axis=col_axis)
+                ret = ops.min(A.abs().sum(row_axis), axis=col_axis)[0]
             elif ord == 2:
                 ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
             elif ord == -2:
@@ -7726,9 +7731,9 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             return ops.sum(ops.abs(A).pow(ord), dim=dim, keepdim=keepdim).pow(1.0 / ord)
     if len(dim) == 1:
         if ord == float('inf'):
-            return ops.abs(A).max(dim, keepdim)
+            return ops.max(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
         if ord == -float('inf'):
-            return ops.abs(A).min(dim, keepdim)
+            return ops.min(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
         if ord is None:
             # special case for speedup
             s = ops.conj(A) * A
@@ -7755,11 +7760,11 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         if ord == float('inf'):
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = ops.reduce_sum(abs(A), col_axis).max(row_axis)
+            ret = ops.max(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
         elif ord == -float('inf'):
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = ops.reduce_sum(abs(A), col_axis).min(row_axis)
+            ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
         elif ord == 'fro':
             ret = ops.sqrt(ops.reduce_sum((ops.conj(A) * A), dim))
         elif ord == 'nuc':

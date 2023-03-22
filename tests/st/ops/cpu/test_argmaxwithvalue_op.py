@@ -21,7 +21,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 
 
 class NetArgmaxWithValue(nn.Cell):
@@ -32,7 +31,7 @@ class NetArgmaxWithValue(nn.Cell):
         self.argmax1 = P.ArgMaxWithValue(axis)
 
     def construct(self, x):
-        return (self.argmax1(x), F.max(x, axis=-1), F.max(x))
+        return self.argmax1(x)
 
 
 class NetArgmaxWithValueBig(nn.Cell):
@@ -54,14 +53,14 @@ def argmaxwithvalue_base(data_type):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     argmax = NetArgmaxWithValue()
     output = argmax(x)
-    assert (output[0][0].asnumpy() == expect1).all()
-    assert (output[0][1].asnumpy() == expect11).all()
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect11).all()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     argmax = NetArgmaxWithValue()
     output = argmax(x)
-    assert (output[0][0].asnumpy() == expect1).all()
-    assert (output[0][1].asnumpy() == expect11).all()
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect11).all()
 
 
 def argmaxwithvalue_3d(data_type, shape_x):
