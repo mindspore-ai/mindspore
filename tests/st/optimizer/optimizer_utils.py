@@ -110,6 +110,8 @@ def build_network(opt_config, net, is_group=False, loss_fn=nn.MSELoss(reduction=
             params = [{'params': fc1_params, 'weight_decay': 0.01, 'lr': 0.001}, {'params': fc2_params, 'lr': 0.1}]
         elif opt_config['name'] == 'adamax':
             params = [{'params': fc1_params, 'lr': 0.0018}, {'params': fc2_params, 'lr': 0.0022}]
+        elif opt_config['name'] == 'SGD':
+            params = [{'params': fc1_params, 'weight_decay': 0.2}, {'params': fc2_params}]
         else:
             params = [{'params': fc1_params, 'lr': 0.001}, {'params': fc2_params, 'lr': 0.1}]
     else:
@@ -126,13 +128,14 @@ def build_network(opt_config, net, is_group=False, loss_fn=nn.MSELoss(reduction=
     elif opt_config['name'] == 'adamax':
         net_opt = AdaMax(params, learning_rate=opt_config['lr'], beta1=opt_config['beta1'],
                          beta2=opt_config['beta2'], eps=opt_config['eps'], weight_decay=0.0)
-
+    elif opt_config['name'] == 'SGD':
+        net_opt = nn.SGD(params, weight_decay=opt_config['weight_decay'], dampening=0.3, momentum=0.1)
     trainonestepcell = mindspore.nn.TrainOneStepCell(networkwithloss, net_opt)
     data, label = make_fake_data()
     for i in range(20):
         loss = trainonestepcell(data[i], label[i])
         losses.append(loss.asnumpy())
-    if opt_config['name'] == 'ASGD':
+    if opt_config['name'] == 'ASGD' or opt_config['name'] == 'SGD':
         return np.array(losses), net_opt
     return np.array(losses)
 
@@ -227,3 +230,13 @@ no_default_group_fc1_weight_asgd = np.array([[-32.526627, -32.29401, -32.8416, -
 no_default_group_fc1_bias_asgd = np.array([-15.838092, -16.811989, -16.078112, -14.289094], dtype=np.float32)
 no_default_group_fc2_weight_asgd = np.array([[1288.7146, 1399.3041, 1292.8445, 1121.4629]], dtype=np.float32)
 no_default_group_fc2_bias_asgd = np.array([18.513494], dtype=np.float32)
+
+default_fc1_weight_sgd = np.array([[-6.6273242e-02, -3.9511207e-02, -1.0251881e-01, -1.2807587e-01,
+                                    -6.9634348e-02, -1.0375493e-01, -1.2083838e-01, -9.7173907e-02],
+                                   [-1.8068390e-02, -7.8982085e-02, -1.3175679e-02, 2.0881524e-04,
+                                    -6.4472459e-02, 7.9219900e-03, -2.8659783e-02, -6.9297753e-02],
+                                   [-2.5218798e-02, -3.6950763e-02, -4.2106784e-03, 2.9642319e-02,
+                                    1.0740350e-02, -6.0375791e-02, 5.5906363e-03, 2.0822065e-02],
+                                   [-1.1401306e+01, -1.1416125e+01, -1.1386261e+01, -1.1366054e+01,
+                                    -1.1324347e+01, -1.1358459e+01, -1.1398650e+01, -1.1339014e+01]], dtype=np.float32)
+default_fc2_weight_sgd = np.array([[-0.5055597, -0.5255496, -0.52437556, 1.0779992]], dtype=np.float32)
