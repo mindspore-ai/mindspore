@@ -42,8 +42,7 @@ def tensor_grad_scale(scale, grad):
     return grad * reciprocal(scale)
 
 
-update_cell = DynamicLossScaleUpdateCell(
-    loss_scale_value=65536, scale_factor=2, scale_window=1000)
+update_cell = DynamicLossScaleUpdateCell(loss_scale_value=65536, scale_factor=2, scale_window=1000)
 
 
 @clip_grad.register("Number", "Number", "Tensor")
@@ -66,7 +65,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
         self.reducer_flag = False
-        self.grad_reducer = self.identity
+        self.grad_reducer = F.identity
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
@@ -81,9 +80,6 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
 
-    def identity(self, x):
-        return x
-
     def construct(self, x, sens=None):
         """Defines the computation performed."""
         weights = self.weights
@@ -97,12 +93,10 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         init = F.depend(init, loss)
         clear_status = self.clear_status(init)
         scaling_sens = F.depend(scaling_sens, clear_status)
-        grads = self.grad(self.network, weights)(
-            x, self.cast(scaling_sens, mstype.float32))
+        grads = self.grad(self.network, weights)(x, self.cast(scaling_sens, mstype.float32))
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
-        grads = self.hyper_map(
-            F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         init = F.depend(init, grads)
         get_status = self.get_status(init)
         init = F.depend(init, get_status)
@@ -142,8 +136,7 @@ class LoopLayer(nn.Cell):
         super(LoopLayer, self).__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
-        self.matmul_weight = Parameter(
-            Tensor(np.ones([64, 64]), dtype=ms.float32), name="weight")
+        self.matmul_weight = Parameter(Tensor(np.ones([64, 64]), dtype=ms.float32), name="weight")
 
     def construct(self, x):
         out = self.matmul(x, self.matmul_weight)
@@ -176,8 +169,7 @@ class Net2(nn.Cell):
         super(Net2, self).__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
-        self.matmul_weight = Parameter(
-            Tensor(np.ones([64, 64]), dtype=ms.float32), name="weight")
+        self.matmul_weight = Parameter(Tensor(np.ones([64, 64]), dtype=ms.float32), name="weight")
 
     def construct(self, x, b):
         out = self.matmul(x, self.matmul_weight)
@@ -187,14 +179,12 @@ class Net2(nn.Cell):
 
 def test_loss_scale():
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(
-        parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
     predict = Tensor(np.ones([64, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64,]), dtype=ms.int32)
     dataset = DatasetLenet(predict, label)
     net = Net()
-    opt = Momentum(filter(lambda x: x.requires_grad,
-                          net.get_parameters()), 0.01, 0.9)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
@@ -202,14 +192,12 @@ def test_loss_scale():
 
 def test_loss_scale2():
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(
-        parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=8)
     predict = Tensor(np.ones([64, 64]), dtype=ms.float32)
     label = Tensor(np.ones([64,]), dtype=ms.int32)
     dataset = DatasetLenet(predict, label)
     net = Net2()
-    opt = Momentum(filter(lambda x: x.requires_grad,
-                          net.get_parameters()), 0.01, 0.9)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, 0.9)
     net = nn.TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
