@@ -762,7 +762,7 @@ REG_BPROP_BUILDER("MatrixInverse").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   if (out_shape.size() == 2) {
     dx = ib->MatMul(dout, dx, false, true);
     dx = ib->MatMul(out, dx, true, false);
-  } else if (out_shape.size() > 2) {
+  } else if (out_shape.size() > 2 || IsDynamicRank(out_shape)) {
     dx = ib->BatchMatMul(dout, dx, false, true);
     dx = ib->BatchMatMul(out, dx, true, false);
   }
@@ -1714,7 +1714,11 @@ REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
                         {"axis", MakeValue(dims)},
                         {"p", MakeValue<int64_t>(p)},
                         {"epsilon", MakeValue<float>(1e-12)}});
-  norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
+  if (IsDynamic(shape)) {
+    norm = ib->Emit("DynamicBroadcastTo", {norm, ib->Shape(input_x)});
+  } else {
+    norm = ib->Emit("BroadcastTo", {norm}, {{"shape", MakeValue(shape)}});
+  }
   auto grad_out = ib->Mul(input_x, dout);
   grad_out = ib->ReduceSum(grad_out, dims, true);
   NodePtr norm_bp = nullptr;
@@ -1754,46 +1758,66 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto std = ib->TupleGetItem(out, 0);
   auto mean_d = ib->TupleGetItem(dout, 1);
   auto mean = ib->TupleGetItem(out, 1);
-  auto x_shape = ib->GetShape(x);
-  if (axis.empty() && !x_shape.empty()) {
-    for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
-      axis.push_back(i);
-    }
-  }
-  (void)std::transform(axis.begin(), axis.end(), axis.begin(), [&x_shape](const int64_t &c) {
-    if (c < 0) {
-      return c + SizeToLong(x_shape.size());
-    }
-    return c;
-  });
-  for (size_t i = 1; i < axis.size(); ++i) {
-    for (size_t j = 0; j < axis.size() - i; ++j) {
-      if (axis[j] > (axis[j + 1])) {
-        std::swap(axis[j], axis[j + 1]);
+  auto shape_func = [&axis](const ShapeArray &inputs) -> ShapeArray {
+    auto new_axis = axis;
+    auto x_shape = inputs.at(0);
+    if (new_axis.empty() && !x_shape.empty()) {
+      for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
+        new_axis.push_back(i);
       }
     }
-  }
-  if (!keep_dims && !x_shape.empty()) {
-    for (const auto &i : axis) {
-      std_d = ib->ExpandDims(std_d, i);
-      std = ib->ExpandDims(std, i);
-      mean_d = ib->ExpandDims(mean_d, i);
-      mean = ib->ExpandDims(mean, i);
+    (void)std::transform(new_axis.begin(), new_axis.end(), new_axis.begin(), [&x_shape](const int64_t &c) {
+      if (c < 0) {
+        return c + SizeToLong(x_shape.size());
+      }
+      return c;
+    });
+    for (size_t i = 1; i < new_axis.size(); ++i) {
+      for (size_t j = 0; j < new_axis.size() - i; ++j) {
+        if (new_axis[j] > (new_axis[j + 1])) {
+          std::swap(new_axis[j], new_axis[j + 1]);
+        }
+      }
     }
+    // input_x:[2,3,4,5]  new_axis:   [0, 2]
+    // reduce: [3,5]      reshape:[1,3,1,5]
+    auto reshape = x_shape;
+    for (auto &i : new_axis) {
+      reshape[i] = 1;
+    }
+    int64_t num = 1;
+    for (const auto &i : new_axis) {
+      num *= x_shape[LongToSize(i)];
+    }
+    return {reshape, {num - 1}, {num}};
+  };
+  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto shape_x = inputs.at(0);
+    auto rank = IsDynamicRank(shape_x) ? -1 : SizeToLong(shape_x.size());
+    return {rank, 1, 1};
+  };
+  auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
+  if (res[1]->abstract()->isa<abstract::AbstractTuple>()) {
+    res[1] = ib->Emit("TupleToTensor", {res[1], ib->Value(kInt64)});
+  }
+  if (res[2]->abstract()->isa<abstract::AbstractTuple>()) {
+    res[2] = ib->Emit("TupleToTensor", {res[2], ib->Value(kInt64)});
+  }
+  if (!keep_dims && !ib->GetShape(x).empty()) {
+    std_d = ib->Reshape(std_d, res[0]);
+    std = ib->Reshape(std, res[0]);
+    mean_d = ib->Reshape(mean_d, res[0]);
+    mean = ib->Reshape(mean, res[0]);
   }
   auto dx = ib->Sub(x, mean);
   dx = ib->Mul(dx, std_d);
   dx = ib->Div(dx, std);
-  int64_t num = 1;
-  for (const auto &i : axis) {
-    num *= x_shape[LongToSize(i)];
-  }
   if (unbiased) {
-    dx = ib->Div(dx, ib->Tensor(num - 1, ib->GetDtype(dx)));
+    dx = ib->Div(dx, ib->Cast(res[1], ib->GetDtype(dx)));
   } else {
-    dx = ib->Div(dx, ib->Tensor(num, ib->GetDtype(dx)));
+    dx = ib->Div(dx, ib->Cast(res[2], ib->GetDtype(dx)));
   }
-  auto temp = ib->Div(mean_d, ib->Tensor(num, ib->GetDtype(mean_d)));
+  auto temp = ib->Div(mean_d, ib->Cast(res[2], ib->GetDtype(mean_d)));
   dx = ib->Add(dx, temp);
   return {dx};
 });
