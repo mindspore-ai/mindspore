@@ -61,6 +61,13 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
     }
   }
 }
+
+bool ContainsAnyType(const AbstractBasePtrList &args_abs_list) {
+  // Not check sequence elements.
+  // We suppose all sequential types are reserved.
+  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(),
+                     [](const AbstractBasePtr &item) { return item->isa<AbstractAny>(); });
+}
 }  // namespace
 
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
@@ -539,6 +546,17 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
+  // Only check in TrivialPrimEvaluator, not in TransitionPrimEvaluator.
+  const auto standard_prim_eval = dyn_cast_ptr<StandardPrimEvaluator>(shared_from_this());
+  bool ignore_any_type_check =
+    (standard_prim_eval != nullptr &&
+     (standard_prim_eval->prim() == prim::kPrimReturn || standard_prim_eval->prim() == prim::kPrimDepend ||
+      standard_prim_eval->prim() == prim::kPrimUpdateState || standard_prim_eval->prim() == prim::kPrimLoad ||
+      standard_prim_eval->prim() == prim::kPrimSwitch || standard_prim_eval->prim() == prim::kPrimSwitchLayer));
+  if (!ignore_any_type_check && ContainsAnyType(args_abs_list)) {
+    MS_LOG(INFO) << ToString() << " receives arguments that contain Any.";
+    return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
+  }
   return EvalPrim(engine, args_abs_list);
 }
 

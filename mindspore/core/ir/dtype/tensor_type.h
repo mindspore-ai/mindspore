@@ -116,6 +116,26 @@ class MS_CORE_API TensorType : public Object {
 };
 using TensorTypePtr = std::shared_ptr<TensorType>;
 
+/// \brief AnyType defines interface for any data type.
+class MS_CORE_API AnyType final : public TensorType {
+ public:
+  /// \brief Default constructor for AnyType.
+  AnyType() = default;
+
+  /// \brief Constructor for AnyType.
+  ///
+  /// \param[in] element_type The element type of AnyType.
+  explicit AnyType(const TypePtr &element_type) : TensorType(element_type) {}
+
+  /// \brief Destructor of AnyType.
+  ~AnyType() override = default;
+  MS_DECLARE_PARENT(AnyType, TensorType)
+
+  std::string ToString() const override;
+  std::string DumpText() const override;
+};
+using AnyTypePtr = std::shared_ptr<AnyType>;
+
 /// \brief SparseTensorType is the base type for all sparse tensors.
 class MS_CORE_API SparseTensorType : public Object {
  public:
