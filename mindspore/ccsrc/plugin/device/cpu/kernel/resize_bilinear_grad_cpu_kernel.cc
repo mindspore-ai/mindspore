@@ -34,8 +34,8 @@ constexpr size_t kResizeBilinearGradNumThree = 3;
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearGradCpuKernelMod::KernelRunFunc>>;
 
-void ResizeBilinearGradFP16(float *float_dloss_addr, float *float_output_addr, float16 *output_addr, size_t *shape,
-                            size_t *size, float height_scale, float width_scale) {
+void ResizeBilinearGradFP16(float *float_dloss_addr, float *float_output_addr, float16 *output_addr,
+                            const size_t *shape, const size_t *size, float height_scale, float width_scale) {
   size_t batch_size = shape[kResizeBilinearGradNumZero];
   size_t channel = shape[kResizeBilinearGradNumOne];
   size_t in_height = shape[kResizeBilinearGradNumTwo];
@@ -86,8 +86,8 @@ void ResizeBilinearGradFP16(float *float_dloss_addr, float *float_output_addr, f
     }
   }
 }
-void ResizeBilinearGradFP16_HPC(float *float_dloss_addr, float *float_output_addr, float16 *output_addr, size_t *shape,
-                                size_t *size, float height_scale, float width_scale) {
+void ResizeBilinearGradFP16_HPC(float *float_dloss_addr, float *float_output_addr, float16 *output_addr,
+                                const size_t *shape, const size_t *size, float height_scale, float width_scale) {
   size_t batch_size = shape[kResizeBilinearGradNumZero];
   size_t channel = shape[kResizeBilinearGradNumOne];
   size_t in_height = shape[kResizeBilinearGradNumTwo];
@@ -139,8 +139,8 @@ void ResizeBilinearGradFP16_HPC(float *float_dloss_addr, float *float_output_add
   }
 }
 template <typename T>
-void ResizeBilinearGrad(T *float_dloss_addr, T *float_output_addr, T *output_addr, size_t *shape, size_t *size,
-                        float height_scale, float width_scale) {
+void ResizeBilinearGrad(T *float_dloss_addr, T *float_output_addr, T *output_addr, const size_t *shape,
+                        const size_t *size, float height_scale, float width_scale) {
   size_t batch_size = shape[kResizeBilinearGradNumZero];
   size_t channel = shape[kResizeBilinearGradNumOne];
   size_t in_height = shape[kResizeBilinearGradNumTwo];
@@ -192,8 +192,8 @@ void ResizeBilinearGrad(T *float_dloss_addr, T *float_output_addr, T *output_add
   }
 }
 template <typename T>
-void ResizeBilinearGrad_HPC(T *float_dloss_addr, T *float_output_addr, T *output_addr, size_t *shape, size_t *size,
-                            float height_scale, float width_scale) {
+void ResizeBilinearGrad_HPC(T *float_dloss_addr, T *float_output_addr, T *output_addr, const size_t *shape,
+                            const size_t *size, float height_scale, float width_scale) {
   size_t batch_size = shape[kResizeBilinearGradNumZero];
   size_t channel = shape[kResizeBilinearGradNumOne];
   size_t in_height = shape[kResizeBilinearGradNumTwo];
