@@ -193,7 +193,7 @@ class Dropout(Cell):
 class Dropout1d(Cell):
     r"""
     During training, randomly zeroes entire channels of the input tensor with probability `p`
-    from a Bernoulli distribution (For a 3-dimensional tensor with a shape of :math:`NCL`,
+    from a Bernoulli distribution (For a 3-dimensional tensor with a shape of :math:`(N, C, L)`,
     the channel feature map refers to a 1-dimensional feature map with the shape of :math:`L`).
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
@@ -201,7 +201,7 @@ class Dropout1d(Cell):
     Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
 
-    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    The paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, And it is proved that
     it can effectively reduce over fitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
@@ -210,8 +210,8 @@ class Dropout1d(Cell):
     `Dropout1d` can improve the independence between channel feature maps.
 
     Args:
-        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means an 80% chance of clearing. Default: 0.5.
+        p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+            which means an 80% chance of being set to 0. Default: 0.5.
 
     Inputs:
         - **x** (Tensor) - A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size,
@@ -231,11 +231,13 @@ class Dropout1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout = nn.Dropout1d(p=0.5)
-        >>> x = Tensor(np.ones([4, 3]), mindspore.float32)
-        >>> output = dropout(x)
-        >>> print(output.shape)
-        (4, 3)
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore import nn, Tensor
+        >>> op = nn.Dropout1d(p=0.6)
+        >>> op.training = True
+        >>> a = Tensor(np.ones((3, 3)), ms.float32)
+        >>> output = op(a)
     """
 
     def __init__(self, p=0.5):
