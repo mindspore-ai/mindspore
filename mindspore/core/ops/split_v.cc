@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/container.h"
-#include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "ops/core_ops.h"

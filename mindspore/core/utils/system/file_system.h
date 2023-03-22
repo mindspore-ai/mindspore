@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 #define MINDSPORE_CORE_UTILS_SYSTEM_FILE_SYSTEM_H_
 
-#include <stdio.h>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
@@ -188,7 +187,7 @@ class PosixWriteFile : public WriteFile {
   bool PWrite(const void *buf, size_t nbytes, size_t offset) override {
     MS_LOG(DEBUG) << "Write data(" << nbytes << ") at offset(" << offset << ")to file(" << file_name_ << ").";
 
-    size_t r = pwrite(fileno(file_), buf, nbytes, offset);
+    size_t r = pwrite(fileno(file_), buf, nbytes, SizeToLong(offset));
     if (r != nbytes) {
       MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
       return false;
@@ -199,7 +198,7 @@ class PosixWriteFile : public WriteFile {
 
   bool PRead(void *buf, size_t nbytes, size_t offset) override {
     MS_LOG(DEBUG) << "Read data(" << nbytes << ") at offset(" << offset << ")to file(" << file_name_ << ").";
-    size_t r = pread(fileno(file_), buf, nbytes, offset);
+    size_t r = pread(fileno(file_), buf, nbytes, SizeToLong(offset));
     if (r != nbytes) {
       MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
       return false;

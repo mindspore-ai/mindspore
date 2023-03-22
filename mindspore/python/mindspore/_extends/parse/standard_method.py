@@ -2432,14 +2432,14 @@ def exist_tensor(data):
     return False
 
 
-def check_sequence_all_variable_scalar(x, str):
+def check_sequence_all_variable_scalar(x, str_info):
     """Check whether x can be used in SequenceMax and SequenceMin"""
     if F.is_sequence_shape_unknown(x):
         if F.is_dynamic_sequence_element_unknown(x):
-            const_utils.raise_value_error(str + "() arg is an empty sequence.")
+            const_utils.raise_value_error(str_info + "() arg is an empty sequence.")
         if not isinstance(x[0], (int, float)):
             const_utils.raise_value_error(
-                "When the input to " + str + "() is dynamic length sequence, only support scalar type input")
+                "When the input to " + str_info + "() is dynamic length sequence, only support scalar type input")
         return True
     contain_variable_scalar = False
     for i in x:
