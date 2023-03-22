@@ -19,6 +19,8 @@
 #include "nnacl/op_base.h"
 #ifdef _MSC_VER
 #include "nnacl/kernel/exp.h"
+#include "nnacl/kernel/gather_d.h"
+#include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/reshape.h"
 #endif
 
@@ -37,6 +39,10 @@ void Init_MSC_VER_kernels(void) {
   if (inited == false) {
     g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
     g_kernelCreatorRegistry[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat16)] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeFloat32)] = CreateGatherD;
+    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeInt32)] = CreateGatherD;
+    g_kernelCreatorRegistry[PrimType_GatherD][REGIST_DT(kNumberTypeFloat16)] = CreateGatherD;
+    g_kernelCreatorRegistry[PrimType_GroupNormFusion][REGIST_DT(kNumberTypeFloat32)] = CreateGroupNorm;
     g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
     g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
     g_kernelCreatorRegistry[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
