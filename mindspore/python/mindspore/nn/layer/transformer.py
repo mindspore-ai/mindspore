@@ -190,7 +190,7 @@ class MultiheadAttention(Cell):
         if key_padding_mask is not None:
             _kpm_dtype = key_padding_mask.dtype
             if _kpm_dtype != mindspore.bool_ and not ops.is_floating_point(key_padding_mask):
-                raise AssertionError(
+                raise ValueError(
                     "only bool and floating types of key_padding_mask are supported")
 
         if self.batch_first and is_batched:
