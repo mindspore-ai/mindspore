@@ -4725,9 +4725,15 @@ def logaddexp(input, other):
         [2.312 2.693 3.312]
     """
 
-    log_op = _get_cache_prim(P.Log)()
-    exp_op = _get_cache_prim(P.Exp)()
-    y = log_op(exp_op(input) + exp_op(other))
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError(f"For logaddexp, the input must be a Tensor, but got {type(input)}.")
+    if not isinstance(other, (Tensor, Tensor_)):
+        raise TypeError(f"For logaddexp, the other must be a Tensor, but got {type(other)}.")
+
+    m = maximum(input, other)
+    abs_val = abs(input - other)
+    exp_val = tensor_exp(neg_tensor(abs_val))
+    y = m + log1p(exp_val)
     return y
 
 
@@ -4761,19 +4767,16 @@ def logaddexp2(input, other):
         [3. 4.32 8.02]
     """
 
-    log_op = _get_cache_prim(P.Log)()
-    pow_op = _get_cache_prim(P.Pow)()
-    add_op = _get_cache_prim(P.Add)()
-
     if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError("The input must be Tensor.")
+        raise TypeError(f"For logaddexp2, the input must be a Tensor, but got {type(input)}.")
     if not isinstance(other, (Tensor, Tensor_)):
-        raise TypeError("The other must be Tensor.")
+        raise TypeError(f"For logaddexp2, the other must be a Tensor, but got {type(other)}.")
 
-    add_exp = add_op(pow_op(2, input), pow_op(2, other))
-    tensor_2 = _make_tensor(2, add_exp.dtype)
-
-    return log_op(add_exp) / log_op(tensor_2)
+    m = maximum(input, other)
+    abs_val = abs(input - other)
+    exp2_val = pows(2., neg_tensor(abs_val))
+    y = m + log2(1. + exp2_val)
+    return y
 
 
 @constexpr
@@ -9216,6 +9219,7 @@ def _tuple_setitem(tup, idx, value):
     return tuple(tup)
 
 
+@_primexpr
 def _check_dim_in_range(dim, ndim):
     if not isinstance(dim, int):
         raise TypeError(f'axes should be integers, not {type(dim)}')
