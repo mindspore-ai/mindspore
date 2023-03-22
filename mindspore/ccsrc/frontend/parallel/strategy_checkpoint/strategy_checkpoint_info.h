@@ -39,7 +39,7 @@ using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 
 class StrategyCheckpointInfo {
  public:
-  StrategyCheckpointInfo() {}
+  StrategyCheckpointInfo() : current_stage_(0) {}
   ~StrategyCheckpointInfo() = default;
   void Init(const StrategyMap &strategy_map, const TensorInfoMap &tensor_info_map,
             const ManualShapeMap &manual_shape_map, int64_t current_stage) {
