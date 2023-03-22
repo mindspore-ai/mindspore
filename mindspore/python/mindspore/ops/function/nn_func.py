@@ -25,6 +25,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN_OPS
 import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
+from mindspore.ops.function.random_func import _get_seed
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -1173,7 +1174,7 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
-def dropout(input, p=0.5, training=True):
+def dropout(input, p=0.5, training=True, seed=None):
     """
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of
@@ -1185,6 +1186,8 @@ def dropout(input, p=0.5, training=True):
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: 0.5.
         training (bool): Apply dropout if is True. Default: True.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+            Default: None, which will be treated as 0.
 
     Returns:
         - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
@@ -1206,7 +1209,8 @@ def dropout(input, p=0.5, training=True):
     if training is False:
         return input
     keep_prob = 1 - p
-    out, _ = P.Dropout(keep_prob=keep_prob)(input)
+    seed0, seed1 = _get_seed(seed, "dropout")
+    out, _ = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)(input)
     return out
 
 
