@@ -196,14 +196,17 @@ class SparseTensor(COOTensor_):
 
     @property
     def indices(self):
+        """Return SparseTensor's indices."""
         return Tensor(self._indices)
 
     @property
     def values(self):
+        """Return SparseTensor's non-zero values."""
         return Tensor(self._values)
 
     @property
     def shape(self):
+        """Return SparseTensor's shape."""
         return self._shape
 
 
