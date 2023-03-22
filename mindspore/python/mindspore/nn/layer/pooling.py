@@ -708,7 +708,7 @@ def _check_tuple_length(arg_name, prim_name, length, cls_name):
 class AvgPool3d(_PoolNd):
     r"""
     Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
-    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, and AvgPool3D outputs
+    Typically, the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, and AvgPool3D outputs
     regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     is :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
@@ -721,15 +721,14 @@ class AvgPool3d(_PoolNd):
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
-            can be an int number that represents depth, height and width, or a tuple
-            of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, can be an int number that represents
-            the depth, height and width of movement, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively. The value must be a positive integer.
-            If the value is None, the default value `kernel_size` is used. Default: 1.
-        pad_mode (str): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
+        kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
+            can be an int number that represents depth, height and width, or a tuple of three positive integers that
+            represent depth, height and width respectively. Default: 1.
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, can be a positive int that represents
+            the depth, height and width of movement, or a tuple of three positive integers that
+            represents depth, height and width of movement respectively. If the value is None, the default value
+            `kernel_size` is used. Default: 1.
+        pad_mode (str, optional): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
 
             - same: The depth, height and width of the output is the same as the value after the input is divided
@@ -741,16 +740,19 @@ class AvgPool3d(_PoolNd):
             - pad: Pads the input. Fill the front, back, top, and bottom of the input with 0s of size `padding`.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int])): Pooling padding value, only 'pad' mode can be set to non-zero.
-            Default: 0. `padding` can only be an integer or a tuple/list containing one or three integers.
-            If `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
-            front, back, top, bottom, left and right of the input. If `padding` is a tuple/list containing three
-            integers, it will be padded in front and back of the input `padding[0]` times, up and down `padding[1]`
-            times, and left and right of the input `padding[2]` times.
-        ceil_mode (bool): If True, use ceil to compute the output shape instead of floor. Default: False.
-        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
-        divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
-            in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
+        padding (Union(int, tuple[int], list[int]), optional): Pooling padding value, only 'pad' mode can be set to
+            non-zero. Default: 0. Only the following paddings are supported:
+
+            - `padding` is an integer or a tuple/list containing one integer, it will be padded in six directions of
+              front, back, top, bottom, left and right of the input.
+
+            - `padding` is a tuple/list containing three integers, it will be padded in front and back of the input
+              `padding[0]` times, up and down `padding[1]` times, and left and right of the input `padding[2]` times.
+
+        ceil_mode (bool, optional): If True, use ceil to compute the output shape instead of floor. Default: False.
+        count_include_pad (bool, optional): If True, averaging calculation will include the zero-padding. Default: True.
+        divisor_override (int, optional): If it is specified as a non-zero parameter, this parameter will be used as the
+            divisor in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: None.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
@@ -1490,16 +1492,14 @@ class AdaptiveMaxPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
 
     Args:
-        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
-            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. If it is None, the output size and input size of the corresponding
-            dimension are the same.
-        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
-            Default: False.
+        output_size (Union[int, tuple]): The specified output size, which is a positive integer that represents depth,
+            height and width, or a tuple of three positive integers that represent depth, height and width respectively.
+            If it is None, the output size and input size of the corresponding dimension are the same.
+        return_indices (bool, optional): If `return_indices` is True, the indices of max value would be output.
+            Otherwise, the indices will not be returned. Default: False.
 
     Inputs:
-        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` . The suppoerted
-          dtypes are int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 and float64 data type.
+        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)` .
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .
@@ -1509,8 +1509,7 @@ class AdaptiveMaxPool3d(Cell):
     Raises:
         TypeError: If `input` is not a Tensor.
         ValueError: If the dimensions number of `input` is not 4 or 5.
-        TypeError: If dtype of `input` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
-                   float16, float32 or float64.
+        TypeError: If dtype of `input` is not int, uint or float.
         ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
     Supported Platforms:
@@ -1545,7 +1544,7 @@ class FractionalMaxPool2d(Cell):
     r"""
     Applies the 2D FractionalMaxPool operatin over input. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used at the same time.
+    `output_size` or `output_ratio` cannot be used or set to None at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1555,30 +1554,26 @@ class FractionalMaxPool2d(Cell):
             of two int numbers that represent height and width respectively.
             The value must be a positive integer.
         output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
-            is an int number that represents height and width, or a tuple
-            of two int numbers that represent height and width respectively.
-            The value must be a positive integer.
-            Default: None.
+            is a positive int that represents height and width, or a tuple of two positive integers that represent
+            height and width respectively. The value must be a positive integer. If None, the shape of the target will
+            be determined by `output_ratio`. Default: None.
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, double, and value is between (0, 1).
-            Default: None.
+            Data type : float16, float32, float64, and value is between (0, 1). If None, the shape of the target will be
+            determined by `output_size`. Default: None.
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
-            Tensor of data type : float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 2)`.
-            Default: None.
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 2)`
+            whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
+            If None, no random step will be set. Default: None.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
           with float16, float32, float64, int32, int64 data type.
 
     Outputs:
-        - **y** (Tensor) - Has the same type as the `input`.
-          Has the shape :math:`(N, C, H, W)`.
-
+        - **y** (Tensor) - Has the same type as the `input`. Has the shape :math:`(N, C, H, W)`.
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
-          `y` and int64 data type. It will output only when `return_indices` is True.
+          `y` and int64 data type. It will be returned only when `return_indices` is True.
 
     Raises:
         TypeError: If data type of `input` is not one of the following: float16, float32, float64, int32, int64.
@@ -1646,7 +1641,7 @@ class FractionalMaxPool3d(Cell):
     r"""
     Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`.
-    `output_size` or `output_ratio` cannot be used at the same time.
+    `output_size` or `output_ratio` cannot be used or set to None at the same time.
 
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
@@ -1654,27 +1649,25 @@ class FractionalMaxPool3d(Cell):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
-            is an int number that represents depth, height and width of the kernel, or a tuple
-            of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer.
-        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
-            is an int number that represents depth, height and width, or a tuple
-            of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer.
-            Default: None.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value, is a positive int
+            that represents depth, height and width of the kernel, or a tuple of three positive integers that represent
+            depth, height and width respectively.
+        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
+            is an int number that represents depth, height and width, or a tuple of three positive integers that
+            represents depth, height and width respectively. If None, the shape of the target will be determined by
+            `output_ratio`. Default: None.
         output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
             Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, double, and value is between (0, 1).
-            Default: None.
+            Data type : float16, float32, float64, and value is between (0, 1). If None, the shape of the target will be
+            determined by `output_size`.Default: None.
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
-            Tensor of data type : float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 3)`
+        _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, a Tensor of shape :math:`(N, C, 3)`
+            whose elements are within the range of :math:`(0, 1)`. Supported data type : float16, float32, float64.
+            If None, no random step will be set. Default: None.
 
     Inputs:
         - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
-          Tensor of data type : float16, float32, double, int32, int64.
+          Tensor of data type : float16, float32, float64, int32, int64.
           Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` .
 
     Outputs:
@@ -1688,8 +1681,8 @@ class FractionalMaxPool3d(Cell):
     Raises:
         TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `imput_x` is not float16, float32, double, int32, int64.
-        TypeError: If dtype of `_random_samples` is not float16, float32, double.
+        TypeError: If data type of `imput_x` is not float16, float32, float64, int32, int64.
+        TypeError: If dtype of `_random_samples` is not float16, float32, float64.
         TypeError: If dtype of `argmax` is not int32, int64.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
