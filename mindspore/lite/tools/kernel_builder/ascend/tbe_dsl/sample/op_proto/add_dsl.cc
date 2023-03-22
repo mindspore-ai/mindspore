@@ -25,7 +25,6 @@ namespace ge {
 
 bool InferShapeAndTypeAdd(Operator &op, const string &input_name1, const string &input_name2,
                           const string &output_name) {
-  // vOutputDesc.push_back(op.GetInputDesc(0));
   TensorDesc vOutputDesc = op.GetOutputDescByName(output_name.c_str());
 
   DataType input_dtype = op.GetInputDescByName(input_name1.c_str()).GetDataType();
