@@ -295,13 +295,32 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
   }
 }
 
+std::string GetSupportedTypesStr(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  std::string supported_type_lists;
+  const auto &kernel_attrs =
+    kernel::NativeCpuKernelMod::GetCpuSupportedList(common::AnfAlgo::GetCNodeName(kernel_node));
+  if (!kernel_attrs.empty()) {
+    for (size_t attr_index = 0; attr_index < kernel_attrs.size(); ++attr_index) {
+      std::string type_list = "input[";
+      auto kernel_attr = kernel_attrs[attr_index];
+      for (size_t input_index = 0; input_index < kernel_attr.GetInputSize(); ++input_index) {
+        type_list = type_list + TypeIdToString(kernel_attr.GetInputAttr(input_index).dtype) +
+                    ((input_index == (kernel_attr.GetInputSize() - 1)) ? "" : " ");
+      }
+      type_list = type_list + "], output[";
+      for (size_t input_index = 0; input_index < kernel_attr.GetOutputSize(); ++input_index) {
+        type_list = type_list + TypeIdToString(kernel_attr.GetOutputAttr(input_index).dtype) +
+                    ((input_index == (kernel_attr.GetOutputSize() - 1)) ? "" : " ");
+      }
+      supported_type_lists = supported_type_lists + type_list + "]; ";
+    }
+  }
+  return supported_type_lists;
+}
+
 std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &kernel_node, bool is_kernel_exist) {
-  std::vector<TypeId> input_types;
-  std::vector<TypeId> infer_output_types;
-  GetInputDtypes(kernel_node, &input_types);
-  GetOutputDtypes(kernel_node, &infer_output_types);
-  auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
-  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (!is_kernel_exist) {
     std::stringstream ss;
@@ -311,37 +330,49 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
     return {ss.str(), NotSupportError};
   }
 
+  std::vector<TypeId> input_types;
+  std::vector<TypeId> infer_output_types;
+  GetInputDtypes(kernel_node, &input_types);
+  GetOutputDtypes(kernel_node, &infer_output_types);
+  auto input_object_types = AnfAlgo::GetAllInputObjectType(kernel_node);
+  auto output_object_types = AnfAlgo::GetAllOutputObjectType(kernel_node);
+  // Show the detail info.
   std::stringstream operator_info;
-  operator_info << "Operator[" << kernel_name << "] ";
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num > 0) {
-    operator_info << "input(";
-    for (size_t i = 0; i < input_num; ++i) {
-      operator_info << TypeIdLabel(input_object_types[i]);
-      operator_info << "(" << TypeIdLabel(input_types[i]) << ")";
-      if (i != input_num - 1) {
-        operator_info << ",";
-      }
+  operator_info << "input(";
+  for (size_t i = 0; i < input_num; ++i) {
+    operator_info << TypeIdLabel(input_object_types[i]);
+    operator_info << "(" << TypeIdLabel(input_types[i]) << ")";
+    if (i != input_num - 1) {
+      operator_info << ",";
     }
-    operator_info << ") ";
   }
+  operator_info << ") ";
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num > 0) {
-    operator_info << "output(";
-    for (size_t i = 0; i < output_num; ++i) {
-      operator_info << TypeIdLabel(output_object_types[i]);
-      operator_info << "(" << TypeIdLabel(infer_output_types[i]) << ")";
-      if (i != output_num - 1) {
-        operator_info << ",";
-      }
+  operator_info << "output(";
+  for (size_t i = 0; i < output_num; ++i) {
+    operator_info << TypeIdLabel(output_object_types[i]);
+    operator_info << "(" << TypeIdLabel(infer_output_types[i]) << ")";
+    if (i != output_num - 1) {
+      operator_info << ",";
     }
-    operator_info << ") ";
   }
-  operator_info
-    << "is not supported. This error means the current input type is not supported, please refer to the MindSpore "
-       "doc for supported types.";
-  operator_info << trace::DumpSourceLines(kernel_node);
-  return {operator_info.str(), TypeError};
+  operator_info << ") ";
+  MS_LOG(INFO) << "Select CPU operator[" << kernel_name << "] fail. The detail info: " << operator_info.str();
+
+  // Show the user info.
+  std::string build_type = "input[";
+  std::for_each(std::begin(input_types), std::end(input_types),
+                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
+  build_type += "] and output[";
+  std::for_each(std::begin(infer_output_types), std::end(infer_output_types),
+                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
+  build_type += "]";
+  auto supported_type_lists = GetSupportedTypesStr(kernel_node);
+  std::stringstream ss;
+  ss << "Select CPU operator[" << kernel_name << "] fail! Unsupported data type!\nThe supported data types are "
+     << supported_type_lists << ", but get " << build_type << trace::DumpSourceLines(kernel_node);
+  return {ss.str(), TypeError};
 }
 
 void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
