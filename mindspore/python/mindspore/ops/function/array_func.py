@@ -5733,6 +5733,9 @@ def aminmax(input, *, axis=0, keepdims=False):
         >>> output0, output1 = ops.aminmax(x)
         >>> print(output0, output1)
         0.0 0.7
+        >>> output2, output3 = ops.aminmax(x, axis=-1, keepdims=True)
+        >>> print(output2, output3)
+        [0.] [0.7]
     """
     argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
     argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)

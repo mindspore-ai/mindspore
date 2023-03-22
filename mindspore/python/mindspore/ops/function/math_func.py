@@ -403,7 +403,7 @@ def angle(input):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of input is not one of: complex64, complex128.
+        TypeError: If the dtype of `input` is not one of: complex64, complex128.
 
     Supported Platforms:
         ``CPU``
@@ -421,12 +421,12 @@ def bincount(input, weights=None, minlength=0):
     """
     Counts the number of occurrences of each value in `input`.
 
-    If you don't specify 'minlength', the length of output Tensor will be
-    the maximum value of the input 'input' plus one.
+    If you don't specify `minlength`, the length of output Tensor will be
+    the maximum value of the input `input` plus one.
 
     If `minlength` is specified, the length of output Tensor is the value of maximum of `input` plus 1 and `minlength`.
 
-    Each value in the output Tensor marks the number of occurrences of that index in 'input'.
+    Each value in the output Tensor marks the number of occurrences of that index in `input`.
     If 'weights' is specified, the output results are weighted, i.e ``out[n] += weight[i]`` instead of ``out[n] += 1``.
 
     Args:
@@ -435,7 +435,7 @@ def bincount(input, weights=None, minlength=0):
         minlength (int, optional): A minimum number of bins for the output tensor. Defaults to 0.
 
     Returns:
-        Tensor, a tensor of shape Size([max(input) + 1]) if input is non-empty, else Size(0).
+        Tensor, a tensor of shape [max(input)+1] if input is non-empty, otherwise, the shape is [0].
 
     Raises:
         TypeError: if `input` or `weights` is not a tensor.
@@ -2718,7 +2718,8 @@ def bitwise_xor(input, other):
 
 def bitwise_left_shift(input, other):
     r"""
-    Calculates the left arithmetic shift of `input` by `other` bits.
+    Perform a left bitwise shift operation on the `input` element-wise, where the number of bits to shift is
+    specified by `other`.
 
     .. math::
 
@@ -2773,7 +2774,8 @@ def bitwise_left_shift(input, other):
 
 def bitwise_right_shift(input, other):
     r"""
-    Calculates the right arithmetic shift of `input` by `other` bits.
+    Perform a right bitwise shift operation on the `input` element-wise, where the number of bits to shift is
+    specified by `other`.
 
     .. math::
 
@@ -8498,8 +8500,8 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
         \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
 
     Args:
-        input (Tensor): The input Tensor. When batch1 is a (CxWxT) Tensor and batch2 is a (CxTxH) Tensor,
-            input must be broadcastable with (CxWxH) Tensor.
+        input (Tensor): The input Tensor. When batch1 is a :math:`(C, W, T)` Tensor and batch2 is a
+            :math:`(C, T, H)` Tensor, input must be broadcastable with :math:`(C, W, H)` Tensor.
         batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
         batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
@@ -8508,7 +8510,7 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
             be a real number.
 
     Returns:
-        Tensor, has the same dtype as input, shape will be (CxWxH).
+        Tensor, has the same dtype as input, shape will be :math:`(C, W, H)`.
 
     Raises:
         TypeError: The type of `input`, `batch1`, `batch2` is not Tensor.

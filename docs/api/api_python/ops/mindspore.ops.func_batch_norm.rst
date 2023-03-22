@@ -13,7 +13,6 @@ mindspore.ops.batch_norm
     其中， :math:`\gamma` 为 `weight`， :math:`\beta` 为 `bias`， :math:`\epsilon` 为 `eps`， :math:`mean` 为 :math:`x` 的均值， :math:`variance` 为 :math:`x` 的方差。
 
     .. warning::
-        - 如果该运算用于推理，并且输出"reserve_space_1"和"reserve_space_2"可用，则"reserve_space_1"的值与"mean"相同，"reserve_space_2"的值与"variance"相同。
         - 对于Ascend 310，由于平方根指令，结果精度未能达到1‰。
 
     .. note::
@@ -26,10 +25,10 @@ mindspore.ops.batch_norm
         - **running_var** (Union[Tensor, Parameter]) - shape为 :math:`(C,)` ，具有与 `weight` 相同的数据类型。
         - **weight** (Union[Tensor, Parameter]) - shape为 :math:`(C,)` ，数据类型为float16或float32。
         - **bias** (Union[Tensor, Parameter]) - shape为 :math:`(C,)` ，具有与 `weight` 相同的数据类型。
-        - **training** (bool) - 如果 `training` 为 `True`，`running_mean` 和 `running_var` 会在训练过程中进行计算。
+        - **training** (bool, 可选) - 如果 `training` 为 `True`，`running_mean` 和 `running_var` 会在训练过程中进行计算。
           如果 `training` 为 `False` ，它们会在推理阶段从checkpoint中加载。默认值：False。
-        - **momentum** (float) - 动态均值和动态方差所使用的动量。（例如 :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`）。动量值必须为[0, 1]。默认值：0.1。
-        - **eps** (float) - 添加到分母上的值，以确保数值稳定性。默认值：1e-5。
+        - **momentum** (float, 可选) - 动态均值和动态方差所使用的动量。（例如 :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`）。动量值必须为[0, 1]。默认值：0.1。
+        - **eps** (float, 可选) - 添加到分母上的值，以确保数值稳定性。默认值：1e-5。
 
     返回：
         Tensor，数据类型与shape大小与 `input_x` 相同，其中，shape大小为 :math:`(N, C)` 。
