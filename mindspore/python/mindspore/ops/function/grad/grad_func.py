@@ -1038,11 +1038,11 @@ def jacfwd(fn, grad_position=0, has_aux=False):
 
     Args:
         fn (Union[Cell, Function]): Function to do GradOperation.
-        grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
+        grad_position (Union[int, tuple[int]], optional): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+        has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
+            while the other outputs will be returned straightly. It means the `fn` must return more than one
+            outputs in this case. Default: False.
 
     Returns:
         Function, returns the Jacobian function for the input function or cell.
@@ -1229,11 +1229,11 @@ def jacrev(fn, grad_position=0, has_aux=False):
 
     Args:
         fn (Union[Cell, Function]): Function to do GradOperation.
-        grad_position (Union[int, tuple[int]]): If int, get the gradient with respect to single input.
+        grad_position (Union[int, tuple[int]], optional): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
-            Default: False.
+        has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
+            while the other outputs will be returned straightly. It means the `fn` must return more than
+            one outputs in this case. Default: False.
 
     Returns:
         Function, returns the Jacobian function for the input function or cell.

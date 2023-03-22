@@ -654,14 +654,14 @@ def obfuscate_model(obf_config, **kwargs):
               model is encrypted, then enc_key and enc_mode should be provided.
             - save_model_path (str): The path to save the obfuscated model.
             - model_inputs (list(Tensor)): The inputs of the original model, the values of Tensor can be random, which
-              is the same as using `export()`.
+              is the same as using :func:`mindspore.export`.
             - obf_ratio (Union(float, str)): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
               should be in range of (0, 1] or in ["small", "medium", "large"].
             - customized_func (function): A python function used for customized function mode, which used for control
               the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
               function needs to ensure that its result is constant for any input. Users can refer to opaque
-              predicates. If customized_func is set, then it should be passed to `load()` interface when loading
-              obfuscated model.
+              predicates. If customized_func is set, then it should be passed to :func:`mindspore.load` interface
+              when loading obfuscated model.
             - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
               weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
               then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should be
