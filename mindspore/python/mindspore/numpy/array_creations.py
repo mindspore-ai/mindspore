@@ -1408,14 +1408,6 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         >>> output = np.trace(np.eye(3))
         >>> print(output)
         3.0
-        >>> a = np.arange(8).reshape((2,2,2))
-        >>> output = np.trace(a)
-        >>> print(output)
-        [6 8]
-        >>> a = np.arange(24).reshape((2,2,2,3))
-        >>> output = np.trace(a).shape
-        >>> print(output)
-        (2, 3)
     """
     return a.trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
 
