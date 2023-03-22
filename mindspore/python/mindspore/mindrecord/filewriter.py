@@ -268,7 +268,11 @@ class FileWriter:
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
+            TypeError: If parallel_writer is not bool.
         """
+        if not isinstance(parallel_writer, bool):
+            raise TypeError("The parameter `parallel_writer` must be bool.")
+
         if self._parallel_writer is None:
             self._parallel_writer = parallel_writer
         if self._parallel_writer != parallel_writer:
@@ -397,6 +401,7 @@ class FileWriter:
             MRMIndexGeneratorError: If failed to create index generator.
             MRMGenerateIndexError: If failed to write to database.
             MRMCommitError: If failed to flush data to disk.
+            RuntimeError: Parallel write failed.
         """
         if not self._parallel_writer:
             self._flush = True
@@ -449,6 +454,14 @@ class FileWriter:
 
     def _parallel_commit(self):
         """Parallel commit"""
+        # if some workers stopped, error may occur
+        alive_count = 0
+        for i in range(len(self._paths)):
+            if self._workers[i].is_alive():
+                alive_count += 1
+        if alive_count != len(self._paths):
+            raise RuntimeError("Parallel write worker error, please check the log file.")
+
         # send EOF to worker process
         for _ in range(len(self._paths)):
             while True:
@@ -461,11 +474,14 @@ class FileWriter:
 
         # wait the worker processing
         while True:
-            if not self._queue.empty():
-                logger.info("Waiting for worker process write done.")
-                time.sleep(1)
-                continue
-            break
+            alive_count = 0
+            for i in range(len(self._paths)):
+                if self._workers[i].is_alive():
+                    alive_count += 1
+            if alive_count == 0:
+                break
+            time.sleep(1)
+            logger.info("Waiting for all the parallel workers to finish.")
 
         del self._queue
 
@@ -614,7 +630,7 @@ class FileWriter:
         while True:
             # try to get new raw_data from master
             try:
-                raw_data = in_queue.get()
+                raw_data = in_queue.get(block=False)
             except queue.Empty:
                 continue
 
@@ -622,7 +638,7 @@ class FileWriter:
             if raw_data == "EOF":
                 ret = self._writers[i].commit()
                 if ret != SUCCESS:
-                    raise RuntimeError("Commit the {}th shard of MindRecord file failed.".format(index))
+                    raise RuntimeError("Commit the {}th shard of MindRecord file failed.".format(i))
                 break
 
             # check the raw_data
