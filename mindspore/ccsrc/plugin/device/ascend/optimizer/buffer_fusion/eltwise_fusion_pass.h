@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ class EltwiseFusionPass : public FusionBasePass {
 
  private:
   void MatchEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
-  bool CheckEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
-  bool CheckDoubleInEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node);
+  bool CheckEltWiseOrBroadCastNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node, size_t input_size);
 };
 }  // namespace opt
 }  // namespace mindspore
