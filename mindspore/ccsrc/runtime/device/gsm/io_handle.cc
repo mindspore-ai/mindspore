@@ -27,12 +27,14 @@
 namespace mindspore {
 namespace device {
 constexpr size_t kFileHeadOffset = 0;
+constexpr char kReadFileMode[] = "r+";
+constexpr char kSwapFileSuffix[] = ".data";
 
 void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string &instance_func_name) {
 #ifdef _MSC_VER
   auto handle = LoadLibrary(aio_shared_lib_name.c_str());
   if (handle == nullptr) {
-    MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " filed.";
+    MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " failed.";
   }
   auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(GetProcAddress(handle, instance_func_name.c_str()));
   if (get_aio_instance == nullptr) {
@@ -42,7 +44,7 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
 #else
   auto handle = dlopen(aio_shared_lib_name.c_str(), RTLD_NOW);
   if (handle == nullptr) {
-    MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " filed. Error message: " << dlerror();
+    MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " failed. Error message: " << dlerror();
     return;
   }
   auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(dlsym(handle, instance_func_name.c_str()));
@@ -56,7 +58,11 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
   MS_EXCEPTION_IF_NULL(aio_);
   const auto &offload_context = OffloadContext::GetInstance();
   MS_EXCEPTION_IF_NULL(offload_context);
-  aio_->Init({offload_context->aio_block_size(), offload_context->aio_queue_depth()});
+  if (!aio_->Init({offload_context->aio_block_size(), offload_context->aio_queue_depth()})) {
+    MS_LOG(WARNING) << "Init aio plugin failed, block size: " << offload_context->aio_block_size()
+                    << ", queue depth: " << offload_context->aio_queue_depth();
+    aio_ = nullptr;
+  }
 }
 
 bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
@@ -65,7 +71,7 @@ bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
   }
   const auto &fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
-  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name));
+  auto file = fs->CreateWriteFile(GetSwapFileWholeName(file_name), kReadFileMode);
   MS_EXCEPTION_IF_NULL(file);
   return file->PRead(data, byte_num, kFileHeadOffset);
 }
@@ -122,7 +128,7 @@ bool IOHandle::CreateSwapFile(const std::string &file_name) const {
 }
 
 std::string IOHandle::GetSwapFileWholeName(const std::string &file_name) const {
-  return swap_path_ + file_name + ".data";
+  return swap_path_ + file_name + kSwapFileSuffix;
 }
 }  // namespace device
 }  // namespace mindspore

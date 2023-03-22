@@ -20,7 +20,7 @@ set -e
 process_options()
 {
   # Process the options
-  while getopts 'drvj:c:t:hb:s:a:g:p:ie:l:I:RP:D:zM:V:K:B:E:n:A:S:k:W:F:H:L:yG:f' opt
+  while getopts 'RdfhiorvyzA:B:D:E:F:G:H:I:K:L:M:P:S:V:W:a:b:c:e:g:j:k:l:n:p:s:t:' opt
   do
     CASE_SENSIVE_ARG=${OPTARG}
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
@@ -110,6 +110,8 @@ process_options()
         build_option_proc_upper_g ;;
       f)
         export FASTER_BUILD_FOR_PLUGINS="on" ;;
+      o)
+        export ENABLE_AIO="on" ;;
       *)
         echo "Unknown option ${opt}!"
         usage

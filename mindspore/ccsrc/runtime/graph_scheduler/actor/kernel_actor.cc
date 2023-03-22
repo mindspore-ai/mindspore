@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   SetSomasMemory(context);
 
   // Allocate the memory address for other tensors which don't use the somas.
-  if (memory_alloc_list_.size() > 0) {
+  if (!memory_alloc_list_.empty()) {
     SendMemoryAllocReq(context);
   } else {
     OnMemoryAllocFinish(context);
@@ -336,7 +336,21 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context),
                                                   "Invalid device context for kernel actor:" + GetAID().Name());
   }
-
+  if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
+    device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemAllocate(input_device_tensors_,
+                                                                                            output_device_tensors_);
+    for (const auto &out_in : kernel_info_->out_in_ref_map()) {
+      const auto &ptr = input_device_tensors_[out_in.second]->GetValidPtr(kDefaultStreamIndex);
+      if (ptr == nullptr || output_device_tensors_[out_in.first]->GetPtr() != nullptr) {
+        continue;
+      }
+      // Pointer in DeviceAddress which is reference output may not be updated to the same as the reference input which
+      // is swapped out.
+      MS_LOG(DEBUG) << "Set device ptr of " << out_in.first << "th ref output the same as input " << out_in.second
+                    << ": " << ptr;
+      output_device_tensors_[out_in.first]->set_ptr(ptr);
+    }
+  }
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     if (ActorDispatcher::is_memory_allocation_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
@@ -354,6 +368,10 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
     MS_LOG(EXCEPTION) << "Invalid device context for kernel actor:" << GetAID();
+  }
+  if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
+    device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
+      input_device_tensors_, output_device_tensors_, kernel_info_);
   }
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     if (ActorDispatcher::is_memory_free_sync()) {
@@ -601,7 +619,7 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context
 
 void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   MS_EXCEPTION_IF_NULL(kernel_mod_);
-
+  MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);

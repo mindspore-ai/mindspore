@@ -84,6 +84,7 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   // index.
   void set_ref_map(const bool &all_ref, const OutputInputRefMap &ref_map);
   const OutputInputRefMap &out_in_ref_map() const { return out_in_ref_map_; }
+  void AddRefMap(size_t out, size_t in) { out_in_ref_map_[out] = in; }
 
   // The interface of somas.
   bool SetSomasResult(std::vector<std::pair<size_t, size_t>> &&output_somas_result,

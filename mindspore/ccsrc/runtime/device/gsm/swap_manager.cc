@@ -25,8 +25,8 @@
 
 namespace mindspore {
 namespace device {
-constexpr char kLinuxAioLibName[] = "liblinux_aio.so";
-constexpr char kLinuxAioInstanceFuncName[] = "linux_aio_instance";
+constexpr char kLinuxAioLibName[] = "libaio_plugin.so";
+constexpr char kLinuxAioInstanceFuncName[] = "get_aio_instance";
 constexpr size_t kFirstSizeLevel = 0xFFFFFFFFFFFFFFFF << 24;  // 16M
 SwapManager::SwapManager(size_t stream_id, mindspore::device::DynamicMemPoolBestFit *device_memory_pool,
                          PinMemPool *pin_mem_pool)
@@ -272,6 +272,36 @@ void SwapManager::AddSwappingTensor(const mindspore::device::DeviceAddress *devi
   } else {
     std::lock_guard<std::mutex> lock(swapping_tensors_host_mutex_);
     (void)swapping_tensors_host_.push(device_address);
+  }
+}
+
+void SwapManager::SetSwappableBeforeMemAllocate(const std::vector<DeviceAddress *> &inputs,
+                                                const std::vector<DeviceAddress *> &outputs) {
+  for (const auto &device_address : inputs) {
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_swappable(false);
+  }
+  for (const auto &device_address : outputs) {
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_swappable(false);
+  }
+}
+
+void SwapManager::SetSwappableBeforeMemFree(const std::vector<DeviceAddress *> &inputs,
+                                            const std::vector<DeviceAddress *> &outputs,
+                                            const mindspore::device::KernelInfo *kernel_info) {
+  for (const auto &device_address : inputs) {
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_swappable(true);
+  }
+  for (const auto &device_address : outputs) {
+    MS_EXCEPTION_IF_NULL(device_address);
+    device_address->set_swappable(true);
+  }
+  for (const auto &out_in : kernel_info->out_in_ref_map()) {
+    if (inputs[out_in.second] != outputs[out_in.first]) {
+      outputs[out_in.first]->set_swappable(false);
+    }
   }
 }
 }  // namespace device

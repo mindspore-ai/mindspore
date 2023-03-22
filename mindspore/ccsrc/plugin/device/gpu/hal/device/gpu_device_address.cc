@@ -176,6 +176,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   MS_EXCEPTION_IF_NULL(src_device_addr);
   auto src_gpu_device = dynamic_cast<const GPUDeviceAddress *>(src_device_addr);
   MS_EXCEPTION_IF_NULL(src_gpu_device);
+  src_gpu_device->MoveToDevice(false);
   if (src_gpu_device->mem_offloaded()) {
     return SyncHostToDevice(src_gpu_device->host_shape(), src_gpu_device->GetSize(), src_gpu_device->type_id(),
                             src_gpu_device->GetOffloadPtr(), src_gpu_device->format());
