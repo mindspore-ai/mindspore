@@ -55,6 +55,8 @@ class AclKernelMod : public AscendKernelMod {
   int UpdateInput(const CNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info,
                   const std::map<uint32_t, tensor::TensorPtr> &value_depend_list);
   void UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntimeInfoPtr &node_op_runtime_info);
+  void SetInputBasicInfo(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_edge,
+                         const size_t ori_idx, const std::vector<std::string> &input_names);
   std::vector<GeTensorDescPtr> input_desc_list_{};
   std::vector<GeTensorDescPtr> output_desc_list_{};
   std::map<int, tensor::TensorPtr> const_input_list_{};
