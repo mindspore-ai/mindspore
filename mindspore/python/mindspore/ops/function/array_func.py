@@ -419,7 +419,7 @@ def where(condition, x, y):
         output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Tensor[Bool]): If True, yield `x`, otherwise yield `y`.
+        condition (Tensor[bool]): If True, yield `x`, otherwise yield `y`.
         x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
         y (Union[Tensor, Scalar]): When `condition` is Fasle, values to select from.
 

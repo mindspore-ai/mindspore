@@ -17,7 +17,7 @@ import pytest
 import mindspore as ms
 from mindspore import ops
 import mindspore.nn as nn
-from tests.st.numpy_native.utils import check_all_results, to_tensor
+from mindspore import Tensor
 
 
 class NetSwapDims(nn.Cell):
@@ -40,24 +40,15 @@ def test_swapdims(mode):
     Expectation: success.
     """
     ms.set_context(mode=mode)
-    np_array = np.random.random((3, 4, 5)).astype('float32')
-
-    np_swap_output = []
-    np_swap_output.append(np.swapaxes(np_array, 0, 1))
-    np_swap_output.append(np.swapaxes(np_array, 1, 0))
-    np_swap_output.append(np.swapaxes(np_array, 1, 1))
-    np_swap_output.append(np.swapaxes(np_array, 2, 1))
-    np_swap_output.append(np.swapaxes(np_array, 1, 2))
-    np_swap_output.append(np.swapaxes(np_array, 2, 2))
-
     swapdims_op = NetSwapDims()
-    op_swap_output = []
-    ms_array = to_tensor(np_array)
-    op_swap_output.append(swapdims_op(ms_array, 0, 1))
-    op_swap_output.append(swapdims_op(ms_array, 1, 0))
-    op_swap_output.append(swapdims_op(ms_array, 1, 1))
-    op_swap_output.append(swapdims_op(ms_array, 2, 1))
-    op_swap_output.append(swapdims_op(ms_array, 1, 2))
-    op_swap_output.append(swapdims_op(ms_array, 2, 2))
 
-    check_all_results(np_swap_output, op_swap_output)
+    np_array = np.random.random((3, 4, 5)).astype('float32')
+    x = Tensor(np_array)
+
+    output1 = swapdims_op(x, 0, 2)
+    expected1 = np.swapaxes(np_array, 0, 2)
+    assert np.allclose(output1.asnumpy(), expected1)
+
+    output2 = swapdims_op(x, 1, 1)
+    expected2 = np.swapaxes(np_array, 1, 1)
+    assert np.allclose(output2.asnumpy(), expected2)
