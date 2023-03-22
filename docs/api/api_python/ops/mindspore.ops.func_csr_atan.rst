@@ -9,7 +9,7 @@ mindspore.ops.csr_atan
         out_i = tan^{-1}(x_i)
 
     参数：
-        - **x** (CSRTensor) - CSRTensor的shape为 :math:`(N,*)` 其中 :math:`*` 表示任意数量的附加维度。数据类型支持：float16、float32。
+        - **x** (CSRTensor) - 数据类型支持：float16、float32。
 
     返回：
         CSRTensor的数据类型与输入相同。

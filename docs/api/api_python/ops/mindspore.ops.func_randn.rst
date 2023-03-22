@@ -3,7 +3,7 @@ mindspore.ops.randn
 
 .. py:function:: mindspore.ops.randn(*size, dtype=None, seed=None)
 
-    返回一个Tensor，shape和dtype由输入决定，其元素为服从标准正态分布的 :math:`[0, 1)` 区间的数字。
+    返回一个Tensor，shape和dtype由输入决定，其元素为服从标准正态分布的数字。
 
     参数：
         - **size** (Union[int, tuple(int), list(int)]) - 输出的Tensor的shape，例如，:math:`(2, 3)` or :math:`2`。
@@ -13,7 +13,7 @@ mindspore.ops.randn
         - **seed** (int，可选) - 随机种子，必须大于或等于0。默认值：None，值将取0。
 
     返回：
-        Tensor，shape和dtype由输入决定其元素为服从标准正态分布的 :math:`[0, 1)` 区间的数字。
+        Tensor，shape和dtype由输入决定其元素为服从标准正态分布的数字。
 
     异常：
         - **TypeError** - 如果 `seed` 不是非负整数。

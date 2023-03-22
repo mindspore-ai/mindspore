@@ -4829,7 +4829,6 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
-            The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         labels (Tensor): The target value which has the same shape and data type as `logits`.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `logits` and `labels`.
