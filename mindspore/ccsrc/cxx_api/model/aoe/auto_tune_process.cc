@@ -78,13 +78,13 @@ static Status ExecuteAoe(const std::shared_ptr<AclModelOptions> &options, const 
   std::tie(init_options, build_options) = options->GenAclOptions();
   std::string dynamic_option;
   if (build_options.find(ge::ir_option::DYNAMIC_BATCH_SIZE) != build_options.end()) {
-    dynamic_option = " --dynamic_batch_size=" + build_options[ge::ir_option::DYNAMIC_BATCH_SIZE];
+    dynamic_option = " --dynamic_batch_size=\"" + build_options[ge::ir_option::DYNAMIC_BATCH_SIZE] + "\"";
   } else if (build_options.find(ge::ir_option::DYNAMIC_IMAGE_SIZE) != build_options.end()) {
-    dynamic_option = " --dynamic_image_size=" + build_options[ge::ir_option::DYNAMIC_IMAGE_SIZE];
+    dynamic_option = " --dynamic_image_size=\"" + build_options[ge::ir_option::DYNAMIC_IMAGE_SIZE] + "\"";
   }
   std::string input_shape;
   if (build_options.find(ge::ir_option::INPUT_SHAPE) != build_options.end()) {
-    input_shape = " --input_shape=" + build_options[ge::ir_option::INPUT_SHAPE];
+    input_shape = " --input_shape=\"" + build_options[ge::ir_option::INPUT_SHAPE] + "\"";
   }
   try {
     for (auto &mode : aoe_modes) {
