@@ -19,7 +19,6 @@
 #include <string>
 #include <utility>
 #include "mindspore/core/ops/nllloss.h"
-#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
