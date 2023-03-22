@@ -29,17 +29,63 @@
 namespace mindspore {
 namespace ops {
 namespace {
+ShapeVector GetOffsetVec(ShapeVector shape) {
+  ShapeVector offsets;
+  for (size_t i = 0; i < shape.size(); i++) {
+    size_t offset = 1;
+    for (size_t j = i + 1; j < shape.size(); j++) {
+      offset *= shape[j];
+    }
+    offsets.push_back(offset);
+  }
+  return offsets;
+}
+
+ShapeVector GetIndexVec(ShapeVector offsets, size_t index) {
+  ShapeVector res;
+  for (size_t i = 0; i < offsets.size(); i++) {
+    if (offsets[i] == 0) {
+      return {};
+    }
+    res.push_back(index / offsets[i]);
+    index %= offsets[i];
+  }
+  return res;
+}
+
+size_t GetIndex(ShapeVector shape, ShapeVector offsets, ShapeVector index_vec) {
+  size_t res = 0;
+  for (size_t i = 0; i < index_vec.size(); i++) {
+    if (index_vec[i] < shape[i]) {
+      res += offsets[i] * index_vec[i];
+    }
+  }
+  return res;
+}
+
 template <typename T>
-void EqualImpl(void *x1, void *x2, void *result, size_t size, bool need_broad_cast) {
+void EqualImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector y_shape,
+               bool need_broad_cast) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
   T *x1_data = static_cast<T *>(x1);
   T *x2_data = static_cast<T *>(x2);
+  auto x1_offsets = GetOffsetVec(x1_shape);
+  auto x2_offsets = GetOffsetVec(x2_shape);
+  auto y_offsets = GetOffsetVec(y_shape);
+  if (x1_offsets.size() != x2_offsets.size() || x1_offsets.size() != y_offsets.size()) {
+    MS_EXCEPTION(ValueError) << "shape is not match, x1_offsets: " << x1_offsets << " , x2_offsets: " << x2_offsets
+                             << " , y_offsets: " << y_offsets;
+  }
+  size_t data_size = std::accumulate(y_shape.begin(), y_shape.end(), 1, std::multiplies<size_t>());
   auto result_data = static_cast<bool *>(result);
-  for (size_t i = 0; i < size; ++i) {
+  for (size_t i = 0; i < data_size; ++i) {
     if (need_broad_cast) {
-      result_data[i] = x1_data[i] == x2_data[0];
+      auto y_index_vec = GetIndexVec(y_offsets, i);
+      auto x1_index = GetIndex(x1_shape, x1_offsets, y_index_vec);
+      auto x2_index = GetIndex(x2_shape, x2_offsets, y_index_vec);
+      result_data[i] = x1_data[x1_index] == x2_data[x2_index];
     } else {
       result_data[i] = x1_data[i] == x2_data[i];
     }
@@ -47,16 +93,60 @@ void EqualImpl(void *x1, void *x2, void *result, size_t size, bool need_broad_ca
 }
 
 template <typename T>
-void EqualFloatImpl(void *x1, void *x2, void *result, size_t size) {
+void EqualFloatImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector y_shape,
+                    bool need_broad_cast) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
   T *x1_data = static_cast<T *>(x1);
   T *x2_data = static_cast<T *>(x2);
   auto result_data = static_cast<bool *>(result);
-  for (size_t i = 0; i < size; ++i) {
-    result_data[i] = std::abs(x1_data[i] - x2_data[i]) < std::numeric_limits<T>::epsilon();
+  auto x1_offsets = GetOffsetVec(x1_shape);
+  auto x2_offsets = GetOffsetVec(x2_shape);
+  auto y_offsets = GetOffsetVec(y_shape);
+  if (x1_offsets.size() != x2_offsets.size() || x1_offsets.size() != y_offsets.size()) {
+    MS_EXCEPTION(ValueError) << "shape is not match, x1_offsets: " << x1_offsets << " , x2_offsets: " << x2_offsets
+                             << " , y_offsets: " << y_offsets;
   }
+  size_t data_size = std::accumulate(y_shape.begin(), y_shape.end(), 1, std::multiplies<size_t>());
+  for (size_t i = 0; i < data_size; ++i) {
+    if (need_broad_cast) {
+      auto y_index_vec = GetIndexVec(y_offsets, i);
+      auto x1_index = GetIndex(x1_shape, x1_offsets, y_index_vec);
+      auto x2_index = GetIndex(x2_shape, x2_offsets, y_index_vec);
+      result_data[i] = std::abs(x1_data[x1_index] - x2_data[x2_index]) < std::numeric_limits<T>::epsilon();
+    } else {
+      result_data[i] = std::abs(x1_data[i] - x2_data[i]) < std::numeric_limits<T>::epsilon();
+    }
+  }
+}
+
+bool IsBroadCast(ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector *broad_cast_x1_shape,
+                 ShapeVector *broad_cast_x2_shape) {
+  MS_EXCEPTION_IF_NULL(broad_cast_x1_shape);
+  MS_EXCEPTION_IF_NULL(broad_cast_x2_shape);
+  bool need_broad_cast = false;
+  if (x1_shape.size() != x2_shape.size()) {
+    need_broad_cast = true;
+  }
+  size_t max_size = x1_shape.size() > x2_shape.size() ? x1_shape.size() : x2_shape.size();
+  for (size_t i = 0; i < max_size - x1_shape.size(); i++) {
+    broad_cast_x1_shape->insert(broad_cast_x1_shape->begin(), 1);
+  }
+  for (size_t i = 0; i < max_size - x2_shape.size(); i++) {
+    broad_cast_x2_shape->insert(broad_cast_x2_shape->begin(), 1);
+  }
+  for (size_t i = 0; i < max_size; i++) {
+    if (broad_cast_x1_shape[i] != broad_cast_x2_shape[i] && broad_cast_x1_shape->at(i) != 1 &&
+        broad_cast_x2_shape->at(i) != 1) {
+      MS_EXCEPTION(NotSupportError) << "input shape is not match, x1 shape: " << x1_shape
+                                    << " , x2 shape: " << x2_shape;
+    }
+    if (broad_cast_x1_shape[i] != broad_cast_x2_shape[i]) {
+      need_broad_cast = true;
+    }
+  }
+  return need_broad_cast;
 }
 
 abstract::ShapePtr EqualInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -94,65 +184,76 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   MS_EXCEPTION_IF_NULL(x1_tensor);
   MS_EXCEPTION_IF_NULL(x2_tensor);
   auto type_id = x1_tensor->data_type();
-  auto data_size = x1_tensor->DataSize();
-  bool need_broad_cast = false;
-  if (x1_tensor->DataSize() != x2_tensor->DataSize() && x2_tensor->DataSize() == 1) {
-    need_broad_cast = true;
-  }
+  auto x1_shape = x1_tensor->shape();
+  auto x2_shape = x2_tensor->shape();
+  ShapeVector broad_cast_x1_shape = x1_shape;
+  ShapeVector broad_cast_x2_shape = x2_shape;
+  bool need_broad_cast = IsBroadCast(x1_shape, x2_shape, &broad_cast_x1_shape, &broad_cast_x2_shape);
   auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, result_shape->shape());
   switch (type_id) {
     case kNumberTypeBool: {
-      EqualImpl<bool>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<bool>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                      broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeInt: {
-      EqualImpl<int>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<int>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                     broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeInt8: {
-      EqualImpl<int8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<int8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                        broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeInt16: {
-      EqualImpl<int16_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<int16_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                         broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeInt32: {
-      EqualImpl<int32_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<int32_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                         broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeInt64: {
-      EqualImpl<int64_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<int64_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                         broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeUInt8: {
-      EqualImpl<uint8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<uint8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                         broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeFloat: {
-      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                            broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeFloat16: {
-      EqualImpl<float16>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size, need_broad_cast);
+      EqualImpl<float16>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                         broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeFloat32: {
-      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                            broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeFloat64: {
-      EqualFloatImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      EqualFloatImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), broad_cast_x1_shape,
+                             broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeComplex64: {
-      EqualImpl<std::complex<float>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size,
-                                     need_broad_cast);
+      EqualImpl<std::complex<float>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(),
+                                     broad_cast_x1_shape, broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     case kNumberTypeComplex128: {
-      EqualImpl<std::complex<double>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size,
-                                      need_broad_cast);
+      EqualImpl<std::complex<double>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(),
+                                      broad_cast_x1_shape, broad_cast_x2_shape, result_shape->shape(), need_broad_cast);
       break;
     }
     default: {
