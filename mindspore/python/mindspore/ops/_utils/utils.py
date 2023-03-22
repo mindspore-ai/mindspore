@@ -20,7 +20,6 @@ from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common import dtype as mstype
-from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.common._utils import is_dim_unknown
 
@@ -110,7 +109,7 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     return offset, all_shp, axis
 
 
-@constexpr
+@_primexpr
 def range_op(start, limit, delta, dtype):
     """helper function to get tensor in specified range."""
     output_tensor = Tensor(list(range(start, limit, delta)), dtype)
