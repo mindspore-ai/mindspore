@@ -287,6 +287,8 @@ class LogNormalReverse(Primitive):
     .. math::
         \text{f}(x;1.0,2.0)=\frac{1}{x\delta \sqrt[]{2\pi} }e^{-\frac{(\ln x-\mu )^2}{2\delta ^2} }
 
+    where \mu, \delta is mean and standard deviation of  lognormal distribution respectively.
+
     Args:
         mean (float, optional): the mean of normal distribution. With float data type.
             Default: 1.0.

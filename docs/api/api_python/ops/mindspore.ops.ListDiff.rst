@@ -10,19 +10,19 @@ mindspore.ops.ListDiff
     表示每个 `out` 元素在 `x` 中的位置。即： :code:`out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]` 。
 
     参数：
-        - **out_idx** (:class:`mindspore.dtype`，可选) - `idx` 的数据类型，可选值： `mindspore.dtype.int32` 和 `mindspore.dtype.int64` 。默认值： `mindspore.dtype.int32` 。
+        - **out_idx** (:class:`mindspore.dtype`，可选) - `idx` 的数据类型，可选值： `mstype.int32` 和 `mstype.int64` 。默认值： `mstype.int32` 。
 
     输入：
-        - **x** (Tensor) - 一个1-D Tensor。保留的值。类型支持：[float16, float32, float64, uint8, uint16, int8, int16, int32, int64]。
-        - **y** (Tensor) - 一个1-D Tensor，与 `x` 类型一致。移除的值。
+        - **x** (Tensor) - 保留的值。是一个1D Tensor。
+        - **y** (Tensor) - 需要被删除的值。是一个1D Tensor，与 `x` 类型一致。
 
     输出：
-        - **out** (Tensor) - 一个1-D Tensor，与 `x` 类型一致。
-        - **idx** (Tensor) - 一个1-D Tensor， `out_idx` 类型。
+        - **out** (Tensor) - 被保留下来的值。是一个1D Tensor，与 `x` 类型一致。
+        - **idx** (Tensor) - 被保留值的原始索引。是一个1D Tensor， 类型由 `out_idx` 指定。
 
     异常：
         - **ValueError** - 如果 `x` 或 `y` 的shape不是1D。
         - **TypeError** - 如果 `x` 或 `y` 不是Tensor。
-        - **TypeError** - 如果 `x` 或 `y` 的数据类型不在支持列表里。
+        - **TypeError** - 如果 `x` 或 `y` 的数据类型不是int或者uint。
         - **TypeError** - 如果 `x` 与 `y` 的数据类型不同。
-        - **TypeError** - 如果属性 `out_idx` 的取值不在[mindspore.dtype.int32, mindspore.dtype.int64]中。
+        - **TypeError** - 如果属性 `out_idx` 的取值不在[mstype.int32, mstype.int64]中。
