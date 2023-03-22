@@ -1729,20 +1729,20 @@ def select(cond, x, y):
         cond (Tensor[bool]): The condition tensor, decides which element is chosen.
           The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
         x (Union[Tensor, int, float]): The first Tensor or number to be selected.
-          If x is a Tensor, the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`. If x is an int or a float,
-          it will be cast to the type of int32 or float32, and broadcast to the same shape as y.
-          One of x and y must be a Tensor.
+          If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If x is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as y. One of x and y must be a Tensor.
         y (Union[Tensor, int, float]): The second Tensor or number to be selected.
-          If y is a Tensor, The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`. If y is an int or a float,
-          it will be cast to the type of int32 or float32, and broadcast to the same shape as x.
-          One of x and y must be a Tensor.
+          If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If y is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as x. One of x and y must be a Tensor.
 
     Returns:
         Tensor, has the same shape as `cond`.
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor, int or float.
-        ValueError: The shapes of inputs are different.
+        ValueError: The shapes of inputs can not be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
