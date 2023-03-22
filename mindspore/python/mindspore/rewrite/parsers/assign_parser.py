@@ -497,18 +497,18 @@ class AssignParser(Parser):
         name = op_type_str
         if isinstance(ast_node, ast.BinOp):
             op = type(ast_node.op).__name__
-            name = name + '_' + op
+            name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
             args.append(AssignParser._create_scopedvalue(ast_node.left))
             args.append(AssignParser._create_scopedvalue(ast_node.right))
         elif isinstance(ast_node, ast.UnaryOp):
             op = type(ast_node.op).__name__
-            name = name + '_' + op
+            name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
             args.append(AssignParser._create_scopedvalue(ast_node.operand))
         elif isinstance(ast_node, ast.BoolOp):
             op = type(ast_node.op).__name__
-            name = name + '_' + op
+            name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
             for value in ast_node.values:
                 args.append(AssignParser._create_scopedvalue(value))
@@ -516,7 +516,7 @@ class AssignParser(Parser):
             args.append(AssignParser._create_scopedvalue(ast_node.left))
             for idx, ast_op in enumerate(ast_node.ops):
                 op = type(ast_op).__name__
-                name = name + '_' + op
+                name = f'{name}_{op}'
                 ops[str(idx)] = ScopedValue.create_naming_value(op)
                 args.append(AssignParser._create_scopedvalue(ast_node.comparators[idx]))
         name = name.lower()
