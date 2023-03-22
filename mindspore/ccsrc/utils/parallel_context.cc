@@ -78,6 +78,7 @@ void ParallelContext::Reset() {
   reducescatter_fusion_threshold_mb_ = kFusionThreshold;
   fusion_threshold_is_set_ = true;
   fusion_mode_ = kFusionAuto;
+  stra_file_only_trainable_params_ = true;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
