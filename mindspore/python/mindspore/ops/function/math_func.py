@@ -74,6 +74,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
+from mindspore.ops.operations._sequence_ops import TupleToTensor
 
 
 @constexpr
@@ -6455,9 +6456,9 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         x = ops.Concat(axis)((x, append))
     elif prepend is not None:
         x = ops.Concat(axis)((prepend, x))
-    a = [i for i in range(x.shape[axis])]
-    a1 = x.gather(Tensor(a[:-1]), axis)
-    a2 = x.gather(Tensor(a[1:]), axis)
+    a = ops.make_range(x.shape[axis])
+    a1 = x.gather(TupleToTensor()(a[:-1], mstype.int64), axis)
+    a2 = x.gather(TupleToTensor()(a[1:], mstype.int64), axis)
     return a2 - a1
 
 
