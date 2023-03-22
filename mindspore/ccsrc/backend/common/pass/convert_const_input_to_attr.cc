@@ -38,8 +38,8 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   MS_EXCEPTION_IF_NULL(ms_context);
   auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (backend != primitive_target && !primitive_target.empty()) {
-    MS_LOG(WARNING) << "primitive target does not match backend: " << backend
-                    << ", primitive_target: " << primitive_target;
+    MS_LOG(INFO) << "Primitive target does not match backend: " << backend
+                 << ", primitive_target: " << primitive_target;
     backend = primitive_target;
   }
 
