@@ -98,7 +98,7 @@ static ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bo
   return parameter_user_info;
 }
 
-static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
+static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, const std::vector<AnfNodePtr> &all_nodes) {
   // In this case, node is a Parameter
   ParameterUsersInfo parameter_user_info;
   MS_EXCEPTION_IF_NULL(node->func_graph());
@@ -110,30 +110,26 @@ static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
       if (candidate.second != 1) {
         continue;
       }
-      auto load_node_users = node->func_graph()->manager()->node_users()[candidate_node];
+      auto node_user_map = node->func_graph()->manager()->node_users();
+      auto load_node_users = node_user_map[candidate_node];
       for (auto &node_user : load_node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
-        if (IsSomePrimitive(cnode, DEPEND)) {
-          auto depend_node_users = node->func_graph()->manager()->node_users()[node_user.first];
-          for (auto depend_user : depend_node_users) {
-            if (IsPrimitiveCNode(depend_user.first, prim::kPrimLoad)) {
-              auto local_load_node_users = node->func_graph()->manager()->node_users()[depend_user.first];
-              for (auto local_load_user : local_load_node_users) {
-                auto local_cnode = local_load_user.first->cast<CNodePtr>();
-                if (local_cnode == nullptr || !local_cnode->has_user_data<OperatorInfo>() ||
-                    IsSomePrimitive(local_cnode, RECEIVE)) {
-                  continue;
-                }
-                parameter_user_info.second.second.insert(local_load_user);
-              }
-            }
-          }
+        std::pair<AnfNodePtr, int> child_parallel_care_node;
+        if (IsSomePrimitive(cnode, UPDATESTATE)) continue;
+        if (!IsSomePrimitive(cnode, MAKE_TUPLE) && (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode))) {
+          child_parallel_care_node = node_user;
+        } else {
+          child_parallel_care_node = BFSParallelCareNode(cnode, node_user_map, node_user.second, all_nodes);
         }
-
+        if (child_parallel_care_node.first) {
+          cnode = child_parallel_care_node.first->cast<CNodePtr>();
+        } else {
+          continue;
+        }
         if (cnode == nullptr || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
           continue;
         }
-        parameter_user_info.second.second.insert(node_user);
+        parameter_user_info.second.second.insert(child_parallel_care_node);
       }
     } else {
       auto c = candidate_node->cast<CNodePtr>();
@@ -166,7 +162,8 @@ static RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode) {
   return {nullptr, refkeys};
 }
 
-ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
+ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &),
+                                      const std::vector<AnfNodePtr> &all_nodes) {
   ParameterUsersInfo parameter_users_info;
 
   auto cnode_with_refkeys = CNodeWithRefKeys(node);
@@ -178,7 +175,7 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
     MS_EXCEPTION_IF_NULL(param_ptr);
     // the node is a parameter node
     if (param_ptr->has_default()) {
-      return FindParameterNodeUsers(node);
+      return FindParameterNodeUsers(node, all_nodes);
     }
   }
 
@@ -221,7 +218,7 @@ static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &paramet
 
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
-    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
+    ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes);
     auto &users_set = parameter_users_info.second.second;
     if (users_set.size() <= 1) {
       continue;

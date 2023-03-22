@@ -2727,13 +2727,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   PipelinePreProcess(root, manager, all_nodes);
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
-
   if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;
-    if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed";
-    }
-
     ExceptionIfHasCommunicationOp(all_nodes);
 
     if (IsInsertVirtualOutput(root)) {

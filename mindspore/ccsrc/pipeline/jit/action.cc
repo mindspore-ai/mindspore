@@ -33,6 +33,7 @@
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/jit/pipeline.h"
@@ -1483,6 +1484,8 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &resource) {
 
 bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass(resource); }
 
+bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
+
 bool ValidateAction(const ResourcePtr &resource) { return ValidatePass(resource); }
 
 bool SetMindIRGraphAction(const ResourcePtr &resource) {
@@ -1581,6 +1584,8 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
   // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
+  // Do prepositive auto parallel.
+  (void)actions.emplace_back(std::make_pair("pre_auto_parallel", AutoParallelAction));
   // Do PipelineSplit action.
   (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 
