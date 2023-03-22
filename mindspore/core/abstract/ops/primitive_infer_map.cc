@@ -324,7 +324,6 @@ RegisterInferDependsHelper::RegisterInferDependsHelper(const std::string &name, 
 }
 
 PrimitiveEvalImplMap *GetPrimitiveInferMapPtr() {
-  // using R = PrimitiveEvalImplMap::mapped_type;
   static PrimitiveEvalImplMap prim_eval_implement_map{
     // core/ops infer
     // Do not add anything in this initializer anymore since it will be removed soon, core/ops prim should register its
