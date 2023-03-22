@@ -165,10 +165,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         """Load timeline data from file."""
         op_file_path = self._get_and_validate_path(
             self._output_op_execute_time_file_path)
-        activity_file_path = self._get_and_validate_path(
-            self._output_activity_execute_time_file_path)
-        activity_args_file_path = self._get_and_validate_path(
-            self._output_gpu_activity_info_file_path)
 
         timeline_list, communication_info = self._load_op_data(op_file_path, reduce_op_type)
         communication_info.sort(key=lambda x: float(x[2]))
@@ -198,15 +194,13 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                                                                        factor_start_time_uint_to_duration)
         recompute_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "recompute_Default",
                                                                         factor_start_time_uint_to_duration)
-
-        activity_timeline_list, cuda_compute_ops_timeline_list = self._load_activity_data( \
-            activity_file_path, activity_args_file_path)
+        cuda_op_timeline = self._load_activity_data()
 
         # Add AllReduce info to timeline temp list and sort by start time.
         if communication_info:
             logger.debug('Allreduce info found, Start adding info to timeline...')
             cluster_related_timeline = self._get_cluster_timeline(
-                timeline_list, cuda_compute_ops_timeline_list, communication_info, step_time_list)
+                timeline_list, cuda_op_timeline[1], communication_info, step_time_list)
             timeline_list.extend(cluster_related_timeline)
             timeline_list.extend(communication_info)
             timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
@@ -219,7 +213,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         timeline_list.sort(key=lambda x: (float(x[self._start_time_idx])))
 
         # Add cuda activity timeline.
-        timeline_list.extend(activity_timeline_list)
+        timeline_list.extend(cuda_op_timeline[0])
         timeline_list.sort(key=lambda x: float(x[2]))
 
         return timeline_list
@@ -268,30 +262,38 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
         return op_timeline_list, communication_info
 
-    def _load_activity_data(self, activity_file_path, activity_args_file_path):
+    def _load_activity_data(self):
         """Load activity data from file"""
         activity_timeline_list = []
         cuda_compute_ops_timeline_list = []
         args_dict = {}
-        try:
-            with open(activity_args_file_path, 'r') as args_file:
-                csv_reader = csv.reader(args_file)
-                keys_list = next(csv_reader)
-                # keys_list format is: name, type, op_full_name, stream_id, block_dim, grid_dim, ...
-                self._activity_keys_list = keys_list[1:3] + keys_list[4:6]
-                for info in csv_reader:
-                    args_dict[info[0]] = info[1:3] + info[4:6]
-            with open(activity_file_path, 'r') as f_obj:
-                for line in f_obj:
-                    line_list = line.strip('\n').split(';')
-                    # concat activity args info.
-                    line_list += args_dict.get(line_list[0])
-                    if not line_list[0].startswith('nccl'):
-                        cuda_compute_ops_timeline_list.append(line_list)
-                    activity_timeline_list.append(line_list)
-        except (IOError, OSError) as err:
-            logger.critical('Error occurred when load activity timeline data intermediate file: %s', err)
-            raise ProfilerIOException()
+        activity_file_path = self._get_and_validate_path(
+            self._output_activity_execute_time_file_path)
+        activity_args_file_path = self._get_and_validate_path(
+            self._output_gpu_activity_info_file_path)
+
+        if not os.path.exists(activity_args_file_path):
+            logger.error(f'The file {activity_args_file_path} does not exist.')
+            raise ProfilerFileNotFoundException(activity_args_file_path)
+        with open(activity_args_file_path, 'r') as args_file:
+            csv_reader = csv.reader(args_file)
+            keys_list = next(csv_reader)
+            # keys_list format is: name, type, op_full_name, stream_id, block_dim, grid_dim, ...
+            self._activity_keys_list = keys_list[1:3] + keys_list[4:6]
+            for info in csv_reader:
+                args_dict[info[0]] = info[1:3] + info[4:6]
+
+        if not os.path.exists(activity_file_path):
+            logger.error(f'The file {activity_file_path} does not exist.')
+            raise ProfilerFileNotFoundException(activity_file_path)
+        with open(activity_file_path, 'r') as f_obj:
+            for line in f_obj:
+                line_list = line.strip('\n').split(';')
+                # concat activity args info.
+                line_list += args_dict.get(line_list[0])
+                if not line_list[0].startswith('nccl'):
+                    cuda_compute_ops_timeline_list.append(line_list)
+                activity_timeline_list.append(line_list)
 
         return activity_timeline_list, cuda_compute_ops_timeline_list
 
@@ -342,24 +344,25 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         communication time between stages slow down the training. The value of t3 indicates the degree
         that communication inside each stage slow down the training.
         """
-        step_num = len(step_info)
+        time_info = {"stage_time": [], "computation_time": [], "recieve_alone_time": [], "comm_alone_time": [],
+                     "collective_comm_alone_time": []}
         is_pipeline_parallel = False
-        comm_merged_timeline, _, comm_display_timeline = self._get_merged_time_list(
+        comm_timeline = self._get_merged_time_list(
             comm_info,
             display_name="communication",
             factor=1e-3
         )
         compute_op_timeline = timeline + activity_info
         compute_op_timeline.sort(key=lambda x: float(x[self._start_time_idx]))
-        compute_op_timeline_interval, _, compute_op_display_timeline = self._get_merged_time_list(
+        compute_timeline = self._get_merged_time_list(
             compute_op_timeline,
             get_interval_time=True,
             factor=1e-3
         )
         # Consider if the overlap will be 0 or not.
         comm_not_overlapped_timeline = self._get_intersection_time(
-            compute_op_timeline_interval,
-            comm_merged_timeline
+            compute_timeline[0],
+            comm_timeline[0]
         )
 
         # Process receive part.
@@ -375,7 +378,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                                                                 factor=1e-3)[0]
 
         receive_op_not_overlapped_timeline = self._get_intersection_time(
-            compute_op_timeline_interval,
+            compute_timeline[0],
             receive_op_merged_timeline,
             display_name="receive_op_not_overlapped"
         )
@@ -388,7 +391,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         collective_comm_merged_timeline = self._get_merged_time_list(collective_comm_timeline,
                                                                      factor=1e-3)[0]
         collective_comm_not_overlapped_timeline = self._get_intersection_time(
-            compute_op_timeline_interval,
+            compute_timeline[0],
             collective_comm_merged_timeline,
             display_name="exclude_receive_op"
         )
@@ -404,32 +407,44 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         )[1]
 
         # Compute these five metrics mentioned above per step.
-        recieve_alone_time = self._compute_time_inside_step(receive_op_not_overlapped_timeline, step_info)
-        stage_time, computation_time = [], []
-        comm_alone_time = self._compute_time_inside_step(comm_not_overlapped_timeline, step_info)
-        collective_comm_alone_time = self._compute_time_inside_step(
+        time_info["recieve_alone_time"] = self._compute_time_inside_step(receive_op_not_overlapped_timeline, step_info)
+        time_info["comm_alone_time"] = self._compute_time_inside_step(comm_not_overlapped_timeline, step_info)
+        time_info["collective_comm_alone_time"] = self._compute_time_inside_step(
             collective_comm_not_overlapped_timeline,
             step_info
         )
+        step_num = len(step_info)
         for step in range(step_num):
             try:
                 if is_pipeline_parallel:
-                    stage_time.append(step_info[step][self._duration_idx] - recieve_alone_time[step])
-                computation_time.append(step_info[step][self._duration_idx] - comm_alone_time[step])
+                    time_info.get("stage_time").append(
+                        step_info[step][self._duration_idx] - time_info.get("recieve_alone_time")[step]
+                    )
+            except IndexError as e:
+                logger.error(e)
+            try:
+                time_info.get("computation_time").append(
+                    step_info[step][self._duration_idx] - time_info.get("comm_alone_time")[step]
+                )
             except IndexError as e:
                 logger.error(e)
 
-        metrices_per_step_list = [computation_time, comm_alone_time, stage_time,
-                                  recieve_alone_time, collective_comm_alone_time]
+        metrices_per_step_list = [time_info.get("computation_time"), time_info.get("comm_alone_time"),
+                                  time_info.get("stage_time"), time_info.get("recieve_alone_time"),
+                                  time_info.get("collective_comm_alone_time")]
         if step_num > 1:
             for metric in metrices_per_step_list:
                 metric.append(sum(metric[1:]) / (step_num - 1))
-        self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Gpu", self._device_id)
+        try:
+            self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Gpu", self._device_id)
+        except (IOError, OSError) as err:
+            logger.warning(err)
+            raise ProfilerIOException
 
         res_timeline = []
         res_timeline.extend(comm_not_overlapped_timeline)
-        res_timeline.extend(compute_op_display_timeline)
-        res_timeline.extend(comm_display_timeline)
+        res_timeline.extend(compute_timeline[2])
+        res_timeline.extend(comm_timeline[2])
         res_timeline.extend(free_timeline)
         return res_timeline
 
@@ -637,28 +652,28 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         # factor to convert the time unit of start_time(ts) from 1ns to 1us for timeline display
         factor = 1000
         op_meta = TimelineContainer(timeline)
-        timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name.split('/')[-1]
-        timeline_dict['ph'] = 'X'
-        timeline_dict['tid'] = op_meta.stream_id
-        timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) / factor
+        timeline_info = {}
+        timeline_info['name'] = op_meta.op_name.split('/')[-1]
+        timeline_info['ph'] = 'X'
+        timeline_info['tid'] = op_meta.stream_id
+        timeline_info['ts'] = (op_meta.start_time - min_cycle_counter) / factor
         dur = op_meta.duration
-        timeline_dict['dur'] = dur
-        timeline_dict['pid'] = int(self._device_id)
+        timeline_info['dur'] = dur
+        timeline_info['pid'] = int(self._device_id)
         if op_meta.stream_id == "Scope Name":
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
-            timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
-            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
+            timeline_info['name'] = "-".join(op_meta.op_name.split('-')[1:])
+            timeline_info['scope_level'] = int(op_meta.op_name.split('-')[0])
         elif self._host_cpu_op_label == op_meta.stream_id[:len(self._host_cpu_op_label)]:
-            timeline_dict['pid'] = self._HOST_CPU_PID
+            timeline_info['pid'] = self._HOST_CPU_PID
 
         if len(timeline) == 5:
             # len(timeline) == 5 refers to analyse data.
-            timeline_dict["pid"] = op_meta.pid
+            timeline_info["pid"] = op_meta.pid
         elif op_meta.stream_id not in ["Scope Name", "Steps"]:
             # Update total time of operator execution.
             self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
 
-        self._update_format_meta_data(timeline_dict)
-        self._timeline_meta.append(timeline_dict)
+        self._update_format_meta_data(timeline_info)
+        self._timeline_meta.append(timeline_info)

@@ -158,10 +158,11 @@ class Integrator:
             csv_writer.writerow(self._header_aicore_type)
 
             for op_type, op_type_time_info in op_type_time_cache.items():
-                type_info = [
-                    op_type, op_type_time_info[0], op_type_time_info[1],
-                    round((op_type_time_info[0] / total_time) * 100, 2)
-                ]
+                if total_time != 0:
+                    type_info = [
+                        op_type, op_type_time_info[0], op_type_time_info[1],
+                        round((op_type_time_info[0] / total_time) * 100, 2)
+                    ]
                 csv_writer.writerow(type_info)
 
     def _parse_aicore_detail_time(self):

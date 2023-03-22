@@ -18,6 +18,7 @@ import stat
 import time
 import json
 import glob
+import subprocess
 from enum import Enum
 
 from mindspore import log as logger, context
@@ -71,7 +72,8 @@ class DeviceSupportParam(Enum):
               'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id']
 
 
-ALWAYS_VALID_PARAM = ['start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache', 'ascend_job_id']
+ALWAYS_VALID_PARAM = ['start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
+                      'ascend_job_id', 'op_time']
 
 
 def _environment_check():
@@ -248,7 +250,7 @@ class Profiler:
         return output_path
 
     @staticmethod
-    def _parse_host_start_log(input_file):
+    def _parse_start_log(input_file):
         """
         Parse host start log file, get the start time of the job.
 
@@ -259,12 +261,9 @@ class Profiler:
             str, job start time.
         """
 
-        job_start_time = ""
+        job_start_time = 0
         with open(input_file) as f:
-            for line in f.readlines():
-                if "clock_realtime" in line:
-                    # 16 means the first digit of the timestamp, len(line)-3 means the last.
-                    job_start_time = line[16:len(line) - 3]
+            job_start_time = json.load(f).get("collectionTimeBegin")
 
         return job_start_time
 
@@ -398,7 +397,7 @@ class Profiler:
         if self._msprof_enable:
             return
 
-        self._start_time = int(time.time() * 10000000)
+        self._start_time = int(time.time() * 1000000)
         logger.info("Profiling: start time: %d", self._start_time)
 
         if not self._has_started:
@@ -811,17 +810,23 @@ class Profiler:
 
     def _ascend_graph_msadvisor_analyse(self, job_id):
         """Call MSAdvisor function."""
+        logger.info("MSAdvisor starts running.")
+        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
         try:
-            msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
-            logger.info("MSAdvisor starts running.")
             msadvisor.analyse()
-        except (ProfilerFileNotFoundException, ValueError, FileNotFoundError, OSError) as err:
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
-            else:
-                logger.warning("MSAdvisor running failed. %s", err)
+        except FileNotFoundError as err:
+            logger.warning("MSAdvisor: command not found,"
+                           "please check if installed ascend-toolkit and set environment path correctly. %s", err)
+        except OSError as err:
+            logger.warning("Cannot execute binary file: Exec format error. %s", err)
+        except subprocess.CalledProcessError:
+            logger.warning("MSAdvisor running failed, please check MSAdvisor running log.")
+        except (ValueError, ProfilerFileNotFoundException) as err:
+            logger.warning("MSAdvisor running failed. %s", err)
         finally:
             pass
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
 
     def _ascend_graph_op_analyse(self, source_path):
         """
@@ -886,40 +891,21 @@ class Profiler:
             MinddataParser.execute(source_path, self._output_path, store_id)
 
         # parse minddata pipeline operator and queue
-        pipeline_parser = None
         try:
-            pipeline_parser = MinddataPipelineParser(self._output_path, store_id, self._output_path)
+            MinddataPipelineParser(self._output_path, store_id, self._output_path).parse()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-
-        if pipeline_parser:
-            logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
-            try:
-                pipeline_parser.parse()
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
 
         # Analyze minddata information
-        md_analyzer = None
+        logger.info("Profiling: analyzing the minddata information.")
         try:
-            md_analyzer = MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path)
+            MinddataProfilingAnalyzer(self._output_path, store_id, self._output_path).analyze()
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
-
-        if md_analyzer:
-            logger.info("Profiling: analyzing the minddata information.")
-            try:
-                md_analyzer.analyze()
-            except ProfilerException as err:
-                logger.warning(err.message)
-            finally:
-                pass
 
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""
@@ -1183,13 +1169,13 @@ class Profiler:
             else:
                 job_dir = os.path.join(self._output_path, dir_name)
 
-            host_start_file_path = get_file_path(job_dir, "host_start.log")
-            if host_start_file_path is None:
+            start_file_path = get_file_path(job_dir, "start_info")
+            if start_file_path is None:
                 logger.warning("Find profiling job path %s, but host_start.log not exist, "
                                "profiler will ignore this job dir.", job_dir)
                 continue
 
-            training_device_id = host_start_file_path.split('.')[-1]
+            training_device_id = start_file_path.split('.')[-1]
             if self._dev_id != training_device_id:
                 logger.debug("Find profiling find job path %s, but not current training device id. "
                              "Current training device id %s, but job path device id: %s, "
@@ -1199,7 +1185,7 @@ class Profiler:
             if not os.listdir(os.path.join(job_dir, 'data')):
                 continue
 
-            job_start_time = self._parse_host_start_log(host_start_file_path)
+            job_start_time = self._parse_start_log(start_file_path)
             if not job_start_time:
                 logger.warning("Find profiling job path %s, but fail to get job start info, "
                                "profiler will ignore this job dir.", job_start_time)
@@ -1357,7 +1343,7 @@ class Profiler:
                 if param not in DeviceSupportParam.__getattr__(f'{self._device_target}'.upper()).value:
                     logger.warning("%s is an invalid param which doesn't work.", param)
                     kwargs.pop(param)
-                elif not self._op_time and kwargs.get(param) and param not in ALWAYS_VALID_PARAM:
+                elif not self._op_time and param not in ALWAYS_VALID_PARAM:
                     logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")
 
         if not isinstance(self._op_time, bool):
