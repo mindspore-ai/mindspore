@@ -37,7 +37,7 @@ constexpr auto kRSpace = "r_space";
 constexpr auto kMBatch = "m_batch";
 constexpr auto kRBatch = "r_batch";
 
-AnfNodePtr BuildSpace(const PatternMap &m, const AnfNodePtr &default_node) {
+AnfNodePtr BuildSpace(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMSpace);
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
@@ -52,7 +52,7 @@ AnfNodePtr BuildSpace(const PatternMap &m, const AnfNodePtr &default_node) {
   return node;
 }
 
-AnfNodePtr BuildBatch(const PatternMap &m, const AnfNodePtr &default_node) {
+AnfNodePtr BuildBatch(const PatternMap &m, const AnfNodePtr &) {
   auto node = m.Get(kMBatch);
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
