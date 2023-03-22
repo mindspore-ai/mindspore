@@ -2863,7 +2863,7 @@ def nextafter(input, other):
         >>> input_ = Tensor(np.asarray([0.0]), mindspore.float32)
         >>> other_ = Tensor(np.asarray([0.1]), mindspore.float32)
         >>> output_ = ops.nextafter(input_, other_)
-        >>> print(output)
+        >>> print(output_)
         [1.e-45]
     """
     nextafter_ = _get_cache_prim(P.NextAfter)()
