@@ -57,30 +57,6 @@ def _raise_value_error(*info):
     raise ValueError(info_str)
 
 
-@bprop_getters.register(P.FillV2)
-def get_bprop_fill_v2(self):
-    """Generate bprop for FillV2"""
-    sum_op = P.ReduceSum()
-    cast_op = P.Cast()
-    shape_op = P.TensorShape()
-
-    def bprop(shape, value, out, dout):
-        dout_type = F.dtype(dout)
-        type_list = [
-            mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-            mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-            mstype.float16, mstype.float64
-        ]
-        if dout_type in type_list:
-            dout = cast_op(dout, mstype.float32)
-        dout_shape = shape_op(dout)
-        axis = tuple([i for i in range(len(dout_shape))])
-        dvalue = sum_op(dout, axis)
-        return zeros_like(shape), cast_op(dvalue, dout_type)
-
-    return bprop
-
-
 @constexpr
 def _create_tensor(data, dtype):
     return Tensor(data, dtype=dtype)

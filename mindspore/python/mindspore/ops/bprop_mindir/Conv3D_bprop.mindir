@@ -1,278 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:¸@
-aget_bprop_conv3d.1:[CNode]2:1get_bprop_conv3d.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-Èget_bprop_conv3d.1:get_shape:2get_bprop_conv3d.1:get_shape:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op1
-A[ValueNode]19[ValueNode]19"Constant*
-value*out_channel€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]19get_bprop_conv3d.1:[CNode]20:14get_bprop_conv3d.1:[CNode]20:14"REF::getattr:15:Default/getattr-op11
-A[ValueNode]21[ValueNode]21"Constant*
-value*kernel_size€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]21get_bprop_conv3d.1:[CNode]22:16get_bprop_conv3d.1:[CNode]22:16"REF::getattr:15:Default/getattr-op12
-:[ValueNode]23[ValueNode]23"Constant*
-value*mode€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]23get_bprop_conv3d.1:[CNode]24:17get_bprop_conv3d.1:[CNode]24:17"REF::getattr:15:Default/getattr-op13
-Þ
-get_bprop_conv3d.1:[CNode]20:14
-get_bprop_conv3d.1:[CNode]22:16
-get_bprop_conv3d.1:[CNode]24:17get_bprop_conv3d.1:[CNode]25:18get_bprop_conv3d.1:[CNode]25:18"REF::S-Prim-MakeTuple:19:Default/S-Prim-MakeTuple-op14
->[ValueNode]26[ValueNode]26"Constant*
-value*pad_mode€
-9[ValueNode]27[ValueNode]27"Constant*
-value*pad€
-<[ValueNode]28[ValueNode]28"Constant*
-value*stride€
->[ValueNode]29[ValueNode]29"Constant*
-value*dilation€
-;[ValueNode]30[ValueNode]30"Constant*
-value*group€
-A[ValueNode]31[ValueNode]31"Constant*
-value*data_format€
-Õ
-[ValueNode]26
-[ValueNode]27
-[ValueNode]28
-[ValueNode]29
-[ValueNode]30
-[ValueNode]31get_bprop_conv3d.1:[CNode]32:20get_bprop_conv3d.1:[CNode]32:20"REF::S-Prim-MakeTuple:21:Default/S-Prim-MakeTuple-op15
->[ValueNode]33[ValueNode]33"Constant*
-value*pad_mode€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]33get_bprop_conv3d.1:[CNode]34:22get_bprop_conv3d.1:[CNode]34:22"REF::getattr:15:Default/getattr-op16
-9[ValueNode]35[ValueNode]35"Constant*
-value*pad€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]35get_bprop_conv3d.1:[CNode]36:23get_bprop_conv3d.1:[CNode]36:23"REF::getattr:15:Default/getattr-op17
-<[ValueNode]37[ValueNode]37"Constant*
-value*stride€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]37get_bprop_conv3d.1:[CNode]38:24get_bprop_conv3d.1:[CNode]38:24"REF::getattr:15:Default/getattr-op18
->[ValueNode]39[ValueNode]39"Constant*
-value*dilation€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]39get_bprop_conv3d.1:[CNode]40:25get_bprop_conv3d.1:[CNode]40:25"REF::getattr:15:Default/getattr-op19
-;[ValueNode]41[ValueNode]41"Constant*
-value*group€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]41get_bprop_conv3d.1:[CNode]42:26get_bprop_conv3d.1:[CNode]42:26"REF::getattr:15:Default/getattr-op20
-A[ValueNode]43[ValueNode]43"Constant*
-value*data_format€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]43get_bprop_conv3d.1:[CNode]44:27get_bprop_conv3d.1:[CNode]44:27"REF::getattr:15:Default/getattr-op21
-Á
-get_bprop_conv3d.1:[CNode]34:22
-get_bprop_conv3d.1:[CNode]36:23
-get_bprop_conv3d.1:[CNode]38:24
-get_bprop_conv3d.1:[CNode]40:25
-get_bprop_conv3d.1:[CNode]42:26
-get_bprop_conv3d.1:[CNode]44:27get_bprop_conv3d.1:[CNode]45:28get_bprop_conv3d.1:[CNode]45:28"REF::S-Prim-MakeTuple:29:Default/S-Prim-MakeTuple-op22
-½
-get_bprop_conv3d.1:[CNode]32:20
-get_bprop_conv3d.1:[CNode]45:28get_bprop_conv3d.1:[CNode]46:30get_bprop_conv3d.1:[CNode]46:30"REF::S-Prim-make_dict:31:Default/S-Prim-make_dict-op23
-S4747"Constant*?
-value*3mindspore.ops.operations.nn_ops.Conv3DBackpropInput€!
-È
-47
-get_bprop_conv3d.1:[CNode]25:18
-get_bprop_conv3d.1:[CNode]46:30 get_bprop_conv3d.1:input_grad:32 get_bprop_conv3d.1:input_grad:32"REF::MetaFuncGraph::unpack_call:Default/unpack_call.48-op24
-¿get_bprop_conv3d.1:cast:35get_bprop_conv3d.1:cast:35"7REF::ClassType::mindspore.ops.operations.array_ops.Cast:LDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Cast'-op27
-A[ValueNode]50[ValueNode]50"Constant*
-value*out_channel€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]50get_bprop_conv3d.1:[CNode]51:36get_bprop_conv3d.1:[CNode]51:36"REF::getattr:15:Default/getattr-op28
-A[ValueNode]52[ValueNode]52"Constant*
-value*kernel_size€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]52get_bprop_conv3d.1:[CNode]53:37get_bprop_conv3d.1:[CNode]53:37"REF::getattr:15:Default/getattr-op29
-:[ValueNode]54[ValueNode]54"Constant*
-value*mode€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]54get_bprop_conv3d.1:[CNode]55:38get_bprop_conv3d.1:[CNode]55:38"REF::getattr:15:Default/getattr-op30
-Þ
-get_bprop_conv3d.1:[CNode]51:36
-get_bprop_conv3d.1:[CNode]53:37
-get_bprop_conv3d.1:[CNode]55:38get_bprop_conv3d.1:[CNode]56:39get_bprop_conv3d.1:[CNode]56:39"REF::S-Prim-MakeTuple:40:Default/S-Prim-MakeTuple-op31
->[ValueNode]57[ValueNode]57"Constant*
-value*pad_mode€
-9[ValueNode]58[ValueNode]58"Constant*
-value*pad€
-<[ValueNode]59[ValueNode]59"Constant*
-value*stride€
->[ValueNode]60[ValueNode]60"Constant*
-value*dilation€
-;[ValueNode]61[ValueNode]61"Constant*
-value*group€
-A[ValueNode]62[ValueNode]62"Constant*
-value*data_format€
-Õ
-[ValueNode]57
-[ValueNode]58
-[ValueNode]59
-[ValueNode]60
-[ValueNode]61
-[ValueNode]62get_bprop_conv3d.1:[CNode]63:41get_bprop_conv3d.1:[CNode]63:41"REF::S-Prim-MakeTuple:42:Default/S-Prim-MakeTuple-op32
->[ValueNode]64[ValueNode]64"Constant*
-value*pad_mode€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]64get_bprop_conv3d.1:[CNode]65:43get_bprop_conv3d.1:[CNode]65:43"REF::getattr:15:Default/getattr-op33
-9[ValueNode]66[ValueNode]66"Constant*
-value*pad€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]66get_bprop_conv3d.1:[CNode]67:44get_bprop_conv3d.1:[CNode]67:44"REF::getattr:15:Default/getattr-op34
-<[ValueNode]68[ValueNode]68"Constant*
-value*stride€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]68get_bprop_conv3d.1:[CNode]69:45get_bprop_conv3d.1:[CNode]69:45"REF::getattr:15:Default/getattr-op35
->[ValueNode]70[ValueNode]70"Constant*
-value*dilation€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]70get_bprop_conv3d.1:[CNode]71:46get_bprop_conv3d.1:[CNode]71:46"REF::getattr:15:Default/getattr-op36
-;[ValueNode]72[ValueNode]72"Constant*
-value*group€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]72get_bprop_conv3d.1:[CNode]73:47get_bprop_conv3d.1:[CNode]73:47"REF::getattr:15:Default/getattr-op37
-A[ValueNode]74[ValueNode]74"Constant*
-value*data_format€
-‘
-get_bprop_conv3d.1:self
-[ValueNode]74get_bprop_conv3d.1:[CNode]75:48get_bprop_conv3d.1:[CNode]75:48"REF::getattr:15:Default/getattr-op38
-Á
-get_bprop_conv3d.1:[CNode]65:43
-get_bprop_conv3d.1:[CNode]67:44
-get_bprop_conv3d.1:[CNode]69:45
-get_bprop_conv3d.1:[CNode]71:46
-get_bprop_conv3d.1:[CNode]73:47
-get_bprop_conv3d.1:[CNode]75:48get_bprop_conv3d.1:[CNode]76:49get_bprop_conv3d.1:[CNode]76:49"REF::S-Prim-MakeTuple:50:Default/S-Prim-MakeTuple-op39
-½
-get_bprop_conv3d.1:[CNode]63:41
-get_bprop_conv3d.1:[CNode]76:49get_bprop_conv3d.1:[CNode]77:51get_bprop_conv3d.1:[CNode]77:51"REF::S-Prim-make_dict:52:Default/S-Prim-make_dict-op40
-W7878"Constant*C
-value*7mindspore.ops.operations._grad_ops.Conv3DBackpropFilter€!
-Ê
-78
-get_bprop_conv3d.1:[CNode]56:39
-get_bprop_conv3d.1:[CNode]77:51!get_bprop_conv3d.1:filter_grad:53!get_bprop_conv3d.1:filter_grad:53"REF::MetaFuncGraph::unpack_call:Default/unpack_call.79-op41
-Ëget_bprop_conv3d.1:get_dtype:56get_bprop_conv3d.1:get_dtype:56"8REF::ClassType::mindspore.ops.operations.array_ops.DType:MDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.DType'-op44
-ß#get_bprop_conv3d.1:get_dyn_shape:61#get_bprop_conv3d.1:get_dyn_shape:61">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:SDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op48get_bprop_conv3d.1*
-get_bprop_conv3d.1:self*
-get_bprop_conv3d.1:x*
-get_bprop_conv3d.1:w*
-get_bprop_conv3d.1:out*
-get_bprop_conv3d.1:dout2
-get_bprop_conv3d.1:[CNode]2:1:@ac358b5dcf264c042115b19fd775801a9b232b96f41720e2d3073b71bec3c441J/grad_nn_ops.pyBà
-f
-get_bprop_conv3d.1:xbprop.3:[CNode]4:3bprop.3:[CNode]4:3"#REF::get_bprop_conv3d.1:get_shape:2:2
-}
-bprop.3:[CNode]4:3bprop.3:[CNode]5:4bprop.3:[CNode]5:4"REF::S-Prim-IsShapeUnKnown:5:!Default/S-Prim-IsShapeUnKnown-op3
-_
-bprop.3:[CNode]5:4bprop.3:[CNode]6:6bprop.3:[CNode]6:6"REF::bool_.7:Default/bool_.7-op4
-y
-bprop.3:[CNode]6:6
-
-â†°bprop.8
-
-â†±bprop.9bprop.3:[CNode]10:7bprop.3:[CNode]10:7"REF::Switch:8:Default/Switch-op5
-Gbprop.3:[CNode]11:9bprop.3:[CNode]11:9"REF::bprop.3:[CNode]10:7:6
-d
-bprop.3:[CNode]11:9bprop.3:[CNode]12:10bprop.3:[CNode]12:10"REF::bool_.7:Default/bool_.7-op7
-
-bprop.3:[CNode]12:10
-âœ“bprop.13
-âœ—bprop.14bprop.3:[CNode]15:11bprop.3:[CNode]15:11"REF::Switch:8:Default/Switch-op8
-Jbprop.3:[CNode]16:12bprop.3:[CNode]16:12"REF::bprop.3:[CNode]15:11:9bprop.32
-bprop.3:[CNode]16:12B‹
-`âœ—bprop.14:[CNode]17:13âœ—bprop.14:[CNode]17:13"REF::â†“bprop.18:Default/â†“bprop.18-op10âœ—bprop.142
-âœ—bprop.14:[CNode]17:13Bý
-s
-get_bprop_conv3d.1:xâ†“bprop.18:[CNode]49:33â†“bprop.18:[CNode]49:33"#REF::get_bprop_conv3d.1:get_shape:2:25
-š
-get_bprop_conv3d.1:w
-get_bprop_conv3d.1:dout
-â†“bprop.18:[CNode]49:33â†“bprop.18:dx:34â†“bprop.18:dx:34"%REF::get_bprop_conv3d.1:input_grad:32:26
-s
-get_bprop_conv3d.1:wâ†“bprop.18:[CNode]80:54â†“bprop.18:[CNode]80:54"#REF::get_bprop_conv3d.1:get_shape:2:42
-©
-get_bprop_conv3d.1:x
-get_bprop_conv3d.1:dout
-â†“bprop.18:[CNode]80:54â†“bprop.18:[CNode]81:55â†“bprop.18:[CNode]81:55"&REF::get_bprop_conv3d.1:filter_grad:53:43
-t
-get_bprop_conv3d.1:xâ†“bprop.18:[CNode]82:57â†“bprop.18:[CNode]82:57"$REF::get_bprop_conv3d.1:get_dtype:56:45
-
-â†“bprop.18:[CNode]81:55
-â†“bprop.18:[CNode]82:57â†“bprop.18:dw:58â†“bprop.18:dw:58"REF::get_bprop_conv3d.1:cast:35:46
-“
-â†“bprop.18:dx:34
-â†“bprop.18:dw:58â†“bprop.18:[CNode]83:59â†“bprop.18:[CNode]83:59"REF::S-Prim-MakeTuple:60:Default/S-Prim-MakeTuple-op47â†“bprop.182
-â†“bprop.18:[CNode]83:59B
-after_block€	Bó
-x
-get_bprop_conv3d.1:xâœ“bprop.13:[CNode]84:62âœ“bprop.13:[CNode]84:62"(REF::get_bprop_conv3d.1:get_dyn_shape:61:49
-š
-get_bprop_conv3d.1:w
-get_bprop_conv3d.1:dout
-âœ“bprop.13:[CNode]84:62âœ“bprop.13:dx:63âœ“bprop.13:dx:63"%REF::get_bprop_conv3d.1:input_grad:32:50
-x
-get_bprop_conv3d.1:wâœ“bprop.13:[CNode]85:64âœ“bprop.13:[CNode]85:64"(REF::get_bprop_conv3d.1:get_dyn_shape:61:51
-©
-get_bprop_conv3d.1:x
-get_bprop_conv3d.1:dout
-âœ“bprop.13:[CNode]85:64âœ“bprop.13:[CNode]86:65âœ“bprop.13:[CNode]86:65"&REF::get_bprop_conv3d.1:filter_grad:53:52
-t
-get_bprop_conv3d.1:xâœ“bprop.13:[CNode]87:66âœ“bprop.13:[CNode]87:66"$REF::get_bprop_conv3d.1:get_dtype:56:53
-
-âœ“bprop.13:[CNode]86:65
-âœ“bprop.13:[CNode]87:66âœ“bprop.13:dw:67âœ“bprop.13:dw:67"REF::get_bprop_conv3d.1:cast:35:54
-“
-âœ“bprop.13:dx:63
-âœ“bprop.13:dw:67âœ“bprop.13:[CNode]88:68âœ“bprop.13:[CNode]88:68"REF::S-Prim-MakeTuple:69:Default/S-Prim-MakeTuple-op55âœ“bprop.132
-âœ“bprop.13:[CNode]88:68Bª
->[ValueNode]89[ValueNode]89"Constant*
-value*__bool__€
-m
-	bool_.7:x
-[ValueNode]89bool_.7:[CNode]90:70bool_.7:[CNode]90:70"REF::getattr:15:Default/getattr-op56
-Kbool_.7:[CNode]91:71bool_.7:[CNode]91:71"REF::bool_.7:[CNode]90:70:57bool_.7*
-	bool_.7:x2
-bool_.7:[CNode]91:71B«
-q
-get_bprop_conv3d.1:wâ†±bprop.9:[CNode]92:72â†±bprop.9:[CNode]92:72"#REF::get_bprop_conv3d.1:get_shape:2:58
-Ž
-â†±bprop.9:[CNode]92:72â†±bprop.9:[CNode]93:73â†±bprop.9:[CNode]93:73"REF::S-Prim-IsShapeUnKnown:74:"Default/S-Prim-IsShapeUnKnown-op59
-â†±bprop.92
-â†±bprop.9:[CNode]93:73B"
-â†°bprop.82
-bprop.3:[CNode]5:4Pb
-Switch:8Switchb
-
-getattr:15getattrb'
-S-Prim-MakeTuple:29S-Prim-MakeTupleb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb1
-S-Prim-IsShapeUnKnown:74S-Prim-IsShapeUnKnownb'
-S-Prim-make_dict:31S-Prim-make_dictb'
-S-Prim-MakeTuple:21S-Prim-MakeTupleb'
-S-Prim-MakeTuple:50S-Prim-MakeTupleb'
-S-Prim-MakeTuple:40S-Prim-MakeTupleb'
-S-Prim-make_dict:52S-Prim-make_dictb'
-S-Prim-MakeTuple:69S-Prim-MakeTupleb'
-S-Prim-MakeTuple:60S-Prim-MakeTupleb'
-S-Prim-MakeTuple:42S-Prim-MakeTupleb'
-S-Prim-MakeTuple:19S-Prim-MakeTupleh

@@ -1,15 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ž
-y%get_bprop_isfinite.1157:[CNode]1158:1%get_bprop_isfinite.1157:[CNode]1158:1"REF::bprop.1159:Default/bprop.1159-op910get_bprop_isfinite.1157*
-get_bprop_isfinite.1157:self*
-get_bprop_isfinite.1157:x*
-get_bprop_isfinite.1157:out*
-get_bprop_isfinite.1157:dout2'
-%get_bprop_isfinite.1157:[CNode]1158:1:@ec94d7a5f48d29f160c176a6fad32658e4aeb3d15446812e70c46ffd52ac443cJ/grad_math_ops.pyBå
-°
-get_bprop_isfinite.1157:xbprop.1159:[CNode]1160:2bprop.1159:[CNode]1160:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op911
-‡
-bprop.1159:[CNode]1160:2bprop.1159:[CNode]1161:3bprop.1159:[CNode]1161:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op912
-bprop.11592
-bprop.1159:[CNode]1161:3Pb&
-S-Prim-MakeTuple:4S-Prim-MakeTupleh

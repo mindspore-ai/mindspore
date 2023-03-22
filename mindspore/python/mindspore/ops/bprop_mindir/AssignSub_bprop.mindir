@@ -1,19 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:½
-}'get_bprop_assign_sub.1237:[CNode]1238:1'get_bprop_assign_sub.1237:[CNode]1238:1"REF::bprop.1239:Default/bprop.1239-op962get_bprop_assign_sub.1237* 
-get_bprop_assign_sub.1237:self*
-get_bprop_assign_sub.1237:x*
-get_bprop_assign_sub.1237:y*
-get_bprop_assign_sub.1237:out* 
-get_bprop_assign_sub.1237:dout2)
-'get_bprop_assign_sub.1237:[CNode]1238:1:@c11c34e0f67efb3b34ee8b93b6fa6cd59afe26e67d7088ae1e06522bc79b9687J/grad_math_ops.pyB¶
-²
-get_bprop_assign_sub.1237:xbprop.1239:[CNode]1240:2bprop.1239:[CNode]1240:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op963
-²
-get_bprop_assign_sub.1237:ybprop.1239:[CNode]1241:3bprop.1239:[CNode]1241:3".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op964
-¡
-bprop.1239:[CNode]1240:2
-bprop.1239:[CNode]1241:3bprop.1239:[CNode]1242:4bprop.1239:[CNode]1242:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op965
-bprop.12392
-bprop.1239:[CNode]1242:4Pb&
-S-Prim-MakeTuple:5S-Prim-MakeTupleh

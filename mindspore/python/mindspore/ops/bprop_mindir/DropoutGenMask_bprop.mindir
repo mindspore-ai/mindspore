@@ -1,18 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ô
-w(get_bprop_dropout_gen_mask.5:[CNode]12:1(get_bprop_dropout_gen_mask.5:[CNode]12:1"REF::bprop.4:Default/bprop.4-op0get_bprop_dropout_gen_mask.5*#
-!get_bprop_dropout_gen_mask.5:self*$
-"get_bprop_dropout_gen_mask.5:shape*(
-&get_bprop_dropout_gen_mask.5:keep_prob*"
- get_bprop_dropout_gen_mask.5:out*#
-!get_bprop_dropout_gen_mask.5:dout2*
-(get_bprop_dropout_gen_mask.5:[CNode]12:1:@33718d8b3c410d1dcbadfa6b75151a77958cc7faf49063290259e12bf3e47074J/grad_nn_ops.pyB‰
-«
-"get_bprop_dropout_gen_mask.5:shapebprop.4:[CNode]1:2bprop.4:[CNode]1:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op1
-¯
-&get_bprop_dropout_gen_mask.5:keep_probbprop.4:[CNode]2:3bprop.4:[CNode]2:3".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op2
-‡
-bprop.4:[CNode]1:2
-bprop.4:[CNode]2:3bprop.4:[CNode]3:4bprop.4:[CNode]3:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op3bprop.42
-bprop.4:[CNode]3:4Pb&
-S-Prim-MakeTuple:5S-Prim-MakeTupleh

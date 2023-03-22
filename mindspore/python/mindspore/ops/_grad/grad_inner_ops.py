@@ -22,7 +22,6 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.ops._grad.grad_base import bprop_getters, sum_grad_reduce_axis
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.operations import image_ops as IMG
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 import mindspore as ms
 
@@ -183,18 +182,6 @@ def get_bprop_dynamic_broadcast_to(self):
             reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
         dx = reshape(reduced_grad, x_shape)
         return dx, zeros_like(shp)
-
-    return bprop
-
-
-@bprop_getters.register(IMG.ResizeBilinearV2)
-def get_bprop_resize_bilinear(self):
-    """Grad definition for `ResizeBilinearV2` operation."""
-    resize_grad = G.ResizeBilinearGrad(self.align_corners, self.half_pixel_centers)
-
-    def bprop(x, size, out, dout):
-        dx = resize_grad(dout, x)
-        return dx, zeros_like(size)
 
     return bprop
 
