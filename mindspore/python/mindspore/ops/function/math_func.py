@@ -2621,7 +2621,7 @@ def bitwise_and(input, other):
     the relatively highest priority data type.
 
     Args:
-        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
             any number of additional dimensions.
         other (Tensor): The second input tensor with the same dtype as `input`.
 
@@ -3188,7 +3188,6 @@ def bessel_y0(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
