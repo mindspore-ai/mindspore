@@ -65,7 +65,7 @@ __global__ void NmsWithOverlapPass(const int valid_num, const int num, const T *
     if (box_j > box_i) {             // skip when box_j index lower/equal to box_i - will
                                      // remain true
       row_mask[mask_index] =
-          overlaps[index_buff[valid_num - box_i - 1] * num + index_buff[valid_num - box_j - 1]] > IOU_value[0] ? false
+          overlaps[index_buff[valid_num - box_i - 1] + index_buff[valid_num - box_j - 1] * num] > IOU_value[0] ? false
                                                                                                                : true;
     }
   }
