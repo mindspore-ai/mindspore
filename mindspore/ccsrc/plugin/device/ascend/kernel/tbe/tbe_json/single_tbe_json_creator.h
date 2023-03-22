@@ -26,6 +26,7 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
   ~SingleTbeJsonCreator() override = default;
   bool GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) override;
   bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
+  bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  protected:
   bool GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);
@@ -37,7 +38,6 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
                         const std::vector<size_t> &inputs_tensor_num, const std::vector<OpIOInfoPtr> &inputs_ptr,
                         std::vector<nlohmann::json> *inputs_json) const;
   void GenOutputDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, nlohmann::json *output_desc);
-  bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   bool AssignOutputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &outputs_desc,
                          const std::vector<size_t> &outputs_tensor_num, const std::vector<OpIOInfoPtr> &outputs_ptr,
                          std::vector<nlohmann::json> *outputs_json) const;
