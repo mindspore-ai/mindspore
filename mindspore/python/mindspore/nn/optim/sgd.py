@@ -27,8 +27,8 @@ from mindspore.nn.optim.optimizer import opt_init_args_register
 _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
-@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
+@_sgd_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Function")
+def _tensor_run_opt_ext(momentum, learning_rate, gradient, weight, accum, stat, opt):
     """Apply sgd optimizer to the weight parameter using Tensor."""
     success = True
     success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
@@ -76,7 +76,9 @@ class SGD(Optimizer):
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
               If not, the `learning_rate` in optimizer will be used. Fixed and dynamic learning rate are supported.
 
-            - weight_decay: Using different `weight_decay` by grouping parameters is currently not supported.
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the optimizer will be used. It should be noted that weight
+              decay must be float, dynamic weight decay is currently not supported.
 
             - grad_centralization: Optional. Must be Boolean. If "grad_centralization" is in the keys, the set value
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
@@ -164,7 +166,7 @@ class SGD(Optimizer):
 
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("For 'SGD', the argument 'momentum' must be at least 0.0, "
-                             "but got {}".format(momentum))
+                             "but got {}.".format(momentum))
 
         if isinstance(dampening, int):
             dampening = float(dampening)
@@ -177,9 +179,6 @@ class SGD(Optimizer):
                              "but got 'dampening' {}".format(dampening))
         self.dampening = dampening
 
-        if isinstance(weight_decay, int):
-            weight_decay = float(weight_decay)
-
         validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
 
         if nesterov and (momentum <= 0.0 or dampening != 0.0):
@@ -187,7 +186,14 @@ class SGD(Optimizer):
                              "equal to 0.0, but got 'momentum' {}, 'dampening' {}".format(momentum, dampening))
         self.nesterov = nesterov
 
-        self.opt = P.SGD(dampening, weight_decay, nesterov)
+        if self.dynamic_weight_decay:
+            raise TypeError("For 'SGD', dynamic weight decay is currently not supported, the argument 'weight_decay' "
+                            "or 'weight_decay' set in grouped 'params' must be float or int type.")
+
+        if hasattr(self, "group_weight_decay") and self.group_weight_decay:
+            self.opt = tuple(P.SGD(dampening, wd, nesterov) for wd in self.group_weight_decay)
+        else:
+            self.opt = tuple([P.SGD(dampening, float(weight_decay), nesterov)] * len(self._parameters))
 
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.accum = self._parameters.clone(prefix="accum", init='zeros')
@@ -203,9 +209,9 @@ class SGD(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.is_group_lr:
-            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.opt, self.momentum),
-                                             lr, gradients, params, accum, stat)
+            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.momentum),
+                                             lr, gradients, params, accum, stat, self.opt)
         else:
-            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.opt, self.momentum, lr),
-                                             gradients, params, accum, stat)
+            success = self.hyper_map_reverse(F.partial(_sgd_opt, self.momentum, lr),
+                                             gradients, params, accum, stat, self.opt)
         return success
