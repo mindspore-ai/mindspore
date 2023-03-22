@@ -783,9 +783,18 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
     auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value = {tensor_data, tensor_data + data_size};
+  } else if (tensor_type->type_id() == kNumberTypeUInt32) {
+    auto tensor_data = reinterpret_cast<uint32_t *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value = {tensor_data, tensor_data + data_size};
+  } else if (tensor_type->type_id() == kNumberTypeUInt64) {
+    auto tensor_data = reinterpret_cast<uint64_t *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value = {tensor_data, tensor_data + data_size};
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << type_name
-                            << "] must be a Tensor[Int64] or Tensor[Int32] type, but got " << value->ToString();
+                            << "] must be a Tensor[Int64] or Tensor[Int32]"
+                            << " or Tensor[UInt64] or Tensor[UInt32] type, but got " << value->ToString();
   }
   return tensor_value;
 }
