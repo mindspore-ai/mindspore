@@ -217,13 +217,10 @@ int GetMaxFrequency(int core_id) {
 
 float CoreAffinity::GetServerFrequency() {
   float max_freq = -1.0f;
+#ifndef _MSC_VER
   // The CPU cores in the server of the numa architecture are the same.
   // The main frequency of the first core is obtained.
-#ifdef _MSC_VER
-  FILE *fp = _popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
-#else
   FILE *fp = popen("cat /proc/cpuinfo|grep cpu\\ MHz | sed -e 's/.*:[^0-9]//'", "r");
-#endif
   if (fp == nullptr) {
     THREAD_ERROR("get system cpuinfo frequency failed");
     return max_freq;
@@ -239,9 +236,6 @@ float CoreAffinity::GetServerFrequency() {
       max_freq = freq;
     }
   }
-#ifdef _MSC_VER
-  (void)_pclose(fp);
-#else
   (void)pclose(fp);
 #endif
   return max_freq;  // MHz
