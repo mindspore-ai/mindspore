@@ -49,7 +49,7 @@ void MaxPoolGradWithArgmaxV2::set_strides(const std::vector<int64_t> &strides) {
 void MaxPoolGradWithArgmaxV2::set_pads(const std::vector<int64_t> &pads) { (void)AddAttr(kPads, api::MakeValue(pads)); }
 
 void MaxPoolGradWithArgmaxV2::set_dilation(const std::vector<int64_t> &dilation) {
-  int64_t kMinDilationSize = 2;
+  constexpr int64_t kMinDilationSize = 2;
   int64_t size = SizeToLong(dilation.size());
   (void)CheckAndConvertUtils::CheckInteger("dilation_shape", size, kGreaterThan, kMinDilationSize, name());
   std::vector<int64_t> d;
@@ -97,7 +97,7 @@ TypePtr MaxPoolGradWithArgmaxV2InferType(const PrimitivePtr &prim,
                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  const int64_t input_num = 3;
+  constexpr int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -121,13 +121,13 @@ abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  const int64_t input_num = 3;
+  constexpr int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const int64_t kInputDims = 4;
-  const size_t kAttrsSize = 4;
+  constexpr int64_t kInputDims = 4;
+  constexpr size_t kAttrsSize = 4;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {

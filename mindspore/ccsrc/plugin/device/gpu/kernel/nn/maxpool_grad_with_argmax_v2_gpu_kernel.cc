@@ -92,7 +92,7 @@ int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     return KRET_RESIZE_FAILED;
   }
 
-  const size_t nc_offset = 2;
+  constexpr size_t nc_offset = 2;
   x_hw_ = std::accumulate(x_shape.begin() + nc_offset, x_shape.end(), 1, std::multiplies<int64_t>());
   dy_hw_ = std::accumulate(dy_shape.begin() + nc_offset, dy_shape.end(), 1, std::multiplies<int64_t>());
   dy_nchw_ = std::accumulate(dy_shape.begin(), dy_shape.end(), 1, std::multiplies<int64_t>());
