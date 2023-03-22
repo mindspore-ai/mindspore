@@ -147,24 +147,24 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         For now, the backward of the operator only support bilinear method, for other methods, will return 0.
 
     Args:
-        image (Tensor): The input image must be a 4-D tensor of shape (batch, image_height, image_width, depth).
-           Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
-        boxes (Tensor): A 2-D tensor of shape [num_boxes, 4].
-           The i-th row of the tensor specifies the coordinates of a box in the box_ind[i] image
-           and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
-           the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
-           mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
-           crop is an up-down flipped version of the original image. The width dimension is treated similarly.
-           Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
-           extrapolate the input image values. Types allowed: float32.
-        box_indices (Tensor): A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
-           The value of box_ind[i] specifies the image that the i-th box refers to. Types allowed: int32.
-        crop_size (Tuple[int]): A tuple of two int32 elements: (crop_height, crop_width).
-           Only constant value is allowed. All cropped image patches are resized to this size.
-           The aspect ratio of the image content is not preserved. Both crop_height and crop_width need to be positive.
+        image (Tensor): A 4-D Tensor representing a batch of images. It has shape
+            :math:`(batch, image_height, image_width, depth)`.
+        boxes (Tensor):  A 2-D Tensor with shape :math:`(num_boxes, 4)` representing the normalized
+            coordinates of the boxes to be cropped. The coordinates are specified in the
+            form :math:`[y1, x1, y2, x2]`, where :math:`(y1, x1)` is the first corner
+            and :math:`(y2, x2)` is the second corner of the box.
+            If :math:`y1 > y2`, the sampled crop is inverted upside down, the width dimensionis treated
+            similarly when :math:`x1 > x2`. If normalized coordinates are not in range [0, 1],
+            extrapolated input image values are used instead. Supported data type: float32.
+        box_indices (Tensor): A 1-D Tensor of shape :math:`\text{num_boxes}` representing the batch
+            index for each box. Supported type: int32.
+        crop_size (Tuple[int]): A tuple of two elements: (crop_height, crop_width), representing
+            the output size of the cropped and resized images.
+            Only positive values are supported. Supported type: int32.
         method (str, optional): An optional string that specifies the sampling method for resizing.
            It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
-           interpolation algorithm, while "bilinear_v2" may result in better result in some cases. Default: "bilinear"
+           interpolation algorithm, while "bilinear_v2" may result in better result in some cases.
+           Default: "bilinear".
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
 
     Returns:

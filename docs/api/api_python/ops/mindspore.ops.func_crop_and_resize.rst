@@ -10,12 +10,12 @@ mindspore.ops.crop_and_resize
         当前该算子的反向仅支持"bilinear"模式，其他模式将会返回0。
 
     参数：
-        - **image** (Tensor) - shape为  :math:`(batch, image\_height, image\_width, depth)` 的图像Tensor。数据类型：int8, int16, int32, int64, float16, float32, float64, uint8, uint16。
-        - **boxes** (Tensor) - shape为 :math:`(num\_boxes, 4)` 的二维Tensor。其中，第 :math:`i` 行指定对第 :math:`\text{box_indices[i]}` 张图像裁剪时的归一化坐标 :math:`[y1, x1, y2, x2]`，那么通过归一化的 :math:`y` 坐标值可映射到的图像坐标为 :math:`y * (image\_height - 1)`，因此，归一化的图像高度 :math:`[0, 1]` 间隔映射到的图像高度间隔为 :math:`[0, image\_height - 1]`。我们也允许 :math:`y1 > y2`，这种情况下，就是对图像进行的上下翻转，宽度方向与此类似。同时，我们也允许归一化的坐标值超出 :math:`[0, 1]` 的区间，这种情况下，采用 :math:`\text{extrapolation_value}` 进行填充。数据类型：float32。
-        - **box_indices** (Tensor) - shape为 :math:`(num\_boxes)` 的一维Tensor，其中，每一个元素必须是 :math:`[0, batch)` 区间内的值。:math:`\text{box_indices[i]}` 指定 :math:`\text{boxes[i, :]}` 所指向的图像索引。数据类型：int32。
-        - **crop_size** (Tuple[int]) - 2元组(crop_height, crop_width)，该输入必须为常量并且均为正值。指定对裁剪出的图像进行调整时的输出大小，纵横比可与原图不一致。数据类型：int32。
+        - **image** (Tensor) - shape为 :math:`(batch, image\_height, image\_width, depth)` 的图像Tensor。
+        - **boxes** (Tensor) - shape为 :math:`(num\_boxes, 4)` 的二维Tensor，表示归一化的边框坐标，坐标格式为 :math:`[y1, x1, y2, x2]` 。其中 :math:`(y1, x1)` 为第一个角点， :math:`(y2, x2)` 为第二个角点。如果 :math:`y1 > y2` ，就是对图像进行的上下翻转，宽度方向与此类似。如果归一化的坐标值超出 :math:`[0, 1]` 的区间，采用 `extrapolation_value` 进行填充。数据类型：float32。
+        - **box_indices** (Tensor) - shape为 :math:`(num\_boxes)` 的一维Tensor，表示每个方框的索引。数据类型：int32。
+        - **crop_size** (Tuple[int]) - 2元组(crop_height, crop_width)，指定对裁剪出的图像进行调整时的输出大小，元素均为正值。数据类型：int32。
         - **method** (str，可选) - 指定调整大小时的采样方法，取值为"bilinear"、 "nearest"或"bilinear_v2"，其中，"bilinear"是标准的线性插值算法，而在某些情况下，"bilinear_v2"可能会得到更优的效果。默认值："bilinear"。
-        - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值： 0.0。
+        - **extrapolation_value** (float，可选) - 指定外插时的浮点值。默认值：0.0。
 
     返回：
         Tensor，shape为(num_boxes, crop_height, crop_width, depth)，数据类型：float32 。
