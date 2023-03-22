@@ -38,6 +38,7 @@ from mindspore.ops.operations.array_ops import (
     MatrixDiagV3,
     MatrixDiagPartV3,
     MatrixSetDiagV3,
+    Fills,
     Col2Im,
     ArgMaxWithValue,
     ArgMinWithValue,
@@ -60,6 +61,7 @@ from mindspore._checkparam import Rel
 from mindspore._c_expression import Tensor as Tensor_
 
 eye_ = P.Eye()
+fills_ = Fills()
 fill_ = P.Fill()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
@@ -859,6 +861,25 @@ def chunk(input, chunks, axis=0):
         if length2:
             res += P.Split(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
+
+
+def fills(x, value):
+    """
+    `fills` is deprecated, please use `ops.fill` instead.
+    """
+    if isinstance(value, float):
+        value_ = value
+    elif isinstance(value, int):
+        value_ = float(value)
+    elif isinstance(value, Tensor):
+        if value.ndim != 0:
+            raise ValueError("For 'ops.fills', if the argument 'value' is a tensor, the number of its dimension"
+                             " should be 0, but got {}".format(value.ndim))
+        value_ = value.astype(mstype.float32)
+    else:
+        raise TypeError("For 'ops.fills', the type of argument 'value' should be int, float or Tensor,"
+                        " but got {}".format(type(value)))
+    return fills_(x, value_)
 
 
 def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
@@ -6907,6 +6928,14 @@ def sequence_mask(lengths, maxlen=None):
     return result
 
 
+def top_k(input_x, k, sorted=True):
+    r"""
+    `top_k` is deprecated, please use `ops.topk` instead.
+    """
+    top_k_ = _get_cache_prim(P.TopK)(sorted)
+    return top_k_(input_x, k)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -6916,6 +6945,7 @@ __all__ = [
     'padding',
     'fill',
     'fill_',
+    'fills',
     'tile',
     'size',
     'ger',
@@ -7036,6 +7066,7 @@ __all__ = [
     'movedim',
     'moveaxis',
     'aminmax',
-    'sort'
+    'sort',
+    'top_k'
 ]
 __all__.sort()
