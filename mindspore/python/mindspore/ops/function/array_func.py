@@ -6234,7 +6234,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
             e_upper = fill_op(mstype.float32, (-offset, m), 0)
             e_lower = e[0:n + offset:1, ...]
             e = _get_cache_prim(P.Concat)(0)((e_upper, e_lower)).astype(dtype)
-    e = _get_cache_prim(P.BroadcastTo)(x_shape)(e)
+    e = F.broadcast_to(e, x_shape)
 
     prod_val = _get_cache_prim(P.Mul)()(input, e)
     res = _get_cache_prim(P.ReduceSum)()(prod_val.astype(mstype.float32), -1)
