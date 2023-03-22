@@ -482,21 +482,21 @@ def bincount(input, weights=None, minlength=0):
     return P.ReduceSum()(idx_mapping.astype(mstype.float32), 1).ravel()
 
 
-def exp2(x):
+def exp2(input):
     """
-    Computes base two exponential of Tensor `x` element-wise.
+    Computes base two exponential of Tensor `input` element-wise.
 
     .. math::
-        out_i = 2^{x_i}
+        out_i = 2^{input_i}
 
     Args:
-        x (Tensor): Input tensor.
+        input (Tensor): Input tensor.
 
     Returns:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -509,9 +509,9 @@ def exp2(x):
     """
 
     tensor_2 = Tensor(np.array(2.0).astype(np.float32))
-    if x.dtype == mstype.float16:
+    if input.dtype == mstype.float16:
         tensor_2 = Tensor(np.array(2.0).astype(np.float16))
-    return exp2_(tensor_2, x)
+    return exp2_(tensor_2, input)
 
 
 def argmin(input, axis=None, keepdims=False):
@@ -2245,24 +2245,24 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
     return polar_(abs, angle)
 
 
-def asin(x):
+def asin(input):
     r"""
     Computes arcsine of input tensors element-wise.
 
     .. math::
 
-        out_i = sin^{-1}(x_i)
+        out_i = sin^{-1}(input_i)
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tensor, has the same shape and dtype as `x`.
+        Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32, float64, complex64, complex128.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32, float64, complex64, complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2273,7 +2273,7 @@ def asin(x):
         >>> print(output)
         [0.8330704  0.04001067  0.30469266  0.5943858 ]
     """
-    return asin_(x)
+    return asin_(input)
 
 
 def acos(input):
@@ -3866,7 +3866,7 @@ def ge(x, y):
     return _greater_equal(x, y)
 
 
-def equal(x, y):
+def equal(input, other):
     r"""
     Computes the equivalence between two tensors element-wise.
 
@@ -3878,15 +3878,15 @@ def equal(x, y):
             \end{cases}
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, the shapes of them could be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        x (Union[Tensor, Number]): The first input is a number or
+        input (Union[Tensor, Number]): The first input is a number or
             a tensor whose data type is number.
-        y (Union[Tensor, Number]): The second input is a number
+        other (Union[Tensor, Number]): The second input is a number
             when the first input is a tensor or a tensor whose data type is number.
             The data type is the same as the first input.
 
@@ -3894,7 +3894,7 @@ def equal(x, y):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3912,7 +3912,7 @@ def equal(x, y):
         >>> print(output)
         [ True  True False]
     """
-    return equal_(x, y)
+    return equal_(input, other)
 
 
 def ne(x, y):
@@ -3964,7 +3964,7 @@ def ne(x, y):
     return not_equal_(x, y)
 
 
-def not_equal(x, other):
+def not_equal(input, other):
     r"""
     Alias for ops.ne.
     For details, please refer to :func:`mindspore.ops.ne`.
@@ -3972,7 +3972,7 @@ def not_equal(x, other):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return ne(x, other)
+    return ne(input, other)
 
 
 def approximate_equal(x, y, tolerance=1e-5):
