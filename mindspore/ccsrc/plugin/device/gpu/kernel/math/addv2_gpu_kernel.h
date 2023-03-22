@@ -44,6 +44,9 @@ class AddV2GpuKernelMod : public NativeGpuKernelMod {
   ~AddV2GpuKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     stream_ptr_ = stream_ptr;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -68,6 +71,7 @@ class AddV2GpuKernelMod : public NativeGpuKernelMod {
  private:
   size_t unit_size_{1};
   bool need_broadcast_;
+  bool is_null_input_;
   std::string kernel_name_{kUnknown};
   size_t input_elements_{0};
   size_t output_num_{1};
