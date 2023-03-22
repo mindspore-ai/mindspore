@@ -18,6 +18,8 @@
 import math
 import numbers
 import numpy as np
+
+from mindspore import log as logger
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
@@ -3311,6 +3313,22 @@ def det(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return _get_cache_prim(P.MatrixDeterminant)()(input)
+
+
+def matrix_determinant(input):
+    r"""
+    `matrix_determinant` is deprecated, please use `det` instead.
+    """
+    logger.warning("matrix_determinant is deprecated, please use `det` instead.")
+    return _get_cache_prim(P.MatrixDeterminant)()(input)
+
+
+def log_matrix_determinant(input):
+    r"""
+    `log_matrix_determinant` is deprecated, please use `matrix_solve` instead.
+    """
+    logger.warning("`log_matrix_determinant` is deprecated, please use `matrix_solve` instead.")
+    return _get_cache_prim(P.LogMatrixDeterminant)()(input)
 
 
 def matrix_exp(input):
@@ -10637,6 +10655,8 @@ __all__ = [
     'is_complex',
     'log',
     'logdet',
+    'log_matrix_determinant',
+    'matrix_determinant',
     'det',
     'linspace',
     'logspace',

@@ -2147,6 +2147,21 @@ def hypot(x, other):
     return F.hypot(x, other)
 
 
+def soft_shrink(input, lambd=0.5):
+    """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""
+    return F.soft_shrink(input, lambd)
+
+
+def matrix_determinant(input):
+    """Computes the determinant of one or more square matrices."""
+    return F.matrix_determinant(input)
+
+
+def log_matrix_determinant(input):
+    """Computes the sign and the log of the absolute value of the determinant of one or more square matrices."""
+    return F.log_matrix_determinant(input)
+
+
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)

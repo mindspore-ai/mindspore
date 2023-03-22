@@ -351,6 +351,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"heaviside", std::string("heaviside")},                            // F.heaviside
        {"hypot", std::string("hypot")},                                    // F.hypot
+       {"soft_shrink", std::string("soft_shrink")},                        // P.SoftShrink
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"unique_with_pad", std::string("unique_with_pad")},                // P.UniqueWithPad()
