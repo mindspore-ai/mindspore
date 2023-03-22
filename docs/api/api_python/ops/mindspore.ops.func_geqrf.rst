@@ -10,7 +10,7 @@ mindspore.ops.geqrf
     此函数返回两个Tensor(`y`, `tau`)。
 
     参数：
-        - **input** (Tensor) - shape为 :math:`(*, m, n)` ，输入矩阵维度必须为大于等于两维，支持dtype为float32、float64、compleinput64、compleinput128。
+        - **input** (Tensor) - shape为 :math:`(*, m, n)` ，输入矩阵维度必须为大于等于两维，支持dtype为float32、float64、complex64、complex128。
 
     返回：
         - **y** (Tensor) - shape为 :math:`(*, m, n)` ，与 `input` 具有相同的dtype。
@@ -18,5 +18,5 @@ mindspore.ops.geqrf
 
     异常：
         - **TypeError** - 如果 `input` 不是一个Tensor。
-        - **TypeError** - 如果 `input` 的dtype不是float32、float64、compleinput64、compleinput128中的一个。
+        - **TypeError** - 如果 `input` 的dtype不是float32、float64、complex64、complext128中的一个。
         - **ValueError** - 如果 `input` 的维度小于2。
