@@ -41,6 +41,17 @@ class _ParallelFusionConfig:
     INDEX = "index"
     SIZE = "size"
     OPENSTATE = "openstate"
+    CONFIG = {"openstate": True,
+              "allreduce": {"mode": "auto", "config": None},
+              "allgather": {"mode": "auto", "config": None},
+              "reducescatter": {"mode": "auto", "config": None}}
+
+    @classmethod
+    def reset(cls):
+        cls.CONFIG = {"openstate": True,
+                      "allreduce": {"mode": "auto", "config": None},
+                      "allgather": {"mode": "auto", "config": None},
+                      "reducescatter": {"mode": "auto", "config": None}}
 
 
 class _ParallelOptimizerConfig:
@@ -119,6 +130,7 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         config = config.copy()
+        _ParallelFusionConfig.CONFIG = config.copy()
         if _ParallelFusionConfig.OPENSTATE not in config.keys():
             config[_ParallelFusionConfig.OPENSTATE] = True
         for key in list(config.keys()):
@@ -137,13 +149,7 @@ class _AutoParallelContext:
     def get_comm_fusion(self):
         """Get comm fusion config."""
         self.check_context_handle()
-        mode = self._context_handle.get_fusion_mode()
-        if mode in (_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE):
-            config = self.fusion_threshold_mb()
-        if mode == _ParallelFusionConfig.INDEX:
-            config = self.get_all_reduce_fusion_split_indices()
-        return {_ParallelFusionConfig.ALLREDUCE: {_ParallelFusionConfig.MODE: mode,
-                                                  _ParallelFusionConfig.FUSION_CONFIG: config}}
+        return _ParallelFusionConfig.CONFIG
 
     def set_fusion_threshold_mb(self, fusion_threshold=64, comm_type="allreduce"):
         """
@@ -907,6 +913,7 @@ class _AutoParallelContext:
         """Reset all settings."""
         self.check_context_handle()
         self._context_handle.reset()
+        _ParallelFusionConfig.reset()
 
     def _check_and_default_group(self, group):
         """Validate the given group, if group is empty, returns a default fusion group"""
