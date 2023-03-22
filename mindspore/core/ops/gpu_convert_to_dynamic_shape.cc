@@ -38,7 +38,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &primitive,
+abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(input_shape)) {
@@ -51,8 +51,7 @@ abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &primit
   return std::make_shared<abstract::Shape>(output_shape_dyn);
 }
 
-TypePtr GpuConvertToDynamicShapeInferType(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
+TypePtr GpuConvertToDynamicShapeInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto x_type = input_args[0]->BuildType();
   return x_type;
 }
