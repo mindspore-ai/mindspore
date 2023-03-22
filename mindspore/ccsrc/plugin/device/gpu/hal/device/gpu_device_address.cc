@@ -358,6 +358,9 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   }
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   size_t host_size = out_tensor->data().nbytes();
+  if (host_size == 0) {
+    MS_LOG(INFO) << "Host size is 0 for tensor: " << tensor_name << ", no need to load.";
+  }
   auto ret_rt_memcpy = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
   if (!ret_rt_memcpy) {
     MS_LOG(ERROR) << "Copy device mem to host failed";
