@@ -1672,3 +1672,23 @@ def get_bprop_inplace_update_v2(self):
         return zeros_like(x), zeros_like(indices), zeros_like(v)
 
     return bprop
+
+
+@bprop_getters.register(P.InplaceSub)
+def get_bprop_inplace_sub(self):
+    """Grad definition for `InplaceSub` operation."""
+
+    def bprop(x, input_v, out, dout):
+        return zeros_like(x), zeros_like(input_v)
+
+    return bprop
+
+
+@bprop_getters.register(P.InplaceAdd)
+def get_bprop_inplace_add(self):
+    """Grad definition for `InplaceAdd` operation."""
+
+    def bprop(x, input_v, out, dout):
+        return zeros_like(x), zeros_like(input_v)
+
+    return bprop
