@@ -23,6 +23,7 @@
 #include <iterator>
 
 #include "ops/matrix_triangular_solve.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/abstract_value.h"
@@ -46,44 +47,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> MatrixTriangularSolveBcastHelper(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape) {
-  if (x_shape == y_shape) {
-    return x_shape;
-  }
-  constexpr int dynamic_rank_len = 1;
-  constexpr int dynamic_rank_value = -2;
-  if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
-      (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
-    return std::vector<int64_t>({dynamic_rank_value});
-  }
-  auto x_length = static_cast<int64_t>(x_shape.size());
-  auto y_length = static_cast<int64_t>(y_shape.size());
-  auto length = x_length < y_length ? x_length : y_length;
-  std::vector<int64_t> broadcast_shape;
-  if (x_length == length) {
-    (void)std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
-  } else {
-    (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
-  }
-  for (int64_t i = -length; i < 0; i++) {
-    if (x_shape[LongToSize(x_length + i)] == 1) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if (x_shape[LongToSize(x_length + i)] == y_shape[LongToSize(y_length + i)]) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[LongToSize(x_length + i)] == abstract::Shape::kShapeDimAny) ||
-               (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
-      broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
-    } else {
-      MS_EXCEPTION(ValueError)
-        << "For 'MatrixTriangularSolve', the batch dimensions of 'matrix' and 'rhs' should satisfy"
-        << "the broadcast rules, but got " << x_shape << " and " << y_shape << " .";
-    }
-  }
-  return broadcast_shape;
-}
-
 abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -121,7 +84,7 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
     if (matrix_shape.size() > kIndex2 && rhs_shape.size() > kIndex2) {
       std::vector<int64_t> matrix_batch_dims(matrix_shape.begin(), matrix_shape.end() - kIndex2);
       std::vector<int64_t> rhs_batch_dims(rhs_shape.begin(), rhs_shape.end() - kIndex2);
-      output_shape = MatrixTriangularSolveBcastHelper(matrix_batch_dims, rhs_batch_dims);
+      output_shape = CalBroadCastShape(matrix_batch_dims, rhs_batch_dims, prim_name, "matrix", "rhs");
       output_shape.emplace_back(rhs_row);
       output_shape.emplace_back(rhs_col);
     } else if (matrix_shape.size() > kIndex2 && rhs_shape.size() == kIndex2) {
