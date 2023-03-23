@@ -2909,7 +2909,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
                                  bool need_comma = false, bool need_symbol = false) {
     std::string exception_str;
     MS_EXCEPTION_IF_NULL(arg);
-    if (arg->isa<abstract::AbstractSequence>()) {
+    if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
       return GetTupleOrListString(arg, input, node, need_comma, need_symbol);
     } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
@@ -2959,6 +2959,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       }
     }
     auto cnode = input->cast_ptr<CNode>();
+    if (arg_tuple_elements.size() >= cnode->inputs().size()) {
+      MS_LOG(EXCEPTION) << "size of cnode should be greater than arg_tuple_elements. "
+                        << "but got cnode size: " << cnode->inputs().size()
+                        << " arg_tuple_elements size: " << arg_tuple_elements.size();
+    }
     bool not_variable = !has_variable_;
     if (has_variable_) {
       not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));

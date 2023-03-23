@@ -1045,7 +1045,7 @@ class AfterOptARewriter : public BaseRewriter {
   void CheckCNodeInputsHasClassType(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
-    if (!support_fallback_runtime) {
+    if (!support_fallback_runtime || !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
       return;
     }
     const auto &inputs = cnode->inputs();
