@@ -1762,13 +1762,14 @@ def get_bprop_diagonal(self):
     offset = self.offset
     dim1 = self.dim1
     dim2 = self.dim2
-    zeros = P.Zeros()
+    zeros_op = P.FillV2()
     size_op = P.Size()
     transpose_op = Transpose()
     matrix_set_diag_op = MatrixSetDiagV3(align="LEFT_RIGHT")
 
     def bprop(x, out, dout):
         x_shape = x.shape
+        x_dtype = x.dtype
         x_dim = len(x_shape)
         if dim1 < 0:
             dim1_ = dim1 + x_dim
@@ -1782,7 +1783,8 @@ def get_bprop_diagonal(self):
             batch_dim = out.shape[:-1]
             diag_plane = (x_shape[dim1_], x_shape[dim2_])
             dx_trans_shape = batch_dim + diag_plane
-            dx = zeros(dx_trans_shape, x.dtype)
+            value = Tensor(0, x_dtype)
+            dx = zeros_op(dx_trans_shape, value)
             k = F.cast(offset, mstype.int32)
             dx = matrix_set_diag_op(dx, dout, k)
             dim = 0
