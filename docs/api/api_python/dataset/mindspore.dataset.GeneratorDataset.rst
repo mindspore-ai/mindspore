@@ -33,7 +33,7 @@
         - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **ValueError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **ValueError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note::
         - 如果配置 `python_multiprocessing=True（默认值：True）` 和 `num_parallel_workers>1（默认值：1）` 表示启动了多进程方式进行数据load加速，

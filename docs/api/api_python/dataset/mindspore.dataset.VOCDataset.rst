@@ -12,7 +12,7 @@ mindspore.dataset.VOCDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
-        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持 'Segmentation'和 'Detection'。默认值：'Segmentation'。
+        - **task** (str, 可选) - 指定读取VOC数据的任务类型，现在只支持 'Segmentation' 和 'Detection'。默认值：'Segmentation'。
         - **usage** (str, 可选) - 指定数据集的子集。默认值：'train'。
 
           - 如果 'task' 的值为 'Segmentation'，则读取 'ImageSets/Segmentation/' 目录下定义的图片和label信息；
@@ -20,7 +20,7 @@ mindspore.dataset.VOCDataset
         - **class_indexing** (dict, 可选) - 指定一个从label名称到label索引的映射，要求映射规则为string到int。索引值从0开始，并且要求每个label名称对应的索引值唯一。
           仅在 'Detection' 任务中有效。默认值：None，不指定。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有图像样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -43,7 +43,7 @@ mindspore.dataset.VOCDataset
         - **ValueError** - 指定的任务不为 'Segmentation'或 'Detection'。
         - **ValueError** - 指定任务为 'Segmentation'时， `class_indexing` 参数不为None。
         - **ValueError** - 与 `usage` 参数相关的txt文件不存在。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note::
         - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列 '_meta-filename'的前缀 '_meta-'，

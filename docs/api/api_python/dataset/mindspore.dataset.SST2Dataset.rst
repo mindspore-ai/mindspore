@@ -11,10 +11,10 @@ mindspore.dataset.SST2Dataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为'train'、'test'或'dev'。
-          取值为'train'时将会读取67,349个训练样本，取值为'test'时将会读取1,821个测试样本，取值为'dev'时将会读取872个样本。默认值：None，读取train中样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'dev'。
+          取值为 'train' 时将会读取67,349个训练样本，取值为 'test' 时将会读取1,821个测试样本，取值为 'dev' 时将会读取872个样本。默认值：None，读取train中样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：`Shuffle.GLOBAL` 。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：

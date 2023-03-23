@@ -9,8 +9,8 @@ mindspore.dataset.CoNLL2000Dataset
 
     参数：
         - **dataset_dir** (str) - 包含CoNLL2000分块数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'， 'test'或 'all'。
-          'train'将读取8936个训练样本， 'test'将读取2,012个测试样本中， 'all'将读取所有1,0948个样本。默认值：None，读取全部样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'all'。
+          'train' 将读取8936个训练样本，'test' 将读取2,012个测试样本中，'all' 将读取所有1,0948个样本。默认值：None，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗。如果 `shuffle` 为True，执行全局混洗。
@@ -21,7 +21,7 @@ mindspore.dataset.CoNLL2000Dataset
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。指定此参数后， `num_samples` 表示每个分片的最大样本数。默认值：None。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。只有当指定了 `num_shards` 时才能指定此参数。默认值：None。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：

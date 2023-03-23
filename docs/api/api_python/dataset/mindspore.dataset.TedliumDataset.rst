@@ -5,18 +5,18 @@ mindspore.dataset.TedliumDataset
 
     读取和解析Tedlium数据集的源数据集。生成的数据集的列取决于源SPH文件和相应的STM文件。
 
-    生成的数据集有六列 `[waveform, sample_rate, transcript, talk_id, speaker_id, identifier]` 。
+    生成的数据集有六列 `[waveform, sample_rate, transcript, talk_id, speaker_id, identifier]`。
     列 `waveform` 的数据类型为float32，列 `sample_rate` 的数据类型为int32，列 `transcript`、列 `talk_id`、列 `speaker_id` 和列 `identifier` 的数据类型为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **release** (str) - 指定数据集的发布版本，可以取值为 'release1'、 'release2'或 'release3'。
+        - **release** (str) - 指定数据集的发布版本，可以取值为 'release1'、'release2' 或 'release3'。
         - **usage** (str, 可选) - 指定数据集的子集。
-          对于 `release` 为 'release1'或 'release2'， `usage` 可以是 'train'、 'test'、 'dev'或 'all'。
+          对于 `release` 为 'release1' 或 'release2'，`usage` 可以是 'train'、'test'、'dev' 或 'all'。
           对于 `release` 为 'release3'， `usage` 只能是 'all'。默认值：None，读取全部样本。
         - **extensions** (str, 可选) - 指定SPH文件的扩展名。默认值：'.sph'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
@@ -30,7 +30,7 @@ mindspore.dataset.TedliumDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 

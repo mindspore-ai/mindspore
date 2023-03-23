@@ -18,7 +18,7 @@ mindspore.dataset.TFRecordDataset
           `num_samples` 或numRows字段（由参数 `schema` 定义）将是为每个分片从压缩文件中读取的行数。
           强烈建议在 `compression_type` 为 "GZIP" 或 "ZLIB" 时提供 `num_samples` 或numRows字段（由参数 `schema` 定义）以避免为了获取文件大小对同一个文件进行多次解压而导致性能下降的问题。
 
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：mindspore.dataset.Shuffle.GLOBAL。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
@@ -37,7 +37,7 @@ mindspore.dataset.TFRecordDataset
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-        - **ValueError** - `shard_id` 参数错误，小于0或者大于等于 `num_shards` 。
+        - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
         - **ValueError** - `compression_type` 不是''，'GZIP'，'ZLIB'三者之一。
         - **ValueError** - `compression_type` 有效但是数据集文件数量小于 `num_shards` 。
         - **ValueError** - `num_samples` 小于0。
