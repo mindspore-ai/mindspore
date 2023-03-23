@@ -601,6 +601,37 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   MS_LOG(DEBUG) << "Control node scheduler link end.";
 }
 
+namespace {
+AnfNodePtr FetchInternalParameterInput(const AnfNodePtr &node, const ControlNodeParserPtr &parser,
+                                       const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(WARNING) << "Node:" << node->DebugString() << " is not a cnode.";
+    return nullptr;
+  }
+  const auto &kernel = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(kernel);
+  for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+    auto input = input_with_index.first;
+    MS_EXCEPTION_IF_NULL(input);
+    if (HasAbstractMonad(input) || (!parser->IsControlFlowDataArrow(graph, input))) {
+      continue;
+    }
+
+    auto from_node_with_index = GetFrontNodeByKernelGraph(input, graph.get());
+    MS_EXCEPTION_IF_NULL(from_node_with_index.first);
+    const auto &from_node = from_node_with_index.first;
+    if (from_node->isa<CNode>()) {
+      return from_node;
+    }
+  }
+  return nullptr;
+}
+}  // namespace
+
 void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
                                                           const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
@@ -620,15 +651,24 @@ void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_
       SchedulerHelper::AddControlArrow(custom_actor.get(), actor);
     }
     if (custom_actor->input_control_arrow_aids().empty() && custom_actor->input_data_arrow_aids().empty()) {
-      const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+      const auto &kernel_graph = std::dynamic_pointer_cast<KernelGraph>(graph);
       MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+      AnfNodePtr internal_parameter = nullptr;
+      if (base_node != nullptr) {
+        internal_parameter = FetchInternalParameterInput(base_node, parser, kernel_graph);
+      }
       AbstractActor *from_actor = nullptr;
-      if (parser->IsCallInputKernelGraph(kernel_graph)) {
+      if (parser->IsCallInputKernelGraph(kernel_graph.get())) {
         auto kernel_graph_ptr = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
         const auto &actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph_ptr) + kStackActorNameSuffix;
         from_actor = FetchActor(actor_name);
+      } else if (internal_parameter != nullptr) {
+        const auto &from_graph = parser->FetchKernelGraphByFrontNode(internal_parameter);
+        MS_EXCEPTION_IF_NULL(from_graph);
+        from_actor = FetchActor(parser->FetchGroupNameByKernelGraph(from_graph) + kExitActorNameSuffix);
       } else {
-        const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph);
+        const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph.get());
         MS_EXCEPTION_IF_NULL(func_graph);
         const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
         from_actor = FetchActor(actor_name);
