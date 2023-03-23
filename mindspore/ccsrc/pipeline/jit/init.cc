@@ -430,8 +430,6 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<OffloadContext, std::shared_ptr<OffloadContext>>(m, "OffloadContext")
     .def_static("get_instance", &OffloadContext::GetInstance, "Get offload context instance.")
-    .def("set_enable_offload", &OffloadContext::set_enable_offload, "Set the flag of whether enabling offload.")
-    .def("enable_offload", &OffloadContext::enable_offload, "Get the flag of whether enabling offload.")
     .def("set_offload_param", &OffloadContext::set_offload_param, "Set the param for offload destination, cpu or disk.")
     .def("offload_param", &OffloadContext::offload_param, "Get the param for offload destination.")
     .def("set_offload_path", &OffloadContext::set_offload_path, "Set the path of offload.")
