@@ -163,7 +163,7 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_size, abstract::Shape::kShapeDimAny));
   }
 
-  if (!(IsDynamic(x_shape) || IsDynamic(output_size_value))) {
+  if (!(IsDynamic(x_shape) || !(IsValueKnown(input_args[1]->BuildValue())))) {
     Col2ImShapeCheck(x_shape, kernel_size, dilation, padding, stride, output_size_value[kInputIndex0],
                      output_size_value[kInputIndex1]);
   }
