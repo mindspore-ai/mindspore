@@ -636,9 +636,8 @@ class IGamma(Cell):
         ax = a * self.log(x) - x - self.lgamma(a)
         para_shape = self.shape(ax)
         if para_shape != ():
-            broadcastto = P.BroadcastTo(para_shape)
-            x = broadcastto(x)
-            a = broadcastto(a)
+            x = F.broadcast_to(x, para_shape)
+            a = F.broadcast_to(a, para_shape)
         x_is_zero = self.equal(x, 0)
         log_maxfloat = self.log_maxfloat32
         underflow = self.less(ax, self.neg(log_maxfloat))
@@ -721,9 +720,8 @@ class LBeta(Cell):
         x_plus_y = x + y
         para_shape = self.shape(x_plus_y)
         if para_shape != ():
-            broadcastto = P.BroadcastTo(para_shape)
-            x = broadcastto(x)
-            y = broadcastto(y)
+            x = F.broadcast_to(x, para_shape)
+            y = F.broadcast_to(y, para_shape)
         comp_less = self.less(x, y)
         x_min = self.select(comp_less, x, y)
         y_max = self.select(comp_less, y, x)
@@ -843,12 +841,10 @@ class MatMul(Cell):
             x2_shape = self.shape_op(x2)
 
         x1_broadcast_shape, x2_broadcast_shape = get_broadcast_matmul_shape(x1_shape, x2_shape)
-        x1_broadcast_to = P.BroadcastTo(x1_broadcast_shape)
-        x2_broadcast_to = P.BroadcastTo(x2_broadcast_shape)
         if x1_broadcast_shape != x1_shape:
-            x1 = x1_broadcast_to(x1)
+            x1 = F.broadcast_to(x1, x1_broadcast_shape)
         if x2_broadcast_shape != x2_shape:
-            x2 = x2_broadcast_to(x2)
+            x2 = F.broadcast_to(x2, x2_broadcast_shape)
 
         matmul_broadcast = matmul_op(x1, x2)
 
