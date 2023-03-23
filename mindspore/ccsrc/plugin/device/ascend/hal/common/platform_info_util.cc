@@ -19,8 +19,6 @@
 
 namespace mindspore::device::ascend {
 const auto kDefaultCoreType = "AiCore";
-PlatformInfoUtil::~PlatformInfoUtil() { fe::PlatformInfoManager::Instance().Finalize(); }
-
 PlatformInfoUtil &PlatformInfoUtil::GetInstance() {
   static PlatformInfoUtil inst;
   return inst;
@@ -48,6 +46,8 @@ bool PlatformInfoUtil::Init(const std::string &soc_version) {
   soc_version_ = soc_version;
   return true;
 }
+
+void PlatformInfoUtil::Finalize() { (void)fe::PlatformInfoManager::Instance().Finalize(); }
 
 std::string PlatformInfoUtil::soc_version() const { return soc_version_; }
 

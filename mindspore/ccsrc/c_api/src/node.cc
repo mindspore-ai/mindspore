@@ -34,7 +34,7 @@ constexpr size_t secondInIdx = 2;
 constexpr size_t switchInputNum = 3;
 static const size_t maxMallocSize = GetMaxMallocSize();
 
-STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_names, AttrHandle attrs[],
+STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, const char *const *attr_names, AttrHandle attrs[],
                 size_t attr_num) {
   AttrMap attr_map{};
   for (size_t i = 0; i < attr_num; ++i) {
@@ -60,7 +60,7 @@ STATUS SetAttrs(ResMgrHandle res_mgr, const PrimitivePtr &prim, char **attr_name
 }
 
 NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type, Handle const inputs[],
-                   size_t input_num, char **attr_names, AttrHandle attrs[], size_t attr_num) {
+                   size_t input_num, const char *const *attr_names, AttrHandle attrs[], size_t attr_num) {
   if (res_mgr == nullptr || graph == nullptr || op_type == nullptr || inputs == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] or [op_type] or [inputs] is nullptr.";
     return nullptr;

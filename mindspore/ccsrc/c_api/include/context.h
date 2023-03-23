@@ -46,6 +46,14 @@ MIND_C_API void MSSetEagerMode(bool eager_mode);
 /// \return Error code indicates whether the function executed successfully.
 MIND_C_API STATUS MSSetBackendPolicy(const char *policy);
 
+/// \brief Get backend policy context.
+///
+/// \param[in] str_buf The char array to contain the backend policy string.
+/// \param[in] str_len The size of the char array.
+///
+/// \return name of the device under current context
+MIND_C_API STATUS MSGetBackendPolicy(char str_buf[], size_t str_len);
+
 /// \brief set device type context.
 ///
 /// \param[in] device type name of the device i.e. CPU, GPU, Ascend.

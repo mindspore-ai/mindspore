@@ -16,7 +16,7 @@
 
 set -e
 BASEPATH=$(cd "$(dirname $0)"; pwd)
-PROJECT_PATH=${BASEPATH}/../../..
+PROJECT_PATH=${BASEPATH}/../../../..
 
 # print usage message
 usage()
@@ -39,7 +39,7 @@ checkopts()
   DEVICE_TARGET_OPT="ascend310"
   DEVICE_ID_OPT=0
   TASECASE_NAME_OPT=""
-  TEST_PATH=${PROJECT_PATH}/tests/st/cpp
+  TEST_PATH=${PROJECT_PATH}/tests/st/cpp/cxx_api
   PACKAGE_PATH=${PROJECT_PATH}/output
   PACKAGE_TYPE="cpp"
 
@@ -100,7 +100,7 @@ elif [[ "${PACKAGE_TYPE}" == "cpp" ]]; then
   MINDSPORE_PKG_PATH=$(find "${TEST_PATH}" -maxdepth 1 -name "mindspore_ascend*")
 fi
 
-export LD_LIBRARY_PATH=${MINDSPORE_PKG_PATH}:${MINDSPORE_PKG_PATH}/lib:${PROJECT_PATH}/tests/st/cpp:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${MINDSPORE_PKG_PATH}:${MINDSPORE_PKG_PATH}/lib:${PROJECT_PATH}/tests/st/cpp/cxx_api:$LD_LIBRARY_PATH
 export GLOG_v=2
 export GC_COLLECT_IN_CELL=1
 export DEVICE_ID=$DEVICE_ID_OPT
@@ -113,9 +113,9 @@ else
 fi
 
 if [[ "X$TASECASE_NAME_OPT" != "X" ]]; then
-  ./st_tests --gtest_filter=$TASECASE_NAME_OPT
+  ./cxx_st_tests --gtest_filter=$TASECASE_NAME_OPT
 else
-  ./st_tests
+  ./cxx_st_tests
 fi
 RET=$?
 cd -
