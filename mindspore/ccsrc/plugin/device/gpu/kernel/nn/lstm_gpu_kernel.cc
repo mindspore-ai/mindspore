@@ -162,6 +162,9 @@ bool LstmGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto states_addr = GetDeviceAddress<T>(outputs, 4);
   void *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
 
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                     "stream synchronize failed.");
+
   if (!states_init_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, output_size_list_[kIndex4], 0),
