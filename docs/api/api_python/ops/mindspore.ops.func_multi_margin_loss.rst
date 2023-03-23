@@ -3,7 +3,7 @@ mindspore.ops.multi_margin_loss
 
 .. py:function:: mindspore.ops.multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean')
 
-    用于优化多类分类问题的合页损失。
+    用于优化多分类问题的合页损失。
 
     优化输入和输出之间的多级分类合页损耗（基于边缘损失）。
 
