@@ -2399,8 +2399,8 @@ class Logit(Primitive):
 
 class ReduceStd(Primitive):
     """
-    Returns the standard-deviation and mean of each row of the input Tensor in the dimension `axis`.
-    If `axis` is a list of dimensions, reduce over all of them.
+    Returns the standard-deviation and mean of the input Tensor along
+    dimension(s) specified by `axis`.
 
     Args:
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
@@ -5776,7 +5776,7 @@ class MatrixLogarithm(Primitive):
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not one of: complex64, complex128.
         ValueError: If the dimension of `x` is less to 2.
-        ValueError: If the inner two dimension is not equal.
+        ValueError: If the size of last two dimensions are not equal.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -6353,19 +6353,19 @@ class MatrixSolve(Primitive):
     Solves systems of linear equations.
 
     Args:
-        adjoint (bool, optional): Indicating whether to solve with matrix or
-            its (block-wise) adjoint. Default: False.
+        adjoint (bool, optional): Indicates whether the adjoint of the
+            matrix is used during the computation. Default: False,  use its transpose instead.
 
     Inputs:
         - **matrix** (Tensor) - A tensor of shape :math:`[..., M, M]`,
           is a matrix of coefficients for a system of linear equations.
         - **rhs** (Tensor) - A tensor of shape :math:`[..., M, K]`,
           is a matrix of the resulting values of a system of linear equations.
-          'rhs' must have the same type as `matrix`.
+          `rhs` must have the same type as `matrix`.
 
     Outputs:
         Tensor, a matrix composed of solutions to a system of linear equations,
-        which has the same type and shape as 'rhs'.
+        which has the same type and shape as `rhs`.
 
     Raises:
         TypeError: If `adjoint` is not the type of bool.
@@ -6496,7 +6496,10 @@ class Lu(Primitive):
 
 class LuSolve(Primitive):
     r"""
-    Return the solution of the linear equation :math:`Ax = b` .
+    Computes the solution y to the system of linear equations :math:`Ay = b` ,
+    given LU decomposition A and column vector b.
+
+    LU decomposition of a matrix can be generated from :func:`mindspore.scipy.linalg.lu` .
 
     Note:
         The batch dimensions of lu_pivots must match the batch dimensions of lu_data, the size of the dimension and the
@@ -6510,14 +6513,14 @@ class LuSolve(Primitive):
         :math:`(3, 3)`, x's batch dimensions is :math:`(2, 3, 3)`.
 
     Inputs:
-        - **x** (Tensor) - The input is a tensor of size :math:`(*, m, k)`, where * is batch dimensions, with data type
-          float32, float16.
-        - **lu_data** (Tensor) - The input is a tensor of size :math:`(*, m, m)`, where * is batch dimensions, that can
-          be decomposed into an upper
-          triangular matrix U and a lower triangular matrix L, with data type float32, float16.
-        - **lu_pivots** (Tensor) - The input is a tensor of size :math:`(*, m)`,
-          where :math:`*` is batch dimensions, that can
-          be converted to a permutation matrix P, with data type int32.
+        - **x** (Tensor) - Column vector `b` in the above equation. It has shape :math:`(*, m, k)`,
+          where * is batch dimensions, with data type float32, float16.
+        - **lu_data** (Tensor) - LU decomposition. It has shape :math:`(*, m, m)`, where * is batch
+          dimensions, that can be decomposed into an upper triangular matrix U and a lower triangular
+          matrix L, with data type float32, float16.
+        - **lu_pivots** (Tensor) - Permutation matrix P of LU decomposition. It has
+          shape :math:`(*, m)`, where :math:`*` is batch dimensions, that can be converted
+          to a permutation matrix P, with data type int32.
 
     Outputs:
         Tensor, the same data type as the x and lu_data.
@@ -6866,7 +6869,7 @@ class Trace(Primitive):
         - **x** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
 
     Outputs:
-        Tensor, with the same data type as input `x`, and size equals to 1.
+        Tensor, 0D Tensor with 1 element, it has the same data type as input `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6880,7 +6883,17 @@ class Trace(Primitive):
         >>> trace = ops.Trace()
         >>> output = trace(x)
         >>> print(output)
-        15.
+        15.0
+        >>> x = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        18.0
+        >>> x = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        24.0
     """
 
     @prim_attr_register
@@ -7502,8 +7515,8 @@ class MatrixTriangularSolve(Primitive):
     Args:
         lower (bool, optional): If True, the innermost matrices in `matrix` is
             are lower triangular. Default: True.
-        adjoint (bool, optional): If True, solve with the adjoint of `matrix`.
-            Default: False.
+        adjoint (bool, optional): Indicates whether the adjoint of the
+            matrix is used during the computation. Default: False,  use its transpose instead.
 
     Inputs:
         - **matrix** (Tensor) - Tensor of shape :math:`(*, M, M)`,
@@ -7527,9 +7540,9 @@ class MatrixTriangularSolve(Primitive):
 
     Examples:
         >>> matrix_triangular_solve = ops.MatrixTriangularSolve(lower=True, adjoint=False)
-        >>> a = np.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]])
-        >>> b = np.array([[1, 0],[2, 2],[1, 5],[0, 3]])
-        >>> output = matrix_triangular_solve(Tensor(a, mindspore.float32), Tensor(b, mindspore.float32))
+        >>> matrix = np.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]])
+        >>> rhs = np.array([[1, 0],[2, 2],[1, 5],[0, 3]])
+        >>> output = matrix_triangular_solve(Tensor(matrix, mindspore.float32), Tensor(rhs, mindspore.float32))
         >>> print(output)
         [[ 0.33333334  0.        ]
          [ 1.3333333   2.        ]

@@ -12,7 +12,7 @@ mindspore.ops.Trace
         - **x** (Tensor) - 二维Tensor。
 
     输出：
-        Tensor，其数据类型与 `x` 一致，含有一个元素。
+        Tensor，含有一个元素的零维Tensor，其数据类型与 `x` 一致。
 
     异常：
         - **TypeError** - 如果 `x` 不是Tensor。

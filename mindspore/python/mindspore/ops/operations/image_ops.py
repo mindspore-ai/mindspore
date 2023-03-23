@@ -626,7 +626,7 @@ class RGBToHSV(Primitive):
         A Tensor, has the same type and shape as input `images`.
 
     Raises:
-        TypeError: If `images` is not tensor or its dtype is not float or double.
+        TypeError: If `images` is not tensor or its dtype is not float.
         ValueError: If the rank of `images` is less than 1.
         ValueError: If the last value of shape of `images` is not 3.
 

@@ -3,7 +3,7 @@ mindspore.ops.MultiMarginLoss
 
 .. py:class:: mindspore.ops.MultiMarginLoss(p=1, margin=1.0, reduction="mean")
 
-    创建一个损失函数，用于优化输入和输出之间的多类分类 hinge 损失（基于边界的损失）。
+    创建一个损失函数，用于优化输入和输出之间的多分类合页损失。
 
     更多参考详见 :func:`multi_margin_loss`。
 

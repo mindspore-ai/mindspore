@@ -18,8 +18,8 @@ mindspore.ops.MaxPool3DWithArgmax
         - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在深度，高度和宽度方向的移动步长，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的移动步长。
         - **pads** (Union[int, tuple[int]]) - 池化填充长度。可以是一个整数表示在深度，高度和宽度方向的填充长度，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的填充长度。
         - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认为(1, 1, 1)。
-        - **ceil_mode** (bool) - 是否是用ceil代替floor来计算输出的shape。默认为False。
-        - **data_format** (str) - 选择输入数据格式，当前仅支持'NDCHW'。默认为'NDCHW'。
+        - **ceil_mode** (bool) - 是否使用ceil代替floor来计算输出的shape。默认为False。
+        - **data_format** (str) - 选择输入数据格式，当前仅支持'NCDHW'。默认为'NCDHW'。
         - **argmax_type** (mindspore.dtype) - 返回的最大值索引的数据类型。默认为mindspore.int64。
 
     输入：

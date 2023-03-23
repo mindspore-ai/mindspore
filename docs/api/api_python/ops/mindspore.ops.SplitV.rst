@@ -6,9 +6,9 @@ mindspore.ops.SplitV
     沿给定维度将输入Tensor拆分为 `num_split` 个Tensor。
 
     `input_x` Tensor将被拆分为若干子Tensor，子Tensor的shape由 `size_splits` 沿拆分维度给出。
-    这要求 `input_x.shape(split_dim)` 等于 `size_splits` 的总和。
+    这要求 `size_splits` 的对应位置的总和等于 `input_x.shape(split_dim)` 。
     
-    `input_x` 的shape为 :math:`(x_1, x_2, ..., x_M, ..., x_R)` 。 `input_x` 的秩为 `R` 。设
+    `input_x` 的shape为 :math:`(x_1, x_2, ..., x_M, ..., x_R)` ，其秩为 `R` 。设
     给定的 `split_dim` 为 `M` ，同时 :math:`-R \le M < R` 。设给定的 `num_split` 为 `N` ，给定
     的 `size_splits` 为 :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})` ， :math:`x_M=\sum_{i=1}^Nx_{m_i}` 。
     输出为list(Tensor)，对于第 :math:`i` 个Tensor，其shape为 :math:`(x_1, x_2, ..., x_{m_i}, ..., x_R)` ，其中
@@ -21,7 +21,7 @@ mindspore.ops.SplitV
 
     参数：
         - **size_splits** (Union[tuple, list]) - 包含沿拆分维度的每个输出Tensor大小的list。
-          必须与沿 `split_dim` 的值的维度和相等。可以包含一个-1，以表示要推断维度。
+          list内所有元素的和必须与输入的 `split_dim` 维的shape相等。可以包含一个-1，以表示要推断维度。
         - **split_dim** (int) - 沿着该维度进行拆分，必须在[-len(input_x.shape), len(input_x.shape))范围内。
         - **num_split** (int) - 输出Tensor的数量，必须是正整数。
 
