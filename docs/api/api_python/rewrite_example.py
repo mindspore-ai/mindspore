@@ -143,7 +143,7 @@ def pattern_replace(stree):
             return [conv_node]
 
     class BnReplace(PatternEngine):
-        # 替换网络中nn.MaxPool2d类型的节点
+        """替换网络中nn.MaxPool2d类型的节点"""
         def __init__(self):
             super().__init__([nn.MaxPool2d], ConvReplacement())
 
@@ -182,7 +182,7 @@ def test_rewrite():
     pattern_replace(stree)
     print(f"after pattern replace node code: {stree.get_code()}")
 
-    inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32) # pylint: disable=E1102
+    inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32) # pylint: disable=not-callable
     new_net = get_net(stree)
     source_code = get_code(stree)
     print(source_code)

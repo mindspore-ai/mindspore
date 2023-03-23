@@ -49,14 +49,13 @@ def ast_call_creator(func: ast.AST, args: list, keywords: list):
 
 def ast_create_arg_value(value):
     """Create arg node by type."""
-    from mindspore.rewrite.node import Node
     if isinstance(value, (int, float)):
         ast_value = ast_num_creator(value)
     elif isinstance(value, str):
         ast_value = ast_str_creator(value)
     elif value in (ms.float16, ms.float32, ms.float64):
         ast_value = ast_attributer_creator(".".join(["mindspore", str(value).lower()]))
-    elif isinstance(value, Node):
+    elif isinstance(value, ms.rewrite.node.Node):
         ast_value = ast_str_creator(value.get_targets()[0])
     else:
         raise TypeError("Unsupported arg type: ", type(value))

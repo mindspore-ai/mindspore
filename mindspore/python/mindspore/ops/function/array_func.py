@@ -6903,8 +6903,7 @@ def sequence_mask(lengths, maxlen=None):
         maxlen = _check_positive_int(maxlen, "maxlen", "sequence_mask")
         maxlen = to_tensor_op(maxlen, mstype.int32)
 
-    range_vector = range_op(to_tensor_op(0, mstype.int32), maxlen
-                            , to_tensor_op(1, mstype.int32))
+    range_vector = range_op(to_tensor_op(0, mstype.int32), maxlen, to_tensor_op(1, mstype.int32))
     mask = expand_op(lengths, -1)
     result = range_vector < mask
     return result
