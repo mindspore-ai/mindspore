@@ -854,8 +854,8 @@ bool DecreaseTransposeAlgo::IsNeedGenNewInput(const FuncGraphPtr &func_graph, co
         MS_LOG(WARNING) << "Failed to get current format of graph input";
         return false;
       }
-      if (cur_input_format == NCHW) {
-        MS_LOG(DEBUG) << "Parameter is the input of graph and input format is NCHW";
+      if (cur_input_format == NCHW || cur_input_format == NHWC) {
+        MS_LOG(DEBUG) << "Parameter is the input of graph";
         return true;
       }
     }
