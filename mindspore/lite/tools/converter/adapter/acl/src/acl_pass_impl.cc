@@ -266,7 +266,7 @@ std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
     auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
     if (val_ptr != nullptr) {
       auto origin_name = GetValue<std::string>(val_ptr);
-      MS_LOG(DEBUG) << "Change old name " << name << " to new name " << origin_name;
+      MS_LOG(DEBUG) << "Change name " << name << " to " << origin_name;
       name = origin_name;
     }
   }
