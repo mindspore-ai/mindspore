@@ -55,26 +55,13 @@ abstract::ShapePtr MakeShape(const ShapeVector &x_shape) {
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  const int64_t kNumber2 = 2;
+abstract::ShapePtr InferStaticShape(const std::vector<AbstractBasePtr> &input_args, const ShapeVector &x_shape,
+                                    const ShapeVector &diagonal_shape, const std::string &prim_name) {
   const int64_t kNumber1 = 1;
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto k_rank = SizeToLong(k_shape.size());
-  CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  const int64_t kNumber2 = 2;
   auto rank = SizeToLong(x_shape.size());
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
-  }
   (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto diagonal_rank = SizeToLong(diagonal_shape.size());
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  auto max_value = GetValue<int64_t>(max_length_ptr);
-  TrueValueCalAndCheck(input_args, max_value);
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
     int64_t row = x_shape[LongToSize(rank - kNumber2)];
@@ -145,6 +132,28 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(x_shape);
   }
   return MakeShape(x_shape);
+}
+
+abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const int64_t kNumber1 = 1;
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto k_rank = SizeToLong(k_shape.size());
+  CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
+  if (IsDynamicShape(x_shape) || IsDynamicShape(diagonal_shape) || IsDynamicRank(diagonal_shape)) {
+    return MakeShape(x_shape);
+  }
+  auto max_length_ptr = primitive->GetAttr("max_length");
+  MS_EXCEPTION_IF_NULL(max_length_ptr);
+  auto max_value = GetValue<int64_t>(max_length_ptr);
+  TrueValueCalAndCheck(input_args, max_value);
+  return InferStaticShape(input_args, x_shape, diagonal_shape, prim_name);
 }
 
 TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
