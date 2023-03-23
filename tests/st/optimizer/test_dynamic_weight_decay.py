@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from .weight_decay_utils import dynamic_weight_decay_cmp, WeightDecaySchdule, Net
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -42,7 +42,7 @@ def test_momentum_dynamic_weight_decay(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -77,7 +77,7 @@ def test_momentum_dynamic_weight_decay_group(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -99,7 +99,7 @@ def test_adamweightdecay_dynamic_weight_decay(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -134,7 +134,7 @@ def test_adamweightdecay_dynamic_weight_decay_group(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -167,7 +167,7 @@ def test_lamb_dynamic_weight_decay_graph_group(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -189,7 +189,7 @@ def test_lars_dynamic_weight_decay(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

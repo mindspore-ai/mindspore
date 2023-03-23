@@ -31,7 +31,7 @@ class CTCLossNet(nn.Cell):
         return self.ctcloss(log_probs, target, input_length, target_length)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -71,7 +71,7 @@ def test_ctc_loss_tnc(mode, reduct):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
