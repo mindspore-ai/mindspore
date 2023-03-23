@@ -290,8 +290,7 @@ void EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph) {
   parsed_batch_ids_num_ = true;
 }
 
-void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context,
-                                                             const KernelGraphPtr &graph) {
+void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context) {
   if (allocated_embed_cache_mem_) {
     return;
   }
@@ -343,7 +342,7 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
   }
 
   // 3. Allocate device memory for embedding cache table.
-  AllocMemForEmbeddingCacheTable(device_context, graph);
+  AllocMemForEmbeddingCacheTable(device_context);
 }
 
 void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
@@ -369,7 +368,7 @@ void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
   }
 }
 
-void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) {
+void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) const {
   if (!CheckEmbeddingCacheServer()) {
     return;
   }

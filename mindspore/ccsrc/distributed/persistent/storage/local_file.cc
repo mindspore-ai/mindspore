@@ -57,11 +57,6 @@ LocalFile<KeyType, ValueType>::LocalFile(const std::map<std::string, std::string
 }
 
 template <typename KeyType, typename ValueType>
-LocalFile<KeyType, ValueType>::~LocalFile() {
-  Finalize();
-}
-
-template <typename KeyType, typename ValueType>
 void LocalFile<KeyType, ValueType>::Initialize() {
   fs_ = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs_);

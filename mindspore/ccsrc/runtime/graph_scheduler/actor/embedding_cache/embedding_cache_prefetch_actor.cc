@@ -92,26 +92,6 @@ int32_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_k
   int32_t id = SizeToInt(distributed::kEmbeddingCacheOps.size()) * param_key + iter->second;
   return id;
 }
-
-// Async copy device memory to host.
-bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
-                             size_t stream_id) {
-  MS_ERROR_IF_NULL(dst);
-  MS_ERROR_IF_NULL(src);
-  MS_ERROR_IF_NULL(device_context);
-  MS_ERROR_IF_NULL(device_context->device_res_manager_);
-
-  void *device_ptr = const_cast<void *>(src);
-  void *host_ptr = dst;
-
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
-                                                                                 kTypeUnknown, ShapeVector());
-  MS_ERROR_IF_NULL(device_address);
-  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, stream_id),
-                           "Async memcpy device to host failed.");
-
-  return true;
-}
 }  // namespace
 
 void EmbeddingCachePrefetchActor::Initialize() {
@@ -951,9 +931,10 @@ bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
     auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
     MS_ERROR_IF_NULL(hash_table_addr);
     auto hash_table_size = hash_info.address.size;
-    RETURN_IF_FALSE_WITH_LOG(MemcpyDeviceToHostAsync(device_hash_table_addr_tmp.get(), hash_table_addr, hash_table_size,
-                                                     device_context_, stream_id_),
-                             "Memcpy device to host asynchronously failed.");
+    RETURN_IF_FALSE_WITH_LOG(
+      DeviceEmbeddingOperation::MemcpyDeviceToHostAsync(device_hash_table_addr_tmp.get(), hash_table_addr,
+                                                        hash_table_size, device_context_, stream_id_),
+      "Memcpy device to host asynchronously failed.");
     RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_),
                              "Synchronize stream failed.");
     RETURN_IF_FALSE(LookupLocalHostCache(embedding_size, swap_indices_lens, device_hash_table_addr_tmp.get(),

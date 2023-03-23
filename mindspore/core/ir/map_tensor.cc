@@ -74,7 +74,7 @@ void MapTensor::Update(const MapTensor::ExportData &data) {
   status_tensor_ = data.status_tensor;
 }
 
-void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) {
+void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) const {
   if (export_data.size() != kExportTensorNum) {
     MS_LOG(EXCEPTION) << "Invalid MapTensor export data.";
   }
@@ -100,7 +100,7 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
 
   // The value tensor.
   auto values_length = values->size();
-  auto element_length = abstract::ShapeSize(value_shape()) * abstract::TypeIdSize(value_dtype());
+  auto element_length = LongToSize(abstract::ShapeSize(value_shape())) * abstract::TypeIdSize(value_dtype());
   MS_EXCEPTION_IF_ZERO("element_length", element_length);
   auto values_num = values_length / element_length;
   ShapeVector value_tensor_shape{SizeToLong(values_num)};

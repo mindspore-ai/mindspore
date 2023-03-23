@@ -40,7 +40,7 @@ template <typename KeyType = int32_t, typename ValueType = float>
 class LocalFile : public StorageBase {
  public:
   explicit LocalFile(const std::map<std::string, std::string> &storage_config);
-  ~LocalFile() override;
+  ~LocalFile() override = default;
 
   // Initialize local file storage, such as creating file system handle and check data legitimacy.
   void Initialize() override;

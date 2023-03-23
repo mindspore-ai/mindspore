@@ -166,7 +166,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \brief Get three tensor length from device data with tensor shape and type.
   ///
   /// \param[in] export_data [HashTableExportData] The export data buffer from device side.
-  void TransExportDataToTensor(const HashTableExportData &export_data);
+  void TransExportDataToTensor(const HashTableExportData &export_data) const;
 
   /// \brief Get the key tensor of MapTensor data.
   ///
