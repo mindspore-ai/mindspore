@@ -399,7 +399,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             append_info_list.append({"name": k_name, "data": value})
             save_obj.extend(append_info_list)
 
-    # data_dict format as {"key1": [shape, type, data], "key2": [shape, type, data]}
     data_list = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
