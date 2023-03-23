@@ -543,7 +543,7 @@ def choice_with_mask(input_x, count=256, seed=None):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
 
-    The `input_x` must be a tensor whose rank is not less than 1. If its rank is greater than or equal to 2,
+    The `input_x` must be a tensor whose dimension is not less than 1. If its dimension is greater than or equal to 2,
     the first dimension specifies the number of samples.
     The returned index tensor denotes the index of the nonzero
     sample, the mask tensor denotes which elements in the index tensor are valid.
@@ -551,7 +551,7 @@ def choice_with_mask(input_x, count=256, seed=None):
     Args:
         input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
-        count (int): Number of items expected to get and the number must be greater than 0. Default: 256.
+        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: 256.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
             Default: None, which will be treated as 0.
 
@@ -611,7 +611,8 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
             uint8, int64, float64, float32, float16. Default: int64.
 
     Returns:
-        Tensor. Its shape is spcified by the required args `n`. Its type is spcified by `dtype`. Otherwise is default.
+        Tensor. Its shape is specified by the required args `n`. Its type is specified by `dtype`.
+        Otherwise is default.
 
     Raises:
         TypeError: If `dtype` is not allowed.

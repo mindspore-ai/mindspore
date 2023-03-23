@@ -580,7 +580,9 @@ def coo_asin(x: COOTensor) -> COOTensor:
         out_i = sin^{-1}(x_i)
 
     Args:
-        x (COOTensor): Input COOTensor.
+        x (COOTensor): Input COOTensor. The shape of COOTensor is :math:`(N,*)` ,
+            where :math:`*` means,any number of additional dimensions.
+            The data type should be one of the following types: float16, float32, float64, complex64, complex128.
 
     Returns:
         COOTensor, has the same shape and dtype as `x`.

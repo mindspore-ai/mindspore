@@ -244,10 +244,10 @@ def cat(tensors, axis=0):
     r"""
     Connect input tensors along with the given axis.
 
-    The input data is a tuple of tensors. These tensors have the same rank :math:`R`. Set the given axis as :math:`m`,
-    and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`. For the :math:`i`-th tensor :math:`t_i`,
-    it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
-    :math:`t_i`. Then, the shape of the output tensor is
+    The input data is a tuple or a list of tensors. These tensors have the same rank :math:`R`.
+    Set the given axis as :math:`m`, and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`.
+    For the :math:`i`-th tensor :math:`t_i`, it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`.
+    :math:`x_{mi}` is the :math:`m`-th dimension of the :math:`t_i`. Then, the shape of the output tensor is
 
     .. math::
 
@@ -259,6 +259,7 @@ def cat(tensors, axis=0):
             To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
             all other dimensions should be equal, that is,
             :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
+            where :math:`R` represents the rank of tensor.
         axis (int): The specified axis, whose value is in range :math:`[-R, R)`. Default: 0.
 
     Returns:
@@ -420,7 +421,7 @@ def where(condition, x, y):
     Args:
         condition (Tensor[bool]): If True, yield `x`, otherwise yield `y`.
         x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
-        y (Union[Tensor, Scalar]): When `condition` is Fasle, values to select from.
+        y (Union[Tensor, Scalar]): When `condition` is False, values to select from.
 
     Returns:
         Tensor, elements are selected from `x` and `y`.
@@ -806,7 +807,7 @@ def chunk(input, chunks, axis=0):
     Args:
         input (Tensor): A Tensor to be cut.
         chunks (int): Number of sub-tensors to cut.
-        axis (int): Specify the dimensions that you want to split. Default: 0.
+        axis (int, optional): Specify the dimensions that you want to split. Default: 0.
 
     Returns:
         A tuple of sub-tensors.
@@ -3712,8 +3713,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         the corresponding `updates` will not be updated to `input_x`.
 
     Args:
-        input_x (Tensor): The target tensor.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        input_x (Tensor): The target tensor. The rank of `input` must be at least 1.
         indices (Tensor): The index to do add operation whose data type must be mindspore.int32 or
           mindspore.int64. Same rank as input_x. And accepted range is [-s, s) where s is the size along axis.
         updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
@@ -3755,8 +3755,7 @@ def scatter(input, axis, index, src):
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
     Args:
-        input (Tensor): The target tensor.
-            The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
+        input (Tensor): The target tensor. The rank of `input` must be at least 1.
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
         index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
             mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
@@ -4362,7 +4361,7 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
     input shape :math:`(1, 5, 9)`, the filled input shape will be :math:`(1, 1, 1, 1, 5, 9)` and thus the
     output shape is :math:`(3, 1, 4, 1, 5, 9)`.
 
-    If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is conrresponding to
+    If the first :math:`*` dims of output shape have -1 in it, it implies this -1 is corresponding to
     a non-existing dim so they're not broadcastable. With target shape :math:`(3, -1, 4, 1, 5, 9)`,
     input shape :math:`(1, 5, 9)`, instead of operating the dim-filling process first, it raises errors directly.
 

@@ -24,8 +24,8 @@ mindspore.ops.clamp
 
     参数：
         - **input** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clamp` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。
-        - **min** (Union(Tensor, float, int)) - 指定最小值。默认值为None。
-        - **max** (Union(Tensor, float, int)) - 指定最大值。默认值为None。
+        - **min** (Union(Tensor, float, int)，可选) - 指定最小值。默认值为None。
+        - **max** (Union(Tensor, float, int)，可选) - 指定最大值。默认值为None。
 
     返回：
         Tensor、Tensor的列表或元组，表示裁剪后的Tensor。其shape和数据类型和 `input` 相同。
