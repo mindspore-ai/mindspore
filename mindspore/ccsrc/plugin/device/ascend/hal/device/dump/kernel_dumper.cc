@@ -211,6 +211,11 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
     MS_LOG(INFO) << "Skip dump output";
     return;
   }
+  uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
+  if (op_debug_mode != kNoOverflow) {
+    MS_LOG(WARNING) << "HCCL operator is not supported overflow detection!";
+    return;
+  }
   auto ori_name = task_info->op_name();
   auto idx = ori_name.rfind("_");
   auto op_name = ori_name.substr(0, idx);
