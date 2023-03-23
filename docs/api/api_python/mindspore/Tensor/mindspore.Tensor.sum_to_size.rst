@@ -3,7 +3,7 @@ mindspore.Tensor.sum_to_size
 
 .. py:method:: mindspore.Tensor.sum_to_size(*size)
 
-    将原Tensor的shape求和成 `size`。`size` 必须可以扩展到Tensor的shape。
+    将原Tensor按照指定 `size` 进行求和。`size` 必须可以扩展到Tensor的shape。
 
     参数：
         - **size** (Union[tuple(int), int]) - 期望输出Tensor的shape。

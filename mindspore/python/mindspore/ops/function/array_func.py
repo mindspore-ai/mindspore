@@ -2113,8 +2113,8 @@ def unbind(input, dim=0):
 
     Unstacks a tensor of rank `R` along axis dimension, and output tensors will have rank `(R-1)`.
 
-    Given a tensor of shape :math:`(input_1, input_2, ..., input_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(input_1, input_2, ..., input_{axis}, input_{axis+2}, ..., input_R)`.
+    Given a tensor of shape :math:`(n_1, n_2, ..., n_R)` and a specified `dim`,
+    shape of the output tensors is :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)`.
 
     Args:
         input (Tensor): The shape is :math:`(input_1, input_2, ..., input_R)`.
@@ -2180,18 +2180,14 @@ def unsqueeze(input, dim):
     """
     Adds an additional dimension to `input` at the given dim.
 
-    Note:
-        If the specified dim is a negative number, the index is counted
-        backward from the end and starts at 1.
-
     Args:
-        input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input (Tensor): The shape of tensor is :math:`(n_1, n_2, ..., n_R)`.
         dim (int): Specifies the dimension index at which to expand
             the shape of `input`. The value of `dim` must be in the range
             `[-input.ndim-1, input.ndim]`. Only constant value is allowed.
 
     Returns:
-        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
+        Tensor, the shape of tensor is :math:`(1, n_1, n_2, ..., n_R)` if the
         value of `dim` is 0. It has the same data type as `input`.
 
     Raises:
@@ -5518,7 +5514,9 @@ def tensor_split(input, indices_or_sections, axis=0):
 
 def vsplit(input, indices_or_sections):
     """
-    Splits a tensor into multiple sub-tensors vertically.
+    Splits `input` with two or more dimensions, into multiple sub-tensors vertically
+    according to `indices_or_sections`.
+
     It is equivalent to `ops.tensor_split` with :math:`axis=0` .
 
     Args:
