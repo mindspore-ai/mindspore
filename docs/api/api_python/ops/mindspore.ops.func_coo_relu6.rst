@@ -11,7 +11,7 @@
     返回 :math:`\min(\max(0,x), 6)` 元素的值。
 
     参数：
-        - **x** (COOTensor) - coo_relu6的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，数据类型为float16或float32。
+        - **x** (COOTensor) - coo_relu6的输入，数据类型为float16或float32。
 
     返回：
         COOTensor，数据类型和shape与 `x` 相同。
