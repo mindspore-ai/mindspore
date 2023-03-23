@@ -13,7 +13,7 @@ mindspore.dataset.audio.GriffinLim
         - **n_iter** (int, 可选) - 相位恢复的迭代次数。默认值：32。
         - **win_length** (int, 可选) - GriffinLim的窗口大小。默认值：None，将设置为 `n_fft` 的值。
         - **hop_length** (int, 可选) - STFT窗口之间的跳数长度。默认值：None，将设置为 `win_length//2` 。
-        - **window_type** (WindowType, 可选) - GriffinLim的窗口类型，可以是WindowType.BARTLETT，
+        - **window_type** (:class:`mindspore.dataset.audio.WindowType` , 可选) - GriffinLim的窗口类型，可以是WindowType.BARTLETT，
           WindowType.BLACKMAN，WindowType.HAMMING，WindowType.HANN或WindowType.KAISER。
           默认值：WindowType.HANN，目前macOS上不支持kaiser窗口。
         - **power** (float, 可选) - 幅度谱图的指数。默认值：2.0。

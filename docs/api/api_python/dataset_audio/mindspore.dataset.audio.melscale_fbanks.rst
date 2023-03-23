@@ -11,8 +11,8 @@ mindspore.dataset.audio.melscale_fbanks
         - **f_max** (float) - 最大频率，单位为Hz。
         - **n_mels** (int) - 梅尔滤波器组数。
         - **sample_rate** (int) - 音频波形的采样频率。
-        - **norm** (NormType, 可选) - 标准化方法，可以是NormType.NONE或NormType.SLANEY。默认值：NormType.NONE。
-        - **mel_type** (MelType, 可选) - 使用的标度，可以是MelType.HTK或MelType.SLANEY。默认值：MelType.HTK。
+        - **norm** (:class:`mindspore.dataset.audio.NormType` , 可选) - 标准化方法，可以是NormType.NONE或NormType.SLANEY。默认值：NormType.NONE。
+        - **mel_type** (:class:`mindspore.dataset.audio.MelType` , 可选) - 使用的标度，可以是MelType.HTK或MelType.SLANEY。默认值：MelType.HTK。
 
     返回：
         numpy.ndarray，频率变换矩阵，shape为( `n_freqs` , `n_mels` )。

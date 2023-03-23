@@ -6,10 +6,10 @@
     使用给定的边界框和类别置信度绘制图像。
 
     参数：
-        - **image** (numpy.ndarray) - 待绘制的图像，shape为(C, H, W)或(H, W, C)，通道顺序为RGB。
-        - **bboxes** (numpy.ndarray) - 边界框（包含类别置信度），shape为(N, 4)或(N, 5)，格式为(N,X,Y,W,H)。
-        - **labels** (numpy.ndarray) - 边界框的类别，shape为(N, 1)。
-        - **segm** (numpy.ndarray) - 图像分割掩码，shape为(M, H, W)，M表示类别总数。默认值：None，不绘制掩码。
+        - **image** (numpy.ndarray) - 待绘制的图像，shape为<C, H, W>或<H, W, C>，通道顺序为RGB。
+        - **bboxes** (numpy.ndarray) - 边界框（包含类别置信度），shape为<N, 4>或<N, 5>，格式为<N,X,Y,W,H>。
+        - **labels** (numpy.ndarray) - 边界框的类别，shape为<N, 1>。
+        - **segm** (numpy.ndarray) - 图像分割掩码，shape为<M, H, W>，M表示类别总数。默认值：None，不绘制掩码。
         - **class_names** (list[str], tuple[str], dict) - 类别索引到类别名的映射表。默认值：None，仅显示类别索引。
         - **score_threshold** (float) - 绘制边界框的类别置信度阈值。默认值：0，绘制所有边界框。
         - **bbox_color** (tuple(int)) - 指定绘制边界框时线条的颜色，顺序为BGR。默认值：(0,255,0)，表示绿色。
@@ -27,10 +27,10 @@
 
     异常：
         - **ImportError** - 当未安装opencv-python库。
-        - **AssertionError** - 当 `image` 的格式不为(H, W, C)或(C, H, W)。
-        - **AssertionError** - 当 `bboxes` 的格式不为(N, 4)或(N, 5)。
-        - **AssertionError** - 当 `labels` 的格式不为(N, 1)。
-        - **AssertionError** - 当 `segm` 的格式不为(M, H, W)。
+        - **AssertionError** - 当 `image` 的格式不为<H, W, C>或<C, H, W>。
+        - **AssertionError** - 当 `bboxes` 的格式不为<N, 4>或<N, 5>。
+        - **AssertionError** - 当 `labels` 的格式不为<N, 1>。
+        - **AssertionError** - 当 `segm` 的格式不为<M, H, W>。
         - **AssertionError** - 当 `class_names` 的类型不为list、tuple或dict。
         - **AssertionError** - 当 `bbox_color` 不为(B, G, R)格式的tuple。
         - **AssertionError** - 当 `text_color` 不为(B, G, R)格式的tuple。

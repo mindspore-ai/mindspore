@@ -11,7 +11,7 @@ mindspore.dataset.vision.RandomCropDecodeResize
           如果 size 是一个长度为 2 的序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
         - **scale** (Union[list, tuple], 可选) - 要裁剪的原始尺寸大小的各个尺寸的范围[min, max)，必须为非负数。默认值：(0.08, 1.0)。
         - **ratio** (Union[list, tuple], 可选) - 宽高比的范围 [min, max) 裁剪，必须为非负数。默认值：(3. / 4., 4. / 3.)。
-        - **interpolation** (Inter, 可选) - 图像插值方式。它可以是 [Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA、Inter.PILCUBIC] 中的任何一个。默认值：Inter.BILINEAR。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` , 可选) - 图像插值方式。它可以是 [Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA、Inter.PILCUBIC] 中的任何一个。默认值：Inter.BILINEAR。
 
           - **Inter.BILINEAR**: 双线性插值。
           - **Inter.NEAREST**: 最近邻插值。

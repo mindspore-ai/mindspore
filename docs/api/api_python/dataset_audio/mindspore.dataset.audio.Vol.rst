@@ -10,7 +10,7 @@ mindspore.dataset.audio.Vol
           如果 `gain_type` 为 GainType.AMPLITUDE，应为一个非负的幅度比。
           如果 `gain_type` 为 GainType.POWER，应为一个功率（电压的平方）。
           如果 `gain_type` 为 GainType.DB，应以分贝为单位。
-        - **gain_type** (GainType, 可选) - 增益的类型，可为GainType.AMPLITUDE、
+        - **gain_type** (:class:`mindspore.dataset.audio.GainType` , 可选) - 增益的类型，可为GainType.AMPLITUDE、
           GainType.POWER或GainType.DB。默认值：GainType.AMPLITUDE。
 
     异常：

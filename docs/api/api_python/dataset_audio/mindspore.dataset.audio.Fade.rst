@@ -8,7 +8,7 @@ mindspore.dataset.audio.Fade
     参数：
         - **fade_in_len** (int, 可选) - 淡入长度（时间帧），必须是非负。默认值：0。
         - **fade_out_len** (int, 可选) - 淡出长度（时间帧），必须是非负。默认值：0。
-        - **fade_shape** (FadeShape, 可选) - 淡入淡出形状，可以选择FadeShape提供的模式。默认值：FadeShape.LINEAR。
+        - **fade_shape** (:class:`mindspore.dataset.audio.FadeShape` , 可选) - 淡入淡出形状，可以选择FadeShape提供的模式。默认值：FadeShape.LINEAR。
 
           - FadeShape.QUARTER_SINE，表示淡入淡出形状为四分之一正弦模式。
           - FadeShape.HALF_SINE，表示淡入形状为半正弦模式。

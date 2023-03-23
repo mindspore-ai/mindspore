@@ -8,7 +8,7 @@ mindspore.dataset.vision.read_image
 
     参数：
         - **filename** (str) - 待读取图像文件路径。
-        - **mode** (int, 可选) - 图像读取模式。它可以是 [ImageReadMode.UNCHANGED、ImageReadMode.GRAYSCALE、ImageReadMode.COLOR] 
+        - **mode** (:class:`mindspore.dataset.vision.ImageReadMode` , 可选) - 图像读取模式。它可以是 [ImageReadMode.UNCHANGED、ImageReadMode.GRAYSCALE、ImageReadMode.COLOR] 
           中的任何一个。默认值：ImageReadMode.UNCHANGED。
 
           - **ImageReadMode.UNCHANGED** - 按照图像原始格式读取。

@@ -12,7 +12,7 @@ mindspore.dataset.vision.Affine
         - **shear** (Union[float, Sequence[float, float]]) - 裁切度数，取值需为-180到180之间。
           若输入单个数值，表示平行于X轴的裁切角度，不进行Y轴上的裁切；
           若输入序列[float, float]，分别表示平行于X轴和Y轴的裁切角度。
-        - **resample** (Inter, 可选) - 图像插值方式。默认值：Inter.NEAREST。它可以是 [Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA] 中的任何一个。
+        - **resample** (:class:`mindspore.dataset.vision.Inter` , 可选) - 图像插值方式。默认值：Inter.NEAREST。它可以是 [Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA] 中的任何一个。
 
           - **Inter.BILINEAR**: 双线性插值。
           - **Inter.NEAREST**: 最近邻插值。

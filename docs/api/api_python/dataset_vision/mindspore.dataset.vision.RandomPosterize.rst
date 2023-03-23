@@ -3,7 +3,7 @@ mindspore.dataset.vision.RandomPosterize
 
 .. py:class:: mindspore.dataset.vision.RandomPosterize(bits=(8, 8))
 
-    随机减少输入图像每个颜色通道的位数。
+    随机减少图像的颜色通道的比特位数，使图像变得高对比度和颜色鲜艳。
 
     参数：
         - **bits** (Union[int, Sequence[int]], 可选) - 随机位数压缩的范围。位值必须在 [1,8] 范围内，并且在给定范围内至少包含一个整数值。它必须是 (min, max) 或整数格式。

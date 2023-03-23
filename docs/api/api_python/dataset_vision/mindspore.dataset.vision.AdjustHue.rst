@@ -5,8 +5,6 @@ mindspore.dataset.vision.AdjustHue
 
     调整输入图像的色调。
 
-    输入图像的shape需为 [H, W, C]。
-
     参数：
         - **hue_factor** (float) - 色调通道调节值，值必须在 [-0.5, 0.5] 范围内。
 

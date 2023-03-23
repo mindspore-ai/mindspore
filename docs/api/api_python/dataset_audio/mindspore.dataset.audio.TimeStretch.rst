@@ -5,7 +5,7 @@ mindspore.dataset.audio.TimeStretch
 
     以给定的比例拉伸音频短时傅里叶（Short Time Fourier Transform, STFT）频谱的时域，但不改变音频的音高。
 
-    .. note:: 待处理音频维度需为(..., freq, time, complex=2)。第零维代表实部，第一维代表虚部。
+    .. note:: 待处理音频shape需为<..., freq, time, complex=2>。第零维代表实部，第一维代表虚部。
 
     参数：
         - **hop_length** (int, 可选) - STFT窗之间每跳的长度，即连续帧之间的样本数。默认值：None，表示取 `n_freq - 1` 。

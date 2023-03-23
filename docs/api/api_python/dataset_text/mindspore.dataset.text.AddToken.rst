@@ -7,7 +7,7 @@ mindspore.dataset.text.AddToken
 
     参数：
         - **token** (str) - 待添加的分词(token)。
-        - **begin** (bool, 可选) - 是否在序列的开头或结尾插入分词(token)。默认值：True。
+        - **begin** (bool, 可选) - 选择分词(token)插入的位置，若为True则在序列开头插入，否则在序列结尾插入。默认值：True。
 
     异常：
         - **TypeError** - 如果 `token` 的类型不为str。
