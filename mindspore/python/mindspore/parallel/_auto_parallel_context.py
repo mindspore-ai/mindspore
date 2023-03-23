@@ -130,7 +130,6 @@ class _AutoParallelContext:
         """
         self.check_context_handle()
         config = config.copy()
-        _ParallelFusionConfig.CONFIG = config.copy()
         if _ParallelFusionConfig.OPENSTATE not in config.keys():
             config[_ParallelFusionConfig.OPENSTATE] = True
         for key in list(config.keys()):
@@ -145,6 +144,8 @@ class _AutoParallelContext:
             else:
                 raise KeyError("comm fusion type must be openstate,"
                                "allreduce, allgather or reducescatter, but got {}".format(key))
+            if key in _ParallelFusionConfig.CONFIG:
+                _ParallelFusionConfig.CONFIG[key] = config[key]
 
     def get_comm_fusion(self):
         """Get comm fusion config."""

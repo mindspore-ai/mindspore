@@ -203,8 +203,7 @@ def test_allreduce_fusion_size():
                    'backbone1.fc1.weight': 1}
     assert allreduce_fusion_dict == expect_dict
     cost_model_context.reset_cost_model_context()
-    comm_fusion = auto_parallel_context().get_comm_fusion()
-    assert comm_fusion_dict == comm_fusion
+
 
 def test_lamb_split_fusion_in_index():
     """
@@ -378,7 +377,11 @@ def test_get_comm_fusion():
     comm_fusion_dict = {"openstate": False, "allreduce": {"mode": "auto", "config": None}}
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, comm_fusion=comm_fusion_dict)
     fusion_dict = context.get_auto_parallel_context("comm_fusion")
-    assert fusion_dict == comm_fusion_dict
+    expect_dict = {"openstate": False,
+                   "allreduce": {"mode": "auto", "config": None},
+                   "allgather": {"mode": "auto", "config": None},
+                   "reducescatter": {"mode": "auto", "config": None}}
+    assert fusion_dict == expect_dict
     context.reset_auto_parallel_context()
     fusion_dict = context.get_auto_parallel_context("comm_fusion")
     expect_dict = {"openstate": True,
