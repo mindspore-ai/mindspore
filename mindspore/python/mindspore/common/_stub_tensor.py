@@ -19,15 +19,26 @@ from functools import reduce
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import TensorNode, SequenceNode, NoneTypeNode, AnyTypeNode
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common.api import _convert_python_data
 
 
 def _stub_member(var, init):
+    """handle stub tensor's member, use a member cache to improve performance"""
     def getx(stub):
-        return init if stub.tensor is None else getattr(stub.tensor, var)
+        if stub.tensor is not None:
+            return getattr(stub.tensor, var)
+        if hasattr(stub, "member_cache"):
+            return getattr(stub.member_cache, var, init)
+        return init
 
     def setx(stub, value):
-        setattr(stub.stub_sync(), var, value)
+        if stub.tensor is not None:
+            setattr(stub.tensor, var, value)
+        else:
+            if not hasattr(stub, "member_cache"):
+                stub.member_cache = {}
+            stub.member_cache[var] = value
     return property(getx, setx)
 
 
@@ -147,15 +158,23 @@ class StubTensor:
         if self.stub:
             val = self.stub.get_value()
             self.tensor = Tensor(val, internal=True)
+            if hasattr(self, "member_cache"):
+                for k, v in self.member_cache.items():
+                    setattr(self.tensor, k, v)
             self.stub = None
         return self.tensor
 
 
 def _init_stub_tensor_api():
-    stub_func = dir(StubTensor)
-    for attr in dir(Tensor):
-        if attr not in stub_func:
-            func = inspect.getattr_static(Tensor, attr)
+    """adapt to python tensor and cpp tensor api"""
+    need_init_func = set(dir(Tensor)) - set(dir(StubTensor))
+    cpp_tensor_func = dir(Tensor_)
+    for attr in need_init_func:
+        func = inspect.getattr_static(Tensor, attr)
+        if attr in cpp_tensor_func:
+            # for cpp tensor api, we always need to sync for real tensor first
+            setattr(StubTensor, attr, _stub_method(func))
+        else:
             setattr(StubTensor, attr, func)
 
 
