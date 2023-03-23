@@ -68,6 +68,7 @@ int AdjustHueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                                   inputs[kIndex0]->GetDeviceShapeAdaptively().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (!is_null_input_) {
+    input_elements = 1;
     for (size_t i = 0; i < shape.size(); ++i) {
       input_elements *= shape[i];
     }
