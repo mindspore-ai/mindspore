@@ -27,15 +27,18 @@ class Registry:
 
     @property
     def tensor(self):
+        """Return the registered tensor."""
         if self._tensor is None:
             raise ValueError("Before using Tensor in MSAdapter, please call 'set_adapter_config'.")
         return self._tensor
 
     @property
     def convert_map(self):
+        """Return the registered convert map."""
         return self._convert_map
 
     def register_tensor(self, value):
+        """Register the tensor of ms adapter."""
         if self._tensor is not None:
             raise ValueError("Repeated registration of tensor in ms adapter config.")
         if not issubclass(value, Tensor):
@@ -43,6 +46,7 @@ class Registry:
         self._tensor = value
 
     def register_convert_map(self, value):
+        """Register the convert map of ms adapter."""
         if not isinstance(value, dict):
             raise ValueError(f"Expect a dict type, but got {type(value)}.")
         self._convert_map = value
