@@ -9,7 +9,7 @@ mindspore.ops.coo_sin
         out_i = sin(x_i)
 
     参数：
-        - **x** (COOTensor) - COOTensor的shape为 :math:`(N,*)` 其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (COOTensor) - COOTensor的输入。
 
     返回：
         COOTensor，shape与 `x` 相同。
