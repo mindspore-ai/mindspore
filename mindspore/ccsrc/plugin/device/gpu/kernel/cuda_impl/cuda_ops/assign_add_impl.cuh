@@ -20,6 +20,6 @@
 #include "include/cuda_fp16.h"
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t CalAssignAdd(const size_t size, T *ref, const T *value, T *output,
-                                         cudaStream_t cuda_stream);
+                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ASSIGN_ADD_IMPL_CUH_

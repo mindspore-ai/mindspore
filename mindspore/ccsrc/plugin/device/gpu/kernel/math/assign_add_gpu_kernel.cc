@@ -80,7 +80,8 @@ bool AssignAddFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   T *ref = GetDeviceAddress<T>(inputs, kIndex0);
   T *value = GetDeviceAddress<T>(inputs, kIndex1);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  auto status = CalAssignAdd(input_size_ / sizeof(T), ref, value, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  auto status =
+    CalAssignAdd(input_size_ / sizeof(T), ref, value, output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
