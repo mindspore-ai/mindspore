@@ -500,7 +500,6 @@ int CpuSubGraph::Prepare() {
 
 int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(this->Context()->allocator.get() != nullptr);
-
   for (auto *kernel : nodes_) {
     MS_ASSERT(kernel != nullptr);
     auto ret = kernel->Execute(before, after);
@@ -511,4 +510,152 @@ int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &aft
   }
   return RET_OK;
 }
+
+#if defined(ENABLE_ARM) && defined(ENABLE_FP16) && !defined(ENABLE_MINDRT)
+int CpuFp16SubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
+  MS_ASSERT(this->Context()->allocator.get() != nullptr);
+  int ret;
+  MS_LOG(WARNING) << "step in CpuSubGraph::Execute";
+  ret = this->PreProcess();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "PreProcess kernel failed, name: " << this->name();
+    return ret;
+  }
+  for (auto *kernel : nodes_) {
+    MS_ASSERT(kernel != nullptr);
+    ret = kernel->Execute(before, after);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
+      return ret;
+    }
+  }
+  ret = this->PostProcess();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "PostProcess kernel failed, name: " << this->name();
+    return ret;
+  }
+  return RET_OK;
+}
+
+void CpuFp16SubGraph::FreeOriginInputData() {
+  for (auto *data_store : this->origin_input_data_) {
+    if (data_store == nullptr) {
+      continue;
+    }
+    // free data in data_store
+    if (data_store->data_ != nullptr) {
+      if (data_store->allocator_ == nullptr) {
+        free(data_store->data_);
+      } else {
+        data_store->allocator_->Free(data_store->data_);
+      }
+    }
+    // free data_store
+    if (this->context_->allocator != nullptr) {
+      this->context_->allocator->Free(data_store);
+    } else {
+      free(data_store);
+    }
+    data_store = nullptr;
+  }
+  this->origin_input_data_.clear();
+}
+
+int CpuFp16SubGraph::PreProcess() {
+  if (!support_fp16_) {
+    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
+    return RET_ERROR;
+  }
+  MS_ASSERT(origin_input_data_.empty());
+  for (auto tensor : this->in_tensors()) {
+    MS_ASSERT(tensor != nullptr);
+    if (tensor->data_type() == kNumberTypeFloat32) {
+      auto float32_data = tensor->data();
+      MS_ASSERT(float32_data != nullptr);
+      tensor->set_data(nullptr);
+      tensor->set_data_type(TypeId::kNumberTypeFloat16);
+      auto ret = tensor->MallocData();
+      if (RET_OK != ret) {
+        MS_LOG(ERROR) << "malloc data failed";
+        this->FreeOriginInputData();
+        return RET_ERROR;
+      }
+      MS_ASSERT(tensor->data() != nullptr);
+      Float32ToFloat16_fp16_handler(float32_data, tensor->data(), tensor->ElementsNum(), support_fp16_);
+      auto *data_store = DataStore::CreateDataStore(float32_data, tensor->own_data(), tensor->allocator().get(),
+                                                    this->context_->allocator.get());
+      if (data_store == nullptr) {
+        MS_LOG(ERROR) << "Create DataStore failed";
+        this->FreeOriginInputData();
+        return RET_ERROR;
+      }
+      origin_input_data_.emplace_back(data_store);
+    } else {
+      origin_input_data_.emplace_back(nullptr);
+    }
+  }
+  for (auto kernel : this->nodes_) {
+    for (auto tensor : kernel->out_tensors()) {
+      if (kernel->type() == schema::PrimitiveType_Cast) {
+        continue;
+      }
+      if (tensor->data_type() == kNumberTypeFloat32) {
+        tensor->set_data_type(kNumberTypeFloat16);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int CpuFp16SubGraph::PostProcess() {
+  if (!support_fp16_) {
+    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
+    return RET_ERROR;
+  }
+  for (auto tensor : this->out_tensors()) {
+    MS_ASSERT(tensor != nullptr);
+    if (tensor->data_type() == kNumberTypeFloat16) {
+      auto float16_data = tensor->data();
+      MS_ASSERT(float16_data != nullptr);
+      tensor->set_data(nullptr);
+      tensor->set_data_type(TypeId::kNumberTypeFloat32);
+      auto ret = tensor->MallocData();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "malloc data failed";
+        if (this->context_ != nullptr && this->context_->allocator != nullptr) {
+          this->context_->allocator->Free(float16_data);
+        } else {
+          free(float16_data);
+        }
+        return RET_ERROR;
+      }
+      MS_ASSERT(tensor->data() != nullptr);
+      Float16ToFloat32_fp16_handler(float16_data, tensor->data(), tensor->ElementsNum(), support_fp16_);
+      if (tensor->allocator() != nullptr) {
+        tensor->allocator()->Free(float16_data);
+      } else {
+        free(float16_data);
+      }
+    }
+  }
+  MS_ASSERT(this->origin_input_data_.size() == this->in_tensors().size());
+  for (size_t i = 0; i < this->in_tensors().size(); i++) {
+    auto tensor = in_tensors().at(i);
+    MS_ASSERT(tensor != nullptr);
+    auto origin_tensor_data = origin_input_data_.at(i);
+    if (tensor->data_type() == kNumberTypeFloat16 && origin_tensor_data != nullptr) {
+      if (!origin_tensor_data->own_data_ || (tensor->data() != nullptr)) {
+        MS_ASSERT(tensor != nullptr);
+        tensor->FreeData();
+        MS_ASSERT(origin_tensor_data->data_ != nullptr);
+        tensor->set_data(origin_tensor_data->data_, origin_tensor_data->own_data_);
+        tensor->set_data_type(kNumberTypeFloat32);
+        origin_tensor_data->data_ = nullptr;
+      }
+    }
+  }
+  this->FreeOriginInputData();
+  return RET_OK;
+}
+#endif
 }  // namespace mindspore::kernel
