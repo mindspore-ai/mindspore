@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/session/exec_order_builder.h"
+#include <string>
+#include <algorithm>
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 
@@ -43,7 +45,7 @@ bool NeedOptimize(const AnfNodePtr &node, const std::string &optimized_comm_grou
 }
 }  // namespace
 
-ExecOrderBuilder::~ExecOrderBuilder() { ClearLinkInfo(); }
+ExecOrderBuilder::~ExecOrderBuilder() {}
 
 std::vector<CNodePtr> ExecOrderBuilder::Build(FuncGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -120,6 +122,27 @@ void ExecOrderBuilder::BuildLinkInfo() {
   }
 }
 
+bool ExecOrderBuilder::CanVisitInput(bool visit_with_refcount, const AnfNodePtr &input,
+                                     mindspore::HashSet<AnfNodePtr> *visited) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(visited);
+  if (visit_with_refcount) {
+    auto output_iter = node_output_num_.find(input);
+    if (output_iter != node_output_num_.end()) {
+      output_iter->second--;
+      if (output_iter->second != 0) {
+        return false;
+      }
+    }
+  } else {
+    if (visited->find(input) != visited->end()) {
+      return false;
+    }
+    (void)visited->insert(input);
+  }
+  return true;
+}
+
 void ExecOrderBuilder::FindIndependentNodes() {
   std::queue<AnfNodePtr> to_visit;
   std::queue<AnfNodePtr> vnode_to_visit;
@@ -162,27 +185,16 @@ void ExecOrderBuilder::FindIndependentNodes() {
       }
       independent = false;
 
-      if (visit_with_refcount) {
-        auto output_iter = node_output_num_.find(input);
-        if (output_iter != node_output_num_.end()) {
-          output_iter->second--;
-          if (output_iter->second != 0) {
-            continue;
-          }
-        }
-      } else {
-        if (visited.find(input) != visited.end()) {
-          continue;
-        }
-        visited.insert(input);
+      if (!CanVisitInput(visit_with_refcount, input, &visited)) {
+        continue;
       }
 
       if (AnfUtils::IsRealKernel(node)) {
         to_visit.push(input);
         if (!independent_nodes_.empty() && visit_with_refcount) {
           auto inode = independent_nodes_.top();
-          node_output_edges_[input].emplace_back(inode);
-          node_input_edges_[inode].emplace_back(input);
+          (void)node_output_edges_[input].emplace_back(inode);
+          (void)node_input_edges_[inode].emplace_back(input);
           node_input_num_[inode] += 1;
           independent_nodes_.pop();
         }
@@ -222,7 +234,7 @@ void ExecOrderBuilder::EnqueueReadyNodes(const AnfNodePtr &node, std::deque<AnfN
     } else if ((is_comm_node && comm_first) || (!is_comm_node && !comm_first)) {
       visit_queue->push_back(output_node);
     } else {
-      active_nodes.emplace_back(output_node);
+      (void)active_nodes.emplace_back(output_node);
     }
   }
 
@@ -263,7 +275,7 @@ std::vector<CNodePtr> ExecOrderBuilder::Build() {
       // add execute node
       MS_EXCEPTION_IF_NULL(node);
       if (node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-        execution_order.emplace_back(node->cast<CNodePtr>());
+        (void)execution_order.emplace_back(node->cast<CNodePtr>());
       }
       // delay execute comm ops that need optimize
       bool is_comm = common::AnfAlgo::IsCommunicationOp(node);
