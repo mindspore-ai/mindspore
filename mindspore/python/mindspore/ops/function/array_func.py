@@ -5679,7 +5679,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         >>> print(output, index)
         [0.7] [3]
     """
-    if input.shape == ():
+    if not input.shape:
         return (input, Tensor(0, dtype=input.dtype))
     if axis is None:
         return (reduce_max(input), Tensor(0, dtype=input.dtype))
@@ -5785,10 +5785,10 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         >>> print(index, output)
         [0.0] [0]
     """
-    if input.shape == ():
-        return (input, Tensor(0))
+    if not input.shape:
+        return (input, Tensor(0, dtype=input.dtype))
     if axis is None:
-        return (reduce_min(input), Tensor(0))
+        return (reduce_min(input), Tensor(0, dtype=input.dtype))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
