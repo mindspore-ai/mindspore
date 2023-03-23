@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#include <set>
 #include <functional>
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
@@ -65,7 +64,7 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
   MS_EXCEPTION_IF_NULL(first_cache_size);
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
-    const std::unordered_set<std::string> kNeedCheckNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
+    const mindspore::HashSet<std::string> kNeedCheckNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
                                                              kGatherV2DOpName, kMapTensorGetOpName};
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
     if (kNeedCheckNodes.find(kernel_name) == kNeedCheckNodes.end()) {
@@ -149,8 +148,8 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
   for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
-    const std::set<std::string> kNeedCacheNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
-                                                   kGatherV2DOpName, kMapTensorGetOpName};
+    const mindspore::HashSet<std::string> kNeedCacheNodes = {kGatherOpName, kSparseGatherV2OpName, kGatherV2OpName,
+                                                             kGatherV2DOpName, kMapTensorGetOpName};
     if (kNeedCacheNodes.count(kernel_name) == 0) {
       continue;
     }
@@ -291,8 +290,7 @@ void EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph) {
   parsed_batch_ids_num_ = true;
 }
 
-void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context,
-                                                             const KernelGraphPtr &graph) {
+void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context) {
   if (allocated_embed_cache_mem_) {
     return;
   }
@@ -347,7 +345,7 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
   }
 
   // 3. Allocate device memory for embedding cache table.
-  AllocMemForEmbeddingCacheTable(device_context, graph);
+  AllocMemForEmbeddingCacheTable(device_context);
 }
 
 void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
@@ -373,7 +371,7 @@ void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
   }
 }
 
-void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) {
+void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr> &parameters) const {
   if (!CheckEmbeddingCacheServer()) {
     return;
   }

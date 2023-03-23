@@ -40,6 +40,8 @@ void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Finalize() {
   empty_slots_.clear();
   embedding_param_address_ = nullptr;
   embedding_param_ptr_ = nullptr;
+
+  EmbeddingStorage<KeyType, ValueType, Allocator>::Finalize();
 }
 
 template <typename KeyType, typename ValueType, typename Allocator>
@@ -63,7 +65,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Get(const ConstDataWi
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
   // (cache refresh), and count the keys of cache hit/miss.
   size_t cache_miss_cnt = 0;
-  int *cache_miss_offsets = this->template AllocateMemory<int>(sizeof(int) * key_num);
+  size_t *cache_miss_offsets = this->template AllocateMemory<size_t>(sizeof(size_t) * key_num);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   int *indices_in_cache = this->template AllocateMemory<int>(sizeof(int) * key_num);
   MS_EXCEPTION_IF_NULL(indices_in_cache);
@@ -122,7 +124,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataWi
   // 1. Query cache to get the index of each key in the Tensor, update the positions of cache hit elements in the cache
   // (cache refresh), and count the keys of cache hit/miss.
   size_t cache_miss_cnt = 0;
-  int *cache_miss_offsets = this->template AllocateMemory<int>(sizeof(int) * key_num);
+  size_t *cache_miss_offsets = this->template AllocateMemory<size_t>(sizeof(size_t) * key_num);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
   int *indices_in_cache = this->template AllocateMemory<int>(sizeof(int) * key_num);
   MS_EXCEPTION_IF_NULL(indices_in_cache);
@@ -161,7 +163,8 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::Put(const ConstDataWi
 
 template <typename KeyType, typename ValueType, typename Allocator>
 void DenseEmbeddingStorage<KeyType, ValueType, Allocator>::QueryCache(const KeyType *keys, size_t key_num,
-                                                                      int *cache_miss_offsets, size_t *cache_miss_cnt,
+                                                                      size_t *cache_miss_offsets,
+                                                                      size_t *cache_miss_cnt,
                                                                       int *indices_in_cache) const {
   MS_EXCEPTION_IF_NULL(keys);
   MS_EXCEPTION_IF_NULL(cache_miss_offsets);
@@ -243,7 +246,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::TryEvict(size_t reser
 
 template <typename KeyType, typename ValueType, typename Allocator>
 bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromStorage(const KeyType *keys,
-                                                                                      const int *cache_miss_offsets,
+                                                                                      const size_t *cache_miss_offsets,
                                                                                       size_t cache_miss_cnt,
                                                                                       ValueType *values) {
   MS_EXCEPTION_IF_NULL(keys);
@@ -306,7 +309,7 @@ bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromSt
 
 template <typename KeyType, typename ValueType, typename Allocator>
 bool DenseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromMemory(const KeyType *keys,
-                                                                                     const int *cache_miss_offsets,
+                                                                                     const size_t *cache_miss_offsets,
                                                                                      size_t cache_miss_cnt,
                                                                                      const ValueType *values) {
   MS_EXCEPTION_IF_NULL(keys);

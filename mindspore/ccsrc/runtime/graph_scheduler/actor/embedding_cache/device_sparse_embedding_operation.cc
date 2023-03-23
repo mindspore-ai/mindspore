@@ -88,7 +88,6 @@ bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTa
   MS_ERROR_IF_NULL(device_cache_device_to_host_ids);
   MS_ERROR_IF_NULL(host_cache_device_to_host_index);
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
-  auto cache_vocab_size = hash_info.cache_vocab_size;
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto embedding_size = hash_info.embedding_size;
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
@@ -100,8 +99,8 @@ bool DeviceSparseEmbeddingOperation::PushCacheFromDeviceToLocalHost(const HashTa
                            "Memcpy host to device asynchronously failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
-    LookupDeviceCache(hash_info.device_address, tmp_swap_ids, hash_table_addr, swap_indices_size, cache_vocab_size,
-                      embedding_size, embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_),
+    LookupDeviceCache(hash_info.device_address, tmp_swap_ids, hash_table_addr, swap_indices_size, embedding_size,
+                      embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_),
     "Lookup device cache failed.");
 
   // Erase swap out id from device hash table.
@@ -143,7 +142,6 @@ bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTa
   auto embedding_size = hash_info.embedding_size;
   MS_ERROR_IF_NULL(hash_info.address.addr);
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.address.addr);
-  auto cache_vocab_size = hash_info.cache_vocab_size;
   MS_ERROR_IF_NULL(hash_info.host_address);
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
@@ -166,7 +164,7 @@ bool DeviceSparseEmbeddingOperation::PullCacheFromLocalHostToDevice(const HashTa
   RETURN_IF_FALSE_WITH_LOG(
     UpdateDeviceCache(embedding_cache_table_manager.embedding_device_cache_->hash_swap_index_addr_,
                       embedding_cache_table_manager.embedding_device_cache_->hash_swap_value_addr_, swap_indices_size,
-                      cache_vocab_size, embedding_size, hash_table_addr, hash_info.device_address),
+                      embedding_size, hash_table_addr, hash_info.device_address),
     "Update device embedding cache failed.");
   MS_ERROR_IF_NULL(device_context_);
   MS_ERROR_IF_NULL(device_context_->device_res_manager_);
@@ -298,8 +296,8 @@ ParameterPtr DeviceSparseEmbeddingOperation::NewMapParameter(const KernelGraphPt
 }
 
 bool DeviceSparseEmbeddingOperation::LookupDeviceCache(const DeviceAddress *embed_device_address, void *ids,
-                                                       void *embedding_cache, size_t ids_num, size_t cache_size,
-                                                       size_t embedding_size, void *outputs) {
+                                                       void *embedding_cache, size_t ids_num, size_t embedding_size,
+                                                       void *outputs) {
   MS_ERROR_IF_NULL(embed_device_address);
   MS_ERROR_IF_NULL(ids);
   MS_ERROR_IF_NULL(embedding_cache);
@@ -329,9 +327,9 @@ bool DeviceSparseEmbeddingOperation::LookupDeviceCache(const DeviceAddress *embe
   return true;
 }
 
-bool DeviceSparseEmbeddingOperation::UpdateDeviceCache(void *ids, void *update_value, size_t ids_num, size_t cache_size,
+bool DeviceSparseEmbeddingOperation::UpdateDeviceCache(void *ids, void *update_value, size_t ids_num,
                                                        size_t embedding_size, void *embedding_cache,
-                                                       DeviceAddress *embed_device_address) {
+                                                       const DeviceAddress *embed_device_address) {
   MS_ERROR_IF_NULL(ids);
   MS_ERROR_IF_NULL(update_value);
   MS_ERROR_IF_NULL(embedding_cache);
@@ -363,7 +361,7 @@ bool DeviceSparseEmbeddingOperation::UpdateDeviceCache(void *ids, void *update_v
 }
 
 bool DeviceSparseEmbeddingOperation::EraseDeviceCache(void *ids, size_t ids_num, void *embedding_cache,
-                                                      DeviceAddress *embed_device_address) {
+                                                      const DeviceAddress *embed_device_address) {
   MS_ERROR_IF_NULL(embed_device_address);
   MS_ERROR_IF_NULL(ids);
   MS_ERROR_IF_NULL(embedding_cache);
