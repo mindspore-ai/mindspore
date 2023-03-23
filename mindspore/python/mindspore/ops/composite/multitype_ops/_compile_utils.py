@@ -536,7 +536,6 @@ def _check_dim_shape_valid(data, tensor_index):
     if data.shape[:tensor_index.ndim] != tensor_index.shape[:]:
         raise IndexError(f"The shape of index {tensor_index.shape} does not match the shape "
                          f"of the indexed data {data.shape}")
-    return True
 
 
 def tensor_index_by_bool_tensor(data, tensor_index):
