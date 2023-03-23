@@ -18,7 +18,6 @@ This example mainly illustrates the usage of rewrite.
 from typing import OrderedDict
 import numpy as np
 
-import mindspore
 from mindspore import Tensor, export
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode, \
     TreeNodeHelper
@@ -182,7 +181,7 @@ def test_rewrite():
     pattern_replace(stree)
     print(f"after pattern replace node code: {stree.get_code()}")
 
-    inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32) # pylint: disable=E1102
+    inputs = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32)) # pylint: disable=E1102
     new_net = get_net(stree)
     source_code = get_code(stree)
     print(source_code)

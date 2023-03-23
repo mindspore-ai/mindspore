@@ -70,7 +70,8 @@ class SymbolTree:
             if v not in MsDtypes and not isinstance(v, ParamTypes):
                 raise TypeError(f"For call-function Node, got unsupported kwarg value: {v}, type: {type(v)}")
 
-    def create_call_function(self, func, targets, *args, **kwargs): # pylint: disable=C0111
+    def create_call_function(self, func, targets, *args, **kwargs):
+        """Create call function."""
         Validator.check_value_type("func", func, [FunctionType], "SymbolTree node")
         Validator.check_element_type_of_iterable("targets", targets, [str], "SymbolTree node")
         args_ = list(args)
@@ -113,6 +114,7 @@ class SymbolTree:
         return Node(node_impl)
 
     def get_inputs(self) -> [Node]:
+        """Get inputs."""
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
     def before(self, node: Node):
@@ -289,6 +291,7 @@ class SymbolTree:
         self._symbol_tree.dump()
 
     def print_node_tabulate(self):
+        """Print node tabulate."""
         self._symbol_tree.print_node_tabulate()
 
     def get_code(self) -> str:
@@ -325,11 +328,14 @@ class SymbolTree:
         return self._symbol_tree.get_network()
 
     def set_saved_file_name(self, file_name: str):
+        """Set saved file name."""
         Validator.check_value_type("file_name", file_name, [str], "Saving network")
         self._symbol_tree.set_saved_file_name(file_name)
 
     def get_saved_file_name(self):
+        """Get saved file name."""
         return self._symbol_tree.get_saved_file_name()
 
     def save_network_to_file(self):
+        """Save network to file."""
         self._symbol_tree.save_network_to_file()

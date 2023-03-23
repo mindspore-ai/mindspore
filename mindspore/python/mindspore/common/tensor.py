@@ -1250,7 +1250,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return tensor_operator_registry.get("negative")(self)
 
     # pylint: disable=redefined-builtin
-    # pylint: disable=invalid-name
     def norm(self, ord=None, dim=None, keepdim=False, *, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.norm`.
