@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 class BACKEND_EXPORT ConvertListToTuple : public Pass {
  public:
-  explicit ConvertListToTuple(const std::string &name) : Pass("convert_list_to_tuple") {}
+  explicit ConvertListToTuple(const std::string &name) : Pass(name) {}
   ~ConvertListToTuple() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 

@@ -694,6 +694,10 @@ void DumpNoInputKernelActors(const std::vector<AbstractActorPtr> &actors, std::o
       auto super_kernel_actor = dynamic_cast<const SuperKernelActor *>(actor.get());
       MS_EXCEPTION_IF_NULL(super_kernel_actor);
       DumpSuperKernelActor(super_kernel_actor, ofs);
+    } else if (actor->type() == KernelTransformType::kCustomActor) {
+      auto custom_actor = dynamic_cast<const CustomActor *>(actor.get());
+      MS_EXCEPTION_IF_NULL(custom_actor);
+      DumpCustomActor(custom_actor, ofs);
     }
   }
 }

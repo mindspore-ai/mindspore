@@ -104,7 +104,7 @@ void MergeBlocks(std::vector<Block> *block_list, std::stack<Block> *merged_block
   }
 }
 
-bool Somas::IsSupportSomas(const session::KernelGraph &graph) {
+bool Somas::IsSupportSomas(const session::KernelGraph &graph) const {
   if (graph.is_dynamic_shape()) {
     MS_LOG(WARNING) << "Somas can't allocate graph with dynamic shape now.";
     return false;

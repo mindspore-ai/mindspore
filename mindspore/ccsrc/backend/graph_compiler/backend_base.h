@@ -99,7 +99,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
  protected:
   // Convert the nodes which are not supported in the backend.
-  void UnifyMindIR(const FuncGraphPtr &func_graph);
+  void UnifyMindIR(const FuncGraphPtr &func_graph) const;
 
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
   // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
@@ -115,7 +115,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
                         size_t *output_position, VectorRef *outputs, std::vector<tensor::TensorPtr> *tuple_tensors);
   // Spit the tuple tensor to multi tensors for restoring the tuple output.
   void ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor, const abstract::SequenceShapePtr &tensor_shape,
-                                    VectorRef *outputs, std::vector<tensor::TensorPtr> *tuple_tensors);
+                                    VectorRef *outputs, std::vector<tensor::TensorPtr> *tuple_tensors) const;
   // In the control flow, the output of the call node needs to be created by abstract.
   BaseRef ConstructOutputByAbstract(const abstract::AbstractBasePtr &abstract,
                                     const std::vector<tensor::TensorPtr> &output_tensors, size_t *output_position,

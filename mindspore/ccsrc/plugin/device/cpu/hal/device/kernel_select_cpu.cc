@@ -145,8 +145,8 @@ bool OutputDtypeMatched(const kernel::KernelAttr &kernel_attr, const std::vector
   return true;
 }
 
-bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &input_types, bool strict,
-                             bool has_tuple_input) {
+bool InputDtypeFormatMatched(const kernel::KernelAttr &kernel_attr, const std::vector<TypeId> &input_types,
+                             bool strict) {
   if (kernel_attr.GetInputSize() != input_types.size()) {
     MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetInputSize() << ", actual input num:" << input_types.size();
     return false;
@@ -562,7 +562,7 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
     ExpandKernelAttrByDynamicSize(kernel_node, &kernel_attr, kernel_attrs[0].GetSkipCheck(), has_tuple_input);
 
     auto new_kernel_attr = FillNoneInKernelAttr(kernel_node, input_types, output_types, kernel_attr);
-    bool input_dtype_matched = InputDtypeFormatMatched(new_kernel_attr, input_types, strict, has_tuple_input);
+    bool input_dtype_matched = InputDtypeFormatMatched(new_kernel_attr, input_types, strict);
     bool output_dtype_matched = OutputDtypeMatched(new_kernel_attr, output_types);
     if (input_dtype_matched) {
       input_matched = true;
@@ -597,7 +597,7 @@ void SetCustomOpKernelInfo(const std::string &custom_op_type, const std::string 
 bool IsVmapNotSupported(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, node) &&
-          !kVmapCPUWhiteList.count(common::AnfAlgo::GetCNodeName(node)));
+          (kVmapCPUWhiteList.count(common::AnfAlgo::GetCNodeName(node)) == 0));
 }
 
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
