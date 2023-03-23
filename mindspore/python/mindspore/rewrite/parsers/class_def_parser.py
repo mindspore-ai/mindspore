@@ -210,8 +210,7 @@ class ClassDefParser(Parser):
                     self._replace_ori_field_of_init_func(stree, body.body, -1)
                     self._replace_ori_field_of_init_func(stree, body.orelse, -1)
                     continue
-                else:
-                    logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
+                logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
             if not isinstance(body, ast.Assign):  # if not assign node, delete
                 body_index_to_be_deleted.append(body_index)
                 continue
