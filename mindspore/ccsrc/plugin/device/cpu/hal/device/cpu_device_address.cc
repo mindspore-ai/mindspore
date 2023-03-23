@@ -71,22 +71,17 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
   return true;
 }
 }  // namespace
-CPUDeviceAddress::~CPUDeviceAddress() { DoClearDeviceMemory(); }
+CPUDeviceAddress::~CPUDeviceAddress() { ClearDeviceMemory(); }
 
-void CPUDeviceAddress::DoClearDeviceMemory() {
+void CPUDeviceAddress::ClearDeviceMemory() {
   if (ptr_ == nullptr) {
     return;
   }
   if (from_mem_pool_) {
     CPUMemoryPool::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
-  } else if (deleter_ && ptr_ != nullptr) {
-    deleter_(static_cast<uint8_t *>(ptr_));
-    ptr_ = nullptr;
   }
 }
-
-void CPUDeviceAddress::ClearDeviceMemory() { DoClearDeviceMemory(); }
 
 void CPUDeviceAddress::ClearUserData() {
   if (user_data_ == nullptr) {
