@@ -6283,7 +6283,7 @@ def sparse_segment_mean(x, indices, segment_ids):
 
 def block_diag(*inputs):
     r"""
-    Creates a block diagonal matrix from the provided tensor.
+    Creates a block diagonal matrix from the provided Tensor.
 
     Args:
         inputs (Tensor): One or more tensors, the dimension of Tensor should be 0, 1 or 2.
@@ -6294,7 +6294,7 @@ def block_diag(*inputs):
         diagonally adjacent. All other elements are set to 0.
 
     Raises:
-        TypeError: If the input is not a tensor.
+        TypeError: If the input is not a Tensor.
         ValueError: If the dimension of Tensor is not 0, 1 or 2.
 
     Supported Platforms:
@@ -8410,7 +8410,7 @@ def bmm(input_x, mat2):
 
     .. math::
 
-        \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
+        \text{output[..., :, :]} = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
     The dim of `input_x` can not be less than `3` and the dim of `mat2` can not be less than `2`.
 
@@ -8432,18 +8432,21 @@ def bmm(input_x, mat2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
-        >>> mat2 = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> input_x = Tensor(np.arange(24).reshape((2, 4, 1, 3)), ms.float32)
+        >>> mat2 = Tensor(np.arange(72).reshape((2, 4, 3, 3)), ms.float32)
         >>> output = ops.bmm(input_x, mat2)
         >>> print(output)
-        [[[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]
-         [[[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]]
+        [[[[  15.   18.   21.]]
+          [[ 150.  162.  174.]]
+          [[ 447.  468.  489.]]
+          [[ 906.  936.  966.]]]
+         [[[1527. 1566. 1605.]]
+          [[2310. 2358. 2406.]]
+          [[3255. 3312. 3369.]]
+          [[4362. 4428. 4494.]]]]
     """
     if not (isinstance(input_x, Tensor) and isinstance(mat2, Tensor)):
         raise TypeError("For bmm op, inputs input_x and mat2 must be all tensors.")

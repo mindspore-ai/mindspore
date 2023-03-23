@@ -3,7 +3,7 @@ mindspore.ops.blackman_window
 
 .. py:function:: mindspore.ops.blackman_window(window_length, periodic=True, *, dtype=None)
 
-    布莱克曼窗口函数。
+    布莱克曼窗口函数，常用来为FFT截取有限长的信号片段。
 
     `window_length` 是一个Tensor，控制返回的窗口大小，其数据类型必须是整数。特别当 `window_length` 为1时，返回的窗口只包含一个值，为 `1` 。 `periodic` 决定返回的窗口是否会删除对称窗口的最后一个重复值，并准备用作该函数的周期窗口。因此，如果 `periodic` 为True，则 :math:`N` 为 :math:`window\_length + 1` 。
 
