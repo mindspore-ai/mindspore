@@ -73,13 +73,12 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 }  // namespace
 
 bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const {
-#ifdef ENABLE_TEST
+#if defined(ENABLE_TEST) || defined(__APPLE__)
   return true;
 #else
   const auto &op_prim = op_run_info->op_prim;
   return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) || op_prim->name() == "Custom" ||
          ScopedFallbackRunning::on() || op_prim->HasAttr("side_effect_mem") ||
-         (op_prim->prim_type() == kPrimTypePyCheck || !abstract::GetFrontendPrimitiveInferImpl(op_prim).has_value()) ||
          MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 #endif
 }
