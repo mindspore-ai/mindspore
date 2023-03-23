@@ -282,7 +282,7 @@ class BACKEND_EXPORT GraphKernelFlags {
   // get the `graph_kernel_flags` and `enable_graph_kernel`
   static std::pair<std::string, bool> GetGraphKernelConfig();
   static std::map<std::string, std::string> &GetJitConfig() {
-    static std::map<std::string, std::string> jit_configs;
+    static std::map<std::string, std::string> jit_configs{};
     return jit_configs;
   }
 

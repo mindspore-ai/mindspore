@@ -24,6 +24,9 @@ namespace expander {
 /// \brief ExpanderInfer is the adapter for inferring functions that is called in emitter.
 class COMMON_EXPORT ExpanderInfer {
  public:
+  ExpanderInfer() = default;
+  virtual ~ExpanderInfer() = default;
+
   /// \brief Infer shape and dtype for node
   virtual void Infer(const NodePtr &node) = 0;
 
@@ -42,7 +45,7 @@ class COMMON_EXPORT CppInfer : public ExpanderInfer {
   TypePtr GetDtype(const NodePtr &node) override;
 
  protected:
-  void InferAnfnode(const AnfNodePtr &anfnode);
+  void InferAnfnode(const AnfNodePtr &anfnode) const;
 };
 }  // namespace expander
 }  // namespace mindspore

@@ -209,15 +209,15 @@ int ScatterNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 template <typename S, typename T>
 bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto target = reinterpret_cast<T *>(outputs[0]->addr);
+  auto target = GetDeviceAddress<T>(outputs, 0);
   auto target_init = memset_s(target, outputs[0]->size, 0, outputs[0]->size);
   if (target_init != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no: " << target_init;
   }
   ComputeParams<S, T> params;
   params.target_ = target;
-  params.indices_ = reinterpret_cast<S *>(inputs[0]->addr);
-  params.updates_ = reinterpret_cast<T *>(inputs[1]->addr);
+  params.indices_ = GetDeviceAddress<S>(inputs, 0);
+  params.updates_ = GetDeviceAddress<T>(inputs, 1);
   params.target_mem_size_ = outputs[0]->size;
   params.unit_size_ = unit_size_;
   params.indices_unit_rank_ = indices_unit_rank_;

@@ -63,7 +63,7 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   PrimitivePtr primc = nullptr;
   if (iter == op_primc_fns.end()) {
     primc = std::make_shared<ops::PrimitiveC>(op_name);
-    primc->SetAttrs(attrs);
+    (void)primc->SetAttrs(attrs);
   } else {
     primc = iter->second();
     if (!attrs.empty()) {
@@ -440,7 +440,7 @@ class Emitter::CtrlFlowBlock {
       return param;
     };
 
-    auto empty_body_func = [&init_list](const Emitter *e) { return init_list; };
+    auto empty_body_func = [&init_list](const Emitter *) { return init_list; };
     auto empty_body_fg_with_inputs = BuildSubgraphOfPartial(empty_body_func);
     for (size_t i = 1; i < empty_body_fg_with_inputs.size(); i++) {
       auto inp = empty_body_fg_with_inputs[i]->get();
@@ -478,7 +478,7 @@ class Emitter::CtrlFlowBlock {
                                  [&inp](const NodePtr &no) { return no->get() == inp; });
         if (iter != body_with_inputs.end()) {
           auto param_idx = iter - body_with_inputs.begin() - 1;
-          body_while_fg_inputs.push_back(body_fg->parameters()[param_idx]);
+          body_while_fg_inputs.push_back(body_fg->parameters()[LongToSize(param_idx)]);
         } else {
           body_with_inputs.push_back(while_fg_emitter->NewNode(inp));
           auto p = body_fg->add_parameter();
@@ -603,11 +603,13 @@ class Emitter::CtrlFlowBlock {
 };
 
 NodePtr Emitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) const {
-  return CtrlFlowBlock(this).IfThenElse(cond, true_case, false_case);
+  CtrlFlowBlock cfb(this);
+  return cfb.IfThenElse(cond, true_case, false_case);
 }
 
 NodePtr Emitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) const {
-  return CtrlFlowBlock(this).While(cond, body, init_list);
+  CtrlFlowBlock cfb(this);
+  return cfb.While(cond, body, init_list);
 }
 
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }
