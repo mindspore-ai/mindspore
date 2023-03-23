@@ -8,7 +8,7 @@ mindspore.ops.heaviside
     .. math::
             \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
             0, & \text { if input }<0 \\
-            \text { values, } & \text { if input }==0 \\
+            \text { values, } & \text { if input }=0 \\
             1, & \text { if input }>0
             \end{array}\right.
 

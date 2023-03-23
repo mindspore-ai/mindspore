@@ -1291,10 +1291,9 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
     dimension of the `sorted_sequence` remains unchanged.
 
     Args:
-        sorted_sequence (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
+        sorted_sequence (Tensor): The input tensor.
             It must contain a monotonically increasing sequence on the innermost dimension.
         values (Tensor): The value that should be inserted.
-            The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
 
     Keyword Args:
         out_int32 (bool, optional): Output datatype. If True, the output datatype will be int32;
@@ -1821,8 +1820,8 @@ def strided_slice(input_x,
     all dimensions are not less than the ending position.
 
     Note:
-        - `begin` 、 `end` and `strides` must have the same shape.
-        - `begin` 、 `end` and `strides` are all 1-D Tensor,  and their shape size
+        - `begin` , `end` and `strides` must have the same shape.
+        - `begin` , `end` and `strides` are all 1-D Tensor,  and their shape size
           must not greater than the dim of `input_x`.
 
     During the slicing process, the fragment (end-begin)/strides are extracted from each dimension.
@@ -2931,8 +2930,7 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Args:
-        input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+        input_x (Parameter): Input parameter.
         indices (Tensor): The index to do multiplication operation whose data type must be mindspore.int32 or
             mindspore.int64. The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the multiplication operation with `input_x`.

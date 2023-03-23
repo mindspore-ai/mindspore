@@ -7,9 +7,9 @@ mindspore.ops.sign
 
     .. math::
         \text{out}_{i} = \begin{cases}
-                          -1 & \text{input} < 0 \\
-                           0 & \text{input} = 0 \\
-                           1 & \text{input} > 0
+                          -1 & \text{input}_{i} < 0 \\
+                           0 & \text{input}_{i} = 0 \\
+                           1 & \text{input}_{i} > 0
                          \end{cases}
 
     参数：
