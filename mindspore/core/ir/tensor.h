@@ -335,6 +335,32 @@ class MS_CORE_API Tensor : public MetaTensor {
   Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
          TensorCompressionType compression_type);
 
+  Tensor &operator=(const Tensor &tensor) {
+    if (this == &tensor) {
+      return *this;
+    }
+    init_flag_ = tensor.init_flag_;
+    is_forward_output_ = tensor.is_forward_output_;
+    data_ = tensor.data_;
+    id_ = tensor.id_;
+    event_ = tensor.event_;
+    need_wait_ = tensor.need_wait_;
+    sync_status_ = tensor.sync_status_;
+    device_sync_ = tensor.device_sync_;
+    need_release_device_mem_ = tensor.need_release_device_mem_;
+    cache_enable_ = tensor.cache_enable_;
+    base_shape_ptr_ = tensor.base_shape_ptr_;
+    cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
+    hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
+    padding_type_ = tensor.padding_type();
+    device_event_ = tensor.device_event_;
+    lazy_callback_ = tensor.lazy_callback_;
+    user_data_ = tensor.user_data_;
+    compression_type_ = tensor.compression_type_;
+    tensor_name_ = tensor.tensor_name_;
+    return *this;
+  }
+
   /// Destructor of Tensor.
   ~Tensor() override = default;
 
