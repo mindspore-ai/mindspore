@@ -108,6 +108,7 @@ constexpr auto kKLDivLoss = "KLDivLoss";
 constexpr auto kKLDivLossGrad = "KLDivLossGrad";
 constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kSequenceAdd = "SequenceAdd";
+constexpr auto kAbs = "Abs";
 constexpr auto kSequenceAddN = "SequenceAddN";
 constexpr auto kSequenceAddOffset = "SequenceAddOffset";
 constexpr auto kSequenceConcat = "SequenceConcat";
@@ -164,6 +165,7 @@ constexpr auto kACos = "ACos";
 constexpr auto kAcosh = "Acosh";
 constexpr auto kAsin = "Asin";
 constexpr auto kAsinh = "Asinh";
+constexpr auto kLess = "Less";
 constexpr auto kAtanh = "Atanh";
 constexpr auto kAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
 constexpr auto kCosh = "Cosh";
@@ -174,6 +176,7 @@ constexpr auto kRightShift = "RightShift";
 constexpr auto kFloorDiv = "FloorDiv";
 constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
+constexpr auto kAdd = "Add";
 constexpr auto kTriu = "Triu";
 constexpr auto kExpand = "Expand";
 constexpr auto kExpandDims = "ExpandDims";
@@ -230,6 +233,9 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kResizeBilinear,
                                           kResizeBilinearGrad,
                                           kTensorScatterElements,
+                                          kAdd,
+                                          kAbs,
+                                          kLess,
                                           kUniqueConsecutive,
                                           kLinSpace,
                                           kIsInf,
