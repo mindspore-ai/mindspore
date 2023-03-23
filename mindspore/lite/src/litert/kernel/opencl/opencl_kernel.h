@@ -142,7 +142,7 @@ struct GpuTensorInfo {
     Slice = UP_DIV(C, C4NUM);
 
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
-    FLT4_size = FLT_size * 4;
+    FLT4_size = FLT_size * C4NUM;
     if (W * Slice <= ocl_runtime_wrap_.GetInstance()->GetMaxImage2DWidth()) {
       height = N * D * H;
       width = W * Slice;
@@ -238,7 +238,7 @@ struct GpuTensorInfo {
     if (no_neg_axis == 0) {
       return 0;
     }
-    return static_cast<int>(no_neg_axis + 4 - NDim);
+    return static_cast<int>(no_neg_axis + C4NUM - NDim);
   }
 
   bool IsImageSizeValid() { return width > 0 && height > 0; }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ constexpr char kArgsRemap[] = "args_remap";
 constexpr char kSize[] = "size";
 constexpr char kGlobalWorkspaceSpecWorkspace[] = "globalworkspace_spec_workspace";
 namespace {
-bool CheckHash(const std::string &json_file, const std::string &bin_file, const nlohmann::json &js) {
+bool CheckHash(const std::string & /* json_file */, const std::string &bin_file, const nlohmann::json &js) {
   if (js.find(kSHA256) == js.end()) {
     return false;
   }

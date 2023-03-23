@@ -19,9 +19,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 
-#include <vector>
-#include <memory>
-
 #include "utils/hash_map.h"
 #include "base/base.h"
 #include "base/base_ref.h"
