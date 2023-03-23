@@ -106,7 +106,7 @@ void *SwapManager::AllocHostMemory(size_t size) {
   return ret;
 }
 
-void SwapManager::FreeHostMemory(void *ptr) {
+void SwapManager::FreeHostMemory(const void *ptr) {
   MS_EXCEPTION_IF_NULL(host_memory_pool_);
   host_memory_pool_->Free(ptr);
 }
@@ -177,13 +177,13 @@ void SwapManager::AddSwappingTensor(const mindspore::device::DeviceAddress *devi
   }
   if (device_address->status() == DeviceAddressStatus::kInFileToHost) {
     std::lock_guard<std::mutex> lock(swapping_tensors_file_mutex_);
-    (void)swapping_tensors_file_.push(device_address);
+    swapping_tensors_file_.push(device_address);
   } else if (device_address->status() == DeviceAddressStatus::kInDeviceToHost) {
     std::lock_guard<std::mutex> lock(swapping_tensors_device_mutex_);
-    (void)swapping_tensors_device_.push(device_address);
+    swapping_tensors_device_.push(device_address);
   } else {
     std::lock_guard<std::mutex> lock(swapping_tensors_host_mutex_);
-    (void)swapping_tensors_host_.push(device_address);
+    swapping_tensors_host_.push(device_address);
   }
 }
 }  // namespace device

@@ -40,7 +40,7 @@ class MemSwapScheduler {
 
  private:
   void GetRealParameters(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
-                         HashMap<AnfNodePtr, size_t> *real_parameters);
+                         HashMap<AnfNodePtr, size_t> *real_parameters) const;
 
   void BuildSwapActorForGraph(const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
                               const DeviceContext *device_context, std::vector<MemSwapActorPtr> *actors);

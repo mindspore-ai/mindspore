@@ -66,7 +66,7 @@ std::vector<DeviceTensor *> MemorySwapActor::GetDeviceTensors(const std::vector<
       MS_LOG(EXCEPTION) << "Device tensor index[" << index << "] out of range[" << device_tensors_to_swap_.size()
                         << "].";
     }
-    device_tensors.emplace_back(device_tensors_to_swap_[index]);
+    (void)device_tensors.emplace_back(device_tensors_to_swap_[index]);
   }
   return device_tensors;
 }
@@ -75,7 +75,7 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
   std::vector<size_t> size_list;
   for (const auto device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    size_list.emplace_back(device_tensor->GetSize());
+    (void)size_list.emplace_back(device_tensor->GetSize());
   }
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
@@ -90,7 +90,7 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
 void MemorySwapActor::Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors) {
   for (const auto &device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    device_tensor->MoveTo(to, false, kDefaultStreamIndex);
+    (void)device_tensor->MoveTo(to, false, kDefaultStreamIndex);
   }
 }
 

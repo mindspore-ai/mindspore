@@ -101,10 +101,10 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   bool MoveToHost(bool async, size_t stream_id) const;
   bool MoveToFile(bool async, size_t stream_id) const;
 
-  virtual bool CopyDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
+  virtual bool MoveDeviceToHost(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
     return false;
   }
-  virtual bool CopyHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
+  virtual bool MoveHostToDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id) const {
     return false;
   }
   virtual bool CopyHostToFile(const std::string &dst, const void *src, size_t size, bool async) const;

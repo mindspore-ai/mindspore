@@ -61,7 +61,6 @@ class BACKEND_EXPORT IOHandle {
  private:
   std::string GetSwapFileWholeName(const std::string &file_name) const;
 
- private:
   bool use_aio_{false};
   size_t aio_block_size_{0};
   size_t aio_queue_depth_{0};

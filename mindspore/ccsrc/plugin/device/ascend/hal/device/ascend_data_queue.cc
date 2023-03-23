@@ -306,7 +306,7 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
   }
   auto wingman = DataQueueMgr::GetInstance().GetDataQueue(channel_name_);
   if (wingman != nullptr && wingman->IsOpen() && !data.empty()) {
-    wingman->Push(data);
+    (void)wingman->Push(data);
   }
   return DataQueueStatus::SUCCESS;
 }

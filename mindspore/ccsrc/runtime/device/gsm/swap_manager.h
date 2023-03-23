@@ -40,7 +40,7 @@ class BACKEND_EXPORT SwapManager {
 
   // Host memory
   void *AllocHostMemory(size_t size);
-  void FreeHostMemory(void *ptr);
+  void FreeHostMemory(const void *ptr);
 
   // File
   bool CreateFile(const std::string &file_name);
@@ -66,7 +66,6 @@ class BACKEND_EXPORT SwapManager {
                    Output (SwapManager::*allocate_func)(const Input &), const std::function<bool(Output)> &success,
                    Output *output);
 
- private:
   size_t stream_id_;
   DynamicMemPoolBestFit *device_memory_pool_;
   HostMemPoolPtr host_memory_pool_;
