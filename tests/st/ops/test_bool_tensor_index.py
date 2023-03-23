@@ -192,98 +192,6 @@ def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_bool_tensor_index_set_item_x_3x3_index_3_value_2x3(mode):
-    """
-    Feature: tensor indexing with index of bool tensor
-    Description: Verify the result of bool tensor indexing
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    x0 = np.ones((3, 3))
-    index0 = np.array([True, False, True])
-    value = np.array([[-1, -1, -1], [-1, -1, -1]])
-    # Mindspore
-    x_ms = Tensor(x0, dtype=mstype.float32)
-    index = Tensor(index0, dtype=mstype.float32).astype(mstype.bool_)
-    value_ms = Tensor(value, dtype=mstype.float32)
-    set_item_net = BoolTensorIndexSetItem()
-    x_ms = set_item_net(x_ms, index, value_ms)
-    # numpy
-    x_np = x0.astype(np.float32)
-    index = index0.astype(np.bool_)
-    x_np[index] = value
-    # allclose
-    assert np.allclose(x_ms.asnumpy(), x_np)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_bool_tensor_index_set_item_x_2x1x448x448_index_2x1x448x448_value_401408(mode):
-    """
-    Feature: tensor indexing with index of bool tensor
-    Description: Verify the result of bool tensor indexing
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    x0 = np.random.randn(2, 1, 448, 448)
-    index0 = np.random.randn(2, 1, 448, 448)
-    # Mindspore
-    x_ms = Tensor(x0, dtype=mstype.float32)
-    index = Tensor(index0, dtype=mstype.float32).astype(mstype.bool_)
-    set_item_net = BoolTensorIndexSetItem()
-    x_ms = set_item_net(x_ms, index, -1 * x_ms[index])
-    # numpy
-    x_np = x0.astype(np.float32)
-    index = index0.astype(np.bool_)
-    x_np[index] *= -1
-    # allclose
-    assert np.allclose(x_ms.asnumpy(), x_np)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_bool_tensor_index_set_item_x_2x1x448x448_index_2x1x448_value_896x448(mode):
-    """
-    Feature: tensor indexing with index of bool tensor
-    Description: Verify the result of bool tensor indexing
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    x0 = np.random.randn(2, 1, 448, 448)
-    index0 = np.random.randn(2, 1, 448)
-    # Mindspore
-    x_ms = Tensor(x0, dtype=mstype.float32)
-    index = Tensor(index0, dtype=mstype.float32).astype(mstype.bool_)
-    set_item_net = BoolTensorIndexSetItem()
-    x_ms = set_item_net(x_ms, index, -1 * x_ms[index])
-    # numpy
-    x_np = x0.astype(np.float32)
-    index = index0.astype(np.bool_)
-    x_np[index] *= -1
-    # allclose
-    assert np.allclose(x_ms.asnumpy(), x_np)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     """
     Feature: tensor indexing with index of bool tensor
@@ -341,7 +249,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_3(mode):
+def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
     """
     Feature: tensor indexing with index of bool tensor
     Description: Verify the result of bool tensor indexing

@@ -528,15 +528,14 @@ def _tensor_index_by_integer(data, int_index):
     return strided_slice(data, begin_strides, end_strides, step_strides, begin_mask, end_mask, 0, 0, shrink_axis_mask)
 
 
-@_primexpr
 def _check_dim_shape_valid(data, tensor_index):
     """check dim and shape of tensor_index for tensor(bool) indexing"""
     if data.ndim < tensor_index.ndim:
-        const_utils.raise_index_error(f"The dim of index cannot be greater than indexed data, but got "
-                                      f"dim of index:{tensor_index.ndim}, dim of data:{data.ndim}")
+        raise IndexError(f"The dim of index cannot be greater than indexed data, but got "
+                         f"dim of index:{tensor_index.ndim}, dim of data:{data.ndim}")
     if data.shape[:tensor_index.ndim] != tensor_index.shape[:]:
-        const_utils.raise_index_error(f"The shape of index {tensor_index.shape} does not match the shape "
-                                      f"of the indexed data {data.shape}")
+        raise IndexError(f"The shape of index {tensor_index.shape} does not match the shape "
+                         f"of the indexed data {data.shape}")
     return True
 
 
@@ -730,6 +729,21 @@ def _tensor_getitem_by_tuple_slice(data, tuple_index):
 
 
 @_primexpr
+def _tensor_getitem_by_tuple_parse_bool_tensor_index(index, tuple_index_new, tensor_indexes,
+                                                     tensor_positions_new):
+    """ parse index of bool tensor type """
+    indices = index.nonzero()
+    if indices.shape[0] == 0:
+        return None, tensor_indexes, tensor_positions_new
+    indices = F.cast(indices, mstype.int64)
+    indices = indices.T
+    for sub_index in indices:
+        tensor_positions_new.append(len(tuple_index_new))
+        tuple_index_new += (sub_index,)
+        tensor_indexes.append(sub_index)
+    return tuple_index_new, tensor_indexes, tensor_positions_new
+
+
 def _tensor_getitem_by_tuple_parse_tensor_index(index, tuple_index_new, tensor_indexes, tensor_positions_new):
     """ parse index of tensor type """
     if F.dtype(index) in mstype.int_type:
@@ -738,15 +752,8 @@ def _tensor_getitem_by_tuple_parse_tensor_index(index, tuple_index_new, tensor_i
         tuple_index_new += (tensor_index,)
         tensor_indexes.append(tensor_index)
     elif F.dtype(index) == mstype.bool_:
-        indices = index.nonzero()
-        if indices.shape[0] == 0:
-            return None, tensor_indexes, tensor_positions_new
-        indices = F.cast(indices, mstype.int64)
-        indices = indices.T
-        for sub_index in indices:
-            tensor_positions_new.append(len(tuple_index_new))
-            tuple_index_new += (sub_index,)
-            tensor_indexes.append(sub_index)
+        return _tensor_getitem_by_tuple_parse_bool_tensor_index(index, tuple_index_new, tensor_indexes,
+                                                                tensor_positions_new)
     else:
         exp_msg = const_utils.gen_exception_msg(
             "The tensor element in tuple index must be int or bool type, but got {}.", F.dtype(index))
@@ -1015,16 +1022,11 @@ def _tensor_setitem_by_int_tensor_with_tensor(data, index, value):
 
 def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     """Set a tensor item by a bool tensor with a tensor."""
-    _check_dim_shape_valid(data, index)
-    value = F.cast(value, F.dtype(data))
-    indices = index.nonzero()
-    if indices.shape[0] == 0:
-        return data
-    value_shape = (indices.shape[0],) + data.shape[index.ndim:]
-    value = F.broadcast_to(value, value_shape)
-    value = F.scatter_nd(indices, value, data.shape)
     index = index.reshape(const_utils.generate_padding_shape(index.shape, len(data.shape)))
     index = F.broadcast_to(index, data.shape)
+    value = F.cast(value, F.dtype(data))
+    value = value.reshape(const_utils.generate_padding_shape(value.shape, len(data.shape)))
+    value = F.broadcast_to(value, data.shape)
     result = F.select(index, value, data)
     return result
 
@@ -1330,21 +1332,26 @@ def format_tuple_indices(tuple_indices):
 
 
 @_primexpr
-def remove_expanded_dims_parse_tensor_index(index_out, indices_out, shapes, cur_dim):
-    """ Parse tensor_index """
-    if index_out.dtype == mstype.bool_:
-        index_out = index_out.nonzero()
-        if index_out.shape[0] == 0:
-            return None, shapes, cur_dim
-        for i in range(index_out.shape[1]):
-            out = index_out[:, i]
-            indices_out += (out,)
-            shapes.append(F.shape(out))
-            cur_dim += 1
-    else:
-        indices_out += (index_out,)
-        shapes.append(F.shape(index_out))
+def remove_expanded_dims_parse_bool_tensor_index(index_out, indices_out, shapes, cur_dim):
+    """ Parse bool tensor index """
+    index_out = index_out.nonzero()
+    if index_out.shape[0] == 0:
+        return None, shapes, cur_dim
+    for i in range(index_out.shape[1]):
+        out = index_out[:, i]
+        indices_out += (out,)
+        shapes.append(F.shape(out))
         cur_dim += 1
+    return indices_out, shapes, cur_dim
+
+
+def remove_expanded_dims_parse_tensor_index(index_out, indices_out, shapes, cur_dim):
+    """ Parse tensor index """
+    if index_out.dtype == mstype.bool_:
+        return remove_expanded_dims_parse_bool_tensor_index(index_out, indices_out, shapes, cur_dim)
+    indices_out += (index_out,)
+    shapes.append(F.shape(index_out))
+    cur_dim += 1
     return indices_out, shapes, cur_dim
 
 
