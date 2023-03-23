@@ -468,7 +468,7 @@ std::pair<std::string, ExceptionType> PrintUnsupportedTypeWarning(const CNodePtr
   std::string build_type = "input[";
   std::for_each(std::begin(inputs_type), std::end(inputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
-  build_type += "] output[";
+  build_type += "] and output[";
   std::for_each(std::begin(outputs_type), std::end(outputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "]";
@@ -477,11 +477,12 @@ std::pair<std::string, ExceptionType> PrintUnsupportedTypeWarning(const CNodePtr
   ExceptionType etype;
   if (supported_type_lists.empty()) {
     ss << "Unsupported op [" << kernel_name << "] on GPU, Please confirm whether the device target setting is correct, "
-       << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+       << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list."
+       << trace::DumpSourceLines(kernel_node);
     etype = NotSupportError;
   } else {
     ss << "Select GPU operator[" << kernel_name << "] fail! Unsupported data type!\nThe supported data types are "
-       << supported_type_lists << ", but get " << build_type;
+       << supported_type_lists << ", but get " << build_type << trace::DumpSourceLines(kernel_node);
     etype = TypeError;
   }
   return {ss.str(), etype};

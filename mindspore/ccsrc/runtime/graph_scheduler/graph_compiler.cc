@@ -234,7 +234,13 @@ void OptimizeNopNode(KernelGraph *graph) {
     }
   }
 
-  // Add the ref node pairs.
+  // Eliminate the nop nodes.
+  std::set<CNode *> checked_nodes;
+  MS_EXCEPTION_IF_NULL(graph->return_node());
+  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
+  graph->set_execution_order(new_execution_order);
+
+  // Add the ref node pairs, which must be after elimination to avoid using elimination nodes.
   for (auto &ref_node : nop_nodes_need_set_ref) {
     MS_EXCEPTION_IF_NULL(ref_node);
     auto input_node = common::AnfAlgo::GetInputNode(ref_node, 0);
@@ -255,11 +261,6 @@ void OptimizeNopNode(KernelGraph *graph) {
                  << " to input " << origin_pair.first->fullname_with_scope() << ", index: " << origin_pair.second;
     graph->AddRefCorrespondPairs(std::make_pair(ref_node, 0), origin_pair);
   }
-
-  std::set<CNode *> checked_nodes;
-  MS_EXCEPTION_IF_NULL(graph->return_node());
-  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
-  graph->set_execution_order(new_execution_order);
 }
 
 bool IsEnableZeroCopy(bool run_in_pynative) {
