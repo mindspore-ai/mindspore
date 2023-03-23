@@ -528,24 +528,18 @@ NodePtrList StackBpropFunc(const BpropIRBuilder *ib) {
   }
   return {ret};
 }
-}  // namespace
 
-REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
-REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto dim = ib->GetInput(kIndex1);
-  auto index = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto dx = ib->Emit("GatherDGradV2", {x, dim, index, dout});
-  return {dx, ib->ZerosLike(dim), ib->ZerosLike(index)};
-});
-
-REG_BPROP_BUILDER("GatherDGrad").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+NodePtrList BinopGatherDGradCommon(const BpropIRBuilder *ib, const std::string &op_name) {
   auto dim = GetValue<int64_t>(ib->GetAttr("dim"));
-  auto x_shp = GetValue<ShapeVector>(ib->GetAttr("shape"));
   auto index = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+  ShapeVector x_shp;
+  if (op_name == "GatherDGrad") {
+    x_shp = GetValue<ShapeVector>(ib->GetAttr("shape"));
+  } else {
+    x_shp = ib->GetShape(x);
+  }
   auto index_shp = ib->GetShape(index);
   auto dim_before_axis = 1;
   for (int64_t i = 0; i < dim; ++i) {
@@ -572,44 +566,25 @@ REG_BPROP_BUILDER("GatherDGrad").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) 
   auto dx = ib->Emit("Gather", {dout_reshape, read_id, ib->Tensor(0)});
   dx = ib->Reshape(dx, ib->GetShape(x));
   return {ib->ZerosLike(index), dx};
+}
+}  // namespace
+
+REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
+REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dim = ib->GetInput(kIndex1);
+  auto index = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("GatherDGradV2", {x, dim, index, dout});
+  return {dx, ib->ZerosLike(dim), ib->ZerosLike(index)};
+});
+
+REG_BPROP_BUILDER("GatherDGrad").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+  return BinopGatherDGradCommon(ib, "GatherDGrad");
 });
 
 REG_BPROP_BUILDER("GatherDGradV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
-  auto dim = GetValue<int64_t>(ib->GetAttr("dim"));
-  auto index = ib->GetInput(kIndex0);
-  auto x = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto index_shp = ib->GetShape(index);
-  auto x_shp = ib->GetShape(x);
-  auto dim_before_axis = 1;
-  for (int64_t i = 0; i < dim; ++i) {
-    dim_before_axis *= x_shp[i];
-  }
-  auto dim_at_axis_index = index_shp[dim];
-  auto dim_at_axis_output = x_shp[dim];
-  auto dim_after_axis = 1;
-  for (size_t i = dim + 1; i < x_shp.size(); ++i) {
-    dim_after_axis *= x_shp[i];
-  }
-  auto element = (dim_before_axis * dim_at_axis_index) * dim_after_axis;
-  ShapeVector ranges;
-  for (int64_t i = 0; i < element; i += 1) {
-    ranges.push_back(i);
-  }
-  auto index_type = ib->GetDtype(index);
-  auto id = ib->Tensor(ranges, index_type);
-  auto i = ib->RealDiv(id, ib->Tensor((dim_at_axis_index * dim_after_axis), index_type));
-  auto k = ib->Mod(id, ib->Tensor(dim_after_axis));
-  auto less = ib->Less(index, ib->Tensor(0, index_type));
-  auto j = ib->Cast(less, ib->GetDtype(index));
-  auto j_read = ib->Add((ib->Mul(ib->Tensor(dim_at_axis_index, index_type), j)), index);
-  j_read = ib->Reshape(j_read, {-1});
-  auto i_after = ib->Mul(i, ib->Tensor(dim_at_axis_output * dim_after_axis, index_type));
-  auto read_id = ib->Add((ib->Add(i_after, (ib->Mul(j_read, ib->Tensor(dim_after_axis, index_type))))), k);
-  dout = ib->Reshape(dout, {-1});
-  auto dx = ib->Emit("Gather", {dout, read_id, 0});
-  dx = ib->Reshape(dx, ib->GetShape(x));
-  return {ib->ZerosLike(index), dx};
+  return BinopGatherDGradCommon(ib, "GatherDGradV2");
 });
 
 REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {

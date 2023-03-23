@@ -39,7 +39,7 @@ std::vector<int64_t> GetShape(const ::aicpuops::TensorShape &shape) {
 }
 }  // namespace
 
-bool SliceGradKernel::CheckParams() {
+bool SliceGradKernel::CheckParams() const {
   if (io_addrs_.size() != kSliceGradInputNum + 1) {
     AICPU_LOGE("For 'SliceGrad', input and output address list's size must be 5, but got %lu", io_addrs_.size());
     return false;

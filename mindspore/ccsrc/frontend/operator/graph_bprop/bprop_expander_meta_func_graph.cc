@@ -372,14 +372,8 @@ void RegArrayBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMin);
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMax);
 }
-void RegClipBpropExpanderOps() {}
-void RegCommBpropExpanderOps() {}
-void RegInnerBpropExpanderOps() {}
 
 void RegOtherBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(Assign); }
-
-void RegQuantBpropExpanderOps() {}
-void RegSparseBpropExpanderOps() {}
 
 void RegBpropExpanderOps() {
   RegMathBpropExpanderOps1();
@@ -389,12 +383,7 @@ void RegBpropExpanderOps() {
   RegNNBpropExpanderOps2();
   RegArrayBpropExpanderOps1();
   RegArrayBpropExpanderOps2();
-  RegClipBpropExpanderOps();
-  RegCommBpropExpanderOps();
-  RegInnerBpropExpanderOps();
   RegOtherBpropExpanderOps();
-  RegQuantBpropExpanderOps();
-  RegSparseBpropExpanderOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore

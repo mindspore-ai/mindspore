@@ -28,7 +28,7 @@ class SliceGradKernel : public KernelBase {
  protected:
   uint32_t ParseKernelParam() override;
   uint32_t DoCompute() override;
-  bool CheckParams();
+  bool CheckParams() const;
   bool CheckBeginSizeValue();
 
   template <typename T, typename S>

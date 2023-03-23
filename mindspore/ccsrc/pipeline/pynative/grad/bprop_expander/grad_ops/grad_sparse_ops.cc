@@ -149,6 +149,35 @@ NodePtrList CommonSparseSegmentBpropDefault(const BpropIRBuilder *ib, bool with_
   }
   return result;
 }
+
+NodePtrList BpropSparseDenseCwiseCommon(const BpropIRBuilder *ib, const std::string &op_name) {
+  auto x1_indices = ib->GetInput(kIndex0);
+  auto x1_values = ib->GetInput(kIndex1);
+  auto x1_shape = ib->GetInput(kIndex2);
+  auto x2 = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto x2_shape = ib->GetShape(x2);
+  auto scaling = ib->RealDiv(x1_shape, ib->Tensor(x2_shape));
+  auto scaled_indices = ib->RealDiv(x1_indices, scaling);
+  std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
+  std::vector<int64_t> size = {-1, -1};
+  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
+  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
+  NodePtr dx1 = nullptr;
+  NodePtr dx2_val = nullptr;
+  if (op_name == "SparseDenseCwiseMul") {
+    dx1 = ib->Mul(dout, dense_vals);
+    dx2_val = ib->Mul(dout, x1_values);
+  } else {
+    dx1 = ib->RealDiv(dout, dense_vals);
+    auto dense_vals_2 = ib->Mul(dense_vals, dense_vals);
+    auto w = ib->Neg(ib->RealDiv(x1_values, dense_vals_2));
+    dx2_val = ib->Mul(dout, w);
+  }
+  auto dx2 = ib->Emit("SparseTensorDenseAdd", {scaled_indices, dx2_val, ib->Tensor(x2_shape), ib->ZerosLike(x2)});
+  NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
+  return d_all;
+}
 }  // namespace
 REG_BPROP_BUILDERS_BEGIN(GradSparseOps)
 REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -574,45 +603,11 @@ REG_BPROP_BUILDER("SparseReorder").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib
 });
 
 REG_BPROP_BUILDER("SparseDenseCwiseMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto x1_indices = ib->GetInput(kIndex0);
-  auto x1_values = ib->GetInput(kIndex1);
-  auto x1_shape = ib->GetInput(kIndex2);
-  auto x2 = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
-  auto x2_shape = ib->GetShape(x2);
-  auto scaling = ib->RealDiv(x1_shape, ib->Tensor(x2_shape));
-  auto scaled_indices = ib->RealDiv(x1_indices, scaling);
-  std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
-  std::vector<int64_t> size = {-1, -1};
-  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
-  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
-  auto dx1 = ib->Mul(dout, dense_vals);
-  auto dx2_val = ib->Mul(dout, x1_values);
-  auto dx2 = ib->Emit("SparseTensorDenseAdd", {scaled_indices, dx2_val, ib->Tensor(x2_shape), ib->ZerosLike(x2)});
-  NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
-  return d_all;
+  return BpropSparseDenseCwiseCommon(ib, "SparseDenseCwiseMul");
 });
 
 REG_BPROP_BUILDER("SparseDenseCwiseDiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto x1_indices = ib->GetInput(kIndex0);
-  auto x1_values = ib->GetInput(kIndex1);
-  auto x1_shape = ib->GetInput(kIndex2);
-  auto x2 = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
-  auto x2_shape = ib->GetShape(x2);
-  auto scaling = ib->RealDiv(x1_shape, ib->Tensor(x2_shape));
-  auto scaled_indices = ib->RealDiv(x1_indices, scaling);
-  std::vector<int64_t> begin = {0, ib->GetSize(x1_shape) - SizeToLong(x2_shape.size())};
-  std::vector<int64_t> size = {-1, -1};
-  scaled_indices = ib->Cast(ib->Emit("Slice", {scaled_indices, ib->Value(begin), ib->Value(size)}), kInt64);
-  auto dense_vals = ib->Emit("GatherNd", {x2, scaled_indices});
-  auto dx1 = ib->RealDiv(dout, dense_vals);
-  auto dense_vals_2 = ib->Mul(dense_vals, dense_vals);
-  auto w = ib->Neg(ib->RealDiv(x1_values, dense_vals_2));
-  auto dx2_val = ib->Mul(dout, w);
-  auto dx2 = ib->Emit("SparseTensorDenseAdd", {scaled_indices, dx2_val, ib->Tensor(x2_shape), ib->ZerosLike(x2)});
-  NodePtrList d_all = {ib->ZerosLike(x1_indices), dx1, ib->ZerosLike(x1_shape), dx2};
-  return d_all;
+  return BpropSparseDenseCwiseCommon(ib, "SparseDenseCwiseDiv");
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

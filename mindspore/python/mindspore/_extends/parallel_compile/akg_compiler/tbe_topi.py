@@ -19,6 +19,8 @@ from enum import Enum
 
 
 class OpPattern(Enum):
+    """Pattern of operator."""
+
     ELEMWISE = "ELEMWISE"
     BROADCAST = "BROADCAST"
     REDUCE = "REDUCE"

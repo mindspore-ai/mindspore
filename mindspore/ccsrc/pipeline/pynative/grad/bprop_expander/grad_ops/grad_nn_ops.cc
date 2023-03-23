@@ -200,7 +200,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto in_shape = ib->GetShape(input_x);
   if (IsDynamic(in_shape)) {
     auto shape_func0 = [](const ShapeArray &inputs) -> ShapeArray { return {{-1, inputs.at(0).back()}}; };
-    auto infer_func0 = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector { return {2}; };
+    auto infer_func0 = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {2}; };
     auto re0 = ib->ShapeCalc({indices}, shape_func0, infer_func0, {})[0];
     NodePtr ind_2d = ib->Reshape(indices, re0);
     auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
@@ -211,9 +211,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
         ShapeVector(1, std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>()));
       return {in_shape_1d_x, {outerdim * in_lastdim}, {in_lastdim}};
     };
-    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-      return {1, 1, 1};
-    };
+    auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {1, 1, 1}; };
     auto res = ib->ShapeCalc({input_x, ind_2d}, shape_func, infer_func, {});
     auto in_shape_1d = res[0];
     auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), res[1], res[2]);
@@ -223,7 +221,8 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     auto grad_k = ib->ZerosLike(ib->GetInput(kIndex1));
     return {out_grad, grad_k};
   } else {
-    auto ind_lastdim = ib->GetShape(indices).back();
+    auto shape = ib->GetShape(indices);
+    auto ind_lastdim = shape.back();
     auto ind_2d = ib->Reshape(indices, {-1, ind_lastdim});
     auto in_lastdim = in_shape.back();
     auto outerdim = ib->GetShape(ind_2d)[0];  // k
@@ -715,9 +714,7 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
         return {{b}, {b, -1}, {1, c * h * w}};
       };
 
-      auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-        return {1, 2, 2};
-      };
+      auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector { return {1, 2, 2}; };
 
       auto res = ib->ShapeCalc({x2}, shape_func, infer_func, {});
       auto batch = ib->Cast(ib->Range(res[0]), kInt32);
@@ -913,9 +910,8 @@ REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    int64_t x_rank =
-      IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size() + inputs.at(1).size() - 1);
-    int64_t y_rank = IsDynamicRank(inputs.at(1)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size() + inputs.at(1).size() - 1);
+    int64_t y_rank = IsDynamicRank(inputs.at(1)) ? -1 : SizeToLong(inputs.at(0).size());
     return {x_rank, y_rank};
   };
 
@@ -959,7 +955,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
               {x_row, x_col, x_batch, x_depth}};
     };
 
-    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+    auto infer_func = [](const ShapeArray &, const std::unordered_set<size_t> &) -> ShapeVector {
       return {1, 4, 1, 4, 2, 2, 6, 2, 4};
     };
 
@@ -1206,7 +1202,7 @@ REG_BPROP_BUILDER("Softmax").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : SizeToLong(inputs.at(0).size());
     return {x_rank};
   };
 

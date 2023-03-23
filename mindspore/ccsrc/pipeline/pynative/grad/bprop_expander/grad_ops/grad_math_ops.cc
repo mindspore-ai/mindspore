@@ -126,6 +126,18 @@ NodePtrList MinimumMaximumGrad(const BpropIRBuilder *ib, const NodePtr &x, const
   return BinopGradCommon(ib, x, y, grad_x, grad_y);
 }
 
+ShapeArray MatrixDeterminantShapeFunc(const ShapeArray &inputs) {
+  auto new_shape = inputs.at(0);
+  new_shape.push_back(1);
+  new_shape.push_back(1);
+  return {new_shape};
+}
+
+ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &) {
+  auto new_shape = inputs.at(0);
+  return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
+}
+
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto ta = ib->GetAttr<bool>("transpose_a");
@@ -1169,17 +1181,7 @@ REG_BPROP_BUILDER("LogMatrixDeterminant").SetUnusedInputs({i1}).SetBody(BODYFUNC
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto new_shape = inputs.at(0);
-    new_shape.push_back(1);
-    new_shape.push_back(1);
-    return {new_shape};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 2};
-  };
-  auto res = ib->ShapeCalc({ib->TupleGetItem(out, 1)}, shape_func, infer_func, {})[0];
+  auto res = ib->ShapeCalc({ib->TupleGetItem(out, 1)}, MatrixDeterminantShapeFunc, MatrixDeterminantInferFunc, {})[0];
   auto multipliers = ib->Reshape(ib->TupleGetItem(dout, 1), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
@@ -1190,17 +1192,7 @@ REG_BPROP_BUILDER("MatrixDeterminant").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto x_adj_inv = ib->Emit("MatrixInverse", {x}, {{"adjoint", MakeValue(true)}});
-  auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
-    auto new_shape = inputs.at(0);
-    new_shape.push_back(1);
-    new_shape.push_back(1);
-    return {new_shape};
-  };
-  auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
-    auto new_shape = inputs.at(0);
-    return {IsDynamicRank(new_shape) ? -1 : static_cast<int64_t>(new_shape.size()) + 2};
-  };
-  auto res = ib->ShapeCalc({out}, shape_func, infer_func, {})[0];
+  auto res = ib->ShapeCalc({out}, MatrixDeterminantShapeFunc, MatrixDeterminantInferFunc, {})[0];
   auto multipliers = ib->Reshape(ib->Mul(dout, out), res);
   auto dx = ib->Mul(multipliers, x_adj_inv);
   return {dx};
@@ -1279,16 +1271,16 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
     auto shape_x = inputs.at(0);
-    auto x_len = static_cast<int64_t>(shape_x.size());
-    auto input_perm = Range(x_len);
-    input_perm[x_len - 2] = x_len - 1;
-    input_perm[x_len - 1] = x_len - 2;
-    auto n = shape_x[x_len - 1];
+    auto x_len = shape_x.size();
+    auto input_perm = Range(SizeToLong(x_len));
+    input_perm[x_len - kDim2] = SizeToLong(x_len - kDim1);
+    input_perm[x_len - kDim1] = SizeToLong(x_len - kDim2);
+    auto n = shape_x[x_len - kDim1];
     ShapeVector begins(x_len, 0);
-    begins[x_len - 1] = n;
+    begins[x_len - kDim1] = n;
     auto sizes = shape_x;
-    sizes[x_len - 1] = n;
-    sizes[x_len - 2] = n;
+    sizes[x_len - kDim1] = n;
+    sizes[x_len - kDim2] = n;
     return {input_perm, begins, sizes};
   };
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
