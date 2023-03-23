@@ -19,7 +19,6 @@
 
 #include <map>
 #include <vector>
-#include <unordered_set>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "mindspore/core/ops/shape_calc.h"
