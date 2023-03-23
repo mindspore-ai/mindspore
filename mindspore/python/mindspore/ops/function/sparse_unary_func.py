@@ -1557,7 +1557,7 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i \\approx x_i
+        out_i \approx x_i
 
     Args:
         x (CSRTensor): The input CSRTensor.

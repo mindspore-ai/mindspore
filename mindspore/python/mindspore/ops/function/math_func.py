@@ -4085,7 +4085,6 @@ def isnan(x):
 
     Args:
         x (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -7323,7 +7322,7 @@ def mean(x, axis=None, keep_dims=False):
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
