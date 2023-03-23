@@ -152,11 +152,11 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     return results
 
 
-def clamp(x, min=None, max=None):
+def clamp(input, min=None, max=None):
     r"""
     Clamps tensor values between the specified minimum value and maximum value.
 
-    Limits the value of :math:`x` to a range, whose lower limit is `min` and upper limit is `max` .
+    Limits the value of :math:`input` to a range, whose lower limit is `min` and upper limit is `max` .
 
     .. math::
 
@@ -172,22 +172,21 @@ def clamp(x, min=None, max=None):
         - When `min` is None and `max` is not None, the elements in Tensor larger than `max` will become `max`;
         - When `min` is not None and `max` is None, the elements in Tensor smaller than `min` will become `min`;
         - If `min` is greater than `max`, the value of all elements in Tensor will be set to `max`;
-        - The data type of `x`, `min` and `max` should support implicit type conversion and cannot be bool type.
+        - The data type of `input`, `min` and `max` should support implicit type conversion and cannot be bool type.
 
     Args:
-          x (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
-                                                         The shape of Tensor is :math:`(N,*)` where :math:`*` means,
-                                                         any number of additional dimensions.
+          input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
+            Tensor. The shape of Tensor is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
           min (Union(Tensor, float, int)): The minimum value. Default: None.
           max (Union(Tensor, float, int)): The maximum value. Default: None.
 
     Returns:
           Union(Tensor, tuple[Tensor], list[Tensor]), a clipped Tensor or a tuple or a list of clipped Tensor.
-          The data type and shape are the same as x.
+          The data type and shape are the same as input.
 
     Raises:
           ValueError: If both `min` and `max` are None.
-          TypeError: If the type of `x` is not in Tensor or list[Tensor] or tuple[Tensor].
+          TypeError: If the type of `input` is not in Tensor or list[Tensor] or tuple[Tensor].
           TypeError: If the type of `min` is not in None, Tensor, float or int.
           TypeError: If the type of `max` is not in None, Tensor, float or int.
 
@@ -219,7 +218,7 @@ def clamp(x, min=None, max=None):
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
     """
-    return clip_by_value(x, min, max)
+    return clip_by_value(input, min, max)
 
 
 def clip(x, min=None, max=None):

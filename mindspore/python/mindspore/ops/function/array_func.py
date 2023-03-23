@@ -5680,7 +5680,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         >>> print(output, index)
         [0.7] [3]
     """
-    if input.shape == ():
+    if not input.shape:
         return (input, Tensor(0))
     if axis is None:
         return (reduce_max(input), Tensor(0))
@@ -5786,7 +5786,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         >>> print(index, output)
         [0.0] [0]
     """
-    if input.shape == ():
+    if not input.shape:
         return (input, Tensor(0))
     if axis is None:
         return (reduce_min(input), Tensor(0))
