@@ -76,7 +76,7 @@ static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num
   return rank_id / per_stage_rank_num;
 }
 
-static bool HasVirtualDataset(const std::vector<AnfNodePtr> &all_nodes) {
+bool HasVirtualDataset(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimVirtualDataset)) {
       return true;
@@ -175,7 +175,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
   return graph_sets;
 }
 
-static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(root);
   std::set<FuncGraphPtr> forward_graph_set = FindForwardGraph(root, all_nodes);
   for (const auto &forward_graph : forward_graph_set) {

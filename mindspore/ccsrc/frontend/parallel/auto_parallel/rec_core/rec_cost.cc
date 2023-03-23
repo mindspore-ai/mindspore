@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "include/common/utils/parallel_context.h"
 #include "ir/anf.h"
 
 namespace mindspore {
@@ -57,6 +58,7 @@ double CostRedis(const Graph::NodeType &node,
     for (size_t i_node = 0; i_node < num_node_in; i_node++) {
       if (graph.nodes[node.node_in[i_node]].name == node_name_to_strategy[i_strategy].first) {
         bool is_search_forward = true;
+        MS_LOG(INFO) << "Node_in, index =  " << i_node << node_name_to_strategy[i_strategy].first;
         cost_redis +=
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, i_node, input_tensor, is_search_forward);
       }
@@ -125,13 +127,15 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
     MS_LOG(EXCEPTION) << "Failure: CostRedis failed.";
   }
 
+  MS_LOG(INFO) << "redis_cost = " << new_redis_cost;
+
   return new_redis_cost;
 }
 
 // Get optimal strategy for MatMul
 StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
                                       const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                                      const Graph &graph) {
+                                      const Graph &graph, const bool isTraining) {
   int64_t edge_i =
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_h * node.apply.arguments[0].tensor_str.str_h);
   int64_t edge_j =
@@ -148,6 +152,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
     cost_op.push_back(StrConcatDimI(edge_j, edge_k) + CostRedis(node, node_name_to_strategy, mode, graph));
   }
 
+  // Do not partition the J-axis and K-axis for the same MatMul
   if (edge_j < 2 || edge_j % 2 != 0) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
@@ -160,6 +165,13 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
     cost_op.push_back(StrReduceDimK(edge_i, edge_j) + CostRedis(node, node_name_to_strategy, mode, graph));
+  }
+
+  // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
+  // node.apply.arguments[0].tensor_str.str_h == 1 means that the batch dimension is not partitioned.
+  if (ParallelContext::GetInstance()->enable_parallel_optimizer() && node.apply.arguments[0].tensor_str.str_h == 1 &&
+      isTraining) {
+    cost_op[0] = DOUBLE_MIN;
   }
 
   return ChoseStr(cost_op, node.apply.str);

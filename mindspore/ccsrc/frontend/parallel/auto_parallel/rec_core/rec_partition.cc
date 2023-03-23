@@ -20,10 +20,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "ir/anf.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/step_parallel_utils.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {
@@ -83,7 +86,7 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostBatchParallel>();
 
     return cost_ptr->GetMaxCostIn();
-  } else if (op.op_type == OperatorType::kRecUnkownType) {
+  } else if (op.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
     return 0.0;
   } else {
@@ -99,11 +102,16 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
   std::vector<size_t> node_index_by_weights;
 
   // Get node's weight.
-  for (size_t i = 0; i < graph->nodes.size(); i++) {
-    if (graph->nodes[i].info == kApplication) {
-      const Graph::NodeType &node_ptr = graph->nodes[i];
-      double weight = GetWeights(node_ptr);
-      size_t index = i;
+  for (size_t pos = 0; pos < graph->nodes.size(); pos++) {
+    if (graph->nodes[pos].info == kApplication) {
+      const Graph::NodeType &node_ptr = graph->nodes[pos];
+      double weight;
+      if (PARTITION_ORDER == PartitionOrder::TopologyOrder) {
+        weight = (node_ptr.apply.op_type == OperatorType::kRecUnknownType) ? DOUBLE_LOWEST : pos;
+      } else {
+        weight = GetWeights(node_ptr);
+      }
+      size_t index = pos;
       weight_to_node_index.push_back(std::make_pair(weight, index));
     }
   }
@@ -123,7 +131,7 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
 // Get optimal strategy to partition the target node
 StrategyRec PartitionNode(const Graph::NodeType &node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                          const std::shared_ptr<Graph> &graph) {
+                          const std::shared_ptr<Graph> &graph, const bool isTraining) {
   bool enable_conv_chw_partition = false;
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -131,7 +139,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     // For MatMul
     auto cost_ptr = std::make_shared<CostMatMul>();
 
-    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
+    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
   } else if (node.apply.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
@@ -181,7 +189,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     // For SoftmaxCrossEntropyWithLogits type
     auto cost_ptr = std::make_shared<CostSoftmaxCrossEntropyWithLogits>();
     return cost_ptr->GetOptimalStr(node);
-  } else if (node.apply.op_type == OperatorType::kRecUnkownType) {
+  } else if (node.apply.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
     StrategyRec default_strategy;
     return default_strategy;
@@ -204,9 +212,37 @@ StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str,
   return new_str;
 }
 
+Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
+  if (n_cut >= Node.apply.strs.size()) {
+    MS_LOG(EXCEPTION) << "Strategy not available";
+  }
+  Node.apply.str = Node.apply.strs[n_cut];
+  Node = ApplyStrToTensor(Node);
+
+  return Node;
+}
+
+size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
+
+void PartitionPipelineStages(size_t num_device, double device_memory, const std::shared_ptr<Graph> &graph) {
+  if (!ENABLE_PIPE_ALGO) {
+    size_t n_stage = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    size_t n_node = graph->nodes.size();
+    size_t roll_back = log2(n_stage);
+
+    MS_LOG(INFO) << "ROLLING BACK ACCORDING TO STAGE NUMBER (" << n_stage << ") BY " << roll_back << " LEVELS"
+                 << std::endl;
+    for (size_t i_node = 0; i_node < n_node; ++i_node) {
+      Graph::NodeType &node_ptr = graph->nodes[i_node];
+      size_t n_cut = GetStratNumber(graph->nodes[i_node]) - roll_back - 1;
+      graph->nodes[i_node] = ChangeStrategy(node_ptr, n_cut);
+    }
+  }
+}
+
 // Partition graph into all devices.
-Status PartitionForAllDevices(const size_t num_device, const double device_memory,
-                              const std::shared_ptr<Graph> &graph) {
+Status PartitionForAllDevices(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph,
+                              const bool isTraining) {
   if (num_device < 1) {
     MS_LOG(EXCEPTION) << "ERROR: Number of devices can't be " << num_device << ".";
   }
@@ -222,6 +258,7 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
   if (iter_times > 10) {
     MS_LOG(EXCEPTION) << "ERROR: Number of iter_times can't be larger than 10.";
   }
+
   // N-cuts loop
   for (int64_t loop = 0; loop < iter_times; loop++) {
     // Sort by weights
@@ -243,8 +280,16 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
       // 2-parts partitioning StrategyRec of the last loop
       StrategyRec old_str = graph->nodes[index].apply.str;
 
+      // Save first strategy too
+      if (graph->nodes[index].apply.strs.size() == 0) {
+        graph->nodes[index].apply.strs.push_back(old_str);
+      }
+
+      MS_LOG(INFO) << "------------Node_name: " << graph->nodes[index].name << " -------------";
+
       // Serch optimal strategy to cut this operator. And store the result optimal strategy in graph.
-      graph->nodes[index].apply.str = PartitionNode(node_ptr, node_name_to_strategy, graph);
+      graph->nodes[index].apply.str = PartitionNode(node_ptr, node_name_to_strategy, graph, isTraining);
+      graph->nodes[index].apply.strs.push_back(graph->nodes[index].apply.str);
 
       // Get Current 2-parts partitioning strategy of this loop
       size_t op_inputs_num = graph->nodes[index].node_in.size();
@@ -257,6 +302,11 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
       auto node_name_to_str = std::pair<std::string, StrategyRec>(graph->nodes[index].name, one_loop_strategyrec);
       node_name_to_strategy.push_back(node_name_to_str);
     }
+  }
+
+  // Partition stages
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    PartitionPipelineStages(num_device, device_memory, graph);
   }
 
   if (DevicesMemoryControl(num_device, device_memory, graph) != SUCCESS) {

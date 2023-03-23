@@ -46,6 +46,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "pipeline/jit/pipeline_split.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
@@ -108,9 +109,17 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   TOTAL_OPS = 0;
   AnfNodePtr ret = root->get_return();
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+
+  // insert Virtual Dataset if not exist
   if (ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
   }
+  if (!mindspore::pipeline::HasVirtualDataset(all_nodes)) {
+    mindspore::pipeline::InsertVirtualDataset(root, all_nodes);
+  }
+  // redo deepscoped search again to connected the Virtual Dataset into the graph
+  all_nodes = DeepScopedGraphSearch(ret);
+
   if (strategy_search_mode == kRecursiveProgramming &&
       ((g_device_manager->DeviceNum() & (g_device_manager->DeviceNum() - 1)) != 0)) {
     MS_LOG(EXCEPTION)
@@ -376,7 +385,7 @@ void AddUsersUniqueIdWhenSharingParameter(
     MS_LOG(INFO) << "Parameter " << parameter_users_info.first << " has " << users_set.size() << " users.";
     std::vector<std::string> param_users_uniqueid;
     for (const auto &user : users_set) {
-      MS_LOG(INFO) << "with ID: " << user.first->UniqueId();
+      MS_LOG(INFO) << "with ID: " << user.first->UniqueId() << " and name: " << user.first->UniqueName();
       param_users_uniqueid.push_back(user.first->UniqueId());
     }
     entire_costgraph->add_param_users_uniqueid(param_users_uniqueid);
@@ -1150,6 +1159,83 @@ std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
   return param_users_ops_index;
 }
 
+void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraphPtr &root) {
+  // The first dimension of an operator is its batch dimension.
+  // However, the shape of the first dimension is not the batch_size assigned by users.
+  // This function helps to calculate the real batch size.
+
+  int64_t data_user_size = 0;
+  int64_t total_batch_size = 0;
+  auto manager = root->manager();
+  auto ops = entire_costgraph->GetOperators();
+  AnfNodePtr virtual_dataset_;
+  for (auto &fg : manager->func_graphs()) {
+    for (auto &node : fg->nodes()) {
+      if (IsPrimitiveCNode(node, prim::kPrimVirtualDataset)) {
+        virtual_dataset_ = node;
+        break;
+      }
+    }
+  }
+  MS_EXCEPTION_IF_NULL(virtual_dataset_);
+  auto node_user_map = manager->node_users();
+  auto node_users = node_user_map[virtual_dataset_];
+  for (auto &node_user : node_users) {
+    if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
+      auto data_users = manager->node_users()[node_user.first];
+      auto node_first = data_users.front().first;
+      if (!IsPrimitiveCNode(node_first, prim::kPrimStridedSlice)) {
+        data_users.clear();
+        data_users = node_user_map[node_first];
+      }
+      data_user_size = int64_t(data_users.size());
+    }
+  }
+
+  for (auto op : ops) {
+    if (op->type() == GET_NEXT) {
+      auto outputs_tensor_size = op->outputs_tensor_info().size();
+      for (size_t i = 0; i < outputs_tensor_size; i++) {
+        auto shape = op->outputs_tensor_info()[i].shape();
+        if (!shape.empty()) {
+          total_batch_size = shape[0];
+          break;
+        }
+      }
+      break;
+    }
+  }
+  if (data_user_size != 0) {
+    graph->batch_size = total_batch_size / data_user_size;
+  } else {
+    MS_LOG(EXCEPTION) << "Data user size equals to 0, which could not be divided by the total batch size";
+  }
+}
+
+void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+  InitCostGraph();
+
+  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
+    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  } else {
+    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
+  }
+
+  ReshapeCostCompute(all_nodes);
+
+  ConstructCostGraphEdges(all_nodes);
+}
+
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   InitCostGraph();
   if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
@@ -1178,7 +1264,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   for (auto it = tuple_getitem_list.begin(); it != tuple_getitem_list.end();) {
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
-  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
+  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names, root);
   std::vector<std::vector<size_t>> param_users_ops_index =
     GetIndexOfOpsSharingInputTensor(param_users_uniqueid_list, input_tensor_names);
 
@@ -1186,9 +1272,15 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   std::shared_ptr<std::vector<size_t>> index_list = std::make_shared<std::vector<size_t>>();
   graph = EliminateGraph(graph, eli_list, index_list);
 
+  CalculateRealBatchSize(graph, root);
+
   size_t num_device = g_device_manager->DeviceNum();
   const auto device_memory = CostModelContext::GetInstance()->device_memory_capacity();
-  if (PartitionForAllDevices(num_device, device_memory, graph) == SUCCESS) {
+  // To specify the process is training or inference. For training, if optimizer parallel is activated, it requires at
+  // least one cut on DP dimension.
+  bool isTraining = IsTraining(root->manager());
+
+  if (PartitionForAllDevices(num_device, device_memory, graph, isTraining) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {
     MS_LOG(ERROR) << "PartitionForAllDevices failed.";
@@ -1199,7 +1291,15 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   if (!root->has_flag(kTraining)) {
     is_training = false;
   }
-  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, param_users_ops_index);
+
+  // Needed when changing stage number
+  if (ParallelInit() != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+  }
+  ReInitCostGraph(all_nodes, root);
+  ops = entire_costgraph->GetOperators();
+
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, param_users_ops_index, root);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
