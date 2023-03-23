@@ -3,7 +3,7 @@ mindspore.ops.outer
 
 .. py:function:: mindspore.ops.outer(x1, x2)
 
-    计算 `x1` 和 `x2` 的外积。如果向量 `x1` 长度为n， `x2` 长度为m，则输出矩阵尺寸为n x m。
+    计算 `x1` 和 `x2` 的外积。如果向量 `x1` 长度为 :math:`n` ， `x2` 长度为 :math:`m` ，则输出矩阵shape为 :math:`(n, m)` 。
 
     .. note::
         该函数不支持广播。

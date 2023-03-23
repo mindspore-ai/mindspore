@@ -3,9 +3,8 @@ mindspore.ops.dstack
 
 .. py:function:: mindspore.ops.dstack(inputs)
 
-    将多个Tensor沿着深度方向进行堆叠。
+    将多个Tensor沿着第三维度进行堆叠。
 
-    相当于将输入沿着第三个轴进行拼接。
     1-D Tensor :math:`(N,)` 重新排列为 :math:`(1,N,1)` ，2-D Tensor :math:`(M,N)` 重新排列为 :math:`(M,N,1)` 。
 
     参数：

@@ -9,7 +9,7 @@ mindspore.ops.neg
         out_{i} = - input_{i}
 
     参数：
-        - **input** (Tensor) - Neg的输入Tensor，其秩应在[0, 7]范围内，数据类型为数值型。
+        - **input** (Tensor) - Neg的输入Tensor，数据类型为数值型。
 
     返回：
         Tensor，shape和数据类型与输入相同。
