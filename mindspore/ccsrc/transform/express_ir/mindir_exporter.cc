@@ -237,8 +237,12 @@ std::string IrExportBuilder::GetPrimitiveUniqueName(const PrimitivePtr &primitiv
 
 bool IrExportBuilder::BuildPrimitives() {
   for (auto it = primitive_name_map_.begin(); it != primitive_name_map_.end(); ++it) {
-    auto prim_proto = model_->add_primitives();
     auto prim = it->first;
+    if (prim->name() == prim::kPrimPyExecute->name()) {
+      MS_LOG(EXCEPTION) << "Cannot export a interpret node in MindIR.";
+    }
+    auto prim_proto = model_->add_primitives();
+
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
 
