@@ -131,7 +131,7 @@ def matmul_tik_compute(params, kernel_name):
     KN_TO_K1NK0(tik_instance, kn_gm_input, k1nk0_workspace, data_type, k_size // K0, n_size, K0)
 
     # Tiling is realized through the for_range() loop.
-    with tik_instance.for_range(0, 2, block_num = 1) as core_id:
+    with tik_instance.for_range(0, 2, block_num=1) as core_id:
         with tik_instance.for_range(0, n_cycle_times // 2, thread_num=n_thread_num) as n_idx:
             with tik_instance.for_range(0, m_cycle_times, thread_num=m_thread_num) as m_idx:
                 dst_l0c = tik_instance.Tensor(C_loc_out_type, [n_tiling_size // 16, m_tiling_size, 16], name='dst_l0c',
@@ -186,7 +186,6 @@ def matmul_tik(input_x1, input_x2, output_y=None, kernel_name="simple_matmul"):
     """
     shape_a = input_x1.get("ori_shape")
     shape_b = input_x2.get("ori_shape")
-    output_y = output_y
     m = shape_a[0]
     k = shape_a[1]
     n = shape_b[1]
@@ -205,6 +204,6 @@ def matmul_tik(input_x1, input_x2, output_y=None, kernel_name="simple_matmul"):
         'k_tiling_size': 32,
         'k_cycle_times': 2,
         'k_thread_num': 2,
-        'output_y':output_y
+        'output_y': output_y
     }
     return matmul_tik_compute(params, kernel_name)

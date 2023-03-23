@@ -19,7 +19,6 @@
 #include <functional>
 #include "mindspore/core/ops/meshgrid.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {

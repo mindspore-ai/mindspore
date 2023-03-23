@@ -20,7 +20,6 @@
 #include <map>
 #include <vector>
 #include <utility>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {

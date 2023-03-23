@@ -17,8 +17,8 @@ add
 """
 from __future__ import absolute_import
 
-import tbe.dsl as tbe
 from functools import reduce
+import tbe.dsl as tbe
 from tbe import tvm
 from tbe.common.register import register_op_compute
 from tbe.common.utils import para_check
@@ -28,7 +28,7 @@ from tbe.common.utils import shape_util
 SHAPE_SIZE_LIMIT = 2147483648
 
 
-# pylint: disable=locally-disabled,too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument
 @register_op_compute("Add", op_mode="dynamic", support_fusion=True)
 def add_compute(input_x, input_y, output_z, kernel_name="add"):
     """
