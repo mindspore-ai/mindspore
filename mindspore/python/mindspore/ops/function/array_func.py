@@ -832,7 +832,7 @@ def chunk(input, chunks, axis=0):
     if not isinstance(input, Tensor):
         raise TypeError(f'For ops.chunk parameter `input` must be Tensor, but got {type(input)}')
     _check_axis_type(axis, True, False, False, "ops.chunk")
-    axis = _canonicalize_axis(axis, input.ndim)
+    arr_axis = _canonicalize_axis(axis, input.ndim)
 
     if not isinstance(chunks, int):
         raise TypeError(f"For ops.chunk type of argument `chunks` should be integer, but got {type(chunks)}")
@@ -840,24 +840,24 @@ def chunk(input, chunks, axis=0):
         raise ValueError(f"For ops.chunk parameter 'chunks' must be greater than 0, but got {chunks}")
 
     arr_shape = input.shape
-    length_along_dim = arr_shape[axis]
+    length_along_dim = arr_shape[arr_axis]
 
     if chunks > length_along_dim:
-        res = P.Split(axis, length_along_dim)(input)
+        res = P.Split(arr_axis, length_along_dim)(input)
     elif length_along_dim % chunks == 0:
-        res = P.Split(axis, chunks)(input)
+        res = P.Split(arr_axis, chunks)(input)
     else:
         block_size = int(np.ceil(length_along_dim / chunks))
         true_chunks = int(length_along_dim // block_size)
         length1 = true_chunks * block_size
         length2 = length_along_dim - length1
         start1 = _list_comprehensions(rank(input), 0, True)
-        size1 = _tuple_setitem(arr_shape, axis, length1)
-        start2 = _tuple_setitem(start1, axis, length1)
-        size2 = _tuple_setitem(arr_shape, axis, length2)
-        res = P.Split(axis, true_chunks)(tensor_slice(input, start1, size1))
+        size1 = _tuple_setitem(arr_shape, arr_axis, length1)
+        start2 = _tuple_setitem(start1, arr_axis, length1)
+        size2 = _tuple_setitem(arr_shape, arr_axis, length2)
+        res = P.Split(arr_axis, true_chunks)(tensor_slice(input, start1, size1))
         if length2:
-            res += P.Split(axis, 1)(tensor_slice(input, start2, size2))
+            res += P.Split(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
 
 
@@ -5192,11 +5192,11 @@ def split(tensor, split_size_or_sections, axis=0):
         raise TypeError(f'expect `tensor` is a Tensor, but got {type(tensor)}')
     if type(axis) is not int:
         raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
-    axis = _canonicalize_axis(axis, tensor.ndim)
+    arr_axis = _canonicalize_axis(axis, tensor.ndim)
 
     if type(split_size_or_sections) is int:
         if split_size_or_sections > 0:
-            res = _split_int(tensor, split_size_or_sections, axis)
+            res = _split_int(tensor, split_size_or_sections, arr_axis)
         else:
             raise ValueError(f"For split, the value of 'split_size_or_sections' must be more than zero, "
                              f"but got {split_size_or_sections}.")
@@ -5208,10 +5208,10 @@ def split(tensor, split_size_or_sections, axis=0):
                 raise TypeError(f"Each element in 'split_size_or_sections' should be non-negative, "
                                 f"but got {split_size_or_sections}.")
 
-        if sum(split_size_or_sections) != tensor.shape[axis]:
-            raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {tensor.shape[axis]}, "
+        if sum(split_size_or_sections) != tensor.shape[arr_axis]:
+            raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {tensor.shape[arr_axis]}, "
                              f"but got {sum(split_size_or_sections)}.")
-        res = _split_sub_tensors(tensor, split_size_or_sections, axis)
+        res = _split_sub_tensors(tensor, split_size_or_sections, arr_axis)
     else:
         raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
                         f"but got {type(split_size_or_sections)}")

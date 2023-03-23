@@ -69,7 +69,7 @@ class BackupAndRestore(Callback):
         ckpt_dir = _make_directory(backup_dir)
         self.backup_file = os.path.join(ckpt_dir, 'backup.ckpt')
         if save_freq != "epoch":
-            self.save_freq = Validator.check_positive_int(step_size)
+            self.save_freq = Validator.check_positive_int(save_freq)
         else:
             self.save_freq = 1
         self.delete_checkpoint = Validator.check_bool(delete_checkpoint)
