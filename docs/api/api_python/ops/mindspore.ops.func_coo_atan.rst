@@ -9,7 +9,7 @@ mindspore.ops.coo_atan
         out_i = tan^{-1}(x_i)
 
     参数：
-        - **x** (COOTensor) - COOTensor的shape为 :math:`(N,*)` 其中 :math:`*` 表示任意数量的附加维度。数据类型支持：float16、float32。
+        - **x** (COOTensor) - COOTensor的输入。数据类型支持：float16、float32。
 
     返回：
         COOTensor的数据类型与输入相同。

@@ -8,8 +8,8 @@ mindspore.ops.coo_isnan
     .. math::
 
         out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Nan},\ \ True \\
-          & \text{ if } x_{i} \ne  \text{Nan},\ \ False
+          & \ True,\ \text{ if } x_{i} = \text{Nan} \\
+          & \ False,\ \text{ if } x_{i} \ne  \text{Nan}
         \end{cases}
 
     其中 :math:`Nan` 表示的不是number。

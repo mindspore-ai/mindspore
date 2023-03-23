@@ -279,7 +279,8 @@ def qr(input, mode='reduced'):
 
     Args:
         input (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, the supported dtype are
-            float16, float32, float64, complex64 and complex128. Define the shape of input as (..., m, n), p as the
+            float16, float32, float64, complex64 and complex128.
+            Define the shape of input as :math:`(..., m, n)`, p as the
             minimum values of m and n.
         mode (Union['reduced', 'complete'], optional): If `mode` is 'reduced', computing reduce-sized QR decomposition,
             otherwise, computing the full-sized QR decomposition. Default: 'reduced'.
