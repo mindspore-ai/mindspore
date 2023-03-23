@@ -1760,8 +1760,8 @@ class MaxUnpool1d(Cell):
           Values of indices must belong to :math:`[0, H_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
-          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
+          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not None, then output_size must be :math:`(N, C, H)` , :math:`(C, H)` or
           :math:`(H)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0]), (N, C, H_{out} + stride[0])]`.
 
@@ -1806,6 +1806,8 @@ class MaxUnpool1d(Cell):
         else:
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool1d, output_size must be tuple, but type {type(output_size)}.")
+            if not output_size:
+                raise ValueError(f"For MaxUnpool1d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool1d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out
@@ -1845,8 +1847,8 @@ class MaxUnpool2d(Cell):
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
-          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
+          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not None, then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
           :math:`(H, W)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
 
@@ -1893,6 +1895,8 @@ class MaxUnpool2d(Cell):
         else:
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool2d, output_size must be tuple, but type {type(output_size)}.")
+            if not output_size:
+                raise ValueError(f"For MaxUnpool2d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool2d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out
@@ -1935,8 +1939,8 @@ class MaxUnpool3d(Cell):
           Values of indices must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: None.
-          If output_size == (), then the shape of output computed by kernel_size, stride and padding.
-          If output_size != (), then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
+          If output_size is None, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is not None, then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
           :math:`(D, H, W)` and output_size must belong to
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
           (N, C, D_{out} + stride[0], H_{out} + stride[1], W_{out} + stride[2])]`.
@@ -1983,6 +1987,8 @@ class MaxUnpool3d(Cell):
         else:
             if not isinstance(output_size, tuple):
                 raise ValueError(f"For MaxUnpool3d, output_size must be tuple, but type {type(output_size)}.")
+            if not output_size:
+                raise ValueError(f"For MaxUnpool3d, the length of output_size must be positive, but got 0.")
         out = ops.max_unpool3d(x, indices, self.kernel_size, stride=self.stride, padding=self.padding,
                                output_size=output_size)
         return out
