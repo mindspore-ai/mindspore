@@ -3,7 +3,7 @@ mindspore.dataset.CoNLL2000Dataset
 
 .. py:class:: mindspore.dataset.CoNLL2000Dataset(dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
 
-    读取和解析CoNLL2000分块数据集的源数据集。
+    CoNLL-2000（Conference on Computational Natural Language Learning）分块数据集。
 
     生成的数据集有三列 `[word, pos_tag, chunk_tag]` 。三列的数据类型均为string。
 
@@ -21,7 +21,7 @@ mindspore.dataset.CoNLL2000Dataset
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。指定此参数后， `num_samples` 表示每个分片的最大样本数。默认值：None。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。只有当指定了 `num_shards` 时才能指定此参数。默认值：None。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
 
     异常：

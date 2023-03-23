@@ -3,7 +3,7 @@ mindspore.dataset.Caltech101Dataset
 
 .. py:class:: mindspore.dataset.Caltech101Dataset(dataset_dir, target_type=None, num_samples=None, num_parallel_workers=1, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None)
 
-    读取和解析Caltech101数据集的源文件构建数据集。
+    Caltech 101数据集。
 
     根据不同的 `target_type` 配置，数据集会生成不同的输出列。
 
@@ -20,7 +20,7 @@ mindspore.dataset.Caltech101Dataset
           取值为 'category'时将读取图像的类别标注作为label，取值为 'annotation'时将读取图像的轮廓标注作为label，
           取值为 'all'时将同时输出图像的类别标注和轮廓标注。默认值：None，表示 'category'。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数。默认值：1。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。

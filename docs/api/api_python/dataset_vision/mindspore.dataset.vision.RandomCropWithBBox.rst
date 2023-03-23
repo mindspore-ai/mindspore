@@ -19,7 +19,7 @@ mindspore.dataset.vision.RandomCropWithBBox
           如果是3元素元组，则分别用于填充R、G、B通道。
           如果是整数，则用于所有 RGB 通道。
           `fill_value` 值必须在 [0, 255] 范围内。默认值：0。
-        - **padding_mode** (Border, 可选) - 边界填充方式。它可以是 [Border.CONSTANT、Border.EDGE、Border.REFLECT、Border.SYMMETRIC] 中的任何一个。默认值：Border.CONSTANT。
+        - **padding_mode** (:class:`mindspore.dataset.vision.Border` , 可选) - 边界填充方式。它可以是 [Border.CONSTANT、Border.EDGE、Border.REFLECT、Border.SYMMETRIC] 中的任何一个。默认值：Border.CONSTANT。
 
           - **Border.CONSTANT** - 使用常量值进行填充。
           - **Border.EDGE** - 使用各边的边界像素值进行填充。

@@ -11,10 +11,10 @@ mindspore.dataset.audio.InverseSpectrogram
         - **win_length** (int, 可选) - 窗口大小，应该大于0。默认值：None，将被设为 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度，应该大于0。默认值：None，将被设为 `win_length // 2` 。
         - **pad** (int, 可选) - 信号两端的填充长度，不能小于0。默认值：0。
-        - **window** (WindowType, 可选) - 作用于每一帧的窗口函数。默认值：WindowType.Hann。
+        - **window** (:class:`mindspore.dataset.audio.WindowType` , 可选) - 作用于每一帧的窗口函数。默认值：WindowType.HANN。
         - **normalized** (bool, 可选) - 是否在stft之后按幅度执行标准化。默认值：False。
         - **center** (bool, 可选) - 是否同时在波形两端进行填充。默认值：True。
-        - **pad_mode** (BorderType, 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、
+        - **pad_mode** (:class:`mindspore.dataset.audio.BorderType` , 可选) - 控制在 `center` 为True时使用的填充方法，可为BorderType.REFLECT、BorderType.CONSTANT、
           BorderType.EDGE、BorderType.SYMMETRIC。默认值：BorderType.REFLECT。
         - **onesided** (bool, 可选) - 控制是否只返回一半波形，以避免冗余。默认值：True。
 

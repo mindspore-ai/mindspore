@@ -11,7 +11,7 @@ mindspore.dataset.audio.SpectralCentroid
         - **win_length** (int, 可选) - 窗口大小。默认值：None，将使用 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值：None，将使用 `win_length // 2` 。
         - **pad** (int, 可选) - 信号两端的填充长度。默认值：0。
-        - **window** (WindowType, 可选) - 作用于每一帧的窗口函数，可为WindowType.BARTLETT、WindowType.BLACKMAN、
+        - **window** (:class:`mindspore.dataset.audio.WindowType` , 可选) - 作用于每一帧的窗口函数，可为WindowType.BARTLETT、WindowType.BLACKMAN、
           WindowType.HAMMING、WindowType.HANN或WindowType.KAISER。默认值：WindowType.HANN。
 
     异常：

@@ -6,7 +6,7 @@ mindspore.dataset.audio.Dither
     通过消除非线性截断失真，来抖动增加存储在特定位深的音频的动态感知范围。
 
     参数：
-        - **density_function** (DensityFunction, 可选) - 连续随机变量的密度函数。
+        - **density_function** (:class:`mindspore.dataset.audio.DensityFunction` , 可选) - 连续随机变量的密度函数。
           可为DensityFunction.TPDF（三角概率密度函数）、DensityFunction.RPDF（矩形概率密度函数）
           或DensityFunction.GPDF（高斯概率密度函数）。默认值：DensityFunction.TPDF。
         - **noise_shaping** (bool, 可选) - 是否通过滤波操作，来消除频谱能量的量化误差。默认值：False。

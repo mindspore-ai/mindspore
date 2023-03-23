@@ -5,8 +5,6 @@ mindspore.dataset.vision.AdjustContrast
 
     调整输入图像的对比度。
 
-    输入图像的shape需为 [H, W, C]。
-
     参数：
         - **contrast_factor** (float) - 对比度调节因子，需为非负数。输入0值将得到灰度图像，1值将得到原始图像，
           2值将调整图像对比度为原来的2倍。

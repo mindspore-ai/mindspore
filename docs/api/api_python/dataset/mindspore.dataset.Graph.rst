@@ -14,7 +14,7 @@ mindspore.dataset.Graph
         - **graph_feat** (dict, 可选) - 附加特征，不能分配给 `node_feat` 或者 `edge_feat`，输入数据格式应该是dict，key是特征的类型，用字符串表示; value应该是NumPy数组，其shape可以不受限制。
         - **node_type** (Union[list, numpy.ndarray], 可选) - 节点的类型，每个元素都是字符串，表示每个节点的类型。如果未提供，则每个节点的默认类型为“0”。
         - **edge_type** (Union[list, numpy.ndarray], 可选) - 边的类型，每个元素都是字符串，表示每条边的类型。如果未提供，则每条边的默认类型为“0”。
-        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **working_mode** (str, 可选) - 设置工作模式，目前支持 'local'/'client'/'server'。默认值：'local'。
 
           - **local**：用于非分布式训练场景。

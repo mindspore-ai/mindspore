@@ -6,7 +6,7 @@ mindspore.dataset.vision.ConvertColor
     更改图像的色彩空间。
 
     参数：
-        - **convert_mode**  (ConvertMode) - 图像色彩空间转换的模式。
+        - **convert_mode**  (:class:`mindspore.dataset.vision.ConvertMode`) - 图像色彩空间转换的模式。
 
           - **ConvertMode.COLOR_BGR2BGRA**: 将 BGR 图像转换为 BGRA 图像。
           - **ConvertMode.COLOR_RGB2RGBA**: 将 RGB 图像转换为 RGBA 图像。

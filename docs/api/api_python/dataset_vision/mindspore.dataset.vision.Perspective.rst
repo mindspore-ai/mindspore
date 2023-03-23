@@ -8,7 +8,7 @@ mindspore.dataset.vision.Perspective
     参数：
         - **start_points** (Sequence[Sequence[int, int]]) - 起始点坐标序列，包含四个两元素子序列，分别对应原图中四边形的 [左上、右上、右下、左下]。
         - **end_points** (Sequence[Sequence[int, int]]) - 目标点坐标序列，包含四个两元素子序列，分别对应目标图中四边形的 [左上、右上、右下、左下]。
-        - **interpolation** (Inter，可选) - 插值方式，取值可为 Inter.BILINEAR、Inter.LINEAR、Inter.NEAREST、Inter.AREA、Inter.PILCUBIC、Inter.CUBIC 或 Inter.BICUBIC。默认值：Inter.BILINEAR。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` ，可选) - 插值方式，取值可为 Inter.BILINEAR、Inter.LINEAR、Inter.NEAREST、Inter.AREA、Inter.PILCUBIC、Inter.CUBIC 或 Inter.BICUBIC。默认值：Inter.BILINEAR。
 
           - **Inter.BILINEAR**：双线性插值。
           - **Inter.LINEAR**：线性插值，与双线性插值相同。

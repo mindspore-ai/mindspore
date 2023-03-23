@@ -7,7 +7,7 @@ mindspore.dataset.vision.RandomRotation
 
     参数：
         - **degrees** (Union[int, float, sequence]) - 旋转角度的随机选取范围。若输入单个数字，则从(-degrees, degrees)中随机生成旋转角度；若输入2元素序列，需按(min, max)顺序排列。
-        - **resample** (Inter, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA] 中的任何一个。默认值：Inter.NEAREST。
+        - **resample** (:class:`mindspore.dataset.vision.Inter` , 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA] 中的任何一个。默认值：Inter.NEAREST。
 
           - Inter.BILINEAR，双线性插值。
           - Inter.NEAREST，最近邻插值。

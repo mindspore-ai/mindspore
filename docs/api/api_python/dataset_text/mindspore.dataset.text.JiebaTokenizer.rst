@@ -12,7 +12,7 @@ mindspore.dataset.text.JiebaTokenizer
           详见 `cppjieba_github <https://github.com/yanyiwu/cppjieba/tree/master/dict>`_ 。
         - **mp_path** (str) - 最大概率法分词算法使用的词典文件路径，词典可在cppjieba官网获取，
           详见 `cppjieba_github <https://github.com/yanyiwu/cppjieba/tree/master/dict>`_ 。
-        - **mode** (JiebaMode, 可选) - Jieba分词使用的模式，可以取值为JiebaMode.MP、JiebaMode.HMM或JiebaMode.MIX。默认值：JiebaMode.MIX。
+        - **mode** (:class:`mindspore.dataset.text.JiebaMode` , 可选) - Jieba分词使用的模式，可以取值为JiebaMode.MP、JiebaMode.HMM或JiebaMode.MIX。默认值：JiebaMode.MIX。
 
           - **JiebaMode.MP**：使用最大概率法算法进行分词。
           - **JiebaMode.HMM**：使用隐马尔可夫模型算法进行分词。

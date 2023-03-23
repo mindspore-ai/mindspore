@@ -3,7 +3,7 @@ mindspore.dataset.DIV2KDataset
 
 .. py:class:: mindspore.dataset.DIV2KDataset(dataset_dir, usage="train", downgrade="bicubic", scale=2, num_samples=None, num_parallel_workers=None, shuffle=None, decode=None, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析DIV2K数据集的源文件构建数据集。
+    DIV2K（DIVerse 2K resolution image）数据集。
 
     生成的数据集有两列 `[hr_image, lr_image]` 。 `hr_image` 列和 `lr_image` 列的数据类型都为uint8。
 
@@ -14,7 +14,7 @@ mindspore.dataset.DIV2KDataset
         - **scale** (str, 可选) - 指定数据集的缩放尺度。当参数 `downgrade` 取值为 'bicubic' 时，此参数可以取值为2、3、4、8。
           当参数 `downgrade` 取值为 'unknown' 时，此参数可以取值为2、3、4。当参数 `downgrade` 取值为 'mild'、'difficult'、'wild' 时，此参数仅可以取值为4。默认值：2。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。

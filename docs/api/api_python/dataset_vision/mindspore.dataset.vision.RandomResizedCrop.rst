@@ -11,7 +11,7 @@ mindspore.dataset.vision.RandomResizedCrop
         - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
         - **scale** (Union[list, tuple], 可选) - 裁剪子图的尺寸大小相对原图比例的随机选取范围，需要在[min, max)区间。默认值：(0.08, 1.0)。
         - **ratio** (Union[list, tuple], 可选) - 裁剪子图的宽高比的随机选取范围，需要在[min, max)区间。默认值：(3./4., 4./3.)。
-        - **interpolation** (Inter, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC] 中的任何一个。默认值：Inter.BILINEAR。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` , 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC] 中的任何一个。默认值：Inter.BILINEAR。
 
           - Inter.BILINEAR，双线性插值。
           - Inter.NEAREST，最近邻插值。

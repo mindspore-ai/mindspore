@@ -34,7 +34,7 @@ from ..core.validator_helpers import replace_none
 
 class CMUArcticDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses CMUArctic dataset.
+    CMU Arctic dataset.
 
     The generated dataset has four columns: :py:obj:`[waveform, sample_rate, transcript, utterance_id]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
@@ -49,8 +49,9 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             Default: None, means 'aew'.
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -77,7 +78,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
@@ -171,7 +172,7 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
 class GTZANDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses GTZAN dataset.
+    GTZAN dataset.
 
     The generated dataset has three columns: :py:obj:`[waveform, sample_rate, label]` .
     The tensor of column :py:obj:`waveform` is of the float32 type.
@@ -184,8 +185,9 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
             Default: None, will read all samples.
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: None, will read all audio.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -212,7 +214,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
@@ -301,7 +303,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
 class LibriTTSDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses the LibriTTS dataset.
+    LibriTTS dataset.
 
     The generated dataset has seven columns :py:obj:`[waveform, sample_rate, original_text, normalized_text,
     speaker_id, chapter_id, utterance_id]` .
@@ -319,8 +321,9 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
             'train-clean-100', 'train-clean-360', 'train-other-500', or 'all'. Default: None, means 'all'.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all audio.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -347,7 +350,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
@@ -451,7 +454,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
 class LJSpeechDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses LJSpeech dataset.
+    LJSpeech dataset.
 
     The generated dataset has four columns :py:obj:`[waveform, sample_rate, transcription, normalized_transcript]` .
     The column :py:obj:`waveform` is a tensor of the float32 type.
@@ -463,8 +466,9 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of audios to be included in the dataset.
             Default: None, all audios.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in the `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -588,7 +592,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
 
 class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses the SpeechCommands dataset.
+    Speech Commands dataset.
 
     The generated dataset has five columns :py:obj:`[waveform, sample_rate, label, speaker_id, utterance_number]` .
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
@@ -604,8 +608,9 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
             test samples and 'all' will read from all 105,829 samples. Default: None, will read all samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, will read all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
@@ -711,7 +716,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
 class TedliumDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses Tedlium dataset.
+    Tedlium dataset.
     The columns of generated dataset depend on the source SPH files and the corresponding STM files.
 
     The generated dataset has six columns :py:obj:`[waveform, sample_rate, transcript, talk_id, speaker_id,
@@ -734,8 +739,9 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             Default: None, ".sph".
         num_samples (int, optional): The number of audio samples to be included in the dataset.
             Default: None, all samples.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, number set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: None, expected
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
@@ -922,7 +928,7 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
 
 class YesNoDataset(MappableDataset, AudioBaseDataset):
     """
-    A source dataset that reads and parses the YesNo dataset.
+    YesNo dataset.
 
     The generated dataset has three columns :py:obj:`[waveform, sample_rate, labels]` .
     The tensor of column :py:obj:`waveform` is a vector of the float32 type.
@@ -933,8 +939,9 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: None, will read all images.
-        num_parallel_workers (int, optional): Number of workers to read the data.
-            Default: None, will use value set in `mindspore.dataset.config` .
+        num_parallel_workers (int, optional): Number of worker threads to read the data.
+            Default: None, will use global default workers(8), it can be set
+            by `mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the

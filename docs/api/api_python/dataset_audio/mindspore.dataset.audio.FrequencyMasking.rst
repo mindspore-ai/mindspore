@@ -5,7 +5,7 @@ mindspore.dataset.audio.FrequencyMasking
 
     给音频波形施加频域掩码。
 
-    .. note:: 待处理音频维度需为(..., freq, time)。
+    .. note:: 待处理音频shape需为<..., freq, time>。
 
     参数：
         - **iid_masks** (bool, 可选) - 是否施加随机掩码。默认值：False。

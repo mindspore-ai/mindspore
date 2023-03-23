@@ -7,14 +7,14 @@ mindspore.dataset.vision.AutoAugment
     此操作仅适用于3通道RGB图像。
 
     参数：
-        - **policy** (AutoAugmentPolicy, 可选) - 在不同数据集上学习的AutoAugment策略。默认值：AutoAugmentPolicy.IMAGENET。
+        - **policy** (:class:`mindspore.dataset.vision.AutoAugmentPolicy` , 可选) - 在不同数据集上学习的AutoAugment策略。默认值：AutoAugmentPolicy.IMAGENET。
           可以是[AutoAugmentPolicy.IMAGENET, AutoAugmentPolicy.CIFAR10, AutoAugmentPolicy.SVHN]中的任何一个。
 
           - **AutoAugmentPolicy.IMAGENET**：表示应用在ImageNet数据集上学习的AutoAugment。
           - **AutoAugmentPolicy.CIFAR10**：表示应用在Cifar10数据集上学习的AutoAugment。
           - **AutoAugmentPolicy.SVHN**：表示应用在SVHN数据集上学习的AutoAugment。
 
-        - **interpolation** (Inter, 可选) - 图像插值方式。默认值：Inter.NEAREST。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` , 可选) - 图像插值方式。默认值：Inter.NEAREST。
           可以是[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC, Inter.AREA]中的任何一个。
 
           - **Inter.NEAREST**：表示插值方法是最近邻插值。

@@ -13,7 +13,7 @@ mindspore.dataset.vision.ResizedCrop
         - **size** (Union[int, Sequence[int, int]]) - 图像的输出尺寸大小。
           若输入int，将调整图像的较短边长度为 `size` ，且保持图像的宽高比不变；
           若输入Sequence[int, int]，其输入格式需要是 (高度, 宽度) 。
-        - **interpolation** (Inter, 可选) - 图像插值方式。默认值：Inter.BILINEAR。
+        - **interpolation** (:class:`mindspore.dataset.vision.Inter` , 可选) - 图像插值方式。默认值：Inter.BILINEAR。
           取值可为 Inter.BILINEAR、Inter.NEAREST、Inter.BICUBIC、Inter.AREA 或 Inter.PILCUBIC。
 
           - Inter.BILINEAR，双线性插值。
