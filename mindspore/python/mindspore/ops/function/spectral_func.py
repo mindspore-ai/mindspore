@@ -80,7 +80,8 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
 
 def bartlett_window(window_length, periodic=True, *, dtype=None):
     r"""
-    Bartlett window function.
+    Bartlett window function is a triangular-shaped weighting function used for smoothing or frequency analysis of
+    signals in digital signal processing.
 
     The `window_length` is a input tensor which determines the returned window size, and its data should be
     an integer. In particular, if `window_length` is equal to `1`, only a single value 1 exists in the

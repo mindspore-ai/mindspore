@@ -3,7 +3,7 @@ mindspore.ops.bartlett_window
 
 .. py:function:: mindspore.ops.bartlett_window(window_length, periodic=True, *, dtype=None)
 
-    巴特利特窗口函数。
+    Bartlett窗口函数是一种三角形状的加权函数，通常用于平滑处理或频域分析信号。
 
     `window_length` 是一个Tensor，控制返回的窗口大小，其数据类型必须是整数。特别的，当 `window_length` 为1时，返回的窗口只包含一个值，为 `1` 。 `periodic` 决定返回的窗口是否会删除对称窗口的最后一个重复值，并准备用作带函数的周期窗口。因此，如果 `periodic` 为True， :math:`N` 为 :math:`window\_length + 1`。
 
