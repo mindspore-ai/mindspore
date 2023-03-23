@@ -7,10 +7,10 @@ mindspore.ops.unbind
 
     若输入Tensor在指定的轴上的rank为 `R` ，则输出Tensor的rank为 `(R-1)` 。
 
-    给定一个shape为 :math:`(input_1, input_2, ..., input_R)` 的Tensor。如果存在 :math:`0 \le axis` ，则输出Tensor的shape为 :math:`(input_1, input_2, ..., input_{axis}, input_{axis+2}, ..., input_R)` 。
+    给定一个shape为 :math:`(n_1, n_2, ..., n_R)` 的Tensor，在指定 `dim` 上对其进行展开，返回多个shape为 :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)` 的Tensor 。
 
     参数：
-        - **input** (Tensor) - 输入Tensor，其shape为 :math:`(input_1, input_2, ..., input_R)` 。rank必须大于0。
+        - **input** (Tensor) - 输入Tensor，其shape为 :math:`(n_1, n_2, ..., n_R)` 。rank必须大于0。
         - **dim** (int) - 指定矩阵分解的轴。取值范围为[-R, R)，默认值：0。
 
     返回：

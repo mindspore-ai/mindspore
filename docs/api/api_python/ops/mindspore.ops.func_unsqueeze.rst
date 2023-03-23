@@ -7,11 +7,8 @@ mindspore.ops.unsqueeze
 
     扩展后的Tensor中位置对应 `dim` 的维度为插入的新维度。
 
-    .. note::
-        如果指定的 `dim` 是负数，那么它会从后往前，从1开始计算index。
-
     参数：
-        - **input** (Tensor) - 输入Tensor，shape为 :math:`(x_1, x_2, ..., x_R)`。
+        - **input** (Tensor) - 输入Tensor，shape为 :math:`(n_1, n_2, ..., n_R)`。
         - **dim** (int) - 新插入的维度的位置。 `dim` 的值必须在范围 `[-input.ndim-1, input.ndim]` 内。仅接受常量输入。
 
     返回：
