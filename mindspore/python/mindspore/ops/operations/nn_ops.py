@@ -3647,11 +3647,13 @@ class ResizeBilinear(PrimitiveWithInfer):
     This API is deprecated, please use the :class:`mindspore.ops.ResizeBilinearV2` instead.
     For general resizing with other interpolation methods, refer to :func:`mindspore.ops.interpolate` for more details.
 
+    note:
+        Dynamic shape feature is not supported for now.
+
     Supported Platforms:
         Deprecated
     """
-
-    @deprecated("2.0", "ops.ResizeBilinear", False)
+    @deprecated("2.0", "ResizeBilinearV2", False)
     @prim_attr_register
     def __init__(self, size, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
