@@ -864,7 +864,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   /// \param[in] other The other abstract to be joined.
   /// \return A pointer to the combined abstract.
   template <typename T>
-  AbstractBasePtr ElementsJoin(const AbstractBasePtr &other);
+  AbstractBasePtr ElementsJoin(const std::shared_ptr<AbstractSequence> &other);
 
   /// \brief Combine other sequence nodes with this one.
   ///
@@ -960,7 +960,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   void set_dynamic_len_element_abs(const AbstractBasePtr &dynamic_len_element_abs);
 
   /// \brief Check and convert the sequence to dynamic length sequence.
-  void CheckAndConvertToDynamicLenSequence();
+  void CheckAndConvertToDynamicLenSequence(bool raise_exception = true);
 
  protected:
   AbstractBasePtrList elements_;
@@ -968,10 +968,10 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes_;
   // Dynamic len sequence related.
   bool dynamic_len_ = false;
+  size_t space_num_{0};
   AbstractBasePtr dynamic_len_element_abs_ = nullptr;
 
-  template <typename T>
-  AbstractBasePtr DynamicLenSequenceJoin(const AbstractBasePtr &other);
+  std::shared_ptr<AbstractSequence> DynamicLenSequenceJoin(const std::shared_ptr<AbstractSequence> &other);
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 
