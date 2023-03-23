@@ -208,6 +208,10 @@ class CpuFp16SubGraph : public CpuSubGraph {
     return CpuSubGraph::SetFp16Attr();
   }
 
+#if !defined(ENABLE_MINDRT)
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
+#endif
+
   int Prepare() override {
     auto ret = CpuSubGraph::Prepare();
     if (ret != RET_OK) {
@@ -255,6 +259,12 @@ class CpuFp16SubGraph : public CpuSubGraph {
   }
 
  private:
+#if !defined(ENABLE_MINDRT)
+  int PreProcess();
+  int PostProcess();
+  void FreeOriginInputData();
+  std::vector<DataStore *> origin_input_data_{};
+#endif
   bool support_fp16_ = false;
 };
 #endif
