@@ -24,6 +24,7 @@
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/lp_norm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/lp_norm_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -143,10 +144,7 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                         reinterpret_cast<cudaStream_t>(cuda_stream_)),
         "LpNormGpuKernelMod cudaMemcpyAsync host_template_one failed");
     } else {
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(output, input, outputs.at(kIndex0)->size, cudaMemcpyDeviceToDevice,
-                        reinterpret_cast<cudaStream_t>(cuda_stream_)),
-        "LpNormGpuKernelMod cudaMemcpyAsync input data failed");
+      Abs(input, output, outputs.at(kIndex0)->size, reinterpret_cast<cudaStream_t>(cuda_stream_));
     }
     return true;
   }
