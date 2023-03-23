@@ -119,6 +119,9 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr DepthToSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  (void)CheckAndConvertUtils::CheckInteger("input number", int64_t(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

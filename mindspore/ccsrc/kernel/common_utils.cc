@@ -1216,7 +1216,7 @@ bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<Ker
 std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node) {
   auto GetObjectTypeStr = [](const std::vector<TypeId> &object_types) {
     std::vector<std::string> object_type_strs;
-    std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
+    (void)std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
     return std::accumulate(object_type_strs.begin(), object_type_strs.end(), std::string(),
                            [](const std::string &x, const std::string &y) { return x.empty() ? y : x + ", " + y; });
   };
@@ -1229,6 +1229,17 @@ std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CN
 
 bool IsKernelObjectTypeNotSupportedError(const std::string &error_str) {
   return error_str.find(kKernelObjectTypeNotSupportedStr) != std::string::npos;
+}
+
+bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr) {
+  if (kernel_attr.GetOutputSize() > 1) {
+    for (size_t i = 0; i < kernel_attr.GetOutputSize(); i++) {
+      if (kernel_attr.GetOutputAttr(i).object_type == kObjectTypeTuple) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {

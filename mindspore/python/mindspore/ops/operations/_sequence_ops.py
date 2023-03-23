@@ -350,8 +350,16 @@ class TupleToTensor(Primitive):
         self.init_prim_io_names(inputs=['input_tuple', 'dtype'], outputs=['output_data'])
 
     def __call__(self, x, dtype):
-        if x is not None and None not in x and isinstance(x, tuple):
-            return Tensor(x, dtype)
+        return self.infer_value(x, dtype)
+
+    def infer_value(self, x, dtype):
+        """infer value"""
+        if x is None:
+            return None
+        if isinstance(x, range):
+            x = tuple(x)
+        if isinstance(x, tuple) and None not in x:
+            return Tensor(x, dtype=dtype)
         return None
 
 

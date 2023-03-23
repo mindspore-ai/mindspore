@@ -275,14 +275,14 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
   std::vector<std::string> output_formats;
   std::vector<TypeId> output_types;
   for (size_t index = 0; index < selected_kernel_attr.GetOutputSize(); ++index) {
-    output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
-    output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
+    (void)output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
+    (void)output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
   }
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
   for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
-    input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
-    input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
+    (void)input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
+    (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
   }
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
   if (selected_kernel_attr.GetSkipCheck()) {
@@ -697,6 +697,14 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       return KernelNotSupportWarning(kernel_node, !kernel_attrs.empty());
     }
   }
+
+  if (IsTupleNestedOutputKernelAttr(selected_kernel_attr)) {
+    return {kernel::KernelObjectTypeNotSupportWarning(kernel_node).first +
+              " Multiple tuple outputs is not supported for registered kernel attr: " +
+              kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr),
+            TypeError};
+  }
+
   // Print the selected attr info.
   const auto attr_info = kernel::FetchPrintInfoByKernelAttr(selected_kernel_attr);
   MS_LOG(INFO) << kernel_node->fullname_with_scope() << " kernel attr info: " << attr_info;
