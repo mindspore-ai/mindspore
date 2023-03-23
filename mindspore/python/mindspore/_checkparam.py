@@ -309,6 +309,7 @@ def get_log2_size(size):
 
 
 def is_stub_tensor(tensor):
+    """Check if it's a StubTensor"""
     return hasattr(tensor, "stub")
 
 

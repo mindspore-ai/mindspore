@@ -123,6 +123,7 @@ class StubTensor:
 
     @property
     def adapter_flag(self):
+        """adapter flag."""
         return False
 
     @property
@@ -155,6 +156,7 @@ class StubTensor:
     flush_from_cache = _stub_method(Tensor.flush_from_cache)
 
     def stub_sync(self):
+        """Get value of a stubtensor."""
         if self.stub:
             val = self.stub.get_value()
             self.tensor = Tensor(val, internal=True)

@@ -210,7 +210,7 @@ std::vector<TE> ChangeDataToVec(const NodePtr &n) {
 }
 
 template <typename TM>
-tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs &) {
+tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs &) const {
   const size_t unary_input_num = 1;
   const size_t binary_input_num = 2;
   if (inputs.size() > 0) {
@@ -525,13 +525,13 @@ std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &inputs, con
     }
   } else if (value->isa<tensor::Tensor>()) {
     auto tvalue = value->cast<tensor::TensorPtr>();
-    if (tvalue->data_type_c() == TypeId::kNumberTypeInt32) {
+    if (static_cast<TypeId>(tvalue->data_type_c()) == TypeId::kNumberTypeInt32) {
       int *data = static_cast<int *>(tvalue->data_c());
       for (size_t elem = 0; elem < tvalue->DataSize(); elem++) {
         res.push_back(IntToLong(*(data + elem)));
       }
       return {res};
-    } else if (tvalue->data_type_c() == TypeId::kNumberTypeInt64) {
+    } else if (static_cast<TypeId>(tvalue->data_type_c()) == TypeId::kNumberTypeInt64) {
       int64_t *data = static_cast<int64_t *>(tvalue->data_c());
       res = std::vector<int64_t>(data, data + tvalue->DataSize());
       return {res};
@@ -652,7 +652,7 @@ std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
 }
 
 template <typename TM>
-tensor::TensorPtr GatherOp::CalcGather(const NodePtrList &inputs, const DAttrs &attrs) {
+tensor::TensorPtr GatherOp::CalcGather(const NodePtrList &inputs, const DAttrs &attrs) const {
   constexpr size_t param_index = 0;
   constexpr size_t indice_index = 1;
   constexpr size_t axis_index = 2;

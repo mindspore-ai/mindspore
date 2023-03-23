@@ -73,7 +73,7 @@ class PrimOp : public Node {
 
   // calculate const inputs, used for InferValue
   template <typename TM>
-  tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &);
+  tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &) const;
 
   // Gen PrimitiveC and abstract list to call PrimitiveC's inference function.
   std::pair<PrimitivePtr, AbstractBasePtrList> GenPrimAndAbstract(const NodePtrList &inputs, const DAttrs &attrs) const;
@@ -273,7 +273,7 @@ class GatherOp : public OpaqueOp {
 
  protected:
   template <typename TM>
-  tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
+  tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs) const;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
