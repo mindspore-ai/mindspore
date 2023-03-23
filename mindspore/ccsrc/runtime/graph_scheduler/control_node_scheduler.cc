@@ -1266,8 +1266,16 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
       MS_EXCEPTION_IF_NULL(kernel_actor);
       kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
+    } else if (no_input_kernel_actor->type_ == KernelTransformType::kCustomActor) {
+      const auto &custom_actor = dynamic_cast<CustomActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(custom_actor);
+      auto custom_kernel = custom_actor->kernel().lock();
+      MS_EXCEPTION_IF_NULL(custom_kernel);
+      const auto &base_node = AnfUtils::GetCustomActorBaseNode(custom_kernel);
+      MS_EXCEPTION_IF_NULL(base_node);
+      kernel_graph = AnfAlgo::FetchKernelGraph(base_node.get());
     } else {
-      continue;
+      MS_LOG(EXCEPTION) << "Invalid no input actor: " << no_input_kernel_actor->GetAID().Name();
     }
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kStackActorNameSuffix;

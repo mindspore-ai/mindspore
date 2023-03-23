@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include "runtime/graph_scheduler/actor/memory_aware_actor.h"
 
 namespace mindspore {

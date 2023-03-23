@@ -1301,6 +1301,13 @@ std::vector<AbstractActorPtr> GraphScheduler::BuildNoInputKernelActor(const Acto
       (void)no_input_kernel_actors.emplace_back(kernel_actor);
     }
   }
+
+  for (auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    if ((custom_actor->input_datas_num_ == 0) && (custom_actor->input_controls_num_ == 0)) {
+      (void)no_input_kernel_actors.emplace_back(custom_actor);
+    }
+  }
   return no_input_kernel_actors;
 }
 
@@ -2006,6 +2013,10 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   // Auto monad actor may modify the device tensor store.
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
 
+  // Link arrows for custom actor.
+  LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
+  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+
   // BuildNoInputKernelActor depends on whether kernel actors have input, so must be behind the link of kernel actors.
   actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, graph_compiler_info.strategy_);
 
@@ -2014,10 +2025,6 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
     LinkControlArrowForDataPrepareActor(actor_set->data_prepare_actor_.get(), actor_set,
                                         graph_compiler_info.control_node_parser_);
   }
-
-  // Link arrows for custom actor.
-  LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
-  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
@@ -2094,15 +2101,6 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
         MS_EXCEPTION_IF_NULL(from_actor);
       }
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
-    }
-  }
-
-  // Handle the no input custom actor.
-  for (const auto &custom_actor : actor_set->custom_actors_) {
-    MS_EXCEPTION_IF_NULL(custom_actor);
-    // In control flow, no input actors should be linked to entrance actors.
-    if (!parser->IsInited() && (custom_actor->input_controls_num_ == 0) && (custom_actor->input_datas_num_ == 0)) {
-      SchedulerHelper::AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
     }
   }
 }
