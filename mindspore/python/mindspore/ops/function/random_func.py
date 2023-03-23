@@ -477,8 +477,8 @@ def shuffle(x, seed=None):
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
         >>> output = ops.shuffle(x, seed=1)
-        >>> print(output.shape)
-        (4,)
+        >>> print(output)
+        (3. 4. 2. 1.)
     """
     seed, seed2 = _get_seed(seed, "shuffle")
     random_shuffle_ = _get_cache_prim(RandomShuffle)(seed=seed, seed2=seed2)

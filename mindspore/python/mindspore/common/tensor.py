@@ -1853,10 +1853,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
             >>> index, output = x.argmax_with_value()
             >>> print(index, output)
-            3 0.7
-            >>> index, output = x.argmax_with_value(keep_dims=True)
-            >>> print(index, output)
-            [3] [0.7]
+            0.7 3
+            >>> output, index = x.argmax_with_value(keep_dims=True)
+            >>> print(output, index)
+            [0.7] [3]
         """
         if self.shape == ():
             return (Tensor(0), self)

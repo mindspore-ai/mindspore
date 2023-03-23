@@ -3,14 +3,14 @@ mindspore.ops.sinc
 
 .. py:function:: mindspore.ops.sinc(input)
 
-    按照以下公式逐元素计算输入Tensor的数学正弦函数。
+    计算输入的归一化正弦值。
 
     .. math::
         out_i = \begin{cases} \frac{sin(\pi input_i)}{input_i} & input_i\neq 0\\ 
         1 & input_i=0 \end{cases}
 
     参数：
-        - **input** (Tensor) - `input` 的shape为 :math:`(input_1, input_2, ..., input_R)`。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape与 `input` 相同。
