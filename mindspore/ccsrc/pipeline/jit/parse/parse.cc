@@ -1067,7 +1067,13 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Num is float:" << (std::string)py::str(obj);
     auto data = py::cast<float>(obj);
-    return NewValueNode(data);
+    auto ret = NewValueNode(data);
+    auto fp32_val = ret->value()->cast<FP32ImmPtr>();
+    if (fp32_val != nullptr) {
+      MS_LOG(DEBUG) << "Set float64 value to FP32Imm.";
+      fp32_val->set_prim_value(py::cast<double>(obj));
+    }
+    return ret;
   } else {
     // no else actually
     errcode_ = PARSE_NODE_TYPE_UNKNOWN;

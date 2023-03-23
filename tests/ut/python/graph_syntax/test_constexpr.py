@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_dict_get """
+import math
 from mindspore import Tensor, jit, context, mutable
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
@@ -151,3 +152,39 @@ def test__primexpr_with_mutable_scalar():
 
     out = foo()
     assert out == 0
+
+
+def test_constexpr_with_float_input():
+    """
+    Feature: constexpr with float input.
+    Description: Ensure constexpr with float input has correct value.
+    Expectation: No exception.
+    """
+    @constexpr
+    def calculate_floor(x, y):
+        return math.floor(x * y)
+
+    @jit
+    def foo():
+        return calculate_floor(0.9, 20)
+
+    out = foo()
+    assert out == 18
+
+
+def test_constexpr_with_float_input_2():
+    """
+    Feature: constexpr with float input.
+    Description: Ensure constexpr with float input has correct value.
+    Expectation: No exception.
+    """
+    @constexpr
+    def calculate_floor(x, y):
+        return math.floor(x * y)
+
+    @jit
+    def foo(a, b):
+        return calculate_floor(a, b)
+
+    out = foo(0.9, 20)
+    assert out == 18
