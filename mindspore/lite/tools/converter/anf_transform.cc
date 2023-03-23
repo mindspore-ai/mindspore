@@ -131,6 +131,7 @@
 #include "mindspore/core/ops/op_name.h"
 #include "tools/common/string_util.h"
 #include "src/common/common.h"
+#include "tools/optimizer/graph/miniaturization_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -490,6 +491,9 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   auto const_fold_pm = std::make_shared<opt::LitePassManager>("const fold fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(const_fold_pm);
+  if (param->train_model) {
+    const_fold_pm->AddPass(std::make_shared<opt::MiniaturizationPass>());
+  }
   const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
   if (!param->train_model) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model));
