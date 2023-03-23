@@ -126,7 +126,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__ms_hasnext__", std::string("tuple_hasnext")},  // C.tuple_hasnext
        {"__bool__", std::string("tuple_bool")},           // C.tuple_bool
        {"count", prim::kPrimSequenceCount},               // P.sequence_count
-       {"index", prim::kPrimSequenceIndex},               // P.sequenc_index
+       {"index", std::string("sequence_index")},          // C.sequence_index
      }},
     {kObjectTypeList,
      {
@@ -144,7 +144,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"reverse", std::string("list_reverse")},         // C.list_reverse
        {"extend", std::string("list_extend")},           // C.list_extend
        {"count", prim::kPrimSequenceCount},              // P.sequence_count
-       {"index", prim::kPrimSequenceIndex},              // P.sequence_index
+       {"index", std::string("sequence_index")},         // C.sequence_index
      }},
     {kObjectTypeDictionary,
      {

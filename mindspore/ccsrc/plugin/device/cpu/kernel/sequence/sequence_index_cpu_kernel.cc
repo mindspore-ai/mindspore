@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputNum = 2;
+constexpr size_t kInputNum = 4;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
@@ -58,18 +58,39 @@ bool SequenceIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  T *seq_addr = GetDeviceAddress<T>(inputs, 0);
-  T *target_addr = GetDeviceAddress<T>(inputs, 1);
+  constexpr size_t seq_index = 0;
+  constexpr size_t target_index = 1;
+  constexpr size_t start_index = 2;
+  constexpr size_t end_index = 3;
+  T *seq_addr = GetDeviceAddress<T>(inputs, seq_index);
+  T *target_addr = GetDeviceAddress<T>(inputs, target_index);
+  int64_t *start_addr = GetDeviceAddress<int64_t>(inputs, start_index);
+  int64_t *end_addr = GetDeviceAddress<int64_t>(inputs, end_index);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
   auto seq_size = inputs[0]->size;
 
-  int64_t index = 0;
-  size_t elem_num = seq_size / sizeof(T);
-  for (size_t i = 0; i < elem_num; i++) {
+  int64_t start_value = start_addr[0];
+  int64_t end_value = end_addr[0];
+  int64_t elem_num = SizeToLong(seq_size / sizeof(T));
+  int64_t zero_num = 0;
+  if (start_value < zero_num) {
+    start_value += elem_num;
+    start_value = std::max(zero_num, start_value);
+  }
+  if (end_value < zero_num) {
+    end_value += elem_num;
+    end_value = std::max(zero_num, end_value);
+  }
+  int64_t index = -1;
+  for (int64_t i = start_value; i < std::min(end_value, elem_num); ++i) {
     if (seq_addr[i] == target_addr[0]) {
       index = i;
       break;
     }
+  }
+
+  if (index == -1) {
+    MS_EXCEPTION(ValueError) << target_addr[0] << " is not in list";
   }
   output_addr[0] = index;
   return true;
@@ -79,20 +100,28 @@ std::vector<std::pair<KernelAttr, SequenceIndexCpuKernelMod::SequenceIndexFunc>>
   {{KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
     &SequenceIndexCpuKernelMod::LaunchKernel<float>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
     &SequenceIndexCpuKernelMod::LaunchKernel<double>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
     &SequenceIndexCpuKernelMod::LaunchKernel<int>},
    {KernelAttr()
       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
       .AddOutputAttr(kObjectTypeNumber, kNumberTypeInt64),
     &SequenceIndexCpuKernelMod::LaunchKernel<int64_t>}};

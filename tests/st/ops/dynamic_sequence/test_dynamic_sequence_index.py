@@ -30,8 +30,8 @@ class Net(nn.Cell):
         super().__init__()
         self.seq_index = seq.SequenceIndex()
 
-    def construct(self, x, y):
-        return self.seq_index(x, y)
+    def construct(self, x, y, start, end):
+        return self.seq_index(x, y, start, end)
 
 
 @pytest.mark.level1
@@ -49,7 +49,7 @@ def test_seq_index_tuple_dy():
     y = 3
     expect = 2
     net = Net()
-    res = net(x, y)
+    res = net(x, y, 0, 3)
     assert res == expect
 
 
@@ -68,7 +68,7 @@ def test_seq_index_scalar_dy():
     y = mutable(1)
     expect = 1
     net = Net()
-    res = net(x, y)
+    res = net(x, y, 0, -1)
     assert res == expect
 
 
@@ -85,9 +85,9 @@ def test_seq_index_all_dy():
     """
     x = mutable((1, 2, 3, 3, 2, 3), True)
     y = mutable(3)
-    expect = 2
+    expect = 3
     net = Net()
-    res = net(x, y)
+    res = net(x, y, 3, 6)
     assert res == expect
 
 
@@ -104,7 +104,9 @@ def test_seq_index_grad():
     """
     x = mutable((1, 2, 3), True)
     y = mutable(2)
+    start = 0
+    end = 3
     dout = mutable(2)
     net = Net()
     grad_func = GradOperation(get_all=True, sens_param=True)(net)
-    grad_func(x, y, dout)
+    grad_func(x, y, start, end, dout)
