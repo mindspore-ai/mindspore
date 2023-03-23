@@ -195,53 +195,7 @@ class AdaptiveAvgPool2D(Primitive):
     r"""
     AdaptiveAvgPool2D operation.
 
-    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is H x W.
-    The number of output features is equal to the number of input planes.
-
-    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
-    H is the feature height, and W is the feature width.
-
-    For AdaptiveAvgPool2D:
-
-    ..  math::
-        \begin{align}
-        h_{start} &= floor(i * H_{in} / H_{out})\\
-        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
-        w_{start} &= floor(j * W_{in} / W_{out})\\
-        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
-        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
-        * (w_{end}- w_{start})}
-        \end{align}
-
-    Args:
-        - output_size (Union[int, tuple]): The target output size is H x W.
-          ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-          which means the output size is the same as the input.
-
-    Inputs:
-        - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
-          with float16 ,float32 or float64 data type.
-
-    Outputs:
-        Tensor, with the same type as the `input_x`.
-
-        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
-
-    .. math::
-        out\_shape = \begin{cases}
-        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
-        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
-        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
-        (h, h), & \text{if output_size is h;}\\
-        (h, w), & \text{if output_size is (h, w)}
-        \end{cases}
-
-    Raises:
-        TypeError: If `input_x` is not a tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
-        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+    Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -306,9 +260,9 @@ class AdaptiveMaxPool2D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_max_pool2d` for more details.
 
     Args:
-        output_size (Union[int, tuple]): The target output size is H x W.
-            `ouput_size` can be a tuple, or a single H for H x H. H and W can be int or None
-            in which case the output size is the same as the input.
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(H, W)`,
+            or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or None.
+            If it is None, it means the output size is the same as the input size.
 
     Inputs:
         - **input_x** (Tensor) - The input of AdaptiveMaxPool2D, which is a 3D or 4D tensor,
@@ -378,12 +332,11 @@ class AdaptiveMaxPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more details.
 
     Inputs:
-        x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
-            int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
-        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
-            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. If it is None, the output size and input size of the corresponding
-            dimension are the same.
+        - **x** (Tensor) - Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
+        - **output_size** (Union[int, tuple]) - The specified output size, which is an integer that represents depth,
+          height and width, or a tuple of three int numbers that represent depth, height and width respectively.
+          The value must be a positive integer. If it is None, the output size and input size of the corresponding
+          dimension are the same.
 
     Outputs:
         - **y** (Tensor) - Tensor, with the same number of dims and data type as the `input`.

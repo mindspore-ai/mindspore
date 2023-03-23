@@ -547,8 +547,7 @@ class EuclideanNorm(Primitive):
             If false, these dimensions are removed. Default: False.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor to reduce. Must be one of the following types:
-          float16, float32, float64, int8, int16, int32, int64, complex64, complex128, uint8, uint16, uint32, uint64.
+        - **x** (Tensor) - The input Tensor to reduce.
         - **axes** (Tensor) - The axes to perform reduction on. Must be one of the following types: int32, int64.
 
     Outputs:
@@ -1125,7 +1124,7 @@ class ReduceMin(_Reduce):
 
 class Bucketize(Primitive):
     """
-    Bucketizes 'input' based on 'boundaries'.
+    Bucketizes `input` based on `boundaries`.
 
     Args:
         boundaries (list[float]): A sorted list of floats gives the boundary of the buckets, and no default value.
@@ -1643,12 +1642,12 @@ class Betainc(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> a = Tensor(np.array([1, 1, 1]), mindspore.float32)
-        >>> b = Tensor(np.array([1, 1, 1]), mindspore.float32)
-        >>> x = Tensor(np.array([1, 1,1 ]), mindspore.float32)
+        >>> a = Tensor(np.array([0.3, 0.1, 0.4]), mindspore.float32)
+        >>> b = Tensor(np.array([0.4, 0.5, 0.9]), mindspore.float32)
+        >>> x = Tensor(np.array([0.2, 0.6, 0.5]), mindspore.float32)
         >>> betainc = ops.Betainc()
         >>> print(betainc(a, b, x))
-        [1. 1. 1.]
+        [0.41462693 0.8706035  0.7298298 ]
     """
 
     @prim_attr_register
@@ -6730,7 +6729,7 @@ class Polygamma(Primitive):
 
 class CholeskyInverse(Primitive):
     """
-    Returns the inverse of the positive definite matrix using cholesky matrix factorization by its Cholesky factor `U`.
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization given its Cholesky factor.
 
     Refer to :func:`mindspore.ops.cholesky_inverse` for more details.
 
@@ -7139,8 +7138,8 @@ class Renorm(Primitive):
 
 class Cholesky(Primitive):
     """
-    Performs the Cholesky decomposition on a symmetric
-    positive-definite matrix `A`, or a batch of symmetric positive-definite matrices.
+    Performs the Cholesky decomposition on a single or a batch of
+    symmetric positive-definite matrices.
 
     Refer to :func:`mindspore.ops.cholesky` for more details.
 
@@ -7552,7 +7551,8 @@ class CompareAndBitpack(Primitive):
 
     Each comparison returns a boolean true (if x_value > threshold) or and false otherwise.
 
-    Given an `x` shaped `[s0, s1, ..., s_n]`, the output is a `uint8` tensor shaped `[s0, s1, ..., s_n / 8]`.
+    Given an `x` shaped :math:`(s_0, s_1, ..., s_n)`, the output is a `uint8`
+    Tensor shaped :math:`(s_0, s_1, ..., s_n / 8)`.
 
     Inputs:
         - **x** (Tensor) - Input tensor. Values to compare against `threshold` and bitpack. The data type must be
@@ -7910,6 +7910,7 @@ class Qr(Primitive):
 class Cauchy(Primitive):
     r"""
     Create a tensor of shape `size` with random numbers drawn from Cauchy distribution.
+    It is defined as follows:
 
     .. math::
         f(x)= \frac{1}{\pi} \frac{\sigma}{(x-median)^2 +\sigma^2}

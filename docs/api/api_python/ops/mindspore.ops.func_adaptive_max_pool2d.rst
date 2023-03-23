@@ -22,7 +22,7 @@ mindspore.ops.adaptive_max_pool2d
 
     参数：
         - **input** (Tensor) - adaptive_max_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
-        - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，或代表相同H和W的一个int值，或None，如果是None，则意味着输出大小与输入相同。
+        - **output_size** (Union[int, tuple]) - 输出特征图的size。 `ouput_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。H、W可以是int或None，如果是None，则意味着输出的size与输入相同。
         - **return_indices** (bool) - 如果为 ``True`` ，输出最大值的索引，默认值为 ``False`` 。
 
     返回：
