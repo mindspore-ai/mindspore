@@ -44,6 +44,10 @@ abstract::TupleShapePtr ReduceStdInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (IsDynamicRank(input_shape)) {
+    auto x = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x, x});
+  }
   auto input_rank = SizeToLong(input_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("input_rank", input_rank, kGreaterEqual, 1, prim_name);
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
