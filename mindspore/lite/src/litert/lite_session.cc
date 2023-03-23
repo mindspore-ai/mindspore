@@ -739,6 +739,21 @@ int LiteSession::DrawGraph(kernel::SubGraphKernel *graph) {
   return RET_OK;
 }
 
+void LiteSession::SetInitRefCountOfPartialSubgraphInputs(const Model *model) {
+  if (model == nullptr) {
+    return;
+  }
+  constexpr size_t kFirstPartialSubgraphIndex = 1U;
+  const auto &sub_graphs = model->graph_.sub_graphs_;
+  // Find out partial subgraph's inputs and set their 'init_ref_count' to INT_MAX to avoid trigger 'FreeData()'.
+  // Here start with index:1 to skip main subgraph.
+  for (size_t i = kFirstPartialSubgraphIndex; i < sub_graphs.size(); i++) {
+    for (auto index : sub_graphs[i]->input_indices_) {
+      tensors_[index]->set_init_ref_count(INT_MAX);
+    }
+  }
+}
+
 int LiteSession::PrepareKernels(const Model *model) {
   // find kernel's in_kernels and out_kernels in every subgraph
   kernel::KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(this->kernels_);
@@ -751,6 +766,11 @@ int LiteSession::PrepareKernels(const Model *model) {
     MS_LOG(ERROR) << "SetTensorInitRefCount failed.";
     return ret;
   }
+  // When running control flow model, if partial subgraph's input is also it's output,
+  // 'init_ref_count' is not correctly initialized in 'SetTensorInitRefCount()', which would cause an error
+  // of referencing on input tensor's data_ptr after it's reset to NULL when ref_count down to 0.
+  // Here we set partial input tensor's 'init_ref_count' to INT_MAX to avoid null-filling in above case.
+  SetInitRefCountOfPartialSubgraphInputs(model);
 
   for (auto kernel : this->kernels_) {
     if (kernel->desc().arch == kernel::kDelegate) {

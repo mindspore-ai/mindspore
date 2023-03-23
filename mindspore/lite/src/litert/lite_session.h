@@ -154,6 +154,7 @@ class MS_API LiteSession {
   static int DrawGraph(kernel::SubGraphKernel *graph);
   int SetTensorInitRefCount();
   int SetNonTaiCallSubgraphOutputInitRefCount();
+  void SetInitRefCountOfPartialSubgraphInputs(const Model *model);
   static int ReSizeKernels(
     const std::vector<kernel::KernelExec *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
