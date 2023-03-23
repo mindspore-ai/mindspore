@@ -63,7 +63,8 @@ int MaxPool3DTensorRT::AddInnerOp(TensorRTContext *ctx) {
       MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
       return RET_ERROR;
     }
-    nvinfer1::IPoolingLayer *pooling_layer = ctx->network()->addPoolingNd(*pool_input, pooling_type_, windowSize);
+    nvinfer1::IPoolingLayer *pooling_layer =
+      ctx->network()->addPoolingNd(*pool_input, nvinfer1::PoolingType::kMAX, windowSize);
     if (pooling_layer == nullptr) {
       MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
       return RET_ERROR;
@@ -91,7 +92,6 @@ int MaxPool3DTensorRT::ParseParams(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "convert PoolFusion failed: " << op_name_;
     return RET_ERROR;
   }
-  pooling_type_ = nvinfer1::PoolingType::kMAX;
 
   auto kernel_size = pool_primitive->get_kernel_size();
   if (kernel_size.empty()) {
