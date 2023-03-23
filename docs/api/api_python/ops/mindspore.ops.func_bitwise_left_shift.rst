@@ -3,7 +3,7 @@ mindspore.ops.bitwise_left_shift
 
 .. py:function:: mindspore.ops.bitwise_left_shift(input, other)
 
-    对输入 `input` 进行左移 `other` 位运算。
+    逐元素对输入 `input` 进行左移位运算, 移动的位数由 `other` 指定。
 
     .. math::
 

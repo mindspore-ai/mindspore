@@ -6,7 +6,7 @@ mindspore.ops.affine_grid
     基于一批仿射矩阵 `theta` ，返回一个 2D 或 3D 流场（采样网格）。
 
     参数：
-        - **theta** (Tensor) - 仿射矩阵输入，其shape为 (N, 2, 3) 用于 2D 或 (N, 3, 4) 用于 3D grid。
+        - **theta** (Tensor) - 仿射矩阵输入，其shape为 (N, 2, 3) 用于 2D grid 或 (N, 3, 4) 用于 3D grid。
         - **size** (tuple[int]) - 目标输出图像大小。其值为 (N, C, H, W) 用于 2D grid或 (N, C, D, H, W) 用于 3D grid。
         - **align_corners** (bool，可选) - 在几何上，我们将输入的像素视为正方形而不是点。如果设置为 ``True`` ，则极值 -1 和 1 被认为是指输入角像素的中心点。如果设置为 ``False`` ，则它们被认为是指输入角像素的角点，从而使采样与分辨率无关。默认值： ``False`` 。
 
