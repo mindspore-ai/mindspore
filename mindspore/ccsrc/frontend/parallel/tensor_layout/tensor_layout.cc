@@ -354,71 +354,13 @@ Status TensorLayout::UpdateTensorMap(size_t index, int64_t value) {
   return Status::SUCCESS;
 }
 
-RankList GetDevListByTensorMapValue(DeviceMatrix dev_matrix, int64_t tensor_map_value, size_t dev_matrix_size) {
-  RankList rank_list;
-  if (tensor_map_value >= SizeToLong(dev_matrix_size) || tensor_map_value < MAP_NONE) {
-    MS_LOG(ERROR) << "The size of dev_matrix is " << dev_matrix_size << ", but the tensor map value is "
-                  << tensor_map_value;
-    return rank_list;
-  }
-
-  if (tensor_map_value == MAP_NONE) {
-    rank_list.push_back(g_device_manager->global_rank());
-    return rank_list;
-  }
-
-  uint64_t dim = dev_matrix_size - LongToSize(tensor_map_value) - 1;
-  if (dev_matrix.GetDevicesAlongDim(dim, &rank_list) != SUCCESS) {
-    MS_LOG(ERROR) << "Get devices along dim failed";
-  }
-
-  return rank_list;
-}
-
 bool TensorLayout::operator==(const TensorLayout &t1) const {
-  if (!IsSameTensorShape(t1)) {
-    return false;
-  }
-
-  if (IsSameDeviceArrangement(t1) && IsSameTensorMap(t1)) {
-    return true;
-  }
-
-  Shape t1_tensor_map = t1.tensor_map().array();
-  Shape this_tensor_map = this->tensor_map().array();
-  if (t1_tensor_map.size() != this_tensor_map.size()) {
-    return false;
-  }
-
-  CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
-  DeviceMatrix t1_dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), t1.device_arrangement().array());
-  DeviceMatrix this_dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), this->device_arrangement().array());
-  size_t t1_dev_mat_size = t1.device_arrangement().array().size();
-  size_t this_dev_mat_size = this->device_arrangement().array().size();
-
-  for (size_t i = 0; i < t1_tensor_map.size(); ++i) {
-    if (t1_tensor_map[i] == MAP_NONE && this_tensor_map[i] == MAP_NONE) {
-      continue;
-    }
-
-    RankList t1_dev_list_by_dim = GetDevListByTensorMapValue(t1_dev_matrix, t1_tensor_map[i], t1_dev_mat_size);
-    RankList this_dev_list_by_dim = GetDevListByTensorMapValue(this_dev_matrix, this_tensor_map[i], this_dev_mat_size);
-    if (t1_dev_list_by_dim.empty() || this_dev_list_by_dim.empty()) {
-      MS_LOG(EXCEPTION) << "Can not get device list by tensor map value, these layouts are " << this->ToString()
-                        << std::endl
-                        << " and " << t1.ToString();
-    }
-
-    if (t1_dev_list_by_dim != this_dev_list_by_dim) {
-      return false;
-    }
-  }
-
-  return true;
+  return (IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
 }
 
-bool TensorLayout::operator!=(const TensorLayout &t1) const { return !(operator==(t1)); }
+bool TensorLayout::operator!=(const TensorLayout &t1) const {
+  return !(IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
+}
 
 bool TensorLayout::IsSameWithoutSplit(const TensorLayout &t1) const {
   if (!IsSameTensorMap(t1) || !IsSameTensorShape(t1)) {
