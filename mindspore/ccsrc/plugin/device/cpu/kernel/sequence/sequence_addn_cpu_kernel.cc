@@ -84,8 +84,7 @@ int SequenceAddNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
+bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) {
   size_t elements_num = outputs[0]->size / sizeof(T);
   const auto input_0 = reinterpret_cast<T *>(inputs[0]->addr);
@@ -103,14 +102,12 @@ bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   return true;
 }
 
-#define SEQUENCE_ADDN_REG(ms_type, builtin_type)                                                    \
-  {                                                                                                 \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(kObjectTypeNumber, ms_type), \
-      &SequenceAddNCpuKernelMod::LaunchKernel<builtin_type>                                         \
-  },                                                                                                \
-  {                                                                                                 \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type),                    \
-      &SequenceAddNCpuKernelMod::LaunchKernel<builtin_type>                                         \
+#define SEQUENCE_ADDN_REG(ms_type, builtin_type)                                                   \
+  {KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(kObjectTypeNumber, ms_type), \
+   &SequenceAddNCpuKernelMod::LaunchKernel<builtin_type>},                                         \
+  {                                                                                                \
+    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type),                   \
+      &SequenceAddNCpuKernelMod::LaunchKernel<builtin_type>                                        \
   }
 
 const SequenceAddNCpuKernelMod::FuncList &SequenceAddNCpuKernelMod::GetFuncList() const {
