@@ -72,7 +72,7 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const 
   }
 }
 
-void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) {
+void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   std::string input_args_info;
   // Record input args info (weight or data)

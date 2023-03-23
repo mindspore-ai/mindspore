@@ -465,7 +465,7 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
   }
 }
 
-void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) { grad()->SetTopCellDynamicAttr(obj); }
+void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) const { grad()->SetTopCellDynamicAttr(obj); }
 
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {
   if (is_cell) {
