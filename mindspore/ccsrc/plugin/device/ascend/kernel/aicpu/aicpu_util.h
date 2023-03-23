@@ -32,6 +32,8 @@ constexpr auto kDataFormat = "data_format";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kInitDataSetQueue = "InitDataSetQueue";
 constexpr auto kInitData = "InitData";
+constexpr auto kCTCLossV2 = "CTCLossV2";
+constexpr auto kCTCLossV2Grad = "CTCLossV2Grad";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
 constexpr auto kPack = "Pack";
@@ -223,6 +225,8 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGather,
                                           kDynamicStitch,
                                           kSort,
+                                          kCTCLossV2,
+                                          kCTCLossV2Grad,
                                           kSearchSorted,
                                           kSparseSegmentSum,
                                           kResizeBilinear,
