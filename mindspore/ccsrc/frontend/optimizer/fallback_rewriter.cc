@@ -635,7 +635,7 @@ class AfterOptARewriter : public BaseRewriter {
       : BaseRewriter(root_graph, manager) {}
   ~AfterOptARewriter() override = default;
 
-  void UpdateAbstracts() {
+  void UpdateNoneAbstracts() {
     const auto &nodes = manager_->all_nodes();
     for (const auto &node : nodes) {
       const auto &abs = node->abstract();
@@ -1266,7 +1266,7 @@ bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
   AfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
   // Renormalize for new PyExecute node.
-  rewriter.UpdateAbstracts();
+  rewriter.UpdateNoneAbstracts();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
     std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
