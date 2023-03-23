@@ -528,7 +528,8 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             Default: None.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, all images.
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
+        num_parallel_workers (int, optional): Number of worker threads/subprocesses used to
+            fetch the dataset in parallel. Default: 1.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             Default: None, expected order behavior shown in the table below.
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset. Random accessible
@@ -537,7 +538,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             Random accessible input is required. When this argument is specified, `num_samples` reflects the maximum
             sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when num_shards is also specified. Random accessible input is required.
+            when `num_shards` is also specified. Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: True.
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
@@ -549,7 +550,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If sampler and shuffle are specified at the same time.
         ValueError: If sampler and sharding are specified at the same time.
-        ValueError: If num_shards is specified but shard_id is None.
+        ValueError: If `num_shards` is specified but shard_id is None.
         ValueError: If shard_id is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
@@ -882,7 +883,8 @@ class NumpySlicesDataset(GeneratorDataset):
             provided, the output column names will be named as the keys of dict when the input data is a dict,
             otherwise they will be named like column_0, column_1 ...
         num_samples (int, optional): The number of samples to be included in the dataset. Default: None, all samples.
-        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel. Default: 1.
+        num_parallel_workers (int, optional): Number of worker subprocesses used to
+            fetch the dataset in parallel. Default: 1.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: None, expected order behavior shown in the table below.
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset.
@@ -890,7 +892,7 @@ class NumpySlicesDataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: None.
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This argument must be specified only
-            when num_shards is also specified.
+            when `num_shards` is also specified.
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -927,7 +929,7 @@ class NumpySlicesDataset(GeneratorDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If sampler and shuffle are specified at the same time.
         ValueError: If sampler and sharding are specified at the same time.
-        ValueError: If num_shards is specified but shard_id is None.
+        ValueError: If `num_shards` is specified but shard_id is None.
         ValueError: If shard_id is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 

@@ -188,6 +188,7 @@ The configuration module provides various functions to set and get the supported
     mindspore.dataset.config.get_multiprocessing_timeout_interval
     mindspore.dataset.config.set_error_samples_mode
     mindspore.dataset.config.get_error_samples_mode
+    mindspore.dataset.config.ErrorSamplesMode
 
 Others
 -------

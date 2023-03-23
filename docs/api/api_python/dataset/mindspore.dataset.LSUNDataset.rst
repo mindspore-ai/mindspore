@@ -3,7 +3,7 @@ mindspore.dataset.LSUNDataset
 
 .. py:class:: mindspore.dataset.LSUNDataset(dataset_dir, usage=None, classes=None, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析LSUN数据集的源文件构建数据集。
+    LSUN（Large-scale Scene UNderstarding）数据集。
 
     生成的数据集有两列: `[image, label]` 。
     `image` 列的数据类型为uint8。
@@ -14,7 +14,7 @@ mindspore.dataset.LSUNDataset
         - **usage** (str, 可选) - 指定数据集的子集，可为 'train'、'test'、'valid' 或 'all'。默认值：None，将设置为 'all'。
         - **classes** (Union[str, list[str]], 可选) - 读取数据集指定的类别。默认值：None，表示读取所有类别。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部图像。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。
@@ -61,9 +61,9 @@ mindspore.dataset.LSUNDataset
 
     **关于LSUN数据集：**
     
-    LSUN（Large-Scale Scene Understanding）是一个大规模数据集，用于室内场景理解。LSUN最初是在2015年由斯
-    坦福大学推出的，旨在为计算机视觉和机器学习领域的研究提供一个具有挑战性和多样性的数据集。该数据集的主
-    要应用是室内场景分析。
+    LSUN（Large-Scale Scene Understanding）是一个大规模数据集，用于室内场景理解。
+    LSUN最初是在2015年由斯坦福大学推出的，旨在为计算机视觉和机器学习领域的研究提供一个具有挑战性和多样性的数据集。
+    该数据集的主要应用是室内场景分析。
 
     该数据集包含了十种不同的场景类别，包括卧室、客厅、餐厅、起居室、书房、厨房、浴室、走廊、儿童房和室外。
     每种类别都包含了来自不同视角的数万张图像，并且这些图像都是高质量、高分辨率的真实世界图像。

@@ -1,9 +1,9 @@
 mindspore.dataset.Multi30kDataset
 =================================
 
-.. py:class:: mindspore.dataset.Multi30kDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, language_pair=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.Multi30kDataset(dataset_dir, usage=None, language_pair=None, num_samples=None, num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析Multi30k数据集的源文件构建数据集。
+    Multi30k数据集。
 
     生成的数据集有两列: `[text, translation]`。
     `text` 列的数据类型为string。
@@ -14,7 +14,7 @@ mindspore.dataset.Multi30kDataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test'、'valid' 或 'all'。默认值：None，读取全部样本图片。
         - **language_pair** (Sequence[str, str], 可选) - 源语言与目标语言类别，可取值为 ['en', 'de'] 或 ['de', 'en']。默认值：None，表示 ['en', 'de']。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 是否混洗数据集。默认值：None，表示 Shuffle.GLOBAL 。
           如果输入False，将不进行混洗。
           如果输入True，效果与设置 Shuffle.GLOBAL 相同。

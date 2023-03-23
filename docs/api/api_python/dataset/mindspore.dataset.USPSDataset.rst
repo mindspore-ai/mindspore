@@ -3,7 +3,7 @@ mindspore.dataset.USPSDataset
 
 .. py:class:: mindspore.dataset.USPSDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析USPS数据集的源数据集。
+    USPS（U.S. Postal Service）数据集。
 
     生成的数据集有两列：`[image, label]`。`image` 列的数据类型为uint8。`label` 列的数据类型为uint32。
 
@@ -12,7 +12,7 @@ mindspore.dataset.USPSDataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test' 或 'all'。
           取值为 'train' 时将会读取7,291个样本，取值为 'test' 时将会读取2,007个测试样本，取值为 'all' 时将会读取全部9,298个样本。默认值：None，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：`Shuffle.GLOBAL` 。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：

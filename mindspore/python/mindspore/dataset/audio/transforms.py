@@ -69,7 +69,7 @@ class AllpassBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -117,7 +117,7 @@ class AmplitudeToDB(AudioTensorOperation):
     Turn the input audio waveform from the amplitude/power scale to decibel scale.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., freq, time).
+        The shape of the audio waveform to be processed needs to be <..., freq, time>.
 
     Args:
         stype (ScaleType, optional): Scale of the input waveform, which can be
@@ -171,7 +171,7 @@ class Angle(AudioTensorOperation):
     Calculate the angle of complex number sequence.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., complex=2).
+        The shape of the audio waveform to be processed needs to be <..., complex=2>.
         The first dimension represents the real part while the second represents the imaginary.
 
     Raises:
@@ -204,7 +204,7 @@ class BandBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -265,7 +265,7 @@ class BandpassBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -324,7 +324,7 @@ class BandrejectBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -376,7 +376,7 @@ class BassBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -470,7 +470,7 @@ class ComplexNorm(AudioTensorOperation):
     Compute the norm of complex number sequence.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., complex=2).
+        The shape of the audio waveform to be processed needs to be <..., complex=2>.
         The first dimension represents the real part while the second represents the imaginary.
 
     Args:
@@ -573,7 +573,7 @@ class Contrast(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         enhancement_amount (float, optional): Controls the amount of the enhancement,
@@ -1035,7 +1035,7 @@ class FrequencyMasking(AudioTensorOperation):
     Apply masking to a spectrogram in the frequency domain.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., freq, time).
+        The shape of the audio waveform to be processed needs to be <..., freq, time>.
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: False.
@@ -1210,7 +1210,7 @@ class HighpassBiquad(AudioTensorOperation):
         TypeError: If `cutoff_freq` is not of type float.
         TypeError: If `Q` is not of type float.
         ValueError: If `Q` is not in range of (0, 1].
-        RuntimeError: If the shape of input audio waveform does not match (..., time).
+        RuntimeError: If the shape of input audio waveform does not match <..., time>.
 
     Supported Platforms:
         ``CPU``
@@ -1251,7 +1251,7 @@ class InverseMelScale(AudioTensorOperation):
         sgdargs (dict, optional): Arguments for the SGD optimizer. Default: None, will be set to
             {'sgd_lr': 0.1, 'sgd_momentum': 0.9}.
         norm (NormType, optional): Normalization method, can be NormType.SLANEY or NormType.NONE.
-            Default: NormType.NONE.
+            Default: NormType.NONE, no narmalization.
         mel_type (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
 
     Raises:
@@ -1327,7 +1327,7 @@ class InverseSpectrogram(AudioTensorOperation):
             Default: None, will be set to `win_length // 2` .
         pad (int, optional): Two sided padding of signal, cannot be less than 0. Default: 0.
         window (WindowType, optional): A function to create a window tensor that is applied/multiplied to each
-            frame/window. Default: WindowType.Hann.
+            frame/window. Default: WindowType.HANN.
         normalized (bool, optional): Whether the spectrogram was normalized by magnitude after stft. Default: False.
         center (bool, optional): Whether the signal in spectrogram was padded on both sides. Default: True.
         pad_mode (BorderType, optional): Controls the padding method used when `center` is True,
@@ -1397,7 +1397,7 @@ class LFCC(AudioTensorOperation):
     Create LFCC for a raw audio signal.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int, optional): Sample rate of audio signal. Default: 16000.
@@ -1408,10 +1408,19 @@ class LFCC(AudioTensorOperation):
         dct_type (int, optional) : Type of DCT to use. The value can only be 2. Default: 2.
         norm (NormMode, optional) : Norm to use. Default: NormMode.ORTHO.
         log_lf (bool, optional) : Whether to use log-lf spectrograms instead of db-scaled. Default: False.
-        speckwargs (dict, optional) : Arguments for Spectrogram. Default: None, will be set to
-            `{'n_fft': 400, 'win_length': n_fft, 'hop_length': win_length // 2, 'pad': 0,
-            'window': WindowType.HANN, 'power': 2.0, 'normalized': False, 'center': True,
-            'pad_mode': BorderType.REFLECT, 'onesided': True}` .
+        speckwargs (dict, optional) : Arguments for :class:`mindspore.dataset.audio.Spectrogram`.
+            Default: None, the default setting is a dict including
+
+            - 'n_fft': 400
+            - 'win_length': n_fft
+            - 'hop_length': win_length // 2
+            - 'pad': 0
+            - 'window': WindowType.HANN
+            - 'power': 2.0
+            - 'normalized': False
+            - 'center': True
+            - 'pad_mode': BorderType.REFLECT
+            - 'onesided': True
 
     Raises:
         TypeError: If `sample_rate` is not of type int.
@@ -1532,7 +1541,7 @@ class LowpassBiquad(AudioTensorOperation):
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., time).
+        The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -1705,7 +1714,7 @@ class MelScale(AudioTensorOperation):
         n_stft (int, optional): Number of bins in STFT. Default: 201.
         norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
             If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.
-            Default: NormType.NONE.
+            Default: NormType.NONE, no narmalization.
         mel_type (MelType, optional): Type to use, value should be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
 
     Raises:
@@ -1770,7 +1779,7 @@ class MelSpectrogram(AudioTensorOperation):
         pad (int, optional): Two sided padding of signal, which can't be less than 0. Default: 0.
         n_mels (int, optional): Number of mel filterbanks, which can't be less than 0. Default: 128.
         window (WindowType, optional): A function to create a window tensor that is applied/multiplied to each
-            frame/window. Default: WindowType.Hann.
+            frame/window. Default: WindowType.HANN.
         power (float, optional): Exponent for the magnitude spectrogram, which must be
             greater than 0, e.g., 1 for energy, 2 for power, etc. Default: 2.0.
         normalized (bool, optional): Whether to normalize by magnitude after stft. Default: False.
@@ -1780,7 +1789,7 @@ class MelSpectrogram(AudioTensorOperation):
             Default: BorderType.REFLECT.
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: True.
         norm (NormType, optional): If 'slaney', divide the triangular mel weights by the width of the mel band
-            (area normalization). Default: NormType.NONE.
+            (area normalization). Default: NormType.NONE, no narmalization.
         mel_scale (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK. Default: MelType.HTK.
 
     Raises:
@@ -1868,11 +1877,23 @@ class MFCC(AudioTensorOperation):
         dct_type (int, optional): Type of DCT (discrete cosine transform) to use, can only be 2. Default: 2.
         norm (NormMode, optional): Norm to use. Default: NormMode.ORTHO.
         log_mels (bool, optional): Whether to use log-mel spectrograms instead of db-scaled. Default: False.
-        melkwargs (dict, optional): Arguments for Spectrogram. Default: None, will be set to
-            `{'n_fft': 400, 'win_length': n_fft, 'hop_length': win_length // 2, 'f_min' : 0.0,
-            'f_max' : sample_rate // 2, 'pad': 0, 'window': WindowType.HANN, 'power': 2.0, 'normalized': False,
-            'center': True, 'pad_mode': BorderType.REFLECT, 'onesided': True, 'norm' : NormType.NONE,
-            'mel_scale' : MelType.HTK}` .
+        melkwargs (dict, optional): Arguments for :class:`mindspore.dataset.audio.MelSpectrogram`.
+            Default: None, the default setting is a dict including
+
+            - 'n_fft': 400
+            - 'win_length': n_fft
+            - 'hop_length': win_length // 2
+            - 'f_min': 0.0
+            - 'f_max': sample_rate // 2
+            - 'pad': 0
+            - 'window': WindowType.HANN
+            - 'power': 2.0
+            - 'normalized': False
+            - 'center': True
+            - 'pad_mode': BorderType.REFLECT
+            - 'onesided': True
+            - 'norm': NormType.NONE
+            - 'mel_scale': MelType.HTK
 
     Raises:
         TypeError: If `sample_rate` is not of type int.
@@ -2169,7 +2190,7 @@ class PitchShift(AudioTensorOperation):
         ValueError: If `hop_length` is not positive.
 
     Supported Platforms:
-        "CPU"
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -2484,7 +2505,7 @@ class TimeMasking(AudioTensorOperation):
     Apply masking to a spectrogram in the time domain.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., freq, time).
+        The shape of the audio waveform to be processed needs to be <..., freq, time>.
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: False.
@@ -2540,7 +2561,7 @@ class TimeStretch(AudioTensorOperation):
     Stretch Short Time Fourier Transform (STFT) in time without modifying pitch for a given rate.
 
     Note:
-        The dimension of the audio waveform to be processed needs to be (..., freq, time, complex=2).
+        The shape of the audio waveform to be processed needs to be <..., freq, time, complex=2>.
         The first dimension represents the real part while the second represents the imaginary.
 
     Args:

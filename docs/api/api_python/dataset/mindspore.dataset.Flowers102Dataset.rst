@@ -3,7 +3,7 @@ mindspore.dataset.Flowers102Dataset
 
 .. py:class:: mindspore.dataset.Flowers102Dataset(dataset_dir, task='Classification', usage='all', num_samples=None, num_parallel_workers=1, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None)
 
-    读取和解析Flowers102数据集的源文件构建数据集。
+    Oxfird 102 Flower数据集。
 
     根据给定的 `task` 配置，生成数据集具有不同的输出列：
 
@@ -15,7 +15,7 @@ mindspore.dataset.Flowers102Dataset
         - **task** (str, 可选) - 指定读取数据的任务类型，支持 'Classification' 和 'Segmentation'。默认值：'Classification'。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'valid'、'test' 或 'all'。默认值：'all'，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，所有图像样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：1。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数。默认值：1。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值：None。下表中会展示不同参数配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值：False，不解码。
         - **sampler** (Union[Sampler, Iterable], 可选) - 指定从数据集中选取样本的采样器。默认值：None。下表中会展示不同配置的预期行为。

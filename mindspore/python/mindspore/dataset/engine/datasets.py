@@ -499,17 +499,17 @@ class Dataset:
                 specified, then that column will be padded to the longest in the current
                 batch, and 0 will be used as the padding value. Any None dimensions will
                 be padded to the longest in the current batch, unless if
-                pad_to_bucket_boundary is True. If no padding is wanted, set pad_info
+                `pad_to_bucket_boundary` is True. If no padding is wanted, set pad_info
                 to None. Default: None.
             pad_to_bucket_boundary (bool, optional): If True, will pad each None
-                dimension in pad_info to the bucket_boundary minus 1. If there are any
+                dimension in `pad_info` to the bucket_boundary minus 1. If there are any
                 elements that fall into the last bucket, an error will occur.
                 Default: False.
             drop_remainder (bool, optional): If True, will drop the last batch for each
                 bucket if it is not a full batch. Default: False.
 
         Returns:
-            Dataset, dataset bucketed and batched by length.
+            Dataset, dataset bucketized and batched by length.
 
         Examples:
             >>> # Create a dataset where certain counts rows are combined into a batch
@@ -580,9 +580,11 @@ class Dataset:
                   columns of the last operation. Default: None, output columns will have the same
                   name as the input columns, i.e., the columns will be replaced.
 
-                - python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with
-                  multi-processing. This option could be beneficial if the function is computational heavy.
-                  Default: False.
+                - python_multiprocessing (bool, optional): Parallelize Python function `per_batch_map` with
+                  multi-processing or multi-threading mode, True means multi-processing, False means multi-threading
+                  If `per_batch_map` is a I/O bound task, use multi-threading mode.
+                  If `per_batch_map` is a CPU bound task, it is recommended to use multi-processing mode.
+                  Default: False, use python multi-threading mode.
 
                 - max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to
                   copy data between processes. This is only used if python_multiprocessing is set to True. Default: 16.
@@ -1777,7 +1779,7 @@ class Dataset:
         Return the size of batch.
 
         Returns:
-            int, the number of data in a batch.
+            int, the batch size of data.
 
         Examples:
             >>> # dataset is an instance object of Dataset

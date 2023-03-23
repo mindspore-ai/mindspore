@@ -3,7 +3,7 @@ mindspore.dataset.PennTreebankDataset
 
 .. py:class:: mindspore.dataset.PennTreebankDataset(dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
-    读取和解析PennTreebank数据集的源数据集。
+    PennTreebank数据集。
 
     生成的数据集有一列 `[text]`。 `text` 列的数据类型为string。
 
@@ -12,7 +12,7 @@ mindspore.dataset.PennTreebankDataset
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 'train'、'test'、'valid' 或 'all'。
           取值为 'train'将读取42,068个样本， 'test'将读取3,370个样本， 'test'将读取3,761个样本， 'all'将读取所有49,199个样本。默认值：None，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用 `mindspore.dataset.config` 中配置的线程数。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用全局默认线程数(8)，也可以通过 `mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值：`Shuffle.GLOBAL` 。
           如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
           通过传入枚举变量设置数据混洗的模式：
