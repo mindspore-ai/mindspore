@@ -22,7 +22,7 @@ fractional_max_pool3d_with_fixed_ksize_op_info = AiCPURegOp("FractionalMaxPool3D
     .input(1, "random_samples", "required") \
     .output(0, "y", "required") \
     .output(1, "argmax", "optional") \
-    .attr("ksize", "listFloat") \
+    .attr("ksize", "listInt") \
     .attr("output_shape", "listInt") \
     .attr("format", "str") \
     .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.I32_Default, DataType.I32_Default) \

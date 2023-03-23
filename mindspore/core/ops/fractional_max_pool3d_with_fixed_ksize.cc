@@ -62,17 +62,17 @@ constexpr size_t kDimSize5FormatNDHWCIndexC = 4;
 constexpr size_t kDimSize5FormatNCDHWIndexN = 0;
 constexpr size_t kDimSize5FormatNCDHWIndexC = 1;
 
-void GetAttrs(const PrimitivePtr &primitive, std::vector<float> *ksize, std::vector<int64_t> *output_shape) {
+void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *ksize, std::vector<int64_t> *output_shape) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   // attr kize
   MS_EXCEPTION_IF_NULL(primitive->GetAttr("ksize"));
-  *ksize = GetValue<std::vector<float>>(primitive->GetAttr("ksize"));
+  *ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   if (ksize->size() != kDimSize1 && ksize->size() != kDimSize3) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter 'ksize' must be 1 or 3, but got "
                              << std::to_string(ksize->size()) << ".";
   }
-  if (std::any_of(ksize->begin(), ksize->end(), [](float ksize) { return ksize <= 0; })) {
+  if (std::any_of(ksize->begin(), ksize->end(), [](int64_t ksize) { return ksize <= 0; })) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', invalid ksize, ksize must be all positive.";
   }
   // attr output_shape
@@ -112,7 +112,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'random_samples' must be equal to 3, but got "
                             << std::to_string(random_samples_shape.size()) << ".";
   }
-  std::vector<float> ksize;
+  std::vector<int64_t> ksize;
   std::vector<int64_t> output_shape;
   std::vector<int64_t> output_size;
   GetAttrs(primitive, &ksize, &output_shape);
@@ -211,14 +211,14 @@ AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(const abstract::AnalysisE
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-void FractionalMaxPool3DWithFixedKsize::Init(const std::vector<float> ksize, const std::vector<int64_t> output_shape,
+void FractionalMaxPool3DWithFixedKsize::Init(const std::vector<int64_t> ksize, const std::vector<int64_t> output_shape,
                                              const std::string data_format) {
   set_ksize(ksize);
   set_output_shape(output_shape);
   set_data_format(data_format);
 }
 
-void FractionalMaxPool3DWithFixedKsize::set_ksize(const std::vector<float> ksize) {
+void FractionalMaxPool3DWithFixedKsize::set_ksize(const std::vector<int64_t> ksize) {
   (void)this->AddAttr("ksize", api::MakeValue(ksize));
 }
 
@@ -230,9 +230,9 @@ void FractionalMaxPool3DWithFixedKsize::set_data_format(const std::string data_f
   (void)this->AddAttr(kFormat, api::MakeValue(data_format));
 }
 
-std::vector<float> FractionalMaxPool3DWithFixedKsize::get_ksize() const {
+std::vector<int64_t> FractionalMaxPool3DWithFixedKsize::get_ksize() const {
   auto value_ptr = GetAttr("ksize");
-  return GetValue<std::vector<float>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 std::vector<int64_t> FractionalMaxPool3DWithFixedKsize::get_output_shape() const {

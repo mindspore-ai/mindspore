@@ -55,9 +55,9 @@ class FractionalMaxPool3dNet(nn.Cell):
     """fractional_max_pool3d"""
 
     def construct(self, x, _random_samples):
-        output1 = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_size=(1, 1, 2),
+        output1 = ops.fractional_max_pool3d(x, kernel_size=(1, 1, 1), output_size=(1, 1, 2),
                                             _random_samples=_random_samples, return_indices=True)
-        output2 = ops.fractional_max_pool3d(x, kernel_size=(1.0, 1.0, 1.0), output_ratio=(0.5, 0.5, 0.5),
+        output2 = ops.fractional_max_pool3d(x, kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
                                             _random_samples=_random_samples, return_indices=True)
         return output1, output2
 

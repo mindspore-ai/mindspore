@@ -45,8 +45,8 @@ class FractionalMaxPool3DWithFixedKsizeCPUKernelMod : public NativeCpuKernelMod 
   template <typename scalar_t, typename random_sample_t, typename argmax_t>
   bool FractionalMaxPool3DWithFixedKsizeCompute(scalar_t *inputForPlane, random_sample_t *random_samplesForPlane,
                                                 argmax_t *argmaxForPlane, scalar_t *outputForPlane, int64_t outputD,
-                                                int64_t outputH, int64_t outputW, float_t kernelsizeD,
-                                                float_t kernelsizeH, float_t kernelsizeW, int64_t inputC,
+                                                int64_t outputH, int64_t outputW, int64_t kernelsizeD,
+                                                int64_t kernelsizeH, int64_t kernelsizeW, int64_t inputC,
                                                 int64_t inputD, int64_t inputH, int64_t inputW);
   template <typename scalar_t, typename random_sample_t>
   bool DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
@@ -57,7 +57,7 @@ class FractionalMaxPool3DWithFixedKsizeCPUKernelMod : public NativeCpuKernelMod 
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> random_samples_shape_;
   std::vector<int64_t> output_shape_;
-  std::vector<float> ksize_;
+  std::vector<int64_t> ksize_;
   std::string data_format_;
   TypeId input_type_;
   TypeId random_samples_type_;
@@ -70,9 +70,9 @@ class FractionalMaxPool3DWithFixedKsizeCPUKernelMod : public NativeCpuKernelMod 
   int64_t outputD_;
   int64_t outputH_;
   int64_t outputW_;
-  float kernelsizeD_;
-  float kernelsizeH_;
-  float kernelsizeW_;
+  int64_t kernelsizeD_;
+  int64_t kernelsizeH_;
+  int64_t kernelsizeW_;
 };
 }  // namespace kernel
 }  // namespace mindspore
