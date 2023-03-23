@@ -27,6 +27,10 @@
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "include/common/utils/stub_tensor.h"
 #include "runtime/pynative/op_executor.h"
+#ifndef ENABLE_SECURITY
+#include "profiler/device/profiling.h"
+using mindspore::profiler::ProfilerManager;
+#endif
 
 namespace mindspore {
 namespace pynative {
@@ -454,6 +458,9 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
     if (grad()->is_cell_has_dynamic_inputs(obj_id)) {
       MS_LOG(DEBUG) << "obj id:" << obj_id << " set forward use dynamic shape process true";
       grad()->set_forward_use_dynamic_shape_process(true);
+#ifndef ENABLE_SECURITY
+      ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+#endif
     }
   }
 }
