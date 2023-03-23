@@ -772,7 +772,7 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
   }
   // Call the process function
   std::string node_name = node_type->node_name();
-  MS_LOG(DEBUG) << "Ast node is " << node_name;
+  MS_LOG(DEBUG) << "Ast node is " << node_name << ", location:" << GetLocation(node)->ToString();
   if (stmt_method_map_.count(node_name) != 0) {
     auto stmt_block = (this->*stmt_method_map_[node_name])(block, node);
     return stmt_block;
@@ -795,9 +795,10 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   }
   // Call the process function
   std::string node_name = node_type->node_name();
-  MS_LOG(DEBUG) << "Ast node is " << node_name;
+  MS_LOG(DEBUG) << "Ast node is " << node_name << ", location:" << GetLocation(node)->ToString();
   if (expr_method_map_.count(node_name) != 0) {
     auto expr_node = (this->*expr_method_map_[node_name])(block, node);
+    MS_LOG(DEBUG) << "Get parsed anf node:" << expr_node->DebugString();
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;

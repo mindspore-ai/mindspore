@@ -672,7 +672,7 @@ void FuncGraphManager::AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) 
 }
 
 void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target,
-                                             const ScopePtr &scope) {
+                                             const AnfNodePtr &call_node, const ScopePtr &scope) {
   MS_EXCEPTION_IF_NULL(source);
   CNodePtr source_return = source->get_return();
   MS_EXCEPTION_IF_NULL(source_return);
@@ -692,6 +692,13 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
     node->set_func_graph(target);
     if (node->scope() == kDefaultScope) {
       node->set_scope(scope);
+    }
+    if (node->isa<CNode>()) {
+      MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
+      auto new_debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(call_node->debug_info(), node->debug_info());
+      auto node_new_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(new_debug_info);
+      node->set_debug_info(node_new_debug_info);
+      node_new_debug_info->set_node(node);
     }
   }
 

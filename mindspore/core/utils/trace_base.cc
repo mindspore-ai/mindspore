@@ -28,7 +28,25 @@ namespace trace {
 namespace {
 std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, bool is_debug = false) {
   std::vector<DebugInfoPtr> debug_with_loc_vec;
+  HashSet<DebugInfoPtr> visited;
   while (debug_info != nullptr) {
+    if (visited.find(debug_info) != visited.end()) {
+      int i = 0;
+      for (const auto &info : debug_with_loc_vec) {
+        auto loc = info->location();
+        MS_LOG(ERROR) << "[" << std::to_string(i) << "]:" << info.get()
+                      << ", loc:" << (loc == nullptr ? "null" : loc->ToString());
+        ++i;
+      }
+      auto loc = debug_info->location();
+      MS_LOG(EXCEPTION) << "Find loop debug info: " << debug_info.get()
+                        << ", loc:" << (loc == nullptr ? "null" : loc->ToString()) << ".\n"
+                        << "Please set 'export MS_DEV_ENABLE_FIX_CODE_LINE=0' to avoid this problem.";
+    }
+    auto loc = debug_info->location();
+    MS_LOG(DEBUG) << "Visited Insert debug info: " << debug_info.get()
+                  << ", loc:" << (loc == nullptr ? "null" : loc->ToString());
+    visited.insert(debug_info);
     if (is_debug || debug_info->location() != nullptr) {
       debug_with_loc_vec.push_back(debug_info);
     }
@@ -170,6 +188,7 @@ void GetSourceLineFromDebugInfo(const DebugInfoPtr &debug_info, std::vector<std:
   auto info_vec = GetSourceCodeDebugInfoVec(debug_info);
   const std::string spaces(prefix.size(), ' ');
   bool first_line = true;
+  HashSet<std::string> exist_locations;
   for (const auto &info : info_vec) {
     MS_EXCEPTION_IF_NULL(info);
     auto loc = info->location();
@@ -177,12 +196,16 @@ void GetSourceLineFromDebugInfo(const DebugInfoPtr &debug_info, std::vector<std:
       continue;
     }
     auto loc_str = loc->ToString(kSourceLineTipDiscard);
+    if (exist_locations.find(loc_str) != exist_locations.cend()) {
+      continue;
+    }
+    (void)exist_locations.insert(loc_str);
     ReplaceLinefeed(&loc_str);
     if (first_line) {
-      result->push_back(prefix + loc_str + "\n");
+      result->push_back(std::string(prefix).append(loc_str).append("\n"));
       first_line = false;
     } else {
-      result->push_back(spaces + loc_str + "\n");
+      result->push_back(std::string(spaces).append(loc_str).append("\n"));
     }
   }
 }
@@ -220,6 +243,11 @@ void GetPrimalDebugInfos(const CNodePtr &cnode, std::vector<std::string> *result
       }
     }
   }
+}
+std::vector<std::string> GetSourceLineList(const DebugInfoPtr &debug_info) {
+  std::vector<std::string> result;
+  GetSourceLineFromDebugInfo(debug_info, &result);
+  return result;
 }
 
 std::vector<std::string> GetSourceLineList(const AnfNodePtr &node) {
