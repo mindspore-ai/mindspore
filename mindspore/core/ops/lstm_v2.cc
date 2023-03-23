@@ -94,10 +94,12 @@ abstract::TupleShapePtr LSTMV2InferShape(const PrimitivePtr &primitive,
   auto h_shape = h_shape_map[kShape];
   auto c_shape = c_shape_map[kShape];
   auto seq_lengths_shape = seq_lengths_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input dims", SizeToLong(x_shape.size()), kEqual, kLSTMV2InputSize, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h dims", SizeToLong(h_shape.size()), kEqual, kLSTMV2HSize, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input dims", SizeToLong(x_shape.size()), kEqual,
+                                           SizeToLong(kLSTMV2InputSize), op_name);
+  (void)CheckAndConvertUtils::CheckInteger("h dims", SizeToLong(h_shape.size()), kEqual, SizeToLong(kLSTMV2HSize),
+                                           op_name);
   (void)CheckAndConvertUtils::CheckInteger("seq_lengths dims", SizeToLong(seq_lengths_shape.size()), kEqual,
-                                           kLSTMV2SeqLenSize, op_name);
+                                           SizeToLong(kLSTMV2SeqLenSize), op_name);
   auto max_seq_lengths = x_shape[0];
   auto batch_size = x_shape[1];
   auto input_size = attr_map[kInputSize];

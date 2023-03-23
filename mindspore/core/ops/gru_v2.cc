@@ -84,10 +84,12 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
   auto x_shape = x_shape_map[kShape];
   auto h_shape = h_shape_map[kShape];
   auto seq_lengths_shape = seq_lengths_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input dims", x_shape.size(), kEqual, kGRUV2InputSize, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("h dims", h_shape.size(), kEqual, kGRUV2HSize, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("seq_lengths dims", seq_lengths_shape.size(), kEqual, kGRUV2SeqLenSize,
+  (void)CheckAndConvertUtils::CheckInteger("input dims", SizeToLong(x_shape.size()), kEqual,
+                                           SizeToLong(kGRUV2InputSize), op_name);
+  (void)CheckAndConvertUtils::CheckInteger("h dims", SizeToLong(h_shape.size()), kEqual, SizeToLong(kGRUV2HSize),
                                            op_name);
+  (void)CheckAndConvertUtils::CheckInteger("seq_lengths dims", SizeToLong(seq_lengths_shape.size()), kEqual,
+                                           SizeToLong(kGRUV2SeqLenSize), op_name);
   auto max_seq_lengths = x_shape[0];
   auto batch_size = x_shape[1];
   auto input_size = attr_map[kInputSize];
