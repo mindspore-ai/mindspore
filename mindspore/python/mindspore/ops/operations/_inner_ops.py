@@ -29,6 +29,7 @@ from mindspore import context
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore._c_expression import typing
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
@@ -2246,7 +2247,14 @@ class SameTypeShape(PrimitiveWithInfer):
         validator.check('x shape', x['shape'], 'y shape', y['shape'], Rel.EQ, self.name)
         return x
 
+
 same_type_shape_ = SameTypeShape()
+
+
+def _is_subclass_(type_, dtype):
+    if not isinstance(type_, typing.Type):
+        return False
+    return typing.is_subclass(type_, dtype)
 
 
 class IsSubClass(PrimitiveWithInfer):
@@ -2283,7 +2291,7 @@ class IsSubClass(PrimitiveWithInfer):
         validator.check_value_type("sub_type", sub_type_t, [mstype.Type], self.name)
         validator.check_value_type("type_", type_v, [mstype.Type], self.name)
 
-        value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
+        value = _is_subclass_(sub_type_t, type_v)
 
         out = {'shape': (),
                'dtype': mstype.type_type,
@@ -2333,7 +2341,7 @@ class IsInstance(PrimitiveWithInfer):
         elif type_v == mstype.tuple_:
             value = isinstance(sub_type_t, tuple)
         else:
-            value = mstype._issubclass_(sub_type_t, type_v)  # pylint: disable=W0212
+            value = _is_subclass_(sub_type_t, type_v)
 
         out = {'shape': (),
                'dtype': mstype.type_type,

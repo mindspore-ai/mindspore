@@ -173,8 +173,8 @@ class MapParameter(Parameter):
             info.cloned_obj = [x]
         self.param_info = info
         if init != 'same':
-            x.default_value = init  # pylint: disable=W0201
-        x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value, x.permit_filter_value,  # pylint: disable=W0212
+            x.default_value = init
+        x._map_tensor = MapTensor_(x.key_dtype, x.value_dtype, x.value_shape, x.default_value, x.permit_filter_value,
                                    x.evict_filter_value)
         x.cache_enable = self.cache_enable
         if x.cache_enable:
