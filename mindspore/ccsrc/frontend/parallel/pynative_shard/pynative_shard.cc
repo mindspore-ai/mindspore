@@ -248,7 +248,7 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strateg
       auto tuple_get_item_cnode_abstract = tuple_get_item_cnode->abstract();
       MS_EXCEPTION_IF_NULL(tuple_get_item_cnode_abstract);
       identity_cnode->set_abstract(tuple_get_item_cnode_abstract->Clone());
-      manager->Replace(tuple_get_item_cnode, identity_cnode);
+      (void)manager->Replace(tuple_get_item_cnode, identity_cnode);
 
       // Get corresponding param_layout
       auto tuple_index = tuple_get_item_cnode->input(2);
@@ -288,7 +288,7 @@ void SetParameterLayout(const FuncGraphPtr &root, const FuncGraphPtr &func_graph
       auto load_cnode_abstract = load_cnode->abstract();
       MS_EXCEPTION_IF_NULL(load_cnode_abstract);
       identity_cnode->set_abstract(load_cnode_abstract->Clone());
-      manager->Replace(load_cnode, identity_cnode);
+      (void)manager->Replace(load_cnode, identity_cnode);
       Shapes current_strategies = {param_strategy};
       SetStrategyToCNode(identity_cnode, current_strategies);
       MS_LOG(DEBUG) << "The layout of \"" << param_name << "\" has been set to "

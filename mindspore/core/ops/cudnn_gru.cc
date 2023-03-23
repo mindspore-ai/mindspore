@@ -90,8 +90,8 @@ abstract::TupleShapePtr CudnnGRUInferShape(const PrimitivePtr &primitive,
   int64_t seq_len = abstract::Shape::kShapeDimAny;
   int64_t batch_size = abstract::Shape::kShapeDimAny;
   if (!IsDynamicRank(input_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("input_dims", SizeToLong(input_shape.size()), kEqual, kCudnnGRUInputDim,
-                                             op_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_dims", SizeToLong(input_shape.size()), kEqual,
+                                             SizeToLong(kCudnnGRUInputDim), op_name);
     seq_len = input_shape[kInputIndex0];
     batch_size = input_shape[kInputIndex1];
     if (input_shape[kInputIndex2] != abstract::Shape::kShapeDimAny) {
@@ -101,7 +101,8 @@ abstract::TupleShapePtr CudnnGRUInferShape(const PrimitivePtr &primitive,
   }
 
   if (!IsDynamicRank(h_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("h_dims", SizeToLong(h_shape.size()), kEqual, kCudnnGRUHDim, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_dims", SizeToLong(h_shape.size()), kEqual, SizeToLong(kCudnnGRUHDim),
+                                             op_name);
     if (h_shape[kInputIndex0] != abstract::Shape::kShapeDimAny) {
       (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kInputIndex0], kEqual,
                                                attr_map[kCudnnGRURealNumLayers], op_name);

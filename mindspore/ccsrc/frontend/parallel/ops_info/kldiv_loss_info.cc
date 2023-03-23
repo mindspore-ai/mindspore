@@ -40,7 +40,7 @@ Status KLDivLossInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << StrategyToString(strategies);
     return FAILED;
   }
-  batch_split_num_ = strategies[0][0];
+  batch_split_num_ = LongToSize(strategies[0][0]);
   return SUCCESS;
 }
 
