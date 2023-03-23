@@ -88,8 +88,8 @@ void SoftMarginLossGrad::Init(const std::string &reduction) { this->set_reductio
 MIND_API_OPERATOR_IMPL(SoftMarginLossGrad, BaseOperator);
 AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SoftMarginLossGradInferShape(primitive, input_args),
-                                SoftMarginLossGradInferType(primitive, input_args));
+  return abstract::MakeAbstractTensor(SoftMarginLossGradInferShape(primitive, input_args),
+                                      SoftMarginLossGradInferType(primitive, input_args));
 }
 
 // AG means auto generated
