@@ -82,7 +82,7 @@ bool InlineInnerFuncGraph(const FuncGraphPtr &fg) {
       continue;
     }
     AnfNodePtrList inp(n->inputs().begin() + 1, n->inputs().end());
-    auto out = InlineClone(graph_kernel_g, fg, inp, n->input(0)->scope());
+    auto out = InlineClone(graph_kernel_g, fg, inp, n->input(0)->scope(), n->debug_info());
     (void)mng->Replace(n, out);
     changed = true;
   }
