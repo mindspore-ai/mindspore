@@ -413,12 +413,12 @@ Tensor::~Tensor() {
   }
 #ifdef ENABLE_PYTHON
   try {
-    if (Py_IsInitialized()) {
+    if (Py_IsInitialized() > 0) {
       if (static_cast<bool>(python_dict_)) {  // if it contains data
         // Acquire Python GIL
         py::gil_scoped_acquire gil_acquire;
         if (python_dict_.ref_count() == 1) {  // if we aren't referencing it anywhere else
-          python_dict_.dec_ref();             // manually set the ref count to zero (to be garbage collected by Python)
+          (void)python_dict_.dec_ref();       // manually set the ref count to zero (to be garbage collected by Python)
           python_dict_ = py::none();          // wrapper now pointing to a meaningful thing (added to avoid a segfault)
         }
       }

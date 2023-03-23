@@ -300,6 +300,7 @@ static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, 
   }
 
   pad_mat.Init(src.width_ + 2 * border_x, src.height_ + 2 * border_y, src.channel_, src.data_type_);
+  RETURN_FALSE_IF_LITEMAT_EMPTY(pad_mat);
 
   if (!Pad(src, pad_mat, border_y, border_y, border_x, border_x, pad_type)) {
     return false;
@@ -371,6 +372,7 @@ bool Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType d
   if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != src.channel_ ||
       dst.data_type_ != dst_type) {
     dst.Init(src.width_, src.height_, src.channel_, dst_type);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   }
 
   if (src.data_type_ == LDataType::UINT8 && dst.data_type_ == LDataType::UINT8) {
@@ -397,6 +399,7 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
   if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != src.channel_ ||
       dst.data_type_ != dst_type) {
     dst.Init(src.width_, src.height_, src.channel_, dst_type);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   }
 
   LiteMat mid;
@@ -440,6 +443,7 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
 static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *dst_ptr = mat;
     // mindspore lite version, there is no securec lib
     (void)memcpy(dst_ptr, data, w * h * 3 * sizeof(unsigned char));
@@ -452,6 +456,7 @@ static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, in
 static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
     for (int y = 0; y < h; y++) {
@@ -472,6 +477,7 @@ static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int
 static bool ConvertRGBAToRGB(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
     for (int y = 0; y < h; y++) {
@@ -495,6 +501,7 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
   }
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 3, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     const uint8_t *y_ptr = data;
     const uint8_t *uv_ptr = y_ptr + w * h;
     uint8_t *bgr_ptr = mat;
@@ -621,6 +628,7 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (src.width_ != dst.width_ || src.height_ != dst.height_ || src.channel_ != dst.channel_ ||
              dst.data_type_ != LDataType::FLOAT32) {
     return false;
@@ -677,6 +685,7 @@ static bool CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
   int dst_c = src.channel_;
   if (dst.IsEmpty()) {
     dst.Init(dst_w, dst_h, dst_c, src.data_type_);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.height_ != h || dst.width_ != w || dst.channel_ != src.channel_) {
     return false;
   } else if (dst.data_type_ != src.data_type_) {
@@ -741,6 +750,7 @@ static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const
   }
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.height_ != src.height_ || dst.width_ != src.width_ || dst.channel_ != src.channel_) {
     return false;
   } else if (dst.data_type_ != LDataType::FLOAT32) {
@@ -851,7 +861,14 @@ static int PadFromPos(int p, int len, PaddBorderType pad_type) {
     return p < 0 ? 0 : len - 1;
   } else {
     // calculate the position of pixel in reflect mode like edcb|abcdef|edcb
-    return p < 0 ? -p : pixel_factor * len - p - pixel_factor;
+    while (p < 0 || p >= len) {
+      if (p < 0) {
+        p = -p;
+      } else {
+        p = pixel_factor * len - p - pixel_factor;
+      }
+    }
+    return p;
   }
 }
 
@@ -903,6 +920,7 @@ bool ExtractChannel(LiteMat &src, LiteMat &dst, int col) {
     if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != 1 ||
         dst.data_type_ != src.data_type_) {
       dst.Init(src.width_, src.height_, 1, src.data_type_);
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
     }
   }
 
@@ -922,6 +940,7 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
     for (int c = 0; c < src.channel_; c++) {
       LiteMat dst;
       (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       float *dst_start_p = dst;
       for (int h = 0; h < src.height_; h++) {
         uint32_t src_start = h * src.width_ * src.channel_;
@@ -940,6 +959,7 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv) {
     for (int c = 0; c < src.channel_; c++) {
       LiteMat dst;
       (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       uint8_t *dst_start_p = dst;
       for (int h = 0; h < src.height_; h++) {
         uint32_t src_start = h * src.width_ * src.channel_;
@@ -1000,6 +1020,7 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
   if (dst.IsEmpty() || dst.width_ != width || dst.height_ != height || dst.channel_ != channel ||
       dst.data_type_ != data_type) {
     dst.Init(width, height, channel, data_type);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   }
 
   if (dst.data_type_ == LDataType::FLOAT32) {
@@ -1213,6 +1234,7 @@ bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vec
   IM[5] = b2;
   if (out_img.IsEmpty()) {
     out_img.Init(dsize[0], dsize[1], sizeof(Pixel_Type), src.data_type_);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(out_img);
   } else if (out_img.height_ != dsize[1] || out_img.width_ != dsize[0] || out_img.channel_ != src.channel_) {
     return false;
   } else if (out_img.data_type_ != src.data_type_) {
@@ -1283,6 +1305,7 @@ inline void RotationMatrix2DImpl(float x, float y, double angle, double scale, L
 
 bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &M) {
   M.Init(3, 2, LDataType(LDataType::DOUBLE));
+  RETURN_FALSE_IF_LITEMAT_EMPTY(M);
   RotationMatrix2DImpl(x, y, angle, scale, M);
   return true;
 }
@@ -1293,6 +1316,7 @@ bool TransposeImpl(const LiteMat &src, LiteMat &dst) {
   int n = src.height_;
 
   dst.Init(n, m, src.data_type_);
+  RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
       dst.ptr<T>(i)[j] = src.ptr<T>(j)[i];
@@ -1593,6 +1617,7 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
   }
 
   M.Init(3, 3, LDataType(LDataType::DOUBLE));
+  RETURN_FALSE_IF_LITEMAT_EMPTY(M);
   LiteMat dst(1, 8, M.data_ptr_, LDataType(LDataType::DOUBLE));
 
   GetPerspectiveTransformImpl(src1, src2, dst);
@@ -1613,6 +1638,7 @@ bool GetAffineTransformImpl(LiteMat &src, LiteMat &dst) {
 
     if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
       dst.Init(1, 6, LDataType(LDataType::DOUBLE));
+      RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       (void)memset(dst.data_ptr_, 0, 6 * sizeof(double));
       RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
       return false;
@@ -1682,6 +1708,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 
   GetAffineTransformImpl(src1, src2);
   M.Init(3, 2, 1, LDataType(LDataType::DOUBLE));
+  RETURN_FALSE_IF_LITEMAT_EMPTY(M);
   for (int i = 0; i < M.height_; i++) {
     for (int j = 0; j < M.width_; j++) {
       M.ptr<double>(i)[j] = src2.ptr<double>(i * M.width_ + j)[0];
@@ -1697,6 +1724,7 @@ bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int 
     }
     if (mat.IsEmpty()) {
       mat.Init(w, h, 3, LDataType::UINT8);
+      RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     }
     if (mat.channel_ != 3) {
       return false;
@@ -1729,6 +1757,7 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
     }
     if (mat.IsEmpty()) {
       mat.Init(w, h, 1, LDataType::UINT8);
+      RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     }
     if (mat.channel_ != 1) {
       return false;
@@ -2000,6 +2029,7 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   }
   if (dst.IsEmpty()) {
     dst.Init(w, h, src.channel_, LDataType::FLOAT32);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   }
 
   float varM[2][3] = {{1.0, 0, 0}, {0, 1.0, 0}};
@@ -2078,6 +2108,7 @@ bool HWC2CHW(LiteMat &src, LiteMat &dst) {
   if (dst.IsEmpty() || dst.width_ != src.height_ || dst.height_ != src.channel_ || dst.channel_ != src.width_ ||
       dst.data_type_ != src.data_type_) {
     dst.Init(src.height_, src.channel_, src.width_, src.data_type_);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   }
   if (src.data_type_ == LDataType::FLOAT32) {
     HWC2CHWImpl<float>(src, dst, src.height_, src.width_, src.channel_);

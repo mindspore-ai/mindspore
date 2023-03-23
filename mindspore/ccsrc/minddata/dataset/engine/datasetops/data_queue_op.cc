@@ -367,7 +367,7 @@ Status DataQueueOp::SendDataToAscend() {
 }
 
 void DataQueueOp::RecordProfilingData(bool is_profiling_enable, bool end_of_epoch, int32_t *connector_size,
-                                      int32_t *connector_capacity, int64_t *send_batch) {
+                                      int32_t *connector_capacity, const int64_t *send_batch) const {
   if (is_profiling_enable) {
     *connector_size = ChildOpConnectorSize();
     *connector_capacity = ChildOpConnectorCapacity();

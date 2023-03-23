@@ -55,7 +55,7 @@ class EpochCtrlOp : public RepeatOp {
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
-  int32_t NumEpochs() { return num_repeats_; }
+  int32_t NumEpochs() const { return num_repeats_; }
 
  protected:
   /// \brief Gets the implementation status for operator in pull mode

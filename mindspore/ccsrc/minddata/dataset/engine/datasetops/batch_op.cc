@@ -256,7 +256,6 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
             li.append(key_val.second);
             new_dict[key_val.first] = li;
           }
-
         } else {
           CHECK_FAIL_RETURN_UNEXPECTED(
             num_keys == py::len(old_dict),

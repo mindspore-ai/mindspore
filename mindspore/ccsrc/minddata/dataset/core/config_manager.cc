@@ -21,9 +21,7 @@
 #include <thread>
 #include <utility>
 #include <exception>
-#include <initializer_list>
 #include <ostream>
-#include <vector>
 
 #include "minddata/dataset/util/status.h"
 #include "utils/ms_utils.h"

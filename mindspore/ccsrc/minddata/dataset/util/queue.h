@@ -59,8 +59,11 @@ class Queue {
 
   size_t size() const {
     std::unique_lock<std::mutex> _lock(mux_);
-    size_t v = tail_ - head_;
-    return (v >= 0) ? v : 0;
+    size_t v = 0;
+    if (tail_ >= head_) {
+      v = tail_ - head_;
+    }
+    return v;
   }
 
   size_t capacity() const {
@@ -244,8 +247,11 @@ class Queue {
   }
 
   size_t SizeWhileHoldingLock() const {
-    size_t v = tail_ - head_;
-    return (v >= 0) ? v : 0;
+    size_t v = 0;
+    if (tail_ >= head_) {
+      v = tail_ - head_;
+    }
+    return v;
   }
 
   size_t CapacityWhileHoldingLock() const { return sz_; }
