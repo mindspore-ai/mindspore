@@ -16,8 +16,11 @@
 
 #include "ops/grad/gru_v2_grad.h"
 #include <algorithm>
+#include <vector>
 #include <cstdint>
 #include "ops/op_utils.h"
+#include "ops/core_ops.h"
+#include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 

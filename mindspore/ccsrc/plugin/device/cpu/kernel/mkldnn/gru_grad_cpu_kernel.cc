@@ -123,12 +123,10 @@ int GRUGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
 void GRUGradCpuKernelMod::InitDnnl() {
   auto eng = engine_;
-  dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
-  if (bidirectional_) {
-    direction = dnnl::rnn_direction::bidirectional_concat;
-  }
-  dim src_dims = {seq_len_, batch_size_, input_size_};
+  dnnl::rnn_direction direction =
+    bidirectional_ ? dnnl::rnn_direction::bidirectional_concat : dnnl::rnn_direction::unidirectional;
   dim src_h_dims = {num_layers_, num_directions_, batch_size_, hidden_size_};
+  dim src_dims = {seq_len_, batch_size_, input_size_};
   weights_dims_ = {num_layers_, num_directions_, input_size_, kGateNum, hidden_size_};
   weights_h_dims_ = {num_layers_, num_directions_, hidden_size_, kGateNum, hidden_size_};
   bias_dims_ = {num_layers_, num_directions_, kGateNum, hidden_size_};
