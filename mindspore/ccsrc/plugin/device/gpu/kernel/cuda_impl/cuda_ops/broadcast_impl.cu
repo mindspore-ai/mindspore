@@ -47,6 +47,9 @@ struct EqualFunc<half> {
 template <>
 struct EqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
+    if (std::isinf(lhs) && std::isinf(rhs)) {
+      return true;
+    }
     return abs(lhs - rhs) < 1e-9;
   }
 };
