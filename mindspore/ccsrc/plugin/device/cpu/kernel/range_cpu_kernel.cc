@@ -58,7 +58,7 @@ bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
-    for (size_t index = 0; index < output_size; index++) {
+    for (int index = 0; index < SizeToInt(output_size); index++) {
       output[index] = delta * index + start;
     }
   } else {

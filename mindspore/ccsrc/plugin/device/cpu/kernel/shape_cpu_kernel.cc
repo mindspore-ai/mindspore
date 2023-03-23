@@ -55,7 +55,7 @@ int ShapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 
 bool ShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto output_addr = GetDeviceAddress<int64_t>(outputs, 0);
   for (size_t i = 0; i < LongToSize(output_shape_[0]); ++i) {
     output_addr[i] = input_shape_[i];
   }

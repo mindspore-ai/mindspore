@@ -22,6 +22,7 @@
 #include "utils/hash_map.h"
 #include "ops/base_operator.h"
 #include "base/base.h"
+#include "ir/dtype.h"
 
 namespace mindspore {
 namespace pynative {

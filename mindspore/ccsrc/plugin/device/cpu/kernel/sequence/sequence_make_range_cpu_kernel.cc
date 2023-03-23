@@ -68,7 +68,7 @@ bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   size_t output_size = outputs[0]->size / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
-    for (size_t index = 0; index < output_size; index++) {
+    for (int index = 0; index < SizeToInt(output_size); index++) {
       output_addr[index] = delta * index + start;
     }
   }

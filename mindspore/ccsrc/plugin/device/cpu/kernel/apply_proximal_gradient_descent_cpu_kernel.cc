@@ -131,7 +131,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = input_elements_ / SizeToInt(batch_size_);
+  input_elements_ = input_elements_ / LongToSize(batch_size_);
   if (batch_rank_ > 1) {
     if (var_shape.size() < alpha_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
