@@ -228,7 +228,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     auto outerdim = ib->GetShape(ind_2d)[0];  // k
     std::vector<int64_t> range_flatten_index_vec(LongToSize(outerdim));
     for (int64_t i = 0; i < outerdim; i++) {
-      range_flatten_index_vec[i] = i * in_lastdim;
+      range_flatten_index_vec[static_cast<size_t>(i)] = i * in_lastdim;
     }
     auto range_flatten_index = ib->Tensor(range_flatten_index_vec, ib->GetDtype(indices));
     auto in_shape_1d =

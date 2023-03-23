@@ -4390,7 +4390,7 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
         [[1. 1.]
          [2. 2.]]
     """
-    if  isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
+    if isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
         _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
         return _dyn_broadcast_to(input, shape)
     _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)

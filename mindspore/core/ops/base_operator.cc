@@ -50,7 +50,7 @@ OperatorRegister &OperatorRegister::GetInstance() {
   return instance;
 }
 
-const std::map<std::string, OperatorDefineFunc> &OperatorRegister::GetOperatorMap() { return operator_fns_; }
+const std::map<std::string, OperatorDefineFunc> &OperatorRegister::GetOperatorMap() const { return operator_fns_; }
 void OperatorRegister::SetOperatorMap(const std::string &kname, const OperatorDefineFunc &fn) {
   operator_fns_[kname] = fn;
 }

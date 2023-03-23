@@ -83,7 +83,7 @@ class PrimOp : public Node {
 
   // set abstracts from attrs.
   void SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
-                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec);
+                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) const;
 
   std::string op_;
   ComputeType compute_type_;

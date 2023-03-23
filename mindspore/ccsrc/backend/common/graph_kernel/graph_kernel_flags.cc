@@ -205,8 +205,10 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 
   auto jit_level_iter = jit_config.find(kAttrJitLevel);
   auto jit_level = (jit_level_iter != jit_config.end() ? jit_level_iter->second : "");
-  bool enable_gk = (jit_level == kAttrJitLevelO2 || jit_level == kAttrJitLevelO3 ||
-                    context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL));
+  bool enable_gk = context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+  if (!enable_gk && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+    enable_gk = (jit_level == kAttrJitLevelO2 || jit_level == kAttrJitLevelO3);
+  }
   // use environ flags in priority
   auto flags_env = std::getenv("MS_DEV_GRAPH_KERNEL_FLAGS");
   if (flags_env != nullptr) {

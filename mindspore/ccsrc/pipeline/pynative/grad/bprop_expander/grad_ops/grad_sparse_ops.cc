@@ -125,7 +125,7 @@ NodePtrList CommonSparseSegmentBprop(const BpropIRBuilder *ib, const std::string
   auto dx = ib->Emit(grad_op, {dout, indices, segment_ids, output_dim0});
   NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
   if (with_segments) {
-    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
+    (void)result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
   }
   return result;
 }
@@ -145,7 +145,7 @@ NodePtrList CommonSparseSegmentBpropDefault(const BpropIRBuilder *ib, bool with_
   dx = ib->Cast(dx, ib->GetDtype(dout));
   NodePtrList result = {dx, ib->ZerosLike(indices), ib->ZerosLike(segment_ids)};
   if (with_segments) {
-    result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
+    (void)result.emplace_back(ib->ZerosLike(ib->GetInput(kIndex3)));
   }
   return result;
 }

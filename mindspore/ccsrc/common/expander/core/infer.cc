@@ -61,7 +61,7 @@ static abstract::PrimitiveEvalImplMap unreg_infer_map = {
   {prim::kPrimAdamApplyOneWithDecay, R{abstract::InferImplAdamApplyOneWithDecay, nullptr, true}},
 };
 
-void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) {
+void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
   if (anfnode->isa<ValueNode>()) {
     anfnode->set_abstract(anfnode->cast<ValueNodePtr>()->value()->ToAbstract());
     return;

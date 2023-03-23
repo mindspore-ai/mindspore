@@ -78,12 +78,12 @@ NodePtrList IgammaBpropExpander(const BpropIRBuilder *ib) {
     ib->Sub((ib->Add((ib->Neg(x)), (ib->Mul((ib->Sub(a, (ib->Tensor(1, ib->GetDtype(a))))), (ib->Log(x)))))), lgamma));
   auto dout = ib->GetInput(kIndex3);
   NodePtr r1, r2;
-  if (ra.size()) {
+  if (!ra.empty()) {
     r1 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_a, dout), ra), sa);
   } else {
     r1 = ib->Reshape(ib->Mul(partial_a, dout), sa);
   }
-  if (rx.size()) {
+  if (!rx.empty()) {
     r2 = ib->Reshape(ib->ReduceSum(ib->Mul(partial_x, dout), rx), sx);
   } else {
     r2 = ib->Reshape(ib->Mul(partial_x, dout), sx);
@@ -1876,16 +1876,16 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 
   NodePtr dx;
   if (ta) {
-    dx = ib->BatchMatMul(w, dout, (ta && tb), (ta || !tb));
+    dx = ib->BatchMatMul(w, dout, tb, true);
   } else {
-    dx = ib->BatchMatMul(dout, w, (ta && tb), (ta || !tb));
+    dx = ib->BatchMatMul(dout, w, false, !tb);
   }
 
   NodePtr dw;
   if (tb) {
-    dw = ib->BatchMatMul(dout, x, ((!ta) || tb), (ta && tb));
+    dw = ib->BatchMatMul(dout, x, true, ta);
   } else {
-    dw = ib->BatchMatMul(x, dout, ((!ta) || tb), (ta && tb));
+    dw = ib->BatchMatMul(x, dout, !ta, false);
   }
 
   return BinopGradCommonWithShift(ib, x, w, dx, dw, 2);

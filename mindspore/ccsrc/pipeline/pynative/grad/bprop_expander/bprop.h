@@ -39,11 +39,11 @@ class BpropExpander {
  protected:
   bool RunBprop(const CNodePtr &cnode);
   void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
-  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode);
+  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode) const;
   const BpropHandle *GetBpropHandle(const std::string &name) const {
     return BpropIRBuilderFactory::Instance().GetBuilder(name);
   }
-  void PostProcess() const;
+  void PostProcess();
   void DumpResult(const std::string &name) const;
   NodePtrList input_nodes_;
   // outputs_ must be CNodePtrList, but output_nodes_ may not necessary. output_nodes_ are used to

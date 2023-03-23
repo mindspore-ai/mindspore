@@ -54,7 +54,7 @@ const std::vector<size_t> &BpropExpander::GetUnusedInputs(const CNodePtr &cnode)
   auto handle = GetBpropHandle(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
-    static std::vector<size_t> empty{};
+    static const std::vector<size_t> empty{};
     return empty;
   }
   return handle->unused_inputs;
@@ -66,7 +66,7 @@ void BpropExpander::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *i
                        [ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder); });
 }
 
-std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode) {
+std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode) const {
   auto infer = std::make_shared<CppInfer>();
   return std::make_unique<BpropIRBuilder>(name, cnode->func_graph(), infer);
 }
@@ -92,7 +92,7 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode) {
   return true;
 }
 
-void BpropExpander::PostProcess() const {
+void BpropExpander::PostProcess() {
   outputs_->reserve(output_nodes_.size());
   (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(*outputs_),
                        [](const NodePtr &node) {
@@ -101,11 +101,11 @@ void BpropExpander::PostProcess() const {
                        });
   std::set<AnfNodePtr> visited;
   // do not visit the inputs again.
-  std::for_each(input_nodes_.cbegin(), input_nodes_.cend(),
-                [&visited](const NodePtr &node) { visited.insert(node->get()); });
+  (void)std::for_each(input_nodes_.cbegin(), input_nodes_.cend(),
+                      [&visited](const NodePtr &node) { (void)visited.insert(node->get()); });
 
   std::queue<CNodePtr> que;
-  std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
+  (void)std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
 
   AnfNodePtr dout = input_nodes_.back()->get();
   while (!que.empty()) {
@@ -121,7 +121,7 @@ void BpropExpander::PostProcess() const {
       // record parameter's and dout's user
       if (users_ != nullptr) {
         if (inp == dout || inp->isa<Parameter>()) {
-          (*users_)[inp].emplace_back(node, i);
+          (void)((*users_)[inp].emplace_back(node, i));
         }
       }
       if (IsPrimitiveCNode(inp, prim::kPrimTupleGetItem)) {
@@ -129,7 +129,7 @@ void BpropExpander::PostProcess() const {
         auto real_input = getitem->input(kIndex1);
         // record the dout's successor getitem's users
         if (users_ != nullptr && real_input == dout) {
-          (*users_)[inp].emplace_back(node, i);
+          (void)((*users_)[inp].emplace_back(node, i));
         } else if (real_input->isa<ValueNode>()) {
           // eliminate redundant getitem
           auto real_input_value = real_input->cast<ValueNodePtr>()->value();
@@ -164,12 +164,12 @@ void BpropExpander::DumpResult(const std::string &name) const {
     node_map[inp->get()] = p;
   }
   std::queue<CNodePtr> que;
-  std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
+  (void)std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
 
   while (!que.empty()) {
     auto node = que.front();
     que.pop();
-    if (node_map.count(node)) {
+    if (node_map.count(node) != 0) {
       continue;
     }
     auto new_node = fg->NewCNode(node->inputs());
@@ -225,7 +225,7 @@ void BpropExpander::DumpResult(const std::string &name) const {
 
 class LazyInfer : public CppInfer {
  public:
-  void Infer(const NodePtr &node) override { return; }
+  void Infer(const NodePtr &) override { return; }
 
   AbstractBasePtr GetAbstract(const NodePtr &node) override {
     auto anfnode = node->get();
@@ -300,8 +300,8 @@ class GraphModeBuilder : public BpropIRBuilder {
 };
 
 bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph) {
-  static bool use_imm_infer = (common::GetEnv("MS_DEV_BPROP_IMM_INFER") == "on");
-  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
+  static const bool use_imm_infer = (common::GetEnv("MS_DEV_BPROP_IMM_INFER") == "on");
+  static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
   auto name = prim->name();
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
