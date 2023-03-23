@@ -18,7 +18,7 @@ mindspore.ops.relu
           其数据类型为 `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_。
 
     返回：
-        Tensor，数据类型和shape与 `input` 相同。
+        shape为 :math:`(N, *)` 的Tensor，数据类型和shape与 `input` 相同。
 
     异常：
         - **TypeError** - `input` 的数据类型不是数值型。

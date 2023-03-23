@@ -6,7 +6,7 @@ mindspore.ops.csr_square
     逐元素返回CSRTensor的平方。
 
     .. math::
-        y_i = x_i ^ 2
+        out_{i} = (x_{i})^2
 
     参数：
         - **x** (CSRTensor) - 输入CSRTensor的维度范围为[0,7]，类型为数值类型。

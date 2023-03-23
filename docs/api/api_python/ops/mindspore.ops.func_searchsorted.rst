@@ -6,8 +6,8 @@ mindspore.ops.searchsorted
     返回位置索引，根据这个索引将 `values` 插入 `sorted_sequence` 后，`sorted_sequence` 的最内维度的顺序保持不变。
 
     参数：
-        - **sorted_sequence** (Tensor) - Tensor的形状为 :math:`(x_1, x_2, …, x_R-1, x_R)` 或 `x_1`。在最里面的维度上必须包含单调递增的序列。
-        - **values** (Tensor) - 要插入元素的值。Tensor的形状为 :math:`(x_1, x_2, …, x_R-1, x_S)`。
+        - **sorted_sequence** (Tensor) - Tensor的形状为 :math:`(x_1, x_2, ..., x_R-1, x_R)` 或 `x_1`。在最里面的维度上必须包含单调递增的序列。
+        - **values** (Tensor) - 要插入元素的值。Tensor的形状为 :math:`(x_1, x_2, ..., x_R-1, x_S)`。
 
     关键字参数：
         - **out_int32** (bool, 可选) - 输出数据类型。如果为True，则输出数据类型将为int32；如果为False，则输出数据类型将为int64。默认值：False。

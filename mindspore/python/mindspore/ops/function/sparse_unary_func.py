@@ -2270,7 +2270,7 @@ def coo_sin(x: COOTensor) -> COOTensor:
     Raises:
         TypeError: If `x` is not a COOTensor.
         TypeError: If dtype of `x` is not float16, float32 or float64, complex64,
-    complex128.
+            complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

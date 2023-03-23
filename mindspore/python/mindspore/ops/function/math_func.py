@@ -724,7 +724,7 @@ def round(input):
 
     .. math::
 
-        out_i \approx x_i
+        out_i \approx input_i
 
     Args:
         input (Tensor): The input tensor.
