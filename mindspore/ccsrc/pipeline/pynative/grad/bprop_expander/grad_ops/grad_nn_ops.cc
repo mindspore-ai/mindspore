@@ -1476,7 +1476,7 @@ REG_BPROP_BUILDER("CeLU").SetBody(BODYFUNC(ib) {
   auto greater = ib->GreaterEqual(x, ib->Tensor(0.0, x_dtype));
 
   auto dx =
-    ib->Mul(dout, ib->Select(greater, ib->Fill(1.0, ib->GetShape(x), x_dtype->type_id()),
+    ib->Mul(dout, ib->Select(greater, ib->Fill(1.0, ib->Shape(x), x_dtype->type_id()),
                              ib->Add((ib->RealDiv(out, ib->Tensor(alpha, x_dtype))), ib->Tensor(1.0, x_dtype))));
   return {dx};
 });
