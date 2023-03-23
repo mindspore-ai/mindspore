@@ -19,7 +19,7 @@ import mindspore.context as context
 from .optimizer_utils import FakeNet, build_network, loss_not_default_asgd, loss_default_asgd, loss_group_asgd
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

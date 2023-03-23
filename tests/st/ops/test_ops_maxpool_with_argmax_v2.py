@@ -48,7 +48,7 @@ class DynamicShapeMaxPoolWithArgmaxV2Net(Cell):
         return self.net(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -121,7 +121,7 @@ def test_maxpool_with_argmax_v2_dynamic_shape(mode):
     assert argmax.shape == (20, 16, 24, 31)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

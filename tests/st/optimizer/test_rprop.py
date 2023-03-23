@@ -20,7 +20,7 @@ import mindspore.context as context
 from .optimizer_utils import FakeNet, build_network, loss_default_rprop, loss_group_rprop, loss_not_default_rprop
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -40,7 +40,7 @@ def test_default_rprop(mode):
     assert np.allclose(loss_default_rprop, loss, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -60,7 +60,7 @@ def test_no_default_rprop(mode):
     assert np.allclose(loss_not_default_rprop, loss, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

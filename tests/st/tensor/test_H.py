@@ -25,7 +25,7 @@ class Net(nn.Cell):
         return x.H
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -46,7 +46,7 @@ def test_tensor_H_complex(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -70,7 +70,7 @@ def test_tensor_positive_01(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

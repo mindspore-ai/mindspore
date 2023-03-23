@@ -109,7 +109,7 @@ def test_seq_greater_than_grad():
     assert grad_func(x, y, dout) == expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

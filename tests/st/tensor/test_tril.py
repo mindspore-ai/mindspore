@@ -34,7 +34,7 @@ class TrilNet(nn.Cell):
         return self.tril(value, k)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -56,7 +56,7 @@ def test_tril(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -73,7 +73,7 @@ def test_tril_0(mode):
     assert np.sum(out.asnumpy()) == 34
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -90,7 +90,7 @@ def test_tril_1(mode):
     assert np.sum(out.asnumpy()) == 42
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -107,7 +107,7 @@ def test_tril_2(mode):
     assert np.sum(out.asnumpy()) == 19
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -122,7 +122,7 @@ def test_tril_parameter(mode):
     net(Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -137,7 +137,7 @@ def test_tril_parameter_1(mode):
     net(Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

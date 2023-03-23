@@ -24,7 +24,7 @@ class Net(nn.Cell):
         return x.adjoint()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -47,7 +47,7 @@ def test_tensor_adjoint(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
