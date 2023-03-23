@@ -74,9 +74,11 @@ class Allocator {
     if (rc.IsOk()) {
       return reinterpret_cast<pointer>(p);
     } else if (rc == StatusCode::kMDOutOfMemory) {
-      throw std::bad_alloc();
+      MS_LOG(ERROR) << rc.ToString();
+      return nullptr;
     } else {
-      throw std::exception();
+      MS_LOG(ERROR) << rc.ToString();
+      return nullptr;
     }
   }
 

@@ -126,7 +126,7 @@ inline void ShardTaskList::InsertTask(TaskType task_type, int shard_id, int grou
                                       const std::vector<uint64_t> &offset, const json &label) {
   MS_LOG(DEBUG) << "Insert task into task list, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
-  task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id));
+  (void)task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id));
   if (lazy_load_ == false) {
     sample_meta_list_.emplace_back(offset, label);
   }

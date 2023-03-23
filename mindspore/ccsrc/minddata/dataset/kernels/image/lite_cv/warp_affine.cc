@@ -392,6 +392,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
   }
   if (dst.IsEmpty()) {
     (void)dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.height_ != dst_h || dst.width_ != dst_w || dst.channel_ != src.channel_ ||
              dst.data_type_ != LDataType::UINT8) {
     return false;
@@ -509,6 +510,7 @@ bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M,
   }
   if (dst.IsEmpty()) {
     (void)dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
+    RETURN_FALSE_IF_LITEMAT_EMPTY(dst);
   } else if (dst.height_ != dst_h || dst.width_ != dst_w || dst.channel_ != src.channel_) {
     return false;
   } else if (dst.data_type_ != LDataType::UINT8) {
