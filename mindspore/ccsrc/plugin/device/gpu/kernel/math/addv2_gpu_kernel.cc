@@ -42,6 +42,13 @@ bool AddV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
+
+  std::vector<size_t> lhs_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  std::vector<size_t> rhs_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  std::vector<size_t> output_shape_ = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
+  is_null_input_ = CHECK_SHAPE_NULL(lhs_shape_, kernel_name_, "input_0") ||
+                   CHECK_SHAPE_NULL(rhs_shape_, kernel_name_, "input_1") ||
+                   CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output_0");
   return true;
 }
 
