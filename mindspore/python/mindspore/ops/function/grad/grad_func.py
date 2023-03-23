@@ -360,25 +360,22 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
 
 def get_grad(gradients, identifier):
     """
-    A function to get get expected gradient from the return value of ops.grad, when it has return_ids parameter set
-    to True, by using the position id of a tensor or the parameter.
+    When `return_ids` of :func:`mindspore.grad` is set to True, use its return value as gradients. Then find
+    the specific gradient from `gradients` according to `identifier` .
 
-    As for gradient, three typical cases are included:
+    As for gradient, two typical cases are included:
 
-    1. gradient with respect to inputs. In this case, use return value of ops.grad as the first input and
-       the position of the tensor as the second input.
-    2. gradient with respect to weights. In this case, use return value of ops.grad as the first input and
-       the parameter as the second input.
+    1. `identifier` is the position of the specific tensor to get gradient.
+    2. `identifier` is a parameter of a network.
 
     Args:
-        gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of mindspore.grad when return_ids
-            is set to True.
+        gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of :func:`mindspore.grad`
+        when `return_ids` is set to True.
         identifier (Union[int, Parameter]): The position number of a tensor, or a parameter that is used in
-            mindspore.grad.
+            :func:`mindspore.grad`.
 
     Returns:
-        The gradient of the tensor on the position of the position number used as the second input, or the gradient
-        of the parameter used as the second input.
+        The gradient of the tensor on the position or in the parameter that specified by the `identifier`.
 
     Raises:
         RuntimeError: If gradient is not found.
