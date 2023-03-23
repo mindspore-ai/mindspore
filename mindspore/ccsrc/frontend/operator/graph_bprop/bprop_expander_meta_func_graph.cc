@@ -190,6 +190,11 @@ void RegMathBpropExpanderOps3() {
   REGISTER_EXPANDER_BPROP_IMPL(Mul);
   REGISTER_EXPANDER_BPROP_IMPL(Div);
   REGISTER_EXPANDER_BPROP_IMPL(Transpose);
+  REGISTER_EXPANDER_BPROP_IMPL(AssignSub);
+  REGISTER_EXPANDER_BPROP_IMPL(BesselI0);
+  REGISTER_EXPANDER_BPROP_IMPL(BesselJ0);
+  REGISTER_EXPANDER_BPROP_IMPL(ArgMaxWithValue);
+  REGISTER_EXPANDER_BPROP_IMPL(ArgMinWithValue);
 }
 
 void RegNNBpropExpanderOps1() {
@@ -372,12 +377,20 @@ void RegArrayBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMin);
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMax);
 }
+
+void RegInnerBpropExpanderOps() {
+  REGISTER_EXPANDER_BPROP_IMPL(ResizeBilinearV2);
+  REGISTER_EXPANDER_BPROP_IMPL(Roll);
+  REGISTER_EXPANDER_BPROP_IMPL(FillV2);
+}
+
+void RegOtherBpropExpanderOps() {
+  REGISTER_EXPANDER_BPROP_IMPL(Assign);
+  REGISTER_EXPANDER_BPROP_IMPL(IOU);
+}
+
 void RegClipBpropExpanderOps() {}
 void RegCommBpropExpanderOps() {}
-void RegInnerBpropExpanderOps() {}
-
-void RegOtherBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(Assign); }
-
 void RegQuantBpropExpanderOps() {}
 void RegSparseBpropExpanderOps() {}
 

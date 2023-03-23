@@ -598,8 +598,10 @@ NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &
 NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
   auto x_shape = ib->GetShape(x);
-  auto x_axis = CheckRange(axis, SizeToLong(x_shape.size()));
-  auto onehot_axis = x_axis;
+  int64_t x_axis = axis;
+  if (!IsDynamic(x_shape)) {
+    x_axis = CheckRange(axis, SizeToLong(x_shape.size()));
+  }
   NodePtr dout_expand;
   NodePtr new_out = out;
   if (keep_dims) {
@@ -610,21 +612,51 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
       new_out = ib->Emit("ArgMinWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
     }
   } else {
-    dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(onehot_axis)});
+    dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(x_axis)});
   }
-  auto out_shape = ib->GetShape(ib->TupleGetItem(new_out, 0));
-  if (onehot_axis >= SizeToLong(out_shape.size())) {
-    onehot_axis = -1;
-  }
-
   auto type_x = ib->GetDtype(x);
   auto on_value = ib->Tensor(1, type_x);
   auto off_value = ib->Tensor(0, type_x);
-  int64_t depth = x_shape[x_axis];
-  auto dx =
-    dout_expand * ib->Emit("OneHot", {ib->TupleGetItem(new_out, 0), ib->Value<int64_t>(depth), on_value, off_value},
-                           {{"axis", MakeValue(onehot_axis)}});
-  return dx;
+  auto out_0 = ib->TupleGetItem(new_out, 0);
+  NodePtr depth = ib->Value<int64_t>(1);
+  if (!x_shape.empty()) {
+    depth = ib->TupleGetItem(ib->Shape(x), x_axis);
+  }
+  if (x_axis >= 0) {
+    auto onehot_axis = x_axis;
+    auto out_shape = ib->GetShape(out_0);
+    if (!IsDynamic(out_shape) && onehot_axis >= SizeToLong(out_shape.size())) {
+      onehot_axis = -1;
+    }
+    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value}, {{"axis", MakeValue(onehot_axis)}});
+    if (x_shape.empty()) {
+      dx = ib->Emit("Squeeze", {dx});
+    }
+    return dx;
+  } else {
+    auto indices_expand = ib->ExpandDims(out_0, x_axis);
+    auto shape_func = [x_axis](const ShapeArray &inputs) -> ShapeArray {
+      auto indices_expand_rank = inputs.at(0).size();
+      auto x_shape = inputs.at(1);
+      std::vector<int64_t> broad_shape(indices_expand_rank, 1);
+      auto x = LongToSize(x_axis + SizeToLong(indices_expand_rank));
+      auto depth = x_shape[x];
+      broad_shape[x] = depth;
+      return {broad_shape, {depth}};
+    };
+    auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &) -> ShapeVector {
+      int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+      return {x_rank, 1};
+    };
+    auto res = ib->ShapeCalc({indices_expand, x}, shape_func, infer_func, {});
+    auto broad_shape = res[0];
+    depth = res[1];
+    auto depth_range = ib->Range(depth);
+    auto depth_broad = ib->Reshape(depth_range, broad_shape);
+    auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
+    auto one_hot_res = ib->Cast(one_hot_bool, type_x);
+    return dout_expand * one_hot_res;
+  }
 }
 
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {
