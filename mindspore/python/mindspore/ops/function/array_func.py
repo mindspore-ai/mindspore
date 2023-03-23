@@ -1988,7 +1988,6 @@ def slice(input_x, begin, size):
 
     Args:
         input_x (Tensor): The target tensor.
-            The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         begin (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
         size (Union[tuple, list]): The size of the slice. Only constant value is allowed.
 
