@@ -113,7 +113,12 @@ class DeviceAddress : public mindspore::DeviceSync {
         node_index_(node_index),
         device_name_(device_name),
         device_id_(device_id) {}
-  virtual ~DeviceAddress() { ptr_ = nullptr; }
+  virtual ~DeviceAddress() {
+    if (!from_mem_pool_ && deleter_ && ptr_ != nullptr) {
+      deleter_(static_cast<uint8_t *>(ptr_));
+    }
+    ptr_ = nullptr;
+  }
 
   // Asynchronously copy host memory to device side.
   virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }
@@ -235,8 +240,10 @@ class DeviceAddress : public mindspore::DeviceSync {
     }
     other->set_ptr(GetMutablePtr());
     other->set_from_mem_pool(from_mem_pool());
+    other->set_deleter(deleter());
     set_ptr(nullptr);
     set_from_mem_pool(false);
+    deleter_ = nullptr;
   }
 
   // Free the ptr in user data when the ref count is 0.
@@ -250,7 +257,7 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   std::pair<AnfNodeWeakPtr, size_t> node_index() const { return node_index_; }
   void set_deleter(const std::function<void(uint8_t *)> &deleter) { deleter_ = deleter; }
-  std::function<void(uint8_t *)> deleter() { return deleter_; }
+  std::function<void(uint8_t *)> deleter() const { return deleter_; }
 
  protected:
   const void *ptr() const { return ptr_; }
