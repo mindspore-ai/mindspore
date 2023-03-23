@@ -22,7 +22,7 @@ from .._primitive_cache import _get_cache_prim
 
 def blackman_window(window_length, periodic=True, *, dtype=None):
     r"""
-    Blackman window function.
+    Blackman window function, usually used to extract finite signal segment for FFT.
 
     The `window_length` is a input tensor which determines the returned window size, and its data should be
     an integer. In particular, if `window_length` is equal to `1`, only a single value `1` exists in the
@@ -36,7 +36,7 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
 
         w[n] = 0.42 - 0.5 cos(\frac{2\pi n}{N - 1}) + 0.08 cos(\frac{4\pi n}{N - 1})
 
-    where N is the full window size, and n is natural number less than N:[0, 1, ..., N-1].
+    where :math:`N` is the full window size, and n is natural number less than :math:`N` :[0, 1, ..., N-1].
 
     Args:
         window_length (Tensor): The size of returned window, with data type int32, int64.

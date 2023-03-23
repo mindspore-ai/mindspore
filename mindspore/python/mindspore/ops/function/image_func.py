@@ -26,18 +26,17 @@ from .._primitive_cache import _get_cache_prim
 def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
                         wh_ratio_clip=0.016):
     r"""
-    Decodes bounding boxes locations.
-
-    The function of the operator is to calculate the offset, and this operator converts the offset into a Bbox,
-    which is used to mark the target in the subsequent images, etc.
+    Decode the bounding box locations, calculate the offset, and convert the offset into a Bbox, which is used to mark
+    the target in the subsequent images, etc.
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         deltas (Tensor): Delta of boxes. Which has the same shape with `anchor_box`.
         max_shape (tuple): The max size limit for decoding box calculation.
-        means (tuple): The means of `deltas` calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of `deltas` calculation. Default: (1.0, 1.0, 1.0, 1.0).
-        wh_ratio_clip (float): The limit of width and height ratio for decoding box calculation. Default: 0.016.
+        means (tuple, optional): The means of `deltas` calculation. Default: (0.0, 0.0, 0.0, 0.0).
+        stds (tuple, optional): The standard deviations of `deltas` calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        wh_ratio_clip (float, optional): The limit of width and height ratio for decoding box calculation.
+            Default: 0.016.
 
     Returns:
         Tensor, decoded boxes. It has the same data type and shape as `anchor_box`.
@@ -66,16 +65,14 @@ def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0
 
 def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
     r"""
-    Encodes bounding boxes locations.
-
-    This operator will calculate the offset between the predicted bounding boxes and the real bounding boxes,
-    and this offset will be used as a variable for the loss.
+    Encode the bounding box locations, calculate the offset between the predicted bounding boxes and
+    the real bounding boxes, and the offset will be used as a variable for the loss.
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         groundtruth_box (Tensor): Ground truth boxes. Which has the same shape with `anchor_box`.
-        means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
-        stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
+        means (tuple, optional): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
+        stds (tuple, optional): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
 
     Returns:
         Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.
