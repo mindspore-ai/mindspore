@@ -56,11 +56,13 @@ NodePtrList GatherDropNegatives(const BpropIRBuilder *ib, const NodePtr &params,
         return {res_shape};
       };
       auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-        if (!invalid_indices.empty()) {
+        auto gather = inputs.at(0);
+        auto is_pos = inputs.at(1);
+        if (!invalid_indices.empty() || IsDynamicRank(gather) || IsDynamicRank(is_pos)) {
           return {-1};
         }
-        auto gather_rank = inputs.at(0).size();
-        auto is_pos_rank = inputs.at(1).size();
+        auto gather_rank = gather.size();
+        auto is_pos_rank = is_pos.size();
         return {SizeToLong(std::max(gather_rank, is_pos_rank))};
       };
 
@@ -177,13 +179,15 @@ ShapeVector RegenerateOutputInferFunc(const ShapeArray &inputs, const std::unord
   constexpr size_t inputs_num = 4;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 4.");
 
-  if (!invalid_indices.empty()) {
+  auto x = inputs.at(0);
+  auto indices = inputs.at(1);
+  auto batch_dims = inputs.at(3);
+  if (!invalid_indices.empty() || IsDynamicRank(x) || IsDynamicRank(indices) || IsDynamicRank(batch_dims)) {
     return {-1};
   }
 
-  auto x_rank = inputs.at(0).size();
-  auto indices_rank = inputs.at(1).size();
-  auto batch_dims = inputs.at(3);
+  auto x_rank = x.size();
+  auto indices_rank = indices.size();
   MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
   auto batch_dims_value = batch_dims[0];
 
@@ -228,11 +232,12 @@ ShapeArray Perm1ShapeFunc(const ShapeArray &inputs) {
 }
 
 ShapeVector PermInferFunc(const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) {
-  if (!invalid_indices.empty()) {
+  auto x = inputs.at(0);
+  if (!invalid_indices.empty() || IsDynamicRank(x)) {
     return {-1};
   }
 
-  return {static_cast<int64_t>(inputs.at(0).size())};
+  return {static_cast<int64_t>(x.size())};
 }
 
 ShapeArray Perm2ShapeFunc(const ShapeArray &inputs) {
@@ -317,19 +322,24 @@ ShapeVector GatherReshapeInferFunc(const ShapeArray &inputs, const std::unordere
   constexpr size_t inputs_num = 5;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == inputs_num, "inputs num should equal to 5.");
 
+  auto values = inputs.at(0);
+  auto indices = inputs.at(1);
+  auto params_grad = inputs.at(2);
+  auto batch_dims = inputs.at(4);
+
   constexpr size_t return_num = 4;
-  if (!invalid_indices.empty()) {
+  if (!invalid_indices.empty() || IsDynamicRank(values) || IsDynamicRank(indices) || IsDynamicRank(params_grad) ||
+      IsDynamicRank(batch_dims)) {
     return ShapeVector(return_num, -1);
   }
 
-  auto batch_dims = inputs.at(4);
   MS_EXCEPTION_IF_CHECK_FAIL(batch_dims.size() == 1, "batch_dims should be a scalar.");
   auto batch_dims_value = batch_dims[0];
 
-  auto values_rank = SizeToLong(inputs.at(0).size()) - batch_dims_value + 1;
-  auto indices_rank = SizeToLong(inputs.at(1).size()) - batch_dims_value + 1;
+  auto values_rank = SizeToLong(values.size()) - batch_dims_value + 1;
+  auto indices_rank = SizeToLong(indices.size()) - batch_dims_value + 1;
   auto delta_rank = indices_rank;
-  auto params_grad_rank = SizeToLong(inputs.at(2).size());
+  auto params_grad_rank = SizeToLong(params_grad.size());
 
   ShapeVector res = {values_rank, indices_rank, delta_rank, params_grad_rank};
   return res;
@@ -674,11 +684,12 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs[0];
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return {1, -1, -1};
     }
 
-    auto x_rank = SizeToLong(inputs[0].size());
+    auto x_rank = SizeToLong(x.size());
     return {1, x_rank, x_rank};
   };
 
@@ -867,10 +878,11 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BOD
     };
 
     auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-      if (!invalid_indices.empty()) {
+      auto x = inputs[0];
+      if (!invalid_indices.empty() || IsDynamicRank(x)) {
         return {-1};
       }
-      auto rank = SizeToLong(inputs[0].size());
+      auto rank = SizeToLong(x.size());
       return {rank > 2 ? (rank - 2) : 0};
     };
 
@@ -1029,11 +1041,12 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
+    auto x = inputs[0];
     auto input_num = inputs.size();
-    if (!invalid_indices.empty()) {
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return ShapeVector(input_num, -1);
     }
-    return ShapeVector(input_num, SizeToLong(inputs[0].size()));
+    return ShapeVector(input_num, SizeToLong(x.size()));
   };
 
   NodePtrList x_tuple;
@@ -1362,10 +1375,11 @@ REG_BPROP_BUILDER("Transpose").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs[0];
+    if (!invalid_indices.empty() || IsDynamicRank(x)) {
       return {-1};
     }
-    return {SizeToLong(inputs[0].size())};
+    return {SizeToLong(x.size())};
   };
 
   auto res_perm = ib->ShapeCalc({perm}, shape_func, infer_func, {0})[0];
@@ -1406,11 +1420,13 @@ REG_BPROP_BUILDER("Tile").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   };
 
   auto infer_func = [](const ShapeArray &inputs, const std::unordered_set<size_t> &invalid_indices) -> ShapeVector {
-    if (!invalid_indices.empty()) {
+    auto x = inputs.at(0);
+    auto multiples = inputs.at(1);
+    if (!invalid_indices.empty() || IsDynamicRank(x) || IsDynamicRank(multiples)) {
       return {-1, -1};
     }
-    auto x_sz = static_cast<int64_t>(inputs.at(0).size());
-    auto multiples_sz = static_cast<int64_t>(inputs.at(1).size());
+    auto x_sz = static_cast<int64_t>(x.size());
+    auto multiples_sz = static_cast<int64_t>(multiples.size());
     auto max_sz = x_sz > multiples_sz ? x_sz : multiples_sz;
     return {2 * max_sz, max_sz};
   };
