@@ -274,14 +274,14 @@ void SetKernelBuildInfoWithSelectedAttr(const CNodePtr &kernel_node, const kerne
   std::vector<std::string> output_formats;
   std::vector<TypeId> output_types;
   for (size_t index = 0; index < selected_kernel_attr.GetOutputSize(); ++index) {
-    output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
-    output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
+    (void)output_formats.emplace_back(selected_kernel_attr.GetOutputAttr(index).format);
+    (void)output_types.emplace_back(selected_kernel_attr.GetOutputAttr(index).dtype);
   }
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
   for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
-    input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
-    input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
+    (void)input_types.emplace_back(selected_kernel_attr.GetInputAttr(index).dtype);
+    (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).format);
   }
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
   if (selected_kernel_attr.GetSkipCheck()) {

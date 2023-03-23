@@ -556,7 +556,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   return actor_info;
 }
 
-void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) {
+void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
   MS_EXCEPTION_IF_NULL(root_graph);
   MS_EXCEPTION_IF_NULL(root_graph->manager());
   const std::map<std::string, std::string> kOpListToTupleNames = {{prim::kMakeListNew, prim::kMakeTuple},
