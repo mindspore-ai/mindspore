@@ -13,8 +13,8 @@ mindspore.ops.multilabel_soft_margin_loss
         \sum_{j = 1}^{C}\left(output_{ij}\log\frac{1}{1 + e^{- input_{ij}}} + \left( 1 - output_{ij}
         \right)\log\frac{e^{-input_{ij}}}{1 + e^{-input_{ij}}} \right)
 
-    其中 :math:`input{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`output{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
-    :math:`output{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
+    其中 :math:`input_{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`output_{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
+    :math:`output_{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
     如果 `weight` 不为None，将会和每个分类的loss相乘。
 
     参数：

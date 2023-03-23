@@ -3,4 +3,4 @@ mindspore.ops.multiply
 
 .. py:function:: mindspore.ops.multiply(input, other)
 
-    更多参考详见 :func:`mindspore.ops.mul` 。
+    :func:`mindspore.ops.mul` 的别名。

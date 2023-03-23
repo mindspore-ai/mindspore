@@ -3,7 +3,7 @@ mindspore.ops.msort
 
 .. py:function:: mindspore.ops.msort(input)
 
-    将输入Tensor的元素沿其第一维按值升序排序。
+    将输入Tensor的元素沿其第一个维度按值升序排序。
 
     ops.msort(t)相当于ops.Sort(axis=0)(t)[0]。另外可以参考 :class:`mindspore.ops.Sort()`。
 

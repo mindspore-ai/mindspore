@@ -3,7 +3,7 @@ mindspore.ops.reciprocal
 
 .. py:function:: mindspore.ops.reciprocal(input)
 
-    返回输入Tensor的倒数。
+    返回输入Tensor每个元素的倒数。
 
     .. math::
         out_{i} =  \frac{1}{x_{i}}

@@ -568,7 +568,7 @@ def neg(input):
         out_{i} = - input_{i}
 
     Args:
-        input (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of Number.
 
     Returns:
         Tensor, has the same shape and dtype as input.
@@ -879,7 +879,10 @@ def mul(input, other):
 
 def multiply(input, other):
     r"""
-    Refer to :func:`mindspore.ops.mul` for more details.
+    Alias for :func:`mindspore.ops.asinh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return tensor_mul(input, other)
 
@@ -3929,9 +3932,9 @@ def ne(x, y):
     .. math::
 
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i} \ne y_{i} \\
-            & \text{False,   if } x_{i} = y_{i}
-            \end{cases}
+        & \text{True,    if } x_{i} \ne y_{i} \\
+        & \text{False,   if } x_{i} = y_{i}
+        \end{cases}
 
     Args:
         x (Union[Tensor, Number, bool]): The first input is a number or
@@ -5202,8 +5205,8 @@ def square(input):
 
 def outer(x1, x2):
     """
-    Return outer product of `x1` and `x2`. If `x1` is a vector of size n and `x2` is a vector of size m,
-    then output must be a matrix of size n x m.
+    Return outer product of `x1` and `x2`. If `x1` is a vector of size :math:`n`
+    and `x2` is a vector of size :math:`m` , then output must be a matrix of shape :math:`(n, m)` .
 
     Note:
         This function does not broadcast.
@@ -6332,9 +6335,8 @@ def atleast_1d(inputs):
 
 def dstack(inputs):
     r"""
-    Stacks tensors in sequence depth wise.
+    Stacks tensors along the third axis.
 
-    This is equivalent to concatenation along the third axis.
     1-D tensors :math:`(N,)` should be reshaped to :math:`(1,N,1)`.
     2-D tensors :math:`(M,N)` should be reshaped to :math:`(M,N,1)` before concatenation.
 
@@ -6344,7 +6346,7 @@ def dstack(inputs):
             1-D or 2-D tensors must have the same shape.
 
     Returns:
-        Tensor, formed by stacking the given tensors, will be at least 3-D.
+        Stacked Tensor, will be at least 3-D.
         The output shape is similar to the output of `numpy.dstack()` function.
 
     Raises:
@@ -9083,7 +9085,7 @@ def remainder(input, other):
 
     .. math::
 
-        out_{i} = input_{i} \text{ % } other_{i}
+        remainder(input, other) == input - input.div(other, rounding_mode="floor") * other
 
     .. warning::
         - When the elements of input exceed 2048, there might be accuracy problems.

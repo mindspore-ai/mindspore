@@ -9,7 +9,7 @@ mindspore.ops.mvlgamma
 
     .. math::
 
-        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+        \log (\Gamma_{p}(input))=C+\sum_{i=1}^{p} \log (\Gamma(input-\frac{i-1}{2}))
     
     其中 :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` ，:math:`\Gamma(\cdot)` 为Gamma函数。
 

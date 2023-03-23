@@ -8,7 +8,7 @@ mindspore.ops.remainder
     `input` 和 `other` 的输入遵守隐式类型转换规则，以使数据类型一致。输入必须是两个Tensor或者一个Tensor和一个Scalar。当输入是两个Tensor时，两个dtype都不能是bool类型，shape可以广播。当输入是Tensor和Scalar时，这个Scalar只能是常数。
 
     .. math::
-        out_{i} = input_{i} \text{ % } other_{i}
+        remainder(input, other) == input - input.div(other, rounding_mode="floor") * other
 
     .. warning::
         - 当输入元素超过2048时，可能会有精度问题。

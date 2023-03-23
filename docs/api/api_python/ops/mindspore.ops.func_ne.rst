@@ -14,9 +14,9 @@ mindspore.ops.ne
 
     .. math::
         out_{i} =\begin{cases}
-            & \text{True,    if } x_{i} \ne y_{i} \\
-            & \text{False,   if } x_{i} = y_{i}
-            \end{cases}
+        & \text{True,    if } x_{i} \ne y_{i} \\
+        & \text{False,   if } x_{i} = y_{i}
+        \end{cases}
 
     参数：
         - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是数值型或bool，也可以是数据类型为数值型或bool的Tensor。

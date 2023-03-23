@@ -502,7 +502,7 @@ def reverse(x, axis):
 
 def ravel(input):
     """
-    Return a contiguous flattened tensor.
+    Expand the multidimensional Tensor into 1D along the 0 axis direction.
 
     Args:
         input (Tensor): A tensor to be flattened.
@@ -1426,10 +1426,10 @@ def dyn_shape(input_x):
     Returns the shape of the input tensor.
 
     Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input_x (Tensor): The input Tensor.
 
     Returns:
-        Tensor[int], 1-dim Tensor of type int32
+        Tensor, the shape of `input_x` .
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
@@ -6223,9 +6223,8 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     If `input` is 2-D, returns the diagonal of `input` with the given offset.
     If `input` has more than two
     dimensions, then the axes specified by `dim1` and `dim2` are used to determine
-    the 2-D sub-array whose diagonal is returned. The shape of the resulting
-    array can be determined by removing `dim1` and `dim2` and appending an index
-    to the right equal to the size of the resulting diagonals.
+    the 2-D sub-array whose diagonal is returned. In this case, remove the `dim1` and `dim2` dimensions of `input`
+    and insert the last dimension of `input` by the diagonal elements determined by `dim1` and `dim2`.
 
     Args:
         input (Tensor): Array from which the diagonals are taken.
@@ -6369,7 +6368,7 @@ def mvlgamma(input, p):
 
     .. math::
 
-        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+        \log (\Gamma_{p}(input))=C+\sum_{i=1}^{p} \log (\Gamma(input-\frac{i-1}{2}))
 
     where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
 

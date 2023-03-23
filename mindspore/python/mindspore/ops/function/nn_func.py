@@ -1873,7 +1873,7 @@ def flipud(input):
         input (Tensor): Input array.
 
     Returns:
-        Tensor.
+        Tensor after the flip.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -1904,7 +1904,7 @@ def fliplr(input):
         input (Tensor): Input tensor.
 
     Returns:
-        Tensor.
+        Tensor after the flip.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -2911,13 +2911,13 @@ def prelu(x, weight):
     where :math:`x_i` is an element of a channel of the input, `w` is the weight of the channel.
 
     Note:
-        Scalar or 1-D input x is not supported on Ascend.
+        Scalar or 1-D Tensor is not supported on Ascend.
 
     Args:
         x (Tensor): The input Tensor of the activation function. The data type is float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         weight (Tensor):  Weight Tensor. The data type is float16 or float32.
-          The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
+          The weight can only be a Tensor, and the length is the same as the number of channels C of the `input_x`.
           On GPU devices, when the input is a scalar, the shape is (1,).
 
     Returns:
@@ -5304,10 +5304,10 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
         \sum_{j = 1}^{C}\left(output_{ij}\log\frac{1}{1 + e^{- input_{ij}}} + \left( 1 - output_{ij}
         \right)\log\frac{e^{-input_{ij}}}{1 + e^{-input_{ij}}} \right)
 
-    where :math:`input{ij}` represents the predicted score of sample :math:`i` for class :math:`j`.
-    :math:`output{ij}` represents the binary label of sample :math:`i` for class :math:`j`, where
+    where :math:`input_{ij}` represents the predicted score of sample :math:`i` for class :math:`j`.
+    :math:`output_{ij}` represents the binary label of sample :math:`i` for class :math:`j`, where
     sample :math:`i` belongs to class :math:`j` if :math:`output{ij}=1` , and sample :math:`i` does
-    not belong to class :math:`j` if :math:`output{ij}=0`. For a multi-label classification task, each
+    not belong to class :math:`j` if :math:`output_{ij}=0`. For a multi-label classification task, each
     sample may have multiple labels with a value of 1 in the binary label :math:`output`. `weight` will
     multiply to the loss of each class if given.
 
