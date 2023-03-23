@@ -68,7 +68,7 @@ class SST2Op : public CsvOp {
   /// @param[in] s The input string
   /// @param[in] delim The delimiter
   /// @return The a string vector
-  std::vector<std::string> split(const std::string &s, char delim);
+  std::vector<std::string> split(const std::string &s, char delim) override;
 
   /// \brief Reads a csv file and loads the data into multiple tensors.
   /// @param[in] file The file to read.

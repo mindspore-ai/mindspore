@@ -148,11 +148,14 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return KRET_OK;
     }
-    if (input_shape.size() != 4) {
+    const int dimension = 4;
+    if (input_shape.size() != dimension) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 4, but got "
                         << input_shape.size();
     }
 
+    const int THIRD_ELEMENT_INDEX = 2;
+    const int FOURTH_ELEMENT_INDEX = 3;
     if (use_native_) {
       num_elements_ = 1;
       for (auto x : input_shape) {
@@ -160,8 +163,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
         num_elements_ *= x;
       }
       transpose_shape_.push_back(input_shape_[0]);
-      transpose_shape_.push_back(input_shape_[2]);
-      transpose_shape_.push_back(input_shape_[3]);
+      transpose_shape_.push_back(input_shape_[THIRD_ELEMENT_INDEX]);
+      transpose_shape_.push_back(input_shape_[FOURTH_ELEMENT_INDEX]);
       transpose_shape_.push_back(input_shape_[1]);
     } else {
       const unsigned int lrnN = 2 * depth_radius_ + 1;

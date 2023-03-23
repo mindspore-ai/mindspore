@@ -32,6 +32,11 @@
 constexpr int INVALID_CHANNEL_ID = -1;
 constexpr int INVALID_STREAM_FORMAT = -1;
 constexpr int VIDEO_CHANNEL_MAX = 23;
+constexpr int THIRD_ELEMENT_INDEX = 2;
+constexpr int FOURTH_ELEMENT_INDEX = 3;
+constexpr int FIFTH_ELEMENT_INDEX = 4;
+constexpr int SIXTH_ELEMENT_INDEX = 5;
+constexpr int EIGHTH_ELEMENT_INDEX = 7;
 
 using FrameProcessCallBack = int (*)(void *callback_param, void *frame_data, int frame_size);
 
@@ -90,35 +95,35 @@ class FrameExtarct {
 
  private:
   inline bool FindStartH264(const uint8_t *buf, int idx) {
-    int32_t tmp = buf[idx + 3] & 0x1F;
+    int32_t tmp = buf[idx + FOURTH_ELEMENT_INDEX] & 0x1F;
     // Find 00 00 01
-    return (buf[idx] == 0) && (buf[idx + 1] == 0) && (buf[idx + 2] == 1) &&
-           (((tmp == 0x5 || tmp == 0x1) && ((buf[idx + 4] & 0x80) == 0x80)) ||
-            (tmp == 20 && (buf[idx + 7] & 0x80) == 0x80));
+    return (buf[idx] == 0) && (buf[idx + 1] == 0) && (buf[idx + THIRD_ELEMENT_INDEX] == 1) &&
+           (((tmp == 0x5 || tmp == 0x1) && ((buf[idx + FIFTH_ELEMENT_INDEX] & 0x80) == 0x80)) ||
+            (tmp == 0x14 && (buf[idx + EIGHTH_ELEMENT_INDEX] & 0x80) == 0x80));
   }
 
   inline bool FindEndH264(const uint8_t *buf, int idx) {
     // Find 00 00 01
-    int32_t tmp = buf[idx + 3] & 0x1F;
-    return (buf[idx] == 0) && (buf[idx + 1] == 0) && (buf[idx + 2] == 1) &&
-           ((tmp == 15) || (tmp == 7) || (tmp == 8) || (tmp == 6) ||
-            ((tmp == 5 || tmp == 1) && ((buf[idx + 4] & 0x80) == 0x80)) ||
-            (tmp == 20 && (buf[idx + 7] & 0x80) == 0x80));
+    int32_t tmp = buf[idx + FOURTH_ELEMENT_INDEX] & 0x1F;
+    return (buf[idx] == 0) && (buf[idx + 1] == 0) && (buf[idx + THIRD_ELEMENT_INDEX] == 1) &&
+           ((tmp == 0xF) || (tmp == 0x7) || (tmp == 0x8) || (tmp == 0x6) ||
+            ((tmp == 0x5 || tmp == 1) && ((buf[idx + FIFTH_ELEMENT_INDEX] & 0x80) == 0x80)) ||
+            (tmp == 0x14 && (buf[idx + EIGHTH_ELEMENT_INDEX] & 0x80) == 0x80));
   }
 
   inline bool FindStartH265(const uint8_t *buf, int idx) {
-    uint32_t tmp = (buf[idx + 3] & 0x7E) >> 1;
+    uint32_t tmp = (buf[idx + FOURTH_ELEMENT_INDEX] & 0x7E) >> 1;
     // Find 00 00 01
-    return (buf[idx + 0] == 0) && (buf[idx + 1] == 0) && (buf[idx + 2] == 1) && (tmp <= 21) &&
-           ((buf[idx + 5] & 0x80) == 0x80);
+    return (buf[idx + 0] == 0) && (buf[idx + 1] == 0) && (buf[idx + THIRD_ELEMENT_INDEX] == 1) && (tmp <= 0x15) &&
+           ((buf[idx + SIXTH_ELEMENT_INDEX] & 0x80) == 0x80);
   }
 
   inline bool FindEndH265(const uint8_t *buf, int idx) {
-    uint32_t tmp = (buf[idx + 3] & 0x7E) >> 1;
+    uint32_t tmp = (buf[idx + FOURTH_ELEMENT_INDEX] & 0x7E) >> 1;
     // Find 00 00 01
-    return ((buf[idx + 0] == 0) && (buf[idx + 1] == 0) && (buf[idx + 2] == 1) &&
-            ((tmp == 32) || (tmp == 33) || (tmp == 34) || (tmp == 39) || (tmp == 40) ||
-             ((tmp <= 21) && (buf[idx + 5] & 0x80) == 0x80)));
+    return ((buf[idx + 0] == 0) && (buf[idx + 1] == 0) && (buf[idx + THIRD_ELEMENT_INDEX] == 1) &&
+            ((tmp == 0x20) || (tmp == 0x21) || (tmp == 0x22) || (tmp == 0x27) || (tmp == 0x28) ||
+             ((tmp <= 0x15) && (buf[idx + SIXTH_ELEMENT_INDEX] & 0x80) == 0x80)));
   }
 
  private:
