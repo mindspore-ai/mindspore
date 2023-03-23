@@ -16,6 +16,6 @@ mindspore.ops.RGBToHSV
         Tensor，数据类型和shape与 `images` 相同。
 
     异常：
-        - **TypeError** - `images` 不是Tensor或者其数据类型不是float或double。
+        - **TypeError** - `images` 不是Tensor或者其数据类型不是float。
         - **ValueError** - `images` 的rank小于1。
         - **ValueError** - `images` shape的最后一维长度不等于3。

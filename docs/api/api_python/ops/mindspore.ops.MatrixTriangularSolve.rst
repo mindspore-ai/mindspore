@@ -10,7 +10,7 @@ mindspore.ops.MatrixTriangularSolve
 
     参数：
         - **lower** (bool，可选) - 如果为True， `matrix` 的最内矩阵为下三角矩阵。默认值：True。
-        - **adjoint** (bool，可选) - 如果为True，使用 `matrix` 的伴随求解。默认值：False。
+        - **adjoint** (bool，可选) - 指明是否使用矩阵的伴随矩阵进行求解。默认值：False，使用转置矩阵进行求解。
   
     输入：
         - **matrix** (Tensor) - Tensor，其shape为 :math:`(*, M, M)` ，类型支持float32、float64、complex64和complex128。

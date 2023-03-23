@@ -12,8 +12,8 @@ mindspore.ops.NthElement
         - **reverse** (bool，可选) - 可选参数，如果设为True，则寻找第 :math:`n` 大的值，如果设为False，则寻找第n小的值。默认值：False。
 
     输入：
-        - **input** (Tensor) - 一维或者更高维度的Tensor，最后一维的大小必须大于等于 :math:`n+1` 。
-        - **n** (Union[int, Tensor]) - 如果 `n` 为Tensor，则必须是零维的，数据类型是int32。 `n` 的有效范围是：:math:`[0, input.shape[-1])` 。
+        - **input** (Tensor) - 一维或者更高维度的输入Tensor。
+        - **n** (Union[int, Tensor]) - 如果 `n` 为Tensor，则必须是零维的，数据类型是int32。 `n` 的有效范围是：:math:`[0, input.shape[-1])` ，其中 :math:`input.shape[-1]` 为 `input` 最后一维的size。
 
     输出：
         - **values** (Tensor) - 其shape满足： `values`.shape = `input`.shape[:-1]，数据类型与 `input` 一致。

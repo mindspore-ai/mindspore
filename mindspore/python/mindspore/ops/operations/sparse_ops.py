@@ -195,7 +195,7 @@ class SparseSlice(Primitive):
     Slices a SparseTensor based on the `start` and `size`.
 
     Inputs:
-        - **indices** (Tensor) - A 2D Tensor (N x R matrix), the indices of the SparseTensor.
+        - **indices** (Tensor) - A 2D Tensor of shape :math:`(N, R)`, the indices of the SparseTensor.
           Support int64, each element value should be a non-negative int number.
           The shape is :math:`(N, R)`.
         - **values** (Tensor) - A 1D Tensor, represents the value corresponding to the position in the `indices`.

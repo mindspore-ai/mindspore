@@ -22,4 +22,4 @@ mindspore.ops.matrix_exp
         - **TypeError** -  `input` 不为Tensor。
         - **TypeError** -  `input` 的dtype不属于以下类型：float16、float32、float64、complex64、complex128。
         - **ValueError** - `input` 的秩小于2。
-        - **ValueError** - `input` 的最后两维不相等。
+        - **ValueError** - `input` 的最后两维的size不相等。

@@ -15,11 +15,11 @@ mindspore.ops.ParameterizedTruncatedNormal
         - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
 
     输入：
-        - **shape** (Tensor) - 生成Tensor的shape。数据类型必须是int32或者int64。
-        - **mean** (Tensor) - 截断正态分布均值。数据类型必须是float16、float32或者float64。
-        - **stdevs** (Tensor) - 截断正态分布的标准差。其值必须大于零，数据类型与 `mean` 一致。
-        - **min** (Tensor) - 最小截断值，数据类型与 `mean` 一致。
-        - **max** (Tensor) - 最大截断值，数据类型与 `mean` 一致。
+        - **shape** (Tensor) - 生成Tensor的shape。shape为 :math:`(batch\_size, *)` ，其中 :math:`*` 为长度不小于1的额外维度。数据类型必须是int32或者int64。
+        - **mean** (Tensor) - 截断正态分布均值。 shape为 :math:`()` 或者 :math:`(batch\_size, )` 。数据类型必须是float16、float32或者float64。
+        - **stdevs** (Tensor) - 截断正态分布的标准差。其值必须大于零，shape和数据类型与 `mean` 一致。
+        - **min** (Tensor) - 最小截断值，shape和数据类型与 `mean` 一致。
+        - **max** (Tensor) - 最大截断值，shape和数据类型与 `mean` 一致。
 
     输出：
         Tensor，其shape由 `shape` 决定，数据类型与 `mean` 一致。
