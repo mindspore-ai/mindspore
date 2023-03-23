@@ -11,7 +11,7 @@ mindspore.ops.AdjustSaturation
 
     输入：
         - **image** (Tensor) - 输入的Tensor。dtype需要是float16或float32。Tensor的维度至少是三维。shape的最后一个维度表示通道数，且必须为3。
-        - **scale** (Tensor) - 饱和通道的添加值。dtype需要是float32。Tensor必须是零维的。
+        - **scale** (Tensor) - 应用于图像的饱和度调整因子。大于1.0的值增加饱和度，小于1.0的值减少饱和度，等于1.0保持饱和度不变。Tensor必须是零维，其dtype必须是float32。
 
     输出：
         Tensor，具有与 `image` 相同的shape和dtype。

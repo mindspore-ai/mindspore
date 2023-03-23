@@ -530,8 +530,6 @@ Array操作
     mindspore.ops.ScatterNdMin
     mindspore.ops.ScatterNdMul
     mindspore.ops.SearchSorted
-    mindspore.ops.SegmentMean
-    mindspore.ops.SegmentProd
     mindspore.ops.SegmentSum
     mindspore.ops.Select
     mindspore.ops.Shape
