@@ -146,10 +146,9 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     auto sequence_abs = abs->cast<AbstractSequencePtr>();
     if (sequence_abs->dynamic_len()) {
       auto elem_abs = sequence_abs->dynamic_len_element_abs();
-      if (elem_abs != nullptr && elem_abs->isa<AbstractScalar>()) {
-        elem_abs->cast<AbstractScalarPtr>()->set_is_variable(true);
-      }
-      return abs->Broaden();
+      auto cloned_abs = sequence_abs->Clone()->cast<AbstractSequencePtr>();
+      cloned_abs->set_dynamic_len_element_abs(AbstractBroaden(elem_abs));
+      return cloned_abs;
     }
     std::vector<AbstractBasePtr> new_elements;
     new_elements.reserve(sequence_abs->elements().size());

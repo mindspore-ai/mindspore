@@ -108,9 +108,9 @@ def test_switch_single_op():
 
 class TupleNet(nn.Cell):
     def construct(self, x, y, z):
-        while x < y:
-            z = (z[0] + 3, z[1] + 2)
-            x = x + 1
+        while ops.less(x, y):
+            z = ops.make_tuple(ops.add(F.tuple_getitem(z, 0), 3), ops.add(F.tuple_getitem(z, 1), 2))
+            x = ops.add(x, 1)
         return z
 
 
