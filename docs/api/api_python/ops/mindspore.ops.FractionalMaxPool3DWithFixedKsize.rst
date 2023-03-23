@@ -12,11 +12,11 @@ mindspore.ops.FractionalMaxPool3DWithFixedKsize
     输入和输出的数据格式可以是“NCDHW”和“NDHWC”，N是批量大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
 
     参数：
-        - **ksize** (Union[float, tuple]) - 目标ksize是 `D x H x W`，其可以是一个元组，或者一个单独的 `K` 组成 `K x K x K`，
-          指明了输入Tensor的窗口大小 `(D, H, W)`。
+        - **ksize** (Union[float, tuple]) - 目标ksize是  :math:`(D, H, W)`，其可以是一个元组，或者一个单独的 `K` 组成  :math:`(K, K, K)`，
+          指明了输入Tensor的窗口大小 :math:`(D, H, W)`。
 
-        - **output_shape** (Union[int, tuple]) - 目标输出shape为 `D x H x W`，输出shape可以是一个元组，或者一个单独的 `H` 组成的 `H x H x H`，
-          指明了输出Tensor的大小 `(D, H, W)` 。
+        - **output_shape** (Union[int, tuple]) - 目标输出shape为 :math:`(D, H, W)`，输出shape可以是一个元组，或者一个单独的 `H` 组成的 :math:`(H, H, H)`，
+          指明了输出Tensor的大小 :math:`(D, H, W)` 。
 
         - **data_format** (str，可选) - 可选的数据格式值，当前支持 `NCDHW` 和 `NHDWC`，默认为 `NCDHW`。
 

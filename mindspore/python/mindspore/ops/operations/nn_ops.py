@@ -9243,12 +9243,12 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
     D the feature depth, H is the feature height, and W is the feature width.
 
     Args:
-        ksize (Union[int, tuple]): The target ksize is D x H x W.
-            ksize can be a tuple, or a single K for K x K x K.
-            specifying the window size (D, H, W) of the input tensor.
-        output_shape (Union[int, tuple]): The target output_shape is D x H x W.
-            output_shape can be a tuple, or a single H for H x H x H.
-            specifying the size (D, H, W) of the output tensor.
+        ksize (Union[int, tuple]): The target ksize is  :math:`(D, H, W)`.
+            ksize can be a tuple, or a single K for :math:`(K, K, K)`.
+            specifying the window size :math:`(D, H, W)` of the input tensor.
+        output_shape (Union[int, tuple]): The target output_shape is  :math:`(D, H, W)`.
+            output_shape can be a tuple, or a single H for  :math:`(H, H, H)`.
+            specifying the size  :math:`(D, H, W)` of the output tensor.
         data_format (str, optional) : The optional value for data format.
             Currently support 'NCDHW' and 'NHDWC'. Default: 'NCDHW'.
 
