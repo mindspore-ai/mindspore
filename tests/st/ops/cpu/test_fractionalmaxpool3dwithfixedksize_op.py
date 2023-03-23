@@ -41,7 +41,7 @@ class NetFractionalMaxPool3DGradWithFixedKsize(nn.Cell):
         return self.fractional_max_pool_3d_grad_with_fixed_ksize(origin_input, out_backprop, argmax)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_fractionalmaxpool3dwithfixedksize():
@@ -64,7 +64,7 @@ def test_fractionalmaxpool3dwithfixedksize():
                                dtype=x_ms.dtype)
                 random_samples = Tensor(np.array([0.5, 0.5, 0.8]).reshape(
                     [1, 1, 3]).astype(type_input2))
-                ksize = (1.0, 1.0, 1.0)
+                ksize = (1, 1, 1)
                 output_shape = (2, 2, 3)
                 net = NetFractionalMaxPool3DWithFixedKsize(ksize, output_shape)
                 net.set_inputs(x_dyn, random_samples)
