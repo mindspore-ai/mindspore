@@ -2050,7 +2050,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
 
     int ret;
     if (adpt->IsDynInputOp(i)) {
-      ret = adpt->setInput(Convert(node), i, std::make_shared<std::vector<OutHandler>>(handles));
+      ret = adpt->setInput(Convert(node), static_cast<int>(i), std::make_shared<std::vector<OutHandler>>(handles));
     } else {
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
@@ -2112,7 +2112,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
                  << ", new value node:" << input_node->DebugString();
     input_desc->second.set_op(src, new_input_op);
     // Input idx may be wrong.
-    DrawOpInput(node, input_node, input_desc->first);
+    DrawOpInput(node, input_node, static_cast<size_t>(input_desc->first));
     AddGraphConstInput(new_input_op);
   }
 }
@@ -2228,7 +2228,7 @@ bool DfGraphConvertor::IsIdentityRedundant(const ::ge::GNode &node) const {
   }
 
   for (size_t output_index = 0; output_index < node.GetOutputsSize(); output_index++) {
-    auto output_nodes = node.GetOutDataNodesAndPortIndexs(output_index);
+    auto output_nodes = node.GetOutDataNodesAndPortIndexs(static_cast<int32_t>(output_index));
     if (output_nodes.size() != 1) {
       return false;
     }
@@ -2262,7 +2262,7 @@ void DfGraphConvertor::RemoveIdentity(::ge::GNode identity_node) {
 
   ::ge::graphStatus ret;
   for (size_t output_index = 0; output_index < identity_node.GetOutputsSize(); output_index++) {
-    auto output_nodes = identity_node.GetOutDataNodesAndPortIndexs(output_index);
+    auto output_nodes = identity_node.GetOutDataNodesAndPortIndexs(static_cast<int>(output_index));
     if (output_nodes.size() != 1) {
       return;
     }
@@ -2270,8 +2270,9 @@ void DfGraphConvertor::RemoveIdentity(::ge::GNode identity_node) {
     // 1. Set identity_node data edge
     auto node_output = *(output_nodes.begin());
     auto input_index = output_index;
-    auto node_input = identity_node.GetInDataNodesAndPortIndexs(input_index);
-    ret = df_graph_->RemoveEdge(identity_node, output_index, *node_output.first, node_output.second);
+    auto node_input = identity_node.GetInDataNodesAndPortIndexs(static_cast<int32_t>(input_index));
+    ret =
+      df_graph_->RemoveEdge(identity_node, static_cast<int32_t>(output_index), *node_output.first, node_output.second);
     if (ret != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "Remove edge failed, src identity_node: " << GetGNodeName(identity_node)
                         << ", index: " << output_index << ", dst identity_node: " << GetGNodeName(*node_output.first)
@@ -2617,7 +2618,7 @@ void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node
   MS_LOG(DEBUG) << "Finish to trans input data type of node:" << node->DebugString();
 }
 
-void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, std::string node_name) const {
+void DfGraphConvertor::TransAttrDataType(const CNodePtr &node, const std::string &node_name) const {
   auto iter = kTransAttrDTypeMap.find(node_name);
   if (iter == kTransAttrDTypeMap.end()) {
     return;
