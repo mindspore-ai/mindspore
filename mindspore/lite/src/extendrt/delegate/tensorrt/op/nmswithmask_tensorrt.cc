@@ -90,9 +90,6 @@ int NMSwithmaskPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
 
 int NMSwithmaskPlugin::RunCudaNMSwithmask(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                           void *const *outputs, cudaStream_t stream) {
-  //  T *output = outputs[0];
-  //  int *sel_idx = outputs[1];
-  //  int *sel_boxes = outputs[2];
   int box_size_ = INPUT_SIZE5;
   void *data_buff = nullptr;
   cudaMalloc(&data_buff, NmsRoundUpPower2(num_input_) * sizeof(float));

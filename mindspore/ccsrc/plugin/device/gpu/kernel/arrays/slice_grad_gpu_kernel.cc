@@ -149,8 +149,8 @@ int SliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   std::vector<std::vector<int64_t>> output_shapes;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
                  [](const KernelTensorPtr &input) { return input->GetDeviceShapeAdaptively(); });
-  std::vector<int64_t> out_shape = outputs[0]->GetDeviceShapeAdaptively();
-  output_shapes.emplace_back(out_shape);
+  std::vector<int64_t> out_shapes = outputs[0]->GetDeviceShapeAdaptively();
+  output_shapes.emplace_back(out_shapes);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
@@ -189,10 +189,10 @@ void SliceGradGpuKernelMod::CalcBeginAndSize(const mindspore::Format &data_forma
     (void)size_.insert(size_.begin(), 1);
   }
   if (dim == kSliceGradDefaultInputShapeSize && data_format == mindspore::Format::NHWC) {
-    std::swap(begin_[1], begin_[3]);
-    std::swap(begin_[1], begin_[2]);
-    std::swap(size_[1], size_[3]);
-    std::swap(size_[1], size_[2]);
+    std::swap(begin_[1], begin_[kDim3]);
+    std::swap(begin_[1], begin_[kDim2]);
+    std::swap(size_[1], size_[kDim3]);
+    std::swap(size_[1], size_[kDim2]);
   }
   for (size_t i = 0; i != begin_.size(); ++i) {
     if (i < input_shape_.size() && begin_[i] < 0) {

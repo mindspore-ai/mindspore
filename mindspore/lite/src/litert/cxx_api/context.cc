@@ -421,12 +421,20 @@ uint32_t GPUDeviceInfo::GetDeviceID() const {
 }
 
 int GPUDeviceInfo::GetRankID() const {
+#ifdef SUPPORT_TENSORRT
   data_->params[kModelOptionGPURankID] = lite::GetRankID();
+#else
+  data_->params[kModelOptionGPURankID] = 0;
+#endif
   return GetValue<int>(data_, kModelOptionGPURankID);
 }
 
 int GPUDeviceInfo::GetGroupSize() const {
+#ifdef SUPPORT_TENSORRT
   data_->params[kModelOptionGPUGroupSize] = lite::GetGPUGroupSize();
+#else
+  data_->params[kModelOptionGPUGroupSize] = 1;
+#endif
   return GetValue<int>(data_, kModelOptionGPUGroupSize);
 }
 
