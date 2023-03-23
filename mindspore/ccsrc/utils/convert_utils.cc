@@ -381,24 +381,7 @@ ValuePtr CreateValueFromTensor(const tensor::TensorPtr &tensor) {
 void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(tensors);
-  if (value->isa<ValueSequence>()) {
-    auto value_tuple = value->cast<ValueSequencePtr>();
-    MS_EXCEPTION_IF_NULL(value_tuple);
-    for (size_t i = 0; i < value_tuple->size(); ++i) {
-      ValuePtr element = value_tuple->value()[i];
-      if (element->isa<tensor::Tensor>()) {
-        auto tensor = element->cast<tensor::TensorPtr>();
-        MS_EXCEPTION_IF_NULL(tensor);
-        tensors->emplace_back(tensor);
-      } else if (element->isa<ValueSequence>()) {
-        TensorValueToTensor(element, tensors);
-      } else if (element->isa<Scalar>()) {
-        auto scalar = element->cast<ScalarPtr>();
-        MS_EXCEPTION_IF_NULL(scalar);
-        tensors->emplace_back(ScalarToTensor(scalar));
-      }
-    }
-  } else if (value->isa<tensor::Tensor>()) {
+  if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     tensors->emplace_back(tensor);
@@ -406,6 +389,12 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
     auto tensor = ScalarToTensor(value->cast<ScalarPtr>());
     MS_EXCEPTION_IF_NULL(tensor);
     tensors->emplace_back(tensor);
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_seq);
+    for (const auto &v : value_seq->value()) {
+      TensorValueToTensor(v, tensors);
+    }
   }
 }
 

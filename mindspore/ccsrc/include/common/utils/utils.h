@@ -1167,6 +1167,7 @@ constexpr auto kFlagEnableZeroCopyInGraph = "enable_zero_copy_in_graph";
 constexpr auto kPrimCPrimPyMixed = "primc_primpy_mixed";
 constexpr auto kFlagEnableRunGraphBySingleOp = "enable_run_graph_by_single_op";
 constexpr auto kFlagHasControlFlow = "has_control_flow";
+constexpr auto kFlagGraphGradByExpander = "graph_grad_by_expander";
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
 
