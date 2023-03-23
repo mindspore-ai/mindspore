@@ -15,6 +15,8 @@
 
 """constexpr util"""
 from __future__ import absolute_import
+from enum import IntEnum
+
 
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
@@ -22,9 +24,10 @@ from mindspore.ops import operations as P
 from mindspore.ops.composite import base
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations._inner_ops import TensorCopySlices, SliceGetItem, \
-    TopTypeof, issubclass_, IsParameter
+    TopTypeof, issubclass_, IsParameter, GetitemTensorIndexInfo, SetitemTensorIndexInfo
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.common.initializer import Zero
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore.common import mutable
 from mindspore import ops
@@ -36,6 +39,8 @@ stack = P.Stack(axis=-1)
 copy_slice = TensorCopySlices()
 toptypeof = TopTypeof()
 is_parameter = IsParameter()
+getitem_tensor_index_info = GetitemTensorIndexInfo(const_utils.is_ascend())
+setitem_tensor_index_info = SetitemTensorIndexInfo(const_utils.is_ascend())
 
 
 def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, end_mask=0, ellipsis_mask=0,
@@ -46,50 +51,124 @@ def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, 
     return strided_slice_(data, begin_strides, end_strides, step_strides)
 
 
+class ValueTransferType(IntEnum):
+    """Transfer op types of handling tensor getitem/setitem"""
+    kTensorScatterUpdate = 0
+    kNumberToTensor = 1
+    kHandleSequenceValue = 2
+    kExpandDims = 3
+    kBroadCast = 4
+    kCast = 5
+    kSelect = 6
+    kByPass = 7
+    kReSetItemByIndex = 8
+    kGather = 9
+    kStrideSlice = 10
+    kStrideSliceWithMask = 11
+    kGatherND = 12
+    kCopySlice = 13
+    kSetItemByBool = 14
+    kEmptyTensor = 15
+    kSetItemByEllipsis = 16
+    kScatterNdUpdate = 17
+    kReshape = 18
+    kScatterND = 19
+    kRaiseIndexError = 20
+
+
+def data_update(transfer_types, args, data, new_index, value=None):
+    """
+    We finally generate a new tensor when handling tensor getitem/setitem
+    by transfer data and value with index.
+    """
+    for transfer_type, arg in zip(transfer_types, args):
+        if transfer_type == ValueTransferType.kByPass:
+            return data
+        if transfer_type == ValueTransferType.kStrideSliceWithMask:
+            stride_info, mask_index = arg[0], arg[1]
+            return strided_slice(data, stride_info[0], stride_info[1], stride_info[2],
+                                 mask_index[0], mask_index[1], 0, 0, mask_index[2])
+        if transfer_type == ValueTransferType.kGatherND:
+            return F.gather_nd(data, Tensor(new_index))
+        if transfer_type == ValueTransferType.kTensorScatterUpdate:
+            return F.tensor_scatter_update(data, new_index, value)
+        if transfer_type == ValueTransferType.kScatterNdUpdate:
+            F.scatter_nd_update(data, new_index, value)
+            return data
+        if transfer_type == ValueTransferType.kSelect:
+            return F.select(Tensor(new_index), value, data)
+        if transfer_type == ValueTransferType.kSetItemByBool:
+            return tensor_setitem_by_bool(data, new_index, value)
+        if transfer_type == ValueTransferType.kReshape:
+            data = F.reshape(data, arg)
+        elif transfer_type == ValueTransferType.kGather:
+            data = F.gather(data, new_index, 0)
+        elif transfer_type == ValueTransferType.kExpandDims:
+            data = F.expand_dims(data, 0)
+        elif transfer_type == ValueTransferType.kCopySlice:
+            return copy_slice(data, value.astype(data.dtype), arg[0], arg[1], arg[2])
+        elif transfer_type == ValueTransferType.kSetItemByEllipsis:
+            return tensor_setitem_by_ellipsis(data, new_index, value)
+        elif transfer_type == ValueTransferType.kReSetItemByIndex:
+            data[new_index] = value
+            return data
+        elif transfer_type == ValueTransferType.kEmptyTensor:
+            return handle_empty_tensor(arg, data)
+        elif transfer_type == ValueTransferType.kStrideSlice:
+            return F.strided_slice(data, arg[0], arg[1], arg[2])
+        elif transfer_type == ValueTransferType.kRaiseIndexError:
+            raise IndexError(
+                f'index {arg[0]} is out of bounds for dimension with size {arg[1]}')
+        else:
+            raise IndexError(f"Inlvaid transfer type {transfer_type}.")
+    return data
+
+
+def value_update(transfer_types, args, data, value):
+    """Transfer value before set value to tensor when handling tensor setitem"""
+    for transfer_type, arg in zip(transfer_types, args):
+        if transfer_type == ValueTransferType.kByPass:
+            continue
+        elif transfer_type == ValueTransferType.kNumberToTensor:
+            value = F.fill(F.dtype(data), (), value)
+        elif transfer_type == ValueTransferType.kHandleSequenceValue:
+            op_type, index = arg
+            if op_type == const_utils.SET_ITEM_BY_ONE_TENSOR:
+                index = Tensor(index)
+            value = _generate_updates_from_sequence(
+                data, index, value, op_type)
+        elif transfer_type == ValueTransferType.kExpandDims:
+            value = F.expand_dims(value, arg)
+        elif transfer_type == ValueTransferType.kBroadCast:
+            value = _broadcast(arg, value.astype(F.dtype(data)))
+        elif transfer_type == ValueTransferType.kCast:
+            value = F.cast(value, F.dtype(data))
+        elif transfer_type == ValueTransferType.kReshape:
+            value = F.reshape(value, arg)
+        elif transfer_type == ValueTransferType.kScatterND:
+            value = F.scatter_nd(arg[0], value, arg[1])
+        else:
+            raise IndexError(f"Inlvaid transfer type {transfer_type}.")
+    return value
+
+
 def _tensor_getitem(self, index):
     """Handle tensor getitem"""
-    if isinstance(index, Tensor):
-        return tensor_index_by_tensor(self, index)
-    if isinstance(index, list):
-        return tensor_index_by_list(self, index)
-    if isinstance(index, tuple):
-        return tensor_index_by_tuple(self, index)
-    if isinstance(index, bool):
-        return _tensor_index_by_bool(self, index)
-    if isinstance(index, int):
-        return _tensor_index_by_integer(self, index)
-    if isinstance(index, slice):
-        return tensor_index_by_slice(self, index)
-    if index is None:
-        return F.expand_dims(self, 0)
-    if index is ...:
-        return self
-    raise IndexError(f"Only support integers, slices(`:`), ellipsis(`...`), None, bool, tensor with int, "
-                     f"list and tuple ,but got {index} with type {type(index)}.")
+    new_index, tensor_update_types, tensor_update_args = getitem_tensor_index_info(
+        self, index)
+    return data_update(tensor_update_types, tensor_update_args, self, new_index)
 
 
 def _tensor_setitem(self, index, value):
     """Handle tensor setitem"""
-    if not isinstance(value, (int, float, bool, list, tuple, Tensor)):
-        raise ValueError(f"only support numbers, Tensor, tuple, list as value,"
-                         f"but got {value} with type {type(value)}.")
-    if isinstance(index, list):
-        index = format_list_indices(index, F.shape(self)[0])
-    if isinstance(index, Tensor):
-        return tensor_setitem_by_tensor(self, index, value)
-    if isinstance(index, tuple):
-        return tensor_setitem_by_tuple(self, index, value)
-    if isinstance(index, bool):
-        return tensor_setitem_by_bool(self, index, value)
-    if isinstance(index, int):
-        return tensor_setitem_by_number(self, index, value)
-    if isinstance(index, slice):
-        return tensor_setitem_by_slice(self, index, value)
-    if index in (None, ...):
-        return tensor_setitem_by_ellipsis(self, index, value)
-
-    raise IndexError("Tensor setitem index only support integers, slices(`:`), ellipsis(`...`), bool, tensor, \
-        list and tuple, but got {index} with type{type(index)}")
+    setitem_info = setitem_tensor_index_info(self, index, value)
+    new_index = setitem_info[0]
+    v_transfer_types = setitem_info[1]
+    v_transfer_args = setitem_info[2]
+    data_update_types = setitem_info[3]
+    data_update_args = setitem_info[4]
+    value = value_update(v_transfer_types, v_transfer_args, self, value)
+    return data_update(data_update_types, data_update_args, self, new_index, value)
 
 
 tensor_operator_registry.register("__getitem__", _tensor_getitem)
@@ -294,6 +373,17 @@ def _transform_ellipsis_to_slice(data, tuple_index, op_name):
         else:
             tuple_index_new += (index,)
     return tuple_index_new
+
+
+def handle_empty_tensor(arg, data):
+    """handle data update with empty tensor"""
+    if arg is None:
+        return Tensor([])
+    if 0 in arg:
+        init_func = Zero()
+        init_func.__enable_zero_dim__ = True
+        return Tensor(shape=(0), dtype=data.dtype, init=init_func)
+    return const_utils.make_tensor([], data.dtype, arg)
 
 
 def _expand_data_dims(data, tuple_index):
@@ -764,7 +854,6 @@ def _generate_indices_from_tuple(data, tuple_index, op_name, fancy_position):
     slice_positions, _, _, int_positions, _, tensor_positions, sequence_positions = \
         const_utils.get_pos_of_indexes_types(indexes_types, op_name)
     tuple_index_new, slice_shapes = (), ()
-
     for i, (index, dim_size) in enumerate(zip(tuple_index, data_shape)):
         if i in int_positions:
             int_index = const_utils.check_range(index, dim_size)
