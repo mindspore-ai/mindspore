@@ -49,7 +49,6 @@ from mindspore.ops.operations.array_ops import (
     Expand,
     Lstsq,
     Mvlgamma,
-    CountNonZero,
     Tril,
     Argmax
 )
@@ -6625,45 +6624,6 @@ def moveaxis(x, source, destination):
     return movedim(x, source, destination)
 
 
-def count_nonzero(input, dims=None):
-    """
-    Calculates the total number of non-zero entries in the input tensor along the
-    specified dimensions. If no dimensions are given, then the function will
-    count all non-zero entries in the tensor.
-
-    Note:
-        The value range of `dims` is [-x_dims, x_dims), `x_dims` is the dimension length of input "x".
-
-    Args:
-        input (Tensor): Input to be computed, Tensor of any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` .
-        dims (Union[int, list(int), tuple(int)], optional): The dimension to count the number of non-zero values along.
-            Default: None.
-
-    Returns:
-        A N-D Tensor, represents the number of the nonzero elements of the input tensor along the `dims`.
-        Reduces x_shape along the dimensions given in `dims`. For example, if the size of `input` is :math:`(2, 3, 4)`,
-        `dims` is :math:`[0, 1]`, y_shape will be :math:`(4,)`.
-
-    Raises:
-        TypeError: If the data type of `input` is not supported.
-        TypeError: If the data type of `dims` is not int.
-        ValueError: If any of the values of `dims` is not in range [-x_dims, x_dims).
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> x = Tensor([[0, 0, 1], [1, 1, 2], [0, 0, 1]], mindspore.int64)
-        >>> y = ops.count_nonzero(x, dims=[1])
-        >>> print(y)
-        [1 3 1]
-    """
-    dims = [] if dims is None else dims
-    count_nonzero_ = CountNonZero(dims)
-    return count_nonzero_(input)
-
-
 @constexpr
 def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
@@ -7076,7 +7036,6 @@ __all__ = [
     'movedim',
     'moveaxis',
     'aminmax',
-    'count_nonzero',
     'sort'
 ]
 __all__.sort()
