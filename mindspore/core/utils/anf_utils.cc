@@ -363,7 +363,6 @@ int64_t AnfUtils::GetIntValue(const ValuePtr &value) {
   } else {
     MS_LOG(EXCEPTION) << "The value should be Int32Imm or Int64Imm, but got " << value->ToString();
   }
-  return 0;
 }
 
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {

@@ -26,14 +26,13 @@
 namespace mindspore {
 namespace kernel {
 const char kBISHENG[] = "BISHENG";
-using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
 
 class BishengCpuKernelBuilder : public AkgKernelBuilder {
  public:
   BishengCpuKernelBuilder() = default;
   ~BishengCpuKernelBuilder() = default;
 
-  kernel::KernelBuildClient *GetClient() override { return 0; }
+  kernel::KernelBuildClient *GetClient() override { return nullptr; }
   void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
                        const AnfNodePtr &anf_node) override {
     return;

@@ -49,8 +49,8 @@ class ROIAlignInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t kInputNum = 2;
-    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
+    constexpr int64_t kInputNum = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
 
     auto feature_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
@@ -59,7 +59,7 @@ class ROIAlignInfer : public abstract::OpInferBase {
     if (IsDynamicRank(feature_shape)) {
       out_c = abstract::Shape::kShapeDimAny;
     } else {
-      constexpr size_t kFeatureShapeSize = 4;
+      constexpr int64_t kFeatureShapeSize = 4;
       (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
                                                kFeatureShapeSize, op_name);
       out_c = feature_shape[kInputIndex1];
@@ -67,7 +67,7 @@ class ROIAlignInfer : public abstract::OpInferBase {
     if (IsDynamicRank(rois_shape)) {
       out_n = abstract::Shape::kShapeDimAny;
     } else {
-      constexpr size_t kRoisShapeSize = 2;
+      constexpr int64_t kRoisShapeSize = 2;
       (void)CheckAndConvertUtils::CheckInteger("rank of rois shape", SizeToLong(rois_shape.size()), kEqual,
                                                kRoisShapeSize, op_name);
       auto rois_second_dim = rois_shape[kInputIndex1];
@@ -87,10 +87,10 @@ class ROIAlignInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(pooled_width_ptr);
     auto pooled_width = GetValue<int64_t>(pooled_width_ptr);
 
-    output_shape.emplace_back(out_n);
-    output_shape.emplace_back(out_c);
-    output_shape.emplace_back(pooled_height);
-    output_shape.emplace_back(pooled_width);
+    (void)output_shape.emplace_back(out_n);
+    (void)output_shape.emplace_back(out_c);
+    (void)output_shape.emplace_back(pooled_height);
+    (void)output_shape.emplace_back(pooled_width);
 
     return std::make_shared<abstract::Shape>(output_shape);
   }

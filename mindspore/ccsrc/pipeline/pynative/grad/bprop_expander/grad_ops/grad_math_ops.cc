@@ -1687,7 +1687,7 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Renorm").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto p = GetValue<float>(ib->GetAttr("p"));
+  auto p = static_cast<int64_t>(GetValue<float>(ib->GetAttr("p")));
   float ext = 1e-07;
   auto dim = GetIntList(ib->GetAttr("dim"))[0];
   auto max_norm = GetValue<float>(ib->GetAttr("maxnorm"));
