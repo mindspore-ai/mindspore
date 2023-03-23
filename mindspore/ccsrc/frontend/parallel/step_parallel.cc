@@ -2737,9 +2737,6 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;
-    if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed";
-    }
 
     ExceptionIfHasCommunicationOp(all_nodes);
 

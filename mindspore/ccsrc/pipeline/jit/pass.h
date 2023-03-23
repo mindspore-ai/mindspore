@@ -42,6 +42,7 @@ extern std::vector<PassItem> kPynativePasses;
 bool OptPassAGroup(const ResourcePtr &resource);
 bool CconvPass(const ResourcePtr &resource);
 bool PipelineSplitPass(const ResourcePtr &resource);
+bool AutoParallelPass(const ResourcePtr &resource);
 bool PynativeShardPass(const ResourcePtr &resource);
 bool ValidatePass(const ResourcePtr &resource);
 bool ConvertPrepareAdapt(const ResourcePtr &resource);

@@ -397,7 +397,11 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetOpInfo(const AnfNodePtr 
     }
     // Create OperatorInfo to get slice_shape for send/recv
     MS_EXCEPTION_IF_NULL(cnode);
-    op_info = CreateOpInfo(cnode, tensor_info_index);
+    if (cnode->has_user_data<OperatorInfo>()) {
+      op_info = cnode->user_data<OperatorInfo>();
+    } else {
+      op_info = CreateOpInfo(cnode, tensor_info_index);
+    }
   }
   return std::make_pair(op_info, tensor_info_index);
 }
@@ -442,7 +446,12 @@ std::pair<OperatorInfoPtr, int> PipelineTransformer::GetParameterPair(const AnfN
       if (!IsPipelineCareNode(user_node)) {
         continue;
       }
-      auto op_info = CreateOpInfo(user_node);
+      OperatorInfoPtr op_info;
+      if (user_node->has_user_data<OperatorInfo>()) {
+        op_info = user_node->user_data<OperatorInfo>();
+      } else {
+        op_info = CreateOpInfo(user_node);
+      }
       return std::make_pair(op_info, index - 1);
     }
   }
