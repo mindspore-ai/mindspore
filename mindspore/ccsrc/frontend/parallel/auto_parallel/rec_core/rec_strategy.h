@@ -23,6 +23,7 @@
 namespace mindspore {
 namespace parallel {
 constexpr size_t MAX_INPUT_NUM = 20;
+constexpr size_t STR_DIM_NUM = 4;
 
 struct TensorStr4D {
   float str_n = 1;

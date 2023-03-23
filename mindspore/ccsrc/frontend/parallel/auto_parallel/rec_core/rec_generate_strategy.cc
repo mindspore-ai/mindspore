@@ -104,6 +104,32 @@ Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
   return strategies;
 }
 
+Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
+  size_t numDev = g_device_manager->DeviceNum();
+
+  Strategies stra;
+  Dimensions dim;
+
+  if (numDev == 1) {
+    MS_LOG(EXCEPTION) << "The number of devices is 0";
+  }
+
+  for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info().size(); i++) {
+    dim.clear();
+    if (ops[iter_ops]->inputs_tensor_info()[i].shape()[0] % numDev == 0) {
+      dim.push_back(numDev);
+    } else {
+      dim.push_back(1);
+    }
+    for (size_t j = 1; j < ops[iter_ops]->inputs_tensor_info()[i].shape().size(); j++) {
+      dim.push_back(1);
+    }
+    stra.push_back(dim);
+  }
+
+  return stra;
+}
+
 Strategies PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                Dimensions basic_stra) {
   Strategies stra;
@@ -461,7 +487,7 @@ Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
     size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
     for (size_t dim = 0; dim < input_size; dim++) {
       // Experimental support for 3D data (input_size == 3).
-      if (input_size >= 1 && input_size <= 4) {
+      if (input_size >= 1 && input_size <= STR_DIM_NUM) {
         if (dim == 0) {
           s.push_back(std::min(max_device_num, target_tensor_batch));
         } else {
@@ -1156,6 +1182,9 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   if (ops[iter_ops]->type() == SOFTMAX || ops[iter_ops]->type() == LOG_SOFTMAX) {
     return PrepareSoftMax(ops, iter_ops, basic_stra);
   }
+  if (ops[iter_ops]->type() == FLATTEN) {
+    return PrepareDataParallel(ops, iter_ops);
+  }
   return CheckDivisible(ops, iter_ops, basic_stra);
 }
 
@@ -1272,21 +1301,16 @@ Strategies CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
       continue;
     }
 
-    Dimensions tmp_stra = basic_stra;
-    bool modified = false;
+    Dimensions tmp_stra;
 
     // Make sure each tensor's dim shape is greater than 1. If not, push back strategy as 1 instead.
     for (size_t j = 0; j < ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape().size(); j++) {
+      tmp_stra.push_back(basic_stra[j]);
       if (ops[iter_ops]->inputs_tensor_info()[iter_op_inputs].shape()[j] == 1) {
         tmp_stra[j] = 1;
-        modified = true;
       }
     }
-    if (modified) {
-      stra.push_back(tmp_stra);
-    } else {
-      stra.push_back(basic_stra);
-    }
+    stra.push_back(tmp_stra);
   }
 
   return stra;
