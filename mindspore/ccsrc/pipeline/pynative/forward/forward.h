@@ -76,7 +76,7 @@ class ForwardExecutor {
   void Sync();
   void PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const;
   void ProcessBeforeNewGraph(const py::object &obj, const py::args &args);
-  void ProcessAfterNewGraph(const py::object &obj);
+  void ProcessAfterNewGraph(const py::object &obj) const;
   void ProcessBeforeEndGraph(const py::object &obj, bool is_cell);
   void ProcessAfterEndGraph(const py::object &obj, bool is_cell) const;
   bool CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info);

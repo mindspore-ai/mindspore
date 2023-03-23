@@ -260,7 +260,7 @@ void PyNativeExecutor::SetMsFunctionCompileStatus(bool is_compiling, const std::
   grad_executor()->ms_function()->set_graph_phase(phase);
 }
 
-void PyNativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) const {
+void PyNativeExecutor::SetDynamicInput(const py::object &cell) const {
   grad_executor()->SaveDynamicInputsCells(cell);
   MS_LOG(DEBUG) << "Set dynamic shape by set inputs";
 }
