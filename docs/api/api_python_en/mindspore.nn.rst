@@ -396,13 +396,3 @@ Tools
     mindspore.nn.Flatten
     mindspore.nn.Identity
     mindspore.nn.Unflatten
-
-Mathematical Operations
------------------------
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Moments
