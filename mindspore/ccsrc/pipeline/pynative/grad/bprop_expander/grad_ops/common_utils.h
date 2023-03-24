@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,5 +94,6 @@ NodePtr LGamma(const BpropIRBuilder *ib, const NodePtr &x);
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
 ShapeVector PoolToNHWC(const ShapeVector &v);
 ShapeVector ConvToNHWC(const ShapeVector &v);
+ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin = 0, int64_t end = -1);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_EXPANDER_GRAD_OPS_COMMON_UTILS_H_
