@@ -96,7 +96,7 @@ class GPUEnvChecker(EnvChecker):
         if not version_match:
             if self.v == "0":
                 logger.warning("Can not found cuda libs. Please confirm that the correct "
-                               "cuda version has been installed, you can refer to the "
+                               "cuda version has been installed. Refer to the "
                                "installation guidelines: https://www.mindspore.cn/install")
             else:
                 logger.warning(f"MindSpore version {__version__} and cuda version {self.v} does not match, "
@@ -235,7 +235,7 @@ class GPUEnvChecker(EnvChecker):
             return np.unique(path_list)
         except subprocess.TimeoutExpired:
             logger.warning("Failed to check cuda version due to the ldd command timeout. Please confirm that "
-                           "the correct cuda version has been installed. You can refer to the "
+                           "the correct cuda version has been installed. For details, refer to the "
                            "installation guidelines: https://www.mindspore.cn/install")
             return path_list
 
@@ -318,7 +318,7 @@ class AscendEnvChecker(EnvChecker):
         if not Path(self.fwk_version).is_file():
             logger.warning("Using custom Ascend AI software package (Ascend Data Center Solution) path, package "
                            "version checking is skipped. Please make sure Ascend AI software package (Ascend Data "
-                           "Center Solution) version is supported, you can refer to the installation guidelines "
+                           "Center Solution) version is supported. For details, refer to the installation guidelines "
                            "https://www.mindspore.cn/install")
             return
 
@@ -344,13 +344,15 @@ class AscendEnvChecker(EnvChecker):
             if v not in supported_version:
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"te\" wheel package version {v} does not "
-                               "match, refer to the match info on: https://www.mindspore.cn/install")
+                               "match. For details, refer to the installation guidelines: "
+                               "https://www.mindspore.cn/install")
             from hccl import sys_version as hccl_version
             v = '.'.join(hccl_version.__sys_version__.split('.')[0:2])
             if v not in supported_version:
                 attention_warning = True
                 logger.warning(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
-                               "match, refer to the match info on: https://www.mindspore.cn/install")
+                               "match. For details, refer to the installation guidelines: "
+                               "https://www.mindspore.cn/install")
         # DO NOT modify exception type to any other, you DO NOT know what kind of exceptions the te will throw.
         # pylint: disable=broad-except
         except Exception as e:
@@ -441,25 +443,27 @@ class AscendEnvChecker(EnvChecker):
     def _check_env(self):
         """ascend dependence path check"""
         if self.path is None or self.path_check not in self.path:
-            logger.warning("Can not find ccec_compiler(need by mindspore-ascend). Please check if you have set env "
-                           "PATH, you can refer to the installation guidelines https://www.mindspore.cn/install")
+            logger.warning("Can not find ccec_compiler(need by mindspore-ascend). Please check whether the Environment "
+                           "Variable PATH is set. For details, refer to the installation guidelines: "
+                           "https://www.mindspore.cn/install")
 
         if self.python_path is None or self.python_path_check not in self.python_path:
             logger.warning(
-                "Can not find the tbe operator implementation(need by mindspore-ascend). Please check if you have set "
-                "env PYTHONPATH, you can refer to the installation guidelines "
+                "Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the "
+                "Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: "
                 "https://www.mindspore.cn/install")
 
         if self.ld_lib_path is None or not (self.ld_lib_path_check_fwk in self.ld_lib_path and
                                             self.ld_lib_path_check_addons in self.ld_lib_path):
-            logger.warning("Can not find driver so(need by mindspore-ascend). Please check if you have set env "
-                           "LD_LIBRARY_PATH, you can refer to the installation guidelines "
-                           "https://www.mindspore.cn/install")
+            logger.warning("Can not find driver so(need by mindspore-ascend). Please check whether the "
+                           "Environment Variable LD_LIBRARY_PATH is set. For details, refer to the installation "
+                           "guidelines: https://www.mindspore.cn/install")
 
         if self.ascend_opp_path is None or self.ascend_opp_path_check not in self.ascend_opp_path:
             logger.warning(
-                "Can not find opp path (need by mindspore-ascend). Please check if you have set env ASCEND_OPP_PATH, "
-                "you can refer to the installation guidelines https://www.mindspore.cn/install")
+                "Can not find opp path (need by mindspore-ascend). Please check whether the Environment Variable "
+                "ASCEND_OPP_PATH is set. For details, refer to the installation guidelines: "
+                "https://www.mindspore.cn/install")
 
     def _read_version(self, file_path):
         """get ascend version info"""
@@ -518,7 +522,7 @@ def check_version_and_env_config():
             ctypes.cdll.LoadLibrary("libgomp.so.1")
         except OSError:
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
-                           "the failure occurs, you can find a solution in FAQ in "
+                           "the failure occurs, please refer to the FAQ for a solution: "
                            "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
         if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
             return
