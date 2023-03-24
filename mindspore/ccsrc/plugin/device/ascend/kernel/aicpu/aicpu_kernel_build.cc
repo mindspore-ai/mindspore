@@ -433,8 +433,8 @@ uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
     for (; output_shape_index < output_shape.size(); output_shape_index++) {
       outputs[output_index].dims[output_shape_index] = output_shape[output_shape_index];
     }
-    if (output_shape_index < aicpu::FWKAdapter::kMaxShapeDims) {
-      outputs[output_index].dims[output_shape_index] = LLONG_MIN;
+    for (size_t index = output_shape_index; index < aicpu::FWKAdapter::kMaxShapeDims; index++) {
+      outputs[output_index].dims[index] = LLONG_MIN;
     }
   }
 
