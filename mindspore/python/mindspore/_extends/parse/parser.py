@@ -807,7 +807,7 @@ def _convert_stub_tensor(data):
         return tuple(_convert_stub_tensor(x) for x in data)
     if isinstance(data, list):
         # Keep the list object not change.
-        for input_data in enumerate(data):
+        for _, input_data in enumerate(data):
             input_data = _convert_stub_tensor(input_data)
         return data
     if isinstance(data, dict):
