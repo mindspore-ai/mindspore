@@ -6,7 +6,7 @@ mindspore.ops.scatter_add
     根据指定的更新值和输入索引，进行加法运算更新输入Tensor的值，返回更新后的Tensor。当同一索引有不同更新值时，更新的结果将是累积的加法的结果。
 
     参数：
-        - **input_x** (Parameter) - scatter_add的输入，任意维度的Parameter。
+        - **input_x** (Parameter) - scatter_add的输入，任意维度的Parameter。其shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的维度。
         - **indices** (Tensor) - 指定加法操作的索引，数据类型必须为mindspore.int32或者mindspore.int64。
         - **updates** (Tensor) - 指定与 `input_x` 加法操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
