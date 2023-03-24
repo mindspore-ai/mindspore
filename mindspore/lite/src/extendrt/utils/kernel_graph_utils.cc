@@ -455,8 +455,7 @@ bool KernelGraphUtils::ExistSummaryNode(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(ret);
   auto all_nodes = DeepLinkedGraphSearch(ret);
   for (auto &n : all_nodes) {
-    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+    if (IsSummaryNode(n)) {
       return true;
     }
   }
