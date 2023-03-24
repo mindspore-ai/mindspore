@@ -138,10 +138,13 @@ py::object TensorToPyData(const tensor::TensorPtr &tensor, const AbstractBasePtr
 }
 
 py::object ScalarPtrToPyData(const ScalarPtr &value) {
+  constexpr double eps = 1e-6;
   py::int_ int_v;
   py::float_ float_v;
   py::bool_ bool_v;
   TypeId scalar_type = value->type()->type_id();
+  float float_value;
+  double doubel_value;
   switch (scalar_type) {
     case kNumberTypeUInt8:
       MS_LOG(DEBUG) << "uint8";
@@ -177,7 +180,13 @@ py::object ScalarPtrToPyData(const ScalarPtr &value) {
       return int_v;
     case kNumberTypeFloat32:
       MS_LOG(DEBUG) << "float";
-      float_v = value->cast<FP32ImmPtr>()->value();
+      float_value = value->cast<FP32ImmPtr>()->value();
+      doubel_value = value->cast<FP32ImmPtr>()->prim_value();
+      if (std::abs(float_value - doubel_value) < eps) {
+        float_v = doubel_value;
+      } else {
+        float_v = float_value;
+      }
       return float_v;
     case kNumberTypeFloat64:
       MS_LOG(DEBUG) << "double";

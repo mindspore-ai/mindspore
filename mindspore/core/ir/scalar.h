@@ -475,6 +475,14 @@ class MS_CORE_API FP32Imm final : public FloatImm {
   ///
   /// \return Return the value of FP32Imm.
   float value() const { return v_; }
+  /// \brief Get the double type value of FP32Imm.
+  ///
+  /// \return Return the double type value of FP32Imm.
+  double prim_value() const { return prim_v_; }
+  /// \brief Set the double type value of FP32Imm.
+  ///
+  /// \param[prim_v] double type value for FP32IMM.
+  void set_prim_value(double prim_v) { prim_v_ = prim_v; }
   bool operator==(const Value &other) const override;
   /// \brief Compare two FP32Imm objects is equal.
   ///
@@ -491,6 +499,7 @@ class MS_CORE_API FP32Imm final : public FloatImm {
 
  private:
   float v_;
+  double prim_v_;
 };
 using FP32ImmPtr = std::shared_ptr<FP32Imm>;
 IMM_TRAITS(FP32ImmPtr, float)
