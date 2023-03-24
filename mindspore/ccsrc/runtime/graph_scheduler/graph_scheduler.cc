@@ -639,7 +639,6 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   // Get the run result.
   auto result_future = result[0].GetFuture();
   result_future.Wait();
-  MsException::Instance().CheckException();
   thread_pool->SetSpinCountMinValue();
   if (!result_future.IsOK()) {
 #ifdef ENABLE_DUMP_IR
@@ -658,6 +657,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 
+  MsException::Instance().CheckException();
   double end_time = GetTime();
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
