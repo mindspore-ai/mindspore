@@ -509,6 +509,94 @@ CNodePtr CreateUpdateStateNode(const FuncGraphPtr &func_graph, const AnfNodePtrL
   return update_state_node;
 }
 
+std::map<AnfNodePtr, AnfNodePtrSet> FilterDependencyToTargetNode(const FuncGraphPtr &func_graph,
+                                                                 const AnfNodePtrSet &target_nodes) {
+  std::map<AnfNodePtr, AnfNodePtrSet> depend_matrix;
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto return_node = func_graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  AnfNodePtrList nodes = FuncGraph::TopoSort(return_node);
+  // Trasverse all nodes in topo-sort so that time complexity is O(n).
+  for (const auto node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    CNodePtr cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &inputs = cnode->inputs();
+    // Traverse all inputs and only filter out inputs which is in target nodes set.
+    for (const auto &input : inputs) {
+      MS_EXCEPTION_IF_NULL(input);
+      // If the input is stored already, this means it depends on some of target nodes, so we expand its inputs and
+      // insert them.
+      if (depend_matrix.count(input) != 0) {
+        depend_matrix[node].insert(depend_matrix[input].begin(), depend_matrix[input].end());
+      }
+      // If input itself is in target nodes set, insert it as well.
+      if (target_nodes.count(input) != 0) {
+        depend_matrix[node].insert(input);
+      }
+    }
+  }
+  return depend_matrix;
+}
+
+AnfNodePtrSet UpdateDependedSet(const AnfNodePtr &new_node, const AnfNodePtrSet &old_depended_set,
+                                const std::map<AnfNodePtr, AnfNodePtrSet> &node_dependency) {
+  AnfNodePtrSet updated = old_depended_set;
+  bool is_independent = true;
+  for (const auto &stored_node : old_depended_set) {
+    // If 'new_node' is already depended on by 'stored_node', no need to add 'new_node'.
+    if (node_dependency.count(stored_node) != 0 && node_dependency.at(stored_node).count(new_node) != 0) {
+      MS_LOG(DEBUG) << "Old node " << stored_node->fullname_with_scope() << " depends on "
+                    << new_node->fullname_with_scope() << ". Do not update.";
+      is_independent = false;
+      break;
+    }
+    // If 'new_node' depends on 'stored_node', replace 'stored_node' with 'new_node' to keep minimal dependency.
+    if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).count(stored_node) != 0) {
+      MS_LOG(DEBUG) << "Replace old node " << stored_node->fullname_with_scope() << " with new node "
+                    << new_node->fullname_with_scope();
+      updated.erase(stored_node);
+      updated.insert(new_node);
+    }
+  }
+  if (is_independent) {
+    MS_LOG(DEBUG) << "Add new node to depended set " << new_node->fullname_with_scope();
+    updated.insert(new_node);
+  }
+  return updated;
+}
+
+void HandleHungNodes(const FuncGraphPtr &func_graph, const NodeLabels &node_labels, OperatorLabel process_label,
+                     const AnfNodePtrList &hung_nodes_list) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto make_tuple_node = CreateMakeTupleNode(func_graph, hung_nodes_list);
+  MS_EXCEPTION_IF_NULL(make_tuple_node);
+
+  const auto &origin_output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(origin_output);
+  if (node_labels.count(origin_output) == 0) {
+    MS_LOG(EXCEPTION) << "The origin output node " << origin_output->fullname_with_scope()
+                      << " should have corresponding operator label.";
+  }
+  AnfNodePtr replaced_output = nullptr;
+  if (node_labels.at(origin_output) != process_label) {
+    replaced_output = CreateReplacedOutputNode(func_graph, origin_output);
+  } else {
+    replaced_output = origin_output;
+  }
+  MS_EXCEPTION_IF_NULL(replaced_output);
+
+  // Add dependency and replace.
+  std::vector<AnfNodePtr> depend_inputs = {NewValueNode(prim::kPrimDepend), replaced_output, make_tuple_node};
+  auto final_output_node = func_graph->NewCNode(depend_inputs);
+  MS_EXCEPTION_IF_NULL(final_output_node);
+  final_output_node->set_abstract(replaced_output->abstract());
+  (void)func_graph->manager()->SetEdge(func_graph->get_return(), 1, final_output_node);
+}
+
 void ParameterServerMode::PreBuildDistributedGraph() {
   MS_LOG(INFO) << "Start pre-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
@@ -1393,8 +1481,8 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
     return;
   }
 
-  // Step 2: Add dependency between segments on this process.
-  AddDependencyBetweenSegments(in_out_degree_list);
+  // Step 2: Add dependency between communication edges on this process.
+  AddDependencyBetweenEdges(comm_edges);
 
   // Step 3: Eliminate nodes not on this process.
   EliminateExtraNodes(comm_edges);
@@ -1857,13 +1945,69 @@ InOutDegreeList GraphSplitter::GenerateInOutDegreeList(const std::vector<SplitGr
     // be kept consistent.
     std::vector<AnfNodePtr> concerned_in_degree_nodes = FindInterProcessInDegree(nodes, comm_edges);
     std::vector<AnfNodePtr> concerned_out_degree_nodes = FindInterProcessOutDegree(nodes, comm_edges);
-    // if (concerned_in_degree_nodes.empty()) {
-    //   continue;
-    // }
-    (void)in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
+    if (!concerned_in_degree_nodes.empty() || !concerned_out_degree_nodes.empty()) {
+      (void)in_out_degree_list.emplace_back(std::make_pair(concerned_in_degree_nodes, concerned_out_degree_nodes));
+    }
   }
   MS_LOG(INFO) << "End finding inter-process in-degrees.";
   return in_out_degree_list;
+}
+
+void GraphSplitter::AddDependencyBetweenEdges(const InterProcessOpEdgesInfo &comm_edges) {
+  // 'in_degree_comm_edges' is the edges with recv node on this process.
+  InterProcessOpEdgesInfo in_degree_comm_edges;
+  // 'out_degree_comm_edges' is the edges with send node on this process.
+  InterProcessOpEdgesInfo out_degree_comm_edges;
+
+  // Src nodes of RpcSend nodes.
+  AnfNodePtrSet send_src_nodes;
+  // Map of src nodes to its all RpcSend nodes.
+  std::map<AnfNodePtr, AnfNodePtrSet> src_nodes_to_send_nodes;
+  // This map represents which send nodes are hung. Key is RpcSend node.
+  std::map<AnfNodePtr, bool> is_send_node_hung;
+  for (const auto &e : comm_edges) {
+    const InterProcessOpEdge &edge_info = e.first;
+    const InterProcessOpPair &op_pair = e.second;
+
+    if (edge_info.src_label == this_process_label_) {
+      const AnfNodePtr &send_src_node = edge_info.src_node;
+      const AnfNodePtr &rpc_send_node = std::get<0>(op_pair);
+      send_src_nodes.insert(send_src_node);
+      src_nodes_to_send_nodes[send_src_node].insert(rpc_send_node);
+      is_send_node_hung[rpc_send_node] = true;
+
+      MS_LOG(DEBUG) << "Out degree edge: " << edge_info.to_string() << ". Send src node "
+                    << send_src_node->fullname_with_scope() << " has RpcSend node "
+                    << rpc_send_node->fullname_with_scope();
+      out_degree_comm_edges[edge_info] = op_pair;
+    }
+
+    if (edge_info.dst_label == this_process_label_) {
+      MS_LOG(DEBUG) << "In degree edge: " << edge_info.to_string();
+      in_degree_comm_edges[edge_info] = op_pair;
+    }
+  }
+
+  // This step is vital. It builds a map consists of all dependencies to send src nodes, which helps to
+  // add explicit dependency edges for RpcSend and RpcRecv nodes.
+  std::map<AnfNodePtr, AnfNodePtrSet> node_dependency = FilterDependencyToTargetNode(func_graph_, send_src_nodes);
+  MS_LOG(INFO) << "After filtering out the dependencies, add dependency edges between RpcSend and RpcRecv nodes.";
+
+  // Connect RpcSend and RpcRecv with minimal dependencies.
+  AddSendRecvDependency(in_degree_comm_edges, send_src_nodes, src_nodes_to_send_nodes, node_dependency,
+                        &is_send_node_hung);
+
+  // Some RpcSend nodes may be hung, we need to connect these nodes to output in case they are optimized out.
+  AnfNodePtrList hung_nodes_list;
+  for (const auto &is_hung : is_send_node_hung) {
+    if (is_hung.second) {
+      MS_LOG(INFO) << "RpcSend node: " << is_hung.first->fullname_with_scope() << " is hung.";
+      hung_nodes_list.emplace_back(is_hung.first);
+    }
+  }
+  if (!hung_nodes_list.empty()) {
+    HandleHungNodes(func_graph_, node_labels_, this_process_label_, hung_nodes_list);
+  }
 }
 
 void GraphSplitter::AddDependencyBetweenSegments(const InOutDegreeList &in_out_degree_list) {
@@ -1978,6 +2122,57 @@ void GraphSplitter::ReplaceOriginNodesWithRecv(const FusedInterProcessOpPairMap 
           func_graph_->manager()->SetEdge(user_node, user_node_index, fused_recv_node);
         }
       }
+    }
+  }
+}
+
+void GraphSplitter::AddSendRecvDependency(const InterProcessOpEdgesInfo &in_degree_comm_edges,
+                                          const AnfNodePtrSet &send_src_nodes,
+                                          const std::map<AnfNodePtr, AnfNodePtrSet> &src_nodes_to_send_nodes,
+                                          const std::map<AnfNodePtr, AnfNodePtrSet> &node_dependency,
+                                          std::map<AnfNodePtr, bool> *is_send_node_hung) {
+  for (const auto &in_edge : in_degree_comm_edges) {
+    const auto &rpc_recv_node = std::get<1>(in_edge.second);
+    const auto &recv_dst_node = std::get<2>(in_edge.second);
+    MS_LOG(DEBUG) << "Add dependency for RpcRecv node " << rpc_recv_node->fullname_with_scope()
+                  << " with recv dst node " << recv_dst_node->fullname_with_scope();
+    AnfNodePtrSet depended_nodes;
+    for (const auto &send_src_node : send_src_nodes) {
+      // Get minimum send src nodes set which have dependencies with RpcRecv node.
+      if (node_dependency.count(recv_dst_node) != 0 && node_dependency.at(recv_dst_node).count(send_src_node) != 0) {
+        depended_nodes = UpdateDependedSet(send_src_node, depended_nodes, node_dependency);
+      }
+    }
+    MS_LOG(DEBUG) << "RpcRecv dst node " << recv_dst_node->fullname_with_scope()
+                  << " depends on RpcSend src node size: " << depended_nodes.size();
+
+    // Generate RpcSend nodes input list to add dependency with RpcRecv Nodes.
+    AnfNodePtrList rpc_send_list;
+    for (const auto &send_src_node : depended_nodes) {
+      if (src_nodes_to_send_nodes.count(send_src_node) == 0) {
+        MS_LOG(EXCEPTION) << "Send src node " << send_src_node->fullname_with_scope()
+                          << " has no corresponding RpcSend nodes.";
+      }
+      const AnfNodePtrSet &rpc_send_nodes = src_nodes_to_send_nodes.at(send_src_node);
+      for (const auto &rpc_send : rpc_send_nodes) {
+        (*is_send_node_hung)[rpc_send] = false;
+        rpc_send_list.emplace_back(rpc_send);
+      }
+    }
+    if (!rpc_send_list.empty()) {
+      AnfNodePtr send_node_make_tuple = CreateMakeTupleNode(func_graph_, rpc_send_list);
+      MS_EXCEPTION_IF_NULL(send_node_make_tuple);
+      MS_LOG(DEBUG) << "Connect " << send_node_make_tuple->fullname_with_scope() << " with RpcRecv node "
+                    << rpc_recv_node->fullname_with_scope();
+
+      auto recv_data = rpc_recv_node->cast<CNodePtr>()->inputs()[kIndex1];
+      MS_EXCEPTION_IF_NULL(recv_data);
+
+      AnfNodePtrList depend_node_inputs = {NewValueNode(prim::kPrimDepend), recv_data, send_node_make_tuple};
+      auto depend_node = func_graph_->NewCNode(depend_node_inputs);
+      MS_EXCEPTION_IF_NULL(depend_node);
+      depend_node->set_abstract(recv_data->abstract());
+      func_graph_->manager()->SetEdge(rpc_recv_node, kIndex1, depend_node);
     }
   }
 }
