@@ -30,6 +30,7 @@
 using TaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TaskInfo>;
 namespace mindspore {
 namespace kernel {
+constexpr uint64_t kOverflowAddrSize = 512;
 class AscendKernelMod : public KernelMod {
  public:
   AscendKernelMod() = default;

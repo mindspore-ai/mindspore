@@ -20,8 +20,8 @@
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -184,12 +184,12 @@ AddressPtr TbeKernelMod::GetOverflowAddress() {
   AddressPtr overflow_address_ptr = nullptr;
   auto is_overflow = kernel_pack_.get()->kernel_json_info().global_workspace.is_overflow;
   if (is_overflow) {
-    constexpr size_t size = 32;
-    auto overflow_memory_ptr = device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem();
+    auto overflow_memory_ptr =
+      device::ascend::AscendMemoryManager().MallocOverflowMemFromMemFromMemPool(kOverflowAddrSize, false);
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
     overflow_address_ptr = std::make_shared<kernel::Address>();
-    overflow_address_ptr->addr = reinterpret_cast<void *>(overflow_memory_ptr);
-    overflow_address_ptr->size = size;
+    overflow_address_ptr->addr = overflow_memory_ptr;
+    overflow_address_ptr->size = kOverflowAddrSize;
   }
   return overflow_address_ptr;
 }
