@@ -34,6 +34,16 @@ class ResourceManager {
     context_ = mindspore::MsContext::GetInstance();
     context_->set_backend_policy("ms");
     context_->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mindspore::kGraphMode);
+    if (Py_IsInitialized() == 0) {
+      PyEval_InitThreads();
+      Py_Initialize();
+    }
+  }
+
+  ~ResourceManager() {
+    if (Py_IsInitialized() != 0) {
+      Py_Finalize();
+    }
   }
 
   void SetBackend(std::shared_ptr<mindspore::compile::Backend> backend) { backend_ = std::move(backend); }

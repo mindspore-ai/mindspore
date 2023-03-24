@@ -240,6 +240,10 @@ typedef enum DTypeFormat {
   C128_Default,  // {"complex128", "DefaultFormat"};
 } DTypeFormat;
 
+typedef enum OptPassID {
+  MS_AUTO_MONAD_ELIM_PASS,
+} OptPassID;
+
 typedef enum PadMode {
   PAD = 0,
   SAME = 1,

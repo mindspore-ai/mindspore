@@ -21,6 +21,8 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "ops/primitive_c.h"
+#include "frontend/optimizer/opt.h"
+#include "frontend/optimizer/irpass.h"
 
 using FuncGraphImpl = mindspore::FuncGraph;
 using FuncGraphManagerImpl = mindspore::FuncGraphManager;
@@ -69,11 +71,14 @@ using ParameterPtr = mindspore::ParameterPtr;
 using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
 using FuncGraphPtr = mindspore::FuncGraphPtr;
 using FuncGraphManagerPtr = std::shared_ptr<mindspore::FuncGraphManager>;
-
-using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
 using BaseShapePtr = mindspore::abstract::BaseShapePtr;
-using Shape = mindspore::abstract::Shape;
 using ShapePtr = mindspore::abstract::ShapePtr;
+using Shape = mindspore::abstract::Shape;
 using TupleShape = mindspore::abstract::TupleShape;
 
+using OptPassConfig = mindspore::opt::OptPassConfig;
+using SubstitutionPtr = mindspore::opt::SubstitutionPtr;
+using OptPassGroupMap = mindspore::opt::OptPassGroupMap;
+
+using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
 #endif  // MINDSPORE_CCSRC_C_API_SRC_COMMON_H_

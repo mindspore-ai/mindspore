@@ -80,7 +80,7 @@ export GC_COLLECT_IN_CELL=1
 export DEVICE_ID=$DEVICE_ID_OPT
 if [[ "X$DEVICE_TARGET_OPT" == "Xascend" || "X$DEVICE_TARGET_OPT" == "XAscend" ]]; then
   export DEVICE_TARGET=Ascend
-elif [[ "X$DEVICE_TARGET_OPT" == "Xcpu" ]]; then
+elif [[ "X$DEVICE_TARGET_OPT" == "Xcpu" || "X$DEVICE_TARGET_OPT" == "XCPU" ]]; then
   export DEVICE_TARGET=CPU
 else
   export DEVICE_TARGET=$DEVICE_TARGET_OPT
