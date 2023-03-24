@@ -69,6 +69,12 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", the dimension of input margin must be 0, margin_dim: " << margin.size() << ".";
   }
+  auto x_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  auto x_shape = x_shape_ptr->cast<abstract::ShapePtr>();
+  if (IsDynamicShape(x_shape->shape()) || IsDynamicRank(x_shape->shape())) {
+    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  }
   auto dims = std::max(std::max(x.size(), positive.size()), negative.size());
   std::reverse(x.begin(), x.end());
   std::reverse(positive.begin(), positive.end());
