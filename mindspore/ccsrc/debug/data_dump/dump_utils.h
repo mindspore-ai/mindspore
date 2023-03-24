@@ -46,17 +46,6 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag = false);
 
-bool IsFolder(const std::string &file_path);
-
-bool IsEmptyFolder(const std::string &dir_path);
-
-void RemoveEmptyDir(const std::string &dir_path);
-
-std::vector<std::string> Split(const std::string &input, const std::string &pattern);
-
-void SaveOverflowOperator(const std::string &iterator, const std::string &dump_rank_path);
-
-void DeleteNoOverflowFile(uint32_t rank_id, uint32_t graph_id);
 BACKEND_EXPORT std::string GetOpNameWithoutScope(const std::string &fullname_with_scope,
                                                  const std::string &separator = "--");
 
