@@ -256,8 +256,6 @@ def size_(x):
     Returns:
         size(int).
     """
-    if not shape_(x):
-        return size_op_(x) + 1
     return size_op_(x)
 
 
