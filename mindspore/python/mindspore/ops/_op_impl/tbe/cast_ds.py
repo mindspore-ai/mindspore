@@ -46,6 +46,7 @@ cast_ds_op_info = TBERegOp("Cast") \
     .dtype_format(DataType.F16_None, DataType.U8_None) \
     .dtype_format(DataType.F16_None, DataType.F32_None) \
     .dtype_format(DataType.F16_None, DataType.I32_None) \
+    .dtype_format(DataType.F16_None, DataType.BOOL_None) \
     .dtype_format(DataType.F32_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.I32_None) \
     .get_op_info()
