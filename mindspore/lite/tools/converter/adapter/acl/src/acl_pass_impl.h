@@ -42,19 +42,19 @@ class AclPassImpl {
 
   bool Run(const FuncGraphPtr &func_graph);
 
- private: /* pre or post pass */
+ private:  // pre or post pass
   bool IsDynamicInput();
   STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
   STATUS RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph);
 
- private: /* map func graph */
+ private:  // map func graph
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph);
   std::string AdjustCnodeName(const PrimitivePtr &prim);
 
- private: /* build func graph */
+ private:  // build func graph
   STATUS BuildGraph(const FuncGraphPtr &func_graph);
   STATUS SetGraphInputShape(const FuncGraphPtr &func_graph);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
@@ -66,7 +66,7 @@ class AclPassImpl {
 
   STATUS MapperForOrgMindIR(const FuncGraphPtr &func_graph);
 
- private: /* create custom node */
+ private:  // create custom node
   CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
   void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);
   STATUS SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
@@ -74,7 +74,7 @@ class AclPassImpl {
   STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
   STATUS TraceOutput(const AnfNodePtr &node);
 
- private: /* modify graph by custom node */
+ private:  // modify graph by custom node
   CNodePtr CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
