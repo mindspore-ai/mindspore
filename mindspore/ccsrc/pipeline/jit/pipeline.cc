@@ -333,9 +333,15 @@ py::object GetVectorRefOutputDataWithPyExecuteObject(const AnfNodePtr &node, con
   }
 
   size_t seq_size = abs_seq->size();
-  // List output will be convert to PyExecute real_node, only need to consider tuple here.
-  py::tuple ret = py::tuple(seq_size);
   auto real_cnode = real_node->cast<CNodePtr>();
+  if (abs->isa<abstract::AbstractList>()) {
+    py::list ret = py::list(seq_size);
+    for (size_t i = 0; i < seq_size; ++i) {
+      ret[i] = GetVectorRefOutputDataWithPyExecuteObject(real_cnode->input(i + 1), value_seq[i]);
+    }
+    return ret;
+  }
+  py::tuple ret = py::tuple(seq_size);
   for (size_t i = 0; i < seq_size; ++i) {
     ret[i] = GetVectorRefOutputDataWithPyExecuteObject(real_cnode->input(i + 1), value_seq[i]);
   }

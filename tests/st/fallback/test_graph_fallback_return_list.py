@@ -105,7 +105,6 @@ def test_return_constant_list_4():
     assert np.all(res[2].asnumpy() == np.array([2, 3]))
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -148,7 +147,6 @@ def test_return_constant_list_6():
     assert res[2] == 1
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -225,6 +223,32 @@ def test_return_make_list_node_3():
 
     res = foo(Tensor([1]))
     assert res == [Tensor([1]), 1, "a"]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_make_list_node_4():
+    """
+    Feature: Return list in graph
+    Description: Support return make list node.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        x1 = list(x)
+        x2 = {"a": Tensor(5)}
+        x3 = (0, 1.0)
+        return [x1, x2, x3]
+
+    res = foo(Tensor([1, 2, 3]))
+    assert isinstance(res, list)
+    assert len(res) == 3
+    assert res[0] == [Tensor([1]), Tensor([2]), Tensor([3])]
+    assert res[1] == {"a": Tensor(5)}
+    assert res[2] == (0, 1.0)
 
 
 @pytest.mark.level0
@@ -322,7 +346,6 @@ def test_return_make_list_with_nest_2():
     assert res == ([Tensor([0]), ([Tensor([0]), 1],)], (Tensor([1]), Tensor([2])))
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
