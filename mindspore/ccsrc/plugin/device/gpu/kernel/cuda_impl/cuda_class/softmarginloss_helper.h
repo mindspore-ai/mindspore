@@ -46,12 +46,21 @@ class SoftMarginLossHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr size_t INPUT_NUM = 2;
     constexpr size_t OUTPUT_NUM = 1;
+    constexpr size_t WORKSPACE_NUM = 1;
     ResetResource();
 
     int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
     if (inp_flag == -1) {
       return inp_flag;
     }
+
+    std::vector<std::vector<int64_t>> work_shapes;
+    work_shapes.push_back(input_shapes[0]);
+
+    if (CalShapesSizeInBytes<T>(work_shapes, WORKSPACE_NUM, kernel_name_, "work_size", &work_size_list_)) {
+      return -1;
+    }
+
     if (input_shapes[0] != input_shapes[1]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input shape should be equal to " << input_shapes[0]
                     << "but got " << input_shapes[1];
@@ -82,6 +91,7 @@ class SoftMarginLossHelperGpuKernel : public GpuKernelHelperBase {
     T *prediction = nullptr;
     T *target = nullptr;
     T *loss = nullptr;
+    T *loss_work = nullptr;
     int flag = GetDeviceAddress<T>(input_ptrs, 0, kernel_name_, &prediction);
     if (flag != 0) {
       return flag;
@@ -97,8 +107,13 @@ class SoftMarginLossHelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    flag = GetDeviceAddress<T>(work_ptrs, 0, kernel_name_, &loss_work);
+    if (flag != 0) {
+      return flag;
+    }
+
     // call cuda kernel
-    CalSoftMarginLoss(prediction, target, input_size_, reduction_, loss, device_id_,
+    CalSoftMarginLoss(prediction, target, input_size_, reduction_, loss, loss_work, device_id_,
                       reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
