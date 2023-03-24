@@ -99,8 +99,18 @@ int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const st
       MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
       return RET_ERROR;
     }
-    Cast<int32_t, bool>(host_tensor->DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
-                        stream_);
+    int *host_ptr = reinterpret_cast<int *>(malloc(host_tensor->DataSize()));
+    auto cuda_ret = cudaMemcpy(host_ptr, device_ptr, host_tensor->DataSize(), cudaMemcpyDeviceToHost);
+    if (cuda_ret != cudaSuccess) {
+      MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
+      return RET_ERROR;
+    }
+    bool *host_tensor_ptr = static_cast<bool *>(host_tensor->data_c());
+    for (size_t i = 0; i != host_tensor->Size(); ++i) {
+      host_tensor_ptr[i] = (host_ptr[i] != 0);
+    }
+    free(host_ptr);
+    return RET_OK;
   }
 #endif
   return SyncMemInHostAndDevice(host_tensor->data_c(), device_tensor_name, host_tensor->Size(), false, sync);

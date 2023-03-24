@@ -337,7 +337,7 @@ void BackComfortableAlign(std::vector<int64_t> *in_shape_ptr, const std::vector<
     out_index--;
   }
   if (is_comfortable == false) {
-    MS_LOG(ERROR) << "failed to align constant tensor";
+    MS_LOG(WARNING) << "failed to align constant tensor";
     return;
   }
   while (static_cast<int>(in_shape_ptr->size()) - 1 < out_index) {
