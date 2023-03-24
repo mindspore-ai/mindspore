@@ -106,14 +106,16 @@ using ScriptPtr = std::shared_ptr<Script>;
 // PyObjectWrapper class wrappers resolved python object for further processing.
 class PyObjectWrapper : public Named {
  public:
-  explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object") : Named(name), obj_(obj) {}
-  ~PyObjectWrapper() override = default;
+  explicit PyObjectWrapper(const py::object &obj, const std::string &name = "Python object")
+      : Named(name), obj_(std::make_unique<py::object>(obj)) {}
+  ~PyObjectWrapper() override;
+
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
-  py::object obj() { return obj_; }
+  py::object obj() { return *obj_; }
 
  private:
   // the object that needs to be resolved
-  py::object obj_;
+  std::unique_ptr<py::object> obj_;
 };
 using PyObjectWrapperPtr = std::shared_ptr<PyObjectWrapper>;
 

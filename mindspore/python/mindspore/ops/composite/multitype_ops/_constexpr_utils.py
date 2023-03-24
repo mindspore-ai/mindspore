@@ -938,6 +938,7 @@ def use_copy_slice(tuple_index):
 
 @constexpr
 def is_ascend():
+    """Device target is Ascend or not"""
     return context.get_context('device_target') == "Ascend"
 
 
