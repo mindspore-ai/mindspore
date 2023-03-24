@@ -157,13 +157,13 @@ class Dense(nn.Cell):
             self.bias_y = Parameter(initializer(bias_init_y, [out_channels]), name="bias_y")
 
     def check_dense_input_shape(self, x: Tensor, x_dtype):
+        """check input shape of dense"""
         msg_prefix = f"For '{self.cls_name}', the" if self.cls_name else "The"
         if x_dtype in [mindspore.float32, mindspore.float64] and (len(x) < 3 or x[0] != 2):
             raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 3, and the first dimension "
                              f"should be 2, but got {x}.")
         if x_dtype == mindspore.complex64 and len(x) < 2:
             raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {x}.")
-        return None
 
     def construct(self, u: Tensor) -> Tensor:
         """Construct"""
