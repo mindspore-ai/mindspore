@@ -2473,6 +2473,20 @@ def check_sequence_all_variable_scalar(x, str_info):
     return contain_variable_scalar
 
 
+def get_data_type_str(input_data):
+    """Get the type of input."""
+    if isinstance(input_data, (int, float, bool)):
+        return "variable " + str(F.typeof(input_data))
+    return str(F.typeof(input_data))
+
+
+def check_isconstant(input_data, func_name):
+    """Check the input data of func is constant."""
+    if not F.isconstant(input_data):
+        const_utils.raise_type_error("The input of " + func_name + " only support Tensor, List, Tuple, constant Scalar,"
+                                                                   " but got " + get_data_type_str(input_data))
+
+
 def ms_max_one_element(x):
     """Implementation of `max` which inputs has only one element."""
     if isinstance(x, Tensor):
@@ -2500,9 +2514,7 @@ def ms_max_one_element(x):
         if exist_tensor(x):
             const_utils.raise_type_error(
                 "max() cannot support tensor in list or tuple nested now.")
-    if not F.isconstant(x):
-        const_utils.raise_type_error("The input of max() is not tensor, constant, list or tuple, "
-                                     "it is not supported currently.")
+    check_isconstant(x, "max()")
     return max_(x)
 
 
@@ -2527,9 +2539,7 @@ def ms_max(*data):
             const_utils.raise_value_error(
                 "The truth value of an array with more than one element is ambiguous.")
     for input_data in data:
-        if not F.isconstant(input_data):
-            const_utils.raise_type_error("The input of max() is not tensor, constant, list or tuple, "
-                                         "it is not supported currently.")
+        check_isconstant(input_data, "max()")
     return max_(*data)
 
 
@@ -2587,9 +2597,7 @@ def ms_min_one_element(x):
         if exist_tensor(x):
             const_utils.raise_type_error(
                 "min() cannot support tensor in list or tuple nested now.")
-    if not F.isconstant(x):
-        const_utils.raise_type_error("The input of min() is not tensor, constant, list or tuple, "
-                                     "it is not supported currently.")
+    check_isconstant(x, "min()")
     return min_(x)
 
 
@@ -2614,9 +2622,7 @@ def ms_min(*data):
             const_utils.raise_value_error(
                 "The truth value of an array with more than one element is ambiguous.")
     for input_data in data:
-        if not F.isconstant(input_data):
-            const_utils.raise_type_error("The input of min() is not tensor, constant, list or tuple, "
-                                         "it is not supported currently.")
+        check_isconstant(input_data, "min()")
     return min_(*data)
 
 

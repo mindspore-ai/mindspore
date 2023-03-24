@@ -419,7 +419,7 @@ def test_min_mutable():
             return out
 
     context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of min() is not tensor, constant, list or tuple, it is not supported currently."
+    info = "The input of min() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
     with pytest.raises(TypeError, match=re.escape(info)):
         x = mutable(1)
         net = Net()
@@ -439,7 +439,7 @@ def test_max_mutable():
             return out
 
     context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of max() is not tensor, constant, list or tuple, it is not supported currently."
+    info = "The input of max() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
     with pytest.raises(TypeError, match=re.escape(info)):
         x = mutable(1)
         y = mutable(2)
