@@ -1712,6 +1712,24 @@ class TupleToArray(PrimitiveWithInfer):
         return _run_op(self, self.name, args)
 
 
+class ScalarToArray(PrimitiveWithInfer):
+    """
+    The `ScalarToArray` primitive  is deprecated. Please use the :class:`mindspore.ops.ScalarToTensor` instead.
+    """
+    @deprecated("2.0", "ops.scalar_to_tensor", False)
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_value(self, x):
+        validator.check_value_type("x", x, [int, float], self.name)
+        if isinstance(x, int):
+            ret = np.array(x, np.int32)
+        else:
+            ret = np.array(x, np.float32)
+        return Tensor(ret)
+
+
 class ScalarToTensor(PrimitiveWithInfer):
     """
     Converts a scalar to a `Tensor`, and converts the data type to the specified type.

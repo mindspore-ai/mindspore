@@ -84,6 +84,15 @@ int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list,
   return num_segments_value;
 }
 }  // namespace
+AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a scalar.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractScalarPtr arg = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  return std::make_shared<AbstractTensor>(arg, std::make_shared<Shape>());
+}
+
 AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor with 0 shape.
