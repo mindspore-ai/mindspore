@@ -1,89 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:È
-
-ë2get_bprop_resize_nearest_neighbor.399:[CNode]400:12get_bprop_resize_nearest_neighbor.399:[CNode]400:1"REF::bprop.401:Default/bprop.401-op339
-E[ValueNode]417[ValueNode]417"Constant*
-value*align_cornersÄ
-Œ
-*get_bprop_resize_nearest_neighbor.399:self
-[ValueNode]4173get_bprop_resize_nearest_neighbor.399:[CNode]418:143get_bprop_resize_nearest_neighbor.399:[CNode]418:14"REF::getattr:15:Default/getattr-op349
-≈
-3get_bprop_resize_nearest_neighbor.399:[CNode]418:14-get_bprop_resize_nearest_neighbor.399:—Ñop:16-get_bprop_resize_nearest_neighbor.399:—Ñop:16"LREF::ClassType::mindspore.ops.operations._grad_ops.ResizeNearestNeighborGrad:bDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.ResizeNearestNeighborGrad'-op350
-Ñ5get_bprop_resize_nearest_neighbor.399:tensor_shape:245get_bprop_resize_nearest_neighbor.399:tensor_shape:24">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:TDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op356%get_bprop_resize_nearest_neighbor.399*,
-*get_bprop_resize_nearest_neighbor.399:self*.
-,get_bprop_resize_nearest_neighbor.399:inputs*+
-)get_bprop_resize_nearest_neighbor.399:out*.
-,get_bprop_resize_nearest_neighbor.399:—Ñdout24
-2get_bprop_resize_nearest_neighbor.399:[CNode]400:1:@2afe0072fdea07983339812b97f5c5cc7abf8bb1e028595081d583a21a6b76f9J/grad_array_ops.pyB
-è
-,get_bprop_resize_nearest_neighbor.399:inputsbprop.401:[CNode]402:2bprop.401:[CNode]402:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op340
-ã
-bprop.401:[CNode]402:2bprop.401:[CNode]403:4bprop.401:[CNode]403:4"REF::S-Prim-IsShapeUnKnown:5:#Default/S-Prim-IsShapeUnKnown-op341
-q
-bprop.401:[CNode]403:4bprop.401:[CNode]404:6bprop.401:[CNode]404:6"REF::bool_.405:Default/bool_.405-op342
-â
-bprop.401:[CNode]404:6
-‚Ü∞bprop.406
-‚Ü±bprop.407bprop.401:[CNode]408:7bprop.401:[CNode]408:7"REF::Switch:8:Default/Switch-op343
-Rbprop.401:[CNode]409:9bprop.401:[CNode]409:9"REF::bprop.401:[CNode]408:7:344
-s
-bprop.401:[CNode]409:9bprop.401:[CNode]410:10bprop.401:[CNode]410:10"REF::bool_.405:Default/bool_.405-op345
-å
-bprop.401:[CNode]410:10
-‚úìbprop.411
-‚úóbprop.412bprop.401:[CNode]413:11bprop.401:[CNode]413:11"REF::Switch:8:Default/Switch-op346
-Ubprop.401:[CNode]414:12bprop.401:[CNode]414:12"REF::bprop.401:[CNode]413:11:347
-z
-bprop.401:[CNode]414:12bprop.401:[CNode]415:13bprop.401:[CNode]415:13"REF::‚Üìbprop.416:Default/‚Üìbprop.416-op348	bprop.4012
-bprop.401:[CNode]415:13Bá
-8[ValueNode]419[ValueNode]419"Constant*
-valueÄ
-6[ValueNode]420[ValueNode]420"Constant*
-
-valueÄ
-6[ValueNode]421[ValueNode]421"Constant*
-
-valueÄ
-§
-[ValueNode]419
-[ValueNode]420
-[ValueNode]421‚Üìbprop.416:[CNode]422:17‚Üìbprop.416:[CNode]422:17"REF::S-Prim-make_slice:18:Default/S-Prim-make_slice-op351
-ï
-‚Üìbprop.416:—Ñshp
-‚Üìbprop.416:[CNode]422:17‚Üìbprop.416:shp:19‚Üìbprop.416:shp:19"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op352
-¥
-,get_bprop_resize_nearest_neighbor.399:—Ñdout
-‚Üìbprop.416:shp:19‚Üìbprop.416:[CNode]423:20‚Üìbprop.416:[CNode]423:20"2REF::get_bprop_resize_nearest_neighbor.399:—Ñop:16:353
-é
-‚Üìbprop.416:[CNode]423:20‚Üìbprop.416:[CNode]424:21‚Üìbprop.416:[CNode]424:21"REF::S-Prim-MakeTuple:22:Default/S-Prim-MakeTuple-op354‚Üìbprop.416*
-‚Üìbprop.416:—Ñshp2
-‚Üìbprop.416:[CNode]424:21B
-after_blockÄ	B±
-â
-,get_bprop_resize_nearest_neighbor.399:inputs‚úóbprop.412:shp:23‚úóbprop.412:shp:23"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op355‚úóbprop.4122
-‚úóbprop.412:shp:23B¡
-ô
-,get_bprop_resize_nearest_neighbor.399:inputs‚úìbprop.411:shp:25‚úìbprop.411:shp:25":REF::get_bprop_resize_nearest_neighbor.399:tensor_shape:24:357‚úìbprop.4112
-‚úìbprop.411:shp:25B«
-@[ValueNode]425[ValueNode]425"Constant*
-value*__bool__Ä
-w
-bool_.405:x
-[ValueNode]425bool_.405:[CNode]426:26bool_.405:[CNode]426:26"REF::getattr:15:Default/getattr-op358
-Ubool_.405:[CNode]427:27bool_.405:[CNode]427:27"REF::bool_.405:[CNode]426:26:359	bool_.405*
-bool_.405:x2
-bool_.405:[CNode]427:27B›
-ó
-,get_bprop_resize_nearest_neighbor.399:inputs‚Ü±bprop.407:[CNode]428:28‚Ü±bprop.407:[CNode]428:28"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op360
-î
-‚Ü±bprop.407:[CNode]428:28‚Ü±bprop.407:[CNode]429:29‚Ü±bprop.407:[CNode]429:29"REF::S-Prim-IsDimUnKnown:30:!Default/S-Prim-IsDimUnKnown-op361‚Ü±bprop.4072
-‚Ü±bprop.407:[CNode]429:29B(‚Ü∞bprop.4062
-bprop.401:[CNode]403:4Pb
-Switch:8Switchb
-
-getattr:15getattrb-
-S-Prim-IsDimUnKnown:30S-Prim-IsDimUnKnownb
-S-Prim-Shape:3S-Prim-Shapeb)
-S-Prim-make_slice:18S-Prim-make_sliceb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb'
-S-Prim-MakeTuple:22S-Prim-MakeTupleh

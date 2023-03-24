@@ -1,28 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ú	
-w(get_bprop_space_to_batch_nd.1:[CNode]2:1(get_bprop_space_to_batch_nd.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0
-?[ValueNode]4[ValueNode]4"Constant*
-value*block_shape€
-«
-"get_bprop_space_to_batch_nd.1:self
-[ValueNode]4(get_bprop_space_to_batch_nd.1:[CNode]5:2(get_bprop_space_to_batch_nd.1:[CNode]5:2"REF::getattr:3:Default/getattr-op1
-<[ValueNode]6[ValueNode]6"Constant*
-value*paddings€
-«
-"get_bprop_space_to_batch_nd.1:self
-[ValueNode]6(get_bprop_space_to_batch_nd.1:[CNode]7:4(get_bprop_space_to_batch_nd.1:[CNode]7:4"REF::getattr:3:Default/getattr-op2
-Î
-(get_bprop_space_to_batch_nd.1:[CNode]5:2
-(get_bprop_space_to_batch_nd.1:[CNode]7:46get_bprop_space_to_batch_nd.1:space_to_batch_nd_grad:56get_bprop_space_to_batch_nd.1:space_to_batch_nd_grad:5"AREF::ClassType::mindspore.ops.operations.array_ops.BatchToSpaceND:EDefault/class 'mindspore.ops.operations.array_ops.BatchToSpaceND'-op3get_bprop_space_to_batch_nd.1*$
-"get_bprop_space_to_batch_nd.1:self*!
-get_bprop_space_to_batch_nd.1:x*#
-!get_bprop_space_to_batch_nd.1:out*$
-"get_bprop_space_to_batch_nd.1:dout2*
-(get_bprop_space_to_batch_nd.1:[CNode]2:1:@b659bf9941560c8afadc8fa945c413a19a1182bf80c4dbc3a691e43a53ea882aJ/grad_array_ops.pyB‘
-€
-"get_bprop_space_to_batch_nd.1:doutbprop.3:dx:6bprop.3:dx:6";REF::get_bprop_space_to_batch_nd.1:space_to_batch_nd_grad:5:4
-m
-bprop.3:dx:6bprop.3:[CNode]8:7bprop.3:[CNode]8:7"REF::S-Prim-MakeTuple:8:Default/S-Prim-MakeTuple-op5bprop.32
-bprop.3:[CNode]8:7Pb
-	getattr:3getattrb&
-S-Prim-MakeTuple:8S-Prim-MakeTupleh

@@ -1,98 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:“
-}(get_bprop_strided_slice.370:[CNode]371:1(get_bprop_strided_slice.370:[CNode]371:1"REF::bprop.372:Default/bprop.372-op318
-B[ValueNode]382[ValueNode]382"Constant*
-value*
-begin_maskÄ
-∞
- get_bprop_strided_slice.370:self
-[ValueNode]382)get_bprop_strided_slice.370:[CNode]383:11)get_bprop_strided_slice.370:[CNode]383:11"REF::getattr:12:Default/getattr-op325
-@[ValueNode]384[ValueNode]384"Constant*
-value*end_maskÄ
-∞
- get_bprop_strided_slice.370:self
-[ValueNode]384)get_bprop_strided_slice.370:[CNode]385:13)get_bprop_strided_slice.370:[CNode]385:13"REF::getattr:12:Default/getattr-op326
-E[ValueNode]386[ValueNode]386"Constant*
-value*ellipsis_maskÄ
-∞
- get_bprop_strided_slice.370:self
-[ValueNode]386)get_bprop_strided_slice.370:[CNode]387:14)get_bprop_strided_slice.370:[CNode]387:14"REF::getattr:12:Default/getattr-op327
-E[ValueNode]388[ValueNode]388"Constant*
-value*new_axis_maskÄ
-∞
- get_bprop_strided_slice.370:self
-[ValueNode]388)get_bprop_strided_slice.370:[CNode]389:15)get_bprop_strided_slice.370:[CNode]389:15"REF::getattr:12:Default/getattr-op328
-H[ValueNode]390[ValueNode]390"Constant*
-value*shrink_axis_maskÄ
-∞
- get_bprop_strided_slice.370:self
-[ValueNode]390)get_bprop_strided_slice.370:[CNode]391:16)get_bprop_strided_slice.370:[CNode]391:16"REF::getattr:12:Default/getattr-op329
-—
-)get_bprop_strided_slice.370:[CNode]383:11
-)get_bprop_strided_slice.370:[CNode]385:13
-)get_bprop_strided_slice.370:[CNode]387:14
-)get_bprop_strided_slice.370:[CNode]389:15
-)get_bprop_strided_slice.370:[CNode]391:16+get_bprop_strided_slice.370:—Ñinput_grad:17+get_bprop_strided_slice.370:—Ñinput_grad:17"CREF::ClassType::mindspore.ops.operations._grad_ops.StridedSliceGrad:YDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.StridedSliceGrad'-op330get_bprop_strided_slice.370*"
- get_bprop_strided_slice.370:self*
-get_bprop_strided_slice.370:x*%
-#get_bprop_strided_slice.370:—Ñbegin*#
-!get_bprop_strided_slice.370:—Ñend*'
-%get_bprop_strided_slice.370:—Ñstrides*!
-get_bprop_strided_slice.370:out*$
-"get_bprop_strided_slice.370:—Ñdout2*
-(get_bprop_strided_slice.370:[CNode]371:1:@10d9df60e7853a61b74b274af84fc8e52796d01df754c8b0b281600ac9347e97J/grad_array_ops.pyB˚
-z
-get_bprop_strided_slice.370:xbprop.372:x_shape:2bprop.372:x_shape:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op319
-à
-bprop.372:x_shape:2bprop.372:[CNode]373:4bprop.372:[CNode]373:4"REF::S-Prim-IsShapeUnKnown:5:#Default/S-Prim-IsShapeUnKnown-op320
-q
-bprop.372:[CNode]373:4bprop.372:[CNode]374:6bprop.372:[CNode]374:6"REF::bool_.375:Default/bool_.375-op321
-â
-bprop.372:[CNode]374:6
-‚úìbprop.376
-‚úóbprop.377bprop.372:[CNode]378:7bprop.372:[CNode]378:7"REF::Switch:8:Default/Switch-op322
-Rbprop.372:[CNode]379:9bprop.372:[CNode]379:9"REF::bprop.372:[CNode]378:7:323
-y
-bprop.372:[CNode]379:9bprop.372:[CNode]380:10bprop.372:[CNode]380:10"REF::‚Üìbprop.381:Default/‚Üìbprop.381-op324	bprop.3722
-bprop.372:[CNode]380:10Bá	
-ä
-"get_bprop_strided_slice.370:—Ñdout
-‚Üìbprop.381:—Ñx_shape
-#get_bprop_strided_slice.370:—Ñbegin
-!get_bprop_strided_slice.370:—Ñend
-%get_bprop_strided_slice.370:—Ñstrides‚Üìbprop.381:dx:18‚Üìbprop.381:dx:18"0REF::get_bprop_strided_slice.370:—Ñinput_grad:17:331
-æ
-#get_bprop_strided_slice.370:—Ñbegin‚Üìbprop.381:[CNode]392:19‚Üìbprop.381:[CNode]392:19".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op332
-º
-!get_bprop_strided_slice.370:—Ñend‚Üìbprop.381:[CNode]393:20‚Üìbprop.381:[CNode]393:20".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op333
-¿
-%get_bprop_strided_slice.370:—Ñstrides‚Üìbprop.381:[CNode]394:21‚Üìbprop.381:[CNode]394:21".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op334
-⁄
-‚Üìbprop.381:dx:18
-‚Üìbprop.381:[CNode]392:19
-‚Üìbprop.381:[CNode]393:20
-‚Üìbprop.381:[CNode]394:21‚Üìbprop.381:[CNode]395:22‚Üìbprop.381:[CNode]395:22"REF::S-Prim-MakeTuple:23:Default/S-Prim-MakeTuple-op335‚Üìbprop.381*
-‚Üìbprop.381:—Ñx_shape2
-‚Üìbprop.381:[CNode]395:22B
-after_blockÄ	B%‚úóbprop.3772
-bprop.372:x_shape:2Bª
-è
-get_bprop_strided_slice.370:x‚úìbprop.376:x_shape:24‚úìbprop.376:x_shape:24"REF::S-Prim-TensorShape:25: Default/S-Prim-TensorShape-op336‚úìbprop.3762
-‚úìbprop.376:x_shape:24B«
-@[ValueNode]396[ValueNode]396"Constant*
-value*__bool__Ä
-w
-bool_.375:x
-[ValueNode]396bool_.375:[CNode]397:26bool_.375:[CNode]397:26"REF::getattr:12:Default/getattr-op337
-Ubool_.375:[CNode]398:27bool_.375:[CNode]398:27"REF::bool_.375:[CNode]397:26:338	bool_.375*
-bool_.375:x2
-bool_.375:[CNode]398:27Pb
-Switch:8Switchb
-
-getattr:12getattrb
-S-Prim-Shape:3S-Prim-Shapeb'
-S-Prim-MakeTuple:23S-Prim-MakeTuplebm
-S-Prim-TensorShape:25S-Prim-TensorShape
-output_namesÄäZoutputÄ
-input_namesÄäZinput_xÄb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownh

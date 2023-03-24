@@ -1,22 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ÿ
-fget_bprop_split.26:[CNode]27:1get_bprop_split.26:[CNode]27:1"REF::bprop.28:Default/bprop.28-op16
-:[ValueNode]29[ValueNode]29"Constant*
-value*axis€
-„
-get_bprop_split.26:self
-[ValueNode]29get_bprop_split.26:axis:2get_bprop_split.26:axis:2"REF::getattr:3:Default/getattr-op17get_bprop_split.26*
-get_bprop_split.26:self*
-get_bprop_split.26:x*
-get_bprop_split.26:out*
-get_bprop_split.26:dout2 
-get_bprop_split.26:[CNode]27:1:@c3c9ab3b1058a0cc3900855340ea9652ccc93366cdc7097bc49a4819150c513fJ/grad_array_ops.pyB´
-Â
-get_bprop_split.26:axis:2bprop.28:concat_op:4bprop.28:concat_op:4"9REF::ClassType::mindspore.ops.operations.array_ops.Concat:>Default/class 'mindspore.ops.operations.array_ops.Concat'-op18
-V
-get_bprop_split.26:doutbprop.28:dx:5bprop.28:dx:5"REF::bprop.28:concat_op:4:19
-s
-bprop.28:dx:5bprop.28:[CNode]30:6bprop.28:[CNode]30:6"REF::S-Prim-MakeTuple:7:Default/S-Prim-MakeTuple-op20bprop.282
-bprop.28:[CNode]30:6Pb
-	getattr:3getattrb&
-S-Prim-MakeTuple:7S-Prim-MakeTupleh

@@ -1,58 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:±
-r$get_bprop_expand_dims.19:[CNode]20:1$get_bprop_expand_dims.19:[CNode]20:1"REF::bprop.21:Default/bprop.21-op14get_bprop_expand_dims.19*
-get_bprop_expand_dims.19:self*
-get_bprop_expand_dims.19:x*!
-get_bprop_expand_dims.19:Ñ„axis*
-get_bprop_expand_dims.19:out*!
-get_bprop_expand_dims.19:Ñ„dout2&
-$get_bprop_expand_dims.19:[CNode]20:1:@a1c4ec8aa42e8d29a9d59c4322216dd206af1a1f537c77c505c5c0c0e2998236J/grad_array_ops.pyBÇ
-r
-get_bprop_expand_dims.19:xbprop.21:shapex:2bprop.21:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op15
-
-bprop.21:shapex:2bprop.21:[CNode]22:4bprop.21:[CNode]22:4"REF::S-Prim-IsShapeUnKnown:5:"Default/S-Prim-IsShapeUnKnown-op16
-h
-bprop.21:[CNode]22:4bprop.21:[CNode]23:6bprop.21:[CNode]23:6"REF::bool_.24:Default/bool_.24-op17
-€
-bprop.21:[CNode]23:6
-âœ“bprop.25
-âœ—bprop.26bprop.21:[CNode]27:7bprop.21:[CNode]27:7"REF::Switch:8:Default/Switch-op18
-Kbprop.21:[CNode]28:9bprop.21:[CNode]28:9"REF::bprop.21:[CNode]27:7:19
-p
-bprop.21:[CNode]28:9bprop.21:[CNode]29:10bprop.21:[CNode]29:10"REF::â†“bprop.30:Default/â†“bprop.30-op20bprop.212
-bprop.21:[CNode]29:10BÛ
-³â†“bprop.30:31:11â†“bprop.30:31:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:ODefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op21
-y
-get_bprop_expand_dims.19:Ñ„dout
-â†“bprop.30:Ñ„shapexâ†“bprop.30:31:12â†“bprop.30:31:12"REF::â†“bprop.30:31:11:22
-µ
-get_bprop_expand_dims.19:Ñ„axisâ†“bprop.30:[CNode]32:13â†“bprop.30:[CNode]32:13".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op23
-š
-â†“bprop.30:31:12
-â†“bprop.30:[CNode]32:13â†“bprop.30:[CNode]33:14â†“bprop.30:[CNode]33:14"REF::S-Prim-MakeTuple:15:Default/S-Prim-MakeTuple-op24â†“bprop.30*
-â†“bprop.30:Ñ„shapex2
-â†“bprop.30:[CNode]33:14B
-after_block€	B"âœ—bprop.262
-bprop.21:shapex:2B°
-‡
-get_bprop_expand_dims.19:xâœ“bprop.25:shapex:16âœ“bprop.25:shapex:16"REF::S-Prim-TensorShape:17:Default/S-Prim-TensorShape-op25âœ“bprop.252
-âœ“bprop.25:shapex:16B³
->[ValueNode]34[ValueNode]34"Constant*
-value*__bool__€
-p
-
-bool_.24:x
-[ValueNode]34bool_.24:[CNode]35:18bool_.24:[CNode]35:18"REF::getattr:19:Default/getattr-op26
-Nbool_.24:[CNode]36:20bool_.24:[CNode]36:20"REF::bool_.24:[CNode]35:18:27bool_.24*
-
-bool_.24:x2
-bool_.24:[CNode]36:20Pb
-Switch:8Switchb
-
-getattr:19getattrb
-S-Prim-Shape:3S-Prim-Shapeb'
-S-Prim-MakeTuple:15S-Prim-MakeTupleb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownbm
-S-Prim-TensorShape:17S-Prim-TensorShape
-output_names€ŠZoutput€
-input_names€ŠZinput_x€h

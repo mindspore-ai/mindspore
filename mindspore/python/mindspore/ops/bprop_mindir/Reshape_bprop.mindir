@@ -1,60 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:ý
-cget_bprop_reshape.1:[CNode]2:1get_bprop_reshape.1:[CNode]2:1"REF::bprop.3:Default/bprop.3-op0get_bprop_reshape.1*
-get_bprop_reshape.1:self*
-get_bprop_reshape.1:x*
-get_bprop_reshape.1:Ñ„shp*
-get_bprop_reshape.1:out*
-get_bprop_reshape.1:Ñ„dout2 
-get_bprop_reshape.1:[CNode]2:1:@d7c01d2d3181f48670b5fbd024a5c1c23f406e97b11b20c3a99a03fab27b00eaJ/grad_array_ops.pyBš
-j
-get_bprop_reshape.1:xbprop.3:shapex:2bprop.3:shapex:2"REF::S-Prim-Shape:3:Default/S-Prim-Shape-op1
-{
-bprop.3:shapex:2bprop.3:[CNode]4:4bprop.3:[CNode]4:4"REF::S-Prim-IsShapeUnKnown:5:!Default/S-Prim-IsShapeUnKnown-op2
-_
-bprop.3:[CNode]4:4bprop.3:[CNode]5:6bprop.3:[CNode]5:6"REF::bool_.6:Default/bool_.6-op3
-w
-bprop.3:[CNode]5:6
-
-âœ“bprop.7
-
-âœ—bprop.8bprop.3:[CNode]9:7bprop.3:[CNode]9:7"REF::Switch:8:Default/Switch-op4
-Fbprop.3:[CNode]10:9bprop.3:[CNode]10:9"REF::bprop.3:[CNode]9:7:5
-l
-bprop.3:[CNode]10:9bprop.3:[CNode]11:10bprop.3:[CNode]11:10"REF::â†“bprop.12:Default/â†“bprop.12-op6bprop.32
-bprop.3:[CNode]11:10BÍ
-²â†“bprop.12:13:11â†“bprop.12:13:11":REF::ClassType::mindspore.ops.operations.array_ops.Reshape:NDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Reshape'-op7
-s
-get_bprop_reshape.1:Ñ„dout
-â†“bprop.12:Ñ„shapexâ†“bprop.12:13:12â†“bprop.12:13:12"REF::â†“bprop.12:13:11:8
-®
-get_bprop_reshape.1:Ñ„shpâ†“bprop.12:[CNode]14:13â†“bprop.12:[CNode]14:13".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:-Default/S-Prim-hyper_map[zeros_like_leaf]-op9
-š
-â†“bprop.12:13:12
-â†“bprop.12:[CNode]14:13â†“bprop.12:[CNode]15:14â†“bprop.12:[CNode]15:14"REF::S-Prim-MakeTuple:15:Default/S-Prim-MakeTuple-op10â†“bprop.12*
-â†“bprop.12:Ñ„shapex2
-â†“bprop.12:[CNode]15:14B
-after_block€	B 
-âœ—bprop.82
-bprop.3:shapex:2B§
-€
-get_bprop_reshape.1:xâœ“bprop.7:shapex:16âœ“bprop.7:shapex:16"REF::S-Prim-TensorShape:17:Default/S-Prim-TensorShape-op11
-âœ“bprop.72
-âœ“bprop.7:shapex:16Bª
->[ValueNode]16[ValueNode]16"Constant*
-value*__bool__€
-m
-	bool_.6:x
-[ValueNode]16bool_.6:[CNode]17:18bool_.6:[CNode]17:18"REF::getattr:19:Default/getattr-op12
-Kbool_.6:[CNode]18:20bool_.6:[CNode]18:20"REF::bool_.6:[CNode]17:18:13bool_.6*
-	bool_.6:x2
-bool_.6:[CNode]18:20Pb
-Switch:8Switchb
-
-getattr:19getattrb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb
-S-Prim-Shape:3S-Prim-Shapeb'
-S-Prim-MakeTuple:15S-Prim-MakeTuplebm
-S-Prim-TensorShape:17S-Prim-TensorShape
-output_names€ŠZoutput€
-input_names€ŠZinput_x€h

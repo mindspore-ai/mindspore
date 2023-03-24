@@ -1,15 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:ÿ
-u#get_bprop_argmax.1027:[CNode]1028:1#get_bprop_argmax.1027:[CNode]1028:1"REF::bprop.1029:Default/bprop.1029-op820get_bprop_argmax.1027*
-get_bprop_argmax.1027:self*
-get_bprop_argmax.1027:x*
-get_bprop_argmax.1027:out*
-get_bprop_argmax.1027:dout2%
-#get_bprop_argmax.1027:[CNode]1028:1:@c1bdaf52c4157e91a81b3f089baa28644b7ead8d17fa1975f3935bbc42cce80dJ/grad_array_ops.pyBã
-®
-get_bprop_argmax.1027:xbprop.1029:[CNode]1030:2bprop.1029:[CNode]1030:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op821
-‡
-bprop.1029:[CNode]1030:2bprop.1029:[CNode]1031:3bprop.1029:[CNode]1031:3"REF::S-Prim-MakeTuple:4:Default/S-Prim-MakeTuple-op822
-bprop.10292
-bprop.1029:[CNode]1031:3Pb&
-S-Prim-MakeTuple:4S-Prim-MakeTupleh

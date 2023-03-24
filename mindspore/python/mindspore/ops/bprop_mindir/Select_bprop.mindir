@@ -1,31 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:æ
-o!get_bprop_select.987:[CNode]988:1!get_bprop_select.987:[CNode]988:1"REF::bprop.989:Default/bprop.989-op791
-ºget_bprop_select.987:select:3get_bprop_select.987:select:3"9REF::ClassType::mindspore.ops.operations.array_ops.Select:?Default/class 'mindspore.ops.operations.array_ops.Select'-op793get_bprop_select.987*
-get_bprop_select.987:self*
-get_bprop_select.987:cond*
-get_bprop_select.987:x*
-get_bprop_select.987:y*
-get_bprop_select.987:out*
-get_bprop_select.987:dout2#
-!get_bprop_select.987:[CNode]988:1:@1131f548644251e0757579514cc95fc63ce7b6647694c3c6bd937ae4e4cc8db0J/grad_array_ops.pyB´
-¬
-get_bprop_select.987:condbprop.989:[CNode]990:2bprop.989:[CNode]990:2".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op792
-©
-get_bprop_select.987:xbprop.989:[CNode]991:4bprop.989:[CNode]991:4".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op794
-§
-get_bprop_select.987:cond
-get_bprop_select.987:dout
-bprop.989:[CNode]991:4bprop.989:[CNode]992:5bprop.989:[CNode]992:5""REF::get_bprop_select.987:select:3:795
-©
-get_bprop_select.987:ybprop.989:[CNode]993:6bprop.989:[CNode]993:6".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op796
-§
-get_bprop_select.987:cond
-bprop.989:[CNode]993:6
-get_bprop_select.987:doutbprop.989:[CNode]994:7bprop.989:[CNode]994:7""REF::get_bprop_select.987:select:3:797
-±
-bprop.989:[CNode]990:2
-bprop.989:[CNode]992:5
-bprop.989:[CNode]994:7bprop.989:[CNode]995:8bprop.989:[CNode]995:8"REF::S-Prim-MakeTuple:9:Default/S-Prim-MakeTuple-op798	bprop.9892
-bprop.989:[CNode]995:8Pb&
-S-Prim-MakeTuple:9S-Prim-MakeTupleh
