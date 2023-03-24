@@ -755,6 +755,12 @@ bool CconvPass(const ResourcePtr &resource) {
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
+bool AutoParallelPass(const ResourcePtr &resource) {
+  auto func_graph = resource->func_graph();
+  auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
+  return parallel::StepAutoParallel(func_graph, opt);
+}
+
 bool ValidatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
