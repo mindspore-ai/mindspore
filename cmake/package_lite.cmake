@@ -552,10 +552,10 @@ if(PLATFORM_ARM64)
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
             if(MSLITE_ENABLE_ACL)
                 set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
-                install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                         DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
                 if(MSLITE_ENABLE_RUNTIME_CONVERT)
-                    install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                    install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                             DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                             RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -939,10 +939,10 @@ else()
 
         if(MSLITE_ENABLE_ACL)
             set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
-            install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+            install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             if(MSLITE_ENABLE_RUNTIME_CONVERT)
-                install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
+                install(FILES ${LITE_ACL_DIR}/mslite_shared_lib/libmslite_shared_lib.so
                         DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
