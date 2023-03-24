@@ -73,6 +73,18 @@ class Context:
         >>> context = mslite.Context()
         >>> print(context)
         target: ["cpu"].
+        >>> # testcase 2 about context's attribute parallel based on server inference package
+        >>> # (export MSLITE_ENABLE_SERVER_INFERENCE=on before compile lite or use cloud inference package)
+        >>> import mindspore_lite as mslite
+        >>> context = mslite.Context()
+        >>> context.target = ["cpu"]
+        >>> context.parallel.workers_num = 4
+        >>> context.parallel.config_info = {"weight": {"weight_path": "/home/user/weight.cfg"}}
+        >>> context.parallel.config_path = "/home/user/config.txt"
+        >>> print(context.parallel)
+        workers num: 4,
+        config info: weight: weight_path /home/user/weight.cfg,
+        config path: /home/user/config.txt.
     """
 
     def __init__(self):
@@ -110,10 +122,11 @@ class Context:
               `inter_op_parallel_num` cannot be greater than `thread_num` . Setting `inter_op_parallel_num`
               to 0 represents `inter_op_parallel_num` will be automatically adjusted based on computer
               performance and core num.
-            - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
+            - **precision_mode** (str) - Set the mix precision mode. Options are "preferred_fp16" |
+              "enforce_fp32".
 
-              - "force_fp16": Force the fp16 precision mode.
-              - "must_keep_origin_dtype": keep the origin precision data type.
+              - "preferred_fp16": prefer to use fp16.
+              - "enforce_fp32": force to use fp32.
 
             - **thread_num** (int) - Set the number of threads at runtime. `thread_num` cannot be less than
               `inter_op_parallel_num` . Setting `thread_num` to 0 represents `thread_num` will be automatically
@@ -131,23 +144,24 @@ class Context:
         gpu properties:
             - **device_id** (int) - The device id.
             - **group_size** (int) - the number of the clusters. Get only, not settable.
-            - **precision_mode** (str) - Set the mix precision mode. Options: "force_fp16" | "must_keep_origin_dtype".
+            - **precision_mode** (str) - Set the mix precision mode. Options are "preferred_fp16" | "enforce_fp32".
 
-              - "force_fp16": Force the fp16 precision mode.
-              - "must_keep_origin_dtype": keep the origin precision data type.
+              - "preferred_fp16": prefer to use fp16.
+              - "enforce_fp32": force to use fp32.
 
             - **rank_id** (int) - the ID of the current device in the cluster, which starts from 0. Get only,
               not settable.
 
         ascend properties:
             - **device_id** (int) - The device id.
-            - **precision_mode** (str) - Set the mix precision mode. Options: "allow_fp32_to_fp16" |
-              "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
+            - **precision_mode** (str) - Set the mix precision mode. Options are "enforce_fp32" | "preferred_fp32" |
+              "enforce_fp16" | "enforce_origin" | "preferred_optimal".
 
-              - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
-              - "allow_mix_precision": allow mix precision mode.
-              - "force_fp16": Force the fp16 precision mode.
-              - "must_keep_origin_dtype": keep the origin precision data type.
+              - "enforce_fp32": ACL option is force_fp32, force to use fp32.
+              - "preferred_fp32": ACL option is force_fp32, prefer to use fp32.
+              - "enforce_fp16": ACL option is force_fp16, force to use fp16.
+              - "enforce_origin": ACL option is must_keep_origin_dtype, force to use original type.
+              - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
         Returns:
             list[str], the target device information of context.
@@ -160,7 +174,7 @@ class Context:
             >>> context.target = ["cpu"]
             >>> print(context.target)
             ["cpu"]
-            >>> context.cpu.precision_mode="force_fp16"
+            >>> context.cpu.precision_mode="preferred_fp16"
             >>> context.cpu.thread_num = 2
             >>> context.cpu.inter_op_parallel_num = 2
             >>> context.cpu.thread_affinity_mode = 1
@@ -169,7 +183,7 @@ class Context:
             >>> context.target = ["gpu"]
             >>> print(context.target)
             ["gpu"]
-            >>> context.gpu.precision_mode = "force_fp16"
+            >>> context.gpu.precision_mode = "preferred_fp16"
             >>> context.gpu.device_id = 2
             >>> print(context.gpu.rank_id)
             0
@@ -177,7 +191,7 @@ class Context:
             1
             >>> print(context.gpu)
             device_type: DeviceType:kGPU,
-            precision_mode: force_fp16,
+            precision_mode: preferred_fp16,
             device_id: 2,
             rank_id: 0,
             group_size: 1.
@@ -185,11 +199,11 @@ class Context:
             >>> context.target = ["ascend"]
             >>> print(context.target)
             ["ascend"]
-            >>> context.ascend.precision_mode = "force_fp16"
+            >>> context.ascend.precision_mode = "enforce_fp32"
             >>> context.ascend.device_id = 2
             >>> print(context.ascend)
             device_type: DeviceType:kAscend,
-            precision_mode: force_fp16,
+            precision_mode: enforce_fp32,
             device_id: 2.
         """
         return self._target
@@ -201,7 +215,7 @@ class Context:
 
         Args:
             target (list[str]): the target device information of context.
-            Currently support target: ["cpu"] | ["cpu"] | ["ascend"].
+            Currently support target: ["cpu"] | ["gpu"] | ["ascend"].
 
         Raises:
             TypeError: `target` is not a list.
@@ -212,7 +226,7 @@ class Context:
         check_list_of_element("target", target, str)
         for ele in target:
             if ele.lower() not in ["cpu", "gpu", "ascend"]:
-                raise ValueError(f"target elements must be in ['cpu', 'gpu', 'ascend'].")
+                raise ValueError(f"target elements must be in ['cpu', 'gpu', 'ascend'], but got {ele.lower()}.")
         self._context.clear_target()
         need_cpu_backup = False
         for ele in target:
@@ -333,8 +347,8 @@ class _CPU(_Target):
     def precision_mode(self):
         """Get mixed precision mode."""
         if self._device_info.get_enable_fp16():
-            return "force_fp16"
-        return "must_keep_origin_dtype"
+            return "preferred_fp16"
+        return "enforce_fp32"
 
     @precision_mode.setter
     def precision_mode(self, cpu_precision_mode):
@@ -342,19 +356,20 @@ class _CPU(_Target):
         Set mixed precision mode.
 
         Args:
-            cpu_precision_mode (str): Set mixed precision mode. CPU options: "force_fp16" | "must_keep_origin_dtype".
+            cpu_precision_mode (str): Set mixed precision mode. CPU options are "preferred_fp16" | "enforce_fp32".
 
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+                - "preferred_fp16": Force the fp16 precision mode.
+                - "enforce_fp32": keep the origin precision data type.
 
         Raises:
             TypeError: `cpu_precision_mode` is not a str.
-            ValueError: `cpu_precision_mode` is neither "must_keep_origin_dtype" nor "force_fp16" when it is a str.
+            ValueError: `cpu_precision_mode` is neither "enforce_fp32" nor "preferred_fp16" when it is a str.
         """
         check_isinstance("cpu_precision_mode", cpu_precision_mode, str)
-        if cpu_precision_mode not in ["must_keep_origin_dtype", "force_fp16"]:
-            raise ValueError(f"cpu_precision_mode must be in [must_keep_origin_dtype, force_fp16].")
-        if cpu_precision_mode == "force_fp16":
+        if cpu_precision_mode not in ["enforce_fp32", "preferred_fp16"]:
+            raise ValueError(f"cpu_precision_mode must be in [enforce_fp32, preferred_fp16],"
+                             f" but got {cpu_precision_mode}.")
+        if cpu_precision_mode == "preferred_fp16":
             self._device_info.set_enable_fp16(True)
         else:
             self._device_info.set_enable_fp16(False)
@@ -476,8 +491,8 @@ class _GPU(_Target):
     def precision_mode(self):
         """Get mixed precision mode."""
         if self._device_info.get_enable_fp16():
-            return "force_fp16"
-        return "must_keep_origin_dtype"
+            return "preferred_fp16"
+        return "enforce_fp32"
 
     @precision_mode.setter
     def precision_mode(self, gpu_precision_mode):
@@ -485,19 +500,20 @@ class _GPU(_Target):
         Set mixed precision mode.
 
         Args:
-            gpu_precision_mode (str): Set mixed precision mode. GPU options: "force_fp16" | "must_keep_origin_dtype".
+            gpu_precision_mode (str): Set mixed precision mode. GPU options are "preferred_fp16" | "enforce_fp32".
 
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+                - "preferred_fp16": Force the fp16 precision mode.
+                - "enforce_fp32": keep the origin precision data type.
 
         Raises:
             TypeError: `gpu_precision_mode` is not a str.
-            ValueError: `gpu_precision_mode` is neither "must_keep_origin_dtype" nor "force_fp16" when it is a str.
+            ValueError: `gpu_precision_mode` is neither "enforce_fp32" nor "preferred_fp16" when it is a str.
         """
         check_isinstance("gpu_precision_mode", gpu_precision_mode, str)
-        if gpu_precision_mode not in ["must_keep_origin_dtype", "force_fp16"]:
-            raise ValueError(f"gpu_precision_mode must be in [must_keep_origin_dtype, force_fp16].")
-        if gpu_precision_mode == "force_fp16":
+        if gpu_precision_mode not in ["enforce_fp32", "preferred_fp16"]:
+            raise ValueError(f"gpu_precision_mode must be in [enforce_fp32, preferred_fp16],"
+                             f" but got {gpu_precision_mode}.")
+        if gpu_precision_mode == "preferred_fp16":
             self._device_info.set_enable_fp16(True)
         else:
             self._device_info.set_enable_fp16(False)
@@ -572,24 +588,25 @@ class _Ascend(_Target):
         Set mixed precision mode.
 
         Args:
-            ascend_precision_mode (str): Set mixed precision mode. Ascend options: "allow_fp32_to_fp16" |
-                "allow_mix_precision" | "force_fp16" | "must_keep_origin_dtype".
+            ascend_precision_mode (str): Set mixed precision mode. Ascend options are "enforce_fp32" |
+                "preferred_fp32" | "enforce_fp16" | "enforce_origin" | "preferred_optimal".
 
-                - "allow_fp32_to_fp16": allow the fp32 precision mode change to the fp16 precision mode.
-                - "allow_mix_precision": allow mix precision mode.
-                - "force_fp16": Force the fp16 precision mode.
-                - "must_keep_origin_dtype": keep the origin precision data type.
+              - "enforce_fp32": ACL option is force_fp32, force to use fp32.
+              - "preferred_fp32": ACL option is force_fp32, prefer to use fp32.
+              - "enforce_fp16": ACL option is force_fp16, force to use fp16.
+              - "enforce_origin": ACL option is must_keep_origin_dtype, force to use original type.
+              - "preferred_optimal": ACL option is allow_mix_precision, prefer to use fp16+ mix precision mode.
 
         Raises:
             TypeError: `ascend_precision_mode` is not a str.
-            ValueError: `ascend_precision_mode` is not in ["force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype",
-            "allow_mix_precision"] when it is a str.
+            ValueError: `ascend_precision_mode` is not in ["enforce_fp32", "preferred_fp32", "enforce_fp16",
+            "enforce_origin", "preferred_optimal"] when it is a str.
         """
         check_isinstance("ascend_precision_mode", ascend_precision_mode, str)
-        if ascend_precision_mode not in ["force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype",
-                                         "allow_mix_precision"]:
-            raise ValueError(f"ascend_precision_mode must be in [force_fp16, allow_fp32_to_fp16, "
-                             f"must_keep_origin_dtype, allow_mix_precision].")
+        if ascend_precision_mode not in ["enforce_fp32", "preferred_fp32", "enforce_fp16", "enforce_origin",
+                                         "preferred_optimal"]:
+            raise ValueError(f"ascend_precision_mode must be in [enforce_fp32, preferred_fp32, enforce_fp16, "
+                             f"enforce_origin, preferred_optimal], but got {ascend_precision_mode}.")
         self._device_info.set_precision_mode(ascend_precision_mode)
 
     @property
@@ -669,7 +686,7 @@ class _Parallel:
     @property
     def config_info(self):
         """Get the device id."""
-        return self._runner_config.get_config_info_string()
+        return self._runner_config.get_config_info_string().rstrip("\n")
 
     @config_info.setter
     def config_info(self, config_info):

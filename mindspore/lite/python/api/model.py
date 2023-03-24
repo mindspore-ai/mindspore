@@ -98,9 +98,9 @@ class Model:
         Load and build a model from file.
 
         Args:
-            model_path (str): Path of the input model when build from file. For example, "/home/user/model.ms". Options:
-                MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms".
-            model_type (ModelType): Define The type of input model file. Options: ModelType.MINDIR |
+            model_path (str): Path of the input model when build from file. For example, "/home/user/model.ms". Options
+                are MindSpore model: "model.mindir" | MindSpore Lite model: "model.ms".
+            model_type (ModelType): Define The type of input model file. Options are ModelType.MINDIR |
                 ModelType.MINDIR_LITE. For details, see
                 `ModelType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.ModelType.html>`_ .
             context (Context, optional): Define the context used to transfer options during execution. Default: None.
