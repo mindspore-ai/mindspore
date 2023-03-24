@@ -88,14 +88,16 @@ uint32_t MultiMarginLossGradCpuKernel::MultiMarginLossGradCheck(CpuKernelContext
     KERNEL_CHECK_FALSE(*(target + i) >= 0 && (*(target + i) < dims), KERNEL_STATUS_PARAM_INVALID,
                        "[%s]'s target out of range.", ctx.GetOpType().c_str());
   }
-  if (ctx.Input(0)->GetTensorShape()->GetDims() == 1) {
+  AttrValue *Attr_red = ctx.GetAttr("reduction");
+  std::string reduction = (Attr_red == nullptr) ? "mean" : Attr_red->GetString();
+  if (reduction == "none") {
     KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDimSize(0) == ctx.Input(1)->GetTensorShape()->GetDimSize(0),
                        KERNEL_STATUS_PARAM_INVALID,
                        "[%s] 's y_grad's shape should be the same as "
                        "target when reduction is none.",
                        ctx.GetOpType().c_str())
   } else {
-    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
+    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
                        "[%s] 's y_grad should be a scalar "
                        "when reduction is mean or sum.",
                        ctx.GetOpType().c_str())
