@@ -808,6 +808,10 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
 }
 
 int MatmulFp32BaseCPUKernel::Run() {
+  if (parallel_fun_ == nullptr) {
+    MS_LOG(ERROR) << "parallel_fun_ can not be nullptr";
+    return RET_ERROR;
+  }
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(out_data);
   if (!out_need_aligned_) {
