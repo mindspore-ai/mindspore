@@ -220,10 +220,6 @@ std::string OpenCLKernel::OpenCLKernelHeader() {
 }
 
 bool OpenCLKernel::MallocDataDone() {
-  if ((op_parameter_->type_ >= PrimType::PrimType_InnerOpMin) &&
-      (op_parameter_->type_ < PrimType::PrimType_InnerOpMax)) {
-    return false;
-  }
   for (auto &out_tensor : out_tensors_) {
     if (out_tensor->data() == nullptr) {
       return false;
