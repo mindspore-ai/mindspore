@@ -45,6 +45,12 @@ class SigmoidInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+
+    auto output_shape_ptr = input_args[0]->BuildShape();
+    auto output_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(output_shape_ptr)[kShape];
+    if (IsDynamic(output_shape)) {
+      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    }
     return input_args[0]->BuildShape();
   }
 
