@@ -275,62 +275,6 @@ void KernelRuntime::AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &no
   }
 }
 
-void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
-                                   const std::vector<tensor::TensorPtr> &input_tensors) {
-  const auto &nodes = graph.execution_order();
-  // Malloc for Node output
-  for (const auto &node : nodes) {
-    auto output_num = AnfAlgo::GetOutputTensorNum(node);
-    for (size_t i = 0; i < output_num; ++i) {
-      MS_EXCEPTION_IF_NULL(node);
-      auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
-      MS_EXCEPTION_IF_NULL(runtime_info);
-      auto const &output_format = runtime_info->output_format(i);
-      auto output_type = runtime_info->output_type(i);
-      auto tensor_size = runtime_info->output_tensor_size(i);
-      // Create DeviceAddress without ptr.
-      // Get real device ptr after KernelBuild finish.
-      auto device_address = CreateDeviceAddress(nullptr, tensor_size, output_format, output_type);
-      device_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
-      AnfAlgo::SetOutputAddr(device_address, i, node.get());
-    }
-  }
-
-  // Malloc for graph input
-  if (input_tensors.size() != graph.inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size()
-                      << " should be equal to graph input parameter size " << graph.inputs().size();
-  }
-  for (size_t input_index = 0; input_index < graph.inputs().size(); ++input_index) {
-    auto item = graph.inputs()[input_index];
-    MS_EXCEPTION_IF_NULL(item);
-    if (!item->isa<Parameter>()) {
-      continue;
-    }
-    auto output_size = AnfAlgo::GetOutputTensorNum(item);
-    for (size_t index = 0; index < output_size; index++) {
-      auto current_tensor = input_tensors[input_index];
-      MS_EXCEPTION_IF_NULL(current_tensor);
-      auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(current_tensor->device_address());
-      if (output_address != nullptr && output_address->GetDeviceType() == GetTargetDeviceType()) {
-        AnfAlgo::SetOutputAddr(output_address, index, item.get());
-        continue;
-      }
-      auto op_runtime_info = item->user_data<runtime::OpRuntimeInfo>();
-      MS_EXCEPTION_IF_NULL(op_runtime_info);
-      TypeId output_type_id = op_runtime_info->output_type(index);
-      auto output_tensor_size = op_runtime_info->output_tensor_size(index);
-      auto output_format = op_runtime_info->output_format(index);
-      auto device_address =
-        CreateDeviceAddress(nullptr, output_tensor_size, output_format, output_type_id, {item, index});
-      device_address->set_from_persistent_mem(current_tensor->is_parameter());
-      AnfAlgo::SetOutputAddr(device_address, index, item.get());
-      current_tensor->set_device_address(device_address);
-      current_tensor->set_sync_status(kNeedSyncHostToDevice);
-    }
-  }
-}
-
 void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
   auto kernels = kernel_graph.execution_order();
   for (auto &kernel : kernels) {

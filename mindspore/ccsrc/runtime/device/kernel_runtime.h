@@ -61,7 +61,6 @@ class BACKEND_EXPORT KernelRuntime {
   void AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &node) const;
   void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph &graph) const;
-  void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
   using TbeLaunchKernelModCallBack =
     std::function<void(const AnfNodePtr &, const kernel::KernelMod *kernel_mod, std::vector<AddressPtr> *)>;
   static void tbe_call_setter(const TbeLaunchKernelModCallBack &call) { tbe_call_ = call; }
@@ -100,7 +99,7 @@ class BACKEND_EXPORT KernelRuntime {
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
-  uint32_t device_id() { return device_id_; }
+  uint32_t device_id() const { return device_id_; }
   static bool UseMemScheduler();
   void SyncParameter(const session::KernelGraph &graph, const std::shared_ptr<MemScheduler> &mem_scheduler) const;
 
