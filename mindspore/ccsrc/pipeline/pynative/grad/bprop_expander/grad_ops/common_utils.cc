@@ -574,7 +574,6 @@ NodePtr SumGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis,
 
 NodePtr MinOrMaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout) {
-  auto input_shape = ib->GetShape(x);
   auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
     auto input_shape = inputs.at(0);
     auto axis_value = inputs.at(1);

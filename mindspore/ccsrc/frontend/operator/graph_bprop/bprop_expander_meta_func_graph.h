@@ -44,11 +44,11 @@ class BpropExpanderMetaFuncGraph : public BpropMetaFuncGraph {
 
 FuncGraphPtr GetExpandBprop(const BpropHandle *handle, const PrimitivePtr &primal, size_t forward_inputs_size);
 
-#define REGISTER_EXPANDER_BPROP_IMPL(name)                                                            \
-  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(                        \
-    STR(name), [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {     \
-      static auto *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(STR(name)); \
-      return GetExpandBprop(handle, primal, forward_inputs_size);                                     \
+#define REGISTER_EXPANDER_BPROP_IMPL(name)                                                                  \
+  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(                              \
+    STR(name), [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {           \
+      static const auto *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(STR(name)); \
+      return GetExpandBprop(handle, primal, forward_inputs_size);                                           \
     })
 
 void RegBpropExpanderOps();
