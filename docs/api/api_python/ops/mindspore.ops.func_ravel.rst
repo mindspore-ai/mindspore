@@ -3,7 +3,7 @@ mindspore.ops.ravel
 
 .. py:function:: mindspore.ops.ravel(input)
 
-    返回一个展开的一维Tensor。
+    沿着0轴方向，将多维Tensor展开成一维。
 
     参数：
         - **input** (Tensor) - 要展开的Tensor。
