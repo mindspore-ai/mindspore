@@ -70,7 +70,7 @@
             - **MRMIndexGeneratorError** - 创建索引Generator失败。
             - **MRMGenerateIndexError** - 写入数据库失败。
             - **MRMCommitError** - 数据同步到磁盘失败。
-
+            - **RuntimeError** - 并行写失败。
 
     .. py:method:: open_and_set_header()
 
@@ -147,4 +147,4 @@
             - **MRMValidateDataError** - 数据校验失败。
             - **MRMSetHeaderError** - 设置MindRecord文件的header失败。
             - **MRMWriteDatasetError** - 写入MindRecord格式的数据集失败。
-
+            - **TypeError** - 参数 `parallel_writer` 不是bool类型。
