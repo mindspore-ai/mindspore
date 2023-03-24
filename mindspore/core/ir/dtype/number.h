@@ -55,7 +55,7 @@ class MS_CORE_API Number : public Object {
   TypeId type_id() const override { return number_type_; }
   TypeId generic_type_id() const override { return kObjectTypeNumber; }
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
   TypePtr DeepCopy() const override { return std::make_shared<Number>(); }
   std::string ToString() const override { return "Number"; }
   std::string ToReprString() const override { return "number"; }

@@ -17,10 +17,7 @@
 #include "ir/adapter_tensor.h"
 
 #include <memory>
-#include <utility>
-#include <algorithm>
 #include "abstract/utils.h"
-#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace tensor {

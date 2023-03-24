@@ -1629,8 +1629,6 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
  public:
   explicit AbstractMapTensor(const MapTensorPtr &map_tensor);
   AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value);
-  AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                    const ValuePtr &ref_key_value, const ValuePtr &default_value);
   AbstractMapTensor(const AbstractMapTensor &other);
   AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
                     const ValuePtr &ref_key_value, const ValuePtr &default_value, const ValuePtr &permit_filter_value,
@@ -1638,6 +1636,8 @@ class MS_CORE_API AbstractMapTensor final : public AbstractBase {
   ~AbstractMapTensor() override = default;
 
   MS_DECLARE_PARENT(AbstractMapTensor, AbstractBase)
+
+  AbstractMapTensor &operator=(const AbstractMapTensor &other);
 
   MapTensorTypePtr map_tensor_type() const { return dyn_cast<MapTensorType>(GetTypeTrack()); }
   ShapePtr shape() const { return dyn_cast<Shape>(GetShapeTrack()); }

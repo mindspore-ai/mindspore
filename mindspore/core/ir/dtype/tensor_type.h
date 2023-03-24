@@ -69,7 +69,7 @@ class MS_CORE_API UndeterminedType final : public Object {
   std::string DumpText() const override;
 
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
 
  protected:
   TypePtr element_type_;

@@ -128,7 +128,7 @@ class MS_CORE_API MapTensor final : public Tensor {
 
   TypeId value_dtype() const { return data_type_; }
 
-  size_t size() const { return size_; }
+  int64_t size() const { return size_; }
 
   const ShapeVector &value_shape() const { return value_shape_; }
 
@@ -212,7 +212,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   ShapeVector value_shape_;
 
   // The size of keys, shape_ is (size_, value_shape_).
-  size_t size_;
+  int64_t size_;
 
   // Key tensor of data.
   TensorPtr key_tensor_;
