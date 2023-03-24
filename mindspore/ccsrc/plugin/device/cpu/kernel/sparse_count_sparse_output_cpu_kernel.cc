@@ -130,8 +130,11 @@ int SparseCountSparseOutputCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   values_shape_ = inputs[kValuesIndex]->GetShapeVector();
   shape_shape_ = inputs[kShapeIndex]->GetShapeVector();
   weights_shape_ = inputs[kWeightsIndex]->GetShapeVector();
-  values_size_ = LongToSize(values_shape_[0]);
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+    return ret;
+  }
+  values_size_ = LongToSize(values_shape_[0]);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kSparseCountSparseOutputInputsNum) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kSparseCountSparseOutputInputsNum
