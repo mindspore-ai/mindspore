@@ -44,22 +44,12 @@ bool ZetaGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 
 int ZetaGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
   }
-  ResetResource();
-  std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                           outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
-  if (output_elements_ == 0) {
-    is_null_input_ = true;
-  }
-  InitSizeLists();
+  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
+  output_elements_ = SizeOf(output_shape);
   return KRET_OK;
 }
 
