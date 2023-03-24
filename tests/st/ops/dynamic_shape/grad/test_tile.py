@@ -44,7 +44,7 @@ def dynamic_rank():
     test_dynamic.test_dynamic_grad_net((x, y), True)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

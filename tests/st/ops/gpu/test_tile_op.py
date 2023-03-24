@@ -62,11 +62,13 @@ def ms_tile(nptype):
     ms_output = tile_net(mul_2).asnumpy()
     np.testing.assert_array_equal(ms_output, np_expected)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tile_float16():
     ms_tile(np.float16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -74,11 +76,13 @@ def test_tile_float16():
 def test_tile_float32():
     ms_tile(np.float32)
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tile_float64():
     ms_tile(np.float64)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -86,11 +90,13 @@ def test_tile_float64():
 def test_tile_int16():
     ms_tile(np.int16)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tile_int32():
     ms_tile(np.int32)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
