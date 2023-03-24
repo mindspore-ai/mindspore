@@ -6692,9 +6692,9 @@ def cartesian_prod(*inputs):
 
 def atleast_3d(inputs):
     r"""
-    Reshapes Tensor in `inputs`, every Tensor has at least 2 dimension after this operation.
+    Reshapes Tensor in `inputs`, every Tensor has at least 3 dimension after this operation.
 
-    Scalar, 1-D or 2-D Tensor is converted to 2-D Tensor,
+    Scalar, 1-D or 2-D Tensor is converted to 3-D Tensor,
     tensor with higher dimensions will be returned as it is.
 
     Args:
@@ -9568,12 +9568,14 @@ def conj(input):
 def cross(input, other, dim=None):
     r"""
     Computes the cross product of `input` and `other` in dimension `dim`.
+    `input` and `other` must have the same shape, and the size of their `dim` dimension should be `3`.
+    If `dim` is not specified, it is set to be the first dimension found with the size `3`.
 
     Args:
         input (Tensor): input is a tensor.
         other (Tensor):  The other Tensor, `other` must have the same shape and type as input `input`, and
             the size of their `dim` dimension should be `3`.
-        dim (int): dimension to apply cross product in. if `dim` is None, it is set to be the first dimension
+        dim (int, optional): dimension to apply cross product in. if `dim` is None, it is set to be the first dimension
             found with the size `3`. Default: None.
 
     Returns:

@@ -177,8 +177,8 @@ def clamp(input, min=None, max=None):
     Args:
           input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
             Tensor. The shape of Tensor is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          min (Union(Tensor, float, int)): The minimum value. Default: None.
-          max (Union(Tensor, float, int)): The maximum value. Default: None.
+          min (Union(Tensor, float, int), optional): The minimum value. Default: None.
+          max (Union(Tensor, float, int), optional): The maximum value. Default: None.
 
     Returns:
           Union(Tensor, tuple[Tensor], list[Tensor]), a clipped Tensor or a tuple or a list of clipped Tensor.
