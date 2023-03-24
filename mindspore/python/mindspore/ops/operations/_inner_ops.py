@@ -28,6 +28,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim
 from mindspore import context
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
@@ -2495,3 +2496,42 @@ class TileSize(Primitive):
             if i != j:
                 size[idx] = j
         return tuple(size)
+
+
+class GetitemTensorIndexInfo(Primitive):
+    r"""
+        Get getitem tensor index info
+    """
+
+    @prim_attr_register
+    def __init__(self, is_ascend):
+        """Initialize GetitemTensorIndexInfo"""
+        self.init_prim_io_names(inputs=['data', 'index'],
+                                outputs=["new_index", "tensor_update_types", "tensor_update_args"])
+        validator.check_value_type('is_ascend', is_ascend, [bool], self.name)
+        self.is_ascend = is_ascend
+
+    def __call__(self, data, index):
+        return Tensor_.getitem_index_info(data, index, self.is_ascend)
+
+
+class SetitemTensorIndexInfo(Primitive):
+    r"""
+        Get setitem tensor index info
+    """
+
+    @prim_attr_register
+    def __init__(self, is_ascend):
+        """Initialize GetitemTensorIndexInfo"""
+        self.init_prim_io_names(
+            inputs=['data', 'index', 'value'], outputs=['new_index',
+                                                        'v_transfer_types',
+                                                        'v_transfer_args',
+                                                        'tensor_update_types',
+                                                        'tensor_update_args',
+                                                        'special_for_parameters'])
+        validator.check_value_type('is_ascend', is_ascend, [bool], self.name)
+        self.is_ascend = is_ascend
+
+    def __call__(self, data, index, value):
+        return Tensor_.setitem_index_info(data, index, value, self.is_ascend)

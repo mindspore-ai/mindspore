@@ -24,6 +24,7 @@
 #include "utils/cache_embedding_hashmap_struct.h"
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/distributed/embedding_cache/embedding_cache_utils.h"
+#include "pybind_api/ir/tensor_index_py.h"
 
 namespace mindspore {
 namespace tensor {
@@ -632,6 +633,8 @@ void RegMetaTensor(const py::module *m) {
                                  (4, 4)
                              )mydelimiter")
     .def("_flatten_tensors", Tensor::FlattenTensors, py::arg("fusion_size") = 0)
+    .def("setitem_index_info", TensorIndex::SetItemIndexInfo)
+    .def("getitem_index_info", TensorIndex::GetItemIndexInfo)
     .def("_is_flattened", Tensor::IsFlattened)
     .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
     .def("_get_fusion_size", Tensor::GetFusionSize)
