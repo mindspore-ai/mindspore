@@ -45,8 +45,7 @@ class DenseThor(Cell):
     The dense connected layer and saving the information needed for THOR.
 
     Applies dense connected layer for the input and saves the information A and G in the dense connected layer
-    needed for THOR, the detail can be seen in `THOR, Trace-based Hardware-driven layer-ORiented Natural
-    Gradient Descent Computation <https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf>`_.
+    needed for THOR.
     This layer implements the operation as:
 
     .. math::
@@ -283,7 +282,6 @@ class Conv2dThor(_ConvThor):
     Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is channel number, and :math:`H_{in}, W_{in})` are height and width.
     And saves the information A and G in the 2D convolution layer needed for THOR.
-    The detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
 
     For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
 
@@ -540,7 +538,7 @@ class EmbeddingThor(Cell):
     This module is often used to store word embeddings and retrieve them using
     indices. The input to the module is a list of indices, and the output is
     the corresponding word embeddings. And saves the information A and G in the dense connected layer
-    needed for THOR, the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+    needed for THOR.
 
     Note:
         When 'use_one_hot' is set to True, the type of the input `x` must be mindspore.int32.
@@ -590,7 +588,7 @@ class EmbeddingThor(Cell):
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_BOTH,
                                                          "padding_idx", self.cls_name)
-            self.init_tensor = self.init_tensor.to_tensor().asnumpy()
+            self.init_tensor = self.init_tensor.init_data().asnumpy()
             self.init_tensor[self.padding_idx] = 0
         self.embedding_table = Parameter(self.init_tensor, name='embedding_table')
         self.expand = P.ExpandDims()
@@ -671,8 +669,7 @@ class EmbeddingLookupThor(Cell):
     and saving the information needed for THOR.
 
     This module has the same function as EmbeddingLookup, but additionally saves the information A and G in the
-    embeddinglookup layer needed for THOR,
-    the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+    embeddinglookup layer needed for THOR.
 
 
     Args:
