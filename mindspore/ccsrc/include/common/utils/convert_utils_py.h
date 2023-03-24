@@ -39,6 +39,7 @@ COMMON_EXPORT tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 COMMON_EXPORT ValuePtr PyStubNodeCast(const py::handle &obj);
 COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                                      const std::shared_ptr<py::object> &ret_val);
+COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_PY_H_
