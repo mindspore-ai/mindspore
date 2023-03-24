@@ -128,7 +128,7 @@ class InsertQuantNodeManager {
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
     T *origin_data = static_cast<T *>(tensor_info->data_c());
     Transpose2Dim(origin_data, out_data, strides, perm, lite::quant::ConvertShapeVectorToInt32(transfer_shape).data());
-    auto mem_ret = memcpy_s(tensor_info->data_c(), tensor_info->Size(), out_data, tensor_info->DataSize());
+    auto mem_ret = memcpy_s(tensor_info->data_c(), tensor_info->Size(), out_data, tensor_info->DataSize() * sizeof(T));
     delete[] out_data;
     if (mem_ret != EOK) {
       MS_LOG(ERROR) << "memcpy failed.";
