@@ -115,7 +115,7 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
   const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
   if (indices_abs->isa<abstract::AbstractTensor>() || indices_abs->isa<abstract::AbstractScalar>()) {
     (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->BuildType(), indices_valid_types, prim->name());
-  } else if (indices_abs->isa<abstract::AbstractSequence>()) {
+  } else if (indices_abs->isa<abstract::AbstractTuple>()) {
     const auto &seq_ele = indices_abs->cast<abstract::AbstractSequencePtr>()->elements();
     if (seq_ele.empty()) {
       MS_EXCEPTION(ValueError) << "Input indices should not be empty: " << indices_abs->ToString();
@@ -123,7 +123,8 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
     const auto &element0 = seq_ele[kInputIndex0];
     (void)CheckAndConvertUtils::CheckTypeValid("indices", element0->BuildType(), indices_valid_types, prim->name());
   } else {
-    MS_EXCEPTION(TypeError) << "Input 'indices' should be scalar, tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "Input 'indices' should be int scalar, tuple or Tensor, but got "
+                            << indices_abs->ToString();
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
 }
