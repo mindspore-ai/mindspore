@@ -1,82 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:Ë
-{&get_bprop_roi_align.1049:[CNode]1050:1&get_bprop_roi_align.1049:[CNode]1050:1"REF::bprop.1051:Default/bprop.1051-op806
-‘#get_bprop_roi_align.1049:shape_op:2#get_bprop_roi_align.1049:shape_op:2"8REF::ClassType::mindspore.ops.operations.array_ops.Shape:NDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.Shape'-op807
-G[ValueNode]1061[ValueNode]1061"Constant*
-value*pooled_heightÄ
-≤
-get_bprop_roi_align.1049:self
-[ValueNode]1061+get_bprop_roi_align.1049:—Ñpooled_height:11+get_bprop_roi_align.1049:—Ñpooled_height:11"REF::getattr:12:Default/getattr-op814
-F[ValueNode]1062[ValueNode]1062"Constant*
-value*pooled_widthÄ
-∞
-get_bprop_roi_align.1049:self
-[ValueNode]1062*get_bprop_roi_align.1049:—Ñpooled_width:13*get_bprop_roi_align.1049:—Ñpooled_width:13"REF::getattr:12:Default/getattr-op815
-G[ValueNode]1063[ValueNode]1063"Constant*
-value*spatial_scaleÄ
-≤
-get_bprop_roi_align.1049:self
-[ValueNode]1063+get_bprop_roi_align.1049:—Ñspatial_scale:14+get_bprop_roi_align.1049:—Ñspatial_scale:14"REF::getattr:12:Default/getattr-op816
-D[ValueNode]1064[ValueNode]1064"Constant*
-value*
-sample_numÄ
-¨
-get_bprop_roi_align.1049:self
-[ValueNode]1064(get_bprop_roi_align.1049:—Ñsample_num:15(get_bprop_roi_align.1049:—Ñsample_num:15"REF::getattr:12:Default/getattr-op817
-‰%get_bprop_roi_align.1049:dyn_shape:21%get_bprop_roi_align.1049:dyn_shape:21">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:TDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op822get_bprop_roi_align.1049*
-get_bprop_roi_align.1049:self*!
-get_bprop_roi_align.1049:inputs*!
-get_bprop_roi_align.1049:—Ñrois*
-get_bprop_roi_align.1049:out*!
-get_bprop_roi_align.1049:—Ñdout2(
-&get_bprop_roi_align.1049:[CNode]1050:1:@54e9e17f438e625d83b3973e34dc7264f184fff9047b1bd0f9a442f271abebd6J/grad_nn_ops.pyB¥
-Ü
-get_bprop_roi_align.1049:inputsbprop.1051:inputs_shape:3bprop.1051:inputs_shape:3"(REF::get_bprop_roi_align.1049:shape_op:2:808
-í
-bprop.1051:inputs_shape:3bprop.1051:[CNode]1052:4bprop.1051:[CNode]1052:4"REF::S-Prim-IsShapeUnKnown:5:#Default/S-Prim-IsShapeUnKnown-op809
-y
-bprop.1051:[CNode]1052:4bprop.1051:[CNode]1053:6bprop.1051:[CNode]1053:6"REF::bool_.1054:Default/bool_.1054-op810
-ë
-bprop.1051:[CNode]1053:6
-‚úìbprop.1055
-‚úóbprop.1056bprop.1051:[CNode]1057:7bprop.1051:[CNode]1057:7"REF::Switch:8:Default/Switch-op811
-Xbprop.1051:[CNode]1058:9bprop.1051:[CNode]1058:9"REF::bprop.1051:[CNode]1057:7:812
-Å
-bprop.1051:[CNode]1058:9bprop.1051:[CNode]1059:10bprop.1051:[CNode]1059:10"REF::‚Üìbprop.1060:Default/‚Üìbprop.1060-op813
-bprop.10512
-bprop.1051:[CNode]1059:10Bå
-Ñ
-+get_bprop_roi_align.1049:—Ñpooled_height:11
-*get_bprop_roi_align.1049:—Ñpooled_width:13
-+get_bprop_roi_align.1049:—Ñspatial_scale:14
-(get_bprop_roi_align.1049:—Ñsample_num:15‚Üìbprop.1060:[CNode]1065:16‚Üìbprop.1060:[CNode]1065:16"?REF::ClassType::mindspore.ops.operations._grad_ops.ROIAlignGrad:UDefault/MindIRClassType:class 'mindspore.ops.operations._grad_ops.ROIAlignGrad'-op818
-≤
-get_bprop_roi_align.1049:—Ñdout
-get_bprop_roi_align.1049:—Ñrois
-‚Üìbprop.1060:—Ñinputs_shape‚Üìbprop.1060:dx:17‚Üìbprop.1060:dx:17"!REF::‚Üìbprop.1060:[CNode]1065:16:819
-æ
-get_bprop_roi_align.1049:—Ñrois‚Üìbprop.1060:[CNode]1066:18‚Üìbprop.1060:[CNode]1066:18".REF::MetaFuncGraph::hyper_map[zeros_like_leaf]:/Default/S-Prim-hyper_map[zeros_like_leaf]-op820
-©
-‚Üìbprop.1060:dx:17
-‚Üìbprop.1060:[CNode]1066:18‚Üìbprop.1060:[CNode]1067:19‚Üìbprop.1060:[CNode]1067:19"REF::S-Prim-MakeTuple:20:Default/S-Prim-MakeTuple-op821‚Üìbprop.1060*
-‚Üìbprop.1060:—Ñinputs_shape2
-‚Üìbprop.1060:[CNode]1067:19B
-after_blockÄ	B,‚úóbprop.10562
-bprop.1051:inputs_shape:3B√
-ê
-get_bprop_roi_align.1049:inputs‚úìbprop.1055:inputs_shape:22‚úìbprop.1055:inputs_shape:22"*REF::get_bprop_roi_align.1049:dyn_shape:21:823‚úìbprop.10552
-‚úìbprop.1055:inputs_shape:22BŸ
-B[ValueNode]1068[ValueNode]1068"Constant*
-value*__bool__Ä
-}
-bool_.1054:x
-[ValueNode]1068bool_.1054:[CNode]1069:23bool_.1054:[CNode]1069:23"REF::getattr:12:Default/getattr-op824
-[bool_.1054:[CNode]1070:24bool_.1054:[CNode]1070:24"REF::bool_.1054:[CNode]1069:23:825
-bool_.1054*
-bool_.1054:x2
-bool_.1054:[CNode]1070:24Pb
-Switch:8Switchb
-
-getattr:12getattrb0
-S-Prim-IsShapeUnKnown:5S-Prim-IsShapeUnKnownb'
-S-Prim-MakeTuple:20S-Prim-MakeTupleh

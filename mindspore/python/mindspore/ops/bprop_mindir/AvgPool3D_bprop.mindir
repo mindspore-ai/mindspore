@@ -1,150 +1,0 @@
-
-0.1.1	MindSpore*2.0.0:°)
-ƒ+get_bprop_avg_pool_3d_grad.822:[CNode]823:1+get_bprop_avg_pool_3d_grad.822:[CNode]823:1"REF::bprop.824:Default/bprop.824-op627
-C[ValueNode]835[ValueNode]835"Constant*
-value*kernel_size€
-?[ValueNode]836[ValueNode]836"Constant*
-value*strides€
-<[ValueNode]837[ValueNode]837"Constant*
-value*pads€
-A[ValueNode]838[ValueNode]838"Constant*
-value*	ceil_mode€
-I[ValueNode]839[ValueNode]839"Constant*
-value*count_include_pad€
-H[ValueNode]840[ValueNode]840"Constant*
-value*divisor_override€
-C[ValueNode]841[ValueNode]841"Constant*
-value*data_format€
-@[ValueNode]842[ValueNode]842"Constant*
-value*pad_mode€
-–
-[ValueNode]835
-[ValueNode]836
-[ValueNode]837
-[ValueNode]838
-[ValueNode]839
-[ValueNode]840
-[ValueNode]841
-[ValueNode]842,get_bprop_avg_pool_3d_grad.822:[CNode]843:10,get_bprop_avg_pool_3d_grad.822:[CNode]843:10"REF::S-Prim-MakeTuple:11:Default/S-Prim-MakeTuple-op634
-C[ValueNode]844[ValueNode]844"Constant*
-value*kernel_size€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]844,get_bprop_avg_pool_3d_grad.822:[CNode]845:12,get_bprop_avg_pool_3d_grad.822:[CNode]845:12"REF::getattr:13:Default/getattr-op635
-?[ValueNode]846[ValueNode]846"Constant*
-value*strides€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]846,get_bprop_avg_pool_3d_grad.822:[CNode]847:14,get_bprop_avg_pool_3d_grad.822:[CNode]847:14"REF::getattr:13:Default/getattr-op636
-E[ValueNode]848[ValueNode]848"Constant*
-value*get_attr_dict€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]848,get_bprop_avg_pool_3d_grad.822:[CNode]849:15,get_bprop_avg_pool_3d_grad.822:[CNode]849:15"REF::getattr:13:Default/getattr-op637
-”,get_bprop_avg_pool_3d_grad.822:[CNode]850:16,get_bprop_avg_pool_3d_grad.822:[CNode]850:16"1REF::get_bprop_avg_pool_3d_grad.822:[CNode]849:15:638
-@[ValueNode]851[ValueNode]851"Constant*
-value*pad_list€
-Ñ
-,get_bprop_avg_pool_3d_grad.822:[CNode]850:16
-[ValueNode]851*get_bprop_avg_pool_3d_grad.822:pad_list:17*get_bprop_avg_pool_3d_grad.822:pad_list:17"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op639
-A[ValueNode]852[ValueNode]852"Constant*
-value*	ceil_mode€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]852,get_bprop_avg_pool_3d_grad.822:[CNode]853:18,get_bprop_avg_pool_3d_grad.822:[CNode]853:18"REF::getattr:13:Default/getattr-op640
-E[ValueNode]854[ValueNode]854"Constant*
-value*get_attr_dict€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]854,get_bprop_avg_pool_3d_grad.822:[CNode]855:19,get_bprop_avg_pool_3d_grad.822:[CNode]855:19"REF::getattr:13:Default/getattr-op641
-”,get_bprop_avg_pool_3d_grad.822:[CNode]856:20,get_bprop_avg_pool_3d_grad.822:[CNode]856:20"1REF::get_bprop_avg_pool_3d_grad.822:[CNode]855:19:642
-I[ValueNode]857[ValueNode]857"Constant*
-value*count_include_pad€
-ã
-,get_bprop_avg_pool_3d_grad.822:[CNode]856:20
-[ValueNode]8573get_bprop_avg_pool_3d_grad.822:count_include_pad:213get_bprop_avg_pool_3d_grad.822:count_include_pad:21"REF::MetaFuncGraph::getitem:Default/S-Prim-getitem-op643
-H[ValueNode]858[ValueNode]858"Constant*
-value*divisor_override€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]858,get_bprop_avg_pool_3d_grad.822:[CNode]859:22,get_bprop_avg_pool_3d_grad.822:[CNode]859:22"REF::getattr:13:Default/getattr-op644
-C[ValueNode]860[ValueNode]860"Constant*
-value*data_format€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]860,get_bprop_avg_pool_3d_grad.822:[CNode]861:23,get_bprop_avg_pool_3d_grad.822:[CNode]861:23"REF::getattr:13:Default/getattr-op645
-@[ValueNode]862[ValueNode]862"Constant*
-value*pad_mode€
-¹
-#get_bprop_avg_pool_3d_grad.822:self
-[ValueNode]862,get_bprop_avg_pool_3d_grad.822:[CNode]863:24,get_bprop_avg_pool_3d_grad.822:[CNode]863:24"REF::getattr:13:Default/getattr-op646
-‹
-,get_bprop_avg_pool_3d_grad.822:[CNode]845:12
-,get_bprop_avg_pool_3d_grad.822:[CNode]847:14
-*get_bprop_avg_pool_3d_grad.822:pad_list:17
-,get_bprop_avg_pool_3d_grad.822:[CNode]853:18
-3get_bprop_avg_pool_3d_grad.822:count_include_pad:21
-,get_bprop_avg_pool_3d_grad.822:[CNode]859:22
-,get_bprop_avg_pool_3d_grad.822:[CNode]861:23
-,get_bprop_avg_pool_3d_grad.822:[CNode]863:24,get_bprop_avg_pool_3d_grad.822:[CNode]864:25,get_bprop_avg_pool_3d_grad.822:[CNode]864:25"REF::S-Prim-MakeTuple:26:Default/S-Prim-MakeTuple-op647
-ò
-,get_bprop_avg_pool_3d_grad.822:[CNode]843:10
-,get_bprop_avg_pool_3d_grad.822:[CNode]864:25,get_bprop_avg_pool_3d_grad.822:[CNode]865:27,get_bprop_avg_pool_3d_grad.822:[CNode]865:27"REF::S-Prim-make_dict:28:Default/S-Prim-make_dict-op648
-R866866"Constant*<
-value*0mindspore.ops.operations._grad_ops.AvgPool3DGrad€!
-Û
-866
-,get_bprop_avg_pool_3d_grad.822:[CNode]865:272get_bprop_avg_pool_3d_grad.822:Ñ„avgpool3d_grad:292get_bprop_avg_pool_3d_grad.822:Ñ„avgpool3d_grad:29"REF::MetaFuncGraph::unpack_call:Default/unpack_call.867-op649get_bprop_avg_pool_3d_grad.822*%
-#get_bprop_avg_pool_3d_grad.822:self*"
- get_bprop_avg_pool_3d_grad.822:x*$
-"get_bprop_avg_pool_3d_grad.822:out*'
-%get_bprop_avg_pool_3d_grad.822:Ñ„dout2-
-+get_bprop_avg_pool_3d_grad.822:[CNode]823:1:@bf8b8248fd9c9db80b0d31d687666512880861acf459f9165036db6d5b9bb2a0J/grad_nn_ops.pyBó
-u
- get_bprop_avg_pool_3d_grad.822:xbprop.824:x_shape:2bprop.824:x_shape:2"REF::shape.825:Default/shape.825-op628
-ˆ
-bprop.824:x_shape:2bprop.824:[CNode]826:3bprop.824:[CNode]826:3"REF::S-Prim-IsShapeUnKnown:4:#Default/S-Prim-IsShapeUnKnown-op629
-q
-bprop.824:[CNode]826:3bprop.824:[CNode]827:5bprop.824:[CNode]827:5"REF::bool_.828:Default/bool_.828-op630
-‰
-bprop.824:[CNode]827:5
-âœ“bprop.829
-âœ—bprop.830bprop.824:[CNode]831:6bprop.824:[CNode]831:6"REF::Switch:7:Default/Switch-op631
-Rbprop.824:[CNode]832:8bprop.824:[CNode]832:8"REF::bprop.824:[CNode]831:6:632
-w
-bprop.824:[CNode]832:8bprop.824:[CNode]833:9bprop.824:[CNode]833:9"REF::â†“bprop.834:Default/â†“bprop.834-op633	bprop.8242
-bprop.824:[CNode]833:9B‹
-¥
-â†“bprop.834:Ñ„x_shape
-%get_bprop_avg_pool_3d_grad.822:Ñ„doutâ†“bprop.834:dx:30â†“bprop.834:dx:30"7REF::get_bprop_avg_pool_3d_grad.822:Ñ„avgpool3d_grad:29:650
-†
-â†“bprop.834:dx:30â†“bprop.834:[CNode]868:31â†“bprop.834:[CNode]868:31"REF::S-Prim-MakeTuple:32:Default/S-Prim-MakeTuple-op651â†“bprop.834*
-â†“bprop.834:Ñ„x_shape2
-â†“bprop.834:[CNode]868:31B
-after_block€	B%âœ—bprop.8302
-bprop.824:x_shape:2Bö
-Îâœ“bprop.829:[CNode]869:33âœ“bprop.829:[CNode]869:33">REF::ClassType::mindspore.ops.operations.array_ops.TensorShape:TDefault/MindIRClassType:class 'mindspore.ops.operations.array_ops.TensorShape'-op652
-z
- get_bprop_avg_pool_3d_grad.822:xâœ“bprop.829:x_shape:34âœ“bprop.829:x_shape:34"REF::âœ“bprop.829:[CNode]869:33:653âœ“bprop.8292
-âœ“bprop.829:x_shape:34BÇ
-@[ValueNode]870[ValueNode]870"Constant*
-value*__bool__€
-w
-bool_.828:x
-[ValueNode]870bool_.828:[CNode]871:35bool_.828:[CNode]871:35"REF::getattr:13:Default/getattr-op654
-Ubool_.828:[CNode]872:36bool_.828:[CNode]872:36"REF::bool_.828:[CNode]871:35:655	bool_.828*
-bool_.828:x2
-bool_.828:[CNode]872:36B´
-w
-shape.825:input_xshape.825:[CNode]873:37shape.825:[CNode]873:37"REF::S-Prim-Shape:38:Default/S-Prim-Shape-op656	shape.825*
-shape.825:input_x2
-shape.825:[CNode]873:37Pb
-Switch:7Switchb
-
-getattr:13getattrb
-S-Prim-Shape:38S-Prim-Shapeb'
-S-Prim-MakeTuple:26S-Prim-MakeTupleb'
-S-Prim-MakeTuple:32S-Prim-MakeTupleb0
-S-Prim-IsShapeUnKnown:4S-Prim-IsShapeUnKnownb'
-S-Prim-MakeTuple:11S-Prim-MakeTupleb'
-S-Prim-make_dict:28S-Prim-make_dicth

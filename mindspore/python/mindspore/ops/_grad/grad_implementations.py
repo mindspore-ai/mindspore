@@ -26,16 +26,6 @@ get_dtype = P.DType()
 # Unused parameters are placeholders.
 
 
-@bprops.register("MaximumGrad")
-@bprops.register("MinimumGrad")
-def bprop_max_and_minimum_grad_grad(x, y, z, out, dout):
-    """Backpropagator for primitive `MaximumGrad` and `MinimumGrad`."""
-    out0 = F.cast(out[0] != 0, get_dtype(dout[0]))
-    out1 = F.cast(out[1] != 0, get_dtype(dout[1]))
-    dz = out0 * dout[0] + out1 * dout[1]
-    return F.zeros_like(x), F.zeros_like(y), dz
-
-
 @bprops.register(_constants.kScalarPow)
 def bprop_scalar_pow(x, y, out, dout):
     """Backpropagator for primitive `scalar_pow`."""

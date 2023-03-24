@@ -936,36 +936,6 @@ def test_split_shape_index():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_bias_add_gradgrad_helper():
-    """
-    Feature: ms_len_with_iterable_check func
-    Description: Verify the result of ms_len_with_iterable_check
-    Expectation: success
-    """
-    from mindspore.ops._grad.grad_nn_ops import bias_add_gradgrad_helper
-
-    class Net(nn.Cell):
-        def __init__(self, data_format):
-            super(Net, self).__init__()
-            self.func = bias_add_gradgrad_helper
-            self.data_format = data_format
-
-        def construct(self, shape, bias_shape):
-            return self.func(shape, bias_shape, self.data_format)
-    shape = (2, 3, 4, 4)
-    bias_shape = (1, 3)
-    data_format = "NCHW"
-    net = Net(data_format)
-    out1, out2 = net(shape, bias_shape)
-    assert out1 == (1, 1, 3, 1, 1)
-    assert out2 == (2, 1, 4, 4)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_fft_rank_offset():
     """
     Feature: ms_len_with_iterable_check func

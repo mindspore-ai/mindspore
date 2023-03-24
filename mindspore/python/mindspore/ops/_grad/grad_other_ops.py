@@ -24,30 +24,12 @@ from mindspore.ops._grad.grad_base import bprop_getters
 # Unused parameters are placeholders.
 
 
-@bprop_getters.register(P.Assign)
-def get_bprop_assign(self):
-    """Generate bprop for Assign"""
-
-    def bprop(x, y, out, dout):
-        return (dout, zeros_like(y))
-    return bprop
-
-
 @bprop_getters.register(P.InvertPermutation)
 def get_bprop_invert_permutation(self):
     """Generate bprop for InvertPermutation"""
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
-    return bprop
-
-
-@bprop_getters.register(P.IOU)
-def get_bprop_iou(self):
-    """Generate bprop for IOU"""
-
-    def bprop(x, y, out, dout):
-        return zeros_like(x), zeros_like(y)
     return bprop
 
 

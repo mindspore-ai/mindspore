@@ -195,6 +195,7 @@ void RegMathBpropExpanderOps3() {
   REGISTER_EXPANDER_BPROP_IMPL(BesselJ0);
   REGISTER_EXPANDER_BPROP_IMPL(ArgMaxWithValue);
   REGISTER_EXPANDER_BPROP_IMPL(ArgMinWithValue);
+  REGISTER_EXPANDER_BPROP_IMPL(MaximumGrad);
 }
 
 void RegNNBpropExpanderOps1() {
@@ -298,6 +299,7 @@ void RegNNBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(BCEWithLogitsLoss);
   REGISTER_EXPANDER_BPROP_IMPL(KLDivLoss);
   REGISTER_EXPANDER_BPROP_IMPL(ExtractImagePatches);
+  REGISTER_EXPANDER_BPROP_IMPL(Conv3D);
 }
 
 void RegArrayBpropExpanderOps1() {
@@ -389,6 +391,8 @@ void RegArrayBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMax);
 }
 
+void RegClipBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(ClipByNorm); }
+
 void RegInnerBpropExpanderOps() {
   REGISTER_EXPANDER_BPROP_IMPL(ResizeBilinearV2);
   REGISTER_EXPANDER_BPROP_IMPL(Roll);
@@ -400,11 +404,6 @@ void RegOtherBpropExpanderOps() {
   REGISTER_EXPANDER_BPROP_IMPL(IOU);
 }
 
-void RegClipBpropExpanderOps() {}
-void RegCommBpropExpanderOps() {}
-void RegQuantBpropExpanderOps() {}
-void RegSparseBpropExpanderOps() {}
-
 void RegBpropExpanderOps() {
   RegMathBpropExpanderOps1();
   RegMathBpropExpanderOps2();
@@ -414,11 +413,8 @@ void RegBpropExpanderOps() {
   RegArrayBpropExpanderOps1();
   RegArrayBpropExpanderOps2();
   RegClipBpropExpanderOps();
-  RegCommBpropExpanderOps();
   RegInnerBpropExpanderOps();
   RegOtherBpropExpanderOps();
-  RegQuantBpropExpanderOps();
-  RegSparseBpropExpanderOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore
