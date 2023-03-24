@@ -120,7 +120,7 @@ void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t>
   }
 }
 
-ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const ShapeVector &x_shape,
+ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &, const ShapeVector &x_shape,
                                         const std::vector<int64_t> &axis, bool keep_dims_value) {
   ShapeVector out_shape;
   ShapeVector axis_value;
@@ -153,7 +153,7 @@ ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const Sha
   return out_shape;
 }
 
-ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t axis_shape, bool keep_dims) {
+ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, bool keep_dims) {
   ShapeVector out_shape;
   constexpr int dynamic_rank_value = -2;
   if (!keep_dims) {
@@ -308,7 +308,7 @@ abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
   ReduceFuncCheckAxisInferImpl(primitive, &axis_value, x_shape.size());
 
   if (axis_is_dynamic) {
-    out_shape = ReduceFuncCalShapeAxisDyn(x_shape, axis_shape, keep_dims);
+    out_shape = ReduceFuncCalShapeAxisDyn(x_shape, keep_dims);
     return std::make_shared<abstract::Shape>(out_shape);
   }
   out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, axis_value, keep_dims);

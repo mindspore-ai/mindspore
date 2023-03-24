@@ -31,24 +31,23 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MakeList, BaseOperator);
-AbstractBasePtr MakeListInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr MakeListInnerInfer(const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractList>(input_args);
 }
 
 class MakeListInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeListInnerInfer(primitive, input_args)->BuildShape();
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MakeListInnerInfer(input_args)->BuildShape();
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeListInnerInfer(primitive, input_args)->BuildType();
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    return MakeListInnerInfer(input_args)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeListInnerInfer(primitive, input_args);
+    return MakeListInnerInfer(input_args);
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(MakeList, prim::kPrimMakeList, MakeListInfer, false);

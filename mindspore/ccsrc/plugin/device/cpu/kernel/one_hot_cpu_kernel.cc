@@ -139,8 +139,8 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 template <typename ID, typename OD>
 void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   const auto *indices = reinterpret_cast<ID *>(inputs[0]->addr);
-  auto on_value = reinterpret_cast<OD *>(inputs[kIndex2]->addr)[0];
-  auto off_value = reinterpret_cast<OD *>(inputs[kIndex3]->addr)[0];
+  auto on_value = GetDeviceAddress<OD>(inputs, kIndex2)[0];
+  auto off_value = GetDeviceAddress<OD>(inputs, kIndex3)[0];
   auto *output = reinterpret_cast<OD *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(ID);
   auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {
