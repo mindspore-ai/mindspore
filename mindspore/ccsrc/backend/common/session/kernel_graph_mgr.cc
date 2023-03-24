@@ -45,7 +45,8 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
                                     common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
     return false;
   }
-  if (AnfUtils::IsRealKernel(node) && !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+  if ((AnfUtils::IsRealKernel(node) || IsSummaryNode(node)) &&
+      !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     return true;
   }
   (*idx) += 1;
@@ -135,8 +136,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(ret);
   auto all_nodes = DeepLinkedGraphSearch(ret);
   for (auto &n : all_nodes) {
-    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+    if (IsSummaryNode(n)) {
       return true;
     }
   }
