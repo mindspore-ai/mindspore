@@ -10,7 +10,7 @@
         - 在半自动并行模式或自动并行模式下，如果输入是梯度，那么将会自动汇聚所有设备上的梯度的平方和。
 
     参数：
-        - **x** (Union(tuple[Tensor], list[Tensor])) - 由Tensor组成的tuple，其每个元素为任意维度的Tensor。
+        - **x** (Union(tuple[Tensor], list[Tensor])) - 要被剪裁的数据。
         - **clip_norm** (Union(float, int)) - 表示裁剪比率，应大于0。默认值：1.0。
         - **use_norm** (None) - 表示全局范数。目前只支持None，默认值：None。
 
