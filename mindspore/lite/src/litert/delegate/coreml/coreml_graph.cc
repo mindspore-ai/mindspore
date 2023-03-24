@@ -159,7 +159,7 @@ std::string CoreMLGraph::SaveMLModel() {
   auto model_path = std::string(getenv("HOME")) + "/tmp/" + model_name;
   std::ofstream file_stream(model_path, std::ios::out | std::ios::binary);
   ml_model_->SerializeToOstream(&file_stream);
-  MS_LOG(ERROR) << "Build CoreML model success!";
+  MS_LOG(INFO) << "Build CoreML model success!";
   return model_path;
 }
 

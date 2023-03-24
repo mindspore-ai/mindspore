@@ -162,7 +162,7 @@ Status CoreMLDelegateImpl::Build(DelegateModel<schema::Primitive> *model) {
     model->Replace(from, end + 1, coreml_graph_kernel);
     coreml_ops.clear();
   }
-  MS_LOG(ERROR) << "CoreML graph build success!";
+  MS_LOG(INFO) << "CoreML graph build success!";
   return mindspore::kSuccess;
 }
 
