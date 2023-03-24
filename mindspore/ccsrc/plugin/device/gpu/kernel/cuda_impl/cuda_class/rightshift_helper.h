@@ -55,6 +55,13 @@ class RightShiftHelperGpuKernel : public GpuKernelHelperBase {
     auto inputy_shape = input_shapes[1];
     auto output_shape = output_shapes[0];
 
+    if (inputx_shape.size() == 0 || inputy_shape.size() == 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the dimension of 'input_shape' must bigger than 0, but got 'inputx_shape' "
+                    << inputx_shape.size() << " and 'inputy_shape' " << inputy_shape.size() << ".";
+      return -1;
+    }
+
     for (size_t i = 0; i < inputx_shape.size(); i++) {
       if (inputx_shape[i] != inputy_shape[i]) {
         need_broadcast_ = true;
