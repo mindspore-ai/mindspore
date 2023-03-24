@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 from abc import ABC, abstractmethod
+from mindspore.common import mutable
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
 from ._checkparam import Validator as validator
@@ -51,6 +52,16 @@ def _grad_unscale(scale, grad):
 
 def _grad_scale(scale, grad):
     return grad * scale.astype(grad.dtype)
+
+
+@jit
+def _grad_scale_map(scale_value, inputs):
+    return _hypermap(_partial(_grad_scale, scale_value), inputs)
+
+
+@jit
+def _grad_unscale_map(scale_value, inputs):
+    return _hypermap(_partial(_grad_unscale, scale_value), inputs)
 
 
 def _overflow(inputs):
@@ -179,7 +190,6 @@ class StaticLossScaler(LossScaler):
             raise ValueError("The argument 'scale_value' must be > 1, but got {}".format(scale_value))
         self.scale_value = Parameter(Tensor(scale_value, dtype=mstype.float32), name="scale_value")
 
-    @jit
     def scale(self, inputs):
         """
         Scaling inputs by `scale_value`.
@@ -190,9 +200,9 @@ class StaticLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
         """
-        return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
+        inputs = mutable(inputs)
+        return _grad_scale_map(self.scale_value, inputs)
 
-    @jit
     def unscale(self, inputs):
         """
         Unscaling inputs by `scale_value`.
@@ -203,7 +213,8 @@ class StaticLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
         """
-        return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
+        inputs = mutable(inputs)
+        return _grad_unscale_map(self.scale_value, inputs)
 
     def adjust(self, grads_finite):
         """
@@ -256,7 +267,6 @@ class DynamicLossScaler(LossScaler):
         self.scale_factor = validator.check_positive_int(scale_factor, "scale_factor")
         self.counter = Parameter(Tensor(0, dtype=mstype.int32), name="counter")
 
-    @jit
     def scale(self, inputs):
         """
         Scaling inputs by `scale_value`.
@@ -267,9 +277,9 @@ class DynamicLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
         """
-        return _hypermap(_partial(_grad_scale, self.scale_value), inputs)
+        inputs = mutable(inputs)
+        return _grad_scale_map(self.scale_value, inputs)
 
-    @jit
     def unscale(self, inputs):
         """
         Unscaling inputs by `scale_value`.
@@ -280,7 +290,8 @@ class DynamicLossScaler(LossScaler):
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
         """
-        return _hypermap(_partial(_grad_unscale, self.scale_value), inputs)
+        inputs = mutable(inputs)
+        return _grad_unscale_map(self.scale_value, inputs)
 
     @jit
     def adjust(self, grads_finite):
