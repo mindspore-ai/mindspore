@@ -142,17 +142,8 @@ bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
                     << " has no abstract, Debug String: " << node->DebugString();
       return false;
     }
-    auto ret = abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kValueAny;
-    if (ret) {
-      auto op_name = common::AnfAlgo::GetCNodeName(node);
-      if (op_name == kDependOpName) {
-        return false;
-      } else {
-        return true;
-      }
-    } else {
-      return false;
-    }
+    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue() == kValueAny &&
+           !IsPrimitiveCNode(node, prim::kPrimDepend);
   });
 }
 

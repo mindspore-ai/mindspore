@@ -125,7 +125,8 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   auto ge_op = converter.GeNodeToGeOperatorAdapter(ge_node);
   auto platform_infos = device::ascend::PlatformInfoUtil::GetInstance().platform_infos();
   ::ge::graphStatus ret;
-  if (::optiling::EnableRt2Tiling(ge_node->GetOpDesc())) {
+  if (::optiling::EnableRt2Tiling(ge_node->GetOpDesc()) ||
+      common::AnfAlgo::GetCNodeName(cnode) == kSoftMarginLossOpName) {
     ret = optiling::AicoreRtParseAndTiling(ge_op, platform_infos, op_run_info_v2);
   } else {
     ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);

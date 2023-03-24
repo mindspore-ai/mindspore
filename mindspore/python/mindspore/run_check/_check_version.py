@@ -35,7 +35,7 @@ class EnvChecker(metaclass=ABCMeta):
 
     @abstractmethod
     def check_env(self):
-        pass
+        """check dependency"""
 
     @abstractmethod
     def set_env(self):
