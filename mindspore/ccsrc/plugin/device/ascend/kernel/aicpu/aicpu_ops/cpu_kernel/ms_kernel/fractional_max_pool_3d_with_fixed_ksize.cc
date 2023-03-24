@@ -56,7 +56,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelC
   AttrValue *ksize = ctx.GetAttr("ksize");
   KERNEL_CHECK_NULLPTR(ksize, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:ksize failed.",
                        kFractionalMaxPool3DWithFixedKsize);
-  kernel_size = ksize->GetListFloat();
+  kernel_size = ksize->GetListInt();
   KERNEL_CHECK_FALSE(kernel_size.size() == 1 || kernel_size.size() == Num3, KERNEL_STATUS_PARAM_INVALID,
                      "FractionalMaxPool3DWithFixedKsize: kernel_size must be equal to 1 or 3.");
   if (kernel_size.size() == 1) {
@@ -81,7 +81,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelC
 
 template <typename random_sample_t>
 static std::vector<int> generate_intervals(random_sample_t random_sample, int input_size, int output_size,
-                                           float kernel_size) {
+                                           int kernel_size) {
   std::vector<int> sequence(output_size);
   if (output_size > 1) {
     random_sample_t alpha =
@@ -114,9 +114,9 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
   int64_t outputT = output_size[0];
   int64_t outputH = output_size[1];
   int64_t outputW = output_size[2];
-  float kernelsizeT = kernel_size[0];
-  float kernelsizeH = kernel_size[1];
-  float kernelsizeW = kernel_size[2];
+  int64_t kernelsizeT = kernel_size[0];
+  int64_t kernelsizeH = kernel_size[1];
+  int64_t kernelsizeW = kernel_size[2];
   int64_t inputN = 0;
   int64_t inputC = 0;
   int64_t inputT = 0;
