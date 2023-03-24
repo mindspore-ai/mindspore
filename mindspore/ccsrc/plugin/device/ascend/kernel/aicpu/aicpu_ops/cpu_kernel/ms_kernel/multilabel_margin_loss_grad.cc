@@ -63,7 +63,7 @@ uint32_t MultilabelMarginLossGradCpuKernel::MultilabelMarginLossGradCheck(CpuKer
   }
   if (reduction == "none") {
     if (dims == 1) {
-      KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
+      KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
                          "[%s]'s y_grad should be a scalar "
                          "when rank of x is 1.",
                          ctx.GetOpType().c_str())
@@ -77,7 +77,8 @@ uint32_t MultilabelMarginLossGradCpuKernel::MultilabelMarginLossGradCheck(CpuKer
         ctx.GetOpType().c_str())
     }
   } else {
-    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
+    // change condition "== 0" to "<= 0" as a hotfix that 0-dim tensor has a rank of 1 when dynamic shape
+    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
                        "[%s]'s y_grad should be a scalar "
                        "when reduction is mean or sum.",
                        ctx.GetOpType().c_str())

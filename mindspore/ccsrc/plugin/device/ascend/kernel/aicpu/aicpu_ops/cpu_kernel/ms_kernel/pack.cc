@@ -70,7 +70,7 @@ uint32_t PackCpuKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t PackCpuKernel::PackCheck(CpuKernelContext &ctx) {
   auto *input = ctx.Input(0);
-  AttrValue *n_attr = ctx.GetAttr("N");
+  AttrValue *n_attr = ctx.GetAttr("num");
   AttrValue *axis_attr = ctx.GetAttr("axis");
   int64_t axis = axis_attr->GetInt();
   auto expanded_num_dims = input->GetTensorShape()->GetDims() + 1;  // first_input.dims() + 1;
@@ -98,7 +98,7 @@ uint32_t PackCpuKernel::PackCompute(CpuKernelContext &ctx) {
   AttrValue *axis_attr = ctx.GetAttr("axis");
   int64_t axis = axis_attr->GetInt();
 
-  AttrValue *n_attr = ctx.GetAttr("N");
+  AttrValue *n_attr = ctx.GetAttr("num");
   int64_t input_num = n_attr->GetInt();
 
   auto *input = ctx.Input(0);

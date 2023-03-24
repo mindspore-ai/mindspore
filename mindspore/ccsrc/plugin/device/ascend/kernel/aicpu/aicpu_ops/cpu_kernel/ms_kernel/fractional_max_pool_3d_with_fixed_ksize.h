@@ -38,7 +38,7 @@ class FractionalMaxPool3DWithFixedKsizeCpuKernel : public CpuKernel {
   std::vector<int64_t> input_shape;
   std::vector<int64_t> random_samples_shape;
   std::vector<int64_t> output_size;
-  std::vector<float> kernel_size;
+  std::vector<int64_t> kernel_size;
 };
 }  // namespace aicpu
 #endif
