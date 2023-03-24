@@ -40,3 +40,5 @@ mindspore.shard
           - 如果 `parameter_plan` 不是dict或None。
           - 如果 `parameter_plan` 里的任何一个键值类型不是str。
           - 如果 `parameter_plen` 里的任何一个值类型不是tuple。
+          - 如果 `device` 不是str。
+          - 如果 `level` 不是int。
