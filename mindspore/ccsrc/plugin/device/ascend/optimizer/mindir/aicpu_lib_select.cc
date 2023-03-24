@@ -51,6 +51,7 @@ static const std::set<std::string> kAICpuOpNames = {kDropoutGenMaskOpName,
                                                     kReshapeOpName,
                                                     kFlattenOpName,
                                                     kSqueezeOpName,
+                                                    kUniformCandidateSamplerOpName,
                                                     kExpandDimsOpName};
 static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiveAvgPool2DOpName,
                                                              mindspore::kAdaptiveAvgPool2DGradOpName,

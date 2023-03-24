@@ -34,11 +34,13 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
     set(AICPU_SRC
         ${PROTO_SRCS}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_base.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/range_sampler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_async_event.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/random_choice_with_mask_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/gather_grad_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/candidate_sampler_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/expand_dims_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/flatten_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/reshape_kernels.cc
