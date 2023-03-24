@@ -28,7 +28,7 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
 
 from ..._checkparam import Validator as validator
 from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for_squeeze, \
-    check_axis_in_range, check_axis_valid, infer_out_shape, check_and_canonicalize_axes, get_log2_size
+    check_axis_in_range, check_axis_valid, check_and_canonicalize_axes
 from ...ops import functional as F
 from ...ops import operations as P
 from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
@@ -1632,6 +1632,20 @@ def take(x, indices, axis=None, mode='clip'):
     return res.reshape(shape_out)
 
 
+def _infer_out_shape(*shapes):
+    """
+    Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
+    """
+    shape_out = list()
+    max_len = ms_max([len(it) for it in shapes])
+    for i in range(max_len):
+        items = [it[i-(max_len-len(it))] if i - (max_len - len(it))
+                 >= 0 else 1 for it in shapes]
+        max_size = 0 if 0 in items else ms_max(items)
+        shape_out.append(max_size)
+    return tuple(shape_out)
+
+
 def choose(x, choices, mode='clip'):
     """
     Construct an array from an index array and a list of arrays to choose from.
@@ -1669,7 +1683,7 @@ def choose(x, choices, mode='clip'):
         [20 31 12  3]
     """
     if check_is_tensor(F.typeof(choices)):
-        shape_choice = infer_out_shape(x.shape, choices.shape[1:])
+        shape_choice = _infer_out_shape(x.shape, choices.shape[1:])
         choices = P.BroadcastTo((choices.shape[0],) + shape_choice)(choices)
     else:
         # broadcasts choices to the same shape if choices is a sequence
@@ -1680,7 +1694,7 @@ def choose(x, choices, mode='clip'):
                 choice = const_utils.make_tensor(choice)
             shapes += (choice.shape,)
             choicelist.append(choice)
-        shape_choice = infer_out_shape(x.shape, *shapes)
+        shape_choice = _infer_out_shape(x.shape, *shapes)
         tmp = []
         for choice in choicelist:
             tmp.append(P.BroadcastTo(shape_choice)(choice))
@@ -1707,6 +1721,14 @@ def choose(x, choices, mode='clip'):
     grid = P.Stack(-1)(grids)
     indices = P.Concat(-1)((a.reshape(a.shape + (1,)), grid))
     return F.gather_nd(choices, indices).astype(dtype)
+
+
+def _get_log2_size(size):
+    """Get log2 size"""
+    log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
+    ceil_res = F.ceil(log2_res)
+    cast_res = F.cast(ceil_res, mstype.int64)
+    return cast_res
 
 
 def searchsorted(x, v, side='left', sorter=None):
@@ -1754,7 +1776,7 @@ def searchsorted(x, v, side='left', sorter=None):
     i = F.fill(mstype.int32, shape, 0)
     j = F.fill(mstype.int32, shape, a.size)
 
-    loop_num = get_log2_size(F.shape_mul(a.shape) + 1)
+    loop_num = _get_log2_size(F.shape_mul(a.shape) + 1)
     index = Tensor([0])
     while index < loop_num:
         mid = (i - F.neg_tensor(j)) // 2

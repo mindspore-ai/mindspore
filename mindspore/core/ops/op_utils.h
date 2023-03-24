@@ -54,7 +54,7 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name,
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim);
 bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_args, std::vector<int64_t> *axis_value,
                           int64_t *axis_shape_v, const PrimitivePtr &primitive);
-ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, const int64_t axis_shape, bool keep_dims = false);
+ShapeVector ReduceFuncCalShapeAxisDyn(const ShapeVector &x_shape, bool keep_dims = false);
 ShapeVector ReduceFuncCalShapeInferImpl(const PrimitivePtr &primitive, const ShapeVector &x_shape,
                                         const std::vector<int64_t> &axis, bool keep_dims_value = false);
 abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,

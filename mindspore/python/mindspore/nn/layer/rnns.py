@@ -22,7 +22,6 @@ import mindspore.nn as nn
 import mindspore.ops as P
 import mindspore.context as context
 import mindspore.common.dtype as mstype
-from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
@@ -208,6 +207,7 @@ class _DynamicGRUCPUGPU(Cell):
         self.is_gpu = context.get_context("device_target") == "GPU"
 
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
+        '''_DynamicGRUCPUGPU'''
         gate_size, input_size = w_ih.shape
         hidden_size = gate_size // 3
         if self.is_gpu:
@@ -250,6 +250,7 @@ class _DynamicGRUAscend(Cell):
         self.dtype = mstype.float16
 
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
+        '''Dynamic GRU module on Ascend'''
         if b_ih is None:
             b_ih = P.Zeros()(w_ih.shape[0], w_ih.dtype)
             b_hh = P.Zeros()(w_ih.shape[0], w_ih.dtype)
@@ -277,6 +278,7 @@ class _DynamicLSTMCPUGPU(Cell):
         self.is_gpu = context.get_context("device_target") == "GPU"
 
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
+        '''Dynamic LSTM module on CPU and GPU'''
         gate_size, input_size = w_ih.shape
         hidden_size = gate_size // 4
         if seq_length is not None:
@@ -327,6 +329,7 @@ class _DynamicLSTMAscend(Cell):
         self.dtype = mstype.float16
 
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
+        '''Dynamic LSTM module on Ascend'''
         w_ih_i, w_ih_f, w_ih_g, w_ih_o = self.split(w_ih)
         w_hh_i, w_hh_f, w_hh_g, w_hh_o = self.split(w_hh)
         w_ih = self.concat_dim0((w_ih_i, w_ih_g, w_ih_f, w_ih_o))
@@ -442,17 +445,6 @@ class _RNNBase(Cell):
         self.b_ih_list = ParameterTuple(self.b_ih_list)
         self.b_hh_list = ParameterTuple(self.b_hh_list)
 
-    # TODO: remove this func
-    def _shape_dynamic(self, shape):
-        """use this func for dynamic. del it when ShapeOp is supported"""
-        x = []
-        for i in shape:
-            if not F.isconstant(i):
-                x.append(-1)
-            else:
-                x.append(i)
-        return tuple(x)
-
     def _stacked_bi_dynamic_rnn(self, x, h, seq_length):
         """stacked bidirectional dynamic_rnn"""
         pre_layer = x
@@ -498,8 +490,8 @@ class _RNNBase(Cell):
         if self.is_lstm:
             h_n = P.Concat(0)(h_n)
             c_n = P.Concat(0)(c_n)
-            h0_shape = self._shape_dynamic(h[0].shape)
-            h1_shape = self._shape_dynamic(h[1].shape)
+            h0_shape = h[0].shape
+            h1_shape = h[1].shape
             h_n = h_n.view(h0_shape)
             c_n = c_n.view(h1_shape)
             return output, (h_n.view(h0_shape), c_n.view(h1_shape))
@@ -532,8 +524,8 @@ class _RNNBase(Cell):
         if self.is_lstm:
             h_n = P.Concat(0)(h_n)
             c_n = P.Concat(0)(c_n)
-            h0_shape = self._shape_dynamic(h[0].shape)
-            h1_shape = self._shape_dynamic(h[1].shape)
+            h0_shape = h[0].shape
+            h1_shape = h[1].shape
             h_n = h_n.view(h0_shape)
             c_n = c_n.view(h1_shape)
             return output, (h_n.view(h0_shape), c_n.view(h1_shape))

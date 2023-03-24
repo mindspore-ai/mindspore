@@ -42,6 +42,15 @@ namespace mindspore {
 namespace ops {
 class ScalarBoolInfer : public abstract::OpInferBase {
  public:
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_type = input_args[0]->BuildType();
+    std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
+    (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
+    return kBool;
+  }
+
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
@@ -53,15 +62,6 @@ class ScalarBoolInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got : " << elem->ToString();
     }
     return abstract::kNoShape;
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    auto x_type = input_args[0]->BuildType();
-    std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
-    (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
-    return kBool;
   }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
@@ -105,6 +105,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
       case kNumberTypeBool: {
         auto elem_value = GetValue<bool>(x_valueptr);
         res = static_cast<bool>(elem_value);
+        break;
       }
       default: {
         MS_EXCEPTION(TypeError)

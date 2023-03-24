@@ -26,12 +26,12 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr auto kScalarBitwiseAnd = "bit_and";
-constexpr auto kScalarBitwiseOr = "bit_or";
-constexpr size_t kInputNum = 2;
 constexpr size_t kInputx = 0;
 constexpr size_t kInputy = 1;
+constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 1;
+constexpr auto kScalarBitwiseAnd = "bit_and";
+constexpr auto kScalarBitwiseOr = "bit_or";
 }  // namespace
 
 template <typename T, typename S, typename N>
@@ -41,7 +41,7 @@ void AddImpl(const T *in_x, const S *in_y, N *out) {
 #ifndef _MSC_VER
   if constexpr (std::is_integral<N>::value && std::is_signed<N>::value) {
     if (__builtin_add_overflow(x, y, out)) {
-      MS_EXCEPTION(ValueError) << "For prim ScalarAdd Overflow of the sum of two signed number x: " << std::to_string(x)
+      MS_EXCEPTION(ValueError) << "For prim bitwise Overflow of the sum of two signed number x: " << std::to_string(x)
                                << ", y: " << std::to_string(y) << ".";
     }
     return;
@@ -55,12 +55,12 @@ bool ScalarBitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.size() != kInputNum) {
-    MS_LOG(EXCEPTION) << "For kernel '" << kernel_type_ << "' input_num must be 2, but got " << inputs.size();
+    MS_LOG(EXCEPTION) << "For kernel '" << kernel_name_ << "' input_num must be 2, but got " << inputs.size();
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -78,8 +78,7 @@ int ScalarBitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T, typename S, typename N>
-bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
+bool ScalarBitwiseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
