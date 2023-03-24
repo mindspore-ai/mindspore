@@ -175,7 +175,6 @@ bool EltWiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
       return false;
     }
     additional_func_ = iter->second[index].second();
-    additional_func_->InitFunc(base_operator, inputs, outputs);
     use_mkl_ = false;
   } else {
     auto is_match_pair = MatchKernelAttr(kernel_attr, GetMklOpSupport());
@@ -225,6 +224,9 @@ int EltWiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     primitive_ = CreatePrimitive<dnnl::eltwise_forward>(prim_desc);
     AddArgument(DNNL_ARG_SRC, src_desc);
     AddArgument(DNNL_ARG_DST, src_desc);
+  }
+  if (additional_func_) {
+    additional_func_->InitFunc(base_operator, inputs, outputs);
   }
   return KRET_OK;
 }
