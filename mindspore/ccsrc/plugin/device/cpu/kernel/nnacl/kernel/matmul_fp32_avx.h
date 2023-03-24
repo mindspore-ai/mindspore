@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_CONVOLUTION_H_
-#define MINDSPORE_NNACL_KERNEL_CONVOLUTION_H_
 
+#ifndef MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_
+#define MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_
+
+#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
@@ -24,9 +26,10 @@
 extern "C" {
 #endif
 
-KernelBase *CreateConvolution(OpParameter *param, int data_type);
+KernelBase *CreateMatmulFp32Avx();
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
+#endif
+#endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX_H_

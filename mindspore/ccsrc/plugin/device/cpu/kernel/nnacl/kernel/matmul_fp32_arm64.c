@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
-#define MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
-#include "nnacl/kernel/matmul_optimize.h"
+#ifdef ENABLE_ARM64
+#include "nnacl/kernel/matmul_fp32_arm64.h"
+#include "nnacl/kernel/matmul_fp32_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct Conv1x1Stru {
-  KernelBase base;
-  uint8_t *bias_;
-  uint8_t *weight_;
-} Conv1x1Stru;
-
-KernelBase *CreateConv1x1(OpParameter *param, int data_type);
-
-#ifdef __cplusplus
+KernelBase *CreateMatmulFp32Arm64() {
+  MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32();
+  return (KernelBase *)matmul;
 }
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_CONVOLUTION_1X1_H_
