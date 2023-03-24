@@ -7,8 +7,8 @@ mindspore.ops.linspace
 
     .. math::
         \begin{aligned}
-        &step_len = (end - start)/(steps - 1)\\
-        &output = [start, start+step_len, start+2*step_len, ... , end]
+        &step = (end - start)/(steps - 1)\\
+        &output = [start, start+step, start+2*step, ... , end]
         \end{aligned}
 
     参数：

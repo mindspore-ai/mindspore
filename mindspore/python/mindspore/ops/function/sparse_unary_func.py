@@ -28,7 +28,7 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
         out_i = cos(x_i)
 
     .. warning::
-        If use Float64, there may be a problem of missing precision.
+        Currently support data types float16 and float32. If use Float64, there may be a problem of missing precision.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -39,7 +39,7 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
     Raises:
         TypeError: If `x` is not a CSRTensor.
         TypeError: If dtype of `x` is not float16, float32 or float64, complex64,
-    complex128.
+            complex128.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

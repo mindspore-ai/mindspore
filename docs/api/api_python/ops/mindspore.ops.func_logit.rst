@@ -11,7 +11,7 @@ mindspore.ops.logit
         y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
         z_{i} & = \begin{cases}
         input_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
+        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
         input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
         1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
         \end{cases}
