@@ -65,12 +65,33 @@ ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   return new_node;
 }
 
+CNodePtr CreateReshape(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const ShapeVector &shape,
+                       const PatternProcessPass &pass) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input_node);
+
+  auto reshape_primitive = std::make_shared<Primitive>(kReshapeOpName);
+  std::vector<std::string> input_names = {"x", "shape"};
+  std::vector<std::string> output_names = {"output"};
+  reshape_primitive->set_attr(kAttrInputNames, MakeValue(input_names));
+  reshape_primitive->set_attr(kAttrOutputNames, MakeValue(output_names));
+
+  auto shape_node = NewValueNode(shape);
+  std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(reshape_primitive), input_node, shape_node};
+  auto reshape_node = pass.NewCNode(reshape_inputs, graph);
+  MS_EXCEPTION_IF_NULL(reshape_node);
+  auto data_types = common::AnfAlgo::GetOutputInferDataType(input_node, 0UL);
+  common::AnfAlgo::SetOutputInferTypeAndShape({data_types}, {shape}, reshape_node.get());
+  return reshape_node;
+}
+
 CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_node, const PatternProcessPass &pass,
                       bool is_convert_const_to_attr = false) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
   int64_t depth = 0;
   if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
@@ -79,6 +100,11 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
                       << trace::DumpSourceLines(sparse_softmax_node);
   }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size};
+
+  // Reshape multi-dim labels to 1D labels.
+  auto reshape_node = CreateReshape(graph, sparse_softmax_node->input(kIndex2), shape, pass);
 
   auto value_on = std::make_shared<tensor::Tensor>(1.0, kFloat32);
   auto value_on_node = CreateValueNode(value_on, kNumberTypeFloat32);
@@ -100,8 +126,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
 
   std::vector<AnfNodePtr> one_hot_inputs;
   if (is_convert_const_to_attr) {
-    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), value_on_node,
-                      value_off_node};
+    one_hot_inputs = {NewValueNode(one_hot_primitive), reshape_node, value_on_node, value_off_node};
   } else {
     auto depth_node = NewValueNode(depth);
     MS_EXCEPTION_IF_NULL(depth_node);
@@ -109,15 +134,13 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     MS_EXCEPTION_IF_NULL(depth_abstract);
     depth_abstract->set_type(kInt64);
     depth_node->set_abstract(depth_abstract);
-    one_hot_inputs = {NewValueNode(one_hot_primitive), sparse_softmax_node->input(kIndex2), depth_node, value_on_node,
-                      value_off_node};
+    one_hot_inputs = {NewValueNode(one_hot_primitive), reshape_node, depth_node, value_on_node, value_off_node};
   }
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
   MS_EXCEPTION_IF_NULL(one_hot_node);
   one_hot_node->set_scope(sparse_softmax_node->scope());
-  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
-  labels_shape.emplace_back(depth);
-  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {labels_shape}, one_hot_node.get());
+  ShapeVector one_hot_shape = {batch_size, depth};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {one_hot_shape}, one_hot_node.get());
   if (is_convert_const_to_attr) {
     common::AnfAlgo::SetNodeAttr(kAttrDepth, MakeValue(depth), one_hot_node);
   }
@@ -130,23 +153,33 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(one_hot_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
+
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
+  int64_t depth = 0;
+  if (!logits_shape.empty()) {
+    size_t index = logits_shape.size() - 1;
+    depth = logits_shape[index];
+  } else {
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
+  }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size, depth};
+
+  // Reshape multi-dim logits to 2D logits.
+  auto reshape_node = CreateReshape(graph, sparse_softmax_node->input(kIndex1), shape, pass);
+
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSoftmaxCrossEntropyWithLogitsOpName)),
-                                    sparse_softmax_node->input(kIndex1), one_hot_node};
+                                    reshape_node, one_hot_node};
   auto softmax_node = pass.NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(softmax_node);
   softmax_node->set_scope(sparse_softmax_node->scope());
 
-  auto labels_shape = common::AnfAlgo::GetOutputInferShape(one_hot_node, 0);
-  ShapeVector loss_shape;
-  if (!labels_shape.empty()) {
-    loss_shape.emplace_back(labels_shape[0]);
-  } else {
-    MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
-  }
-
+  ShapeVector loss_shape = {batch_size};
   auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, 0UL);
   auto types = {data_types, data_types};
-  auto shapes = {loss_shape, labels_shape};
+  auto shapes = {loss_shape, shape};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_node.get());
   return softmax_node;
 }
@@ -268,10 +301,11 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
-  auto multiple_value = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
-  if (std::all_of(multiple_value.begin(), multiple_value.end(), [](int64_t value) { return value == 1; })) {
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
+  if (std::all_of(labels_shape.begin(), labels_shape.end(), [](int64_t value) { return value == 1; })) {
     return nullptr;
   }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
 
   auto tile_primitive = std::make_shared<Primitive>(kTileOpName);
   std::vector<std::string> input_names = {"x", "multiples"};
@@ -283,19 +317,19 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   if (is_convert_const_to_attr) {
     tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2)};
   } else {
-    if (std::any_of(multiple_value.begin(), multiple_value.end(), [](int64_t value) { return value < 0; })) {
+    if (std::any_of(labels_shape.begin(), labels_shape.end(), [](int64_t value) { return value < 0; })) {
       std::vector<AnfNodePtr> dynamic_shape_inputs = {NewValueNode(std::make_shared<Primitive>("DynamicShape")),
                                                       sparse_softmax_node->input(kIndex2)};
       auto shape_node = pass.NewCNode(dynamic_shape_inputs, graph);
       MS_EXCEPTION_IF_NULL(shape_node);
-      ShapeVector tensor_shp({static_cast<int64_t>(multiple_value.size())});
+      ShapeVector tensor_shp({static_cast<int64_t>(labels_shape.size())});
       auto dynamic_shape_abstract =
         std::make_shared<abstract::AbstractTensor>(kInt64, std::make_shared<abstract::Shape>(tensor_shp));
       MS_EXCEPTION_IF_NULL(dynamic_shape_abstract);
       shape_node->set_abstract(dynamic_shape_abstract);
       tile_inputs = {NewValueNode(tile_primitive), mul_node->input(kIndex2), shape_node};
     } else {
-      auto multiples = MakeValue(multiple_value);
+      auto multiples = MakeValue(batch_size);
       auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
       MS_EXCEPTION_IF_NULL(multiples_node);
       auto kernel_graph = graph->cast<KernelGraphPtr>();
@@ -308,11 +342,11 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   auto tile_node = pass.NewCNode(tile_inputs, graph);
   MS_EXCEPTION_IF_NULL(tile_node);
   tile_node->set_scope(mul_node->scope());
-  common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
-                                               {AnfAlgo::GetPrevNodeOutputDetailShape(sparse_softmax_node, 1UL)},
-                                               tile_node.get());
+  ShapeVector tile_shape = {batch_size};
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1UL)},
+                                              {tile_shape}, tile_node.get());
   if (is_convert_const_to_attr) {
-    common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiple_value), tile_node);
+    common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(batch_size), tile_node);
   }
   // feature map set
   std::vector<size_t> feature_map_input_indexs;
@@ -328,11 +362,8 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   MS_EXCEPTION_IF_NULL(tile_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
-  if (labels_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
-                      << trace::DumpSourceLines(sparse_softmax_node);
-  }
-  auto y_value = static_cast<float>(labels_shape[0]);
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  auto y_value = static_cast<float>(batch_size);
   auto y = std::make_shared<tensor::Tensor>(y_value, kFloat32);
   auto y_node = CreateValueNode(y, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(y_node);
@@ -586,7 +617,24 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
                                     NewValueNode(MakeValue<bool>(true)), NewValueNode(MakeValue<bool>(true))};
   auto new_depend = graph->NewCNode(inputs);
   (void)manager->Replace(sparse_softmax_node_grad, new_depend);
-  return new_mul_node;
+
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
+  int64_t depth = 0;
+  if (!logits_shape.empty()) {
+    size_t index = logits_shape.size() - 1;
+    depth = logits_shape[index];
+  } else {
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
+  }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size, depth};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
+
+  // Reshape 1D result to multi-dim result.
+  auto reshape_node = CreateReshape(graph, new_mul_node, logits_shape, *this);
+  return reshape_node;
 }
 
 const BaseRef GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::DefinePattern() const {
@@ -620,7 +668,11 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(sparse_softmax_node, reduce_node);
-  return mul_node;
+
+  // Reshape 1D result to multi-dim result.
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto reshape_node = CreateReshape(graph, mul_node, logits_shape, *this);
+  return reshape_node;
 }
 
 const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(const FuncGraphPtr &graph,
@@ -693,7 +745,24 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   MS_EXCEPTION_IF_NULL(new_mul_node);
   new_mul_node->set_scope(mul_node->scope());
   new_mul_node->set_abstract(mul_node->abstract());
-  return new_mul_node;
+
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
+  int64_t depth = 0;
+  if (!logits_shape.empty()) {
+    size_t index = logits_shape.size() - 1;
+    depth = logits_shape[index];
+  } else {
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
+  }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size, depth};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
+
+  // Reshape 1D result to multi-dim result.
+  auto reshape_node = CreateReshape(graph, new_mul_node, logits_shape, *this);
+  return reshape_node;
 }
 
 std::vector<std::string> PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::MustExistPrimitiveName() const {
@@ -744,7 +813,24 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   MS_EXCEPTION_IF_NULL(new_mul_node);
   new_mul_node->set_scope(mul_node->scope());
   new_mul_node->set_abstract(mul_node->abstract());
-  return new_mul_node;
+
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
+  int64_t depth = 0;
+  if (!logits_shape.empty()) {
+    size_t index = logits_shape.size() - 1;
+    depth = logits_shape[index];
+  } else {
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
+  }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size, depth};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
+
+  // Reshape 1D result to multi-dim result.
+  auto reshape_node = CreateReshape(graph, new_mul_node, logits_shape, *this);
+  return reshape_node;
 }
 
 const BaseRef PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV3::DefinePattern() const {
@@ -787,7 +873,24 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV3::P
   MS_EXCEPTION_IF_NULL(new_mul_node);
   new_mul_node->set_scope(mul_node->scope());
   new_mul_node->set_abstract(mul_node->abstract());
-  return new_mul_node;
+
+  auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1UL);
+  int64_t depth = 0;
+  if (!logits_shape.empty()) {
+    size_t index = logits_shape.size() - 1;
+    depth = logits_shape[index];
+  } else {
+    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                      << trace::DumpSourceLines(sparse_softmax_node);
+  }
+  int64_t batch_size = std::accumulate(labels_shape.begin(), labels_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector shape = {batch_size, depth};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
+
+  // Reshape 1D result to multi-dim result.
+  auto reshape_node = CreateReshape(graph, new_mul_node, logits_shape, *this);
+  return reshape_node;
 }
 }  // namespace opt
 }  // namespace mindspore
