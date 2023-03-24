@@ -66,7 +66,7 @@ static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatM
                                                                      {"MatMul", ACL_FORMAT_ND}};
 
 static const std::unordered_map<std::string, std::vector<std::string>> kMsNeedPad = {
-  {kTransDataOpName, {"", ""}},
+  {kTransDataOpName, {}},
   {kBNTrainingReduceOpName, {"", kOpFormat_NCHW}},
   {kBNTrainingUpdateOpName, {"", kOpFormat_NCHW}},
   {kBNTrainingReduceGradOpName, {"", kOpFormat_NCHW}},
