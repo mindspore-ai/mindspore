@@ -1351,19 +1351,19 @@ void AutoGradCellImpl::BackPropagate() {
 AnfNodePtr AutoGradCellImpl::GetGradNodeByIndex(const AnfNodePtr &grad_node) {
   MS_EXCEPTION_IF_NULL(grad_node);
   const auto &input_adjoint_iter = ad_param()->anfnode_to_variable_adjoint_.find(grad_node);
-  if (input_adjoint_iter == ad_param()->anfnode_to_variable_adjoint_.end()) {
+  if (grad_node->isa<Parameter>()) {
+    auto tensor = pynative::PyNativeAlgo::Common::GetTensorFromParam(grad_node);
     // If weight is not used in the forward network, just return zeros_like() as dout.
-    if (grad_node->isa<Parameter>()) {
+    if (input_adjoint_iter == ad_param()->anfnode_to_variable_adjoint_.end()) {
+      MS_EXCEPTION_IF_NULL(tensor);
       MS_LOG(INFO) << "Weight does not participate in forward calculation, weight: " << grad_node->DebugString();
-      auto w = grad_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(w);
-      auto default_param = w->default_param();
-      MS_EXCEPTION_IF_NULL(default_param);
-      return BuildZerosLikeNode(ad_param()->tape_, default_param);
+      return BuildZerosLikeNode(ad_param()->tape_, tensor);
     }
-    // If input is not used in the forward network, just return zeros_like() as dout.
-    MS_LOG(EXCEPTION) << "Input does not participate in forward calculation, input: " << grad_node->DebugString();
-    return nullptr;
+    // If weight used in the forward network, but requires_grad is false, return zero like.
+    if (tensor != nullptr && tensor->param_info() != nullptr && !tensor->param_info()->requires_grad()) {
+      MS_LOG(INFO) << "weight participate in forward calculation, but requires_grad is false";
+      return BuildZerosLikeNode(ad_param()->tape_, tensor);
+    }
   }
   return input_adjoint_iter->second->RealDout();
 }
