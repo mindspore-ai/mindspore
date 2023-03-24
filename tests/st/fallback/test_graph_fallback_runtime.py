@@ -920,6 +920,7 @@ def test_resolve_cust_class():
     assert output == 200
 
 
+@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -951,6 +952,7 @@ class PrintPyExecuteNet(ms.nn.Cell):
         return out
 
 
+@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -1162,3 +1164,37 @@ def test_pyexecute_with_scalar_input_4():
     net.set_inputs(dyn)
     ret = net(data)
     assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pyexecute_as_multitype_fg_input():
+    """
+    Feature: Fallback runtime.
+    Description: Pyexecute node can not be used as multitype function graph.
+    Expectation: No error.
+    """
+    class sub_class:
+        def __getitem__(self, item):
+            pass
+        def __setitem__(self, key, target):
+            pass
+
+
+    class InnerNet(nn.Cell):
+        def __init__(self, tuple_input):
+            super(InnerNet, self).__init__()
+            self.data = tuple_input
+
+        def construct(self, start):
+            return self.data[start:]
+
+    sub_class_obj = sub_class()
+    sub_class_obj[0] = [1, 2, 3, 4, 5]
+    net = InnerNet(sub_class_obj)
+    with pytest.raises(RuntimeError) as err:
+        net(1)
+    assert "current input arguments types are" in str(err.value)
