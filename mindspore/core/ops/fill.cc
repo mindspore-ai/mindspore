@@ -145,13 +145,11 @@ class FillInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    std::vector<size_t> inputsIndex{0, 1, 2};
-    if (input_args.size() == kIndex2) {
-      inputsIndex[kIndex1] = 0;
-      inputsIndex[kIndex2] = 1;
-    }
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
+    if (input_args.size() <= kIndex2) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the inputs take 3 arguments, but got less than 3 here!";
+    }
     // check
     ValuePtr dtype_value;
     TypePtr value_dtype;

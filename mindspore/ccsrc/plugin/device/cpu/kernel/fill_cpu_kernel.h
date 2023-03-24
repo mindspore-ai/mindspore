@@ -58,6 +58,7 @@ class FillCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Fil
  private:
   TypeId output_dtype_{kTypeUnknown};
   TypeId input0_dtype_{kTypeUnknown};
+  TypeId x_type_id_;
 };
 }  // namespace kernel
 }  // namespace mindspore
