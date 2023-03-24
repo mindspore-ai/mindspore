@@ -1132,6 +1132,110 @@ class SampledSoftmaxLoss(LossBase):
         return out_logits, out_labels
 
 
+class TripletMarginWithDistanceLoss(LossBase):
+    r"""
+    TripletMarginWithDistanceLoss operation.
+
+    Creates a criterion that measures the triplet loss given an input
+    tensors :math:`x1`, :math:`x2`, :math:`x3` and a margin with a value greater than :math:`0`.
+    This is used for measuring a relative similarity between samples. A triplet
+    is composed by `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
+    examples` respectively). The shapes of all input tensors should be
+    :math:`(N, D)`.
+
+    The distance swap is described in detail in the paper `Learning shallow
+    convolutional feature descriptors with triplet losses` by
+    V. Balntas, E. Riba et al.
+
+    The loss function for each sample in the mini-batch is:
+
+    .. math::
+        L(a, p, n) = \max \{d(a_i, p_i) - d(a_i, n_i) + {\rm margin}, 0\}
+
+    where
+
+    .. math::
+        d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
+
+    Args:
+        distance_function (callable): The distance function needed to calculate the margin loss of a triplet.
+            if no distance metric is specified, the pairwise distance will be used. Default: None.
+        swap (bool): The distance swap is described in detail in the paper
+            `Learning shallow convolutional feature descriptors with triplet losses` by
+            V. Balntas, E. Riba et al. Default: False.
+        reduction (str): Apply specific reduction method to the output:
+            'none', 'mean', 'sum'. Default: 'mean'.
+        margin (float): Make a margin between the positive pair and the negative pair. Default: 1.0.
+
+    Inputs:
+        - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
+          The shape should be :math:`(N, D)`.
+        - **positive** (Tensor) - A sample belonging to the same category as x,
+          with the same type and shape as `x`.
+        - **negative** (Tensor) - A sample belonging to the different class from x,
+          with the same type and shape as `x`.
+
+    Outputs:
+        Union[Tensor, Scalar], if `reduction` is 'none', its shape is :math:`(N)`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `x` or `positive` or `negative` is not a Tensor.
+        TypeError: If `swap` is not a bool.
+        ValueError: If dimensions of input `x`, `positive` and `negative` are less than or equal to 1 at the same time.
+        ValueError: If length of shape of `margin` is not 0.
+        ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0.3, 0.7], [0.5, 0.5]])
+        >>> positive = Tensor([[0.4, 0.6], [0.4, 0.6]])
+        >>> negative = Tensor([[0.2, 0.9], [0.3, 0.7]])
+        >>> loss = nn.TripletMarginWithDistanceLoss()
+        >>> out = loss(x, positive, negative)
+        >>> print(out.asnumpy())
+        0.8881968
+    """
+
+    def __init__(self, distance_function=None, swap=False, reduction="mean", margin=1.0):
+        """Initialize TripletMarginWithDistanceLoss."""
+        super(TripletMarginWithDistanceLoss, self).__init__(reduction=reduction)
+        validator.check_is_float(margin, "margin", self.cls_name)
+        validator.check_bool(swap, "swap", self.cls_name)
+        if distance_function is None:
+            def pairwise_distance(x, y):
+                d = (x - y).abs()
+                if d.ndim == 0:
+                    raise ValueError(
+                        "For 'pairwise_distance' in 'TripletMarginWithDistanceLoss', "
+                        "'ndim' of the input must be positive, "
+                        f"but got {d.ndim}"
+                    )
+                return P.LpNorm(axis=1, p=2)(d)
+            self.distance_function = pairwise_distance
+        else:
+            self.distance_function = distance_function
+        self.swap = swap
+        self.reduction = reduction
+        self.margin = margin
+        self.minimum = P.Minimum()
+        self.maximum = P.Maximum()
+
+    def construct(self, x, positive, negative):
+        _check_is_tensor("x", x, self.cls_name)
+        _check_is_tensor("positive", positive, self.cls_name)
+        _check_is_tensor("negative", negative, self.cls_name)
+        d1 = self.distance_function(x, positive)
+        d2 = self.distance_function(x, negative)
+        if self.swap:
+            d2 = self.minimum(d2, self.distance_function(positive, negative))
+        loss = self.maximum(d1 - d2 + self.margin, 0)
+        return self.get_loss(loss)
+
+
 class PoissonNLLLoss(LossBase):
     r"""
     Poisson negative log likelihood loss.
