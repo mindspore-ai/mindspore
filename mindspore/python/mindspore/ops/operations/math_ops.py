@@ -1843,7 +1843,7 @@ class InplaceUpdateV2(Primitive):
     Refer to :func:`mindspore.ops.inplace_update` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

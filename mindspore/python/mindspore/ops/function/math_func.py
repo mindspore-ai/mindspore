@@ -1363,6 +1363,9 @@ def inplace_update(x, v, indices):
     """
     Updates specified values in `x` to `v` according to `indices`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Note:
         `indices` can only be indexed along the highest dimension.
 
@@ -1373,7 +1376,7 @@ def inplace_update(x, v, indices):
             the first dimension, which must be the same as the size of `indices`.
         indices (Union[int, tuple[int], Tensor]): Determines which rows of `x` to update with `v`,
             should be several int. It is an int or tuple or tensor with one dimension,
-            whose value is in [0, the highest dimension of `x`).
+            whose value is in [-x.shape[0], x.shape[0]).
             If it is a tuple or Tensor, the size of 'indices' should be the same as the first dimension of 'v'.
 
     Returns:
@@ -1384,7 +1387,7 @@ def inplace_update(x, v, indices):
         TypeError: If `indices` is a tuple or Tensor, but its element is not an int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
