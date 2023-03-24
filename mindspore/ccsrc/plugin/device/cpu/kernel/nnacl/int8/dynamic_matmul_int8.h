@@ -31,7 +31,7 @@ void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias
                              const float *filter_scale, const int filter_zp, bool filter_per_channel, int64_t act_type);
 void CalcWeightSums(const int8_t *weight, int row, int col, int32_t *dst, DataOrder order);
 void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int32_t *dst, DataOrder order);
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
 void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                                  float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
                                  const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum, int64_t act_type);

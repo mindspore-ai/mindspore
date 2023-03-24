@@ -133,7 +133,8 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
         if (bias != nullptr) {
           bias += col_offset;
         }
-#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64))
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64)) && \
+  !defined(USE_AOS_GCC_TOOLCHAIN)
         DynamicMatmulSdot4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
                                     out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
                                     quant_param_->filter_zp_[0] * param_->deep_, act_type);
@@ -149,7 +150,8 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
         if (bias != nullptr) {
           bias += col_offset;
         }
-#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64))
+#if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && !defined(SUPPORT_34XX) && (!defined(MACHINE_LINUX_ARM64)) && \
+  !defined(USE_AOS_GCC_TOOLCHAIN)
         DynamicMatmulSdot4x4x16AIWIForFp16(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias,
                                            row, col, out_stride_fp16, input_sums_ptr, weight_sums_ptr,
                                            quant_param_->input_zp_, quant_param_->filter_zp_[0] * param_->deep_,

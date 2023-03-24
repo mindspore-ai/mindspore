@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
 
 void MatMulR4Int8_optimize_handler(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
                                    const int *input_sum, const int *bias) {
