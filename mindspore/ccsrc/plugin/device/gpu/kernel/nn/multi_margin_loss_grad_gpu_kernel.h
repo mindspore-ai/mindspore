@@ -67,7 +67,6 @@ class MultiMarginLossGradGpuKernelMod : public NativeGpuKernelMod {
   int nframe_;
   int dim_;
   bool has_weight_ = false;
-  std::vector<size_t> input_shape_;
   void *cuda_stream_{nullptr};
   MultiMarginLossGradFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, MultiMarginLossGradFunc>> func_list_;
