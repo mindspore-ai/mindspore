@@ -52,7 +52,7 @@ class Net(nn.Cell):
         return self.fc2(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -73,7 +73,7 @@ def test_default_adamax(mode):
     assert np.allclose(loss_default_adamax, loss, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -94,7 +94,7 @@ def test_no_default_adamax(mode):
     assert np.allclose(loss_not_default_adamax, loss, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

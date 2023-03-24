@@ -51,7 +51,7 @@ def test_sub_dyn_shape():
     sub_test(False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -86,7 +86,7 @@ def sub_test_scalar(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -108,7 +108,7 @@ def sub_test_both_scalar(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -131,7 +131,7 @@ def sub_test_same_shape(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

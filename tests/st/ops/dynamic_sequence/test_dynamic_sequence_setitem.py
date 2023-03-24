@@ -50,7 +50,7 @@ def test_seq_setitem():
     assert res == expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -70,7 +70,7 @@ def test_seq_setitem_grad_0():
     print("grad out0 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

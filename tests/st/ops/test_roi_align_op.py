@@ -91,7 +91,7 @@ def roi_align_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=False):
     np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -109,7 +109,7 @@ def test_roi_align_float16():
     roi_align_case(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training

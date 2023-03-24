@@ -24,7 +24,7 @@ class Rot90(nn.Cell):
         return x.rot90(k=1, dims=[0, 1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

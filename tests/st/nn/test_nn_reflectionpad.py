@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -83,7 +83,7 @@ def test_reflection_pad1d_input2d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -148,7 +148,7 @@ def test_reflection_pad2d_input3d(mode):
     assert np.array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
