@@ -272,7 +272,10 @@ class _Context:
             if ascend_key == 'precision_mode':
                 self.set_param(ms_ctx_param.precision_mode, ascend_config[ascend_key])
             if ascend_key == 'jit_compile':
-                self.set_param(ms_ctx_param.jit_compile, ascend_config[ascend_key])
+                if ascend_config[ascend_key] is True:
+                    self.set_param(ms_ctx_param.jit_compile, "1")
+                else:
+                    self.set_param(ms_ctx_param.jit_compile, "0")
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1081,9 +1084,11 @@ def set_context(**kwargs):
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
             Currently, only setting `precision_mode` and `jit_compile` are supported on Ascend910B hardware platform.
+            The default value of `precision_mode` and `jit_compile` are experimental parameters, may change
+            in the future.
 
             - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
-              value of training network is must_keep_origin_dtype, and the default value of inference network
+              value of training network is based on the value of CANN, and the default value of inference network
               is force_fp16. The value range is as follows:
 
               - force_fp16: When the operator supports both float16 and float32, select float16 directly.
@@ -1106,7 +1111,7 @@ def set_context(**kwargs):
               - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
-            - jit_compile (bool): Whether to select online compilation. Default: True.
+            - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
 
     Raises:
         ValueError: If input key is not an attribute in context.
