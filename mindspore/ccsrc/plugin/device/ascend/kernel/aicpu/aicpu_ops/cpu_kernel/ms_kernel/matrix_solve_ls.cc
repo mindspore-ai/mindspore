@@ -68,8 +68,8 @@ uint32_t MatrixSolveLsCpuKernel::Compute(CpuKernelContext &ctx) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
-  if (shapel2->GetDims() != 0) {
-    KERNEL_LOG_ERROR("[%s] Tensor l2 should be a scalar.", ctx.GetOpType().c_str());
+  if (shapel2->GetDims() != 0 && !(shapel2->GetDims() == 1 && shapel2->GetDimSize(0) == 1)) {
+    KERNEL_LOG_ERROR("[%s] Tensor l2 should be a scalar or a single 1-dimension number.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetTensorShape()->GetDims() == 1) {
