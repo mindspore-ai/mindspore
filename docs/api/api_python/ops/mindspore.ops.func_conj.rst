@@ -3,9 +3,9 @@
 
 .. py:function:: mindspore.ops.conj(input)
 
-    计算输入Tensor的逐元素共轭。复数的形式必须是 `a + bj` ，其中a是实部，b是虚部。
+    逐元素计算输入Tensor的共轭。复数的形式必须是 `a + bj` ，其中a是实部，b是虚部。
 
-    返回的共轭形式为 `a + bj` 。
+    返回的共轭形式为 `a - bj` 。
 
     如果 `input` 是实数，则直接返回 `input` 。
 
