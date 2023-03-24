@@ -60,6 +60,9 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
                         << " argument is not list or tuple.\nThe " << error_index
                         << " argument detail: " << args_spec_list[idx]->ToString() << ".";
     }
+    if (abs->cast<AbstractSequencePtr>()->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "For 'zip', the dynamic length input is unsupported in graph mode";
+    }
   }
 
   auto min_abs = std::min_element(
