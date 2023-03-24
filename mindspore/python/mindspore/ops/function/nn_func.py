@@ -1659,11 +1659,11 @@ def kl_div(logits, labels, reduction='mean'):
     r"""
     Computes the Kullback-Leibler divergence between the logits and the labels.
 
-    The updating formulas of KLDivLoss algorithm are as follows,
+    For input tensors :math:`x` and :math:`target` with the same shape, the updating formulas of KLDivLoss algorithm are
+    as follows,
 
     .. math::
-        L = \{l_1,\dots,l_N\}^\top, \quad
-        l_n = target_n \cdot (\log target_n - x_n)
+        L(x, target) = target \cdot (\log target - x)
 
     Then,
 
