@@ -1627,7 +1627,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
 
       auto from_node_with_index = GetFrontNodeByKernelGraph(input, graph.get());
       MS_EXCEPTION_IF_NULL(from_node_with_index.first);
-      if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
+      if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem) &&
+          (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend))) {
         MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
                         << " for graph:" << graph->ToString() << " is a tuple get item";
         from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
@@ -1668,6 +1669,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         SchedulerHelper::AddDataArrow(exit_actor, to_actor, from_index, i);
         continue;
       } else {
+        MS_LOG(DEBUG) << "Fetch node:" << from_node_with_index.first->DebugString()
+                      << " index:" << from_node_with_index.second << " from actor:" << from_actor->GetAID();
         from_index = from_actor->FetchNodePosition(from_node_with_index);
       }
 
