@@ -198,6 +198,7 @@ def get_bprop_mirror_micro_step_operator(self):
         assign.add_prim_attr("parameter_micro", 0)
     out_tensor = Tensor(1.0, mstype.float16)
     opt_shard = _get_enable_parallel_optimizer()
+
     def bprop(x, z, out, dout):
         real_grad = z
         assign_out = dout
@@ -288,6 +289,7 @@ def get_bprop_mini_step_all_gather(self):
                 dx = F.depend(dx, z)
         else:
             dx = dout
+
         return (dx, zeros_like(z))
 
     return bprop

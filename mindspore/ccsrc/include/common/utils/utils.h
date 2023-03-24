@@ -324,6 +324,7 @@ constexpr auto kEqualOpName = "Equal";
 constexpr auto kErfOpName = "Erf";
 constexpr auto kEuclideanNormOpName = "EuclideanNorm";
 constexpr auto kEuclideanNormDOpName = "EuclideanNormD";
+constexpr auto kNoRepeatNGramOpName = "NoRepeatNGram";
 constexpr auto kExpandOpName = "Expand";
 constexpr auto kExpandDOpName = "ExpandD";
 constexpr auto kExpandDimsOpName = "ExpandDims";
