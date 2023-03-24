@@ -289,7 +289,7 @@ def aot_reduce_dyn_shape(source_name):
     assert np.allclose(np.sum(input_x, axis, keepdims=keep_dim), output.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_aot_single_output_cpu_dyn_shape():
