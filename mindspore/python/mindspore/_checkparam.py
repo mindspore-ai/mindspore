@@ -287,6 +287,7 @@ def check_and_canonicalize_axes(axes, ndim):
 
 
 def is_stub_tensor(tensor):
+    """Check if it's a StubTensor"""
     return hasattr(tensor, "stub")
 
 

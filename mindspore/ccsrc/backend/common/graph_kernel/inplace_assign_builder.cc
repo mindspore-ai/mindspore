@@ -213,7 +213,7 @@ void InplaceAssignBuilder::ProcessOriginCNode(
 }
 
 std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
-  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+  const AnfNodePtr &composite_node,
   const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
   const FuncGraphManagerPtr &mng) const {
   std::vector<InplaceAssignUserInfo> user_node_infos;
@@ -263,7 +263,7 @@ void InplaceAssignBuilder::ProcessOriginCNodeUser(
   const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
   const FuncGraphManagerPtr &mng) const {
   // 1. Find users.
-  auto user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_inplace_assignee_addr, mng);
+  auto user_nodes = FindOriginCNodeUsers(composite_node, info_and_inplace_assignee_addr, mng);
   for (const auto &iter : user_nodes) {
     // 2. Make sure modified composite node running first, So firstly, create depend_node, then add edge to connect
     // work_node, broadcast_node and depend_node to keep order.
