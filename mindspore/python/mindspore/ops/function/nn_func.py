@@ -1969,7 +1969,7 @@ def hardswish(x):
 
     .. math::
 
-        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6}
 
     where :math:`x_i` is an element of the input Tensor.
 
@@ -3603,7 +3603,7 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
-    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to c in feature map;
+    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to :math:`c` in feature map;
     where the :math:`n/2` indicates the `depth_radius`; where the :math:`k` indicates the `bias`;
     where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
 
@@ -4177,7 +4177,6 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 
     Args:
         inputs (Tensor): Predicted values, represented as :math:`x` in the formula.
-            Tensor of shape :math:`(*)` where :math:`*` means any number of dimensions.
         targets (Tensor): Label values, represented as :math:`y` in the formula.
             Has the same shape as `inputs`, contains -1 or 1.
         margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
@@ -4186,7 +4185,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
             Default: 'mean'.
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
 
     Raises:
         TypeError: If `inputs` is not a Tensor.
