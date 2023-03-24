@@ -47,3 +47,4 @@ mindspore.nn.MaxPool2d
         - **ValueError** - `dilation` 参数为tuple时长度不为2。
         - **ValueError** - `dilation` 参数不为int也不为tuple。
         - **ValueError** - `pad_mode` 为 'pad' 时，`data_format` 为 'NHWC'。
+        - **ValueError** - `pad_mode` 不为 "pad" 的时候 `padding` 为非0。

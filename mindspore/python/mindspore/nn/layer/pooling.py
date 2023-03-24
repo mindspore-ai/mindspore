@@ -231,6 +231,8 @@ def _check_maxpool_padding(padding, nd, cls_name):
         return (0,) * (3 - nd) + (padding,) * nd
     if isinstance(padding, (tuple, list)):
         validator.check_non_negative_int_sequence(padding, "padding", cls_name)
+        if len(padding) == 1:
+            return (0,) * (3 - nd) + tuple(padding * nd)
         if len(padding) != nd:
             raise ValueError(f"For {cls_name}, the length of padding must equal to {nd}, but got {len(padding)}.")
         return (0,) * (3 - nd) + tuple(padding)
@@ -324,6 +326,7 @@ class MaxPool3d(_PoolNd):
         ValueError: If the `padding` parameter is neither an integer nor a tuple of length 3.
         ValueError: If `pad_mode` is not set to 'pad', setting return_indices to True or dilation to a value
             other than 1.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -454,6 +457,7 @@ class MaxPool2d(_PoolNd):
         ValueError: If The length of the tuple dilation parameter is not 2.
         ValueError: If dilation parameter is neither an integer nor a tuple.
         ValueError: If `pad_mode` is 'pad' and `data_format` is 'NHWC'.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -596,6 +600,7 @@ class MaxPool1d(_PoolNd):
         ValueError: If the length of the tuple/list `padding` parameter is not 1.
         ValueError: If The length of the tuple dilation parameter is not 1.
         ValueError: If dilation parameter is neither an integer nor a tuple.
+        ValueError: If `padding` is non-zero when `pad_mode` is not 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -46,3 +46,4 @@ mindspore.nn.MaxPool1d
         - **ValueError** - `padding` 参数为tuple/list时长度不为1。
         - **ValueError** - `dilation` 参数为tuple时长度不为1。
         - **ValueError** - `dilation` 参数不为int也不为tuple。
+        - **ValueError** - `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
