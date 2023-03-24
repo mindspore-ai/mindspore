@@ -180,7 +180,7 @@ bool DynamicRnnOpBaseMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
 
   // copy seq_lens_ from seq_addr
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpy(seq_lens_.data(), seq_addr, batch_size_ * sizeof(int32_t), cudaMemcpyDeviceToHost),
+    cudaMemcpyAsync(seq_lens_.data(), seq_addr, batch_size_ * sizeof(int32_t), cudaMemcpyDeviceToHost, cuda_stream_),
     "cudaMemcpy seq_lengths from device to host failed.");
   CreateRNNDataDescGrp();
 
