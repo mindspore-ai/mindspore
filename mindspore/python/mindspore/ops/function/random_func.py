@@ -683,6 +683,8 @@ def normal(shape, mean, stddev, seed=None):
         >>> print(result)
         (3, 3, 3)
     """
+    _check_param("normal", "mean", mean)
+    _check_param("normal", "stddev", stddev)
     if not isinstance(mean, Tensor):
         mean = Tensor(mean)
     if not isinstance(stddev, Tensor):
@@ -692,7 +694,7 @@ def normal(shape, mean, stddev, seed=None):
     const_utils.check_type_valid(mean_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     const_utils.check_type_valid(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     seed1, seed2 = _get_seed(seed, "normal")
-    stdnormal = _get_cache_prim(P.StandardNormal)(seed1, seed2)
+    stdnormal = P.StandardNormal(seed1, seed2)
     _check_shape(shape)
     random_normal = stdnormal(shape)
     value = random_normal * stddev + mean
@@ -1274,6 +1276,14 @@ def _check_shape(input_shape):
             const_utils.raise_type_error("Elements of 'shape' must be int, but got: {}".format(type(item)))
         if item < 1:
             const_utils.raise_value_error("Elements of 'shape' must be positive int, but got: {}".format(item))
+    return True
+
+
+def _check_param(op_name, param_name, param_value):
+    """Check type of param_value is Tensor, int, or float."""
+    if not isinstance(param_value, (Tensor, int, float)):
+        const_utils.raise_type_error("For '{}', the type of '{}' must be Tensor, int, or float, "
+                                     "but got: {}".format(op_name, param_name, type(param_value)))
     return True
 
 
