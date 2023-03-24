@@ -5418,6 +5418,9 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     r"""
     Multiplies matrix `mat1` and matrix `mat2`. The matrix `input` is added to the final result.
 
+     .. math::
+        output = \beta input + \alpha (mat1 @ mat2)
+
     Args:
         input (Tensor): Tensor to be added.
         mat1 (Tensor): The first tensor to be multiplied.
@@ -5426,9 +5429,6 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     Keyword Args:
         beta (Union[int, float], optional): Multiplier for `input`. Default: 1.
         alpha (Union[int, float], optional): Multiplier for `mat1` @ `mat2`. Default: 1.
-
-    .. math::
-        output = \beta input + \alpha (mat1 @ mat2)
 
     Returns:
         Tensor, has the same dtype as `input`.
@@ -5465,7 +5465,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
     Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
 
     If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
-    with a 1-D tensor of size :math:`N` and `out` will be 1-D tensor of size :math:`N`.
+    with a 1-D tensor of size :math:`N`.In this case `out` will be 1-D tensor of size :math:`N`.
 
     The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
     factor for the added Tensor `x` respectively. If `beta` is 0, then `x` will be ignored.

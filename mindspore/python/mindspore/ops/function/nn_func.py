@@ -720,16 +720,15 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
 def adaptive_max_pool3d(input, output_size, return_indices=False):
     r"""
     Calculates the 3D adaptive max pooling for an input Tensor.
-    That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
 
     Args:
         input (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
-        output_size (Union[int, tuple]): The specified output size, which is an integer that represents depth,
-            height and width, or a tuple of three int numbers that represent depth, height and width respectively.
-            The value must be a positive integer. If it is None, the output size and input size of the corresponding
-            dimension are the same.
-        return_indices (bool, optional): If `return_indices` is ``True``, the indices of max value would be output,
-            else would not be output. Default: ``False``.
+        output_size (Union[int, tuple]): The specified output size, which is an int or Tuple(int) that
+            represents depth, height and width, or a tuple of three int numbers that represent depth, height and
+            width respectively. The value must be a positive integer. If it is None, the output size and
+            input size of the corresponding dimension are the same.
+        return_indices (bool, optional): If `return_indices` is `True`, the indices of max value would be output,
+            Otherwise, it will not be output. Default: `False`.
 
     Returns:
         - **y** (Tensor) - Tensor, with the same number of dims and data type as the `input`.
@@ -1261,7 +1260,7 @@ def dropout1d(input, p=0.5, training=True):
     probability `p`.
 
     The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
-    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology，And it is proved that
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, And it is proved that
     it can effectively reduce over fitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
@@ -1332,7 +1331,7 @@ def dropout2d(input, p=0.5, training=True):
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
     The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
-    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology，And it is proved that
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology, And it is proved that
     it can effectively reduce over fitting and prevent neuronal coadaptation.
     For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_ .
@@ -4903,7 +4902,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     where :math:`k` is kernel,
     :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ,
     :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
-    the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
+    the output and :math:`j` is in the range of :math:`[0, C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
     is a convolution kernel slice with shape
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`,
     where :math:`\text{kernel_size[0]}`, :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are

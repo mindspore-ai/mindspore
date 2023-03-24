@@ -17,7 +17,7 @@ mindspore.ops.addr
         - **vec1** (Tensor) - 第一个需要相乘的Tensor，shape大小为 :math:`(N,)` 。
         - **vec2** (Tensor) - 第二个需要相乘的Tensor，shape大小为 :math:`(M,)` 。
         - **beta** (scalar[int, float, bool], 可选) - `x` (β)的乘数。 `beta` 必须是int或float或bool类型，默认值：1。
-        - **alpha** (scalar[int, float, bool], 可选) - `vec1` ⊗ `vec2` (α)的乘法器。 `alpha` 必须是int或float或bool类型，默认值：1。
+        - **alpha** (scalar[int, float, bool], 可选) - `vec1` ⊗ `vec2` (α)的乘数。 `alpha` 必须是int或float或bool类型，默认值：1。
 
     返回：
         Tensor，shape大小为 :math:`(N, M)` ，数据类型与 `x` 相同。

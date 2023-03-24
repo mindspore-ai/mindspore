@@ -3,7 +3,7 @@ mindspore.ops.adaptive_max_pool3d
 
 .. py:function:: mindspore.ops.adaptive_max_pool3d(input, output_size, return_indices=False)
 
-    对输入Tensor执行三维的自适应最大池化操作。对于任何输入尺寸，指定输出的size都为 :math:`(D, H, W)`。
+    对输入Tensor执行三维的自适应最大池化操作。
 
     参数：
         - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N, C, D, H, W)` 的Tensor。
@@ -17,5 +17,5 @@ mindspore.ops.adaptive_max_pool3d
     异常：
         - **TypeError** - `input` 不是Tensor。
         - **ValueError** - `input` 的维度不是4D或者5D。
-        - **TypeError** - `input` 的数据类型不是int，uint或float。
+        - **TypeError** - `input` 的数据类型不是int或float。
         - **ValueError** - `output_size` 不是一个int或者shape为(3,)的tuple。

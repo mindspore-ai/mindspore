@@ -5,7 +5,7 @@ mindspore.nn.KLDivLoss
 
     计算输入 `logits` 和 `labels` 的KL散度。
 
-    对于相同形状的张量 :math:`x` 和 :math:`target` ，KLDivLoss的计算公式如下：
+    对于相同shape的Tensor :math:`x` 和 :math:`target` ，KLDivLoss的计算公式如下：
 
     .. math::
         L(x, target) = target \cdot (\log target - x)
