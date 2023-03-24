@@ -381,6 +381,8 @@ def get_bprop_real_div(self):
     mul_op = P.Mul()
 
     def bprop(x, y, out, dout):
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            raise TypeError("For 'RealDiv', gradient not support for complex type currently.")
         bc_x = div_op(dout, y)
         bc_y = neg(mul_op(bc_x, out))
         return binop_grad_common(x, y, bc_x, bc_y)
