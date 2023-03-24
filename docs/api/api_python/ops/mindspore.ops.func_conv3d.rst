@@ -13,12 +13,14 @@ mindspore.ops.conv3d
     其中，:math:`k` 为卷积核数，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ，
     :math:`C_{in}` 为输入通道数， :math:`j` 的范围从 :math:`0` 到 :math:`C_{out} - 1` ， :math:`W_{ij}` 对应第 :math:`j` 个过滤器的第 :math:`i` 个通道， :math:`out_{j}` 对应输出的第 :math:`j` 个通道。
     :math:`W_{ij}` 为卷积核的切片，其shape为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 :math:`\text{kernel_size[1]}` 和 :math:`\text{kernel_size[2]}` 是卷积核的高度和宽度，
-    :math:`\text{kernel_size[0]}` 是卷积核的深度。完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 `group` 是在通道上分割输入 `inputs` 的组数。
+    :math:`\text{kernel_size[0]}` 是卷积核的深度。
+    :math:`\text{bias}` 是偏置参数， :math:`\text{X}` 是输入Tensor。
+    完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 `group` 是在通道上分割输入 `inputs` 的组数。
 
     详细内容请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
 
     .. note::
-        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `C_{in}` = `C_{out}` = `group` 的约束条件。
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 :math:`C_{in} = C_{out} = group` 的约束条件。
 
     参数：
         - **inputs** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。

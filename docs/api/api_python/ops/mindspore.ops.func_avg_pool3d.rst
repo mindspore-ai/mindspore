@@ -10,6 +10,7 @@ mindspore.ops.avg_pool3d
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     .. warning::

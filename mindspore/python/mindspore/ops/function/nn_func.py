@@ -1225,7 +1225,7 @@ def celu(x, alpha=1.0):
 
     Args:
         x (Tensor): The input of celu with data type of float16 or float32.
-        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+        alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: 1.0
 
     Returns:
         Tensor, has the same data type and shape as the input.
@@ -3780,8 +3780,8 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
         target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
-        margin (float): Should be in [-1.0, 1.0]. Default 0.0.
-        reduction (str): Specifies which reduction to be applied to the output. It must be one of
+        margin (float, optional): Should be in [-1.0, 1.0]. Default 0.0.
+        reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of
           "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
 
     Returns:
@@ -3993,19 +3993,29 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
+    CTC is a loss function in sequence labeling problems, which is mainly used to deal with the alignment of input
+    and output labels in sequence labeling problems.
+    While traditional sequence labeling algorithms require the input and output symbols to be perfectly aligned at
+    each moment, CTC expands the label collection and adds empty elements.
+    After labeling the sequence using the extended label set, all the prediction sequences that can be converted
+    into real sequences by the mapping function are correct prediction results, that is, the predicted sequence
+    can be obtained without data alignment processing.
+    Its objective function is to maximize the sum of probabilities of all correct prediction sequences.
+
     The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
 
     Args:
         log_probs (Tensor): A tensor of shape (T, N, C), where T is input length, N is batch size and C is
             number of classes (including blank).
-        targets (Tensor): A tensor of shape (N, S), where S is max target length, means the target sequences.
-        input_lengths (Union(tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the input.
-        target_lengths (Union(tuple, Tensor)): A tuple or Tensor of shape(N). It means the lengths of the target.
-        blank (int): The blank label. Default: 0.
-        reduction (str): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
-            Default: 'mean'.
-        zero_infinity (bool): Whether to set infinite loss and correlation gradient to 0. Default: False.
+        targets (Tensor): Target sequences. A tensor of shape (N, S), where S is max target length.
+        input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape(N).
+        target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape(N).
+        blank (int, optional): The blank label. Default: 0.
+        reduction (str, optional): Implements the reduction method to the output with 'none', 'mean', or 'sum',
+            respectively indicate that no calculation is specified, that the mean is used, and that is calculated
+            using summation. Default: 'mean'.
+        zero_infinity (bool, optional): Whether to set infinite loss and correlation gradient to 0. Default: False.
 
     Returns:
         neg_log_likelihood (Tensor), A loss value with shape :math:`(N)` , which is differentiable with respect to
@@ -4907,7 +4917,7 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `group>1`, condition `C_{in}` = `C_{out}` = `group` must be satisfied.
+        That is, when `group>1`, condition :math:`C_{in} = C_{out} = group` must be satisfied.
 
     Args:
         inputs (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -4930,10 +4940,10 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
             - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0. If `pad` is an integer,
+        padding (Union[int, tuple[int]], optional): The pad value to be filled. If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
             If `pad` is a tuple of six integers, the padding of head, tail, top, bottom,
-            left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly.
+            left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4] and pad[5] correspondingly. Default: 0.
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.

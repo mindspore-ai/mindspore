@@ -8,7 +8,7 @@ mindspore.ops.atleast_3d
     Scalar、一维或二维Tensor被转换为三维Tensor，而高维输入则被保留。
 
     参数：
-        - **inputs** (Union[Tensor, list[Tensor]]) - 一个或多个输入Tensor。例如，shape为 :math:`(N,)` 的Tensor变成shape为 :math:`(1, N, 1)` 的Tensor，shape为 :math:`(M, N)` 的Tensor变成shape为 :math:`(M, N, 1)` 的Tensor。
+        - **inputs** (Union[Tensor, list[Tensor]]) - 一个或多个输入Tensor。
 
     返回：
         Tensor或Tensor列表。如果返回列表，则列表中的每一个元素 `a` 满足： `a`.ndim >= 3。
