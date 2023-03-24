@@ -121,12 +121,14 @@ class Dropout(Cell):
         - Each channel will be zeroed out independently on every construct call.
         - Parameter `keep_prob` will be removed in a future version, please use parameter `p` instead.
           Parameter `p` means the probability of the element of the input tensor to be zeroed.
+        - Parameter `dtype` will be removed in a future version. It is not recommended to define this parameter.
 
     Args:
         keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
             E.g. rate=0.9, dropping out 10% of input neurons. Default: 0.5.
         p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
             E.g. rate=0.9, dropping out 90% of input neurons. Default: None.
+        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: mindspore.float32.
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
@@ -155,9 +157,12 @@ class Dropout(Cell):
         (2, 2, 3)
     """
 
-    def __init__(self, keep_prob=0.5, p=None):
+    def __init__(self, keep_prob=0.5, p=None, dtype=mstype.float32):
         """Initialize Dropout."""
         super(Dropout, self).__init__()
+        if dtype != mstype.float32:
+            logger.warning(
+                "This parameter `dtype` will be deleted or invisible in the future. Please don't use it.")
         if p is None:
             logger.warning("For Dropout, this parameter `keep_prob` will be deprecated, please use `p` instead.")
             Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)

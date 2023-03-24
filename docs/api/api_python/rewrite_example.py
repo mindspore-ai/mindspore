@@ -132,10 +132,7 @@ def pattern_replace(stree):
     class ConvReplacement(Replacement):
         """创建新节点类的实现"""
         def build(self, pattern: PatternNode, is_chain_pattern: bool, matched: OrderedDict) -> [Node]:
-            assert is_chain_pattern
-            assert pattern.type() == nn.MaxPool2d
             bn_node: Node = matched.get(pattern.name())
-            assert bn_node is not None
 
             conv = nn.Conv2d(1, 1, 1)
             conv_node = Node.create_call_cell(conv, ['x1'], bn_node.get_args(), bn_node.get_kwargs(),
