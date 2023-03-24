@@ -276,6 +276,10 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/crop_and_resize_cpu_kernel.cc
 mindspore/mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc:mindspore::device::cpu::CPUDeviceAddress::SyncHostToDevice
 
 # AICPU migration
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_max_pool_3d_with_fixed_ksize.cc:aicpu::FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixedKsizeOutCpuTemplate
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multi_margin_loss_grad.cc:aicpu::MultiMarginLossGradCpuKernel::MultiMarginLossGradCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/multi_margin_loss_grad.cc:aicpu::MultiMarginLossGradCpuKernel::MultiMarginLossGradComputeFP16
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/fractional_max_pool_3d_grad_with_fixed_ksize.cc:aicpu::FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGradWithFixedKsizeOutCpuTemplate
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/mediangrad.cc:aicpu::MedianGradCpuKernel::MedianGradCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/adaptive_max_pool_3d.cc:aicpu::AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/adaptive_max_pool_3d_grad.cc:aicpu::AdaptiveMaxPool3dGradCpuKernel::Compute
