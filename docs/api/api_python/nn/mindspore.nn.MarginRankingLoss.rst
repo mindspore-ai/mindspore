@@ -11,8 +11,8 @@ mindspore.nn.MarginRankingLoss
         \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
 
     参数：
-        - **margin** (float) - 指定运算的调节因子。默认值：0.0。
-        - **reduction** (str) - 指定输出结果的计算方式。可选值为"none"、"mean"或"sum"，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值："mean"。
+        - **margin** (float, 可选) - 指定运算的调节因子。默认值：0.0。
+        - **reduction** (str, 可选) - 指定输出结果的计算方式。可选值为"none"、"mean"或"sum"，分别表示不指定计算方式、使用均值计算和使用求和计算。默认值："mean"。
 
     输入：
         - **input1** (Tensor) - 输入Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。
