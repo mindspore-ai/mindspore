@@ -46,9 +46,11 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsIndicesDynamic(const PrimitivePtr &primitive, const AbstractBasePtr &indices_abs) {
-  if (indices_abs->isa<abstract::AbstractTensor>() || indices_abs->isa<abstract::AbstractSequence>()) {
+  if (indices_abs->isa<abstract::AbstractTensor>()) {
     ShapeVector indices_shape = GetShapeValue(primitive, indices_abs);
     return IsDynamic(indices_shape);
+  } else if (indices_abs->isa<abstract::AbstractSequence>()) {
+    return indices_abs->cast<abstract::AbstractSequencePtr>()->dynamic_len();
   } else if (indices_abs->isa<abstract::AbstractScalar>()) {
     return false;
   } else {
