@@ -386,7 +386,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPatternT5New(bool transpose,
   return matmul3;
 }
 
-VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPatternPA() const {
+VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPatternPA(bool mask) const {
   VectorRef k_embedding, v_embedding;
   auto q_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
   MS_CHECK_TRUE_RET(q_transpose != nullptr, {});
@@ -399,14 +399,21 @@ VectorRef MultiHeadAttentionFusion::DefineMPWithMaskPatternPA() const {
   auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
   auto matmul1 = VectorRef({is_matmul1, q_embedding, k_embedding});
-  auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
-  MS_CHECK_TRUE_RET(is_add != nullptr, {});
-  auto mask = DefineMask(mask_);
-  MS_CHECK_TRUE_RET(!mask.empty(), {});
-  auto add = VectorRef({is_add, mask, matmul1});
-  auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
-  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
-  auto softmax = VectorRef({is_softmax, add});
+  VectorRef softmax;
+  if (mask) {
+    auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion));
+    MS_CHECK_TRUE_RET(is_add != nullptr, {});
+    auto mask = DefineMask(mask_);
+    MS_CHECK_TRUE_RET(!mask.empty(), {});
+    auto add = VectorRef({is_add, mask, matmul1});
+    auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
+    MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+    softmax = VectorRef({is_softmax, add});
+  } else {
+    auto is_softmax = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimSoftmax));
+    MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+    softmax = VectorRef({is_softmax, matmul1});
+  }
   auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion));
   MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
   auto matmul2 = VectorRef({is_matmul2, softmax, v_embedding});
@@ -574,6 +581,7 @@ std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatte
   patterns[kMPAWithMaskPatternName] = DefineMPWithMaskPattern();
   patterns[kMPAPatternName] = DefineMPWithMaskPattern(false);
   patterns[kMPAWithMaskPatternNamePA] = DefineMPWithMaskPatternPA();
+  patterns[kMPAPatternNamePA] = DefineMPWithMaskPatternPA(false);
   patterns[kMPAWithMaskPatternNameT5] = DefineMPWithMaskPatternT5();
   patterns[kMPAWithMaskPatternNameT5New] = DefineMPWithMaskPatternT5New(false);
   patterns[kMPAWithMaskPatternNameT5New2] = DefineMPWithMaskPatternT5New(true, true);
@@ -603,8 +611,10 @@ bool MultiHeadAttentionFusion::CheckPattern(const EquivPtr &equiv, int *head_num
     MS_LOG(ERROR) << "cannot find head_num or head_size";
     return false;
   }
-  *head_num = out.at(0);
-  *head_size = out.at(1);
+  std::vector<int> out2(out.end() - C2NUM, out.end());
+  *head_num = out2.at(0);
+  *head_size = out2.at(C1NUM);
+  scale_ = (scale_ == 0.0f) ? 1.0f / sqrtf(*head_size * 1.0f) : scale_;
   return true;
 }
 
@@ -614,17 +624,20 @@ AnfNodePtr MultiHeadAttentionFusion::Process(const std::string &pattern_name, co
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
   }
+  scale_ = 0.0f;
   if ((pattern_name == kMPAWithMaskPatternName) || (pattern_name == kMPAWithMaskPatternNamePA) ||
       (pattern_name == kMPAWithMaskPatternNameT5) || (pattern_name == kMPAWithMaskPatternNameT5New) ||
       (pattern_name == kMPAWithMaskTransposePatternNameT5New) || (pattern_name == kMPAWithMaskPatternNameT5New2)) {
     if (pattern_name == kMPAWithMaskPatternNameT5New || pattern_name == kMPAWithMaskTransposePatternNameT5New ||
         pattern_name == kMPAWithMaskPatternNameT5New2) {
       t5_x_ = true;
+      scale_ = 1.0f;
     }
-    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope(), true);
+    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, true);
   }
-  if (pattern_name == kMPAPatternName || pattern_name == kMPAPatternNameSwin1 || pattern_name == kMPAPatternNameSwin2)
-    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope(), false);
+  if (pattern_name == kMPAPatternName || pattern_name == kMPAPatternNameSwin1 || pattern_name == kMPAPatternNameSwin2 ||
+      pattern_name == kMPAPatternNamePA)
+    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, false);
   return nullptr;
 }
 
@@ -758,7 +771,7 @@ std::shared_ptr<ops::Attention> MultiHeadAttentionFusion::CreatePrim(const Equiv
   if (!CheckPattern(equiv, &head_num, &head_size)) {
     return nullptr;
   }
-  attention_prim->Init(head_num, head_size, t5_x_, cross);
+  attention_prim->Init(head_num, head_size, t5_x_, cross, scale_);
   return attention_prim;
 }
 
@@ -852,7 +865,8 @@ std::vector<AnfNodePtr> MultiHeadAttentionFusion::GetNewNodeInputs(const EquivPt
 }
 
 CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph,
-                                                                      const EquivPtr &equiv, const string &base_name,
+                                                                      const EquivPtr &equiv,
+                                                                      const mindspore::AnfNodePtr &node,
                                                                       bool mask) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
@@ -874,7 +888,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     auto c_bias = ConcatTensors({bias_q_tensor, bias_k_tensor, bias_v_tensor});
     c_bias_param = func_graph->add_parameter();
     MS_CHECK_TRUE_RET(c_bias_param != nullptr, nullptr);
-    c_bias_param->set_name(base_name + "/bias_qkv");
+    c_bias_param->set_name(node->fullname_with_scope() + "/bias_qkv");
     if (lite::InitParameterFromTensorInfo(c_bias_param, c_bias) != lite::RET_OK) {
       MS_LOG(ERROR) << "Init parameter from tensor info failed.";
       return nullptr;
@@ -901,7 +915,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     MS_LOG(ERROR) << "Init parameter from tensor info failed.";
     return nullptr;
   }
-  c_weight_param->set_name(base_name + "/weight_qkv");
+  c_weight_param->set_name(node->fullname_with_scope() + "/weight_qkv");
   ParameterPtr q_weight_param;
   if (cross) {
     q_weight_param = func_graph->add_parameter();
@@ -921,12 +935,15 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
       return nullptr;
     }
   }
-  new_node->set_fullname_with_scope(base_name + "/attention");
+  new_node->set_fullname_with_scope(node->fullname_with_scope() + "/attention");
   CNodePtr ret_node;
   if (vnode) {
     auto get_item_node = MakeGetTuple(func_graph, new_node, knode, vnode);
     ret_node = get_item_node;
   } else {
+    auto old_node = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(old_node->abstract() != nullptr, nullptr);
+    new_node->set_abstract(old_node->abstract()->Clone());
     ret_node = new_node;
   }
   RemoveRedundantInput(func_graph, redundant);

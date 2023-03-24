@@ -401,6 +401,7 @@ OP_SCHEMA_DEF(Attention)
 OP_ATTR(head_num, long)
 OP_ATTR(head_size, long);
 OP_ATTR(cross, bool)
+OP_ATTR(scale, float)
 OP_SCHEMA_DEF_END(Attention)
 
 OP_SCHEMA_DEF(Conv2DBackpropFilterFusion)

@@ -27,25 +27,23 @@
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(Attention, BaseOperator);
 
-void Attention::set_head_num(int64_t head_num) { (void)this->AddAttr(kAttentionNumHeads, api::MakeValue(head_num)); }
+void Attention::set_head_num(int64_t head_num) { (void)this->AddAttr(kNumHeads, api::MakeValue(head_num)); }
 
-void Attention::set_head_size(int64_t head_size) {
-  (void)this->AddAttr(kAttentionSizePerHead, api::MakeValue(head_size));
-}
+void Attention::set_head_size(int64_t head_size) { (void)this->AddAttr(kSizePerHead, api::MakeValue(head_size)); }
 
 void Attention::set_cross(bool cross) { (void)this->AddAttr(kCross, api::MakeValue(cross)); }
 
 void Attention::set_position_bias(bool position_bias) {
-  (void)this->AddAttr(kPositionBias, api::MakeValue(position_bias));
+  (void)this->AddAttr(kPositionBias1, api::MakeValue(position_bias));
 }
-
+void Attention::set_scale(float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 int64_t Attention::get_head_num() const {
-  auto value_ptr = this->GetAttr(kAttentionNumHeads);
+  auto value_ptr = this->GetAttr(kNumHeads);
   return GetValue<int64_t>(value_ptr);
 }
 
 int64_t Attention::get_head_size() const {
-  auto value_ptr = this->GetAttr(kAttentionSizePerHead);
+  auto value_ptr = this->GetAttr(kSizePerHead);
   return GetValue<int64_t>(value_ptr);
 }
 
@@ -55,15 +53,19 @@ bool Attention::get_cross() const {
 }
 
 bool Attention::get_position_bias() const {
-  auto value_ptr = this->GetAttr(kPositionBias);
+  auto value_ptr = this->GetAttr(kPositionBias1);
   return GetValue<bool>(value_ptr);
 }
-
-void Attention::Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross) {
+float Attention::get_scale() const {
+  auto value_ptr = this->GetAttr(kScale);
+  return GetValue<float>(value_ptr);
+}
+void Attention::Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross, float scale) {
   this->set_head_num(head_num);
   this->set_head_size(head_size);
   this->set_cross(cross);
   this->set_position_bias(position_bias);
+  this->set_scale(scale);
 }
 REGISTER_PRIMITIVE_C(kNameAttention, Attention);
 }  // namespace mindspore::ops

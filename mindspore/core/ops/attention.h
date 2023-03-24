@@ -41,15 +41,17 @@ class MIND_API Attention : public BaseOperator {
   /// \param[in] head_size Define size per head.
   /// \param[in] cross Define is cross attention. Default false.
   /// \param[in] position_bias Define is position bias attention.
-  void Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross = false);
+  void Init(int64_t head_num, int64_t head_size, bool position_bias, bool cross = false, float scale = 1.0f);
   void set_head_num(int64_t head_num);
   void set_head_size(int64_t head_size);
   void set_cross(bool cross);
   void set_position_bias(bool position_bias);
+  void set_scale(float scale);
   int64_t get_head_num() const;
   int64_t get_head_size() const;
   bool get_cross() const;
   bool get_position_bias() const;
+  float get_scale() const;
 };
 }  // namespace ops
 }  // namespace mindspore
