@@ -55,6 +55,25 @@ std::pair<bool, bool> CheckCondAbstractIsInterpretedObj(const AbstractBasePtr &c
   return {false, false};
 }
 
+void CheckTensorCondValid(const AbstractBasePtr &cond) {
+  // Tensor condition must be one element or dynamic shape.
+  auto base_shape = cond->BuildShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  ShapeVector cond_shape = base_shape->cast<ShapePtr>()->shape();
+  if (cond_shape.empty()) {
+    return;
+  }
+  for (size_t i = 0; i < cond_shape.size(); i++) {
+    if (cond_shape[i] != Shape::kDynamicRankLen && cond_shape[i] != Shape::kShapeDimAny &&
+        cond_shape[i] != Shape::kShapeRankAny) {
+      MS_LOG(ERROR) << "The condition value of control flow can be a tensor with one element, "
+                    << "but got tensor with shape " << base_shape->ToString();
+      MS_LOG(EXCEPTION) << "The truth value of an array with more than one element is ambiguous.";
+    }
+  }
+  return;
+}
+
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: condition, true branch, false branch
@@ -74,6 +93,9 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
   // If the value of condition is AnyValue or the abstract of condition is AbstractTensor,
   // keeps both true and false branch.
   if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
+    if (cond->isa<AbstractTensor>()) {
+      CheckTensorCondValid(cond);
+    }
     MS_EXCEPTION_IF_NULL(tb);
     // Need record two func_graph
     SetVariableFlag(tb);
