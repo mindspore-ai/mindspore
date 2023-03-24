@@ -73,27 +73,29 @@ BuiltInTypeMap &GetMethodMap() {
        {"__le__", prim::kPrimScalarLe},                // P.scalar_le
        {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
        {"__bool__", std::string("int_bool")},          // C.int_bool
+       {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
     {kNumberTypeUInt,
      {
-       {"__add__", prim::kPrimScalarAdd},            // P.scalar_add,
-       {"__sub__", prim::kPrimScalarSub},            // P.scalar_sub,
-       {"__mul__", prim::kPrimScalarMul},            // P.scalar_mul,
-       {"__floordiv__", prim::kPrimScalarDiv},       // P.scalar_div,
-       {"__truediv__", std::string("int_truediv")},  // C.int_truediv
-       {"__mod__", prim::kPrimScalarMod},            // P.scalar_mod,
-       {"__pow__", prim::kPrimScalarPow},            // P.scalar_pow,
-       {"__floor__", prim::kPrimIdentity},           // P.identity,
-       {"__trunc__", prim::kPrimIdentity},           // P.identity,
-       {"__pos__", prim::kPrimScalarUadd},           // P.scalar_uadd,
-       {"__neg__", prim::kPrimScalarUsub},           // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},              // P.scalar_eq,
-       {"__ne__", prim::kPrimScalarNe},              // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},              // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},              // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},              // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},              // P.scalar_ge,
-       {"__bool__", std::string("int_bool")},        // C.int_bool
+       {"__add__", prim::kPrimScalarAdd},              // P.scalar_add,
+       {"__sub__", prim::kPrimScalarSub},              // P.scalar_sub,
+       {"__mul__", prim::kPrimScalarMul},              // P.scalar_mul,
+       {"__floordiv__", prim::kPrimScalarDiv},         // P.scalar_div,
+       {"__truediv__", std::string("int_truediv")},    // C.int_truediv
+       {"__mod__", prim::kPrimScalarMod},              // P.scalar_mod,
+       {"__pow__", prim::kPrimScalarPow},              // P.scalar_pow,
+       {"__floor__", prim::kPrimIdentity},             // P.identity,
+       {"__trunc__", prim::kPrimIdentity},             // P.identity,
+       {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
+       {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
+       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+       {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
+       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
+       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
+       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
+       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+       {"__bool__", std::string("int_bool")},          // C.int_bool
+       {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
     {kNumberTypeFloat,
      {
@@ -115,6 +117,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
        {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
        {"__bool__", std::string("float_bool")},          // C.float_bool
+       {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
     {kObjectTypeTuple,
      {
@@ -212,6 +215,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__ms_iter__", prim::kPrimIdentity},                               // C.array_iter
        {"__ms_hasnext__", std::string("array_hasnext")},                   // C.array_hasnext
        {"__ms_next__", std::string("array_next")},                         // C.array_next
+       {"__ms_to_array__", prim::kPrimIdentity},                           // P.identity,
        {"gather_elements", std::string("gather_elements")},                // P.GatherD
        {"item", std::string("item")},                                      // P.item,
        {"itemset", std::string("itemset")},                                // P.itemset,
