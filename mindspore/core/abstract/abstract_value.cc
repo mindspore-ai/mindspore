@@ -1099,7 +1099,7 @@ AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
       dyn_len_sequence->CheckAndConvertToDynamicLenSequence();
       return dyn_len_sequence->Join(other_sequence);
     }
-  } catch (std::exception) {
+  } catch (std::exception &) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
   auto res = dyn_cast<AbstractSequence>(ElementsJoin<AbstractTuple>(other_sequence));
@@ -1125,7 +1125,7 @@ AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
       dyn_len_sequence->CheckAndConvertToDynamicLenSequence();
       return dyn_len_sequence->Join(other_sequence);
     }
-  } catch (std::exception) {
+  } catch (std::exception &) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
 
