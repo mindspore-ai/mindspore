@@ -36,6 +36,11 @@
 
 namespace mindspore {
 namespace lite {
+constexpr int kOffsetTwo = 2;
+constexpr int kOffsetThree = 3;
+constexpr size_t kMinShapeSizeTwo = 2;
+constexpr size_t kMinShapeSizeFour = 4;
+
 using BaseOperatorPtr = std::shared_ptr<mindspore::ops::BaseOperator>;
 typedef OpParameter *(*ParameterPtrGen)(const BaseOperatorPtr &base_operator);
 OpParameter *CreatePopulatePtr(const BaseOperatorPtr &base_operator);
