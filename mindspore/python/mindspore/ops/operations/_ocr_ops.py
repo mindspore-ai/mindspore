@@ -70,7 +70,7 @@ class OCRDetectionPreHandle(PrimitiveWithInfer):
     This operator is used to prehandle images in ocr detection.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         data_format (str): Data format of the tensor passed to operator, is 'NHWC' or 'NCHW'. Default: "NHWC"
@@ -107,7 +107,7 @@ class OCRFindContours(PrimitiveWithInfer):
     Find contours of the images.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         value_mode (int): Binarization mode.
@@ -140,7 +140,7 @@ class BatchDilatePolys(PrimitiveWithInfer):
     Batch dilate polygons according to expand_scale.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **polys_data** (Tensor) - Point data of every contours. The data type must be int32.
@@ -179,7 +179,7 @@ class ResizeAndClipPolys(PrimitiveWithInfer):
     Resize the dilated polygons according to scales.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **polys_data** (Tensor) - Point data of every contours. The data type must be int32.
@@ -219,7 +219,7 @@ class OCRDetectionPostHandle(PrimitiveWithInfer):
     This operator is used to posthandle images in ocr detection.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **img** (Tensor) - Original image tensor. The data type must be uint8.
@@ -252,7 +252,7 @@ class OCRIdentifyPreHandle(PrimitiveWithInfer):
     This operator is used to prehandle images in ocr identification.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         size (Union[tuple[int], list[int]]): Image size after prehandle.
@@ -288,7 +288,7 @@ class OCRRecognitionPreHandle(Primitive):
     This operator is used to prehandle images in ocr recognition.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         batch_size (int): Image batch size of each partition.
@@ -320,7 +320,7 @@ class BatchEnqueue(PrimitiveWithInfer):
     This operator is used to batch input x according to attr batch_size and enqueue.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         batch_size (int): Image batch size of each dequeue.
@@ -352,7 +352,7 @@ class Dequeue(PrimitiveWithInfer):
     This operator is used to dequeue data according to queue_id.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         output_type (mstype): Data output type.

@@ -4965,7 +4965,7 @@ class Atanh(Primitive):
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.atanh` for more details.
 
@@ -6209,7 +6209,7 @@ class Igamma(Primitive):
     Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **a** (Tensor) - The input tensor. With type of float32 or float64.
@@ -6257,7 +6257,7 @@ class Igammac(Primitive):
     Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **a** (Tensor) - The input tensor of igammac. With float32 or float64 data type.
@@ -6649,7 +6649,7 @@ class Digamma(Primitive):
         P(x) = grad(ln(gamma(x)))
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - The input tensor. With type of float16 or float32 or float64.
@@ -6989,7 +6989,7 @@ class Zeta(Primitive):
     Compute the Hurwitz zeta function ζ(x,q) of input Tensor.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     .. math::
         \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}

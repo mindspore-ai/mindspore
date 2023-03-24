@@ -5,8 +5,8 @@ mindspore.amp.StaticLossScaler
 
     Static Loss scale类。用固定的常数来scales和unscale损失或梯度。
 
-    .. note::
-        - 这是一个实验性接口，后续可能删除或修改。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **scale_value** (Union(float, int)) - 缩放系数。

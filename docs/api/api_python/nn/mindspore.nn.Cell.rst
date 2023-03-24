@@ -174,8 +174,8 @@
         返回：
             Tuple类型，编译计算图所设置的输入。
 
-        .. note::
-            这是一个实验接口，可能会被更改或者删除。
+        .. warning::
+            这是一个实验性API，后续可能修改或删除。
 
     .. py:method:: get_parameters(expand=True)
 
@@ -470,8 +470,8 @@
         参数：
             - **inputs** (tuple) - Cell的输入。
 
-        .. note::
-            这是一个实验接口，可能会被更改或者删除。
+        .. warning::
+            这是一个实验性API，后续可能修改或删除。
 
     .. py:method:: set_jit_config(jit_config)
 

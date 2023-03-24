@@ -32,7 +32,7 @@ class EnvCreate(PrimitiveWithInfer):
     created handle. Make sure to create a new operator instance if you want to create a new environment instance.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         name (str): Name of built-in environment.
@@ -70,7 +70,7 @@ class EnvReset(PrimitiveWithInfer):
     Reset reinforcement learning built-in environment.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         handle (int): The handle returned by `EnvCreate` operator.
@@ -110,7 +110,7 @@ class EnvStep(PrimitiveWithInfer):
     Run one environment timestep.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         handle (int): The handle returned by `EnvCreate` operator.
@@ -570,7 +570,7 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
     Sample a transition to the priority replay buffer.
 
     .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
@@ -744,7 +744,7 @@ class ReservoirReplayBufferSample(Primitive):
     Sample a transition to the replay buffer.
 
     .. warning::
-            This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
@@ -852,7 +852,7 @@ class TensorsQueueCreate(PrimitiveWithInfer):
     TensorsQueueCreate used to create a TensorsQueue and return an unique handle.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorsQueue.
@@ -902,7 +902,7 @@ class TensorsQueuePut(PrimitiveWithInfer):
     TensorsQueuePut used to put tensors into a created TensorsQueue.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorsQueue.
@@ -954,7 +954,7 @@ class TensorsQueueGet(PrimitiveWithInfer):
     TensorsQueueGet used to get tensors in the front of the TensorsQueue.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         shapes (tuple(tuple(int))): the shape of each tensor in element.
@@ -1008,7 +1008,7 @@ class TensorsQueueClose(PrimitiveWithInfer):
     TensorsQueueClose used to close the created TensorsQueue. The resources in TensorsQueue will be deleted.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
@@ -1044,7 +1044,7 @@ class TensorsQueueSize(PrimitiveWithInfer):
     TensorsQueueSize used get the indeed size of TensorsQueue.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
@@ -1081,7 +1081,7 @@ class TensorsQueueClear(PrimitiveWithInfer):
     TensorsQueueClear used to reset the created TensorsQueue. The instance of TensorsQueue is still aviliable.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorsQueue.
@@ -1117,7 +1117,7 @@ class MuxSend(PrimitiveWithInfer):
     Send tensors to the specified dest_rank.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         Send and Receive must be used in combination.
@@ -1173,7 +1173,7 @@ class MuxReceive(PrimitiveWithInfer):
     receive tensors from src_rank.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         Send and Receive must be used in combination.

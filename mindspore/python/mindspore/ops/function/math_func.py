@@ -2538,7 +2538,7 @@ def atanh(x):
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         x (Tensor): The shape of tensor is
@@ -9930,7 +9930,7 @@ def igamma(input, other):
     Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The first input tensor. With type of float32 or float64.
@@ -9979,7 +9979,7 @@ def igammac(input, other):
     Above :math:`P(a, x)` is the lower regularized complete Gamma function.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The first input tensor. With type of float32 or float64.
@@ -10047,7 +10047,7 @@ def digamma(input):
         P(input) = grad(\ln \Gamma(input))
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The input tensor. With type of float16 or float32 or float64.

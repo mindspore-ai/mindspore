@@ -1900,8 +1900,8 @@ class ResizeLinear1DGrad(Primitive):
     """
     Compute gradient of `ResizeLinear1D` operator.
 
-    Note:
-        This is an experimental feature and is subjected to change.
+    .. warning::
+        This is an experimental API that is subject to change.
 
     Args:
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate

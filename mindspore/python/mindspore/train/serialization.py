@@ -2252,8 +2252,8 @@ def convert_model(mindir_file, convert_file, file_format):
     """
     Convert mindir model to other format model. Current version only support convert to "ONNX" format.
 
-    Note:
-        This is an experimental function that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         mindir_file (str): MindIR file name.

@@ -83,8 +83,10 @@ def mutable(input_data, dynamic_len=False):
             the same type and shape. Default: False.
 
     .. warning::
-        - This is an experimental prototype that is subject to change or deletion.
-        - Currently this api only works in GRAPH mode.
+        This is an experimental API that is subject to change or deletion.
+
+    Note:
+        Currently this api only works in GRAPH mode.
 
     Returns:
         The origin input data which has been set mutable.

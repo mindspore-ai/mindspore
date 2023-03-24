@@ -9,8 +9,8 @@ mindspore.train.LambdaCallback
 
     请注意，callback的每个阶段都需要一个位置参数：`run_context`。
 
-    .. note::
-        - 这是一个会变更或删除的实验性接口。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **on_train_epoch_begin** (Function) - 训练每个epoch开始时被调用。

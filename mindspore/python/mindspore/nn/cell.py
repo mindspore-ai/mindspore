@@ -871,8 +871,8 @@ class Cell(Cell_):
         Args:
             inputs (tuple): Inputs of the Cell object.
 
-        Note:
-            This is an experimental interface that is subject to change or deletion.
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Examples:
             >>> import numpy as np
@@ -912,8 +912,8 @@ class Cell(Cell_):
         Returns:
             inputs (tuple), Inputs of the Cell object.
 
-        Note:
-            This is an experimental interface that is subject to change or deletion.
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
         """
 
         return self._dynamic_shape_inputs

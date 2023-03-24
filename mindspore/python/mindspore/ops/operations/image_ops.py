@@ -654,7 +654,7 @@ class ResizeLinear1D(Primitive):
     For general resize, refer to :func:`mindspore.ops.interpolate` for more details.
 
     .. warning::
-        - This is an experimental feature and is subjected to change.
+        - This is an experimental API that is subject to change.
         - Currently, the Ascend platform only supports scenarios where the input `size` is Tuple or List.
 
     Args:

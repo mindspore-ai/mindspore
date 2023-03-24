@@ -482,8 +482,7 @@ def get_white_list():
     Provide a copy of internal white list used by auto mixed precision.
 
     .. note::
-
-        - This is an experimental interface that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Returns:
         list, A copy of internal white list.
@@ -497,8 +496,7 @@ def get_black_list():
     Provide a copy of internal black list used by auto mixed precision.
 
     .. note::
-
-        - This is an experimental interface that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Returns:
         list, A copy of internal black list.
@@ -515,9 +513,10 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
     conversion.
     Only one of `white_list` and `black_list` should be provided.
 
-    .. note::
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
-        - This is an experimental interface that is subject to change or deletion.
+    Note:
         - `custom_mixed_precision` should not be used at the same time as `auto_mixed_precision` . When both
           `build_train_network` and `custom_mixed_precision` are used, `build_train_network` need to be called with
           `level='O0'` before call `custom_mixed_precision` .

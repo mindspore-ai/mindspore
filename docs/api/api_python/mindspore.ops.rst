@@ -666,7 +666,7 @@ Parameter操作函数
 ----------------
 
 .. warning::
-    以下是实验性接口，后续可能删除或修改。
+    这些是实验性API，后续可能修改或删除。
 
 .. mscnplatwarnautosummary::
     :toctree: ops
@@ -681,7 +681,7 @@ COO函数
 ^^^^^^^^^^^^^^^^
 
 .. warning::
-    以下是实验性接口，后续可能删除或修改。
+    这些是实验性API，后续可能修改或删除。
 
 .. mscnplatwarnautosummary::
     :toctree: ops
@@ -726,7 +726,7 @@ CSR函数
 ^^^^^^^^^^^^^^^^
 
 .. warning::
-    以下是实验性接口，后续可能删除或修改。
+    这些是实验性API，后续可能修改或删除。
 
 .. mscnplatwarnautosummary::
     :toctree: ops

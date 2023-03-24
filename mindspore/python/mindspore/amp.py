@@ -65,8 +65,8 @@ def all_finite(inputs):
     r"""
     Returns a scalar Tensor indicating whether the inputs are finite.
 
-    Note:
-        This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
         The interface must be used in whole network training scenario to detect
         whether grads are finite, and the results may be different on different
@@ -112,8 +112,8 @@ class LossScaler(ABC):
     For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/zh-CN/master/advanced/
     mixed_precision.html#%E6%8D%9F%E5%A4%B1%E7%BC%A9%E6%94%BE>`_。
 
-    Note:
-        This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
     """
     @abstractmethod
     def scale(self, inputs):
@@ -152,8 +152,8 @@ class StaticLossScaler(LossScaler):
 
     Scales and unscales loss or gradients by a fixed constant.
 
-    Note:
-        This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         scale_value (Union(float, int)): The initial loss scale value.
@@ -225,8 +225,8 @@ class DynamicLossScaler(LossScaler):
     `scale_window` steps by `factor` if the grads remain finite, otherwise it reduces
     the loss scale by `1 / factor` and resets the counter.
 
-    Note:
-        This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         scale_value (Union(float, int)): The initial loss scale value.

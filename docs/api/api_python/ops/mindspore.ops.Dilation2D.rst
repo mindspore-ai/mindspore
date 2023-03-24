@@ -18,8 +18,10 @@
         \text{input}(N_i, C_j, s_0 \times h + d_0 \times m, s_1 \times w + d_1 \times n) + \text{filter}(C_j, m, n)
 
     .. warning::
-        - 此算子为实验性算子。
-        - 如果输入数据类型为float32，算子仍然按float16模式执行。
+        这是一个实验性API，后续可能修改或删除。
+
+    .. note::
+        如果输入数据类型为float32，算子仍然按float16模式执行。
 
     参数：
         - **stride** (Union(int，tuple[int])) - kernel移动的距离。

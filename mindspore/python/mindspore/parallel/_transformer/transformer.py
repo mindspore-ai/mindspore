@@ -2764,8 +2764,8 @@ class Transformer(Cell):
         the residual addition before the layer normalization. And the default hidden act is `gelu`.
         The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
-        Note:
-            This is an experimental interface that is subject to change or deletion.
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             hidden_size(int): The hidden size of the input.
