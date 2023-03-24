@@ -1410,7 +1410,7 @@ def inplace_add(x, v, indices):
 
     Args:
         x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            Its rank should be less than 8.
         v (Tensor): The second input is a tensor that has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
@@ -2426,8 +2426,7 @@ def tanh(input):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-            additional dimensions, with float16 or float32 data type.
+        input (Tensor): Input of Tanh, with float16 or float32 data type.
 
     Returns:
         Tensor, with the same type and shape as the `input`.
@@ -4672,7 +4671,7 @@ def histc(input, bins=100, min=0., max=0.):
     Elements lower than min or higher than max are ignored.
 
     Args:
-        input (Tensor): the input tensor, type support list [float16, float32, int32]
+        input (Tensor): the input tensor, type support list :math:`[float16, float32, int32]`.
         bins (int, optional): Number of histogram bins, optional. Default 100. If specified, must be positive.
         min (int, float, optional): An optional float of the lower end of the range (inclusive). Default value is 0.0.
         max (int, float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.

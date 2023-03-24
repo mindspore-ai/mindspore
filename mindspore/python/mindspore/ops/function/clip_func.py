@@ -300,8 +300,6 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
 
     Args:
         x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
-          The shape of each Tensor in tuple is :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions.
         clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: 1.0
         use_norm (None): The global norm. Default: None. Currently only none is supported.
 
