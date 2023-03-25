@@ -15,6 +15,8 @@
 """Parse ast.Assign in construct function to node of SymbolTree."""
 from typing import Union
 import ast
+import sys
+import inspect
 import astunparse
 
 from mindspore import log as logger
@@ -29,7 +31,7 @@ from mindspore.rewrite.node import Node, TreeNode, CellContainer
 from mindspore.rewrite.parser import Parser
 from mindspore.rewrite.parser_register import reg_parser
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
-from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder
+from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder, FunctionSymbolTreeBuilder
 from mindspore.rewrite.ast_helpers import AstReplacer, AstModifier
 from mindspore.rewrite.common.event import Event
 from ..common import error_str
@@ -364,6 +366,35 @@ class AssignParser(Parser):
                 sub_node.set_inputs([cell_container.node_list[i-1]])
         return cell_container
 
+    def _process_external_function(self, stree, func_name):
+        """Process external function."""
+        for k, m in sys.modules.items():
+            if k in ("_ast", "ast"):
+                continue
+            if hasattr(m, func_name):
+                func = getattr(m, func_name)
+                source_code = inspect.getsource(func)
+                ast_root: ast.Module = ast.parse(source_code)
+                stree._external_func_ast.append(ast_root.body[0]) # pylint: disable=protected-access
+                return func, ast_root.body[0]
+            return None, None
+
+    def _process_internal_function(self, stree: SymbolTree, func_name):
+        """Process internal function."""
+        func = getattr(stree._origin_network, func_name) # pylint: disable=protected-access
+        ast_node = None
+        for body in stree._class_ast.body: # pylint: disable=protected-access
+            if isinstance(body, ast.FunctionDef) and func_name == body.name:
+                ast_node = body
+        return func, ast_node
+
+    def _create_func_subtree(self, op, targets, father_ast_node, ast_node, call_args, call_kwargs, func_name):
+        """Create subtree of function."""
+        stb = FunctionSymbolTreeBuilder(op, ast_node)
+        new_stree = stb.build()
+        return TreeNode.create_tree_node(new_stree, father_ast_node, targets, func_name, call_args, call_kwargs,
+                                         func_name, op)
+
     def _convert_ast_call_to_node(self, ast_node: ast.Call, father_ast_node: ast.Assign, stree: SymbolTree) -> Node:
         """
         Convert ast.Call to a symbol tree node.
@@ -396,9 +427,15 @@ class AssignParser(Parser):
                 func = get_functional(func_name.split(".")[-1])
                 node = stree.inner_create_call_function(func_name, father_ast_node, func_name, func, targets,
                                                         call_args, call_kwargs)
-                return node
-            raise RuntimeError(error_str(f"operator instance undefined.",
-                                         child_node=ast_node.func, father_node=ast_node))
+            elif hasattr(stree._origin_network, func_name): # pylint: disable=protected-access
+                func, ast_node = self._process_internal_function(stree, func_name)
+                node = self._create_func_subtree(func, targets, father_ast_node, ast_node, call_args, call_kwargs,
+                                                 func_name)
+            else:
+                func, ast_node = self._process_external_function(stree, func_name)
+                node = self._create_func_subtree(func, targets, father_ast_node, ast_node, call_args, call_kwargs,
+                                                 func_name)
+            return node
         if isinstance(op, SequentialCell):
             node = self._cell_container_process(father_ast_node, stree, targets, func, call_args, call_kwargs,
                                                 func_name, op)
