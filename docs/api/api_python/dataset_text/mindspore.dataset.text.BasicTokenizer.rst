@@ -10,7 +10,7 @@
     参数：
         - **lower_case** (bool，可选) - 是否对字符串进行小写转换处理。若为True，会将字符串转换为小写并删除重音字符；若为False，将只对字符串进行规范化处理，其模式由 `normalization_form` 指定。默认值：False。
         - **keep_whitespace** (bool，可选) - 是否在分词输出中保留空格。默认值：False。
-        - **normalization_form** (:class:`mindspore.dataset.text.NormalizeForm`，可选) - `Unicode规范化模式 <http://unicode.org/reports/tr15/>`_ ，仅当 `lower_case` 为False时生效，取值可为NormalizeForm.NONE、NormalizeForm.NFC、NormalizeForm.NFKC、NormalizeForm.NFD或NormalizeForm.NFKD。默认值：NormalizeForm.NONE。
+        - **normalization_form** (:class:`~.text.NormalizeForm`，可选) - `Unicode规范化模式 <http://unicode.org/reports/tr15/>`_ ，仅当 `lower_case` 为False时生效，取值可为NormalizeForm.NONE、NormalizeForm.NFC、NormalizeForm.NFKC、NormalizeForm.NFD或NormalizeForm.NFKD。默认值：NormalizeForm.NONE。
 
           - NormalizeForm.NONE：不进行规范化处理。
           - NormalizeForm.NFC：先以标准等价方式分解，再以标准等价方式重组。
