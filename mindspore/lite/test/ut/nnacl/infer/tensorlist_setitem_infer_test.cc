@@ -106,7 +106,7 @@ TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
     delete inputs[i];
   }
   lite::FreeOutTensorC(&outputs);
-  delete out;
+  free(out);
 }
 
 // retest mergeshape

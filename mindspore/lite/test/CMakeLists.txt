@@ -121,6 +121,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/ut/tools/converter/decomposer/svd_test.cc
             ${TEST_DIR}/ut/tools/converter/registry/*.cc
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
+            ${TEST_DIR}/ut/tools/converter/api/*.cc
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/delegate_test.cc
             ${TEST_DIR}/st/mindrt_parallel_test.cc

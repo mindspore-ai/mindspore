@@ -153,6 +153,10 @@ FuncGraphPtr ConverterFuncGraph::Build(const std::shared_ptr<ConverterPara> &par
   } else {
     func_graph = Load3rdModelToFuncgraph(param);
   }
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Load model file failed";
+    return nullptr;
+  }
 
   // Add attribute "isDynamicShape" to the func_graph to mark if the graph has dynamic input shapes.
   SetIsGraphDynamicShapeAttr(func_graph);
