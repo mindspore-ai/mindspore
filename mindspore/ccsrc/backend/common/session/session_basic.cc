@@ -1166,8 +1166,7 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   auto apply_list = TopoSort(graph->get_return());
   for (auto &n : apply_list) {
     MS_EXCEPTION_IF_NULL(n);
-    if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
+    if (IsSummaryNode(n)) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode->inputs().size() <= kSummaryGetItem) {
