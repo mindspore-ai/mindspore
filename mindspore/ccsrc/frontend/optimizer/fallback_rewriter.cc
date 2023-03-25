@@ -307,7 +307,7 @@ class BeforeOptARewriter : public BaseRewriter {
   //   DictGetItem(data:AbstractDictionary, key:AbstractBase)
   // To:
   //   TupleGetItem(data, index:Int64Imm)
-  AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 

@@ -1521,7 +1521,7 @@ int64_t CalOutputTupleSize(const AnfNodePtr &node) {
       return -1;
     }
   }
-  auto output_size = AnfAlgo::GetOutputElementNum(node);
+  auto output_size = static_cast<int64_t>(AnfAlgo::GetOutputElementNum(node));
   if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     output_size = 0;
     auto make_tuple = node->cast<CNodePtr>();

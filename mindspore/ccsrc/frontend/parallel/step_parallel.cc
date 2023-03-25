@@ -23,7 +23,6 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <utility>
 #include <queue>
 
 #include "utils/hash_map.h"

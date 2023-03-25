@@ -372,7 +372,7 @@ std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
   return buffer.str();
 }
 bool enable_waiting_branch_eval() {
-  static bool enable_waiting_branch_eval = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL") != "1";
+  static const bool enable_waiting_branch_eval = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL") != "1";
   return enable_waiting_branch_eval;
 }
 }  // namespace abstract
