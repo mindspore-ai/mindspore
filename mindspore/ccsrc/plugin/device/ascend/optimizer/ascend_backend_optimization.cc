@@ -93,6 +93,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_dilation_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include "plugin/device/ascend/optimizer/format_type/reselect_call_inline_format.h"
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
@@ -698,6 +699,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2UnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<HistogramFixedWidthFusion>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::QuantDTypeCastAdjust>());
   unify_mindir_pm->AddPass(std::make_shared<opt::FSEDecodeAdjust>());
