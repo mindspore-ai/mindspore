@@ -62,7 +62,6 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
                                       device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(device_context);
-  py::gil_scoped_acquire acquire_gil;
   auto graph_info = op_run_info->base_op_run_info.graph_info;
   auto iter = op_compiler_infos_.find(graph_info);
   // Check if the graph cache exists.
@@ -76,6 +75,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   *single_op_cache_hit = false;
   // Generate kernel graph.
   MS_EXCEPTION_IF_NULL(session_);
+  py::gil_scoped_acquire acquire_gil;
   KernelGraphPtr graph = session_->ConstructSingleOpGraph(
     op_run_info, op_run_info->base_op_run_info.input_tensor, op_run_info->base_op_run_info.input_mask,
     device_context->GetDeviceType() == device::DeviceType::kAscend);

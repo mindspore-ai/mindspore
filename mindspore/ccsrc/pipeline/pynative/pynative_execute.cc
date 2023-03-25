@@ -70,6 +70,18 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
     return res;
   }
 }
+
+// Tensor may be used before the execution of the asynchronous task.
+void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
+  for (auto &input : op_run_info->input_value) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<tensor::Tensor>()) {
+      auto tensor = input->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    }
+  }
+}
 }  // namespace
 
 bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -78,8 +90,7 @@ bool PyNativeExecutor::DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_in
 #else
   const auto &op_prim = op_run_info->op_prim;
   return forward_executor()->IsVmOp(op_run_info->base_op_run_info.op_name) || op_prim->name() == "Custom" ||
-         ScopedFallbackRunning::on() || op_prim->HasAttr("side_effect_mem") ||
-         MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+         ScopedFallbackRunning::on() || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 #endif
 }
 
@@ -98,6 +109,7 @@ py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
   const auto &adapter = prim.cast<PrimitivePyAdapterPtr>();
   auto run_args = py::make_tuple(prim, adapter->name(), input_args);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(run_args, true);
+  SetCallbackForInputTensor(op_run_info);
 
   StoreAsyncStatus(op_run_info);
   // 1. get top_type from Primitive::PredictOutputType

@@ -28,7 +28,7 @@ class ForwardTask : public AsyncTask {
  public:
   ForwardTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func, FrontendOpRunInfoPtr op_run_info)
       : AsyncTask(kForwardTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
-  ~ForwardTask() = default;
+  ~ForwardTask() override;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
 

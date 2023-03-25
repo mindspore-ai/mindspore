@@ -18,6 +18,11 @@
 
 namespace mindspore {
 namespace pynative {
+ForwardTask::~ForwardTask() {
+  py::gil_scoped_acquire acquire_gil;
+  op_run_info_ = nullptr;
+}
+
 void ForwardTask::Run() { run_func_(op_run_info_); }
 
 void ForwardTask::SetException(const std::exception_ptr &e) { op_run_info_->stub_output->SetException(e); }
