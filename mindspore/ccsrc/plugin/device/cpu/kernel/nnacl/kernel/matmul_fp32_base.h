@@ -47,6 +47,7 @@ typedef struct MatmulFp32Struct {
   int col_min_unit_;
   int batch_stride_;
   int pack_b_stride_;
+  int block_col_unit_;
 
   int row_;
   int col_;
@@ -70,10 +71,11 @@ typedef struct MatmulFp32Struct {
 
   bool infer_shape_;
   MatmulType matmul_type_;
-
-  int model_thread_nr_;
+  int model_thread_nr_; /* model pool optimize */
 
   int split_points_[16];
+  int col_split_points_[16];
+  int row_split_points_[16];
   int a_offset_[512];
   int b_offset_[512];
 
@@ -99,6 +101,8 @@ typedef struct MatmulFp32Struct {
   int (*pack_matrix_a_impl_opt_)(struct MatmulFp32Struct *matmul);
   int (*pack_matrix_a_impl_)(struct MatmulFp32Struct *matmul);
   int (*pack_matrix_b_impl_)(struct MatmulFp32Struct *matmul);
+
+  int (*init_parameter_)(struct MatmulFp32Struct *matmul);
   void (*init_global_varibale_)(struct MatmulFp32Struct *matmul);
 
   bool (*check_thread_cutting_by_row_)(struct MatmulFp32Struct *matmul);
@@ -117,8 +121,11 @@ typedef struct MatmulFp32Struct {
   void (*gemm_not_pack_fun_)(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 } MatmulFp32Struct;
 
+int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul);
+int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul);
 int matmul_fp32_prepare(KernelBase *self);
 int matmul_fp32_resize(KernelBase *self);
+KernelBase *CreateMatmulFp32Base();
 KernelBase *CreateMatmulFp32();
 #ifdef __cplusplus
 }
