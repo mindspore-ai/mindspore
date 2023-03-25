@@ -128,9 +128,12 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
 
   // whether element is tensor with a scalar or a scalar
   for (auto elem : seq_abs->elements()) {
-    if (!elem->isa<abstract::AbstractScalar>() &&
-        (elem->isa<abstract::AbstractTensor>() &&
-         elem->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() > 1)) {
+    if (!(elem->isa<abstract::AbstractScalar>() ||
+          (elem->isa<abstract::AbstractTensor>() &&
+           elem->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() == 0) ||
+          (elem->isa<abstract::AbstractTensor>() &&
+           elem->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() == 1 &&
+           elem->cast<abstract::AbstractTensorPtr>()->shape()->shape()[0] == 1))) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', the element in the input should be a scalar or a tensor with one scalar, but got "
                               << elem->ToString();
