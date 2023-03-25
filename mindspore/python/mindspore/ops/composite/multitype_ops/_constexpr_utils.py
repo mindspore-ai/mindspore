@@ -966,6 +966,9 @@ def get_output_dtype(dtype_1, dtype_2, use_complex=False):
 
 @constexpr
 def promote_binary_dtype(dtype_1, dtype_2):
+    """
+    promote binary types
+    """
     if dtype_1 == dtype_2:
         return dtype_1
     if dtype_1 in complex_types or dtype_2 in complex_types:

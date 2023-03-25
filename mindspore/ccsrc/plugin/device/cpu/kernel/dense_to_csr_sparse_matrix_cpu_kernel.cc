@@ -60,8 +60,8 @@ int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   batch_size_ = (rank_ == kDefaultRank) ? kOne : dense_shape[kZero];
   num_rows_ = (rank_ == kDefaultRank) ? dense_shape[kZero] : dense_shape[kOne];
   num_cols_ = (rank_ == kDefaultRank) ? dense_shape[kOne] : dense_shape[kTwo];
-  total_ele_ = (rank_ == kDefaultRank) ? dense_shape[kZero] * dense_shape[kOne]
-                                       : dense_shape[kZero] * dense_shape[kOne] * dense_shape[kTwo];
+  total_ele_ = LongToSize((rank_ == kDefaultRank) ? dense_shape[kZero] * dense_shape[kOne]
+                                                  : dense_shape[kZero] * dense_shape[kOne] * dense_shape[kTwo]);
   return KRET_OK;
 }
 
