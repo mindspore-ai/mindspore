@@ -85,7 +85,7 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   const auto *weight = reinterpret_cast<float *>(inputs[kIndex2]->addr);
   auto *loss = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   auto *total_weight = reinterpret_cast<float *>(outputs[kIndex1]->addr);
-  if (logits == NULL || labels == NULL || weight == NULL) {
+  if (logits == nullptr || labels == nullptr || weight == nullptr) {
     MS_LOG(EXCEPTION) << "Nllloss does not support null input";
   }
 
@@ -93,10 +93,6 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     if (labels[i] < minLabelNum || labels[i] > nllloss_param_.class_num_) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1], but got" << labels[i];
     }
-  }
-
-  if (logits == NULL || labels == NULL || weight == NULL) {
-    MS_LOG(ERROR) << "For NLLLoss, it does not support NULL input";
   }
 
   float total_loss = 0.0;
