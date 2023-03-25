@@ -63,7 +63,7 @@ class OpTilingCalculateAdapter {
                               ::ge::ComputeGraphPtr *ge_graph, size_t index) const;
   void AddEdge(const ::ge::NodePtr &ge_node, const std::vector<std::tuple<std::size_t, ::ge::NodePtr>> &constant_ops);
   std::string GetRealOpType(const std::string &op_type) const;
-  std::map<std::string, std::string> GetConvertAttr(const std::string &op_type) const;
+  ValuePtr GetAttrDefaultValue(const std::string &op_type, const std::string &attr_name) const;
   std::string GetInputName(const CNodePtr &node, size_t index);
   std::string GetOutputName(const CNodePtr &node, size_t index);
   void InitOpIoName(const CNodePtr &node);

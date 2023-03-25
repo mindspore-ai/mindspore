@@ -310,12 +310,10 @@ def check_support(job: TbeJob):
     if op_func_name in ("resize_nearest_neighbor_v2_grad_d", "resize_bilinear_v2_grad"):
         attrs.pop(-2)
     op_module_name = get_module_name(compute_op_info)
-    py_module_path = compute_op_info["py_module_path"]
-    _normalize_module_name(op_module_name, py_module_path)
+    _normalize_module_name(op_module_name, compute_op_info["py_module_path"])
     func_name = "check_supported"
     op_type = compute_op_info["type"]
-    impl_mode = {op_type: "high_performance"}
-    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name, op_type, impl_mode)
+    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name, op_type, {op_type: "high_performance"})
     if isinstance(res, tuple):
         result, reason = res
         result_str = str(result)
