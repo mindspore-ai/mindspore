@@ -9,7 +9,7 @@ mindspore.nn.Identity
         - **x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` 的Tensor。数据类型为Number。
 
     输出：
-        Tensor，shape和数据类型与 `input_x` 相同， :math:`(x_1, x_2, ..., x_R)` 。
+        Tensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

@@ -3,7 +3,7 @@ mindspore.nn.HingeEmbeddingLoss
 
 .. py:class:: mindspore.nn.HingeEmbeddingLoss(margin=1.0, reduction="mean")
 
-    Hinge Embedding 损失函数。按输入元素计算输出。衡量输入张量x和标签y（包含1或-1）之间的损失值。通常被用来衡量两个输入之间的相似度。
+    Hinge Embedding 损失函数。根据输入 `logits` 和 `labels` (只包含1或-1）计算Hinge Embedding损失值。通常被用来衡量两个输入之间的相似度。
 
     mini-batch中的第n个样例的损失函数为：
 
