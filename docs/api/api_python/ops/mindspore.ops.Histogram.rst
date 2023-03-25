@@ -3,7 +3,7 @@ mindspore.ops.Histogram
 
 .. py:class:: mindspore.ops.Histogram(bins=100, min=0.0, max=0.0)
 
-    计算Tensor的直方图。
+    计算Tensor元素分布的直方图。
     
     元素被分类到 `min` 和 `max` 之间的等宽箱中。
     如果 `min` 和 `max` 均为0，则使用数据的最小值和最大值。
@@ -12,11 +12,11 @@ mindspore.ops.Histogram
 
     参数：
         - **bins** (int, 可选) - 直方图箱的数量，可选。默认值：100。若指定，则必须为正数。
-        - **min** (float, 可选) - 范围下端（含）的可选浮点数。默认值：0.0。
-        - **max** (float, 可选) - 范围上限（含）的可选浮点数。默认值：0.0。
+        - **min** (float, 可选) - 范围下限（包括在内）的可选浮点数。默认值：0.0。
+        - **max** (float, 可选) - 范围上限（包括在内）的可选浮点数。默认值：0.0。
 
     输入：
-        - **x** (Tensor) - 输入Tensor，类型支持： :math:`[float16, float32, int32]` 。
+        - **x** (Tensor) - 输入Tensor，类型支持：[float16, float32, int32]。
 
     输出：
         Tensor，类型为int32的1-D Tensor。

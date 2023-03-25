@@ -2417,9 +2417,10 @@ class CTCLoss(LossBase):
 
     Args:
         blank (int, optional): The blank label. Default: 0.
-        reduction (str, optional): Implements the reduction method to the output with 'none', 'mean', or 'sum'.
-            Default: 'mean'.
-        zero_infinity (bool, optional): Whether to set infinite loss and the associated gradient to 0. Default: False.
+        reduction (str, optional): Implements the reduction method to the output with
+            'none', 'mean', or 'sum'. Default: 'mean'.
+        zero_infinity (bool, optional): If loss is infinite, this parameter determines whether to set that loss
+            and its correlated gradient to zero. Default: False.
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, N, C)` or :math:`(T, C)`, where T is length of input,

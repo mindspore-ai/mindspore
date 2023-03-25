@@ -549,6 +549,7 @@ class EuclideanNorm(Primitive):
     Inputs:
         - **x** (Tensor) - The input Tensor to reduce.
         - **axes** (Tensor) - The axes to perform reduction on. Must be one of the following types: int32, int64.
+          It must be in range :math:`[-rank(x), rank(x))`.
 
     Outputs:
         Tensor, has the same type as the 'x'.
@@ -1837,7 +1838,7 @@ class Neg(Primitive):
 
 class InplaceUpdateV2(Primitive):
     r"""
-    Updates specified rows with values in `v`.
+    Updates specified values in `x` to `v` according to `indices`.
 
     Refer to :func:`mindspore.ops.inplace_update` for more details.
 
@@ -2644,7 +2645,7 @@ class Expm1(Primitive):
 
 class Histogram(Primitive):
     """
-    Computes the histogram of a tensor.
+    Computes the histogram of Tensor element distribution.
 
     The elements are sorted into equal width bins between `min` and `max`.
     If `min` and `max` are both zero, the minimum and maximum values of the data are used.
@@ -2657,7 +2658,7 @@ class Histogram(Primitive):
         max (float, optional): An optional float of the upper end of the range (inclusive). Default value is 0.0.
 
     Inputs:
-        - **x** (Tensor) - the input tensor, type support list :math:`[float16, float32, int32]`.
+        - **x** (Tensor) - the input tensor, type support list: [float16, float32, int32].
 
     Outputs:
         Tensor, 1-D Tensor with type int32.
@@ -2838,11 +2839,10 @@ class Heaviside(Primitive):
     Inputs:
         - **x** (Tensor) - The input tensor. With real number data type.
         - **values** (Tensor) - The values to use where `x` is zero.
-          Values can be broadcast with `x` . 'x' should have the same
-          dtype with 'values'.
+          It should be able to broadcast with `x` have the same dtype as `x`.
 
     Outputs:
-        Tensor, has the same type as 'x' and 'values'.
+        Tensor, has the same type as `x` and `values`.
 
     Raises:
         TypeError: If `x` or `values` is not Tensor.
@@ -4046,7 +4046,7 @@ class Gcd(Primitive):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is one
-        with higher digits in the two inputs.
+        with higher precision in the two inputs.
 
     Raises:
         TypeError: If data type `x1` or `x2` is not int32 or int64.
@@ -7318,19 +7318,20 @@ class FFTWithSize(Primitive):
 
             - "backward" has the direct transforms unscaled and the inverse transforms scaled by :math:`1/n`,
               where n is the input x's element numbers.
-            - "ortho" has both direct and inverse transforms are scaled by :math:`1/\sqrt(n)`.
+            - "ortho" has both direct and inverse transforms are scaled by :math:`1/\sqrt n`.
             - "forward" has the direct transforms scaled by :math:`1/n` and the inverse transforms unscaled.
 
         onesided (bool, optional): Controls whether the input is halved to avoid redundancy. Default: True.
-        signal_sizes (list, optional): Size of the original signal (the signal before rfft, no batch dimension),
-            only in irfft mode and set onesided=true requires the parameter, signal_sizes satisfies the following
-            three rules. Default: [].
+        signal_sizes (tuple, optional): Size of the original signal (the signal before rfft, no batch dimension),
+            only in IRFFT mode and set `onesided` to True requires the parameter, the following conditions must be
+            satisfied. Default: ().
 
-            - len(signal_sizes)==signal_ndim, the length of signal_sizes is equal to the signal_ndim of the IRFFT.
-            - signal_size[-1]/2+1==x.shape[-1], the last dimension of signal_sizes divided by 2 is equal to
-              the last dimension of the IRFFT input.
-            - signal_sizes[:-1]==x.shape[:-1], signal_sizes has exactly the same dimensions as the input shape
-              except for the last dimension.
+            - The length of `signal_sizes` is equal to the signal_ndim of the IRFFT:
+              :math:`len(signal_sizes)=signal_ndim`.
+            - The last dimension of `signal_sizes` divided by 2 is equal to
+              the last dimension of the IRFFT input: :math:`signal_size[-1]/2+1=x.shape[-1]`.
+            - `signal_sizes` has exactly the same dimensions as the input shape
+              except for the last dimension: :math:`signal_sizes[:-1]=x.shape[:-1]`.
 
     Inputs:
         - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
