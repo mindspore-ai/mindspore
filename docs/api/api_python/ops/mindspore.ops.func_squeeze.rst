@@ -8,7 +8,7 @@ mindspore.ops.squeeze
     如果 :math:`axis=None` ，则删除所有大小为1的维度。
     如果指定了 `axis`，则删除指定 `axis` 中大小为1的维度。
     例如，如果不指定维度 :math:`axis=None` ，输入的shape为(A, 1, B, C, 1, D)，则输出的Tensor的shape为(A, B, C, D)。如果指定维度，squeeze操作仅在指定维度中进行。
-    如果输入的shape为(A, 1, B)， `axis` 设置为0时不会改变输入的Tensor，但 `axis` 设置为1时会使输入Tensor的shape变为(A, B)。
+    如果输入的shape为(A, 1, B)， `axis=0` 时不会改变输入的Tensor，但 `axis=1` 时会使输入Tensor的shape变为(A, B)。
 
     .. note::
         - 请注意，在动态图模式下，输出Tensor将与输入Tensor共享数据，并且没有Tensor数据复制过程。

@@ -6,7 +6,7 @@ mindspore.ops.coo_cosh
     逐元素计算COOTensor `x` 的双曲余弦值。
 
     .. math::
-        out_i = cosh(x_i)
+        out_i = \cosh(x_i)
 
     参数：
         - **x** (COOTensor) - coo_cosh的输入，任意维度的COOTensor，其数据类型为float16、float32、float64、complex64、complex128。

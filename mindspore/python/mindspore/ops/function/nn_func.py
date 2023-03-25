@@ -556,19 +556,19 @@ def adaptive_max_pool1d(input, output_size):
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    Typically, the input is of shape :math:`(N, C, L_{in})`,
     adaptive_max_pool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
-    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
+    shape :math:`(N, C, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
         :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
+        input (Tensor): Tensor of shape :math:`(N, C, L_{in})`, with float16 or float32 data type.
         output_size (int): the target output size :math:`L_{out}`.
 
     Returns:
-        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input`.
+        Tensor of shape :math:`(N, C, L_{out})`, has the same type as `input`.
 
     Raises:
         TypeError: If `input` is neither float16 nor float32.
@@ -4891,7 +4891,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`mean` is the
-    mean of `input_x`, :math:`variance` is the variance of `input_x`.
+    mean of `x`, :math:`variance` is the variance of `x`.
 
     .. warning::
         - For Ascend 310, the result accuracy fails to reach 1‰ due to the square root instruction.

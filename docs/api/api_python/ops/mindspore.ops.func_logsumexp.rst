@@ -7,7 +7,7 @@ mindspore.ops.logsumexp
 
     .. math::
 
-        logsumexp(input) = \log(\sum e^{input-input_{max}}) + input_{max}
+        logsumexp(input) = \log(\sum(e^{input-input_{max}})) + input_{max}
 
     .. note::
         Ascend上输入Tensor的维度要小于等于8，CPU上输入Tensor的维度要小于8。

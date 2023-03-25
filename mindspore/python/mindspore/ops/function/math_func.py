@@ -797,7 +797,7 @@ def subtract(input, other, *, alpha=1):
     Performs the element-wise subtraction of input tensors.
 
     .. math::
-        output[i] = input[i] - alpha * y[i]
+        output[i] = input[i] - alpha * other[i]
 
     Args:
         input (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
@@ -1498,13 +1498,13 @@ def inplace_sub(x, v, indices):
     Subtracts `v` into specified rows of `x`. Computes :math:`y = x`; :math:`y[i,] -= input\_v`.
 
     Note:
-            `indices` refers to the left-most dimension.
+        `indices` refers to the left-most dimension.
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
             to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
         x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            Tensors of arbitrary dimensions are supported, its rank should be less than 8.
         v (Tensor): The second input is a tensor who has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
@@ -2665,7 +2665,7 @@ def bitwise_or(input, other):
     the relatively highest priority data type.
 
     Args:
-        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
             any number of additional dimensions.
         other (Tensor): The second input tensor with the same dtype as `input`.
 
@@ -4061,7 +4061,7 @@ def isfinite(x):
     .. math::
 
         out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+          & \text{ if } x_{i} = \text{Finite},\ \ True \\
           & \text{ if } x_{i} \ne \text{Finite},\ \ False
         \end{cases}
 
@@ -5121,7 +5121,7 @@ def reciprocal(input):
 
     Args:
         input (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape as the `input`.
@@ -5535,7 +5535,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
     Given `vec1` and `vec2` of sizes :math:`N` and :math:`M`,
     `x` must be able to broadcast to a matrix of shape :math:`(N, M)`.
 
-    `beta` and `alpha` are optional scaling factors for the outer product of :math:`vec1` and :math:`vec2`,
+    `beta` and `alpha` are optional scaling factors for the outer product of `vec1` and `vec2`,
     and the matrix `x` respectively. Setting `beta` to 0 will exclude `x` from the computation.
 
     .. math::
@@ -6767,7 +6767,7 @@ def vstack(inputs):
     Stacks tensors in sequence vertically.
 
     This is equivalent to concatenation along the first axis.
-    1-D tensors :math:`(N)` should firstly be reshaped to :math:`(1, N)`,
+    1-D tensors :math:`(N,)` should firstly be reshaped to :math:`(1, N)`,
     and then be concatenated along the first axis.
 
     Args:
@@ -7100,7 +7100,7 @@ def logsumexp(input, axis, keep_dims=False):
 
     .. math::
 
-        logsumexp(input) = \log(\sum(e^(input-input_{max}))) + input_{max}
+        logsumexp(input) = \log(\sum(e^{input-input_{max}})) + input_{max}
 
     Note:
         The dimension of input Tensor on Ascend should be less than or equal to 8,
@@ -7255,7 +7255,7 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
@@ -8009,7 +8009,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0):
     with
 
     .. math::
-        - \frac{M - 1}{2} \leq n \leq \frac{M - 1}{2},
+        - \frac{M - 1}{2} \leq n \leq \frac{M - 1}{2}
 
     where :math:`I_0` is the modified zeroth-order Bessel function.
 
@@ -8910,7 +8910,7 @@ def log1p(x):
 
 def kron(x, y):
     """
-    Computes the Kronecker product, denoted by ⊗, of `x` and `y`.
+    Computes the Kronecker product :math:`x ⊗ y`, denoted by ⊗, of `x` and `y`.
 
     If `x` is a :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` Tensor
     and `y` is a :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` Tensor,
@@ -8918,8 +8918,8 @@ def kron(x, y):
     Tensor with the following entries:
 
     .. math::
-            (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
-            x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
+        (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
+        x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
 
     where :math:`k_{t} = i_{t} * b_{t} + j_{t}` for 0 ≤ `t` ≤ `n`. If one
     Tensor has fewer dimensions than the other it is unsqueezed
@@ -9057,7 +9057,7 @@ def any(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
             axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
@@ -9470,11 +9470,11 @@ def cholesky_inverse(input_x, upper=False):
 
         inv = (U^{T}U)^{-1}
 
-    If `upper` is `False`, :math:`L` is a lower triangular such that the output tensor is
+    If `upper` is `False`, :math:`U` is a lower triangular such that the output tensor is
 
     .. math::
 
-        inv = (LL^{T})^{-1}
+        inv = (UU^{T})^{-1}
 
     Note:
         The input must be either an upper-triangular matrix or a lower-triangular matrix from Cholesky decomposition.
