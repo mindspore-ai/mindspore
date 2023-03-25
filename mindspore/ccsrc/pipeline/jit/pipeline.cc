@@ -1328,7 +1328,7 @@ void GraphExecutorPy::TerminateDebugger() {
 #endif
 
 std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res,
-                                                                           const BaseRef &value) {
+                                                                           const BaseRef &value) const {
   if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
     auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(res_tensor);
