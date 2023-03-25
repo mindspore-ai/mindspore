@@ -28,6 +28,6 @@ static std::map<std::string, ReductionMode> kReductionModeMap{
 
 template <typename T>
 CUDA_LIB_EXPORT void CalSoftMarginLoss(const T *prediction, const T *target, const size_t input_size,
-                                       const ReductionMode &reduction, T *loss, const uint32_t &device_id,
+                                       const ReductionMode &reduction, T *loss, T *loss_work, const uint32_t &device_id,
                                        cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SOFTMARGINLOSS_IMPL_CUH_
