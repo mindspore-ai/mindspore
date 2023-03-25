@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,12 @@ bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs, c
     };
   }
   ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
+
+  // Set 0 for u and v if not compute u and v.
+  if (!compute_uv_) {
+    output_u[0] = static_cast<T>(0);
+    output_v[0] = static_cast<T>(0);
+  }
   return true;
 }
 
@@ -190,6 +196,12 @@ bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
     };
   }
   ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
+
+  // Set 0 for u and v if not compute u and v.
+  if (!compute_uv_) {
+    output_u[0] = static_cast<T>(0);
+    output_v[0] = static_cast<T>(0);
+  }
   return true;
 }
 
