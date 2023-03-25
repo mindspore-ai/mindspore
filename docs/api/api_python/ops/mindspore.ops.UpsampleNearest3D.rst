@@ -5,7 +5,7 @@ mindspore.ops.UpsampleNearest3D
 
     执行最近邻上采样操作。
 
-    此运算符使用指定的 `output_size` 或 `scales` 缩放因子放大输入体积，过程使用最近的邻算法。
+    此运算符使用指定的 `output_size` 或 `scales` 缩放因子放大输入体积，过程使用最近邻算法。
 
     必须指定 `output_size` 或 `scales` 中的一个值，并且不能同时指定两者。
 

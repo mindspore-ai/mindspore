@@ -2037,7 +2037,7 @@ class MaxUnpool2D(Primitive):
         - **x** (Tensor) - The input Tensor to invert.
           Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(N, H_{in}, W_{in}, C)`.
         - **argmax** (Tensor) - Max values' index represented by the `argmax`.
-          Tensor of shape must be same with input 'x'.
+          Tensor of shape must be same with input `x`.
           Values of `argmax` must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
 
@@ -2964,7 +2964,7 @@ class SmoothL1Loss(Primitive):
 
 class MultiMarginLoss(Primitive):
     r"""
-    Creates a loss function that minimizes the margin-based loss or hinge loss
+    Creates a loss function that minimizes the hinge loss
     for multi-class classification tasks.
     The loss is calculated by comparing the input and output of the function.
 
@@ -4278,21 +4278,34 @@ class Pad(Primitive):
 
 class PadV3(Primitive):
     """
-    Pads the input tensor according to the paddings, `mode` and `paddings_contiguous`.
+    Pads the input Tensor according to the `paddings`, `mode` and `paddings_contiguous`.
 
     Args:
         mode (str, optional): An optional string indicates padding mode,
             support "constant", "reflect", "edge", "circular". Default: "constant".
+            The effects of various padding modes are as follows:
+
+            - "constant": Pads the input Tensor with value specified by `constant_value`.
+            - "reflect": Pads the input Tensor by reflecting the values of the pixels at the
+              boundary of the Tensor.
+            - "edge": Pads the input Tensor with the values of the pixels on the border of the Tensor.
+            - "circular": Circular padding mode. In this mode, the pixels from one edge of the image
+              are wrapped around to the opposite edge, such that the pixel on the right edge of the
+              image is replaced with the pixel on the left edge, and the pixel on the bottom edge
+              is replaced with the pixel on the top edge.
+
         paddings_contiguous (bool, optional): An optional bool value indicates if the padding is paddings_contiguous.
             If true, paddings is arranged as [begin0, end0, begin1, end1, ...]
             If false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
             Default:True.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions.
-        - **paddings** (Tensor) - Only constant value is allowed. A 1D tensor of type int32 or int64.
-        - **constant_value** (Tensor, optional) - A tensor with the same type as `x`, padding value in 'constant' mode.
+        - **x** (Tensor) - Tensor to be padded. It has shape :math:`(N, *)`, where :math:`*` means
+          any number of additional dimensions.
+        - **paddings** (Tensor) -  Specifies the number of zeros to be padded before and after each
+          dimension of the input Tensor `x`. It's a 1D Tensor of type int32 or int64.
+        - **constant_value** (Tensor, optional) - Padding value to use in 'constant' mode,
+          if not specified, 0 is used instead. It has the same type as `x`.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -8981,7 +8994,7 @@ class ApplyKerasMomentum(Primitive):
 
 class MultilabelMarginLoss(Primitive):
     r"""
-    Creates a loss criterion that minimizes a margin-based loss for multi-class
+    Creates a loss criterion that minimizes the hinge loss for multi-class
     classification tasks.
     It takes a 2D mini-batch Tensor :math:`x` as input and a 2D
     Tensor :math:`y` containing target class indices as output.
@@ -9423,9 +9436,10 @@ class NthElement(Primitive):
           in the vector instead of the nth-smallest. Default: False.
 
     Inputs:
-        - **input** (Tensor) - A Tensor. 1-D or higher with last dimension at least :math:`n+1`.
+        - **input** (Tensor) - Input Tensor with 1-D or higher dimension.
         - **n** (Union[int, Tensor]) -  If the `n` is a Tensor, it should be a 0-D Tensor, dtype is int32.
-          Valid range of `n` is :math:`[0, input.shape[-1])`.
+          Valid range of `n` is :math:`[0, input.shape[-1])` where :math:`input.shape[-1]` is
+          last dimension size of `input`.
 
     Outputs:
         - **values** (Tensor) - Its shape satisfies:  `values`.shape = `input`.shape[:-1].
@@ -9574,9 +9588,9 @@ class TripletMarginLoss(Primitive):
     Args:
         p (int, optional): The norm degree for pairwise distance. Default: 2.
         eps (float, optional): Default: 1e-06.
-        swap (bool, optional): The distance swap. Default: "False".
+        swap (bool, optional): The distance swap. Default: False.
         reduction (str, optional): Apply specific reduction method to the
-            output: 'none', 'mean', 'sum'. Default: "mean".
+            output: "none", "mean", "sum". Default: "mean".
 
     Inputs:
         - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.

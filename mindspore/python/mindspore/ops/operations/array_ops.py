@@ -86,8 +86,8 @@ class UnravelIndex(Primitive):
           The dimension of `dims` must be 1-D. Must have the same type as `indices`.
 
     Outputs:
-        - **y** (Tensor) - Has the same type as `indices`.
-          The dimension of `y` can be 2-D or 1-D(if `indices` is 0D).
+        - **y** (Tensor) - Tensor, it should be 2-D or 1-D(if `indices` is 0D)
+          and has the same type as `indices`.
 
     Raises:
         TypeError: If the data type of `indices` and `dims` are different.
@@ -1272,10 +1272,10 @@ class MatrixDiagPartV3(Primitive):
 
 class MatrixSetDiagV3(Primitive):
     r"""
-    Returns a matrix Tensor with updated diagonal values across batches.
-    It takes an Tensor `x` and `diagonal` as input and returns a Tensor of
-    the same shape and values as `x`. But the specified diagonal values in
-    the innermost matrices will be replaced by the values in the `diagonal`.
+    Updates the diagonal part of a batched tensor.
+    It takes an Tensor `x` and `diagonal` as input and returns a Tensor in which
+    the specified diagonal values in the innermost matrices will be replaced
+    by the values in the `diagonal`.
 
     Diagonals shorter than `max_diag_len` need to be padded, where `max_diag_len` is the
     longest diagonal value.
@@ -1311,7 +1311,7 @@ class MatrixSetDiagV3(Primitive):
         - **diagonal** (Tensor) - A Tensor with the same dtype as `x`. Its rank depends on `k`.
           If `k` is an integer or :math:`k[0] == k[1]`, its dimension is :math:`n-1`.
           Otherwise, it has dimension :math:`n`.
-        - **k** (Tensor) - Tensor type int32, used for diagonal offset(s).
+        - **k** (Tensor) - Diagonal offset(s), Tensor of type int32.
           `k` can either be a single integer, which represents a single diagonal,
           or a pair of integers that specify the low and high ends of a matrix band.
           In this case, `k[0]` should not be greater than `k[1]`.
@@ -6685,7 +6685,7 @@ class SplitV(Primitive):
     by `size_splits` along the split dimension. This requires that `input_x.shape(split_dim)`
     is equal to the sum of `size_splits`.
 
-    The shape of `input_x` is :math:`(x_1, x_2, ..., x_M, ..., x_R)`. The rank of `input_x`
+    The shape of `input_x` is :math:`(x_1, x_2, ..., x_M, ..., x_R)` whose rank
     is `R`. Set the given `split_dim` as M, and :math:`-R \le M < R`. Set the given `num_split`
     as `N`, the given `size_splits` as :math:`(x_{m_1}, x_{m_2}, ..., x_{m_N})`,
     :math:`x_M=\sum_{i=1}^Nx_{m_i}`. The output is a list of tensor objects, for the
@@ -7180,7 +7180,7 @@ class RightShift(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, will be shifted to the right
-          by y in element-wise.
+          by `input_y` bits element-wise.
         - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
 
     Outputs:
@@ -7290,6 +7290,13 @@ class NonZero(Primitive):
         >>> print(output)
         [[0 0 0]
          [0 1 0]]
+        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+        >>> nonzero = NonZero()
+        >>> output = nonzero(x)
+        >>> print(output)
+        [[0]
+         [2]
+         [4]]
     """
 
     @prim_attr_register
