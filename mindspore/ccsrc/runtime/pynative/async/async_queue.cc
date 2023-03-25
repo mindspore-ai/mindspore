@@ -63,7 +63,7 @@ void AsyncQueue::WorkerLoop() {
         task_cond_var_.notify_all();
       }
     } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Run task failed, error msg:" << e.what();
+      MS_LOG(WARNING) << "Run task failed, error msg:" << e.what();
       {
         std::unique_lock<std::mutex> lock(task_mutex_);
 
