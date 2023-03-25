@@ -384,6 +384,9 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   size_t forward_args_size = args.size() - 1;
   auto sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[forward_args_size]);
   const auto &sens_tensor = ConvertOutputValueToTensor(sens_v);
+  if (sens_tensor == nullptr) {
+    MS_LOG(EXCEPTION) << "sens convert tensor is nullptr";
+  }
   // Sens have already exist, which may be need update
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (input_args_info->input_arg_value_vec.size() == args.size()) {
@@ -748,7 +751,10 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
                 << ", input args info ptr " << input_args_info.get();
   bool is_top_cell_end = (input_args_info->cell_id == top_cell()->cell_id());
   if (is_top_cell_end) {
-    input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value);
+    auto out_tensor = ConvertOutputValueToTensor(input_args_info->out_value);
+    if (out_tensor != nullptr) {
+      input_args_info->out_value = out_tensor;
+    }
   }
   const auto &out_id = PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value);
   DoGradForCustomBprop(input_args_info, out_id);

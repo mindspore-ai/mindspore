@@ -52,6 +52,7 @@ const size_t DEFAULT_MAX_COMM_OP_REUSE_NUM = 1000;
 
 void RemoveUnusedValueNode(const KernelGraphPtr &graph) {
   auto m = graph->manager();
+  MS_EXCEPTION_IF_NULL(m);
   auto node_users = m->node_users();
   mindspore::HashSet<ValueNodePtr> unused_value_nodes;
   for (auto &value_node : graph->graph_value_nodes()) {
@@ -228,6 +229,12 @@ void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph)
     SelectKernel(graph);
     opt::RunOpAscendBackendOptimization(graph);
   }
+
+  auto manager = MakeManager({graph});
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(graph);
+  graph->set_manager(manager);
+  RemoveUnusedValueNode(graph);
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
