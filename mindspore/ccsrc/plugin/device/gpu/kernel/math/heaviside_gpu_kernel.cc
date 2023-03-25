@@ -89,9 +89,12 @@ int HeavisideGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> inpx_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> inpy_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> out_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> inpx_shape =
+    inputs.at(kIndex0)->GetShapeVector().empty() ? std::vector<int64_t>({1}) : inputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> inpy_shape =
+    inputs.at(kIndex1)->GetShapeVector().empty() ? std::vector<int64_t>({1}) : inputs.at(kIndex1)->GetShapeVector();
+  std::vector<int64_t> out_shape =
+    outputs.at(kIndex0)->GetShapeVector().empty() ? std::vector<int64_t>({1}) : outputs.at(kIndex0)->GetShapeVector();
   input_shapes.emplace_back(inpx_shape);
   input_shapes.emplace_back(inpy_shape);
   output_shapes.emplace_back(out_shape);
