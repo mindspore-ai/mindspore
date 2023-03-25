@@ -3,7 +3,7 @@ mindspore.ops.sparse_segment_mean
 
 .. py:function:: mindspore.ops.sparse_segment_mean(x, indices, segment_ids)
 
-    计算输出Tensor :math:`output_i = \frac{\sum_j x_{indices[j]}}{N}` ，其中平均是对所有满足 :math:`segment\_ids[j] == i` 的元素， :math:`N` 表示相加的元素个数。如果给定的分段ID :math:`i` 不存在，则有 :math:`output[i] = 0` 。
+    计算输出Tensor :math:`output_i = \frac{\sum_j x_{indices[j]}}{N}` ，其中平均是对所有 :math:`j` 满足 :math:`segment\_ids[j] == i` 的元素， :math:`N` 表示相加的元素个数。如果给定的分段ID :math:`i` 不存在，则有 :math:`output[i] = 0` 。
 
     .. note::
         - 在CPU平台， `segment_ids` 中的值会被校验是否排序，若索引值不是升序的，则抛出错误。另外， `indices` 中的值也会被校验是否在界限内，若索引值超出范围[0, x.shape[0])，则抛出错误。

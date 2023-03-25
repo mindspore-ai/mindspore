@@ -24,4 +24,4 @@ mindspore.ops.unique_consecutive
         - **TypeError** - `return_idx` 不是bool。
         - **TypeError** - `return_counts` 不是bool。
         - **TypeError** - `axis` 不是int。
-        - **ValueError** - `axis` 不在 `[-ndim, ndim-1]` 范围内。
+        - **ValueError** - `axis` 不在 :math:`[-ndim, ndim-1]` 范围内。

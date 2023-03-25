@@ -182,7 +182,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
     not checked internally, and only use the lower triangular part in the computations.
     When the singular value of x (or the norm of the eigenvalues when hermitian = True) that are below
-    threshold (:math:`Max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
+    threshold (:math:`max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
     characteristic value), it is set to zero, and is not used in the computations.
     If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
     be :math:`rtol=max(M, N)*\varepsilon`, :math:`\varepsilon` is the
