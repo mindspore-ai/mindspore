@@ -65,7 +65,7 @@ class ForwardExecutor {
   void ClearNodeAbsMap() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
-  const NodeAbsCache &NodeAbsMap() const;
+  AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
   const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }

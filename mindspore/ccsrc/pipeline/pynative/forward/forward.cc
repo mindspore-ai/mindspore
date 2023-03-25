@@ -312,7 +312,9 @@ void ForwardExecutor::SetNodeAbsMapById(const std::string &id, const abstract::A
   infer_operation()->SetNodeAbsCacheById(id, abs);
 }
 
-const NodeAbsCache &ForwardExecutor::NodeAbsMap() const { return infer_operation()->node_abs_cache(); }
+AbstractBasePtr ForwardExecutor::GetNodeAbsById(const std::string &id) const {
+  return infer_operation()->GetNodeAbsById(id);
+}
 
 void ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const {
   infer_operation()->DoInfer(op_run_info);

@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <shared_mutex>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_cache.h"
 
@@ -35,7 +36,7 @@ class InferOperation {
   inline void ClearNodeAbsCache() { node_abs_cache_.clear(); }
   void SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info);
   void SetNodeAbsCacheById(const std::string &id, const abstract::AbstractBasePtr &abs);
-  inline const NodeAbsCache &node_abs_cache() const { return node_abs_cache_; }
+  AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   // Manage primitive output abstract cache.
   inline void ClearPrimAbsList() { prim_abs_list_.clear(); }
   // Manage constant flag primitive cache.
@@ -45,6 +46,7 @@ class InferOperation {
 
  private:
   void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const;
+  void SetNodeAbsById(const std::string &id, const abstract::AbstractBasePtr &abs);
   // Set abstract for each input value.
   void SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info);
   AbstractBasePtr GetInputValueAbs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &input_value,
@@ -69,6 +71,7 @@ class InferOperation {
   // This map is used to get the input abstract of input value form cache.
   // It works when top cell forward run begin and is cleared when top cell forward run end.
   NodeAbsCache node_abs_cache_;
+  mutable std::shared_mutex abs_mutex_;
   // This map is used to cache op output abstract.
   PrimAbsCache prim_abs_list_;
 };
