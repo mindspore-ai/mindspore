@@ -73,8 +73,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
 
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of Tensor.
-                                                         The shape of Tensor is :math:`(N,*)` where :math:`*` means,
-                                                         any number of additional dimensions.
+            Tensors of arbitrary dimensions are supported.
           clip_value_min (Union(Tensor, float, int)): The minimum value. Default: None.
           clip_value_max (Union(Tensor, float, int)): The maximum value. Default: None.
 
@@ -176,7 +175,7 @@ def clamp(input, min=None, max=None):
 
     Args:
           input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
-            Tensor. The shape of Tensor is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            Tensor. Tensors of arbitrary dimensions are supported.
           min (Union(Tensor, float, int), optional): The minimum value. Default: None.
           max (Union(Tensor, float, int), optional): The maximum value. Default: None.
 

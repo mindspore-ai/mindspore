@@ -6,7 +6,7 @@ mindspore.ops.argwhere
     返回一个Tensor，包含所有输入Tensor非零数值的位置。
 
     参数：
-        - **input** (Tensor) - Tensor的shape是 :math:`(x_1, x_2, ..., x_R)`。类型可以为int、float或bool。
+        - **input** (Tensor) - 输入Tensor。类型可以为Number或bool。
 
     返回：
         一个2-D Tensor，数据类型为int64，包含所有输入中的非零数值的位置。
