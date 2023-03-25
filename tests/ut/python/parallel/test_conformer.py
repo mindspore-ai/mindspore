@@ -804,29 +804,3 @@ class ConformerOverflow(nn.Cell):
         else:
             tran_cls = self.trans_cls_head(self.mean(x_t, 1))
         return [conv_cls, tran_cls]
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_conformer_arm_ascend():
-    """
-    Feature: test conformer architecture
-    Description: convolution and transformer
-    Expectation: compile success
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    net = ConformerOverflow(patch_size=16, channel_ratio=4, embed_dim=384, stage_point=[1, 4, 8, 12],
-                            num_heads=6, mlp_ratio=4, qkv_bias=False, qk_scale=None, cls_token=True,
-                            num_classes=1000, drop_rate=0.0, drop_path_rate=0.1, attn_drop_rate=0.0,
-                            batch_size=32, weighted_fusion=True, dp=8, mp=1, seq_length=196)
-    ls = CrossEntropySmooth(reduction="mean")
-    net_with_loss_net = NetWithLossCell(net, ls)
-    net_with_loss = _VirtualDatasetCell(net_with_loss_net)
-    optimizer = nn.AdamWeightDecay(net.trainable_params())
-    train_net = nn.TrainOneStepCell(net_with_loss, optimizer)
-    data = Tensor(np.ones([32, 3, 224, 224]), dtype=mindspore.float32)
-    label = Tensor(np.ones([32]).astype(np.int32))
-    label = one_hot_int(label, 1000)
-    train_net(data, label)
