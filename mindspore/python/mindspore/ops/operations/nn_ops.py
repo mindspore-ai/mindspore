@@ -6754,74 +6754,10 @@ class SparseApplyFtrl(Primitive):
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):
     """
-    Updates relevant entries according to the FTRL-proximal scheme. This class has one more attribute, named
-    l2_shrinkage, than class SparseApplyFtrl.
-
-    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-
-    Args:
-        lr (float): The learning rate value, must be positive.
-        l1 (float): l1 regularization strength, must be greater than or equal to zero.
-        l2 (float): l2 regularization strength, must be greater than or equal to zero.
-        l2_shrinkage (float): L2 shrinkage regularization.
-        lr_power (float): Learning rate power controls how the learning rate decreases during training,
-            must be less than or equal to zero. Use fixed learning rate if `lr_power` is zero.
-        use_locking (bool, optional): If `True`, the var and accumulation tensors will be protected from being updated.
-            Default: False.
-
-    Inputs:
-        - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
-        - **linear** (Parameter) - the linear coefficient to be updated, must be same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var` and
-          :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
-        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
-          The type must be int32 and :math:`indices.shape[0] = grad.shape[0]`.
-
-    Outputs:
-        Tuple of 3 Tensor, the updated parameters.
-
-        - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
-        - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
-        - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
-
-    Raises:
-        TypeError: If `lr`, `l1`, `l2`, `lr_power` or `use_locking` is not a float.
-        TypeError: If `use_locking` is not a bool.
-        TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
-        TypeError: If dtype of `indices` is not int32.
-        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
+    The SparseApplyFtrlV2 interface is deprecated, please use the :class:`mindspore.ops.SparseApplyFtrl` instead.
 
     Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> class SparseApplyFtrlV2Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(SparseApplyFtrlV2Net, self).__init__()
-        ...         self.sparse_apply_ftrl_v2 = ops.SparseApplyFtrlV2(lr=0.01, l1=0.0, l2=0.0,
-        ...                                                         l2_shrinkage=0.0, lr_power=-0.5)
-        ...         self.var = Parameter(Tensor(np.array([[0.2, 0.3]]).astype(np.float32)), name="var")
-        ...         self.accum = Parameter(Tensor(np.array([[0.5, 0.9]]).astype(np.float32)), name="accum")
-        ...         self.linear = Parameter(Tensor(np.array([[0.7, 0.5]]).astype(np.float32)), name="linear")
-        ...
-        ...     def construct(self, grad, indices):
-        ...         out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
-        ...         return out
-        ...
-        >>> net = SparseApplyFtrlV2Net()
-        >>> grad = Tensor(np.array([[0.8, 0.5]]).astype(np.float32))
-        >>> indices = Tensor(np.ones([1]), mindspore.int32)
-        >>> output = net(grad, indices)
-        >>> print(output)
-        (Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 2.00000003e-01,  3.00000012e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 5.00000000e-01,  8.99999976e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 6.99999988e-01,  5.00000000e-01]]))
+        Deprecated
     """
 
     __mindspore_signature__ = (
@@ -6832,6 +6768,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.1", "ops.SparseApplyFtrl", False)
     @prim_attr_register
     def __init__(self, lr, l1, l2, l2_shrinkage, lr_power, use_locking=False):
         """Initialize SparseApplyFtrlV2."""
