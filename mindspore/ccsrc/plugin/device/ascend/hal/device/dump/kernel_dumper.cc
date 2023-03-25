@@ -323,7 +323,7 @@ void KernelDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<a
 #endif
 }
 
-void KernelDumper::DumpKernelOutput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) {
+void KernelDumper::DumpKernelOutput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) const {
   if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
     MS_LOG(INFO) << "Skip dump output";
     return;
@@ -387,7 +387,7 @@ void KernelDumper::DumpKernelOutput(const std::shared_ptr<HcclTaskInfo> &task_in
   }
 }
 
-void KernelDumper::DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) {
+void KernelDumper::DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) const {
   if (!DumpJsonParser::GetInstance().InputNeedDump()) {
     MS_LOG(INFO) << "Skip dump input";
     return;
@@ -436,7 +436,7 @@ void KernelDumper::DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::
   }
 }
 
-std::string KernelDumper::StripUniqueId(const std::string node_name) {
+std::string KernelDumper::StripUniqueId(const std::string node_name) const {
   size_t last_underscore = node_name.find_last_of('_');
   std::string stripped_node_name;
   if (last_underscore == string::npos) {

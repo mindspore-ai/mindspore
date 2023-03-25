@@ -101,10 +101,10 @@ class KernelDumper : public debug::OverflowDumper {
                         const std::shared_ptr<HcclTaskInfo> &task_info);
 
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task);
-  void DumpKernelOutput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task);
+  void DumpKernelOutput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) const;
   void DumpKernelOutput(const std::shared_ptr<HcclTaskInfo> &task_info, NotNull<aicpu::dump::Task *> task);
-  void DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task);
-  std::string StripUniqueId(const std::string node_name);
+  void DumpKernelInput(const CNodePtr &kernel, NotNull<aicpu::dump::Task *> task) const;
+  std::string StripUniqueId(const std::string node_name) const;
 
   void SetOpMappingInfoRegister(NotNull<aicpu::dump::OpMappingInfo *> dump_info, const CNodePtr &kernel);
   void MallocP2PDebugMem(const void *const op_debug_addr);

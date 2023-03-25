@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PYNATIVE_PROFILING_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PYNATIVE_PROFILING_H_
 
-#include <cstdio>
 #include <map>
 #include <string>
 #include <unordered_map>
