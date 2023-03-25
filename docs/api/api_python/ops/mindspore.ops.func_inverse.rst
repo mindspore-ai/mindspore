@@ -9,7 +9,7 @@ mindspore.ops.inverse
         - **input** (Tensor) - 计算的矩阵。`input` 至少是两维的，最后两个维度大小相同。
 
     返回：
-        Tensor，shape和类型和 `input` 相同。
+        Tensor，其类型和shape与 `input` 的类型和shape相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

@@ -360,7 +360,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
 
         w[n]=\alpha − \beta \cos \left( \frac{2 \pi n}{N - 1} \right),
 
-    where N is the full window size.
+    where :math:`N` is the full window size.
 
     Args:
         window_length (int): The size of returned window. Must be a non negative integer.
@@ -6595,12 +6595,20 @@ def movedim(x, source, destination):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> # case1 : moving single axis
         >>> from mindspore import ops, Tensor
         >>> import numpy as np
         >>> x = Tensor(np.zeros((3, 4, 5)))
         >>> output = ops.movedim(x, 0, -1)
         >>> print(output.shape)
         (4, 5, 3)
+        >>> # case 2 : moving multiple axes
+        >>> from mindspore import ops, Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.zeros((3, 4, 5)))
+        >>> output = ops.movedim(x, (0, 2), (1, 2))
+        >>> print(output.shape)
+        (4, 3, 5)
     """
     ndim = F.rank(x)
     source = _check_axis_valid(source, ndim)

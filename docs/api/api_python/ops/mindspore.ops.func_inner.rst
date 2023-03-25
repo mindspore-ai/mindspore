@@ -13,8 +13,8 @@ mindspore.ops.inner
         如果 `input` 或 `other` 之一是标量，那么 :func:`mindspore.ops.inner` 相当于 :func:`mindspore.ops.mul`。
 
     参数：
-        - **input** (Tensor) - 第一个输入。
-        - **other** (Tensor) - 第二个输入。
+        - **input** (Tensor) - 第一个输入的Tensor。
+        - **other** (Tensor) - 第二个输入的Tensor。
 
     返回：
         Tensor，内积的结果。
