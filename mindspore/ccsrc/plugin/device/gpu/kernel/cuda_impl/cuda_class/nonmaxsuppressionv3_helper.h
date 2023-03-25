@@ -156,6 +156,7 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
       return flag;
     }
 
+    cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream));
     M iou_host = 0.0;
     cudaMemcpy(&iou_host, iou_threshold_, sizeof(M), cudaMemcpyDeviceToHost);
     float iou = static_cast<float>(iou_host);
