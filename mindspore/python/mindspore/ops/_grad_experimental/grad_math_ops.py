@@ -372,6 +372,7 @@ def get_bprop_euclidean_norm(self):
     """Generate bprop for EuclideanNorm"""
     expand_dims = P.ExpandDims()
     keep_dims = self.keep_dims
+
     def bprop(x, axes, out, dout):
         scale_v = dout / out
         if not keep_dims and x.shape != ():
@@ -1021,6 +1022,7 @@ def get_bprop_polar(self):
     sig = P.Sign()
     ones = P.Ones()
     zeros = P.Zeros()
+
     def bprop(input1, angle, out, dout):
         grad_conj = conj(dout)
         zero = zeros(dout.shape, input1.dtype)
@@ -1441,6 +1443,7 @@ def get_bprop_bernoulli(self):
 def get_bprop_tridiagonalsolve(self):
     """Grad definition for 'TridiagonalSolve' operation"""
     tridiagonalsolve = TridiagonalSolve()
+
     def bprop(diagonals, rhs, out, dout):
         diags = diagonals
         diag1 = diags[..., 1, :]
@@ -2056,9 +2059,9 @@ def get_bprop_fft_with_size(self):
                             input_shape[-1], input_type))
                         dout_last_term = complex_op(tile_op(real_op(dout_last_term), _rfft_last_term_shape(dout_shape,
                                                                                                            [input_shape[
-                                                                                                               -1],])),
+                                                                                                               -1]])),
                                                     tile_op(imag_op(dout_last_term), _rfft_last_term_shape(
-                                                        dout_shape, [input_shape[-1],])))
+                                                        dout_shape, [input_shape[-1]])))
                         dout_last_term = dout_last_term * vec_mask
                         terms = real_op(dout_first_term) + is_even * real_op(dout_last_term)
                     elif signal_ndim == 3:

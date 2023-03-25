@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVEAVGPOOL3DGRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAPTIVEAVGPOOL3DGRAD_CPU_KERNEL_H_
 #include <functional>
-#include <memory>
 #include <vector>
 #include <map>
 #include <utility>

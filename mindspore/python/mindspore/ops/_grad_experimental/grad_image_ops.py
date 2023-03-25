@@ -67,6 +67,7 @@ def get_bprop_crop_and_resize(self):
     dyn_shape = P.TensorShape()
 
     is_ascend_cpu = context.get_context('device_target') in ("Ascend", "CPU")
+
     def bprop(x, boxes, box_index, crop_size, out, dout):
         if method_ != "bilinear":
             if not is_ascend_cpu:

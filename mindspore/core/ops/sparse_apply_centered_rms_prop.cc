@@ -145,7 +145,7 @@ void SparseApplyCenteredRMSProp::Init(bool use_locking) { set_use_locking(use_lo
 void SparseApplyCenteredRMSProp::set_use_locking(bool use_locking) {
   (void)AddAttr(kUseLocking, api::MakeValue(use_locking));
 }
-bool SparseApplyCenteredRMSProp::get_use_locking() { return GetValue<bool>(GetAttr(kUseLocking)); }
+bool SparseApplyCenteredRMSProp::get_use_locking() const { return GetValue<bool>(GetAttr(kUseLocking)); }
 
 AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {

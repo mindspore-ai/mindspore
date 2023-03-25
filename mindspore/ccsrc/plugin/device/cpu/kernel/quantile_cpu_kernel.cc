@@ -54,7 +54,7 @@ int QuantileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   return KRET_OK;
 }
 
-uint32_t QuantileCpuKernelMod::MaybeWrapDim(int dim, int dim_post_expr) {
+uint32_t QuantileCpuKernelMod::MaybeWrapDim(int dim, int dim_post_expr) const {
   if (dim == kQuantileDefaultDim) {
     return dim;
   }
@@ -255,7 +255,7 @@ bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 
 template <typename T>
 void QuantileCpuKernelMod::ParallelRun(int64_t last_shape_size, uint64_t q_size, const std::vector<T> &sorted,
-                                       T *output_addr, T *q_addrs) {
+                                       T *output_addr, T *q_addrs) const {
   const int64_t thread_num = SizeToLong(FloatToSize(std::ceil(total_ / last_shape_size)));
   std::vector<common::Task> tasks;
   for (uint64_t task_id = 0; task_id < LongToUlong(thread_num) && task_id * last_shape_size < total_; task_id++) {
@@ -273,7 +273,7 @@ void QuantileCpuKernelMod::ParallelRun(int64_t last_shape_size, uint64_t q_size,
 
 template <typename T>
 void QuantileCpuKernelMod::DoQuantile(int64_t last_shape_size, uint64_t q_size, const std::vector<T> &sorted,
-                                      T *output_addr, T *q_addrs, uint64_t start, uint64_t end) {
+                                      T *output_addr, T *q_addrs, uint64_t start, uint64_t end) const {
   std::vector<T> tmp;
   bool has_nan = false;
   bool all_nan = true;

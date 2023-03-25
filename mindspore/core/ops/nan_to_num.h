@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_NAN_TO_NUM_H_
 #define MINDSPORE_CORE_OPS_NAN_TO_NUM_H_
 #include <vector>
-#include <limits>
 #include <memory>
 
 #include "ops/base_operator.h"

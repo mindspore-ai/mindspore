@@ -77,7 +77,7 @@ bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 }
 
 bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+                                             const std::vector<AddressPtr> &outputs) const {
   float16 *grad = reinterpret_cast<float16 *>(inputs[0]->addr);
   float16 *input = reinterpret_cast<float16 *>(inputs[1]->addr);
   float16 *output = reinterpret_cast<float16 *>(outputs[0]->addr);
@@ -106,7 +106,7 @@ bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inpu
 
 template <typename T>
 bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+                                         const std::vector<AddressPtr> &outputs) const {
   T *grad = reinterpret_cast<T *>(inputs[0]->addr);
   T *input = reinterpret_cast<T *>(inputs[1]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);

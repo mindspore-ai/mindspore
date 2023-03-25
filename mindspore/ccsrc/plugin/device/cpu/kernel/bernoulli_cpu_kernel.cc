@@ -44,7 +44,7 @@ const int64_t kBernoulliDefaultSeed = -1;
 const int64_t kBernoulliDefaultOffset = 0;
 }  // namespace
 
-uint64_t BernoulliCpuKernelMod::New64() {
+uint64_t BernoulliCpuKernelMod::New64() const {
   std::random_device device("/dev/urandom");
   static std::mt19937_64 rng = std::mt19937_64(device());
   return (rng)();
@@ -65,7 +65,10 @@ float BernoulliCpuKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  int ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "The memcpy error, errorno(" << ret << ")";
+  }
   return result - 1.0f;
 }
 

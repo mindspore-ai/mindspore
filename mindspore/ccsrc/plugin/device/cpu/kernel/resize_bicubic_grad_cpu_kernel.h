@@ -47,7 +47,7 @@ class ResizeBicubicGradCPUKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   using ResizeBicubicGradFunc = std::function<bool(
     ResizeBicubicGradCPUKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, ResizeBicubicGradFunc>> func_list_;

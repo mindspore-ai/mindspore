@@ -46,8 +46,8 @@ class IndexPutCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
 
  private:
   void CheckParams();
-  std::vector<std::vector<int64_t>> Transpose(const std::vector<std::vector<int64_t>> &A);
-  int64_t Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start, int64_t end);
+  std::vector<std::vector<int64_t>> Transpose(const std::vector<std::vector<int64_t>> &A) const;
+  int64_t Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start, int64_t end) const;
   template <typename T, typename T0>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>

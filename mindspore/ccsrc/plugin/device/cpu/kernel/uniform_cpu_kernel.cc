@@ -42,7 +42,7 @@ const size_t kUniformInputsNum = 1;
 const size_t kUniformOutputsNum = 1;
 }  // namespace
 
-uint64_t UniformCpuKernelMod::New64() {
+uint64_t UniformCpuKernelMod::New64() const {
   std::random_device device("/dev/urandom");
   static std::mt19937_64 rng = std::mt19937_64(device());
   return (rng)();
@@ -63,7 +63,10 @@ float UniformCpuKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  int ret = memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "The memcpy error, errorno(" << ret << ")";
+  }
   return result - 1.0f;
 }
 

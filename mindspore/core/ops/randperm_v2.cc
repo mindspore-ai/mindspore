@@ -46,7 +46,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t GetDtypeMaxForCheckOverFlow(TypePtr tid) {
+int64_t GetDtypeMaxForCheckOverFlow(const TypePtr tid) {
   int64_t max = 0;
   int64_t max_float16 = 65504;
   switch (tid->type_id()) {

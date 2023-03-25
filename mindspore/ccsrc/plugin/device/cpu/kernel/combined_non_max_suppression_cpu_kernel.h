@@ -69,9 +69,9 @@ class CombinedNonMaxSuppressionCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   size_t nms_perbath(float *, float *, float *, float *, float *, int *);
-  void regular_input2buffer(std::vector<std::vector<float>> *, const float *, const int);
-  float IOU(std::vector<std::vector<float>> *, const int, const int) const;
-  void non_max_suppression(std::vector<std::vector<float>> *, std::vector<float> *, std::vector<int> &);
+  void regular_input2buffer(std::vector<std::vector<float>> *, const float *, const int) const;
+  float IOU(std::vector<std::vector<float>> *const, const int, const int) const;
+  void non_max_suppression(std::vector<std::vector<float>> *, std::vector<float> *, std::vector<int> &) const;
   void nms_perclass(float *, float *, std::vector<non_max_suppression_local::result_para> &, int &);
   void CheckInput();
   void CheckOutput();
