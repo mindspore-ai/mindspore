@@ -5340,7 +5340,7 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
     factor for the added tensor `input` respectively. If `beta` is 0, then `input` will be ignored.
 
     .. math::
-        output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1 @ batch2})
+        output = \beta input + \alpha (\sum_{i=0}^{b-1} {batch1_i @ batch2_i})
 
     Args:
         input (Tensor): Tensor to be added.
