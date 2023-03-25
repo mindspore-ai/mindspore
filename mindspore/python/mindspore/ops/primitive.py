@@ -745,8 +745,8 @@ def _check_contains_variable(item_dtype, item_value):
     Check whether the item is or contains variable.
     """
     if isinstance(item_value, (list, tuple)):
-        for i in range(len(item_value)):
-            if _check_contains_variable(item_dtype[i], item_value[i]):
+        for i, element in enumerate(item_value):
+            if _check_contains_variable(item_dtype[i], element):
                 return True
     elif isinstance(item_value, dict):
         for i in range(len(item_value)):

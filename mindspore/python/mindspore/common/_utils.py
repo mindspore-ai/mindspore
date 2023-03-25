@@ -84,6 +84,7 @@ def get_slice_shape(dtype, shape):
 
 
 def dict_setitem(dic, key, val):
+    """Set an element to dict."""
     dic.__setitem__(key, val)
     return dic
 

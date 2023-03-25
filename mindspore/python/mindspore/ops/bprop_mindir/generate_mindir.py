@@ -28,6 +28,7 @@ os.environ['MS_DEV_EXPORT_BPROP_MINDIR'] = '1'
 
 
 def run_generate(bprop_mindir_install_dir, bprop_map, force_update):
+    """Run the generate process of bprop mindir."""
     for op_name in bprop_map.keys():
         if not isinstance(op_name, str):
             continue
@@ -36,6 +37,7 @@ def run_generate(bprop_mindir_install_dir, bprop_map, force_update):
 
 
 def run_generate_with_op_name(op_name, force_update):
+    """Run the generate process of bprop mindir for single op."""
     _export_bprop_mindir(op_name, force_update)
 
 

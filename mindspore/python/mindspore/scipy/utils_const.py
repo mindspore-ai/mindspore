@@ -31,6 +31,7 @@ def _callable_const(x):
 
 @constexpr
 def is_pynative():
+    """Returns true if the current mode is PYNATIVE mode."""
     return context.get_context("mode") == context.PYNATIVE_MODE
 
 

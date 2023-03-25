@@ -1474,6 +1474,7 @@ class _CellGraphExecutor:
         raise KeyError('{} graph is not exist.'.format(phase_real))
 
     def del_net_res(self, obj, net_id):
+        """Clear the memory resource of a network."""
         self._graph_executor.del_net_res(obj, net_id)
 
     def _get_branch_control_input(self):
