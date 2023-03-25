@@ -91,7 +91,7 @@ AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   auto shape = SoftMarginLossInferShape(primitive, input_args);
   auto type = SoftMarginLossInferType(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  return abstract::MakeAbstractTensor(shape, type);
 }
 
 // AG means auto generated
