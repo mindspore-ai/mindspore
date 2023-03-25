@@ -3,7 +3,7 @@ mindspore.ops.index_select
 
 .. py:function:: mindspore.ops.index_select(input, axis, index)
 
-    返回一个新的Tensor，该Tensor沿维度 `axis` 按 `index` 中给定的顺序对 `input` 进行选择。
+    返回一个新的Tensor，该Tensor沿维度 `axis` 按 `index` 中给定的索引对 `input` 进行选择。
 
     返回的Tensor和输入Tensor( `input` )的维度数量相同，其第 `axis` 维度的大小和 `index` 的长度相同；其它维度和 `input` 相同。
 
@@ -12,7 +12,7 @@ mindspore.ops.index_select
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **axis** (int) - `index` 的维度。
+        - **axis** (int) - 根据索引进行选择的维度。
         - **index** (Tensor) - 包含索引的一维Tensor。
 
     返回：
