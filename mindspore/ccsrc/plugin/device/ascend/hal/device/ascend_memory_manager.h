@@ -34,6 +34,7 @@ class AscendMemoryManager : public MemoryManager {
   void ResetDynamicMemory() override;
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override;
+  void *MallocOverflowMemFromMemFromMemPool(size_t size, bool from_persistent_mem);
   void FreeMemFromMemPool(void *device_ptr) override;
   uint64_t GetMsMaxMemSize() const;
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;

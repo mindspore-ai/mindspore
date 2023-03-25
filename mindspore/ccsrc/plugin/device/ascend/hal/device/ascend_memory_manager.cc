@@ -51,6 +51,11 @@ void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persisten
   return device_addr;
 }
 
+void *AscendMemoryManager::MallocOverflowMemFromMemFromMemPool(size_t size, bool from_persistent_mem) {
+  const auto device_addr = AscendMemoryPool::GetInstance().AllocOverflowTensorMem(size, from_persistent_mem);
+  return device_addr;
+}
+
 void AscendMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   AscendMemoryPool::GetInstance().FreeTensorMem(device_ptr);
 }

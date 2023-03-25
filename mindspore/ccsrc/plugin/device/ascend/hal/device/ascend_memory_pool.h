@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_POOL_H_
 
 #include <memory>
+#include <string>
+#include "utils/hash_map.h"
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 
 namespace mindspore {
@@ -37,6 +39,9 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
   void ResetIdleMemBuf() const;
 
+  // The main program entry of memory alloc.
+  DeviceMemPtr AllocOverflowTensorMem(size_t size, bool from_persistent_mem = false);
+
   static AscendMemoryPool &GetInstance() {
     static AscendMemoryPool instance;
     return instance;
@@ -48,6 +53,9 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
  private:
   AscendMemoryPool() = default;
+  std::mutex mutex_;
+  // overflow memory info, key is kernel, val is memory ptr
+  mindspore::HashMap<std::string, void *> overflow_memory_info_map_;
 };
 }  // namespace ascend
 }  // namespace device
