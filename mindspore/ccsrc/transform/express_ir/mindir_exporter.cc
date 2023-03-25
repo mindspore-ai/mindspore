@@ -333,6 +333,9 @@ void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {
       int64_t field_size = tensor_layout->get_field_size();
       bool uniform_split = tensor_layout->uniform_split();
       std::string opt_shard_group = tensor_layout->opt_shard_group();
+      if (!opt_shard_group.empty()) {
+        slice_shape = tensor_layout->opt_shard_slice_shape();
+      }
 
       // Save all information to Layout Proto
       layoutProto->set_name(name);
