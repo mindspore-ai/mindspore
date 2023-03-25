@@ -136,6 +136,7 @@ void AsyncQueue::Clear() {
 
 void AsyncQueue::Reset() {
   {
+    // cppcheck-suppress unreadVariable
     std::lock_guard<std::mutex> lock(task_mutex_);
     if (tasks_.empty()) {
       return;

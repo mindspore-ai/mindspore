@@ -33,11 +33,11 @@
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
-
 namespace PyNativeAlgo {
 // Common function
 struct Common {
   static AbstractBasePtr SetAbstractValueToAnyValue(const AbstractBasePtr &abs);
+  static AnfNodePtr ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, const FuncGraphPtr &func_graph);
   static std::string GetIdByValue(const ValuePtr &v);
   static bool ValueHasDynamicShape(const ValuePtr &value);
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
