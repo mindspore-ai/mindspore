@@ -33,7 +33,7 @@ class MIND_API DynamicRNN : public BaseOperator {
     InitIOName({"x", "w", "b", "seq_length", "init_h", "init_c"},
                {"y", "output_h", "output_c", "i", "j", "f", "o", "tanhc"});
   }
-  void Init() {}
+  void Init() const {}
 };
 
 MIND_API abstract::AbstractBasePtr DynamicRNNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

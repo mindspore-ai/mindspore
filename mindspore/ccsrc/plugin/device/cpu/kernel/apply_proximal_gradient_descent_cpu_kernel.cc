@@ -125,7 +125,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
   if (!alpha_shape.empty()) {
     batch_size_ = std::accumulate(alpha_shape.begin(), alpha_shape.end(), batch_size_, std::multiplies<int64_t>());
   }
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), (int64_t)1, std::multiplies<int64_t>());
   if (batch_size_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;

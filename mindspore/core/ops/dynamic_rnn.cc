@@ -59,7 +59,7 @@ constexpr int64_t kDynamicRnnShapeC = 3;
 constexpr int64_t kDynRnnNum4 = 4;
 constexpr int64_t kDynRnnInputNum = 6;
 
-abstract::TupleShapePtr DynamicRNNInferDynamicShape(const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr DynamicRNNInferDynamicShape() {
   const int64_t y_shape_num = 3;
   ShapeVector y_shape_dyn;
   for (size_t i = 0; i < y_shape_num; ++i) {
@@ -139,7 +139,7 @@ abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
       std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny})});
   }
   if (IsDynamic(x_shape) || IsDynamic(w_shape)) {
-    return DynamicRNNInferDynamicShape(input_args);
+    return DynamicRNNInferDynamicShape();
   }
   DynamicRNNShapeCheck(primitive, input_args);
   int64_t num_step = x_shape[kDynRnnIdx0];
