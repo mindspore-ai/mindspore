@@ -162,7 +162,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     return temp_mod->GetAllSupportedList(kernel_name);
   }
 
-  std::vector<KernelAttr> GetOpSupport() { return {}; }
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::NativeCpuKernelMod; }
 
