@@ -23,7 +23,7 @@ __global__ void Bucketize(const int N, const int M, const float *bounds, const T
     int32_t high = M;
     while (high - low > 1) {
       const int32_t median = low + (high - low) / 2;
-      if (bounds[median] < static_cast<float>(input[i])) {
+      if (bounds[median] <= static_cast<float>(input[i])) {
         low = median;
       } else {
         high = median;
