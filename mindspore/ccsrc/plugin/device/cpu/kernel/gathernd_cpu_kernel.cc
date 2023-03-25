@@ -75,10 +75,6 @@ int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 
   size_t dim_after_indices = 1;
   size_t dim_indices_last = LongToSize(indices_shapes_[indices_shapes_.size() - IntToSize(1)]);
-  if (dim_indices_last == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices_shapes_[" << indices_shapes_.size()
-                      << " - 1] can not be 0.";
-  }
   for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
     dim_after_indices *= LongToSize(input_shapes_[i]);
   }
@@ -92,7 +88,7 @@ int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     batch_indices_[dim_indices_last - 1] = dims_[1];
   }
 
-  for (size_t i = dim_indices_last - 1; i > 0; --i) {
+  for (int i = static_cast<int>(dim_indices_last) - 1; i > 0; --i) {
     batch_indices_[i - 1] = batch_indices_[i] * LongToInt(input_shapes_[i]);
   }
   return ret;
