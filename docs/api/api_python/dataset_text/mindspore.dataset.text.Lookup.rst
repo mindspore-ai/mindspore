@@ -6,7 +6,7 @@ mindspore.dataset.text.Lookup
     根据词表，将分词标记(token)映射到其索引值(id)。
 
     参数：
-        - **vocab** (Vocab) - 词表对象，用于存储分词和索引的映射。
+        - **vocab** (:class:`~.text.Vocab`) - 词表对象，用于存储分词和索引的映射。
         - **unknown_token** (str, 可选) - 备用词汇，用于要查找的单词不在词汇表时进行替换。
           如果单词不在词汇表中，则查找结果将替换为 `unknown_token` 的值。
           如果单词不在词汇表中，且未指定 `unknown_token` ，将抛出运行时错误。默认值：None，不指定该参数。
