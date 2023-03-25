@@ -28,7 +28,7 @@ if __name__ == "__main__":
     device_target = args.device_target
     sparse = bool(args.sparse)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+    context.set_context(mode=context.GRAPH_MODE, device_target=device_target, runtime_num_threads=12)
     context.set_ps_context(enable_ps=True)
     init()
 
