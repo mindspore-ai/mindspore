@@ -18,14 +18,11 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
 
 #include <string>
-#include <tuple>
-#include <vector>
 #include <map>
-#include <memory>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
 class ConvertOpUtils {

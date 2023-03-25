@@ -33,8 +33,8 @@ class LU : public OpDesc {
     std::vector<int64_t> indices_value;
     for (int64_t u = u_left; u < u_right; ++u) {
       for (int64_t v = v_left; v < v_right; ++v) {
-        (void)indices_value.emplace_back(u);
-        (void)indices_value.emplace_back(v);
+        indices_value.push_back(u);
+        indices_value.push_back(v);
       }
     }
     return indices_value;
@@ -55,7 +55,7 @@ class LU : public OpDesc {
   std::vector<int32_t> GetRangeValue(int64_t num) {
     std::vector<int32_t> range_value;
     for (int i = 0; i < static_cast<int>(num); ++i) {
-      (void)range_value.emplace_back(i);
+      range_value.push_back(i);
     }
     return range_value;
   }

@@ -198,13 +198,13 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     std::vector<int64_t> begin;
     std::vector<int64_t> size;
     if (param_dtype_ == kNumberTypeInt32) {
-      auto begin_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
-      auto size_ptr = reinterpret_cast<int32_t *>(inputs[kSliceInputIndex2]->addr);
+      auto begin_ptr = GetDeviceAddress<int32_t>(inputs, 1);
+      auto size_ptr = GetDeviceAddress<int32_t>(inputs, kSliceInputIndex2);
       begin.assign(begin_ptr, begin_ptr + begin_shape[0]);
       size.assign(size_ptr, size_ptr + size_shape[0]);
     } else if (param_dtype_ == kNumberTypeInt64) {
-      auto begin_ptr = reinterpret_cast<int64_t *>(inputs[1]->addr);
-      auto size_ptr = reinterpret_cast<int64_t *>(inputs[kSliceInputIndex2]->addr);
+      auto begin_ptr = GetDeviceAddress<int64_t>(inputs, 1);
+      auto size_ptr = GetDeviceAddress<int64_t>(inputs, kSliceInputIndex2);
       begin.assign(begin_ptr, begin_ptr + begin_shape[0]);
       size.assign(size_ptr, size_ptr + size_shape[0]);
     } else {

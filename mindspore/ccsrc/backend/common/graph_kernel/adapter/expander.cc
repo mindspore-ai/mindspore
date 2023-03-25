@@ -254,8 +254,8 @@ AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
   auto new_cnode = dyn_cast<CNode>(new_node);
   auto expand_fg = GetCNodeFuncGraph(new_cnode);
   auto todos = TopoSort(expand_fg->get_return());
-  for (const auto &node : todos) {
-    ConvertOpUtils::ConvertAttrToInput(node);
+  for (const auto &no : todos) {
+    ConvertOpUtils::ConvertAttrToInput(no);
   }
   new_cnode->set_input(0, NewValueNode(expand_fg));
   return new_cnode;

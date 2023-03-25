@@ -111,7 +111,7 @@ class CNodeDecoder {
     }
   }
 
-  void InitIOName(const CNodePtr &cnode) {
+  void InitIOName(const CNodePtr &cnode) const {
     auto primitive = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(primitive);
     const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();

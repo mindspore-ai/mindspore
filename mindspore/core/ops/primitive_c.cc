@@ -43,7 +43,7 @@ OpPrimCRegister &OpPrimCRegister::GetInstance() {
   return instance;
 }
 
-const HashMap<std::string, OpPrimCDefineFunc> &OpPrimCRegister::GetPrimCMap() { return op_primc_fns_; }
+const HashMap<std::string, OpPrimCDefineFunc> &OpPrimCRegister::GetPrimCMap() const { return op_primc_fns_; }
 void OpPrimCRegister::SetPrimCMap(const std::string &kname, const OpPrimCDefineFunc &fn) { op_primc_fns_[kname] = fn; }
 }  // namespace ops
 }  // namespace mindspore
