@@ -18,13 +18,13 @@ mindspore.ops.HammingWindow
 
         - **alpha** (float，可选) - 加权系数，上式中的 :math:`\alpha` ，默认值：0.54。
         - **beta** (float，可选) - 加权系数，上式中的 :math:`\beta` ，默认值：0.46。
-        - **dtype** (:class:`mindspore.dtype`，可选) - 数据类型，可选值为 `mindspore.dtype.float16` 、 `mindspore.dtype.float32` 或 `mindspore.dtype.float64` 。默认值： `mindspore.dtype.float32` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 数据类型，可选值为 `mstype.float16` 、 `mstype.float32` 或 `mstype.float64` 。默认值： `mstype.float32` 。
 
     输入：
         - **length** (Tensor) - 一个1D的正整数Tensor，控制返回窗口的大小。
 
     输出：
-        Tensor，一个包含窗口的1-D Tensor，其shape为 :math:`\text{length}` 。
+        Tensor，一个包含窗口的1-D Tensor，其shape为 :math:`(\text{length},)` 。
 
     异常：
         - **TypeError** - 如果 `length` 不是一个Tensor。

@@ -9,7 +9,7 @@ mindspore.ops.IdentityN
     我们希望为反向传播应用自定义函数g，则 :math:`dx=g(dy)` 。
 
     输入：
-        - **x** (Tensors) - tuple(Tensor)或List(Tensor)，数据类型为实数。
+        - **x** (Union[tuple[Tensor], list[Tensor]]) - 输入，数据类型为实数。
 
     输出：
         与输入 `x` 具有相同shape和数据类型的tuple(Tensor)。

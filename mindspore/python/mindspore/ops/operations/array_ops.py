@@ -175,7 +175,7 @@ def _check_infer_attr_reduce(axis, keep_dims, prim_name):
 
 class Expand(Primitive):
     """
-    Expands the Tensor along singleton dimensions to match given desired shape.
+    Expands the Tensor along singleton dimensions(dim with size 1) to match given desired shape.
 
     Refer to :func:`mindspore.ops.expand` for more details.
 
@@ -1491,9 +1491,7 @@ class FillV2(PrimitiveWithCheck):
     Inputs:
         - **shape** (Union[Tuple[int], Tensor[int]]) - 1-D Tensor or Tuple, specify the shape
           of output tensor. Its dtype must be int32 or int64.
-        - **value** (Tensor) - A scalar tensor, the value to fill the output tensor `y` .
-          Its dtype must be one of the following types: bool, int8, int16, int32, int64,
-          uint8, uint16, uint32, uint64, float16, float32, float64, complex64, complex128.
+        - **value** (Tensor) - A 0-D Tensor, the value to fill the output tensor `y` .
 
     Outputs:
         - **y** (Tensor) - A tensor, its shape and value are described above.
@@ -1501,7 +1499,7 @@ class FillV2(PrimitiveWithCheck):
     Raises:
         TypeError: If `shape` is not a 1-D tensor or tuple.
         TypeError: If the data type of `shape` is not int32 or int64.
-        ValueError: If `value` is not a scalar tensor.
+        ValueError: If `value` is not a 0-D Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5968,7 +5966,7 @@ class IdentityN(Primitive):
     such that :math:`dx=g(dy)`.
 
     Inputs:
-        - **x** (Tensors) - tuple(Tensor) or List(Tensor). The data type is RealNumber.
+        - **x** (Union[tuple[Tensor], list[Tensor]]) - Input, the data type is RealNumber.
 
     Outputs:
         Tensors - tuple(Tensor), the shape of tensor and the data type are the same as input `x`.
@@ -6639,24 +6637,23 @@ class ListDiff(Primitive):
 
     Args:
         out_idx (:class:`mindspore.dtype`, optional): The dtype of `idx`,
-            an optioanal datatype of `mindspore.dtype.int32` and `mindspore.dtype.int64`.
-            Default: `mindspore.dtype.int32`.
+            an optioanal datatype of `mstype.int32` and `mstype.int64`.
+            Default: `mstype.int32`.
 
     Inputs:
-        - **x** - A 1-D `Tensor`. Values to keep. type support list [float16, float32,
-          float64, uint8, uint16, int8, int16, int32, int64]
-        - **y** - A 1-D `Tensor`. Must have the same type as `x`. 1-D. Values to remove.
+        - **x** - Values to keep. A 1-D `Tensor`.
+        - **y** - Values to remove. A 1-D `Tensor`. Must have the same type as `x`. 1-D.
 
     Outputs:
-        - **out** - A 1-D `Tensor`. Has the same type as `x`.
-        - **idx** - A 1-D `Tensor` of type `out_idx`.
+        - **out** - The kept values. A 1-D `Tensor`. Has the same type as `x`.
+        - **idx** - The original index of kept values. A 1-D `Tensor` of type `out_idx`.
 
     Raises:
         ValueError: If `x` or `y` shape is not 1D.
         TypeError: If `x` or `y` is not a Tensor.
-        TypeError: If `x` or `y` datetype not in support list.
+        TypeError: If `x` or `y` date type is not int or uint.
         TypeError: If `x` has different data type with `y`.
-        TypeError: If attr `out_idx` not in [mindspore.dtype.int32, mindspore.dtype.int64].
+        TypeError: If attr `out_idx` not in [mstype.int32, mstype.int64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6980,7 +6977,7 @@ class Lstsq(Primitive):
             - If `fast` is True, then the solution is computed by solving
               the normal equations using Cholesky decomposition.
             - If `fast` is False, an algorithm based on numerically robust
-              completee orthogonal decomposition is used.
+              completed orthogonal decomposition is used.
 
         l2_regularizer (float, optional): L2 regularization coefficient. Default: 0.0.
 
@@ -7027,8 +7024,7 @@ class Lstsq(Primitive):
 
 class LowerBound(Primitive):
     """
-    Returns a tensor that contains the index for finding the lower bound of the value
-    of the input values element in the input sorted_x.
+    Find the index of the lower bound of `values` in sorted sequence `sorted_x` element-wise.
 
     Args:
         out_type (:class:`mindspore.dtype`, optional): An optional data type of
@@ -7230,14 +7226,14 @@ class LogSpace(Primitive):
         steps (int, optional): The steps must be a non-negative integer. Default: 10.
         base (int, optional): The base must be a non-negative integer. Default: 10.
         dtype (mindspore.dtype, optional): The dtype of output, include mindspore.float16,
-            mindspore.float32 or mindspore.float64(for GPU). Default: mindspore.float32.
+            mindspore.float32 or mindspore.float64. Default: mindspore.float32.
 
 
     Inputs:
         - **start** (Tensor) - Start value of interval, with shape of 0-D,
-          dtype is float16, float32 or float64(for GPU).
+          dtype is float16, float32 or float64.
         - **end** (Tensor) - End value of interval, with shape of 0-D,
-          dtype is float16, float32 or float64(for GPU).
+          dtype is float16, float32 or float64.
 
     Outputs:
         Tensor has the shape as :math:`(step, )`. Its datatype is set by the attr 'dtype'.
@@ -7247,7 +7243,7 @@ class LogSpace(Primitive):
         TypeError: If `steps` is not an int.
         TypeError: If `base` is not an int.
         TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or
-            mindspore.float64(for GPU).
+            mindspore.float64.
         ValueError: If `steps` is not a non-negative integer.
         ValueError: If `base` is not a non-negative integer.
 
@@ -7382,8 +7378,8 @@ class Tril(Primitive):
 
 class IndexFill(Primitive):
     """
-    Fills the specified elements of the input Tensor with a given value,
-    using the indices specified in the input index array.
+    Fills the elements under the `dim` dimension of the input Tensor `x` with the input `value`
+    by selecting the indices in the order given in `index`.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
 
@@ -7764,14 +7760,14 @@ class HammingWindow(Primitive):
 
         alpha (float, optional): The coefficient :math:`\alpha` in the equation above. Default: 0.54.
         beta (float, optional): The coefficient :math:`\beta` in the equation above. Default: 0.46.
-        dtype (:class:`mindspore.dtype`, optional): An optional data type of `mindspore.dtype.float16`,
-            `mindspore.dtype.float32` and `mindspore.dtype.float64`. Default: `mindspore.dtype.float32`.
+        dtype (:class:`mindspore.dtype`, optional): An optional data type of `mstype.float16`,
+            `mstype.float32` and `mstype.float64`. Default: `mstype.float32`.
 
     Inputs:
         - **length** (Tensor) - a positive integer tensor controlling the returned window size, must be 1D.
 
     Outputs:
-        Tensor, A 1-D tensor containing the window, whose shape is :math:`\text{length}`.
+        Tensor, A 1-D tensor containing the window, whose shape is :math:`(\text{length},)`.
 
     Raises:
         TypeError: If `length` is not a Tensor.

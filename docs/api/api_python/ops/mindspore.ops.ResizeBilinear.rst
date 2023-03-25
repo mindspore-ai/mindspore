@@ -7,4 +7,3 @@ mindspore.ops.ResizeBilinear
 
     .. note::
         目前不支持动态shape特性。
-
