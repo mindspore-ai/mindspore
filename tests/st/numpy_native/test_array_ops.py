@@ -22,6 +22,7 @@ import numpy as onp
 import mindspore.numpy as mnp
 from mindspore import context, Tensor, int32
 from mindspore.nn import Cell
+from mindspore.common.api import _pynative_executor
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
     rand_bool, match_res, run_multi_test, to_tensor, match_all_arrays
@@ -1387,8 +1388,10 @@ def test_tensor_reshape():
     tensor_list = to_tensor(lst)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.reshape({0, 1, 2})
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         tensor_list = tensor_list.reshape(1, 2, 3)
+        _pynative_executor.sync()
     assert tensor_list.reshape([-1, 4]).shape == (2, 4)
     assert tensor_list.reshape(1, -1, 4).shape == (1, 2, 4)
 
