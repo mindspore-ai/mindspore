@@ -94,8 +94,8 @@ class Jvp(Cell):
 
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
-            for i in range(len(output)):
-                u = u + self.make_tuple(self.oneslike(output[i]))
+            for _, element in enumerate(output):
+                u = u + self.make_tuple(self.oneslike(element))
         else:
             u = self.oneslike(output)
 
@@ -130,8 +130,8 @@ class _JvpInner(Cell):
         """Compute the jacobian-vector-product of the given fn, vector, inputs and outputs."""
         if self.issubclass_(self.typeof(output), mstype.tuple_):
             u = self.make_tuple()
-            for i in range(len(output)):
-                u = u + self.make_tuple(self.oneslike(output[i]))
+            for _, element in enumerate(output):
+                u = u + self.make_tuple(self.oneslike(element))
         else:
             u = self.oneslike(output)
 

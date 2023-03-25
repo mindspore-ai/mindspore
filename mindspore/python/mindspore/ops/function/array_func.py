@@ -1679,6 +1679,7 @@ def _check_select_shape_same(cond_shape, x_shape, y_shape):
 
 @constexpr
 def get_max_value(x, y, z):
+    """Get the maximum value of x, y and z."""
     if x >= y and x >= z:
         return x
     if y >= x and y >= z:
