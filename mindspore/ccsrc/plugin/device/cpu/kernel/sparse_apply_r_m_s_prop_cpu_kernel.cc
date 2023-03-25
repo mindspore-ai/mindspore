@@ -222,7 +222,7 @@ bool SparseApplyRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
       const size_t cur_pos = index * var_outer_dim_size + inner_pos;
       const float grad_t = static_cast<float>(grad[i]);
       float msf = static_cast<float>(ms[cur_pos]);
-      if (grad_t) {
+      if (std::fabs(grad_t) > std::numeric_limits<float>::epsilon()) {
         msf = msf * rho + grad_t * grad_t * (1.0f - rho);
         ms[cur_pos] = static_cast<T>(msf);
       }

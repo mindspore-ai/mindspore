@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/size_cpu_kernel.h"
-#include <cmath>
 #include <functional>
 #include <map>
 #include <type_traits>

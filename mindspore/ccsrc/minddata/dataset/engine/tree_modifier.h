@@ -27,7 +27,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 
-constexpr int64_t queue = 10;
+constexpr int64_t queue_size = 10;
 
 namespace mindspore {
 namespace dataset {
@@ -90,7 +90,7 @@ class ResizeConnectorRequest : public ChangeRequest {
 class AutotuneCallback : public DSCallback {
  public:
   AutotuneCallback(int32_t step_size, DatasetOp *op)
-      : DSCallback(step_size), op_(op), change_request_queue_(std::make_unique<Queue<ChangeRequestPtr>>(queue)) {}
+      : DSCallback(step_size), op_(op), change_request_queue_(std::make_unique<Queue<ChangeRequestPtr>>(queue_size)) {}
   virtual ~AutotuneCallback() = default;
 
   Status DSNStepBegin(const CallbackParam &cb_param) override;
