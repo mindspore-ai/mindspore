@@ -9343,7 +9343,7 @@ def select_(feat, dim, index):
 
 def trapz(y, x=None, dx=1.0, dim=-1):
     r"""
-    Integrates `y` (x) along given dim using trapezoidal rule.
+    Integrates `y(x)` along given dim using trapezoidal rule.
     By default x-dim distances between points will be 1.0,
     alternatively they can be provided with `x` array or with `dx` scalar.
 
