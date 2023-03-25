@@ -114,8 +114,6 @@ class AclUtils {
 
   static std::vector<GeTensorDescPtr> GetInputTensorDesc(const AnfNodePtr &anf_node);
 
-  static void UpdateShape(const AnfNodePtr &node, ShapeVector *shape, std::string *format);
-
   static int GetOutputKernelIdxByGraphIdx(const AnfNodePtr &node, size_t ori_idx);
 
   static int GetInputKernelIdxByGraphIdx(const AnfNodePtr &node, size_t ori_idx);

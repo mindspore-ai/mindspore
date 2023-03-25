@@ -1127,15 +1127,6 @@ void RestoreCastOpFormat(const CNodePtr &kernel_node, const KernelBuildInfoBuild
   common::AnfAlgo::EraseNodeAttr(kOriSelectFormat, kernel_node);
 }
 
-void UpdateOutputForBNTrainingUpdateOp(const CNodePtr &kernel_node, const KernelBuildInfoBuilderPtr &builder) {
-  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimBNTrainingUpdate->name()) {
-    return;
-  }
-  builder->SetOutputFormat(kOpFormat_NCHW, 0);
-  MS_LOG(INFO) << "Set the first output's format of BNTrainingUpdate op: " << kernel_node->fullname_with_scope()
-               << " to " << kOpFormat_NCHW;
-}
-
 void SetAclKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (!common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel_node)) {
@@ -1174,9 +1165,6 @@ void SetAclKernelInfo(const CNodePtr &kernel_node) {
   UpdateInputForHighPrecisionOp(kernel_node, new_builder);
   // Restore the device format of cast op to original value if it has been modified according to conv2d
   RestoreCastOpFormat(kernel_node, new_builder);
-  // The reshape type of first output of BNTrainingUpdate is NCH
-  // Set the first output's format of BNTrainingUpdate to NCHW to avoid discontinuity between device shapes
-  UpdateOutputForBNTrainingUpdateOp(kernel_node, new_builder);
 
   AnfAlgo::SetSelectKernelBuildInfo(new_builder->Build(), kernel_node.get());
 }
