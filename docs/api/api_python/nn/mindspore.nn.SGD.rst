@@ -34,7 +34,7 @@ mindspore.nn.SGD
           .. include:: mindspore.nn.optim_group_param.rst
           .. include:: mindspore.nn.optim_group_lr.rst
 
-          - **weight_decay** - 目前不支持通过参数分组使用不同的weight_decay。
+          - **weight_decay** - 可选。如果键中存在"weight_decay"，则使用对应的值作为权重衰减值。如果没有，则使用优化器中配置的 `weight_decay` 作为权重衰减值。当前 `weight_decay` 仅支持float类型，不支持动态变化。
 
           .. include:: mindspore.nn.optim_group_gc.rst
           .. include:: mindspore.nn.optim_group_order.rst
