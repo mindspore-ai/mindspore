@@ -451,7 +451,7 @@ class Identity(Cell):
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
 
     Outputs:
-        Tensor, the shape of tensor and the data type are the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+        Tensor, the shape of tensor and the data type are the same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.

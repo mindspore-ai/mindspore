@@ -3,7 +3,7 @@ mindspore.ops.adaptive_max_pool3d
 
 .. py:function:: mindspore.ops.adaptive_max_pool3d(input, output_size, return_indices=False)
 
-    对输入Tensor执行三维的自适应最大池化操作。对于任何输入尺寸，指定输出的size都为 :math:`(D, H, W)`。
+    对输入Tensor执行三维的自适应最大池化操作。
 
     参数：
         - **input** (Tensor) - shape为 :math:`(C, D, H, W)` 或 :math:`(N, C, D, H, W)` 的Tensor。

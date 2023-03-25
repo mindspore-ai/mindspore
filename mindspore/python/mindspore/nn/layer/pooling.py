@@ -157,7 +157,8 @@ class LPPool2d(Cell):
     Args:
         norm_type(Union[int, float]) - Type of normalization, represents p in the formula, can not be 0.
 
-            - if p = 1, the result obtained is the sum of elements in the pool nucleus(Proportional to average pooling).
+            - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
+              pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
         kernel_size(Union[int, tuple[int]]): The size of kernel window.

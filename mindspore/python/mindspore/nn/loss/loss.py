@@ -467,9 +467,9 @@ class MarginRankingLoss(LossBase):
         \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
 
     Args:
-        margin (float): Specify the adjustment factor of the operation. Default 0.0.
-        reduction (str): Specifies which reduction to be applied to the output. It must be one of
-          "none", "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default "mean".
+        margin (float, optional): Specify the adjustment factor of the operation. Default 0.0.
+        reduction (str, optional): Specifies which reduction to be applied to the output. It must be one of "none",
+            "mean", and "sum", meaning no reduction, reduce mean and sum on output, respectively. Default: "mean".
 
     Inputs:
         - **input1** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number
@@ -2232,7 +2232,7 @@ class CrossEntropyLoss(LossBase):
 
 class KLDivLoss(LossBase):
     r"""
-    Computes the Kullback-Leibler divergence between the logits and the labels.
+    Computes the Kullback-Leibler divergence between the `logits` and the `labels`.
 
     For tensors of the same shape :math:`x` and :math:`target`,
     the updating formulas of KLDivLoss algorithm are as follows,
@@ -2418,7 +2418,7 @@ class GaussianNLLLoss(LossBase):
     the loss. If the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
     their shapes must allow correct broadcasting.
 
-    Args:
+    Keyword Args:
         full (bool): Whether include the constant term in the loss calculation. When :math:`full=True`,
             the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: False.
         eps (float): Used to improve the stability of log function. Default: 1e-6.
@@ -2487,7 +2487,8 @@ class GaussianNLLLoss(LossBase):
 
 class HingeEmbeddingLoss(LossBase):
     r"""
-    Measures Hinge Embedding Loss given an input Tensor `logits` and a labels Tensor `labels` (containing 1 or -1).
+    Calculate the Hinge Embedding Loss value based on the input 'logits' and' labels' (only including 1 or -1).
+    Usually used to measure the similarity between two inputs.
 
     The loss function for :math:`n`-th sample in the mini-batch is
 
