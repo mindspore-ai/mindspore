@@ -1,12 +1,12 @@
 mindspore.ops.narrow
 =====================
 
-.. py:function:: mindspore.ops.narrow(inputs, axis, start, length)
+.. py:function:: mindspore.ops.narrow(input, axis, start, length)
 
     沿着指定的轴，指定起始位置获取指定长度的Tensor。
 
     参数：
-        - **inputs** (Tensor) - 需要计算的Tensor。
+        - **input** (Tensor) - 需要计算的Tensor。
         - **axis** (int) - 指定的轴。
         - **start** (int) - 指定起始位置。
         - **length** (int) - 指定长度。
