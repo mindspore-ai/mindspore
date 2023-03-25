@@ -396,7 +396,7 @@ def angle(input):
     """
     Returns the element-wise argument of a complex tensor.
     The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
-    is the imaginary part. The argument returned by this function is of the form atan2(b,a).
+    is the imaginary part. The argument returned by this function is of the form :math:`atan2(b, a)`.
 
     Args:
         input (Tensor): The input tensor. types: complex64, complex128.
@@ -2190,7 +2190,10 @@ def arccosh(input):
 
 def arcsin(x):
     r"""
-    For details, please refer to :func:`mindspore.ops.asin`.
+    Alias for :func:`mindspore.ops.asin`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return asin_(x)
 
@@ -2455,7 +2458,7 @@ def asinh(x):
 
     .. math::
 
-        out_i = \sinh^{-1}(input_i)
+        out_i = \sinh^{-1}(x_i)
 
     Args:
         x (Tensor): The input tensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
@@ -4834,7 +4837,7 @@ def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-o
     in specified dimension `axis`. If `axis` is a list of dimensions, reduce over all of them.
 
     Note:
-        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        If ddof is 0, 1, True or False, the supported device is only Ascend and CPU. In other cases,
         the supported device is Ascend, GPU and CPU.
 
     Args:
@@ -4892,7 +4895,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     If `axis` is a list of dimensions, reduce over all of them.
 
     Note:
-        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        If ddof is 0, 1, True or False, the supported device is only Ascend and CPU. In other cases,
         the supported device is Ascend, GPU and CPU.
 
     Args:
@@ -4965,7 +4968,7 @@ def std(input, axis=None, ddof=0, keepdims=False):
     in specified dimension `axis`. If `axis` is a list of dimensions, reduce over all of them.
 
     Note:
-        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        If ddof is 0, 1, True or False, the supported device is only Ascend and CPU. In other cases,
         the supported device is Ascend, GPU and CPU.
 
     Args:
@@ -5023,7 +5026,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
     If `axis` is a list of dimensions, reduce over all of them.
 
     Note:
-        If ddof is 0, 1, True or Flase, the supported device is only Ascend and CPU. In other cases,
+        If ddof is 0, 1, True or False, the supported device is only Ascend and CPU. In other cases,
         the supported device is Ascend, GPU and CPU.
 
     Args:
@@ -5501,7 +5504,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
 
 def adjoint(x):
     r"""
-    Returns the conjugate with the last two dimensions transposed.
+    Calculates the conjugation of Tensor element by element, and transposes the last two dimensions.
 
     Args:
         x (Tensor): Input Tensor.
@@ -8994,16 +8997,15 @@ def kron(x, y):
 
 def all(input, axis=None, keep_dims=False):
     r"""
-    Reduces a dimension of `input` by the "logicalAND" of all elements in the dimension, by default. And also can
+    Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
     reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
     by controlling `keep_dims`.
 
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Only constant value is allowed. Supposed the rank of `input` is r,
-            axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
+            r, axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
             If false, don't keep these dimensions. Default : False.
 
@@ -9011,10 +9013,10 @@ def all(input, axis=None, keep_dims=False):
         Tensor, the dtype is bool.
 
         - If axis is None, and keep_dims is False,
-          the output is a 0-D Tensor representing the "logical and" of all elements in the input Tensor.
-        - If axis is int, set as 2, and keep_dims is False,
+          the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
+        - If axis is int, such as 2, and keep_dims is False,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int), such as (2, 3), and keep_dims is False,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
@@ -9056,8 +9058,7 @@ def any(input, axis=None, keep_dims=False):
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
-            Only constant value is allowed. Supposed the rank of `input` is r,
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
             axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
             If false, don't keep these dimensions. Default : False.
@@ -9066,10 +9067,10 @@ def any(input, axis=None, keep_dims=False):
         Tensor, the dtype is bool.
 
         - If axis is None, and keep_dims is False,
-          the output is a 0-D Tensor representing the "logical or" of all elements in the input Tensor.
-        - If axis is int, set as 2, and keep_dims is False,
+          the output is a 0-D Tensor representing the "logical OR" of all elements in the input Tensor.
+        - If axis is int, such as 2, and keep_dims is False,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+        - If axis is tuple(int), such as (2, 3), and keep_dims is False,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
