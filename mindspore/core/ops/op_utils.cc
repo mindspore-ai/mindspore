@@ -526,7 +526,10 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
   } else if (arg->isa<abstract::AbstractTensor>()) {
     auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
     auto abs_tensor_shape = abs_tensor->shape()->shape();
-    MS_EXCEPTION_IF_CHECK_FAIL(abs_tensor_shape.size() == 1, "Shape of shape value only could be one-dimensional");
+    if (abs_tensor_shape.size() != 1) {
+      MS_EXCEPTION(ValueError) << "For Primitive[" << primitive->name()
+                               << "], Shape of shape value only could be one-dimensional";
+    }
     if (IsDynamic(abs_tensor_shape)) {
       return {abstract::Shape::kShapeRankAny};
     }
