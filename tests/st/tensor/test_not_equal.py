@@ -26,7 +26,7 @@ class NotEqualNet(nn.Cell):
         return x.not_equal(other)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

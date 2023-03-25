@@ -24,7 +24,7 @@ class ReshapeAs(nn.Cell):
         return x.reshape_as(y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

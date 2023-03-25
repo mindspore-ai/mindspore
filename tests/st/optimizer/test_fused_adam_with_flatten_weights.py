@@ -25,7 +25,7 @@ from tests.st.networks.models.lenet import LeNet
 set_seed(1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
@@ -53,7 +53,7 @@ def test_lenet_flatten_weight_with_adam(mode):
     assert np.all(loss[-1] < 2.2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])

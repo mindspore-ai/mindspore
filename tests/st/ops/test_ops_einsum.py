@@ -35,7 +35,7 @@ class NetSublist(nn.Cell):
         return ops.einsum(x, [..., 0, 1], y, [..., 1, 2], [..., 0, 2])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

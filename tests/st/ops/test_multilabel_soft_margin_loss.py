@@ -33,7 +33,7 @@ class MultiLabelSoftMarginLossNet(nn.Cell):
         return ops.multilabel_soft_margin_loss(x, target, self.weight, self.reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
