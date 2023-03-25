@@ -42,11 +42,11 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   half *output_device = GetDeviceAddress<half>(outputs, kIndex0);
   int32_t *indices_device = GetDeviceAddress<int32_t>(outputs, kIndex1);
 
-  half *temp_output_device = GetDeviceAddress<half>(workspace, kIndex0);
   int32_t *temp_indices_device = GetDeviceAddress<int32_t>(workspace, kIndex1);
   size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, kIndex2);
   size_t *perm_device = GetDeviceAddress<size_t>(workspace, kIndex3);
   size_t *transposed_shape_device = GetDeviceAddress<size_t>(workspace, kIndex4);
+  half *temp_output_device = GetDeviceAddress<half>(workspace, kIndex0);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(input_shape_device, &input_shape_[0], workspace_size_list_[kIndex2], cudaMemcpyHostToDevice,
@@ -66,8 +66,6 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   half *intermediate_input_device = input_device;
   half *intermediate_output_device = output_device;
 
-  half topk_init_ = static_cast<half>(kMinValue);
-
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
     NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
@@ -83,6 +81,7 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
   // topk sorts the input along the last dimension
+  half topk_init_ = static_cast<half>(kMinValue);
   FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
            intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
   std::swap(intermediate_input_device, intermediate_output_device);
@@ -123,11 +122,11 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   float *output_device = GetDeviceAddress<float>(outputs, kIndex0);
   int32_t *indices_device = GetDeviceAddress<int32_t>(outputs, kIndex1);
 
-  float *temp_output_device = GetDeviceAddress<float>(workspace, kIndex0);
   int32_t *temp_indices_device = GetDeviceAddress<int32_t>(workspace, kIndex1);
   size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, kIndex2);
   size_t *perm_device = GetDeviceAddress<size_t>(workspace, kIndex3);
   size_t *transposed_shape_device = GetDeviceAddress<size_t>(workspace, kIndex4);
+  float *temp_output_device = GetDeviceAddress<float>(workspace, kIndex0);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(input_shape_device, &input_shape_[0], workspace_size_list_[kIndex2], cudaMemcpyHostToDevice,
@@ -147,8 +146,6 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   float *intermediate_input_device = input_device;
   float *intermediate_output_device = output_device;
 
-  float topk_init_ = std::numeric_limits<float>::lowest();
-
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
     NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
@@ -164,6 +161,7 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
   // topk sorts the input along the last dimension
+  float topk_init_ = std::numeric_limits<float>::lowest();
   FastTopK(outer_size_, inner_size_, intermediate_input_device, static_cast<int32_t>(input_shape_[axis_]),
            intermediate_output_device, temp_indices_device, topk_init_, reinterpret_cast<cudaStream_t>(stream_ptr));
   std::swap(intermediate_input_device, intermediate_output_device);

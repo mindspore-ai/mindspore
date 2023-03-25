@@ -21,7 +21,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <algorithm>
 
 #include "ops/base_operator.h"
 #include "ir/dtype/type_id.h"

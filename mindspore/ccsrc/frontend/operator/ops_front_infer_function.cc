@@ -966,7 +966,6 @@ bool PrimNeedFrontendInferValue(const PrimitivePtr &primitive) {
   return false;
 }
 
-// using R = PrimitiveEvalImplMap::mapped_type;
 static PrimitiveEvalImplMap frontend_prim_infer_map{
   // frontend
 };
