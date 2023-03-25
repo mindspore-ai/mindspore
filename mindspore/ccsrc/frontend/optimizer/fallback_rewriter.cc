@@ -157,7 +157,7 @@ class BaseRewriter : protected SimpleRewriter {
     return nullptr;
   }
 
-  void UpdateAbstracts() {
+  virtual void UpdateAbstracts() {
     const auto &nodes = manager_->all_nodes();
     for (const auto &node : nodes) {
       const auto &abs = node->abstract();
@@ -239,7 +239,7 @@ class BeforeOptARewriter : public BaseRewriter {
       if (new_node_and_abs.first == para) {
         continue;
       }
-      manager_->Replace(para, new_node_and_abs.first);
+      (void)manager_->Replace(para, new_node_and_abs.first);
       para->set_abstract(new_node_and_abs.second);
     }
   }
@@ -330,7 +330,7 @@ class BeforeOptARewriter : public BaseRewriter {
     return NewTupleGetCNode(node, data, abs_dict->elements(), key);
   }
 
-  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (!support_fallback_runtime || !is_dict_output_) {
       return ConvertDictGetItemToTupleGetItem(node);
@@ -393,7 +393,7 @@ class BeforeOptARewriter : public BaseRewriter {
     return CheckContainsDict(output->abstract());
   }
 
-  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (!support_fallback_runtime || !is_dict_output_) {
       return ConvertDictSetItemToTupleSetItem(node);
@@ -413,7 +413,7 @@ class BeforeOptARewriter : public BaseRewriter {
     return node->input(input_index);
   }
 
-  AnfNodePtr ConvertMakeDict(const CNodePtr &node) {
+  AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (!support_fallback_runtime || !is_dict_output_) {
       return EraseMakeDictNode(node);
@@ -425,7 +425,7 @@ class BeforeOptARewriter : public BaseRewriter {
   //   DictGetValues(dict:AbstractDictionary)
   // To:
   //   dict
-  AnfNodePtr EraseDictGetValues(const CNodePtr &node) {
+  AnfNodePtr EraseDictGetValues(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     constexpr size_t expect_inputs_size = 2;
     CheckInputsSize(node, expect_inputs_size);
@@ -436,7 +436,7 @@ class BeforeOptARewriter : public BaseRewriter {
   //   DictItems(dict:AbstractDictionary)
   // To:
   //   kPrimMakeList(MakeTuple(key0, TupleGetItem(dict, 0)), ...)
-  AnfNodePtr EraseDictItems(const CNodePtr &node) {
+  AnfNodePtr EraseDictItems(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     auto fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -467,7 +467,7 @@ class BeforeOptARewriter : public BaseRewriter {
   //   MakeKeywordArg(key, value)
   // To:
   //   value
-  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
+  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [make_keyword_arg, key, value]
     constexpr size_t expect_input_size = 3;
@@ -480,7 +480,7 @@ class BeforeOptARewriter : public BaseRewriter {
   //   ExtractKeywordArg(arg, key)
   // To:
   //   key
-  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
+  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [extract_keyword_arg, arg, key]
     const size_t expect_inputs_size = 3;
@@ -499,8 +499,8 @@ class BeforeOptARewriter : public BaseRewriter {
     return NewValueNode(std::make_shared<ValueTuple>(value_list));
   }
 
-  using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
-  using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
+  using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
+  using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
     {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItem},
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
@@ -659,7 +659,7 @@ class AfterOptARewriter : public BaseRewriter {
   //   MakeSparseTensor(indices, values, dense_shape)
   // To:
   //   MakeTuple(indices, values, dense_shape)
-  AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) {
+  AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -683,7 +683,7 @@ class AfterOptARewriter : public BaseRewriter {
   //   SparseTensorGetXXX(sparse) # index
   // To:
   //   TupleGetItem(sparse, index)
-  AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -706,7 +706,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // DictGetItem --> PyExecute()
-  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -768,7 +768,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // DictSetItem --> PyExecute()
-  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) {
+  AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [dict_setitem, dict, item, value]
     const size_t expect_inputs_size = 4;
@@ -823,7 +823,7 @@ class AfterOptARewriter : public BaseRewriter {
     return dict_setitem_node;
   }
 
-  AnfNodePtr ConstructInternalTupleKeysNode(const FuncGraphPtr &fg, const AnfNodePtr &keys_node) {
+  AnfNodePtr ConstructInternalTupleKeysNode(const FuncGraphPtr &fg, const AnfNodePtr &keys_node) const {
     constexpr auto internal_tuple_keys_str = "__internal_tuple_keys__";
     MS_EXCEPTION_IF_NULL(fg);
     const auto script_key_tuple_str = std::make_shared<StringImm>(internal_tuple_keys_str);
@@ -835,7 +835,7 @@ class AfterOptARewriter : public BaseRewriter {
     return make_key_tuple_node;
   }
 
-  AnfNodePtr ConstructInternalTupleValueNode(const FuncGraphPtr &fg, const AnfNodePtr &values_node) {
+  AnfNodePtr ConstructInternalTupleValueNode(const FuncGraphPtr &fg, const AnfNodePtr &values_node) const {
     constexpr auto internal_tuple_values_str = "__internal_tuple_values__";
     MS_EXCEPTION_IF_NULL(fg);
     const auto script_value_tuple_str = std::make_shared<StringImm>(internal_tuple_values_str);
@@ -848,7 +848,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConstructNewDictNode(const FuncGraphPtr &fg, const AnfNodePtr &make_key_tuple_node,
-                                  const AnfNodePtr &make_value_tuple_node) {
+                                  const AnfNodePtr &make_value_tuple_node) const {
     constexpr auto internal_dict_zip_keys_str = "__internal_dict_zip_keys__";
     constexpr auto internal_dict_zip_values_str = "__internal_dict_zip_values__";
     // Pack the local parameters values
@@ -879,7 +879,7 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // MakeDict(keys, values) --> PyExecute('dict(zip(keys, values))', ...)
-  AnfNodePtr ConvertMakeDict(const CNodePtr &node) {
+  AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     // Local parameters values.
@@ -899,8 +899,8 @@ class AfterOptARewriter : public BaseRewriter {
     return new_dict_node;
   }
 
-  using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
-  using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
+  using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
+  using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
     // SparseProcess: 1.MakeSparse->MakeTuple 2.SparseGetAttr->TupleGetItem
     {prim::kPrimMakeRowTensor, &ThisClass::ConvertMakeSparseToMakeTuple},
@@ -979,7 +979,7 @@ class AfterOptARewriter : public BaseRewriter {
     }
     if (has_none) {
       auto new_seq = func->NewCNode(new_inputs);
-      manager_->Replace(input, new_seq);
+      (void)manager_->Replace(input, new_seq);
       return new_seq;
     }
     return nullptr;
@@ -1164,7 +1164,7 @@ class AfterOptARewriter : public BaseRewriter {
     return make_dict_node;
   }
 
-  AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) {
+  AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) const {
     // Convert InterpretedObject value node to PyExecute CNode.
     return ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
   }
@@ -1433,8 +1433,8 @@ bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
   rewriter.UpdateNoneAbstracts();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
-    std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
-                   [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
     (void)pipeline::Renormalize(resource, root, new_args_spec);
   }
   return change;
@@ -1474,7 +1474,7 @@ static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGrap
 
     // Make former node as latter node's input.
     auto tr = manager->Transact();
-    int latest_index = latter_node->size() - 1;
+    size_t latest_index = latter_node->size() - 1;
     const auto &last_input_abs = latter_node->input(latest_index)->abstract();
     if (last_input_abs != nullptr && last_input_abs->isa<abstract::AbstractMonad>()) {  // Should be IO monad.
       const auto &monad_node = latter_node->input(latest_index);
@@ -1500,11 +1500,11 @@ bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::Resou
       std::all_of(func_graphs_used_total.cbegin(), func_graphs_used_total.cend(),
                   [&manager](const FuncGraphPtr &func_graph) { return OrderPyExecuteCNode(func_graph, manager); });
   }
-  change |= OrderPyExecuteCNode(root, manager);
+  change = change || OrderPyExecuteCNode(root, manager);
   if (change) {
     abstract::AbstractBasePtrList new_args_spec;
-    std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
-                   [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+    (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
+                         [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
     (void)pipeline::Renormalize(resource, root, new_args_spec);
   }
   return change;
