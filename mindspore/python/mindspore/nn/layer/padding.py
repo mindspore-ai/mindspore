@@ -505,7 +505,7 @@ class ReflectionPad2d(_ReflectionPadNd):
 
 class ReflectionPad3d(_ReflectionPadNd):
     r"""
-    Using a given padding to do reflection pad the given tensor.
+    Pad the given tensor in a reflecting way using the input boundaries as the axis of symmetry.
 
     Note:
         ReflectionPad3d has not supported 5D tensor yet.

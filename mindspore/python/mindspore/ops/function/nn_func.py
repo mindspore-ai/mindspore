@@ -4165,7 +4165,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
-    Measures Hinge Embedding Loss given an input Tensor `logits` and a labels Tensor `labels` (containing 1 or -1).
+    Measures Hinge Embedding Loss given an input Tensor `intputs` and a labels Tensor `targets` (containing 1 or -1).
 
     The loss function for :math:`n`-th sample in the mini-batch is
 

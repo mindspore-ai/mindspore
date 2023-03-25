@@ -23,6 +23,7 @@ mindspore.ops.conv1d
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in}, W_{kernel}})` ，则卷积核shape为 :math:`(W_{kernel})` 。
         - **bias** (Tensor) - 偏置Tensor，shape为 :math:`(C_{out})` 的Tensor。如果 `bias` 是None，将不会添加偏置。默认值：None。
+        - **stride** (Union(int, tuple[int])，可选) - 卷积核移动的步长，数据类型为int或1个int组成的tuple。表示在宽度方向的移动步长。默认值：1。
         - **pad_mode** (str，可选) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
 
           - **same**: 输出的宽度与输入整除 `stride` 后的值相同。填充将被均匀地添加到两侧，剩余填充量将被添加到维度末端。若设置该模式，`padding` 的值必须为0。
@@ -30,7 +31,6 @@ mindspore.ops.conv1d
           - **pad**: 对输入 `input` 进行填充。在输入上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union(int, tuple[int])，可选) - 输入 `input` 的宽度方向上填充的数量。数据类型为int或包含1个int组成的tuple。表示宽度方向的 `padding` 数量（左右两边均为该值）。值必须大于等于0，默认值：0。
-        - **stride** (Union(int, tuple[int])，可选) - 卷积核移动的步长，数据类型为int或1个int组成的tuple。表示在宽度方向的移动步长。默认值：1。
         - **dilation** (Union(int, tuple[int])，可选) - 卷积核元素间的间隔。数据类型为int或1个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围为[1, W]。默认值：1。
         - **groups** (int，可选) - 将过滤器拆分为组。默认值：1。
 
