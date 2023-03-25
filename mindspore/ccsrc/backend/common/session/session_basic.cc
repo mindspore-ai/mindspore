@@ -1,6 +1,6 @@
 
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1165,7 +1165,7 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   auto apply_list = TopoSort(graph->get_return());
   for (auto &n : apply_list) {
     MS_EXCEPTION_IF_NULL(n);
-    if (IsSummaryNode(n)) {
+    if (AnfAlgo::IsSummaryNode(n)) {
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (cnode->inputs().size() <= kSummaryGetItem) {
@@ -1622,7 +1622,8 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
       }
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+    if ((json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) &&
+        context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       std::string root_dir = json_parser.path() + "/rank_" + std::to_string(rank_id);
       MS_LOG(INFO) << "Dump graph and exeorder for graph: " << graph->graph_id()
                    << "root_graph_id: " << graph->root_graph_id();
@@ -1685,8 +1686,11 @@ uint32_t GetRankId() {
     MS_LOG(ERROR) << "Invalid backend: " << backend;
     return rank_id;
   }
-  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-    MS_LOG(INFO) << "Failed to get rank id.";
+  auto env_rank_id = common::GetEnv("RANK_ID");
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) && !env_rank_id.empty()) {
+    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
+      MS_LOG(INFO) << "Failed to get rank id.";
+    }
   }
   return rank_id;
 }
