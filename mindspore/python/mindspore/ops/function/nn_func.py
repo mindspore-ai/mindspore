@@ -5004,9 +5004,15 @@ def conv3d(inputs, weight, pad_mode="valid", padding=0, stride=1, dilation=1, gr
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
-        >>> output = ops.conv3d(x, weight)
+        >>> output = ops.conv3d(x, weight, pad_mode="same", padding=0, stride=1, dilation=1, group=1)
+        >>> print(output.shape)
+        (16, 32, 10, 32, 32)
+        >>> output = ops.conv3d(x, weight, pad_mode="valid", padding=0, stride=1, dilation=1, group=1)
         >>> print(output.shape)
         (16, 32, 7, 30, 30)
+        >>> output = ops.conv3d(x, weight, pad_mode="pad", padding=(2, 2, 1, 1, 1, 1), stride=1, dilation=1, group=1)
+        >>> print(output.shape)
+        (16, 32, 11, 32, 32)
     """
     weight_shape = weight.shape
     out_channel = weight_shape[0]
