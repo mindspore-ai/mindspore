@@ -40,8 +40,8 @@ class ParallelStrategy {
 
  private:
   std::shared_ptr<irpb::ProfilingParallel> GetProfilingParallel();
-  bool IsProfilingParallelStrategyEnabled();
-  bool StringToInt(std::string *str, int32_t *value);
+  bool IsProfilingParallelStrategyEnabled() const;
+  bool StringToInt(std::string *str, int32_t *value) const;
 
   static std::shared_ptr<ParallelStrategy> parallel_strategy_inst_;
   bool has_save_parallel_strategy_ = false;

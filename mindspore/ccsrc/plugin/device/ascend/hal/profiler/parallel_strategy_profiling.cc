@@ -40,7 +40,7 @@ std::shared_ptr<ParallelStrategy> &ParallelStrategy::GetInstance() {
   return parallel_strategy_inst_;
 }
 
-bool ParallelStrategy::IsProfilingParallelStrategyEnabled() {
+bool ParallelStrategy::IsProfilingParallelStrategyEnabled() const {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->IsInitialized() || !ascend_profiler->GetParallelStrategyEnableFlag()) {
@@ -66,7 +66,7 @@ bool ParallelStrategy::IsProfilingParallelStrategyEnabled() {
   return false;
 }
 
-bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) {
+bool ParallelStrategy::StringToInt(std::string *str, int32_t *value) const {
   try {
     *value = stoi(*str);
   } catch (std::invalid_argument &) {
