@@ -32,6 +32,7 @@ namespace opt {
 bool RewriterBeforeOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
+bool RewriterForExport(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource);
 }  // namespace opt
 }  // namespace mindspore
 

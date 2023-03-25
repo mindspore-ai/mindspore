@@ -948,6 +948,17 @@ bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   return EliminateSpecialOpOptPass(resource);
 }
 
+bool ConvertListToTupleForExport(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
+  }
+  if (resource->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
+  }
+  return ConvertListToTupleForExportPass(resource);
+}
+
 bool SupportInlinePartial(const AnfNodePtr &input0) {
   // inline partial
   if (IsPrimitiveCNode(input0, prim::kPrimTupleGetItem)) {
@@ -1560,6 +1571,7 @@ std::vector<ActionItem> GePipeline() {
   (void)actions.emplace_back(std::make_pair("remove_value_node_duplications", RemoveValueNodeDuplicationsAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
   (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
+  (void)actions.emplace_back(std::make_pair("convert_list_to_tuple_for_export", ConvertListToTupleForExport));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
 #ifdef WITH_BACKEND
   // Compile the ANF graph
