@@ -61,6 +61,8 @@ class CastInfer : public abstract::OpInferBase {
     if ((dst_type == nullptr) || (!dst_type->isa<Type>())) {
       MS_EXCEPTION(TypeError) << "Invalid dtype";
     }
+    primitive->AddAttr("DstT", dst_type);
+    primitive->AddAttr("SrcT", x_type);
     return dst_type->cast<TypePtr>();
   }
 
