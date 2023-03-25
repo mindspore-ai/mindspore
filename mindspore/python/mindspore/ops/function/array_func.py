@@ -174,9 +174,9 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     `step` up to but not including `end`.
 
     Args:
-        start (Union[float, int, Tensor], optional): The first number in the sequence.
+        start (Union[float, int, Tensor], optional): The start of the interval.
             If Tensor, the shape must be (). Default: 0.
-        end (Union[float, int, Tensor], optional): Upper or lower limit of the sequence, exclusive.
+        end (Union[float, int, Tensor], optional): The end of the interval, exclusive.
             If Tensor, the shape must be ().
             Default: None. If None, it defaults to the value of `start`, and 0 is used as the starting value.
         step (Union[float, int, Tensor], optional): Number that increments `start`.
@@ -3263,7 +3263,7 @@ def argsort(input, axis=-1, descending=False):
         input(Tensor): The input tensor to sort.
         axis (int): The axis to sort along. Default: -1, means the last axis
         descending (bool): The sort order. If `descending` is True then the elements
-            are sorted in descending order by value. Otherwise sort in descending order. Default: False.
+            are sorted in descending order by value. Otherwise sort in ascending order. Default: False.
 
     Returns:
         Tensor, the indices of sorted input tensor. Data type is int32.
@@ -3275,6 +3275,9 @@ def argsort(input, axis=-1, descending=False):
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = ops.argsort(x)
         >>> print(sort)
+        [[2 1 0]
+         [2 0 1]
+         [0 1 2]]
     """
     _sort = _get_cache_prim(P.Sort)(axis, descending)
     _, arg_sort = _sort(input)
@@ -4285,23 +4288,23 @@ def affine_grid(theta, size, align_corners=False):
 
     Args:
         theta (Tensor): The input tensor of flow field whose dtype is float16, float32.
-            Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
+            Input batch of affine matrices with shape (N, 2, 3) for 2D grid or (N, 3, 4) for 3D grid.
         size (tuple[int]): The target output image size.
-            The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
+            The value of target output with format (N, C, H, W) for 2D grid or (N, C, D, H, W) for 3D grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
-            If ``True``, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
-            The default value is ``False``, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
-            irrelevant to resolution of the image.
+            If True, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            The default value is False, extremum -1 and 1 refer to the corners of the pixels, so that sampling is
+            irrelevant to resolution of the image. Default: False.
     Returns:
-        Tensor, a tensor whose data type is same as 'theta', and the shape is [N, H, W, 2] for 2D grid
-        or [N, D, H, W, 3] for 3D grid.
+        Tensor, a tensor whose data type is same as 'theta', and the shape is (N, H, W, 2) for 2D grid
+        or (N, D, H, W, 3) for 3D grid.
 
     Raises:
         TypeError: If `theta` is not a Tensor or `size` is not a tuple.
-        ValueError: If the shape of `theta` is not [N, 2, 3] or [N, 3, 4].
+        ValueError: If the shape of `theta` is not (N, 2, 3) or (N, 3, 4).
         ValueError: If the size of `size` is not 4 or 5.
-        ValueError: If the shape of `theta` is [N, 2, 3], the size of `size` is not 4;
-                    If the shape of `theta` is [N, 3, 4], the size of `size` is not 5.
+        ValueError: If the shape of `theta` is (N, 2, 3), the size of `size` is not 4;
+                    If the shape of `theta` is (N, 3, 4), the size of `size` is not 5.
         ValueError: If the size[0] is not equal to the shape[0] of theta.
 
     Supported Platforms:
@@ -6410,7 +6413,7 @@ def argwhere(input):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        input (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+        input (Tensor): The input tensor. The data type is Number or Bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
