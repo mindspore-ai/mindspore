@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, CpuRegOp, DataType
 tensor_shape_op_info = CpuRegOp("TensorShape") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default) \
     .dtype_format(DataType.F32_Default, DataType.I64_Default) \
+    .dtype_format(DataType.F64_Default, DataType.I64_Default) \
     .dtype_format(DataType.I8_Default, DataType.I64_Default) \
     .dtype_format(DataType.I16_Default, DataType.I64_Default) \
     .dtype_format(DataType.I32_Default, DataType.I64_Default) \
@@ -29,6 +31,8 @@ tensor_shape_op_info = CpuRegOp("TensorShape") \
     .dtype_format(DataType.U32_Default, DataType.I64_Default) \
     .dtype_format(DataType.U64_Default, DataType.I64_Default) \
     .dtype_format(DataType.BOOL_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.I64_Default) \
     .get_op_info()
 
 
