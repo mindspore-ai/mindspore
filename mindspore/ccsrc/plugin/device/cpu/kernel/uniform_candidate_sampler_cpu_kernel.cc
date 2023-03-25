@@ -248,7 +248,7 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
   if (init_seed_ != 0) {
     RNG_seed = init_seed_;
   } else {
-    RNG_seed = static_cast<uint32_t>(time(NULL));
+    RNG_seed = static_cast<uint32_t>(time(nullptr));
   }
   MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : RNG_seed = " << RNG_seed;
   for (int64_t j = 0; j < batch_size_; ++j) {

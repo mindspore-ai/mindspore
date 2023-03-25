@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_MOMENTUM_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
 #include <map>
 #include "mindspore/core/ops/apply_momentum.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

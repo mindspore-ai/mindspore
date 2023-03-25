@@ -17,10 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_SEGMENT_SUM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SPARSE_SEGMENT_SUM_CPU_KERNEL_H_
 #include <functional>
-#include <numeric>
 #include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 #include <map>
 #include <utility>

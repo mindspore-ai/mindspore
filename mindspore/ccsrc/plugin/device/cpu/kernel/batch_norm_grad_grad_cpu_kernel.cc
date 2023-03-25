@@ -163,7 +163,7 @@ bool BatchNormGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
 template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &workspace,
-                                                        const std::vector<kernel::AddressPtr> &outputs) {
+                                                        const std::vector<kernel::AddressPtr> &outputs) const {
   auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
@@ -211,7 +211,7 @@ void BatchNormGradGradCpuKernelMod::TrainingComputeNHWC(const std::vector<kernel
 template <typename T>
 void BatchNormGradGradCpuKernelMod::InferenceComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<kernel::AddressPtr> &workspace,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+                                                         const std::vector<kernel::AddressPtr> &outputs) const {
   auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
@@ -280,7 +280,7 @@ void BatchNormGradGradCpuKernelMod::InferenceComputeNHWC(const std::vector<kerne
 template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &workspace,
-                                                        const std::vector<kernel::AddressPtr> &outputs) {
+                                                        const std::vector<kernel::AddressPtr> &outputs) const {
   auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
@@ -328,7 +328,7 @@ void BatchNormGradGradCpuKernelMod::TrainingComputeNCHW(const std::vector<kernel
 template <typename T>
 void BatchNormGradGradCpuKernelMod::InferenceComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<kernel::AddressPtr> &workspace,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+                                                         const std::vector<kernel::AddressPtr> &outputs) const {
   auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
@@ -398,7 +398,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
                                                             const std::vector<kernel::AddressPtr> &workspace,
                                                             const std::vector<kernel::AddressPtr> &outputs,
-                                                            float *x_hat, float *inv_std) {
+                                                            float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
   auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
@@ -473,7 +473,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
                                                              const std::vector<kernel::AddressPtr> &workspace,
                                                              const std::vector<kernel::AddressPtr> &outputs,
-                                                             float *x_hat, float *inv_std) {
+                                                             float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
   auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
@@ -529,7 +529,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
                                                                 const std::vector<kernel::AddressPtr> &workspace,
                                                                 const std::vector<kernel::AddressPtr> &outputs,
-                                                                float *x_hat, float *inv_std) {
+                                                                float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
   auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
@@ -585,7 +585,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
                                                             const std::vector<kernel::AddressPtr> &workspace,
                                                             const std::vector<kernel::AddressPtr> &outputs,
-                                                            float *x_hat, float *inv_std) {
+                                                            float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
   auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
@@ -660,7 +660,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
                                                              const std::vector<kernel::AddressPtr> &workspace,
                                                              const std::vector<kernel::AddressPtr> &outputs,
-                                                             float *x_hat, float *inv_std) {
+                                                             float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
   auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
@@ -716,7 +716,7 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
                                                                 const std::vector<kernel::AddressPtr> &workspace,
                                                                 const std::vector<kernel::AddressPtr> &outputs,
-                                                                float *x_hat, float *inv_std) {
+                                                                float *x_hat, float *inv_std) const {
   auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
   auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
   auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32

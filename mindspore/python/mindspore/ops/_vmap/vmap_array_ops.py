@@ -844,6 +844,7 @@ def get_fill_vmap_rule(prim, axis_size):
 
 @constexpr
 def to_tensor_with_type(x, type):
+    """x to Tensor with type"""
     return Tensor(x, type)
 
 

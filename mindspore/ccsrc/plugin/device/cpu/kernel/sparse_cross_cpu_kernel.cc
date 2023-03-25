@@ -41,16 +41,13 @@ int64_t kBatchNum = 0;
 template <typename InternalType>
 class ColumnInterface {
  public:
-  // Returns the number of features in the specified batch.
   virtual int64_t FeatureCount(int64_t batch) const = 0;
 
-  // Returns the fingerprint of nth feature from the specified batch.
   virtual InternalType Feature(int64_t batch, int64_t n) const = 0;
 
   virtual ~ColumnInterface() {}
 };
 
-// A column that is backed by a sparse tensor.
 template <typename InternalType>
 class SparseTensorColumn : public ColumnInterface<InternalType> {
  public:
@@ -75,7 +72,6 @@ class SparseTensorColumn : public ColumnInterface<InternalType> {
   std::vector<int64_t> feature_start_indices_;
 };
 
-// InternalType is int64 only when using HashCrosser.
 template <>
 int64_t SparseTensorColumn<int64_t>::Feature(int64_t batch, int64_t n) const {
   const int64_t start = feature_start_indices_[batch];
@@ -94,14 +90,12 @@ class DenseTensorColumn : public ColumnInterface<T> {
   std::vector<T> tensor_;
 };
 
-// InternalType is int64 only when using HashCrosser.
 template <>
 int64_t DenseTensorColumn<int64_t>::Feature(int64_t batch, int64_t n) const {
   int64_t idx = static_cast<int64_t>(tensor_.size()) / kBatchNum;
   return tensor_[batch * idx + n];
 }
 
-// Updates Output tensors with sparse crosses.
 template <typename OutType>
 class OutputUpdater {
  public:
@@ -123,7 +117,6 @@ class OutputUpdater {
   std::vector<int64_t> *values_out_;
 };
 
-// Generates the sparse crosses as nested hash to avoid string manipulations.
 class HashCrosser {
  public:
   explicit HashCrosser(const std::vector<std::unique_ptr<ColumnInterface<int64_t>>> &columns, const int64_t num_buckets,
@@ -142,7 +135,6 @@ class HashCrosser {
   }
 
   int64_t Generate(const int64_t batch_index, const std::vector<int64_t> &permutation) const {
-    // Do the fingerprint concatenation on uint64.
     uint64_t hashed_output = hash_key_;
     for (size_t i = 0; i < permutation.size(); ++i) {
       uint64_t hash_i = static_cast<uint64_t>(columns_[i]->Feature(batch_index, permutation[i]));
@@ -151,7 +143,6 @@ class HashCrosser {
     if (num_buckets_ > 0) {
       return hashed_output % num_buckets_;
     } else {
-      // To prevent negative output we take modulo to max int64.
       return hashed_output % static_cast<uint64_t>(std::numeric_limits<int64_t>::max());
     }
   }
@@ -162,7 +153,6 @@ class HashCrosser {
   const uint64_t hash_key_;
 };
 
-// ProductIterator generates cartesian products based on indices.
 template <typename InternalType>
 class ProductIterator {
  public:
@@ -170,7 +160,6 @@ class ProductIterator {
                            int64_t batch_index)
       : columns_(columns), batch_index_(batch_index) {
     next_permutation_.resize(columns_.size(), 0);
-    // Sets has_next_ to false if any feature column has 0 features.
     has_next_ = true;
     for (uint32_t i = 0; i < columns_.size(); i++) {
       if (columns_[i]->FeatureCount(batch_index_) == 0) {
@@ -183,7 +172,6 @@ class ProductIterator {
   std::vector<int64_t> Next() {
     std::vector<int64_t> permutation(next_permutation_);
 
-    // Generates next permutation, if available.
     bool carry = true;
     for (int64_t i = static_cast<int64_t>(next_permutation_.size() - 1); i >= 0; i--) {
       if (carry) {
@@ -200,7 +188,7 @@ class ProductIterator {
     return permutation;
   }
 
-  bool HasNext() { return has_next_; }
+  bool HasNext() const { return has_next_; }
 
  private:
   bool has_next_;
@@ -257,8 +245,8 @@ void SparseCrossCpuKernelMod::SyncData() {
 }
 
 void ExtractFeatureData(const std::vector<std::vector<int64_t>> &indices_list_in, int64_t batch_size,
-                        std::vector<std::vector<int64_t>> *feature_counts,
-                        std::vector<std::vector<int64_t>> *feature_start_indices) {
+                        std::vector<std::vector<int64_t>> *const feature_counts,
+                        std::vector<std::vector<int64_t>> *const feature_start_indices) {
   std::vector<int64_t> current_row(indices_list_in.size(), 0);
   uint32_t value = 2;
   for (int64_t b = 0; b < batch_size; b++) {
@@ -342,7 +330,7 @@ bool SparseCrossCpuKernelMod::SparseCrossCann(const std::vector<std::vector<int6
                                               const std::vector<std::vector<T>> &values_list_in,
                                               const std::vector<std::vector<int64_t>> &shapes_list_in,
                                               const std::vector<std::vector<S>> &dense_list_in,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
+                                              const std::vector<kernel::AddressPtr> &outputs) const {
   auto indices_out = static_cast<int64_t *>(outputs[kOutputindecs]->addr);
   auto values_out = static_cast<int64_t *>(outputs[kOutputValue]->addr);
   auto out_shape = static_cast<int64_t *>(outputs[kOutputShape]->addr);

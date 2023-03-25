@@ -45,7 +45,6 @@ namespace ops {
 abstract::ShapePtr ChannelShuffleInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  ShapeVector out_shape;
   const int64_t min_dims = 3;
   int64_t group = GetValue<int64_t>(primitive->GetAttr("group"));
   auto input_shape_ = shape_map[kShape];

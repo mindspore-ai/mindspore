@@ -43,12 +43,13 @@ class QuantileCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
-  uint32_t MaybeWrapDim(int dim, int dim_post_expr);
+  uint32_t MaybeWrapDim(int dim, int dim_post_expr) const;
   template <typename T>
-  void ParallelRun(int64_t last_shape_size, uint64_t q_size, const std::vector<T> &sorted, T *output_addr, T *q_addrs);
+  void ParallelRun(int64_t last_shape_size, uint64_t q_size, const std::vector<T> &sorted, T *output_addr,
+                   T *q_addrs) const;
   template <typename T>
   void DoQuantile(int64_t last_shape_size, uint64_t q_size, const std::vector<T> &sorted, T *output_addr, T *q_addrs,
-                  uint64_t start, uint64_t end);
+                  uint64_t start, uint64_t end) const;
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:

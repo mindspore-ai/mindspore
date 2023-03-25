@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/broadcastto_fission.h"
-#include <algorithm>
 #include <memory>
 #include <vector>
 #include "include/backend/anf_runtime_algorithm.h"

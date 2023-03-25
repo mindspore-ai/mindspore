@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_LOGARITHM_CPU_KERNEL_H_
 
 #include <vector>
-#include <complex>
 #include <utility>
 #include <map>
 #include <algorithm>

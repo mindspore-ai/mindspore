@@ -29,7 +29,7 @@ class MIND_API Quantile : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Quantile);
   Quantile() : BaseOperator(kNameQuantile) { InitIOName({"input", "q"}, {"out"}); }
-  void Init() {}
+  void Init() const {}
   void set_dim(int64_t dim);
   void set_keepdim(bool keepdim);
   void set_ignorenan(bool ignorenan);
