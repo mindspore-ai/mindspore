@@ -3386,8 +3386,8 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
     .. math::
         L_{i} =
         \begin{cases}
-        \frac{0.5 (x_i - y_i)^{2}}{\text{beta}}, & \text{if } |x_i - y_i| < \text{beta} \\
-        |x_i - y_i| - 0.5 \text{beta}, & \text{otherwise. }
+        \frac{0.5 (x_i - y_i)^{2}}{\beta}, & \text{if } |x_i - y_i| < \beta \\
+        |x_i - y_i| - 0.5 \beta, & \text{otherwise. }
         \end{cases}
 
     If `reduction` is not `none`, then:
