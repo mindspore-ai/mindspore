@@ -20,7 +20,7 @@
 namespace mindspore::device::ascend {
 const auto kDefaultCoreType = "AiCore";
 PlatformInfoUtil &PlatformInfoUtil::GetInstance() {
-  static PlatformInfoUtil inst;
+  static PlatformInfoUtil inst{};
   return inst;
 }
 

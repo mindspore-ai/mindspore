@@ -102,20 +102,6 @@ bool ExistGraphCaller(const AnfNodePtr &partial_node) {
   auto graph_nodes = TopoSort(partial_graph->get_return());
   return std::any_of(graph_nodes.begin(), graph_nodes.end(), IsValueNode<FuncGraph>);
 }
-
-KernelGraphPtr GetValueNodeKernelGraph(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto value_node = node->cast<ValueNodePtr>();
-  if (value_node == nullptr) {
-    return nullptr;
-  }
-  auto value = value_node->value();
-  if (value == nullptr) {
-    return nullptr;
-  }
-  auto kernel_graph = value->cast<KernelGraphPtr>();
-  return kernel_graph;
-}
 }  // namespace
 
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
@@ -728,7 +714,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       auto call_node = get_from_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(call_node);
       auto call_graph = call_node->input(kFirstIndex);
-      auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+      auto sub_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(call_graph);
       MS_EXCEPTION_IF_NULL(sub_kernel_graph);
       if (kernel_graph_partial_map_.find(sub_kernel_graph.get()) == kernel_graph_partial_map_.end()) {
         MS_LOG(EXCEPTION) << "Kernel Graph: " << sub_kernel_graph->ToString()
@@ -741,7 +727,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
         // call_graph and info.sub_graph need inline when cell reuse.
         sub_kernel_graph->set_need_inline(true);
-        auto partial_sub_graph = GetValueNodeKernelGraph(info.sub_graph);
+        auto partial_sub_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(info.sub_graph);
         MS_EXCEPTION_IF_NULL(partial_sub_graph);
         partial_sub_graph->set_need_inline(true);
         MS_LOG(INFO) << "Inline graph " << sub_kernel_graph->graph_id() << " and graph "
@@ -889,7 +875,7 @@ void KernelGraphMgr::FlattenTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
     auto call_graph = node->input(kFirstIndex);
-    auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+    auto sub_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(call_graph);
     MS_EXCEPTION_IF_NULL(sub_kernel_graph);
     auto iter = kernel_graph_partial_map_.find(sub_kernel_graph.get());
     if (iter != kernel_graph_partial_map_.end() && iter->second.multi_tuple != 0) {

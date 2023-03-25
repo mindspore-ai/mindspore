@@ -23,7 +23,6 @@
 #include <vector>
 #include <memory>
 #include "utils/ms_context.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace profiler {
