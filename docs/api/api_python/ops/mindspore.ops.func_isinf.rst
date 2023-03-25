@@ -6,9 +6,10 @@ mindspore.ops.isinf
     确定输入Tensor每个位置上的元素是否为无穷大或无穷小。
 
     .. math::
+
         out_i = \begin{cases}
-        & \text{ if } x_{i} = \text{Inf},\ \ True \\
-        & \text{ if } x_{i} \ne \text{Inf},\ \ False
+          & \ True,\ \text{ if } x_{i} = \text{Inf} \\
+          & \ False,\ \text{ if } x_{i} \ne  \text{Inf}
         \end{cases}
 
     其中 :math:`Inf` 表示不是一个数字。
