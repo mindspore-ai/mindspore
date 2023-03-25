@@ -1,7 +1,7 @@
 mindspore.nn.Dropout
 ====================
 
-.. py:class:: mindspore.nn.Dropout(keep_prob=0.5, p=None, dtype=mstype.float32))
+.. py:class:: mindspore.nn.Dropout(keep_prob=0.5, p=None, dtype=mstype.float32)
 
     随机丢弃层。
 

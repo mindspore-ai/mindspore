@@ -3,11 +3,12 @@ mindspore.ops.kron
 
 .. py:function:: mindspore.ops.kron(x, y)
 
-    计算 `x` 和 `y` 的Kronecker积：:math:`x⊗y` 。
+    计算 `x` 和 `y` 的Kronecker积：:math:`x ⊗ y` 。
     如果 `x` 是Tensor :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` ， `y` 是Tensor :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` ，计算结果为Tensor :math:`(a_{0}*b_{0}` x :math:`a_{1}*b_{1}` x ... x :math:`a_{n}*b_{n})` ，计算公式如下：
 
     .. math::
-        (x ⊗ y)_{k_{0},k_{1},...k_{n}} = x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
+        (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
+        x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
 
     其中，对于所有的 0 ≤ `t` ≤ `n`，都有 :math:`k_{t} = i_{t} * b_{t} + j_{t}` 。如果其中一个Tensor维度小于另外一个，则在第一维补维度直到两Tensor维度相同为止。
 
