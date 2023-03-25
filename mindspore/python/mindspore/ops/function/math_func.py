@@ -7796,10 +7796,10 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
           dimensions. The dim of `LU_data` must be equal to or greater than 2.
         LU_pivots (Tensor): The packed LU factorization pivots. A Tensor of shape :math:`(*, min(M, N))`, where * is
           batch dimensions, with data type int8, uint8, int16, int32, int64.
-        unpack_data (bool): A flag indicating if the `LU_data` should be unpacked. If False, then the returned L and U
-            are None. Default: True.
-        unpack_pivots (bool): A flag indicating if the `LU_pivots` should be unpacked into a permutation matrix P. If
-            False, then the returned P is None. Default: True.
+        unpack_data (bool, optional): A flag indicating if the `LU_data` should be unpacked. If False,
+            then the returned L and U are None. Default: True.
+        unpack_pivots (bool, optional): A flag indicating if the `LU_pivots` should be unpacked into
+            a permutation matrix P. If False, then the returned P is None. Default: True.
 
     Returns:
         - pivots(Tensor) - The permutation matrix of LU factorization.

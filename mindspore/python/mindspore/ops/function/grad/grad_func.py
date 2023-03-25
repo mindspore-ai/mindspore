@@ -370,7 +370,7 @@ def get_grad(gradients, identifier):
 
     Args:
         gradients (Union[tuple[int, Tensor], tuple[tuple, tuple]]): The return value of :func:`mindspore.grad`
-        when `return_ids` is set to True.
+            when `return_ids` is set to True.
         identifier (Union[int, Parameter]): The position number of a tensor, or a parameter that is used in
             :func:`mindspore.grad`.
 

@@ -136,7 +136,7 @@ def check_valid(bboxes, img_metas):
 
 
 def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", extrapolation_value=0.0):
-    """
+    r"""
     Extracts crops from the input image Tensor and resizes them.
 
     Note:
