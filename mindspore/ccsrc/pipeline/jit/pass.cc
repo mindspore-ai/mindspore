@@ -150,6 +150,19 @@ bool OrderPyExecuteAfterRewriterPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool ConvertListToTupleForExportPass(const ResourcePtr &resource) {
+  if (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0") {
+    return true;
+  }
+  // When phase is export, MS_DEV_ENABLE_FALLBACK_RUNTIME will be false.
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  (void)opt::RewriterForExport(func_graph, resource);
+  UpdateArgsSpec(func_graph, resource);
+  return true;
+}
+
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());
