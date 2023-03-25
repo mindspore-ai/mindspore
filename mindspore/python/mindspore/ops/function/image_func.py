@@ -100,18 +100,36 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
 
 def check_valid(bboxes, img_metas):
     r"""
-    Checks bounding box.
+    Checks whether the bounding box is in the image.
 
-    Checks whether the bounding box cross data and data border are valid.
+    `bboxes` contain several sets of bounding boxes, each represented by two abscissa points :math:`(x0, x1)` and
+    two ordinate points :math:`(y0, y1)` .
+    `img_metas` provides information about the original image, including three parameters
+    :math:`(height, width, rate)` , which specify the valid boundary of the image.
+
+    when the following conditions are met:
+
+    :math:`x0 >= 0`
+
+    :math:`y0 >= 0`
+
+    :math:`x1 <= width * rate - 1`
+
+    :math:`y1 <= height * rate - 1`
+
+    the bounding box is considered to be within the image.
 
     .. warning::
-        Boundary(heights * ratio, widths * ratio) specified by `bboxes` is required to be valid.
+        The bounding box specified by `bboxes` and the image information specified by `img_metas` need to be valid,
+        i.e.:
+        :math:`x0 <= x1` , :math:`y0 <= y1` , and :math:`(height, width, rate)` are all positive.
 
     Args:
-        bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)`. :math:`N` indicates the number of
-            bounding boxes, the value `4` indicates `x0`, `x1`, `y0`, and `y1`. Data type must be float16 or float32.
-        img_metas (Tensor): Raw image size information with the format of `(height, width, ratio)`, specifying
-            the valid boundary `(height * ratio, width * ratio)`. Data type must be float16 or float32.
+        bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)` . :math:`N` indicates the number of
+            bounding boxes, the value `4` indicates four coordinate points :math:`(x0, y0, x1, y1)` . Data type must
+            be float16 or float32.
+        img_metas (Tensor): Raw image size information with the format of :math:`(height, width, ratio)` , specifying
+            the valid boundary :math:`(height * ratio - 1, width * ratio - 1)` . Data type must be float16 or float32.
 
     Returns:
         Tensor, with shape of :math:`(N,)` and dtype of bool, specifying whether the bounding boxes is in the image.
@@ -161,6 +179,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         method (str, optional): An optional string that specifies the sampling method for resizing.
            It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
            interpolation algorithm, while "bilinear_v2" may result in better result in some cases.
+           "nearest" is the nearest neighbor interpolation algorithm.
            Default: "bilinear".
         extrapolation_value (float, optional): An optional float value used extrapolation, if applicable. Default: 0.0.
 
