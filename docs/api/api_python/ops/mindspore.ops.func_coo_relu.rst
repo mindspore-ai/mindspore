@@ -3,7 +3,7 @@ mindspore.ops.coo_relu
 
 .. py:function:: mindspore.ops.coo_relu(x: COOTensor)
 
-    对输入COOTensor逐元素计算线性修正单元激活函数（Rectified Linear Unit）值。
+    对输入的COOTensor逐元素计算其应用ReLU激活函数后的值。
 
     返回 :math:`\max(x,\  0)` 的值。负值神经元将被设置为0，正值神经元将保持不变。
 

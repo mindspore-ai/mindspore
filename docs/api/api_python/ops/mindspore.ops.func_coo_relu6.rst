@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.coo_relu6(x: COOTensor)
 
-    计算输入COOTensor的ReLU（修正线性单元），其上限为6。
+    对输入的COOTensor计算其应用ReLU激活函数后的值，上限为6。
 
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)

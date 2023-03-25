@@ -253,10 +253,10 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     Args:
         a (CSRTensor): Sparse CSR Tensor, rank should be 2.
         b (CSRTensor): Sparse CSR Tensor, rank should be 2.
-        trans_a (bool): whether to transpose CSRTensor a. Default: False.
-        trans_b (bool): whether to transpose CSRTensor b. Default: False.
-        adjoint_a (bool): whether to adjoint CSRTensor a. Default: False.
-        adjoint_b (bool): whether to adjoint CSRTensor b. Default: False.
+        trans_a (bool, optional): whether to transpose CSRTensor a， Default: False.
+        trans_b (bool, optional): whether to transpose CSRTensor b. Default: False.
+        adjoint_a (bool, optional): whether to adjoint CSRTensor a. Default: False.
+        adjoint_b (bool, optional): whether to adjoint CSRTensor b. Default: False.
 
     Returns:
         CSRTensor.
@@ -659,7 +659,7 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         x1 (COOTensor): the first COOTensor to sum.
         x2 (COOTensor): the second COOTensor to sum.
         thresh (Tensor): A 0-D Tensor, represents the magnitude threshold that determines
-            if an output value/index pair take space. Its dtype
+            if an output value/index pair take place. Its dtype
             should match that of the values if they are real. If output's
             value is less than the `thresh`, it will vanish.
 
@@ -768,7 +768,13 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
 
 def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTensor:
     """
-    Returns alpha * csr_a + beta * csr_b where both csr_a and csr_b are CSRTensor, alpha and beta are both Tensor.
+    Computes the linear combination of two input CSRTensors a and b.
+
+    .. math::
+
+        out = alpha * a + beta * b
+
+    where both :math:`a` and :math:`b` are CSRTensor, :math:`alpha` and :math:`beta` are both Tensor
 
     Note:
         The user need to ensure that the input sparse matrix is legal.
