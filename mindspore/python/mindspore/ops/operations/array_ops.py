@@ -521,7 +521,7 @@ class Col2Im(Primitive):
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1460,12 +1460,11 @@ class Fill(PrimitiveWithCheck):
 
 class Fills(Primitive):
     """
-    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
-
-    Refer to :func:`mindspore.ops.fills` for more details.
+    The `Fills` primitive  is deprecated.
+    Please use :func:`mindspore.ops.fill` instead.
 
     Supported Platforms:
-        ``GPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1478,6 +1477,7 @@ class Fills(Primitive):
          [1. 1.]]
     """
 
+    @deprecated("2.0", "ops.fill", False)
     @prim_attr_register
     def __init__(self):
         """Initialize Fills."""
@@ -5405,9 +5405,8 @@ class SpaceToBatchND(Primitive):
 
 class BatchToSpaceND(Primitive):
     r"""
-    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
-
-    Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
+    `ops.BatchToSpaceND` is deprecated from version 2.0 and will be removed in a future version,
+    use `ops.batch_to_space_nd` instead.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5423,6 +5422,7 @@ class BatchToSpaceND(Primitive):
            [3.  4.]]]]
     """
 
+    @deprecated("2.0", "ops.batch_to_space_nd", False)
     @prim_attr_register
     def __init__(self, block_shape, crops):
         """Initialize BatchToSpaceND"""
@@ -6769,13 +6769,13 @@ class SplitV(Primitive):
 
 class TensorScatterElements(Primitive):
     """
-    Updates the value of the output tensor through the reduction operation.
+    Updates the value of the input Tensor through specified reduction operation.
+
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
     .. warning::
-        The order in which updates are applied is nondeterministic, meaning that if there
-        are multiple index vectors in `indices` that correspond to the same position, the
-        value of that position in the output will be nondeterministic.
+        If there are multiple index vectors in `indices` that correspond to the same position,
+        the value of that position in the output will be nondeterministic.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6892,31 +6892,11 @@ class ExtractVolumePatches(Primitive):
 
 class ScatterAddWithAxis(Primitive):
     """
-    The output of the operation is produced by creating a copy of the input input_x, and then
-    add updating its value to values specified by `updates` at specific index positions specified
-    by `indices`.
-
-    Note:
-        The three inputs `input_x`, `updates` and `indices` must have the same rank r >= 1.
-
-    Args:
-        axis (int, optional): Specifies which axis to do scatter add, default: 0.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor to be added.
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-        - **updates** (Tensor) - The Tensor to update the `input_x`, has the same type as `input_x`
-          and the same shape as `indices`.
-
-    Outputs:
-        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If the shape of `indices` is not equal to the shape of `updates`.
+    'ops.ScatterAddWithAxis' is deprecated from version 2.0 and will be removed in a future version,
+    use 'ops.TensorScatterElements' instead.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> op = ops.ScatterAddWithAxis(0)
@@ -6942,6 +6922,7 @@ class ScatterAddWithAxis(Primitive):
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.0", "ops.TensorScatterElements", False)
     @prim_attr_register
     def __init__(self, axis=0):
         """Initialize ScatterAddWithAxis"""

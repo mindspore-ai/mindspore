@@ -5105,7 +5105,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         ValueError: If input_x.shape[3] does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
@@ -6134,7 +6134,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         ValueError: If `input.shape[3]` does not match the calculated number of sliding blocks.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)

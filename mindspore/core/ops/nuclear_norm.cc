@@ -119,7 +119,7 @@ AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const Prim
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = NuclearNormInferType(primitive, input_args);
   auto infer_shape = NuclearNormInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 MIND_API_OPERATOR_IMPL(NuclearNorm, BaseOperator);
 
