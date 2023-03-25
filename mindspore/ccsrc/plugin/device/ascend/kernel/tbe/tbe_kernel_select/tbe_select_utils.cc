@@ -51,8 +51,8 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
   for (size_t i = 0; i < real_input_num; i++) {
     auto format = AnfAlgo::GetInputFormat(node, i);
     if (!CheckValidInOutDeviceShape(node, i, false, format)) {
-      MS_LOG(WARNING) << "TBE Host check input device shape failed, node:" << node->fullname_with_scope()
-                      << ", format:" << format;
+      MS_LOG(DEBUG) << "TBE Host check input device shape failed, node:" << node->fullname_with_scope()
+                    << ", format:" << format;
       return false;
     }
   }
@@ -61,8 +61,8 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
   for (size_t i = 0; i < real_output_num; i++) {
     auto format = AnfAlgo::GetOutputFormat(node, i);
     if (!CheckValidInOutDeviceShape(node, i, true, format)) {
-      MS_LOG(WARNING) << "TBE Host check output device shape failed, node:" << node->fullname_with_scope()
-                      << ", format:" << format;
+      MS_LOG(DEBUG) << "TBE Host check output device shape failed, node:" << node->fullname_with_scope()
+                    << ", format:" << format;
       return false;
     }
   }
@@ -386,10 +386,15 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
   const std::map<TypeId, TypeId> reduce_map = {{kNumberTypeInt64, kNumberTypeInt32},
                                                {kNumberTypeFloat, kNumberTypeFloat16},
                                                {kNumberTypeFloat32, kNumberTypeFloat16}};
+  const std::map<TypeId, TypeId> transdata_raise_map = {{kNumberTypeBool, kNumberTypeFloat16}};
   // raise precision
   for (const auto &kernel_info : kernel_info_list) {
     MS_EXCEPTION_IF_NULL(kernel_info);
     if (TagRaiseReduce(kernel_info, cnode, raise_map)) {
+      filtered_kernel_info_list.push_back(kernel_info);
+    }
+    if (common::AnfAlgo::GetCNodeName(cnode) == kTransDataOpName &&
+        TagRaiseReduce(kernel_info, cnode, transdata_raise_map)) {
       filtered_kernel_info_list.push_back(kernel_info);
     }
   }
