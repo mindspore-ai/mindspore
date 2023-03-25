@@ -67,23 +67,23 @@ static const std::map<std::string, aclFormat> kMsSpecOriginFormat = {{"BatchMatM
 
 static const std::map<std::string, std::vector<int>> kInputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
-  {prim::kPrimOneHotD->name(), {0, 2, 3}},
-  {prim::kPrimAvgPoolGrad->name(), {1, -1, -1, -1}},
-  {prim::kPrimAvgPool->name(), {0, -1, -1}},
-  {prim::kPrimMaximumGrad->name(), {1, 2, 0}},
-  {prim::kPrimMinimumGrad->name(), {1, 2, 0}},
-  {prim::kPrimInplaceUpdateD->name(), {0, 2}},
-  {prim::kPrimDeformableOffsets->name(), {0, 1, -1}},
-  {prim::kPrimSplitD->name(), {1}},
-  {prim::kPrimInplaceAddD->name(), {0, 2}}};
+  {kOneHotDOpName, {0, 2, 3}},
+  {kAvgPoolGradOpName, {1, -1, -1, -1}},
+  {kAvgPoolOpName, {0, -1, -1}},
+  {kMaximumGradOpName, {1, 2, 0}},
+  {kMinimumGradOpName, {1, 2, 0}},
+  {kInplaceUpdateDOpName, {0, 2}},
+  {kDeformableOffsetsOpName, {0, 1, -1}},
+  {kSplitDOpName, {1}},
+  {kInplaceAddDOpName, {0, 2}}};
 
 static const std::map<std::string, std::vector<int>> kOutputOrders = {
   // op_name: {graph_id to kernel_id} . -1 means the the graph id is useless in acl kernel
-  {prim::kPrimApplyMomentum->name(), {0, -1}},
-  {prim::kPrimApplyFtrlD->name(), {0, -1, -1}},
-  {prim::kPrimSparseApplyFtrlV2D->name(), {0, -1, -1}},
-  {prim::kPrimApplyMomentumD->name(), {0, -1}},
-  {prim::kPrimApplyFtrl->name(), {0, -1, -1}}};
+  {kApplyMomentumOpName, {0, -1}},
+  {kApplyFtrlDOpName, {0, -1, -1}},
+  {kSparseApplyFtrlV2DOpName, {0, -1, -1}},
+  {kApplyMomentumDOpName, {0, -1}},
+  {kApplyFtrlOpName, {0, -1, -1}}};
 }  // namespace
 
 AclOpDesc::AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr) {
@@ -147,10 +147,10 @@ aclTensorDesc *AclOpDesc::CreateTensorDesc(const GeTensorDescPtr &tensor_desc) {
 
   auto acl_desc = aclCreateTensorDesc(acl_type, ori_shape.size(), ori_shape.data(), acl_ori_format);
   MS_EXCEPTION_IF_NULL(acl_desc);
-  if (!dev_shape.empty() && aclSetTensorShape(acl_desc, dev_shape.size(), dev_shape.data())) {
+  if (!dev_shape.empty() && (aclSetTensorShape(acl_desc, dev_shape.size(), dev_shape.data()) != ACL_SUCCESS)) {
     MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
   }
-  if (aclSetTensorFormat(acl_desc, acl_format)) {
+  if (aclSetTensorFormat(acl_desc, acl_format) != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
   }
   if (!name.empty()) {
@@ -159,7 +159,7 @@ aclTensorDesc *AclOpDesc::CreateTensorDesc(const GeTensorDescPtr &tensor_desc) {
   return acl_desc;
 }
 
-aclDataBuffer *AclOpDesc::CreateDataBuf(const AddressPtr &address, const size_t op_size) {
+aclDataBuffer *AclOpDesc::CreateDataBuf(const AddressPtr &address, const size_t op_size) const {
   MS_EXCEPTION_IF_NULL(address);
   auto data_buf = aclCreateDataBuffer(address->addr, op_size);
   MS_EXCEPTION_IF_NULL(data_buf);
@@ -208,14 +208,21 @@ void AclOpDesc::AddDataBuf(const std::vector<AddressPtr> &inputs, const std::vec
       }
       continue;
     }
-    input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);
     if (const_input_list.find(idx) != const_input_list.end()) {
       const auto &tensor = const_input_list.at(idx);
-      auto const_ret = aclSetTensorConst(input_tensor_desc_[idx], tensor->data_c(), tensor->Size());
-      if (const_ret != ACL_SUCCESS) {
-        MS_LOG(EXCEPTION) << "ACL set tensor const failed!";
+      auto memtype = ACL_MEMTYPE_HOST;
+      if (tensor->DataSize() <= 1) {
+        memtype = ACL_MEMTYPE_HOST_COMPILE_INDEPENDENT;
       }
+      auto const_ret = aclSetTensorPlaceMent(input_tensor_desc_[idx], memtype);
+      if (const_ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "ACL set host tensor failed!";
+      }
+      input_tensor_data_[idx] = aclCreateDataBuffer(tensor->data_c(), tensor->Size());
+      MS_EXCEPTION_IF_NULL(input_tensor_data_[idx]);
+      continue;
     }
+    input_tensor_data_[idx] = CreateDataBuf(inputs[i], input_size_list[idx]);
   }
 
   output_tensor_data_.clear();
@@ -250,10 +257,10 @@ void AclOpDesc::CreateNullAclTensor(const size_t idx, const bool is_input) {
 
 void AclOpDesc::ClearNullTensor() {
   (void)input_tensor_desc_.erase(std::remove_if(input_tensor_desc_.begin(), input_tensor_desc_.end(),
-                                                [](aclTensorDesc *desc) { return desc == nullptr; }),
+                                                [](const aclTensorDesc *desc) { return desc == nullptr; }),
                                  input_tensor_desc_.end());
   (void)input_tensor_data_.erase(std::remove_if(input_tensor_data_.begin(), input_tensor_data_.end(),
-                                                [](aclDataBuffer *buf) { return buf == nullptr; }),
+                                                [](const aclDataBuffer *buf) { return buf == nullptr; }),
                                  input_tensor_data_.end());
 }
 
@@ -282,7 +289,7 @@ void AclOpDesc::ProcessAclAttrs(const std::string &attr_name, const ValuePtr &va
 }
 
 void AclOpDesc::ListListToListInt(const std::vector<std::vector<int64_t>> &value_list,
-                                  std::vector<int64_t> *array_list) {
+                                  std::vector<int64_t> *array_list) const {
   MS_EXCEPTION_IF_NULL(array_list);
   auto list_size = value_list.size();
   for (size_t i = 0; i < list_size; i++) {
@@ -290,8 +297,7 @@ void AclOpDesc::ListListToListInt(const std::vector<std::vector<int64_t>> &value
   }
 }
 
-std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrBool(const std::string &attr_name,
-                                                                 const ValuePtrList &value_sequence) {
+std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrBool(const ValuePtrList &value_sequence) const {
   std::vector<std::vector<int64_t>> value_lists;
   for (const auto &val : value_sequence) {
     if (!val->isa<ValueSequence>()) {
@@ -306,8 +312,7 @@ std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrBool(const std::stri
   return value_lists;
 }
 
-std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrInt(const std::string &attr_name,
-                                                                const ValuePtrList &value_sequence) {
+std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrInt(const ValuePtrList &value_sequence) const {
   std::vector<std::vector<int64_t>> value_lists;
   for (const auto &val : value_sequence) {
     if (!val->isa<ValueSequence>()) {
@@ -318,8 +323,7 @@ std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrInt(const std::strin
   return value_lists;
 }
 
-std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrFloat(const std::string &attr_name,
-                                                                  const ValuePtrList &value_sequence) {
+std::vector<std::vector<int64_t>> AclOpDesc::GetListListAttrFloat(const ValuePtrList &value_sequence) const {
   std::vector<std::vector<int64_t>> value_lists;
   for (const auto &val : value_sequence) {
     if (!val->isa<ValueSequence>()) {
@@ -344,11 +348,11 @@ void AclOpDesc::GetListListAttr(const std::string &attr_name, const ValuePtr &va
     const auto &sub_value_sequence = val->cast<ValueSequencePtr>()->value();
     auto sub_val = sub_value_sequence[0];
     if (sub_val->isa<BoolImm>()) {
-      value_list = GetListListAttrBool(attr_name, value_sequence);
+      value_list = GetListListAttrBool(value_sequence);
     } else if (sub_val->isa<Int64Imm>()) {
-      value_list = GetListListAttrInt(attr_name, value_sequence);
+      value_list = GetListListAttrInt(value_sequence);
     } else if (sub_val->isa<FP32Imm>()) {
-      value_list = GetListListAttrFloat(attr_name, value_sequence);
+      value_list = GetListListAttrFloat(value_sequence);
     } else {
       MS_LOG(INFO) << "Currently not support to Add the attr '" << attr_name << "' with value: " << value->ToString()
                    << ", perhaps you should add more supported type.";
@@ -393,19 +397,24 @@ void AclOpDesc::GetListAttr(const std::string &attr_name, const ValuePtr &value,
 }
 
 template <typename T>
-void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::string &attr_name) {
-  size_t real_size = 0;
-  bool is_empty_vec = false;
+void AclOpDesc::GetConstAttrInfo(const T &val, const TypeId type, void **current_addr, size_t *real_size,
+                                 aclTensorDesc **tensor_desc) {
+  MS_EXCEPTION_IF_NULL(current_addr);
+  MS_EXCEPTION_IF_NULL(*current_addr);
+  MS_EXCEPTION_IF_NULL(tensor_desc);
+  MS_EXCEPTION_IF_NULL(real_size);
+
   ShapeVector shape;
+  TypeId new_type = type;
   aclError ret = ACL_SUCCESS;
   std::vector<int> value_list_int;
   std::vector<int64_t> value_list_long;
-  TypeId new_type = type;
-  void *current_addr = static_cast<void *>(static_cast<int *>(attr_to_input_) + attr_data_offset_ / sizeof(int));
+  bool is_empty_vec = false;
+
   if constexpr (is_vector<T>) {
     if constexpr (is_vector<typename T::value_type>) {
       if (!val.empty() && !val[0].empty()) {
-        real_size = sizeof(typename T::value_type::value_type) * val.size() * val[0].size();
+        *real_size = sizeof(typename T::value_type::value_type) * val.size() * val[0].size();
         shape.push_back(SizeToLong(val.size()));
         shape.push_back(SizeToLong(val[0].size()));
         if constexpr (std::is_same_v<T, std::vector<std::vector<int64_t>>>) {
@@ -414,53 +423,61 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
       }
     } else {
       constexpr size_t min_byte = 1;
-      real_size = std::max(sizeof(typename T::value_type) * val.size(), min_byte);
+      *real_size = std::max(sizeof(typename T::value_type) * val.size(), min_byte);
       if constexpr (std::is_same_v<T, std::vector<int64_t>>) {
         std::transform(val.begin(), val.end(), std::back_inserter(value_list_int),
                        [](const int64_t val) { return LongToInt(val); });
-        real_size = std::max(sizeof(int) * value_list_int.size(), min_byte);
+        *real_size = std::max(sizeof(int) * value_list_int.size(), min_byte);
         new_type = kNumberTypeInt32;
       }
       shape.push_back(SizeToLong(val.size()));
     }
     if (!value_list_int.empty()) {
-      ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_int.data(), real_size,
+      ret = aclrtMemcpy(*current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_int.data(), *real_size,
                         ACL_MEMCPY_HOST_TO_HOST);
     } else if (!value_list_long.empty()) {
-      ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_long.data(), real_size,
+      ret = aclrtMemcpy(*current_addr, kMaxAttrToInputSize - attr_data_offset_, value_list_long.data(), *real_size,
                         ACL_MEMCPY_HOST_TO_HOST);
     } else if (!val.empty()) {
-      ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, val.data(), real_size,
+      ret = aclrtMemcpy(*current_addr, kMaxAttrToInputSize - attr_data_offset_, val.data(), *real_size,
                         ACL_MEMCPY_HOST_TO_HOST);
     } else {
       is_empty_vec = true;
     }
   } else {
-    real_size = sizeof(T);
+    *real_size = sizeof(T);
     if constexpr (std::is_same_v<T, int64_t>) {
       new_type = kNumberTypeInt32;
-      real_size = sizeof(int32_t);
+      *real_size = sizeof(int32_t);
     }
-    ret = aclrtMemcpy(current_addr, kMaxAttrToInputSize - attr_data_offset_, &val, real_size, ACL_MEMCPY_HOST_TO_HOST);
+    ret =
+      aclrtMemcpy(*current_addr, kMaxAttrToInputSize - attr_data_offset_, &val, *real_size, ACL_MEMCPY_HOST_TO_HOST);
   }
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "When convert attr to input, offset is " << attr_data_offset_ << " and current size is "
-                      << real_size << ", please increase limit of kMaxAttrToInputSize.";
-    return;
+                      << *real_size << ", please increase limit of kMaxAttrToInputSize.";
   }
-  attr_data_offset_ += real_size;
 
-  aclTensorDesc *tensor_desc = nullptr;
   if (is_empty_vec) {
     std::vector<int64_t> empty_shape = {0};
-    tensor_desc = aclCreateTensorDesc(ACL_INT64, 0, empty_shape.data(), ACL_FORMAT_ND);
+    *tensor_desc = aclCreateTensorDesc(ACL_INT64, 0, empty_shape.data(), ACL_FORMAT_ND);
   } else {
-    tensor_desc =
+    *tensor_desc =
       CreateTensorDesc(GeOpConvertor::GetTensorDesc(shape, new_type, kOpFormat_DEFAULT, shape, kOpFormat_DEFAULT));
   }
+}
+
+template <typename T>
+void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::string &attr_name) {
+  void *current_addr = static_cast<void *>(static_cast<int *>(attr_to_input_) + attr_data_offset_ / sizeof(int));
+  size_t real_size = 0;
+  aclTensorDesc *tensor_desc = nullptr;
+  GetConstAttrInfo<T>(val, type, &current_addr, &real_size, &tensor_desc);
+  MS_EXCEPTION_IF_NULL(tensor_desc);
+  attr_data_offset_ += real_size;
 
   // Set host memory flag to const input.
-  ret = aclSetTensorPlaceMent(tensor_desc, ACL_MEMTYPE_HOST);
+  auto ret = aclSetTensorPlaceMent(tensor_desc, ACL_MEMTYPE_HOST);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set host memory flag failed! ret = " << ret;
     return;
@@ -488,7 +505,7 @@ void AclOpDesc::AddConstDescAndBuf(const T &val, const TypeId type, const std::s
 }
 
 aclError AclOpDesc::AclSetAttrListListInt(const std::string &attr_name,
-                                          const std::vector<std::vector<int64_t>> &value_list) {
+                                          const std::vector<std::vector<int64_t>> &value_list) const {
   auto list_size = value_list.size();
   int64_t *values[list_size];
   std::vector<int> num_values;
@@ -500,7 +517,8 @@ aclError AclOpDesc::AclSetAttrListListInt(const std::string &attr_name,
   return ret;
 }
 
-aclError AclOpDesc::AclSetAttrListString(const std::string &attr_name, const std::vector<std::string> &value_list) {
+aclError AclOpDesc::AclSetAttrListString(const std::string &attr_name,
+                                         const std::vector<std::string> &value_list) const {
   std::vector<const char *> convert_list;
   std::transform(value_list.begin(), value_list.end(), std::back_inserter(convert_list),
                  [](const std::string &s) { return s.c_str(); });
@@ -509,7 +527,7 @@ aclError AclOpDesc::AclSetAttrListString(const std::string &attr_name, const std
 }
 
 template <typename T>
-void AclOpDesc::CallAclAttrFunc(const T &val, const TypeId type, const std::string &attr_name) {
+void AclOpDesc::CallAclAttrFunc(const T &val, const TypeId type, const std::string &attr_name) const {
   if (acl_attr_ == nullptr) {
     MS_LOG(EXCEPTION) << "Acl attr create failed!";
   }
@@ -547,7 +565,7 @@ void AclOpDesc::CallAclAttrFunc(const T &val, const TypeId type, const std::stri
     }
   }
 
-  if (ret) {
+  if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value tyep: " << type << " failed!";
   }
 }

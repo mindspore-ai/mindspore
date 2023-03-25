@@ -18,6 +18,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <algorithm>
 #include "runtime/rt.h"
 #include "ir/tensor.h"
 #include "include/common/utils/anfalgo.h"
@@ -59,6 +60,41 @@ std::map<uint32_t, tensor::TensorPtr> CheckValueDependEdge(
 }
 }  // namespace
 
+tensor::TensorPtr AclKernelMod::UpdateConstInput(const CNodePtr &node, const size_t ori_idx,
+                                                 const tensor::TensorPtr &tensor, TypeId *type, ShapeVector *shape) {
+  MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(shape);
+
+  tensor::TensorPtr new_tensor = tensor;
+  if (common::AnfAlgo::IsReduceOp(op_type_) && tensor->Size() == 0) {
+    shape->clear();
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, ori_idx);
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      (void)shape->emplace_back(SizeToLong(i));
+    }
+    new_tensor = std::make_shared<tensor::Tensor>(*shape);
+  }
+
+  if (*type == kNumberTypeInt64) {
+    if (tensor->Size() == 0) {
+      return new_tensor;
+    }
+    std::vector<int> new_data;
+    auto data_ptr = static_cast<int64_t *>(new_tensor->data_c());
+    ShapeVector ori_data = std::vector<int64_t>(data_ptr, data_ptr + new_tensor->DataSize());
+    if (ori_data.size() != (new_tensor->Size() / sizeof(int64_t))) {
+      MS_LOG(EXCEPTION) << "Error data size when get data from origin tensor! expect size is:"
+                        << (new_tensor->Size() / sizeof(int64_t)) << " but get:" << ori_data.size();
+    }
+    (void)std::transform(ori_data.begin(), ori_data.end(), std::back_inserter(new_data),
+                         [](const int64_t data) { return LongToInt(data); });
+    new_tensor = std::make_shared<tensor::Tensor>(new_data);
+    *type = kNumberTypeInt32;
+  }
+
+  return new_tensor;
+}
+
 void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_edge,
                                      const size_t ori_idx, const std::vector<std::string> &input_names) {
   MS_EXCEPTION_IF_NULL(node);
@@ -76,7 +112,6 @@ void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32
   bool host_use = false;
   auto value_iter = depend_edge.find(ori_idx);
   if (value_iter != depend_edge.end()) {
-    const_input_list_[index] = value_iter->second;
     host_use = true;
   }
 
@@ -99,6 +134,14 @@ void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32
     ori_format = IsOneOf3DFormat(input_format) ? kOpFormat_NCDHW : kOpFormat_DEFAULT;
   }
 
+  if (host_use) {
+    const auto &new_tensor = UpdateConstInput(node, ori_idx, value_iter->second, &input_type, &ori_shape);
+    const_input_list_[index] = new_tensor;
+    input_shape = ori_shape;
+    auto type_size = GetTypeByte(TypeIdToType(input_type));
+    input_size = type_size * SizeOf(input_shape);
+  }
+
   input_size_list_[index] = (input_size == 0) ? kSizeMax : input_size;
   if (input_type == kMetaTypeNone) {
     return;
@@ -112,7 +155,7 @@ void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32
   ori_shape = trans::GetRuntimePaddingShape(input, idx);
   if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
       op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
-      input_desc_list_[index] != nullptr) {
+      input_desc_list_[index] != nullptr && !host_use) {
     input_desc_list_[index]->SetShape(GeShape(input_shape));
     input_desc_list_[index]->SetOriginShape(GeShape(ori_shape));
     return;

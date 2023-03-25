@@ -19,10 +19,7 @@
 
 #include <map>
 #include <string>
-#include <utility>
-#include <vector>
 #include "kernel/kernel.h"
-#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace kernel {
