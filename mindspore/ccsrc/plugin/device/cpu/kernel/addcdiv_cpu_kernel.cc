@@ -110,66 +110,6 @@ bool AddcdivCpuKernelMod::AddcdivCheck(const std::vector<AddressPtr> &inputs, co
   return true;
 }
 
-template <typename T1, typename T2>
-bool AddcdivCpuKernelMod::AddcdivCompute(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  auto *input0 = static_cast<T1 *>(inputs[kInputData]->addr);
-  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->addr);
-  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->addr);
-  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
-  auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
-  AddcdivMul(input1, input3, output);
-  AddcdivDiv(output, input2, output);
-  AddcdivAdd(input0, output, output);
-  return true;
-}
-
-template <typename T1, typename T2>
-void AddcdivCpuKernelMod::AddcdivMul(const T1 *input1, const T2 *input2, T1 *output) {
-  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_) == 0) {
-    T1 mul2 = static_cast<T1>(input2[0]);
-    output[0] = input1[0] * mul2;
-  } else {
-    BroadcastIterator mul_iter(input_shape1_, input_shape3_, output_shape_);
-    auto mul_task = [&input1, &input2, &output, &mul_iter](size_t mul_start, size_t mul_end) {
-      auto iter = mul_iter;
-      iter.SetPos(mul_start);
-      for (auto i = mul_start; i < mul_end; i++) {
-        T1 mul2 = static_cast<T1>(input2[iter.GetInputPosB()]);
-        output[i] = input1[iter.GetInputPosA()] * mul2;
-        iter.GenNextPos();
-      }
-    };
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<int64_t>(output_shape_[i]);
-    }
-    ParallelLaunchAutoSearch(mul_task, LongToSize(output_size_), this, &parallel_search_info_);
-  }
-}
-
-template <typename T>
-void AddcdivCpuKernelMod::AddcdivAdd(const T *input1, const T *input2, T *output) {
-  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
-    output[0] = input1[0] + input2[0];
-  } else {
-    BroadcastIterator add_iter(input_shape0_, output_shape_, output_shape_);
-    auto add_task = [&input1, &input2, &output, &add_iter](size_t add_start, size_t add_end) {
-      auto iter = add_iter;
-      iter.SetPos(add_start);
-      for (size_t i = add_start; i < add_end; i++) {
-        output[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
-        iter.GenNextPos();
-      }
-    };
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<int64_t>(output_shape_[i]);
-    }
-    ParallelLaunchAutoSearch(add_task, LongToSize(output_size_), this, &parallel_search_info_);
-  }
-}
-
 template <typename T>
 T abs(T num) {
   if (num >= static_cast<T>(0.0)) {
@@ -179,57 +119,71 @@ T abs(T num) {
   }
 }
 
-template <typename T>
-void AddcdivCpuKernelMod::AddcdivDiv(const T *input1, const T *input2, T *output) {
-  if (inputx_shape_size_ == 0 && inputy_shape_size_ == 0) {
-    const auto eps_if_zero = static_cast<T>(1e-6);
-    auto zero = static_cast<T>(0);
-    if (abs(input2[0] - zero) <= eps_if_zero) {
-      if (abs(input1[0] - zero) <= eps_if_zero) {
-        output[0] = std::numeric_limits<T>::quiet_NaN();
-        return;
+template <typename T1, typename T2>
+bool AddcdivCpuKernelMod::AddcdivCompute(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
+  auto *input0 = static_cast<T1 *>(inputs[kInputData]->addr);
+  const auto *input1 = static_cast<T1 *>(inputs[kInputX1]->addr);
+  const auto *input2 = static_cast<T1 *>(inputs[kInputX2]->addr);
+  const auto *input3 = static_cast<T2 *>(inputs[kInputValue]->addr);
+  auto *output = static_cast<T1 *>(outputs[kOutputData]->addr);
+
+  if ((inputx_shape_size_ + inputy_shape_size_ + value_shape_size_ + data_shape_size_) == 0) {
+    auto eps_if_zero = static_cast<T1>(1e-6);
+    auto zero = static_cast<T1>(0);
+    if (abs(input2[0]) <= eps_if_zero) {
+      auto prod = static_cast<T1>(input3[0]) * input1[0];
+      if (abs(prod) <= eps_if_zero) {
+        output[0] = std::numeric_limits<T1>::quiet_NaN();
+        return true;
       }
-      if (std::numeric_limits<T>::has_infinity) {
-        output[0] = input1[0] > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      if (std::numeric_limits<T1>::has_infinity) {
+        output[0] = prod > zero ? std::numeric_limits<T1>::infinity() : -std::numeric_limits<T1>::infinity();
       } else {
-        output[0] = input1[0] > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        output[0] = prod > zero ? std::numeric_limits<T1>::max() : std::numeric_limits<T1>::min();
       }
+    } else {
+      output[0] = static_cast<T1>(input3[0]) * input1[0] / input2[0] + input0[0];
     }
   } else {
-    BroadcastIterator div_iter(output_shape_, input_shape2_, output_shape_);
-    auto div_task = [&input1, &input2, &output, &div_iter](int64_t div_start, int64_t div_end) {
-      const auto eps_if_zero = static_cast<T>(1e-6);
-      auto iter = div_iter;
-      iter.SetPos(div_start);
-      for (int64_t i = div_start; i < div_end; i++) {
-        auto zero = static_cast<T>(0);
-        auto addcdiv_dividend = input1[iter.GetInputPosA()];
-        auto addcdiv_divisor = input2[iter.GetInputPosB()];
-        if (abs(addcdiv_divisor - zero) <= eps_if_zero) {
-          if (abs(addcdiv_dividend - zero) <= eps_if_zero) {
-            output[i] = std::numeric_limits<T>::quiet_NaN();
+    MultipleBroadcastIterator multi_broadcast_iterator({input_shape0_, input_shape1_, input_shape2_, input_shape3_},
+                                                       output_shape_);
+    auto base_task = [&input0, &input1, &input2, &input3, &output, &multi_broadcast_iterator](size_t start,
+                                                                                              size_t end) {
+      auto iter = multi_broadcast_iterator;
+      iter.SetPos(start);
+      auto eps_if_zero = static_cast<T1>(1e-6);
+      auto zero = static_cast<T1>(0);
+      for (size_t i = start; i < end; i++) {
+        if (abs(input2[iter.GetInputPos(kIndex2)]) <= eps_if_zero) {
+          auto prod = static_cast<T1>(input3[iter.GetInputPos(kIndex3)]) * input1[iter.GetInputPos(kIndex1)];
+          if (abs(prod) <= eps_if_zero) {
+            output[i] = std::numeric_limits<T1>::quiet_NaN();
             iter.GenNextPos();
             continue;
           }
-          if (std::numeric_limits<T>::has_infinity) {
-            output[i] =
-              addcdiv_dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+          if (std::numeric_limits<T1>::has_infinity) {
+            output[i] = prod > zero ? std::numeric_limits<T1>::infinity() : -std::numeric_limits<T1>::infinity();
           } else {
-            output[i] = addcdiv_dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+            output[i] = prod > zero ? std::numeric_limits<T1>::max() : std::numeric_limits<T1>::min();
           }
           iter.GenNextPos();
           continue;
+        } else {
+          output[i] = static_cast<T1>(input3[iter.GetInputPos(kIndex3)]) * input1[iter.GetInputPos(kIndex1)] /
+                        input2[iter.GetInputPos(kIndex2)] +
+                      input0[iter.GetInputPos(kIndex0)];
+          iter.GenNextPos();
         }
-        output[i] = addcdiv_dividend / addcdiv_divisor;
-        iter.GenNextPos();
       }
     };
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= static_cast<int64_t>(output_shape_[i]);
+      output_size_ *= static_cast<size_t>(output_shape_[i]);
     }
-    ParallelLaunchAutoSearch(div_task, LongToSize(output_size_), this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(base_task, output_size_, this, &parallel_search_info_);
   }
+  return true;
 }
 
 std::vector<KernelAttr> AddcdivCpuKernelMod::GetOpSupport() {
