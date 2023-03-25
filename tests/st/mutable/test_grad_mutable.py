@@ -809,7 +809,7 @@ def test_grad_mutable_dynamic_len_sequence():
         def construct(self, input1, input2):
             x = (input1, input2)
             x = mutable(x, True)
-            output = ops.conv2d(x[0], x[1], pad_mode="pad", padding=(2, 2, 3, 3))
+            output = ops.conv2d(x[0], x[1], pad_mode="pad", padding=(2, 3))
             return output
 
     context.set_context(mode=context.GRAPH_MODE)
