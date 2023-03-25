@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,14 @@
 #include "include/backend/device_type.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "src/common/common.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 namespace {
 constexpr auto kProviderGe = "ge";
+constexpr auto kDump = "dump";
+constexpr auto kDumpMode = "dump_mode";
+constexpr auto kProfiling = "profiler";
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -86,7 +90,8 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   return res;
 }
 
-bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
+bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
+                const std::map<std::string, std::string> &ge_options, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph);
   if (export_air) {
@@ -106,11 +111,11 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   std::string graph_name = anf_graph->ToString();
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + GetGraphName(anf_graph);
+  auto options = ge_options;
   if (common::GetEnv("GE_TRAIN") == "1") {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
-  } else {
-    (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
+    options["ge.exec.variable_acc"] = "1";
   }
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
@@ -121,25 +126,12 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   return true;
 }
 
-void CreateSessionAndGraphRunner(const ConfigInfos &config_infos) {
+void CreateSessionAndGraphRunner(const std::map<std::string, std::string> &ge_options) {
   std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
-    transform::SessionOptions options;
+    transform::SessionOptions options = ge_options;
     options["ge.trainFlag"] = "0";
     options["ge.enablePrintOpPass"] = "0";
-    if (config_infos.empty() || config_infos.find(lite::kAscendContextSection) == config_infos.end()) {
-      MS_LOG(INFO) << "There is no ascend context info in config infos.";
-    } else {
-      auto ascend_context = config_infos.at(lite::kAscendContextSection);
-      if (ascend_context.find(lite::kGeVariableMemoryMaxSize) != ascend_context.end()) {
-        auto variable_memory_max_size = ascend_context[lite::kGeVariableMemoryMaxSize];
-        options["ge.variableMemoryMaxSize"] = variable_memory_max_size;
-      }
-      if (ascend_context.find(lite::kGeGraphMemoryMaxSize) != ascend_context.end()) {
-        auto graph_memory_max_size = ascend_context[lite::kGeGraphMemoryMaxSize];
-        options["ge.graphMemoryMaxSize"] = graph_memory_max_size;
-      }
-    }
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }
@@ -182,18 +174,107 @@ void RunGeInitGraph(const FuncGraphPtr &anf_graph) {
     MS_LOG(INFO) << "Exec " << run_options.name << " graph success.";
   }
 }
+
+void GetGeSessionOptions(const ConfigInfos &config_infos, std::map<std::string, std::string> *ge_options) {
+  MS_EXCEPTION_IF_NULL(ge_options);
+  if (config_infos.find(lite::kAscendContextSection) == config_infos.end()) {
+    return;
+  }
+  auto config = config_infos.at(lite::kAscendContextSection);
+  if (config.find(lite::kDumpPathKey) != config.end()) {
+    auto dump_path = config.at(lite::kDumpPathKey);
+    auto real_path = lite::RealPath(dump_path.c_str());
+    std::ifstream ifs(real_path);
+    if (!ifs.good() || !ifs.is_open()) {
+      MS_LOG(EXCEPTION) << "The dump config file: " << real_path << " is not exit or open failed.";
+    }
+    nlohmann::json dump_cfg_json;
+    try {
+      dump_cfg_json = nlohmann::json::parse(ifs);
+    } catch (const nlohmann::json::parse_error &error) {
+      MS_LOG(EXCEPTION) << "parse json failed, please check the file: " << real_path;
+    }
+    if (dump_cfg_json[kDump] != nullptr && dump_cfg_json[kDump][kDumpMode] != nullptr) {
+      (*ge_options)["ge.exec.enableDump"] = "1";
+      (*ge_options)["ge.exec.dumpMode"] = dump_cfg_json[kDump][kDumpMode].get<std::string>();
+    }
+  }
+  if (config.find(lite::kProfilingPathKey) != config.end()) {
+    auto profiling_path = config.at(lite::kProfilingPathKey);
+    auto real_path = lite::RealPath(profiling_path.c_str());
+    std::ifstream ifs(real_path);
+    if (!ifs.good() || !ifs.is_open()) {
+      MS_LOG(EXCEPTION) << "The profiling_path config file: " << real_path << " is not exit or open failed.";
+    }
+    nlohmann::json profiling_cfg_json;
+    try {
+      profiling_cfg_json = nlohmann::json::parse(ifs);
+    } catch (const nlohmann::json::parse_error &error) {
+      MS_LOG(EXCEPTION) << "parse json failed, please check the file: " << real_path;
+    }
+    if (profiling_cfg_json[kProfiling] != nullptr) {
+      (*ge_options)["ge.exec.profilingMode"] = "1";
+      (*ge_options)["ge.exec.profilingOptions"] = profiling_cfg_json[kProfiling].dump();
+    }
+  }
+
+  if (config_infos.find(lite::kAscendContextSection) != config_infos.end()) {
+    auto ascend_context = config_infos.at(lite::kAscendContextSection);
+    if (ascend_context.find(lite::kGeVariableMemoryMaxSize) != ascend_context.end()) {
+      auto variable_memory_max_size = ascend_context[lite::kGeVariableMemoryMaxSize];
+      (*ge_options)["ge.variableMemoryMaxSize"] = variable_memory_max_size;
+    }
+    if (ascend_context.find(lite::kGeGraphMemoryMaxSize) != ascend_context.end()) {
+      auto graph_memory_max_size = ascend_context[lite::kGeGraphMemoryMaxSize];
+      (*ge_options)["ge.graphMemoryMaxSize"] = graph_memory_max_size;
+    }
+  }
+
+  (*ge_options)["ge.graph_compiler_cache_dir"] =
+    config.find(lite::kGraphCompilerCacheDirKey) == config.end() ? "" : config.at(lite::kGraphCompilerCacheDirKey);
+}
+
+void GetGeGraphOptions(const FuncGraphPtr &anf_graph, const std::shared_ptr<Context> &ctx,
+                       const ConfigInfos &config_infos, std::map<std::string, std::string> *ge_options) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  MS_EXCEPTION_IF_NULL(ge_options);
+  (*ge_options)["ge.graph_key"] = anf_graph->ToString();
+  auto device_list = ctx->MutableDeviceInfo();
+  auto itr =
+    std::find_if(device_list.begin(), device_list.end(), [](const std::shared_ptr<DeviceInfoContext> &device_info) {
+      return device_info->GetDeviceType() == DeviceType::kAscend;
+    });
+  if (itr == device_list.end()) {
+    MS_LOG(EXCEPTION) << "Can not find ascend device context.";
+  }
+  auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
+  auto precision_mode = ascend_device_info->GetPrecisionMode();
+  if (!precision_mode.empty()) {
+    (*ge_options)["ge.exec.precision_mode"] = precision_mode;
+  }
+  if (config_infos.find(lite::kAscendContextSection) == config_infos.end()) {
+    return;
+  }
+  auto config = config_infos.at(lite::kAscendContextSection);
+  (*ge_options)["ge.exec.modify_mixlist"] =
+    config.find(lite::kModifyMixList) == config.end() ? "" : config.at(lite::kModifyMixList);
+}
 }  // namespace
 
-FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
+FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph, const std::shared_ptr<Context> &ctx,
                                            const transform::TensorOrderMap &init_inputs_map, bool export_air,
                                            const ConfigInfos config_infos) {
   MS_EXCEPTION_IF_NULL(anf_graph);
-  if (!AddDFGraph(anf_graph, init_inputs_map, export_air)) {
+  std::map<std::string, std::string> graph_options;
+  GetGeGraphOptions(anf_graph, ctx, config_infos, &graph_options);
+  if (!AddDFGraph(anf_graph, init_inputs_map, graph_options, export_air)) {
     MS_LOG(ERROR) << "GenConvertor failed";
     return nullptr;
   }
   (void)setenv("GE_TRAIN", "0", 1);
-  CreateSessionAndGraphRunner(config_infos);
+  std::map<std::string, std::string> session_options;
+  GetGeSessionOptions(config_infos, &session_options);
+  CreateSessionAndGraphRunner(session_options);
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
@@ -213,7 +294,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     return false;
   }
   // opt::GeOptimization(origin_graph);
-  (void)BuildDFGraph(kg, GetParams(kg), false, config_infos_);
+  (void)BuildDFGraph(kg, context_, GetParams(kg), false, config_infos_);
   kg->set_run_mode(device::RunMode::kGraphMode);
   // copy init weight to device
   RunGeInitGraph(kg);

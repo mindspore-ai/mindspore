@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,6 +447,7 @@ std::shared_ptr<Context> ModelPool::CopyContext(const std::shared_ptr<Context> &
       auto asscend_info = device->Cast<AscendDeviceInfo>();
       auto new_asscend_info = std::make_shared<AscendDeviceInfo>();
       new_asscend_info->SetDeviceID(asscend_info->GetDeviceID());
+      new_asscend_info->SetProvider(asscend_info->GetProvider());
       new_device_list.push_back(new_asscend_info);
     } else {
       MS_LOG(ERROR) << "device type is: " << device->GetDeviceType();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,9 @@ class GeGraphExecutor : public LiteGraphExecutor {
 
   std::vector<tensor::Tensor> GetOutputInfos(const FuncGraphPtr &) override;
 
-  static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
-                                   bool export_air, const ConfigInfos config_infos = {});
+  static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const std::shared_ptr<Context> &ctx,
+                                   const transform::TensorOrderMap &init_inputs_map, bool export_air,
+                                   const ConfigInfos config_infos = {});
 
  private:
   const std::shared_ptr<mindspore::Context> context_;
