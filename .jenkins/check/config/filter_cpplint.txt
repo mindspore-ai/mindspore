@@ -27,6 +27,7 @@
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/threadsafe_fn"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.cc"            "runtime/references"
 "mindspore/mindspore/ccsrc/utils/dynamic_obfuscation/dynamic_obfuscation.h"            "runtime/references"
+"mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/sequence/sequence_addn_gpu_kernel.cc"          "whitespace/indent"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
