@@ -603,8 +603,7 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   } else if (IsGeTrain()) {
     auto soc_version = device::ascend::GetSocVersion();
     if (kAscend910BVersions.count(soc_version) != 0) {
-      (*ge_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
-      MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype. soc_version is " << soc_version;
+      MS_LOG(INFO) << "The default value of precision_mode is set by CANN. soc_version is " << soc_version;
     } else {
       (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
       MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16. soc_version is " << soc_version;
@@ -613,10 +612,11 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
   }
 
-  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_JIT_COMPILE)) {
-    (*ge_options)["ge.jit_compile"] = "1";
+  if (ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) != "") {
+    (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
+    MS_LOG(INFO) << "Set jit_compile " << ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) << ".";
   } else {
-    (*ge_options)["ge.jit_compile"] = "0";
+    MS_LOG(INFO) << "The default value of jit_compile is set by CANN.";
   }
 }
 
