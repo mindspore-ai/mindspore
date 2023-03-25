@@ -78,9 +78,7 @@ class CNodeZeroCopyTask : public ZeroCopyTask {
  public:
   CNodeZeroCopyTask(const AnfNodeWeakPtr &anf_node, size_t output_index, void *args_base, size_t args_offset,
                     const std::string &task_name)
-      : ZeroCopyTask(anf_node, args_base, args_offset, task_name) {
-    output_index_ = output_index;
-  }
+      : ZeroCopyTask(anf_node, args_base, args_offset, task_name), output_index_(output_index) {}
   ~CNodeZeroCopyTask() override = default;
   void *GetAddressPtr() override;
 

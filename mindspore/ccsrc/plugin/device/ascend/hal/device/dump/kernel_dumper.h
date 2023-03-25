@@ -64,9 +64,9 @@ class KernelDumper : public debug::OverflowDumper {
   ~KernelDumper();
 
   void OpLoadDumpInfo(const CNodePtr &kernel) override;
-  void DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t stream);
+  void DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t &stream);
   void Init() override;
-  void ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t stream);
+  void ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t &stream);
 #ifndef ENABLE_SECURITY
   void OpDebugRegisterForStream(const CNodePtr &kernel) override;
   void OpDebugUnregisterForStream() override;
