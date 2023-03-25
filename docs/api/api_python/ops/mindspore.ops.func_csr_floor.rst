@@ -9,7 +9,7 @@ mindspore.ops.csr_floor
         out_i = \lfloor x_i \rfloor
 
     参数：
-        - **x** (CSRTensor) - Floor的输入，任意维度的CSRTensor，秩应小于8。其数据类型必须为float16、float32。
+        - **x** (CSRTensor) - Floor的输入，任意维度的CSRTensor，秩应小于8。其数据类型必须为float16、float32、float64。
 
     返回：
         CSRTensor，shape与 `x` 相同。
