@@ -349,7 +349,7 @@ void ConjugateTransposeCpuKernelMod::TransposeDim4(const T *in_data, T *out_data
         size_t out_stride2_k = k * out_stride2;
         size_t stride2_k = k * stride2;
         for (size_t m = 0; m < static_cast<uint32_t>(output3); ++m) {
-          int num = stride0_i + stride1_j + stride2_k + m * stride3;
+          int num = SizeToLong(stride0_i + stride1_j + stride2_k + m * stride3);
           if (num >= data_size) {
             MS_LOG(EXCEPTION) << "For 'ConjugateTranspose', dimension of input data exceed data size." << num;
           }
