@@ -220,7 +220,7 @@ class ModelImpl {
   // config info not in context
   ConfigInfos config_info_;
   std::map<std::string, TypeId> execution_plan_;
-  std::mutex mutex_;
+  std::recursive_mutex mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_
