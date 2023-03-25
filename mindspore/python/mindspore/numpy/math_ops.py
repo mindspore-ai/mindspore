@@ -1438,7 +1438,7 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [-1.  3.]
     """
-    return a.max(axis, keepdims, initial, where)
+    return a.max(axis, keepdims, initial=initial, where=where)
 
 
 def amin(a, axis=None, keepdims=False, initial=None, where=True):
@@ -1493,7 +1493,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [10.  1.]
     """
-    return a.min(axis, keepdims, initial, where)
+    return a.min(axis, keepdims, initial=initial, where=where)
 
 
 def hypot(x1, x2, dtype=None):
