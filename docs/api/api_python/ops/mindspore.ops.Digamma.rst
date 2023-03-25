@@ -9,7 +9,7 @@
         P(x) = grad(ln(gamma(x)))
 
     .. warning::
-        此算子为实验性算子，将来可能面临更改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     输入：
         - **x** (Tensor) - 输入Tensor。数据类型为 `float16` 、 `float32` 或者 `float64` 。

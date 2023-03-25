@@ -759,7 +759,7 @@ class PyFunc(PrimitiveWithInfer):
     checkpoint and load to the network again, but will lose any Python function state.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         fn (function): Python function which inputs and outputs should be Python built-in scalar or numpy ndarray.

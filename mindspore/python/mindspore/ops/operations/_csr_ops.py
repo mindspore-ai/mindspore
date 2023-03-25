@@ -22,7 +22,7 @@ class CSRReduceSum(Primitive):
     in the dimension.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **indptr** (Tensor) - A Tensor.
@@ -72,7 +72,7 @@ class CSRMV(Primitive):
     Sparse matrix-vector multiplication.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **indptr** (Tensor) - A Tensor.
@@ -123,7 +123,7 @@ class CSRMul(Primitive):
     Elemwise multiplication of a CSRTensor (composed of `indptr`, `indices`, `values` and `shape`) and a dense tensor.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         The op outputs a 1-D dense tensor whose shape and values are the same as input `values`.
@@ -177,7 +177,7 @@ class CSRGather(Primitive):
     Returns the values of a CSRTensor indexed from a dense tensor using indptr and indices.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **indptr** (Tensor) - A Tensor.
@@ -225,7 +225,7 @@ class CSR2COO(Primitive):
     Converts the indptr of a CSRTensor to the row indices of a COOTensor.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **indptr** (Tensor) - A Tensor.
@@ -265,7 +265,7 @@ class COO2CSR(Primitive):
     Converts the row indices of a COOTensor to the indptr of a CSRTensor.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **row_indices** (Tensor) - A Tensor.
@@ -357,7 +357,7 @@ class CSRMM(Primitive):
     Sparse matrix-vector multiplication.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **indptr** (Tensor) - A Tensor.

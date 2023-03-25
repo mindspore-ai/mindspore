@@ -154,7 +154,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
     in_strategy and out_strategy define the input and output layout respectively.
     in_strategy/out_strategy should be a tuple, each element of which corresponds to the desired layout of
     this input/output, and None represents data_parallel,
-    which can refer to the description of `mindspore.ops.Primitive.shard`.
+    which can refer to the description of :func:`mindspore.ops.Primitive.shard`.
     The parallel strategies of remaining operators are derived from the strategy specified by the input and output.
 
     Note:
@@ -162,16 +162,18 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         set the parallel mode in `set_auto_parallel_context` to "auto_parallel"
         and the search mode to "sharding_propagation".
         If the input contain Parameter, its strategy should be set in `in_strategy`.
+        For more details about shard, please refer to `Functional Operator Sharding
+        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_.
 
     Args:
         fn (Union[Cell, Function]): Function to be executed in parallel.
                                     Its arguments and return value must be Tensor or Parameter.
-                                    If fn is a Cell with parameters, fn needs to be an instantiated object,
+                                    If `fn` is a Cell with parameters, `fn` needs to be an instantiated object,
                                     otherwise its arguments cannot be accessed.
         in_strategy (tuple): Define the layout of inputs, each element of the tuple should be a tuple or None.
                              Tuple defines the layout of the corresponding input
                              and None represents a data parallel strategy.
-        out_strategy (Union[tuple, None]): Define the layout of outputs similar with in_strategy.
+        out_strategy (Union[tuple, None]): Define the layout of outputs similar with `in_strategy`.
                                            It is not in use right now. Default: None.
         parameter_plan (Union[dict, None]): Define the layout for the specified parameters. Each element in dict
                                             defines the layout of the parameter like "param_name: layout".
@@ -180,7 +182,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
                                             If the parameter name is incorrect or the corresponding parameter
                                             has been set, the parameter setting will be ignored.
                                             Default: None.
-        device (string): Select a certain device target. It is not in use right now.
+        device (string): Select a certain `device` target. It is not in use right now.
                          Support ["CPU", "GPU", "Ascend"]. Default: "Ascend".
         level (int): Option for parallel strategy infer algorithm, namely the object function, maximize computation
                      over communication ratio, maximize speed performance, minimize memory usage etc. It is not in
@@ -190,20 +192,17 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         Function, return the function that will be executed under auto parallel process.
 
     Raises:
-        AssertionError:
-            - If execute mode is not PYNATIVE_MODE.
-            - If parallel mode is not "auto_parallel".
-            - If search_mode it not "sharding_propagation".
-            - If device_target it not "Ascend" or "GPU".
-
-        TypeError:
-            - If `in_strategy` is not a tuple.
-            - If `out_strategy` is not a tuple or None.
-            - If `parameter_plan` is not a dict or None.
-            - If any key in `parameter_plan` is not a str.
-            - If any value in `parameter_plan` is not a tuple.
-            - If `device` is not a str.
-            - If `level` is not an integer.
+        AssertionError: If execute mode is not PYNATIVE_MODE.
+        AssertionError: If parallel mode is not "auto_parallel".
+        AssertionError: If search_mode it not "sharding_propagation".
+        AssertionError: If device_target it not "Ascend" or "GPU".
+        TypeError: If `in_strategy` is not a tuple.
+        TypeError: If `out_strategy` is not a tuple or None.
+        TypeError: If `parameter_plan` is not a dict or None.
+        TypeError: If any key in `parameter_plan` is not a str.
+        TypeError: If any value in `parameter_plan` is not a tuple.
+        TypeError: If `device` is not a str.
+        TypeError: If `level` is not an integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

@@ -19,7 +19,7 @@ mindspore.ops.igamma
     :math:`Q(a, x)` 则为正规化的上层完全伽马函数。   
  
     .. warning::
-        这是一个实验原型，可以更改和/或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **input** (Tensor) - 输入Tensor，数据类型为float32或者float64。

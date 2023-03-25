@@ -1141,7 +1141,7 @@ def unique(input):
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Returns:
         Tuple, containing Tensor objects (`y`, `idx`), `y` is a tensor with the

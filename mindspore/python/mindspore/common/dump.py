@@ -31,7 +31,7 @@ def set_dump(target, enabled=True):
     a :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` is False.
 
     .. warning::
-        This is an experimental prototype that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Note:
         1. This API is only effective for GRAPH_MODE with Ascend backend.

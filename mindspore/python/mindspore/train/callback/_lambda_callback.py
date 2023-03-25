@@ -26,8 +26,8 @@ class LambdaCallback(Callback):
     at the appropriate time (during `mindspore.train.Model.{train | eval | fit}`). Note that
     each stage of callbacks expects one positional arguments: `run_context`.
 
-    Note:
-        This is an experimental interface that is subject to change or deletion.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         on_train_epoch_begin (Function): called at each train epoch begin.

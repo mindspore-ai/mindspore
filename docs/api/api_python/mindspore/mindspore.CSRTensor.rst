@@ -15,9 +15,9 @@ mindspore.CSRTensor
 
     `CSRTensor` 的算术运算包括：加（+）、减（-）、乘（*）、除（/）。详细的算术运算支持请参考 `运算符 <https://www.mindspore.cn/docs/zh-CN/master/note/static_graph_syntax_support.html#%E8%BF%90%E7%AE%97%E7%AC%A6>`_。
 
-    .. note::
-        这是一个实验特性，在未来可能会发生API的变化。
-        如果 `indptr` 或 `indices` 的值不合法，行为将没有定义。不合法的值包括当 `values` 或 `indices` 的长度超出了 `indptr` 所指定的取值范围，以及当 `indices` 在同一行中出现重复的列。
+    .. warning::
+        - 这是一个实验性API，后续可能修改或删除。
+        - 如果 `indptr` 或 `indices` 的值不合法，行为将没有定义。不合法的值包括当 `values` 或 `indices` 的长度超出了 `indptr` 所指定的取值范围，以及当 `indices` 在同一行中出现重复的列。
 
     参数：
         - **indptr** (Tensor) - shape为 :math:`(M)` 的一维整数Tensor，其中M等于 `shape[0] + 1` ，表示每行非零元素的在 `values` 中存储的起止位置。默认值：None。支持的数据类型为int16，int32和int64。
