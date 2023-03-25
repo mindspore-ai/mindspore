@@ -2372,7 +2372,7 @@ class Logit(Primitive):
     Args:
         eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: -1.0.
 
-    Inupts:
+    Inputs:
         - **x** (Tensor) - The input tensor.
 
     Outputs:
