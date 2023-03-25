@@ -33,7 +33,6 @@ typedef struct KernelBase {
   int (*compute)(struct KernelBase *self);
   int (*resize)(struct KernelBase *self);
   int (*infershape)(struct KernelBase *self);
-  bool infer_shape_;
   OpParameter *param_;
   int thread_nr_;
   ExecEnv *env_;
@@ -41,6 +40,9 @@ typedef struct KernelBase {
   size_t in_size_;
   TensorC *out_;
   size_t out_size_;
+  bool train_session_;
+  void *workspace_; /* only used in train */
+  int work_size_;   /* only used in train */
 } KernelBase;
 
 #ifdef _MSC_VER

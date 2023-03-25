@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_EXPERIMENT_MATMUL_OPTIMIZE_H_
-#define MINDSPORE_NNACL_EXPERIMENT_MATMUL_OPTIMIZE_H_
+#ifdef ENABLE_SSE
+#include "nnacl/kernel/matmul_fp32_sse.h"
+#include "nnacl/kernel/matmul_fp32_base.h"
 
-#include "nnacl/kernel.h"
-#include "nnacl/matmul_parameter.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-typedef struct MatmulOptStru {
-  KernelBase *base;
-  MatMulParameter param;
-  int row_tile;
-  int col_tile;
-} MatmulOptStru;
-
-void MatmulOpt_prepare(MatmulOptStru *matmul);
-
-#ifdef __cplusplus
+KernelBase *CreateMatmulFp32Sse() {
+  MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32();
+  return (KernelBase *)matmul;
 }
 #endif
-#endif  // MINDSPORE_NNACL_EXPERIMENT_MATMUL_OPTIMIZE_H_
