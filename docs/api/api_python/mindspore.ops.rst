@@ -25,6 +25,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
     mindspore.ops.ctc_greedy_decoder
+    mindspore.ops.conv1d
     mindspore.ops.conv2d
     mindspore.ops.conv3d
     mindspore.ops.deformable_conv2d
