@@ -67,7 +67,6 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   ResetResource();
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  indices_column_ = inputs.at(1)->GetShapeVector()[1];
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
@@ -100,6 +99,10 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     input_size_list_.push_back(out_indices_size_);
     output_size_list_.push_back(x1_indices_size_);
     output_size_list_.push_back(x2_indices_size_);
+  }
+  auto dims = inputs.at(0)->GetShapeVector()[1];
+  if (dims >= 0) {
+    indices_column_ = LongToSize(dims);
   }
   return ret;
 }

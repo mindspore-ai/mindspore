@@ -44,16 +44,16 @@ constexpr float kAdamBlock = 1000;
 template <typename T>
 void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &) {
-  T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
-  T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
-  T *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  float *beta1_power = reinterpret_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = reinterpret_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = reinterpret_cast<float *>(inputs[kIndexLr]->addr);
-  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
-  T *gradient = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
+  T *var = static_cast<T *>(inputs[kIndexVar]->addr);
+  T *m = static_cast<T *>(inputs[kIndexM]->addr);
+  T *v = static_cast<T *>(inputs[kIndexV]->addr);
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
+  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
+  T beta1 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
+  T beta2 = static_cast<T>(static_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
+  T epsilon = static_cast<T>(static_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
+  T *gradient = static_cast<T *>(inputs[kIndexGrad]->addr);
   constexpr float ONE = 1.0;
 
   for (int64_t b = 0; b < batch_size_; b++) {
@@ -82,12 +82,12 @@ void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
 
 void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &) {
-  float *var = reinterpret_cast<float *>(inputs[kIndexVar]->addr);
-  float *m = reinterpret_cast<float *>(inputs[kIndexM]->addr);
-  float *v = reinterpret_cast<float *>(inputs[kIndexV]->addr);
-  float *beta1_power = reinterpret_cast<float *>(inputs[kIndexBeta1Power]->addr);
-  float *beta2_power = reinterpret_cast<float *>(inputs[kIndexBeta2Power]->addr);
-  float *lr = reinterpret_cast<float *>(inputs[kIndexLr]->addr);
+  float *var = static_cast<float *>(inputs[kIndexVar]->addr);
+  float *m = static_cast<float *>(inputs[kIndexM]->addr);
+  float *v = static_cast<float *>(inputs[kIndexV]->addr);
+  float *beta1_power = static_cast<float *>(inputs[kIndexBeta1Power]->addr);
+  float *beta2_power = static_cast<float *>(inputs[kIndexBeta2Power]->addr);
+  float *lr = static_cast<float *>(inputs[kIndexLr]->addr);
   float beta1 = reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex];
   float beta2 = reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex];
   float epsilon = reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex];
@@ -176,8 +176,8 @@ int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
-  input_elements_ = input_elements_ / batch_size_;
+  input_elements_ = IntToSize(std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>()));
+  input_elements_ = input_elements_ / LongToSize(batch_size_);
   if (batch_rank_ > 1) {
     if (var_shape.size() < lr_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
