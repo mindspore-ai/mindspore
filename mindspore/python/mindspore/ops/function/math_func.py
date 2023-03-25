@@ -3357,7 +3357,7 @@ def matrix_exp(input):
         TypeError: If the dtype of `input` is not one of the following dtype:
                    float16, float32, float64, complex64, complex128.
         ValueError: If the rank of `input` is less than 2.
-        ValueError: If the last two dimensions of `input` are not equal.
+        ValueError: If the size of last two dimensions of `input` are not equal.
 
     Supported Platforms:
 
@@ -3479,7 +3479,15 @@ def trace(input):
         >>> input = Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]]), mindspore.float32)
         >>> output = ops.trace(input)
         >>> print(output)
-        42.
+        42.0
+        >>> input = Tensor(np.arange(1, 13).reshape(3, 4), mindspore.float32)
+        >>> output = ops.trace(input)
+        >>> print(output)
+        18.0
+        >>> input = Tensor(np.arange(12, 0, -1).reshape(4, 3), mindspore.float32)
+        >>> output = ops.trace(input)
+        >>> print(output)
+        24.0
     """
     trace_ = _get_cache_prim(P.Trace)()
     return trace_(input)

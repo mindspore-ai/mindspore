@@ -3957,6 +3957,12 @@ def nonzero(input):
         >>> print(output)
         [[0 0 0]
          [0 1 0]]
+        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+        >>> output = ops.nonzero(x)
+        >>> print(output)
+        [[0]
+         [2]
+         [4]]
     """
     return nonzero_(input)
 

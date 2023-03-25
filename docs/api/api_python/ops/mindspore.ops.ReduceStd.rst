@@ -3,8 +3,7 @@ mindspore.ops.ReduceStd
 
 .. py:class:: mindspore.ops.ReduceStd(axis=(), unbiased=True, keep_dims=False)
 
-    返回输入Tensor在 `axis` 维上每一行的标准差和均值。
-    如果 `axis` 是维度列表，则减少列表内的所有维度。
+    返回输入Tensor在 `axis` 对应维度上的标准差和均值。
 
     参数：
         - **axis** (Union[int, tuple(int), list(int)]，可选) - 要进行规约计算的维度。只允许常量值。假设 `input_x` 的秩为 `r` ，取值范围 :math:`[-r,r)` 。默认值: ()，对所有维度进行规约。

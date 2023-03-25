@@ -1525,7 +1525,7 @@ class CosineEmbeddingLoss(LossBase):
 
 class MultilabelMarginLoss(LossBase):
     r"""
-    Creates a loss criterion that minimizes a margin-based loss for multi-class
+    Creates a loss criterion that minimizes the hinge loss for multi-class
     classification tasks.
     It takes a 2D mini-batch Tensor :math:`x` as input and a 2D
     Tensor :math:`y` containing target class indices as output.

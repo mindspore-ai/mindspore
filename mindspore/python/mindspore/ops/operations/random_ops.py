@@ -426,16 +426,20 @@ class ParameterizedTruncatedNormal(Primitive):
         seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
 
     Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
-          int32 and int64.
+        - **shape** (Tensor) - The shape of random tensor to be generated.
+          It has shape :math:`(batch\_size, *)` where :math:`*` is an additional
+          dimension with a length of no less than 1.
+          Its type must be one of the following types: int32 and int64.
         - **mean** (Tensor) - The parameter defines the mean of truncated normal distribution.
+          It has shape :math:`()` or :math:`(batch\_size, )`.
           Its type must be one of the following types:float16, float32, float64.
         - **stdevs** (Tensor) - The parameter defines the standard deviation for truncation of
-          the normal distribution. It must be greater than 0 and have the same type as means.
+          the normal distribution.
+          It must be greater than 0 and have the same shape and type as means.
         - **min** (Tensor) - The parameter defines the minimum of
-          truncated normal distribution. It must have the same type as means.
+          truncated normal distribution. It must have the same shape and type as means.
         - **max** (Tensor) - The parameter defines the maximum of
-          truncated normal distribution. It must have the same type as means.
+          truncated normal distribution. It must have the same shape and type as means.
 
     Outputs:
         Tensor. Its shape is specified by the input `shape` and it must have the same type as means.

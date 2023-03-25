@@ -10,7 +10,7 @@ mindspore.ops.UnravelIndex
         - **dims** (Tensor) - `indices` 转换之后的shape，输入Tensor。其维度必须为1，数据类型与 `indices` 一致。
 
     输出：
-        - **y** - 输出类型与 `indices` 一致。 `y` 的维度必须是二维或者一维（如果 `indices` 是零维）。
+        - **y** - Tensor，必须是二维或者一维（如果 `indices` 是零维），数据类型与 `indices` 一致。
 
     异常：
         - **TypeError** - 如果 `indices` 和 `dims` 的数据类型不一致。
