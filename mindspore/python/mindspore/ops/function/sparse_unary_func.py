@@ -363,10 +363,12 @@ def coo_relu(x: COOTensor) -> COOTensor:
         output one more Mask.
 
     Args:
-        x (COOTensor): Input COOTensor.
+        x (COOTensor): Input COOTensor with shape :math:`(N, *)`, where :math:`*`
+            means any number of additional dimensions. Its dtype is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
-        COOTensor of shape :math:`(N, *)`, with the same dtype and shape as the `x`.
+        COOTensor, has the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If dtype of `x` is not a number.

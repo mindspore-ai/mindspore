@@ -1,7 +1,7 @@
 mindspore.ops.MaxPoolWithArgmaxV2
 =================================
 
-.. py:class mindspore.ops.MaxPoolWithArgmaxV2(kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mindspore.int64)
+.. py:class:: mindspore.ops.MaxPoolWithArgmaxV2(kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mindspore.int64)
 
     对输入Tensor执行最大池化运算，并返回最大值和索引。
 

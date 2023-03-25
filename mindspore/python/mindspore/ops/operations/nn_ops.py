@@ -1793,55 +1793,11 @@ class MaxPoolV1(Primitive):
 
 class MaxPoolWithArgmax(Primitive):
     r"""
-    Performs max pooling on the input Tensor and returns both max values and indices.
-
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
-    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows:
-
-    .. math::
-        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
-
-    Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
-            value, is an int number that represents height and width of the kernel, or a tuple of
-            two int numbers that represent height and width respectively. Default: 1.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            not only the height of movement but also the width of movement, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
-            Default: "valid".
-
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top, bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
-
-            - valid: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
-
-        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
-            Default: 'NCHW'.
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-          Data type must be float16 or float32.
-
-    Outputs:
-        Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
-
-        - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
-          It has the same data type as `x`.
-        - **mask** (Tensor) -  Max values' index represented by the mask. Data type is int32.
-
-    Raises:
-        TypeError: If the data type of `x` is neither float16 nor float32.
-        TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
-        TypeError: If `x` is not a Tensor.
+    `ops.MaxPoolWithArgmax` is deprecated from version 2.0 and will be removed in a future version,
+    use `ops.MaxPoolWithArgmaxV2` instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
@@ -1856,6 +1812,7 @@ class MaxPoolWithArgmax(Primitive):
            [33. 34. 35.]]]]
     """
 
+    @deprecated("2.0", "ops.MaxPoolWithArgmaxV2", False)
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         """Initialize MaxPoolWithArgmax."""
@@ -3640,7 +3597,7 @@ class ResizeBilinear(PrimitiveWithInfer):
     Supported Platforms:
         Deprecated
     """
-    @deprecated("2.0", "ResizeBilinearV2", False)
+    @deprecated("2.0", "ops.ResizeBilinearV2", False)
     @prim_attr_register
     def __init__(self, size, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
@@ -9785,27 +9742,7 @@ class Pdist(Primitive):
     r"""
     Computes the p-norm distance between each pair of row vectors in the input.
 
-    .. math::
-
-        y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p},
-
-    where :math:`x_{i}, x_{j}` are two different row vectors in the input.
-
-    Args:
-        p (float): p value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
-
-    Inputs:
-        - **x** (Tensor) - Input tensor with dtype of float16 or float32 and shape of :math:`(N, M)`.
-
-    Outputs:
-        Tensor, has the same dtype as `x`, whose shape is :math:`(N * (N - 1) / 2)`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
-        TypeError: If `p` is not a float.
-        ValueError: If `p` is a negative float.
-        ValueError: If dimension of `x` is not 2.
+    Refer to :func:`mindspore.ops.pdist` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -10268,32 +10205,10 @@ class NuclearNorm(Primitive):
 
 
 class GLU(Primitive):
-    r"""The gated linear unit.
+    r"""
+    Computes GLU (Gated Linear Unit activation function) of input tensors.
 
-    .. math ::
-        \begin{array}{ll} \\
-            \text{GLU}(a, b) = a \otimes \sigma(b)
-        \end{array}
-    where `input` is split in half along `dim` to form `a` and `b`,
-    σ is the sigmoid function and ⊗ is the element-wise product between matrices.
-
-    Args:
-        axis (int): Dimension on which to split the input.
-            The value of `axis` must be in the range [-rank(`x`), rank(`x`)). Default: -1.
-
-    Inputs:
-        - **x** (Tensor) - Input tensor. `x.shape[axis]` must be even.
-
-    Outputs:
-        - **y** (Tensor) - The output of Glu, has the same data type with `x`.
-        With the same shape as `x`, except for the dimension of `axis`, y.shape[axis] = x.shape[axis] / 2.
-
-    Raises:
-        TypeError: If data type of `x` is not one of the following: float16, float32, float64.
-        TypeError: If data type of `axis` is not int.
-        ValueError: If `axis` is not in the range [-rank(`x`), rank(`x`)).
-        ValueError: If the dimension of the `x` is not equal or greater than 1.
-        ValueError: If `x.shape[axis]` is not even.
+    Refer to :func:`mindspore.ops.glu` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -5318,7 +5318,7 @@ def pixel_unshuffle(input, downscale_factor):
 
 def glu(x, axis=-1):
     r"""
-    Computes GLU (Gated Linear Unit activation function) of input tensors .
+    Computes GLU (Gated Linear Unit activation function) of input tensors.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
@@ -5668,8 +5668,8 @@ def channel_shuffle(x, groups):
     rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
 
     Args:
-        group (int): Number of groups to divide channels in.
-        x (Tensor): Tensor of shape :math:`(*, C, H, W)`,
+        groups (int): Number of groups to divide channels in.
+        x (Tensor): Tensor to be divided, it has shape :math:`(*, C, H, W)`,
           with float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64 data type.
 
     Returns:
@@ -5679,8 +5679,8 @@ def channel_shuffle(x, groups):
         TypeError: If data type of `x` is not one of the following:
                    float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64.
         TypeError: If dim of `x` is < 4.
-        ValueError: If `group` is not a positive number.
-        ValueError: If number of channels can not be divisible by `group`.
+        ValueError: If `groups` is not a positive number.
+        ValueError: If channel number of `x` is not divisible by `groups`.
 
     Supported Platforms:
         ``CPU``
