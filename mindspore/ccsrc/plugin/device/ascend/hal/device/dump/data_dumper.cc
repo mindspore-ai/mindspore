@@ -49,36 +49,6 @@ DataDumper::~DataDumper() {
 }
 
 #ifndef ENABLE_SECURITY
-void DataDumper::GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const {
-  MS_EXCEPTION_IF_NULL(kernel_graph_);
-  for (const auto &kernel : kernel_graph_->execution_order()) {
-    MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
-        DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
-      auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
-      for (size_t i = 0; i < input_size; ++i) {
-        auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
-        auto input = input_with_index.first;
-        MS_EXCEPTION_IF_NULL(input);
-        if (input->isa<CNode>()) {
-          MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << kernel->fullname_with_scope()
-                       << " Input:" << input->fullname_with_scope();
-          auto it = kernel_map->try_emplace(input->fullname_with_scope(), input->cast<CNodePtr>());
-          if (!it.second) {
-            MS_LOG(INFO) << "Node name already exist: " << input->fullname_with_scope();
-          }
-        }
-      }
-    } else if (KernelNeedDump(kernel)) {
-      MS_LOG(INFO) << "[AsyncDump] Match Node:" << kernel->fullname_with_scope();
-      auto it = kernel_map->try_emplace(kernel->fullname_with_scope(), kernel);
-      if (!it.second) {
-        MS_LOG(INFO) << "Node name already exist: " << kernel->fullname_with_scope();
-      }
-    }
-  }
-}
-
 void DataDumper::LoadDumpInfo() {
   MS_LOG(INFO) << "[DataDump] LoadDumpInfo start";
   MS_EXCEPTION_IF_NULL(kernel_graph_);
@@ -98,12 +68,12 @@ void DataDumper::LoadDumpInfo() {
       continue;
     }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->UniqueName();
-    (void)dump_kernel_names_.emplace_back(kernel->UniqueName());
-    DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL) {
       MS_LOG(INFO) << "Skip HCCL kernel.";
       continue;
     }
+    (void)dump_kernel_names_.emplace_back(kernel->UniqueName());
+    DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
     aicpu::dump::Task task;
     ConstructDumpTask(NOT_NULL(kernel), NOT_NULL(&task));
     MS_EXCEPTION_IF_NULL(dump_info.mutable_task());
