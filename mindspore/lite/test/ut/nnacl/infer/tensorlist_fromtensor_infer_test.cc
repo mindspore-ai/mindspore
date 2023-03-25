@@ -67,7 +67,7 @@ TEST_F(TensorlistFromtensorInferTest, TensorlistFromtensorInferTest0) {
     delete inputs[i];
   }
   lite::FreeOutTensorC(&outputs);
-  delete out;
+  free(out);
 }
 
 }  // namespace mindspore

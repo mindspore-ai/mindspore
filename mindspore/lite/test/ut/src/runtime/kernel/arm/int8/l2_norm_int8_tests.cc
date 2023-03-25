@@ -67,7 +67,6 @@ TEST_F(TestL2NormInt8, norm) {
   for (int i = 0; i < 10; ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
-  free(param_.axis_);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
   delete kernel;
@@ -113,7 +112,6 @@ TEST_F(TestL2NormInt8, norm2) {
   for (size_t i = 0; i < sizeof(expect); ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
-  free(param_.axis_);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
   delete kernel;
