@@ -80,7 +80,7 @@ class BACKEND_EXPORT Somas {
   Somas &operator=(const Somas &) = delete;
   virtual ~Somas() = default;
 
-  bool IsSupportSomas(const session::KernelGraph &graph);
+  bool IsSupportSomas(const session::KernelGraph &graph) const;
   bool Assign(const session::KernelGraph &graph);
   bool Assign(const KernelGraphPtr &graph_ptr);
   std::string SomasInfo(bool calc_hash = false) const;
