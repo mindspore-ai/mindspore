@@ -23,10 +23,11 @@ trans_data_op_info = TBERegOp("TransData") \
     .compute_cost(10) \
     .kernel_name("trans_data") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("src_format", "required", "str",
-          "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
+          "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NHWC") \
     .attr("dst_format", "required", "str",
-          "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
+          "DefaultFormat, NC1HWC0, FRACTAL_Z, FRACTAL_NZ, HWCN, C1HWNCoC0, NHWC") \
     .attr("groups", "optional", "int", "all", "1") \
     .input(0, "src", False, "required", "all") \
     .output(0, "dst", False, "required", "all") \
@@ -125,8 +126,6 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.U64_HWCN, DataType.U64_Default) \
     .dtype_format(DataType.U64_HWCN, DataType.U64_NHWC) \
     .dtype_format(DataType.I32_FracNZ, DataType.I32_Default) \
-    .dtype_format(DataType.F16_NDHWC, DataType.F16_5HD) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_NDHWC) \
     .dtype_format(DataType.I8_HWCN, DataType.I8_C1HWNCoC0) \
     .dtype_format(DataType.F16_HWCN, DataType.F16_FracZ) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_HWCN) \
@@ -136,24 +135,12 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F32_HWCN, DataType.F32_FracZNLSTM) \
     .dtype_format(DataType.F16_FracZNLSTM, DataType.F16_HWCN) \
     .dtype_format(DataType.F32_FracZNLSTM, DataType.F32_HWCN) \
-    .dtype_format(DataType.F16_NDHWC, DataType.F16_NDC1HWC0) \
-    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NDHWC) \
-    .dtype_format(DataType.F16_DHWCN, DataType.F16_FRACTAL_Z_3D) \
-    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_DHWCN) \
     .dtype_format(DataType.F16_NCDHW, DataType.F16_NDC1HWC0) \
     .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NCDHW) \
     .dtype_format(DataType.F16_NCDHW, DataType.F16_FRACTAL_Z_3D) \
     .dtype_format(DataType.F32_NCDHW, DataType.F32_FRACTAL_Z_3D) \
     .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_NCDHW) \
     .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_NCDHW) \
-    .dtype_format(DataType.F16_NDHWC, DataType.F16_FRACTAL_Z_3D) \
-    .dtype_format(DataType.F32_NDHWC, DataType.F32_FRACTAL_Z_3D) \
-    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_NDHWC) \
-    .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_NDHWC) \
-    .dtype_format(DataType.F32_DHWCN, DataType.F32_FRACTAL_Z_3D) \
-    .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_DHWCN) \
-    .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NDHWC) \
-    .dtype_format(DataType.F32_NDHWC, DataType.F32_NDC1HWC0) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NCDHW) \
     .dtype_format(DataType.F32_NCDHW, DataType.F32_NDC1HWC0) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NCDHW) \
