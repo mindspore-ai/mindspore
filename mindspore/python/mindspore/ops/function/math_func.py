@@ -4831,7 +4831,7 @@ def _check_var_std_input(input, ddof, keepdims, axis, cls_name):
     return axis
 
 
-def var(input, axis=None, ddof=0, keepdims=False): # pylint: disable=redefined-outer-name
+def var(input, axis=None, ddof=0, keepdims=False):
     r"""
     Returns the variance of each row of the input Tensor by default, or it can calculate them
     in specified dimension `axis`. If `axis` is a list of dimensions, reduce over all of them.
@@ -7490,7 +7490,8 @@ def prod(input, axis=None, keep_dims=False):
 
 
 def _multi_svd_norm(x, row_axis, col_axis, op):
-    y = moveaxis(x.astype(mstype.float32), (row_axis, col_axis), (-2, -1))
+    """_multi_svd_norm for norm."""
+    y = _moveaxis(x.astype(mstype.float32), (row_axis, col_axis), (-2, -1))
     if op == 'amax':
         return ops.svd(y, compute_uv=False).max(axis=-1)
     if op == 'amin':
@@ -7500,7 +7501,8 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     raise ValueError(f"For svd_norm, the op input must be one of ['amax', 'amin', 'sum'], but got f{op}")
 
 
-def normalize_axis_index(axis, ndim):
+def _normalize_axis_index(axis, ndim):
+    """normalize_axis_index for norm."""
     # pylint: disable=chained-comparison
     if axis >= 0 and axis < ndim:
         return axis
@@ -7510,9 +7512,9 @@ def normalize_axis_index(axis, ndim):
     raise ValueError('For norm, the dim is out of range.')
 
 
-def moveaxis(x, source, destination):
-    destination = tuple([normalize_axis_index(ax, x.ndim) for ax in destination])
-    source = tuple([normalize_axis_index(ax, x.ndim) for ax in source])
+def _moveaxis(x, source, destination):
+    destination = tuple([_normalize_axis_index(ax, x.ndim) for ax in destination])
+    source = tuple([_normalize_axis_index(ax, x.ndim) for ax in source])
     perm = [n for n in range(x.ndim) if n not in source]
     for dest, src in sorted(zip(destination, source)):
         perm.insert(dest, src)
@@ -7717,8 +7719,8 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     if isinstance(ord, int):
         if len(dim) == 2:
             row_axis, col_axis = dim
-            row_axis = normalize_axis_index(row_axis, ndim)
-            col_axis = normalize_axis_index(col_axis, ndim)
+            row_axis = _normalize_axis_index(row_axis, ndim)
+            col_axis = _normalize_axis_index(col_axis, ndim)
             if ord == 1:
                 if col_axis > row_axis:
                     col_axis -= 1
@@ -7751,6 +7753,9 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
             return ops.max(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
         if ord == -float('inf'):
             return ops.min(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
+        if ord == 0:
+            # Zero norm
+            return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
         if ord is None:
             # special case for speedup
             s = ops.conj(A) * A
@@ -7769,8 +7774,8 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         return ret
     if len(dim) == 2:
         row_axis, col_axis = dim
-        row_axis = normalize_axis_index(row_axis, ndim)
-        col_axis = normalize_axis_index(col_axis, ndim)
+        row_axis = _normalize_axis_index(row_axis, ndim)
+        col_axis = _normalize_axis_index(col_axis, ndim)
         if row_axis == col_axis:
             raise ValueError('For norm, the elements of dim can not be duplicate.')
 

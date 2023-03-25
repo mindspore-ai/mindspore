@@ -18,7 +18,6 @@ This example mainly illustrates the usage of rewrite.
 from typing import OrderedDict
 import numpy as np
 
-import mindspore
 from mindspore import Tensor, export
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode, \
     TreeNodeHelper

@@ -23,6 +23,7 @@ class Registry(UserDict):
     """Registry class for registry functions for creating ast node."""
 
     def register(self, obj_str, obj):
+        """Register object by str."""
         if isinstance(obj_str, str):
             self[obj_str] = obj
 
