@@ -3296,7 +3296,7 @@ def det(input):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The shape is :math:`x.shape[:-2]`, and the dtype is same as `input`.
+        Tensor. The shape is :math:`input.shape[:-2]`, and the dtype is same as `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -5932,7 +5932,7 @@ def deg2rad(x):
     Converts angles in degrees to angles in radians element-wise.
 
     Args:
-        x (Tensor[Number]): The input tensor.
+        x (Tensor): The input tensor.
             With float16, float32 or float64 data type.
 
     Returns:
@@ -9792,7 +9792,8 @@ def cumprod(input, dim, dtype=None):
         input (Tensor[Number]): The input tensor.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
-        dtype: The desired data type of output. Default: None.
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of output.
+            If not specified, remains the same as the original Tensor. Default: None.
 
     Returns:
         Tensor, has the same shape and dtype as the `input` unless `dtype` is specified.
@@ -10324,7 +10325,7 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
         offset (int, optional): Offset of the diagonal. :math:`offset=0` refers to the main diagonal. Default: 0.
 
             - If :math:`offset>0`, fill the diagonals that are `offset` units upward from the main diagonal.
-            - If :math:`offset<0`, fill the diagonals that are `offset` units downward from the main diagonal.
+            - If :math:`offset<0`, fill the diagonals that are `|offset|` units downward from the main diagonal.
 
         dim1 (int, optional): The first dimension in `input` with respect to which to fill diagonal. Default: -2.
         dim2 (int, optional): The second dimension in `input` with respect to which to fill diagonal. Default: -1.
