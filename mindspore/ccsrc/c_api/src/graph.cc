@@ -18,6 +18,7 @@
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
+#include "c_api/src/pass.h"
 #include "base/base.h"
 #include "ops/core_ops.h"
 #include "ir/func_graph.h"
@@ -26,6 +27,7 @@
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend.h"
 #include "pipeline/jit/pass.h"
+#include "pipeline/jit/static_analysis/auto_monad.h"
 
 GraphHandle MSFuncGraphCreate(ResMgrHandle res_mgr) {
   if (res_mgr == nullptr) {
@@ -139,7 +141,7 @@ STATUS MSFuncGraphSetOutputs(ResMgrHandle res_mgr, GraphHandle graph, Handle con
       ConvertConstScalarInputToTensor(out_node);
       abs_list.push_back(out_node->abstract());
     }
-    auto make_tuple_cnode = res_fg->NewCNode(out_nodes);
+    auto make_tuple_cnode = res_fg->NewCNodeInOrder(out_nodes);
     make_tuple_cnode->set_abstract(std::make_shared<AbstractTupleImpl>(abs_list));
     res_fg->set_output(make_tuple_cnode, force_new_ret);
   } catch (const std::exception &e) {
@@ -264,7 +266,7 @@ STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHand
   return RET_OK;
 }
 
-STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph) {
+STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *opt_pass, size_t pass_num) {
   if (res_mgr == nullptr || graph == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
     return RET_NULL_PTR;
@@ -278,6 +280,7 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph) {
     fg_mgr->AddFuncGraph(func_graph, true);
     MS_EXCEPTION_IF_NULL(fg_mgr);
     func_graph->set_manager(fg_mgr);
+    (void)mindspore::pipeline::AutoMonad(func_graph);
     (void)mindspore::LiftingClone(func_graph);
     context_ptr->Refresh();
     std::string backend_name = context_ptr->backend_policy();
@@ -290,6 +293,18 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph) {
       backend->set_is_multi_graph_sink(false);
     }
     // TODO(XianglongZeng): SetRunMode()
+    for (size_t i = 0; i < pass_num; i++) {
+      auto iter = kPassEnumToFuncMap.find(opt_pass[i]);
+      if (iter == kPassEnumToFuncMap.end()) {
+        MS_LOG(ERROR) << "Unsupported optimization pass: " << opt_pass[i];
+        return RET_ERROR;
+      }
+      auto pass_func = iter->second;
+      auto success = pass_func(func_graph);
+      if (!success) {
+        MS_LOG(WARNING) << "Run optimization pass failed! Pass ID: " << opt_pass[i];
+      }
+    }
     auto actor_info = backend->CompileGraphs(func_graph);
     res_mgr_ptr->SetResult(mindspore::pipeline::kOutput, actor_info);
   } catch (const std::exception &e) {

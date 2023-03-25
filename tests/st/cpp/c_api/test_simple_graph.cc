@@ -36,6 +36,7 @@ class TestSimpleGraph : public ST::Common {
 TEST_F(TestSimpleGraph, TestMultiOutputs) {
   STATUS ret;
   ResMgrHandle res_mgr = MSResourceManagerCreate();
+  ASSERT_TRUE(res_mgr != nullptr);
 
   // test set context
   ContextAutoSet();
@@ -64,7 +65,7 @@ TEST_F(TestSimpleGraph, TestMultiOutputs) {
   // test basic funcGraph compiling and executing
   int64_t a[1] = {97};
   int64_t a_shape[1] = {1};
-  ret = MSFuncGraphCompile(res_mgr, fg);
+  ret = MSFuncGraphCompile(res_mgr, fg, NULL, 0);
   ASSERT_TRUE(ret == RET_OK);
   TensorHandle tensor_a = MSNewTensor(res_mgr, a, MS_INT32, a_shape, 1, 1 * sizeof(int));
   ASSERT_TRUE(tensor_a != nullptr);
@@ -146,7 +147,7 @@ TEST_F(TestSimpleGraph, TestConvReLU) {
   ret = MSFuncGraphSetOutput(res_mgr, fg, op_relu, false);
   ASSERT_TRUE(ret == RET_OK);
 
-  ret = MSFuncGraphCompile(res_mgr, fg);
+  ret = MSFuncGraphCompile(res_mgr, fg, NULL, 0);
   ASSERT_TRUE(ret == RET_OK);
 
   // Graph input data

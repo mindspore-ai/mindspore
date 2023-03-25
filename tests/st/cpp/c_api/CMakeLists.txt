@@ -15,7 +15,12 @@ endif()
 
 file(GLOB_RECURSE C_ST_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
 add_executable(c_st_tests ${C_ST_SRC})
-target_link_libraries(c_st_tests PRIVATE mindspore_shared_lib mindspore_c_api mindspore::gtest)
+target_link_libraries(c_st_tests PRIVATE mindspore_c_api mindspore::gtest)
 target_link_options(c_st_tests PRIVATE -Wl,--unresolved-symbols=ignore-all)
 set_target_properties(c_st_tests PROPERTIES SKIP_BUILD_RPATH TRUE RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+
+# compile custom op so
+add_compile_options(-fvisibility=default)
+add_library(custom_add SHARED ${CMAKE_CURRENT_SOURCE_DIR}/custom_impl/add_with_attr.cc)
+set_target_properties(custom_add PROPERTIES SKIP_BUILD_RPATH TRUE LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

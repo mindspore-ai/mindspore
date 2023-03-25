@@ -133,7 +133,7 @@ MIND_C_API STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, Co
 /// \param[in] graph The given function graph pointer handle.
 ///
 /// \return Error code that indicate whether the function graph compiled successfully.
-MIND_C_API STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph);
+MIND_C_API STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *opt_pass, size_t pass_num);
 
 /// \brief Run the function graph.
 ///

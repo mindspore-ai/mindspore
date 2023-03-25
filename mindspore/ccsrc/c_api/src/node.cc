@@ -96,14 +96,14 @@ NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type,
       cnode_inputs.push_back(input);
       abs_list.push_back(input->abstract());
     }
-    cnode = res_fg->NewCNode(cnode_inputs);
+    cnode = res_fg->NewCNodeInOrder(cnode_inputs);
     MS_EXCEPTION_IF_NULL(cnode);
     if (res_mgr_ptr->GetInfer()) {
-      auto out_abs = mindspore::opt::CppInferShapeAndType(prim, abs_list);
+      auto out_abs = OpInferShapeAndType(prim, abs_list);
       cnode->set_abstract(out_abs);
     }
   } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "FuncGraph create CNode failed. Error info: " << e.what();
+    MS_LOG(ERROR) << "FuncGraph create new operator failed. Error info: " << e.what();
     return nullptr;
   }
   MS_LOG(INFO) << "Add Operator" << op_type;
@@ -128,7 +128,7 @@ NodeHandle MSPackNodesTuple(ResMgrHandle res_mgr, GraphHandle graph, Handle cons
       ConvertConstScalarInputToTensor(in_node);
       abs_list.push_back(in_node->abstract());
     }
-    make_tuple_cnode = res_fg->NewCNode(in_nodes);
+    make_tuple_cnode = res_fg->NewCNodeInOrder(in_nodes);
     MS_EXCEPTION_IF_NULL(make_tuple_cnode);
     make_tuple_cnode->set_abstract(std::make_shared<AbstractTupleImpl>(abs_list));
   } catch (const std::exception &e) {
@@ -163,7 +163,7 @@ NodeHandle MSOpGetSpecOutput(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeH
       auto idx = mindspore::NewValueNode(mindspore::SizeToLong(i));
       auto abs_scalar = std::make_shared<mindspore::abstract::AbstractScalar>(mindspore::SizeToInt(i));
       idx->set_abstract(abs_scalar);
-      ret_node = res_fg->NewCNode({NewValueNode(mindspore::prim::kPrimTupleGetItem), cnode, idx});
+      ret_node = res_fg->NewCNodeInOrder({NewValueNode(mindspore::prim::kPrimTupleGetItem), cnode, idx});
       MS_EXCEPTION_IF_NULL(ret_node);
       ret_node->set_abstract(abs->cast<mindspore::abstract::AbstractTuplePtr>()->elements()[i]);
     } else {
@@ -199,7 +199,7 @@ CNodePtr BuildSwitchStructure(ResMgrHandle res_mgr, GraphHandle graph, NodeHandl
   MS_EXCEPTION_IF_NULL(src_switch);
   auto fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
   MS_EXCEPTION_IF_NULL(fg);
-  CNodePtr switch_call = fg->NewCNode({src_switch});
+  CNodePtr switch_call = fg->NewCNodeInOrder({src_switch});
   MS_EXCEPTION_IF_NULL(switch_call);
   if (set_fg_out) {
     fg->set_output(switch_call);
@@ -336,6 +336,7 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
     NodeHandle cond_raw_ptr = nullptr;
     GraphHandle cond_graph = nullptr;
     FuncGraphPtr src_cond_graph = nullptr;
+    auto main_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     if (src_cond->isa<FuncGraphImpl>()) {
       cond_graph = cond;
       src_cond_graph = src_cond->cast<FuncGraphPtr>();
@@ -348,10 +349,11 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
       MS_EXCEPTION_IF_NULL(cond_graph);
       src_cond_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, cond_graph);
       MS_EXCEPTION_IF_NULL(src_cond_graph);
+      (void)main_fg->AddFuncGraphUsed(src_cond_graph);
       if (src_cond->isa<CNodeImpl>()) {
         auto cond_node = src_cond->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cond_node);
-        auto new_cond = src_cond_graph->NewCNode(cond_node->inputs());
+        auto new_cond = src_cond_graph->NewCNodeInOrder(cond_node->inputs());
         MS_EXCEPTION_IF_NULL(new_cond);
         new_cond->set_abstract(cond_node->abstract());
         cond_raw_ptr = GetRawPtr(res_mgr, new_cond);
@@ -376,7 +378,6 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
     (void)BuildSwitchStructure(res_mgr, cond_graph, switch_input, switchInputNum, true);
 
     // handle main graph call
-    auto main_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
     NodeHandle main_func_call = MSNewFuncCallNode(res_mgr, graph, cond_graph, nullptr, 0);
     auto src_call = GetSrcPtr<AnfNodePtr>(res_mgr, main_func_call);
     main_fg->set_output(src_call);
@@ -398,7 +399,7 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
     } else {
       sub_input_nodes.push_back(body_out_node);
     }
-    auto body_func_call = body_fg->NewCNode(sub_input_nodes);
+    auto body_func_call = body_fg->NewCNodeInOrder(sub_input_nodes);
     MS_EXCEPTION_IF_NULL(src_cond_graph->output());
     body_func_call->set_abstract(src_cond_graph->output()->abstract());
     MS_EXCEPTION_IF_NULL(body_func_call);
@@ -732,9 +733,10 @@ NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph, ConstGraph
       MS_EXCEPTION_IF_NULL(cnode_input);
       cnode_inputs.push_back(cnode_input);
     }
-    cnode = res_fg->NewCNode(cnode_inputs);
+    cnode = res_fg->NewCNodeInOrder(cnode_inputs);
     MS_EXCEPTION_IF_NULL(res_sub_fg->output());
     cnode->set_abstract(res_sub_fg->output()->abstract());
+    (void)res_fg->AddFuncGraphUsed(res_sub_fg);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph create SubGraph node failed. Error info: " << e.what();
     return nullptr;
@@ -759,6 +761,52 @@ NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, DataTypeC t
     param->set_abstract(abs);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph add parameter failed. Error info: " << e.what();
+    return nullptr;
+  }
+  return GetRawPtr(res_mgr, param);
+}
+
+NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value) {
+  if (res_mgr == nullptr || graph == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
+    return nullptr;
+  }
+  ParameterPtr param = nullptr;
+  try {
+    auto res_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
+    MS_EXCEPTION_IF_NULL(res_fg);
+    param = res_fg->add_parameter();
+    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeFloat32);
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    auto tensor = std::make_shared<TensorImpl>(value, type_ptr);
+    tensor->set_param_info(std::make_shared<mindspore::ParamInfo>());
+    param->set_abstract(tensor->ToAbstract());
+    param->set_default_param(tensor);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New Scalar Variable failed. Error info: " << e.what();
+    return nullptr;
+  }
+  return GetRawPtr(res_mgr, param);
+}
+
+NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int value) {
+  if (res_mgr == nullptr || graph == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] or [graph] is nullptr.";
+    return nullptr;
+  }
+  ParameterPtr param = nullptr;
+  try {
+    auto res_fg = GetSrcPtr<FuncGraphPtr>(res_mgr, graph);
+    MS_EXCEPTION_IF_NULL(res_fg);
+    param = res_fg->add_parameter();
+    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeInt32);
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    auto tensor = std::make_shared<TensorImpl>(value, type_ptr);
+    tensor->set_param_info(std::make_shared<mindspore::ParamInfo>());
+    param->set_abstract(tensor->ToAbstract());
+    param->set_default_param(tensor);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New Scalar Variable failed. Error info: " << e.what();
     return nullptr;
   }
   return GetRawPtr(res_mgr, param);

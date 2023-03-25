@@ -111,6 +111,40 @@ TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int6
   return GetRawPtr(res_mgr, tensor);
 }
 
+TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float value) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
+    return nullptr;
+  }
+  TensorPtr tensor = nullptr;
+  try {
+    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeFloat32);
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    tensor = std::make_shared<TensorImpl>(value, type_ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New Float32 Scalar Tensor failed. Error info: " << e.what();
+    return nullptr;
+  }
+  return GetRawPtr(res_mgr, tensor);
+}
+
+TensorHandle MSNewScalarTensorInt32(ResMgrHandle res_mgr, int value) {
+  if (res_mgr == nullptr) {
+    MS_LOG(ERROR) << "Input Handle [res_mgr] is nullptr.";
+    return nullptr;
+  }
+  TensorPtr tensor = nullptr;
+  try {
+    auto type_ptr = mindspore::TypeIdToType(mindspore::TypeId::kNumberTypeInt32);
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    tensor = std::make_shared<TensorImpl>(value, type_ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "New Int32 Scalar Tensor failed. Error info: " << e.what();
+    return nullptr;
+  }
+  return GetRawPtr(res_mgr, tensor);
+}
+
 void *MSTensorGetData(ResMgrHandle res_mgr, ConstTensorHandle tensor) {
   if (res_mgr == nullptr || tensor == nullptr) {
     MS_LOG(ERROR) << "Input Handle [res_mgr] or [tensor] is nullptr.";

@@ -67,6 +67,22 @@ MIND_C_API TensorHandle MSNewTensorFromFile(ResMgrHandle res_mgr, DataTypeC type
 MIND_C_API TensorHandle MSNewTensorWithSrcType(ResMgrHandle res_mgr, void *data, const int64_t shape[],
                                                size_t shape_size, DataTypeC tensor_type, DataTypeC src_type);
 
+/// \brief Create a tensor with float32 scalar value.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] value The input scalar value.
+///
+/// \return The pointer of the created tensor instance.
+MIND_C_API TensorHandle MSNewScalarTensorFloat32(ResMgrHandle res_mgr, float value);
+
+/// \brief Create a tensor with int32 scalar value.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] value The input scalar value.
+///
+/// \return The pointer of the created tensor instance.
+MIND_C_API TensorHandle MSNewScalarTensorInt32(ResMgrHandle res_mgr, int value);
+
 /// \brief Get the raw pointer of tensor data.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.

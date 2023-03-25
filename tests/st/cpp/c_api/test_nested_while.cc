@@ -165,7 +165,7 @@ TEST_F(TestNestedWhile, TestNestedWhile) {
   ASSERT_TRUE(ret == RET_OK);
 
   // test basic funcGraph compiling and executing
-  ret = MSFuncGraphCompile(res_mgr, fg);
+  ret = MSFuncGraphCompile(res_mgr, fg, NULL, 0);
   ASSERT_TRUE(ret == RET_OK);
 
   int64_t a[1] = {1};

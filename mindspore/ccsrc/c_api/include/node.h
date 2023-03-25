@@ -34,14 +34,14 @@ extern "C" {
 /// to be specified. For output_shapes and shape_infer_func, only one of them need to be specified as well, and
 /// output_dims must be given if output_shapes is specified.
 typedef struct CustomOpInfo {
-  char *func_name;
-  char *func_type;
-  char *target;
-  char **input_name;
+  const char *func_name;
+  const char *func_type;
+  const char *target;
+  const char **input_name;
   size_t input_num;
-  char **output_name;
+  const char **output_name;
   size_t output_num;
-  char **attr_name;
+  const char **attr_name;
   AttrHandle *attr_value;
   size_t attr_num;
   DTypeFormat **dtype_formats;
@@ -199,7 +199,25 @@ MIND_C_API NodeHandle MSNewFuncCallNode(ResMgrHandle res_mgr, GraphHandle graph,
 MIND_C_API NodeHandle MSNewPlaceholder(ResMgrHandle res_mgr, GraphHandle graph, DataTypeC type, const int64_t shape[],
                                        size_t shape_size);
 
-/// \brief Create a Variable node of tensor, which contains variable tensor data.
+/// \brief Create a Variable node of tensor without shape, which contains variable scalar data.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] graph The given function graph pointer handle.
+/// \param[in] value The float scalar number.
+///
+/// \return The created Variable node handle.
+MIND_C_API NodeHandle MSNewScalarVariableFloat32(ResMgrHandle res_mgr, GraphHandle graph, float value);
+
+/// \brief Create a Variable node of tensor without shape, which contains variable scalar data.
+///
+/// \param[in] res_mgr Resource manager that saves allocated instance resources.
+/// \param[in] graph The given function graph pointer handle.
+/// \param[in] value The int scalar number.
+///
+/// \return The created Variable node handle.
+MIND_C_API NodeHandle MSNewScalarVariableInt32(ResMgrHandle res_mgr, GraphHandle graph, int value);
+
+/// \brief Create a Variable node of tensor, which contains variable array data.
 ///
 /// \param[in] res_mgr Resource manager that saves allocated instance resources.
 /// \param[in] graph The given function graph pointer handle.
