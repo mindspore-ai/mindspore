@@ -7,10 +7,10 @@ mindspore.ops.float_power
 
     参数：
         - **input** (Union[Tensor, Number]) - 第一个输入，为Tensor或数值型数据类型。
-        - **exponent** (Union[Tensor, Number]) - 第二个输入，如果第一个输入是Tensor，第二个输入可以是数值型或Tensor。否则，必须是Tensor。
+        - **exponent** (Union[Tensor, Number]) - 第二个输入，如果第一个输入是Tensor，第二个输入可以是Number或Tensor。否则，必须是Tensor。
 
     返回：
-        Tensor，输出的shape与广播后的shape相同。对于复数运算，返回类型和输入数据类型相同。对于实数运算，返回类型为mindspore.float64。
+        Tensor，输出的shape与广播后的shape相同。对于实数运算，返回类型为mindspore.float64。
 
     异常：
         - **TypeError** - `input` 和 `exponent` 都不是Tensor。

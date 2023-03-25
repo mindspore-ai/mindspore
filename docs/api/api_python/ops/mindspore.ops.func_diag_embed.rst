@@ -11,7 +11,7 @@ mindspore.ops.diag_embed
         - **offset** (int，可选) - 对角线偏离值。 :math:`offset=0` 为主对角线。
 
           - 如果 :math:`offset>0` ，填充主对角线上方第 `offset` 条对角线。
-          - 如果 :math:`offset<0` ，填充主对角线下方第 `offset` 条对角线。
+          - 如果 :math:`offset<0` ，填充主对角线下方第 `|offset|` 条对角线。
 
           默认值：0。
 
@@ -20,9 +20,6 @@ mindspore.ops.diag_embed
 
     返回：
         Tensor，数据类型与 `input` 一致，但输出shape维度比 `input` 高一维。
-
-        - 如果 `keepdims` 为True，则输出shape为： :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)` 。
-        - 否则输出shape为： :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` 。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

@@ -13,8 +13,8 @@ mindspore.ops.dropout1d
 
     参数：
         - **input** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
-        - **p** (float) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
-        - **training** (bool) - 若为True则启用dropout功能。默认值：True。
+        - **p** (float，可选) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认值：0.5。
+        - **training** (bool，可选) - 是否启用dropout功能。默认值：True。
 
     返回：
         Tensor，输出，具有与输入 `input` 相同的shape和数据类型。

@@ -12,7 +12,7 @@
     参数：
         - **input** (Tensor[Number]) - 输入Tensor，必须是数字类型。:math:`(N,*)` ，其中 :math:`*` 表示任何额外的维度，其秩都应该小于8。
         - **dim** (int) - 计算累积乘积的尺寸。只允许常量值。
-        - **dtype** - 输出的数据类型。默认值：None。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 输出的数据类型。如果为None，则输出和输入的数据类型一致。默认值：None。
 
     返回：
         Tensor，数据类型和shape与 `input` 相同，除非指定了 `dtype`。
