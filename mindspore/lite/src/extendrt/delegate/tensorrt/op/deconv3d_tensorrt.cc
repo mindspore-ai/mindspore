@@ -72,16 +72,16 @@ int Deconv3dTensorRT::AddInnerOp(TensorRTContext *ctx) {
     ctx->network()->addDeconvolutionNd(*deconv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
 
   if (deconv_layer == nullptr) {
-    MS_LOG(ERROR) << "DeconvolutionLayer failed";
+    MS_LOG(ERROR) << "Deconv3dLayer failed";
     return RET_ERROR;
   }
   deconv_layer->setName((op_name_ + "_deconv").c_str());
-  this->layer_ = deconv_layer;
   // set extra params
   SetAttributes(deconv_op, deconv_layer);
 
   nvinfer1::ITensor *out_tensor = deconv_layer->getOutput(0);
   ctx->RegisterTensor(ITensorHelper{out_tensor, Format::NCHW, true}, out_tensors_[0].Name());
+  this->layer_ = deconv_layer;
   return RET_OK;
 }
 
@@ -99,21 +99,21 @@ void Deconv3dTensorRT::SetAttributes(const std::shared_ptr<ops::Conv3DTranspose>
     decon_layer->setKernelSizeNd(kernel_size_dims);
   }
 
-  // nbOutputMaps
-  int nbOutputMaps = in_tensors_[1].Shape()[1];
-  decon_layer->setNbOutputMaps(nbOutputMaps);
-
   // stride
   auto stride = ms_op->get_stride();
   if (!stride.empty()) {
     auto stride_val = std::vector<int64_t>(stride.begin() + INPUT_SIZE2, stride.end());
-    nvinfer1::Dims stride_dims = lite::ConvertCudaDims(stride_val);
-    if (stride_dims.nbDims == -1) {
+    nvinfer1::Dims strides = lite::ConvertCudaDims(stride_val);
+    if (strides.nbDims == -1) {
       MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
       return;
     }
-    decon_layer->setStrideNd(stride_dims);
+    decon_layer->setStrideNd(strides);
   }
+
+  // nbOutputMaps
+  int nbOutputMaps = in_tensors_[1].Shape()[1];
+  decon_layer->setNbOutputMaps(nbOutputMaps);
 
   // nbGroups
   int32_t nbGroups = static_cast<int32_t>(ms_op->get_group());

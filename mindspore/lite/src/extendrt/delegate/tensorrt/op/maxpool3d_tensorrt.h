@@ -38,15 +38,11 @@ class MaxPool3DTensorRT : public TensorRTOp {
 
   int AddParams(nvinfer1::IPoolingLayer *pooling_layer);
 
+  std::vector<int64_t> padding_;
   std::vector<int64_t> kernel_size_;
-
   std::vector<int64_t> stride_;
 
-  std::vector<int64_t> padding_;
-
-  nvinfer1::PoolingType pooling_type_;
-
-  PadMode pad_mode_ = PadMode::PAD;
+  PadMode pad_mode_{PadMode::PAD};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_MAX_POOL3D_TENSORRT_H_
