@@ -348,10 +348,10 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
 
 
 def coo_relu(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes ReLU (Rectified Linear Unit activation function) of input coo_tensors element-wise.
 
-    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(x,\  0)` element-wise. Specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::
@@ -1992,12 +1992,12 @@ def coo_isinf(x: COOTensor) -> COOTensor:
 
 
 def csr_atanh(x: CSRTensor) -> CSRTensor:
-    r"""
+    """
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. math::
 
-        out_i = \\tanh^{-1}(x_{i})
+        out_i = \tanh^{-1}(x_{i})
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

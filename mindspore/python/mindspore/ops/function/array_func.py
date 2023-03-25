@@ -1861,7 +1861,7 @@ def strided_slice(input_x,
 
       If the ith bit of `ellipsis_mask` is 1, as many unspecified dimensions as needed
       will be inserted between other dimensions. Only one non-zero bit is allowed
-      in `ellipsis_mask`. For a 5*6*7*8 Tensor `input_x`,  `input_x[2:,...,:6]`
+      in `ellipsis_mask`. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  `input_x[2:,...,:6]`
       is equivalent to `input_x[2:5,:,:,0:6]` ,  `input_x[2:,...]` is equivalent
       to `input_x[2:5,:,:,:]`.
 
@@ -3729,7 +3729,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         ValueError: If the shape of `updates` is not equal to the shape of `indices`.
         ValueError: If the rank of `updates` is not equal to the rank of `input_x`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
-                        is required when data type conversion of Parameter is not supported.
+            is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6765,8 +6765,8 @@ def repeat_interleave(input, repeats, axis=None):
 
     Returns:
         One tensor with values repeated along the specified axis. If input has shape
-        (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
-        si * repeats, ..., sn). The output type will be the same as the type of `input`.
+        :math:`(s1, s2, ..., sn)` and axis is i, the output will have shape :math:`(s1, s2, ...,
+        si * repeats, ..., sn)`. The output type will be the same as the type of `input`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
