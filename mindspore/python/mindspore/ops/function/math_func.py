@@ -1371,8 +1371,10 @@ def inplace_update(x, v, indices):
             float32, float16 and int32.
         v (Tensor): A tensor with the same type as `x` and the same dimension size as `x` except
             the first dimension, which must be the same as the size of `indices`.
-        indices (Union[int, tuple, Tensor]): Determines which rows of `x` to update with `v`.
-            It is an int or tuple or tensor, whose value is in [0, the highest dimension of `x`).
+        indices (Union[int, tuple[int], Tensor]): Determines which rows of `x` to update with `v`,
+            should be several int. It is an int or tuple or tensor with one dimension,
+            whose value is in [0, the highest dimension of `x`).
+            If it is a tuple or Tensor, the size of 'indices' should be the same as the first dimension of 'v'.
 
     Returns:
         Tensor, with the same type and shape as the input `x`.
