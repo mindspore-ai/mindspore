@@ -78,13 +78,14 @@ def test_obfuscate_model_password_mode():
     Description: Test obfuscate a MindIR format model and then load it for prediction.
     Expectation: Success.
     """
-    net_1 = ObfuscateNet()
+    ori_mindir_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "ori_net.mindir")
+    ori_graph = load(ori_mindir_path)
+    ori_net = nn.GraphCell(ori_graph)
     input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
-    export(net_1, input_tensor, file_name="net_1", file_format="MINDIR")
-    original_result = net_1(input_tensor).asnumpy()
+    original_result = ori_net(input_tensor).asnumpy()
 
     # obfuscate model
-    obf_config = {"original_model_path": "net_1.mindir", "save_model_path": "./obf_net_1",
+    obf_config = {"original_model_path": ori_mindir_path, "save_model_path": "./obf_net_1",
                   "model_inputs": [input_tensor], "obf_ratio": 0.8, "obf_random_seed": 3423}
     obfuscate_model(obf_config)
 
@@ -105,10 +106,11 @@ def test_obfuscate_model_customized_func_mode():
     Description: Test obfuscate a MindIR format model and then load it for prediction.
     Expectation: Success.
     """
-    net_2 = ObfuscateNet()
+    ori_mindir_path = os.path.join(os.path.split(os.path.realpath(__file__))[0], "ori_net.mindir")
+    ori_graph = load(ori_mindir_path)
+    ori_net = nn.GraphCell(ori_graph)
     input_tensor = Tensor(np.ones((1, 1, 32, 32)).astype(np.float32))
-    export(net_2, input_tensor, file_name="net_2", file_format="MINDIR")
-    original_result = net_2(input_tensor).asnumpy()
+    original_result = ori_net(input_tensor).asnumpy()
 
     # obfuscate model
     def my_func(x1, x2):
@@ -116,7 +118,7 @@ def test_obfuscate_model_customized_func_mode():
             return True
         return False
 
-    obf_config = {"original_model_path": "net_2.mindir", "save_model_path": "./obf_net_2",
+    obf_config = {"original_model_path": ori_mindir_path, "save_model_path": "./obf_net_2",
                   "model_inputs": [input_tensor], "obf_ratio": 0.8, "customized_func": my_func}
     obfuscate_model(obf_config)
 
