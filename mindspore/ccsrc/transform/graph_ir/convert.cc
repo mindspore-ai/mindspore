@@ -1531,7 +1531,14 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
       GetBranchNodeInput(node);
     }
   }
-
+  auto manager = anf_graph_->manager();
+  if (manager == nullptr) {
+    auto new_manager = MakeManager({anf_graph_});
+    MS_EXCEPTION_IF_NULL(new_manager);
+    new_manager->AddFuncGraph(anf_graph_);
+    anf_graph_->set_manager(new_manager);
+    manager = new_manager;
+  }
   nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     SetNodeInput(it);
@@ -2080,14 +2087,6 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     return;
   }
   MS_EXCEPTION_IF_NULL(anf_graph_);
-  auto manager = anf_graph_->manager();
-  if (manager == nullptr) {
-    auto new_manager = MakeManager({anf_graph_});
-    MS_EXCEPTION_IF_NULL(new_manager);
-    new_manager->AddFuncGraph(anf_graph_);
-    anf_graph_->set_manager(new_manager);
-    manager = new_manager;
-  }
   for (auto &it : attr_input_map) {
     // Get attr from node.
     auto value = primitive->GetAttr(it.first);
@@ -2098,7 +2097,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     // Create input node for attr value.
     auto input_node = NewValueNode(value);
     input_node->set_abstract(value->ToAbstract());
-    manager->AddEdge(node, input_node);
+    anf_graph_->manager()->AddEdge(node, input_node);
     auto new_input_op = Convert(input_node);
     // Get input desc.
     auto input_name = it.second;
