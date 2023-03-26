@@ -284,3 +284,4 @@ config模块能够设置或获取数据处理的全局配置参数。
     mindspore.dataset.show
     mindspore.dataset.sync_wait_for_dataset
     mindspore.dataset.utils.imshow_det_bbox
+    mindspore.dataset.utils.LineReader
