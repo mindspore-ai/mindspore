@@ -241,8 +241,8 @@ void PartitionPipelineStages(size_t num_device, double device_memory, const std:
 }
 
 // Partition graph into all devices.
-Status PartitionForAllDevices(const size_t num_device, const double device_memory, const std::shared_ptr<Graph> &graph,
-                              const bool isTraining) {
+Status PartitionForAllDevices(size_t num_device, double device_memory, const std::shared_ptr<Graph> &graph,
+                              bool isTraining) {
   if (num_device < 1) {
     MS_LOG(EXCEPTION) << "ERROR: Number of devices can't be " << num_device << ".";
   }
@@ -280,10 +280,16 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
       // 2-parts partitioning StrategyRec of the last loop
       StrategyRec old_str = graph->nodes[index].apply.str;
 
+      // Save first strategy too
+      if (graph->nodes[index].apply.strs.size() == 0) {
+        graph->nodes[index].apply.strs.push_back(old_str);
+      }
+
       MS_LOG(INFO) << "------------Node_name: " << graph->nodes[index].name << " -------------";
 
-      // Serch optimal strategy to cut this operator. And store the result optimal strategy in graph.
+      // Search optimal strategy to cut this operator. And store the result optimal strategy in graph.
       graph->nodes[index].apply.str = PartitionNode(node_ptr, node_name_to_strategy, graph, isTraining);
+      graph->nodes[index].apply.strs.push_back(graph->nodes[index].apply.str);
 
       // Get Current 2-parts partitioning strategy of this loop
       size_t op_inputs_num = graph->nodes[index].node_in.size();

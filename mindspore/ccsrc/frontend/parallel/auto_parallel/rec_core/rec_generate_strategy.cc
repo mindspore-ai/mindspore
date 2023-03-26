@@ -104,13 +104,13 @@ Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
   return strategies;
 }
 
-Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops) {
+Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops) {
   size_t numDev = g_device_manager->DeviceNum();
 
   Strategies stra;
   Dimensions dim;
 
-  if (numDev == 1) {
+  if (numDev == 0) {
     MS_LOG(EXCEPTION) << "The number of devices is 0";
   }
 
@@ -209,7 +209,7 @@ Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
   size_t s_second = 1;
 
   if (s[0] != 0) {
-    s_second = g_device_manager->DeviceNum() / LongToSize(s[0]);
+    s_second = g_device_manager->stage_device_num() / LongToSize(s[0]);
   }
 
   if (s.size() == 1) {
@@ -248,7 +248,7 @@ Strategies PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
-  size_t num_device = g_device_manager->DeviceNum();
+  size_t num_device = g_device_manager->stage_device_num();
   size_t cut = 1;
   for (size_t i = 0; i < index.size(); i++) {
     size_t index_i = LongToSize(index[i]);
@@ -312,7 +312,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
-  size_t num_device = g_device_manager->DeviceNum();
+  size_t num_device = g_device_manager->stage_device_num();
   size_t cut = 1;
   for (size_t i = 0; i < index.size(); i++) {
     size_t index_i = LongToSize(index[i]);
@@ -476,7 +476,7 @@ Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
   Strategies strategies;
-  size_t max_device_num = g_device_manager->DeviceNum();
+  size_t max_device_num = g_device_manager->stage_device_num();
   size_t target_tensor_batch = LongToUlong(ops[iter_ops]->inputs_tensor_info()[0].shape()[0]);
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
@@ -652,7 +652,7 @@ void ModifyParamSharingOpsStrategy(const std::vector<std::shared_ptr<OperatorInf
             for (size_t i = 0; i < str_j.size(); i++) {
               num_device_used *= LongToSize(str_j[i]);
             }
-            str2.push_back(g_device_manager->DeviceNum() / num_device_used);
+            str2.push_back(g_device_manager->stage_device_num() / num_device_used);
             str2.push_back(1);
             strategies.push_back(str1);
             strategies.push_back(str2);
@@ -1376,7 +1376,7 @@ Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<Ope
   for (size_t i = 0; i < s_Squeeze.size(); i++) {
     cut *= LongToSize(s_Squeeze[i]);
   }
-  if (cut != g_device_manager->DeviceNum()) {
+  if (cut != size_t(g_device_manager->stage_device_num())) {
     s_Squeeze.clear();
   }
 
