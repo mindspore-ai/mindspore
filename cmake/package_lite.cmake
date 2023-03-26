@@ -507,8 +507,6 @@ if(PLATFORM_ARM64)
                     ${RUNTIME_COMPONENT_NAME})
         endif()
         if(MSLITE_ENABLE_CONVERTER)
-            install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION
                     ${CONVERTER_ROOT_DIR}/include/registry COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${API_HEADER}  DESTINATION ${CONVERTER_ROOT_DIR}/include/api
@@ -729,8 +727,6 @@ elseif(WIN32)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
             ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_*-1.dll)
     if(MSLITE_ENABLE_CONVERTER)
-        install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/converter_lite/converter_lite.exe
                 DESTINATION ${CONVERTER_ROOT_DIR}/converter COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/libmindspore_converter.dll
@@ -894,8 +890,6 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     endif()
     if(MSLITE_ENABLE_CONVERTER)
-        install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/include/kernel_interface.h DESTINATION ${CONVERTER_ROOT_DIR}/include
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/registry/ DESTINATION ${CONVERTER_ROOT_DIR}/include/registry
