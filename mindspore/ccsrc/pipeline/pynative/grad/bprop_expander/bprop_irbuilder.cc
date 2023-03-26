@@ -107,16 +107,17 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
   std::vector<int64_t> begin_strides(n, 0);
   std::vector<int64_t> end_strides = data_shape;
   std::vector<int64_t> step_strides(n, 1);
-  int64_t shrink_axis_mask = 0;
-  int64_t end_mask = 0;
+  size_t shrink_axis_mask = 0;
+  size_t end_mask = 0;
+  constexpr size_t one = 1;
   auto zero = MakeValue<int64_t>(0);
   for (const auto &[_axis, slice] : slices) {
-    auto axis = CheckRange(_axis, static_cast<int64_t>(n));
+    auto axis = LongToSize(CheckRange(_axis, static_cast<int64_t>(n)));
     if (slice.size() >= kDim2) {
       begin_strides[axis] = slice[kIndex0];
       end_strides[axis] = slice[kIndex1];
       if (end_strides[axis] == LLONG_MAX) {
-        end_mask |= (1 << axis);
+        end_mask |= (one << axis);
       }
       if (slice.size() >= kDim3) {
         step_strides[axis] = slice[kIndex2];
@@ -125,16 +126,16 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
       if (slice.size() == 1) {
         begin_strides[axis] = slice[kIndex0];
         end_strides[axis] = begin_strides[axis] + 1;
-        shrink_axis_mask |= (1 << axis);
+        shrink_axis_mask |= (one << axis);
       }
     }
   }
   return Emit(prim::kStridedSlice, {x, Value(begin_strides), Value(end_strides), Value(step_strides)},
               {{kAttrBeginMask, zero},
-               {kAttrEndMask, MakeValue(end_mask)},
+               {kAttrEndMask, MakeValue(SizeToLong(end_mask))},
                {kAttrEllipsisMask, zero},
                {kAttrNewAxisMask, zero},
-               {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+               {kAttrShrinkAxisMask, MakeValue(SizeToLong(shrink_axis_mask))}});
 }
 
 NodePtr BpropIRBuilder::TupleToTensor(const NodePtr &node, const TypePtr &dtype) const {
