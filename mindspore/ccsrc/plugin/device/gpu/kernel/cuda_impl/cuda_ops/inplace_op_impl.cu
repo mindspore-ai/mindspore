@@ -38,9 +38,9 @@ __global__ void InplaceUpdate(const size_t size, const T *input_v, T *output, co
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t row = pos / band_size;
     if (row + 1 == indices_len || indices[row] != indices[row + 1]) {
-      S x_row = indices[row];
+      S x_row = indices[row] < 0 ? (indices[row] + first_dimension) : indices[row];
       CUDA_KERNEL_ASSERT(x_row >= 0 && x_row < first_dimension &&
-                         "Indices for 'InplaceUpdate' should be [0, the first dimension size of input x).")
+                         "Indices for 'InplaceUpdate' should be [-x.shape[0], x.shape[0]).")
       S v_row = indices_key[row];
       int offset = pos % band_size;
       int x_offset = x_row * band_size;
