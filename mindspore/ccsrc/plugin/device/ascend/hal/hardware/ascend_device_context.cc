@@ -61,6 +61,11 @@ void AscendDeviceContext::Initialize() {
   }
   runtime_instance_->SetRtDevice(device_id);
 
+  // Must initialize AscendKernelExecutor first to avoid port conflict with HCCL.
+  auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
+  MS_EXCEPTION_IF_NULL(ascend_kernel_executor);
+  ascend_kernel_executor->Initialize();
+
   // enable hccl and init hccl not done, skip the rest step.
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) &&
       !distributed::collective::CollectiveManager::instance()->initialized()) {
@@ -72,9 +77,6 @@ void AscendDeviceContext::Initialize() {
   auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());
   MS_EXCEPTION_IF_NULL(ascend_res_manager);
   runtime_instance_ = ascend_res_manager->runtime_instance_;
-  auto ascend_kernel_executor = dynamic_cast<AscendKernelExecutor *>(kernel_executor_.get());
-  MS_EXCEPTION_IF_NULL(ascend_kernel_executor);
-  ascend_kernel_executor->Initialize();
   auto ascend_graph_executor = dynamic_cast<AscendGraphExecutor *>(graph_executor_.get());
   MS_EXCEPTION_IF_NULL(ascend_graph_executor);
   ascend_graph_executor->Initialize();

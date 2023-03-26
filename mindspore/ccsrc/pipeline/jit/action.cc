@@ -1209,8 +1209,9 @@ void SetRunMode(const ResourcePtr &resource) {
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
-  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseHostCollective()) {
-    MS_LOG(EXCEPTION) << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or MS";
+  if (!is_task_sink && mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || common::UseHcclCM())) {
+    MS_LOG(EXCEPTION)
+      << "Current execute mode is kernelbykernel, the processes must be launched with OpenMPI or Dynamic Cluster.";
   }
 }
 

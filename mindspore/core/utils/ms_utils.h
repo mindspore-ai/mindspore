@@ -25,6 +25,7 @@
 #include <limits>
 #include <cmath>
 #include <chrono>
+#include <algorithm>
 #include "mindapi/base/macros.h"
 namespace mindspore {
 class MSLogTime {
@@ -124,8 +125,19 @@ static inline bool UseDynamicCluster() {
   return !common::GetEnv("MS_ROLE").empty();
 }
 
+static inline bool UseHcclSingleOp() {
+  // If environment variable 'HCCL_COMM' is set, we consider this process should use 'HcclCommInitRootInfo' type of
+  // methods, which could be used in kernel-by-kernel and pynative mode.
+  return !common::GetEnv("HCCL_SINGLE_OP").empty();
+}
+
 // UseDynamicCluster or UseMPI. If false, means use rank table file.
 static inline bool UseHostCollective() { return common::UseDynamicCluster() || common::UseMPI(); }
+
+static inline bool UseHcclCM() {
+  // When using dynamic cluster and 'HCCL_COMM' env is not set, we use hccl's CM envs to initialize hccl.
+  return common::UseDynamicCluster() && !common::UseHcclSingleOp();
+}
 
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
@@ -172,6 +184,10 @@ inline bool IsFloatEqual(const float &a, const float &b) {
 
 inline bool IsDoubleEqual(const double &a, const double &b) {
   return (std::fabs(a - b) <= std::numeric_limits<double>::epsilon());
+}
+
+inline bool IsStrNumeric(const std::string &str) {
+  return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
 }  // namespace common
 }  // namespace mindspore

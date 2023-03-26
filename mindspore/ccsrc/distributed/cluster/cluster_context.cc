@@ -39,8 +39,11 @@ ClusterContext::ClusterContext()
       node_num_each_role_({}),
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
+      node_base_(nullptr),
+      node_id_(""),
       node_role_(""),
-      cluster_config_(nullptr) {}
+      cluster_config_(nullptr),
+      client_ip_in_cluster_("") {}
 
 ClusterContext::~ClusterContext() {
   if (!finalized_) {
@@ -164,18 +167,18 @@ void ClusterContext::InitClusterConfig() {
 
 bool ClusterContext::BuildCluster() {
   // Get node_id from environment configuration or uuid generator.
-  std::string node_id = common::GetEnv(kNodeId);
-  if (node_id.length() == 0) {
-    node_id = ps::core::CommUtil::GenerateUUID();
+  node_id_ = common::GetEnv(kNodeId);
+  if (node_id_.length() == 0) {
+    node_id_ = ps::core::CommUtil::GenerateUUID();
   }
   // Init the node according to the process role.
   size_t retry_num;
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
-    node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_role_, node_num);
+    node_base_ = std::make_shared<topology::MetaServerNode>(node_id_, node_role_, node_num);
     retry_num = topology::kMsnExecuteRetryNum;
   } else {
-    node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id, node_role_);
+    node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id_, node_role_);
     retry_num = topology::kCgnExecuteRetryNum;
   }
   MS_EXCEPTION_IF_NULL(node_base_);
@@ -190,6 +193,8 @@ bool ClusterContext::BuildCluster() {
   EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(INFO) << "Cluster is successfully initialized.";
+
+  PostProcessForCGN();
   return true;
 }
 
@@ -245,6 +250,23 @@ void ClusterContext::InitSchedulerPort() {
                                "The environment variable MS_SCHED_PORT is invalid.");
   if (scheduler_port_ > kMaxPort) {
     MS_LOG(EXCEPTION) << "The port: " << scheduler_port_ << " is invalid.";
+  }
+}
+
+void ClusterContext::PostProcessForCGN() {
+  if (node_role_ != kEnvRoleOfScheduler) {
+    auto cgn = std::dynamic_pointer_cast<topology::ComputeGraphNode>(node_base_);
+    MS_EXCEPTION_IF_NULL(cgn);
+
+    // Get new rank id from meta server node because it may be reassigned.
+    std::string final_rank_id = cgn->GetMetadata(node_role_ + node_id_);
+    cgn->set_rank_id(static_cast<uint32_t>(std::atoi(final_rank_id.c_str())));
+    MS_LOG(WARNING) << "This node " << node_id_ << " rank id: " << final_rank_id;
+
+    // Set this node's client ip address in this cluster.
+    client_ip_in_cluster_ = cgn->client_ip();
+    MS_LOG(INFO) << "Client ip address in this cluster of this compute graph node is " << client_ip_in_cluster_;
+    common::SetEnv(kEnvWorkerClientIp, client_ip_in_cluster_.c_str());
   }
 }
 }  // namespace cluster

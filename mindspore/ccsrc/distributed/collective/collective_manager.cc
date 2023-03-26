@@ -216,6 +216,7 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
 
 bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                                                  const std::vector<uint32_t> &group_ranks) {
+  MS_LOG(WARNING) << "Start to create communication group: " << group_name << " " << group_ranks;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
   if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
@@ -268,7 +269,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
     device_ctx_->Initialize();
     return group->Initialize(root_info);
   };
-  MS_LOG(INFO) << "Begin initialize communication group on the device side.";
+  MS_LOG(INFO) << "Begin initialize communication group on the device side: " << group_name;
 
   // Timeout limit 600 seconds to wait finish initializing device communication group.
   const int64_t kTimeToWait = 600;
@@ -277,7 +278,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   if (!ret) {
     MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
   }
-  MS_LOG(INFO) << "End initialize communication group on the device side.";
+  MS_LOG(INFO) << "End initialize communication group on the device side: " << group_name;
   return ret;
 }
 
@@ -434,6 +435,13 @@ bool CollectiveManager::InitDeviceCommLib() {
                            "Failed to initialize communication library on device side.");
   MS_LOG(INFO) << "Communication library on device side is successfully initialized.";
   return true;
+}
+
+void CollectiveManager::ReInitDeviceCtx() {
+  device::DeviceContextKey device_key = {device_type_, local_rank_id_};
+  device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
+  MS_EXCEPTION_IF_NULL(device_ctx_);
+  device_ctx_->Initialize();
 }
 
 bool CollectiveManager::AssignLocalRank() {

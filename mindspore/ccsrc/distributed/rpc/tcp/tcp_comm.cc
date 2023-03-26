@@ -225,6 +225,8 @@ bool TCPComm::StartServerSocket(const MemAllocateCallback &allocate_cb) {
 
 int TCPComm::GetServerFd() const { return server_fd_; }
 
+std::string TCPComm::GetSrcIp(const std::string &dst_url) { return dst_url_to_src_ip_[dst_url]; }
+
 void TCPComm::ReadCallBack(void *connection) {
   const int max_recv_count = 3;
   Connection *conn = reinterpret_cast<Connection *>(connection);
@@ -338,8 +340,8 @@ bool TCPComm::Send(MessageBase *msg, size_t *const send_bytes, bool sync) {
     std::string destination = msg->to.Url();
     Connection *conn = conn_pool_->FindConnection(destination);
     if (conn == nullptr) {
-      MS_LOG(ERROR) << "Can not found remote link and send fail name: " << msg->name.c_str()
-                    << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
+      MS_LOG(WARNING) << "Can not found remote link and send fail name: " << msg->name.c_str()
+                      << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
       DropMessage(msg);
       return false;
     }
@@ -450,8 +452,14 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
       conn = nullptr;
       return false;
     }
-    conn->source = SocketOperation::GetLocalIP() + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
+
+    conn->src_ip = SocketOperation::GetIp(sock_fd);
+    dst_url_to_src_ip_.insert(std::make_pair(dst_url, conn->src_ip));
+
+    conn->source = conn->src_ip + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
     conn->destination = dst_url;
+
+    MS_LOG(INFO) << "Connection " << sock_fd << " source: " << conn->source << ", destination: " << conn->destination;
 
     // Check the state of this new created connection.
     uint32_t interval = 1;

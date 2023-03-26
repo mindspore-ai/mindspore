@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <utility>
 #include "utils/ms_exception.h"
 #include "proto/topology.pb.h"
 #include "ps/ps_context.h"
@@ -176,19 +177,27 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   const auto &node_id = registration.node_id();
   const auto &host_name = registration.host_name();
   const auto &role = registration.role();
+  const auto &host_ip = registration.host_ip();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
-    auto rank_id = AllocateRankId(role);
+    uint32_t rank_id;
+    if (common::IsStrNumeric(node_id)) {
+      // This means node id is not randomly generated. So directly convert to int.
+      rank_id = static_cast<uint32_t>(std::atoi(node_id.c_str()));
+    } else {
+      rank_id = AllocateRankId(role);
+    }
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
     MS_ERROR_IF_NULL_W_RET_VAL(node_info, rpc::NULL_MSG);
     node_info->host_name = host_name;
+    node_info->host_ip = host_ip;
     node_info->role = role;
     node_info->rank_id = rank_id;
     node_info->state = NodeState::kRegistered;
     (void)time(&(node_info->last_update));
     nodes_[node_id] = node_info;
     MS_LOG(INFO) << "The new node: " << node_id << "(role: " << role << ")"
-                 << " is registered successfully.";
+                 << ", rank id: " << rank_id << " is registered successfully.";
     (void)TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
@@ -452,6 +461,8 @@ bool MetaServerNode::TransitionToInitialized() {
         MS_LOG(EXCEPTION) << "Failed to persist the metadata of the cluster.";
       }
     }
+
+    ReassignNodeRank();
     topo_state_ = TopoState::kInitialized;
     MS_LOG(INFO) << "The cluster topology has been constructed successfully";
     return true;
@@ -542,6 +553,37 @@ uint32_t MetaServerNode::AllocateRankId(const std::string &role) {
     next_rank_ids_[role] += 1;
   }
   return next_rank_ids_[role];
+}
+
+void MetaServerNode::ReassignNodeRank() {
+  std::map<std::string, std::map<NodeKey, uint32_t>> node_ranks;
+  for (auto &n : nodes_) {
+    std::shared_ptr<NodeInfo> &node_info = n.second;
+    NodeKey node_key = {node_info->host_ip, node_info->node_id};
+    (void)node_ranks[node_info->role].insert(std::make_pair(node_key, 0));
+  }
+
+  for (auto &n : node_ranks) {
+    std::map<NodeKey, uint32_t> &node_key_ranks = n.second;
+    uint32_t accum_rank_id = 0;
+    for (auto &node_rank : node_key_ranks) {
+      node_rank.second = accum_rank_id++;
+    }
+  }
+
+  for (auto &n : nodes_) {
+    std::shared_ptr<NodeInfo> &node_info = n.second;
+    const std::string &role = node_info->role;
+    NodeKey node_key = {node_info->host_ip, node_info->node_id};
+    uint32_t new_rank = node_ranks[role][node_key];
+
+    MS_LOG(WARNING) << "Assign rank id of node id: " << node_info->node_id << ", role: " << role
+                    << ", with host ip: " << node_info->host_ip << ", old rank id: " << node_info->rank_id
+                    << ", new rank id: " << new_rank;
+
+    node_info->rank_id = new_rank;
+    (void)metadata_.insert(std::make_pair(role + node_info->node_id, std::to_string(node_info->rank_id)));
+  }
 }
 
 TopoState MetaServerNode::TopologyState() const { return topo_state_; }

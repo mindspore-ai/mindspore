@@ -66,6 +66,9 @@ class BACKEND_EXPORT TCPClient {
   // Force the data in the send buffer to be sent out.
   bool Flush(const std::string &dst_url);
 
+  // Get this client's source ip address with specified dst_url.
+  std::string GetClientIp(const std::string &dst_url) const;
+
  private:
   // The basic TCP communication component used by the client.
   std::unique_ptr<TCPComm> tcp_comm_{nullptr};
