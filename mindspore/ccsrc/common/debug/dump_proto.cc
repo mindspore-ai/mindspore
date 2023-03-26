@@ -89,7 +89,8 @@ static std::map<TypeId, irpb::DataType> number_data_type_map = {{kNumberTypeBool
                                                                 {kNumberTypeFloat, irpb::DT_BASE_FLOAT},
                                                                 {kNumberTypeComplex64, irpb::DT_COMPLEX64},
                                                                 {kNumberTypeComplex128, irpb::DT_COMPLEX128},
-                                                                {kObjectTypeString, irpb::DT_STRING}};
+                                                                {kObjectTypeString, irpb::DT_STRING},
+                                                                {kObjectTypeTuple, irpb::DT_TUPLE}};
 
 static irpb::DataType GetNumberDataType(const TypePtr &type) {
   auto iter = number_data_type_map.find(type->type_id());
