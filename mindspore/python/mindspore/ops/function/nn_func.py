@@ -812,7 +812,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         >>> indices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
         >>> output = ops.max_unpool1d(x, indices, kernel_size =2, stride=2, padding=0)
         >>> print(output.asnumpy())
-        [[0, 2, 0, 4, 0, 6, 0, 8]]
+        [[0. 2. 0. 4. 0. 6. 0. 8.]]
     """
     if stride is None:
         stride = kernel_size
