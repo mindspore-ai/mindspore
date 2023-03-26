@@ -49,6 +49,8 @@ class EXPORT_WRAPPER AscendCollectiveCommLib : public CollectiveCommunicationLib
 
   bool CreateDeviceCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
+  bool DestroyCommunicationGroup(const std::string &group_name) override;
+
   bool DestroyDeviceCommunicationGroup(const std::string &group_name) override;
 
   uint32_t GetRankId(const std::string &group_name) override;

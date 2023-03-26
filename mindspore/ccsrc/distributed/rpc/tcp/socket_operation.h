@@ -45,7 +45,10 @@ class SocketOperation {
   static std::string GetLocalIP();
 
   static std::string GetIP(const std::string &url);
+
+  // Get ip and port of this end with the specified socket fd.
   static uint16_t GetPort(int sock_fd);
+  static std::string GetIp(int sock_fd);
 
   // Get the address(ip:port) of the other end of the connection.
   static std::string GetPeer(int sock_fd);

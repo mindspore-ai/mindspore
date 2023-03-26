@@ -28,6 +28,7 @@
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/hccl_adapter/converter.h"
+#include "distributed/constants.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -39,6 +40,38 @@ static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
     MS_LOG(WARNING) << #symbol << " is null, hccl has not been inited, do nothing."; \
     return HcclResult::HCCL_E_RESERVED;                                              \
   }
+
+static std::string GenerateCMChiefWorkDevice() {
+  if (mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerNum) == "1") {
+    // If only one device is used, use 'DEVICE_ID' env if it's set.
+    auto device_id_env = mindspore::common::GetEnv("DEVICE_ID");
+    return device_id_env.empty() ? "0" : device_id_env;
+  } else {
+    // If multiple device number is set, we need to find the smallest device id. Set to "0" for now.
+    return "0";
+  }
+}
+
+static void AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_opt_map) {
+  MS_EXCEPTION_IF_NULL(hccl_opt_map);
+  // Before hccl initialization, the validation of these environment variables is already verified.
+  hccl_opt_map->emplace("ge.cmChiefIp", mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerHost));
+
+  // We offset scheduler port by 1 as cm chief port.
+  std::string sched_port = mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerPort);
+  int sched_port_num = std::stoi(sched_port);
+  int cm_port_num = sched_port_num + 1;
+  hccl_opt_map->emplace("ge.cmChiefPort", std::to_string(cm_port_num));
+
+  hccl_opt_map->emplace("ge.cmChiefWorkerDevice", GenerateCMChiefWorkDevice());
+  hccl_opt_map->emplace("ge.cmWorkerSize", mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerNum));
+  hccl_opt_map->emplace("ge.cmWorkerIp", mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerClientIp));
+  MS_LOG(WARNING) << "Set CM options to hccl. OPTION_EXEC_CM_CHIEF_IP: " << hccl_opt_map->at("ge.cmChiefIp")
+                  << ", OPTION_EXEC_CM_CHIEF_PORT: " << hccl_opt_map->at("ge.cmChiefPort")
+                  << ", OPTION_EXEC_CM_CHIEF_DEVICE: " << hccl_opt_map->at("ge.cmChiefWorkerDevice")
+                  << ", OPTION_EXEC_CM_WORKER_SIZE: " << hccl_opt_map->at("ge.cmWorkerSize")
+                  << ", OPTION_EXEC_CM_WORKER_IP: " << hccl_opt_map->at("ge.cmWorkerIp");
+}
 
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
                                                          std::string_view rank_file = "") {
@@ -64,6 +97,9 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
   }
   if (!rank_file.empty()) {
     default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
+  }
+  if (mindspore::common::UseHcclCM()) {
+    AddCMEnvToHcclOption(&default_options_map);
   }
   return default_options_map;
 }
@@ -161,7 +197,7 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
 
 void HcclAdapter::CheckExcutionMode() const {
   auto hccl_mode = GetCurrentHcclMode();
-  if (hccl_mode != hccl_mode_ && !common::UseHostCollective()) {
+  if (hccl_mode != hccl_mode_ && (!common::UseHostCollective() || common::UseHcclCM())) {
     MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_) << " but current execution mode is "
                       << GetHcclModeString(hccl_mode)
                       << ". Please set the execution mode before HCCL init(), and then do not change it in the "

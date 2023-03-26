@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_TCP_COMM_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_TCP_COMM_H_
 
+#include <map>
 #include <string>
 #include <memory>
 #include <mutex>
@@ -81,6 +82,9 @@ class TCPComm {
    */
   const MemAllocateCallback &allocate_cb() const { return allocate_cb_; }
 
+  // Get a connection's source ip address with specified dst_url.
+  std::string GetSrcIp(const std::string &dst_url);
+
  private:
   // Build the connection.
   Connection *CreateDefaultConn(const std::string &to);
@@ -105,6 +109,9 @@ class TCPComm {
 
   // The server url.
   std::string url_;
+
+  // For each destination address, client's ip address is specific.
+  std::map<std::string, std::string> dst_url_to_src_ip_;
 
   // The socket of server.
   int server_fd_;
