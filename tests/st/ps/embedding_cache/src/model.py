@@ -37,16 +37,6 @@ class Net(Cell):
                                                  param_init='normal', target=target,
                                                  slice_mode='table_row_slice', sparse=sparse,
                                                  vocab_cache_size=vocab_cache_size)
-        self.embedding_lookup2 = EmbeddingLookup(vocab_size=vocab_size,
-                                                 embedding_size=embedding_size,
-                                                 param_init='normal', target=target,
-                                                 slice_mode='table_row_slice', sparse=sparse,
-                                                 vocab_cache_size=vocab_cache_size)
-        self.embedding_lookup3 = EmbeddingLookup(vocab_size=vocab_size,
-                                                 embedding_size=embedding_size,
-                                                 param_init='normal', target=target,
-                                                 slice_mode='table_row_slice', sparse=sparse,
-                                                 vocab_cache_size=vocab_cache_size)
         self.add = op.TensorAdd()
         self.flatten = Flatten()
         self.dense = Dense(in_channels=in_channels, out_channels=out_channels, weight_init='normal',
@@ -58,11 +48,7 @@ class Net(Cell):
         x = self.flatten(x)
         x = self.cast(x, self.type)
         y = self.embedding_lookup1(x)
-        z = self.embedding_lookup2(x)
-        u = self.embedding_lookup3(x)
-        x = self.add(y, z)
-        x = self.add(x, u)
-        x = self.flatten(x)
+        x = self.flatten(y)
         x = self.dense(x)
         x = self.flatten(x)
         return x
@@ -88,8 +74,6 @@ class ModelExecutor:
         net = Net(self.in_channels, self.out_channels, self.vocab_size, self.embedding_size,
                   self.target, self.sparse, self.vocab_cache_size)
         net.embedding_lookup1.set_param_ps()
-        net.embedding_lookup2.set_param_ps()
-        net.embedding_lookup3.set_param_ps()
         net.set_train()
         loss = SoftmaxCrossEntropyWithLogits(reduction='mean')
         opt = Adam(params=filter(lambda x: x.requires_grad, net.get_parameters()))
