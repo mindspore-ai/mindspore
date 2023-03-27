@@ -3,7 +3,7 @@ mindspore.ops.movedim
 
 .. py:function:: mindspore.ops.movedim(x, source, destination)
 
-    将 `x` 在 `source` 中位置的维度移动到 `destination` 中的位置。
+    调换 `x` 中 `source` 和 `destination` 两个维度的位置。
 
     其它维度保留在原始位置。
 

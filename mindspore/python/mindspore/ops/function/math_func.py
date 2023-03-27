@@ -8851,7 +8851,7 @@ def log10(input):
         input Tensor on the CPU or GPU should be less than 8.
 
     Args:
-        input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+        input (Tensor): Input Tensor of any dimension. The each element in Tensor must be greater than 0.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -9857,7 +9857,7 @@ def greater(input, other):
 
 def greater_equal(input, other):
     r"""
-    Computes the boolean value of :math:`input >= other` element-wise.
+    Computes the boolean value of :math:`input \geq other` element-wise.
 
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
@@ -10090,8 +10090,8 @@ def isinf(input):
     .. math::
 
         out_i = \begin{cases}
-        & \text{ if } x_{i} = \text{Inf},\ \ True \\
-        & \text{ if } x_{i} \ne \text{Inf},\ \ False
+          & \ True,\ \text{ if } x_{i} = \text{Inf} \\
+          & \ False,\ \text{ if } x_{i} \ne  \text{Inf}
         \end{cases}
 
     where :math:`Inf` means not a number.

@@ -15,7 +15,7 @@ mindspore.ops.log10
         Ascend上输入Tensor的维度要小于等于8，CPU或GPU上输入Tensor的维度要小于8。
 
     参数：
-        - **input** (Tensor) - 任意维度的输入Tensor。该值必须大于0。
+        - **input** (Tensor) - 任意维度的输入Tensor。Tensor内每个元素都必须大于0。
 
     返回：
         Tensor，具有与 `input` 相同的shape。

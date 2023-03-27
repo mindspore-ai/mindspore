@@ -8,7 +8,7 @@ mindspore.ops.hamming_window
     .. math::
         w[n]=\alpha − \beta \cos \left( \frac{2 \pi n}{N - 1} \right),
 
-    这里N是整个window的大小。
+    这里 :math:`N` 是整个window的大小。
 
     参数：
         - **window_length** (int) - 输出window的大小。为非负整数。

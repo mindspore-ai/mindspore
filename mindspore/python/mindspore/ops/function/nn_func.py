@@ -4682,12 +4682,12 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
-            1, & \text{ if } input > 1; \\
-            -1, & \text{ if } input < -1; \\
+            1, & \text{ if } input > 1 \\
+            -1, & \text{ if } input < -1 \\
             input, & \text{ otherwise. }
         \end{cases}
 
-    Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
+    Linear region range :math:`[min_val, max_val]` can be adjusted using `min_val` and `max_val`.
 
     Args:
         input (Tensor): Input Tensor.
@@ -5331,7 +5331,7 @@ def glu(x, axis=-1):
     See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
-        x (Tensor): Tensor to be splited. Its dtype is number.Number, and shape is :math:`(\ast_1, N, \ast_2)`
+        x (Tensor): Tensor to be splited. Its dtype is Number, and shape is :math:`(\ast_1, N, \ast_2)`
             where `*` means, any number of additional dimensions.
         axis (int, optional): the axis to split the input. It must be int. Default: -1, the last axis of `x`.
 
@@ -5339,7 +5339,7 @@ def glu(x, axis=-1):
         Tensor, the same dtype as the `x`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
 
     Raises:
-        TypeError: If dtype of `x` is not number.Number.
+        TypeError: If dtype of `x` is not Number.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
