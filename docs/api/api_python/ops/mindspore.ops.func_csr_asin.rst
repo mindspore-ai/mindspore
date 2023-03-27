@@ -9,7 +9,7 @@ mindspore.ops.csr_asin
         out_i = sin^{-1}(x_i)
 
     参数：
-        - **x** (CSRTensor) - CSRTensor的shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型应该是以下类型之一：float16、float32、float64。
+        - **x** (CSRTensor) - CSRTensor的输入。数据类型应该是以下类型之一：float16、float32、float64。
 
     返回：
         CSRTensor，数据类型和shape与 `x` 相同。

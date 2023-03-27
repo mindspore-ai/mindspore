@@ -5069,7 +5069,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Note:
         1. On Ascend platform, only group convolution in depthwise convolution scenarios is supported. That is, when
-        `groups>1`, condition :math:`C_{in} = C_{out} = groups` must be satisfied.
+           `groups>1`, condition :math:`C_{in} = C_{out} = groups` must be satisfied.
         2. On Ascend dilation on depth only supports the case of 1.
 
     Args:
