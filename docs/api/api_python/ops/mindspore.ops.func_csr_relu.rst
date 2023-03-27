@@ -3,7 +3,7 @@ mindspore.ops.csr_relu
 
 .. py:function:: mindspore.ops.csr_relu(x: CSRTensor)
 
-    对输入CSRTensor逐元素计算线性修正单元激活函数（Rectified Linear Unit）值。
+    逐元素计算CSRTensor的ReLU（Rectified Linear Unit）激活值。
 
     返回 :math:`\max(x,\  0)` 的值。负值神经元将被设置为0，正值神经元将保持不变。
 

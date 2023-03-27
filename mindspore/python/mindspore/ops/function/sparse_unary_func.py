@@ -203,7 +203,7 @@ def csr_exp(x: CSRTensor) -> CSRTensor:
 
 def coo_exp(x: COOTensor) -> COOTensor:
     """
-    Returns coo_exponential of a COOTensor element-wise.
+    Returns the element-wise exponential of a COOTensor.
 
     .. math::
 
@@ -1527,7 +1527,8 @@ def coo_log1p(x: COOTensor) -> COOTensor:
         out_i = {log_e}(x_i + 1)
 
     Args:
-        x (COOTensor): The input COOTensor. With float16 or float32 data type.
+        x (COOTensor): The input COOTensor, should have dtype of float16 or float32
+            and its value should be greater than -1.
 
     Returns:
         COOTensor, has the same shape as the `x`.
@@ -1559,7 +1560,7 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        out_i \approx x_i
+        out_i \\approx x_i
 
     Args:
         x (CSRTensor): The input CSRTensor.
@@ -1589,7 +1590,7 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
 
 def coo_round(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Returns half to even of a COOTensor element-wise.
 
     .. math::
@@ -1810,7 +1811,7 @@ def coo_neg(x: COOTensor) -> COOTensor:
         out_{i} = - x_{i}
 
     Args:
-        x (COOTensor): The input COOTensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        x (COOTensor): The input COOTensor with a dtype of Number.
 
     Returns:
         COOTensor, has the same shape and dtype as input.
@@ -1843,12 +1844,9 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
 
         out_i = \cosh^{-1}(input_i)
 
-    .. warning::
-        Given an input CSRTensor x, the function computes inverse hyperbolic cosine of every element.
-        Input range is [1, inf].
-
     Args:
-        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
+        x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its element must be in range [1, inf],
+        its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
@@ -1963,7 +1961,7 @@ def coo_isinf(x: COOTensor) -> COOTensor:
         & \text{ if } x_{i} \ne \text{Inf},\ \ False
         \end{cases}
 
-    where :math:`Inf` means not a number.
+    where :math:`Inf` means infinitity or negative infinitity.
 
     Args:
         x (COOTensor): The input COOTensor.
@@ -2037,7 +2035,7 @@ def coo_atanh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        out_i = \tanh^{-1}(x_{i})
+        out_i = tanh^{-1}(x_{i})
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

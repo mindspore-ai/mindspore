@@ -13,7 +13,7 @@ mindspore.ops.coo_isfinite
         \end{cases}
 
     参数：
-        - **x** (COOTensor) - IsFinite的输入，任意维度的COOTensor。
+        - **x** (COOTensor) - 任意维度的COOTensor。
 
     返回：
         COOTensor，输出的shape与输入相同，数据类型为bool。
