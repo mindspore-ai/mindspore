@@ -36,7 +36,6 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.flatten
     mindspore.ops.unfold
     mindspore.ops.fold
-    mindspore.ops.fractional_max_pool2d
     mindspore.ops.fractional_max_pool3d
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
@@ -392,7 +391,6 @@ Reduction函数
     mindspore.ops.cholesky
     mindspore.ops.cholesky_inverse
     mindspore.ops.batch_dot
-    mindspore.ops.det
     mindspore.ops.dot
     mindspore.ops.eig
     mindspore.ops.inner
@@ -471,6 +469,7 @@ Tensor创建
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
+    mindspore.ops.multinomial_with_replacement
     mindspore.ops.rand
     mindspore.ops.rand_like
     mindspore.ops.randint
@@ -526,6 +525,7 @@ Array操作
     mindspore.ops.index_fill
     mindspore.ops.index_select
     mindspore.ops.inplace_add
+    mindspore.ops.inplace_index_add
     mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
     mindspore.ops.masked_fill

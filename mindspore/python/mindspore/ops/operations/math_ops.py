@@ -1930,8 +1930,7 @@ class InplaceAdd(Primitive):
 
 class InplaceIndexAdd(Primitive):
     """
-    Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
-    and indices should be in [0, the size of `var` - 1] at the axis dimension.
+    Adds Tensor `updates` to specified axis and indices of Tensor `var`.
 
     Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
@@ -6779,25 +6778,29 @@ class Median(Primitive):
         When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
 
     Args:
-        global_median (bool): Whether the output tensor is the median of all input tensor elements or not.
-        axis (int): The dimension need to reduce. Default: 0.
-        keep_dims (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+        global_median (bool, optional): Whether the output tensor is the median of all
+            input tensor elements or not. Default: Fasle.
+        axis (int, optional): The dimension need to reduce. Default: 0.
+        keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
     Inputs:
-        - **x** (Tensor) - A Tensor, whose dtype is int16, int32, int64, float32 or float64.
+        - **x** (Tensor) - A Tensor to calculate median with. Supported dtype:int16, int32, int64, float32 or float64.
 
     Outputs:
-        - **y** (Tensor) - A Tensor, Has the same dtype as the `x`. If `global_median` is true, the `y` has only one
-          element. If `keep_dims` is true, the `y` has the same shape as the `x` except the shape of `y` in dimension
-          `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
-        - **indices** (Tensor) - A Tensor, Has the same shape as the `y`, but dtype is int64.
+        - **y** (Tensor) - Median, has the same dtype as the `x`.
+
+          - If `global_median` is True, the `y` has only one element.
+          - If `keep_dims` is True, the `y` has the same shape as the `x` except the size
+            of `y` in dimension `axis` is 1.
+          - Otherwise, the `y` lacks `axis` dimension than input.
+
+        - **indices** (Tensor) - Indices, Has the same shape as the `y`, with dtype int64.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, double.
+        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `x` is not a Tensor.
-        TypeError: If `global_median` is not a bool.
+        TypeError: If `global_median` or `keep_dims` is assigned a nonboolean value.
         TypeError: If `axis` is not a int.
-        TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 
     Supported Platforms:
@@ -7472,29 +7475,10 @@ class CompareAndBitpack(Primitive):
 
 class NanToNum(Primitive):
     """
-    Replaces `NaN`, positive infinity, and negative infinity values in the `x` with the values
-    specified by `nan`, `posinf`, and `neginf`, respectively. By default, NaN is replaced by 0,
-    positive infinity is replaced by the largest finite value representable by the x dtype,
-    and negative infinity is replaced by the smallest finite value representable by the x dtype.
+    Replaces `NaN`, positive infinity and negative infinity values in the `x` with the values
+    specified by `nan`, `posinf` and `neginf` respectively.
 
-    Args:
-        nan (float): The value to replace `NaN`. Default value is 0.0.
-        posinf (float): If a Number, the value to replace positive infinity values with. If None, positive
-          infinity values are replaced with the greatest finite value representable by `x`'s dtype.
-          Default value is None.
-        neginf (float): if a Number, the value to replace negative infinity values with. If None, negative
-          infinity values are replaced with the lowest finite value representable by `x`'s dtype.
-          Default value is None.
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+    Refer to :func:`mindspore.ops.nan_to_num` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

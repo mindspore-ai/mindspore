@@ -2070,28 +2070,33 @@ class MaxUnpool3D(Primitive):
         ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
-        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both strides, or a tuple of three int numbers that
-            represent depth, height and width of movement respectively.
-            If strides is 0 or (0, 0, 0), then strides equal to ksize. Default: 0.
-        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
-            the paddings of depth, height and width are the same, equal to pads. If `pads` is a tuple of three integers,
-            the padding of depth, height and width equal to pads[0], pads[1] and pads[2] correspondingly.
-        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
+        strides (Union[int, tuple[int]], optional): The distance of kernel moving. Default: 0.
+
+            - If it is an int number, the depth, height and width of movement are all equal to `strides`.
+            - If it is a tuple of three int numbers, they represent depth, height and width of movement respectively.
+            - If strides is 0 or (0, 0, 0), then `strides` equal to `ksize`.
+
+        pads (Union[int, tuple[int]], optional): The pad value to be filled. Default: 0.
+
+            - If `pads` is an integer, the paddings of depth, height and width are the same, equal to pads.
+            - If `pads` is a tuple of three integers, the padding of depth, height and width equal to pads[0],
+              pads[1] and pads[2] correspondingly.
+
+        output_shape (tuple[int], optional) : The target output size is an optional input. Default: ().
             If output_shape == (), then the shape of output computed by kszie, strides and pads.
             If output_shape != (), then output_shape must be :math:`(N, C, D, H, W)` or
             :math:`(N, D, H, W, C)` and output_shape must belong to
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.
-        data_format (str) : The optional value for data format. Currently support 'NCDHW' and 'NDHWC'. Default: 'NCDHW'.
+        data_format (str, optional) : The optional value for data format. Currently
+            support 'NCDHW' and 'NDHWC'. Default: 'NCDHW'.
 
     Inputs:
         - **x** (Tensor) - The input Tensor to invert.
           Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
-        - **argmax** (Tensor) - Max values' index represented by the argmax.
-          Tensor of shape must be same with input 'x'.
-          Values of argmax must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
-          Data type must be in int32 or int64.
+        - **argmax** (Tensor) - Max values' index. Tensor that has the same shape as `x`.
+          Values of `argmax` must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
+          Data type must be int32 or int64.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
@@ -2105,7 +2110,7 @@ class MaxUnpool3D(Primitive):
         ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not a str or is neither `NCDHW` nor `NDHWC`.
         ValueError: If `output_shape` whose length is neither 0 or 5.
-        ValueError: If `output_shape` is not close to output size
+        ValueError: If `output_shape` is not close to output size range
                     computed by attr `ksize, strides, pads`.
 
     Supported Platforms:
@@ -3689,19 +3694,21 @@ class UpsampleTrilinear3D(Primitive):
 
 
     Examples:
-        >>> ops = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
-        >>> out = ops(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)))
+        >>> net = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
+        >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
+        >>> out = net(in_x)
         >>> print(out.shape)
         (2, 3, 4, 64, 48)
-        ...
-        >>> ops = ops.UpsampleTrilinear3D(output_size=[2, 4, 4])
+        >>>
+        >>> net = ops.UpsampleTrilinear3D(output_size=[2, 4, 4])
         >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
-        >>> out = ops(in_x)
+        >>> out = net(in_x)
         >>> print(out)
         [[[[[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]
             [3.   3.25 3.75 4.  ]]
+
            [[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]

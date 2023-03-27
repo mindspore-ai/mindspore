@@ -73,6 +73,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxPoolWithArgmax
     mindspore.ops.MaxPoolWithArgmaxV2
     mindspore.ops.MaxUnpool2D
+    mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
     mindspore.ops.Padding
@@ -235,16 +236,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.BesselI0
-    mindspore.ops.BesselI1
-    mindspore.ops.BesselJ0
-    mindspore.ops.BesselJ1
-    mindspore.ops.BesselK0
-    mindspore.ops.BesselK0e
-    mindspore.ops.BesselK1
-    mindspore.ops.BesselK1e
-    mindspore.ops.BesselY0
-    mindspore.ops.BesselY1
     mindspore.ops.Bincount
     mindspore.ops.Bucketize
     mindspore.ops.Cauchy
@@ -277,8 +268,18 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Atan
     mindspore.ops.Atan2
     mindspore.ops.Atanh
+    mindspore.ops.BesselI0
     mindspore.ops.BesselI0e
+    mindspore.ops.BesselI1
     mindspore.ops.BesselI1e
+    mindspore.ops.BesselJ0
+    mindspore.ops.BesselJ1
+    mindspore.ops.BesselK0
+    mindspore.ops.BesselK0e
+    mindspore.ops.BesselK1
+    mindspore.ops.BesselK1e
+    mindspore.ops.BesselY0
+    mindspore.ops.BesselY1
     mindspore.ops.BitwiseAnd
     mindspore.ops.BitwiseOr
     mindspore.ops.BitwiseXor
@@ -354,6 +355,7 @@ Reduction算子
     mindspore.ops.ArgMaxWithValue
     mindspore.ops.Argmin
     mindspore.ops.ArgMinWithValue
+    mindspore.ops.Median
     mindspore.ops.ReduceAll
     mindspore.ops.ReduceAny
     mindspore.ops.ReduceMax
@@ -435,6 +437,7 @@ Tensor创建
     mindspore.ops.Bernoulli
     mindspore.ops.Gamma
     mindspore.ops.Multinomial
+    mindspore.ops.MultinomialWithReplacement
     mindspore.ops.RandomCategorical
     mindspore.ops.RandomChoiceWithMask
     mindspore.ops.RandomGamma
@@ -493,6 +496,7 @@ Array操作
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.InplaceAdd
+    mindspore.ops.InplaceIndexAdd
     mindspore.ops.InplaceSub
     mindspore.ops.InplaceUpdate
     mindspore.ops.InplaceUpdateV2
@@ -513,10 +517,12 @@ Array操作
     mindspore.ops.MatrixSolve
     mindspore.ops.Meshgrid
     mindspore.ops.Mvlgamma
+    mindspore.ops.NanToNum
     mindspore.ops.NonZero
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
     mindspore.ops.Qr
+    mindspore.ops.RandomShuffle
     mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Renorm

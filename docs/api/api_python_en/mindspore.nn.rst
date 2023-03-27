@@ -209,7 +209,6 @@ Pooling Layer
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
     mindspore.nn.AvgPool3d
-    mindspore.nn.FractionalMaxPool2d
     mindspore.nn.FractionalMaxPool3d
     mindspore.nn.LPPool1d
     mindspore.nn.LPPool2d
