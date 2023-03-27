@@ -45,7 +45,8 @@ constexpr char INIT_OPTIMIZER_STATE_FN[] = "_init_optimizer_state";
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
 
-ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
+ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &),
+                                      const std::vector<AnfNodePtr> &all_nodes);
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes);
 void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 void HandleNoUsedParameter(const FuncGraphPtr &root);

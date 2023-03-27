@@ -333,6 +333,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     return false;
   }
   CNodePtr cnode = node->cast<CNodePtr>();
+  FindPreNodeCrossFuncGraph(&cnode, out_index);
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
@@ -352,6 +353,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
       MS_LOG(EXCEPTION) << "tuple get item's second input is not a cnode";
     }
     CNodePtr pre_cnode = pre_node->cast<CNodePtr>();
+    FindPreNodeCrossFuncGraph(&pre_cnode, out_index);
     auto pre_op_info = pre_cnode->user_data<OperatorInfo>();
     if (IsParallelCareNode(pre_cnode) && (pre_op_info != nullptr)) {
       *pre_operator_info = pre_op_info;
@@ -389,8 +391,21 @@ void FindReshapeNextNodeStraCosts(const CNodePtr &cnode,
   AnfNodeIndexSet node_set = manager->node_users()[cnode];
   for (auto &node_pair : node_set) {
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
-    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+    if (use_apply == nullptr ||
+        !(IsValueNode<Primitive>(use_apply->input(0)) || IsValueNode<FuncGraph>(use_apply->input(0)))) {
       continue;
+    }
+    auto pair = node_pair;
+    if (IsValueNode<FuncGraph>(use_apply->input(0))) {
+      auto sub_graph = GetValueNode<FuncGraphPtr>(use_apply->input(0));
+      auto params = sub_graph->parameters();
+      auto sub_manager = sub_graph->manager();
+      auto sub_node_set = sub_manager->node_users()[params[node_pair.second - 1]];
+      for (auto &sub_node_pair : sub_node_set) {
+        use_apply = sub_node_pair.first->cast<CNodePtr>();
+        pair = sub_node_pair;
+        break;
+      }
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimReshape)) {
       *is_next_reshape = true;
@@ -401,14 +416,14 @@ void FindReshapeNextNodeStraCosts(const CNodePtr &cnode,
     PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(node_prim);
     MS_LOG(INFO) << "FindNextLayout prim " << node_prim->name();
-    if (node_prim->name() == DEPEND && node_pair.second != 1) {
+    if (node_prim->name() == DEPEND && pair.second != 1) {
       continue;
     }
     auto op_info = use_apply->user_data<OperatorInfo>();
     if (IsParallelCareNode(use_apply) && (op_info != nullptr)) {
       MS_LOG(INFO) << "FindReshapeNextNodeStraCosts success prim " << node_prim->name();
       *is_next_reshape = false;
-      next_ops_index->push_back(std::make_pair(op_info, node_pair.second - 1));
+      next_ops_index->push_back(std::make_pair(op_info, pair.second - 1));
       continue;
     }
     MS_LOG(DEBUG) << "FindReshapeNextNodeStraCosts failed prim " << node_prim->name() << "  "

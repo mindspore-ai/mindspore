@@ -612,6 +612,80 @@ bool CheckTensorType(const TypePtr &node_type) {
   return true;
 }
 
+void FindReturnUser(const CNodePtr &cnode, const std::vector<AnfNodePtr> &all_nodes,
+                    std::pair<std::shared_ptr<AnfNode>, int> *queue_node) {
+  auto graph = cnode->func_graph();
+  auto is_target = [&](const AnfNodePtr &ele) {
+    if (ele->isa<CNode>()) {
+      auto parent_cnode = ele->cast<CNodePtr>();
+      return IsValueNode<FuncGraph>(parent_cnode->input(0)) &&
+             GetValueNode<FuncGraphPtr>(parent_cnode->input(0)) == graph;
+    }
+    return false;
+  };
+  auto it = std::find_if(all_nodes.begin(), all_nodes.end(), is_target);
+  if (it == all_nodes.end()) {
+    return;
+  }
+  *queue_node = {*it, 0};
+}
+
+void AddVisitedNode(std::queue<std::pair<std::shared_ptr<AnfNode>, int>> *visited, const NodeUsersMap &node_users_map,
+                    const AnfNodePtr &key_node) {
+  auto node_users = node_users_map.at(key_node);
+  for (auto &node_user : node_users) {
+    auto cnode = node_user.first->cast<CNodePtr>();
+    if (!cnode || !cnode->in_forward_flag() || IsSomePrimitiveList(cnode->cast<CNodePtr>(), {MAKE_TUPLE, UPDATESTATE}))
+      continue;
+    if (node_user.first) {
+      visited->push(node_user);
+    }
+  }
+}
+
+std::pair<std::shared_ptr<AnfNode>, int> BFSParallelCareNode(const AnfNodePtr &node_ptr,
+                                                             const NodeUsersMap &node_users_map, const int index,
+                                                             const std::vector<AnfNodePtr> &all_nodes) {
+  std::queue<std::pair<std::shared_ptr<AnfNode>, int>> visited;
+  CNodePtr cnode = nullptr;
+  AnfNodePtr node = nullptr;
+  if (!node_ptr) return std::make_pair(nullptr, 0);
+  auto users_map = node_users_map;
+  AddVisitedNode(&visited, node_users_map, node_ptr);
+  while (!visited.empty()) {
+    auto queue_node = visited.front();
+    visited.pop();
+    cnode = queue_node.first->cast<CNodePtr>();
+    if (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode)) {
+      return queue_node;
+    } else if (IsValueNode<FuncGraph>(cnode->input(0))) {
+      auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+      auto params = graph->parameters();
+      users_map = graph->manager()->node_users();
+      auto target_param = params[queue_node.second - 1];
+      auto node_set = users_map[target_param];
+      for (auto &node_user : node_set) {
+        cnode = node_user.first->cast<CNodePtr>();
+        if (IsParallelCareNode(cnode) || IsAutoParallelCareNode(cnode)) {
+          return node_user;
+        } else if (IsSomePrimitiveList(cnode, {MAKE_TUPLE, UPDATESTATE})) {
+          continue;
+        }
+        visited.push(node_user);
+      }
+    } else {
+      if (IsSomePrimitive(cnode, RETURN)) {
+        FindReturnUser(cnode, all_nodes, &queue_node);
+      } else if (IsSomePrimitive(cnode, prim::kTupleGetItem)) {
+        auto tuple_index = LongToSize(GetValue<int64_t>(GetValueNode(cnode->input(2))));
+        if (tuple_index != IntToSize(index - 1)) continue;
+      }
+      AddVisitedNode(&visited, node_users_map, queue_node.first);
+    }
+  }
+  return std::make_pair(nullptr, 0);
+}
+
 // For the weight used by cast and matmul at the same time, like the followings
 // weight1->mirror->cast1-> matmul1;
 // weight1->add
@@ -656,6 +730,7 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
   }
   return node;
 }
+
 // Given the cnode ptr, find its users until we find the computation node, then return the type of the
 // computation node. This function is used to find the target type for CreateFP16Cast. Only returns the target type if
 // it is float16, and the source node is float32. If the situation is not matched, then return the nullptr.
@@ -1156,8 +1231,71 @@ bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
   return true;
 }
 
+void FindPreNodeCrossFuncGraph(CNodePtr *cnode, int64_t *out_index) {
+  if (IsValueNode<FuncGraph>((*cnode)->input(0))) {
+    auto graph = GetValueNode<FuncGraphPtr>((*cnode)->input(0));
+    auto output = graph->output();
+    MS_EXCEPTION_IF_NULL(output);
+    while (IsPrimitiveCNode(output, prim::kPrimDepend)) {
+      auto output_cnode = output->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(output_cnode);
+      output = output_cnode->input(1);
+    }
+    while (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+      auto make_tuple_cnode = output->cast<CNodePtr>();
+      output = make_tuple_cnode->input(*out_index + 1);
+    }
+    *cnode = output->cast<CNodePtr>();
+  }
+}
+
+AnfNodePtr FindRealInputByFormalParameter(const CNodePtr &node, const AnfNodePtr &input,
+                                          const std::vector<AnfNodePtr> &all_nodes) {
+  auto prev_node = input;
+  auto graph = node->func_graph();
+  auto params = graph->parameters();
+  int64_t param_index = -1;
+  for (size_t j = 0; j < params.size(); ++j) {
+    if (params[j] == input) {
+      param_index = j;
+    }
+  }
+  if (param_index == -1) {
+    return prev_node;
+  }
+  for (auto &ele : all_nodes) {
+    if (!ele->isa<CNode>()) {
+      continue;
+    }
+    auto parent_node = ele->cast<CNodePtr>();
+    if (IsValueNode<FuncGraph>(parent_node->input(0)) && GetValueNode<FuncGraphPtr>(parent_node->input(0)) == graph) {
+      return parent_node->input(param_index + 1);
+    }
+  }
+  return prev_node;
+}
+
+bool CrossInterNode(CNodePtr *prev_cnode, ValueNodePtr *prev_prim_anf_node, PrimitivePtr *prev_prim) {
+  if ((*prev_cnode == nullptr) ||
+      !(IsValueNode<Primitive>((*prev_cnode)->input(0)) || IsValueNode<FuncGraph>((*prev_cnode)->input(0)))) {
+    return true;
+  }
+  if (!IsValueNode<FuncGraph>((*prev_cnode)->input(0))) {
+    *prev_prim_anf_node = (*prev_cnode)->input(0)->cast<ValueNodePtr>();
+    *prev_prim = (*prev_prim_anf_node)->value()->cast<PrimitivePtr>();
+  }
+  return false;
+}
+
+bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim) {
+  return (IsValueNode<FuncGraph>(prev_cnode->input(0))) || (prev_prim->name() == prim::kTupleGetItem) ||
+         (prev_prim->name() == prim::kDepend) || (prev_prim->name() == prim::kMakeList) ||
+         (prev_prim->name() == prim::kLoad) || (prev_prim->name() == prim::kMakeTuple) ||
+         IsAutoParallelCareNode(prev_cnode);
+}
+
 // Needed by rec_parser
-std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node) {
+std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std::vector<AnfNodePtr> &all_nodes) {
   std::vector<std::string> name_inputs;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
   std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
@@ -1165,8 +1303,69 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node) {
   std::string node_id = node->UniqueId();
   name_inputs.push_back(node_id);
   for (auto &input : node_inputs) {
-    std::string name = input->UniqueId();
-    name_inputs.push_back(name);
+    AnfNodePtr prev_node = input;
+    if (input->isa<Parameter>()) {
+      prev_node = FindRealInputByFormalParameter(node, input, all_nodes);
+      if (prev_node->UniqueId() == input->UniqueId()) {
+        name_inputs.push_back(input->UniqueId());
+        continue;
+      }
+    }
+    auto prev_cnode = prev_node->cast<CNodePtr>();
+    PrimitivePtr prev_prim;
+    ValueNodePtr prev_prim_anf_node;
+    bool is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
+    if (is_cross) {
+      name_inputs.push_back(input->UniqueId());
+      continue;
+    }
+
+    size_t output_index = 0;
+    while (IsCarePrevCNode(prev_cnode, prev_prim)) {
+      if (IsValueNode<FuncGraph>(prev_cnode->input(0))) {
+        auto graph = GetValueNode<FuncGraphPtr>(prev_cnode->input(0));
+        auto output = graph->output();
+        MS_EXCEPTION_IF_NULL(output);
+        prev_cnode = output->cast<CNodePtr>();
+        (void)CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
+      } else if (IsAutoParallelCareNode(prev_cnode)) {
+        name_inputs.push_back(prev_cnode->UniqueId());
+        break;
+      } else if (prev_prim->name() == prim::kTupleGetItem) {
+        // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
+        // this 'tuple_getitem'
+        output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(INDEX_TWO))));
+        prev_node = prev_cnode->input(1);
+        prev_cnode = prev_node->cast<CNodePtr>();
+        is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
+        if (is_cross) {
+          name_inputs.push_back(prev_node->UniqueId());
+          break;
+        }
+        if (!IsAutoParallelCareNode(prev_cnode) && !IsValueNode<FuncGraph>(prev_cnode->input(0))) {
+          MS_LOG(EXCEPTION) << "Did not create OperatorInfo for : " << prev_prim->name();
+        }
+      } else if (prev_prim->name() == prim::kMakeTuple) {
+        prev_node = prev_cnode->input(output_index + 1);
+        prev_cnode = prev_node->cast<CNodePtr>();
+        output_index = 0;
+        is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
+        if (is_cross) {
+          name_inputs.push_back(prev_node->UniqueId());
+          break;
+        }
+      } else if (prev_prim->name() == prim::kDepend || prev_prim->name() == prim::kLoad) {
+        // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
+        // this 'depend'
+        prev_node = prev_cnode->input(1);
+        prev_cnode = prev_node->cast<CNodePtr>();
+        is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);
+        if (is_cross) {
+          name_inputs.push_back(prev_node->UniqueId());
+          break;
+        }
+      }
+    }
   }
 
   return name_inputs;
