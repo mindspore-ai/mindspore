@@ -3677,7 +3677,8 @@ def logit(input, eps=None):
 
     Args:
         input (Tensor): The input tensor.
-        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.
+        eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
+            otherwise, the input `input` is not clamped. Default: None.
 
     Returns:
         Tensor, with the same shape and dtype as the `input`.
@@ -9758,12 +9759,12 @@ def less_equal(input, other):
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+        input (Union[Tensor, Number, bool]): The first input is a Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+        other (Union[Tensor, Number, bool]): The second input, when the first input is a Tensor,
+            the second input should be a Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Returns:
