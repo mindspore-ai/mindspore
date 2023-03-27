@@ -323,7 +323,7 @@ def csr_relu(x: CSRTensor) -> CSRTensor:
         x (CSRTensor): Input CSRTensor.
 
     Returns:
-        CSRTensor of shape :math:`(N, *)`, with the same dtype and shape as the `x`.
+        CSRTensor, with the same dtype and shape as the `x`.
 
     Raises:
         TypeError: If dtype of `x` is not a number.
@@ -1591,7 +1591,7 @@ def csr_round(x: CSRTensor) -> CSRTensor:
 
 
 def coo_round(x: COOTensor) -> COOTensor:
-    r"""
+    """
     Returns half to even of a COOTensor element-wise.
 
     .. math::

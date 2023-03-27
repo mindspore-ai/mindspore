@@ -2426,13 +2426,13 @@ def silu(x):
     Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
 
     .. math::
-        \text{SiLU}(x) = x * \sigma(x)
+        \text{SiLU}(x) = x * \sigma(x),
 
     where the Logistic Sigmoid function is defined as:
 
     .. math::
 
-        \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)}
+        \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
     where :math:`x_i` is an element of the x.
 
@@ -4087,8 +4087,10 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
         \ \text{eps}\right)\right) + \frac{\left(\text{x} - \text{target}\right)^2}
         {\text{max}\left(\text{var}, \ \text{eps}\right)}\right) + \text{const.}
 
-    where `eps` is used for stability of :math:`log`. When :math:`full=True`, a constant will be added to the loss. If
-    the shape of :math:`var` and `logits` are not the same (due to a homoscedastic assumption), their shapes must allow
+    where :math:`eps` is used for stability of :math:`log`. When :math:`full=True`,
+    a constant will be added to the loss. If
+    the shape of :math:`var` and :math:`logits` are not the same (due to a homoscedastic assumption),
+    their shapes must allow
     correct broadcasting.
 
     Args:
@@ -4100,13 +4102,13 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             but with one dimension equal to 1, or same shape as the x but with one fewer dimension
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
-            the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: ``False`` .
+            the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False`` .
         eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: ``1e-6`` .
         reduction (str, optional): Apply specific reduction method to the
             output: ``"none"`` , ``"mean"`` , or ``"sum"`` . Default: ``"mean"`` .
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on `reduction`.
+        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -4808,19 +4810,19 @@ def adaptive_avg_pool1d(input, output_size):
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
     planes.
 
-    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, adaptive_avg_pool1d outputs regional average
-    in the :math:`L_{in}`-dimension. The output is of shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}`
+    Typically, the input is of shape :math:`(N, C, L_{in})`, adaptive_avg_pool1d outputs regional average
+    in the :math:`L_{in}`-dimension. The output is of shape :math:`(N, C, L_{out})`, where :math:`L_{out}`
     is defined by `output_size`.
 
     Note:
         :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
+        input (Tensor): Tensor of shape :math:`(N, C, L_{in})`, with float16 or float32 data type.
         output_size (int): the target output size :math:`L_{out}`.
 
     Returns:
-        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `input`.
+        Tensor of shape :math:`(N, C, L_{out})`, has the same type as `input`.
 
     Raises:
         TypeError: If `output_size` is not an int.
@@ -5376,7 +5378,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
     .. math::
         \text{loss}(x, y) = \frac{\sum_i \max(0, \text{margin} - x[y] + x[i])^p}{\text{x.size}(0)}
 
-    where :math:`i\in \{0,⋯,x.size(0)−1\} \space and \space i \ne y`
+    where :math:`i\in \{0,⋯,x.size(0)−1\}` and :math:`i \ne y`.
 
     Args:
         input (Tensor): Input , with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
@@ -5620,7 +5622,7 @@ def gelu(input_x, approximate='none'):
     When `approximate` argument is `none`, GeLU is defined as follows:
 
     .. math::
-        GELU(x_i) = x_i*P(X < x_i)
+        GELU(x_i) = x_i*P(X < x_i),
 
     where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
     :math:`x_i` is the input element.

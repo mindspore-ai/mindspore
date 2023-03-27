@@ -5,7 +5,7 @@ mindspore.ops.csr_relu
 
     逐元素计算CSRTensor的ReLU（Rectified Linear Unit）激活值。
 
-    返回 :math:`\max(x,\  0)` 的值。负值神经元将被设置为0，正值神经元将保持不变。
+    返回 max(x, 0) 的值。负值神经元将被设置为0，正值神经元将保持不变。
 
     .. math::
         ReLU(x) = (x)^+ = max(0, x)
@@ -14,8 +14,7 @@ mindspore.ops.csr_relu
         一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
 
     参数：
-        - **x** (CSRTensor) - csr_relu的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
-          其数据类型为 `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_。
+        - **x** (CSRTensor) - csr_relu的输入。
 
     返回：
         CSRTensor，数据类型和shape与 `x` 相同。
