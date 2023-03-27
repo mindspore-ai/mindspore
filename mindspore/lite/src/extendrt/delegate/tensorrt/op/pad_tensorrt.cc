@@ -70,10 +70,10 @@ int PadTensorRT::AddInnerOpFix(TensorRTContext *ctx, const std::vector<int64_t> 
   std::vector<int64_t> start_values;
   std::vector<int64_t> size_values;
   std::vector<int64_t> stride_values;
-  for (size_t i = 0; i < pad_vec.size(); i += 2) {
+  for (size_t i = 0; i < pad_vec.size(); i += INPUT_SIZE2) {
     start_values.push_back(-pad_vec[i]);
     stride_values.push_back(1);
-    size_values.push_back(input_shape[i / 2] + pad_vec[i] + pad_vec[i + 1]);
+    size_values.push_back(input_shape[i / INPUT_SIZE2] + pad_vec[i] + pad_vec[i + 1]);
   }
   auto slice_layer = ctx->network()->addSlice(*pad_input, ConvertCudaDims(start_values), ConvertCudaDims(size_values),
                                               ConvertCudaDims(stride_values));
@@ -119,7 +119,7 @@ int PadTensorRT::AddInnerOpDynamic(TensorRTContext *ctx, const std::vector<int64
   std::vector<int> pre_values;
   std::vector<int> post_values;
   std::vector<int> stride_values;
-  for (size_t i = 0; i < pad_vec.size(); i += 2) {
+  for (size_t i = 0; i < pad_vec.size(); i += INPUT_SIZE2) {
     pre_values.push_back(-pad_vec[i]);
     post_values.push_back(pad_vec[i + 1]);
     stride_values.push_back(1);
@@ -187,7 +187,7 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   constexpr size_t pad_multi_times = 2;
-  if (pad_vec.size() % 2 != 0 && pad_vec.size() != input_shape.size() * pad_multi_times) {
+  if (pad_vec.size() % INPUT_SIZE2 != 0 && pad_vec.size() != input_shape.size() * pad_multi_times) {
     MS_LOG(ERROR) << "pad tensor is invalid, pad count: " << pad_vec.size()
                   << ", input dims count: " << input_shape.size() << ", op: " << op_name_;
     return RET_ERROR;
