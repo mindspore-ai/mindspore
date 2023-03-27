@@ -30,7 +30,7 @@ namespace cg = cooperative_groups;
 template <typename CG, typename Key, typename View>
 __device__ __forceinline__ void CheckKeyExist(const CG &g, const Key &key, View *submap_views, size_t submaps_num,
                                               int32_t *index_in_block) {
-  for (auto i = 0; i < submaps_num; ++i) {
+  for (size_t i = 0; i < submaps_num; ++i) {
     auto &submap_view = submap_views[i];
     auto iter = submap_view.find(g, key);
     if (iter != submap_view.end()) {
@@ -80,10 +80,12 @@ __global__ void LookupIndices(const Key *keys, size_t key_num, bool insert_miss_
   auto tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
   auto global_thread_index = blockDim.x * blockIdx.x + threadIdx.x;
   size_t key_idx = global_thread_index / tile_size;
+  int32_t empty_key = submap_views[0].get_empty_key_sentinel();
   int32_t empty_value = submap_views[0].get_empty_value_sentinel();
 
   while (key_idx < key_num) {
     Key key = keys[key_idx];
+    CUDA_KERNEL_ASSERT(key != empty_key);
     int32_t index_in_block = empty_value;
     // 1. Check whether the key exist in map already.
     CheckKeyExist(tile, key, submap_views, submaps_num, &index_in_block);
@@ -91,12 +93,15 @@ __global__ void LookupIndices(const Key *keys, size_t key_num, bool insert_miss_
     // 2. Handle the key doesn't exist in map.
     if (index_in_block == empty_value && insert_miss_key) {
       index_in_block = GetInsertIndex(tile, erased_slot, erased_counter, current_index);
-      if (submap_mutable_views[submap_idx].insert(tile, cuco::pair_type<Key, int32_t>{key, index_in_block}) &&
-          tile.thread_rank() == 0) {
+      bool ret = submap_mutable_views[submap_idx].insert(tile, cuco::pair_type<Key, int32_t>{key, index_in_block});
+      CUDA_KERNEL_ASSERT(ret);
+      if (tile.thread_rank() == 0) {
         insert_success_num_per_thread++;
       }
     }
 
+    CUDA_KERNEL_ASSERT(index_in_block != empty_value);
+    CUDA_KERNEL_ASSERT(index_in_block >= 0);
     if (tile.thread_rank() == 0) {
       // 3. Update the final index.
       *(indices + key_idx) = index_in_block;
@@ -126,13 +131,19 @@ __global__ void InsertNormalDistRandomValue(size_t value_dim, size_t total_inser
                                             Value *const *blocks_ptr) {
   size_t total_thread_num = blockDim.x * gridDim.x;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num; pos += total_thread_num) {
+    CUDA_KERNEL_ASSERT(indices[pos] >= 0);
+
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
 
     bool enable_permission = permit_threshold > kMinPermitThreshold;
     bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == permit_threshold;
-    // Need not to initialize if the current slot is not idle and does not meet the permission condition.
-    if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
+    // Need not to initialize if the current slot is not idle.
+    if (!idle_flags_ptr[block_idx][offset_in_block]) {
+      continue;
+    }
+    // Need not to initialize if the current slot does not meet the permission condition.
+    if (enable_permission && !meet_permit_cond) {
       continue;
     }
 
@@ -179,13 +190,19 @@ __global__ void InsertDefaultValue(size_t value_dim, size_t total_insert_element
                                    const Value default_value, bool **idle_flags_ptr, Value *const *blocks_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_elements_num;
        pos += blockDim.x * gridDim.x) {
+    CUDA_KERNEL_ASSERT(indices[pos] >= 0);
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
 
     bool enable_permission = permit_threshold > kMinPermitThreshold;
     bool meet_permit_cond = lookup_cnts_ptr[block_idx][offset_in_block] == permit_threshold;
-    // Need not to initialize if the current slot is not idle and does not meet the permission condition.
-    if (!idle_flags_ptr[block_idx][offset_in_block] && (!(enable_permission && meet_permit_cond))) {
+    // Need not to initialize if the current slot is not idle.
+    if (!idle_flags_ptr[block_idx][offset_in_block]) {
+      continue;
+    }
+
+    // Need not to initialize if the current slot does not meet the permission condition.
+    if (enable_permission && !meet_permit_cond) {
       continue;
     }
 
@@ -215,9 +232,7 @@ __global__ void GetValues(size_t value_dim, size_t total_size, const int *indice
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
-    if (indices[index] < 0) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0);
 
     const size_t block_idx = indices[index] / elements_per_block;
     const size_t offset_in_block = indices[index] % elements_per_block;
@@ -236,9 +251,7 @@ __global__ void InsertValues(size_t value_dim, size_t total_insert_size, const i
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_insert_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / value_dim;
     const size_t offset = pos % value_dim;
-    if (indices[index] < 0) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0);
 
     const size_t block_idx = indices[index] / elements_per_block;
     const size_t offset_in_block = indices[index] % elements_per_block;
@@ -276,6 +289,7 @@ __global__ void CountPermissionNum(size_t elements_per_block, size_t key_num, co
   size_t local_counter = 0;
 
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < key_num; pos += blockDim.x * gridDim.x) {
+    CUDA_KERNEL_ASSERT(indices[pos] >= 0);
     const size_t block_idx = indices[pos] / elements_per_block;
     const size_t offset_in_block = indices[pos] % elements_per_block;
     lookup_cnts_ptr[block_idx][offset_in_block] += 1;
@@ -352,14 +366,10 @@ __global__ void FindExpiredKeysAndIndices(size_t key_num, size_t elements_per_bl
 }
 
 // Erase elements in hash map, update idle status for erased slots.
-__global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_block, int empty_index,
-                                       const int *erased_indices, bool *const *idle_flags_ptr,
-                                       Status *const *statuses_ptr) {
+__global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_block, const int *erased_indices,
+                                       bool *const *idle_flags_ptr, Status *const *statuses_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erase_num; pos += blockDim.x * gridDim.x) {
-    // Elements which do not exist in hash map.
-    if (erased_indices[pos] == empty_index) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(erased_indices[pos] >= 0);
 
     const size_t block_idx = erased_indices[pos] / elements_per_block;
     const size_t offset_in_block = erased_indices[pos] % elements_per_block;
@@ -369,13 +379,10 @@ __global__ void EraseElementsByIndices(size_t erase_num, size_t elements_per_blo
   }
 }
 
-__global__ void AddErasedSlots(size_t erased_num, int empty_index, const int *erased_indices,
-                               CudaAtomicInt *erased_counter, int *erased_slot) {
+__global__ void AddErasedSlots(size_t erased_num, const int *erased_indices, CudaAtomicInt *erased_counter,
+                               int *erased_slot) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < erased_num; pos += blockDim.x * gridDim.x) {
-    // Elements which do not exist in hash map.
-    if (erased_indices[pos] == empty_index) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(erased_indices[pos] >= 0);
 
     erased_slot[erased_counter->fetch_add(1, cuda::std::memory_order_relaxed)] = erased_indices[pos];
   }

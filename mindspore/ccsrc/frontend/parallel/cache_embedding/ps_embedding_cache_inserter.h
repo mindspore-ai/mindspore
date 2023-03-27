@@ -56,6 +56,10 @@ class PsEmbeddingCacheInserter {
   // Build Embedding store for each param which enable cache. Embedding store can read/write embedding from/to
   // persistent storage.
   void BuildEmbeddingStorages();
+  // Build Embedding store for dense mode(Tensor).
+  void BuildDenseEmbeddingStorages();
+  // Build Embedding store for sparse mode(Hash Table).
+  void BuildSparseEmbeddingStorages();
 
   // Construct the embedding cache services subgraphs, including embedding lookup and update operations, and package the
   // subgraphs corresponding to the related operations into the partial.

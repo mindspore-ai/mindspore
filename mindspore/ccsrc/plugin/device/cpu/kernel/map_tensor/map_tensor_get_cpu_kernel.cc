@@ -22,6 +22,7 @@
 
 #include "plugin/device/cpu/hal/device/cpu_hash_table.h"
 #include "plugin/device/cpu/kernel/map_tensor/map_tensor_get_cpu_kernel.h"
+#include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -69,6 +70,14 @@ bool MapTensorGetCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 
   input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   output_type_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
+
+  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
+    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
+  }
+  if (base_operator->HasAttr(kAttrParameterKey)) {
+    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
+  }
+
   return true;
 }
 
@@ -101,6 +110,18 @@ bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   // The real hash table should be accessed by user data.
   if (input_user_data_.empty()) {
     MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
+  }
+
+  if (enable_embedding_storage_) {
+    auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
+    MS_ERROR_IF_NULL(embedding_storage);
+    if (!embedding_storage->Get({inputs[kIndex1]->addr, inputs[kIndex1]->size},
+                                {outputs[kIndex0]->addr, outputs[kIndex0]->size})) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', lookup embeddings from sparse embedding storage failed, parameter key: " << parameter_key_;
+      return false;
+    }
+    return true;
   }
 
   auto user_data = input_user_data_[kIndex0];

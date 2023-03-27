@@ -20,6 +20,7 @@
 #include <string>
 #include <algorithm>
 #include <utility>
+#include <functional>
 
 #include "ir/func_graph.h"
 #include "abstract/abstract_function.h"
@@ -52,6 +53,7 @@ constexpr size_t kEmbeddingTableDims = 2;
 
 constexpr char kEmbeddingRemoteCacheNode[] = "EmbeddingRemoteCacheNode";
 constexpr char kEmbeddingLocalCacheNode[] = "EmbeddingLocalCacheNode";
+constexpr char kEnvEmbeddingCacheMemSizeInGBytes[] = "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE";
 
 namespace {
 ValueNodePtr CreateFakeValueNode(const AnfNodePtr &origin_node) {
@@ -571,7 +573,7 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheGraph() const {
   return graph_manager->Replace(root_graph_->output(), final_output_node);
 }
 
-void PsEmbeddingCacheInserter::BuildEmbeddingStorages() {
+void PsEmbeddingCacheInserter::BuildDenseEmbeddingStorages() {
   for (const auto &item : keys_to_params_) {
     int32_t key = item.first;
     ParameterPtr param = item.second;
@@ -612,9 +614,66 @@ void PsEmbeddingCacheInserter::BuildEmbeddingStorages() {
     TypeId value_type = common::AnfAlgo::GetOutputInferDataType(node, output_index0);
     // Create dense or sparse embedding storage and add into embedding storage manager.
     distributed::CreateEmbeddingStorage(std::make_pair(key_type, value_type), key, emb_dim, capacity);
-    MS_LOG(INFO) << "Add a new embedding storage, key: " << key << ", emb_dim: " << emb_dim
+    MS_LOG(INFO) << "Add a new dense embedding storage, key: " << key << ", emb_dim: " << emb_dim
                  << ", capacity: " << capacity << ", origin emb_dim:" << origin_emb_dim
                  << ", origin capacity: " << origin_capacity;
+  }
+}
+
+void PsEmbeddingCacheInserter::BuildSparseEmbeddingStorages() {
+  if (common::GetEnv(kEnvEmbeddingCacheMemSizeInGBytes).empty()) {
+    return;
+  }
+  const size_t cache_size_in_gbytes = std::stoul(common::GetEnv(kEnvEmbeddingCacheMemSizeInGBytes));
+  const size_t cache_size_in_bytes = cache_size_in_gbytes << 30;
+
+  for (const auto &item : keys_to_params_) {
+    int32_t key = item.first;
+    ParameterPtr param = item.second;
+    MS_EXCEPTION_IF_NULL(param);
+
+    auto param_info = param->param_info();
+    MS_EXCEPTION_IF_NULL(param_info);
+    param_info->set_use_persistent_storage(true);
+
+    const auto &abstract_base = common::AnfAlgo::GetNodeAbstractByIndex(param, 0);
+    MS_EXCEPTION_IF_NULL(abstract_base);
+    if (!abstract_base->isa<abstract::AbstractMapTensor>()) {
+      MS_LOG(EXCEPTION) << "Parameter:" << param->DebugString() << " is not a map tensor type.";
+    }
+    const auto &abstract = abstract_base->cast<abstract::AbstractMapTensorPtr>();
+    MS_EXCEPTION_IF_NULL(abstract);
+
+    MS_EXCEPTION_IF_NULL(abstract->value_shape());
+    const auto &value_shape = abstract->value_shape()->shape();
+    size_t emb_dim = LongToSize(
+      std::accumulate(value_shape.begin(), value_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
+
+    const auto &map_tensor_type = abstract->map_tensor_type();
+    MS_EXCEPTION_IF_NULL(map_tensor_type);
+    auto key_type = map_tensor_type->key_dtype();
+    auto value_type = map_tensor_type->value_dtype();
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    size_t map_element_size = GetTypeByte(key_type) + (GetTypeByte(value_type) * emb_dim);
+    MS_EXCEPTION_IF_ZERO("map_element_size", map_element_size);
+
+    size_t capacity = cache_size_in_bytes / map_element_size;
+    TypeId key_type_id = key_type->type_id();
+    TypeId value_type_id = value_type->type_id();
+
+    // Create dense or sparse embedding storage and add into embedding storage manager.
+    distributed::CreateEmbeddingStorage(std::make_pair(key_type_id, value_type_id), key, emb_dim, capacity);
+    MS_LOG(INFO) << "Add a new sparse embedding storage, key: " << key << ", emb_dim: " << emb_dim
+                 << ", capacity: " << capacity;
+  }
+}
+
+void PsEmbeddingCacheInserter::BuildEmbeddingStorages() {
+  if (embedding_cache_table_manager.is_sparse_format()) {
+    BuildSparseEmbeddingStorages();
+  } else {
+    BuildDenseEmbeddingStorages();
   }
 }
 

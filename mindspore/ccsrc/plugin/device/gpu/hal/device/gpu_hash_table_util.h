@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include "include/backend/distributed/ps/ps_context.h"
 #if CUDA_VERSION > 11000 && defined(__linux__)
 
 namespace mindspore {
@@ -59,14 +60,20 @@ void SetHashTable(const UserDataPtr &user_data) {
   if (value_size <= 0) {
     MS_LOG(WARNING) << "Invalid value size:" << value_size;
   }
+
+  // Embedding cache sparse mode(use hash table) involves multi-streaming, and the memory pool does not support
+  // multi-streaming currently, so hash table on embedding cache mode does not use the memory pool currently.
+  bool use_memory_pool = !ps::PSContext::instance()->cache_enable();
+  GPUAllocator<char> allocator(use_memory_pool);
+
   if (default_value->isa<StringImm>()) {
     user_data->set<GPUHashTable<KeyType, ValueType>>(
       kUserDataData, std::make_shared<GPUHashTable<KeyType, ValueType>>(
-                       value_size, GetValue<std::string>(default_value), permit_threshold, evict_threshold));
+                       value_size, GetValue<std::string>(default_value), permit_threshold, evict_threshold, allocator));
   } else if (default_value->isa<FloatImm>()) {
     user_data->set<GPUHashTable<KeyType, ValueType>>(
       kUserDataData, std::make_shared<GPUHashTable<KeyType, float>>(value_size, GetValue<float>(default_value),
-                                                                    permit_threshold, evict_threshold));
+                                                                    permit_threshold, evict_threshold, allocator));
   } else {
     MS_LOG(EXCEPTION) << "Invalid default value:" << default_value;
   }

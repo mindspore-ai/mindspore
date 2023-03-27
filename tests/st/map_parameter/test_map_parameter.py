@@ -14,8 +14,8 @@
 # ============================================================================
 import os
 import os.path
-import pytest
 import numpy as np
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context, Tensor, Parameter, save_checkpoint, load_checkpoint, ParameterTuple
@@ -191,6 +191,7 @@ def test_map_parameter_erase():
         values = Tensor([[1, 2], [1, 2]], dtype=ms.float32)
         map_tensor = MapParameter(key_tensor=keys, value_tensor=values, default_value='zeros')
         key = Tensor([2], dtype=ms.int32)
+        map_tensor.put(keys, values)
         map_tensor.erase(key)
         data1 = map_tensor.export_data(incremental=False)
         print("data1:", data1)

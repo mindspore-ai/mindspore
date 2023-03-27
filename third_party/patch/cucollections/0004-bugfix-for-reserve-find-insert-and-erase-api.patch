@@ -1,0 +1,230 @@
+From c858e60ee9839b6d9d3346528b5825b42df4e887 Mon Sep 17 00:00:00 2001
+From: lizhenyu <lizhenyu13@huawei.com>
+Date: Fri, 2 Dec 2022 11:42:05 +0800
+Subject: [PATCH] bugfix for reserve find insert and erase api
+
+---
+ include/cuco/detail/dynamic_map.inl |  9 ++++---
+ include/cuco/detail/static_map.inl  | 39 +++++++++++++++++++++++++++++
+ include/cuco/dynamic_map.cuh        |  2 ++
+ include/cuco/static_map.cuh         |  8 ++++++
+ 4 files changed, 54 insertions(+), 4 deletions(-)
+
+diff --git a/include/cuco/detail/dynamic_map.inl b/include/cuco/detail/dynamic_map.inl
+index 2425c7d..e64032f 100644
+--- a/include/cuco/detail/dynamic_map.inl
++++ b/include/cuco/detail/dynamic_map.inl
+@@ -104,6 +104,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n)
+         submap_capacity,
+         sentinel::empty_key<Key>{empty_key_sentinel_},
+         sentinel::empty_value<Value>{empty_value_sentinel_},
++        sentinel::erased_key<Key>{erased_key_sentinel_},
+         alloc_));
+       submap_views_.push_back(submaps_[submap_idx]->get_device_view());
+       submap_mutable_views_.push_back(submaps_[submap_idx]->get_device_mutable_view());
+@@ -172,7 +173,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(InputIt first,
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+ template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
+ void dynamic_map<Key, Value, Scope, Allocator>::find(
+-  InputIt first, InputIt last, OutputIt output_begin, Hash hash, KeyEqual key_equal)
++  InputIt first, InputIt last, OutputIt output_begin, cudaStream_t stream, Hash hash, KeyEqual key_equal)
+ {
+   auto num_keys         = std::distance(first, last);
+   auto const block_size = 128;
+@@ -180,9 +181,9 @@ void dynamic_map<Key, Value, Scope, Allocator>::find(
+   auto const tile_size  = 4;
+   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
+ 
+-  detail::find<block_size, tile_size, Value><<<grid_size, block_size>>>(
++  detail::find<block_size, tile_size, Value><<<grid_size, block_size, 0, stream>>>(
+     first, last, output_begin, submap_views_.data().get(), submaps_.size(), hash, key_equal);
+-  CUCO_CUDA_TRY(cudaDeviceSynchronize());
++  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
+ }
+ 
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+@@ -241,7 +242,7 @@ bool dynamic_map<Key, Value, Scope, Allocator>::get_keys_values(Key *keys, Value
+   *num_successes_ = 0;
+   int device_id;
+   CUCO_CUDA_TRY(cudaGetDevice(&device_id));
+-  CUCO_CUDA_TRY(cudaMemPrefetchAsync(num_successes_, sizeof(atomic_ctr_type), device_id));
++  CUCO_CUDA_TRY(cudaMemPrefetchAsync(num_successes_, sizeof(atomic_ctr_type), device_id, stream));
+ 
+   auto const block_size = 128;
+   auto const stride     = 1;
+diff --git a/include/cuco/detail/static_map.inl b/include/cuco/detail/static_map.inl
+index a1bb4f0..d7c40bb 100644
+--- a/include/cuco/detail/static_map.inl
++++ b/include/cuco/detail/static_map.inl
+@@ -49,6 +49,7 @@ static_map<Key, Value, Scope, Allocator>::static_map(
+   detail::initialize<block_size, atomic_key_type, atomic_mapped_type>
+     <<<grid_size, block_size, 0, stream>>>(
+       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
++  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
+ }
+ 
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+@@ -78,6 +79,7 @@ static_map<Key, Value, Scope, Allocator>::static_map(
+   detail::initialize<block_size, atomic_key_type, atomic_mapped_type>
+     <<<grid_size, block_size, 0, stream>>>(
+       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
++  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
+ }
+ 
+ template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+@@ -429,6 +431,10 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
+ {
+   auto current_slot = initial_slot(g, insert_pair.first, hash);
+ 
++  size_t search_count = 0;
++  // The maximum number of times the target key is searched (that is, traversed through
++  // the entire slot) to prevent an endless loop.
++  size_t max_search_count = static_cast<size_t>(std::ceil(static_cast<float>(this->get_capacity()) / g.size()));
+   while (true) {
+     key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+ 
+@@ -481,6 +487,9 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
+     // if there are no empty slots in the current window,
+     // we move onto the next window
+     else {
++      if (++search_count >= max_search_count) {
++        return false;
++      }
+       current_slot = next_slot(g, current_slot);
+     }
+   }
+@@ -537,6 +546,10 @@ template <typename CG, typename Hash, typename KeyEqual>
+ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
+   CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
+ {
++  size_t search_count = 0;
++  // The maximum number of times the target key is searched (that is, traversed through
++  // the entire slot) to prevent an endless loop.
++  size_t max_search_count = static_cast<size_t>(std::ceil(static_cast<float>(this->get_capacity()) / g.size()));
+   auto current_slot = initial_slot(g, k, hash);
+   value_type const insert_pair =
+     make_pair<Key, Value>(this->get_erased_key_sentinel(), this->get_empty_value_sentinel());
+@@ -586,6 +599,10 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
+     // empty slot found, but key not found, must not be in the map
+     if (g.ballot(slot_is_empty)) { return false; }
+ 
++    if (++search_count >= max_search_count) {
++      return false;
++    }
++
+     current_slot = next_slot(g, current_slot);
+   }
+ }
+@@ -645,6 +662,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
+                                                             KeyEqual key_equal) noexcept
+ {
+   auto current_slot = initial_slot(g, k, hash);
++  size_t search_count = 0;
++  // The maximum number of times the target key is searched (that is, traversed through
++  // the entire slot) to prevent an endless loop.
++  size_t max_search_count = static_cast<size_t>(std::ceil(static_cast<float>(this->get_capacity()) / g.size()));
+ 
+   while (true) {
+     auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+@@ -668,6 +689,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
+     // we found an empty slot, meaning that the key we're searching for isn't present
+     if (g.ballot(slot_is_empty)) { return this->end(); }
+ 
++    if (++search_count >= max_search_count) {
++      return this->end();
++    }
++
+     // otherwise, all slots in the current window are full with other keys, so we move onto the
+     // next window
+     current_slot = next_slot(g, current_slot);
+@@ -684,6 +709,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
+ {
+   auto current_slot = initial_slot(g, k, hash);
+ 
++  size_t search_count = 0;
++  // The maximum number of times the target key is searched (that is, traversed through
++  // the entire slot) to prevent an endless loop.
++  size_t max_search_count = static_cast<size_t>(std::ceil(static_cast<float>(this->get_capacity()) / g.size()));
+   while (true) {
+     auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+ 
+@@ -710,6 +739,9 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
+     // otherwise, all slots in the current window are full with other keys,
+     // so we move onto the next window in the current submap
+ 
++    if (++search_count >= max_search_count ){
++      return this->end();
++    }
+     current_slot = next_slot(g, current_slot);
+   }
+ }
+@@ -742,6 +774,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
+ {
+   auto current_slot = initial_slot(g, k, hash);
+ 
++  size_t search_count = 0;
++  // The maximum number of times the target key is searched (that is, traversed through
++  // the entire slot) to prevent an endless loop.
++  size_t max_search_count = static_cast<size_t>(std::ceil(static_cast<float>(this->get_capacity()) / g.size()));
+   while (true) {
+     key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+ 
+@@ -757,6 +793,9 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
+     // we found an empty slot, meaning that the key we're searching for isn't present
+     if (g.ballot(slot_is_empty)) { return false; }
+ 
++    if (++search_count >= max_search_count) {
++      return false;
++    }
+     // otherwise, all slots in the current window are full with other keys, so we move onto the
+     // next window
+     current_slot = next_slot(g, current_slot);
+diff --git a/include/cuco/dynamic_map.cuh b/include/cuco/dynamic_map.cuh
+index 9ed2f25..f82a4c6 100644
+--- a/include/cuco/dynamic_map.cuh
++++ b/include/cuco/dynamic_map.cuh
+@@ -218,6 +218,7 @@ dynamic_map(std::size_t initial_capacity,
+    * @param first Beginning of the sequence of keys
+    * @param last End of the sequence of keys
+    * @param output_begin Beginning of the sequence of values retrieved for each key
++   * @param stream The cuda stream to enqueue the find operator.
+    * @param hash The unary function to apply to hash each key
+    * @param key_equal The binary function to compare two keys for equality
+    */
+@@ -228,6 +229,7 @@ dynamic_map(std::size_t initial_capacity,
+   void find(InputIt first,
+             InputIt last,
+             OutputIt output_begin,
++            cudaStream_t stream = 0,
+             Hash hash          = Hash{},
+             KeyEqual key_equal = KeyEqual{});
+ 
+diff --git a/include/cuco/static_map.cuh b/include/cuco/static_map.cuh
+index 4a329ce..072f81f 100644
+--- a/include/cuco/static_map.cuh
++++ b/include/cuco/static_map.cuh
+@@ -459,6 +459,7 @@ class static_map {
+         erased_key_sentinel_{erased_key_sentinel.value},
+         empty_value_sentinel_{empty_value_sentinel.value}
+     {
++      assert(erased_key_sentinel_ != empty_key_sentinel_);
+     }
+ 
+     /**
+@@ -1337,6 +1338,13 @@ class static_map {
+    */
+   std::size_t get_size() const noexcept { return size_; }
+ 
++  /**
++   * @brief Gets the slots of elements in the hash map.
++   *
++   * @return The the slots of elements in the hash map.
++   */
++  pair_atomic_type* get_slots() const noexcept { return slots_; }
++
+   /**
+    * @brief Gets the load factor of the hash map.
+    *
+-- 
+2.17.1
+
