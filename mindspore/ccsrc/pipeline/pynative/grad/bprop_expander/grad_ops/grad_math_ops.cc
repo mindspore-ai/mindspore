@@ -1750,7 +1750,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
   auto std = ib->TupleGetItem(out, 0);
   auto mean_d = ib->TupleGetItem(dout, 1);
   auto mean = ib->TupleGetItem(out, 1);
-  auto shape_func = [&axis](const ShapeArray &inputs) -> ShapeArray {
+  auto shape_func = [axis](const ShapeArray &inputs) -> ShapeArray {
     auto new_axis = axis;
     auto x_shape = inputs.at(0);
     if (new_axis.empty() && !x_shape.empty()) {
@@ -1789,12 +1789,8 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
     return {rank, 1, 1};
   };
   auto res = ib->ShapeCalc({x}, shape_func, infer_func, {});
-  if (res[1]->abstract()->isa<abstract::AbstractTuple>()) {
-    res[1] = ib->Emit("TupleToTensor", {res[1], ib->Value(kInt64)});
-  }
-  if (res[2]->abstract()->isa<abstract::AbstractTuple>()) {
-    res[2] = ib->Emit("TupleToTensor", {res[2], ib->Value(kInt64)});
-  }
+  res[1] = ib->TupleToTensor(res[1]);
+  res[2] = ib->TupleToTensor(res[2]);
   if (!keep_dims && !ib->GetShape(x).empty()) {
     std_d = ib->Reshape(std_d, res[0]);
     std = ib->Reshape(std, res[0]);
