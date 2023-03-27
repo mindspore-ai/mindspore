@@ -59,12 +59,19 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input_x cannot be less than 2, but got "
                       << num_dims;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasAdd>(base_operator);
-  auto format = kernel_ptr->get_format();
-  auto format_str = format_str_list[format + 1];
-  string::size_type pos = format_str.find("C");
+
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  format_ = GetValue<std::string>(prim->GetAttr("format"));
+  string::size_type pos = format_.find("C");
   if (pos == std::string::npos || pos >= num_dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format_str;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format_;
+  }
+
+  if (format_ == "NHWC") {
+    input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
+    bias_shape_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
+    return KRET_OK;
   }
 
   // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
@@ -77,13 +84,11 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     b_dims[i] = (i == pos) ? LongToInt(x_shape[i]) : 1;
   }
 
-  auto input_device_format = inputs[kIndex0]->GetFormat();
-  auto cudnn_cal_format = (input_device_format == Format::NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetTensorNdDescriptorEx(x_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), x_dims.get()),
+    cudnnSetTensorNdDescriptorEx(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(cudnn_dims), x_dims.get()),
     "cudnnSetTensorNdDescriptor failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetTensorNdDescriptorEx(b_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), b_dims.get()),
+    cudnnSetTensorNdDescriptorEx(b_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(cudnn_dims), b_dims.get()),
     "cudnnSetTensorNdDescriptor failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetOpTensorDescriptor(op_desc_, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN),
@@ -92,11 +97,36 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
+bool BiasAddGpuKernelMod::ComputeNHWC(const T *src_addr, const T *bias_addr, T *output_addr, const size_t num_value,
+                                      const size_t num_bias) {
+  if (num_bias == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'bias' tensor shape not be 0, but got : " << num_bias;
+  }
+  cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
+  auto status = CalBiasAddNHWC<T>(num_value, num_bias, src_addr, bias_addr, output_addr, device_id_, stream);
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+  return true;
+}
+
+template <typename T>
 bool BiasAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
   VARIABLE_NOT_USED(stream_ptr);
+  cuda_stream_ = stream_ptr;
   if (is_null_input_) {
+    return true;
+  }
+  if (format_ == "NHWC") {
+    T *src_addr = GetDeviceAddress<T>(inputs, 0);
+    T *bias_addr = GetDeviceAddress<T>(inputs, 1);
+    T *output_addr = GetDeviceAddress<T>(outputs, 0);
+    size_t num_value = 1;
+    size_t num_bias = bias_shape_[0];
+    for (size_t i = 0; i < input_shape_.size(); ++i) {
+      num_value *= input_shape_[i];
+    }
+    ComputeNHWC<T>(src_addr, bias_addr, output_addr, num_value, num_bias);
     return true;
   }
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
