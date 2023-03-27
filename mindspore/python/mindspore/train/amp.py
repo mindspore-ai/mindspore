@@ -481,7 +481,7 @@ def get_white_list():
     """
     Provide a copy of internal white list used by auto mixed precision.
 
-    .. note::
+    .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Returns:
@@ -495,7 +495,7 @@ def get_black_list():
     """
     Provide a copy of internal black list used by auto mixed precision.
 
-    .. note::
+    .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Returns:
