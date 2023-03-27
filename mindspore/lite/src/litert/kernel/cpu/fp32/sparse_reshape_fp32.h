@@ -26,9 +26,7 @@ class SparseReshapeCPUKernel : public LiteKernel {
  public:
   SparseReshapeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    // sparse_reshape_param_ = reinterpret_cast<SparseReshapeParameter *>(op_parameter_);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SparseReshapeCPUKernel() = default;
 
   int Prepare() override;
@@ -36,10 +34,6 @@ class SparseReshapeCPUKernel : public LiteKernel {
   int ReSize() override { return RET_OK; }
   int Run() override;
   int SoftCopyInputToOutput(lite::Tensor *src_tensor, lite::Tensor *dst_tensor);
-  // virtual int DoExcute(int task_id);
-
- protected:
-  // SparseReshapeParameter *sparse_reshape_param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPARSE_RESHAPE_FP32_H_

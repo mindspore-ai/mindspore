@@ -267,7 +267,6 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByRow1Deep1GEPDOT(int task_id) const {
   auto a_plane_size = params_->row_align_ * params_->deep_;
   auto b_plane_size = params_->deep_ * params_->col_align_;
   auto c_plane_size = params_->row_ * col_step_;
-  // int matrix_row = params_->row_;
   int matrix_col = col_step_;
   int matrix_deep = params_->deep_;
 
@@ -303,7 +302,6 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByRow1Deep1GEPDOT(int task_id) const {
       auto b = matrix_b_.pack_ptr + b_offset_[i] * b_plane_size + start_oc;
       auto c = output_data_ + i * c_plane_size + start_oc;
 
-      // gemmIsNotPackFun(a, b, c, bias, params_->act_type_, matrix_deep, compute_oc, matrix_col);
       gemmIsNotPackFun(a, b, c, bias, compute_oc, matrix_deep, params_->act_type_);
     }
   }
@@ -315,7 +313,6 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEPM(int task_id) const {
   auto a_plane_size = params_->row_align_ * params_->deep_;
   auto b_plane_size = params_->deep_ * params_->col_align_;
   auto c_plane_size = params_->row_ * col_step_;
-  // int matrix_row = params_->row_;
   int matrix_col = col_step_;
   int matrix_deep = params_->deep_;
 
@@ -384,7 +381,6 @@ int MatmulFp32AVX512CPUKernel::ParallelRunByGEMM(int task_id) const {
   }
 
   // by ColCut
-  // int b_stride = params_->deep_;
   int col_split_points_size = static_cast<int>(col_split_points_.size()) - 1;
   if (task_id < col_split_points_size) {
     int start_oc = col_split_points_[task_id];
@@ -706,10 +702,8 @@ int MatmulFp32AVX512CPUKernel::GetThreadCuttingPolicy() {
     }
     BatchColThreadCut();
     MatmulFp32BaseCPUKernel::SetRunByGEPM();
-    // return MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy();
   } else {
     BatchColRowSliceThreadCut();
-    // BatchColRowThreadCut();
     MatmulFp32BaseCPUKernel::SetRunByBatchColRowGEMM();
   }
   return RET_OK;

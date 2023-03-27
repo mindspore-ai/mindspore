@@ -55,10 +55,8 @@ int SparseSegmentSumCPUKernel::Run() {
     out_data_shape.emplace_back(in_data_shape[i]);
   }
 
-  // auto origin_out_data_shape = out_tensors_.at(kOutput_data)->shape();
   out_tensors_.at(kOutput_data)->set_shape(out_data_shape);
   out_tensors_.at(kOutput_data)->FreeData();
-  // out_tensors_.at(kOutput_data)->set_shape_changed(out_data_shape != origin_out_data_shape);
 
   constexpr size_t kMultiply = 1;
   size_t n =
@@ -120,5 +118,4 @@ int SparseSegmentSumCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SparseSegmentSum, LiteKernelCreator<SparseSegmentSumCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseSegmentSum, LiteKernelCreator<SparseSegmentSumCPUKernel>)
-// REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_SparseSegmentSum, LiteKernelCreator<SparseSegmentSumCPUKernel>)
 }  // namespace mindspore::kernel
