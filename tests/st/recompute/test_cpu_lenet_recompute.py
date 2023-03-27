@@ -31,14 +31,16 @@ class LeNet(nn.Cell):
         self.relu = P.ReLU()
         self.batch_size = 32
 
-        self.conv1 = nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0, has_bias=False, pad_mode='valid')
-        self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0, has_bias=False, pad_mode='valid')
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0, has_bias=False, pad_mode='valid',
+                               weight_init="normal")
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0, has_bias=False, pad_mode='valid',
+                               weight_init="normal")
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.pool.recompute()
         self.reshape = P.Reshape()
-        self.fc1 = nn.Dense(400, 120)
-        self.fc2 = nn.Dense(120, 84)
-        self.fc3 = nn.Dense(84, 10)
+        self.fc1 = nn.Dense(400, 120, weight_init="normal", bias_init="zeros")
+        self.fc2 = nn.Dense(120, 84, weight_init="normal", bias_init="zeros")
+        self.fc3 = nn.Dense(84, 10, weight_init="normal", bias_init="zeros")
 
     def construct(self, input_x):
         output = self.conv1(input_x)

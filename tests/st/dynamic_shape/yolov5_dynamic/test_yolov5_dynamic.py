@@ -16,6 +16,7 @@ import os
 import numpy as np
 import pytest
 
+import mindspore
 from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
@@ -88,11 +89,13 @@ def test_yolov5_dynamic_ascend_graph():
     Description: test yolov5_dynamic run
     Expectation: loss is same with the expect
     """
+    mindspore.set_seed(1234)
     cur_model_path = init_files()
-    expect_loss = [7200.35, 530]
+    expect_loss = [7402.8818359375, 549]
     # Currently, the rtol/atol of loss of network running for many times exceeds
     # 1e-3, so only compare the first step
     loss_list = run_yolov5_dynamic_case(cur_model_path, "Ascend")
     check_and_print_when_fail(loss_list[0], expect_loss[0], 1e-3, 1e-3)
+    expect_loss = [7402.767578125, 551]
     loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "Ascend", "PYNATIVE")
     check_and_print_when_fail(loss_list_pynative[0], expect_loss[0], 1e-3, 1e-3)

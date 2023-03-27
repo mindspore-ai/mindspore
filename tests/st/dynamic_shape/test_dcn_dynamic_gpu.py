@@ -68,7 +68,7 @@ class DNN(nn.Cell):
         drop_layers = []
         for i in range(self.num_layers):
             dense_layer = nn.Dense(in_channels=self.hidden_units[i], out_channels=self.hidden_units[i + 1],
-                                   activation=self.activation, weight_init="heUniform")
+                                   activation=self.activation, weight_init="heUniform", bias_init="zeros")
             dense_layers.append(dense_layer)
             drop_layer = nn.Dropout(p=self.dropout_rate)
             drop_layers.append(drop_layer)

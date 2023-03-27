@@ -242,8 +242,8 @@ class Conv2dSubsampling(nn.Cell):
         :param int odim: output dim
         """
         super(Conv2dSubsampling, self).__init__()
-        self.conv1 = nn.Conv2d(1, odim, 3, 2, pad_mode="pad", padding=pad)
-        self.conv2 = nn.Conv2d(odim, odim, 3, 2, pad_mode="pad", padding=pad)
+        self.conv1 = nn.Conv2d(1, odim, 3, 2, pad_mode="pad", padding=pad, weight_init="normal", bias_init="zeros")
+        self.conv2 = nn.Conv2d(odim, odim, 3, 2, pad_mode="pad", padding=pad, weight_init="normal", bias_init="zeros")
         shape1 = 1 + (idim + 2 * pad - 3) // 2
         shape2 = 1 + (shape1 + 2 * pad - 3) // 2
         self.linear = CustomDense(odim * shape2, odim)
@@ -584,7 +584,7 @@ class CTC(nn.Cell):
         super(CTC, self).__init__()
         self.ctc = P.CTCLoss(ignore_longer_outputs_than_inputs=False)
         self.transpose = P.Transpose()
-        self.linear_c = nn.Dense(adim, odim)
+        self.linear_c = nn.Dense(adim, odim, weight_init="normal", bias_init="zeros")
         self.reshape = P.Reshape()
         self.adim = adim
         self.odim = odim
