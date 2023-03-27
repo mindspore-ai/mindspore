@@ -101,7 +101,11 @@ class LPPool1d(Cell):
 
     Outputs:
         - **output** (Tensor) - LPPool1d result, with shape :math:`(N_{out}, C_{out}, L_{out})` or
-          :math:`(C_{out}, L_{out})`, it has the same data type as `x`.
+          :math:`(C_{out}, L_{out})`, it has the same data type as `x`, where
+
+        .. math::
+            L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
+
 
     Raises:
         TypeError: If `x` is not an Tensor.
@@ -175,7 +179,13 @@ class LPPool2d(Cell):
 
     Outputs:
         - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
-          It has the same data type as `x`.
+          It has the same data type as `x`, where
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} - \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
         TypeError: If `x` is not an Tensor.
@@ -320,6 +330,20 @@ class MaxPool3d(_PoolNd):
           :math:`(C_{out}, D_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] - \text{dilation}[0] \times
+            (\text{kernel_size}[0] - 1) - 1}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] - \text{dilation}[1] \times
+            (\text{kernel_size}[1] - 1) - 1}{\text{stride}[1]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] - \text{dilation}[2] \times
+            (\text{kernel_size}[2] - 1) - 1}{\text{stride}[2]} + 1\right\rfloor
+
     Raises:
         ValueError: If length of shape of `x` is not equal to 4 or 5.
         TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is neither an int nor a tuple.
@@ -445,6 +469,15 @@ class MaxPool2d(_PoolNd):
           :math:`(C_{out}, H_{out}, W_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
 
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{padding[0]} - \text{dilation[0]}
+                \times (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{padding[1]} - \text{dilation[1]}
+                \times (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
 
     Raises:
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
@@ -589,6 +622,12 @@ class MaxPool1d(_PoolNd):
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N, C_{out}, L_{out})` or
           :math:`(C_{out}, L_{out})`. It has the same data type as `x`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64.
+
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            L_{out} = \left\lfloor \frac{L_{in} + 2 \times \text{padding} - \text{dilation}
+                \times (\text{kernel_size} - 1) - 1}{\text{stride}} + 1\right\rfloor
 
     Raises:
         TypeError: If `kernel_size` or `strides` is not an int.
@@ -769,6 +808,20 @@ class AvgPool3d(_PoolNd):
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
         :math:`(C, D_{out}, H_{out}, W_{out})`, with the same data type as `x`.
 
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] -
+                \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] -
+                \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] -
+                \text{kernel_size}[2]}{\text{stride}[2]} + 1\right\rfloor
+
     Raises:
         TypeError: If `kernel_size` is neither an int nor a tuple.
         TypeError: If `stride` is neither an int nor a tuple.
@@ -873,6 +926,16 @@ class AvgPool2d(_PoolNd):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out},H_{out},W_{out})`.
+
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in}  + 2 \times \text{padding}[0] -
+            \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[1] -
+            \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
@@ -1007,6 +1070,12 @@ class AvgPool1d(_PoolNd):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})` or :math:`(C_{out}, L_{out})`.
+
+        If `pad_mode` is in `pad` mode, the output shape calculation formula is as follows:
+
+        .. math::
+            L_{out} = \left\lfloor \frac{L_{in} +
+            2 \times \text{padding} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
 
     Raises:
         TypeError: If `kernel_size` or `stride` is not an int.

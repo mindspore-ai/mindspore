@@ -1573,11 +1573,11 @@ def logical_not(input):
     return logical_not_(input)
 
 
-def logical_or(input, others):
+def logical_or(input, other):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    Inputs of `input` and `others` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them must be bool.
@@ -1586,7 +1586,7 @@ def logical_or(input, others):
 
     .. math::
 
-        out_{i} = input_{i} \\vee others_{i}
+        out_{i} = input_{i} \\vee other_{i}
 
     Note:
         LogicalOr supports broadcasting.
@@ -1594,14 +1594,14 @@ def logical_or(input, others):
     Args:
         input (Union[Tensor, bool]): The first input is a bool or a tensor whose data type can be implicitly
             converted to bool.
-        others (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
+        other (Union[Tensor, bool]): The second input is a bool when the first input is a tensor or
             a tensor whose data type can be implicitly converted to bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `input` nor `others` is a Tensor.
+        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1615,9 +1615,9 @@ def logical_or(input, others):
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
-    if isinstance(others, Tensor) and others.dtype != mstype.bool_:
-        others = others.astype(mstype.bool_)
-    return logical_or_(input, others)
+    if isinstance(other, Tensor) and other.dtype != mstype.bool_:
+        other = other.astype(mstype.bool_)
+    return logical_or_(input, other)
 
 
 def logical_and(input, other):
@@ -1673,9 +1673,9 @@ def sign(input):
 
     .. math::
         \text{out}_{i} = \begin{cases}
-                          -1 & \text{input} < 0 \\
-                           0 & \text{input} = 0 \\
-                           1 & \text{input} > 0
+                          -1 & \text{input}_{i} < 0 \\
+                           0 & \text{input}_{i} = 0 \\
+                           1 & \text{input}_{i} > 0
                          \end{cases}
 
     Args:

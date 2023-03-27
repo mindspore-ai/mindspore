@@ -5738,7 +5738,10 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Returns:
         - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{out})` or :math:`(C, L_{out})`,
-          It has the same data type as `x`.
+          It has the same data type as `x`, where
+
+          .. math::
+              L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
 
     Raises:
         TypeError: If `x` is not an Tensor.
@@ -5818,7 +5821,13 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Returns:
         - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
-          It has the same data type as `x`.
+          It has the same data type as `x`, where
+
+          .. math::
+              H_{out} = \left\lfloor\frac{H_{in} - \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+          .. math::
+              W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
         TypeError: If `x` is not an Tensor.

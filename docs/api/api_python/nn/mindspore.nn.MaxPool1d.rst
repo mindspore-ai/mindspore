@@ -36,6 +36,12 @@ mindspore.nn.MaxPool1d
         - **output** (Tensor) - 最大池化结果，shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor。数据类型与 `x` 一致。
         - **argmax** (Tensor) - 最大值对应的索引。数据类型为int64。
 
+        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+
+        .. math::
+            L_{out} = \left\lfloor \frac{L_{in} + 2 \times \text{padding} - \text{dilation}
+                \times (\text{kernel_size} - 1) - 1}{\text{stride}} + 1\right\rfloor
+
     异常：
         - **TypeError** - `kernel_size` 或 `strides` 不是整数。
         - **ValueError** - `pad_mode` 既不是'valid'，也不是'same' 或者 'pad'，不区分大小写。
