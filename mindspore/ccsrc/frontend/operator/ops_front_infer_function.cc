@@ -962,8 +962,8 @@ bool PrimNeedFrontendInferValue(const PrimitivePtr &primitive) {
   // that the optimization of the frontend like constant folding, can be carried out smoothly. We need to delete this
   // list when the infer value can be mapped to the CPU backend operator.
   static std::vector<PrimitivePtr> skip_frontend_registration_list{
-    prim::kPrimAdd, prim::kPrimMod,          prim::kPrimMul,   prim::kPrimRealDiv,
-    prim::kPrimSub, prim::kPrimStridedSlice, prim::kPrimStack, prim::kPrimTensorScatterUpdate,
+    prim::kPrimAdd, prim::kPrimMod,   prim::kPrimMul,          prim::kPrimRealDiv,
+    prim::kPrimSub, prim::kPrimStack, prim::kPrimStridedSlice, prim::kPrimTensorScatterUpdate,
     prim::kPrimTile};
   if (std::any_of(skip_frontend_registration_list.begin(), skip_frontend_registration_list.end(),
                   [&primitive](const PrimitivePtr &item) { return IsPrimitiveEquals(primitive, item); })) {

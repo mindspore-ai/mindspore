@@ -51,24 +51,25 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> TenToTwo(int64_t num) {
+std::vector<int64_t> TenToTwo(int64_t num, const size_t &length) {
   std::vector<int64_t> output;
-  if (num == 0) {
-    output.push_back(0);
-    return output;
-  }
   const int64_t factor = 2;
+  size_t i = 0;
   while (num) {
+    ++i;
     output.push_back(num % factor);
     num /= factor;
   }
-
+  while (i < length) {
+    output.push_back(0);
+    ++i;
+  }
   return output;
 }
 
 void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *begin_pos, std::vector<int64_t> *end_pos,
                          std::vector<int64_t> *ellipsis_pos, std::vector<int64_t> *new_axis_pos,
-                         std::vector<int64_t> *shrink_axis_pos) {
+                         std::vector<int64_t> *shrink_axis_pos, const size_t &length) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto begin_mask = GetValue<int64_t>(primitive->GetAttr(kBeginMask));
   auto end_mask = GetValue<int64_t>(primitive->GetAttr(kEndMask));
@@ -76,11 +77,11 @@ void GetAndCheckAttrMask(const PrimitivePtr &primitive, std::vector<int64_t> *be
   auto new_axis_mask = GetValue<int64_t>(primitive->GetAttr(kNewAxisMask));
   auto shrink_axis_mask = GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask));
 
-  *begin_pos = TenToTwo(begin_mask);
-  *end_pos = TenToTwo(end_mask);
-  *ellipsis_pos = TenToTwo(ellipsis_mask);
-  *new_axis_pos = TenToTwo(new_axis_mask);
-  *shrink_axis_pos = TenToTwo(shrink_axis_mask);
+  *begin_pos = TenToTwo(begin_mask, length);
+  *end_pos = TenToTwo(end_mask, length);
+  *ellipsis_pos = TenToTwo(ellipsis_mask, length);
+  *new_axis_pos = TenToTwo(new_axis_mask, length);
+  *shrink_axis_pos = TenToTwo(shrink_axis_mask, length);
 }
 
 int64_t GetSlicingLengthForPositiveStrides(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
@@ -110,7 +111,7 @@ int64_t GetSlicingLengthForPositiveStrides(int64_t start_pos, int64_t end_pos, i
 int64_t GetSlicingLengthForNegativeStrides(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
   int64_t slicing_length = 0;
   if (start_pos >= -x_dim && end_pos < x_dim) {
-    if (start_pos > 0 && start_pos < x_dim) {
+    if (start_pos >= 0 && start_pos < x_dim) {
       start_pos += -x_dim;
     }
     if (start_pos >= x_dim) {
@@ -159,9 +160,10 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, slice_len);
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
                                            SizeToLong(slice_len), primitive->name());
+
   size_t num = 0;
   for (size_t n = j + 1; n < slice_len; n++) {
     if (new_axis_pos[n] == 1) {
@@ -213,13 +215,13 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
 
 std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &begin_v,
                                        const std::vector<int64_t> &end_v, const std::vector<int64_t> &strides_v,
-                                       const std::vector<int64_t> &x_shape) {
+                                       const std::vector<int64_t> &x_shape, const size_t &slice_len) {
   std::vector<int64_t> begin_pos;
   std::vector<int64_t> end_pos;
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, slice_len);
 
   size_t i = 0;
   size_t j = 0;
@@ -229,7 +231,6 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
   int64_t slicing_length;
   bool has_ellipsis = false;
   std::vector<int64_t> infer_shape;
-  size_t slice_len = begin_v.size();
   size_t x_rank = x_shape.size();
   while (i < x_rank || j < slice_len) {
     int64_t x_dim_size = x_shape[i];
@@ -285,7 +286,7 @@ ShapeMap DynamicComputeInferShape(const PrimitivePtr &primitive, const std::vect
   std::vector<int64_t> ellipsis_pos;
   std::vector<int64_t> new_axis_pos;
   std::vector<int64_t> shrink_axis_pos;
-  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos);
+  GetAndCheckAttrMask(primitive, &begin_pos, &end_pos, &ellipsis_pos, &new_axis_pos, &shrink_axis_pos, slice_len);
 
   size_t i = 0;
   size_t j = 0;
@@ -330,7 +331,7 @@ ShapeMap DynamicComputeInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string &arg_name, ShapeVector *slice_value,
-                             size_t *slice_len) {
+                             size_t *slice_len, bool *dyn_tuple) {
   bool is_dynamic = false;
   MS_EXCEPTION_IF_NULL(input_arg);
   auto input_value = input_arg->BuildValue();
@@ -341,7 +342,11 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       *slice_len = (*slice_value).size();
     } else {
       auto tuple_arg = input_arg->cast<abstract::AbstractTuplePtr>();
-      *slice_len = tuple_arg->size();
+      if (tuple_arg->dynamic_len()) {
+        *dyn_tuple = true;
+      } else {
+        *slice_len = tuple_arg->size();
+      }
     }
   } else if (input_arg->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt32, kInt64},
@@ -357,7 +362,6 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
         MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got"
                                  << slice_shape->shape().size() << "-D.";
       }
-      *slice_len = LongToSize(slice_shape->shape()[0]);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For 'StridedSlice', '" << arg_name
@@ -380,10 +384,6 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   const size_t x_index = 0;
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
   auto x_shape = shape_map[kShape];
-  if (IsDynamicRank(x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-  }
-
   ShapeVector begin_v;
   ShapeVector end_v;
   ShapeVector strides_v;
@@ -394,9 +394,17 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   const size_t begin_index = 1;
   const size_t end_index = 2;
   const size_t stride_index = 3;
-  bool begin_dynamic = CheckAndGetDynamicSlice(input_args[begin_index], "begin", &begin_v, &begin_len);
-  bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len);
-  bool stride_dynamic = CheckAndGetDynamicSlice(input_args[stride_index], "strides", &strides_v, &stride_len);
+  bool begin_dyn_tuple{false}, end_dyn_tuple{false}, stride_dyn_tuple{false};
+  bool begin_dynamic =
+    CheckAndGetDynamicSlice(input_args[begin_index], "begin", &begin_v, &begin_len, &begin_dyn_tuple);
+  bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len, &end_dyn_tuple);
+  bool stride_dynamic =
+    CheckAndGetDynamicSlice(input_args[stride_index], "strides", &strides_v, &stride_len, &stride_dyn_tuple);
+  std::vector<bool> check_vec = {IsDynamicRank(x_shape), begin_dyn_tuple, end_dyn_tuple, stride_dyn_tuple,
+                                 begin_dynamic,          end_dynamic,     stride_dynamic};
+  if (std::any_of(check_vec.begin(), check_vec.end(), [](const bool &flag) { return flag; })) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
   if (begin_len != stride_len || end_len != stride_len) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'begin', 'end' and 'strides' must have the same length, "
                              << "but got length of 'begin': " << begin_len << ", 'end': " << end_len
@@ -407,7 +415,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
     slice_dynamic = true;
   }
   if (!slice_dynamic) {
-    ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape);
+    ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape, begin_len);
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
   auto ret_shape_map = DynamicComputeInferShape(primitive, x_shape, begin_len);
@@ -514,10 +522,13 @@ class MIND_API AGStridedSliceInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return StridedSliceInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return StridedSliceInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2, 3}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(StridedSlice, prim::kPrimStridedSlice, AGStridedSliceInfer, false);
