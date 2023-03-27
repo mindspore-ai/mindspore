@@ -110,6 +110,27 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
   return true;
 }
 
+void GetListStrValue(const std::string &attr_name, const mindspore::ValuePtr &value,
+                     ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr) {
+  std::vector<std::string> attr_value;
+  auto value_type = value->type();
+  MS_EXCEPTION_IF_NULL(value_type);
+  auto value_type_str = value_type->ToString();
+  if (value_type_str == "string") {
+    auto data = GetValue<std::string>(value);
+    attr_value.push_back(data);
+  } else {
+    attr_value = GetValue<std::vector<std::string>>(value);
+  }
+  mindspore::AttrValue input_shape_attr;
+  mindspore::AttrValue_ArrayValue *input_shape_attr_list = input_shape_attr.mutable_array();
+  MS_EXCEPTION_IF_NULL(input_shape_attr_list);
+  for (const auto shape : attr_value) {
+    input_shape_attr_list->add_s(shape);
+  }
+  (*node_attr)[attr_name] = input_shape_attr;
+}
+
 void ParseAttrValue(const std::string &type, const std::string &attr_name, const mindspore::ValuePtr &value,
                     ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr) {
   MS_EXCEPTION_IF_NULL(node_attr);
@@ -167,23 +188,7 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
     }
     (*node_attr)[attr_name] = input_shape_attr;
   } else if (type == "listStr") {
-    std::vector<std::string> attr_value;
-    auto value_type = value->type();
-    MS_EXCEPTION_IF_NULL(value_type);
-    auto value_type_str = value_type->ToString();
-    if (value_type_str == "string") {
-      auto data = GetValue<std::string>(value);
-      attr_value.push_back(data);
-    } else {
-      attr_value = GetValue<std::vector<std::string>>(value);
-    }
-    mindspore::AttrValue input_shape_attr;
-    mindspore::AttrValue_ArrayValue *input_shape_attr_list = input_shape_attr.mutable_array();
-    MS_EXCEPTION_IF_NULL(input_shape_attr_list);
-    for (const auto shape : attr_value) {
-      input_shape_attr_list->add_s(shape);
-    }
-    (*node_attr)[attr_name] = input_shape_attr;
+    GetListStrValue(attr_name, value, node_attr);
   } else {
     MS_LOG(EXCEPTION) << "type: " << type << "not support";
   }

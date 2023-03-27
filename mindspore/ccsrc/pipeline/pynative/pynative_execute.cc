@@ -219,7 +219,7 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
-  forward_executor()->ProcessBeforeNewGraph(obj, args);
+  forward_executor()->ProcessBeforeNewGraph(obj);
 
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "Grad flag is false";
