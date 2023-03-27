@@ -1673,9 +1673,9 @@ def sign(input):
 
     .. math::
         \text{out}_{i} = \begin{cases}
-                          -1 & \text{input} < 0 \\
-                           0 & \text{input} = 0 \\
-                           1 & \text{input} > 0
+                          -1 & \text{input}_{i} < 0 \\
+                           0 & \text{input}_{i} = 0 \\
+                           1 & \text{input}_{i} > 0
                          \end{cases}
 
     Args:
@@ -1712,7 +1712,8 @@ def sign(input):
 
 def signbit(input):
     r"""
-    Returns element-wise True where signbit is set (less than zero).
+    Determine the symbol of each element. If the element value is less than 0,
+    the corresponding output position is True; otherwise, it is False.
 
     Args:
         input (Tensor): The input value.
@@ -1823,11 +1824,11 @@ def sinc(input):
 
     .. math::
 
-        out_i = \begin{cases} \frac{sin(\pi input_i)}{input_i} & input_i\neq 0\\
+        out_i = \begin{cases} \frac{sin(\pi input_i)}{\pi input_i} & input_i\neq 0\\
         1 & input_i=0 \end{cases}
 
     Args:
-        input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
+        input (Tensor): The input Tensor.
 
     Returns:
         Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
@@ -3650,6 +3651,12 @@ def ldexp(x, other):
         >>> out = ops.ldexp(x, other)
         >>> print(out)
         [ 2.  4.  8. 16.]
+        >>> x = Tensor(np.array([[1.], [2]]), mindspore.float32)
+        >>> other = Tensor(np.array([[1.], [2]]), mindspore.int32)
+        >>> out = ops.ldexp(x, other)
+        >>> print(out)
+        [[2.]
+         [8.]]
     """
 
     pow_ops = _get_cache_prim(P.Pow)()
@@ -4611,7 +4618,7 @@ def heaviside(input, values):
     Args:
         input (Tensor): The input tensor. With real number data type.
         values (Tensor): The values to use where `input` is zero. Values can be broadcast with `input` .
-            `input` should have the same dtype with 'values'.
+            `input` should have the same dtype with `values` .
 
     Returns:
         Tensor, has the same type as `input` and `values`.
@@ -5032,8 +5039,9 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
             where :math:`*` means any number of additional dims, its rank should be less than 8.
-        axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
-            Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
+        axis (Union[int, tuple(int)], optional): Specifies the dimensions from which to calculate the standard
+            deviation and mean. Only constant value is allowed. Must be in the range [-rank(`input`), rank(`input`)).
+            Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
             If ddof is an integer, the divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements.
@@ -7047,7 +7055,7 @@ def hann_window(window_length, periodic=True):
     The Hann window is defined as
 
     .. math::
-        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right) \qquad 0 \leq n \leq M-1
+        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right),\qquad 0 \leq n \leq M-1
 
     Args:
         window_length (int): Length of window.

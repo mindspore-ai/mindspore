@@ -7,7 +7,7 @@ mindspore.ops.strided_slice
 
     该算子在给定的 `input_x` 中提取大小为 `(end-begin)/strides` 的片段。根据起始索引、结束索引和步长进行提取，直到所有维度的索引都不小于结束索引为止, 返回提取出的切片。
 
-    .. note::
+    .. warning::
         - `begin` 、 `end` 和 `strides` 的shape必须相同。
         - `begin` 、 `end` 和 `strides` 是一维Tensor，且shape小于或等于 `input_x` 的维度。
 

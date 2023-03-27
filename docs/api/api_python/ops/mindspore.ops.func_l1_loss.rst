@@ -14,7 +14,7 @@ mindspore.ops.l1_loss
 
     其中， :math:`N` 为batch size。
 
-    如果 `reduction` 是"mean"或者"sum"，则：
+    如果 `reduction` 是mean或者sum，则：
 
     .. math::
         \ell(x, y) =
