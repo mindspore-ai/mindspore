@@ -591,7 +591,7 @@ class Reshape(PrimitiveWithCheck):
     def infer_value(self, x, shape):
         """infer value"""
         # for shape is not constant
-        if shape is None or x is None:
+        if shape is None or None in shape or x is None:
             return None
         if isinstance(shape, (Tensor, Tensor_)):
             validator.check_tensor_dtype_valid("shape", mstype.tensor_type(shape.dtype),

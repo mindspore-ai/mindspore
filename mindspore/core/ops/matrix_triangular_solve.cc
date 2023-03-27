@@ -47,13 +47,27 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void CheckShapeMatch(const std::vector<int64_t> &matrix_shape, const std::vector<int64_t> &rhs_shape,
+                     const std::string &prim_name) {
+  if (IsDynamic(matrix_shape) || IsDynamic(rhs_shape)) {
+    return;
+  }
+  for (size_t i = 0; i < matrix_shape.size() - kInputIndex2; ++i) {
+    if (matrix_shape[i] != rhs_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in batch dimension should be same, dim[" << i
+                               << "] are not the same, "
+                               << "while matrix is " << matrix_shape[i] << ", rhs is " << rhs_shape[i];
+    }
+  }
+}
+
 abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  if (IsDynamic(matrix_shape) || IsDynamic(rhs_shape)) {
+  if (IsDynamicRank(matrix_shape) || IsDynamicRank(rhs_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
 
@@ -67,19 +81,22 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
   int64_t matrix_col = matrix_shape[matrix_shape.size() - kIndex1];
   int64_t rhs_row = rhs_shape[rhs_shape.size() - kIndex2];
   int64_t rhs_col = rhs_shape[rhs_shape.size() - kIndex1];
-  if (matrix_row != rhs_row) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
-                             << "got " << matrix_row << " and " << rhs_row << " , with matrix row " << matrix_row
-                             << ", rhs row " << rhs_row << ", matrix's row rank should be same as rhs's row rank";
+  if (!(IsDynamic(matrix_shape) || IsDynamic(rhs_shape))) {
+    if (matrix_row != rhs_row) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
+                               << "got " << matrix_row << " and " << rhs_row << " , with matrix row " << matrix_row
+                               << ", rhs row " << rhs_row << ", matrix's row rank should be same as rhs's row rank";
+    }
+    if (matrix_row != matrix_col) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
+                               << "got " << matrix_row << " and " << matrix_col << " , with matrix row " << matrix_row
+                               << ", matrix col " << matrix_col
+                               << ". Inner-most 2 demision of input matrix must be square";
+    }
   }
-  if (matrix_row != matrix_col) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << " evaluator shapes of inputs can not do this operator, "
-                             << "got " << matrix_row << " and " << matrix_col << " , with matrix row " << matrix_row
-                             << ", matrix col " << matrix_col
-                             << ". Inner-most 2 demision of input matrix must be square";
-  }
-  std::vector<int64_t> output_shape;
+
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::vector<int64_t> output_shape;
   if (device_target == kGPUDevice) {
     if (matrix_shape.size() > kIndex2 && rhs_shape.size() > kIndex2) {
       std::vector<int64_t> matrix_batch_dims(matrix_shape.begin(), matrix_shape.end() - kIndex2);
@@ -96,13 +113,7 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
       output_shape = rhs_shape;
     }
   } else {
-    for (size_t i = 0; i < matrix_shape.size() - kIndex2; ++i) {
-      if (matrix_shape[i] != rhs_shape[i]) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in batch dimension should be same, dim[" << i
-                                 << "] are not the same, "
-                                 << "while matrix is " << matrix_shape[i] << ", rhs is " << rhs_shape[i];
-      }
-    }
+    CheckShapeMatch(matrix_shape, rhs_shape, prim_name);
     output_shape = rhs_shape;
   }
 
