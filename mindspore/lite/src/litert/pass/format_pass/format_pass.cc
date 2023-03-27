@@ -28,6 +28,7 @@ int FormatOptimize::AddPass(FormatPassPtr pass) {
 int FormatOptimize::RunPass(kernel::SubGraphKernel *graph, std::vector<Tensor *> *tensors) {
   for (FormatPassPtr pass : pass_list_) {
     CHECK_NULL_RETURN(pass);
+
     auto status = pass->RunPass(graph, tensors);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run pass failed";
@@ -39,17 +40,17 @@ int FormatOptimize::RunPass(kernel::SubGraphKernel *graph, std::vector<Tensor *>
 
 int RuntimeFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
                       std::vector<mindspore::lite::Tensor *> *tensors, mindspore::Format graph_format) {
-#ifndef SERVER_INFERENCE
+#ifndef ENABLE_MULTI_LAYOUT
   return RET_OK;
 #endif
-  for (kernel::KernelExec *subgraph : *subgraph_list) {
+  for (const auto &subgraph : *subgraph_list) {
     FormatOptimizePtr optimize = std::make_shared<FormatOptimize>();
 
     optimize->AddPass(std::make_shared<InsertTranspose>(graph_format));
     optimize->AddPass(std::make_shared<EliminateTranspose>(graph_format));
 
-    auto grpah = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
-    auto ret = optimize->RunPass(grpah, tensors);
+    auto graph = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
+    auto ret = optimize->RunPass(graph, tensors);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Runtime format pass failed.";
       return RET_ERROR;

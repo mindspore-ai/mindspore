@@ -61,7 +61,8 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
       continue;
     }
 
-    std::string type_name = "Type_name";
+    // to be realized: 1. get type from kernel; 2. flag for transpose weight.
+    std::string type_name = schema::EnumNamePrimitiveType(kernel->type());
     auto find_result = cloud_format_kernel_list.find(type_name);
     if (find_result == cloud_format_kernel_list.end()) {
       continue;

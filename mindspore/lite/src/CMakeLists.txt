@@ -73,6 +73,15 @@ elseif(NOT MSVC)
     endif()
 endif()
 
+if(MSLITE_ENABLE_MULTI_LAYOUT)
+    add_compile_definitions(ENABLE_MULTI_LAYOUT)
+    add_compile_definitions(ENABLE_BOLT)
+    set(BOLT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/cpu/bolt/)
+    include_directories(${BOLT_DIR}/bolt/common/uni/include)
+    include_directories(${BOLT_DIR}/bolt/common/memory/include)
+    include_directories(${BOLT_DIR}/bolt/compute/tensor/include)
+endif()
+
 file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/model/*.cc
@@ -629,6 +638,11 @@ if(SUPPORT_CUDA AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_C
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
     add_subdirectory(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops cuda_ops)
     target_link_libraries(mindspore-lite cuda_lite_kernel_mid cuda_ops mindspore_core)
+endif()
+
+if(MSLITE_ENABLE_MULTI_LAYOUT)
+    target_link_libraries(mindspore-lite bolt_kernel_mid)
+    target_link_libraries(mindspore-lite_static bolt_kernel_mid)
 endif()
 
 if(MSLITE_ENABLE_RUNTIME_GLOG)

@@ -277,6 +277,15 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::KernelExec *> *dst_kernels
   return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
 }
 
+int Scheduler::ProcessSubGraphTranspose(std::vector<kernel::KernelExec *> *dst_kernels) {
+  auto ret = pass::RuntimeFormatPass(dst_kernels, src_tensors_, Format::NHWC);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run runtime format pass failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::KernelExec *> *kernels) {
   for (auto iter = (*kernels).begin(); iter != (*kernels).end();) {
     auto cur_kernel = *iter;
@@ -410,6 +419,12 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   ret = ConstructSubGraphs(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
+    return ret;
+  }
+
+  ret = ProcessSubGraphTranspose(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Process SubGraph with multi layout failed.";
     return ret;
   }
 

@@ -23,7 +23,7 @@ namespace mindspore::lite::micro::nnacl {
 int NNaclFp32Serializer::count = 0;
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
   CodeBaseStruct<false>("PoolingParameter", name, pooling_parameter.op_parameter_, pooling_parameter.pool_mode_,
-                        pooling_parameter.round_mode_, pooling_parameter.pad_mode_, pooling_parameter.act_type_,
+                        pooling_parameter.round_type_, pooling_parameter.pad_mode_, pooling_parameter.act_type_,
                         pooling_parameter.avg_mode_, pooling_parameter.global_, pooling_parameter.window_w_,
                         pooling_parameter.window_h_, pooling_parameter.stride_w_, pooling_parameter.stride_h_,
                         pooling_parameter.pad_u_, pooling_parameter.pad_d_, pooling_parameter.pad_l_,

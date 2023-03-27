@@ -7,3 +7,6 @@
 [submodule "tests/models"]
 	path = tests/models
 	url = https://gitee.com/mindspore/models.git
+[submodule "mindspore/lite/src/litert/kernel/cpu/bolt/bolt"]
+	path = mindspore/lite/src/litert/kernel/cpu/bolt/bolt
+	url = https://gitee.com/mindspore/bolt.git

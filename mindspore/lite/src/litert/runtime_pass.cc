@@ -217,7 +217,9 @@ void ConvNormC4PassActIndex(std::vector<kernel::KernelExec *> *kernels, size_t i
   if (start_kernel->out_kernels().size() != 1) {
     return;
   }
-  CHECK_NULL_RETURN_VOID(start_kernel->op_parameter());
+  if (start_kernel->op_parameter() == nullptr) {
+    return;
+  }
   if (reinterpret_cast<ConvParameter *>(start_kernel->op_parameter())->group_ != 1) {
     /* conv-depthwise and group-conv */
     return;

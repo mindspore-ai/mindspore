@@ -20,13 +20,13 @@
 
 typedef enum PoolMode { PoolMode_No, PoolMode_MaxPool, PoolMode_AvgPool } PoolMode;
 
-typedef enum RoundMode { RoundMode_No, RoundMode_Ceil, RoundMode_Floor } RoundMode;
+typedef enum RoundType { RoundType_No, RoundType_Ceil, RoundType_Floor } RoundType;
 
 typedef struct PoolingParameter {
   OpParameter op_parameter_;
   PoolMode pool_mode_;
-  RoundMode round_mode_;
-  PadMode pad_mode_;
+  RoundType round_type_;
+  PadType pad_mode_;
   ActType act_type_;
   int avg_mode_;
   bool global_;

@@ -23,7 +23,7 @@ class TestOpenCL_Pooling : public CommonTest {};
 namespace {
 // PrimitiveType_Pooling: src/ops/populate/pooling_populate.cc
 OpParameter *CreateParameter(PoolMode pool_mode, int window_h, int window_w, int stride_h, int stride_w, int pad_u,
-                             int pad_d, int pad_l, int pad_r, RoundMode round_mode = RoundMode_Floor,
+                             int pad_d, int pad_l, int pad_r, RoundType round_mode = RoundType_Floor,
                              ActType act_type = ActType_No) {
   auto *param = test::CreateParameter<PoolingParameter>(schema::PrimitiveType_MaxPoolFusion);
   param->global_ = false;
@@ -37,7 +37,7 @@ OpParameter *CreateParameter(PoolMode pool_mode, int window_h, int window_w, int
   param->stride_h_ = stride_h;
   param->avg_mode_ = 0;
   param->pool_mode_ = pool_mode;
-  param->round_mode_ = round_mode;
+  param->round_type_ = round_mode;
   param->act_type_ = act_type;
   return reinterpret_cast<OpParameter *>(param);
 }

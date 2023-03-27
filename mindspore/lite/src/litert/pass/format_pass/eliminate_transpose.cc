@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <queue>
 #include "src/litert/pass/format_pass/eliminate_transpose.h"
 #include "src/litert/kernel_exec_util.h"
 
@@ -242,122 +243,76 @@ int EliminateTranspose::EliminateForSingleKernel(kernel::SubGraphKernel *subgrap
   return RET_OK;
 }
 
-int EliminateTranspose::RepeteTransposeFusionPass(kernel::SubGraphKernel *subgraph,
-                                                  std::vector<lite::Tensor *> *all_tensors) {
-  std::vector<kernel::KernelExec *> nodes = subgraph->in_nodes();
-  std::vector<lite::Tensor *> tensors = subgraph->in_tensors();
-  auto iter = tensors.begin();
-  while (iter != tensors.end()) {
-    auto tensor = *iter;
-
-    std::vector<kernel::KernelExec *> repete_trans;
-    for (auto node : nodes) {
-      if (node->type() != schema::PrimitiveType_Transpose && node->type() != schema::PrimitiveType_FormatTranspose) {
-        iter++;
-        continue;
-      }
-      if (node->in_tensors().size() == 1 && node->in_tensors().at(0) == tensor) {
-        repete_trans.push_back(node);
+int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *subgraph) {
+  auto in_tensors = subgraph->in_tensors();
+  std::queue<lite::Tensor *> tensor_queue;
+  for (const auto &tensor : in_tensors) {
+    tensor_queue.push(tensor);
+  }
+  while (!tensor_queue.empty()) {
+    auto tensor = tensor_queue.front();
+    tensor_queue.pop();
+    auto in_kernel = kernel::KernelExecUtil::FindInKernelForTensorInSubGraph(tensor, subgraph);
+    auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForTensorInSubGraph(tensor, subgraph);
+    for (const auto &out_kernel : out_kernels) {
+      for (const auto &out_tensor : out_kernel->out_tensors()) {
+        tensor_queue.push(out_tensor);
       }
     }
 
-    if (repete_trans.size() <= 1) {
-      iter++;
+    TransInfoPair post_trans;
+    auto count = transpose_strategy_.GetTransCount(out_kernels, &post_trans);
+    if (count <= 1) {
       continue;
     }
+
     graph_changed_ = true;
-    kernel::KernelExec *transpose_kernel = repete_trans.at(0);
-    auto reserve_tensor = transpose_kernel->out_tensors().at(0);
 
-    for (size_t i = 1; i < repete_trans.size(); i++) {
-      kernel::KernelExec *replace_kernel = repete_trans.at(i);
-      lite::Tensor *replace_tensor = replace_kernel->out_tensors().at(0);
-
-      auto post_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(replace_kernel, replace_tensor);
-      for (const auto &post : post_kernels) {
-        replace_kernel->RemoveOutKernel(post);
-        post->RemoveInKernel(replace_kernel);
-
-        post->AddInKernel(transpose_kernel);
-        transpose_kernel->AddOutKernel(post);
-
-        auto input_index = post->FindInTensorIndex(replace_kernel->out_tensors().at(0));
-        post->set_in_tensor(reserve_tensor, input_index);
+    kernel::KernelExec *reserve_kernel = nullptr;
+    std::vector<kernel::KernelExec *> to_deletes;
+    for (const auto &out_kernel : out_kernels) {
+      TransInfoPair tmp_trans;
+      if (GetTransposeInfo(out_kernel, &tmp_trans) != RET_OK || !IsSameTranspose(post_trans, tmp_trans)) {
+        continue;
       }
-      subgraph->DropNode(replace_kernel);
-      delete replace_kernel;
+      if (reserve_kernel == nullptr) {
+        // firstly set value
+        reserve_kernel = out_kernel;
+        continue;
+      }
+      if (IsContain(subgraph->out_tensors(), out_kernel->out_tensors().at(0))) {
+        to_deletes.push_back(reserve_kernel);
+        reserve_kernel = out_kernel;
+      } else {
+        to_deletes.push_back(out_kernel);
+      }
     }
-    iter++;
-  }
-  return RET_OK;
-}
+    auto reserve_tensor = reserve_kernel->out_tensors().at(0);
 
-int EliminateTranspose::HorizontalTransposeFusionPass(kernel::SubGraphKernel *subgraph) {
-  auto kernels = &(subgraph->nodes());
-  auto kernel_iter = kernels->begin();
-  while (kernel_iter != kernels->end()) {
-    auto kernel = *kernel_iter;
-    CHECK_NULL_RETURN(kernel);
-
-    bool is_fusion = false;
-    for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
-      auto trans_in_tensor = kernel->out_tensors().at(i);
-      auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(kernel, trans_in_tensor);
-      TransInfoPair post_trans;
-      auto count = transpose_strategy_.GetTransCount(out_kernels, &post_trans);
-      if (count <= 1) {
+    for (const auto &to_delete : to_deletes) {
+      if (to_delete == reserve_kernel) {
         continue;
       }
 
-      is_fusion = true;
-      graph_changed_ = true;
-
-      kernel::KernelExec *reserve_kernel = nullptr;
-      std::vector<kernel::KernelExec *> to_deletes;
-      for (const auto &out_kernel : out_kernels) {
-        TransInfoPair tmp_trans;
-        if (GetTransposeInfo(out_kernel, &tmp_trans) != RET_OK || !IsSameTranspose(post_trans, tmp_trans)) {
-          continue;
-        }
-        if (reserve_kernel == nullptr) {
-          // firstly set value
-          reserve_kernel = out_kernel;
-          continue;
-        }
-        if (IsContain(subgraph->out_tensors(), out_kernel->out_tensors().at(0))) {
-          to_deletes.push_back(reserve_kernel);
-          reserve_kernel = out_kernel;
-        } else {
-          to_deletes.push_back(out_kernel);
-        }
+      if (in_kernel != nullptr) {
+        in_kernel->RemoveOutKernel(to_delete);
+        to_delete->RemoveInKernel(in_kernel);
       }
-      auto reserve_tensor = reserve_kernel->out_tensors().at(0);
 
-      for (const auto &to_delete : to_deletes) {
-        if (to_delete == reserve_kernel) {
-          continue;
-        }
+      auto post_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(to_delete, to_delete->out_tensors().at(0));
+      for (const auto &post : post_kernels) {
+        to_delete->RemoveOutKernel(post);
+        post->RemoveInKernel(to_delete);
 
-        kernel->RemoveOutKernel(to_delete);
-        to_delete->RemoveInKernel(kernel);
+        post->AddInKernel(reserve_kernel);
+        reserve_kernel->AddOutKernel(post);
 
-        auto post_kernels =
-          kernel::KernelExecUtil::FindOutKernelsForOutTensor(to_delete, to_delete->out_tensors().at(0));
-        for (const auto &post : post_kernels) {
-          to_delete->RemoveOutKernel(post);
-          post->RemoveInKernel(to_delete);
-
-          post->AddInKernel(reserve_kernel);
-          reserve_kernel->AddOutKernel(post);
-
-          auto input_index = post->FindInTensorIndex(to_delete->out_tensors().at(0));
-          post->set_in_tensor(reserve_tensor, input_index);
-        }
-        subgraph->DropNode(to_delete);
-        delete to_delete;
+        auto input_index = post->FindInTensorIndex(to_delete->out_tensors().at(0));
+        post->set_in_tensor(reserve_tensor, input_index);
       }
+      subgraph->DropNode(to_delete);
+      delete to_delete;
     }
-    kernel_iter = is_fusion ? find(kernels->begin(), kernels->end(), kernel) : kernel_iter + 1;
   }
   return RET_OK;
 }
@@ -440,12 +395,6 @@ int EliminateTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite:
     ret = HorizontalTransposeFusionPass(graph);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "HorizontalTransposeFusionPass failed in runtime pass.";
-      return RET_ERROR;
-    }
-
-    ret = RepeteTransposeFusionPass(graph, tensors);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Graph input fusion pass failed.";
       return RET_ERROR;
     }
 

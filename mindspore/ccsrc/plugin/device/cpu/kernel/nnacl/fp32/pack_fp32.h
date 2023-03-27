@@ -39,6 +39,9 @@ void PackNHWCXToNHWCFp32(const void *src, void *dst, int batch, int plane, int c
 void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNC4HW4ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel);
+void PackNC8HW8ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel);
+void PackNHWCToNC8HW8Fp32(const void *src, void *dst, int batch, int plane, int channel);
+void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
 void UnPackC4Uint(const void *src, void *dst, size_t plane, size_t channel);
 void PackNC8HW8AlignedToNC8HW8NotAlignedFp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel);

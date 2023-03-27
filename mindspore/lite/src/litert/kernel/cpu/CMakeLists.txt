@@ -126,3 +126,7 @@ if(PLATFORM_ARM)
     add_library(cpu_opt_kernel_mid OBJECT ${OPT_KERNEL_SRC})
     add_dependencies(cpu_kernel_mid fbs_src)
 endif()
+
+if(MSLITE_ENABLE_MULTI_LAYOUT)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bolt)
+endif()

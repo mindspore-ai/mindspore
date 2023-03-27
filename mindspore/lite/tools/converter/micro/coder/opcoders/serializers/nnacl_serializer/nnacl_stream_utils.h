@@ -36,11 +36,11 @@ std::ostream &operator<<(std::ostream &code, const SliceQuantArg &arg);
 
 std::ostream &operator<<(std::ostream &code, PoolMode pool_mode);
 
-std::ostream &operator<<(std::ostream &code, RoundMode round_mode);
+std::ostream &operator<<(std::ostream &code, RoundType round_type);
 
 std::ostream &operator<<(std::ostream &code, RoundingMode rounding_mode);
 
-std::ostream &operator<<(std::ostream &code, PadMode pad_mode);
+std::ostream &operator<<(std::ostream &code, PadType pad_type);
 
 std::ostream &operator<<(std::ostream &code, ActType act_type);
 

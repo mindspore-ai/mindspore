@@ -37,13 +37,13 @@ int CheckOpPoolingParam(const PoolingParameter *param) {
 void UpdateOpRoundMode(RoundMode round_mode, PoolingParameter *param) {
   switch (round_mode) {
     case FLOOR:
-      param->round_mode_ = RoundMode_Floor;
+      param->round_type_ = RoundType_Floor;
       break;
     case CEIL:
-      param->round_mode_ = RoundMode_Ceil;
+      param->round_type_ = RoundType_Ceil;
       break;
     default:
-      param->round_mode_ = RoundMode_No;
+      param->round_type_ = RoundType_No;
       break;
   }
 }

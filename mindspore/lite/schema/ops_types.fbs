@@ -55,7 +55,8 @@ enum Format : int {
     NUM_OF_FORMAT,
     NCDHW,
     NWC,
-    NCW
+    NCW,
+    NC8HW8
 }
 
 enum ActivationType : byte {

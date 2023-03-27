@@ -47,7 +47,7 @@ TEST_F(PoolingGradInferTest, PoolingGradInferTest0) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_same;
-  parameter->round_mode_ = RoundMode_Floor;
+  parameter->round_type_ = RoundType_Floor;
   int ret = PoolingGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                   reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
