@@ -72,7 +72,6 @@ const int64_t kParallelDataNumSameShape = 100 * 1024;
 namespace aicpu {
 uint32_t OneHotCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "OneHot check input and output number failed.");
-  KERNEL_HANDLE_ERROR(OneHotParamCheck(ctx), "OneHot check params failed.");
   auto input_data_type = ctx.Input(0)->GetDataType();
   auto output_data_type = ctx.Output(0)->GetDataType();
   switch (input_data_type) {
@@ -161,37 +160,6 @@ uint32_t OneHotCpuKernel::OneHotCompute(CpuKernelContext &ctx) {
     get_output_func(0, data_num);
   }
   return run_state ? KERNEL_STATUS_OK : KERNEL_STATUS_INNER_ERROR;
-}
-
-// 参数校验
-uint32_t OneHotCpuKernel::OneHotParamCheck(CpuKernelContext &ctx) {
-  Tensor *indices = ctx.Input(0);
-  Tensor *depth = ctx.Input(1);
-  Tensor *on_value = ctx.Input(2);
-  Tensor *off_value = ctx.Input(3);
-  int64_t axis = ctx.GetAttr("axis") == nullptr ? -1 : ctx.GetAttr("axis")->GetInt();
-
-  DataType on_value_type = on_value->GetDataType();
-  DataType off_value_type = off_value->GetDataType();
-  KERNEL_CHECK_FALSE((on_value_type == off_value_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of on_value [%s] need be same with off_value [%s].",
-                     DTypeStr(on_value_type).c_str(), DTypeStr(off_value_type).c_str())
-  auto depth_shape = depth->GetTensorShape();
-  auto on_value_shape = on_value->GetTensorShape();
-  auto off_value_shape = off_value->GetTensorShape();
-  KERNEL_CHECK_FALSE((depth_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Depth must be a scalar, actual dim num is %d.", depth_shape->GetDims())
-  KERNEL_CHECK_FALSE((on_value_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "On_value must be a scalar, actual dim num is %d.", on_value_shape->GetDims())
-  KERNEL_CHECK_FALSE((off_value_shape->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Off_value must be a scalar , actual dim num is %d.", off_value_shape->GetDims())
-  int32_t output_dims = indices->GetTensorShape()->GetDims() + 1;
-  KERNEL_CHECK_FALSE(((axis > -2 && axis < output_dims)), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected axis value should between [-1, %d]. But received: %d.", output_dims - 1, axis)
-  int32_t depth_value = *(reinterpret_cast<int32_t *>(ctx.Input(1)->GetData()));
-  KERNEL_CHECK_FALSE((depth_value >= 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Depth should be a non-negative. But received: %d.", depth_value)
-  return KERNEL_STATUS_OK;
 }
 
 REGISTER_CPU_KERNEL(kOneHot, OneHotCpuKernel);
