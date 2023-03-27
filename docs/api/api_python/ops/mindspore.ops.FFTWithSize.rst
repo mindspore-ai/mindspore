@@ -50,9 +50,9 @@ mindspore.ops.FFTWithSize
         - **signal_sizes** (tuple，可选) - 原始信号的大小（RFFT变换之前的信号，不包含batch这一维），只有在IRFFT模式下和设置 `onesided` 为True时需要该参数，需要满足
           以下条件。默认值：()。
 
-            - `signal_sizes` 的长度等于IRFFT的 `signal_ndim` ： :math:`len(signal_sizes)=signal_ndim` 。
-            - `signal_sizes` 的最后一个维度除以2等于IRFFT输入的最后一个维度： :math:`signal_size[-1]/2+1=x.shape[-1]` 。
-            - 除了最后一个维度外， `signal_sizes` 的维度与输入shape完全相同： :math:`signal_sizes[:-1]=x.shape[:-1]` 。
+          - `signal_sizes` 的长度等于IRFFT的 `signal_ndim` ： :math:`len(signal_sizes)=signal_ndim` 。
+          - `signal_sizes` 的最后一个维度除以2等于IRFFT输入的最后一个维度： :math:`signal_size[-1]/2+1=x.shape[-1]` 。
+          - 除了最后一个维度外， `signal_sizes` 的维度与输入shape完全相同： :math:`signal_sizes[:-1]=x.shape[:-1]` 。
  
     输入：
         - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。
