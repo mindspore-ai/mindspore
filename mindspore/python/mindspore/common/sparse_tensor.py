@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 
 __all__ = ['RowTensorInner', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 
-from typing import Tuple
+from typing import Tuple, Union
 
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
@@ -811,7 +811,7 @@ class CSRTensor(CSRTensor_):
 
     def mm(self, matrix: Union[Tensor, CSRTensor]) -> Union[Tensor, CSRTensor]:
         """
-        Return the matrix multiplication result of the right-multiply matrix（dense or CSRTensor） of the CSRTensor.
+        Return the matrix multiplication result of the right-multiply matrix(dense or CSRTensor) of the CSRTensor.
         The CSRTensor with shape `[M, N]` needs to adapt the right matrix with shape `[N, K]`
         to get the dense matrix or CSRTensor with result `[M, K]`.
 
