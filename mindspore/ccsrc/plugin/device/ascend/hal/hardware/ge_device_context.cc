@@ -668,6 +668,8 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   bool training = IsGeTrain();
   if (training) {
     (*ge_options)["ge.graphRunMode"] = "1";
+  } else {
+    (*ge_options)["ge.graphRunMode"] = "0";
   }
 
   SetDisableReuseMemoryFlag(ge_options);
@@ -759,7 +761,6 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
     (*ge_options)["ge.exec.podName"] = env_rank_id;
-    (*ge_options)["ge.graphRunMode"] = "1";
   } else {
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
