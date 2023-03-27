@@ -935,6 +935,7 @@ constexpr auto kAttrN = "n";
 constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active";
 constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
+constexpr auto kAttrCommInputDepend = "comm_input_depend";
 constexpr auto kAttrNotDelayFusion = "not_delay_fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrRankList = "rank_list";
@@ -1125,6 +1126,7 @@ constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";
+constexpr auto kAttrRecomputeSubGraph = "recompute_sub_graph";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";

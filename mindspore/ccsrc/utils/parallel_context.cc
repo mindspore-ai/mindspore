@@ -283,5 +283,9 @@ void ParallelContext::set_pipeline_micro_size(const size_t pipeline_micro_size) 
 
 void ParallelContext::set_do_transform(const bool do_transform) { do_transform_ = do_transform; }
 
+void ParallelContext::set_speedup_config(const std::unordered_map<std::string, bool> speedup_config) {
+  speedup_config_ = speedup_config;
+}
+
 void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 }  // namespace mindspore::parallel

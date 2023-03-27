@@ -186,24 +186,121 @@ void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
   }
 }
 
+std::vector<AnfNodePtr> GetInputNodesWithFilter(const CNodePtr &node, std::function<bool(const AnfNodePtr &)> filter,
+                                                std::function<bool(const AnfNodePtr &)> push) {
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> res;
+  std::queue<CNodePtr> cnode_queue;
+  cnode_queue.push(node);
+  while (!cnode_queue.empty()) {
+    auto queue_end = cnode_queue.front();
+    cnode_queue.pop();
+    auto input_nodes = queue_end->inputs();
+    bool is_filtered = false;
+    for (size_t i = 1; i < input_nodes.size(); ++i) {
+      if (push(input_nodes[i])) {
+        res.push_back(queue_end);
+        is_filtered = true;
+        break;
+      }
+    }
+    if (!is_filtered) {
+      for (size_t i = 1; i < input_nodes.size(); ++i) {
+        if (!input_nodes[i]->isa<CNode>()) {
+          continue;
+        }
+        if (filter(input_nodes[i])) {
+          continue;
+        }
+        cnode_queue.push(input_nodes[i]->cast<CNodePtr>());
+      }
+    }
+  }
+  return res;
+}
+
+void GetNewFirstTargetInputs(const std::vector<AnfNodePtr> &recompute_input_border_bprop_nodes,
+                             std::function<bool(const AnfNodePtr &)> push_func,
+                             std::vector<AnfNodePtr> *first_target_inputs) {
+  for (const auto &input_border_bprop_node : recompute_input_border_bprop_nodes) {
+    MS_LOG(INFO) << "input_border_bprop_node:" << input_border_bprop_node->DebugString()
+                 << ", the fullname:" << input_border_bprop_node->fullname_with_scope();
+    if (!input_border_bprop_node->isa<CNode>()) {
+      (void)(*first_target_inputs).emplace_back(input_border_bprop_node);
+      continue;
+    }
+    auto input_border_bprop_cnode = input_border_bprop_node->cast<CNodePtr>();
+    for (size_t k = 1; k < input_border_bprop_cnode->size(); ++k) {
+      if (!push_func(input_border_bprop_cnode->input(k))) {
+        continue;
+      }
+      (void)(*first_target_inputs).emplace_back(input_border_bprop_cnode->input(k));
+    }
+  }
+}
+
 std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin_nodes_topological,
+                                             const mindspore::HashSet<CNodePtr> &max_recomputed_sub_graph,
                                              const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
                                              const mindspore::HashSet<CNodePtr> &target_nodes) {
   std::vector<AnfNodePtr> first_target_inputs;
+  auto filt_func = [&](const AnfNodePtr &anode) {
+    if (!anode->isa<CNode>() || !anode->cast<CNodePtr>()->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      return true;
+    }
+    auto c_node = anode->cast<CNodePtr>();
+    auto forward_unique_id = GetValue<std::string>(c_node->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+    return std::find_if(max_recomputed_sub_graph.begin(), max_recomputed_sub_graph.end(), [&](CNodePtr r_cnode) {
+             return r_cnode->HasPrimalAttr(kPrimalAttrUniqueId) &&
+                    GetValue<std::string>(r_cnode->GetPrimalAttr(kPrimalAttrUniqueId)) == forward_unique_id;
+           }) == max_recomputed_sub_graph.end();
+  };
+  auto push_func = [&](const AnfNodePtr &anode) {
+    if (!anode->isa<CNode>() || !anode->cast<CNodePtr>()->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
+      return false;
+    }
+    auto c_node = anode->cast<CNodePtr>();
+    auto forward_unique_id = GetValue<std::string>(c_node->GetPrimalAttr(kPrimalAttrForwardUniqueId));
+    return std::find_if(max_recomputed_sub_graph.begin(), max_recomputed_sub_graph.end(), [&](CNodePtr r_cnode) {
+             return r_cnode->HasPrimalAttr(kPrimalAttrUniqueId) &&
+                    GetValue<std::string>(r_cnode->GetPrimalAttr(kPrimalAttrUniqueId)) == forward_unique_id;
+           }) == max_recomputed_sub_graph.end();
+  };
   for (const auto &node : origin_nodes_topological) {
     MS_EXCEPTION_IF_NULL(node);
-    if (target_nodes.find(node) != target_nodes.end()) {
-      for (size_t i = 1; i < node->size(); ++i) {
-        auto input = node->input(i);
-        MS_EXCEPTION_IF_NULL(input);
-        if (!input->isa<CNode>()) {
+    if (target_nodes.find(node) == target_nodes.end()) {
+      continue;
+    }
+    for (size_t i = 1; i < node->size(); ++i) {
+      auto input = node->input(i);
+      MS_EXCEPTION_IF_NULL(input);
+      if (!input->isa<CNode>()) {
+        continue;
+      }
+      auto input_cnode = input->cast<CNodePtr>();
+      if (target_nodes.find(input_cnode) != target_nodes.end() ||
+          recomputed_origin_nodes.find(input_cnode) != recomputed_origin_nodes.end()) {
+        continue;
+      }
+
+      for (size_t j = 1; j < input_cnode->size(); ++j) {
+        if (filt_func(input_cnode->input(j))) {
           continue;
         }
-        if (recomputed_origin_nodes.find(input->cast<CNodePtr>()) != recomputed_origin_nodes.end()) {
+        auto select_node = input_cnode->input(j)->cast<CNodePtr>();
+        auto recompute_input_border_bprop_nodes = GetInputNodesWithFilter(select_node, filt_func, push_func);
+        if (recompute_input_border_bprop_nodes.empty()) {
+          (void)first_target_inputs.emplace_back(input);
           continue;
         }
+        GetNewFirstTargetInputs(recompute_input_border_bprop_nodes, push_func, &first_target_inputs);
+      }
+      if (first_target_inputs.empty()) {
         (void)first_target_inputs.emplace_back(input);
       }
+    }
+    if (!first_target_inputs.empty()) {
       break;
     }
   }
@@ -325,7 +422,7 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
                                  const std::vector<AnfNodePtr> &new_inputs) {
   auto recomputed_node = graph->NewCNode(new_inputs);
   MS_EXCEPTION_IF_NULL(recomputed_node);
-  recomputed_node->AddAttr("duplicated", MakeValue(true));
+  recomputed_node->AddAttr(kAttrDuplicated, MakeValue(true));
   recomputed_node->AddAttr(kAttrNeedCseAfterRecompute, MakeValue(true));
   recomputed_node->set_abstract(origin_node->abstract());
   recomputed_node->set_scope(origin_node->scope());
@@ -333,7 +430,11 @@ CNodePtr CreateNewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &orig
     recomputed_node->AddPrimalAttr(kAttrMicro, origin_node->GetPrimalAttr(kAttrMicro));
   }
   if (origin_node->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
-    recomputed_node->AddPrimalAttr(kAttrMicro, origin_node->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+    recomputed_node->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId,
+                                   origin_node->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+  }
+  if (origin_node->HasAttr(kAttrRecomputeSubGraph)) {
+    recomputed_node->AddAttr(kAttrRecomputeSubGraph, origin_node->GetAttr(kAttrRecomputeSubGraph));
   }
   static int64_t recompute_id = 0;
   ++recompute_id;

@@ -490,7 +490,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, grad_accumulation_step=int,
-                 parallel_optimizer_config=dict, comm_fusion=dict)
+                 parallel_optimizer_config=dict, comm_fusion=dict, speedup_config_path=str)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, only data parallel supported on CPU.
@@ -622,6 +622,9 @@ def set_auto_parallel_context(**kwargs):
 
                         - reducescatter: If communication fusion type is `reducescatter`. The `mode` contains: `auto`
                           and `size`. Config is same as `allgather`.
+
+        speedup_config_path (str): Json format config files for speedup large model distributed training
+                        in auto parallel mode. Default: "".
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

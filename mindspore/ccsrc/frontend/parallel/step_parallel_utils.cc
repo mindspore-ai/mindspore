@@ -970,7 +970,7 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
   std::queue<AnfNodePtr> anf_queue;
   anf_queue.push(node);
   while (!anf_queue.empty()) {
-    auto queue_end = anf_queue.back();
+    auto queue_end = anf_queue.front();
     anf_queue.pop();
     auto user_set = manager->node_users()[queue_end];
     for (auto &pair : user_set) {
@@ -1288,7 +1288,7 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
          IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
-         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
+         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimDepend);
 }
 
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
