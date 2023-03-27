@@ -212,7 +212,11 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                   std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
                                  std::back_inserter(maybe_new_args_spec),
                                  [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
+                  auto engine = resource->engine();
+                  MS_EXCEPTION_IF_NULL(engine);
+                  engine->set_check_side_effect(true);
                   func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
+                  engine->set_check_side_effect(true);
                 }
               }
               changes_since_last_renorm = false;

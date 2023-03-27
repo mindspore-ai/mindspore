@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1433,12 +1433,20 @@ class AutoMonadConverter {
   void ClearIsolatedNodes() const {
     auto output = GetGraphOutput();
     constexpr size_t attach_index = 2;
-    if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
-        IsPrimitiveCNode(output->cast<CNodePtr>()->input(attach_index), prim::kPrimStopGradient)) {
-      // Replace Depend(orig_output, StopGrad) node with orig_output.
-      // After that, nodes may be eliminated if have no side effects.
-      auto &orig_output = output->cast<CNodePtr>()->input(1);
-      func_graph_->set_output(orig_output);
+    if (IsPrimitiveCNode(output, prim::kPrimDepend)) {
+      auto attach_node = output->cast<CNodePtr>()->input(attach_index);
+      if (IsPrimitiveCNode(attach_node, prim::kPrimStopGradient)) {
+        auto attach_cnode = attach_node->cast<CNodePtr>();
+        auto input = attach_cnode->input(1);
+        // Check the input of stop_gradient.
+        if (input->isa<CNode>() && input->cast<CNodePtr>()->has_side_effect_node()) {
+          return;
+        }
+        // Replace Depend(orig_output, StopGrad) node with orig_output.
+        // After that, nodes may be eliminated if have no side effects.
+        auto &orig_output = output->cast<CNodePtr>()->input(1);
+        func_graph_->set_output(orig_output);
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -788,6 +788,16 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   }
 }
 
+bool CheckAbstractIsRaiseNone(const AbstractBasePtr &abs, const AnfNodePtr &node_input) {
+  if (abs->isa<AbstractNone>() && abs->has_user_data("has_side_effect")) {
+    if (node_input->isa<CNode>()) {
+      node_input->cast<CNodePtr>()->set_has_side_effect_node(true);
+    }
+    return true;
+  }
+  return false;
+}
+
 void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
@@ -840,6 +850,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       MS_LOG(EXCEPTION) << "Fail to get input's abstract value, with input config: " << input_conf->ToString()
                         << ", in old node: " << c_old->DebugString();
     }
+    bool is_raise_none = CheckAbstractIsRaiseNone(abs, node_input);
     bool ignore_build_value = false;
     AnfNodePtr replace_node = nullptr;
     if (specializer_->engine()->check_side_effect()) {
@@ -850,7 +861,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
                      << cnode_input->DebugString() << ", flag: " << cnode_input->has_side_effect_node();
       }
     }
-    if (!ignore_build_value) {
+    if (!is_raise_none && !ignore_build_value) {
       // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
       // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.
       replace_node = BuildPossibleValueNode(node_input, abs, attrs, node);
