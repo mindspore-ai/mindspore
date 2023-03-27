@@ -63,14 +63,14 @@ int MultiMarginLossGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator
 }
 
 bool MultiMarginLossGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
+                                                   const std::vector<AddressPtr> &,
                                                    const std::vector<AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernelFP16<float16>(inputs, outputs);
+  if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernelFP32AndFP64<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernelFP32AndFP64<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernelFP32AndFP64<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernelFP16<float16>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
   }

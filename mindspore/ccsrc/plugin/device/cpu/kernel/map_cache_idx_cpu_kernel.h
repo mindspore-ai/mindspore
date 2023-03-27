@@ -52,7 +52,7 @@ class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   using MapCacheIdxFunc =

@@ -165,8 +165,7 @@ void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, con
 }
 
 template <typename T>
-bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
+bool MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs) {
   auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);

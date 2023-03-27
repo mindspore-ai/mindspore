@@ -34,6 +34,9 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
   size_t x_size = seqx_elements.size();
   size_t y_size = seqy_elements.size();
   size_t max_size = std::max(x_size, y_size);
+  if (x_size == 0 && y_size > 0) {
+    return std::make_shared<abstract::AbstractScalar>(true);
+  }
 
   for (size_t i = 0; i < max_size; ++i) {
     if (i >= x_size) {
@@ -42,20 +45,22 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
     if (i >= y_size) {
       return std::make_shared<abstract::AbstractScalar>(false);
     }
+
     auto x_element = seqx_elements[i];
     auto y_element = seqy_elements[i];
-
     if (x_element->BuildType()->type_id() == kObjectTypeTensorType ||
         y_element->BuildType()->type_id() == kObjectTypeTensorType) {
-      MS_EXCEPTION(TypeError) << "For primitive tupel_equal, the input element must be scalar, but got "
+      MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
-    if (x_element->BuildValue() == kAnyValue || y_element->BuildValue() == kAnyValue) {
+    auto x_value = x_element->BuildValue();
+    auto y_value = y_element->BuildValue();
+    if (x_value == kAnyValue || y_value == kAnyValue) {
       return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
     }
 
-    auto x = GetScalarValue<double>(prim_name, x_element->BuildValue());
-    auto y = GetScalarValue<double>(prim_name, y_element->BuildValue());
+    auto x = GetScalarValue<double>(prim_name, x_value);
+    auto y = GetScalarValue<double>(prim_name, y_value);
     if (x > y) {
       return std::make_shared<abstract::AbstractScalar>(false);
     } else if (x < y) {
@@ -75,16 +80,19 @@ AbstractBasePtr SequenceLessInferInner(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_abs = input_args[0];
-  auto y_abs = input_args[1];
-  if (!x_abs->isa<abstract::AbstractSequence>() || !y_abs->isa<abstract::AbstractSequence>()) {
+  constexpr size_t x_index = 0;
+  constexpr size_t y_index = 1;
+  auto x_abs = input_args[x_index];
+  auto y_abs = input_args[y_index];
+  if (!(x_abs->isa<abstract::AbstractSequence>() && y_abs->isa<abstract::AbstractSequence>())) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }
   auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
   auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
   if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len()) {
-    return std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+    auto dynamic_output = std::make_shared<abstract::AbstractScalar>(kAnyValue, kBool);
+    return dynamic_output;
   }
   const auto &seqx_elements = seqx_abs->elements();
   const auto &seqy_elements = seqy_abs->elements();

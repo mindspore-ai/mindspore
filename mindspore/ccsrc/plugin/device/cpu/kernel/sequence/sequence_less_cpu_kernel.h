@@ -39,20 +39,20 @@ class SequenceLessCpuKernelMod : public NativeCpuKernelMod,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) {
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  const bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                          const std::vector<AddressPtr> &outputs);
 
  private:
   size_t x_size_ = 0;

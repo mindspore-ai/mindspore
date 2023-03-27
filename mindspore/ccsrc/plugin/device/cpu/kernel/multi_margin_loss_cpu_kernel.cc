@@ -60,8 +60,7 @@ int MultiMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
+bool MultiMarginLossCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernelFP16<float16>(inputs, outputs);

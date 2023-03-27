@@ -50,7 +50,7 @@ class MultiMarginLossCPUKernelMod : public NativeCpuKernelMod, public MatchKerne
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
 
  private:
