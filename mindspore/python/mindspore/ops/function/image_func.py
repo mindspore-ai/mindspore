@@ -169,7 +169,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
             form :math:`[y1, x1, y2, x2]`, where :math:`(y1, x1)` is the first corner
             and :math:`(y2, x2)` is the second corner of the box.
             If :math:`y1 > y2`, the sampled crop is inverted upside down, the width dimensionis treated
-            similarly when :math:`x1 > x2`. If normalized coordinates are not in range [0, 1],
+            similarly when :math:`x1 > x2`. If normalized coordinates are not in range :math:`[0, 1]`,
             extrapolated input image values are used instead. Supported data type: float32.
         box_indices (Tensor): A 1-D Tensor of shape :math:`\text{num_boxes}` representing the batch
             index for each box. Supported type: int32.

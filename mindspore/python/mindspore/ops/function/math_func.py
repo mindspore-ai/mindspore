@@ -2397,7 +2397,7 @@ def cosh(input):
 
     .. math::
 
-        out_i = \cosh(x_i)
+        out_i = cosh(input_i)
 
     Args:
         input (Tensor): The input tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
@@ -2705,7 +2705,7 @@ def bitwise_xor(input, other):
     the relatively highest priority data type.
 
     Args:
-        input (Tensor): The first input tensor with shape :math:`(N,*)` where :math:`*` means
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
             any number of additional dimensions.
         other (Tensor): The second input tensor with the same dtype as `input`.
 
@@ -3038,7 +3038,6 @@ def bessel_j0(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3146,7 +3145,6 @@ def bessel_k0(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3226,7 +3224,6 @@ def bessel_y1(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3672,10 +3669,10 @@ def logit(input, eps=None):
         \begin{align}
         y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
         z_{i} & = \begin{cases}
-        x_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
-        x_{i} & \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
-        1 - \text{eps} & \text{if } x_{i} \gt 1 - \text{eps}
+        input_{i} & \text{if eps is None} \\
+        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
+        input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
         \end{cases}
         \end{align}
 
@@ -7197,7 +7194,7 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
@@ -7462,7 +7459,7 @@ def prod(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `input` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
@@ -9787,13 +9784,12 @@ def erfinv(input):
 
 def less_equal(input, other):
     r"""
-    Computes the boolean value of :math:`input\_x <= other` element-wise.
+    Computes the boolean value of :math:`input <= other` element-wise.
 
     .. math::
-
         out_{i} =\begin{cases}
-            & \text{True,    if } input\_x_{i}<=other_{i} \\
-            & \text{False,   if } input\_x_{i}>other_{i}
+            & \text{True,    if } input_{i}<=other_{i} \\
+            & \text{False,   if } input_{i}>other_{i}
             \end{cases}
 
     .. note::
