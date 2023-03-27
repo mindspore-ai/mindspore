@@ -86,18 +86,8 @@ mindspore::Buffer ReadFile(const std::string &file) {
 mindspore::FuncGraphPtr Serialization::ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite,
                                                                 const std::string &mindir_path) {
   MS_EXCEPTION_IF_NULL(buf);
-  std::string str(buf, buf_size);
-  mind_ir::ModelProto model;
-  if (!model.ParseFromString(str)) {
-    MS_LOG(ERROR) << "Parse model from buffer fail!";
-    return nullptr;
-  }
-  mindspore::MSANFModelParser model_parser;
-  model_parser.SetMindIRPath(mindir_path);
-  if (is_lite) {
-    model_parser.SetLite();
-  }
-  mindspore::FuncGraphPtr dstgraph_ptr = model_parser.Parse(model);
+  MindIRLoader loader;
+  mindspore::FuncGraphPtr dstgraph_ptr = loader.LoadMindIR(buf, buf_size);
   return dstgraph_ptr;
 }
 
