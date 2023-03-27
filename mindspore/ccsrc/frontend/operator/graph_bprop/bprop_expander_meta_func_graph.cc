@@ -404,6 +404,8 @@ void RegOtherBpropExpanderOps() {
   REGISTER_EXPANDER_BPROP_IMPL(IOU);
 }
 
+void RegSequenceBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(make_range); }
+
 void RegBpropExpanderOps() {
   RegMathBpropExpanderOps1();
   RegMathBpropExpanderOps2();
@@ -415,6 +417,7 @@ void RegBpropExpanderOps() {
   RegClipBpropExpanderOps();
   RegInnerBpropExpanderOps();
   RegOtherBpropExpanderOps();
+  RegSequenceBpropExpanderOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore

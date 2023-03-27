@@ -59,7 +59,7 @@ def test_single_for_2():
             y += x
         return y
 
-    with pytest.raises(TypeError, match="the 0th input should be a int64 scalar"):
+    with pytest.raises(TypeError, match="the 0th input should be a int scalar"):
         control_flow_for()
 
 
