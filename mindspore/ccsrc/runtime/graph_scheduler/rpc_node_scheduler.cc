@@ -226,6 +226,7 @@ void RpcNodeScheduler::Clear() {
       MS_EXCEPTION_IF_NULL(send_actor);
       send_actor->Clear();
     }
+    rpc_actors_ = nullptr;
     MS_LOG(INFO) << "End finalizing tcp server and client for rpc actors.";
   }
 }
