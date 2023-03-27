@@ -517,7 +517,7 @@ std::map<AnfNodePtr, AnfNodePtrSet> FilterDependencyToTargetNode(const FuncGraph
   MS_EXCEPTION_IF_NULL(return_node);
   AnfNodePtrList nodes = FuncGraph::TopoSort(return_node);
   // Trasverse all nodes in topo-sort so that time complexity is O(n).
-  for (const auto node : nodes) {
+  for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
