@@ -21,27 +21,20 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
-#include "kernel/kernel.h"
-#include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-class BishengCpuKernelManager {
+class BishengCpuKernelManager : public AkgCpuKernelManager {
  public:
   BishengCpuKernelManager() = default;
   ~BishengCpuKernelManager();
-
-  void *GetFunction(const std::string &kernel_name);
+  void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
+                                std::string *fn_kernel) const;
 
  private:
-  void *SearchFunc(const std::string &kernel_name) const;
-  void *SearchFuncWithSharedLock(const std::string &kernel_name) const;
-
   // cache the kernel function: kernel_name -> {kernel_func, so_handle}
   std::unordered_map<std::string, std::pair<void *, void *>> cpu_func_map_;
-  mutable std::shared_mutex mutex_;
 };
 using BishengCpuKernelManagerPtr = std::shared_ptr<BishengCpuKernelManager>;
 class BishengCpuKernelMod : public CpuKernelMod {
