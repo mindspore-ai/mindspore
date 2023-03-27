@@ -130,7 +130,7 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   size_t num_row = 1;
   size_t num_shape = 2;
   if (input_shape_.size() == num_shape) {
-    num_row = input_shape_[0];
+    num_row = static_cast<size_t>(input_shape_[0]);
   }
   size_t num_col = static_cast<size_t>(input_shape_[input_shape_.size() - 1]);
 
@@ -169,7 +169,7 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
           begin = pivot + 1;
         }
       }
-      output[i * num_sample + n] = begin;
+      output[i * static_cast<size_t>(num_sample) + n] = begin;
     }
   }
   return true;
