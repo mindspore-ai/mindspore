@@ -393,6 +393,22 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
   return input_tensor_lists;
 }
 
+runtime::KernelMapPosition FetchOriginOutputOrder(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  runtime::KernelMapPosition outputs_order;
+  const auto &root_output = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem}).first;
+  size_t position = 0;
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(root_output);
+  for (const auto &output : outputs) {
+    if (outputs_order.count(output) == 0) {
+      outputs_order[output] = {position++};
+    } else {
+      (void)outputs_order[output].emplace_back(position++);
+    }
+  }
+  return outputs_order;
+}
+
 MindRTBackendBase::MindRTBackendBase(const std::string &backend_name, const std::string &device_name,
                                      uint32_t device_id)
     : Backend(backend_name), device_name_(device_name), device_id_(device_id) {
@@ -1152,20 +1168,10 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackendBase::ConstructGraphCompilerInfo
   }
 
   auto parser = std::make_shared<ControlNodeParser>();
-
-  runtime::KernelMapPosition outputs_order;
   const auto &root_output =
     common::AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
-  size_t position = 0;
-  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(root_output);
-  size_t outputs_num = outputs.size();
-  for (const auto &output : outputs) {
-    if (outputs_order.count(output) == 0) {
-      outputs_order[output] = {position++};
-    } else {
-      (void)outputs_order[output].emplace_back(position++);
-    }
-  }
+  auto outputs_num = common::AnfAlgo::GetAllOutputWithIndex(root_output).size();
+  runtime::KernelMapPosition outputs_order = FetchOriginOutputOrder(root_graph->output());
 
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
@@ -1199,6 +1205,15 @@ void MindRTBackendBase::ParseControlNodes(const GraphCompilerInfo &graph_compile
   graph_compile_info.control_node_parser_->Parse(control_nodes_, graph_compile_info.graphs_,
                                                  graph_compile_info.device_contexts_, root_graph_,
                                                  func_graph_to_kernel_graphs);
+}
+
+void MindRTBackendBase::UpdateGraphCompilerInfo(const ActorInfo &actor_info) {
+  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
+  if (graph_iter == actor_to_graph_compiler_info_.end()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(graph_iter->second);
+  graph_iter->second->origin_outputs_order_ = FetchOriginOutputOrder(root_graph_->output());
 }
 }  // namespace compile
 }  // namespace mindspore
