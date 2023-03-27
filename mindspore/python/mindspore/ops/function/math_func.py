@@ -3064,7 +3064,6 @@ def bessel_j1(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3383,7 +3382,7 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
 
     .. math::
         \begin{aligned}
-        &matrix[..., M, M] * x[..., M, K] = rhs[..., M, K] \\
+        &matrix[..., M, M] * x[..., M, K] = rhs[..., M, K]\\
         &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
         \end{aligned}
 

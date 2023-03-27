@@ -2040,7 +2040,7 @@ def stack(tensors, axis=0):
     Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
     Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
-    If :math:`0 \le axis`, the shape of the output tensor is
+    If :math:`axis \ge 0`, the shape of the output tensor is
     :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
@@ -2860,7 +2860,6 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index of input tensor, with int32 or int64 data type.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the subtraction operation with `input_x`, has the same type as input.

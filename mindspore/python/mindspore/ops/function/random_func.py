@@ -38,7 +38,7 @@ def random_gamma(shape, alpha, seed=None):
     Args:
         shape (Tensor): The shape of random tensor to be generated.
             Must be one of the following types: int32, int64. 1-D integer tensor.
-        alpha (Tensor): The alpha α distribution parameter.
+        alpha (Tensor): The :math:`\alpha` distribution parameter.
             A Tensor. Must be one of the following types: half, float32, float64.
         seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
             Default: None, which will be treated as 0.
@@ -404,7 +404,8 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     Args:
         shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D `Tensor` whose
           dtype is mindspore.dtype.int32 or mindspore.dtype.int64.
-        rate (Tensor): The μ parameter the distribution is constructed with. It represents the mean of the distribution
+        rate (Tensor): The :math:`μ` parameter the distribution is constructed with.
+          It represents the mean of the distribution
           and also the variance of the distribution. It should be a `Tensor` whose dtype is mindspore.dtype.int64,
           mindspore.dtype.int32, mindspore.dtype.float64, mindspore.dtype.float32 or mindspore.dtype.float16.
         seed (int, optional): Seed is used as entropy source for the random number engines to generate pseudo-random

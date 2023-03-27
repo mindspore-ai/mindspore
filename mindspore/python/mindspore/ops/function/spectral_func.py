@@ -89,7 +89,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
 
     Attr `periodic` determines whether the returned window removes the last duplicate value from the symmetric
     window and prepares to be a periodic window with functions. Therefore, if attr `periodic` is true,
-    the `N` in formula is `window_length` + 1.
+    the :math:`N` in formula is :math:`window\_length + 1`.
 
     .. math::
 
