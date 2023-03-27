@@ -165,7 +165,7 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
-                          bool concat_batch) {
+                          bool concat_batch, bool contains_per_batch_map) {
   RETURN_UNEXPECTED_IF_NULL(src);
   RETURN_UNEXPECTED_IF_NULL(dest);
   if ((*src)->size() != batch_size) {
@@ -188,7 +188,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
   auto num_columns = (*src)->front().size();
   for (size_t i = 0; i < num_columns; i++) {
     std::shared_ptr<Tensor> new_tensor;
-    RETURN_IF_NOT_OK(ConvertRowsToTensor(src, &new_tensor, batch_size, i));
+    RETURN_IF_NOT_OK(ConvertRowsToTensor(src, &new_tensor, batch_size, i, contains_per_batch_map));
     dest->emplace_back(new_tensor);
   }
 
@@ -196,7 +196,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
 }
 
 Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, std::shared_ptr<Tensor> *dst,
-                                    dsize_t batch_size, size_t col) {
+                                    dsize_t batch_size, size_t col, bool contains_per_batch_map) {
   RETURN_UNEXPECTED_IF_NULL(src);
   RETURN_UNEXPECTED_IF_NULL(dst);
   std::shared_ptr<Tensor> first_tensor = (*src)->at(0).at(col);  // first row, column i
@@ -238,7 +238,9 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
   } else if (first_type.IsPython()) {
     // handle python dictionary columns differently:
     // each column of new batch will be a python dictionary where each key stores
-    // all values of corresponding rows in a python list.
+    // all values of corresponding rows in a python list if user has provided a per_batch_map.
+    // If no per_batch_map is provided, all values of that key will be combined in a single NumPy array.
+    // and we will error out if that is not feasible.
     {
       // Acquire Python GIL
       py::gil_scoped_acquire gil_acquire;
@@ -270,7 +272,22 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
           }
         }
       }
-      RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(new_dict, &new_tensor));
+      if (contains_per_batch_map) {
+        RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(new_dict, &new_tensor));
+      } else {  // convert to NumPy array
+        py::dict np_dict;
+        for (auto item : new_dict) {
+          py::list li = new_dict[item.first];
+          py::array arr = py::array(li);
+          CHECK_FAIL_RETURN_UNEXPECTED(
+            arr.dtype() != py::dtype("object_"),
+            std::string("Batch operation: failed to create a NumPy array with primitive types for the dictionary ") +
+              "objects in column " + std::to_string(col) + ", key: '" + item.first.cast<std::string>() +
+              "'.\nIf you want a customized array, define a custom 'per_batch_map' function.");
+          np_dict[item.first] = arr;
+        }
+        RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(np_dict, &new_tensor));
+      }
     }
 #endif
   } else {  // handle string column differently
@@ -317,15 +334,18 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
   bool concat_batch = false;
+  bool contains_per_batch_map = false;
 #ifdef ENABLE_PYTHON
   if (batch_map_func_) {
+    contains_per_batch_map = true;
     RETURN_IF_NOT_OK(MapColumns(&table_pair, &concat_batch));
   }  // pass it through pyfunc
 #endif
   if (pad_) {
     RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
   }  // do padding if needed
-  RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size(), concat_batch));
+  RETURN_IF_NOT_OK(
+    BatchRows(&table_pair.first, new_row, table_pair.first->size(), concat_batch, contains_per_batch_map));
   return Status::OK();
 }
 
@@ -374,8 +394,8 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
       size_t col_id = column_name_id_map_[itr.first];
       if (*concat_batch) {
         std::shared_ptr<Tensor> new_tensor;
-        RETURN_IF_NOT_OK(
-          ConvertRowsToTensor(&in_q_table, &new_tensor, in_q_table->size(), static_cast<size_t>(itr.second)));
+        RETURN_IF_NOT_OK(ConvertRowsToTensor(&in_q_table, &new_tensor, in_q_table->size(),
+                                             static_cast<size_t>(itr.second), static_cast<bool>(batch_map_func_)));
         (*out_q_table)[0][col_id] = std::move(new_tensor);
       } else {
         for (size_t i = 0; i < num_rows; i++) {
@@ -477,10 +497,10 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       // Invoke batch map func
       py::object ret_py_obj = batch_map_func_(*input_args);
       // Parse batch map return value
-      py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
-      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple),
+      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_py_obj),
                                    "Invalid per_batch_map, 'per_batch_map' function should return a tuple, but got " +
                                      std::string(ret_py_obj.get_type().str()));
+      py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(),
                                    "Invalid per_batch_map, the number of columns returned in 'per_batch_map' function "
                                    "should be " +

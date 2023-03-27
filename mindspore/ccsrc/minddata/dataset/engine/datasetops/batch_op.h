@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,19 +197,23 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
   // @param const std::unique_ptr<TensorQTable> *dest - dest_table to hold batched rows
   // @param int32_t size - batch_size
-  // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
+  // @param bool concat_batch - whether to keep batch to 1 row or expand dimensions
+  // @param bool contains_per_batch_map - whether user has provided per_batch_map
+  // @notes contains_per_batch_map is passed to this function since some callers require this function to be static
   // @return Status The status code returned
   static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
-                          bool concat_batch = false);
+                          bool concat_batch = false, bool contains_per_batch_map = false);
 
   // convert the rows to tensor
   // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
   // @param const std::unique_ptr<TensorQTable> *dst - dest_table to hold batched rows
   // @param int32_t size - batch_size
   // @param int32_t size - col
+  // @param bool contains_per_batch_map - whether user has provided per_batch_map
+  // @notes contains_per_batch_map is passed to this function since some callers require this function to be static
   // @return Status The status code returned
   static Status ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, std::shared_ptr<Tensor> *dst,
-                                    dsize_t batch_size, size_t col);
+                                    dsize_t batch_size, size_t col, bool contains_per_batch_map);
 
   // @param table
   // @param const PadInfo &pad_info pad info
