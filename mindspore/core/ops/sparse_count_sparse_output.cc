@@ -94,6 +94,18 @@ AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto dense_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   const int maxIndexRank = 2;
+  if (IsDynamic(indices_shape) || IsDynamic(values_shape) || IsDynamic(dense_shape_shape)) {
+    auto out_indices = std::make_shared<abstract::AbstractTensor>(
+      kInt64, std::make_shared<mindspore::abstract::Shape>(
+                ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny})));
+    auto out_values = std::make_shared<abstract::AbstractTensor>(
+      weights_ptr->element()->BuildType(),
+      std::make_shared<mindspore::abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
+    auto out_dense_shape = std::make_shared<abstract::AbstractTensor>(
+      kInt64, std::make_shared<mindspore::abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
+    AbstractBasePtrList ret = {out_indices, out_values, out_dense_shape};
+    return std::make_shared<abstract::AbstractTuple>(ret);
+  }
   if (indices_shape.size() != maxIndexRank) {
     MS_EXCEPTION(ValueError) << "For SparseCountSparseOutput, indices must be a 2-D tensor"
                              << ", but got " << indices_shape.size() << ".";
