@@ -39,6 +39,20 @@ mindspore.nn.AvgPool3d
     输出：
         shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或者 :math:`(C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
 
+        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+
+        .. math::
+            D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] -
+                \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] -
+                \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] -
+                \text{kernel_size}[2]}{\text{stride}[2]} + 1\right\rfloor
+
     异常：
         - **TypeError** - `kernel_size` 既不是整数也不是元组。
         - **TypeError** - `stride` 既不是整数也不是元组。
