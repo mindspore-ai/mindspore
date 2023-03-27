@@ -59,7 +59,7 @@ using Data = ::ge::op::Data;
 using std::endl;
 using std::static_pointer_cast;
 
-constexpr size_t kInputOffset = 2;
+constexpr int64_t kInputOffset = 2;
 constexpr size_t kSwitchInputSize = 4;
 constexpr size_t kSwitchBodyIndex = 2;
 constexpr size_t kSwitchAfterIndex = 3;
@@ -1289,7 +1289,7 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
         }
       }
       ProcessSubgraph(cnode, bnode->input(i), branch_to_parent_node_map);
-      df_branches->emplace_back(branches_map_[bnode->input(i).get()]);
+      (void)(df_branches->emplace_back(branches_map_[bnode->input(i).get()]));
     }
   }
   return df_branches;
@@ -1355,7 +1355,7 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
   if (!is_kernel_graph_) {
     for (size_t i = 1; i < node->inputs().size(); i++) {
       auto pred = node->input(i);
-      branch_inputs.emplace_back(pred);
+      (void)(branch_inputs.emplace_back(pred));
     }
     input_node = node->input(0)->cast<CNodePtr>();
   }
@@ -1370,7 +1370,7 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
     auto branch_node = bnode->input(i)->cast<CNodePtr>();
     for (size_t j = 2; j < branch_node->inputs().size(); j++) {
       auto pred = branch_node->input(j);
-      branch_inputs.emplace_back(pred);
+      (void)(branch_inputs.emplace_back(pred));
     }
   }
   std::vector<AnfNodePtr> branch_control_input;
@@ -1382,7 +1382,7 @@ void DfGraphConvertor::GetBranchNodeInput(const CNodePtr node) {
     }
     if (IsBodyGraph() && item->isa<Parameter>()) {
       auto idx = std::find(inputs_.begin(), inputs_.end(), item) - inputs_.begin();
-      tuple_items->push_back(OutHandler(subgraph_input_cache_[idx], "", item));
+      (void)(tuple_items->emplace_back(subgraph_input_cache_[idx], "", item));
     } else {
       auto hd = GetHandler(item);
       tuple_items->push_back(hd);
