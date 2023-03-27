@@ -160,7 +160,9 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
 @_function_forbid_reuse
 def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False):
     r"""
-    Returns a tensor where each row contains `numsamples` elements sampled from the multinomial distribution.
+    Returns a tensor where each row contains numsamples indices sampled from the
+    multinomial distribution with replacement. It is different from `multinomial` in that it allows
+    the same outcome to be chosen multiple times.
 
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
@@ -171,19 +173,19 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
           dimensions. Must be one of the following types: float16, float32, float64.
         seed (int): If seed is set to be -1, and offset is set to be 0, the random number
           generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
-        offset (int): To avoid seed collision.
+        offset (int): Offset used to avoid seed collision.
         numsamples (int): the number of samples to draw.
-        replacement (bool): Whether to draw with replacement or not. Defaults to false.
+        replacement (bool, optional): Whether to draw with replacement or not. Default: False.
 
     Returns:
-        Tensor with the same rows as `x`, each row has numsamples sampled indices.
+        Tensor with the same rows as `x`, each row has `numsamples` sampled indices.
 
     Raises:
-        TypeError: If `x` is not a Tensor whose dtype is float16, float32, float64.
+        TypeError: If `x`  is not a 1D or 2D Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
         TypeError: If `numsamples` is not an int.
         TypeError: If `replacement` is not a bool.
-        ValueError: If `x` rank is not 1 or 2.
-        ValueError: If the value of `numsamples` must larger than x_shape[-1], when `replacement` is false.
+        ValueError: If the value of `numsamples` is not greater than x_shape[-1] when `replacement` is False.
         ValueError: If the sum of one row of `x` less than 0.
         ValueError: If one of the element of each row of `x` less than 0.
         ValueError: If `numsamples` equal or less than 0.
