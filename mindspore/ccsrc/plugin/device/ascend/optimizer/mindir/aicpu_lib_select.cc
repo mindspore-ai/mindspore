@@ -165,6 +165,7 @@ static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiv
                                                              mindspore::kBincountOpName,
                                                              mindspore::kBlackmanWindowOpName,
                                                              mindspore::kBroadcastToOpName,
+                                                             mindspore::kNoRepeatNGramOpName,
                                                              mindspore::kMedianGradOpName,
                                                              mindspore::kNMSWithMaskOpName,
                                                              mindspore::kReduceSumOpName,
