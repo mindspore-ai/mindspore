@@ -399,6 +399,13 @@ if(MSLITE_ENABLE_MINDRT)
                 )
         set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_ACTOR_SRC})
     endif()
+elseif(TARGET_AOS_ARM)
+    set(LITE_SRC ${LITE_SRC}
+            ${CORE_DIR}/mindrt/src/thread/aos_worker.cc
+            ${CORE_DIR}/mindrt/src/thread/hal_adapter.cc
+            ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+            ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+            )
 else()
     set(LITE_SRC ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
@@ -534,8 +541,10 @@ endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
         AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64 AND NOT TARGET_OHOS)
-    target_link_libraries(mindspore-lite log)
-    target_link_libraries(mindspore-lite_static log)
+    if(NOT TARGET_AOS_ARM)
+        target_link_libraries(mindspore-lite log)
+        target_link_libraries(mindspore-lite_static log)
+    endif()
 endif()
 
 if(TARGET_OHOS)
@@ -578,8 +587,13 @@ endif()
 ########################## build optimize and float16 library #################################
 if(PLATFORM_ARM)
     if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT TARGET_MIX210 AND NOT MACHINE_LINUX_ARM64)
-        target_link_libraries(mindspore-lite cpu_opt_kernel_mid nnacl_optimize_mid)
-        target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid nnacl_optimize_mid)
+        if(TARGET_AOS_ARM AND TOOLCHAIN_NAME STREQUAL "gcc")
+            target_link_libraries(mindspore-lite cpu_opt_kernel_mid)
+            target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid)
+        else()
+            target_link_libraries(mindspore-lite cpu_opt_kernel_mid nnacl_optimize_mid)
+            target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid nnacl_optimize_mid)
+        endif()
     endif()
     if(MSLITE_ENABLE_FP16)
         target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)

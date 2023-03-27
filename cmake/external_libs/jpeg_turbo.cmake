@@ -1,3 +1,7 @@
+if(TARGET_AOS_ARM)
+    set(CMAKE_C_COMPILER          "$ENV{CC}")
+    set(CMAKE_SYSTEM_PROCESSOR    "aarch64")
+endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libjpeg-turbo/repository/archive/2.0.4.tar.gz")
@@ -14,8 +18,13 @@ else()
     if(MSVC)
         set(jpeg_turbo_CFLAGS "-O2")
     else()
-        set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC \
-            -D_FORTIFY_SOURCE=2 -O2")
+        set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
+        if(TARGET_AOS_ARM)
+            set(jpeg_turbo_CFLAGS "${jpeg_turbo_CFLAGS} -march=armv8.2-a -mtune=cortex-a72")
+            set(jpeg_turbo_CFLAGS "${jpeg_turbo_CFLAGS} -Wno-uninitialized -march=armv8.2-a -mtune=cortex-a72")
+        else()
+            set(jpeg_turbo_CFLAGS "${jpeg_turbo_CFLAGS} -Wno-maybe-uninitialized")
+        endif()
     endif()
 endif()
 
@@ -49,6 +58,10 @@ if(BUILD_LITE)
                               -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
                               -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
         endif()
+    elseif(TARGET_AOS_ARM)
+        set(CMAKE_OPTION ${CMAKE_OPTION} -DCMAKE_C_COMPILER=${C_COMPILER}
+                -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     endif()
 endif()
 

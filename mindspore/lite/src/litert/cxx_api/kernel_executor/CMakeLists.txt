@@ -1,4 +1,8 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
+if(TARGET_AOS_ARM)
+    string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+endif()
 
 add_library(kernel_executor SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor.cc
