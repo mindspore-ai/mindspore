@@ -136,8 +136,8 @@ Status Task::Run() {
   std::lock_guard<std::mutex> lk(mux_);
   if (running_ == false) {
     try {
-      thrd_ = std::async(std::launch::async, std::ref(*this));
       running_ = true;
+      thrd_ = std::async(std::launch::async, std::ref(*this));
       caught_severe_exception_ = false;
     } catch (const std::exception &e) {
       rc = STATUS_ERROR(StatusCode::kMDUnexpectedError, e.what());
