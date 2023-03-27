@@ -67,27 +67,28 @@ class AclOpDesc {
 
  protected:
   aclTensorDesc *CreateTensorDesc(const GeTensorDescPtr &tensor_desc);
-  aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size);
+  aclDataBuffer *CreateDataBuf(const AddressPtr &address, const size_t op_size) const;
 
   void GetListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
   void GetListListAttr(const std::string &attr_name, const ValuePtr &value, const ProcessAttrMode &mode);
-  std::vector<std::vector<int64_t>> GetListListAttrBool(const std::string &attr_name,
-                                                        const ValuePtrList &value_sequence);
-  std::vector<std::vector<int64_t>> GetListListAttrInt(const std::string &attr_name,
-                                                       const ValuePtrList &value_sequence);
-  std::vector<std::vector<int64_t>> GetListListAttrFloat(const std::string &attr_name,
-                                                         const ValuePtrList &value_sequence);
+  std::vector<std::vector<int64_t>> GetListListAttrBool(const ValuePtrList &value_sequence) const;
+  std::vector<std::vector<int64_t>> GetListListAttrInt(const ValuePtrList &value_sequence) const;
+  std::vector<std::vector<int64_t>> GetListListAttrFloat(const ValuePtrList &value_sequence) const;
 
-  void ListListToListInt(const std::vector<std::vector<int64_t>> &value_list, std::vector<int64_t> *array_list);
-  aclError AclSetAttrListListInt(const std::string &attr_name, const std::vector<std::vector<int64_t>> &value_list);
-  aclError AclSetAttrListString(const std::string &attr_name, const std::vector<std::string> &value_list);
+  void ListListToListInt(const std::vector<std::vector<int64_t>> &value_list, std::vector<int64_t> *array_list) const;
+  aclError AclSetAttrListListInt(const std::string &attr_name,
+                                 const std::vector<std::vector<int64_t>> &value_list) const;
+  aclError AclSetAttrListString(const std::string &attr_name, const std::vector<std::string> &value_list) const;
 
   template <typename T>
   void CallFunc(const T &val, const TypeId type, const std::string &attr_name, const ProcessAttrMode &mode);
   template <typename T>
   void AddConstDescAndBuf(const T &val, const TypeId type, const std::string &attr_name);
   template <typename T>
-  void CallAclAttrFunc(const T &val, const TypeId type, const std::string &attr_name);
+  void GetConstAttrInfo(const T &val, const TypeId type, void **current_addr, size_t *real_size,
+                        aclTensorDesc **tensor_desc);
+  template <typename T>
+  void CallAclAttrFunc(const T &val, const TypeId type, const std::string &attr_name) const;
 
   void CreateNullAclTensor(const size_t idx, const bool is_input);
 
