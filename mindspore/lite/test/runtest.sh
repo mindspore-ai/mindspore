@@ -71,6 +71,7 @@ if [ "$ENABLE_CONVERTER_TEST" = true ]; then
   ./lite-test-converter --gtest_filter="ModelParserRegistryTest.TestRegistry"
   ./lite-test-converter --gtest_filter="NodeParserRegistryTest.TestRegistry"
   ./lite-test-converter --gtest_filter="PassRegistryTest.TestRegistry"
+  ./lite-test-converter --gtest_filter="TestConverterAPI.*"
 fi
 ./lite-test --gtest_filter="TestRegistry.TestAdd"
 ./lite-test --gtest_filter="TestRegistryCustomOp.TestCustomAdd"
