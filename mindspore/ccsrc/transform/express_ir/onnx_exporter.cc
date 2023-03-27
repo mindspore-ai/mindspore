@@ -4445,6 +4445,20 @@ void OnnxExporter::ExportMergeDynamicGRUV2(const FuncGraphPtr &, const CNodePtr 
   auto bias_hidden = GetNodeInputName(gru_node->input(kInBiasHidden), node_map_ptr, graph_proto);
   auto init_h = GetNodeInputName(gru_node->input(kInInitH), node_map_ptr, graph_proto);
 
+  if (GetOutputType(gru_node->input(kInBiasInput)) == onnx::TensorProto_DataType_FLOAT) {
+    auto x_cast = x + "_cast";
+    AddCastOp(x, x_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    x = x_cast;
+
+    auto wi_cast = weight_input + "_cast";
+    AddCastOp(weight_input, wi_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    weight_input = wi_cast;
+
+    auto wh_cast = weight_hidden + "_cast";
+    AddCastOp(weight_hidden, wh_cast, onnx::TensorProto_DataType_FLOAT, graph_proto);
+    weight_hidden = wh_cast;
+  }
+
   auto weight_hidden_shape = dyn_cast<abstract::Shape>(gru_node->input(kInWeightHidden)->Shape())->shape();
   if (weight_hidden_shape.size() != kWeightHiddenDim) {
     MS_LOG(EXCEPTION) << "The dim of input weight_hidden must be " << kWeightHiddenDim << ".";
