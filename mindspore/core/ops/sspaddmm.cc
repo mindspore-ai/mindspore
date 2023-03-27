@@ -301,19 +301,13 @@ void CheckIndices(const std::vector<AbstractBasePtr> &input_args) {
     MS_EXCEPTION_IF_NULL(x1_indices_value_ptr);
     auto x1_indices_tensor = x1_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_indices_tensor);
-    auto x1_indices_type = input_args[kInputIndex0]->BuildType();
-    MS_EXCEPTION_IF_NULL(x1_indices_type);
-    auto x1_indices_type_id = x1_indices_type->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(x1_indices_type_id);
-    auto x1_indices_type_element = x1_indices_type_id->element();
-    MS_EXCEPTION_IF_NULL(x1_indices_type_element);
     auto x1_shape_abstract = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_shape_abstract);
     auto x1_shape_value_ptr = x1_shape_abstract->BuildValue();
     MS_EXCEPTION_IF_NULL(x1_shape_value_ptr);
     auto x1_shape_tensor = x1_shape_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_shape_tensor);
-    if (x1_indices_type_element->type_id() == kNumberTypeInt32) {
+    if (x1_indices_tensor->data_type_c() == kNumberTypeInt32) {
       IndicesBoundCheck<int32_t>(reinterpret_cast<int32_t *>(x1_indices_tensor->data_c()),
                                  x1_indices_tensor->DataSize(), reinterpret_cast<int32_t *>(x1_shape_tensor->data_c()),
                                  "x1");
@@ -333,19 +327,13 @@ void CheckIndices(const std::vector<AbstractBasePtr> &input_args) {
     MS_EXCEPTION_IF_NULL(x2_indices_value_ptr);
     auto x2_indices_tensor = x2_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_tensor);
-    auto x2_indices_type = input_args[kInputIndex3]->BuildType();
-    MS_EXCEPTION_IF_NULL(x2_indices_type);
-    auto x2_indices_type_id = x2_indices_type->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(x2_indices_type_id);
-    auto x2_indices_type_element = x2_indices_type_id->element();
-    MS_EXCEPTION_IF_NULL(x2_indices_type_element);
     auto x2_shape_abstract = input_args[kInputIndex5]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_shape_abstract);
     auto x2_shape_value_ptr = x2_shape_abstract->BuildValue();
     MS_EXCEPTION_IF_NULL(x2_shape_value_ptr);
     auto x2_shape_tensor = x2_shape_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_shape_tensor);
-    if (x2_indices_type_element->type_id() == kNumberTypeInt32) {
+    if (x2_indices_tensor->data_type_c() == kNumberTypeInt32) {
       IndicesBoundCheck<int32_t>(reinterpret_cast<int32_t *>(x2_indices_tensor->data_c()),
                                  x2_indices_tensor->DataSize(), reinterpret_cast<int32_t *>(x2_shape_tensor->data_c()),
                                  "x2");
