@@ -251,6 +251,7 @@ bool DenseToCSRSparseMatrixKernelMod::LaunchKernel(const std::vector<AddressPtr>
       cudaMemcpyAsync(host_batch_pointers.data(), batch_pointers_addr, sizeof(S) * (num_batches + 1),
                       cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync failed for device batch pointers to host.");
+    cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr));
     auto row_num = input_shapes_[kIndex1];
     for (size_t i = 0; i < host_batch_pointers.size() - 1; ++i) {
       S *temp_row_indices_addr = dev_row_indices_ + host_batch_pointers[i];
