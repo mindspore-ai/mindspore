@@ -35,16 +35,19 @@ class HalfNormal(Distribution):
     where :math:`\mu, \sigma` are the mean and the standard deviation of the half normal distribution respectively.
 
     Args:
-        mean (int, float, list, numpy.ndarray, Tensor): The mean of the distribution. Default: None.
-        sd (int, float, list, numpy.ndarray, Tensor): The standard deviation of the distribution. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
-        name (str): The name of the distribution. Default: 'HalfNormal'.
+        mean (Union[int, float, list, numpy.ndarray, Tensor], optional): The mean of the distribution.
+            If this arg is None, then the mean of the distribution will be passed in runtime. Default: None.
+        sd (Union[int, float, list, numpy.ndarray, Tensor], optional): The standard deviation of the distribution.
+            If this arg is None, then the sd of the distribution will be passed in runtime. Default: None.
+        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype, optional): The type of the event samples. Default: mstype.float32.
+        name (str, optional): The name of the distribution. Default: 'HalfNormal'.
 
     Note:
         - `sd` must be greater than zero.
-        - `dist_spec_args` are `mean` and `sd`.
         - `dtype` must be a float type because HalfNormal distributions are continuous.
+        - If the arg `mean` or `sd` is passed in runtime, then it will be used as the parameter value.
+          Otherwise, the value passed in the constructor will be used.
 
     Raises:
         ValueError: When sd <= 0.
@@ -110,12 +113,12 @@ class HalfNormal(Distribution):
 
     def _prob(self, value, mean=None, sd=None):
         r"""
-        Evaluate probability.
+        Evaluate probability of the value of the HalfNormal distribution.
 
         Args:
             value (Tensor): The value to be evaluated.
-            mean (Tensor): The mean of the distribution. Default: self._mean_value.
-            sd (Tensor): The standard deviation the distribution. Default: self._sd_value.
+            mean (Tensor, optional): The mean of the distribution. Default: self._mean_value.
+            sd (Tensor, optional): The standard deviation the distribution. Default: self._sd_value.
 
         .. math::
             P(x) = 1 / \sigma \sqrt{2\pi} \exp(-(x - \mu)^2 / 2\sigma^2)
