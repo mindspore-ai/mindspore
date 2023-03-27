@@ -5573,6 +5573,10 @@ def hsplit(input, indices_or_sections):
     Returns:
         A list of sub-tensors.
 
+    Raises:
+        TypeError: If `input` is not Tensor.
+        ValueError: If dimension of `input` is less than 2.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
