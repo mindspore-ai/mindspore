@@ -84,7 +84,7 @@ void CalExtractVolumePatches(size_t output_size, int64_t stride_dep, int64_t str
                              int64_t pad_left, int64_t chan_input_stride, int64_t dep_input_stride,
                              int64_t row_input_stride, int64_t patch_input_stride, const T *input, T *output,
                              cudaStream_t stream) {
-  cudaMemsetAsync(output, 0, sizeof(T) * output_size);
+  cudaMemsetAsync(output, 0, sizeof(T) * output_size, stream);
   ExtractVolumePatches<<<GET_BLOCKS(output_size / (w_stride * input_channel)), GET_THREADS, 0, stream>>>(
     output_size, stride_dep, stride_row, stride_col, output_depth, output_height, output_width, need_batch, d_stride,
     h_stride, w_stride, patch_stride, other_stride, input_channel, input_dep_size, input_row_size, input_col_size,
