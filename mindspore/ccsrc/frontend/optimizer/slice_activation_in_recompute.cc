@@ -102,9 +102,9 @@ void CreateGroupForSliceAllGatherInMicroInterleaved(const CNodePtr &allgather_cn
   }
   auto new_group_name = group_name + "_slice_act_" + std::to_string(micro_interleaved_index);
   parallel::Group cur_device_list;
-  parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
+  (void)parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
   auto allgather_prim = GetCNodePrimitive(allgather_cnode);
-  allgather_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
+  (void)allgather_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
 }
 
 void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNode>, int>> &node_users,

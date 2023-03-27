@@ -50,7 +50,7 @@ class ScatterNdOpsInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  std::vector<AnfNodePtr> PrepareReplaceGraph(const CNodePtr &cnode);
+  std::vector<AnfNodePtr> PrepareReplaceGraph();
   virtual Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status InferBias();
   bool do_replace_graph_ = false;

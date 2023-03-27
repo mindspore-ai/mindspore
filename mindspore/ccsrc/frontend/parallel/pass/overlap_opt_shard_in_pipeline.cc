@@ -112,11 +112,12 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
     auto dev_list = parallel::g_device_manager->CreateDeviceListByRankList(rank_ids);
     auto new_group_name = group_name + "_parallel_optimizer";
     parallel::Group cur_device_list;
-    parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
-    allgather_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
+    (void)parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
+    (void)allgather_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
   }
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
-  std::copy(opt_shard_allgather_list.begin(), opt_shard_allgather_list.end(), std::back_inserter(make_tuple_inputs));
+  (void)std::copy(opt_shard_allgather_list.begin(), opt_shard_allgather_list.end(),
+                  std::back_inserter(make_tuple_inputs));
   for (auto &user_set : recv_users) {
     if (!IsPrimitiveCNode(user_set.first)) {
       continue;

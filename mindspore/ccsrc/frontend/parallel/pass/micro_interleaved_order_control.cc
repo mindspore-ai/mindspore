@@ -138,10 +138,10 @@ void CreateGroupForMicroInterleaved(const CNodePtr &comm_cnode, size_t micro_int
   auto dev_list = parallel::g_device_manager->CreateDeviceListByRankList(rank_ids);
   auto new_group_name = group_name + "_micro_interleaved_" + std::to_string(micro_interleaved_index);
   parallel::Group cur_device_list;
-  parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
+  (void)parallel::g_device_manager->CreateGroup(new_group_name, dev_list, &cur_device_list);
   auto new_comm_prim = comm_prim->Clone();
-  new_comm_prim->SetAttrs(comm_prim->attrs());
-  new_comm_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
+  (void)new_comm_prim->SetAttrs(comm_prim->attrs());
+  (void)new_comm_prim->AddAttr(parallel::GROUP, MakeValue<std::string>(new_group_name));
   comm_cnode->set_input(0, NewValueNode(new_comm_prim));
 }
 

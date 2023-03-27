@@ -110,7 +110,7 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
       }
       auto attrs = prim->attrs();
       attrs[parallel::SKIP_REDISTRIBUTION] = MakeValue<bool>(true);
-      prim->SetAttrs(attrs);
+      (void)prim->SetAttrs(attrs);
     }
 
     elements.push_back(MakeValue(input_strategy));
