@@ -85,6 +85,18 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
     RemoveDequantizeLinear(func_graph, cnode);
   }
 
+  if (!FoldQuantParms(func_graph)) {
+    MS_LOG(ERROR) << "Fold quant params failed.";
+    return false;
+  }
+  if (!DoWeightQuantDeQuant(func_graph)) {
+    MS_LOG(ERROR) << "Do weight quant and dequant failed.";
+    return false;
+  }
+  return true;
+}
+
+bool OnnxQuantizeLinearAdjust::FoldQuantParms(const FuncGraphPtr &func_graph) {
   // fold quant params to input/output tensor
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     if (!opt::CheckPrimitiveType(cnode, std::make_shared<Primitive>(lite::kNameQuantizeLinear))) {
@@ -118,11 +130,17 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
       manager->SetEdge(node_user.first, node_user.second, cnode->inputs()[kIndex1]);
     }
   }
+  return true;
+}
 
+bool OnnxQuantizeLinearAdjust::DoWeightQuantDeQuant(const FuncGraphPtr &func_graph) {
   auto nodes = func_graph->GetOrderedCnodes();
   for (auto const &cnode : nodes) {
     auto quant_param_holder = GetCNodeQuantHolder(cnode);
     CHECK_NULL_RETURN(quant_param_holder);
+    if (!quant_param_holder->IsInputQuantParamsInited()) {
+      continue;
+    }
     // weight constant folding
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto input_node = cnode->input(i);
@@ -134,7 +152,7 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
         auto ret = DoParameterQuantDeQuant(cnode, input_node->cast<ParameterPtr>(), i, quant_param_holder);
         if (ret != RET_OK && ret != RET_NO_CHANGE) {
           MS_LOG(ERROR) << input_node->fullname_with_scope() << " parameter quant dequant failed.";
-          return RET_ERROR;
+          return false;
         }
       }
     }
@@ -191,7 +209,6 @@ int OnnxQuantizeLinearAdjust::QuantDeQuantFilter(const AnfNodePtr &parameter_nod
     auto count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
     MS_CHECK_FALSE_MSG(static_cast<size_t>(count) != elem_count, RET_ERROR, "element != count.");
     CHECK_LESS_RETURN(dims.size(), static_cast<size_t>(preferred_dim + 1));
-    // Do quant and dequant
     for (size_t i = 0; i < elem_count; i++) {
       float raw_data = raw_datas[i];
       auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
@@ -200,7 +217,6 @@ int OnnxQuantizeLinearAdjust::QuantDeQuantFilter(const AnfNodePtr &parameter_nod
       new_datas[i] = new_data;
     }
   } else {
-    // Do quant and dequant
     auto quant_param = quant_params.front();
     for (uint32_t i = 0; i < elem_count; i++) {
       float raw_data = raw_datas[i];
