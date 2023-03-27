@@ -14,7 +14,7 @@ mindspore.dataset.audio.LFCC
         - **f_min** (float, 可选) - 最小频率。默认值：0.0。
         - **f_max** (float, 可选) - 最大频率。默认值：None，会被设置为 `sample_rate // 2` 。
         - **dct_type** (int, 可选) - 要使用的离散余弦变换的类型。该值只能为2。默认值：2。
-        - **norm** (:class:`~.audio.NormMode` , 可选) - 要使用的标准化方法。默认值：NormMode.ORTHO。
+        - **norm** (:class:`~.audio.NormMode`, 可选) - 要使用的标准化方法。默认值：NormMode.ORTHO。
         - **log_lf** (bool, 可选) - 是否使用对数-线性频谱图而不是以分贝为刻度的频谱图。默认值：False。
         - **speckwargs** (dict, 可选) - :class:`~.audio.Spectrogram` 接口的参数。默认值：None，会被设置为包含以下字段的字典
 

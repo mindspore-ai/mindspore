@@ -14,7 +14,7 @@ mindspore.dataset.audio.ComputeDeltas
 
     参数：
         - **win_length** (int, 可选) - 用于计算delta值的窗口长度，必须不小于3。默认值：5。
-        - **pad_mode** (:class:`~.audio.BorderType` , 可选) - 边界填充模式，可为
+        - **pad_mode** (:class:`~.audio.BorderType`, 可选) - 边界填充模式，可为
           BorderType.CONSTANT，BorderType.EDGE，BorderType.REFLECT或BorderType.SYMMETRIC。
           默认值：BorderType.EDGE。
 
