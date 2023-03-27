@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <memory>
-#include <utility>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"

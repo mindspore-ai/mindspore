@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_HANDLE_GROUP_INFO_H_
 
-#include "ir/anf.h"
-
 namespace mindspore {
 namespace parallel {
 // Handle hccl group info.
