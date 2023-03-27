@@ -9,7 +9,7 @@ mindspore.ops.fliplr
         - **input** (Tensor) - 输入Tensor。
 
     返回：
-        翻转后的Tensor。
+        每一行元素翻转后的Tensor。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
