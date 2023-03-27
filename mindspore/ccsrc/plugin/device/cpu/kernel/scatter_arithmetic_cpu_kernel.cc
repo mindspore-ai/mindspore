@@ -77,14 +77,14 @@ template <typename T, typename S>
 bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  static const mindspore::HashMap<std::string, std::function<void(T & a, const T &b)>> scatter_arithmetic_func_map{
-    {prim::kPrimScatterMul->name(), [](T &a, const T &b) { a *= b; }},
-    {prim::kPrimScatterDiv->name(), [](T &a, const T &b) { a /= b; }},
-    {prim::kPrimScatterAdd->name(), [](T &a, const T &b) { a += b; }},
-    {prim::kPrimScatterSub->name(), [](T &a, const T &b) { a -= b; }},
-    {prim::kPrimScatterMax->name(), [](T &a, const T &b) { a = a > b ? a : b; }},
-    {prim::kPrimScatterMin->name(), [](T &a, const T &b) { a = a > b ? b : a; }},
-    {prim::kPrimScatterUpdate->name(), [](T &a, const T &b) { a = b; }},
+  static const mindspore::HashMap<std::string, std::function<void(T * a, const T *b)>> scatter_arithmetic_func_map{
+    {prim::kPrimScatterMul->name(), [](T *a, const T *b) { *a *= *b; }},
+    {prim::kPrimScatterDiv->name(), [](T *a, const T *b) { *a /= *b; }},
+    {prim::kPrimScatterAdd->name(), [](T *a, const T *b) { *a += *b; }},
+    {prim::kPrimScatterSub->name(), [](T *a, const T *b) { *a -= *b; }},
+    {prim::kPrimScatterMax->name(), [](T *a, const T *b) { *a = *a > *b ? *a : *b; }},
+    {prim::kPrimScatterMin->name(), [](T *a, const T *b) { *a = *a > *b ? *b : *a; }},
+    {prim::kPrimScatterUpdate->name(), [](T *a, const T *b) { *a = *b; }},
   };
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
@@ -99,17 +99,18 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   }
   if (kernel_name_ == "ScatterDiv") {
     for (size_t i = 0; i < indices_size_; i++) {
+      auto idx = static_cast<int>(*(indices + i));
       auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      if (indices[i] < 0 || indices[i] >= first_dim_size_) {
+      auto base_index_input = idx * inner_size_;
+      if (idx < 0 || idx >= first_dim_size_) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
-                          << "), but got '" << indices[i] << "' in indices.";
+                          << "), but got '" << idx << "' in indices.";
       }
       for (size_t j = 0; j < inner_size_; j++) {
-        if (std::equal_to<T>()(updates[base_index_updates + j], static_cast<T>(0))) {
+        if (std::equal_to<T>()(*(updates + base_index_updates + j), static_cast<T>(0))) {
           MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', updates must not contain 0";
         }
-        func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+        func_iter->second((input + base_index_input + j), (updates + base_index_updates + j));
       }
     }
   } else {
@@ -125,14 +126,15 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     }
 
     for (size_t i = 0; i < indices_size_; i++) {
+      auto idx = static_cast<int>(*(indices + i));
       auto base_index_updates = i * inner_size_;
-      auto base_index_input = indices[i] * inner_size_;
-      if (indices[i] < 0 || indices[i] >= first_dim_size_) {
+      auto base_index_input = idx * inner_size_;
+      if (idx < 0 || idx >= first_dim_size_) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size_
-                          << "), but got '" << indices[i] << "' in indices.";
+                          << "), but got '" << idx << "' in indices.";
       }
       for (size_t j = 0; j < inner_size_; j++) {
-        func_iter->second(input[base_index_input + j], updates[base_index_updates + j]);
+        func_iter->second((input + base_index_input + j), (updates + base_index_updates + j));
       }
     }
   }

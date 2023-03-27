@@ -68,6 +68,7 @@ int ReduceScatter::get_rank_size() const {
 }
 
 class ReduceScatterInfer : public abstract::OpInferBase {
+ public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_ERROR_IF_NULL_W_RET_VAL(primitive, std::make_shared<abstract::Shape>());

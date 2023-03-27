@@ -46,7 +46,7 @@ class RpcSendKernelMod : public RpcKernelMod {
 
  private:
   // Get the rpc message size of dynamic shape data input.
-  size_t GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input);
+  size_t GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) const;
 
   // Assign the workspace size.
   void AssignWorkspaceSize(const std::vector<KernelTensorPtr> &inputs);

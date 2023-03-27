@@ -70,7 +70,7 @@ void MatrixPower::Init(const int64_t exponent) { set_exponent(exponent); }
 
 void MatrixPower::set_exponent(const int64_t exponent) { (void)this->AddAttr(kExponent, api::MakeValue(exponent)); }
 
-int64_t MatrixPower::get_exponent() {
+int64_t MatrixPower::get_exponent() const {
   auto value_ptr = GetAttr(kExponent);
   return GetValue<int64_t>(value_ptr);
 }
