@@ -5437,7 +5437,7 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     r"""
     Multiplies matrix `mat1` and matrix `mat2`. The matrix `input` is added to the final result.
 
-     .. math::
+    .. math::
         output = \beta input + \alpha (mat1 @ mat2)
 
     Args:

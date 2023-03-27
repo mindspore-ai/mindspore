@@ -544,14 +544,15 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
         out_i = sin^{-1}(x_i)
 
     Args:
-        x (CSRTensor): Input CSRTensor.
+        x (CSRTensor): Input CSRTensor. The data types should be one of the following types:
+            float16, float32, float64.
 
     Returns:
         CSRTensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a CSRTensor.
-        TypeError: If dtype of `x` is not float16, float32, float64, complex64, complex128.
+        TypeError: If dtype of `x` is not float16, float32, float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
