@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_CONCAT_OFFSET_H_
 #include <vector>
 #include <memory>
-#include "ops/op_name.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 

@@ -47,7 +47,7 @@ std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
   return support_list;
 }
 
-size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) {
+size_t RpcSendKernelMod::GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) const {
   MS_EXCEPTION_IF_NULL(dynamic_shape_input);
 
   size_t msg_size = 0;
