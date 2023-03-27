@@ -161,7 +161,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   ///
   /// \param[in] incremental [bool] True for incremental export, false for full export.
   /// \return The exported data.
-  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental);
+  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) const;
 
   /// \brief Get three tensor length from device data with tensor shape and type.
   ///
