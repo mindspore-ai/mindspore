@@ -20,7 +20,6 @@
 #include <utility>
 #include <unordered_map>
 #include "mindspore/core/ops/grad/nllloss_grad.h"
-#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
