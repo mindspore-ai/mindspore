@@ -60,7 +60,7 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   const auto stop_addr = GetDeviceAddress<D1>(inputs, 2);
   const auto step_addr = GetDeviceAddress<D2>(inputs, 3);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
-  int64_t len = inputs[0]->size / sizeof(T);
+  int64_t len = static_cast<int64_t>(inputs[0]->size / sizeof(T));
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
   int64_t step = step_addr[0];
