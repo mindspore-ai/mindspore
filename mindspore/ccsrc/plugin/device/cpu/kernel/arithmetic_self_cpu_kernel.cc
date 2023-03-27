@@ -26,6 +26,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -273,12 +274,17 @@ void ComplexAtan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size
 
 template <typename T>
 void Sin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto task = [&in, &out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  if constexpr (std::is_same_v<T, float>) {
+    auto task = [&in, &out](size_t start, size_t end) { (void)ElementSin(in, out, end - start); };
+    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  } else {
+    auto task = [&in, &out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
+      }
+    };
+    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  }
 }
 
 template <typename T>
