@@ -44,19 +44,13 @@ class ScalarCast(Primitive):
     def __init__(self):
         self.init_prim_io_names(inputs=['input_scalar', 'dtype'], outputs=['output_data'])
 
-    def __call__(self, x, t):
-        validator.check_equal_int(len(x['shape']), 0, 'x shape', self.name)
-        value, to = x['value'], t['value']
-        if value is not None:
-            validator.check_value_type("value", value, [numbers.Number, bool], self.name)
-            if isinstance(to, type(tensor)):
-                to = to.element_type()
-            np_type = dtype_to_pytype(to)
-            value = np_type(value)
-        out = {'shape': x['shape'],
-               'dtype': t['value'],
-               'value': value}
-        return out
+    def __call__(self, x, dtype):
+        validator.check_value_type("x", x, [bool, numbers.Number], self.name)
+        if isinstance(dtype, type(tensor)):
+            dtype = dtype.element_type()
+        np_type = dtype_to_pytype(dtype)
+        value = np_type(x)
+        return value
 
 
 class Randperm(Primitive):
