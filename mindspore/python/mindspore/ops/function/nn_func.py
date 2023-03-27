@@ -4005,9 +4005,9 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
 
     Args:
-        log_probs (Tensor): A tensor of shape (T, N, C), where T is input length, N is batch size and C is
+        log_probs (Tensor): A tensor of shape :math:`(T, N, C)`, where T is input length, N is batch size and C is
             number of classes (including blank).
-        targets (Tensor): Target sequences. A tensor of shape (N, S), where S is max target length.
+        targets (Tensor): Target sequences. A tensor of shape :math:`(N, S)`, where S is max target length.
         input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape(N).
         target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape(N).
         blank (int, optional): The blank label. Default: 0.
@@ -5494,8 +5494,9 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     Calculates the MultiLabelSoftMarginLoss.
     The multi-label soft margin loss is a commonly used loss function in multi-label classification tasks
     where an input sample can belong to multiple classes.
-    Given an input `input` and binary labels `output` of size `(N,C)`, where `N` denotes the number of samples
-    and `C` denotes the number of classes.
+    Given an input :math:`input` and binary labels :math:`output` of size :math:`(N,C)`,
+    where :math:`N` denotes the number of samples
+    and :math:`C` denotes the number of classes.
 
     .. math::
         \mathcal{loss\left( input , output \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
@@ -5504,7 +5505,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
 
     where :math:`input_{ij}` represents the predicted score of sample :math:`i` for class :math:`j`.
     :math:`output_{ij}` represents the binary label of sample :math:`i` for class :math:`j`, where
-    sample :math:`i` belongs to class :math:`j` if :math:`output{ij}=1` , and sample :math:`i` does
+    sample :math:`i` belongs to class :math:`j` if :math:`output_{ij}=1` , and sample :math:`i` does
     not belong to class :math:`j` if :math:`output_{ij}=0`. For a multi-label classification task, each
     sample may have multiple labels with a value of 1 in the binary label :math:`output`. `weight` will
     multiply to the loss of each class if given.

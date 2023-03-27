@@ -6,7 +6,7 @@ mindspore.ops.split
     根据指定的轴将输入Tensor切分成块。
 
     参数：
-        - **tensor** (Tensor) - Tensor的shape为 :math:`(tensor_1, tensor_2, ..., tensor_R)` 。
+        - **tensor** (Tensor) - 要被切分的Tensor。
         - **split_size_or_sections** (Union[int, tuple(int), list(int)]) - 如果 `split_size_or_sections` 是int类型，
           `tensor` 将被均匀的切分成块，每块的大小为 `split_size_or_sections` ，若 `tensor.shape[axis]` 不能被 `split_size_or_sections` 整除，最后一块大小将小于 `split_size_or_sections` 。
           如果 `split_size_or_sections` 是个list类型，`tensor` 将沿 `axis` 轴被切分成 `len(split_size_or_sections)` 块，大小为 `split_size_or_sections` 。
