@@ -35,12 +35,15 @@ class StudentT(Distribution):
 
     where :math:`y = (x-\mu)/\sigma`,
     :math:`Z = abs(\sigma) * \sqrt{(\nu * \pi)} * \Gamma(0.5 * \nu) / \Gamma(0.5 * (\nu + 1))`,
-    :math:`\nu, \mu, \sigma` are the degrees of freedom , mean and scale of the laplace distribution respectively.
+    :math:`\nu, \mu, \sigma` are the degrees of freedom , mean and sd of the laplace distribution respectively.
 
     Args:
-        df (int, float, list, numpy.ndarray, Tensor): The degrees of freedom. Default: None.
-        mean (int, float, list, numpy.ndarray, Tensor): The mean of the distribution. Default: None.
-        sd (int, float, list, numpy.ndarray, Tensor): The standard deviation of the distribution. Default: None.
+        df (int, float, list, numpy.ndarray, Tensor): The degrees of freedom.
+            If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
+        mean (int, float, list, numpy.ndarray, Tensor): The mean of the distribution.
+            If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
+        sd (int, float, list, numpy.ndarray, Tensor): The standard deviation of the distribution.
+            If this arg is None, then the sd of the distribution will be passed in runtime. Default: None.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'StudentT'.
@@ -48,8 +51,9 @@ class StudentT(Distribution):
     Note:
         - `df` must be greater than zero.
         - `sd` must be greater than zero.
-        - `dist_spec_args` are `mean` and `sd`.
         - `dtype` must be a float type because StudentT distributions are continuous.
+        - If the arg `df`, `mean` or `sd` is passed in runtime, then it will be used as the parameter value.
+          Otherwise, the value passed in the constructor will be used.
 
     Raises:
         ValueError: When df <= 0.
@@ -123,13 +127,13 @@ class StudentT(Distribution):
 
     def _log_prob(self, value, df=None, mean=None, sd=None):
         r"""
-        Evaluate log probability.
+        Evaluate log probability of the value of the StudentT distribution.
 
         Args:
             value (Tensor): The value to be evaluated.
-            df (Tensor): The degrees of freedom of the distribution. Default: self._df_value.
-            mean (Tensor): The mean of the distribution. Default: self._mean_value.
-            sd (Tensor): The standard deviation the distribution. Default: self._sd_value.
+            df (Tensor, optional): The degrees of freedom of the distribution. Default: self._df_value.
+            mean (Tensor, optional): The mean of the distribution. Default: self._mean_value.
+            sd (Tensor, optional): The standard deviation the distribution. Default: self._sd_value.
 
         .. math::
             L(x) = -0.5 * (\nu + 1.) * \log((x - \mu) / \sigma + 1.)) + \log(\sqrt(\pi * \mu * \sigma^2))
