@@ -63,6 +63,7 @@ class PyFuncRegistry(UserDict):
 
 
 class OpaquePredicateRegistry(PyFuncRegistry):
+    """Registry opaque predicate functions used for dynamic obfuscation"""
     def __init__(self):
         super(OpaquePredicateRegistry, self).__init__()
         self.func_names = []
