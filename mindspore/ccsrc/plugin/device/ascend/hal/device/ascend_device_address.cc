@@ -96,6 +96,10 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
 
   // Only apply asynchronous copy in Pynative && ACL_MEMCPY_HOST_TO_DEVICE mode
   if (execution_mode != kPynativeMode || kind != ACL_MEMCPY_HOST_TO_DEVICE) {
+    auto ret = runtime_instance->SyncStream();
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Sync stream error!";
+    }
     auto ret_rt_memcpy = aclrtMemcpy(dst, size, src, size, kind);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
