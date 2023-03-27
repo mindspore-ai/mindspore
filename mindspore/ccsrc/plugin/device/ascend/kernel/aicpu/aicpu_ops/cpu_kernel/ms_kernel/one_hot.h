@@ -34,8 +34,6 @@ class OneHotCpuKernel : public CpuKernel {
  private:
   template <typename T, typename TI>
   uint32_t OneHotCompute(CpuKernelContext &ctx);
-
-  uint32_t OneHotParamCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
