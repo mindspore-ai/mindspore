@@ -2407,9 +2407,20 @@ def scatter_max(input_x, indices, updates):
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each :math:`i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :]
+        = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+
+    Inputs of `input_x` and `updates` follow the implicit type conversion rules to keep the data types consistent.
+    If they have different data types, the lower priority data type will be converted to the relatively highest
+    priority data type. A RuntimeError will be reported when `updates` does not support conversion to the data type
+    required by `input_x`.
+
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do max operation whose data type must be mindspore.int32.
         updates (Tensor): The tensor doing the max operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
