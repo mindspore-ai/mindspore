@@ -224,11 +224,11 @@ Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
 
 size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
 
-void PartitionPipelineStages(size_t num_device, double device_memory, const std::shared_ptr<Graph> &graph) {
+void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> &graph) {
   if (!ENABLE_PIPE_ALGO) {
-    size_t n_stage = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    size_t n_stage = LongToSize(parallel::ParallelContext::GetInstance()->pipeline_stage_split_num());
     size_t n_node = graph->nodes.size();
-    size_t roll_back = log2(n_stage);
+    size_t roll_back = FloatToSize(log2(n_stage));
 
     MS_LOG(INFO) << "ROLLING BACK ACCORDING TO STAGE NUMBER (" << n_stage << ") BY " << roll_back << " LEVELS"
                  << std::endl;
@@ -306,7 +306,7 @@ Status PartitionForAllDevices(size_t num_device, double device_memory, const std
 
   // Partition stages
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    PartitionPipelineStages(num_device, device_memory, graph);
+    PartitionPipelineStages(device_memory, graph);
   }
 
   if (DevicesMemoryControl(num_device, device_memory, graph) != SUCCESS) {
