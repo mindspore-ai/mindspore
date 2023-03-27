@@ -19,6 +19,7 @@ import numpy as onp
 import mindspore.numpy as mnp
 from mindspore import context
 from mindspore.common.dtype import dtype_to_nptype
+from mindspore.common.api import _pynative_executor
 
 from .utils import rand_int, rand_bool, run_binop_test, run_unary_test, run_multi_test, \
     run_single_test, match_res, match_array, match_meta, match_all_arrays, to_tensor
@@ -1826,6 +1827,7 @@ def test_exception_innner():
     with pytest.raises(ValueError):
         mnp.inner(to_tensor(test_case.arrs[0]),
                   to_tensor(test_case.arrs[1]))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
@@ -1837,6 +1839,7 @@ def test_exception_innner():
 def test_exception_add():
     with pytest.raises(ValueError):
         mnp.add(to_tensor(test_case.arrs[1]), to_tensor(test_case.arrs[2]))
+        _pynative_executor.sync()
 
 
 def mnp_nanmax(x):

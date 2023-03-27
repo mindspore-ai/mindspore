@@ -71,7 +71,9 @@ void OpExecutor::Wait() {
 
 void OpExecutor::WaitAll() {
   GilReleaseWithCheck gil_release;
-  forward_callback_();
+  if (forward_callback_ != nullptr) {
+    forward_callback_();
+  }
   WaitForBuild();
   WaitForRun();
 }

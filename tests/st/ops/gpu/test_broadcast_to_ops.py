@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
+from mindspore.common.api import _pynative_executor
 
 
 @pytest.mark.level1
@@ -138,12 +139,14 @@ def test_broadcast_dyn_invalid_init():
     x_np = np.random.rand(4, 5).astype(np.float32)
     with pytest.raises(ValueError):
         P.BroadcastTo(ms_shape)(Tensor(x_np))
+        _pynative_executor.sync()
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     ms_shape = (-1, 1, -1, -1)
     x_np = np.random.rand(4, 5).astype(np.float32)
     with pytest.raises(ValueError):
         P.BroadcastTo(ms_shape)(Tensor(x_np))
+        _pynative_executor.sync()
 
 
 class BroadcastToNet(Cell):
