@@ -53,6 +53,11 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
+  const uint32_t kShapeShpaeDim = 1;
+  if (input_args[0]->cast<abstract::AbstractTensorPtr>()->shape()->shape().size() != kShapeShpaeDim) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', 'Shape of shape value only could be one-dimensional";
+  }
   auto shape_v = GetShapeValue(primitive, input_args[0]);
   if (!IsDynamic(shape_v)) {
     if (shape_v.size() < kMinShapeDim) {
