@@ -297,6 +297,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 
   // copy extinfo to device
   if (ext_info_handler_ != nullptr) {
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
                                 ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
     if (ret != RT_ERROR_NONE) {
