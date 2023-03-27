@@ -30,7 +30,7 @@ public class DataType {
     public static final int kNumberTypeUInt = 36;
     public static final int kNumberTypeUInt8 = 37;
     public static final int kNumberTypeUInt16 = 38;
-    public static final int kNumberTypeUint32 = 39;
+    public static final int kNumberTypeUInt32 = 39;
     public static final int kNumberTypeUInt64 = 40;
     public static final int kNumberTypeFloat = 41;
     public static final int kNumberTypeFloat16 = 42;
