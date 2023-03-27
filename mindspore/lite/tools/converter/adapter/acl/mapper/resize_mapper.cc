@@ -69,10 +69,14 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(dst_prim);
-  auto pytorch_half_pixel_ptr = src_prim->GetAttr("coordinate_transform_mode");
-  if (pytorch_half_pixel_ptr != nullptr &&
-      GetValue<int64_t>(pytorch_half_pixel_ptr) == mindspore::CoordinateTransformMode::HALF_PIXEL) {
+  auto coordinate_transformation_mode_ptr = src_prim->GetAttr("coordinate_transform_mode");
+  if (coordinate_transformation_mode_ptr != nullptr &&
+      GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::HALF_PIXEL) {
     dst_prim->set_attr("half_pixel_centers", MakeValue(true));
+  }
+  if (coordinate_transformation_mode_ptr != nullptr &&
+      GetValue<int64_t>(coordinate_transformation_mode_ptr) == mindspore::CoordinateTransformMode::ALIGN_CORNERS) {
+    dst_prim->set_attr("align_corners", MakeValue(true));
   }
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
