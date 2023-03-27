@@ -373,6 +373,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     }
   }
 
+  if (unknow_type_ != ::ge::UnknowShapeOpType::DEPEND_COMPUTE) {
+    FreeExtInfoDeviceAddr();
+  }
   return true;
 }
 
@@ -447,7 +450,6 @@ void AicpuOpKernelMod::SyncData() {
   if (unknow_type_ != ::ge::UnknowShapeOpType::DEPEND_COMPUTE ||
       common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " update op skip.";
-    FreeExtInfoDeviceAddr();
     return;
   }
   // cppcheck-suppress unreadVariable
