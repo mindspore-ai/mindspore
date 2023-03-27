@@ -774,7 +774,7 @@ class RandomCategorical(PrimitiveWithInfer):
         - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
 
     Outputs:
-        - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+        - **output** (Tensor) - The output Tensor with shape :math:`(batch_size, num_samples)`.
 
     Raises:
         TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.

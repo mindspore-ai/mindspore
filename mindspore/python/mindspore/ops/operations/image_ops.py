@@ -209,16 +209,16 @@ class ExtractGlimpse(Primitive):
               When `uniform_noise` is 'False', the value of `noise` can be 'uniform', 'gaussian' and 'zero'.
 
     Inputs:
-        - **x** (Tensor) - A 4-D float tensor of shape [batch_size, height, width, channels].
+        - **x** (Tensor) - A 4-D float tensor of shape :math:`(batch_size, height, width, channels)`.
           Types allowed: float32.
         - **size** (Tensor) - A 1-D tensor of 2 elements containing the size of the glimpses to extract.
           The glimpse height must be specified first, following by the glimpse width. Types allowed: int32.
           The value of size must be greater than zero.
-        - **offsets** (Tensor) - A 2-D integer tensor of shape [batch_size, 2] containing the y, x locations
+        - **offsets** (Tensor) - A 2-D integer tensor of shape :math:`(batch_size, 2)` containing the y, x locations
           of the center of each window. Types allowed: float32.
 
     Outputs:
-        A 4-D tensor of shape [batch_size, glimpse_height, glimpse_width, channels] with type: float32.
+        A 4-D tensor of shape :math:`(batch_size, glimpse_height, glimpse_width, channels)` with type: float32.
 
     Raises:
         TypeError: If `centered` is not a bool.
@@ -512,11 +512,11 @@ class HSVToRGB(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input image must be a 4-D tensor of shape
-          :math:`[batch, image\_height, image\_width, channel]`.
+          :math:`(batch, image\_height, image\_width, channel)`.
           Number of channel must be 3. Types allowed: float16, float32, float64.
 
     Outputs:
-        A 4-D tensor of shape :math:`[batch, image\_height, image\_width, channel]`
+        A 4-D tensor of shape :math:`(batch, image\_height, image\_width, channel)`
         with same type of input.
 
     Raises:

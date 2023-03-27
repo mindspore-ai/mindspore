@@ -9,8 +9,8 @@ mindspore.ops.MatrixSolve
         - **adjoint** (bool，可选) - 指明是否使用矩阵的伴随矩阵进行求解。默认值：False，使用转置矩阵进行求解。
   
     输入：
-        - **matrix** (Tensor) - Tensor，线性方程组系数组成的矩阵，其shape为 :math:`[..., M, M]` 。
-        - **rhs** (Tensor) - Tensor，线性方程组结果值组成的矩阵，其shape为 :math:`[..., M, K]` ， `rhs` 与 `matrix` 的类型必须一致。
+        - **matrix** (Tensor) - Tensor，线性方程组系数组成的矩阵，其shape为 :math:`(..., M, M)` 。
+        - **rhs** (Tensor) - Tensor，线性方程组结果值组成的矩阵，其shape为 :math:`(..., M, K)` ， `rhs` 与 `matrix` 的类型必须一致。
 
     输出：
         Tensor，线性方程组解组成的矩阵，与 `rhs` 的shape及类型均相同。
