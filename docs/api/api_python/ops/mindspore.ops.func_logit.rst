@@ -11,7 +11,7 @@ mindspore.ops.logit
         y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
         z_{i} & = \begin{cases}
         input_{i} & \text{if eps is None} \\
-        \text{eps} & \text{if } x_{i} \lt \text{eps} \\
+        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
         input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
         1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
         \end{cases}
@@ -19,7 +19,8 @@ mindspore.ops.logit
 
     参数：
         - **input** (Tensor) - Tensor输入。
-        - **eps** (float, 可选) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值：None。
+        - **eps** (float, 可选) - epsilon值。当eps不为None时，输入的数值界限被定义[eps, 1-eps]，否则，输入的数值不进行数值截断。
+          默认值：None。
 
     返回：
         Tensor，具有与 `input` 相同的shape。
