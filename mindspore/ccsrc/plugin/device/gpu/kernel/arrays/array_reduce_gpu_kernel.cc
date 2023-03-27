@@ -20,6 +20,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "ops/reduce.h"
 #include "plugin/device/gpu/kernel/arrays/cast_gpu_kernel.h"
+#include "plugin/device/gpu/hal/device/gpu_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -419,6 +420,8 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   if (is_null_input_) {
     return true;
   }
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                      "Failed to set stream for cuDNN handle.");
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   if (all_match_ || need_skip_execute_) {
