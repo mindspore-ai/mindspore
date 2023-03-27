@@ -8,7 +8,7 @@ mindspore.ops.coo_add
     参数：
         - **x1** (COOTensor) - 一个操作数，与当前操作数相加。
         - **x2** (COOTensor) - 另一个操作数，与当前操作数相加。
-        - **thresh** (Tensor) - 零维。是COOTensor.add结果中的value/index对的阈值。如果结果中value的数据类型为实数，则 `thresh` 的数据类型应该与它的数据类型一致。如果结果中value小于 `thresh`, 它将会被丢掉。
+        - **thresh** (Tensor) - 零维Tensor，其值作为阈值，用来决定相加后的结果Tensor中的哪些value/index对在最终返回值中出现。如果结果中value的数据类型为实数，则 `thresh` 的数据类型应该与它的数据类型一致。如果结果中value小于 `thresh`, 它将会被丢掉。
 
     返回：
         COOTensor，为两COOTensor相加后的结果。

@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.csr_relu6(x: CSRTensor)
 
-    计算输入CSRTensor的ReLU（修正线性单元），其上限为6。
+    逐元素计算CSRTensor的ReLU值，其上限为6。
 
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)
