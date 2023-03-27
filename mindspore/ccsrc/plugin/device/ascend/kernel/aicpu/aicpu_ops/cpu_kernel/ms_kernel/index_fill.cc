@@ -59,13 +59,6 @@ uint32_t IndexFillCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *tensor = ctx.Output(0);
   outputs_.push_back(tensor);
 
-  int32_t value_dim = inputs_[3]->GetTensorShape()->GetDims();
-
-  KERNEL_CHECK_FALSE((value_dim == 0), KERNEL_STATUS_INNER_ERROR,
-                     "IndexFill only supports a 0-dimensional value tensor, "
-                     "but got tensor with [%d] dimension(s).",
-                     value_dim)
-
   DataType dim_type = inputs_[1]->GetDataType();
   DataType index_type = inputs_[2]->GetDataType();
 
@@ -133,15 +126,10 @@ uint32_t IndexFillCpuKernel::DoCompute(CpuKernelContext &ctx) {
   int32_t *input_2 = reinterpret_cast<int32_t *>(inputs_[2]->GetData());
 
   int32_t x_dim_nums = inputs_[0]->GetTensorShape()->GetDims();
-  int32_t dim_nums = inputs_[1]->GetTensorShape()->GetDims();
-  int32_t index_dim_nums = inputs_[2]->GetTensorShape()->GetDims();
   auto x_dims = inputs_[0]->GetTensorShape()->GetDimSizes();
 
   uint32_t data_num = outputs_[0]->NumElements();
   int64_t index_num = inputs_[2]->GetTensorShape()->NumElements();
-
-  KERNEL_CHECK_FALSE(dim_nums == 0, KERNEL_STATUS_PARAM_INVALID, "Dim has to be a scalar.")
-  KERNEL_CHECK_FALSE(index_dim_nums <= 1, KERNEL_STATUS_PARAM_INVALID, "Index has to be a vector/scalar.")
 
   int32_t cur_dim = *input_1;
   if (*input_1 < 0) {
