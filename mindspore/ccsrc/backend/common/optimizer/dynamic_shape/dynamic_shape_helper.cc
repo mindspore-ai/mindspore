@@ -173,13 +173,14 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   auto abs = input->abstract();
   abstract::AbstractBasePtr new_abs;
   if (abs->isa<abstract::AbstractTensor>()) {
-    new_abs = abs->Clone();
-    new_abs->set_value(depended_value);
-
     // Set user data for PyExecute infer.
     if (input->has_user_data<kernel::PyExecuteOutputUserData>()) {
+      new_abs = abs->Clone();
+      new_abs->set_value(depended_value);
       const auto &output_data = input->user_data<kernel::PyExecuteOutputUserData>();
       new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
+    } else {
+      return depended_value->ToAbstract();
     }
   } else if (abs->isa<abstract::AbstractScalar>()) {
     auto type = depended_value->Dtype()->type_id();
