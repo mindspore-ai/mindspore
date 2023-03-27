@@ -277,7 +277,10 @@ void UpdateGetNextWithDataQueueItems(const AnfNodePtr &data_kernel, const std::v
 void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel, const std::shared_ptr<BlockingQueue> &data_queue,
                                 std::vector<device::DataQueueItem> *data) {
   auto front_ret = DataQueueStatus::TIMEOUT;
-  int trys = MAX_POP_TIMES;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
+  uint32_t trys = op_timeout / POP_TIMEOUT_SECONDS;
   while (front_ret == DataQueueStatus::TIMEOUT && trys > 0) {
     front_ret = data_queue->FrontAsync(data);
     trys--;
