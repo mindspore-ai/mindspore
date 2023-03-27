@@ -4483,6 +4483,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Raises:
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
         ValueError: If the shape of `bias` is not :math:`C_{out}` .
         ValueError: If `stride` or `dilation` is less than 1.
@@ -4606,6 +4607,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Raises:
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
         ValueError: If  the shape of `bias` is not :math:`C_{out}` .
         ValueError: If `stride` or `dilation` is less than 1.
