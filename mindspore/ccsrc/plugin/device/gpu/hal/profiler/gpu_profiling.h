@@ -177,6 +177,7 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   uint64_t op_host_time_start_;
   uint64_t op_host_time_stop_;
   uint64_t op_cupti_time_start_;
+  std::mutex event_lock_;
   std::string profile_data_path_;
   std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
   ProfilingTraceInfo step_trace_op_name_;
