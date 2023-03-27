@@ -29,7 +29,8 @@ void SetTensorData(void *data, const T &num, size_t data_length) {
 class MS_CORE_API TensorConstructUtils {
  public:
   static tensor::TensorPtr CreateZerosTensor(const TypePtr &type, const std::vector<int64_t> &shape);
-  static tensor::TensorPtr CreateOnesTensor(const TypePtr &type, const std::vector<int64_t> &shape);
+  static tensor::TensorPtr CreateOnesTensor(const TypePtr &type, const std::vector<int64_t> &shape,
+                                            bool skip_exception = false);
   static tensor::TensorPtr CreateTensor(const TypePtr &type, const std::vector<int64_t> &shape, void *data);
 
  private:

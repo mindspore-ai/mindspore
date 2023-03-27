@@ -35,7 +35,8 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(const TypePtr &type, c
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, const std::vector<int64_t> &shape) {
+tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, const std::vector<int64_t> &shape,
+                                                         bool skip_exception) {
   MS_EXCEPTION_IF_NULL(type);
   auto type_id = ExtractTypeId(type);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
@@ -70,6 +71,9 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(const TypePtr &type, co
   const auto &tensor_type = tensor->data_type();
   auto iter = type_dict.find(tensor_type);
   if (iter == type_dict.end()) {
+    if (skip_exception) {
+      return nullptr;
+    }
     MS_LOG(EXCEPTION) << "unsupported data type: " << tensor_type;
   }
   iter->second();
