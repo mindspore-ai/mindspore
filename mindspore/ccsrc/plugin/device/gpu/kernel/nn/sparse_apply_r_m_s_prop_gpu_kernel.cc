@@ -155,7 +155,6 @@ bool SparseApplyRMSPropGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                              << epsilon_;
     return false;
   }
-  // unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

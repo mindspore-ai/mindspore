@@ -230,16 +230,16 @@ class TupleNodeFormatter : public opt::Pass {
     return changed;
   }
 
-  AnfNodePtr TransToMaketuple(const AnfNodePtr &node) {
+  AnfNodePtr TransToMaketuple(const AnfNodePtr &node) const {
     auto fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     auto node_abs = node->abstract()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(node_abs);
-    auto output_num = SizeToLong(node_abs->size());
+    auto output_num = SizeToUlong(node_abs->size());
     AnfNodePtrList mt_inputs{NewValueNode(prim::kPrimMakeTuple)};
     mt_inputs.reserve(output_num + 1);
-    for (int64_t i = 0; i < output_num; i++) {
-      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue(i))};
+    for (uint64_t i = 0; i < output_num; i++) {
+      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue((int64_t)i))};
       gt_inputs.back()->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
       auto &gt = mt_inputs.emplace_back(fg->NewCNode(gt_inputs));
       gt->set_abstract(node_abs->elements()[i]);

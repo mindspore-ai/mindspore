@@ -1216,7 +1216,7 @@ bool SelectKernelByObjectType(const CNodePtr &kernel_node, const std::vector<Ker
 std::pair<std::string, ExceptionType> KernelObjectTypeNotSupportWarning(const CNodePtr &kernel_node) {
   auto GetObjectTypeStr = [](const std::vector<TypeId> &object_types) {
     std::vector<std::string> object_type_strs;
-    std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
+    (void)std::transform(object_types.begin(), object_types.end(), std::back_inserter(object_type_strs), TypeIdLabel);
     return std::accumulate(object_type_strs.begin(), object_type_strs.end(), std::string(),
                            [](const std::string &x, const std::string &y) { return x.empty() ? y : x + ", " + y; });
   };
