@@ -121,6 +121,7 @@ from .engine.datasets import *
 from .engine.graphdata import GraphData, SamplingStrategy, OutputFormat
 from .engine.samplers import *
 from .engine.serializer_deserializer import compare, deserialize, serialize, show
+from .utils.line_reader import LineReader
 
 __all__ = []
 __all__.extend(engine.__all__)
