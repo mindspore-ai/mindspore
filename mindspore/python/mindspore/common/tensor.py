@@ -474,7 +474,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def H(self):
         """
         Returns a view of a matrix (2-D tensor) conjugated and transposed.
-        x.H is equivalent to`mindspore.Tensor.swapaxes(0, 1).conj()` for complex matrices and
+        x.H is equivalent to `mindspore.Tensor.swapaxes(0, 1).conj()` for complex matrices and
         `mindspore.Tensor.swapaxes(0, 1)` for real matrices.
         """
         if self.ndim != 2:

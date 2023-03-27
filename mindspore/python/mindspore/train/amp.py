@@ -529,13 +529,13 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
         black_list (list[Primitive, Cell], optional): Black list of custom mixed precision. Defaults: None, means
             black list is not used.
 
+    Returns:
+        network (Cell), A network supporting mixed precision.
+
     Raises:
         TypeError: The network type is not Cell.
         ValueError: Neither `white_list` nor `black_list` is provided.
         ValueError: Both `white_list` and `black_list` are provided.
-
-    Returns:
-        network (Cell), A network supporting mixed precision.
 
     Examples:
         >>> from mindspore import amp
