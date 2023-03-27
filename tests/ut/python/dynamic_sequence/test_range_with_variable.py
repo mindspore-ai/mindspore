@@ -96,7 +96,7 @@ def test_range_with_wrong_input():
 
     with pytest.raises(TypeError) as ex:
         foo()
-    assert "input should be a int64 scalar but got" in str(ex.value)
+    assert "input should be a int scalar but got" in str(ex.value)
 
 
 def test_range_with_wrong_input_2():
@@ -115,4 +115,4 @@ def test_range_with_wrong_input_2():
 
     with pytest.raises(TypeError) as ex:
         foo()
-    assert "input should be a int64 scalar but got" in str(ex.value)
+    assert "input should be a int scalar but got" in str(ex.value)
