@@ -2579,7 +2579,7 @@ std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) const {
   return cur_value;
 }
 
-void DfGraphConvertor::TransInputDataType(const CNodePtr &node, std::string node_name) const {
+void DfGraphConvertor::TransInputDataType(const CNodePtr &node, const std::string node_name) const {
   auto iter = kTransInputDTypeMap.find(node_name);
   if (iter == kTransInputDTypeMap.end()) {
     return;
