@@ -72,10 +72,10 @@ class ForwardExecutor {
   inline bool IsFirstCell() const { return forward_cell_stack_.empty(); }
   void PushForwardCell(const py::object &cell) { forward_cell_stack_.push(cell.cast<CellPtr>()); }
   void PopForwardCell() { forward_cell_stack_.pop(); }
-  void ExecuteLazyTask();
+  void ExecuteLazyTask() const;
   void Sync();
   void PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const;
-  void ProcessBeforeNewGraph(const py::object &obj, const py::args &args);
+  void ProcessBeforeNewGraph(const py::object &obj);
   void ProcessAfterNewGraph(const py::object &obj) const;
   void ProcessBeforeEndGraph(const py::object &obj, bool is_cell);
   void ProcessAfterEndGraph(const py::object &obj, bool is_cell) const;
@@ -96,7 +96,7 @@ class ForwardExecutor {
 
  private:
   GradExecutorPtr grad() const;
-  std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim);
+  std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);

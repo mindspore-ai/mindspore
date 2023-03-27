@@ -153,7 +153,7 @@ class GradExecutor {
   void AsyncUpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &cloned_value) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void SetBpropGraphJitLevel(const py::object &obj) const;
-  void ClearGlobalRes();
+  void ClearGlobalRes() const;
   void ClearGradRes();
   std::string GetAlreadyRunCellId(const std::string &cell_id) const;
   bool FreeUselessTensors(const CNodePtr &cnode, const ValuePtrList &inputs, const ValuePtr &output) const;
@@ -196,8 +196,7 @@ class GradExecutor {
   void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
-  void GetCustomBpropPrim(const py::object &obj, const py::args &args, const py::object &out,
-                          const InputArgsInfoPtr &input_args_info);
+  void GetCustomBpropPrim(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info);
   void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id);
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
   void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
@@ -206,7 +205,7 @@ class GradExecutor {
                              const vector<size_t> &p_args);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
-                              const abstract::AbstractBasePtr &ir_abs);
+                              const abstract::AbstractBasePtr &ir_abs) const;
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;

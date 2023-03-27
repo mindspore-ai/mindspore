@@ -182,9 +182,8 @@ class AutoGradCellImpl {
                                 AnfNodePtr *const tape_dout);
   CNodePtr GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
   void GradGraphByExpander(const GradParamPtr &grad_param);
-  ValuePtrList GetInputArgs(const GradParamPtr &grad_param, const CNodePtr &cnode,
-                            std::vector<AnfNodePtr> *cnode_inputs);
-  void CreateParameterAdjoint(const GradParamPtr &grad_param);
+  ValuePtrList GetInputArgs(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
+  void CreateParameterAdjoint(const GradParamPtr &grad_param) const;
 
   // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
@@ -210,12 +209,12 @@ class AutoGradCellImpl {
   // Set sens and weights parameter nodes by user input info
   void SetSensAndWeights(const AnfNodePtrList &weights, bool has_sens_arg);
   // get last reverse iterator
-  OrderedMap<AnfNodePtr, VariableAdjointPtr>::reverse_iterator GetLastNodeReverseIter();
+  OrderedMap<AnfNodePtr, VariableAdjointPtr>::reverse_iterator GetLastNodeReverseIter() const;
 
   void BackPropagate();
   // Set return node according to grad flag
   void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
-  AnfNodePtr GetGradNodeByIndex(const AnfNodePtr &grad_node);
+  AnfNodePtr GetGradNodeByIndex(const AnfNodePtr &grad_node) const;
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple);
   // Input node is user cnode one of input, index is user input index
@@ -226,8 +225,7 @@ class AutoGradCellImpl {
 
   // Fbprop
   AnfNodePtr BuildKNode(const GradParamPtr &grad_param, bool from_single_op);
-  void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const ValuePtrList &op_args,
-                                     std::vector<AnfNodePtr> *const node_list);
+  void BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, std::vector<AnfNodePtr> *const node_list) const;
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);

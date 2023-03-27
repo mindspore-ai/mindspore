@@ -61,9 +61,9 @@ class TopCellInfo {
               std::string cellid, const std::string &already_run_cell_id, pipeline::ResourcePtr r, FuncGraphPtr fg)
       : is_high_order_top_cell_(is_high_order_top_cell),
         grad_order_(grad_order),
-        obj_id_with_grad_order_(std::move(obj_id_with_grad_order)),
+        obj_id_with_grad_order_(obj_id_with_grad_order),
         cell_id_(std::move(cellid)),
-        already_run_cell_id_(std::move(already_run_cell_id)),
+        already_run_cell_id_(already_run_cell_id),
         resource_(std::move(r)),
         fg_(std::move(fg)) {}
 
@@ -138,7 +138,7 @@ class TopCellInfo {
     return iter->second;
   }
 
-  void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id);
+  void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const;
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
                                 bool need_save_sub_id = true) const;

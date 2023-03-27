@@ -31,19 +31,19 @@ namespace pynative {
 namespace {
 const char kAddedValue[] = "added_value";
 const mindspore::HashSet<std::string> kNotRealOP{
-  prim::kPrimMakeTuple->name(),
-  prim::kPrimTupleGetItem->name(),
-  prim::kPrimStopGradient->name(),
-  prim::kPrimUpdateState->name(),
-  prim::kPrimLoad->name(),
-  prim::kPrimDepend->name(),
-  prim::kPrimReturn->name(),
-  prim::kPrimNPUAllocFloatStatus->name(),
-  prim::kPrimNPUGetFloatStatus->name(),
-  prim::kPrimNPUClearFloatStatus->name(),
-  prim::kPrimMirror->name(),
-  prim::kPrimPyExecute->name(),
-  prim::kPrimPyInterpret->name(),
+  kMakeTupleOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOPName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kPyExecuteOpName,
+  kPyInterpretOpName,
 };
 
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
@@ -441,7 +441,7 @@ void MsFunction::Reset() {
   graph_phase_.clear();
 }
 
-FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) {
+FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};

@@ -35,7 +35,7 @@ class MsFunction {
   MsFunction() = default;
   ~MsFunction() = default;
   inline void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
-  FuncGraphPtr ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph);
+  FuncGraphPtr ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const;
   py::object GradMsFunction(const py::object &out, const py::args &args);
 
  private:
