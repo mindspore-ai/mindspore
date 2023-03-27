@@ -957,7 +957,7 @@ class ErrorSamplesMode(IntEnum):
     Possible enumeration values are: ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP.
 
     - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
-    - rrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
+    - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
     - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
     """
 
@@ -1000,7 +1000,7 @@ def set_error_samples_mode(error_samples_mode):
 
             - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
 
-            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an correct sample.
+            - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with a correct sample.
 
             - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
 
