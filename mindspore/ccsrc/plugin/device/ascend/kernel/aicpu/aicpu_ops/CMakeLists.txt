@@ -11,7 +11,7 @@ set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-g++)
 
 if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
-    find_program(CCACHE_EXECUTABLE NAMES ccache PATHS /usr/local/ccache/bin)
+    find_program(CCACHE_EXECUTABLE ccache)
     if(CCACHE_EXECUTABLE)
         message(STATUS "using ccache to compile aicpu kernels")
         set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE})
@@ -66,6 +66,8 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/reservoir_replay_buffer_kernels.cc
     )
 
+    string(REGEX REPLACE "-B.*mold" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REGEX REPLACE "-B.*mold" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     add_library(mindspore_aicpu_kernels SHARED
         ${AICPU_SRC}
     )

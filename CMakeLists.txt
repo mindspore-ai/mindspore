@@ -107,6 +107,15 @@ message("PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 message("PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 include_directories(${PYTHON_INCLUDE_DIRS})
 
+find_program(MOLD_LINKER mold)
+if(MOLD_LINKER)
+    message(STATUS "using mold to speed linking libraries")
+    get_filename_component(MOLD_LINKER_PATH ${MOLD_LINKER} DIRECTORY)
+    file(GLOB MOLD_LINKER_PATH "${MOLD_LINKER_PATH}/../libexec/mold")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -B${MOLD_LINKER_PATH}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -B${MOLD_LINKER_PATH}")
+endif()
+
 set(MS_CCSRC_PATH ${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 set(MS_CCSRC_BUILD_PATH ${BUILD_PATH}/mindspore/mindspore/ccsrc)
 
