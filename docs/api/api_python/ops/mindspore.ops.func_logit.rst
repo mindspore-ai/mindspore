@@ -19,7 +19,8 @@ mindspore.ops.logit
 
     参数：
         - **input** (Tensor) - Tensor输入。
-        - **eps** (float, 可选) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值：None。
+        - **eps** (float, 可选) - epsilon值。当eps不为None时，输入的数值界限被定义[eps, 1-eps]，否则，输入的数值不进行数值截断。
+          默认值：None。
 
     返回：
         Tensor，具有与 `input` 相同的shape。
