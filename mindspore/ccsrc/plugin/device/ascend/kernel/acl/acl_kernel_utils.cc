@@ -741,8 +741,9 @@ std::vector<GeTensorDescPtr> AclUtils::GetInputTensorDesc(const AnfNodePtr &anf_
       MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
       input_shape = ori_shape;
       input_format = ori_format;
+    } else {
+      ori_shape = trans::GetRuntimePaddingShape(input, idx);
     }
-    ori_shape = trans::GetRuntimePaddingShape(input, idx);
     auto input_desc = GeOpConvertor::GetTensorDesc(input_shape, input_type, input_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(input_desc);
     input_desc->SetName(input_names[index]);
@@ -779,8 +780,9 @@ std::vector<GeTensorDescPtr> AclUtils::GetOutputTensorDesc(const AnfNodePtr &anf
       MS_LOG_DEBUG << "Set format of " << anf_node->fullname_with_scope() << " to origin format";
       output_shape = ori_shape;
       output_format = ori_format;
+    } else {
+      ori_shape = trans::GetRuntimePaddingShape(anf_node, i);
     }
-    ori_shape = trans::GetRuntimePaddingShape(anf_node, i);
     auto output_desc = GeOpConvertor::GetTensorDesc(output_shape, output_type, output_format, ori_shape, ori_format);
     MS_EXCEPTION_IF_NULL(output_desc);
     output_desc->SetName(output_names[index]);
