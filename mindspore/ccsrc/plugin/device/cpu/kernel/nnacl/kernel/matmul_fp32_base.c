@@ -62,7 +62,7 @@ int MatmulFp32PackMatrixBRun(void *cdata, int task_id, float l, float r) {
   return MatmulFp32Base_PackMatrixBParallelRunByBatch(matmul, task_id);
 }
 
-bool MatmulFp32Base_CheckRow1OptimalConditions(MatmulFp32Struct *matmul) {
+bool MatmulFp32Base_CheckRowOptimalConditions(MatmulFp32Struct *matmul) {
   return matmul->row_ == 1 &&
          !(matmul->support_mul_batch_cut_by_row_ && (matmul->a_batch_ > 1 && matmul->b_batch_ == 1));
 }
@@ -71,7 +71,7 @@ int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
 
   matmul->init_global_varibale_(matmul);
-  if (MatmulFp32Base_CheckRow1OptimalConditions(matmul)) {
+  if (MatmulFp32Base_CheckRowOptimalConditions(matmul)) {
     matmul->row_tile_ = 1;
     matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
     matmul->matrix_a_.need_pack_ = false;
@@ -245,6 +245,152 @@ int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matri
 
 int MatmulFp32Base_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) { return NNACL_OK; }
 
+int MatmulFp32Base_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+
+  int start_batch = task_id * matmul->batch_stride_;
+  int end_batch = MSMIN(matmul->batch_, start_batch + matmul->batch_stride_);
+  int func_flag = 0;
+  if (matmul->row_ == 1) {
+    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
+  }
+
+  for (int index = start_batch; index < end_batch; ++index) {
+    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * matmul->row_align_ * matmul->deep_;
+    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * matmul->deep_ * matmul->col_align_;
+    float *c = matmul->output_data_ + index * matmul->row_ * matmul->col_step_;
+
+    float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_;
+    if (func_flag == 0) {
+      MatMulOpt(a, b, c, bias, param->act_type_, matmul->deep_, matmul->row_, matmul->col_step_, matmul->col_,
+                OutType_Nhwc);
+    } else if (func_flag == C1NUM) {
+      MatVecMulFp32Block8(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_);
+    } else {
+      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_step_);
+    }
+  }
+  return NNACL_OK;
+}
+
+int MatmulFp32Base_ParallelRunIsNotPackByBatch(MatmulFp32Struct *matmul, int task_id) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+  int start_batch = task_id * matmul->batch_stride_;
+  int end_batch = MSMIN(matmul->batch_, start_batch + matmul->batch_stride_);
+  float bias = 0;
+  if (matmul->matrix_c_.pack_ptr_ != NULL) {
+    bias = matmul->matrix_c_.pack_ptr_[0];
+  }
+  for (int index = start_batch; index < end_batch; ++index) {
+    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * matmul->row_ * matmul->deep_;
+    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * matmul->deep_ * matmul->col_;
+    float *c = matmul->output_data_ + index * matmul->row_ * matmul->col_;
+    matmul->gemm_not_pack_fun_(a, b, c, &bias, matmul->row_, matmul->deep_, param->act_type_);
+  }
+  return NNACL_OK;
+}
+
+void MatmulFp32Base_GetThreadCuttingInfoByRow(MatmulFp32Struct *matmul) {
+  int row_step = MSMAX(matmul->row_num_ / matmul->base_.thread_nr_, matmul->row_min_unit_);
+  int row_remaining = matmul->row_num_ - row_step * matmul->base_.thread_nr_;
+
+  int split_point = 0;
+  int count = 0;
+  while (split_point < matmul->row_num_) {
+    matmul->split_points_[count++] = split_point;
+    split_point += row_step;
+    if (row_remaining > 0) {
+      ++split_point;
+      --row_remaining;
+    }
+  }
+  matmul->base_.thread_nr_ = count;
+}
+
+int MatmulFp32Base_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+  MS_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+
+  int start_oc = matmul->split_points_[task_id];
+  int end_oc = matmul->col_step_;
+  if (task_id < (matmul->base_.thread_nr_ - 1)) {
+    end_oc = matmul->split_points_[task_id + 1];
+  }
+  int compute_oc = end_oc - start_oc;
+  if (compute_oc <= 0) {
+    return NNACL_OK;
+  }
+
+  int func_flag = 0;
+  if (matmul->row_ == 1) {
+    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
+  }
+  int b_stride = func_flag == C2NUM ? 1 : matmul->deep_;
+  for (int i = 0; i < matmul->batch_; ++i) {
+    float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[i] * matmul->row_align_ * matmul->deep_;
+    float *b =
+      matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[i] * matmul->deep_ * matmul->col_align_ + start_oc * b_stride;
+    float *c = matmul->output_data_ + i * matmul->row_ * matmul->col_step_ + start_oc;
+    float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_ + start_oc;
+    if (func_flag == 0) {
+      MatMulOpt(a, b, c, bias, param->act_type_, matmul->deep_, matmul->row_, compute_oc, matmul->col_, OutType_Nhwc);
+    } else if (func_flag == C1NUM) {
+      MatVecMulFp32Block8(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc);
+    } else {
+      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_step_);
+    }
+  }
+  return NNACL_OK;
+}
+
+int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
+  if (matmul->deep_ < kNumDeepThreshold) {
+    if (matmul->model_thread_nr_ != -1) {
+      matmul->base_.thread_nr_ = matmul->model_thread_nr_;
+    }
+  }
+
+  if ((matmul->a_batch_ >= matmul->base_.thread_nr_ &&
+       (matmul->b_batch_ == matmul->a_batch_ || !matmul->support_mul_batch_cut_by_row_)) ||
+      matmul->col_ == 1) {
+    matmul->batch_stride_ = UP_DIV(matmul->batch_, matmul->base_.thread_nr_);
+    matmul->parallel_run_ = matmul->parallel_run_by_batch_;
+    if (matmul->col_ != 1 || matmul->a_const_) {
+      return NNACL_OK;
+    }
+
+    matmul->parallel_run_ = matmul->parallel_run_not_pack_by_batch_;
+    if (matmul->deep_ == 1) {
+      matmul->gemm_not_pack_fun_ = GemmIsNotPack;
+    } else {
+      matmul->gemm_not_pack_fun_ = GemmIsNotPackOptimize;
+      if (matmul->check_thread_cutting_by_row_(matmul)) {
+        matmul->parallel_run_ = matmul->parallel_run_by_row_;
+        matmul->get_thread_cutting_info_by_row_(matmul);
+      }
+    }
+    return NNACL_OK;
+  } else if ((matmul->a_batch_ >= matmul->base_.thread_nr_ && matmul->b_batch_ == 1) ||
+             matmul->check_thread_cutting_by_row_(matmul)) {
+    matmul->parallel_run_ = matmul->parallel_run_by_row_;
+    matmul->get_thread_cutting_info_by_row_(matmul);
+  } else {
+    int total_col_unit = UP_DIV(matmul->col_align_, matmul->col_min_unit_);
+    matmul->base_.thread_nr_ = MSMIN(matmul->base_.thread_nr_, total_col_unit);
+    int block_col_unit = UP_DIV(total_col_unit, matmul->base_.thread_nr_);
+
+    int count = 0;
+    int split_point = 0;
+    while (split_point < total_col_unit) {
+      matmul->split_points_[count++] = (split_point * matmul->col_min_unit_);
+      split_point += block_col_unit;
+    }
+    matmul->base_.thread_nr_ = count;
+    matmul->parallel_run_ = matmul->parallel_run_by_oc_;
+  }
+  return NNACL_OK;
+}
+
 int MatmulFp32Base_PackBiasMatrix(MatmulFp32Struct *matmul) {
   if (matmul->base_.in_size_ != FOURTH_INPUT) {
     return NNACL_OK;
@@ -301,6 +447,18 @@ int MatmulFp32Base_InitTmpOutBuffer(MatmulFp32Struct *matmul) {
   return NNACL_OK;
 }
 
+void MatmulFp32Base_InitGlobalVariable(MatmulFp32Struct *matmul) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+  matmul->matrix_a_.need_pack_ = true;
+  matmul->matrix_b_.need_pack_ = !matmul->weight_is_packed_;
+  matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
+  matmul->matrix_b_pack_fun_ = param->b_transpose_ ? RowMajor2Col8MajorParallel : RowMajor2Row8MajorParallel;
+  matmul->row_tile_ = C12NUM;
+  matmul->col_tile_ = C8NUM;
+  matmul->col_min_unit_ = C8NUM;
+  return;
+}
+
 bool MatmulFp32Base_CheckThreadCuttingByRow() { return false; }
 
 void MatmulFp32Base_FreePackedMatrixA(KernelBase *self) {
@@ -322,7 +480,7 @@ void MatmulFp32Base_FreePackedMatrixB(KernelBase *self) {
 int matmul_fp32_resize(KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
 
-  int ret = MatmulFp32Base_InitParameter(matmul);
+  int ret = matmul->init_parameter_(matmul);
   MS_CHECK_FALSE(ret != NNACL_OK, ret);
   if (self->train_session_) {
     self->work_size_ = (matmul->matrix_a_.pack_size_ + matmul->matrix_b_.pack_size_) * sizeof(float);
@@ -394,7 +552,7 @@ int matmul_fp32_prepare(struct KernelBase *self) {
     return NNACL_ERR;
   }
 
-  int ret = MatmulFp32Base_InitParameter(matmul);
+  int ret = matmul->init_parameter_(matmul);
   MS_CHECK_FALSE(ret != NNACL_OK, ret);
 
   if (matmul->a_const_) {
@@ -479,10 +637,17 @@ KernelBase *CreateMatmulFp32Base() {
   matmul->conv1x1_origin_bias_ = NULL;
   matmul->model_thread_nr_ = -1;
   matmul->support_mul_batch_cut_by_row_ = false;
+  matmul->get_thread_cutting_policy_ = MatmulFp32Base_GetThreadCuttingPolicy;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Base_CheckThreadCuttingByRow;
+  matmul->get_thread_cutting_info_by_row_ = MatmulFp32Base_GetThreadCuttingInfoByRow;
+  matmul->init_parameter_ = MatmulFp32Base_InitParameter;
+  matmul->init_global_varibale_ = MatmulFp32Base_InitGlobalVariable;
   matmul->pack_matrix_a_impl_opt_ = MatmulFp32Base_PackMatrixAImplOpt;
   matmul->pack_matrix_a_impl_ = MatmulFp32Base_PackMatrixAImpl;
   matmul->pack_matrix_b_impl_ = MatmulFp32Base_PackMatrixBImpl;
+  matmul->parallel_run_by_batch_ = MatmulFp32Base_ParallelRunByBatch;
+  matmul->parallel_run_not_pack_by_batch_ = MatmulFp32Base_ParallelRunIsNotPackByBatch;
+  matmul->parallel_run_by_oc_ = MatmulFp32Base_ParallelRunByOC;
   matmul->parallel_run_by_row_ = MatmulFp32Base_ParallelRunByRow;
   return (KernelBase *)matmul;
 }
