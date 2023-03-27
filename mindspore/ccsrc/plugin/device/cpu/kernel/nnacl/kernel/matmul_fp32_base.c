@@ -343,7 +343,7 @@ int MatmulFp32Base_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
+void MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
   if (matmul->deep_ < kNumDeepThreshold) {
     if (matmul->model_thread_nr_ != -1) {
       matmul->base_.thread_nr_ = matmul->model_thread_nr_;
@@ -356,7 +356,7 @@ int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
     matmul->batch_stride_ = UP_DIV(matmul->batch_, matmul->base_.thread_nr_);
     matmul->parallel_run_ = matmul->parallel_run_by_batch_;
     if (matmul->col_ != 1 || matmul->a_const_) {
-      return NNACL_OK;
+      return;
     }
 
     matmul->parallel_run_ = matmul->parallel_run_not_pack_by_batch_;
@@ -369,7 +369,7 @@ int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
         matmul->get_thread_cutting_info_by_row_(matmul);
       }
     }
-    return NNACL_OK;
+    return;
   } else if ((matmul->a_batch_ >= matmul->base_.thread_nr_ && matmul->b_batch_ == 1) ||
              matmul->check_thread_cutting_by_row_(matmul)) {
     matmul->parallel_run_ = matmul->parallel_run_by_row_;
@@ -388,7 +388,7 @@ int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
     matmul->base_.thread_nr_ = count;
     matmul->parallel_run_ = matmul->parallel_run_by_oc_;
   }
-  return NNACL_OK;
+  return;
 }
 
 int MatmulFp32Base_PackBiasMatrix(MatmulFp32Struct *matmul) {
@@ -486,9 +486,7 @@ int matmul_fp32_resize(KernelBase *self) {
     self->work_size_ = (matmul->matrix_a_.pack_size_ + matmul->matrix_b_.pack_size_) * sizeof(float);
   }
 
-  ret = matmul->get_thread_cutting_policy_(matmul);
-  MS_CHECK_FALSE(ret != NNACL_OK, ret);
-
+  matmul->get_thread_cutting_policy_(matmul);
   if (!matmul->matrix_c_.has_packed_) {
     ret = MatmulFp32Base_PackBiasMatrix(matmul);
     MS_CHECK_FALSE(ret != NNACL_OK, ret);
