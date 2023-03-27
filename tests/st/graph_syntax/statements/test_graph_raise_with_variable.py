@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -900,3 +900,55 @@ def test_list_in_control_flow():
         z = Tensor(1)
         net(y, z)
     assert "The input maybe [" in str(raise_info_list.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_none_join():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y):  # pylint: disable=R1711
+            if x != y:
+                return None
+            raise RuntimeError(f"The input should not be {x}.")
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        res = net(x, y)
+        print("res:", res)
+    assert "The input should not be 1" in str(
+        raise_info_joinedstr_tensor.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_raise_with_raise_join():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x, y):  # pylint: disable=R1711
+            if x > y:
+                raise RuntimeError(f"The input {x} should not greater {y}.")
+            if x == y:
+                raise RuntimeError(f"The input {x} should not equal {y}.")
+            return None
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        x = Tensor(1)
+        y = Tensor(1)
+        res = net(x, y)
+        print("res:", res)
+    assert "The input 1 should not equal 1" in str(
+        raise_info_joinedstr_tensor.value)

@@ -635,25 +635,6 @@ class AfterOptARewriter : public BaseRewriter {
       : BaseRewriter(root_graph, manager) {}
   ~AfterOptARewriter() override = default;
 
-  void UpdateNoneAbstracts() {
-    const auto &nodes = manager_->all_nodes();
-    for (const auto &node : nodes) {
-      const auto &abs = node->abstract();
-      if (abs == nullptr) {
-        continue;
-      }
-      // Set flag for convert AbstractNone(PyExecute) to AbstractTensor in next renormalize.
-      if (IsPrimitiveCNode(node, prim::kPrimPyExecute) && abs->isa<abstract::AbstractNone>()) {
-        constexpr auto data_type = "__py_execute_no_return_type__";
-        if (node->has_user_data(data_type)) {
-          auto type = std::make_shared<TypeAny>();
-          node->set_user_data<Type>(data_type, type);
-          set_need_renormalized(true);
-        }
-      }
-    }
-  }
-
  protected:
   // From:
   //   MakeSparseTensor(indices, values, dense_shape)
@@ -899,6 +880,19 @@ class AfterOptARewriter : public BaseRewriter {
     return new_dict_node;
   }
 
+  // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
+  AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    MS_LOG(DEBUG) << "Raise node: " << cnode->DebugString();
+    auto raise_pyexecute_node = std::make_shared<CNode>(*cnode);
+    raise_pyexecute_node->set_input(0, NewValueNode(prim::kPrimPyExecute));
+    raise_pyexecute_node->set_debug_info(cnode->debug_info());
+    MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
+    return raise_pyexecute_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -919,6 +913,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItem},
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
+    {prim::kPrimRaise, &ThisClass::ConvertRaise},
   };
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
@@ -935,12 +930,7 @@ class AfterOptARewriter : public BaseRewriter {
       func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), script_node, none_tuple_node, none_tuple_node});
     MS_LOG(DEBUG) << "none_execute_node:" << none_execute_node->DebugString();
 
-    // Keep AbstractNone for PyExecute, because the control flow join problem.
-    auto none_type = std::make_shared<TypeNone>();
-    none_execute_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
-    AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-    res->set_value(kValueAny);
-    none_execute_node->set_abstract(res);
+    set_need_renormalized(true);
     return none_execute_node;
   }
 
@@ -1432,8 +1422,6 @@ bool RewriterAfterOptA(const FuncGraphPtr &root, const pipeline::ResourcePtr &re
   manager->AddFuncGraph(root);
   AfterOptARewriter rewriter(root, manager);
   bool change = rewriter.Execute();
-  // Renormalize for new PyExecute node.
-  rewriter.UpdateNoneAbstracts();
   if (rewriter.need_renormalized()) {
     abstract::AbstractBasePtrList new_args_spec;
     (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
