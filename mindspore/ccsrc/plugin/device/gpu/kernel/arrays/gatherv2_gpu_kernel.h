@@ -54,7 +54,7 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     input_shapes_.clear();
     indices_shapes_.clear();
     output_shapes_.clear();
-    std::fill(dims_, dims_ + 3, 0);
+    std::fill(dims_, dims_ + kIndex4, 0);
     is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
