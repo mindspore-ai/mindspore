@@ -91,6 +91,15 @@ static const char *const kAscendContextSection = "ascend_context";
 static const char *const kProfilingPathKey = "profiling_path";
 static const char *const kDumpPathKey = "dump_path";
 static const char *const kDumpModelNameKey = "dump_model_name";
+static const char *const kGeVariableMemoryMaxSize = "ge_variable_memory_max_size";
+static const char *const kGeGraphMemoryMaxSize = "ge_graph_memory_max_size";
+static const char *const kGraphCompilerCacheDirKey = "model_cache_dir";
+static const char *const kModifyMixList = "mixprecision_list_path";
+// transformer
+static const char *const kTransformerSection = "transformer_context";
+static const char *const kEncoderInputKey = "encoder_input";
+static const char *const kDecoderInputKey = "decoder_input";
+static const char *const kFfnFp16Key = "ffn_fp16";
 }  // namespace lite
 }  // namespace mindspore
 

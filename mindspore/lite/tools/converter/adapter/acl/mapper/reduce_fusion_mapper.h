@@ -33,7 +33,7 @@ class ReduceFusionMapper : public PrimitiveMapper {
   STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
-  STATUS AdjustInput(const CNodePtr &cnode);
+  STATUS AdjustInput(const CNodePtr &cnode, const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore

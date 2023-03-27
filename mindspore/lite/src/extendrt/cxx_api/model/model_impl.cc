@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,13 +168,13 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "convert graph failed.";
     return ret;
   }
-  ret = FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
+  ret = session_->CompileGraph(func_graph);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "store function graph failed.";
+    MS_LOG(ERROR) << "compile graph failed.";
     return ret;
   }
   std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
-  return session_->CompileGraph(func_graph);
+  return FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
 }
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
