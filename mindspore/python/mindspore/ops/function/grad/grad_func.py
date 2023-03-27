@@ -650,6 +650,12 @@ _grad_single = GradOperation(sens_param=True)
 _grad_all = GradOperation(sens_param=True, get_all=True)
 
 
+@constexpr
+def _check_jvp_input_v_len(inputs_len, v_len):
+    if inputs_len != v_len:
+        raise ValueError(f'v has invalid length: should be {inputs_len}, but got {v_len}')
+
+
 def jvp(fn, inputs, v, has_aux=False):
     """
     Compute the jacobian-vector-product of the given network. `jvp` matches
@@ -766,6 +772,15 @@ def jvp(fn, inputs, v, has_aux=False):
 
     if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
         _raise_type_error()
+
+    inputs_len = 1
+    v_len = 1
+    if isinstance(inputs, (tuple, list)):
+        inputs_len = len(inputs)
+    if isinstance(v, (tuple, list)):
+        v_len = len(v)
+    _check_jvp_input_v_len(inputs_len, v_len)
+
     if isinstance(v, list):
         v = tuple(v)
     if isinstance(inputs, (tuple, list)):
