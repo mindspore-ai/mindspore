@@ -3,7 +3,7 @@ mindspore.ops.signbit
 
 .. py:function:: mindspore.ops.signbit(input)
 
-    在符号位已设置（小于零）的情况下，按元素位置返回True。
+    判断每个元素的符号，如果元素值小于0则对应输出的位置为True，否则为False。
 
     参数：
         - **input** (Tensor) - 输入Tensor。

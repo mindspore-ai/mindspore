@@ -8,7 +8,7 @@ mindspore.ops.hann_window
     Hann window定义：
 
     .. math::
-        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right) \qquad 0 \leq n \leq M-1
+        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right),\qquad 0 \leq n \leq M-1
 
     参数：
         - **window_length** (int) - 输出window的大小。
