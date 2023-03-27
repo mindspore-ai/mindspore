@@ -2379,44 +2379,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             self.assign_value(Tensor_.from_numpy(data))
         return self
 
-    def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
-        """
-        Return init_data() and get the tensor format data of this Tensor.
-
-        Note:
-            The usage of `to_tensor` is deprecated. Please use `init_data`.
-
-        Args:
-            slice_index (int): Slice index of a parameter's slices.
-                It is used when initialize a slice of a parameter, it guarantees that devices
-                using the same slice can generate the same tensor. Default: None.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
-            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
-                to get one shard of a parameter's slice. Default: None.
-
-        Returns:
-            Initialized Tensor.
-
-        Raises:
-            TypeError: `indices` is neither int32 nor int64.
-            ValueError: The length of the shape of the tensor is less than the last dimension of `indices`.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore.common.initializer import initializer, Constant
-            >>> x = initializer(Constant(1), [2, 2], ms.float32)
-            >>> out = x.to_tensor()
-            >>> print(out)
-            [[1. 1.]
-             [1. 1.]]
-        """
-        logger.warning("WARN_DEPRECATED: The usage of to_tensor is deprecated."
-                       " Please use init_data")
-        return self.init_data(slice_index, shape, opt_shard_group)
-
     def resize(self, *new_shape):
         """
         Changes shape and size of tensor in-place.

@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.run_check import run_check
-from mindspore import common, dataset, mindrecord, train, log
+from mindspore import common, dataset, mindrecord, train, log, amp
 from mindspore import profiler, communication, numpy, parallel
 from mindspore.common import *
 from mindspore.mindrecord import *

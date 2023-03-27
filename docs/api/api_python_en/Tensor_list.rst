@@ -301,7 +301,6 @@
     mindspore.Tensor.to
     mindspore.Tensor.to_coo
     mindspore.Tensor.to_csr
-    mindspore.Tensor.to_tensor
     mindspore.Tensor.topk
     mindspore.Tensor.trace
     mindspore.Tensor.transpose

@@ -1289,10 +1289,6 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     if "obf_config" in kwargs and file_format != "MINDIR":
         raise ValueError(f"Dynamic obfuscation only support for MindIR format, but got {file_format} format.")
-    if file_format == 'GEIR':
-        logger.warning(f"For 'export', format 'GEIR' is deprecated, "
-                       f"it would be removed in future release, use 'AIR' instead.")
-        file_format = 'AIR'
 
     if file_format == 'AIR':
         _save_air(net, file_name, *inputs, **kwargs)
@@ -1371,7 +1367,7 @@ def _save_onnx(net, file_name, *inputs, **kwargs):
 def _check_dynamic_input(inputs):
     for ele in inputs:
         if isinstance(ele, Tensor) and -1 in ele.shape:
-            raise ValueError(f"Export ONNX format model not support dynamic shape mode, but got input {ele}.")
+            raise ValueError(f"Export ONNX format model not support dynamic shape mode.")
 
 
 def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
