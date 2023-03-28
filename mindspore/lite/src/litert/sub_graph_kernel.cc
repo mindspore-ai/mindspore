@@ -514,9 +514,7 @@ int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &aft
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16) && !defined(ENABLE_MINDRT)
 int CpuFp16SubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(this->Context()->allocator.get() != nullptr);
-  int ret;
-  MS_LOG(WARNING) << "step in CpuSubGraph::Execute";
-  ret = this->PreProcess();
+  auto ret = this->PreProcess();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "PreProcess kernel failed, name: " << this->name();
     return ret;
@@ -572,6 +570,7 @@ int CpuFp16SubGraph::PreProcess() {
     if (tensor->data_type() == kNumberTypeFloat32) {
       auto float32_data = tensor->data();
       MS_ASSERT(float32_data != nullptr);
+      auto tensor_own_data = tensor->own_data();
       tensor->set_data(nullptr);
       tensor->set_data_type(TypeId::kNumberTypeFloat16);
       auto ret = tensor->MallocData();
@@ -582,7 +581,7 @@ int CpuFp16SubGraph::PreProcess() {
       }
       MS_ASSERT(tensor->data() != nullptr);
       Float32ToFloat16_fp16_handler(float32_data, tensor->data(), tensor->ElementsNum(), support_fp16_);
-      auto *data_store = DataStore::CreateDataStore(float32_data, tensor->own_data(), tensor->allocator().get(),
+      auto *data_store = DataStore::CreateDataStore(float32_data, tensor_own_data, tensor->allocator().get(),
                                                     this->context_->allocator.get());
       if (data_store == nullptr) {
         MS_LOG(ERROR) << "Create DataStore failed";
