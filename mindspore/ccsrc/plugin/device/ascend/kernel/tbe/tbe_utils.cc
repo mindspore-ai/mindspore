@@ -374,6 +374,7 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
   }
   if (kernel_json_info.has_kernel_list) {
     MS_EXCEPTION_IF_NULL(handle);
+    std::lock_guard<std::mutex> lock(info_table_mutex_);
     *handle = module;
     info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{1, *block_dim, module});
     return 1;
