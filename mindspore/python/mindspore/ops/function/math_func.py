@@ -3428,17 +3428,18 @@ def slogdet(input):
     r"""
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
+    Note:
+        The type of output always be real-value, even `input` is complex.
+
     Args:
         input (Tensor): A matrix to be calculated, its shape is :math:`[..., M, M]`.
           The matrix must be at least two dimensions, and the last two
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor. The signs of the log determinants. The shape is :math:`input.shape[:-2]`,
-        and the dtype is same as `input`.
+        Tensor. The signs of the log determinants. The shape is :math:`input.shape[:-2]`.
 
-        Tensor. The absolute values of the log determinants. The shape is :math:`input.shape[:-2]`, and
-        the dtype is same as `input`.
+        Tensor. The absolute values of the log determinants. The shape is :math:`input.shape[:-2]`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
