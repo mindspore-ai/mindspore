@@ -26,6 +26,8 @@
 extern "C" {
 #endif
 
+#define SPLIT_COUNT 16
+
 typedef struct MatrixInfo {
   bool need_pack_;
   bool has_packed_;  // only valid for constant, only do once throughout the process.
@@ -34,6 +36,13 @@ typedef struct MatrixInfo {
   float *origin_ptr_;  // only valid for constant, which is synchronized with the 'has_origin'.
   float *pack_ptr_;
 } MatrixInfo;
+
+typedef struct MatmulSlice {
+  int row_s_;
+  int row_e_;
+  int col_s_;
+  int col_e_;
+} MatmulSlice;
 
 typedef struct MatmulFp32Struct {
   KernelBase base_;
@@ -49,33 +58,32 @@ typedef struct MatmulFp32Struct {
   int pack_b_stride_;
   int block_col_unit_;
 
+  int batch_;
   int row_;
   int col_;
-  int row_4_;
-  int row_6_;
-  int row_12_;
-  int row_16_;
-  int row_align_;
-  int col_4_;
-  int col_8_;
-  int col_align_;
   int deep_;
-  int deep_4_;
-  int deep_16_;
+  int row_align_;
+  int col_align_;
   int deep_align_;
-  int batch_;
   bool a_const_;
   bool b_const_;
-  bool use_axis_;
-  int axis_;
+
+  //  int row_4_;
+  //  int row_6_;
+  //  int row_12_;
+  //  int row_16_;
+  //  int col_4_;
+  //  int col_8_;
+  //  int deep_4_;
+  //  int deep_16_;
+  //  bool use_axis_;
+  //  int axis_;
+  //  MatmulType matmul_type_;
 
   bool infer_shape_;
-  MatmulType matmul_type_;
   int model_thread_nr_; /* model pool optimize */
 
-  int split_points_[16];
-  int col_split_points_[16];
-  int row_split_points_[16];
+  int split_points_[SPLIT_COUNT];
   int a_offset_[512];
   int b_offset_[512];
 
@@ -106,11 +114,13 @@ typedef struct MatmulFp32Struct {
   void (*init_global_varibale_)(struct MatmulFp32Struct *matmul);
 
   bool (*check_thread_cutting_by_row_)(struct MatmulFp32Struct *matmul);
-  int (*get_thread_cutting_policy_)(struct MatmulFp32Struct *matmul);
+  void (*get_thread_cutting_policy_)(struct MatmulFp32Struct *matmul);
   void (*get_thread_cutting_info_by_row_)(struct MatmulFp32Struct *matmul);
 
   void (*get_pack_data_by_sharing_weight_)(const void *tensor_data, const size_t size, bool *is_packed);
   void (*free_by_sharing_weight_)(void *tensor_data);
+
+  void (*gemm_not_pack_fun_)(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 
   int (*parallel_run_)(struct MatmulFp32Struct *matmul, int task_id);
   int (*parallel_run_by_row_)(struct MatmulFp32Struct *matmul, int task_id);
@@ -118,11 +128,22 @@ typedef struct MatmulFp32Struct {
   int (*parallel_run_by_batch_)(struct MatmulFp32Struct *matmul, int task_id);
   int (*parallel_run_not_pack_by_batch_)(struct MatmulFp32Struct *matmul, int task_id);
 
-  void (*gemm_not_pack_fun_)(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
+  /* optimize for avx512 */
+  int col_split_points_size_;
+  int row_split_points_size_;
+  int col_split_points_[SPLIT_COUNT];
+  int row_split_points_[SPLIT_COUNT];
+  MatmulSlice matmul_slice_set_[SPLIT_COUNT][SPLIT_COUNT];
+  int matmul_slice_count_[SPLIT_COUNT];
+  int (*parallel_run_by_gemm_)(struct MatmulFp32Struct *matmul, int task_id);
+  int (*parallel_run_by_gepm_)(struct MatmulFp32Struct *matmul, int task_id);
+  int (*parallel_run_by_gepdot_)(struct MatmulFp32Struct *matmul, int task_id);
+  int (*parallel_run_by_batch_col_row_gemm_)(struct MatmulFp32Struct *matmul, int task_id);
+  int (*parallel_run_by_row1_deep1_gepdot_)(struct MatmulFp32Struct *matmul, int task_id);
 } MatmulFp32Struct;
 
+void MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul);
 int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul);
-int MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul);
 int matmul_fp32_prepare(KernelBase *self);
 int matmul_fp32_resize(KernelBase *self);
 KernelBase *CreateMatmulFp32Base();
