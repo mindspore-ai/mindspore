@@ -104,6 +104,9 @@ const AnfNodePtr SoftmaxGradFusionCpu::Process(const FuncGraphPtr &graph, const 
   AnfNodePtr reduce_sum = GetAnfNodeByVar(equiv, reduce_sum_);
   MS_EXCEPTION_IF_NULL(input0);
   MS_EXCEPTION_IF_NULL(input1);
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   if (!NeedFusion(reduce_sum, input0, input1)) {
     return nullptr;
   }
