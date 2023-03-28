@@ -6209,7 +6209,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
         >>> output = ops.unfold(x, kernel_size=3, dilation=1, stride=1)
         >>> print(output.shape)
-        (4, 36, 30, 30)
+        (4, 4, 9, 900)
     """
     kernel_size = _check_unfold_params(kernel_size, "kernel_size", [1, 2])
     dilation = _check_unfold_params(dilation, "dilation", [1, 2])
