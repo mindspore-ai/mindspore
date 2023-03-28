@@ -445,8 +445,8 @@ T NuclearNormCpuKernelMod::ComputeMatrixNuclearNorm(size_t dim0, size_t dim1, co
   if (ret0 != EOK) {
     MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memcpy_s failed. Error no: " << ret0;
   }
-  int m = n2;
-  int n = n1;
+  int m = SizeToInt(n2);
+  int n = SizeToInt(n1);
   int k = (m < n ? m : n);
   T *tU = GetDeviceAddress<T>(workspace, kIndex2);
   T *tS = GetDeviceAddress<T>(workspace, kIndex3);
@@ -480,7 +480,7 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
 
   std::array<Eigen::DenseIndex, RANK> dim_array;
   for (size_t i = 0; i < input_dimnum; i++) {
-    dim_array.at(i) = static_cast<size_t>(input_shape[i]);
+    dim_array.at(i) = input_shape[i];
   }
   Eigen::Tensor<T, RANK, Eigen::RowMajor> reshaped_tensor = eigen_tensor.reshape(dim_array);
 
@@ -490,12 +490,12 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
   int32_t j = 0;
   for (size_t i = 0; i < input_dimnum; i++) {
     if (i != static_cast<size_t>(dim_[0]) && i != static_cast<size_t>(dim_[1])) {
-      dim_array.at(j) = static_cast<size_t>(i);
+      dim_array.at(j) = i;
       j++;
     }
   }
-  dim_array.at(j) = static_cast<size_t>(dim_[0]);
-  dim_array.at(j + 1) = static_cast<size_t>(dim_[1]);
+  dim_array.at(j) = dim_[0];
+  dim_array.at(j + 1) = dim_[1];
 
   Eigen::Tensor<T, RANK, Eigen::RowMajor> shuffled_tensor = reshaped_tensor.shuffle(dim_array);
 
