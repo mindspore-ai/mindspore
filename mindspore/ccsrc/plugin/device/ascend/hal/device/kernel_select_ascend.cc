@@ -115,13 +115,26 @@ bool ProcessKernelInputIdx(const kernel::KernelBuildInfoPtr &kernel_build_info, 
   }
   return true;
 }
+
+// Judge if the tuple input of the node should be unfold to match the kernel_build_info
+bool IsNodeTupleInputNeedUnfold(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
+  if (common::AnfAlgo::HasDynamicTupleInput(cnode)) {
+    return false;
+  }
+  size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  size_t unfold_input_tensor_num = AnfAlgo::GetInputElementNum(cnode);
+  return !(fold_input_tensor_num != unfold_input_tensor_num &&
+           fold_input_tensor_num == kernel_build_info->GetInputNum());
+}
 }  // namespace
+
 bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfoPtr &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
   size_t kernel_input_index = 0;
   size_t fold_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  bool is_fold_node = fold_input_tensor_num != kernel_build_info->GetInputNum();
+
+  bool is_input_need_unfold = IsNodeTupleInputNeedUnfold(cnode, kernel_build_info);
 
   for (size_t input_index = 0; input_index < fold_input_tensor_num; ++input_index) {
     std::vector<TypeId> inputs_type = common::AnfAlgo::GetRealPrevNodesOutputInferDataType(cnode, input_index);
@@ -129,11 +142,11 @@ bool MatchUnfoldInferOutputDataType(const CNodePtr &cnode, const kernel::KernelB
       if (!ProcessKernelInputIdx(kernel_build_info, inputs_type, i, kernel_input_index)) {
         return false;
       }
-      if (is_fold_node) {
+      if (is_input_need_unfold) {
         ++kernel_input_index;
       }
     }
-    if (!is_fold_node) {
+    if (!is_input_need_unfold) {
       ++kernel_input_index;
     }
   }
@@ -401,10 +414,11 @@ bool ProcessInputObjectType(const CNodePtr &cnode, const std::shared_ptr<kernel:
   // Check input object type
   auto kernel_inputs_object_type = kernel_build_info->GetAllInputKernelObjectTypes();
   auto node_inputs_object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(cnode));
-  bool is_fold_node = common::AnfAlgo::GetInputTensorNum(cnode) != kernel_build_info->GetInputNum();
+
+  bool is_node_input_need_unfold = IsNodeTupleInputNeedUnfold(cnode, kernel_build_info);
   for (size_t input_index = 0; input_index < node_inputs_object_type.size(); ++input_index) {
     if (kernel_inputs_object_type[(*kernel_input_index)] != kernel::KernelObjectType::TUPLE &&
-        node_inputs_object_type[input_index] == kernel::KernelObjectType::TUPLE && is_fold_node) {
+        node_inputs_object_type[input_index] == kernel::KernelObjectType::TUPLE && is_node_input_need_unfold) {
       // tuple_unfold condition
       std::vector<KernelWithIndex> index_inputs = common::AnfAlgo::GetRealPrevNodesOutput(cnode, input_index);
       for (auto &index_input : index_inputs) {
