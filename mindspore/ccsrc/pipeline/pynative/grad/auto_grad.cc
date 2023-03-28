@@ -1159,7 +1159,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
     }
   }
   (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
-  (void)bprop_cut->AddAttr("custom_op_name", MakeValue(cnode->fullname_with_scope()));
+  (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
   // Create gradient outputs cnode
   std::vector<AnfNodePtr> inputs{NewValueNode(bprop_cut)};
   // Get input, get output, get dout
