@@ -75,7 +75,7 @@ class Strategy {
   std::vector<StrategyPtr> GetInternalStrategies() const { return internal_stragies_; }
   size_t GetInternalSize() const { return internal_size_; }
 
-  // TODO(Xiaoda): need fix for adapting 'CoverStrategy'
+  // need fix for adapting 'CoverStrategy'
   bool IsEqual(const StrategyPtr &another_stra) {
     if (another_stra == nullptr) {
       return false;
