@@ -3335,7 +3335,8 @@ class StridedSlice(PrimitiveWithInfer):
             strides_value = strides_v['shape_value']
         return begin_value, end_value, strides_value
 
-    def _is_none_in_tuple(self, x):
+    @staticmethod
+    def _is_none_in_tuple(x):
         return isinstance(x, tuple) and None in x
 
     def _compute_slicing_length(self, begin, end, stride, x_dim):

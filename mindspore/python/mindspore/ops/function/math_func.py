@@ -10058,17 +10058,17 @@ def digamma(input):
 
 def polygamma(n, input):
     r"""
-    Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
+    Computes the :math:`n^{th}` derivative of the polygamma function on `x`.
 
     .. math::
-        \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
+        \psi^{(n)}(x) = \frac{d^{(n)}}{dx^{(n)}} \psi(x)
 
     where :math:`\psi(x)` is the digamma function.
 
     Args:
         n (Tensor): The order of the polygamma function.
             Supported dtypes: int32, int64. The shape of `n` is :math:`()`.
-        input (Tensor): The tensor to compute the `n^{th}` derivative of the polygamma function with.
+        input (Tensor): The tensor to compute the :math:`n^{th}` derivative of the polygamma function with.
 
     Returns:
         Tensor, has the same dtype as `input`.
