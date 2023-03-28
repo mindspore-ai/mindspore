@@ -82,7 +82,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   }
   if (!gen_value_succ) {
     auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-    ShapeVector dynamic_shape(dense_size[0] - 1), min_shape(dense_size[0] - 1), max_shape(dense_size[0] - 1);
+    ShapeVector dynamic_shape(dense_size[0] - 1), max_shape(dense_size[0] - 1);
     auto max_length_ptr = primitive->GetAttr("max_length");
     MS_EXCEPTION_IF_NULL(max_length_ptr);
     int64_t max_length = GetValue<int64_t>(max_length_ptr);

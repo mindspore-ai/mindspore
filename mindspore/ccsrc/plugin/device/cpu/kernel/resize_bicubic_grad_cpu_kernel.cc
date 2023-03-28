@@ -344,7 +344,7 @@ int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
 template <typename T>
 bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
+                                                 const std::vector<AddressPtr> &outputs) const {
   auto input0_addr = static_cast<float *>(inputs[0]->addr);
   auto output_addr = static_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size;

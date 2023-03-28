@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NAN_TO_NUM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NAN_TO_NUM_CPU_KERNEL_H_
 
-#include <limits>
 #include <map>
 #include <utility>
 #include <vector>

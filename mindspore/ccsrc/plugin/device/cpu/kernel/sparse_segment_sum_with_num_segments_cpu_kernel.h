@@ -20,7 +20,6 @@
 #include <map>
 #include <utility>
 #include <functional>
-#include <numeric>
 #include <algorithm>
 #include <memory>
 #include <string>

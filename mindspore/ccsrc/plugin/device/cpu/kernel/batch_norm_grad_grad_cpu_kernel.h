@@ -49,51 +49,51 @@ class BatchNormGradGradCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void TrainingComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs);
+                           const std::vector<kernel::AddressPtr> &outputs) const;
 
   template <typename T>
   void InferenceComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                             const std::vector<kernel::AddressPtr> &workspace,
-                            const std::vector<kernel::AddressPtr> &outputs);
+                            const std::vector<kernel::AddressPtr> &outputs) const;
 
   template <typename T>
   void TrainingComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &workspace,
-                           const std::vector<kernel::AddressPtr> &outputs);
+                           const std::vector<kernel::AddressPtr> &outputs) const;
   template <typename T>
   void InferenceComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                             const std::vector<kernel::AddressPtr> &workspace,
-                            const std::vector<kernel::AddressPtr> &outputs);
+                            const std::vector<kernel::AddressPtr> &outputs) const;
 
   template <typename T>
   void TrainingNHWCCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
                                const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   void TrainingNHWCCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   void TrainingNHWCCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   void TrainingNCHWCalculateDx(const std::vector<kernel::AddressPtr> &inputs,
                                const std::vector<kernel::AddressPtr> &workspace,
-                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                               const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   void TrainingNCHWCalculateDdy(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                                const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   void TrainingNCHWCalculateDscale(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &workspace,
-                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std);
+                                   const std::vector<kernel::AddressPtr> &outputs, float *x_hat, float *inv_std) const;
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,

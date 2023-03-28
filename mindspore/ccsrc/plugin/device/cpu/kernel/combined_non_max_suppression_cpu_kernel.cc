@@ -39,7 +39,7 @@ constexpr int multiplier = 4;
 }  // namespace
 
 void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std::vector<float>> *boxes_buffer,
-                                                                 const float *box_src, const int class_idx) {
+                                                                 const float *box_src, const int class_idx) const {
   /**
    * shape of box_src
    * box_src[num_boxes_*q_*4]
@@ -68,7 +68,7 @@ void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std
 }
 
 // Calculate the area ratio of the intersection of two squares
-float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *boxes_buffer, const int i,
+float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>> *const boxes_buffer, const int i,
                                                  const int j) const {
   std::vector<float> box_a = (*boxes_buffer)[i];
   std::vector<float> box_b = (*boxes_buffer)[j];
@@ -97,7 +97,7 @@ float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>>
  */
 void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std::vector<float>> *boxes_buffer,
                                                                 std::vector<float> *scores_buffer,
-                                                                std::vector<int> &selected) {
+                                                                std::vector<int> &selected) const {
   std::priority_queue<non_max_suppression_local::score_index> pq;
   for (size_t i = 0; i < IntToSize(num_boxes_); i++) {
     if ((*scores_buffer)[i] > score_threshold_) {

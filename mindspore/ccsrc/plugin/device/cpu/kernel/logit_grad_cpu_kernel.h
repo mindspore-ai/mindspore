@@ -44,8 +44,8 @@ class LogitGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  bool LaunchKernelHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernelHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   TypeId input_dtype_{kTypeUnknown};
   std::vector<int64_t> input_shape_;
   float eps{-1.0};

@@ -64,7 +64,7 @@ std::vector<int64_t> Strides(ShapeVector shape) {
   return result;
 }
 
-bool GroupShape(ShapeVector input_shape, ShapeVector *grouped_shape) {
+bool GroupShape(ShapeVector input_shape, ShapeVector *const grouped_shape) {
   size_t shape_size = 2;
   if (input_shape.size() < shape_size) {
     return false;
@@ -83,7 +83,7 @@ bool CheckShapesMatch(ShapeVector shape1, ShapeVector shape2) {
   return true;
 }
 
-bool GroupShapeFromInputs(ShapeVector shape1, ShapeVector shape2, ShapeVector *group_shape) {
+bool GroupShapeFromInputs(ShapeVector shape1, ShapeVector shape2, ShapeVector *const group_shape) {
   ShapeVector group_shape_1;
   if (!GroupShape(shape1, &group_shape_1)) {
     MS_EXCEPTION(ValueError) << "For 'DenseToSparseSetOperation', "

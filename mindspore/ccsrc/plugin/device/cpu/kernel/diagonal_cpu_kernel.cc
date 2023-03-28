@@ -54,7 +54,7 @@ class PositionIterator {
     return *this;
   }
 
-  bool is_end() {
+  bool is_end() const {
     if (pos_[0] != shape_[0]) {
       return false;
     }

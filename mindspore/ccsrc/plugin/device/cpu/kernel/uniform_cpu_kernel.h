@@ -62,7 +62,7 @@ class UniformCpuKernelMod : public NativeCpuKernelMod {
   size_t used_result_index_ = random::MSPhiloxRandom::kResultElementCount;
 
   float RandFloat();
-  uint64_t New64();
+  uint64_t New64() const;
   void InitMSPhiloxRandom(int64_t seed, int64_t offset);
   uint32_t GenerateSingle();
 

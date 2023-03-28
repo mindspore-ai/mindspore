@@ -60,7 +60,7 @@ class SparseCrossCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
                        const std::vector<std::vector<T>> &values_list_in,
                        const std::vector<std::vector<int64_t>> &shapes_list_in,
                        const std::vector<std::vector<S>> &dense_list_in,
-                       const std::vector<kernel::AddressPtr> &outputs);
+                       const std::vector<kernel::AddressPtr> &outputs) const;
 
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
