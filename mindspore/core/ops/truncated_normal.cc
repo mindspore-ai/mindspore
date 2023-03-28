@@ -165,7 +165,7 @@ AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const 
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = TruncatedNormalInferType(primitive, input_args);
   auto infer_shape = TruncatedNormalInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated
