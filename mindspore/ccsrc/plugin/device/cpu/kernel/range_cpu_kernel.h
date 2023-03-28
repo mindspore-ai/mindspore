@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
