@@ -134,8 +134,8 @@ bool SuperBar::LoadSBNodeAttr(const nlohmann::json &js) {
     std::map<std::string, std::string> attr_kernel_to_ms_map;
     std::map<std::string, std::string> attr_ms_to_kernel_map;
     for (auto iter_attr = attrs.begin(); iter_attr != attrs.end(); ++iter_attr) {
-      attr_kernel_to_ms_map.insert({iter_attr.key(), iter_attr->get<std::string>()});
-      attr_ms_to_kernel_map.insert({iter_attr->get<std::string>(), iter_attr.key()});
+      (void)attr_kernel_to_ms_map.insert({iter_attr.key(), iter_attr->get<std::string>()});
+      (void)attr_ms_to_kernel_map.insert({iter_attr->get<std::string>(), iter_attr.key()});
     }
     node_attr_kernel_to_ms_[node_type] = attr_kernel_to_ms_map;
     node_attr_ms_to_kernel_[node_type] = attr_ms_to_kernel_map;
@@ -154,7 +154,7 @@ bool SuperBar::LoadSBNodeAttrDefaultValue(const nlohmann::json &js) {
     auto attrs = iter->get<nlohmann::json>();
     std::map<std::string, std::string> attr_map;
     for (auto iter_attr = attrs.begin(); iter_attr != attrs.end(); ++iter_attr) {
-      attr_map.insert({iter_attr.key(), iter_attr->get<std::string>()});
+      (void)attr_map.insert({iter_attr.key(), iter_attr->get<std::string>()});
     }
     node_attr_default_value_map_[node_type] = attr_map;
   }

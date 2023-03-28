@@ -21,7 +21,6 @@
 
 #include "ir/func_graph.h"
 #include "base/base.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace irpb {

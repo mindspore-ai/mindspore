@@ -177,6 +177,7 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_a
                        std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
       } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
         auto arg_dict = specialize_args_before_unpack[index]->cast_ptr<AbstractDictionary>();
+        MS_EXCEPTION_IF_NULL(arg_dict);
         auto dict_elems = arg_dict->elements();
         (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(graph_specialize_args),
                              [](const AbstractElementPair &item) {

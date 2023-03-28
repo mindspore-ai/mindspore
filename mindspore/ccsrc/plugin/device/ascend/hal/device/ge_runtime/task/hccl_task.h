@@ -55,7 +55,7 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
   static std::map<rtModel_t, std::map<uint32_t, std::vector<std::weak_ptr<StreamGuard>>>> model_stream_mapping_;
   static std::mutex model_stream_mapping_mutex_;
 
-  ::ge::GETaskInfo ge_task_;
+  ::ge::GETaskInfo ge_task_{};
   device::ascend::KernelDumper kernel_dumper_;
 };
 

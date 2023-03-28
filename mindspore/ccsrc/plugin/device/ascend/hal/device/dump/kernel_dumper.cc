@@ -201,7 +201,7 @@ void KernelDumper::Init() {
   }
 }
 
-void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t stream) {
+void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info, const rtStream_t &stream) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {
     MS_LOG(INFO) << "Async dump is not enabled, no need to insert dump op for hccl task.";
     return;
@@ -232,7 +232,7 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
   dump_task->set_end_graph(false);
   uint32_t task_id_rt = 0;
   uint32_t stream_id_rt = 0;
-  rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
+  (void)rtGetTaskIdAndStreamID(&task_id_rt, &stream_id_rt);
   MS_LOG(INFO) << "[KernelDumper] Get from rtGetTaskIdAndStreamID, task_id:" << task_id_rt
                << " stream_id:" << stream_id_rt;
   dump_task->set_task_id(task_id_rt);
@@ -248,7 +248,7 @@ void KernelDumper::DumpHcclOutput(const std::shared_ptr<HcclTaskInfo> &task_info
   ExecutorDumpOp(dump_info, stream);
 }
 
-void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t stream_) {
+void KernelDumper::ExecutorDumpOp(const aicpu::dump::OpMappingInfo &op_mapping_info, const rtStream_t &stream_) {
   std::string proto_msg;
   const size_t proto_size = op_mapping_info.ByteSizeLong();
   const bool ret = op_mapping_info.SerializeToString(&proto_msg);
@@ -480,8 +480,8 @@ void KernelDumper::MallocP2PDebugMem(const void *const op_debug_addr) {
     MS_LOG(EXCEPTION) << "[KernelDumper] Call rt api rtGetRtCapability failed, ret = " << rt_ret;
   }
   auto memory_type = (value == static_cast<int64_t>(RT_CAPABILITY_SUPPORT)) ? RT_MEMORY_TS : RT_MEMORY_HBM;
-  rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
-  rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
+  (void)rtMalloc(&p2p_debug_addr_, kDebugP2pSize, memory_type, 0);
+  (void)rtMemcpy(p2p_debug_addr_, sizeof(uint64_t), &debug_addrs_tmp, sizeof(uint64_t), RT_MEMCPY_HOST_TO_DEVICE);
 }
 
 void KernelDumper::OpDebugRegisterForStream(const CNodePtr &kernel) {

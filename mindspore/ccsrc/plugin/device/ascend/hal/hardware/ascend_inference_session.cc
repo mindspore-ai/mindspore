@@ -28,6 +28,23 @@
 #include "include/common/utils/config_manager.h"
 
 namespace mindspore::session {
+namespace {
+bool SkipUnusedNode(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
+    MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
+    return false;
+  }
+  auto pk_node = input_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(pk_node);
+  if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
+    MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
+    return false;
+  }
+  return true;
+}
+}  // namespace
 void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                            const std::vector<tensor::TensorPtr> &inputs_const) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -37,16 +54,11 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
   size_t no_weight_input = 0;
   for (auto &input_node : input_nodes) {
     tensor::TensorPtr tensor = nullptr;
-    if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
-      MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
+    if (!SkipUnusedNode(kernel_graph, input_node)) {
       continue;
     }
     auto pk_node = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
-    if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
-      MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
-      continue;
-    }
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
     if (!common::AnfAlgo::IsParameterWeight(pk_node)) {
@@ -68,16 +80,11 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
   // load weight data to device
   auto input_nodes = kernel_graph->inputs();
   for (auto &input_node : input_nodes) {
-    if (!input_node->isa<Parameter>() || !AnfAlgo::OutputAddrExist(input_node, 0)) {
-      MS_LOG(INFO) << "Kernel graph inputs have anfnode which is not Parameter or without output addr.";
+    if (!SkipUnusedNode(kernel_graph, input_node)) {
       continue;
     }
     auto pk_node = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
-    if (!pk_node->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
-      MS_LOG(INFO) << "Kernel graph inputs have anfnode which has no user.";
-      continue;
-    }
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
     if (common::AnfAlgo::IsParameterWeight(pk_node)) {

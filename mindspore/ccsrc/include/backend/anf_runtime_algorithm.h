@@ -166,6 +166,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get input index in kernel for some tbe ops which input order is different between graph and tbe kernel
   static size_t GetInputKernelIdxByGraphIdx(const AnfNodePtr &anf_node, size_t input_index_in_graph);
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
+  static KernelGraphPtr GetValueNodeKernelGraph(const AnfNodePtr &node);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
   static ShapeVector GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);

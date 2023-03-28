@@ -27,7 +27,6 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/data_queue/data_queue.h"
 #include "include/backend/data_queue/blocking_queue.h"
-#include "include/backend/visible.h"
 #include "runtime/rt.h"
 #include "acl/acl_tdt.h"
 

@@ -1167,6 +1167,20 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
   return {};
 }
 
+KernelGraphPtr AnfRuntimeAlgorithm::GetValueNodeKernelGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    return nullptr;
+  }
+  auto value = value_node->value();
+  if (value == nullptr) {
+    return nullptr;
+  }
+  auto kernel_graph = value->cast<KernelGraphPtr>();
+  return kernel_graph;
+}
+
 bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (AnfAlgo::GetKernelType(node) != AICPU_KERNEL) {
