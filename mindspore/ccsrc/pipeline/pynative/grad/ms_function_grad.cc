@@ -452,6 +452,7 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
   if (graph_phase_.empty()) {
     MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain ms_function func graph.";
   }
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->WaitForwardTask();
   // Get forward graph
   MS_LOG(DEBUG) << "ms_function func graph phase: " << graph_phase_;
   auto executor = pipeline::GraphExecutorPy::GetInstance();
