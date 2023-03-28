@@ -4471,12 +4471,12 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
-def median(input, axis=-1, keepdims=False):
+def median(x, axis=-1, keepdims=False):
     r"""
     Computes the median and indices of input tensor.
 
     Args:
-        input (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
+        x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
         axis (int, optional): The dimension need to reduce. Default: -1.
         keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
