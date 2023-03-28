@@ -28,24 +28,21 @@
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore::lite::micro::nnacl {
 int DeConvolutionFP32Coder::InitRunBuf() {
-  pack_output_size_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * sizeof(float);
-  packed_output_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, pack_output_size_, kWorkspace));
+  pack_output_size_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * output_plane_ * DataTypeSize(data_type_);
+  packed_output_ = allocator_->Malloc(data_type_, pack_output_size_, kWorkspace);
   MS_CHECK_PTR(packed_output_);
 
   if (target_ == kARM32) {
-    tmp_buffer_size_ = matmul_param_.row_4_ * matmul_param_.col_8_ * sizeof(float);
+    tmp_buffer_size_ = matmul_param_.row_4_ * matmul_param_.col_8_ * DataTypeSize(data_type_);
+    pack_input_size_ = matmul_param_.row_4_ * matmul_param_.deep_ * DataTypeSize(data_type_);
   } else {
-    tmp_buffer_size_ = matmul_param_.row_12_ * matmul_param_.col_8_ * sizeof(float);
+    tmp_buffer_size_ = matmul_param_.row_12_ * matmul_param_.col_8_ * DataTypeSize(data_type_);
+    pack_input_size_ = matmul_param_.row_12_ * matmul_param_.deep_ * DataTypeSize(data_type_);
   }
-  tmp_buffer_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, tmp_buffer_size_, kWorkspace));
-  MS_CHECK_PTR(tmp_buffer_);
 
-  if (target_ == kARM32) {
-    pack_input_size_ = matmul_param_.row_4_ * matmul_param_.deep_ * sizeof(float);
-  } else {
-    pack_input_size_ = matmul_param_.row_12_ * matmul_param_.deep_ * sizeof(float);
-  }
-  packed_input_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, pack_input_size_, kWorkspace));
+  tmp_buffer_ = allocator_->Malloc(data_type_, tmp_buffer_size_, kWorkspace);
+  MS_CHECK_PTR(tmp_buffer_);
+  packed_input_ = allocator_->Malloc(data_type_, pack_input_size_, kWorkspace);
   MS_CHECK_PTR(packed_input_);
   return RET_OK;
 }
@@ -60,6 +57,7 @@ int DeConvolutionFP32Coder::InitParam() {
   matmul_param_.col_ = conv_param_->output_channel_ * kernel_plane_;
   matmul_param_.row_12_ = UP_ROUND(matmul_param_.row_, C12NUM);
   matmul_param_.row_4_ = UP_ROUND(matmul_param_.row_, C4NUM);
+  matmul_param_.row_16_ = UP_ROUND(matmul_param_.row_, C16NUM);
   matmul_param_.col_8_ = UP_ROUND(conv_param_->output_channel_, C8NUM) * kernel_plane_;
   return RET_OK;
 }
@@ -84,60 +82,41 @@ int DeConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   int out_channel = filter_tensor_->Channel();
 
   if (input_tensors_.size() == kInputSize2) {
-    bias_data_size_ = UP_ROUND(out_channel, C4NUM) * sizeof(float);
-    packed_bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+    bias_data_size_ = UP_ROUND(out_channel, C4NUM) * DataTypeSize(data_type_);
+    packed_bias_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
     MS_CHECK_PTR(packed_bias_);
   }
 
   int kernel_plane = kernel_h * kernel_w;
   int pack_weight_size = in_channel * kernel_plane;
-  pack_weight_size_ = pack_weight_size * UP_ROUND(out_channel, C8NUM) * sizeof(float);
-
-  packed_weight_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+  pack_weight_size_ = pack_weight_size * UP_ROUND(out_channel, C8NUM) * DataTypeSize(data_type_);
+  packed_weight_ = allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight);
   MS_CHECK_PTR(packed_weight_);
 
   NNaclFp32Serializer init_code;
 
   size_t w_buf_size = 0;
   if (input_tensors_.size() == kInputSize2) {
+    auto packed_bias_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_bias_));
     init_code.CodeBufferOffsetExpression(packed_bias_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), bias_data_size_);
-    init_code.CodeFunction("memcpy", packed_bias_, bias_tensor_, out_channel * sizeof(float));
+    std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
+    init_code.CodeFunction("memcpy", packed_bias_str, bias_tensor_str, out_channel * DataTypeSize(data_type_));
     w_buf_size += bias_data_size_;
   }
+  auto packed_weight_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_weight_));
   init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), pack_weight_size_);
   w_buf_size += pack_weight_size_;
-  init_code.CodeFunction("PackNHWCToC8HWN8Fp32", filter_tensor_, packed_weight_, in_channel, kernel_plane, out_channel);
+  init_code.CodeFunction("PackNHWCToC8HWN8Fp32", filter_tensor_, packed_weight_str, in_channel, kernel_plane,
+                         out_channel);
 
   context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }
 
-int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
-  Collect(context,
-          {
-            "wrapper/fp32/deconvolution_fp32_wrapper.h",
-            "nnacl/fp32/conv_common_fp32.h",
-            "nnacl/pack.h",
-            "nnacl/fp32/common_func_fp32.h",
-            "nnacl/base/minimal_filtering_generator.h",
-            "nnacl/fp32/matmul_fp32.h",
-            "nnacl/conv_parameter.h",
-            "nnacl/matmul_parameter.h",
-            "nnacl/op_base.h",
-          },
-          {
-            "deconvolution_fp32_wrapper.c",
-            "common_func.c",
-            "common_func_fp32.c",
-            "conv_common_fp32.c",
-            "matmul_fp32.c",
-            "pack_fp32.c",
-            "deconv_fp32.c",
-            "minimal_filtering_generator.c",
-          });
+void DeConvolutionFP32Coder::CollectFilesForFunc(CoderContext *const context) {
   if (target_ == kARM32) {
     Collect(context, {}, {},
             {
@@ -166,12 +145,40 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "PostFuncBiasReluC8.S",
             });
   }
+  Collect(context,
+          {
+            "wrapper/fp32/deconvolution_fp32_wrapper.h",
+            "nnacl/fp32/conv_common_fp32.h",
+            "nnacl/pack.h",
+            "nnacl/fp32/common_func_fp32.h",
+            "nnacl/base/minimal_filtering_generator.h",
+            "nnacl/fp32/matmul_fp32.h",
+            "nnacl/conv_parameter.h",
+            "nnacl/matmul_parameter.h",
+            "nnacl/op_base.h",
+          },
+          {
+            "deconvolution_fp32_wrapper.c",
+            "common_func.c",
+            "common_func_fp32.c",
+            "conv_common_fp32.c",
+            "matmul_fp32.c",
+            "pack_fp32.c",
+            "deconv_fp32.c",
+            "minimal_filtering_generator.c",
+          });
+}
 
+int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
+  CollectFilesForFunc(context);
   NNaclFp32Serializer code;
   // call the op function
-  code.CodeFunction("memset", packed_input_, "0", pack_input_size_);
-  code.CodeFunction("memset", packed_output_, "0", pack_output_size_);
-  code.CodeFunction("memset", tmp_buffer_, "0", tmp_buffer_size_);
+  auto packed_input_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_input_));
+  auto packed_output_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(packed_output_));
+  auto tmp_buffer_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float *>(tmp_buffer_));
+  code.CodeFunction("memset", packed_input_str, "0", pack_input_size_);
+  code.CodeFunction("memset", packed_output_str, "0", pack_output_size_);
+  code.CodeFunction("memset", tmp_buffer_str, "0", tmp_buffer_size_);
   code.CodeStruct("conv_parameter", *conv_param_);
   code.CodeStruct("matmul_parameter", matmul_param_);
 
@@ -183,12 +190,12 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
     output_ptr_ = src_out_ptr_str + "+" + std::to_string(batch_index * output_plane_ * conv_param_->output_channel_);
 
     if (target_ == kARM32) {
-      code.CodeFunction("RowMajor2Col4Major", input_ptr_, packed_input_, matmul_param_.row_, matmul_param_.deep_);
+      code.CodeFunction("RowMajor2Col4Major", input_ptr_, packed_input_str, matmul_param_.row_, matmul_param_.deep_);
     } else {
-      code.CodeFunction("RowMajor2Col12Major", input_ptr_, packed_input_, matmul_param_.row_, matmul_param_.deep_);
+      code.CodeFunction("RowMajor2Col12Major", input_ptr_, packed_input_str, matmul_param_.row_, matmul_param_.deep_);
     }
-    code.CodeBaseStruct("DeConvFp32Args", kRunArgs, packed_input_, packed_weight_, packed_bias_, packed_output_,
-                        output_ptr_, tmp_buffer_, "&matmul_parameter", "&conv_parameter");
+    code.CodeBaseStruct("DeConvFp32Args", kRunArgs, packed_input_str, packed_weight_, packed_bias_, packed_output_str,
+                        output_ptr_, tmp_buffer_str, "&matmul_parameter", "&conv_parameter");
     if (!support_parallel_) {
       code.CodeFunction("DeConvFp32Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
     } else {

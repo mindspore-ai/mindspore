@@ -80,6 +80,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/arithmetic_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/avg_pooling_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/concat_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/deconv2d_fp16_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp16/resize_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/transpose_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/layernorm_fp16_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp16/reduce_fp16_coder.cc
