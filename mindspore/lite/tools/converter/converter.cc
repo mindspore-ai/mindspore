@@ -486,9 +486,10 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
       MS_LOG(ERROR) << "Parse cpu option param failed.";
       return ret;
     }
-  } else {
-    MS_LOG(WARNING) << "Multi mode only support micro_param and model_param, other configure can not take effect";
   }
+  MS_LOG(INFO)
+    << "If there are multi models, only support micro_param and model_param, other configure can not take effect";
+
   lite::MicroParamParser micro_param_parser;
   ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
   if (ret != RET_OK) {
