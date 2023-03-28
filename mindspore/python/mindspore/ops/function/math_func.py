@@ -9506,7 +9506,7 @@ def cholesky_inverse(input_x, upper=False):
         ValueError: If the dimension of `input_x` is not equal to 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
