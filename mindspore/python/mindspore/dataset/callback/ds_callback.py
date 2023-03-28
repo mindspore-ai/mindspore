@@ -131,7 +131,7 @@ class WaitedDSCallback(Callback, DSCallback):
     r"""
     Abstract base class used to build dataset callback classes that are synchronized with the training callback class
     `mindspore.train.Callback \
-    <https://www.mindspore.cn/docs/en/master/api_python/train/
+    <https://www.mindspore.cn/docs/en/r2.0/api_python/train/
     mindspore.train.Callback.html#mindspore.train.Callback>`_ .
 
     It can be used to execute a custom callback method before a step or an epoch, such as
@@ -142,7 +142,7 @@ class WaitedDSCallback(Callback, DSCallback):
     `device_number` , `list_callback` , `cur_epoch_num` , `cur_step_num` , `dataset_sink_mode` ,
     `net_outputs` , etc., see
     `mindspore.train.Callback \
-    <https://www.mindspore.cn/docs/en/master/api_python/train/
+    <https://www.mindspore.cn/docs/en/r2.0/api_python/train/
     mindspore.train.Callback.html#mindspore.train.Callback>`_ .
 
     Users can obtain the dataset pipeline context through `ds_run_context` , including

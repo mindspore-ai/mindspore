@@ -9,7 +9,7 @@ mindspore.ops.bitwise_xor
 
         out_i = input_{i} \oplus other_{i}
 
-    输入 `input` 和 `other` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
+    输入 `input` 和 `other` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/r2.0/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
     如果 `input` 和 `other` 数据类型不同，低精度数据类型将自动转换成高精度数据类型。
 
     参数：

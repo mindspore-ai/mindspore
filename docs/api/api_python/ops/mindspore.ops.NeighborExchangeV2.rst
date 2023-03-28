@@ -5,10 +5,10 @@ mindspore.ops.NeighborExchangeV2
 
     NeighborExchangeV2是一个集合通讯操作。
 
-    将数据从本地rank发送到 `send_rank_ids` 中指定的rank，同时从 `recv_rank_ids` 接收数据。请参考 `分布式集合通信原语 - NeighborExchangeV2 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_ 了解具体的数据是如何在相邻设备间交换的。
+    将数据从本地rank发送到 `send_rank_ids` 中指定的rank，同时从 `recv_rank_ids` 接收数据。请参考 `分布式集合通信原语 - NeighborExchangeV2 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/parallel/communicate_ops.html#neighborexchangev2>`_ 了解具体的数据是如何在相邻设备间交换的。
 
     .. note::
-        要求全连接配网，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `分布式集合通信原语注意事项 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_ 。
+        要求全连接配网，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `分布式集合通信原语注意事项 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/parallel/communicate_ops.html#注意事项>`_ 。
 
     参数：
         - **send_rank_ids** (list(int)) - 指定发送数据的rank。8个rank_id分别代表8个方向上的数据要向哪个rank发送，如果某个方向上不发送数据，则设为-1。

@@ -59,7 +59,7 @@ class ScalarSummary(Primitive):
     This operator will put a scalar to a summary file with protocol buffer format. It must be used with SummaryRecord
     or SummaryCollector, which specify the directory of the summary file. The summary file can
     be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
-    mindinsight/docs/en/master/index.html>`_ for details.
+    mindinsight/docs/en/r2.0/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
@@ -115,7 +115,7 @@ class ImageSummary(PrimitiveWithInfer):
     This operator will put an image tensor to a summary file with protocol buffer format. It must be used with
     SummaryRecord or SummaryCollector, which specify the directory of the summary file. The summary file can
     be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
-    mindinsight/docs/en/master/index.html>`_ for details.
+    mindinsight/docs/en/r2.0/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
@@ -176,7 +176,7 @@ class TensorSummary(Primitive):
     This operator will put a tensor to a summary file with protocol buffer format. It must be used with SummaryRecord
     or SummaryCollector, which specify the directory of the summary file. The summary file can
     be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
-    mindinsight/docs/en/master/index.html>`_ for details.
+    mindinsight/docs/en/r2.0/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable.
@@ -232,7 +232,7 @@ class HistogramSummary(PrimitiveWithInfer):
     This operator will calculate the histogram of a tensor and put it to a summary file with protocol buffer format.
     It must be used with SummaryRecord or SummaryCollector, which specify the directory of the summary file.
     The summary file can be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
-    mindinsight/docs/en/master/index.html>`_ for details.
+    mindinsight/docs/en/r2.0/index.html>`_ for details.
 
     Inputs:
         - **name** (str) - The name of the input variable.

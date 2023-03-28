@@ -8,7 +8,7 @@ mindspore.ops.atan2
     返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`input = r*\sin(\theta), other = r*\cos(\theta)` ，其中 :math:`r = \sqrt{input^2 + other^2}` 。
 
     .. note::
-        - 参数 `input` 和 `other` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。如果两参数数据类型不一致，则低精度类型会被转换成较高精度类型。
+        - 参数 `input` 和 `other` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/r2.0/note/operator_list_implicit.html>`_ ，使数据类型保持一致。如果两参数数据类型不一致，则低精度类型会被转换成较高精度类型。
         - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
 

@@ -5,7 +5,7 @@ mindspore.nn
 
 用于构建神经网络中的预定义构建块或计算单元。
 
-MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://gitee.com/mindspore/docs/blob/r2.0/resource/api_updates/nn_api_updates_cn.md>`_ 。
 
 基本构成单元
 ------------

@@ -20,7 +20,7 @@ mindspore.dataset.transforms
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
-更多详情请参考 `通用数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#common-transforms>`_ 。
+更多详情请参考 `通用数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/transforms.html#common-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
@@ -80,7 +80,7 @@ API样例中常用的导入模块如下：
     import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
 
-更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#vision-transforms>`_ 。
+更多详情请参考 `视觉数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/transforms.html#vision-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
@@ -89,7 +89,7 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
 - Eager模式一般用于零散样本，图像预处理举例如下：
 
   .. code-block::
@@ -242,7 +242,7 @@ API样例中常用的导入模块如下：
     import mindspore.dataset as ds
     from mindspore.dataset import text
 
-更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/transforms.html#text-transforms>`_ 。
+更多详情请参考 `文本数据变换 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/transforms.html#text-transforms>`_ 。
 
 常用数据处理术语说明如下：
 
@@ -251,7 +251,7 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
 - Eager模式一般用于零散样本，文本预处理举例如下：
 
   .. code-block::
@@ -343,7 +343,7 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
 - Eager模式一般用于零散样本，音频预处理举例如下：
 
   .. code-block::

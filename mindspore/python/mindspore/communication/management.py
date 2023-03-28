@@ -117,11 +117,11 @@ def init(backend_name=None):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore.communication import init
         >>> init()
@@ -193,11 +193,11 @@ def release():
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore.communication import init, release
         >>> init()
@@ -234,11 +234,11 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore.communication import init, get_rank
         >>> init()
@@ -281,11 +281,11 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_rank, get_local_rank
@@ -331,11 +331,11 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_group_size
@@ -380,11 +380,11 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_local_rank_size
@@ -432,11 +432,11 @@ def get_world_rank_from_group_rank(group, group_rank_id):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_world_rank_from_group_rank
@@ -486,11 +486,11 @@ def get_group_rank_from_world_rank(world_rank_id, group):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_group_rank_from_world_rank
@@ -537,11 +537,11 @@ def create_group(group, rank_ids):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#preparations>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_ .
 
         >>> from mindspore import set_context
         >>> import mindspore.ops as ops

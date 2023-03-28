@@ -163,7 +163,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         and the search mode to "sharding_propagation".
         If the input contain Parameter, its strategy should be set in `in_strategy`.
         For more details about shard, please refer to `Functional Operator Sharding
-        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_.
+        <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/pynative_shard_function_parallel.html>`_.
 
     Args:
         fn (Union[Cell, Function]): Function to be executed in parallel.

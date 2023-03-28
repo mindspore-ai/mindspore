@@ -15,7 +15,7 @@ mindspore.ops.coo_relu
 
     参数：
         - **x** (COOTensor) - coo_relu的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
-          其数据类型为 `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_。
+          其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.html#mindspore.dtype>`_。
 
     返回：
         COOTensor，数据类型和shape与 `x` 相同。

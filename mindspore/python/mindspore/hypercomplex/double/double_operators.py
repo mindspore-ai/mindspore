@@ -1297,7 +1297,7 @@ class ReLU(nn.Cell):
 
     Inputs:
         - **inp** (Tensor) - The input of ReLU is a Tensor of shape (2, *, ..., *). The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ .
 
     Outputs:
         Tensor, with the same type and shape as the `inp`.

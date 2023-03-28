@@ -195,7 +195,7 @@ class Model:
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # For details about how to build the dataset, please refer to the variable `dataset_train` in tutorial
         >>> # document on the official website:
-        >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
+        >>> # https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/quick_start.html
         >>> dataset = create_custom_dataset()
         >>> model.train(2, dataset)
     """

@@ -523,7 +523,7 @@ def check_version_and_env_config():
         except OSError:
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, please refer to the FAQ for a solution: "
-                           "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
+                           "https://www.mindspore.cn/docs/en/r2.0/faq/installation.html.")
         if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
             return
         MSContext.get_instance().register_check_env_callback(check_env)

@@ -655,7 +655,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
+  更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
 
 - mindspore.set_context使用示例
 
@@ -681,7 +681,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
       set_context(device_target="Ascend")
       ...
 
-  更多细节可参考 `API mindspore.set_context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ 。
+  更多细节可参考 `API mindspore.set_context <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ 。
 
 - mindspore.numpy使用示例
 

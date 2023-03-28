@@ -2850,7 +2850,7 @@ def relu(input):
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
 
     Returns:
         Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input`.
@@ -4440,7 +4440,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     where :math:`dilation` is spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
     For output width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv1d
-    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
+    <https://www.mindspore.cn/docs/en/r2.0/api_python/nn/mindspore.nn.Conv2d.html>`_.
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
@@ -4562,7 +4562,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     where :math:`dilation` is spacing between kernel elements, :math:`stride` is The step length of each step,
     :math:`padding` is zero-padding added to both sides of the input.
     For output height and width on other `pad_mode`, please refer to formula on `mindspore.nn.Conv2d
-    <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Conv2d.html>`_.
+    <https://www.mindspore.cn/docs/en/r2.0/api_python/nn/mindspore.nn.Conv2d.html>`_.
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_. More detailed introduction can be found here:
