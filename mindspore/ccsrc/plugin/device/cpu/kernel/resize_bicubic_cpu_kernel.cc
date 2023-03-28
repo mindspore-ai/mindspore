@@ -237,15 +237,14 @@ static float ComputeYInterpolation(int which, const WeightsAndIndices &y_wai, co
                           y_ptr_1[x_index], y_ptr_2[x_index], y_ptr_3[x_index]);
 }
 
-static float Compute_1D(const float values_[4], const float xw_0, const float xw_1, const float xw_2,
-                        const float xw_3) {
+static float Compute_1D(const float *values_, const float xw_0, const float xw_1, const float xw_2, const float xw_3) {
   return Interpolate1D<float>(xw_0, xw_1, xw_2, xw_3, values_[0], values_[1], values_[2], values_[3]);
 }
 
 template <typename T1>
-std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> cached_value, const ResizerState &RS,
-                             const WeightsAndIndices &y_wai, const T1 *y_ptr_0, const T1 *y_ptr_1, const T1 *y_ptr_2,
-                             const T1 *y_ptr_3) {
+void CalSwitch(const WeightsAndIndices &x_wai, float *cached_value, const ResizerState &RS,
+               const WeightsAndIndices &y_wai, const T1 *y_ptr_0, const T1 *y_ptr_1, const T1 *y_ptr_2,
+               const T1 *y_ptr_3) {
   switch (x_wai.advance) {
     case caseid3:
       cached_value[static_cast<size_t>(0)] = cached_value[static_cast<size_t>(1)];
@@ -264,8 +263,7 @@ std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> 
   for (size_t i = x_wai.advance; i <= caseid3; i++) {
     cached_value[i] = ComputeYInterpolation(i, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3, x_wai);
   }
-
-  return cached_value;
+  return;
 }
 
 template <typename T1, typename T2>
@@ -280,8 +278,8 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
   const int64_t out_chw = out_ch * RS.out_width;
   const int64_t out_hw = RS.out_height * RS.out_width;
   const size_t parallel_num = static_cast<size_t>(out_ch * RS.batch_size);
-  std::vector<float> cached_value(calnum4, 0);
   auto task = [&](size_t start, size_t end) {
+    std::array<float, 4> cached_value{};
     for (size_t i = start; i < end; ++i) {  // nch
       const int64_t b = i / out_ch, c = i % out_ch / RS.out_height, y = i % RS.out_height;
       WeightsAndIndices y_wai;
@@ -299,7 +297,7 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
       const T1 *y_ptr_3 = input_b_ptr + y_wai.index_3 * RS.in_width;
       for (int64_t x = 0; x < RS.out_width; ++x) {
         const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
-        cached_value = CalSwitch(x_wai, cached_value, RS, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
+        (void)CalSwitch(x_wai, cached_value.data(), RS, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
         output_y_ptr[x] = static_cast<T2>(
           Compute_1D(cached_value.data(), x_wai.weight_0, x_wai.weight_1, x_wai.weight_2, x_wai.weight_3));
       }
