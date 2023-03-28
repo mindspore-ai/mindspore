@@ -1,11 +1,11 @@
 .. py:method:: log_prob(value, mean=None, sd=None)
 
-    the log value of the probability.
+    Evaluate log probability of the value of the HalfNormal distribution.
 
     Parameters
         - **value** (Tensor) - the value to compute.
-        - **mean** (Tensor) - the mean of the distribution. Default: None.
-        - **sd** (Tensor) - the standard deviation of the distribution. Default: None.
+        - **mean** (Tensor, optional) - the mean of the distribution. Default: None.
+        - **sd** (Tensor, optional) - the standard deviation of the distribution. Default: None.
 
     Returns
         Tensor, the log value of the probability.
