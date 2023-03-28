@@ -1271,9 +1271,9 @@ def dropout1d(input, p=0.5, training=True):
         input (Tensor): A tensor with shape :math:`(N, C, L)` or :math:`(C, L)`, where `N` is the batch size, `C` is the
             number of channels, `L` is the feature length. The data type must be int8, int16, int32, int64, float16,
             float32 or float64.
-        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+        p (float, optional): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means an 80% chance of clearing. Default: 0.5.
-        training (bool): Apply dropout if is True. Default: True.
+        training (bool, optional): Apply dropout if is True. Default: True.
 
     Returns:
         Tensor, output, with the same shape and data type as `input`.
@@ -5079,7 +5079,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
             \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
             \text{kernel_size[1]}, \text{kernel_size[1]})`.
-        bias (Tensor): Bias Tensor with shape `:math:`(C_{out})`. When bias is None, zeros will be used. Default: None.
+        bias (Tensor): Bias Tensor with shape :math:`(C_{out})`. When bias is None, zeros will be used. Default: None.
         stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
@@ -5588,7 +5588,8 @@ def elu(input_x, alpha=1.0):
 
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float): The alpha value of ELU, the data type is float. Only support '1.0' currently. Default: 1.0.
+        alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
+            Default: 1.0.
 
     Returns:
         Tensor, has the same shape and data type as `input_x`.
