@@ -5763,8 +5763,8 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):    # pyl
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Args:
-        x (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        axis (int): The dimension to reduce. Default: 0.
+        input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
+        axis (int): The dimension to reduce. Default: None.
         keepdims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
             the output will reduce dimension if false. Default: False.
 

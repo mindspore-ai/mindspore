@@ -8,12 +8,12 @@ mindspore.ops.hardsigmoid
     Hard Sigmoid定义为：
 
     .. math::
-        \text{hsigmoid}(x_{i}) = \text max(0, min(1, \frac{x_{i} + 3}{6})),
+        \text{hsigmoid}(x_{i}) = \text max(0, min(1, \frac{x_{i} + 3}{6}))
 
     其中，:math:`x_i` 是输入Tensor的一个元素。
 
     参数：
-        - **input** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor，数据类型为float16、float32或float64。
+        - **input** (Tensor) - Hard Sigmoid的输入，数据类型为float16、float32或float64。
 
     返回：
         Tensor，shape和数据类型与输入 `input` 相同。
