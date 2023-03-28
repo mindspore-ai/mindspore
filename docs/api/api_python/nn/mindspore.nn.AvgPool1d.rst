@@ -28,6 +28,12 @@ mindspore.nn.AvgPool1d
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 或 :math:`(C_{in}, L_{in})` 的Tensor。
 
+        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+
+        .. math::
+            L_{out} = \left\lfloor \frac{L_{in} +
+            2 \times \text{padding} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
+
     输出：
         shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor。
 
