@@ -223,3 +223,18 @@ def test_train_pynative_mode_gpu():
     graph_loss = get_train_loss(False, "GPU")
     expect_loss = [11.150148]
     assert np.allclose(graph_loss[0], expect_loss, 5e-2, 5e-2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_train_pynative_mode_ascend():
+    """
+    Feature: Test the simplified dynamic shape transformer network with small data.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    graph_loss = get_train_loss(False, "Ascend")
+    expect_loss = [11.150148]
+    assert np.allclose(graph_loss[3], expect_loss, 5e-2, 5e-2)
