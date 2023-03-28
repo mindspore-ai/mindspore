@@ -53,7 +53,7 @@ int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &a
 AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, int64_t start_v, int64_t end,
                                 int64_t step) {
   auto elems = seq_abs->elements();
-  int64_t len = elems.size();
+  int64_t len = static_cast<int64_t>(elems.size());
   int64_t start = start_v;
   abstract::AbstractBasePtrList abs{};
   if (step == 0) {

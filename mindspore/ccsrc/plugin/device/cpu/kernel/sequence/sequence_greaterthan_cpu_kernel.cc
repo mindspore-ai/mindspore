@@ -49,8 +49,8 @@ int SequenceGreaterThanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (input_shapes_[0].empty() || input_shapes_[1].empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << input_shapes_;
   }
-  x_size_ = input_shapes_[0][0];
-  y_size_ = input_shapes_[1][0];
+  x_size_ = static_cast<size_t>(input_shapes_[0][0]);
+  y_size_ = static_cast<size_t>(input_shapes_[1][0]);
   return KRET_OK;
 }
 
