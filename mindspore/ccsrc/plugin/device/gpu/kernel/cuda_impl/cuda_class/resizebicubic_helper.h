@@ -176,8 +176,8 @@ class ResizeBicubicHelperGpuKernel : public GpuKernelHelperBase {
   int inputheight_;
   int outputwidth_;
   int outputheight_;
-  S h_scale_;
-  S w_scale_;
+  float h_scale_;
+  float w_scale_;
 };
 }  // namespace cukernel
 }  // namespace mindspore

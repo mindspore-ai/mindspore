@@ -16,16 +16,12 @@ const int64_t kParallelDataNum = 1024 * 256;
 const char *kResizeBicubicGrad = "ResizeBicubicGrad";
 std::vector<int64_t> size_;
 std::vector<int64_t> shape_;
-float height_scale_ = 0;
-float width_scale_ = 0;
 bool align_corners_ = false;
 bool half_pixel_centers_ = false;
-
+bool format_nchw_ = true;
 }  // namespace
 
 namespace aicpu {
-
-DataType dtype0_ = DT_FLOAT;
 DataType dtype1_ = DT_FLOAT;
 DataType dtype2_ = DT_FLOAT;
 
@@ -37,20 +33,35 @@ struct ResizerGradState {
   void CalculateSize(CpuKernelContext &ctx) {
     Tensor *input0_tensor = ctx.Input(0);
     Tensor *input1_tensor = ctx.Input(1);
+    auto format = input0_tensor->GetTensorShape()->GetFormat();
+    format_nchw_ = (format == Format::FORMAT_NCHW);
     shape_ = input0_tensor->GetTensorShape()->GetDimSizes();
     size_ = input1_tensor->GetTensorShape()->GetDimSizes();
 
     batch_size = shape_[0];
-    channels = shape_[3];
-    resized_height = shape_[1];
-    resized_width = shape_[2];
+    if (format_nchw_) {
+      channels = shape_[1];
 
-    original_height = size_[1];
-    original_width = size_[2];
+      resized_height = shape_[2];
+      resized_width = shape_[3];
+
+      original_height = size_[2];
+      original_width = size_[3];
+    } else {
+      channels = shape_[3];
+
+      resized_height = shape_[1];
+      resized_width = shape_[2];
+
+      original_height = size_[1];
+      original_width = size_[2];
+    }
 
     height_scale = Scaling64_(original_height, resized_height, align_corners_);
     width_scale = Scaling64_(original_width, resized_width, align_corners_);
   }
+
+  // NHWC
   int64_t Calindex(const int64_t x1, const int64_t x2, const int64_t x3, const int64_t x4, const bool flag_) {
     if (!flag_) {
       return static_cast<int64_t>(x1 * original_height * original_width * channels) +
@@ -62,6 +73,21 @@ struct ResizerGradState {
              static_cast<int64_t>(x4);
     }
   }
+
+  // NCHW
+  int64_t Calindex(const bool reload, const int64_t x1, const int64_t x2, const int64_t x3, const int64_t x4,
+                   const bool flag_) {
+    if (!flag_) {
+      return static_cast<int64_t>(x1 * channels * original_height * original_width) +
+             static_cast<int64_t>(x2 * original_width * original_height) + static_cast<int64_t>(x3 * original_width) +
+             static_cast<int64_t>(x4);
+    } else {
+      return static_cast<int64_t>(x1 * channels * resized_height * resized_width) +
+             static_cast<int64_t>(x2 * resized_width * resized_height) + static_cast<int64_t>(x3 * resized_width) +
+             static_cast<int64_t>(x4);
+    }
+  }
+
   int64_t batch_size;
   int64_t channels;
 
@@ -117,17 +143,10 @@ class CachedInterpolationCalculator {
         cached_values_hand++;
       }
     }
-    switch (new_indices_hand) {
-      case 0:
-        indexes_[0] = x_0;
-      case 1:
-        indexes_[1] = x_1;
-      case 2:
-        indexes_[2] = x_2;
-      case 3:
-        indexes_[3] = x_3;
-        break;
+    for (int i = static_cast<int>(new_indices_hand); i < 4; ++i) {
+      indexes_[i] = new_x_indices[i];
     }
+
     return new_indices_hand;
   }
 
@@ -222,12 +241,9 @@ uint32_t ResizeBicubicGradCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   } else {
     half_pixel_centers_ = pattr_half_pixel_centers->GetBool();
   }
-  dtype0_ = input0_tensor->GetDataType();
+
   dtype1_ = input1_tensor->GetDataType();
   dtype2_ = output_tensor->GetDataType();
-
-  KERNEL_CHECK_FALSE((dtype0_ == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "ResizeBicubicGrad op doesn't support input[0] tensor types: [%s]", DTypeStr(dtype0_).c_str());
 
   KERNEL_CHECK_FALSE((dtype1_ == DT_FLOAT || dtype1_ == DT_DOUBLE), KERNEL_STATUS_PARAM_INVALID,
                      "ResizeBicubicGrad op doesn't support input[1] tensor types: [%s]", DTypeStr(dtype1_).c_str());
@@ -235,12 +251,6 @@ uint32_t ResizeBicubicGradCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   KERNEL_CHECK_FALSE((dtype1_ == dtype2_), KERNEL_STATUS_PARAM_INVALID,
                      "The type of input[1] and output must be the same");
 
-  int64_t in_height = shape_[1];
-  int64_t in_width = shape_[2];
-  int64_t out_height = size_[1];
-  int64_t out_width = size_[2];
-  height_scale_ = Scaling64_(out_height, in_height, align_corners_);
-  width_scale_ = Scaling64_(out_width, in_width, align_corners_);
   return KERNEL_STATUS_OK;
 }
 
@@ -254,7 +264,6 @@ static void ComputeGradientXWeightsAndIndices(const ResizerGradState &resizer_st
       auto &x_wai = (*x_wais)[x];
       x_wai.advance = calc.Advance(x_wai.index_0, x_wai.index_1, x_wai.index_2, x_wai.index_3);
     }
-
   } else {
     for (int64_t x = 0; x < resizer_state.resized_width; ++x) {
       GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(resizer_state.width_scale, x, resizer_state.original_width,
@@ -266,7 +275,7 @@ static void ComputeGradientXWeightsAndIndices(const ResizerGradState &resizer_st
 }
 
 template <typename T>
-inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer_state, const bool half_pixel_centers,
+inline void ResizeBicubicGrad(const T *input_grad, ResizerGradState &resizer_state, const bool half_pixel_centers,
                               T *output_grad, CpuKernelContext &ctx) {
   const float height_scale = resizer_state.height_scale;
   const int64_t original_height = resizer_state.original_height;
@@ -319,6 +328,7 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
                 T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
               output_grad[resizer_state.Calindex(b, y_wai.index_1, x_wai.index_3, c, !flag)] +=
                 T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
+
               // row 2 of 0, 1, 2, 3
               output_grad[resizer_state.Calindex(b, y_wai.index_2, x_wai.index_0, c, !flag)] +=
                 T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
@@ -328,6 +338,7 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
                 T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
               output_grad[resizer_state.Calindex(b, y_wai.index_2, x_wai.index_3, c, !flag)] +=
                 T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
+
               // row 3 of 0, 1, 2, 3
               output_grad[resizer_state.Calindex(b, y_wai.index_3, x_wai.index_0, c, !flag)] +=
                 T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
@@ -375,6 +386,7 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
               T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
             output_grad[resizer_state.Calindex(b, y_wai.index_1, x_wai.index_3, c, !flag)] +=
               T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
+
             // row 2 of 0, 1, 2, 3
             output_grad[resizer_state.Calindex(b, y_wai.index_2, x_wai.index_0, c, !flag)] +=
               T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
@@ -384,6 +396,7 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
               T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
             output_grad[resizer_state.Calindex(b, y_wai.index_2, x_wai.index_3, c, !flag)] +=
               T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
+
             // row 3 of 0, 1, 2, 3
             output_grad[resizer_state.Calindex(b, y_wai.index_3, x_wai.index_0, c, !flag)] +=
               T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
@@ -401,8 +414,147 @@ inline void ResizeBicubicGrad(const float *input_grad, ResizerGradState &resizer
 }
 
 template <typename T>
+inline void ResizeBicubicGrad(const bool reload, const T *input_grad, ResizerGradState &resizer_state,
+                              const bool half_pixel_centers, T *output_grad, CpuKernelContext &ctx) {
+  const float height_scale = resizer_state.height_scale;
+  const int64_t original_height = resizer_state.original_height;
+  const int64_t channels = resizer_state.channels;
+  const int64_t resized_width = resizer_state.resized_width;
+  const int64_t resized_height = resizer_state.resized_height;
+
+  std::vector<WeightsAndIndices> x_wais(resizer_state.resized_width);
+  ComputeGradientXWeightsAndIndices(resizer_state, half_pixel_centers, &x_wais);
+  const bool flag = true;
+  bool utils_flag = false;
+  if (resizer_state.original_width * original_height * channels * resizer_state.batch_size >= kParallelDataNum) {
+    utils_flag = true;
+  }
+  if (utils_flag) {
+    for (int64_t b = 0; b < resizer_state.batch_size; ++b) {
+      uint32_t min_core_num = 1;
+      int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
+      if (max_core_num > resized_height) {
+        max_core_num = resized_height;
+      }
+      auto shard_resize_bicubic_grad = [&](int64_t start, int64_t end) {
+        for (int64_t y = start; y < end; ++y) {
+          WeightsAndIndices y_wai;
+          if (half_pixel_centers) {
+            GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(height_scale, y, original_height, &y_wai);
+          } else {
+            GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(height_scale, y, original_height, &y_wai);
+          }
+          for (int64_t x = 0; x < resized_width; ++x) {
+            const WeightsAndIndices &x_wai = x_wais[x];
+            for (int64_t c = 0; c < channels; ++c) {
+              T curr_input_grad = input_grad[resizer_state.Calindex(true, b, c, y, x, flag)];
+              // row 0 of 0, 1, 2, 3
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_0, !flag)] +=
+                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_0);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_1, !flag)] +=
+                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_1);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_2, !flag)] +=
+                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_2);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_3, !flag)] +=
+                T(curr_input_grad * y_wai.weight_0 * x_wai.weight_3);
+
+              // row 1 of 0, 1, 2, 3
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_0, !flag)] +=
+                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_0);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_1, !flag)] +=
+                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_1);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_2, !flag)] +=
+                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_3, !flag)] +=
+                T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
+
+              // row 2 of 0, 1, 2, 3
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_0, !flag)] +=
+                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_1, !flag)] +=
+                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_1);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_2, !flag)] +=
+                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_3, !flag)] +=
+                T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
+
+              // row 3 of 0, 1, 2, 3
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_0, !flag)] +=
+                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_1, !flag)] +=
+                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_1);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_2, !flag)] +=
+                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_2);
+              output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_3, !flag)] +=
+                T(curr_input_grad * y_wai.weight_3 * x_wai.weight_3);
+            }
+          }
+        }
+      };
+      CpuKernelUtils::ParallelFor(ctx, resized_height, resized_height / max_core_num, shard_resize_bicubic_grad);
+    }
+  } else {
+    for (int64_t b = 0; b < resizer_state.batch_size; ++b) {
+      for (int64_t y = 0; y < resized_height; ++y) {
+        WeightsAndIndices y_wai;
+        if (half_pixel_centers) {
+          GetWeightsAndIndicesGrad<HalfPixelScalerGrad, true>(height_scale, y, original_height, &y_wai);
+        } else {
+          GetWeightsAndIndicesGrad<LegacyScalerGrad, false>(height_scale, y, original_height, &y_wai);
+        }
+        for (int64_t x = 0; x < resized_width; ++x) {
+          const WeightsAndIndices &x_wai = x_wais[x];
+          for (int64_t c = 0; c < channels; ++c) {
+            T curr_input_grad = input_grad[resizer_state.Calindex(true, b, c, y, x, flag)];
+            // row 0 of 0, 1, 2, 3
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_0, !flag)] +=
+              T(curr_input_grad * y_wai.weight_0 * x_wai.weight_0);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_1, !flag)] +=
+              T(curr_input_grad * y_wai.weight_0 * x_wai.weight_1);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_2, !flag)] +=
+              T(curr_input_grad * y_wai.weight_0 * x_wai.weight_2);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_0, x_wai.index_3, !flag)] +=
+              T(curr_input_grad * y_wai.weight_0 * x_wai.weight_3);
+
+            // row 1 of 0, 1, 2, 3
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_0, !flag)] +=
+              T(curr_input_grad * y_wai.weight_1 * x_wai.weight_0);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_1, !flag)] +=
+              T(curr_input_grad * y_wai.weight_1 * x_wai.weight_1);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_2, !flag)] +=
+              T(curr_input_grad * y_wai.weight_1 * x_wai.weight_2);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_1, x_wai.index_3, !flag)] +=
+              T(curr_input_grad * y_wai.weight_1 * x_wai.weight_3);
+
+            // row 2 of 0, 1, 2, 3
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_0, !flag)] +=
+              T(curr_input_grad * y_wai.weight_2 * x_wai.weight_0);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_1, !flag)] +=
+              T(curr_input_grad * y_wai.weight_2 * x_wai.weight_1);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_2, !flag)] +=
+              T(curr_input_grad * y_wai.weight_2 * x_wai.weight_2);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_2, x_wai.index_3, !flag)] +=
+              T(curr_input_grad * y_wai.weight_2 * x_wai.weight_3);
+
+            // row 3 of 0, 1, 2, 3
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_0, !flag)] +=
+              T(curr_input_grad * y_wai.weight_3 * x_wai.weight_0);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_1, !flag)] +=
+              T(curr_input_grad * y_wai.weight_3 * x_wai.weight_1);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_2, !flag)] +=
+              T(curr_input_grad * y_wai.weight_3 * x_wai.weight_2);
+            output_grad[resizer_state.Calindex(true, b, c, y_wai.index_3, x_wai.index_3, !flag)] +=
+              T(curr_input_grad * y_wai.weight_3 * x_wai.weight_3);
+          }
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
 uint32_t ResizeBicubicGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
-  auto input0_addr = reinterpret_cast<float *>(ctx.Input(0)->GetData());
+  auto input0_addr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_addr = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
   AttrValue *pattr_half_pixel_centers = ctx.GetAttr("half_pixel_centers");
@@ -416,8 +568,11 @@ uint32_t ResizeBicubicGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
 
   auto ret = memset_s(output_addr, ctx.Output(0)->GetDataSize(), 0, ctx.Output(0)->GetDataSize());
   KERNEL_CHECK_FALSE((ret == EOK), ret, "Output buffer memset failed, ret: [%d].", ret);
-
-  ResizeBicubicGrad(input0_addr, sta, half_pixel_centers_, output_addr, ctx);
+  if (format_nchw_) {
+    ResizeBicubicGrad(true, input0_addr, sta, half_pixel_centers_, output_addr, ctx);
+  } else {
+    ResizeBicubicGrad(input0_addr, sta, half_pixel_centers_, output_addr, ctx);
+  }
   return KERNEL_STATUS_OK;
 }
 

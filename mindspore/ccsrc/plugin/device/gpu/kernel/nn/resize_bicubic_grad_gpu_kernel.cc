@@ -31,10 +31,6 @@ using ResizeBicubicGradPtrCreatorFunc =
 const std::vector<std::pair<KernelAttr, ResizeBicubicGradPtrCreatorFunc>> kernel_attr = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    CreateResizeBicubicGradKernelPtr<float, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   CreateResizeBicubicGradKernelPtr<float, double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   CreateResizeBicubicGradKernelPtr<double, float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    CreateResizeBicubicGradKernelPtr<double, double>}};
 }  // namespace

@@ -40,11 +40,6 @@ def get_bprop_resize_bicubic(self):
                                             half_pixel_centers=self.half_pixel_centers)
 
     def bprop(images, size, out, dout):
-        images_type = F.dtype(images)
-        type_list = [mstype.int8, mstype.uint8, mstype.int16, mstype.uint16, mstype.int32,
-                     mstype.int64, mstype.float16]
-        if images_type in type_list:
-            images = F.cast(images, mstype.float64)
         dx = resize_bicubic_grad(dout, images)
         return (dx, P.ZerosLike()(size))
     return bprop
