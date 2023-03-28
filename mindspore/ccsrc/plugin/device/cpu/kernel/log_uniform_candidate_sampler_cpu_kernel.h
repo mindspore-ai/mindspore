@@ -55,7 +55,7 @@ class LogUniformCandidateSamplerCpuKernel : public NativeCpuKernelMod {
   }
 
  private:
-  int64_t Sample(random::SinglePhiloxRandom *single);
+  int64_t Sample(random::SinglePhiloxRandom *single) const;
   float Probability(int64_t value) const;
 
  private:

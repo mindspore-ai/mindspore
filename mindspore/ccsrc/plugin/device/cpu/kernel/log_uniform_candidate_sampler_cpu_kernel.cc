@@ -62,7 +62,7 @@ float LogUniformCandidateSamplerCpuKernel::Probability(int64_t value) const {
   return (log((value + 2.0) / (value + 1.0))) / log_range_;
 }
 
-int64_t LogUniformCandidateSamplerCpuKernel::Sample(random::SinglePhiloxRandom *single) {
+int64_t LogUniformCandidateSamplerCpuKernel::Sample(random::SinglePhiloxRandom *single) const {
   double d = single->GenDouble();
   int64_t val = static_cast<int64_t>(exp(d * log_range_)) - 1;
   return val % range_max_;
