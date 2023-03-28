@@ -37,7 +37,7 @@ abstract::ShapePtr NPUClearFloatStatusV2InferShape(const PrimitivePtr &,
   }
   // dynamic shape
   if (IsDynamic(input_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector(abstract::Shape::kShapeDimAny, input_shape.size()));
+    return std::make_shared<abstract::Shape>(ShapeVector(input_shape.size(), abstract::Shape::kShapeDimAny));
   }
   const int64_t normal_shape_size = 1;
   const int64_t normal_shape_len = 8;
