@@ -17,13 +17,10 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_KERNEL_FACTORY_H_
 #define MINDSPORE_CCSRC_KERNEL_KERNEL_FACTORY_H_
 
-#include <algorithm>
 #include <functional>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 #include "include/backend/visible.h"
 #include "utils/log_adapter.h"
 

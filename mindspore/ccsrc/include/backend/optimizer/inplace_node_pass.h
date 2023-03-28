@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"

@@ -94,6 +94,7 @@ class BACKEND_EXPORT UnpackNode {
  public:
   UnpackNode &operator=(const std::string &name);
   UnpackNode &operator=(const UnpackNode &u) = default;
+  UnpackNode(const UnpackNode &u) = default;
 
  private:
   explicit UnpackNode(AnfNodePtr node) : node_(std::move(node)) {}
