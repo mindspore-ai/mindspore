@@ -130,7 +130,7 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   }
 }
 
-MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) {
+MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) const {
   auto user_data = device_sync->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
   HashTableExportData export_data;
