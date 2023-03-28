@@ -921,46 +921,11 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
 
 class ResizeBilinear(Cell):
     r"""
-    Samples the input tensor to the given size or scale_factor by using bilinear interpolate.
-
-    Args:
-        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
-            Default: False.
-
-    Inputs:
-        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
-          :math:`(batch, channels, height, width)`, with data type of float16 or float32.
-        - **size** (Union[tuple[int], list[int], None]): A tuple or list of 2 int elements
-          :math:`(new\_height, new\_width)`,the new size of the tensor.
-          One and only one of size and scale_factor can be set to None. Default: None.
-        - **scale_factor** (int, None): The scale factor of new size of the tensor. The value should be positive
-          integer. One and only one of size and scale_factor can be set to None. Default: None.
-        - **align_corners** (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
-          aligns the 4 corners of images and resized images. If false, rescale by :math:`new\_height / height`.
-          Default: False.
-
-    Outputs:
-        Resized tensor.
-        If size is set, the result is 4-D tensor with shape :math:`(batch, channels, new\_height, new\_width)`,
-        and the data type is the same as `x`.
-        If scale is set, the result is 4-D tensor with shape
-        :math:`(batch, channels, scale\_factor * height, scale\_factor * width)` and the data type is the same as `x`.
-
-    Raises:
-        TypeError: If `size` is not one of tuple, list, None.
-        TypeError: If `scale_factor` is neither int nor None.
-        TypeError: If `align_corners` is not a bool.
-        TypeError: If `half_pixel_centers` is not a bool.
-        TypeError: If `align_corners` and `half_pixel_centers` are all True.
-        TypeError: If `half_pixel_centers` is True and device_target not Ascend.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        ValueError: If `size` and `scale_factor` are both None or not None.
-        ValueError: If length of shape of `x` is not equal to 4.
-        ValueError: If `scale_factor` is an int which is less than 0.
-        ValueError: If `size` is a list or tuple whose length is not equal to 2.
+    'nn.ResizeBilinear' is deprecated from version 2.0 and will be removed in a future version,
+    use 'ops.ResizeBilinearV2' or 'ops.interpolate' instead.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
@@ -982,6 +947,8 @@ class ResizeBilinear(Cell):
     def __init__(self, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
         super(ResizeBilinear, self).__init__()
+        logger.warning("'nn.ResizeBilinear' is deprecated from version 2.0 and will be removed in a "
+                       "future version, use 'ops.ResizeBilinearV2' or 'ops.interpolate' instead.")
         self.half_pixel_centers = half_pixel_centers
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):

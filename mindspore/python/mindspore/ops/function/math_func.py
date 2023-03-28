@@ -1479,7 +1479,7 @@ def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-
         ValueError: If `updates`'s shape is not the same as `var` except the `axis` th dimension.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
@@ -1522,7 +1522,7 @@ def inplace_sub(x, v, indices):
         ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
