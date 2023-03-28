@@ -17,4 +17,4 @@ mindspore.ops.swapdims
     异常：
         - **TypeError** - `input` 不是Tensor类型。
         - **TypeError** - `dim0` 或 `dim1` 不是整数。
-        - **ValueError** - `dim0` 或 `dim1` 不在 `[-ndim, ndim-1]` 范围内。
+        - **ValueError** - `dim0` 或 `dim1` 不在 :math:`[-ndim, ndim-1]` 范围内。
