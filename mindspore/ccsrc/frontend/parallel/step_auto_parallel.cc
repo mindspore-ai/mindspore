@@ -1225,7 +1225,13 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
       }
     }
   }
-  MS_EXCEPTION_IF_NULL(virtual_dataset_);
+  if (!virtual_dataset_) {
+    // Normally for auto parallel, virtual dataset is required in order to control the input's parallel strategy.
+    // However, in some test cases or NN, there is no input data.
+    // This if condition aims to deal with these cases, and return -1 to indicate that input batch size is null.
+    graph->batch_size = -1;
+    return;
+  }
   auto node_user_map = manager->node_users();
   auto node_users = node_user_map[virtual_dataset_];
   for (auto &node_user : node_users) {
