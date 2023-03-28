@@ -34,13 +34,16 @@ def create_dataset(size, needs_batch):
         return ({"originally_tensor": x, "originally_numpy": arr, "originally_dict": {"dd": x},
                  "originally_int": 1, "originally_bool": True, "originally_float": 1.0}, x, arr)
 
+    def my_batch_map(col1, col2, col3, batch_info):
+        return (col1, col2, col3)
+
     data_path = os.path.join("/home/workspace/mindspore_dataset/mnist", "train")
     data = ds.MnistDataset(data_path, num_parallel_workers=8, num_samples=size)
     data = data.project("image")
     data = data.map(operations=my_func, input_columns=["image"],
                     output_columns=["dict", "originally_tensor", "originally_numpy"])
     if needs_batch:
-        data = data.batch(2)
+        data = data.batch(2, per_batch_map=my_batch_map)
     return data
 
 
