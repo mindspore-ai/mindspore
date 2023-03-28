@@ -74,7 +74,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   }
   NodePtr Custom(const NodePtrList &inputs, const NodeBase &baseinfo, const std::string &func_name,
                  const std::string &func_type, const std::string &func_source_str, const size_t &inplace_assign_output,
-                 const std::string &func_compile_attrs) {
+                 const std::string &func_compile_attrs) const {
     std::string write_from_output_to_input = "0 " + std::to_string(inplace_assign_output);
     return Op("Custom", baseinfo, inputs,
               {{"func_name", MakeValue(func_name)},
