@@ -422,7 +422,7 @@ def test_tensor_shape_value_infer():
     assert res == ((64, 16, -1), (32, 32, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
