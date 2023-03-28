@@ -194,7 +194,7 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
         ParallelLaunchAutoSearch(shard_frame, sub_args.size_d, this, &parallel_search_info_);
       }
     };
-    ParallelLaunchAutoSearch(shard_template, input_dim_sizes_[0], this, &parallel_search_info_);
+    shard_template(0, input_dim_sizes_[0]);
   }
   return true;
 }
