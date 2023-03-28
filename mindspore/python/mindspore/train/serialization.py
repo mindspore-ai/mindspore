@@ -48,7 +48,7 @@ from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common.api import _get_parameter_layout
 from mindspore.common.api import _generate_branch_control_input
 from mindspore.common.initializer import initializer, One
-from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import Parameter, _offload_if_config
 from mindspore.common.tensor import Tensor
 from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
@@ -213,6 +213,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                 os.chmod(ckpt_file_name, stat.S_IWUSR)
                 os.remove(ckpt_file_name)
             with open(ckpt_file_name, "ab") as f:
+                plain_data = None
                 if enc_key is not None:
                     plain_data = BytesIO()
 
@@ -220,30 +221,18 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                     if value[0] == "mapparameter":
                         _write_mapparameter(name, value, f)
                         continue
+                    elif value[0] == "offload_parameter":
+                        new_value = value[1:]
+                        new_value[2] = value[3].asnumpy().reshape(-1)
+                        _write_parameter_data(name, new_value, f, enc_key, plain_data)
+                        _offload_if_config(value[3])
+                        continue
+
                     if isinstance(value[2], Tensor):
                         _write_hugeparameter(name, value, f)
                         continue
 
-                    data_size = value[2].nbytes / 1024
-                    if data_size > SLICE_SIZE:
-                        slice_count = math.ceil(data_size / SLICE_SIZE)
-                        param_slice_list = np.array_split(value[2], slice_count)
-                    else:
-                        param_slice_list = [value[2]]
-
-                    for param_slice in param_slice_list:
-                        checkpoint_list = Checkpoint()
-                        param_value = checkpoint_list.value.add()
-                        param_value.tag = name
-                        param_tensor = param_value.tensor
-                        param_tensor.dims.extend(value[0])
-                        param_tensor.tensor_type = value[1]
-                        param_tensor.tensor_content = param_slice.tobytes()
-
-                        if enc_key is None:
-                            f.write(checkpoint_list.SerializeToString())
-                        else:
-                            plain_data.write(checkpoint_list.SerializeToString())
+                    _write_parameter_data(name, value, f, enc_key, plain_data)
 
                 if enc_key is not None:
                     plain_data.seek(0)
@@ -259,6 +248,30 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         logger.critical("Failed to save the checkpoint file %s. Maybe don't have the permission to write files, "
                         "or the disk space is insufficient and so on.", ckpt_file_name)
         raise e
+
+
+def _write_parameter_data(name, value, f, enc_key, plain_data):
+    """Write parameter data into protobuf file."""
+    data_size = value[2].nbytes / 1024
+    if data_size > SLICE_SIZE:
+        slice_count = math.ceil(data_size / SLICE_SIZE)
+        param_slice_list = np.array_split(value[2], slice_count)
+    else:
+        param_slice_list = [value[2]]
+
+    for param_slice in param_slice_list:
+        checkpoint_list = Checkpoint()
+        param_value = checkpoint_list.value.add()
+        param_value.tag = name
+        param_tensor = param_value.tensor
+        param_tensor.dims.extend(value[0])
+        param_tensor.tensor_type = value[1]
+        param_tensor.tensor_content = param_slice.tobytes()
+
+        if enc_key is None:
+            f.write(checkpoint_list.SerializeToString())
+        else:
+            plain_data.write(checkpoint_list.SerializeToString())
 
 
 def _write_mapparameter(name, value, f):
@@ -379,13 +392,25 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 param_data.append(value.param_info.origin_shape)
                 param_data.append(str(value.dtype))
                 param_data.append(value.key)
+            elif value.data.offload_file_path() != "":
+                # list save offload data: [Param, shape, type, param.key]
+                param_data = ["offload_parameter"]
+                param_tensor = value.data
+                if key in parameter_layout_dict:
+                    param_tensor = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_tensor,
+                                                          integrated_save)
+                param_data.append(param_tensor)
+                param_data.append(param_tensor.shape)
+                param_data.append(str(param_tensor.dtype))
+                param_data.append(value.key)
             else:
                 param_data = Tensor(value.data.asnumpy())
 
-            # in automatic model parallel scenario, some parameters were split to all the devices,
-            # which should be combined before saving
-            if key in parameter_layout_dict:
-                param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data, integrated_save)
+                # in automatic model parallel scenario, some parameters were split to all the devices,
+                # which should be combined before saving
+                if key in parameter_layout_dict:
+                    param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data,
+                                                        integrated_save)
 
             each_param["data"] = param_data
             param_list.append(each_param)
@@ -406,7 +431,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data_list[key] = []
             if isinstance(param["data"], list):
                 if param["data"][0] == "persistent_data":
-                    _save_persistent_data(data_list, key, param)
+                    _save_param_list_data(data_list, key, param)
+                elif param["data"][0] == "offload_parameter":
+                    data_list[key].append("offload_parameter")
+                    _save_param_list_data(data_list, key, param)
                 else:
                     _save_mapparameter(data_list, param)
                 continue
@@ -456,7 +484,7 @@ def _save_mapparameter(data_list, param):
         data_list[param["name"]].append(tmp_list)
 
 
-def _save_persistent_data(data_list, key, param):
+def _save_param_list_data(data_list, key, param):
     """Save persistent data into save_obj."""
     dims = []
     # persistent_data shape can not be ()
@@ -868,7 +896,9 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                         param_data = int(param_data[0])
                     if dims not in ([0], [1]):
                         param_data = param_data.reshape(list(dims))
-                    parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                    parameter = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                    parameter_dict[element.tag] = parameter
+                    _offload_if_config(parameter)
 
         logger.info("Loading checkpoint files process is finished.")
 

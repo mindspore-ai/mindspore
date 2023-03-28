@@ -143,6 +143,17 @@ class MS_CORE_API TensorData {
   /// \param[in] use_comma Whether to use comma.
   /// \return The display information.
   virtual std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const = 0;
+
+  /// \brief Set data saved file path.
+  ///
+  /// \param[in] data file path.
+  /// \return Void.
+  virtual void set_file_path(const std::string &path) {}
+
+  /// \brief Get data saved file path.
+  ///
+  /// \return data file path.
+  virtual const std::string file_path() const { return ""; }
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
@@ -793,6 +804,16 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return tensor quant param.
   const std::vector<std::shared_ptr<QuantizationParam>> &quant_params() const { return quant_params_; }
 
+  /// \brief Offload tensor to file.
+  ///
+  /// \return offload tensor success.
+  bool Offload(const std::string &file_path);
+
+  /// \brief Get tensor offload file path.
+  ///
+  /// \return offload file path, or empty string if tensor has not offload.
+  const std::string GetOffloadFilePath() const;
+
  private:
   void ExecuteLazyTask() const;
 
@@ -806,7 +827,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   bool graph_output_{false};
   bool updated_by_device_{false};
-  DeviceSyncPtr device_sync_{nullptr};
+  mutable DeviceSyncPtr device_sync_{nullptr};
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};

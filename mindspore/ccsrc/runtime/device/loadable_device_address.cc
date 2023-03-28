@@ -16,11 +16,14 @@
 
 #include "runtime/device/loadable_device_address.h"
 #include "include/common/debug/common.h"
+#include "include/common/utils/offload_context.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace device {
 namespace {
 constexpr size_t kFileAlignSize = 512;
+constexpr char kSwapFileSuffix[] = ".data";
 }  // namespace
 
 bool LoadableDeviceAddress::Offload(size_t stream_id) {
@@ -102,7 +105,9 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   const auto swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
+  if (storage_info_.host_ptr_ == nullptr || storage_info_.host_ptr_mutable_) {
+    storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
+  }
   MS_EXCEPTION_IF_NULL(storage_info_.host_ptr_);
   if (status_ == DeviceAddressStatus::kInFile) {
     if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, GetFileAlignSize(), async)) {
@@ -113,8 +118,10 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
       swap_manager->AddSwappingTensor(this);
       status_ = DeviceAddressStatus::kInFileToHost;
     } else {
-      swap_manager->DeleteFile(storage_info_.file_name_);
-      storage_info_.file_name_ = "";
+      if (storage_info_.file_name_mutable_) {
+        swap_manager->DeleteFile(storage_info_.file_name_);
+        storage_info_.file_name_ = "";
+      }
       status_ = DeviceAddressStatus::kInHost;
     }
   } else {
@@ -158,8 +165,11 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
     swap_manager->AddSwappingTensor(this);
     status_ = DeviceAddressStatus::kInHostToDevice;
   } else {
-    swap_manager->FreeHostMemory(storage_info_.host_ptr_);
-    storage_info_.host_ptr_ = nullptr;
+    if (storage_info_.host_ptr_mutable_) {
+      swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+      storage_info_.host_ptr_ = nullptr;
+    }
+
     status_ = DeviceAddressStatus::kInDevice;
   }
   return true;
@@ -177,7 +187,9 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   if (status_ == DeviceAddressStatus::kInDevice && !MoveToHost(false, stream_id)) {
     return false;
   }
-  storage_info_.file_name_ = GetSwapFileName();
+  if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
+    storage_info_.file_name_ = GetSwapFileName();
+  }
   if (!swap_manager->CreateFile(storage_info_.file_name_)) {
     MS_LOG(WARNING) << "Create file for swapping failed.";
     return false;
@@ -190,8 +202,10 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
     swap_manager->AddSwappingTensor(this);
     status_ = DeviceAddressStatus::kInHostToFile;
   } else {
-    swap_manager->FreeHostMemory(storage_info_.host_ptr_);
-    storage_info_.host_ptr_ = nullptr;
+    if (storage_info_.host_ptr_mutable_) {
+      swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+      storage_info_.host_ptr_ = nullptr;
+    }
     status_ = DeviceAddressStatus::kInFile;
   }
   return true;
@@ -237,14 +251,15 @@ void LoadableDeviceAddress::ReleaseResource() {
   if (status_ == DeviceAddressStatus::kInDevice) {
     return;
   }
+
   auto device_context = GetDeviceContext();
   if (device_context != nullptr) {
     const auto swap_manager = device_context->device_res_manager_->swap_manager();
     MS_EXCEPTION_IF_NULL(swap_manager);
-    if (!storage_info_.file_name_.empty()) {
+    if (!storage_info_.file_name_.empty() && storage_info_.file_name_mutable_) {
       swap_manager->DeleteFile(storage_info_.file_name_);
     }
-    if (storage_info_.host_ptr_ != nullptr) {
+    if (storage_info_.host_ptr_ != nullptr && storage_info_.host_ptr_mutable_) {
       swap_manager->FreeHostMemory(storage_info_.host_ptr_);
     }
   }
@@ -256,8 +271,18 @@ size_t LoadableDeviceAddress::GetFileAlignSize() const {
 
 std::string LoadableDeviceAddress::GetSwapFileName() const {
   static size_t swap_file_index = 0;
-  return std::to_string(device_id()) + "_" + std::to_string(swap_file_index++) + "_" +
-         std::to_string(Common::GetTimeStamp());
+  std::string file_dir;
+  const auto &offload_context = OffloadContext::GetInstance();
+  if (offload_context != nullptr) {
+    const auto real_dir = FileUtils::GetRealPath(offload_context->offload_path().c_str());
+    if (!real_dir.has_value()) {
+      MS_LOG(EXCEPTION) << "Invalid offload path[" << offload_context->offload_path()
+                        << "]. Please check offload_path configuration.";
+    }
+    file_dir = real_dir.value() + "/";
+  }
+  return file_dir + std::to_string(device_id()) + "_" + std::to_string(swap_file_index++) + "_" +
+         std::to_string(Common::GetTimeStamp()) + kSwapFileSuffix;
 }
 
 void LoadableDeviceAddress::SetStorageInfo(const mindspore::device::StorageInfo &storage_info) {
@@ -265,8 +290,10 @@ void LoadableDeviceAddress::SetStorageInfo(const mindspore::device::StorageInfo 
   storage_info_ = storage_info;
   if (storage_info_.host_ptr_ != nullptr) {
     status_ = DeviceAddressStatus::kInHost;
+    storage_info_.host_ptr_mutable_ = false;
   } else if (!storage_info_.file_name_.empty()) {
     status_ = DeviceAddressStatus::kInFile;
+    storage_info_.file_name_mutable_ = false;
   } else {
     status_ = DeviceAddressStatus::kInDevice;
   }
@@ -285,6 +312,8 @@ void LoadableDeviceAddress::Swap(mindspore::device::DeviceAddress *other) {
     loadable_device_address->mem_offloaded_ = mem_offloaded_;
     storage_info_.host_ptr_ = nullptr;
     storage_info_.file_name_ = "";
+    storage_info_.host_ptr_mutable_ = true;
+    storage_info_.file_name_mutable_ = true;
     status_ = DeviceAddressStatus::kInDevice;
     offload_ptr_ = nullptr;
     mem_offloaded_ = false;

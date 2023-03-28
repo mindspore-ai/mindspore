@@ -254,6 +254,7 @@ void MemSwapScheduler::BuildSwapActorForGraph(const KernelGraphPtr &graph, const
   const auto &swap_context = GetSwapContext();
   auto swap_strategy = builder.Build(graph, swap_context);
   MS_EXCEPTION_IF_NULL(swap_strategy);
+  MS_LOG(INFO) << "Graph " << graph->graph_id() << ": " << swap_strategy->GetStatisticInfo();
   graph_strategy_map_[graph->graph_id()] = swap_strategy;
   AddSwappableTensors(device_context, swap_strategy, graph);
 

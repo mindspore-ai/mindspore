@@ -775,6 +775,29 @@ void RegMetaTensor(const py::module *m) {
                                   >>> data.set_dtype(mindspore.int32)
                                   mindspore.int32
                               )mydelimiter")
+    .def("offload", &Tensor::Offload, R"mydelimiter(
+                              Offload tensor data to file.
+
+                              Arg:
+                                  str : file path to save tensor data.
+                              Returns:
+                                  bool, whether the tensor offload success.
+                              Examples:
+                                  >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                  >>> data.offload('./test.data')
+                                  True
+                              )mydelimiter")
+    .def("offload_file_path", &Tensor::GetOffloadFilePath, R"mydelimiter(
+                              Offload file path for tensor.
+
+                              Returns:
+                                 str, offload file path for tensor.
+                              Examples:
+                                  >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                  >>> ret = data.offload('./test.data')
+                                  >>> ret = (data.offload_file_path() != '')
+                                  True
+                              )mydelimiter")
     .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
     .def("data_sync", &Tensor::data_sync)
     .def("__str__", &Tensor::ToString)

@@ -67,7 +67,9 @@ using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 
 struct StorageInfo {
   void *host_ptr_{nullptr};
-  std::string file_name_;
+  std::string file_name_{""};
+  bool host_ptr_mutable_{true};
+  bool file_name_mutable_{true};
 };
 
 enum class StorageType { kDevice, kHost, kFile };

@@ -59,13 +59,7 @@ class BACKEND_EXPORT IOHandle {
   bool WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token);
   bool Wait(AsyncIOToken sync_token);
 
-  void set_swap_path(const std::string &swap_path) { swap_path_ = swap_path; }
-
  private:
-  std::string GetSwapFileWholeName(const std::string &file_name) const;
-
- private:
-  std::string swap_path_;
   AsyncIO *aio_{nullptr};
 };
 using IOHandlePtr = std::shared_ptr<IOHandle>;
