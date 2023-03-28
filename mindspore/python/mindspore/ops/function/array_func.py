@@ -762,7 +762,7 @@ def full_like(input, fill_value, *, dtype=None):
 
     Args:
         input (Tensor): input Tensor and the output Tensor have the same shape as `input`.
-        fill_value (number.Number): Value to fill the returned Tensor. Complex numbers are not supported for now.
+        fill_value (Number): Value to fill the returned Tensor. Complex numbers are not supported for now.
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The specified type of output tensor. `bool_` and `number` are supported,

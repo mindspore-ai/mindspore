@@ -1849,7 +1849,7 @@ def csr_acosh(x: CSRTensor) -> CSRTensor:
 
     Args:
         x (CSRTensor): The input CSRTensor of inverse hyperbolic cosine function, its element must be in range [1, inf],
-        its rank must be in [0, 7] inclusive.
+            its rank must be in [0, 7] inclusive.
 
     Returns:
         CSRTensor, has the same shape and type as `x`.
