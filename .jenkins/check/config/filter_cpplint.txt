@@ -144,3 +144,5 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/" "readability/nolint"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/expand_dims_kernels.h" "runtime/explicit"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/expand_dims_kernels.h" "build/include_order"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/max_pool_with_argmax_v2_cpu_kernel.h" "build/include_what_you_use"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/max_pool_with_argmax_v2_cpu_kernel.cc" "build/include_what_you_use"
