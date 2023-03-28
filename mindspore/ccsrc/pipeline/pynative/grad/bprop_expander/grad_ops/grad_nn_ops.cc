@@ -1813,8 +1813,8 @@ REG_BPROP_BUILDER("DepthwiseConv2dNative").SetUnusedInputs({i2}).SetBody(BODYFUN
 
 REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto paddings = ib->GetInput(kIndex1);
-  auto constant_values = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
+  bool has_constant_values = ib->GetInputs().size() == kDim5;
+  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
   auto mode = GetValue<std::string>(ib->GetAttr("mode"));
   NodePtr dx;
 
@@ -1830,13 +1830,19 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
       pad_value = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", pad, "PadV3");
     }
     (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+    auto constant_values = ib->GetInput(kIndex2);
     dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
   } else {
     dx = ib->Emit("PadV3Grad", {dout, paddings},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
   }
-  return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};
+  if (has_constant_values) {
+    auto constant_values = ib->GetInput(kIndex2);
+    return {dx, ib->ZerosLike(paddings), ib->ZerosLike(constant_values)};
+  } else {
+    return {dx, ib->ZerosLike(paddings)};
+  }
 });
 
 REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
