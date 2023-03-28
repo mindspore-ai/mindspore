@@ -70,6 +70,10 @@ bool ContainsAnyType(const AbstractBasePtrList &args_abs_list) {
 }
 }  // namespace
 
+const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_any_type_checking_prims{
+  prim::kPrimReturn,      prim::kPrimDepend,      prim::kPrimSwitch,
+  prim::kPrimSwitchLayer, prim::kPrimUpdateState, prim::kPrimLoad};
+
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList args_abs_list;
   args_abs_list.reserve(args_conf_list.size());
@@ -546,17 +550,18 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
+
+  // If the arguments contain Any, return Any directly.
   // Only check in TrivialPrimEvaluator, not in TransitionPrimEvaluator.
   const auto standard_prim_eval = dyn_cast_ptr<StandardPrimEvaluator>(shared_from_this());
-  bool ignore_any_type_check =
+  bool ignore_any_type_checking =
     (standard_prim_eval != nullptr &&
-     (standard_prim_eval->prim() == prim::kPrimReturn || standard_prim_eval->prim() == prim::kPrimDepend ||
-      standard_prim_eval->prim() == prim::kPrimUpdateState || standard_prim_eval->prim() == prim::kPrimLoad ||
-      standard_prim_eval->prim() == prim::kPrimSwitch || standard_prim_eval->prim() == prim::kPrimSwitchLayer));
-  if (!ignore_any_type_check && ContainsAnyType(args_abs_list)) {
+     ignore_any_type_checking_prims.find(standard_prim_eval->prim()) != ignore_any_type_checking_prims.end());
+  if (!ignore_any_type_checking && ContainsAnyType(args_abs_list)) {
     MS_LOG(INFO) << ToString() << " receives arguments that contain Any.";
     return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
   }
+
   return EvalPrim(engine, args_abs_list);
 }
 

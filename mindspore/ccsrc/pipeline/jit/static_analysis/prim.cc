@@ -2812,13 +2812,10 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     const std::string error_msg =
       "__import__('mindspore').common._utils.raise_func(" + exception_type + "," + exception_string + ")";
     const auto script_str = std::make_shared<StringImm>(error_msg);
-
     // Pack local parameter keys
     const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);
-
     // Pack local parameter values
     const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
-
     // Build the PyExecute node for raise error.
     const auto raise_error_node = cur_graph->NewCNode(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
