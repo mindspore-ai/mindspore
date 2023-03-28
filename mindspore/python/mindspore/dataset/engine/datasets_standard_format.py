@@ -75,7 +75,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: None. This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
 
     Raises:
@@ -149,7 +149,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: None, all samples.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
 
     Raises:
@@ -291,7 +291,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
             When `compression_type` is not None, and `num_samples` or numRows (parsed from `schema` ) is provided,
             `shard_equal_rows` will be implied as true.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.0/dataset/cache.html>`_ .
             Default: None, which means no cache is used.
         compression_type (str, optional): The type of compression used for all files, must be either '', 'GZIP', or
             'ZLIB'. Default: None, as in empty string.

@@ -506,11 +506,11 @@ def load(file_name, **kwargs):
 
               - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: 'AES-GCM'.
               - For details of using the customized decryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
-              <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.obfuscate_model.html>` .
+              <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore/mindspore.obfuscate_model.html>` .
 
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
@@ -1221,7 +1221,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 or Customized encryption.
                 Default: 'AES-GCM'.
               - For details of using the customized encryption, please check the `tutorial
-                <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
+                <https://mindspore.cn/mindarmour/docs/en/r1.9/model_encrypt_protection.html>`_.
 
             - dataset (Dataset): Specifies the preprocessing method of the dataset, which is used to import the
               preprocessing of the dataset into MindIR.
@@ -1863,7 +1863,7 @@ def build_searched_strategy(strategy_filename):
     Build strategy of every parameter in network. Used in the case of distributed inference.
     For details of it, please check:
     `Saving and Loading Models in Hybrid Parallel Mode
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
+    <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/save_load.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.
@@ -1885,7 +1885,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     """
     Merge parameter slices into one parameter. Used in the case of distributed inference.
     For details of it, please check:
-    `<https://www.mindspore.cn/tutorials/experts/en/master/parallel/save_load.html>`_.
+    `<https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/save_load.html>`_.
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank id.
@@ -1981,7 +1981,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     Load checkpoint into net for distributed predication. Used in the case of distributed inference.
     For details of distributed inference, please check:
     `Distributed Inference
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/distributed_inference.html>`_ .
+    <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/distributed_inference.html>`_ .
 
     Args:
         network (Cell): Network for distributed predication.

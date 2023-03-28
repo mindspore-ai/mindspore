@@ -80,7 +80,7 @@ class GraphData:
 
     About how to load raw graph dataset into MindSpore please
     refer to `Loading Graph Dataset <https://www.mindspore.cn/tutorials/en/
-    master/advanced/dataset/augment_graph_data.html>`_ .
+    r2.0/advanced/dataset/augment_graph_data.html>`_ .
 
     Args:
         dataset_file (str): One of file names in the dataset.

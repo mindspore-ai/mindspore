@@ -7,7 +7,7 @@ mindspore.dataset.GraphData
     支持读取图数据集Cora、Citeseer和PubMed。
 
     关于如何将源数据集加载到mindspore中请参考 `图数据加载与处理 <https://www.mindspore.cn/tutorials/zh-CN/
-    master/advanced/dataset/augment_graph_data.html>`_ 。
+    r2.0/advanced/dataset/augment_graph_data.html>`_ 。
 
     参数：
         - **dataset_file** (str) - 数据集文件路径。

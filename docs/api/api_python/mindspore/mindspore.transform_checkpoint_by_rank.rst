@@ -3,7 +3,7 @@ mindspore.transform_checkpoint_by_rank
 
 .. py:function:: mindspore.transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name, src_strategy_file=None, dst_strategy_file=None)
 
-    将一个分布式网络的Checkpoint由源切分策略转换到目标切分策略，对特定一个rank进行转换。关于更多分布式Checkpoint转换的细节，请参考：`分布式弹性训练与推理 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/resilience_train_and_predict.html>`_。
+    将一个分布式网络的Checkpoint由源切分策略转换到目标切分策略，对特定一个rank进行转换。关于更多分布式Checkpoint转换的细节，请参考：`分布式弹性训练与推理 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/parallel/resilience_train_and_predict.html>`_。
 
     参数：
         - **rank_id** (int) - 待转换得到的Checkpoint的rank号。

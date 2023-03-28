@@ -10,7 +10,7 @@ mindspore.shard
     .. note::
         需设置执行模式为PyNative模式，同时设置 `set_auto_parallel_context` 中的并行模式为"auto_parallel"且搜索模式(search mode)为"sharding_propagation"。
         如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
-        如果你想了解更多关于shard的信息，可以参考 `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/pynative_shard_function_parallel.html>`_ 。
+        如果你想了解更多关于shard的信息，可以参考 `函数式算子切分 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/parallel/pynative_shard_function_parallel.html>`_ 。
 
     参数：
         - **fn** (Union[Cell, Function]) - 待通过分布式并行执行的函数，它的参数和返回值类型应该均为Tensor或Parameter。

@@ -661,7 +661,7 @@ The following are examples:
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.GradOperation.html>`_ .
+  For more details, see `API GradOperation <https://www.mindspore.cn/docs/en/r2.0/api_python/ops/mindspore.ops.GradOperation.html>`_ .
 
 - Use mindspore.set_context to control execution mode
 
@@ -687,7 +687,7 @@ The following are examples:
       set_context(device_target="Ascend")
       ...
 
-  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
+  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
 
 - Use mindspore.numpy in MindSpore Deep Learning Models
 

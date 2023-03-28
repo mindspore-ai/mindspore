@@ -12,9 +12,9 @@ mindspore.dataset.Dataset.map
     最后一个数据增强的输出列的列名由 `output_columns` 指定，如果没有指定 `output_columns` ，输出列名与 `input_columns` 一致。
 
     - 如果使用的是 `mindspore` `dataset` 提供的数据增强（
-      `vision类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
-      `nlp类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ ，
-      `audio类 <https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#音频>`_ ），请使用如下参数：
+      `vision类 <https://mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
+      `nlp类 <https://mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.transforms.html#文本>`_ ，
+      `audio类 <https://mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore.dataset.transforms.html#音频>`_ ），请使用如下参数：
 
       .. image:: map_parameter_cn.png
 
@@ -31,9 +31,9 @@ mindspore.dataset.Dataset.map
 
           - python_multiprocessing (bool, 可选) - 启用Python多进程模式加速map操作。当传入的 `operations` 计算量很大时，开启此选项可能会有较好效果。默认值：False。
           - max_rowsize (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为True时，该选项有效。默认值：16，单位为MB。
-          - cache (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
+          - cache (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/dataset/cache.html>`_ 。默认值：None，不使用缓存。
           - callbacks (DSCallback, list[DSCallback], 可选) - 要调用的Dataset回调函数列表。默认值：None。
-          - offload (bool, 可选) - 是否进行异构硬件加速，详情请阅读 `数据准备异构加速 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/dataset_offload.html>`_ 。默认值：None。
+          - offload (bool, 可选) - 是否进行异构硬件加速，详情请阅读 `数据准备异构加速 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.0/dataset/dataset_offload.html>`_ 。默认值：None。
 
     .. note::
         - `operations` 参数接收 `TensorOperation` 类型的数据处理操作，以及用户定义的Python函数(PyFuncs)。

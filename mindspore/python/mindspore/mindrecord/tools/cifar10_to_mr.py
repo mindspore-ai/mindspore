@@ -40,7 +40,7 @@ class Cifar10ToMR:
 
     Note:
         For details about Examples, please refer to `Converting the CIFAR-10 Dataset <https://
-        www.mindspore.cn/tutorials/en/master/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
+        www.mindspore.cn/tutorials/en/r2.0/advanced/dataset/record.html#converting-the-cifar-10-dataset>`_ .
 
     Args:
         source (str): The cifar10 directory to be transformed.

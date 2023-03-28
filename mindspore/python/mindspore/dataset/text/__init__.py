@@ -25,7 +25,7 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset.text as text
 
 See `Text Transforms
-<https://www.mindspore.cn/tutorials/en/master/beginner/transforms.html#text-transforms>`_ tutorial for more details.
+<https://www.mindspore.cn/tutorials/en/r2.0/beginner/transforms.html#text-transforms>`_ tutorial for more details.
 
 Descriptions of common data processing terms are as follows:
 
@@ -35,7 +35,7 @@ Descriptions of common data processing terms are as follows:
 The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
 - Pipeline mode is generally used to process datasets. For examples, please refer to
-  `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
+  `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/r2.0/api_python/
   mindspore.dataset.html#introduction-to-data-processing-pipeline>`_ .
 - Eager mode is generally used for scattered samples. Examples of text preprocessing are as follows:
 

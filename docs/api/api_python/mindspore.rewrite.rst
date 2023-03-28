@@ -3,7 +3,7 @@ mindspore.rewrite
 MindSpore的ReWrite功能用于修改网络前向的计算过程，对网络进行插入、删除和替换语句。该功能目前处于开发调试阶段，可能会更改或删除。
 
 ReWrite完整示例请参考
-`rewrite_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python/rewrite_example.py>`_ 。
+`rewrite_example.py <https://gitee.com/mindspore/mindspore/tree/r2.0/docs/api/api_python/rewrite_example.py>`_ 。
 该样例代码的主要功能包括：怎么通过网络创建SymbolTree，并且对SymbolTree中的节点进行插入删除替换等操作，其中还包含了对子网络的修改和通过模式匹配进行节点替换。
 
 .. literalinclude:: rewrite_example.py

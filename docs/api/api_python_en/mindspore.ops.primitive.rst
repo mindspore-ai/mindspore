@@ -7,7 +7,7 @@ operators that can be used for constructor function of Cell
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/r2.0/resource/api_updates/ops_api_updates_en.md>`_ .
 
 Operator Primitives
 -------------------
@@ -619,9 +619,9 @@ Communication Operator
 
 Note that the APIs in the following list need to preset communication environment variables. For
 the Ascend devices, users need to prepare the rank table, set rank_id and device_id. Please see the `Ascend tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
+<https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_ascend.html#configuring-distributed-environment-variables>`_ for more details.
 For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
-<https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_.
+<https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/train_gpu.html#preparation>`_.
 
 .. msplatwarnautosummary::
     :toctree: ops

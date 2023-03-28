@@ -176,7 +176,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     Batch matrices are supported. If x is a batch matrix, the output has the same batch dimension when
     atol or rtol is float.
     If atol or rtol is a Tensor, its shape must be broadcast to the singular value returned by
-    `x.svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ .
+    `x.svd <https://www.mindspore.cn/docs/en/r2.0/api_python/ops/mindspore.ops.svd.html>`_ .
     If x.shape is :math:`(B, M, N)`, and the shape of atol or rtol is :math:`(K, B)`, the output
     shape is :math:`(K, B, N, M)`.
     When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
@@ -186,13 +186,13 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     characteristic value), it is set to zero, and is not used in the computations.
     If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
     be :math:`rtol=max(M, N)*\varepsilon`, :math:`\varepsilon` is the
-    `eps <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
+    `eps <https://www.mindspore.cn/docs/en/r2.0/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
     If rtol is not specified and atol specifies a value larger than zero, rtol is set to zero.
 
     .. note::
         This function uses
-        `svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ internally,
-        (or `eigh <https://www.mindspore.cn/docs/en/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
+        `svd <https://www.mindspore.cn/docs/en/r2.0/api_python/ops/mindspore.ops.svd.html>`_ internally,
+        (or `eigh <https://www.mindspore.cn/docs/en/r2.0/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
         when hermitian = True). So it has the same problem as these functions. For details,
         see the warnings in svd() and eigh().
 
