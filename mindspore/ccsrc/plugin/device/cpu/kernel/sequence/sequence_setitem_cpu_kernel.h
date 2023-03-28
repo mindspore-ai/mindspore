@@ -56,6 +56,8 @@ class SequenceSetItemCpuKernelMod : public NativeCpuKernelMod {
  private:
   std::string kernel_type_;
   TypeId dtype{kTypeUnknown};
+  std::vector<int64_t> seq_shape_;
+  std::vector<int64_t> ele_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

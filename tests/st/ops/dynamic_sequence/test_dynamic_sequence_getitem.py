@@ -111,6 +111,25 @@ def test_seq_getitem_grad():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_seq_getitem_grad_tensor():
+    """
+    Feature: test sequence getitem grad op
+    Description: setitem operation on tuple type
+    Expectation: the behavior is matched to python style
+    """
+    net_ms = NetGetItem()
+    seq = mutable((Tensor([[1, 2], [2, 3]]), Tensor([[2, 3], [3, 4]]), Tensor([[3, 4], [4, 5]])), True)
+    index = 1
+    dout = Tensor([[2, 3], [3, 4]])
+    grad_func = GradOperation(get_all=True, sens_param=True)(net_ms)
+    print("grad out1 = ", grad_func(seq, index, dout))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_seq_getitem_grad_scalar():
     """
     Feature: test sequence getitem grad op

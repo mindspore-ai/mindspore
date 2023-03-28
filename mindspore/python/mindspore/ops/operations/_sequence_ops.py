@@ -16,6 +16,7 @@
 
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, prim_attr_register
 from mindspore.common import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 
 
 class ListAppend(Primitive):
@@ -357,7 +358,7 @@ class TupleToTensor(PrimitiveWithCheck):
         return None
 
 
-class ListToTensor(Primitive):
+class ListToTensor(PrimitiveWithCheck):
     r"""
     Convert list to tensor
 
@@ -387,8 +388,16 @@ class ListToTensor(Primitive):
         """Initialize ListToTensor"""
         self.init_prim_io_names(inputs=['input_list', 'dtype'], outputs=['output_data'])
 
+    def __call__(self, x, dtype):
+        return self.infer_value(x, dtype)
 
-class TensorToTuple(Primitive):
+    def infer_value(self, x, dtype):
+        if x is not None and None not in x and isinstance(x, list):
+            return Tensor(x, dtype)
+        return None
+
+
+class TensorToTuple(PrimitiveWithCheck):
     r"""
     Convert tensor to tuple
 
@@ -414,8 +423,17 @@ class TensorToTuple(Primitive):
         """Initialize TensorToTuple"""
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
+    def __call__(self, x):
+        return self.infer_value(x)
 
-class TensorToList(Primitive):
+    def infer_value(self, x):
+        value = None
+        if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
+            value = tuple(x.asnumpy().tolist())
+        return value
+
+
+class TensorToList(PrimitiveWithCheck):
     r"""
     Convert tensor to list
 
@@ -441,8 +459,17 @@ class TensorToList(Primitive):
         """Initialize TensorToList"""
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
 
+    def __call__(self, x):
+        return self.infer_value(x)
 
-class TensorToScalar(Primitive):
+    def infer_value(self, x):
+        value = None
+        if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
+            value = x.asnumpy().tolist()
+        return value
+
+
+class TensorToScalar(PrimitiveWithCheck):
     r"""
     Convert tensor to scalar
 
@@ -467,6 +494,15 @@ class TensorToScalar(Primitive):
     def __init__(self):
         """Initialize TensorToScalar"""
         self.init_prim_io_names(inputs=['input_tensor'], outputs=['output_data'])
+
+    def __call__(self, x):
+        return self.infer_value(x)
+
+    def infer_value(self, x):
+        value = None
+        if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
+            value = x.asnumpy().tolist()
+        return value
 
 
 class SequenceCount(Primitive):

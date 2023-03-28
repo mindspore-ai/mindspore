@@ -464,7 +464,9 @@ def get_bprop_mirror_operator(self):
     group = self.get_attr_dict()['group']
     dev_num = self.get_attr_dict()['dev_num']
     mean_flag = self.get_attr_dict()['mean_flag']
+    dev_num_r = 1.0
     if dev_num > 1:
+        dev_num_r = 1.0 / dev_num
         all_reduce = AllReduce(group=group)
         all_gather = AllGather(group=group)
         mul = P.Mul()
@@ -486,15 +488,11 @@ def get_bprop_mirror_operator(self):
         if mean_flag:
             if issubclass_(F.typeof(dout), mstype.tensor):
                 dx = all_reduce(dout)
-                float_one = F.scalar_cast(1.0, F.dtype(dx))
-                num = F.scalar_cast(dev_num, F.dtype(dx))
-                dx = mul(dx, cast(F.scalar_to_tensor(float_one/num), F.dtype(dx)))
+                dx = mul(dx, cast(F.scalar_to_tensor(dev_num_r), F.dtype(dx)))
             else:
                 indices = all_gather(dout.indices)
                 grad = all_gather(dout.values)
-                float_one = F.scalar_cast(1.0, F.dtype(grad))
-                num = F.scalar_cast(dev_num, F.dtype(grad))
-                grad = mul(grad, cast(F.scalar_to_tensor(float_one/num), F.dtype(grad)))
+                grad = mul(grad, cast(F.scalar_to_tensor(dev_num_r), F.dtype(grad)))
                 dx = RowTensorInner(indices, grad, dout.dense_shape)
         else:
             if issubclass_(F.typeof(dout), mstype.tensor):
@@ -517,6 +515,7 @@ def get_bprop_mirror_mini_step_operator(self):
     group = self.group
     dev_num = self.dev_num
     mean_flag = self.mean_flag
+    dev_num_r = 1.0 / dev_num
 
     all_reduce = AllReduce(group=group)
     mul = P.Mul()
@@ -542,9 +541,7 @@ def get_bprop_mirror_mini_step_operator(self):
                     dx = real_grad
                 else:
                     dx = dout
-                float_one = F.scalar_cast(1.0, F.dtype(dx))
-                num = F.scalar_cast(dev_num, F.dtype(dx))
-                dx = mul(dx, cast(F.scalar_to_tensor(float_one/num), F.dtype(dx)))
+                dx = mul(dx, cast(F.scalar_to_tensor(dev_num_r), F.dtype(dx)))
             else:
                 dx = zeros_like(x)  # The grad accumulation do not support row tensor now
         else:

@@ -1443,16 +1443,6 @@ def get_bprop_conj(self):
     return bprop
 
 
-@bprop_getters.register(P.ScalarCast)
-def get_bprop_scalar_cast(self):
-    """Generate bprop for ScalarCast"""
-
-    def bprop(x, t, out, dout):
-        return F.scalar_cast(dout, F.typeof(x)), zeros_like(t)
-
-    return bprop
-
-
 @bprop_getters.register(P.AccumulateNV2)
 def get_bprop_scalar_accumulatenv2(self):
     """Generate bprop for AccumulateNV2"""
