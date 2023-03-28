@@ -32,16 +32,19 @@
 namespace mindspore::kernel {
 namespace {
 constexpr auto kAscend910A = "Ascend910A";
+constexpr auto kAscend910B = "Ascend910B";
+constexpr auto Ascend910PremiumA = "Ascend910PremiumA";
 constexpr auto kAscend910ProA = "Ascend910ProA";
+constexpr auto kAscend910ProB = "Ascend910ProB";
+
 constexpr auto kAscend910PremiumA = "Ascend910PremiumA";
 constexpr auto kAscend920A = "Ascend920A";
 constexpr auto kAscend910SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
 constexpr auto kAscend920SuffixPath = "/opp/built-in/op_impl/ai_core/tbe/config/ascend920/aic-ascend920-ops-info.json";
-const std::map<std::string, std::string> kAscendSuffixPathMap = {{kAscend910A, kAscend910SuffixPath},
-                                                                 {kAscend910ProA, kAscend910SuffixPath},
-                                                                 {kAscend910PremiumA, kAscend910SuffixPath},
-                                                                 {kAscend920A, kAscend920SuffixPath}};
-
+const std::map<std::string, std::string> kAscendSuffixPathMap = {
+  {kAscend910A, kAscend910SuffixPath}, {kAscend910ProA, kAscend910SuffixPath},
+  {kAscend920A, kAscend920SuffixPath}, {kAscend910ProB, kAscend910SuffixPath},
+  {kAscend910B, kAscend910SuffixPath}, {kAscend910PremiumA, kAscend910SuffixPath}};
 #define MAKE_SHARE_CHECK(expr1)                                 \
   try {                                                         \
     expr1;                                                      \
