@@ -1936,7 +1936,7 @@ class InplaceIndexAdd(Primitive):
     Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
@@ -1971,7 +1971,7 @@ class InplaceSub(Primitive):
     Refer to :func:`mindspore.ops.inplace_sub` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -3671,22 +3671,6 @@ class Sinc(Primitive):
 
     Refer to :func:`mindspore.ops.sinc` for more details.
 
-    .. math::
-
-        y_i = \begin{cases}1 & \text{ if } x_i= 0\\ \frac{sin(\pi x_i)}{x_i} &
-        \text{ otherwise } \end{cases}
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        Tensor, has the same shape as the `x`. The dtype of output is float32 when dtype of `x` is in
-        [uint8, int8, uint16, int16, uint32, int32, uint64, int64, bool]. Otherwise output has the
-        same dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4200,21 +4184,7 @@ class LogicalXor(Primitive):
     r"""
     Computes the "logical XOR" of two tensors element-wise.
 
-    .. math::
-
-        out_{i} = x_{i} \oplus y_{i}
-
-    Inputs:
-        - **x** (Tensor) - The first input is a tensor whose data type is bool.
-        - **y** (Tensor) - The second input is a the tensor to compute XOR with the first input.
-          Datatype must be bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor whose data type is bool.
-        ValueError: If the shape of two inputs cannot be broadcast.
+    Refer to :func:`mindspore.ops.logical_xor` for more details.
 
     Supported Platforms:
         ``CPU``
@@ -5118,15 +5088,7 @@ class BesselI0(Primitive):
     """
     Computes BesselI0 of input element-wise.
 
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          Data type must be float16, float32 or float64.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor of float16, float32 or float64.
+    Refer to :func:`mindspore.ops.bessel_i0` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -5148,15 +5110,7 @@ class BesselI1(Primitive):
     """
     Computes BesselI1 of input element-wise.
 
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          Data type must be float16 or float32.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor of float16, float32 or float64.
+    Refer to :func:`mindspore.ops.bessel_i1` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6073,18 +6027,8 @@ class Imag(Primitive):
 class Angle(Primitive):
     """
     Returns the element-wise argument of a complex tensor.
-    The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
-    is the imaginary part. The argument returned by this function is of the form atan2(b,a).
 
-    Inputs:
-        - **input** (Tensor) - The input tensor. types: complex64, complex128.
-
-    Outputs:
-        Tensor, has the float32 or float64 type and the same shape as input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of input is not one of: complex64, complex128.
+    Refer to :func:`mindspore.ops.angle` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6195,34 +6139,7 @@ class Igamma(Primitive):
     Calculates lower regularized incomplete Gamma function.
     The lower regularized incomplete Gamma function is defined as:
 
-    .. math::
-        P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
-
-    where
-
-    .. math::
-        gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
-
-    is the lower incomplete Gamma function.
-
-    Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Inputs:
-        - **a** (Tensor) - The input tensor. With type of float32 or float64.
-        - **x** (Tensor) - The input tensor. With float32 or float64 type. `x` should have
-          the same dtype with `a`.
-
-    Outputs:
-        Tensor, has the same dtype as `a` and `x`.
-
-    Raises:
-        TypeError: If a or x is not a Tensor.
-        TypeError: If dtype of input x and a is not float32 nor float64.
-        TypeError: If x has different dtype with a.
-        ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
+    Refer to :func:`mindspore.ops.igamma` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6246,31 +6163,7 @@ class Igammac(Primitive):
     r"""
     Compute the upper regularized incomplete Gamma function Q(a, x).
 
-    The upper regularized incomplete Gamma function is defined as:
-    \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
-    where
-    \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
-
-    is the upper incomplete Gama function.
-
-    Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Inputs:
-        - **a** (Tensor) - The input tensor of igammac. With float32 or float64 data type.
-        - **x** (Tensor) - The input tensor of igammac. With float32 or float64 type. `x` should have
-          the same type with `a`.
-
-    Outputs:
-        A Tensor, has the same dtype as `a` and `x`.
-
-    Raises:
-        TypeError: If dtype of input x and a is not float32 nor float64.
-        TypeError: If a or x is not a Tensor.
-        TypeError: If x has different dtype with a.
-        ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
+    Refer to :func:`mindspore.ops.igammac` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6611,20 +6504,9 @@ class LuUnpack(Primitive):
 
 class Lgamma(Primitive):
     r"""
-    Computes the natural logarithm of the gamma function on input `x`.
+    Computes the natural logarithm of the absolute value of the gamma function on input.
 
-    .. math::
-        \text{out}_{i} = \ln \Gamma(\text{input}_{i})
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. The dtype can be float16, float32 or float64.
-
-    Outputs:
-        Tensor, has the same dtype as `x`.
-
-    Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of input x is not one of: float16, float32, float64.
+    Refer to :func:`mindspore.ops.lgamma` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -6684,20 +6566,7 @@ class Polygamma(Primitive):
     r"""
     Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
 
-    .. math::
-        \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)
-
-    Inputs:
-        - **a** (Tensor) - The order of the polygamma function, types: int32, int64.
-        - **x** (Tensor) - The input tensor, types: float16, float32, float64.
-
-    Outputs:
-        Tensor, has the same dtype as `x`.
-
-    Raises:
-        TypeError: If x is not a Tensor.
-        TypeError: If dtype of input x is not one of: float16, float32, float64.
-        TypeError: If dtype of input a is not one of: int32, int64.
+    Refer to :func:`mindspore.ops.polygamma` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -7587,7 +7456,7 @@ class CompareAndBitpack(Primitive):
         ValueError: If the innermost dimension of `x`'s shape is not disvisible by 8.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32)

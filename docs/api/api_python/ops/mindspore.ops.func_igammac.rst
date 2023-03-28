@@ -3,7 +3,7 @@ mindspore.ops.igammac
 
 .. py:function:: mindspore.ops.igammac(input, other)
 
-    计算正规化的上层不完全伽马函数。
+    计算正则化的上层不完全伽马函数。。
     如果我们将 `input` 比作 `a` ， `other` 比作 `x` ，则正规化的下层不完全伽马函数可以表示成：
 
     .. math::

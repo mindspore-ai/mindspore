@@ -125,6 +125,5 @@ std::vector<KernelAttr> CompareAndBitpackGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, CompareAndBitpackFunc> &pair) { return pair.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CompareAndBitpack, CompareAndBitpackGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

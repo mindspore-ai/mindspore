@@ -3,6 +3,4 @@ mindspore.ops.BatchToSpaceND
 
 .. py:class:: mindspore.ops.BatchToSpaceND(block_shape, crops)
 
-    用块划分批次维度，并将这些块交错回空间维度。
-
-    更多参考详见 :func:`mindspore.ops.batch_to_space_nd`。
+    `ops.BatchToSpaceND` 从2.0版本开始已被弃用，并将在未来版本中被移除，建议使用 `ops.batch_to_space_nd` 代替。

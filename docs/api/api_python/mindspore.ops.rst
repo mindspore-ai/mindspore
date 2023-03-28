@@ -498,6 +498,7 @@ Array操作
     mindspore.ops.block_diag
     mindspore.ops.broadcast_to
     mindspore.ops.cat
+    mindspore.ops.channel_shuffle
     mindspore.ops.chunk
     mindspore.ops.column_stack
     mindspore.ops.concat
