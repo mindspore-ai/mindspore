@@ -697,7 +697,7 @@ class NeighborExchange(Primitive):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -773,7 +773,7 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -878,13 +878,13 @@ class NeighborExchangeV2(Primitive):
     NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
     as while receive data from `recv_rank_ids`. Please refer to
     `Distributed Set Communication Primitives - NeighborExchangeV2 \
-    <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#neighborexchangev2>`_
+    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#neighborexchangev2>`_
     to learn about how the data is exchanged between neighborhood devices.
 
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one

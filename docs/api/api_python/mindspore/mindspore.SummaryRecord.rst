@@ -97,7 +97,7 @@ mindspore.SummaryRecord
             bool，表示记录是否成功。
 
         异常：
-            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html?highlight=MindSpore.nn.cell#mindspore-nn-cell>`_ 。
+            - **TypeError** - `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
     .. py:method:: set_mode(mode)
 
