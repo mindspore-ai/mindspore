@@ -63,6 +63,7 @@ static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiv
                                                              mindspore::kCholeskySolveOpName,
                                                              mindspore::kCol2ImOpName,
                                                              mindspore::kCombinedNonMaxSuppressionOpName,
+                                                             mindspore::kUniqueConsecutiveOpName,
                                                              mindspore::kComplexOpName,
                                                              mindspore::kComplexAbsOpName,
                                                              mindspore::kConcatOpName,
