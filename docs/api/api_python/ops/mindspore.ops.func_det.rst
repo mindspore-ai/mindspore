@@ -9,7 +9,7 @@ mindspore.ops.det
         - **input** (Tensor) - 输入Tensor， shape 为 :math:`[..., M, M]` 。矩阵必须至少有两个维度，最后两个维度尺寸必须相同。支持的数据类型为float32、float64、complex64或complex128。
 
     返回：
-        Tensor，其shape为 math:`input.shape[:-2]` ，数据类型与 `input` 相同。
+        Tensor，其shape为 :math:`input.shape[:-2]` ，数据类型与 `input` 相同。
 
     异常：
         - **TypeError** -  `input` 不为 Tensor。

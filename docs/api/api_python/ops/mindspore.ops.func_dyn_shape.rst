@@ -6,7 +6,7 @@ mindspore.ops.dyn_shape
     返回输入Tensor的shape。
 
     参数：
-        - **input_x** (Tensor) - 输入Tensor的shape是 math:`(x_1, x_2, ..., x_R)`。
+        - **input_x** (Tensor) - 输入Tensor的shape是 :math:`(x_1, x_2, ..., x_R)`。
 
     返回：
         Tensor， `input_x` 的shape。

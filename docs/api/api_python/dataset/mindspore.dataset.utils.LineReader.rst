@@ -19,6 +19,10 @@ mindspore.dataset.utils.LineReader
         - **TypeError** - `filename` 无效。
         - **RuntimeError** - `filename` 不存在或者不是普通文件。
 
+    .. py:method:: close()
+
+        关闭文件。
+
     .. py:method:: len()
 
         获取文件总行数。
@@ -36,7 +40,3 @@ mindspore.dataset.utils.LineReader
         异常：
             - **TypeError** - 参数 `line` 类型错误。
             - **ValueError** - 参数 `line` 取值越界。
-
-    .. py:method:: close()
-
-        关闭文件。
