@@ -29,7 +29,7 @@ class LU : public OpDesc {
   ~LU() = default;
 
  protected:
-  std::vector<int64_t> GetIndicesValue(int64_t u_left, int64_t u_right, int64_t v_left, int64_t v_right) {
+  std::vector<int64_t> GetIndicesValue(int64_t u_left, int64_t u_right, int64_t v_left, int64_t v_right) const {
     std::vector<int64_t> indices_value;
     for (int64_t u = u_left; u < u_right; ++u) {
       for (int64_t v = v_left; v < v_right; ++v) {
@@ -39,7 +39,7 @@ class LU : public OpDesc {
     }
     return indices_value;
   }
-  std::vector<int32_t> GetEyesValue(int64_t num) {
+  std::vector<int32_t> GetEyesValue(int64_t num) const {
     std::vector<int32_t> eyes_value;
     for (int64_t i = 0; i < num; ++i) {
       for (int64_t j = 0; j < num; ++j) {
@@ -52,7 +52,7 @@ class LU : public OpDesc {
     }
     return eyes_value;
   }
-  std::vector<int32_t> GetRangeValue(int64_t num) {
+  std::vector<int32_t> GetRangeValue(int64_t num) const {
     std::vector<int32_t> range_value;
     for (int i = 0; i < static_cast<int>(num); ++i) {
       (void)range_value.emplace_back(i);

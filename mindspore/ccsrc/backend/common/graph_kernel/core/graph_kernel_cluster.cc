@@ -432,7 +432,7 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-void GraphKernelCluster::ConvertInputToAttrForClusterGraph(const AnfNodePtr &graph_kernel_node) {
+void GraphKernelCluster::ConvertInputToAttrForClusterGraph(const AnfNodePtr &graph_kernel_node) const {
   auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto todos = TopoSort(gk_graph->get_return());

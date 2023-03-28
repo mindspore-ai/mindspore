@@ -58,19 +58,21 @@ class RegisterPrimitiveBpropHelper {
 
 #define STR(s) #s
 
-#define REGISTER_PRIMITIVE_BPROP_IMPL(name, bprop_fn)                                                                \
-  auto get_bprop_##name = [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {         \
-    auto fg = std::make_shared<FuncGraph>();                                                                         \
-    std::vector<AnfNodePtr> inputs{NewValueNode(std::make_shared<BpropMetaFuncGraph>(STR(name), primal, bprop_fn))}; \
-    for (size_t i = 0; i < forward_inputs_size; ++i) {                                                               \
-      (void)inputs.emplace_back(fg->add_parameter());                                                                \
-    }                                                                                                                \
-    (void)inputs.emplace_back(fg->add_parameter());                                                                  \
-    (void)inputs.emplace_back(fg->add_parameter());                                                                  \
-    fg->set_output(fg->NewCNode(inputs));                                                                            \
-    return fg;                                                                                                       \
-  };                                                                                                                 \
-  static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(STR(name), get_bprop_##name);
+#define REGISTER_PRIMITIVE_BPROP_IMPL(name, bprop_fn)                                                                  \
+  do {                                                                                                                 \
+    auto get_bprop_##name = [](const PrimitivePtr &primal, const size_t forward_inputs_size) -> FuncGraphPtr {         \
+      auto fg = std::make_shared<FuncGraph>();                                                                         \
+      std::vector<AnfNodePtr> inputs{NewValueNode(std::make_shared<BpropMetaFuncGraph>(STR(name), primal, bprop_fn))}; \
+      for (size_t i = 0; i < forward_inputs_size; ++i) {                                                               \
+        (void)inputs.emplace_back(fg->add_parameter());                                                                \
+      }                                                                                                                \
+      (void)inputs.emplace_back(fg->add_parameter());                                                                  \
+      (void)inputs.emplace_back(fg->add_parameter());                                                                  \
+      fg->set_output(fg->NewCNode(inputs));                                                                            \
+      return fg;                                                                                                       \
+    };                                                                                                                 \
+    static auto helper_bprop_##name = graph_bprop::RegisterPrimitiveBpropHelper(STR(name), get_bprop_##name);          \
+  } while (0)
 
 void RegArrayOps();
 void RegMathOps();
