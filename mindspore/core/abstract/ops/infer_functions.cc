@@ -18,7 +18,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 namespace mindspore {
 namespace abstract {
-// using R = PrimitiveEvalImplMap::mapped_type;
 static PrimitiveEvalImplMap deprecated_infer_map{
   // deprecated infer functions, new implement please refer to op_infer.h
 };
