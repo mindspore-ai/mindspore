@@ -47,7 +47,7 @@ bool PlatformInfoUtil::Init(const std::string &soc_version) {
   return true;
 }
 
-void PlatformInfoUtil::Finalize() { (void)fe::PlatformInfoManager::Instance().Finalize(); }
+void PlatformInfoUtil::Finalize() const { (void)fe::PlatformInfoManager::Instance().Finalize(); }
 
 std::string PlatformInfoUtil::soc_version() const { return soc_version_; }
 

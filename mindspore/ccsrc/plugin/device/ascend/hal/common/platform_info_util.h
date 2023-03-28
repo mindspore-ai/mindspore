@@ -26,7 +26,7 @@ class PlatformInfoUtil {
  public:
   static PlatformInfoUtil &GetInstance();
   bool Init(const std::string &soc_version);
-  void Finalize();
+  void Finalize() const;
   std::string soc_version() const;
   fe::PlatFormInfos platform_infos() const;
   bool IsCubeVectorSplit() const;

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-void BiShengMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr> *kernel_info_list);
+void BiShengMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr> *const kernel_info_list);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_BISHENG_KERNEL_METADATA_H_

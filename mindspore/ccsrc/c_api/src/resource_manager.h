@@ -33,11 +33,11 @@ class ResourceManager {
   ResourceManager() {
     context_ = mindspore::MsContext::GetInstance();
     org_policy_ = context_->backend_policy();
-    context_->set_backend_policy("ms");
+    (void)context_->set_backend_policy("ms");
     context_->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mindspore::kGraphMode);
   }
 
-  ~ResourceManager() { context_->set_backend_policy(org_policy_); }
+  ~ResourceManager() { (void)context_->set_backend_policy(org_policy_); }
 
   void SetBackend(std::shared_ptr<mindspore::compile::Backend> backend) { backend_ = std::move(backend); }
 
@@ -55,7 +55,7 @@ class ResourceManager {
 
   void SetInfer(bool infer) { auto_infer_ = infer; }
 
-  bool GetInfer() { return auto_infer_; }
+  bool GetInfer() const { return auto_infer_; }
 
   void StoreSrcPtr(const BasePtr &src_ptr) {
     (void)ptr_res_pool_.insert(std::make_pair(reinterpret_cast<Handle>(src_ptr.get()), src_ptr));

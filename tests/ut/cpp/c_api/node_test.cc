@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include "common/common_test.h"
 #include "c_api/include/node.h"
+#include "c_api/include/graph.h"
 #include "c_api/include/tensor.h"
 #include "c_api/include/context.h"
 #include "c_api/base/status.h"

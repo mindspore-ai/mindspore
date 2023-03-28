@@ -21,11 +21,11 @@
 extern "C" {
 #endif
 
-typedef int STATUS;
-
-#define RET_OK 0        /* No error */
-#define RET_ERROR -1    /* Normal error */
-#define RET_NULL_PTR -2 /* Nullptr error */
+typedef enum STATUS {
+  RET_OK = 0,        /* No error */
+  RET_ERROR = -1,    /* Normal error */
+  RET_NULL_PTR = -2, /* Nullptr error */
+} STATUS;
 
 #ifdef __cplusplus
 }
