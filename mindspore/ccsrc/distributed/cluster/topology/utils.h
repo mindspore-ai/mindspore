@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_UTILS_H_
 
-#include <limits.h>
+#include <climits>
 #include <string>
 #include <memory>
 #include <chrono>

@@ -83,8 +83,7 @@ int MapTensorEraseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename KeyType>
-bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
+bool MapTensorEraseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                               const std::vector<AddressPtr> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorEraseInputNum, kernel_name_);
