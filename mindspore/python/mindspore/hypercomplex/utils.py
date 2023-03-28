@@ -24,6 +24,7 @@ get_imag = P.Imag()
 
 
 def get_x_and_y(tensor):
+    """get real and image data from the tensor"""
     if tensor.dtype == mindspore.complex64:
         return get_real(tensor), get_imag(tensor)
     return P.unstack(tensor, 0)

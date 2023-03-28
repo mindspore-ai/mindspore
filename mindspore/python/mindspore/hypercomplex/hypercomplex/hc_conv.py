@@ -272,7 +272,6 @@ class _ConvNd(Cell):
     def _check_input_5dims(self, input_shape: tuple):
         if len(input_shape) != 5:
             raise ValueError(f"For {self.cls_name}, input should be 5 dims, but got shape {input_shape}.")
-        return None
 
 
 class Conv2d(_ConvNd):
@@ -614,7 +613,6 @@ class Conv1d(_ConvNd):
     def _check_input_3d(self, input_shape: tuple):
         if len(input_shape) != 3:
             raise ValueError(f"For '{self.cls_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
-        return None
 
     def _construct(self,
                    x: Tensor,
