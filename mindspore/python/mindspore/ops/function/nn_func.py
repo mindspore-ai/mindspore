@@ -760,6 +760,18 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
     return output
 
 
+def check_shape(x_shape, indices_shape, func_name):
+    """
+    :param x_shape: the shape of x.
+    :param indices_shape: the shape of indices.
+    :param func_name: the name of function.
+    :return:
+    """
+    if x_shape != indices_shape:
+        raise ValueError(f"For {func_name}, the x shape and indices shape must be equal, but got input "
+                         f"shape {x_shape} and indices shape {indices_shape}.")
+
+
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
     max_unpool1d is a partial inverse of maxpool1d, since the non-maximal values are lost.
@@ -821,9 +833,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     x_shape = shape(x)
     indices_shape = shape(indices)
     x_dim = len(x_shape)
-    if x_shape != indices_shape:
-        raise ValueError(f"For max_unpool1d, the x shape and indices shape must be equal, but got input "
-                         f"shape {x_shape} and indices shape {indices_shape}.")
+    check_shape(x_shape, indices_shape, "max_unpool1d")
     if x_dim not in (2, 3):
         raise ValueError(f"For max_unpool1d, the x shape must have 2 or 3 dims, but got {x_dim}.")
 
@@ -945,9 +955,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     x_shape = shape(x)
     indices_shape = shape(indices)
     x_dim = len(x_shape)
-    if x_shape != indices_shape:
-        raise ValueError(f"For max_unpool2d, the x shape and indices shape must be equal, but got input "
-                         f"shape {x_shape} and indices shape {indices_shape}.")
+    check_shape(x_shape, indices_shape, "max_unpool2d")
     if x_dim not in (3, 4):
         raise ValueError(f"For max_unpool2d, the x shape must have 3 or 4 dims, but got {x_dim}.")
 
@@ -1053,9 +1061,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     x_shape = P.Shape()(x)
     indices_shape = P.Shape()(indices)
     x_dim = len(x_shape)
-    if x_shape != indices_shape:
-        raise ValueError(f"For max_unpool3d, the x shape and indices shape must be equal, but got input "
-                         f"shape {x_shape} and indices shape {indices_shape}.")
+    check_shape(x_shape, indices_shape, "max_unpool3d")
     if x_dim not in (4, 5):
         raise ValueError(f"For max_unpool3d, the x shape must have 4 or 5 dims, but got {x_dim}.")
 
@@ -3727,14 +3733,24 @@ def _get_loss(x, reduction, cls_name, weights=1.0):
     return x
 
 
-def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data2, cls_name):
-    """check input1 and input2 type and shape same"""
+def check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_name):
+    """Check the type of input1 and input2."""
     if input_data1.dtype != input_data2.dtype:
         raise TypeError(f'For {cls_name}, the {param_name1} dtype should be equal to {param_name2} dtype, '
                         f'but got {param_name1} dtype:{input_data1.dtype}, {param_name2} dtype:{input_data2.dtype}.')
+
+
+def check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name):
+    """Check the shape of input1 and input2."""
     if input_data1.shape != input_data2.shape:
         raise ValueError(f'For {cls_name}, the {param_name1} shape should be equal to {param_name2} shape, '
                          f'but got {param_name1} shape:{input_data1.shape}, {param_name2} shape:{input_data2.shape}.')
+
+
+def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data2, cls_name):
+    """check input1 and input2 type and shape same"""
+    check_input_dtype(param_name1, input_data1, param_name2, input_data2, cls_name)
+    check_input_shape(param_name1, input_data1, param_name2, input_data2, cls_name)
     return 0
 
 
