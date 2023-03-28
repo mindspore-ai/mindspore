@@ -113,7 +113,8 @@ void BpropExpander::PostProcess() const {
     que.pop();
 
     if (IsPrimitiveCNode(node, prim::kPrimShapeCalc)) {
-      MS_LOG(EXCEPTION) << "ShapeCalc donot support in pynative mode.";
+      // Manually throw an exception to terminate without critical log.
+      throw std::runtime_error("ShapeCalc donot support in pynative mode.");
     }
 
     for (size_t i = 1; i < node->size(); ++i) {
