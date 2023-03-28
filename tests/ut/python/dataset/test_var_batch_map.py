@@ -258,8 +258,8 @@ def test_batch_multi_col_map():
 
     def col1_col2_add_num(col1, col2, batch_info):
         _ = batch_info
-        return ([[np.copy(arr + 100) for arr in col1],
-                 [np.copy(arr + 300) for arr in col2]])
+        return ([np.copy(arr + 100) for arr in col1],
+                [np.copy(arr + 300) for arr in col2])
 
     def invert_sign_per_batch(col_list, batch_info):
         return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
