@@ -51,9 +51,20 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_shape = input_args[0]->BuildShape();
-  auto gradient_accumulator_shape = input_args[kInputIndex1]->BuildShape();
-  auto gradient_squared_accumulator_shape = input_args[kInputIndex2]->BuildShape();
+  auto prim_name = primitive->name();
+  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto gradient_accumulator_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto gradient_squared_accumulator_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto gradient_accumulator_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto gradient_squared_accumulator_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, gradient_accumulator_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, gradient_squared_accumulator_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
+
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
@@ -64,6 +75,9 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
+  if (batch_rank < 0) {
+    MS_EXCEPTION(ValueError) << "batch_rank is" << batch_rank;
+  }
   auto lr_shape_rank = SizeToLong(lr_shape.size());
   auto l1_shape_rank = SizeToLong(l1_shape.size());
   auto l2_shape_rank = SizeToLong(l2_shape.size());
@@ -72,8 +86,8 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape_rank, kEqual, batch_rank, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, batch_rank,
                                            primitive->name());
-  return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>{var_shape, gradient_accumulator_shape, gradient_squared_accumulator_shape});
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
+    var_shape_ptr, gradient_accumulator_shape_ptr, gradient_squared_accumulator_shape_ptr});
 }
 
 TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
