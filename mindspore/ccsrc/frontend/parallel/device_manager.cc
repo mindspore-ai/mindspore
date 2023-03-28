@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include "utils/hash_set.h"
-#include "frontend/parallel/step_parallel.h"
+#include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
