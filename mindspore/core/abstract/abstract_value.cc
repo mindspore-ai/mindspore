@@ -1380,6 +1380,12 @@ std::string AbstractTensor::ToString() const {
   return buffer.str();
 }
 
+TypePtr AbstractAny::BuildType() const {
+  MS_EXCEPTION_IF_NULL(element_);
+  TypePtr element_type = element_->BuildType();
+  return std::make_shared<AnyType>(element_type);
+}
+
 TypePtr AbstractDictionary::BuildType() const {
   std::vector<std::pair<ValuePtr, TypePtr>> key_values;
   for (const auto &item : key_values_) {

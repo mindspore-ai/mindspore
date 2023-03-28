@@ -111,6 +111,20 @@ size_t TensorType::hash() const {
   return hash_value;
 }
 
+std::string AnyType::ToString() const {
+  if (element() == nullptr) {
+    return "Any(Tensor)";
+  }
+  return "Any(Tensor)[" + element()->ToString() + "]";
+}
+
+std::string AnyType::DumpText() const {
+  if (element() == nullptr) {
+    return "Any(Tensor)";
+  }
+  return "Any(Tensor)(" + element()->DumpText() + ")";
+}
+
 std::string SparseTensorType::ElementsDtypeStr(const StringType str_type) const {
   std::ostringstream oss;
   for (const TypePtr &elem : elements_) {

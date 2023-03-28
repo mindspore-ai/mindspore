@@ -820,6 +820,8 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
   /// \brief Destructor of AbstractAny.
   ~AbstractAny() override = default;
   MS_DECLARE_PARENT(AbstractAny, AbstractTensor)
+
+  TypePtr BuildType() const override;
 };
 using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
 using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;

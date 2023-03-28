@@ -39,7 +39,7 @@ class StandardPrimEvaluator final : public TrivialPrimEvaluator {
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
   PrimitivePtr prim() { return prim_; }
 
-  std::string ToString() const override { return identifier_ + prim_->name(); }
+  std::string ToString() const override { return identifier_ + "_" + prim_->name(); }
 
  private:
   EvalResultPtr EvalPyCheckPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args);
@@ -60,7 +60,7 @@ class PythonPrimEvaluator final : public TrivialPrimEvaluator {
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
   PrimitivePtr prim() { return dyn_cast<Primitive>(prim_py_); }
 
-  std::string ToString() const override { return identifier_ + prim_py_->name(); }
+  std::string ToString() const override { return identifier_ + "_" + prim_py_->name(); }
 
  private:
   PrimitivePyPtr prim_py_;
