@@ -3,7 +3,7 @@ mindspore.ops.dist
 
 .. py:function:: mindspore.ops.dist(input, other, p=2)
 
-    计算输入中每对行向量之间的p-范数距离。
+    计算输入中每对行向量之间的 :math:`p`-norm距离。
 
     .. note::
         在MindSpore中只支持计算整数 :math:`p`-norm形式的范数，如果 :math:`p` 不是整数会引发类型错误。

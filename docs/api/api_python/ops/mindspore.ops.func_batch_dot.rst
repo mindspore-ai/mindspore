@@ -6,7 +6,7 @@ mindspore.ops.batch_dot
     当输入的两个Tensor是批量数据时，对其进行批量点积操作。
 
     .. math::
-        output = x1[batch, :]* x2[batch, :]
+        output = x1[batch, :] * x2[batch, :]
 
     参数：
         - **x1** (Tensor) - 第一个输入Tensor，数据类型为float32且 `x1` 的秩必须大于或等于2。

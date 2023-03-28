@@ -5,7 +5,7 @@
 
     获取预测值和目标值之间的交叉熵损失。
 
-    cross_entropy方法支持两种不同的目标值(target):
+    cross_entropy方法支持两种不同的目标值(target)：
 
     - 类别索引 (int)，取值范围为 :math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
 
@@ -50,11 +50,11 @@
 
     参数：
         - **input** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`
-          (针对二维数据), 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。`input` 需为对数概率。数据类型仅支持float32或float16。
+          (针对二维数据)，或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。`input` 需为对数概率。数据类型仅支持float32或float16。
         - **target** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)`
           (针对高维数据)。数据类型仅支持int32。
-        - **weight** (Tensor) - 指定各类别的权重。若值不为None，则shape为 (C,)。
-          数据类型仅支持float32或float16。默认值: None。
+        - **weight** (Tensor) - 指定各类别的权重。若值不为None，则shape为 :math:`(C,)`。
+          数据类型仅支持float32或float16。默认值：None。
         - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值：-100。
         - **reduction** (str) - 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'，默认值：'mean'。
         - **label_smoothing** (float) - 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。默认值：0.0。

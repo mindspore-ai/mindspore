@@ -5,7 +5,7 @@
 
     将输入Tensor值裁剪到指定的最小值和最大值之间。
 
-    限制 :math:`x` 的范围，其 :math:`x` 的最小值为 `clip_value_min` ，最大值为 `clip_value_max` 。
+    限制 :math:`x` 的范围，其最小值为 `clip_value_min` ，最大值为 `clip_value_max` 。
 
     .. math::
         out_i= \left\{

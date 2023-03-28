@@ -20,7 +20,7 @@ mindspore.ops.var
 
         - 如果 `axis` 为()，且 `keepdims` 为False，则输出一个零维Tensor，表示输入Tensor `input` 中所有元素的方差。
         - 如果 `axis` 为int，取值为1，并且 `keepdims` 为False，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
-        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keepdims` 为False，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keepdims` 为False，则输出Tensor的shape为 :math:`(x_0, x_2, ..., x_R)` 。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

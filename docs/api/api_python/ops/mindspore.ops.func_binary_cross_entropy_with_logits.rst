@@ -41,7 +41,7 @@ mindspore.ops.binary_cross_entropy_with_logits
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
-        - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
+        - **logits** (Tensor) - 输入预测值。其数据类型为float16或float32。
         - **label** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
         - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
         - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
