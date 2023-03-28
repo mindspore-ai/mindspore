@@ -490,9 +490,16 @@ REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto bc_x = ib->Mul(dout, y);
-  auto bc_y = ib->Mul(x, dout);
-  return {BinopGradCommon(ib, x, y, bc_x, bc_y)};
+  auto x_shape = ib->Shape(x);
+  auto y_shape = ib->Shape(y);
+  auto dx = ib->MulNoNan(dout, y);
+  auto dy = ib->MulNoNan(x, dout);
+  auto bc_axis = ib->DynamicBroadcastGradientArgs(x_shape, y_shape);
+  auto broadcast_x = ib->TupleGetItem(bc_axis, 0);
+  auto broadcast_y = ib->TupleGetItem(bc_axis, 1);
+  dx = ib->Reshape(ib->ReduceSum(dx, broadcast_x, false, true), x_shape);
+  dy = ib->Reshape(ib->ReduceSum(dy, broadcast_y, false, true), y_shape);
+  return {dx, dy};
 });
 
 REG_BPROP_BUILDER("BesselI0").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
