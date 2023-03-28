@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, Tensor
 from mindspore.ops.operations import _sequence_ops as S
 from mindspore.common import mutable
 from mindspore.ops.composite import GradOperation
@@ -106,3 +106,24 @@ def test_seq_slice_mutable():
     out = net(x, a, b)
     ex = x[a:b]
     assert np.allclose(out, ex)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_seq_slice_mutable_typeerror():
+    """
+    Feature: test sequence_slice mutable
+    Description: slice operation on tuple type which will cause type error
+    Expectation: the behavior is matched to python style
+    """
+    class Net(nn.Cell):
+        def construct(self, x, a, b):
+            out = x[a:b]
+            return out
+
+    x = mutable([Tensor([1, 1]), Tensor([1, 1])], dynamic_len=True)
+    a, b = 1, 2
+    net = Net()
+    with pytest.raises(TypeError):
+        net(x, a, b)
