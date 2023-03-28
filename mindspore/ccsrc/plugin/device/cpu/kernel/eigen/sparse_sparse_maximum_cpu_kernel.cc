@@ -80,20 +80,20 @@ void UnionSparseIndicesAndValues(
   while (i < a_nnz && j < b_nnz) {
     switch (cmp(a_indices_mat, b_indices_mat, i, j, num_dims)) {
       case -1:
-        entries_to_copy->emplace_back(true, i);
+        (void)entries_to_copy->emplace_back(true, i);
         a_augmented_values->push_back(a_values(i));
         b_augmented_values->push_back(kZero);
         ++i;
         break;
       case 0:
-        entries_to_copy->emplace_back(true, i);
+        (void)entries_to_copy->emplace_back(true, i);
         a_augmented_values->push_back(a_values(i));
         b_augmented_values->push_back(b_values(j));
         ++i;
         ++j;
         break;
       case 1:
-        entries_to_copy->emplace_back(false, j);
+        (void)entries_to_copy->emplace_back(false, j);
         a_augmented_values->push_back(kZero);
         b_augmented_values->push_back(b_values(j));
         ++j;
@@ -130,9 +130,9 @@ bool SparseSparseMaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   dtype_ = inputs.at(kInputa_values)->GetDtype();
   itype_ = inputs.at(kIndex0)->GetDtype();
-  value_size_ = abstract::TypeIdSize(dtype_);
-  indice_size_ = abstract::TypeIdSize(itype_);
-  shape_size_ = abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype());
+  value_size_ = static_cast<int64_t>(abstract::TypeIdSize(dtype_));
+  indice_size_ = static_cast<int64_t>(abstract::TypeIdSize(itype_));
+  shape_size_ = static_cast<int64_t>(abstract::TypeIdSize(inputs.at(kIndex2)->GetDtype()));
   return true;
 }
 
@@ -156,14 +156,14 @@ int SparseSparseMaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   b_nnz_ = b_indice_shape[0];
   num_dims_ = a_indice_shape[1];
   auto max_nnz = a_nnz_ + b_nnz_;
-  input_size_list_.emplace_back(a_nnz_ * num_dims_ * indice_size_);
-  input_size_list_.emplace_back(a_nnz_ * value_size_);
-  input_size_list_.emplace_back(num_dims_ * shape_size_);
-  input_size_list_.emplace_back(b_nnz_ * num_dims_ * indice_size_);
-  input_size_list_.emplace_back(b_nnz_ * value_size_);
-  input_size_list_.emplace_back(num_dims_ * shape_size_);
-  output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
-  output_size_list_.emplace_back(max_nnz * value_size_);
+  (void)input_size_list_.emplace_back(a_nnz_ * num_dims_ * indice_size_);
+  (void)input_size_list_.emplace_back(a_nnz_ * value_size_);
+  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
+  (void)input_size_list_.emplace_back(b_nnz_ * num_dims_ * indice_size_);
+  (void)input_size_list_.emplace_back(b_nnz_ * value_size_);
+  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
+  (void)output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
+  (void)output_size_list_.emplace_back(max_nnz * value_size_);
   CheckInputShape(inputs, a_nnz_, b_nnz_, num_dims_);
   return KRET_OK;
 }
@@ -277,7 +277,7 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   std::vector<std::pair<bool, int64_t>> entries_to_copy;  // from_a?, idx
   UnionSparseIndicesAndValues(a_indices_mat, a_values, a_nnz, b_indices_mat, b_values, b_nnz, num_dims,
                               &a_augmented_values, &b_augmented_values, &entries_to_copy);
-  const int64_t sum_nnz = a_augmented_values.size();
+  const int64_t sum_nnz = SizeToLong(a_augmented_values.size());
   sum_nnz_ = sum_nnz;
   auto output_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput_indices]->addr);
   Eigen::DSizes<Eigen::DenseIndex, kIndex2> output_indices_size(static_cast<Eigen::DenseIndex>(sum_nnz),
