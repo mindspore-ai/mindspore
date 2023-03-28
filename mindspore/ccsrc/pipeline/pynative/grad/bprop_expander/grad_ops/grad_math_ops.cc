@@ -1032,8 +1032,15 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
+  }
   auto axis = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
+  if (ib->GetShape(x).empty()) {
+    return {SumGrad(ib, x, axis, dout), ib->ZerosLike(axis)};
+  }
   auto shape_func = [](const ShapeArray &inputs) -> ShapeArray {
     auto input_shape = inputs.at(0);
     auto axis = inputs.at(1);
@@ -1061,13 +1068,8 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                         {{"exclusive", MakeValue(true)}, {"reverse", MakeValue(true)}});
   auto y = ib->Reshape(ib->Mul(left, right), permuted_shape);
   auto out = ib->Mul(ib->Transpose(y, res[4]), grad);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReduceProd', gradient not support for complex type currently.";
-  } else {
-    auto dx = ib->Reshape(out, ib->Shape(x));
-    return {dx, ib->ZerosLike(axis)};
-  }
+  auto dx = ib->Reshape(out, ib->Shape(x));
+  return {dx, ib->ZerosLike(axis)};
 });
 
 REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
