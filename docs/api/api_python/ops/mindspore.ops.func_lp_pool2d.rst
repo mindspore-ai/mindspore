@@ -22,7 +22,13 @@ mindspore.ops.lp_pool2d
         - **ceil_mode** (bool) - 若为True，使用ceil模式来计算输出shape。若为False，使用floor模式来计算输出shape。默认值：False。
 
     返回：
-        - **output** - LPPool2d的计算结果，shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor，与 输入 `x` 的类型一致。
+        - **output** - LPPool2d的计算结果，shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor，与输入 `x` 的类型一致，其中
+
+        .. math::
+            H_{out} = \left\lfloor\frac{H_{in} - \text{kernel_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+
+        .. math::
+            W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     异常：
         - **TypeError** - `x` 不是Tensor。

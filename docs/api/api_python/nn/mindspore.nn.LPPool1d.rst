@@ -24,7 +24,10 @@ mindspore.nn.LPPool1d
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, L_{in})` 或 :math:`(C_{in}, L_{in})` 的Tensor。
 
     输出：
-        - **output** - LPPool1d的计算结果，shape为 :math:`(N_{out}, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor，与输入 `x` 的类型一致。
+        - **output** - LPPool1d的计算结果，shape为 :math:`(N_{out}, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor，与输入 `x` 的类型一致，其中：
+
+        .. math::
+            L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
 
     异常：
         - **TypeError** - `x` 不是Tensor。

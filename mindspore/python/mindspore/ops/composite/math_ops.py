@@ -651,10 +651,10 @@ def matmul(x1, x2, dtype=None):
     return res
 
 
-def mm(mat1, mat2):
+def mm(input, mat2):
     r"""
     Returns the matrix product of two arrays.
-    If `mat1` is a :math:`(n \times m)` Tensor, `mat2` is a
+    If `input` is a :math:`(n \times m)` Tensor, `mat2` is a
     :math:`(m \times p)` Tensor, `out` will be a :math:`(n \times p)` Tensor.
 
     Note:
@@ -662,18 +662,18 @@ def mm(mat1, mat2):
         Refer to :func:`mindspore.ops.matmul` instead if you need a broadcastable function.
 
     Args:
-        mat1 (Tensor): The first matrix of matrix multiplication.
-          The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
+        input (Tensor): The first matrix of matrix multiplication.
+          The last dimension of `input` must be the same size as the first dimension of `mat2`.
         mat2 (Tensor): The second matrix of matrix multiplication.
-          The last dimension of `mat1` must be the same size as the first dimension of `mat2`.
+          The last dimension of `input` must be the same size as the first dimension of `mat2`.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs.
 
     Raises:
-        ValueError: If the last dimension of `mat1` is not the same size as the
+        ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `mat2`.
-        ValueError: If `mat1` or `mat2` is not a matrix.
+        ValueError: If `input` or `mat2` is not a matrix.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -688,10 +688,10 @@ def mm(mat1, mat2):
         >>> print(out.shape)
         (2, 4)
     """
-    if mat1.ndim != 2 or mat2.ndim != 2:
+    if input.ndim != 2 or mat2.ndim != 2:
         raise ValueError(f"For mm, the input tensor must be a matrix, "
-                         f"but got mat1.ndim:{mat1.ndim}, mat2.ndim:{mat2.ndim}")
-    return matmul(mat1, mat2)
+                         f"but got mat1.ndim:{input.ndim}, mat2.ndim:{mat2.ndim}")
+    return matmul(input, mat2)
 
 
 def cummin(x, axis):
