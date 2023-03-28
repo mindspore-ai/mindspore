@@ -45,7 +45,7 @@ def sparsify_helper(f, arg_types, user_defined_rules=None, sparse_name="", full_
         init_vars = {}
     functiondef = tree.body[0]
     args = [arg.arg for arg in functiondef.args.args]
-    type_map = {arg: t for arg, t in zip(args, arg_types)}
+    type_map = dict(zip(args, arg_types))
 
     sparse_transformer = SparseTransformer(
         type_map, global_vars, init_vars, user_defined_rules, full_sparse_rules, depth)
@@ -131,9 +131,11 @@ class SparseTransformer(ast.NodeTransformer):
         self._frames.append([])
 
     def pop_frame(self):
+        """Pop a frame in deque."""
         return tuple(self._frames.pop())
 
     def push_onto_frame(self, t):
+        """Push an arg_type into frame deque."""
         if not self._frames:
             raise ValueError("Current frame not initialized!")
         self._frames[-1].append(t)
@@ -284,12 +286,14 @@ class SparseTransformer(ast.NodeTransformer):
         return self.visit_method(node)
 
     def visit_generic_stmt(self, node):
+        """Visitor for generic statement."""
         self.add_frame()
         node = self.generic_visit(node)
         self.pop_frame()
         return node
 
     def visit_scalar_expr(self, node):
+        """Visitor for scalar expression."""
         self.push_onto_frame(ArgType.NONSPARSE)
         return node
 
@@ -304,6 +308,7 @@ class SparseTransformer(ast.NodeTransformer):
         return self.generic_visit(node)
 
     def visit_partial_expr(self, node):
+        """Visitor for a part of an expression."""
         return node
 
     def visit_Assign(self, node):     # pylint: disable=invalid-name
