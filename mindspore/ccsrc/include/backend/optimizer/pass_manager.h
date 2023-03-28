@@ -28,8 +28,6 @@
 
 namespace mindspore {
 namespace opt {
-class CacheManager;
-using CacheManagerPtr = std::shared_ptr<CacheManager>;
 // @brief For optimization passes management
 class BACKEND_EXPORT PassManager {
  public:
