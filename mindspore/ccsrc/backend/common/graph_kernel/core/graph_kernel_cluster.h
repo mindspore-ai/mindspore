@@ -45,7 +45,7 @@ class GraphKernelCluster : public opt::Pass {
   std::vector<size_t> FindCandidates(size_t basenode_id);
   void RemoveWildGetitem(std::vector<size_t> *candidates);
   void CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id);
-  void ConvertInputToAttrForClusterGraph(const AnfNodePtr &graph_kernel_node);
+  void ConvertInputToAttrForClusterGraph(const AnfNodePtr &graph_kernel_node) const;
   void DumpClusterInfo(const AnfNodePtrList &old_nodes, const AnfNodePtr &new_node);
   void DumpToFile();
   void Clean() {
