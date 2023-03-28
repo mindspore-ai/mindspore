@@ -257,8 +257,6 @@ void UpdateOutputNodeShape(const AnfNodePtr &node, size_t index, TypeId output_t
   std::vector<ShapeVector> shapes = {};
   for (size_t i = 0; i < total_output_num; ++i) {
     if (i == index && kIgnoreGEShapeOps.count(name) == 0) {
-      // Using GE infer result to update shape
-      // TODO(hbhu_bin): when kIgnoreGEShapeOps's size > 5, you should refactor this code
       types.push_back(output_type);
       shapes.push_back(output_shape);
     } else {
@@ -595,7 +593,7 @@ void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
   }
 }
 void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_context_ptr,
-                                      std::map<std::string, std::string> *ge_options) {
+                                      std::map<std::string, std::string> *ge_options) const {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_EXCEPTION_IF_NULL(ge_options);
   if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {

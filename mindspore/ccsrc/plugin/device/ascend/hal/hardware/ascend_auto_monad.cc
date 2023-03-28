@@ -143,20 +143,6 @@ void DumpExecuteOrder(const NotNull<KernelGraphPtr> &kg) {
 }
 #endif
 
-KernelGraphPtr GetValueNodeKernelGraph(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto value_node = node->cast<ValueNodePtr>();
-  if (value_node == nullptr) {
-    return nullptr;
-  }
-  auto value = value_node->value();
-  if (value == nullptr) {
-    return nullptr;
-  }
-  auto kernel_graph = value->cast<KernelGraphPtr>();
-  return kernel_graph;
-}
-
 // Return kNoLabel when label id attribute not set for the graph.
 uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
   auto value = kg->get_attr(kAttrLabelIndex);
@@ -171,7 +157,7 @@ bool CheckCallInline(const CNodePtr &cnode) {
     return false;
   }
   auto call_graph = cnode->input(kFirstIndex);
-  auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+  auto sub_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(call_graph);
   return sub_kernel_graph->need_inline();
 }
 
@@ -1069,7 +1055,7 @@ class AscendAutoMonadConverter {
     auto &cnode = call_site->cnode;
     if (CheckCallInline(cnode)) {
       auto call_graph = cnode->input(kFirstIndex);
-      auto sub_kernel_graph = GetValueNodeKernelGraph(call_graph);
+      auto sub_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(call_graph);
       std::vector<AnfNodePtr> call_inline_inputs = {NewPrimitive(prim::kPrimCallInline)};
       for (size_t i = kFirstIndex; i < common::AnfAlgo::GetInputNum(cnode); i++) {
         call_inline_inputs.emplace_back(common::AnfAlgo::GetInputNode(cnode, i));
