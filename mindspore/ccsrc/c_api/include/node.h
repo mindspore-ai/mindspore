@@ -19,7 +19,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include "c_api/include/graph.h"
 #include "c_api/include/context.h"
 #include "c_api/base/macros.h"
 #include "c_api/base/status.h"

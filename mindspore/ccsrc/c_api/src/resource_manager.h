@@ -32,7 +32,7 @@ class ResourceManager {
  public:
   ResourceManager() {
     context_ = mindspore::MsContext::GetInstance();
-    context_->set_backend_policy("ms");
+    (void)context_->set_backend_policy("ms");
     context_->set_param<int>(mindspore::MS_CTX_EXECUTION_MODE, mindspore::kGraphMode);
     if (Py_IsInitialized() == 0) {
       PyEval_InitThreads();
@@ -62,7 +62,7 @@ class ResourceManager {
 
   void SetInfer(bool infer) { auto_infer_ = infer; }
 
-  bool GetInfer() { return auto_infer_; }
+  bool GetInfer() const { return auto_infer_; }
 
   void StoreSrcPtr(const BasePtr &src_ptr) {
     (void)ptr_res_pool_.insert(std::make_pair(reinterpret_cast<Handle>(src_ptr.get()), src_ptr));
