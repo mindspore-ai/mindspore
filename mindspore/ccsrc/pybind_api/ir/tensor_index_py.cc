@@ -32,8 +32,9 @@ using tensor::TensorPy;
 py::handle TensorIndex::py_index_handle_ = py::none();
 py::handle TensorIndex::py_value_handle_ = py::none();
 bool TensorIndex::is_ascend_ = false;
+IndexOpType TensorIndex::index_op_type_ = IndexOpType::GetItem;
 py::module TensorIndex::np_module_ = py::module();
-
+static const std::vector<TypeId> kIntTypes{kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
 // ***********************************************utils*******************************************
 std::ostream &operator<<(std::ostream &stream, const TensorIndex &tensor_index) {
   TensorIndexType tensor_index_type = tensor_index.type();
@@ -96,9 +97,6 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<TensorIndex> &t
 }
 
 inline void TensorIndex::CheckGetItemIndex(const ShapeVector &data_shape, const TensorIndexType &index_data_type) {
-  if (data_shape.empty()) {
-    MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
-  }
   bool valid = CheckTypeIsInstance<TensorIndexType>(
     index_data_type,
     {TensorIndexType::Tensor, TensorIndexType::List, TensorIndexType::Boolean, TensorIndexType::Slice,
@@ -118,8 +116,9 @@ inline void TensorIndex::CheckSetItemIndex(const ShapeVector &data_shape, const 
     value_data_type, {TensorIndexType::Integer, TensorIndexType::Float, TensorIndexType::Boolean,
                       TensorIndexType::Tensor, TensorIndexType::List, TensorIndexType::Tuple});
   if (!valid) {
-    MS_EXCEPTION(TypeError) << "Only support numbers, Tensor, tuple, list as value, but got "
-                            << TensorIndex::py_value_handle_ << "with type" << TensorIndex::py_value_handle_;
+    MS_EXCEPTION(TypeError) << "only support numbers, Tensor, tuple, list as value, but got "
+                            << TensorIndex::py_value_handle_ << " with type "
+                            << TensorIndex::py_value_handle_.get_type();
   }
 }
 
@@ -140,7 +139,9 @@ inline ShapeVector TensorIndex::BroadCastShape(const ShapeVector &x_shape, const
     } else if (y_shape[y_shape_index] == 1 || x_shape[x_shape_index] == y_shape[y_shape_index]) {
       broadcast_shape_back.emplace_back(x_shape[x_shape_index]);
     } else {
-      MS_EXCEPTION(ValueError) << "For BroadCastShape, x.shape and y.shape need to broadcast. The value of x.shape["
+      string index_op_type = index_op_type_ == IndexOpType::GetItem ? "tensor getitem" : "tensor setitem";
+      MS_EXCEPTION(ValueError) << "For '" << index_op_type
+                               << "', x.shape and y.shape need to broadcast. The value of x.shape["
                                << std::to_string(x_shape_index) << "] or y.shape[" << std::to_string(y_shape_index)
                                << "] must be 1 or -1 when they are not the same but got x.shape =" << x_shape
                                << "and y.shape = " << y_shape;
@@ -234,7 +235,7 @@ py::object TensorIndex::DeepTensorToNdArray(const py::object &array_like) {
     MS_EXCEPTION_IF_NULL(tensor_index);
     return TensorPy::AsNumpy(*tensor_index);
   }
-  if (py::isinstance<py::tuple>(array_like)) {
+  if (py::isinstance<py::list>(array_like)) {
     auto new_array_like_vector = array_like.cast<py::list>();
     for (size_t i = 0; i < new_array_like_vector.size(); i++) {
       new_array_like_vector[i] = DeepTensorToNdArray(new_array_like_vector[i]);
@@ -319,15 +320,19 @@ std::tuple<ShapeVector, ShapeVector, ShapeVector, int64_t> TensorIndex::Generate
   } else {
     fancy_position = py_fancy_position.integer();
   }
+
   ShapeVector broadcast_shape = BroadCastShape(tensor_indexes_shapes);
-  MS_EXCEPTION_IF_CHECK_FAIL(fancy_position <= SizeToLong(slice_shapes.size()), "Index out of vector size.");
-  ShapeVector final_shape(slice_shapes.begin(), slice_shapes.begin() + fancy_position);
-  final_shape.insert(final_shape.end(), broadcast_shape.begin(), broadcast_shape.end());
-  final_shape.insert(final_shape.end(), slice_shapes.begin() + fancy_position, slice_shapes.end());
+
+  fancy_position = std::min(fancy_position, SizeToLong(slice_shapes.size()));
+  ShapeVector final_shape = slice_shapes;
+  final_shape.insert(final_shape.begin() + fancy_position, broadcast_shape.begin(), broadcast_shape.end());
+
   ShapeVector index_tensor_new_shape(slice_shapes.size(), 1);
-  MS_EXCEPTION_IF_CHECK_FAIL(fancy_position <= SizeToLong(index_tensor_new_shape.size()), "Index out of vector size.");
+  fancy_position = std::min(fancy_position, SizeToLong(index_tensor_new_shape.size()));
+
   index_tensor_new_shape.insert(index_tensor_new_shape.begin() + fancy_position, broadcast_shape.begin(),
                                 broadcast_shape.end());
+
   return std::make_tuple(broadcast_shape, index_tensor_new_shape, final_shape, fancy_position);
 }
 
@@ -413,6 +418,10 @@ inline std::tuple<int64_t, py::object, ShapeVector> TensorIndex::GetValueTransfe
   return std::make_tuple(static_cast<int>(value_transfer_type), value_transfer_arg, value_shape);
 }
 
+static py::array CastToInt(const py::array &input) {
+  return TensorIndex::np_module_.attr("ndarray").attr("astype")(input, TensorIndex::np_module_.attr("int32"));
+}
+
 // ***********************************************for get_item*******************************************
 py::tuple TensorIndex::GenerateNonZeroIndex(const ShapeVector &data_shape, const TensorPtr &tensor_index) {
   const int64_t data_dim = SizeToLong(data_shape.size());
@@ -423,7 +432,7 @@ py::tuple TensorIndex::GenerateNonZeroIndex(const ShapeVector &data_shape, const
   }
   for (size_t i = 0; i < static_cast<size_t>(index_dims); i++) {
     if (data_shape[i] != tensor_index->shape()[i]) {
-      MS_EXCEPTION(IndexError) << "The shape of index " << tensor_index->shape()
+      MS_EXCEPTION(ValueError) << "The shape of index " << tensor_index->shape()
                                << "does not match the shape of the indexed data " << data_shape << " at dim index" << i;
     }
   }
@@ -457,7 +466,7 @@ bool TensorIndex::TensorGetitemByTupleParseTensorIndex(const ShapeVector &data_s
                                                        std::vector<int64_t> *tensor_positions) {
   //  parse index of tensor type
   MS_EXCEPTION_IF_NULL(tensor_index);
-  if (CheckTypeIsInstance<TypeId>(tensor_index->data_type(), {kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64})) {
+  if (CheckTypeIsInstance<TypeId>(tensor_index->data_type(), kIntTypes)) {
     tensor_positions->emplace_back(tuple_index_new->size());
     tuple_index_new->emplace_back(tensor_index);
     tensor_indexes->emplace_back(tensor_index);
@@ -473,8 +482,8 @@ bool TensorIndex::TensorGetitemByTupleParseTensorIndex(const ShapeVector &data_s
     tuple_index_new->insert(tuple_index_new->end(), nonzero_indices_tensors.begin(), nonzero_indices_tensors.end());
     tensor_indexes->insert(tensor_indexes->end(), nonzero_indices_tensors.begin(), nonzero_indices_tensors.end());
   } else {
-    MS_EXCEPTION(TypeError) << "The tensor element in tuple index must be int or bool type, but got "
-                            << tensor_index->data_type();
+    MS_EXCEPTION(IndexError) << "The tensor element in tuple index must be int or bool type, but got "
+                             << TypeIdToString(tensor_index->data_type(), false);
   }
   return true;
 }
@@ -564,8 +573,10 @@ std::tuple<bool, ShapeVector, std::vector<TensorIndex>> TensorIndex::GetExpandDi
       new_tuple_index.emplace_back(tensor::Slice());
       expand_dims_info.emplace_back(i);
     } else if (index[i].IsBoolean()) {
-      MS_EXCEPTION_IF_CHECK_FAIL(index[i].boolean(), "Bool element of tuple index must be 'True', but got 'False'.");
-      new_tuple_index.emplace_back(std::make_shared<Tensor>(std::vector<int64_t>(0)));
+      if (!index[i].boolean()) {
+        MS_EXCEPTION(IndexError) << "Bool element of tuple index must be 'True', but got 'False'.";
+      }
+      new_tuple_index.emplace_back(std::make_shared<Tensor>(std::vector<int64_t>({0})));
       expand_dims_info.emplace_back(i);
     } else {
       new_tuple_index.emplace_back(index[i]);
@@ -573,7 +584,7 @@ std::tuple<bool, ShapeVector, std::vector<TensorIndex>> TensorIndex::GetExpandDi
   }
   auto reshape_info = data_shape;
   for (auto dim : expand_dims_info) {
-    MS_EXCEPTION_IF_CHECK_FAIL(dim <= SizeToLong(reshape_info.size()), "Index out of vector size.");
+    dim = std::min(dim, SizeToLong(reshape_info.size()));
     reshape_info.insert(reshape_info.begin() + dim, 1);
   }
 
@@ -634,11 +645,13 @@ py::array TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, const
   }
   tuple_index_len = SizeToLong(tuple_index.size());
   std::vector<ShapeVector> tensor_indexes_shapes;
-  std::transform(tensor_indexes.begin(), tensor_indexes.end(), std::back_inserter(tensor_indexes_shapes),
-                 [](auto &tensor_index) {
-                   MS_EXCEPTION_IF_NULL(tensor_index);
-                   return tensor_index->shape();
-                 });
+  std::transform(
+    tensor_indexes.begin(), tensor_indexes.end(), std::back_inserter(tensor_indexes_shapes), [](auto &tensor_index) {
+      if (tensor_index == nullptr) {
+        MS_EXCEPTION(IndexError) << "IndexError: The sequence element(tuple/list) in tuple index can't be empty.";
+      }
+      return tensor_index->shape();
+    });
   std::tuple<ShapeVector, ShapeVector, ShapeVector, int64_t> index_info = GenerateIndexInfoFromTupleOfMixedTensors(
     tensor_positions, tensor_indexes_shapes, slice_shapes, TensorIndex(py::none()));
   constexpr size_t broadcast_shape_index = 0;
@@ -676,10 +689,10 @@ py::array TensorIndex::TensorGetitemByTuple(const ShapeVector &data_shape, const
   }
   data_transfer_types->emplace_back(static_cast<int>(ValueTransferType::kGatherND));
   data_transfer_args->emplace_back(py::none());
-
-  return py::make_tuple(TensorPy::MakeTensor(TensorIndex::np_module_.attr("array")(
-                          TensorIndex::np_module_.attr("stack")(final_index_tensors, -1))),
-                        VectorToPyTuple(*data_transfer_types), VectorToPyTuple(*data_transfer_args));
+  py::array new_index =
+    TensorIndex::np_module_.attr("array")(TensorIndex::np_module_.attr("stack")(final_index_tensors, -1));
+  return py::make_tuple(TensorPy::MakeTensor(CastToInt(new_index)), VectorToPyTuple(*data_transfer_types),
+                        VectorToPyTuple(*data_transfer_args));
 }
 
 // ***********************************************for set_item*******************************************
@@ -732,9 +745,11 @@ py::array TensorIndex::GenerateIndicesFromTupleOfTensor(const std::vector<Tensor
     TensorPtr index_tensor = index.tensor();
     MS_EXCEPTION_IF_NULL(index_tensor);
     tuple_index_vector.emplace_back(index_tensor);
-    MS_EXCEPTION_IF_CHECK_FAIL(
-      CheckTypeIsInstance<TypeId>(index_tensor->data_type(), {kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64}),
-      "Type of tuple_index should be int, but got " + std::to_string(index_tensor->data_type()));
+    if (!CheckTypeIsInstance<TypeId>(index_tensor->data_type(), kIntTypes)) {
+      string index_op_type = index_op_type_ == IndexOpType::GetItem ? "tensor getitem" : "tensor setitem";
+      MS_EXCEPTION(IndexError) << "For '" << index_op_type << "', the index tensor data type '"
+                               << index_tensor->data_type() << "' is not supported.";
+    }
   }
   std::transform(tuple_index_vector.begin(), tuple_index_vector.end(), std::back_inserter(tensor_index_shape),
                  [](TensorPtr &x) { return x->shape(); });
@@ -745,10 +760,11 @@ py::array TensorIndex::GenerateIndicesFromTupleOfTensor(const std::vector<Tensor
   }
 
   std::vector<py::array> broadcast_tensors;
-  std::transform(
-    tuple_index.begin(), tuple_index.end(), std::back_inserter(broadcast_tensors), [&broadcast_shape](auto &index) {
-      return TensorIndex::np_module_.attr("broadcast_to")(TensorPy::SyncAsNumpy(*index.tensor()), broadcast_shape);
-    });
+  std::transform(tuple_index.begin(), tuple_index.end(), std::back_inserter(broadcast_tensors),
+                 [&broadcast_shape](auto &index) {
+                   return TensorIndex::np_module_.attr("broadcast_to")(
+                     CastToInt(TensorPy::SyncAsNumpy(*index.tensor())), broadcast_shape);
+                 });
   return TensorIndex::np_module_.attr("stack")(py::cast(broadcast_tensors), -1);
 }
 
@@ -759,7 +775,7 @@ void TensorIndex::RemNotExpandedDims(int64_t *idx_advanced, const bool &expand_t
     if (expand_true) {
       tensor_dims = {false};
     }
-    MS_EXCEPTION_IF_CHECK_FAIL(*idx_advanced <= SizeToLong(not_expanded_dim->size()), "Index out of vector size.");
+    *idx_advanced = std::min(*idx_advanced, SizeToLong(not_expanded_dim->size()));
     not_expanded_dim->insert(not_expanded_dim->begin() + *idx_advanced, tensor_dims.begin(), tensor_dims.end());
   }
   std::vector<bool> rem_ndim_vector(rem_ndim, true);
@@ -787,7 +803,7 @@ TensorIndex TensorIndex::FormatIndex(const TensorIndex &idx, const ShapeVector &
   }
   const TensorPtr &tensor_idx = idx.tensor();
   MS_EXCEPTION_IF_NULL(tensor_idx);
-  if (CheckTypeIsInstance<TypeId>(tensor_idx->data_type(), {kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64})) {
+  if (CheckTypeIsInstance<TypeId>(tensor_idx->data_type(), kIntTypes)) {
     py::array new_idx = TensorPy::SyncAsNumpy(*tensor_idx);
     if (tensor_idx->DataDim() == 0) {
       auto new_int_idx = new_idx.cast<int64_t>();
@@ -798,7 +814,11 @@ TensorIndex TensorIndex::FormatIndex(const TensorIndex &idx, const ShapeVector &
     new_idx = TensorIndex::np_module_.attr("select")(TensorIndex::np_module_.attr("less")(new_idx, 0),
                                                      TensorIndex::np_module_.attr("add")(new_idx, py::int_(dims_size)),
                                                      new_idx);
-    return TensorIndex(TensorPy::MakeTensor(new_idx));
+    return TensorIndex(TensorPy::MakeTensor(CastToInt(new_idx)));
+  } else if (tensor_idx->data_type() != kNumberTypeBool) {
+    string index_op_type = index_op_type_ == IndexOpType::GetItem ? "tensor getitem" : "tensor setitem";
+    MS_EXCEPTION(IndexError) << "For '" << index_op_type << "', the index tensor data type '"
+                             << TypeIdToString(tensor_idx->data_type(), false) << "' is not supported.";
   }
   return idx;
 }
@@ -946,8 +966,7 @@ py::array TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
       tensor_indexes_shapes.emplace_back(tensor_index->shape());
     } else if (index.IsTensor()) {
       TensorPtr tensor_index = index.tensor();
-      if (!CheckTypeIsInstance<TypeId>(tensor_index->data_type(),
-                                       {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64})) {
+      if (!CheckTypeIsInstance<TypeId>(tensor_index->data_type(), kIntTypes)) {
         MS_EXCEPTION(TypeError) << "The tensor element in tuple index must be int type, but got "
                                 << tensor_index->data_type();
       }
@@ -995,7 +1014,7 @@ py::array TensorIndex::GenerateIndicesFromTuple(const ShapeVector &data_shape,
       slice_cnt += 1;
     }
   }
-  return TensorIndex::np_module_.attr("stack")(final_index_tensors, -1);
+  return CastToInt(TensorIndex::np_module_.attr("stack")(final_index_tensors, -1));
 }
 
 py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, const std::vector<TensorIndex> &indices,
@@ -1013,6 +1032,9 @@ py::object TensorIndex::SetitemByTupleWithTensor(const ShapeVector &data_shape, 
       return py::make_tuple(py::none(), VectorToPyTuple<int64_t>(*value_transfer_types),
                             VectorToPyTuple<py::object>(*value_transfer_args),
                             py::make_tuple(static_cast<int>(tensor_update_type)), py::make_tuple(py::none()));
+    }
+    if (data_shape.empty()) {
+      MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
     }
     int64_t dim0_start =
       new_indices[0].integer() >= 0 ? new_indices[0].integer() : new_indices[0].integer() + data_shape[0];
@@ -1103,6 +1125,9 @@ py::object TensorIndex::SetitemBySliceWithTensor(const ShapeVector &data_shape, 
                                                  std::vector<py::object> *value_transfer_args) {
   ValueTransferType tensor_update_type = ValueTransferType::kTensorScatterUpdate;
   if (slice_index.slice().step() == 1 && !TensorIndex::is_ascend_) {
+    if (data_shape.empty()) {
+      MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+    }
     Slice slice_info = Slice(slice_index.slice(), data_shape[0]);
     int64_t start = slice_info.start();
     int64_t stop = slice_info.stop();
@@ -1194,7 +1219,7 @@ py::object TensorIndex::GetItemByTensor(const ShapeVector &data_shape, const Ten
   JudgeDataDim(data_dim, min_data_dim, max_data_dim);
   py::object output = py::none();
   MS_EXCEPTION_IF_NULL(index);
-  if (CheckTypeIsInstance<TypeId>(index->data_type(), {kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64})) {
+  if (CheckTypeIsInstance<TypeId>(index->data_type(), kIntTypes)) {
     output =
       py::make_tuple(index, py::make_tuple(static_cast<int>(ValueTransferType::kGather)), py::make_tuple(py::none()));
   } else if (index->data_type() == kNumberTypeBool) {
@@ -1225,6 +1250,9 @@ py::object TensorIndex::GetItemByList(const ShapeVector &data_shape, const Tenso
   bool use_gather = std::all_of(tensor_index.list().begin(), tensor_index.list().end(),
                                 [](auto &x) { return py::isinstance<py::int_>(x) || py::isinstance<py::bool_>(x); });
   if (use_gather) {
+    if (data_shape.empty()) {
+      MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+    }
     TensorIndex tuple_index = SequenceToTensor(tensor_index, data_shape[0]);
     if (tuple_index.IsBoolean() && !tuple_index.boolean()) {
       MS_EXCEPTION(IndexError) << "When tensor is indexed by list, the list can't be empty.";
@@ -1289,8 +1317,11 @@ py::object TensorIndex::GetItemByBool(const ShapeVector &data_shape, const bool 
 
 py::object TensorIndex::GetItemByNumber(const ShapeVector &data_shape, const int64_t &index) {
   MS_LOG(DEBUG) << "In branch get item by number, data_shape: " << data_shape << " tensor_indexes: " << index;
-  constexpr int min_data_dim = 0;
-  constexpr int max_data_dim = 7;
+  if (data_shape.empty()) {
+    MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+  }
+  constexpr int min_data_dim = 1;
+  constexpr int max_data_dim = 8;
   int64_t data_dim = SizeToLong(data_shape.size());
   JudgeDataDim(data_dim, min_data_dim, max_data_dim);
   if (index >= data_shape[0] || index < -data_shape[0]) {
@@ -1299,11 +1330,11 @@ py::object TensorIndex::GetItemByNumber(const ShapeVector &data_shape, const int
                           py::make_tuple(static_cast<int>(ValueTransferType::kRaiseIndexError)),
                           py::make_tuple(py::make_tuple(index, data_shape[0])));
   }
-  if (!TensorIndex::is_ascend_) {
-    return py::make_tuple(std::make_shared<Tensor>(index), py::make_tuple(static_cast<int>(ValueTransferType::kGather)),
-                          py::make_tuple(py::none()));
-  }
   int64_t transformed_number = CheckRange(index, data_shape[0]);
+  if (!TensorIndex::is_ascend_) {
+    return py::make_tuple(std::make_shared<Tensor>(transformed_number),
+                          py::make_tuple(static_cast<int>(ValueTransferType::kGather)), py::make_tuple(py::none()));
+  }
   std::vector<int64_t> begin_strides = {transformed_number};
   std::vector<int64_t> end_strides = {transformed_number + 1};
   std::vector<int64_t> step_strides = {1};
@@ -1336,6 +1367,9 @@ py::object TensorIndex::GetItemBySlice(const ShapeVector &data_shape, const Tens
   constexpr int max_data_dim = 8;
   int64_t data_dim = SizeToLong(data_shape.size());
   JudgeDataDim(data_dim, min_data_dim, max_data_dim);
+  if (data_shape.empty()) {
+    MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+  }
   Slice slice_info = Slice(py_index.slice(), data_shape[0]);
   int64_t begin_mask = slice_info.start_init_by_none() ? 1 : 0;
   int64_t end_mask = slice_info.stop_init_by_none() ? 1 : 0;
@@ -1370,6 +1404,7 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
   TensorIndex::py_index_handle_ = new_py_index;
   TensorIndex::is_ascend_ = is_ascend;
   TensorIndex::np_module_ = py::module::import("numpy");
+  TensorIndex::index_op_type_ = IndexOpType::GetItem;
   TensorIndex index(new_py_index);
   CheckGetItemIndex(data_shape, index.type());
   py::object output = py::none();
@@ -1432,7 +1467,7 @@ py::object TensorIndex::SetItemByNumber(const ShapeVector &data_shape, const Typ
   std::vector<int64_t> value_transfer_types = {std::get<0>(value_transfer)};
   std::vector<py::object> value_transfer_args = {std::get<1>(value_transfer)};
   if (data_shape.empty()) {
-    MS_LOG(EXCEPTION) << "data_shape of tensor is empty";
+    MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
   }
   int64_t dim_size = data_shape[0];
   int64_t index = tensor_index.integer();
@@ -1501,9 +1536,12 @@ py::object TensorIndex::SetItemByTensor(const ShapeVector &data_shape, const boo
       }
       value_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kBroadCast));
       value_transfer_args.emplace_back(VectorToPyTuple(updates_shape));
+      if (data_shape.empty()) {
+        MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+      }
       int64_t first_val = data_shape[0];
       np_index = TensorIndex::np_module_.attr("select")(
-        TensorIndex::np_module_.attr("less")(np_index, -1),
+        TensorIndex::np_module_.attr("less")(np_index, 0),
         TensorIndex::np_module_.attr("add")(np_index, py::int_(first_val)), np_index);
       np_index = TensorIndex::np_module_.attr("expand_dims")(np_index, -1);
       index_shape.emplace_back(1);
@@ -1519,9 +1557,8 @@ py::object TensorIndex::SetItemByTensor(const ShapeVector &data_shape, const boo
   } else if (py_value_type == TensorIndexType::Tuple || py_value_type == TensorIndexType::List) {
     value_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kHandleSequenceValue));
     value_transfer_args.emplace_back(py::make_tuple(py::int_(set_item_by_one_tensor), index));
-    if (CheckTypeIsInstance<TypeId>(index->data_type(),
-                                    {kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64})) {
-      np_index = TensorIndex::np_module_.attr("expand_dims")(np_index, -1);
+    if (CheckTypeIsInstance<TypeId>(index->data_type(), kIntTypes)) {
+      np_index = CastToInt(TensorIndex::np_module_.attr("expand_dims")(np_index, -1));
       tensor_update_type = ValueTransferType::kTensorScatterUpdate;
     } else if (index->data_type() == kNumberTypeBool) {
       np_index = SetItemByTensorByBool(data_shape, py_value_type, index, data_dims, np_index, &value_transfer_types,
@@ -1599,16 +1636,19 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
 
   py::object new_py_index = IsStubTensor(py_index) ? py::cast(ConvertStubTensor(py_index)) : py_index;
   py::object new_py_value = IsStubTensor(py_value) ? py::cast(ConvertStubTensor(py_value)) : py_value;
-  MS_LOG(DEBUG) << "Set item data shape is: " << data_shape << ", index is: " << py_index
-                << ", value shape is: " << py::cast<TensorPtr>(new_py_value)->shape();
+  MS_LOG(DEBUG) << "Set item data shape is: " << data_shape << ", index is: " << py_index << ", value is: " << py_value;
   TensorIndex::py_index_handle_ = new_py_index;
   TensorIndex::py_value_handle_ = new_py_value;
   TensorIndex::is_ascend_ = is_ascend;
+  TensorIndex::index_op_type_ = IndexOpType::SetItem;
   TensorIndex::np_module_ = py::module::import("numpy");
   TensorIndex index = TensorIndex(new_py_index);
   const TensorIndexType value_type = TensorIndex(new_py_value).type();
   CheckSetItemIndex(data_shape, index.type(), value_type);
   if (index.IsList()) {
+    if (data_shape.empty()) {
+      MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+    }
     index = TensorIndex::FormatList(index, data_shape[0]);
   }
   py::object output = py::none();
@@ -1638,7 +1678,7 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
     }
     case TensorIndexType::Boolean: {
       output = py::make_tuple(
-        py::none(), py::make_tuple(static_cast<int>(ValueTransferType::kByPass)), py::make_tuple(py::none()),
+        py_index, py::make_tuple(static_cast<int>(ValueTransferType::kByPass)), py::make_tuple(py::none()),
         py::make_tuple(static_cast<int>(ValueTransferType::kSetItemByBool)), py::make_tuple(py::none()));
       break;
     }
