@@ -4652,13 +4652,12 @@ def hardsigmoid(input):
 
     .. math::
 
-        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6}))
 
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(*)`, where :math:`*` means any number of
-          dimensions, with float16, float32 or float64 data type.
+        input (Tensor): Hard Sigmoid input, with float16, float32 or float64 data type.
 
     Returns:
         A Tensor whose dtype and shape are the same as `input`.
