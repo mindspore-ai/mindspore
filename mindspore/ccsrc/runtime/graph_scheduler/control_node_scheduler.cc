@@ -185,24 +185,7 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
       MS_LOG(DEBUG) << "Insert front node:" << parameter_with_index.first->DebugString()
                     << " index:" << parameter_with_index.second << " to host queue data source actor.";
     } else {
-      if (parameter_with_index.first->kernel_info() == nullptr) {
-        // Create kernel info for control node parameters.
-        const auto &backend_kernel_info = static_cast<device::KernelInfo *>(node_with_index.first->kernel_info());
-        MS_EXCEPTION_IF_NULL(backend_kernel_info);
-        const auto &backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
-        MS_EXCEPTION_IF_NULL(backend_build_info);
-
-        std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-        MS_EXCEPTION_IF_NULL(builder);
-        builder->SetOutputsFormat(backend_build_info->GetAllOutputFormats());
-        builder->SetOutputsDeviceType(backend_build_info->GetAllOutputDeviceTypes());
-
-        auto kernel_info = std::make_shared<device::KernelInfo>();
-        MS_EXCEPTION_IF_NULL(kernel_info);
-        kernel_info->set_select_kernel_build_info(builder->Build());
-        parameter_with_index.first->set_kernel_info(kernel_info);
-      }
-
+      CreateBuildInfoForFrontNode(parameter_with_index, node_with_index.first);
       // Create device tensor.
       const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
