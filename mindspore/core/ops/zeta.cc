@@ -98,7 +98,7 @@ AbstractBasePtr ZetaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = ZetaInferType(primitive, input_args);
   auto infer_shape = ZetaInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated

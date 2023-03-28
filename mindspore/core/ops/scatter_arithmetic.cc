@@ -88,7 +88,7 @@ AbstractBasePtr ScatterArithmeticInfer(const abstract::AnalysisEnginePtr &, cons
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ScatterArithmeticInferType(primitive, input_args);
   auto infer_shape = ScatterArithmeticInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 MIND_API_OPERATOR_IMPL(ScatterAdd, BaseOperator);

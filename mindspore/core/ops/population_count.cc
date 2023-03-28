@@ -84,7 +84,7 @@ AbstractBasePtr PopulationCountInfer(const abstract::AnalysisEnginePtr &, const 
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = PopulationCountInferType(primitive, input_args);
   auto infer_shape = PopulationCountInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return abstract::MakeAbstractTensor(infer_shape, infer_type);
 }
 
 // AG means auto generated
