@@ -69,6 +69,7 @@ namespace {
 void CheckInputsShape(const ShapeVector &x_shape, const ShapeVector &lu_data_shape, const ShapeVector &lu_pivots_shape,
                       const std::string &op_name) {
   const int64_t kDimNum = 2;
+  const int64_t minPivotsShape = 1;
   if (lu_data_shape.size() < kDimNum) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', lu_data's dimension must be greater than or equal to 2, but got: "
@@ -79,7 +80,7 @@ void CheckInputsShape(const ShapeVector &x_shape, const ShapeVector &lu_data_sha
                              << "', x's dimension must be greater than or equal to 2, but got: " << x_shape.size()
                              << ".";
   }
-  if (lu_pivots_shape.size() < 1) {
+  if (lu_pivots_shape.size() < minPivotsShape) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', lu_pivots's dimension must be greater than or equal to 1, but got: "
                              << lu_pivots_shape.size() << ".";
@@ -112,8 +113,9 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
 
+  CheckInputsShape(x_shape, lu_data_shape, lu_pivots_shape, op_name);
+
   if (!IsDynamicShape(x_shape) && !IsDynamicShape(lu_data_shape) && !IsDynamic(lu_pivots_shape)) {
-    CheckInputsShape(x_shape, lu_data_shape, lu_pivots_shape, op_name);
     if (x_shape.size() == lu_data_shape.size()) {
       for (size_t i = 0; i <= x_shape.size() - kDimNum; i++) {
         if (x_shape[i] != lu_data_shape[i]) {
