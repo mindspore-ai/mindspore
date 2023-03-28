@@ -45,12 +45,6 @@ class ApplyAdagradDACpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
-
-  void CheckShapeAndDtypeEqual(int64_t size_a, int64_t size_b, const char *name_a, const char *name_b) const;
-
-  void CheckDType(const std::vector<KernelTensorPtr> &inputs) const;
-
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
