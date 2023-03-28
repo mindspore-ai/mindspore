@@ -44,7 +44,7 @@ class COMMON_EXPORT DynamicObfuscator {
   ObfCase ObfuscateOpCase(const std::string obf_type);
   CNodePtr GetControlNode(const FuncGraphPtr &func_graph, const AnfNodePtr &prev_node);
   CNodePtr RandomSeedModeControl(const FuncGraphPtr func_graph);
-  CNodePtr CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node);
+  CNodePtr CustomOpModeControl(const FuncGraphPtr func_graph, const AnfNodePtr &prev_node) const;
 
   bool IsTarget(const std::string &cnode_name);
   void UpdateDict(const AnfNodePtr &node, const bool isParent);
@@ -54,9 +54,9 @@ class COMMON_EXPORT DynamicObfuscator {
   FuncGraphPtr CloneSubGraph(const std::vector<CNodePtr> &node_arr, const AnfNodePtr &parent_node);
   FuncGraphPtr BuildFakeGraph(const std::vector<CNodePtr> &node_arr, const AnfNodePtr &parent_node);
   CNodePtr BuildOneInputNoWeightNode(const FuncGraphPtr &fg, const mindspore::AnfNodePtr &input_node,
-                                     const mindspore::PrimitivePtr prim_node);
+                                     const mindspore::PrimitivePtr prim_node) const;
   CNodePtr BuildOneInputWithWeightNode(const FuncGraphPtr &fg, const AnfNodePtr &input_node, const CNodePtr &conv_node,
-                                       const AnfNodePtr &weights);
+                                       const AnfNodePtr &weights) const;
   CNodePtr AddPartialBranch(const FuncGraphPtr fg, FuncGraphPtr fg_sub, const std::vector<mindspore::CNodePtr> &nodes);
   PrimitivePtr get_random_prim(const std::string &obf_type, const mindspore::CNodePtr &node);
   bool IsValidOpNum(const int &current_num, const int &compa_num) const;
