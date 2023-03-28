@@ -62,6 +62,8 @@ enum class ValueTransferType {
   kRaiseIndexError
 };
 
+enum class IndexOpType { GetItem = 0, SetItem };
+
 class Slice final {
  public:
   Slice(const py::object &start_index, const py::object &stop_index, const py::object &step_index) {
@@ -78,7 +80,9 @@ class Slice final {
       step_ = 1;
     } else if (py::isinstance<py::int_>(step_index)) {
       step_ = step_index.cast<int64_t>();
-      MS_EXCEPTION_IF_CHECK_FAIL(step_ != 0, "slice step cannot be zero");
+      if (step_ == 0) {
+        MS_EXCEPTION(ValueError) << "For 'StridedSlice', 'strides' cannot contain 0";
+      }
       if (step_ < -kIndexMax) step_ = -kIndexMax;
     }
     start_ = NormalizeIndex(start_index, step_, dim_size_);
@@ -91,7 +95,9 @@ class Slice final {
         const bool &start_init_by_none, const bool &stop_init_by_none) {
     dim_size_ = dim_size;
     step_ = step_index;
-    MS_EXCEPTION_IF_CHECK_FAIL(step_ != 0, "slice step cannot be zero");
+    if (step_ == 0) {
+      MS_EXCEPTION(ValueError) << "For 'StridedSlice', 'strides' cannot contain 0";
+    }
     if (step_ < -kIndexMax) step_ = -kIndexMax;
 
     start_ = NormalizeIndex(start_index, step_, dim_size_);
@@ -326,6 +332,7 @@ class TensorIndex final {
   static py::handle py_value_handle_;
   static bool is_ascend_;
   static py::module np_module_;
+  static IndexOpType index_op_type_;
 
  private:
   int64_t integer_ = 0;
@@ -347,8 +354,8 @@ class TensorIndex final {
     return std::any_of(target_types.begin(), target_types.end(),
                        [&type](const auto &target_type) { return target_type == type; });
   }
-  static inline void JudgeDataDim(const int64_t &data_dim, const int64_t &max_data_dim, const int64_t &min_data_dim) {
-    if (data_dim >= min_data_dim && data_dim <= max_data_dim) {
+  static inline void JudgeDataDim(const int64_t &data_dim, const int64_t &min_data_dim, const int64_t &max_data_dim) {
+    if (data_dim < min_data_dim || data_dim > max_data_dim) {
       MS_EXCEPTION(ValueError) << "The input data's dim must in the range of " << min_data_dim << "," << max_data_dim
                                << " but got " << data_dim;
     }
@@ -556,8 +563,7 @@ class TensorIndex final {
   static inline ShapeVector FilterExpandedDims(const ShapeVector &shape, const std::vector<bool> &not_expanded_dim) {
     int64_t diff = SizeToLong(not_expanded_dim.size()) - SizeToLong(shape.size());
     if (diff < 0) {
-      MS_EXCEPTION(IndexError) << "Inner function filter expanded dims error , index of vector is minus number, index: "
-                               << diff;
+      MS_EXCEPTION(ValueError) << "Input array must have the same size across all dimensions.";
     }
     std::vector<int64_t> res;
     int64_t index = std::min(SizeToLong(shape.size()), SizeToLong(not_expanded_dim.size()) - diff);

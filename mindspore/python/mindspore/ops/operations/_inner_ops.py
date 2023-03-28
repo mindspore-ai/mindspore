@@ -2536,8 +2536,7 @@ class SetitemTensorIndexInfo(Primitive):
                                                         'v_transfer_types',
                                                         'v_transfer_args',
                                                         'tensor_update_types',
-                                                        'tensor_update_args',
-                                                        'special_for_parameters'])
+                                                        'tensor_update_args'])
         validator.check_value_type('is_ascend', is_ascend, [bool], self.name)
         self.is_ascend = is_ascend
 
