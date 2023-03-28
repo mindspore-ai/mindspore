@@ -1014,9 +1014,14 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   // Convert ValueNode<ClassType> to PyExecute("type", ("None"), ("None")).
-  AnfNodePtr ClassTypeConvertPyExecute(const FuncGraphPtr &func_graph) {
+  AnfNodePtr ClassTypeConvertPyExecute(const FuncGraphPtr &func_graph, const ClassTypePtr &clt) {
     MS_EXCEPTION_IF_NULL(func_graph);
-    auto str_type = std::make_shared<StringImm>("type");
+    MS_EXCEPTION_IF_NULL(clt);
+    const auto &class_name = clt->name();
+    auto begin = class_name.find("'") + 1;
+    auto end = class_name.substr(begin).find("'");
+    auto class_type = class_name.substr(begin, end);
+    auto str_type = std::make_shared<StringImm>(class_type);
     auto str_value = std::make_shared<StringImm>("None");
     auto script_node = NewValueNode(str_type);
 
@@ -1034,20 +1039,49 @@ class AfterOptARewriter : public BaseRewriter {
   void CheckCNodeInputsHasClassType(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime || !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    const auto &cur_func = cnode->func_graph();
+    if (!allow_fallback_runtime ||
+        (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute))) {
       return;
     }
-    const auto &inputs = cnode->inputs();
-    const auto &cur_func = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(cur_func);
-    for (auto &input : inputs) {
-      auto class_type = GetValueNode<ClassTypePtr>(input);
-      if (class_type == nullptr) {
-        continue;
+    if (IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+      constexpr auto num_three = 3;
+      const auto &inputs = cnode->inputs();
+      auto value_list = inputs[num_three];
+      if (value_list->isa<ValueNode>()) {
+        auto tuple_node = GetValueNode(value_list);
+        if (tuple_node->isa<ValueTuple>()) {
+          auto value_tuple = tuple_node->cast<ValueTuplePtr>()->value();
+          std::vector<AnfNodePtr> make_tuple = {NewValueNode(prim::kPrimMakeTuple)};
+          bool found_clt = false;
+          for (auto value : value_tuple) {
+            if (value->isa<parse::ClassType>()) {
+              auto class_type = value->cast<ClassTypePtr>();
+              auto type_py_execute = ClassTypeConvertPyExecute(cur_func, class_type);
+              (void)make_tuple.emplace_back(type_py_execute);
+              found_clt = true;
+            } else {
+              (void)make_tuple.emplace_back(NewValueNode(value));
+            }
+          }
+          if (found_clt) {
+            (void)manager_->Replace(value_list, cur_func->NewCNodeInOrder(make_tuple));
+            set_need_renormalized(true);
+          }
+        }
       }
-      auto type_py_execute = ClassTypeConvertPyExecute(cur_func);
-      (void)manager_->Replace(input, type_py_execute);
-      set_need_renormalized(true);
+    } else {
+      const auto &inputs = cnode->inputs();
+      MS_EXCEPTION_IF_NULL(cur_func);
+      for (auto &input : inputs) {
+        auto class_type = GetValueNode<ClassTypePtr>(input);
+        if (class_type == nullptr) {
+          continue;
+        }
+        auto type_py_execute = ClassTypeConvertPyExecute(cur_func, class_type);
+        (void)manager_->Replace(input, type_py_execute);
+        set_need_renormalized(true);
+      }
     }
   }
 

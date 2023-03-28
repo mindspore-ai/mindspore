@@ -1196,9 +1196,15 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   py::object function_ast_node = python_adapter::GetPyObjAttr(node, "func");
   // Process raise ValueError
   if (py::isinstance<py::none>(function_ast_node)) {
-    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
-    if (exception_types_map.find(name_id) != exception_types_map.end()) {
-      return {NewValueNode(name_id)};
+    auto name = python_adapter::GetPyObjAttr(node, "id");
+    auto name_id = py::cast<std::string>(name);
+    if (support_fallback() != "0" && block->IsLocalVariable(name_id)) {
+      auto error_node = block->ReadVariable(name_id);
+      error_node = HandleInterpret(block, error_node, name);
+      return {NewValueNode(name_id), error_node};
+    } else if (exception_types_map.find(name_id) != exception_types_map.end()) {
+      auto str_value = std::make_shared<StringImm>("None");
+      return {NewValueNode(name_id), NewValueNode(str_value)};
     } else {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id
                         << ". Raise only support some Python standard exception types: "
@@ -1211,10 +1217,19 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   auto arg_type =
     AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
   if (arg_type == AST_SUB_TYPE_NAME) {
-    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    auto name = python_adapter::GetPyObjAttr(function_ast_node, "id");
+    auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
-    if (exception_types_map.find(name_id) != exception_types_map.end()) {
-      return ParseException(block, args, name_id);
+    auto node_list = ParseException(block, args, name_id);
+    if (support_fallback() != "0" && block->IsLocalVariable(name_id)) {
+      auto error_node = block->ReadVariable(name_id);
+      error_node = HandleInterpret(block, error_node, name);
+      (void)node_list.emplace_back(error_node);
+      return node_list;
+    } else if (exception_types_map.find(name_id) != exception_types_map.end()) {
+      auto str_value = std::make_shared<StringImm>("None");
+      (void)node_list.emplace_back(NewValueNode(str_value));
+      return node_list;
     } else {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id
                         << ". Raise only support some Python standard exception types: "
@@ -3050,6 +3065,8 @@ FunctionBlockPtr Parser::MakeAssertErrorBlock(const FunctionBlockPtr &block, con
     msg = HandleInterpret(block, msg, msg_node);
     (void)inputs.emplace_back(msg);
   }
+  auto str_none = std::make_shared<StringImm>("None");
+  (void)inputs.emplace_back(NewValueNode(str_none));
 
   auto func_graph = block->func_graph();
   CNodePtr raise_node = func_graph->NewCNodeInOrder(inputs);
