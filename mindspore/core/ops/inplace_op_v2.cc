@@ -47,7 +47,12 @@ namespace ops {
 namespace {
 bool IsIndicesDynamic(const PrimitivePtr &primitive, const AbstractBasePtr &indices_abs) {
   if (indices_abs->isa<abstract::AbstractTensor>()) {
-    ShapeVector indices_shape = GetShapeValue(primitive, indices_abs);
+    auto abs_tensor = indices_abs->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(abs_tensor);
+    ShapeVector indices_shape = abs_tensor->shape()->shape();
+    if (indices_shape.size() != kDim1) {
+      MS_LOG(EXCEPTION) << "Shape of indices only could be one-dimensional. But got " << indices_shape;
+    }
     return IsDynamic(indices_shape);
   } else if (indices_abs->isa<abstract::AbstractSequence>()) {
     return indices_abs->cast<abstract::AbstractSequencePtr>()->dynamic_len();
