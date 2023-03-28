@@ -1,7 +1,7 @@
 mindspore.ops.min
 ==============================
 
-.. py:function:: mindspore.ops.min(input, axis=0, keepdims=False, *, initial=None, where=None)
+.. py:function:: mindspore.ops.min(input, axis=None, keepdims=False, *, initial=None, where=None)
 
     在给定轴上计算输入Tensor的最小值。并且返回最小值和索引。
 
@@ -13,7 +13,7 @@ mindspore.ops.min
 
     参数：
         - **input** (Tensor) - 输入任意维度的Tensor。不支持复数类型。
-        - **axis** (int) - 指定计算维度。默认值：0。
+        - **axis** (int) - 指定计算维度。默认值：None。
         - **keepdims** (bool) - 表示是否减少维度，如果为True，输出将与输入保持相同的维度；如果为False，输出将减少维度。默认值：False。
 
     关键字参数：
