@@ -661,6 +661,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     }
 
     ParseControlNodes(graph_compiler_info);
+    UpdateGraphCompilerInfo(graph_compiler_info.name_);
     actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
     MS_EXCEPTION_IF_NULL(actor_set);
     constexpr auto kKernelActorThreshold = 5000;

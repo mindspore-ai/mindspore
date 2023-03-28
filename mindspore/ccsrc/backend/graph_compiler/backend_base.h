@@ -73,6 +73,7 @@ class BACKEND_EXPORT Backend {
 void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, const AnfNodePtr &node = nullptr);
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args);
+runtime::KernelMapPosition FetchOriginOutputOrder(const AnfNodePtr &root_output);
 
 class BACKEND_EXPORT MindRTBackendBase : public Backend {
  public:
@@ -125,6 +126,7 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
 
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
+  void UpdateGraphCompilerInfo(const ActorInfo &actor_info);
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.

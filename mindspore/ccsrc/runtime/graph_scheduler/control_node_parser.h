@@ -126,6 +126,7 @@ bool IsPartialInput(const AnfNodePtr &node);
 void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *const depend_nodes);
 // Get all the depend nodes of node in side effect.
 std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node);
+void CreateBuildInfoForFrontNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:

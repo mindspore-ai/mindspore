@@ -77,7 +77,7 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
       auto idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
         auto sequeue_abstract = sequeue_->abstract()->cast<abstract::AbstractSequencePtr>();
-        if (sequeue_abstract == nullptr) {
+        if (sequeue_abstract == nullptr || sequeue_abstract->dynamic_len()) {
           return;
         }
         id_ = idx + SizeToLong(sequeue_abstract->size());
