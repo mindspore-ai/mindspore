@@ -33,7 +33,7 @@ class CrossNet(nn.Cell):
         bias_list = []
         for i in range(self.num_layers):
             kernel = Parameter(initializer(XavierUniform(0.02), (hidden_size, 1), mstype.float32),
-                               requires_grad=True, name="kernerl" + str(i))
+                               requires_grad=True, name="kernel" + str(i))
             kernels.append(kernel)
             bias = Parameter(Tensor(np.zeros((hidden_size, 1)), mstype.float32),
                              requires_grad=True, name="bias" + str(i))
@@ -220,7 +220,7 @@ def test_train():
     """
     Feature: Test the dcn_dynamic network with small shape.
     Description:  The batch of inputs is dynamic.
-    Expectation: Assert that results of GRAPH_MODE(static graph) are consistent with expected result.
+    Expectation: Assert that results are consistent with expected result.
     """
     batch_size_list = [6, 70, 123]
     DenseFeature = namedtuple("DenseFeature", ['name', 'size'])
@@ -228,8 +228,10 @@ def test_train():
     SparseFeature = namedtuple("SparseFeature", ['name', 'voc_size', 'embed_size'])
     sparse_columns = [SparseFeature('a', 7, 6), SparseFeature('b', 136, 18), SparseFeature('c', 3, 6)]
     data_list = gen_data(numeric_columns, sparse_columns, batch_size_list)
-    # GRAPH_MODE is temporarily not supported due to some new features that are not completely complete
     set_seed(0)
     graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.GRAPH_MODE)
     expect_loss = [6.687461, 2928.5852, 8715.267]
     assert np.allclose(graph_loss, expect_loss, 1e-3, 1e-3)
+    set_seed(0)
+    pynative_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.PYNATIVE_MODE)
+    assert np.allclose(pynative_loss, expect_loss, 1e-3, 1e-3)
