@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include <utility>
 #include <functional>
 #include "mindspore/core/ops/grad/pdist_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

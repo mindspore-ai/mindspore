@@ -21,7 +21,6 @@
 #include <memory>
 #include <map>
 #include <string>
-#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "utils/ms_utils.h"
