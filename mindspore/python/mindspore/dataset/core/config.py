@@ -879,34 +879,33 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
     Examples:
         1. Enable dataset pipeline debug mode and use default debug hook.
-        >>> import mindspore.dataset as ds
         >>> # Print shape and type of input/output data of each transform op in map operator.
         >>> ds.config.set_debug_mode(True)
 
         2. Enable dataset pipeline debug mode and use pre-defined debug hook provided by MindData.
-        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.debug as debug
+        >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[debug.PrintDataHook()])
 
         3. Enable dataset pipeline debug mode and use user-defined debug hook. It must define a
         class inherited from DebugHook.
-        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.debug as debug
+        >>>
         >>> class CustomizedHook(debug.DebugHook):
         ...     def __init__(self):
         ...         super().__init__()
+        ...
         ...     def compute(self, *args):
         ...         # Add your debugging code here.
         ...         return args
+        >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
 
         4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
         >>> # the debug hook is added after `Decode` operation.
-        >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop()])
+        >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
