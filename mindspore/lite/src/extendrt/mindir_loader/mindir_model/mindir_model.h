@@ -46,7 +46,6 @@ class MindirModel : public AbstractBaseModel {
   ~MindirModel() { Destroy(); }
 
   bool ModelVerify() const override;
-  // virtual SchemaTensorWrapper *GetSchemaTensor(const size_t &tensor_index) const override;
   int ConvertTensors(std::vector<mindspore::lite::Tensor *> *lite_tensors) override;
   std::string GetModelPath() const override;
   virtual mindspore::kernel::KernelExec *FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,

@@ -61,9 +61,6 @@ class ModelLoaderRegistrar {
   ~ModelLoaderRegistrar() = default;
 };
 
-// #define REG_MODEL_LOADER(model_type, model_loader)
-//   static ModelLoaderRegistrar g_##model_type##model_loader##ModelLoader(model_type, new model_loader());
-
 #define REG_MODEL_LOADER(model_type, model_loader_creator) \
   static ModelLoaderRegistrar g_##model_type##model_loader##ModelLoader(model_type, model_loader_creator);
 }  // namespace mindspore::infer

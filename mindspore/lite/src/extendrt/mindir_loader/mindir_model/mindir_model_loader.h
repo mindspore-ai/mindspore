@@ -34,7 +34,6 @@ class MindirModelLoader : public ModelLoader {
   AbstractBaseModel *ImportModel(const char *model_buf, size_t size, bool take_buf) override;
 
  private:
-  // int InitModelBuffer(const char *model_buf, size_t size, bool take_buf);
   bool ConvertModel(const mind_ir::ModelProto &model_proto);
   bool ConvertPrimitives(const mind_ir::ModelProto &model_proto);
   bool ConvertGraph(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph = nullptr,
