@@ -81,7 +81,7 @@ bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   size_t size_mp = m * p;
   size_t size_pn = p * n;
   if (size_mn > 0) {
-    size_t input_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+    size_t input_num = static_cast<size_t>(inputs[0]->size / sizeof(T));
     size_t matrix_num = input_num / size_mn;
     size_t data_size = input_num * sizeof(T);
     if (data_size <= kParallelDataNums) {

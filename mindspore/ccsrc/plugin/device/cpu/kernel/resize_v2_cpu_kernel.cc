@@ -107,17 +107,17 @@ static void ComputeInterpolationWeightsByCubic(const size_t out_size, const size
     const float in = ComputeSourceIndex(i, scale, align_corners);
     const float in_f = std::floor(in);
     const float in_c = std::ceil(in);
-    interpolation[i].lowest = (in_f - 1 > 0) ? static_cast<size_t>(in_f - 1) : 0;
-    interpolation[i].lower = (in_f > 0) ? static_cast<size_t>(in_f) : 0;
-    interpolation[i].upper = (in_c < in_size - 1) ? static_cast<size_t>(in_c) : in_size - 1;
-    interpolation[i].uppest = (in_c + 1 < in_size - 1) ? static_cast<size_t>(in_c + 1) : in_size - 1;
+    interpolation[i].lowest = static_cast<float>((in_f - 1 > 0) ? (in_f - 1) : 0);
+    interpolation[i].lower = static_cast<float>((in_f > 0) ? in_f : 0);
+    interpolation[i].upper = static_cast<float>((in_c < in_size - 1) ? in_c : in_size - 1);
+    interpolation[i].uppest = static_cast<float>((in_c + 1 < in_size - 1) ? (in_c + 1) : in_size - 1);
     interpolation[i].lerp = in - in_f;
   }
 }
 
 // data[4] = {top_left, top_right, bottom_left, bottom_right}
 template <typename T>
-static inline T ComputeLerpByNearest(T *data, float x_lerp, float y_lerp, const std::string &nearest_mode) {
+static inline T ComputeLerpByNearest(T *data, const std::string &nearest_mode) {
   T top_left = data[0];
   if (nearest_mode != "floor") {
     MS_LOG(ERROR) << "For 'ResizeV2', nearest_mode must be 'floor'.";
@@ -138,7 +138,7 @@ static inline T ComputeLerpByBiLinear(T *data, float x_lerp, float y_lerp) {
 }
 
 static float GetBiCubicWeight(float lerp, float a) {
-  if (a != kCubicCoeffA) {
+  if (static_cast<float>(a) != static_cast<float>(kCubicCoeffA)) {
     MS_LOG(ERROR) << "For 'ResizeV2', cubic_coeff_a must be -0.75.";
   }
   if (lerp <= 1.0) {
@@ -239,20 +239,20 @@ int ResizeV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 template <typename T>
 bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   MS_ERROR_IF_NULL_W_RET_VAL(input_addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_addr, false);
 
   auto sizes = inputs[kIndex3];
   if (sizes_dtype_ == kNumberTypeInt64) {
-    int64_t *sizes_data = reinterpret_cast<int64_t *>(sizes->addr);
+    int64_t *sizes_data = static_cast<int64_t *>(sizes->addr);
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     out_height_ = LongToSize(sizes_data[kIndex2]);
     out_width_ = LongToSize(sizes_data[kIndex3]);
   } else {
-    int32_t *sizes_data = reinterpret_cast<int32_t *>(sizes->addr);
+    int32_t *sizes_data = static_cast<int32_t *>(sizes->addr);
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     std::vector<int64_t> sizes_v;
     sizes_v.push_back(static_cast<int64_t>(sizes_data[kIndex2]));
@@ -295,8 +295,8 @@ bool ResizeV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 template <typename T>
 bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -311,18 +311,16 @@ bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::Addre
       for (size_t h = 0; h < out_height_; ++h) {
         const T *ys_input_lower_ptr = c_input_addr + ys[h].lower * in_width_;
         const T *ys_input_upper_ptr = c_input_addr + ys[h].upper * in_width_;
-        const float ys_lerp = static_cast<float>(ys[h].lerp);
         for (size_t w = 0; w < out_width_; ++w) {
           const size_t xs_lower = xs[w].lower;
           const size_t xs_upper = xs[w].upper;
-          const float xs_lerp = static_cast<float>(xs[w].lerp);
           const T top_left(ys_input_lower_ptr[xs_lower]);
           const T top_right(ys_input_lower_ptr[xs_upper]);
           const T bottom_left(ys_input_upper_ptr[xs_lower]);
           const T bottom_right(ys_input_upper_ptr[xs_upper]);
-          int64_t output_index = h * out_width_ + w;
+          int64_t output_index = SizeToLong(h * out_width_ + w);
           T data[4] = {top_left, top_right, bottom_left, bottom_right};
-          c_output_addr[output_index] = ComputeLerpByNearest(data, xs_lerp, ys_lerp, "floor");
+          c_output_addr[output_index] = ComputeLerpByNearest(data, "floor");
         }
       }
     }
@@ -334,8 +332,8 @@ bool ResizeV2CpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::Addre
 template <typename T>
 bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::AddressPtr> &inputs,
                                                 const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   std::vector<CachedInterpolation> ys(out_height_ + 1);
   std::vector<CachedInterpolation> xs(out_width_ + 1);
@@ -359,7 +357,7 @@ bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::Addres
           const T top_right(ys_input_lower_ptr[xs_upper]);
           const T bottom_left(ys_input_upper_ptr[xs_lower]);
           const T bottom_right(ys_input_upper_ptr[xs_upper]);
-          int64_t output_index = h * out_width_ + w;
+          int64_t output_index = SizeToLong(h * out_width_ + w);
           T data[4] = {top_left, top_right, bottom_left, bottom_right};
           c_output_addr[output_index] = ComputeLerpByBiLinear(data, xs_lerp, ys_lerp);
         }
@@ -374,8 +372,8 @@ bool ResizeV2CpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::Addres
 template <typename T>
 bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::AddressPtr> &inputs,
                                                const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   std::vector<CachedInterpolationCubic> ys(out_height_ + 1);
   std::vector<CachedInterpolationCubic> xs(out_width_ + 1);
@@ -415,7 +413,7 @@ bool ResizeV2CpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::Address
           const T i_3_1(ys_input_uppest_ptr[xs_lower]);
           const T i_3_2(ys_input_uppest_ptr[xs_upper]);
           const T i_3_3(ys_input_uppest_ptr[xs_uppest]);
-          int64_t output_index = h * out_width_ + w;
+          int64_t output_index = SizeToLong(h * out_width_ + w);
           T data[16] = {i_0_0, i_0_1, i_0_2, i_0_3, i_1_0, i_1_1, i_1_2, i_1_3,
                         i_2_0, i_2_1, i_2_2, i_2_3, i_3_0, i_3_1, i_3_2, i_3_3};
           c_output_addr[output_index] = ComputeLerpByBiCubic(data, xs_lerp, ys_lerp, -0.75);
