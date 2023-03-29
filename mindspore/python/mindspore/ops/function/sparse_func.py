@@ -85,6 +85,7 @@ def promote_tensor(tensor_1, tensor_2):
 
 
 def promote_csr(csr_tensor_1, csr_tensor_2):
+    """Type promotion for CSR tensor."""
     indptr_1, indptr_2 = promote_tensor(csr_tensor_1.indptr, csr_tensor_2.indptr)
     indices_1, indices_2 = promote_tensor(csr_tensor_1.indices, csr_tensor_2.indices)
     values_1, values_2 = promote_tensor(csr_tensor_1.values, csr_tensor_2.values)

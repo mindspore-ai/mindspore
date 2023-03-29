@@ -1003,10 +1003,9 @@ def _jacfwd_construct_v(inputs, grad_position):
     items_num = ()
     cum_num = (0,)
     for item in inputs:
-        item_num = size(item)
-        num += item_num
+        num += size(item)
         inputs_shape += ((item.shape, num),)
-        items_num += (item_num,)
+        items_num += (size(item),)
         cum_num += (num,)
     for i, element in enumerate(inputs):
         item_size = items_num[i]
