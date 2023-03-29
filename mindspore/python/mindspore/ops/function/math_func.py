@@ -6076,12 +6076,11 @@ def frac(x):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore.common import dtype as mstype
         >>> import mindspore.ops as ops
         >>> x = Tensor([2, 4.2, -2.5], mstype.float16)
-        >>> output = frac(x)
+        >>> output = ops.frac(x)
         >>> print(output)
         [ 0.      0.1992 -0.5   ]
     """
@@ -6477,7 +6476,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     r"""
     Computes the n-th discrete difference along a specified axis of a given input `x`.
 
-    The first difference is calculated as :math:`out[i] = a[i+1] - a[i]` along the specified `axis`.
+    The first difference is calculated as :math:`out[i] = x[i+1] - x[i]` along the specified `axis`.
     To compute higher differences, the function is called recursively
     using the output from the previous iteration as input.
 
