@@ -965,15 +965,23 @@ def _jacfwd_trans_item(item, inputs_shape, grad_position):
     return output_wrt_input_all
 
 
-def _jacfwd_postprocess(x, inputs_shape, grad_position):
+def _jac_postprocess(x, shape, grad_position, mode):
     """reformat jacobian."""
+
+    if mode == 'forward':
+        func = _jacfwd_trans_item
+        args = (shape, grad_position)
+    else:
+        func = _jacrev_trans_item
+        args = (shape,)
+
     if isinstance(x, tuple):
         jacobian = ()
         for item in x:
-            jacobian += _jacfwd_trans_item(item, inputs_shape, grad_position)
+            jacobian += func(item, *args)
         res = jacobian
     else:
-        res = _jacfwd_trans_item(x, inputs_shape, grad_position)
+        res = func(x, *args)
     if len(res) == 1:
         return res[0]
     input_num = len(grad_position)
@@ -989,6 +997,11 @@ def _jacfwd_postprocess(x, inputs_shape, grad_position):
             input_grad += (res[i * input_num + j],)
         jac += (input_grad,)
     return jac
+
+
+def _jacfwd_postprocess(x, inputs_shape, grad_position):
+    """reformat forward-computed Jacobian."""
+    return _jac_postprocess(x, inputs_shape, grad_position, 'forward')
 
 
 def _jacfwd_construct_v(inputs, grad_position):
@@ -1154,29 +1167,8 @@ def _jacrev_trans_item(item, outputs_shape):
 
 
 def _jacrev_postprocess(x, outputs_shape, grad_position):
-    """reformat jacobian."""
-    if isinstance(x, tuple):
-        jacobian = ()
-        for item in x:
-            jacobian += _jacrev_trans_item(item, outputs_shape)
-        res = jacobian
-    else:
-        res = _jacrev_trans_item(x, outputs_shape)
-    if len(res) == 1:
-        return res[0]
-    input_num = len(grad_position)
-    if len(res) % input_num != 0:
-        raise ValueError("The numbers of inputs and outputs do not match.")
-    output_num = len(res) // input_num
-    if input_num == 1 or output_num == 1:
-        return res
-    jac = ()
-    for i in range(output_num):
-        input_grad = ()
-        for j in range(input_num):
-            input_grad += (res[j * output_num + i],)
-        jac += (input_grad,)
-    return jac
+    """reformat reverse-computed jacobian."""
+    return _jac_postprocess(x, outputs_shape, grad_position, 'reverse')
 
 
 def _jacrev_construct_v(inputs, outputs, has_aux=False):
@@ -1200,7 +1192,7 @@ def _jacrev_construct_v(inputs, outputs, has_aux=False):
         outputs_shape += ((item.shape, num),)
         items_num += (item_num,)
         cum_num += (num,)
-    for i, element in enumerate(inputs):
+    for element in inputs:
         primal = broadcast_to(element, (num,) + element.shape)
         primals += (primal,)
     for i, element in enumerate(outputs):

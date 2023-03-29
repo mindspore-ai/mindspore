@@ -52,13 +52,13 @@ def lagrange_para_check(func, constraints, options, tol):
     """check the parameter of lagrange method."""
 
     if not callable(func):
-        raise TypeError(" 'func' must be of type function, but got {}".format(type(func)))
+        raise TypeError("'func' must be of type function, but got {}".format(type(func)))
     if 'coincide_func' in options:
         if not callable(options['coincide_fun']):
-            raise TypeError(" 'coincide_fun' must be of type function, but got {}".format(type(coincide_fun)))
+            raise TypeError("'coincide_fun' must be of type function, but got {}".format(type(options['coincide_fun'])))
     for constraint in constraints:
         if not callable(constraint):
-            raise TypeError(" 'constraint' must be of type function, but got {}".format(type(constraint)))
+            raise TypeError("'constraint' must be of type function, but got {}".format(type(constraint)))
     if tol is not None:
         if len(tol) != len(constraints):
             raise ValueError("The len of tol must be same as the len of constraints")
