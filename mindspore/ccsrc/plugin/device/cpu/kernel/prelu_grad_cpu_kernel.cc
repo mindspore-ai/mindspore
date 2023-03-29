@@ -78,21 +78,21 @@ template <typename T>
 bool PReLUGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
-  auto *dy = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *dy = static_cast<T *>(inputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(dy, false);
-  auto *x = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *x = static_cast<T *>(inputs[1]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(x, false);
-  auto *w = reinterpret_cast<T *>(inputs[2]->addr);
+  auto *w = static_cast<T *>(inputs[2]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(w, false);
-  auto *dx = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *dx = static_cast<T *>(outputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
-  auto *dw = reinterpret_cast<T *>(outputs[1]->addr);
+  auto *dw = static_cast<T *>(outputs[1]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(dw, false);
   auto ret = memset_s(dw, outputs[1]->size, 0, outputs[1]->size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed. Error no: " << ret;
   }
-  auto *dw_array = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *dw_array = static_cast<float *>(workspace[0]->addr);
   ret = memset_s(dw_array, workspace[0]->size, 0, workspace[0]->size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', workspace buffer memset failed. Error no: " << ret;

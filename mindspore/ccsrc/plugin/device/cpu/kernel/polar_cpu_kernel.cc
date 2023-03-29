@@ -62,9 +62,9 @@ bool PolarCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 
 template <typename T>
 bool PolarCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto abs = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto angle = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<std::complex<T> *>(outputs[0]->addr);
+  const auto abs = static_cast<T *>(inputs[0]->addr);
+  const auto angle = static_cast<T *>(inputs[1]->addr);
+  auto output_addr = static_cast<std::complex<T> *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size / sizeof(std::complex<T>);
   auto task = [output_addr, abs, angle](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {

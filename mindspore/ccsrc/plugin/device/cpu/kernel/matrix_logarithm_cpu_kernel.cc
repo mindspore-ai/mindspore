@@ -99,12 +99,12 @@ void MatrixLogarithmCpuKernelMod::LaunchMatrixLogarithm(const std::vector<Addres
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   size_t shape_size = shape_x_.size();
-  auto m = shape_x_[shape_size - 1];
+  auto m = IntToSize(shape_x_[shape_size - 1]);
   size_t size_mm = m * m;
   if (size_mm > 0) {
     size_t input_num = 1;
     for (size_t i = 0; i < shape_x_.size(); i++) {
-      input_num *= shape_x_[i];
+      input_num *= IntToSize(shape_x_[i]);
     }
     size_t matrix_num = input_num / size_mm;
     size_t data_size = input_num * sizeof(T);

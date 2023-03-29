@@ -154,7 +154,7 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
   CheckSparseConcatShape(indices_element0_shape, indices_expect_rank, "indices shape", prim_name);
   CheckSparseConcatShape(values_element0_shape, values_expect_rank, "values shape", prim_name);
   CheckSparseConcatShape(shapes_element0_shape, shapes_expect_rank, "shape shape", prim_name);
-  CheckSparseConcatShapeValue(indices_element0_shape, values_element0_shape, shapes_element0_shape, prim_name);
+  (void)CheckSparseConcatShapeValue(indices_element0_shape, values_element0_shape, shapes_element0_shape, prim_name);
 
   if (IsDynamicRank(indices_element0_shape)) {
     abstract::ShapePtr y_indices_shape_ptr = std::make_shared<mindspore::abstract::Shape>(ShapeVector{-1, -1});

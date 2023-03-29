@@ -61,7 +61,7 @@ int64_t compute_output_indices_unique_size(const T *indices, size_t size) {
   for (size_t i = 0; i < half_size; i++) {
     (void)mat1_indices_set.insert(indices[i]);
   }
-  return mat1_indices_set.size();
+  return static_cast<int64_t>(mat1_indices_set.size());
 }
 
 enum DimNum : size_t {
@@ -142,13 +142,15 @@ void CheckAlphaBeta(const std::vector<AbstractBasePtr> &input_args) {
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
   if (!IsDynamic(alpha_shape) &&
-      !((alpha_shape.size() == dim1Num && alpha_shape[0] == SizeToLong(dim1Num)) || (alpha_shape.size() == dim0Num))) {
+      !((alpha_shape.size() == static_cast<size_t>(dim1Num) && alpha_shape[0] == SizeToLong(dim1Num)) ||
+        (alpha_shape.size() == static_cast<size_t>(dim0Num)))) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, alpha shape should be (1,) or ()"
                              << ", but get dim num is " << alpha_shape.size() << ", dim0 size is " << alpha_shape[0]
                              << ".";
   }
   if (!IsDynamic(beta_shape) &&
-      !((beta_shape.size() == dim1Num && beta_shape[0] == SizeToLong(dim1Num)) || (beta_shape.size() == dim0Num))) {
+      !((beta_shape.size() == static_cast<size_t>(dim1Num) && beta_shape[0] == SizeToLong(dim1Num)) ||
+        (beta_shape.size() == static_cast<size_t>(dim0Num)))) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, beta shape should be (1,) or ()"
                              << ", but get dim num is " << beta_shape.size() << ", dim0 size is " << beta_shape[0]
                              << ".";
@@ -171,33 +173,33 @@ void CheckInputTensorShapeSize(const std::vector<AbstractBasePtr> &input_args, c
   auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
   auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
 
-  if (x1_indices_shape.size() != dim2Num) {
+  if (x1_indices_shape.size() != static_cast<size_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices should be a 2-D tensor"
                              << ", while x1_indices dim num is " << x1_indices_shape.size() << ".";
   }
-  if (x1_values_shape.size() != dim1Num) {
+  if (x1_values_shape.size() != static_cast<size_t>(dim1Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_values should be a 1-D tensor"
                              << ",  while x1_values dim num is " << x1_values_shape.size() << ".";
   }
-  if (x1_shape_shape.size() != dim1Num) {
+  if (x1_shape_shape.size() != static_cast<size_t>(dim1Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", x1_shape should be a 1-D tensor, while x1_shape dim num is " << x1_shape_shape.size()
                              << ".";
   }
-  if (x2_indices_shape.size() != dim2Num) {
+  if (x2_indices_shape.size() != static_cast<size_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x2_indices should be a 2-D tensor"
                              << ", while x2_indices dim num is " << x2_indices_shape.size() << ".";
   }
-  if (x2_values_shape.size() != dim1Num) {
+  if (x2_values_shape.size() != static_cast<size_t>(dim1Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x2_values should be a 1-D tensor"
                              << ",  while x2_values dim num is " << x2_values_shape.size() << ".";
   }
-  if (x2_shape_shape.size() != dim1Num) {
+  if (x2_shape_shape.size() != static_cast<size_t>(dim1Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", x2_shape should be a 1-D tensor, while x2_shape dim num is " << x2_shape_shape.size()
                              << ".";
   }
-  if (x3_shape.size() != dim2Num) {
+  if (x3_shape.size() != static_cast<size_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x3_dense should be a 2-D tensor"
                              << ", while dim num is " << x3_shape.size() << ".";
   }
@@ -218,7 +220,7 @@ void CheckInputTensorShapeValue(const std::vector<AbstractBasePtr> &input_args, 
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
 
-  if (x1_indices_shape[0] != SizeToLong(dim2Num)) {
+  if (x1_indices_shape[0] != static_cast<int64_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices shape should be (2, n)"
                              << ", while x1_indices shape dim0 is " << x1_indices_shape[0] << ".";
   }
@@ -228,11 +230,11 @@ void CheckInputTensorShapeValue(const std::vector<AbstractBasePtr> &input_args, 
                              << " while x1_indices dim1 size is " << x1_indices_shape[1]
                              << ", x1_values_shape dim0 size is " << x1_values_shape[0] << ".";
   }
-  if (x1_shape_shape[0] != SizeToLong(dim2Num)) {
+  if (x1_shape_shape[0] != static_cast<int64_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", the shape of x1_shape should be [2] but got shape [" << x1_shape_shape[0] << "].";
   }
-  if (x2_indices_shape[0] != SizeToLong(dim2Num)) {
+  if (x2_indices_shape[0] != static_cast<int64_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x2_indices shape should be (2, n)"
                              << ", while x2_indices shape dim0 is " << x2_indices_shape[0] << ".";
   }
@@ -242,7 +244,7 @@ void CheckInputTensorShapeValue(const std::vector<AbstractBasePtr> &input_args, 
                              << " while x2_indices dim1 size is " << x2_indices_shape[1]
                              << ", x2_values_shape dim0 size is " << x2_values_shape[0] << ".";
   }
-  if (x2_shape_shape[0] != SizeToLong(dim2Num)) {
+  if (x2_shape_shape[0] != static_cast<int64_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm"
                              << ", the shape of x2_shape should be [2] but got shape [" << x2_shape_shape[0] << "].";
   }

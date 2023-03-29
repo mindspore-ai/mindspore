@@ -72,11 +72,11 @@ static inline double calc_digamma(double x) {
   static constexpr int64_t kTEN = 10;
   static constexpr double kHALF = 0.5;
   static constexpr int64_t kSIX = 6;
-  if (x == 0) {
+  if (static_cast<double>(x) == 0) {
     return std::copysign(INFINITY, -x);
   }
 
-  bool x_is_integer = x == trunc(x);
+  bool x_is_integer = static_cast<double>(x) == static_cast<double>(trunc(x));
   if (x < 0) {
     if (x_is_integer) {
       return std::numeric_limits<double>::quiet_NaN();
@@ -117,7 +117,7 @@ int DigammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
   input_shape_ = inputs[kInputIndex]->GetShapeVector();
   output_shape_ = outputs[kOutputIndex]->GetShapeVector();
-  input_tensor_size_ = SizeOf(input_shape_);
+  input_tensor_size_ = SizeToLong(SizeOf(input_shape_));
   dtype_ = inputs[kInputIndex]->GetDtype();
   return 0;
 }

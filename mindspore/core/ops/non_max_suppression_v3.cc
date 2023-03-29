@@ -48,8 +48,8 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   auto boxes_shape = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
@@ -70,24 +70,25 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   // boxes must be rank 2
-  (void)CheckAndConvertUtils::CheckInteger("boxes rank", boxes_shape->shape().size(), kEqual, 2, prim_name);
-  int x_shape = boxes_shape->shape()[1];
+  (void)CheckAndConvertUtils::CheckInteger("boxes rank", SizeToLong(boxes_shape->shape().size()), kEqual, 2, prim_name);
+  int x_shape = static_cast<int32_t>(boxes_shape->shape()[1]);
   if (x_shape > 0) {
     // boxes second dimension must euqal 4
     (void)CheckAndConvertUtils::CheckInteger("boxes second dimension", boxes_shape->shape()[1], kEqual, 4, prim_name);
   }
   // score must be rank 1
-  (void)CheckAndConvertUtils::CheckInteger("scores rank", scores_shape->shape().size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scores rank", SizeToLong(scores_shape->shape().size()), kEqual, 1,
+                                           prim_name);
   // score length must be equal with boxes first dimension
   (void)CheckAndConvertUtils::CheckInteger("scores length", scores_shape->shape()[0], kEqual, boxes_shape->shape()[0],
                                            prim_name);
   // max_output_size,iou_threshold,score_threshold must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("max_output_size size", max_output_size_shape->shape().size(), kEqual, 0,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("iou_threshold size", iou_threshold_shape->shape().size(), kEqual, 0,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("score_threshold size", score_threshold_shape->shape().size(), kEqual, 0,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("max_output_size size", SizeToLong(max_output_size_shape->shape().size()),
+                                           kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("iou_threshold size", SizeToLong(iou_threshold_shape->shape().size()),
+                                           kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("score_threshold size", SizeToLong(score_threshold_shape->shape().size()),
+                                           kEqual, 0, prim_name);
   auto scores_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   // calculate output shape
   ShapeVector selected_indices_shape = {-1};

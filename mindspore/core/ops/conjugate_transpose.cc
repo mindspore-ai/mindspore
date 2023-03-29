@@ -61,7 +61,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
 
   for (auto p : p_value_raw) {
     p = (p >= 0) ? p : (static_cast<int64_t>(p_value_raw.size()) + p);
-    p_value.emplace_back(p);
+    (void)p_value.emplace_back(p);
   }
 
   if (x_shape.size() != p_value.size()) {

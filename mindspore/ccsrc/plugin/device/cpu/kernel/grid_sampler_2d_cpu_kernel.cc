@@ -202,7 +202,7 @@ void GridSampler2DCpuKernelMod::Call2Half(const float16 *x_data_addr, float16 *y
                                           std::vector<int64_t> y_dims, int64_t *y_stride, int64_t *x_stride,
                                           const int64_t *grid_stride, std::string interpolation_mode,
                                           std::string padding_mode, bool align_corners) {
-  uint32_t data_num = y_dims[0] * y_dims[2] * y_dims[3];
+  uint32_t data_num = LongToSize(y_dims[0] * y_dims[2] * y_dims[3]);
   auto shard_compute = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       int64_t y_iter[4] = {0};

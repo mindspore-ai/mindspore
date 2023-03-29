@@ -43,9 +43,9 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
       std::vector<abstract::BaseShapePtr>{unknow_shape_ptr, unknow_shape_ptr});
   }
 
-  CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, kNumber, prim_name);
-  int64_t last_shape_input = input_shape[input_rank - 1];
-  int64_t last_second__shape_input = input_shape[input_rank - 2];
+  (void)CheckAndConvertUtils::CheckInteger("input rank", input_rank, kGreaterEqual, kNumber, prim_name);
+  int64_t last_shape_input = input_shape[LongToSize(input_rank - 1)];
+  int64_t last_second__shape_input = input_shape[LongToSize(input_rank - 2)];
   // Check whether the innermost matrix is square
   if (last_shape_input != last_second__shape_input) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last dimension of the input "
@@ -58,7 +58,7 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
   auto compute_v_ptr = primitive->GetAttr("compute_v");
   MS_EXCEPTION_IF_NULL(compute_v_ptr);
   for (int64_t i = 0; i < input_rank - 1; i++) {
-    out_shape_e.push_back(input_shape[i]);
+    out_shape_e.push_back(input_shape[LongToSize(i)]);
   }
   abstract::ShapePtr Out_shape_e = std::make_shared<abstract::Shape>(out_shape_e);
   abstract::ShapePtr Out_shape_v = x->cast<abstract::ShapePtr>();

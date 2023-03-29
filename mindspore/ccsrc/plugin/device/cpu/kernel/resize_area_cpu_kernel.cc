@@ -69,10 +69,10 @@ int ResizeAreaCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   for (int64_t x = 0; x < out_width_; x++) {
     float transit_x0 = x * width_scale_;
     float transit_x1 = (x + 1) * width_scale_;
-    int64_t v = std::floor(transit_x0);
+    int64_t v = static_cast<int64_t>(std::floor(transit_x0));
     x_interps_[static_cast<size_t>(x)].start = v;
     x_interps_[static_cast<size_t>(x)].start_scale = (v + 1 > transit_x1 ? width_scale_ : v + 1 - transit_x0);
-    v = std::ceil(transit_x1);
+    v = static_cast<int64_t>(std::ceil(transit_x1));
     x_interps_[static_cast<size_t>(x)].end = v;
     v = x_interps_[static_cast<size_t>(x)].end - 1;
     x_interps_[static_cast<size_t>(x)].end_minus_one_scale = (v + 1 > transit_x1 ? transit_x1 - v : 1.0);

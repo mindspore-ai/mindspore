@@ -150,7 +150,7 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   for (int64_t batch = 0; batch < batch_size; ++batch) {
     auto task = [&](int64_t begin, int64_t end) {
       int64_t c_in{0}, h_offset{0}, w_offset{0};
-      data_index_init<int64_t>(&begin, &c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
+      (void)data_index_init<int64_t>(&begin, &c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
 
       for (int64_t c_out = begin; c_out < end; ++c_out) {
         for (int64_t h_out = 0; h_out < y_height; ++h_out) {
@@ -164,7 +164,7 @@ bool Im2ColCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
           }
         }
 
-        data_index_step(&c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
+        (void)data_index_step(&c_in, &x_channel, &h_offset, &kernel_height, &w_offset, &kernel_width);
       }
     };
 

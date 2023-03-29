@@ -53,9 +53,9 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
     if (input_value->isa<tensor::Tensor>()) {
       axis = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, prim_name);
     } else if (input_value->isa<Int64Imm>()) {
-      axis.emplace_back(GetValue<int64_t>(input_value));
+      (void)axis.emplace_back(GetValue<int64_t>(input_value));
     } else if (input_value->isa<Int32Imm>()) {
-      axis.emplace_back(static_cast<int64_t>(GetValue<int32_t>(input_value)));
+      (void)axis.emplace_back(static_cast<int64_t>(GetValue<int32_t>(input_value)));
     } else if (input_value->isa<ValueAny>()) {
       ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(out_shape);
@@ -68,7 +68,7 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
     if (value_ptr->isa<tensor::Tensor>()) {
       axis = CheckAndConvertUtils::CheckTensorIntValue("axis", value_ptr, prim_name);
     } else {
-      axis.emplace_back(GetValue<int64_t>(primitive->GetAttr(kAxis)));
+      (void)axis.emplace_back(GetValue<int64_t>(primitive->GetAttr(kAxis)));
     }
   } else {
     MS_LOG(EXCEPTION) << " The input number of ExpandDims must be 1 or 2, but got " << input_args.size();
@@ -118,7 +118,7 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr size_t input_num = 2;
   if (input_args.size() > input_num) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the input numbe must be 1 or 2, but got "
+    MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name() << "], the input number must be 1 or 2, but got "
                              << input_args.size();
   }
   // Only for checking nullptr

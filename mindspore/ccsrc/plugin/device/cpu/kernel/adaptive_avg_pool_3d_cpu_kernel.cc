@@ -144,7 +144,7 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto input_size_iter = input_dim_sizes_.rbegin();
   auto output_size_iter = output_size_data_.rbegin();
-  for (; output_size_iter != output_size_data_.rend(); output_size_iter++, input_size_iter++) {
+  for (; output_size_iter != output_size_data_.rend(); (void)output_size_iter++, (void)input_size_iter++) {
     // If output size is none, the input shape should be used.
     if (*output_size_iter == kPyValueNone) {
       *output_size_iter = *input_size_iter;
@@ -152,10 +152,10 @@ bool AdaptiveAvgPool3DCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
   }
 
   size_t input_dims = input_dim_sizes_.size();
-  auto input_x = reinterpret_cast<SCALAR_T *>(inputs[0]->addr);
+  auto input_x = static_cast<SCALAR_T *>(inputs[0]->addr);
   MS_EXCEPTION_IF_NULL(input_x);
 
-  auto output_y = reinterpret_cast<SCALAR_T *>(outputs[0]->addr);
+  auto output_y = static_cast<SCALAR_T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_y);
 
   AdaptiveCalcArgs<SCALAR_T> args;

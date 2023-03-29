@@ -117,7 +117,8 @@ abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
   constexpr size_t x_min_len = 2;
-  CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kGreaterEqual, x_min_len, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kGreaterEqual,
+                                           SizeToLong(x_min_len), prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

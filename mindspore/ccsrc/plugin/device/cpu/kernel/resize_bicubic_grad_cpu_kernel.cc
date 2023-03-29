@@ -295,8 +295,9 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
   if (utils_flag) {
     auto task = [&](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        const int64_t b = i / (RGS.channels * RGS.resized_height), c = i / RGS.resized_height % RGS.channels;
-        const int64_t y = i % RGS.resized_height;
+        const int64_t b = SizeToLong(i) / (RGS.channels * RGS.resized_height),
+                      c = SizeToLong(i) / RGS.resized_height % RGS.channels;
+        const int64_t y = SizeToLong(i) % RGS.resized_height;
         ResizeCommomCalc(RGS, half_pixel_centers_, x_wais, flag, input_grad, output_grad, b, c, y);
       }
     };

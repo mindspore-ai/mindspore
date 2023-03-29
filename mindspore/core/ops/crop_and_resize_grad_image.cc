@@ -98,7 +98,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
       const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
       std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
-        auto value = reinterpret_cast<int *>(output_size_tensor->data_c());
+        auto value = static_cast<int *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] > 0) {
@@ -107,7 +107,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
                                        << ", but got " << value[i]
                                        << "! The value in output_size should be reduced or max_len should be increased";
             }
-            output_size_value_vec[i] = static_cast<int64_t>(value[i]);
+            output_size_value_vec[i] = static_cast<int64_t>(value[LongToSize(i)]);
           } else {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
                                         "positive data, but got "

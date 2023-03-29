@@ -173,8 +173,9 @@ AbstractBasePtr SparseApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckValue(kL1, l1, kGreaterEqual, 0.0f, op_name);
   (void)CheckAndConvertUtils::CheckValue(kL2, l2, kGreaterEqual, 0.0f, op_name);
   (void)CheckAndConvertUtils::CheckValue(kLrPower, lr_power, kLessEqual, 0.0f, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args),
-                                           kEqual, sparse_apply_ftrl::kSparseApplyFtrlInputNum, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers",
+                                           SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)), kEqual,
+                                           SizeToLong(sparse_apply_ftrl::kSparseApplyFtrlInputNum), op_name);
   auto types = sparse_apply_ftrl::SparseApplyFtrlInferType(primitive, input_args);
   auto shapes = sparse_apply_ftrl::SparseApplyFtrlInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

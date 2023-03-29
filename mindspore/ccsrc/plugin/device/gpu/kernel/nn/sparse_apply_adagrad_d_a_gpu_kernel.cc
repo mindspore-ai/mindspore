@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// #include <cub/cub.cuh>
 #include <vector>
 #include <map>
 #include <string>
@@ -52,8 +51,6 @@ std::map<size_t, std::string> InputNames = {{kVarIndex, "var"},
                                             {kGlobalStepIndex, "global_step"}};
 std::map<size_t, std::string> OutputNames = {{kVarIndex, "var"}};
 }  // namespace
-
-// {"var", "grad_accum", "grad_square_accum", "grad", "indices", "lr", "l1", "l2", "global_step"}, {"var"}
 
 bool SparseApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,

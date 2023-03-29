@@ -109,8 +109,8 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossCPUKernelMod::KernelRunFu
 template <typename T>
 void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto target_addr = reinterpret_cast<int64_t *>(inputs[kOne]->addr);
+  auto x_addr = static_cast<T *>(inputs[kZero]->addr);
+  auto target_addr = static_cast<int64_t *>(inputs[kOne]->addr);
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -119,9 +119,9 @@ void MultiMarginLossCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kern
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 3);
   if (weight_defined_) {
-    weight_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
+    weight_addr = static_cast<T *>(inputs[kTwo]->addr);
   }
-  auto y_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+  auto y_addr = static_cast<T *>(outputs[kZero]->addr);
   std::vector<T> tmp_loss(batch_size);
   auto task = [&](size_t start, size_t end) {
     start *= dims;

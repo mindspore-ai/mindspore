@@ -112,11 +112,12 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
   }
   const int64_t min_dim = 0;
   const int64_t axes_dim = 1;
-  CheckAndConvertUtils::CheckInteger("the rank of input", SizeToLong(input_shape.size()), kGreaterEqual, min_dim,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("the rank of input", SizeToLong(input_shape.size()), kGreaterEqual, min_dim,
+                                           prim_name);
   auto output_shape = input_shape;
   auto input_rank = static_cast<int64_t>(input_shape.size());
-  CheckAndConvertUtils::CheckInteger("the rank of axes", SizeToLong(axes_shape.size()), kEqual, axes_dim, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("the rank of axes", SizeToLong(axes_shape.size()), kEqual, axes_dim,
+                                           prim_name);
 
   if (!input_args[kInputIndex1]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex1]->BuildValue()->isa<None>()) {

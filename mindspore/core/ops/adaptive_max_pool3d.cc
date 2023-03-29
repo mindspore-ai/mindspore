@@ -88,14 +88,14 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
                                  << "', 'output_size' should be a vector with all positive item, but got "
                                  << ShapeVectorToStr(output_size) << ".";
       }
-      out_shape[input_num_dims - i] = output_size[kOutputSizeNumElem - i];
+      out_shape[LongToSize(input_num_dims - i)] = output_size[LongToSize(kOutputSizeNumElem - i)];
     }
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   } else {
     const size_t kDHWDims = 3;
     std::vector<int64_t> out_shape = x_shape;
     for (int64_t i = out_shape.size() - kDHWDims; i < SizeToLong(out_shape.size()); ++i) {
-      out_shape[i] = abstract::Shape::kShapeDimAny;
+      out_shape[LongToSize(i)] = abstract::Shape::kShapeDimAny;
     }
     out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   }

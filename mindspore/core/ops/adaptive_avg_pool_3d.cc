@@ -65,8 +65,8 @@ abstract::ShapePtr AdaptiveAvgPool3DInferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInRange("the rank of x", input_num_dims, kIncludeBoth, {4, 5}, op_name);
   if (!IsDynamic(x_shape)) {
     for (size_t i = 0; i < x_shape.size(); i++) {
-      CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
-                                         op_name);
+      (void)CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
+                                               op_name);
     }
   }
 

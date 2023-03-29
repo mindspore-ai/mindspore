@@ -70,14 +70,14 @@ bool CompareAndBitpackCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
     for (int64_t i = 0; i < data_num; ++i) {
       uint8_t *out = output + i;
       const T *input = input0 + 8 * i;
-      *out = (((static_cast<int64_t>(input[kIndex0] > thresh) << shift_num7)) |
-              ((static_cast<int64_t>(input[kIndex1] > thresh) << shift_num6)) |
-              ((static_cast<int64_t>(input[kIndex2] > thresh) << shift_num5)) |
-              ((static_cast<int64_t>(input[kIndex3] > thresh) << shift_num4)) |
-              ((static_cast<int64_t>(input[kIndex4] > thresh) << shift_num3)) |
-              ((static_cast<int64_t>(input[kIndex5] > thresh) << shift_num2)) |
-              ((static_cast<int64_t>(input[kIndex6] > thresh) << shift_num1)) |
-              ((static_cast<int64_t>(input[kIndex7] > thresh))));
+      *out = ((((static_cast<int64_t>(input[kIndex0] > thresh)) << shift_num7) |
+               ((static_cast<int64_t>(input[kIndex1] > thresh)) << shift_num6) |
+               ((static_cast<int64_t>(input[kIndex2] > thresh)) << shift_num5) |
+               ((static_cast<int64_t>(input[kIndex3] > thresh)) << shift_num4) |
+               ((static_cast<int64_t>(input[kIndex4] > thresh)) << shift_num3) |
+               ((static_cast<int64_t>(input[kIndex5] > thresh)) << shift_num2) |
+               ((static_cast<int64_t>(input[kIndex6] > thresh)) << shift_num1) |
+               ((static_cast<int64_t>(input[kIndex7] > thresh)))));
     }
   }
 

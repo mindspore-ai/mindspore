@@ -48,7 +48,7 @@ bool DiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto aptr = static_cast<T *>(inputs[0]->addr);
   auto xptr = static_cast<T *>(outputs[0]->addr);
 
-  int64_t data_num = inputs[0]->size / sizeof(T);
+  int64_t data_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
 
   auto task = [&xptr, &aptr, &data_num](int64_t start, int64_t end) {
     std::fill(xptr + data_num * start, xptr + data_num * end, T());

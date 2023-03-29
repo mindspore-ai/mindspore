@@ -108,7 +108,7 @@ AbstractBasePtr SearchSortedInfer(const abstract::AnalysisEnginePtr &, const Pri
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = SearchSortedInferType(primitive, input_args);
   auto infer_shape = SearchSortedInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

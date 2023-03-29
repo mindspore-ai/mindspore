@@ -167,13 +167,13 @@ void CumulativeLogsumexpCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
       axis_[0] += x_rank;
     }
     uint32_t inner = 1;
-    uint32_t depth = shape_[IntToSize(axis_[0])];
+    uint32_t depth = static_cast<uint32_t>(shape_[IntToSize(axis_[0])]);
     uint32_t outer = 1;
     for (size_t i = 0; i < IntToSize(axis_[0]); i++) {
-      inner *= shape_[i];
+      inner *= static_cast<uint32_t>(shape_[i]);
     }
     for (size_t i = IntToSize(axis_[0]) + 1; i < shape_.size(); i++) {
-      outer *= shape_[i];
+      outer *= static_cast<uint32_t>(shape_[i]);
     }
     CumulativeProcess<T>(input_data, output_data, outer, inner, depth);
   };

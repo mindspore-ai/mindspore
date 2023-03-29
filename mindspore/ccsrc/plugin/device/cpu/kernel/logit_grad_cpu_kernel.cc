@@ -55,7 +55,8 @@ int LogitGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_dtype_ = inputs[kIndex0]->GetDtype();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ =
+    static_cast<size_t>(std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>()));
   return KRET_OK;
 }
 
@@ -63,11 +64,11 @@ bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
-    LaunchKernelHalf(inputs, outputs);
+    (void)LaunchKernelHalf(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    (void)LaunchKernel<float>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
+    (void)LaunchKernel<double>(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_
                             << "', the dtype of input should be float16, float32 or float64, but got "
@@ -78,9 +79,9 @@ bool LogitGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
 
 bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs) {
-  float16 *grad = reinterpret_cast<float16 *>(inputs[0]->addr);
-  float16 *input = reinterpret_cast<float16 *>(inputs[1]->addr);
-  float16 *output = reinterpret_cast<float16 *>(outputs[0]->addr);
+  float16 *grad = static_cast<float16 *>(inputs[0]->addr);
+  float16 *input = static_cast<float16 *>(inputs[1]->addr);
+  float16 *output = static_cast<float16 *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size;
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
@@ -107,9 +108,9 @@ bool LogitGradCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inpu
 template <typename T>
 bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
-  T *grad = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *grad = static_cast<T *>(inputs[0]->addr);
+  T *input = static_cast<T *>(inputs[1]->addr);
+  T *output = static_cast<T *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size;
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";

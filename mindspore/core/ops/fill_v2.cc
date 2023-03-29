@@ -61,7 +61,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
 
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     if (!IsDynamic(input2_shape)) {
-      CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero,
+                                               prim_name);
     }
 
     auto input1_type = input_args[kInputIndex0]->BuildType();
@@ -75,7 +76,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     ShapeVector output_shape{};
     if (input1_type->isa<TensorType>()) {
       auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-      CheckAndConvertUtils::CheckInteger("rank of shape", SizeToLong(input1_shape.size()), kEqual, kDimOne, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("rank of shape", SizeToLong(input1_shape.size()), kEqual, kDimOne,
+                                               prim_name);
       output_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", value_ptr, prim_name);
     } else if (IsIdentidityOrSubclass(input1_type, kTuple)) {
       output_shape = CheckAndConvertUtils::CheckTupleInt("shape", value_ptr, prim_name);
@@ -86,8 +88,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     }
 
     for (size_t i = 0; i < output_shape.size(); ++i) {
-      CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
-                                         kGreaterThan, kDimZero, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape",
+                                               output_shape[i], kGreaterThan, kDimZero, prim_name);
     }
 
     return std::make_shared<abstract::Shape>(output_shape);
@@ -111,7 +113,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     return input2_type;
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
@@ -119,7 +121,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(input);
     }
     const int64_t input_num = 2;
-    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto infer_type = InferType(primitive, input_args);
     auto infer_shape = InferShape(primitive, input_args);
     return abstract::MakeAbstract(infer_shape, infer_type);

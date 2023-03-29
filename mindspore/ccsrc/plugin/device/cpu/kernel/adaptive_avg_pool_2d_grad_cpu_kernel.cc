@@ -129,7 +129,7 @@ bool AdaptiveAvgPool2DGradCpuKernelMod::Launch(const std::vector<kernel::Address
 template <typename SCALAR_T>
 bool AdaptiveAvgPool2DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  auto orig_input_shape_ptr = reinterpret_cast<int64_t *>(inputs[1]->addr);
+  auto orig_input_shape_ptr = static_cast<int64_t *>(inputs[1]->addr);
   orig_input_shape_dim_sizes = std::vector<int64_t>(orig_input_shape_ptr, orig_input_shape_ptr + orig_input_shape_dims);
   if (orig_input_shape_dims != k3D && orig_input_shape_dims != k4D) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

@@ -190,7 +190,7 @@ bool SparseFillEmptyRowsCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     int64_t &offset = filled_count[row];
     const int64_t output_i = ((row == 0) ? 0 : scratch[row - 1]) + offset;
     offset++;  // Increment the filled count for this row.
-    std::copy_n(&a_indices(i, 0), rank, &a_output_y_indices(output_i, 0));
+    (void)std::copy_n(&a_indices(i, 0), rank, &a_output_y_indices(output_i, 0));
     output_y_values_ptr[output_i] = values_ptr[i];
     // We'll need this reverse index map to backprop correctly.
     output_reverse_index_map_ptr[i] = output_i;

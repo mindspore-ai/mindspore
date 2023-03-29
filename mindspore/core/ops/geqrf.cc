@@ -54,15 +54,15 @@ abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std
     return std::make_shared<abstract::TupleShape>(shape_tuple);
   }
   auto ndim = a_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("ndim", ndim, kGreaterEqual, kTwo, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kGreaterEqual, kTwo, primitive->name());
   auto m = a_shape[ndim - 2];
   auto n = a_shape[ndim - 1];
   auto p = std::min(m, n);
   std::vector<int64_t> tau_shape;
-  for (size_t i = 0; i < ndim - kDim2; i++) {
-    tau_shape.emplace_back(a_shape[i]);
+  for (size_t i = 0; i < ndim - static_cast<size_t>(kDim2); i++) {
+    (void)tau_shape.emplace_back(a_shape[i]);
   }
-  tau_shape.emplace_back(p);
+  (void)tau_shape.emplace_back(p);
 
   std::vector<abstract::BaseShapePtr> shape_tuple;
   (void)shape_tuple.emplace_back(std::make_shared<abstract::Shape>(a_shape));

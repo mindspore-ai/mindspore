@@ -647,7 +647,7 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vect
 }
 
 void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+                                                         const std::vector<kernel::AddressPtr> &) {
   // for begin, end, stride are not const input
   if (dtype_attr_ == kNumberTypeInt32) {
     StridedSliceV2LaunchDynamicType<int32_t>(inputs);

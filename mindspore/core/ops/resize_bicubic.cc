@@ -87,7 +87,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("size", value_ptr, prim_name);
     const int64_t kNumZero = 0;
     for (size_t i = 0; i < size_value.size(); ++i) {
-      CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
     }
     output_shape[kInputIndex2] = size_value[kInputIndex0];
     output_shape[kInputIndex3] = size_value[kInputIndex1];

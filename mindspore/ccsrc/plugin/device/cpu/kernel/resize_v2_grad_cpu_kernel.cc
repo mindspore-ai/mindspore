@@ -177,21 +177,20 @@ int ResizeV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 }
 
 template <typename T>
-bool ResizeV2GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspaces,
+bool ResizeV2GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input_addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output_addr, false);
   auto original_size = inputs[kIndex3];
   if (sizes_dtype_ == kNumberTypeInt64) {
-    int64_t *sizes_data = reinterpret_cast<int64_t *>(original_size->addr);
+    int64_t *sizes_data = static_cast<int64_t *>(original_size->addr);
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     out_height_ = LongToSize(sizes_data[kIndex2]);
     out_width_ = LongToSize(sizes_data[kIndex3]);
   } else {
-    int32_t *sizes_data = reinterpret_cast<int32_t *>(original_size->addr);
+    int32_t *sizes_data = static_cast<int32_t *>(original_size->addr);
     MS_ERROR_IF_NULL_W_RET_VAL(sizes_data, false);
     std::vector<int64_t> sizes_v;
     sizes_v.push_back(static_cast<int64_t>(sizes_data[kIndex2]));
@@ -233,8 +232,8 @@ bool ResizeV2GradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 template <typename T>
 bool ResizeV2GradCpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   if (memset_s(output_addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
@@ -257,8 +256,8 @@ bool ResizeV2GradCpuKernelMod::LaunchKernelByNearest(const std::vector<kernel::A
 template <typename T>
 bool ResizeV2GradCpuKernelMod::LaunchKernelByLinear(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   if (memset_s(output_addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
@@ -328,8 +327,8 @@ static void BicubicGeneralComputeHelper(T *in, float *out, std::vector<size_t> x
 template <typename T>
 bool ResizeV2GradCpuKernelMod::LaunchKernelByCubic(const std::vector<kernel::AddressPtr> &inputs,
                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  T *input_addr = static_cast<T *>(inputs[kIndex0]->addr);
+  T *output_addr = static_cast<T *>(outputs[kIndex0]->addr);
 
   size_t n = channels_ * out_hw_size_;
   float *out_temp = new float[n];

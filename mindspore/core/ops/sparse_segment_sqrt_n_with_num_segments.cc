@@ -54,9 +54,10 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto num_segments_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("indices_shape", indices_shape.size(), kEqual, kInputIndex1, prim->name());
-  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", segment_ids_shape.size(), kEqual, kInputIndex1,
-                                           prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("indices_shape", SizeToLong(indices_shape.size()), kEqual,
+                                           SizeToLong(kInputIndex1), prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kEqual,
+                                           SizeToLong(kInputIndex1), prim->name());
   if (x_shape.size() < kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', "
                              << "x's rank must be greater than 1, but got [" << x_shape.size() << "].";
@@ -77,7 +78,7 @@ abstract::ShapePtr SparseSegmentSqrtNWithNumSegmentsInferShape(const PrimitivePt
   if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
       !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
     if (!IsDynamic(num_segments_shape) && num_segments_shape.size() == kInputIndex1) {
-      if (num_segments_shape[kInputIndex0] != kInputIndex1) {
+      if (LongToSize(num_segments_shape[kInputIndex0]) != kInputIndex1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", the num element of num_segments should be 1, but got ["
                                  << num_segments_shape[kInputIndex0] << "].";
       }

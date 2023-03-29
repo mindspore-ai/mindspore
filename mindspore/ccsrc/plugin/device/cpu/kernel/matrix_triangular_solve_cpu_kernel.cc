@@ -75,17 +75,17 @@ int MatrixTriangularSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
   size_t a_dims = a_shape.size();
   size_t aRowIndex = a_dims - kRowIndex;
-  m_ = a_shape[aRowIndex];
+  m_ = static_cast<size_t>(a_shape[aRowIndex]);
   size_t b_sims = b_shape.size();
   bool vector_b = b_sims == a_dims - 1;
   if (vector_b) {
     n_ = 1;
   } else {
-    n_ = b_shape[b_sims - 1];
+    n_ = static_cast<size_t>(b_shape[b_sims - 1]);
   }
   batch_ = 1;
   for (size_t batch = 0; batch < a_dims - kRowIndex; ++batch) {
-    batch_ *= a_shape[batch];
+    batch_ *= static_cast<size_t>(a_shape[batch]);
   }
   return KRET_OK;
 }
