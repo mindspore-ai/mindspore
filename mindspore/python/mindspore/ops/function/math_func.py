@@ -1165,7 +1165,7 @@ def floor_mod(x, y):
         - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+        - If shape is expressed as :math:`(D1, D2 ..., Dn)`, then D1\*D2... \*DN<=1000000,n<=8.
 
     Args:
         x (Union[Tensor, Number, bool]): The first input is a number or
@@ -5932,7 +5932,6 @@ def bessel_k1e(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -9050,7 +9049,7 @@ def all(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
             r, axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.

@@ -3,7 +3,7 @@ mindspore.ops.vsplit
 
 .. py:function:: mindspore.ops.vsplit(input, indices_or_sections)
 
-    根据 `indices_or_sections` 将输入Tensor `input` 垂直分割成多个子Tensor。等同于 `axis=0` 时的 `ops.tensor_split` 。
+    根据 `indices_or_sections` 将输入Tensor `input` 垂直分割成多个子Tensor。等同于 :math:`axis=0` 时的 `ops.tensor_split` 。
 
     参数：
         - **input** (Tensor) - 待分割的Tensor。
