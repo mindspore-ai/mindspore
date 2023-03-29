@@ -65,7 +65,7 @@ def sparsify_tree(tree, arg_types, sparse_rules, f):
         if len(args) != len(arg_types):
             raise ValueError(f"arg_types should have the same length as function parameters, but "
                              f"{len(arg_types)} != {len(args)}!")
-        type_map = {arg: arg_type for arg, arg_type in zip(args, arg_types)}
+        type_map = dict(zip(args, arg_types))
     elif isinstance(arg_types, dict):
         if all(isinstance(i, int) for i in arg_types.keys()):
             type_map = {args[i]: arg_types[i] if i in arg_types else ArgType.NONSPARSE for i in range(len(args))}
