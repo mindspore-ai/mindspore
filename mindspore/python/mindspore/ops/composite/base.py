@@ -353,12 +353,12 @@ class GradOperation(GradOperation_):
                 fn.grad_ops_label = True
             if self.get_by_list:
                 @jit(input_signature=dynamic_shape_inputs)
-                def after_grad(*args):
-                    return grad_(fn, weights)(*args)
+                def after_grad(*args, **kwargs):
+                    return grad_(fn, weights)(*args, **kwargs)
             else:
                 @jit(input_signature=dynamic_shape_inputs)
-                def after_grad(*args):
-                    return grad_(fn)(*args)
+                def after_grad(*args, **kwargs):
+                    return grad_(fn)(*args, **kwargs)
         elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
