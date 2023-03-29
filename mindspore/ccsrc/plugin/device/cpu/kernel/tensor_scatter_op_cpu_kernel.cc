@@ -91,6 +91,7 @@ int TensorScatterOpCpuKernelMode::Resize(const BaseOperatorPtr &base_operator,
   batch_strides_.resize(slice_size_);
   // Since the quit condition(i >= 0) is about negative integer,
   // we convert iterated index from unsigned integer to signed integer.
+  total_batch_size_ = 1;
   for (auto i = SizeToLong(slice_size_) - 1; i >= 0; --i) {
     auto dim = LongToSize(i);
     total_batch_size_ *= input_shape_[dim];
