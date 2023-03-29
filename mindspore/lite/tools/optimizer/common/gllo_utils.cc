@@ -207,6 +207,21 @@ bool IsRealKernel(const AnfNodePtr &node) {
   return !is_virtual_node;
 }
 
+void CopyDataFromInt64(const int64_t *origin_data, int *tensor_data, size_t data_count) {
+  for (size_t i = 0; i < data_count; ++i) {
+    if (origin_data[i] == INT64_MAX) {
+      tensor_data[i] = INT32_MAX;
+    } else if (origin_data[i] == INT64_MIN) {
+      tensor_data[i] = INT32_MIN;
+    } else if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+      MS_LOG(WARNING) << "int64 data " << origin_data[i] << " cannot fit into int32";
+      tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
+    } else {
+      tensor_data[i] = static_cast<int>(origin_data[i]);
+    }
+  }
+}
+
 int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
                                  const std::shared_ptr<tensor::Tensor> &tensor_info_dst, size_t data_count) {
   if (tensor_info->data_type() == kNumberTypeInt64) {
@@ -217,18 +232,7 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
     }
     auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
     MS_CHECK_TRUE_MSG(origin_data != nullptr, lite::RET_NULL_PTR, "origin_data is nullptr");
-    for (size_t i = 0; i < data_count; ++i) {
-      if (origin_data[i] == INT64_MAX) {
-        tensor_data[i] = INT32_MAX;
-      } else if (origin_data[i] == INT64_MIN) {
-        tensor_data[i] = INT32_MIN;
-      } else if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << " cannot fit into int32";
-        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
-      }
-    }
+    CopyDataFromInt64(origin_data, tensor_data, data_count);
   } else if (tensor_info->data_type() == kNumberTypeFloat64) {
     auto *tensor_data = reinterpret_cast<float *>(tensor_info_dst->data_c());
     if (tensor_data == nullptr) {
