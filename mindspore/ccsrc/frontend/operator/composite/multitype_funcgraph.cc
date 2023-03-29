@@ -175,8 +175,12 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
                                                         size_t match_max_idx) {
   std::ostringstream buffer1;
   py::list types_list;
+  bool external_flag = false;
   buffer1 << "<";
   for (size_t i = 0; i < types.size(); ++i) {
+    if (types[i]->type_id() == kMetaTypeExternal) {
+      external_flag = true;
+    }
     std::string types_to_int = IntToNumber(TypeIdLabel(types[i]->type_id()));
     types_list.append(types_to_int);
     if (i != types.size() - 1) {
@@ -191,7 +195,7 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
     buffer2 << "When first argument is '" << types_list[0].str() << "', ";
   }
   if (match_max_idx > 1) {
-    buffer2 << "When argumen are given as ";
+    buffer2 << "When arguments are given as ";
     for (size_t i = 0; i < match_max_idx; ++i) {
       buffer2 << "'" << types_list[i].str() << "', ";
     }
@@ -200,7 +204,7 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
   std::ostringstream oss;
   oss << "For operation '" << name_ << "', current input arguments types are " << buffer1.str() << ". The "
       << (match_max_idx + 1) << "-th argument type '" << types_list[match_max_idx].str() << "' is not supported now.\n"
-      << buffer2.str() << "the support argument types of '" << name_ << "' operation as follows:\n";
+      << buffer2.str() << "the support arguments types of '" << name_ << "' operation as follows:\n";
   const std::vector<mindspore::TypePtrList> cache_vec = GetSortedCache(fn_cache_py_, types, match_max_idx);
   for (auto &item : cache_vec) {
     oss << "<";
@@ -216,7 +220,9 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
   }
 
   if (!doc_url_.empty()) {
-    oss << "For more details, please refer to " << doc_url_;
+    oss << "For more details with '" << name_ << "', please refer to " << doc_url_ << "\n";
+  } else if (external_flag) {
+    oss << "For more details with 'External', please refer to https://www.mindspore.cn/search?inputValue=External \n";
   }
 
   return oss.str();
