@@ -5801,11 +5801,9 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     if len(x.shape) == 2:
         x = expand_dims(x, 0)
         _is_squeeze = True
-    if stride is not None:
-        out = ops.avg_pool1d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
-    else:
-        out = ops.avg_pool1d(x.pow(norm_type), kernel_size=kernel_size, stride=kernel_size, padding=0,
-                             ceil_mode=ceil_mode)
+    if stride is None:
+        stride = kernel_size
+    out = ops.avg_pool1d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
     if _is_squeeze:
         out = squeeze(out)
     return ((sign(out) * ops.relu(ops.abs(out))) * kernel_size).pow(1.0 / norm_type)
@@ -5889,15 +5887,12 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     if norm_type == 0:
         raise ValueError(f"For lp_pool2d, the value of 'norm_type' can not be 0.")
     sign = _get_cache_prim(ops.Sign)()
-    if not isinstance(x, tuple):
-        kernel_size = tuple((kernel_size, kernel_size))
-    kw, kh = kernel_size
-    if stride is not None:
-        out = ops.avg_pool2d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
-    else:
-        out = ops.avg_pool2d(x.pow(norm_type), kernel_size=kernel_size, stride=kernel_size, padding=0,
-                             ceil_mode=ceil_mode)
-    return ((sign(out) * ops.relu(ops.abs(out))) * (kw * kh)).pow(1.0 / norm_type)
+    if not isinstance(kernel_size, tuple):
+        kernel_size = (kernel_size, kernel_size)
+    if stride is None:
+        stride = kernel_size
+    out = ops.avg_pool2d(x.pow(norm_type), kernel_size=kernel_size, stride=stride, padding=0, ceil_mode=ceil_mode)
+    return ((sign(out) * ops.relu(ops.abs(out))) * (kernel_size[0] * kernel_size[1])).pow(1.0 / norm_type)
 
 
 def mse_loss(input, target, reduction='mean'):
