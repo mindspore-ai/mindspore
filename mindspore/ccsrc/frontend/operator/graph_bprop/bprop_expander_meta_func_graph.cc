@@ -374,6 +374,7 @@ void RegArrayBpropExpanderOps2() {
 }
 
 void RegOtherBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(Assign); }
+void RegSequenceBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(make_range); }
 
 void RegBpropExpanderOps() {
   RegMathBpropExpanderOps1();
@@ -384,6 +385,7 @@ void RegBpropExpanderOps() {
   RegArrayBpropExpanderOps1();
   RegArrayBpropExpanderOps2();
   RegOtherBpropExpanderOps();
+  RegSequenceBpropExpanderOps();
 }
 }  // namespace graph_bprop
 }  // namespace mindspore

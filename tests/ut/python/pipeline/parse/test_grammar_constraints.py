@@ -57,7 +57,7 @@ def test_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "For 'make_range', the 0th input should be a int64 scalar" in str(er.value)
+    assert "For 'make_range', the 0th input should be a int scalar" in str(er.value)
 
 
 def test_nest_function_missing_return():
@@ -89,7 +89,7 @@ def test_nest_function_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "For 'make_range', the 0th input should be a int64 scalar" in str(er.value)
+    assert "For 'make_range', the 0th input should be a int scalar" in str(er.value)
 
 
 @pytest.mark.skip(reason='Case will not appear for now, but may appear in the future')
