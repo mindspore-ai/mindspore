@@ -675,38 +675,7 @@ class SymbolTree(Observer, Observable):
             self._node_visitor.append_node(node)
         # update init-function-ast and construct-function-ast
         if insert_to_ast:
-            node.set_func(ScopedValue.create_naming_value(node_name, "self"))
-            node_ast = node.get_ast()
-            if not isinstance(node_ast, ast.Assign):
-                raise RuntimeError("Only support insert cell op now")
-            if isinstance(node, TreeNode):
-                setattr(self._origin_network, node.get_name(), node.get_instance())
-                args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                                    [ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                     ScopedValue(ValueType.StringValue, "", node.get_name())])
-                value = ast.Call(func=ast.Name(node.symbol_tree.get_opt_cls_name(), ast.Store(), lineno=0,
-                                               col_offset=0), args=[args_call], keywords=[], lineno=0, col_offset=0)
-
-                ast_target = ast.Name("self." + node.get_name(), ast.Store(), lineno=0, col_offset=0)
-                assign = ast.Assign(targets=[ast_target], value=value, lineno=0, col_offset=0)
-                AstModifier.insert_assign_ast_to_function(self._init_func_ast, assign)
-
-                AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
-                                                          None if position is None else position.node.get_ast(),
-                                                          position.before_node)
-                sub_stree: SymbolTree = node.symbol_tree
-                from .symbol_tree_builder import SymbolTreeBuilder
-                SymbolTreeBuilder.merge_module_of_subtree(self, sub_stree)
-            else:
-                AstModifier.insert_assign_to_function(self._init_func_ast,
-                                                      targets=[ScopedValue(ValueType.NamingValue, "self", node_name)],
-                                                      expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                                      args=[ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                            ScopedValue(ValueType.StringValue, "", node_name)])
-                AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
-                                                          None if position is None else position.node.get_ast(),
-                                                          position.before_node)
-            setattr(self._origin_network, node_name, node.get_instance())
+            self._insert_to_ast_while_insert_node(node, position)
         return node
 
     def append_node(self, node: Node, append_to_ast: bool = True) -> Node:
@@ -1064,6 +1033,41 @@ class SymbolTree(Observer, Observable):
             source = self.get_code()
             f.write(source.encode('utf-8'))
             f.flush()
+
+    def _insert_to_ast_while_insert_node(self, node: Node, position: Optional[Position]):
+        """ insert_to_ast_while_insert_node. """
+        node.set_func(ScopedValue.create_naming_value(node.get_name(), "self"))
+        node_ast = node.get_ast()
+        if not isinstance(node_ast, ast.Assign):
+            raise RuntimeError("Only support insert cell op now")
+        if isinstance(node, TreeNode):
+            setattr(self._origin_network, node.get_name(), node.get_instance())
+            args_call = AstModifier.create_call(ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                                [ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                 ScopedValue(ValueType.StringValue, "", node.get_name())])
+            value = ast.Call(func=ast.Name(node.symbol_tree.get_opt_cls_name(), ast.Store(), lineno=0,
+                                           col_offset=0), args=[args_call], keywords=[], lineno=0, col_offset=0)
+
+            ast_target = ast.Name("self." + node.get_name(), ast.Store(), lineno=0, col_offset=0)
+            assign = ast.Assign(targets=[ast_target], value=value, lineno=0, col_offset=0)
+            AstModifier.insert_assign_ast_to_function(self._init_func_ast, assign)
+
+            AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
+                                                      None if position is None else position.node.get_ast(),
+                                                      position.before_node)
+            sub_stree: SymbolTree = node.symbol_tree
+            from .symbol_tree_builder import SymbolTreeBuilder
+            SymbolTreeBuilder.merge_module_of_subtree(self, sub_stree)
+        else:
+            AstModifier.insert_assign_to_function(self._init_func_ast,
+                                                  targets=[ScopedValue(ValueType.NamingValue, "self", node.get_name())],
+                                                  expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
+                                                  args=[ScopedValue(ValueType.NamingValue, "", "obj"),
+                                                        ScopedValue(ValueType.StringValue, "", node.get_name())])
+            AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
+                                                      None if position is None else position.node.get_ast(),
+                                                      position.before_node)
+        setattr(self._origin_network, node.get_name(), node.get_instance())
 
     def _remove_unused_import(self):
         """remove unused import in self._module_ast"""
