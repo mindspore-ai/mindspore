@@ -152,7 +152,7 @@ bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   if (input_num_dims_ == kInputNumDims5) {
     output_shape_.push_back(input_shape_[1]);
   }
-  auto output_size_ptr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto output_size_ptr = static_cast<int32_t *>(inputs[1]->addr);
   const size_t kOutputSizeDims = 3;
   for (size_t i = 0; i < kOutputSizeDims; ++i) {
     const int32_t elem = output_size_ptr[i];
@@ -259,9 +259,9 @@ void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data,
 template <typename T>
 void AdaptiveMaxPool3DCpuKernelMod::AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs,
                                                              const std::vector<AddressPtr> &outputs) {
-  auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_data = reinterpret_cast<T *>(outputs[0]->addr);
-  auto indices_data = reinterpret_cast<int32_t *>(outputs[1]->addr);
+  auto input_data = static_cast<T *>(inputs[0]->addr);
+  auto output_data = static_cast<T *>(outputs[0]->addr);
+  auto indices_data = static_cast<int32_t *>(outputs[1]->addr);
   if (input_shape_.size() == kInputShapeDims4) {
     input_shape_.insert(input_shape_.begin(), 1);
   }

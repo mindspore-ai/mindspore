@@ -53,7 +53,7 @@ int TriuIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto offset1_ = offset_ - 1;
@@ -61,16 +61,16 @@ bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset1_));
   auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset1_));
   auto n_row_trapezoid = (m_last_row - m_first_row + 1);
-  auto tril_size = ((m_first_row + m_last_row) * n_row_trapezoid) >> 1;
+  auto tril_size = (static_cast<size_t>((m_first_row + m_last_row) * n_row_trapezoid)) >> 1;
   auto diff_row = n_row_all - n_row_trapezoid;
   if (diff_row > 0) {
     tril_size += diff_row * col_;
   }
   auto triu_size = row_ * col_ - tril_size;
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   int64_t i = 0;
   int64_t c = std::max<int64_t>(0, offset_), r = 0;
-  while (i < triu_size) {
+  while (i < SizeToLong(triu_size)) {
     output_addr[i] = r;
     output_addr[triu_size + i++] = c;
     c += 1;
@@ -88,8 +88,8 @@ std::vector<std::pair<KernelAttr, TriuIndicesCpuKernelMod::TriuIndicesFunc>> Tri
 
 std::vector<KernelAttr> TriuIndicesCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, TriuIndicesFunc> &item) { return item.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, TriuIndicesFunc> &item) { return item.first; });
   return support_list;
 }
 

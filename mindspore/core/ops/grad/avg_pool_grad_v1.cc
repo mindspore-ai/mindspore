@@ -41,9 +41,9 @@ abstract::ShapePtr AvgPoolGradV1InferShape(const PrimitivePtr &primitive,
     (void)primitive->DelAttr("data_format");
     (void)primitive->AddAttr("data_format", MakeValue("NCHW"));
   }
-  if (pad_mode == VALID) {
+  if (pad_mode == static_cast<int64_t>(VALID)) {
     (void)primitive->AddAttr("padding", MakeValue("VALID"));
-  } else if (pad_mode == SAME) {
+  } else if (pad_mode == static_cast<int64_t>(SAME)) {
     (void)primitive->AddAttr("padding", MakeValue("SAME"));
   }
 

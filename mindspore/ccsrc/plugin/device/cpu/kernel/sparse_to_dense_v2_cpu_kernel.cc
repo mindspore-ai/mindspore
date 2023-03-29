@@ -148,7 +148,7 @@ void SparseToDenseV2CpuKernelMod::CheckValidate(const std::vector<kernel::Addres
 }
 template <typename I, typename T>
 bool SparseToDenseV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
+                                               const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &outputs) {
   if (validate_indices_ == true && indices_dims_ == kSparseToDenseV2TwoDims) {
     (void)SparseToDenseV2CpuKernelMod::CheckValidate<I, T>(inputs, outputs, true);

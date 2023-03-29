@@ -53,22 +53,22 @@ int TrilIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 }
 
 template <typename T>
-bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool TrilIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto m_first_row = offset_ > 0 ? std::min<int64_t>(col_, 1 + offset_) : row_ + offset_ > 0;
   auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset_));
   auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset_));
   auto n_row_trapezoid = (m_last_row - m_first_row + 1);
-  auto tril_size = ((m_first_row + m_last_row) * n_row_trapezoid) >> 1;
+  auto tril_size = (static_cast<size_t>((m_first_row + m_last_row) * n_row_trapezoid)) >> 1;
   auto diff_row = n_row_all - n_row_trapezoid;
   if (diff_row > 0) {
     tril_size += diff_row * col_;
   }
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output_addr = static_cast<T *>(outputs[0]->addr);
   int64_t i = 0;
   int64_t r = std::max<int64_t>(0, -offset_), c = 0;
-  while (i < tril_size) {
+  while (i < SizeToLong(tril_size)) {
     output_addr[i] = r;
     output_addr[tril_size + i++] = c;
     c += 1;
@@ -86,8 +86,8 @@ std::vector<std::pair<KernelAttr, TrilIndicesCpuKernelMod::TrilIndicesFunc>> Tri
 
 std::vector<KernelAttr> TrilIndicesCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, TrilIndicesFunc> &item) { return item.first; });
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, TrilIndicesFunc> &item) { return item.first; });
   return support_list;
 }
 

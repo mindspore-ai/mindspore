@@ -112,7 +112,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
     auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
@@ -124,7 +124,7 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   }
 
@@ -185,7 +185,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   } else if (perm_type_ == kNumberTypeInt64) {
     auto perm_addr = static_cast<int64_t *>(inputs[1]->addr);
@@ -197,7 +197,7 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm_size << ", "
                           << (perm_size - 1) << "], but got " << p << " .";
       }
-      axes_.emplace_back(p);
+      (void)axes_.emplace_back(p);
     }
   }
 
@@ -530,10 +530,10 @@ void ConjugateTransposeCpuKernelMod::TransposeDims(const T *in_data, T *out_data
   const int *strides = transpose_param->strides_;
   const int *out_strides = transpose_param->out_strides_;
   int num_axes = transpose_param->num_axes_;
-  size_t data_size = (*out_strides) * output_shape[0];
-  size_t offset_size = UP_DIV(data_size, thread_num);
+  size_t data_size_ = (*out_strides) * output_shape[0];
+  size_t offset_size = UP_DIV(data_size_, thread_num);
   size_t task_offset = offset_size * static_cast<size_t>(task_id);
-  int count = static_cast<int32_t>(data_size) - static_cast<int32_t>(task_offset);
+  int count = static_cast<int32_t>(data_size_) - static_cast<int32_t>(task_offset);
   if (count <= 0) {
     return;
   }

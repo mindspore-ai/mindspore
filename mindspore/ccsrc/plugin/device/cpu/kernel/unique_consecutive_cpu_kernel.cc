@@ -102,14 +102,14 @@ std::vector<std::vector<T1>> ReshapeInput(std::vector<int64_t> input_shape_, int
   int64_t dim0 = input_shape_[static_cast<size_t>(axis)];
   std::vector<int64_t> input_stride = ConstructStride<int64_t>(input_shape_);
   std::vector<int64_t> v_shape = input_shape_;
-  v_shape.erase(v_shape.begin() + axis);
+  (void)v_shape.erase(v_shape.begin() + axis);
   std::vector<int64_t> v_start(v_shape.size(), 0);
   std::vector<int64_t> v_stride = input_stride;
-  v_stride.erase(v_stride.begin() + axis);
+  (void)v_stride.erase(v_stride.begin() + axis);
   std::vector<std::vector<T1>> data_;
   for (int64_t i = 0; i < dim0; i++) {
     std::vector<T1> tmp_v1;
-    for (PositionIterator<int64_t> mit(v_start, v_shape); !mit.End(); ++mit) {
+    for (PositionIterator<int64_t> mit(v_start, v_shape); !mit.End(); (void)++mit) {
       auto pos = mit.GetPos();
       tmp_v1.push_back(
         x_dataptr[static_cast<size_t>(MulSum<int64_t>(pos, v_stride) + i * input_stride[static_cast<size_t>(axis)])]);
@@ -124,17 +124,17 @@ void OutputYSet(const std::vector<int64_t> &y_shape_, const std::vector<int64_t>
                 T1 *y_dataptr, std::vector<std::vector<T1>> out_data_) {
   std::vector<int64_t> y_stride = ConstructStride<int64_t>(y_shape_);
   std::vector<int64_t> y_v_shape = y_shape_;
-  y_v_shape.erase(y_v_shape.begin() + axis);
+  (void)y_v_shape.erase(y_v_shape.begin() + axis);
   std::vector<int64_t> y_v_start(y_v_shape.size(), 0);
   std::vector<int64_t> y_v_stride = y_stride;
-  y_v_stride.erase(y_v_stride.begin() + axis);
+  (void)y_v_stride.erase(y_v_stride.begin() + axis);
   std::vector<int64_t> v_shape = input_shape_;
-  v_shape.erase(v_shape.begin() + axis);
+  (void)v_shape.erase(v_shape.begin() + axis);
   std::vector<int64_t> trans_stride = ConstructStride<int64_t>(v_shape);
   int64_t size0 = static_cast<int64_t>(out_data_.size());
   for (int64_t i = 0; i < size0; i++) {
     auto tmp_v = out_data_[static_cast<size_t>(i)];
-    for (PositionIterator<int64_t> mit(y_v_start, y_v_shape); !mit.End(); ++mit) {
+    for (PositionIterator<int64_t> mit(y_v_start, y_v_shape); !mit.End(); (void)++mit) {
       auto pos = mit.GetPos();
       y_dataptr[static_cast<size_t>(MulSum<int64_t>(pos, y_v_stride) + i * y_stride[axis])] =
         tmp_v[static_cast<size_t>(MulSum<int64_t>(pos, trans_stride))];
@@ -177,7 +177,7 @@ int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   outputs_ = outputs;
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   input_shape_ = inputs[0]->GetShapeVector();
-  int64_t input_size = input_shape_.size();
+  int64_t input_size = SizeToLong(input_shape_.size());
   axis_ = axis_ < 0 ? (axis_ + input_size) : axis_;
   return ret;
 }
@@ -197,7 +197,7 @@ void UniqueConsecutiveCpuKernelMod::UniqueConsecutiveNone(const std::vector<Addr
     T2 *q = output_count;
     T2 last = 0;
     for (T2 i = 0; i < input_total; i++) {
-      if (input_x[i] != *p) {
+      if (static_cast<T1>(input_x[i]) != static_cast<T1>(*p)) {
         *(++p) = input_x[i];
         if (return_counts_) {
           *(q++) = i - last;

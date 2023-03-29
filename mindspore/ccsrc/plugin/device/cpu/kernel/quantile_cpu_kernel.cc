@@ -76,7 +76,7 @@ uint32_t QuantileCpuKernelMod::MaybeWrapDim(int dim, int dim_post_expr) const {
 template <typename T>
 std::vector<T> transpose(const std::vector<T> &f, const std::vector<int64_t> &shape, int index) {
   size_t element_count = f.size();
-  size_t m = SizeToInt(shape.size());
+  size_t m = shape.size();
   std::vector<int> pos(m);
   std::vector<int> indexA(m);
   std::vector<int> indexB(m);
@@ -95,7 +95,7 @@ std::vector<T> transpose(const std::vector<T> &f, const std::vector<int64_t> &sh
   }
 
   for (size_t src = 0; src < element_count; src++) {
-    int temp = src;
+    int temp = SizeToInt(src);
     for (int i = SizeToInt(m) - 1; i >= 0; i--) {
       indexA[i] = temp % LongToInt(shape[i]);
       temp = temp / LongToInt(shape[i]);
@@ -118,7 +118,7 @@ std::vector<T> transpose(const std::vector<T> &f, const std::vector<int64_t> &sh
 }
 
 template <typename T>
-void QuantileComputeDefaultFunc(uint64_t n, uint64_t q_size, const std::vector<T> &sorted, T *output_addr, T *q_addrs,
+void QuantileComputeDefaultFunc(uint64_t q_size, const std::vector<T> &sorted, T *output_addr, T *q_addrs,
                                 bool has_nan_, bool ignore_nan_) {
   std::vector<T> tmp(sorted);
 
@@ -171,7 +171,7 @@ std::vector<int64_t> SetQuantileOutputShape(int64_t dim, int64_t input_dim, bool
 
 template <typename T>
 bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
+                                        const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs[kIndex1]->size == 0) {
     MS_EXCEPTION(ValueError) << "For Quantile, q-th must be non-empty";
@@ -219,7 +219,7 @@ bool QuantileCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   }
 
   if (dim_ == kQuantileDefaultDim) {
-    QuantileComputeDefaultFunc<T>(total_, q_size, sorted, output, q, has_nan_, ignore_nan_);
+    QuantileComputeDefaultFunc<T>(q_size, sorted, output, q, has_nan_, ignore_nan_);
   } else if (dim_ == SizeToInt(input_dim) - 1) {
     int64_t last_shape_size = input_shape[input_shape.size() - 1];
     ParallelRun(last_shape_size, q_size, sorted, output, q);
@@ -258,7 +258,8 @@ void QuantileCpuKernelMod::ParallelRun(int64_t last_shape_size, uint64_t q_size,
                                        T *output_addr, T *q_addrs) const {
   const int64_t thread_num = SizeToLong(FloatToSize(std::ceil(total_ / last_shape_size)));
   std::vector<common::Task> tasks;
-  for (uint64_t task_id = 0; task_id < LongToUlong(thread_num) && task_id * last_shape_size < total_; task_id++) {
+  for (uint64_t task_id = 0; task_id < LongToUlong(thread_num) && task_id * LongToUlong(last_shape_size) < total_;
+       task_id++) {
     uint64_t start = task_id * LongToUlong(last_shape_size);
     uint64_t end = (task_id + 1) * LongToUlong(last_shape_size);
     auto task = [this, &last_shape_size, &q_size, &sorted, &output_addr, &q_addrs, start, end]() {

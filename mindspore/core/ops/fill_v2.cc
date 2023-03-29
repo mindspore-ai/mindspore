@@ -59,7 +59,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     const int64_t kDimZero = 0;
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     if (!IsDynamic(input2_shape)) {
-      CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero,
+                                               prim_name);
     }
 
     auto value_ptr = input_args[kInputIndex0]->BuildValue();
@@ -74,8 +75,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     ShapeVector output_shape = GetShapeValue(primitive, input_args[0]);
     if (IsValueKnown(value_ptr)) {
       for (size_t i = 0; i < output_shape.size(); ++i) {
-        CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
-                                           kGreaterThan, kDimZero, prim_name);
+        (void)CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape",
+                                                 output_shape[i], kGreaterThan, kDimZero, prim_name);
       }
     }
     return std::make_shared<abstract::Shape>(output_shape);
@@ -99,7 +100,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     return input2_type;
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
@@ -107,7 +108,7 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(input);
     }
     const int64_t input_num = 2;
-    (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto infer_type = InferType(primitive, input_args);
     auto infer_shape = InferShape(primitive, input_args);
     return abstract::MakeAbstract(infer_shape, infer_type);

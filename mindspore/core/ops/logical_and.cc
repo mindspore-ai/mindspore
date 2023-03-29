@@ -35,6 +35,7 @@ abstract::ShapePtr LogicalAndInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr LogicalAndInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   auto x_dtype = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   auto y_dtype = input_args[1]->BuildType();

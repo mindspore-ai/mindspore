@@ -107,9 +107,9 @@ bool FminCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFminInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFminOutputsNum, kernel_name_);
 
-  T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output_ = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_x_ = static_cast<T *>(inputs[0]->addr);
+  T *input_y_ = static_cast<T *>(inputs[1]->addr);
+  T *output_ = static_cast<T *>(outputs[0]->addr);
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }
@@ -119,7 +119,6 @@ void FminCpuKernelMod::BroadcastArith(const T *input_x, const T *input_y, T *out
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
-  // bool need_broadcast = false;
   if (need_broadcast_) {
     BroadcastArithKernel(broadcast_input_x_shape_[kShapeIndexZero], broadcast_input_x_shape_[kShapeIndex1st],
                          broadcast_input_x_shape_[kShapeIndex2nd], broadcast_input_x_shape_[kShapeIndex3rd],
@@ -164,17 +163,17 @@ void FminCpuKernelMod::InitTensorBroadcastShape() {
   broadcast_input_y_shape_.resize(max_dims_, 1);
   broadcast_output_shape_.resize(max_dims_, 1);
   for (size_t i = 0; i < output_shape_.size(); i++) {
-    broadcast_output_shape_[i] = static_cast<size_t>(output_shape_[i]);
+    broadcast_output_shape_[i] = output_shape_[i];
   }
-  int input_x_dim_offset = output_shape_.size() - input_x_shape_.size();
+  int input_x_dim_offset = SizeToInt(output_shape_.size() - input_x_shape_.size());
   for (size_t j = 0; j < input_x_shape_.size(); j++) {
-    broadcast_input_x_shape_[j + IntToSize(input_x_dim_offset)] = static_cast<size_t>(input_x_shape_[j]);
+    broadcast_input_x_shape_[j + IntToSize(input_x_dim_offset)] = input_x_shape_[j];
     input_x_num_ *= static_cast<size_t>(input_x_shape_[j]);
   }
-  int input_y_dim_offset = output_shape_.size() - input_y_shape_.size();
+  int input_y_dim_offset = SizeToInt(output_shape_.size() - input_y_shape_.size());
   for (size_t k = 0; k < input_y_shape_.size(); k++) {
     if (need_broadcast_) {
-      broadcast_input_y_shape_[k + IntToSize(input_y_dim_offset)] = static_cast<size_t>(input_y_shape_[k]);
+      broadcast_input_y_shape_[k + IntToSize(input_y_dim_offset)] = input_y_shape_[k];
       input_y_num_ *= static_cast<size_t>(input_y_shape_[k]);
     }
   }
@@ -204,7 +203,7 @@ void FminCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1, co
                                             const size_t d2, const size_t d3, const size_t d4, const size_t d5,
                                             const size_t d6, const T *input_x, const T *input_y, T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
-    auto pos_signed = SizeToLong(pos);
+    auto pos_signed = pos;
     size_t i = pos_signed / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos_signed / (d2 * d3 * d4 * d5 * d6) % d1;
     size_t k = pos_signed / (d3 * d4 * d5 * d6) % d2;
@@ -213,20 +212,20 @@ void FminCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1, co
     size_t n = pos_signed / d6 % d5;
     size_t o = pos_signed % d6;
 
-    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;
-    l_index += Index(k, l2) * l3 * l4 * l5 * l6;
-    l_index += Index(l, l3) * l4 * l5 * l6;
-    l_index += Index(m, l4) * l5 * l6;
-    l_index += Index(n, l5) * l6;
-    l_index += Index(o, l6);
-    size_t r_index = Index(i, r0) * r1 * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(j, r1) * r2 * r3 * r4 * r5 * r6;
-    r_index += Index(k, r2) * r3 * r4 * r5 * r6;
-    r_index += Index(l, r3) * r4 * r5 * r6;
-    r_index += Index(m, r4) * r5 * r6;
-    r_index += Index(n, r5) * r6;
-    r_index += Index(o, r6);
+    size_t l_index = LongToSize(Index(i, l0)) * l1 * l2 * l3 * l4 * l5 * l6;
+    l_index += LongToSize(Index(j, l1)) * l2 * l3 * l4 * l5 * l6;
+    l_index += LongToSize(Index(k, l2)) * l3 * l4 * l5 * l6;
+    l_index += LongToSize(Index(l, l3)) * l4 * l5 * l6;
+    l_index += LongToSize(Index(m, l4)) * l5 * l6;
+    l_index += LongToSize(Index(n, l5)) * l6;
+    l_index += LongToSize(Index(o, l6));
+    size_t r_index = LongToSize(Index(i, r0)) * r1 * r2 * r3 * r4 * r5 * r6;
+    r_index += LongToSize(Index(j, r1)) * r2 * r3 * r4 * r5 * r6;
+    r_index += LongToSize(Index(k, r2)) * r3 * r4 * r5 * r6;
+    r_index += LongToSize(Index(l, r3)) * r4 * r5 * r6;
+    r_index += LongToSize(Index(m, r4)) * r5 * r6;
+    r_index += LongToSize(Index(n, r5)) * r6;
+    r_index += LongToSize(Index(o, r6));
     output[pos] = FminFunc(input_x[LongToSize(l_index)], input_y[LongToSize(r_index)]);
   }
 }

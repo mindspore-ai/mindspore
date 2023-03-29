@@ -86,7 +86,8 @@ abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
     if (x_size_val_size == kLenImageSize2D) {
       (void)CheckAndConvertUtils::CheckInteger("rank of 'y_grad'", y_grad_rank, kEqual, kLenImageSize2D, prim_name);
       if (y_grad_shape[kInputIndex1] == x_size_val[kInputIndex2] &&
-          y_grad_shape[kInputIndex2] == x_size_val[kInputIndex3] && y_grad_shape[kInputIndex3] == kInputIndex2) {
+          y_grad_shape[kInputIndex2] == x_size_val[LongToSize(kInputIndex3)] &&
+          y_grad_shape[LongToSize(kInputIndex3)] == kInputIndex2) {
         auto N = static_cast<int64_t>(x_size_val[kInputIndex0]);
         x_grad_shape = {N, kInputIndex2, kInputIndex3};
       } else {
@@ -104,7 +105,8 @@ abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
       (void)CheckAndConvertUtils::CheckInteger("rank of 'y_grad'", y_grad_rank, kEqual, kLenImageSize3D, prim_name);
       if (y_grad_shape[kInputIndex1] == x_size_val[kInputIndex2] &&
           y_grad_shape[kInputIndex2] == x_size_val[kInputIndex3] &&
-          y_grad_shape[kInputIndex3] == x_size_val[kInputIndex4] && y_grad_shape[kInputIndex4] == kInputIndex3) {
+          y_grad_shape[LongToSize(kInputIndex3)] == x_size_val[LongToSize(kInputIndex4)] &&
+          y_grad_shape[LongToSize(kInputIndex4)] == kInputIndex3) {
         auto N = static_cast<int64_t>(x_size_val[kInputIndex0]);
         x_grad_shape = {N, kInputIndex3, kInputIndex4};
       } else {

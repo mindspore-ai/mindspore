@@ -80,15 +80,16 @@ template <typename T1, typename T2>
 void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                                const std::vector<kernel::AddressPtr> &outputs) {
   constexpr size_t kMultiply = 1;
-  size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) / x_shape_[kIndex0];
+  size_t n = std::accumulate(x_shape_.begin(), x_shape_.end(), kMultiply, std::multiplies<int>()) /
+             static_cast<size_t>(x_shape_[kIndex0]);
   size_t m = std::accumulate(segment_ids_shape_.begin(), segment_ids_shape_.end(), kMultiply, std::multiplies<int>());
   size_t num_elements = std::accumulate(y_shape_.begin(), y_shape_.end(), kMultiply, std::multiplies<int>());
   auto x_shape0 = static_cast<T2>(x_shape_[kIndex0]);
-  auto x_addr = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
-  auto indices_addr = reinterpret_cast<T2 *>(inputs[kIndex1]->addr);
-  auto segment_ids_addr = reinterpret_cast<T2 *>(inputs[kIndex2]->addr);
-  auto num_segments_addr = reinterpret_cast<T2 *>(inputs[kIndex3]->addr);
-  auto y_addr = reinterpret_cast<T1 *>(outputs[kIndex0]->addr);
+  auto x_addr = static_cast<T1 *>(inputs[kIndex0]->addr);
+  auto indices_addr = static_cast<T2 *>(inputs[kIndex1]->addr);
+  auto segment_ids_addr = static_cast<T2 *>(inputs[kIndex2]->addr);
+  auto num_segments_addr = static_cast<T2 *>(inputs[kIndex3]->addr);
+  auto y_addr = static_cast<T1 *>(outputs[kIndex0]->addr);
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input segment_ids should be sorted.";
@@ -111,11 +112,11 @@ void SparseSegmentSumWithNumSegmentsCpuKernelMod::LaunchKernel(const std::vector
     if (oldindex != segment_ids_addr[i]) {
       oldindex = segment_ids_addr[i];
       for (size_t j = 0; j < n; j++) {
-        y_addr[j + oldindex * n] = (T1)0;
+        y_addr[j + IntToSize(oldindex) * n] = (T1)0;
       }
     }
     for (size_t j = 0; j < n; j++) {
-      y_addr[j + oldindex * n] += x_addr[j + indices_addr[i] * n];
+      y_addr[j + IntToSize(oldindex) * n] += x_addr[j + static_cast<size_t>(indices_addr[i]) * n];
     }
   }
 }

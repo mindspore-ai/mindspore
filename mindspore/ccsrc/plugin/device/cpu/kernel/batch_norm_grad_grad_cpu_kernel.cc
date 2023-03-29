@@ -56,9 +56,9 @@ bool BatchNormGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   data_format_ = (data_format_ == kOpFormat_NHWC) ? "NHWC" : "NCHW";
 
   std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
+  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
   std::vector<int64_t> scale_shape = inputs.at(kIndex2)->GetShapeVector();
-  std::transform(scale_shape.begin(), scale_shape.end(), std::back_inserter(scale_shape_), LongToSize);
+  (void)std::transform(scale_shape.begin(), scale_shape.end(), std::back_inserter(scale_shape_), LongToSize);
 
   x_num_ = static_cast<int>(std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>()));
   N_num_ = static_cast<int>(x_shape_[0]);
@@ -141,7 +141,7 @@ bool BatchNormGradGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // fp32
   for (int j = 0; j < C_num_; j++) {
     if (*(reserve_space_2 + j) < 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'reserve_space_2' must be no less than zero.";
@@ -164,16 +164,16 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &workspace,
                                                         const std::vector<kernel::AddressPtr> &outputs) const {
-  auto x_ori = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto reserve_space_1 = reinterpret_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
+  auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
 
   // change dtype from 'T' to 'fp32'
-  float *x = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
-  float *dy = reinterpret_cast<float *>(workspace.at(kIndex1)->addr);
-  float *ddx = reinterpret_cast<float *>(workspace.at(kIndex2)->addr);
+  float *x = static_cast<float *>(workspace.at(kIndex0)->addr);
+  float *dy = static_cast<float *>(workspace.at(kIndex1)->addr);
+  float *ddx = static_cast<float *>(workspace.at(kIndex2)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int k = 0; k < HW_num_; k++) {
@@ -187,8 +187,8 @@ void BatchNormGradGradCpuKernelMod::TrainingComputeNHWC(const std::vector<kernel
   }
 
   // create intermediate variables
-  float *x_hat = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
-  float *inv_std = reinterpret_cast<float *>(workspace.at(kIndex11)->addr);
+  float *x_hat = static_cast<float *>(workspace.at(kIndex3)->addr);
+  float *inv_std = static_cast<float *>(workspace.at(kIndex11)->addr);
 
   for (int j = 0; j < C_num_; j++) {
     *(inv_std + j) = num_1 / sqrt(*(reserve_space_2 + j) + epsilon_);
@@ -212,22 +212,22 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::InferenceComputeNHWC(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<kernel::AddressPtr> &workspace,
                                                          const std::vector<kernel::AddressPtr> &outputs) const {
-  auto x_ori = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
-  auto reserve_space_1 = reinterpret_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
-  auto ddoffset = reinterpret_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
-  auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto ddy = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
-  auto dscale = reinterpret_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
+  auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
+  auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
+  auto ddoffset = static_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
+  auto dx = static_cast<T *>(outputs.at(kIndex0)->addr);
+  auto ddy = static_cast<T *>(outputs.at(kIndex1)->addr);
+  auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
 
   // change dtype from 'T' to 'fp32'
-  float *x = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
-  float *dy = reinterpret_cast<float *>(workspace.at(kIndex1)->addr);
-  float *ddx = reinterpret_cast<float *>(workspace.at(kIndex2)->addr);
+  float *x = static_cast<float *>(workspace.at(kIndex0)->addr);
+  float *dy = static_cast<float *>(workspace.at(kIndex1)->addr);
+  float *ddx = static_cast<float *>(workspace.at(kIndex2)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int k = 0; k < HW_num_; k++) {
@@ -241,8 +241,8 @@ void BatchNormGradGradCpuKernelMod::InferenceComputeNHWC(const std::vector<kerne
   }
 
   // create intermediate variables
-  float *x_hat = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
-  float *inv_std = reinterpret_cast<float *>(workspace.at(kIndex4)->addr);
+  float *x_hat = static_cast<float *>(workspace.at(kIndex3)->addr);
+  float *inv_std = static_cast<float *>(workspace.at(kIndex4)->addr);
 
   for (int j = 0; j < C_num_; j++) {
     *(inv_std + j) = num_1 / sqrt(*(reserve_space_2 + j) + epsilon_);
@@ -281,16 +281,16 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::TrainingComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &workspace,
                                                         const std::vector<kernel::AddressPtr> &outputs) const {
-  auto x_ori = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto reserve_space_1 = reinterpret_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
+  auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
 
   // change dtype from 'T' to 'fp32'
-  float *x = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
-  float *dy = reinterpret_cast<float *>(workspace.at(kIndex1)->addr);
-  float *ddx = reinterpret_cast<float *>(workspace.at(kIndex2)->addr);
+  float *x = static_cast<float *>(workspace.at(kIndex0)->addr);
+  float *dy = static_cast<float *>(workspace.at(kIndex1)->addr);
+  float *ddx = static_cast<float *>(workspace.at(kIndex2)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int k = 0; k < HW_num_; k++) {
@@ -304,8 +304,8 @@ void BatchNormGradGradCpuKernelMod::TrainingComputeNCHW(const std::vector<kernel
   }
 
   // create intermediate variables
-  float *x_hat = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
-  float *inv_std = reinterpret_cast<float *>(workspace.at(kIndex11)->addr);
+  float *x_hat = static_cast<float *>(workspace.at(kIndex3)->addr);
+  float *inv_std = static_cast<float *>(workspace.at(kIndex11)->addr);
 
   for (int j = 0; j < C_num_; j++) {
     *(inv_std + j) = num_1 / sqrt(*(reserve_space_2 + j) + epsilon_);
@@ -329,22 +329,22 @@ template <typename T>
 void BatchNormGradGradCpuKernelMod::InferenceComputeNCHW(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<kernel::AddressPtr> &workspace,
                                                          const std::vector<kernel::AddressPtr> &outputs) const {
-  auto x_ori = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
-  auto reserve_space_1 = reinterpret_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
-  auto ddoffset = reinterpret_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
-  auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto ddy = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
-  auto dscale = reinterpret_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
+  auto x_ori = static_cast<T *>(inputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
+  auto reserve_space_1 = static_cast<float *>(inputs.at(kIndex3)->addr);  // batch_mean  fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
+  auto ddoffset = static_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
+  auto dx = static_cast<T *>(outputs.at(kIndex0)->addr);
+  auto ddy = static_cast<T *>(outputs.at(kIndex1)->addr);
+  auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
 
   // change dtype from 'T' to 'fp32'
-  float *x = reinterpret_cast<float *>(workspace.at(kIndex0)->addr);
-  float *dy = reinterpret_cast<float *>(workspace.at(kIndex1)->addr);
-  float *ddx = reinterpret_cast<float *>(workspace.at(kIndex2)->addr);
+  float *x = static_cast<float *>(workspace.at(kIndex0)->addr);
+  float *dy = static_cast<float *>(workspace.at(kIndex1)->addr);
+  float *ddx = static_cast<float *>(workspace.at(kIndex2)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int k = 0; k < HW_num_; k++) {
@@ -358,8 +358,8 @@ void BatchNormGradGradCpuKernelMod::InferenceComputeNCHW(const std::vector<kerne
   }
 
   // create intermediate variables
-  float *x_hat = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
-  float *inv_std = reinterpret_cast<float *>(workspace.at(kIndex4)->addr);
+  float *x_hat = static_cast<float *>(workspace.at(kIndex3)->addr);
+  float *inv_std = static_cast<float *>(workspace.at(kIndex4)->addr);
 
   for (int j = 0; j < C_num_; j++) {
     *(inv_std + j) = num_1 / sqrt(*(reserve_space_2 + j) + epsilon_);
@@ -399,19 +399,19 @@ void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDx(const std::vector<ke
                                                             const std::vector<kernel::AddressPtr> &workspace,
                                                             const std::vector<kernel::AddressPtr> &outputs,
                                                             float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);  // fp32
-  auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);  // fp32
+  auto dx = static_cast<T *>(outputs.at(kIndex0)->addr);
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {
@@ -436,8 +436,8 @@ void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDx(const std::vector<ke
     }
   }
 
-  float *dx_term = reinterpret_cast<float *>(workspace.at(kIndex4)->addr);
-  float *scale_term = reinterpret_cast<float *>(workspace.at(kIndex5)->addr);
+  float *dx_term = static_cast<float *>(workspace.at(kIndex4)->addr);
+  float *scale_term = static_cast<float *>(workspace.at(kIndex5)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int k = 0; k < HW_num_; k++) {
@@ -474,19 +474,19 @@ void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDdy(const std::vector<k
                                                              const std::vector<kernel::AddressPtr> &workspace,
                                                              const std::vector<kernel::AddressPtr> &outputs,
                                                              float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
-  auto ddoffset = reinterpret_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
-  auto ddy = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
+  auto ddoffset = static_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
+  auto ddy = static_cast<T *>(outputs.at(kIndex1)->addr);
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {
@@ -530,16 +530,16 @@ void BatchNormGradGradCpuKernelMod::TrainingNHWCCalculateDscale(const std::vecto
                                                                 const std::vector<kernel::AddressPtr> &workspace,
                                                                 const std::vector<kernel::AddressPtr> &outputs,
                                                                 float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto dscale = reinterpret_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {
@@ -586,19 +586,19 @@ void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDx(const std::vector<ke
                                                             const std::vector<kernel::AddressPtr> &workspace,
                                                             const std::vector<kernel::AddressPtr> &outputs,
                                                             float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
-  auto reserve_space_2 = reinterpret_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);  // fp32
-  auto dx = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);            // fp32
+  auto reserve_space_2 = static_cast<float *>(inputs.at(kIndex4)->addr);  // batch_var  fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);  // fp32
+  auto dx = static_cast<T *>(outputs.at(kIndex0)->addr);
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {
@@ -623,8 +623,8 @@ void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDx(const std::vector<ke
     }
   }
 
-  float *dx_term = reinterpret_cast<float *>(workspace.at(kIndex4)->addr);
-  float *scale_term = reinterpret_cast<float *>(workspace.at(kIndex5)->addr);
+  float *dx_term = static_cast<float *>(workspace.at(kIndex4)->addr);
+  float *scale_term = static_cast<float *>(workspace.at(kIndex5)->addr);
 
   for (int i = 0; i < N_num_; i++) {
     for (int j = 0; j < C_num_; j++) {
@@ -661,19 +661,19 @@ void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDdy(const std::vector<k
                                                              const std::vector<kernel::AddressPtr> &workspace,
                                                              const std::vector<kernel::AddressPtr> &outputs,
                                                              float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto scale = reinterpret_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto ddscale = reinterpret_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
-  auto ddoffset = reinterpret_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
-  auto ddy = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto scale = static_cast<float *>(inputs.at(kIndex2)->addr);  // fp32
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto ddscale = static_cast<float *>(inputs.at(kIndex6)->addr);   // fp32
+  auto ddoffset = static_cast<float *>(inputs.at(kIndex7)->addr);  // fp32
+  auto ddy = static_cast<T *>(outputs.at(kIndex1)->addr);
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {
@@ -717,16 +717,16 @@ void BatchNormGradGradCpuKernelMod::TrainingNCHWCalculateDscale(const std::vecto
                                                                 const std::vector<kernel::AddressPtr> &workspace,
                                                                 const std::vector<kernel::AddressPtr> &outputs,
                                                                 float *x_hat, float *inv_std) const {
-  auto dy_ori = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-  auto ddx_ori = reinterpret_cast<T *>(inputs.at(kIndex5)->addr);
-  auto dscale = reinterpret_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
+  auto dy_ori = static_cast<T *>(inputs.at(kIndex1)->addr);
+  auto ddx_ori = static_cast<T *>(inputs.at(kIndex5)->addr);
+  auto dscale = static_cast<float *>(outputs.at(kIndex2)->addr);  // fp32
 
   // create intermediate variables
-  float *sum_dy = reinterpret_cast<float *>(workspace.at(kIndex6)->addr);
-  float *sum_dy_x_hat = reinterpret_cast<float *>(workspace.at(kIndex7)->addr);
-  float *sum_ddx = reinterpret_cast<float *>(workspace.at(kIndex8)->addr);
-  float *sum_ddx_x_hat = reinterpret_cast<float *>(workspace.at(kIndex9)->addr);
-  float *sum_dy_ddx = reinterpret_cast<float *>(workspace.at(kIndex10)->addr);
+  float *sum_dy = static_cast<float *>(workspace.at(kIndex6)->addr);
+  float *sum_dy_x_hat = static_cast<float *>(workspace.at(kIndex7)->addr);
+  float *sum_ddx = static_cast<float *>(workspace.at(kIndex8)->addr);
+  float *sum_ddx_x_hat = static_cast<float *>(workspace.at(kIndex9)->addr);
+  float *sum_dy_ddx = static_cast<float *>(workspace.at(kIndex10)->addr);
 
   // initialize
   for (int j = 0; j < C_num_; j++) {

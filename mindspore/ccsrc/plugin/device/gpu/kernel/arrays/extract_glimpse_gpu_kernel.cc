@@ -45,7 +45,6 @@ bool ExtractGlimpseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
                       << "', it does not support this kernel data type: " << kernel_attr;
   }
-  // outputs_ = outputs;
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;
   centered_ = kernel_ptr->get_centered();
@@ -61,7 +60,6 @@ int ExtractGlimpseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  // outputs_ = outputs;
   inputs_shape = inputs[kIndex0]->GetShapeVector();
   size_shape = inputs[kIndex1]->GetShapeVector();
   offsets_shape = inputs[kIndex2]->GetShapeVector();

@@ -97,7 +97,7 @@ bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     if (segment_ids_addr[i] != beginindex) {
       for (size_t j = 1; j <= countnum; j++) {
         for (size_t l = 0; l < n; l++) {
-          y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(countnum);
+          y_addr[IntToSize(indices_addr[i - j]) * n + l] += x_addr[IntToSize(beginindex) * n + l] / (T)(countnum);
         }
       }
       beginindex = segment_ids_addr[i];
@@ -107,10 +107,11 @@ bool SparseSegmentMeanGradCpuKernelMod::LaunchKernel(const std::vector<kernel::A
     }
   }
 
-  int i = m;
+  int i = SizeToInt(m);
   for (size_t j = 1; j <= countnum; j++) {
     for (size_t l = 0; l < n; l++) {
-      y_addr[indices_addr[i - j] * n + l] += x_addr[beginindex * n + l] / (T)(countnum);
+      y_addr[IntToSize(indices_addr[IntToSize(i) - j]) * n + l] +=
+        x_addr[IntToSize(beginindex) * n + l] / (T)(countnum);
     }
   }
 

@@ -69,7 +69,7 @@ bool GLUCpuKernelMod::SplitCompute(T *input_data_ptr, T *output_data_ptr) {
   }
   int64_t size_split = midfix / kEvenNum;
   int64_t subfix = 1;
-  for (size_t i = split_dim_ + 1; i < value_shape_vec_.size(); i++) {
+  for (size_t i = IntToSize(split_dim_ + 1); i < value_shape_vec_.size(); i++) {
     subfix *= value_shape_vec_[i];
   }
   int64_t offset = 0;

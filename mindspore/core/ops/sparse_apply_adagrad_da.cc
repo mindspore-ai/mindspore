@@ -81,8 +81,9 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   if (!is_dynamic) {
     (void)CheckAndConvertUtils::CheckInteger("rank(grad) and rank(var)", SizeToLong(grad_shape.size()), kEqual,
                                              SizeToLong(var_shape.size()), prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("grad.shape[0] and indices.shape[0]", SizeToLong(indices_shape[0]), kEqual,
-                                             SizeToLong(grad_shape[0]), prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("grad.shape[0] and indices.shape[0]",
+                                             SizeToLong(indices_shape[LongToSize(0)]), kEqual,
+                                             SizeToLong(grad_shape[LongToSize(0)]), prim_name);
     for (size_t i = 1; i < var_shape.size(); ++i) {
       if (var_shape[i] != grad_shape[i]) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i

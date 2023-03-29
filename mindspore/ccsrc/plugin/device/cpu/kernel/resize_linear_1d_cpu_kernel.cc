@@ -114,7 +114,7 @@ ResizeLinear1DCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
   CoordinateTransformationMode coordinate_transformation_mode) const {
   const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}};
+    {ALIGN_CORNERS_, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -132,7 +132,7 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 
   std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
   if (coordinate_transformation_mode == "align_corners") {
-    coordinate_transformation_mode_ = ALIGN_CORNERS;
+    coordinate_transformation_mode_ = ALIGN_CORNERS_;
   } else if (coordinate_transformation_mode == "half_pixel") {
     coordinate_transformation_mode_ = HALF_PIXEL;
   } else {

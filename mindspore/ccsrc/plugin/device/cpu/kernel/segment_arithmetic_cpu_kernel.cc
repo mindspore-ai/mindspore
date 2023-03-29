@@ -193,7 +193,7 @@ std::vector<KernelAttr> SegmentArithmeticCPUKernelMod::GetOpSupport() {
 
 template <typename T1, typename T2>
 bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                 const std::vector<kernel::AddressPtr> &workspace,
+                                                 const std::vector<kernel::AddressPtr> &,
                                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (kernel_name_ == prim::kPrimSegmentMax->name() || kernel_name_ == prim::kPrimSegmentMin->name()) {
     if constexpr (std::is_same_v<T1, std::complex<float>>) {
@@ -231,10 +231,11 @@ bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
           size_t res_init_addr = input_addr_base + j;
           T1 res_value = input_x_data_addr[res_init_addr];
           for (size_t k = 1; k < count; ++k) {
-            int cmp_addr = res_init_addr + k * num_compare_per;
+            int cmp_addr = SizeToInt(res_init_addr + k * num_compare_per);
             compute_func_(static_cast<void *>(&res_value), static_cast<void *>(input_x_data_addr + cmp_addr));
           }
-          output_data_addr[segment_ids_data_addr[LongToSize(count_no)] * num_compare_per + j] = res_value;
+          output_data_addr[static_cast<size_t>(segment_ids_data_addr[LongToSize(count_no)]) * num_compare_per + j] =
+            res_value;
         }
       };
       if (num_compare_per < kDataSizeThreshold) {
@@ -256,10 +257,11 @@ bool SegmentArithmeticCPUKernelMod::LaunchKernel(const std::vector<kernel::Addre
           size_t res_init_addr = input_addr_base + j;
           T1 res_value = input_x_data_addr[res_init_addr];
           for (size_t k = 1; k < count; ++k) {
-            int cmp_addr = res_init_addr + k * num_compare_per;
+            int cmp_addr = SizeToInt(res_init_addr + k * num_compare_per);
             compute_func_(static_cast<void *>(&res_value), static_cast<void *>(input_x_data_addr + cmp_addr));
           }
-          output_data_addr[segment_ids_data_addr[LongToSize(count_no)] * num_compare_per + j] = res_value;
+          output_data_addr[static_cast<size_t>(segment_ids_data_addr[LongToSize(count_no)]) * num_compare_per + j] =
+            res_value;
         }
       }
     };

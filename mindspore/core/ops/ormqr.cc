@@ -60,8 +60,9 @@ abstract::ShapePtr OrmqrInferShape(const PrimitivePtr &primitive, const std::vec
   auto x_rank = x_shape.size();
   auto tau_rank = tau_shape.size();
   auto other_rank = other_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(x_rank), kGreaterEqual, kTwo, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("other_rank", SizeToLong(other_rank), kGreaterEqual, kTwo,
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(x_rank), kGreaterEqual, SizeToLong(kTwo),
+                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("other_rank", SizeToLong(other_rank), kGreaterEqual, SizeToLong(kTwo),
                                            primitive->name());
 
   if ((x_rank - kColIndex) != tau_rank) {
@@ -145,7 +146,7 @@ AbstractBasePtr OrmqrInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = OrmqrInferType(primitive, input_args);
   auto infer_shape = OrmqrInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

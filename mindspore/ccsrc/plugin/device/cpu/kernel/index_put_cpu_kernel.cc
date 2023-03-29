@@ -33,9 +33,9 @@ constexpr size_t kIndexPutOutputsNum = 1;
 #define INDEXPUT_LAUNCH_CASE(DTYPE, TYPE, DTYPE0, INPUTS, OUTPUTS) \
   case DTYPE: {                                                    \
     if ((DTYPE0) == kNumberTypeInt32) {                            \
-      LaunchKernel<TYPE, int32_t>(INPUTS, OUTPUTS);                \
+      (void)LaunchKernel<TYPE, int32_t>(INPUTS, OUTPUTS);          \
     } else {                                                       \
-      LaunchKernel<TYPE, int64_t>(INPUTS, OUTPUTS);                \
+      (void)LaunchKernel<TYPE, int64_t>(INPUTS, OUTPUTS);          \
     }                                                              \
     break;                                                         \
   }
@@ -139,7 +139,7 @@ void IndexPutCpuKernelMod::CheckParams() {
 
 template <typename T>
 void IndexPutCpuKernelMod::ComputeNospecial(T *x2, size_t x2_nums, std::vector<std::vector<int64_t>> indices_value,
-                                            T *y, int accumulate) {
+                                            T *y, int accumulate_) {
   auto x1_shape = x1_shape_;
   size_t x1_shape_size = x1_shape.size();
   size_t idxli = indices_value.size();
@@ -150,33 +150,33 @@ void IndexPutCpuKernelMod::ComputeNospecial(T *x2, size_t x2_nums, std::vector<s
   for (size_t i = 0; i < idxli; ++i) {
     size_t offset = 0;
     for (size_t j = 0; j < idxcol; ++j) {
-      offset += indices_value[i][j] * Multiplicative(x1_shape, j + 1, x1_shape_size);
+      offset += LongToSize(indices_value[i][j] * Multiplicative(x1_shape, j + 1, x1_shape_size));
     }
     size_t v_idx = i % x2_nums;
-    y[offset] = (accumulate == 0) ? x2[v_idx] : y[offset] + x2[v_idx];
+    y[offset] = (accumulate_ == 0) ? x2[v_idx] : y[offset] + x2[v_idx];
   }
 }
 
 template <typename T>
 void IndexPutCpuKernelMod::ComputeSpecial(T *x2, size_t x2_nums, std::vector<std::vector<int64_t>> indices_value, T *y,
-                                          int accumulate) {
+                                          int accumulate_) {
   auto x1_shape = x1_shape_;
   size_t x1_shape_size = x1_shape.size();
   size_t idxli = indices_value.size();
   size_t idxcol = indices_value[0].size();
-  size_t strides = Multiplicative(x1_shape, indices_value.size(), x1_shape_size);
+  size_t strides = LongToSize(Multiplicative(x1_shape, indices_value.size(), x1_shape_size));
   if (x2_nums == 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', x2 input illegal, please check!";
   }
   for (size_t i = 0; i < idxcol; i++) {
     size_t offset = 0;
     for (size_t j = 0; j < idxli; j++) {
-      offset += indices_value[j][i] * Multiplicative(x1_shape, j + 1, x1_shape_size);
+      offset += LongToSize(indices_value[j][i] * Multiplicative(x1_shape, j + 1, x1_shape_size));
     }
     for (size_t j = 0; j < strides; j++) {
       size_t y_idx = offset + j;
       size_t v_idx = j % x2_nums;
-      y[y_idx] = (accumulate == 0) ? x2[v_idx] : y[y_idx] + x2[v_idx];
+      y[y_idx] = (accumulate_ == 0) ? x2[v_idx] : y[y_idx] + x2[v_idx];
     }
   }
 }
@@ -184,9 +184,9 @@ void IndexPutCpuKernelMod::ComputeSpecial(T *x2, size_t x2_nums, std::vector<std
 template <typename T, typename T0>
 bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto *x1 = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *x2 = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *x1 = static_cast<T *>(inputs[0]->addr);
+  auto *x2 = static_cast<T *>(inputs[1]->addr);
+  auto *y = static_cast<T *>(outputs[0]->addr);
   size_t x1_nums =
     std::accumulate(x1_shape_.begin(), x1_shape_.end(), static_cast<size_t>(1), std::multiplies<size_t>());
   size_t x2_nums =
@@ -194,7 +194,7 @@ bool IndexPutCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   constexpr size_t indices_start_pos = 2;
   std::vector<std::vector<int64_t>> indices_value;
   for (size_t i = indices_start_pos; i < inputs.size(); i++) {
-    auto *linetensor = reinterpret_cast<T0 *>(inputs[i]->addr);
+    auto *linetensor = static_cast<T0 *>(inputs[i]->addr);
     std::vector<int64_t> iline;
     for (size_t j = 0; static_cast<int64_t>(j) < indices_shape_[i - indices_start_pos][0]; j++) {
       linetensor[j] = (linetensor[j] < 0) ? linetensor[j] + x1_shape_[i - indices_start_pos] : linetensor[j];

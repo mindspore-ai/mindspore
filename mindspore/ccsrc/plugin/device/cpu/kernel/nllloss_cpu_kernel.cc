@@ -80,11 +80,11 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_INPUTS_NUM(kNLLLossInputsNum, inputs.size(), kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(kNLLLossOutputsNum, outputs.size(), kernel_name_);
 
-  const auto *logits = reinterpret_cast<float *>(inputs[kIndex0]->addr);
-  const auto *labels = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto *weight = reinterpret_cast<float *>(inputs[kIndex2]->addr);
-  auto *loss = reinterpret_cast<float *>(outputs[kIndex0]->addr);
-  auto *total_weight = reinterpret_cast<float *>(outputs[kIndex1]->addr);
+  const auto *logits = static_cast<float *>(inputs[kIndex0]->addr);
+  const auto *labels = static_cast<T *>(inputs[kIndex1]->addr);
+  const auto *weight = static_cast<float *>(inputs[kIndex2]->addr);
+  auto *loss = static_cast<float *>(outputs[kIndex0]->addr);
+  auto *total_weight = static_cast<float *>(outputs[kIndex1]->addr);
   if (logits == nullptr || labels == nullptr || weight == nullptr) {
     MS_LOG(EXCEPTION) << "Nllloss does not support null input";
   }

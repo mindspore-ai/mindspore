@@ -56,7 +56,7 @@ int SparseSegmentSqrtNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   segment_ids_num_ = SizeOf(inputs[kIndex2]->GetShapeVector());
   y_num_ = SizeOf(outputs[kIndex0]->GetShapeVector());
   x_shape_0_val_ = inputs[kIndex0]->GetShapeVector()[0];
-  inner_size_ = x_num_ / x_shape_0_val_;
+  inner_size_ = SizeToLong(x_num_) / x_shape_0_val_;
   return KRET_OK;
 }
 
@@ -133,7 +133,7 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
     }
     for (size_t idx = 1; idx < segment_ids_num_; ++idx) {
       if (segment_ids_addr[idx] == segment_ids_addr[idx - 1] + 1) {
-        start_end_point.emplace_back(idx);
+        (void)start_end_point.emplace_back(idx);
       } else if (segment_ids_addr[idx] != segment_ids_addr[idx - 1]) {
         MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', segment_ids should be sorted and contiguous.";
       }
@@ -141,7 +141,7 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
         MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', indices is out of range of x's first dimension.";
       }
     }
-    start_end_point.emplace_back(segment_ids_num_);
+    (void)start_end_point.emplace_back(segment_ids_num_);
     for (int64_t idx_inner = 0; idx_inner < inner_size_; ++idx_inner) {
       for (size_t idx_seg_node = 0; idx_seg_node < start_end_point.size() - 1; ++idx_seg_node) {
         int64_t start = start_end_point[idx_seg_node];
@@ -151,7 +151,7 @@ void SparseSegmentSqrtNCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
           sum_val +=
             static_cast<float>(x_addr[idx_inner + static_cast<int64_t>(indices_addr[idx_indices]) * inner_size_]);
         }
-        y_addr[idx_inner + idx_seg_node * inner_size_] =
+        y_addr[LongToSize(idx_inner) + idx_seg_node * LongToSize(inner_size_)] =
           static_cast<T1>(sum_val / static_cast<float>(sqrt(end - start)));
       }
     }

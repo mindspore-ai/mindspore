@@ -55,9 +55,9 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
   auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
 
   if (!is_dynamic_rank) {
-    (void)CheckAndConvertUtils::CheckInteger("grads rank", grads_shape.size(), kEqual, num4, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("original image rank", original_image_shape.size(), kEqual, num4,
-                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("grads rank", SizeToLong(grads_shape.size()), kEqual, num4, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("original image rank", SizeToLong(original_image_shape.size()), kEqual,
+                                             num4, prim_name);
   }
   if (!is_dynamic) {
     if (grads_shape[kInputIndex0] != original_image_shape[kInputIndex0]) {

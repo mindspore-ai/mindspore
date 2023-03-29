@@ -47,7 +47,7 @@ void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std
    * box_src[i][class_idx][k]=box_src[i*q_*4+class_idx*4+k]
    */
   int sub_box_len1 = q_ * multiplier;
-  int box_len2 = (class_idx << KIndex2);
+  int box_len2 = (static_cast<size_t>(class_idx) << KIndex2);
   for (size_t i = 0; i < IntToSize(num_boxes_); i++) {
     size_t box_len1 = IntToSize(i * sub_box_len1 + box_len2);
     if (box_src[box_len1] > box_src[box_len1 + KIndex2]) {
@@ -188,8 +188,8 @@ void CombinedNonMaxSuppressionCpuKernelMod::nms_perclass(
 size_t CombinedNonMaxSuppressionCpuKernelMod::nms_perbath(float *boxes, float *scores, float *nmsed_boxes,
                                                           float *nmsed_scores, float *nmsed_class,
                                                           int *valid_detection) {
-  int box_size = num_bath_ * num_detection_ * sizeof(float) * multiplier;
-  int score_size = num_bath_ * num_detection_ * sizeof(float);
+  int box_size = SizeToInt(num_bath_ * num_detection_ * sizeof(float) * multiplier);
+  int score_size = SizeToInt(num_bath_ * num_detection_ * sizeof(float));
   void(memset_s(nmsed_boxes, box_size, 0, box_size));
   void(memset_s(nmsed_scores, score_size, 0, score_size));
   void(memset_s(nmsed_class, score_size, 0, score_size));

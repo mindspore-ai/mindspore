@@ -84,7 +84,7 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
     MS_EXCEPTION_IF_NULL(num_segments_value);
     auto num_segments_value_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name);
-    size_t dim_zero = num_segments_value_tensor.back();
+    size_t dim_zero = LongToSize(num_segments_value_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", num_segments must bigger than the last number of segment_ids, "

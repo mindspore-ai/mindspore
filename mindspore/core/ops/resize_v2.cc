@@ -29,8 +29,8 @@ abstract::ShapePtr ResizeV2InferShape(const PrimitivePtr &primitive, const std::
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  int64_t x_shape_0 = SizeToLong(x_shape[0]);
-  int64_t x_shape_1 = SizeToLong(x_shape[1]);
+  int64_t x_shape_0 = SizeToLong(x_shape[LongToSize(0)]);
+  int64_t x_shape_1 = SizeToLong(x_shape[LongToSize(1)]);
   const int64_t kXDimSize = 4;
   (void)CheckAndConvertUtils::CheckInteger("dim of x", SizeToLong(x_shape.size()), kEqual, kXDimSize, op_name);
 

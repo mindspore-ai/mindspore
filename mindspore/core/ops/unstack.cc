@@ -58,7 +58,7 @@ class UnstackInfer : public abstract::OpInferBase {
     if (axis >= x_shape.size()) {
       MS_LOG(EXCEPTION) << "Axis should be less than " << x_rank << ", but got " << axis;
     }
-    (void)temp_shape.erase(temp_shape.begin() + axis);
+    (void)temp_shape.erase(temp_shape.begin() + SizeToLong(axis));
     if (!IsDynamic(x_shape)) {
       auto output_num_from_shape = x_shape[axis];
       auto name = primitive->name();

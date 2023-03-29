@@ -96,7 +96,7 @@ abstract::ShapePtr CountNonZeroInferShape(const PrimitivePtr &primitive,
   }
 
   for (size_t i = 0; i < dims.size(); ++i) {
-    output_shape[dims[i]] = -1;
+    output_shape[LongToSize(dims[i])] = -1;
   }
 
   for (std::vector<int64_t>::iterator iter = output_shape.begin(); iter != output_shape.end(); ++iter) {

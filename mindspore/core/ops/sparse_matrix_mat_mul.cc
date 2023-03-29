@@ -143,8 +143,8 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
       CheckAndConvertUtils::CheckTensorIntValue("x1_dense_shape", dense_shape_value_ptr, primitive->name());
 
     const int64_t rank_x1 = static_cast<int64_t>(dense_shape_value_ptr_tensor.size());
-    auto row_x1 = dense_shape_value_ptr_tensor[rank_x1 - 2];
-    auto col_x1 = dense_shape_value_ptr_tensor[rank_x1 - 1];
+    auto row_x1 = dense_shape_value_ptr_tensor[LongToSize(rank_x1 - 2)];
+    auto col_x1 = dense_shape_value_ptr_tensor[LongToSize(rank_x1 - 1)];
 
     row_x1 = (adjoint_x1 || transpose_x1) ? col_x1 : row_x1;
 

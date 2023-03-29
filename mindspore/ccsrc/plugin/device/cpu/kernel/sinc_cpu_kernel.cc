@@ -43,7 +43,7 @@ bool SincCpuKernelMod::LaunchSameKernel(const std::vector<kernel::AddressPtr> &i
   size_t total = inputs[0]->size / sizeof(T);
   auto task = [&input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      if (input[i] == static_cast<T>(0.0f)) {
+      if (static_cast<T>(input[i]) == static_cast<T>(0.0f)) {
         output[i] = static_cast<T>(1.0f);
       } else {
         T pi = static_cast<T>(3.14159265358979323846L);

@@ -49,7 +49,7 @@ bool Dilation2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   pad_mode_ = kernel_ptr->get_pad_mode();
   format_ = kernel_ptr->get_format();
 
-  CheckKernelParam();
+  (void)CheckKernelParam();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -121,16 +121,16 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
       for (size_t pos = 0; pos < output_plane_size; ++pos) {
         size_t pos_h = pos / output_width % output_height;
         size_t pos_w = pos % output_width;
-        size_t h_start = SizeToLong(pos_h * stride_height) - pad_top;
-        size_t w_start = SizeToLong(pos_w * stride_width) - pad_left;
+        size_t h_start = LongToSize(SizeToLong(pos_h * stride_height) - pad_top);
+        size_t w_start = LongToSize(SizeToLong(pos_w * stride_width) - pad_left);
 
         T max_val = std::numeric_limits<T>::lowest();
 
         for (size_t h = 0; h < filter_height; ++h) {
-          int64_t h_in = h_start + SizeToLong(h * rate_height);
+          int64_t h_in = SizeToLong(h_start + h * rate_height);
           if (h_in >= 0 && h_in < SizeToLong(input_height)) {
             for (size_t w = 0; w < filter_width; ++w) {
-              int w_in = w_start + SizeToLong(w * rate_width);
+              int w_in = SizeToInt(w_start + w * rate_width);
               if (w_in >= 0 && w_in < SizeToLong(input_width)) {
                 T val = input[LongToSize(w_in) + input_width * (LongToSize(h_in) + input_height * (c + channel * n))] +
                         filter[w + filter_width * (h + filter_height * c)];

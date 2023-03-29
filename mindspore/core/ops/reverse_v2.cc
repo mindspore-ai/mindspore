@@ -55,11 +55,11 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
       if (realdim < 0 || realdim >= SizeToLong(x_dims)) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 'axis[" << i << "]' must be in range of [-"
                                  << x_dims << ", " << x_dims << "), but got " << input_axis[i] << " with type 'int'.";
-      } else if (realdim >= 0 && reverse_shape[realdim] == true) {
+      } else if (realdim >= 0 && reverse_shape[LongToSize(realdim)] == true) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", 'axis' cannot contain duplicate dimensions"
                                  << ", but got " << realdim;
-      } else if (realdim >= 0 && reverse_shape[realdim] == false) {
-        reverse_shape[realdim] = true;
+      } else if (realdim >= 0 && reverse_shape[LongToSize(realdim)] == false) {
+        reverse_shape[LongToSize(realdim)] = true;
       }
     }
   } else {

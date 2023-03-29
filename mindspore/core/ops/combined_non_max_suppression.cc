@@ -122,10 +122,11 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
     auto max_total_size = *(static_cast<int32_t *>(input3_tensor->data_c()));
 
     const int32_t kNumZero = 0;
-    CheckAndConvertUtils::CheckInteger("max_total_size", max_total_size, kGreaterThan, kNumZero, primitive->name());
+    (void)CheckAndConvertUtils::CheckInteger("max_total_size", max_total_size, kGreaterThan, kNumZero,
+                                             primitive->name());
 
-    CheckAndConvertUtils::CheckInteger("max_output_size_per_clas", max_output_size_per_class, kGreaterThan, kNumZero,
-                                       primitive->name());
+    (void)CheckAndConvertUtils::CheckInteger("max_output_size_per_clas", max_output_size_per_class, kGreaterThan,
+                                             kNumZero, primitive->name());
 
     auto num_detection = max_total_size;
     if (pad_per_class) {
@@ -171,7 +172,7 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
   CombinedNonMaxSuppressionCheckShapeValue(input0_shape, input1_shape, is_dynamic, prim_name);
 
   for (int64_t i = 0; i < kInputs; i++) {
-    if (!input_args[i]->isa<abstract::AbstractTensor>()) {
+    if (!input_args[LongToSize(i)]->isa<abstract::AbstractTensor>()) {
       MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
     }
   }
