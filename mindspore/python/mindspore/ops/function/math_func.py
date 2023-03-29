@@ -4394,7 +4394,7 @@ def fmin(input, other):
 
     Note:
         - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-            consistent.
+          consistent.
         - Shapes of `input` and `other` should be able to broadcast.
         - If one of the elements to be compared is NaN, another element is returned.
 

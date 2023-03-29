@@ -10376,7 +10376,7 @@ class MaxPoolWithArgmaxV2(Primitive):
     Supported Platforms:
         ``CPU`` ``GPU`` ``Ascend``
 
-    Example:
+    Examples:
         >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
         >>> maxpool_arg_v2_op = ops.MaxPoolWithArgmaxV2(kernel_size=(3, 2), strides=(2, 1))
         >>> output_tensor, argmax = maxpool_arg_v2_op(x)
