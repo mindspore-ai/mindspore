@@ -72,6 +72,10 @@ void RegCompositeOpsGroup(const py::module *m) {
                                                                                                "SequenceSliceGetItem_")
     .def(py::init<std::string &, std::string &, std::string &>());
 
+  // Reg ZerosLike
+  (void)py::class_<ZerosLike, MetaFuncGraph, std::shared_ptr<ZerosLike>>(*m, "ZerosLike_")
+    .def(py::init<const std::string &, std::shared_ptr<MultitypeFuncGraph>>());
+
   // Reg Shard
   (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
     .def(py::init<const std::string &>(), py::arg("fn"));

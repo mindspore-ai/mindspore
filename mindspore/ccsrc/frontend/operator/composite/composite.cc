@@ -1883,5 +1883,36 @@ FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   auto [start, stop, step] = GenerateTupleSliceParameter(sequence_, slice_);
   return this->BuildFuncGraph(start, stop, step);
 }
+
+FuncGraphPtr ZerosLike::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  constexpr auto input_size = 1;
+  abstract::CheckArgsSize("ZerosLike", args_spec_list, input_size);
+
+  auto x = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(x);
+  auto type = x->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->type_id() == kTuple->type_id() || type->type_id() == kList->type_id()) {
+    auto abs_seq = x->cast<AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len()) {
+      FuncGraphPtr res_graph = std::make_shared<FuncGraph>();
+      res_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+      res_graph->debug_info()->set_name("zeros_like");
+      auto x_parameter = res_graph->add_parameter();
+      res_graph->set_output(res_graph->NewCNodeInOrder({NewValueNode(prim::kPrimSequenceZerosLike), x_parameter}));
+      return res_graph;
+    }
+  }
+
+  HyperMap hyper_map(false, fn_leaf_);
+  TypePtrList types;
+  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+                       [](const AbstractBasePtr &arg) -> TypePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         return arg->BuildType();
+                       });
+  return hyper_map.GenerateFromTypes(types);
+}
 }  // namespace prim
 }  // namespace mindspore
