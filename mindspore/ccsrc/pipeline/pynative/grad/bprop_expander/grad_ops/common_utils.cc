@@ -166,7 +166,7 @@ NodePtr SumGradReduceAxisWithCast(const BpropIRBuilder *ib, const NodePtr &dx, c
 }
 
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis) {
-  auto rank = input_shape.size();
+  auto rank = SizeToLong(input_shape.size());
   if (rank == 0) {
     return {};
   }
@@ -175,14 +175,16 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
   int64_t reduced_num = 1;
   int64_t other_num = 1;
   for (auto i : axis) {
-    i = (i + rank) % rank;
+    if (i < 0) {
+      i += rank;
+    }
     reduction_indices_set.insert(i);
-    reduced_num *= input_shape[i];
+    reduced_num *= input_shape[LongToSize(i)];
     perm.emplace_back(i);
   }
-  for (int64_t i = 0; i < (int64_t)rank; i++) {
+  for (int64_t i = 0; i < rank; i++) {
     if (reduction_indices_set.find(i) == reduction_indices_set.end()) {
-      other_num *= input_shape[i];
+      other_num *= input_shape[LongToSize(i)];
       perm.emplace_back(i);
     }
   }
@@ -397,16 +399,20 @@ std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
 std::vector<int64_t> Range(int64_t stop) { return Range(0, stop); }
 
 std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64_t axis) {
+  std::vector<int64_t> reverse_axis;
+  if (x_shape.empty()) {
+    return reverse_axis;
+  }
   auto rk = static_cast<int64_t>(x_shape.size());
   if (axis < 0) {
     axis += rk;
   }
-  std::vector<int64_t> reverse_axis;
+  reverse_axis.reserve(x_shape.size());
   for (int64_t i = 0; i < rk; ++i) {
     reverse_axis.emplace_back(i);
   }
-  reverse_axis[axis] = rk - 1;
-  reverse_axis[rk - 1] = axis;
+  reverse_axis[LongToSize(axis)] = rk - 1;
+  reverse_axis[LongToSize(rk - 1)] = axis;
   return reverse_axis;
 }
 

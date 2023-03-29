@@ -138,6 +138,59 @@ ShapeVector MatrixDeterminantInferFunc(const ShapeArray &inputs, const std::unor
   return {IsDynamicRank(new_shape) ? -1 : SizeToLong(new_shape.size()) + 2};
 }
 
+NodePtrList BpropAddcCommon(const BpropIRBuilder *ib, const std::string &op_name,
+                            const std::unordered_set<TypeId> &type_list) {
+  auto input_data = ib->GetInput(kIndex0);
+  auto x1 = ib->GetInput(kIndex1);
+  auto x2 = ib->GetInput(kIndex2);
+  auto value = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dinput_data = dout;
+  auto dout_typeptr = ib->GetDtype(dout);
+  bool need_cast = type_list.count(dout_typeptr->type_id()) > 0;
+  if (need_cast) {
+    input_data = ib->Cast(input_data, kFloat32);
+    x1 = ib->Cast(x1, kFloat32);
+    x2 = ib->Cast(x2, kFloat32);
+    value = ib->Cast(value, kFloat32);
+    if (op_name == "Addcdiv") {
+      dinput_data = ib->Cast(dinput_data, kFloat32);
+    }
+  }
+  NodePtr inner_out = nullptr;
+  NodePtr dx1 = nullptr;
+  NodePtr dx2 = nullptr;
+  NodePtr dvalue = nullptr;
+  if (op_name == "Addcdiv") {
+    constexpr int64_t const_val = -2;
+    inner_out = ib->Add((ib->Mul(value, ib->Div(x1, x2))), input_data);
+    dx2 =
+      ib->Neg(ib->Mul(ib->Mul(ib->Mul(x1, value), ib->Pow(x2, ib->Tensor(const_val, ib->GetDtype(x2)))), dinput_data));
+    dx1 = ib->Mul(dinput_data, ib->Div(value, x2));
+    dvalue = ib->Mul(dinput_data, ib->Div(x1, x2));
+  } else {
+    dx1 = ib->Mul(dout, ib->Mul(value, x2));
+    dx2 = ib->Mul(dout, ib->Mul(value, x1));
+    inner_out = ib->Add((ib->Mul((ib->Mul(x1, x2)), value)), input_data);
+    dvalue = ib->Mul(dout, ib->Mul(x1, x2));
+  }
+  auto tmp_dinput_data = BinopGradCommon(ib, inner_out, input_data, dout, dinput_data);
+  dinput_data = tmp_dinput_data[1];
+  auto tmp_dx1 = BinopGradCommon(ib, inner_out, x1, dout, dx1);
+  dx1 = tmp_dx1[1];
+  auto tmp_dx2 = BinopGradCommon(ib, inner_out, x2, dout, dx2);
+  dx2 = tmp_dx2[1];
+  auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
+  dvalue = tmp_dvalue[1];
+  if (need_cast) {
+    dinput_data = ib->Cast(dinput_data, dout_typeptr);
+    dx1 = ib->Cast(dx1, dout_typeptr);
+    dx2 = ib->Cast(dx2, dout_typeptr);
+    dvalue = ib->Cast(dvalue, dout_typeptr);
+  }
+  return {dinput_data, dx1, dx2, dvalue};
+}
+
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
 REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto ta = ib->GetAttr<bool>("transpose_a");
@@ -1588,81 +1641,16 @@ REG_BPROP_BUILDER("AddV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Addcdiv").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto input_data = ib->GetInput(kIndex0);
-  auto x1 = ib->GetInput(kIndex1);
-  auto x2 = ib->GetInput(kIndex2);
-  auto value = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
-  auto dinput_data = dout;
   std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt64, TypeId::kNumberTypeFloat16,
                                        TypeId::kNumberTypeFloat64};
-  auto dout_typeptr = ib->GetDtype(dout);
-  bool need_cast = type_list.count(dout_typeptr->type_id()) > 0;
-  if (need_cast) {
-    input_data = ib->Cast(input_data, kFloat32);
-    x1 = ib->Cast(x1, kFloat32);
-    x2 = ib->Cast(x2, kFloat32);
-    value = ib->Cast(value, kFloat32);
-    dinput_data = ib->Cast(dinput_data, kFloat32);
-  }
-  auto inner_out = ib->Add((ib->Mul(value, ib->Div(x1, x2))), input_data);
-  auto dx2 = ib->Neg(ib->Mul(ib->Mul(ib->Mul(x1, value), ib->Pow(x2, ib->Tensor(-2, ib->GetDtype(x2)))), dinput_data));
-  auto dx1 = ib->Mul(dinput_data, ib->Div(value, x2));
-  auto dvalue = ib->Mul(dinput_data, ib->Div(x1, x2));
-  auto tmp_dinput_data = BinopGradCommon(ib, inner_out, input_data, dout, dinput_data);
-  dinput_data = tmp_dinput_data[1];
-  auto tmp_dx1 = BinopGradCommon(ib, inner_out, x1, dout, dx1);
-  dx1 = tmp_dx1[1];
-  auto tmp_dx2 = BinopGradCommon(ib, inner_out, x2, dout, dx2);
-  dx2 = tmp_dx2[1];
-  auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
-  dvalue = tmp_dvalue[1];
-  if (need_cast) {
-    dinput_data = ib->Cast(dinput_data, dout_typeptr);
-    dx1 = ib->Cast(dx1, dout_typeptr);
-    dx2 = ib->Cast(dx2, dout_typeptr);
-    dvalue = ib->Cast(dvalue, dout_typeptr);
-  }
-  return {dinput_data, dx1, dx2, dvalue};
+  return BpropAddcCommon(ib, "Addcdiv", type_list);
 });
 
 REG_BPROP_BUILDER("Addcmul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto input_data = ib->GetInput(kIndex0);
-  auto x1 = ib->GetInput(kIndex1);
-  auto x2 = ib->GetInput(kIndex2);
-  auto value = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
   std::unordered_set<TypeId> type_list{TypeId::kNumberTypeInt8,    TypeId::kNumberTypeInt16,
                                        TypeId::kNumberTypeInt64,   TypeId::kNumberTypeUInt8,
                                        TypeId::kNumberTypeFloat16, TypeId::kNumberTypeFloat64};
-  auto dout_typeptr = ib->GetDtype(dout);
-  bool need_cast = type_list.count(dout_typeptr->type_id()) > 0;
-  if (need_cast) {
-    input_data = ib->Cast(input_data, kFloat32);
-    x1 = ib->Cast(x1, kFloat32);
-    x2 = ib->Cast(x2, kFloat32);
-    value = ib->Cast(value, kFloat32);
-  }
-  auto dinput_data = dout;
-  auto dx1 = ib->Mul(dout, ib->Mul(value, x2));
-  auto dx2 = ib->Mul(dout, ib->Mul(value, x1));
-  auto inner_out = ib->Add((ib->Mul((ib->Mul(x1, x2)), value)), input_data);
-  auto dvalue = ib->Mul(dout, ib->Mul(x1, x2));
-  auto tmp_dinput_data = BinopGradCommon(ib, inner_out, input_data, dout, dinput_data);
-  dinput_data = tmp_dinput_data[1];
-  auto tmp_dx1 = BinopGradCommon(ib, inner_out, x1, dout, dx1);
-  dx1 = tmp_dx1[1];
-  auto tmp_dx2 = BinopGradCommon(ib, inner_out, x2, dout, dx2);
-  dx2 = tmp_dx2[1];
-  auto tmp_dvalue = BinopGradCommon(ib, inner_out, value, dout, dvalue);
-  dvalue = tmp_dvalue[1];
-  if (need_cast) {
-    dinput_data = ib->Cast(dinput_data, dout_typeptr);
-    dx1 = ib->Cast(dx1, dout_typeptr);
-    dx2 = ib->Cast(dx2, dout_typeptr);
-    dvalue = ib->Cast(dvalue, dout_typeptr);
-  }
-  return {dinput_data, dx1, dx2, dvalue};
+  return BpropAddcCommon(ib, "Addcmul", type_list);
 });
 
 REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
