@@ -44,15 +44,6 @@ def get_bprop_sequence_len(self):
     return bprop
 
 
-@bprop_getters.register(seq.make_range)
-def get_bprop_range(self):
-    """Generate bprop for make_range"""
-    def bprop(start, limit, delta, out, dout):
-        return (zeros_like(start), zeros_like(limit), zeros_like(delta))
-
-    return bprop
-
-
 @bprop_getters.register(seq.SequenceAdd)
 def get_bprop_sequence_add(self):
     """Generate bprop for SequenceAdd"""
