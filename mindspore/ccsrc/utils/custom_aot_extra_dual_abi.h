@@ -80,66 +80,74 @@ class AotExtraDualABIImpl : public AotExtraDualABI {
 
   bool GetAttrBool(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<bool>(value);
   }
   int64_t GetAttrInt(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<int64_t>(value);
   }
   float GetAttrFloat(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<float>(value);
   }
   std::vector<char> GetAttrStr(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return StringToChar(GetValue<std::string>(value));
   }
 
   std::vector<int64_t> GetAttrIntVec(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<std::vector<int64_t>>(value);
   }
   std::vector<float> GetAttrFloatVec(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<std::vector<float>>(value);
   }
   std::vector<std::vector<int64_t>> GetAttrInt2DVec(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<std::vector<std::vector<int64_t>>>(value);
   }
   std::vector<std::vector<float>> GetAttrFloat2DVec(std::vector<char> name) {
     MS_EXCEPTION_IF_NULL(prim_);
-    auto value = prim_->GetAttr(CharToString(name));
+    auto name_str = CharToString(name);
+    auto value = prim_->GetAttr(name_str);
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name << "! ";
+      MS_LOG(EXCEPTION) << "For '" << prim_->ToString() << ", there is no attribute called " << name_str << "! ";
     }
     return GetValue<std::vector<std::vector<float>>>(value);
   }
