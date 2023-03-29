@@ -2207,6 +2207,28 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_max')()(self, indices, updates)
 
+    def fill(self, value):
+        """
+        `Tensor.fill` is deprecated, please use `ops.fill` instead.
+        """
+        if value is None:
+            if self.dtype not in (mstype.float16, mstype.float32, mstype.float64):
+                raise TypeError("For 'Tensor.fill', if the argument 'value' is None, the type of the original "
+                                "tensor must be float, but got {}.".format(self.dtype))
+            value = Tensor(float('nan')).astype("float32")
+            return tensor_operator_registry.get("tile")()(value, self.shape).astype(self.dtype)
+        if not isinstance(value, (int, float, bool)):
+            raise TypeError("For 'Tensor.fill', the type of the argument 'value' must be int, float or bool, "
+                            "but got {}.".format(type(value)))
+        return tensor_operator_registry.get("fill")(self.dtype, self.shape, value)
+
+    def fills(self, value):
+        """
+        `Tensor.fills` is deprecated, please use `ops.fill` instead.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fills')(self, value)
+
     def masked_fill(self, mask, value):
         """
         For details, please refer to :func:`mindspore.ops.masked_fill`.
@@ -3378,6 +3400,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get("topk")(self, k, dim, largest, sorted)
+
+    def top_k(self, k, sorted=True):
+        r"""
+        `Tensor.top_k` is deprecated, please use `Tensor.topk` instead.
+        """
+        self._init_check()
+        validator.check_is_int(k, 'k')
+        validator.check_bool(sorted, 'sorted')
+        return tensor_operator_registry.get("top_k")(sorted)(self, k)
 
     def sigmoid(self):
         r"""

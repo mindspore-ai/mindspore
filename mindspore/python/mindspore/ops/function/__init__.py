@@ -122,6 +122,7 @@ from .array_func import (
     where,
     meshgrid,
     affine_grid,
+    fills,
     broadcast_to,
     unsorted_segment_sum,
     col2im,
@@ -156,7 +157,8 @@ from .array_func import (
     moveaxis,
     searchsorted,
     aminmax,
-    sort
+    sort,
+    top_k
 )
 from .parameter_func import (
     assign,
