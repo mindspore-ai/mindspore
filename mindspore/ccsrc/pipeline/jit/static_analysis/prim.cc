@@ -2922,7 +2922,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
       return GetTupleOrListString(arg, input, node, need_comma, need_symbol);
-    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>()) {
+    } else if (arg->BuildValue() == kAnyValue || arg->isa<abstract::AbstractTensor>() ||
+               IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
       std::string key = "__internal_error_value" + std::to_string(num_str_) + "__";
       num_str_ += 1;
       if (need_symbol) {
@@ -2934,9 +2935,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       (void)values_.emplace_back(input);
     } else if (arg->isa<abstract::AbstractDictionary>()) {
       MS_LOG(EXCEPTION) << "Dictionary type is currently not supporting";
-    } else {
+    } else if (arg->isa<abstract::AbstractScalar>()) {
       // Process raise ValueError
       exception_str += GetScalarStringValue(arg, node);
+    } else {
+      MS_LOG(EXCEPTION) << "Unexpected abstract: " << arg->ToString();
     }
     return exception_str;
   }
@@ -2974,11 +2977,6 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       }
     }
     auto cnode = input->cast_ptr<CNode>();
-    if (arg_tuple_elements.size() >= cnode->inputs().size()) {
-      MS_LOG(EXCEPTION) << "size of cnode should be greater than arg_tuple_elements. "
-                        << "but got cnode size: " << cnode->inputs().size()
-                        << " arg_tuple_elements size: " << arg_tuple_elements.size();
-    }
     bool not_variable = !has_variable_;
     if (has_variable_) {
       not_variable = (arg->BuildValue() != kAnyValue) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
@@ -2987,6 +2985,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       auto &element = arg_tuple_elements[index];
       if (has_variable_) {
         auto inputs = cnode->inputs();
+        if (arg_tuple_elements.size() >= cnode->inputs().size()) {
+          MS_LOG(EXCEPTION) << "Size of cnode should be greater than arg_tuple_elements, "
+                            << "but got cnode size: " << cnode->inputs().size()
+                            << " arg_tuple_elements size: " << arg_tuple_elements.size();
+        }
         auto inputs_in_tuple = inputs[index + 1];
         exception_str += GetExceptionString(element, inputs_in_tuple, node, need_comma, need_symbol);
       } else {
@@ -3026,22 +3029,16 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(abs);
     MS_EXCEPTION_IF_NULL(node);
     std::string str;
-    if (abs->isa<abstract::AbstractScalar>()) {
-      auto scalar = abs->cast<abstract::AbstractScalarPtr>();
-      auto scalar_value = scalar->BuildValue();
-      auto scalar_type = scalar->BuildType();
-      if (scalar_type->isa<Float>()) {
-        str = std::to_string(GetValue<float>(scalar_value));
-      } else {
-        str = scalar_value->ToString();
-      }
-      return str;
+    auto scalar = abs->cast<abstract::AbstractScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    auto scalar_value = scalar->BuildValue();
+    auto scalar_type = scalar->BuildType();
+    if (scalar_type->isa<Float>()) {
+      str = std::to_string(GetValue<float>(scalar_value));
+    } else {
+      str = scalar_value->ToString();
     }
-    MS_LOG(DEBUG) << "The abstract is not scalar: " << abs->ToString();
-    MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios. "
-                      << "Tensor type data cannot exist in the raise statement. "
-                      << "Please check your raise statement which is located at: "
-                      << trace::GetDebugInfo(node->debug_info());
+    return str;
   }
 };
 
