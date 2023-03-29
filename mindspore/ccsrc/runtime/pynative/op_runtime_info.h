@@ -69,7 +69,7 @@ class AclRuntimeInfo {
   }
 
  private:
-  void CheckInUse() {
+  void CheckInUse() const {
     if (!use()) {
       MS_LOG(EXCEPTION) << "AclRuntimeInfo is not in use.";
     }
