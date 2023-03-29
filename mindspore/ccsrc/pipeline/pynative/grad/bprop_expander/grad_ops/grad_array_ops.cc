@@ -575,7 +575,7 @@ NodePtrList StackBpropFunc(const BpropIRBuilder *ib) {
 }
 
 NodePtrList BinopGatherDGradCommon(const BpropIRBuilder *ib, const std::string &op_name) {
-  auto dim = GetValue<int64_t>(ib->GetAttr("dim"));
+  auto dim = LongToSize(GetValue<int64_t>(ib->GetAttr("dim")));
   auto index = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
@@ -587,7 +587,7 @@ NodePtrList BinopGatherDGradCommon(const BpropIRBuilder *ib, const std::string &
   }
   auto index_shp = ib->GetShape(index);
   auto dim_before_axis = 1;
-  for (int64_t i = 0; i < dim; ++i) {
+  for (size_t i = 0; i < dim; ++i) {
     dim_before_axis *= x_shp[i];
   }
   auto dim_at_axis_index = index_shp[dim];
