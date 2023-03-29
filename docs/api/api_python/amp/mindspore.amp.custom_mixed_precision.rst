@@ -20,10 +20,10 @@ mindspore.amp.custom_mixed_precision
         - **white_list** (list[Primitive, Cell], optional) - 自定义混合精度的白名单。默认值：None。
         - **black_list** (list[Primitive, Cell], optional) - 自定义混合精度的黑名单。默认值：None。
 
+    返回：
+        network (Cell)，支持混合精度的网络。
+
     异常：
-        - **ValueError** - `network` 的类型不是Cell。
+        - **TypeError** - `network` 的类型不是Cell。
         - **ValueError** -  `white_list` 和 `black_list` 都没提供。
         - **ValueError** -  同时提供了 `white_list` 和 `black_list` 。
-
-    返回：
-        network (Cell)：支持混合精度的网络。

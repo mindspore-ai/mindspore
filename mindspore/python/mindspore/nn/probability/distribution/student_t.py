@@ -38,15 +38,15 @@ class StudentT(Distribution):
     :math:`\nu, \mu, \sigma` are the degrees of freedom , mean and sd of the laplace distribution respectively.
 
     Args:
-        df (int, float, list, numpy.ndarray, Tensor): The degrees of freedom.
+        df (Union[int, float, list, numpy.ndarray, Tensor]): The degrees of freedom.
             If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
-        mean (int, float, list, numpy.ndarray, Tensor): The mean of the distribution.
+        mean (Union[int, float, list, numpy.ndarray, Tensor]): The mean of the distribution.
             If this arg is None, then the df of the distribution will be passed in runtime. Default: None.
-        sd (int, float, list, numpy.ndarray, Tensor): The standard deviation of the distribution.
+        sd (Union[int, float, list, numpy.ndarray, Tensor]): The standard deviation of the distribution.
             If this arg is None, then the sd of the distribution will be passed in runtime. Default: None.
-        seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
-        dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
-        name (str): The name of the distribution. Default: 'StudentT'.
+        seed (int, optional): The seed used in sampling. The global seed is used if it is None. Default: None.
+        dtype (mindspore.dtype, optional): The type of the event samples. Default: mstype.float32.
+        name (str, optional): The name of the distribution. Default: 'StudentT'.
 
     Note:
         - `df` must be greater than zero.
