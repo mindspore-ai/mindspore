@@ -43,9 +43,6 @@ class ApplyAdagradDAGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void CheckParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
-  void CheckShape(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
-  void CheckDType(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
   template <typename T, typename T1, typename T2, typename T3, typename T4>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using ApplyAdagradDAFunc = std::function<bool(ApplyAdagradDAGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
