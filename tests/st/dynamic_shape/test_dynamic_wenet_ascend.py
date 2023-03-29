@@ -238,6 +238,58 @@ class TrainAccumulationAllReduceEachWithLossScaleCell(nn.TrainOneStepWithLossSca
     def reset_accu_grads_(self):
         return self.hyper_map(reset_accu_grads, self.accu_grads)
 
+    def start_overflow_check(self, pre_cond, compute_input):
+        """
+        Args:
+            pre_cond(object): A precondition for starting overflow detection. It determines the executing order of
+                overflow state clearing and prior processions. It makes sure that the function 'start_overflow' clears
+                status after finishing the process of precondition.
+            compute_input(object): The input of subsequent process. Overflow detection should be performed on a certain
+                computation. Set `compute_input` as the input of the computation, to ensure overflow status is cleared
+                before executing the computation.
+
+        Returns:
+            Tuple[object, object], the first value is False for GPU backend, while it is a instance of
+            NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
+            The second value is the same as the input of `compute_input`, but contains some information about the
+            execution order.
+        """
+        status = False
+        # init overflow buffer
+        status = P.NPUAllocFloatStatus()()
+        status = F.depend(status, pre_cond)
+        # clear overflow buffer
+        clear_status = P.NPUClearFloatStatus()(status)
+        compute_input = F.depend(compute_input, clear_status)
+        return status, compute_input
+
+    def get_overflow_status(self, status, compute_output):
+        """
+        Get floating-point overflow status.
+
+        Get overflow results after executing the target process for overflow detection.
+
+        Args:
+            status(object): A status instance used to detect the overflow.
+            compute_output: Overflow detection should be performed on a certain computation. Set `compute_output` as
+                the output of the computation, to ensure overflow status is acquired before executing the computation.
+                Returns:
+            bool, whether the overflow occurs or not.
+        """
+        status = F.depend(status, compute_output)
+        get_status = P.NPUGetFloatStatus()(status)
+        status = F.depend(status, get_status)
+        # sum overflow buffer elements, 0:not overflow , >0:overflow
+        flag_sum = self.reduce_sum(status, (0,))
+
+        if self.is_distributed:
+            # sum overflow flag over devices
+            flag_reduce = self.allreduce(flag_sum)
+            overflow = self.less_equal(self.base, flag_reduce)
+        else:
+            overflow = self.less_equal(self.base, flag_sum)
+        return overflow
+
 
 class TimeMonitor(Callback):
     """
@@ -499,42 +551,20 @@ class CustomDense(nn.Dense):
         """Initialize CustomDense."""
         super(CustomDense, self).__init__(in_channels, out_channels,
                                           weight_init, bias_init, has_bias, activation)
-        self.dyn_shape = ops.TensorShape()
         self.cast = ops.Cast()
 
     def construct(self, x):
         x_shape = self.shape_op(x)
-        if F.is_sequence_value_unknown(x_shape):
-            x_dyn_shape = self.dyn_shape(x)
-            x_dyn_shape = self.cast(x_dyn_shape, mstype.float32)
-            if len(x_dyn_shape) != 2:
-                new_shape = x_dyn_shape.copy()[1:]
-                new_shape[0] = x_dyn_shape[0:1] * x_dyn_shape[1:2]
-                new_shape = self.cast(new_shape, mstype.int64)
-                x = self.reshape(x, new_shape)
-            x = self.matmul(x, self.weight)
-            if self.has_bias:
-                x = self.bias_add(x, self.bias)
-            if self.activation_flag:
-                x = self.activation(x)
-            if len(x_dyn_shape) != 2:
-                out_shape = self.dyn_shape(x)
-                out_shape = self.cast(out_shape, mstype.float32)
-                x_dyn_shape[2] = out_shape[1:2]
-                x_dyn_shape = self.cast(x_dyn_shape, mstype.int64)
-                x = self.reshape(x, x_dyn_shape)
-        else:
-            check_dense_input_shape(x_shape, self.cls_name)
-            if len(x_shape) != 2:
-                x = self.reshape(x, (-1, x_shape[-1]))
-            x = self.matmul(x, self.weight)
-            if self.has_bias:
-                x = self.bias_add(x, self.bias)
-            if self.activation_flag:
-                x = self.activation(x)
-            if len(x_shape) != 2:
-                out_shape = x_shape[:-1] + (-1,)
-                x = self.reshape(x, out_shape)
+        if len(x_shape) != 2:
+            x = self.reshape(x, (-1, x_shape[-1]))
+        x = self.matmul(x, self.weight)
+        if self.has_bias:
+            x = self.bias_add(x, self.bias)
+        if self.activation_flag:
+            x = self.activation(x)
+        if len(x_shape) != 2:
+            out_shape = x_shape[:-1] + (-1,)
+            x = self.reshape(x, out_shape)
         return x
 
 
@@ -1254,12 +1284,9 @@ class PositionalEncoding(nn.Cell):
         self.pe[:, 1::2] = np.cos(position * div_term)
         self.pe = Tensor(np.expand_dims(self.pe, 0), mstype.float32)
         self.get_shape = ops.Shape()
-        self.dyn_shape = ops.TensorShape()
 
     def construct(self, x, offset=0) -> Tuple[mindspore.Tensor, mindspore.Tensor]:
         x_shape = self.get_shape(x)
-        if F.is_sequence_value_unknown(x_shape):
-            x_shape = self.dyn_shape(x)
         pos_emb = self.pe[:, offset: offset + x_shape[1]]
         x = x * self.xscale + pos_emb
         return self.dropout(x), self.dropout(pos_emb)
@@ -1736,7 +1763,7 @@ def test_train():
     train_proccess(context.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1746,4 +1773,6 @@ def test_train_pynative():
     Description:  The sequence length of inputs is dynamic.
     Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
     """
+    # set pynative_synchronize=True for temp avoid
+    context.set_context(pynative_synchronize=True)
     train_proccess(context.PYNATIVE_MODE)
