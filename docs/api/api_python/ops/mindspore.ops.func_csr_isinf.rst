@@ -14,7 +14,7 @@ mindspore.ops.csr_isinf
     其中 :math:`Inf` 表示不是一个数字。
 
     参数：
-        - **x** (CSRTensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (CSRTensor) - IsInf的输入。
 
     返回：
         CSRTensor，shape与相同的输入，数据的类型为bool。

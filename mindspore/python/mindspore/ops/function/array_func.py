@@ -6096,7 +6096,7 @@ def expand(input_x, size):
           the front, and for the new dimensions, the `size` can not be -1.
 
     Args:
-        input_x (Tensor): A Tensor to be expanded. The shape of tensor is (x_1, x_2, ..., x_R).
+        input_x (Tensor): A Tensor to be expanded. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         size (Tensor): The expanded shape of `input_x`.
 
     Returns:
