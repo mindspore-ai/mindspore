@@ -100,7 +100,7 @@ class SequenceIndexInfer : public abstract::OpInferBase {
     for (int64_t i = start_value; i < std::min(end_value, seq_len); ++i) {
       auto element = seq_elements[i];
       if (CheckAndConvertUtils::CheckValueSame(target_value, element->BuildValue())) {
-        return MakeValue(SizeToLong(i));
+        return MakeValue(i);
       }
     }
     MS_EXCEPTION(ValueError) << target_value->ToString() << " is not in " << seq_abs->ToString();
