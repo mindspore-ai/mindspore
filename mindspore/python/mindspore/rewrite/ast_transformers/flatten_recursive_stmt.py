@@ -17,9 +17,9 @@
 from typing import Any, Tuple
 import ast
 from ast import FunctionDef
+import astunparse
 
 from mindspore import log as logger
-import astunparse
 from ..common import error_str
 
 
