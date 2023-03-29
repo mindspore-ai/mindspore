@@ -30,6 +30,11 @@ namespace irpass {
 class SetCellOutputNoRecompute : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static const auto graph_reuse_env = common::GetEnv("MS_DEV_GRAPH_REUSE");
+    static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
+    if (graph_reuse) {
+      return nullptr;
+    }
     if (!IsValueNode<FuncGraph>(node)) {
       return nullptr;
     }

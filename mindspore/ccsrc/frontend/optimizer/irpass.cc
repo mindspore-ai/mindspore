@@ -54,15 +54,16 @@
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
 #include "frontend/optimizer/irpass/convert_tensor_eliminate.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_constexpr_ops.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_class_type.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_meta_fg.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_primal_attr.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/get_sub_func_graph.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/class_type_resolve.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/do_signature_resolve.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/resolve_node_resolve.h"
-#include "mindspore/ccsrc/frontend/optimizer/irpass/bprop_mindir/reslove_primitive_attr.h"
+#include "frontend/optimizer/irpass/recompute.h"
+#include "frontend/optimizer/irpass/bprop_mindir/get_constexpr_ops.h"
+#include "frontend/optimizer/irpass/bprop_mindir/get_class_type.h"
+#include "frontend/optimizer/irpass/bprop_mindir/get_meta_fg.h"
+#include "frontend/optimizer/irpass/bprop_mindir/get_primal_attr.h"
+#include "frontend/optimizer/irpass/bprop_mindir/get_sub_func_graph.h"
+#include "frontend/optimizer/irpass/bprop_mindir/class_type_resolve.h"
+#include "frontend/optimizer/irpass/bprop_mindir/do_signature_resolve.h"
+#include "frontend/optimizer/irpass/bprop_mindir/resolve_node_resolve.h"
+#include "frontend/optimizer/irpass/bprop_mindir/reslove_primitive_attr.h"
 
 namespace mindspore {
 namespace opt {
@@ -281,6 +282,12 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // recompute
   set_cell_output_no_recompute_ = MakeSubstitution(std::make_shared<SetCellOutputNoRecompute>(),
                                                    "set_cell_output_no_recompute", IsValueNode<FuncGraph>);
+  add_recompute_primal_ =
+    MakeSubstitution(std::make_shared<AddRecomputePrimal>(), "add_recompute_primal", prim::kPrimTupleGetItem);
+  remove_not_recompute_node_ =
+    MakeSubstitution(std::make_shared<RemoveNotRecomputeNode>(), "remove_not_recompute_node", IsCNode);
+  add_recompute_depend_ =
+    MakeSubstitution(std::make_shared<AddRecomputeDepend>(), "add_recompute_depend", prim::kPrimTupleGetItem);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
