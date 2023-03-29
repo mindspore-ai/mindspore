@@ -11,7 +11,6 @@ mindspore.ops.csr_log1p
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。数据类型为float16或float32。
           该值必须大于-1。
-          shape： :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度，其秩应小于8。
 
     返回：
         CSRTensor，与 `x` 的shape相同。
