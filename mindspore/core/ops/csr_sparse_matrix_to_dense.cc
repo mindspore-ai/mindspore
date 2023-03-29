@@ -47,10 +47,9 @@ namespace ops {
 namespace {
 abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t kMinusOne = -1;
   const int64_t kZero = 0;
   const int64_t kOne = 1;
-  const int64_t kDefalutRank = 2;
+  const int64_t kDefaultRank = 2;
   const int64_t kBatchRank = 3;
   CheckInputShapeEmpty(primitive->name(), input_args);
   auto d_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
@@ -76,24 +75,30 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
     ShapeVector dense_shape = {-2};
     return std::make_shared<abstract::Shape>(dense_shape);
   }
-  if (!IsDynamic(d_shape_shape) && rank != kDefalutRank && rank != kBatchRank) {
+  bool rankExcept = !IsDynamic(d_shape_shape) && rank != kDefaultRank && rank != kBatchRank;
+  if (rankExcept) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', dense form of the input "
                              << "should have rank 2 or 3, but got " << d_shape_shape[kZero] << ".";
   }
+  bool dynShape =
+    input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
+    (input_args[kInputIndex0]->BuildValue()->isa<ValueAny>() || input_args[kInputIndex0]->BuildValue()->isa<None>());
   // Dynamic Shape
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-      (input_args[kInputIndex0]->BuildValue()->isa<ValueAny>() ||
-       input_args[kInputIndex0]->BuildValue()->isa<None>())) {
-    ShapeVector dense_shape;
+  if (dynShape) {
     auto shape_size = d_shape_shape[kZero];
-    dense_shape.resize(static_cast<size_t>(shape_size), kMinusOne);
+    if (shape_size == -1) {
+      ShapeVector dense_shape = {-1, -1, -1, -1};
+      return std::make_shared<abstract::Shape>(dense_shape);
+    }
+    ShapeVector dense_shape;
+    dense_shape.resize(static_cast<size_t>(shape_size), -1);
     return std::make_shared<abstract::Shape>(dense_shape);
   }
   // Static Shape
-  if (!IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'col_indices' and 'values' "
-                             << "should have the same length.";
-  }
+  bool staShape = !IsDynamic(values_shape) && !IsDynamic(c_ind_shape) && values_shape[kZero] != c_ind_shape[kZero];
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !staShape, "For '" + primitive->name() + "', 'col_indices' and 'values' " + "should have the same length.");
+
   auto shape_abs_ptr = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_abs_ptr);
   ShapeVector y_shape;
@@ -115,8 +120,9 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   if (rank == kBatchRank) {
     batch_size = d_shape_value_ptr_tensor[kZero], row_num = d_shape_value_ptr_tensor[kOne];
   }
-  if (!IsDynamic(b_ptrs_shape) && !IsDynamic(r_ptrs_shape) &&
-      (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne))) {
+  bool rowExcept = !IsDynamic(b_ptrs_shape) && !IsDynamic(r_ptrs_shape) &&
+                   (b_ptrs_shape[kZero] != (batch_size + kOne) || r_ptrs_shape[kZero] != batch_size * (row_num + kOne));
+  if (rowExcept) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', batch size of the input is " << batch_size
                              << ", row numbers of the input is " << row_num << ", so shape of 'x_batch_pointers' "
                              << "should be (" << batch_size + kOne << "), but got (" << b_ptrs_shape[kZero] << ")"
