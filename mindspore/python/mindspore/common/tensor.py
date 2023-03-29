@@ -661,7 +661,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Insert scalar into a tensor (scalar is cast to tensor's dtype, if possible).
 
         There must be at least 1 argument, and define the last argument as item.
-        Then, tensor.itemset(\*args) is equivalent to :math:`tensor[args] = item`.
+        Then, tensor.itemset(\*args) is equivalent to :math:`Tensor[args] = item`.
 
         Args:
             args (Union[(numbers.Number), (int/tuple(int), numbers.Number)]): The arguments that
@@ -672,7 +672,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 It is either an int or a tuple.
 
         Returns:
-            A new tensor that doesn't affect the original tensor, with value set by :math:`tensor[args] = item`.
+            A new tensor that doesn't affect the original tensor, with value set by :math:`Tensor[args] = item`.
 
         Raises:
             ValueError: If the length of the first argument is not equal to self.ndim.
