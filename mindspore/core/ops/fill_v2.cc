@@ -56,40 +56,28 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
 
-    const int64_t kDimOne = 1;
     const int64_t kDimZero = 0;
-
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
     if (!IsDynamic(input2_shape)) {
       CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero, prim_name);
     }
 
-    auto input1_type = input_args[kInputIndex0]->BuildType();
     auto value_ptr = input_args[kInputIndex0]->BuildValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
-
-    if (!IsValueKnown(value_ptr)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
-    }
-
-    ShapeVector output_shape{};
-    if (input1_type->isa<TensorType>()) {
-      auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-      CheckAndConvertUtils::CheckInteger("rank of shape", SizeToLong(input1_shape.size()), kEqual, kDimOne, prim_name);
-      output_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", value_ptr, prim_name);
-    } else if (IsIdentidityOrSubclass(input1_type, kTuple)) {
-      output_shape = CheckAndConvertUtils::CheckTupleInt("shape", value_ptr, prim_name);
-    } else {
+    auto input1_type = input_args[kInputIndex0]->BuildType();
+    if (!(input1_type->isa<TensorType>() || IsIdentidityOrSubclass(input1_type, kTuple))) {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the `shape` "
                               << " must be a tuple or tensor with all Int elements, but got " << value_ptr->type_name()
                               << ".";
     }
 
-    for (size_t i = 0; i < output_shape.size(); ++i) {
-      CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
-                                         kGreaterThan, kDimZero, prim_name);
+    ShapeVector output_shape = GetShapeValue(primitive, input_args[0]);
+    if (IsValueKnown(value_ptr)) {
+      for (size_t i = 0; i < output_shape.size(); ++i) {
+        CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
+                                           kGreaterThan, kDimZero, prim_name);
+      }
     }
-    output_shape = GetShapeValue(primitive, input_args[0]);
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
