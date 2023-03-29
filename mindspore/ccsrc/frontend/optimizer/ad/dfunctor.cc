@@ -359,6 +359,12 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     if (k == nullptr) {
       MS_LOG(EXCEPTION) << "MapMorphism adjoint node does not exist, input[" << i << "] " << node->ToString() << ".";
     }
+    if (i == 0) {
+      auto k_fg = GetValueNode<FuncGraphPtr>(k);
+      if (k_fg != nullptr) {
+        (void)k_fg->transforms().emplace("primal_cnode", FuncGraphTransform(cnode_morph));
+      }
+    }
     inputs.push_back(k);
     param_adjoints.push_back(node_adjoint);
   }
@@ -597,6 +603,10 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   }
   auto k_prim = g_k_prims.KPrimitive(primitive_user, value_node, resources_);
   if (k_prim != nullptr) {
+    auto prim_recompute_attr = prim->GetAttr(kAttrRecompute);
+    if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>() && !GetValue<bool>(prim_recompute_attr)) {
+      k_prim->set_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH, true);
+    }
     return NewValueNode(k_prim);
   }
   // When failed to find k_prim, try k_meta.
@@ -636,6 +646,9 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     functor->k_graph_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
     functor->tape_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
+  }
+  if (func_graph->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    functor->k_graph_->set_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH, true);
   }
 
   MS_LOG(DEBUG) << "Map \"" << func_graph->ToString() << "\" to \"" << functor->k_graph_->ToString() << "\"";
