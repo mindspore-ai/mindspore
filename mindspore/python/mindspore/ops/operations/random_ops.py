@@ -867,7 +867,8 @@ class Multinomial(Primitive):
 
 class MultinomialWithReplacement(Primitive):
     r"""
-    Returns a tensor where each row contains numsamples indices sampled from the multinomial distribution.
+    Returns a tensor where each row contains `numsamples` indices sampled from the multinomial distribution
+    with replacement. It diffs from `Multinomial` in that it allows the same outcome to be chosen multiple times.
 
     Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
 
@@ -876,19 +877,19 @@ class MultinomialWithReplacement(Primitive):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
-        - **replacement** (bool) - Whether to draw with replacement or not. Defaults to false.
+        - **numsamples** (int) - number of samples to draw, must be a nonnegative number.
+        - **replacement** (bool, optional) - Whether to draw with replacement or not. Defaults to false.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-          dimensions. CPU and GPU supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
-        - **seed** (Tensor) - If seed is set to be -1, and offset is set to be 0, the random number
+          dimensions.
+        - **seed** (Tensor) - If `seed` is set to -1, and `offset` is set to 0, the random number
           generator is seeded by a random seed. Otherwise, it is seeded by the given seed.
           Supported dtype: int64.
-        - **offset** (Tensor) -To avoid seed collision. Supported dtype: int64.
+        - **offset** (Tensor) - Offset used to avoid seed collision. Supported dtype: int64.
 
     Outputs:
-        Tensor with the same rows as `x`, each row has num_samples sampled indices.
+        Tensor with the same rows as `x`, each row has `numsamples` sampled indices.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1015,8 +1016,8 @@ class RandomShuffle(Primitive):
 
     Args:
         seed (int): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator will be seeded
-            by the given seed. Otherwise, it will be seeded randomly. The seed must be non-negative. Default: 0.
-        seed2 (int): Random seed2, a second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
+            by the given seed. Otherwise, it will be seeded randomly. The `seed` must be non-negative. Default: 0.
+        seed2 (int): A second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
             the seed of the random generator. It must be non-negative. Default: 0.
 
     Inputs:
