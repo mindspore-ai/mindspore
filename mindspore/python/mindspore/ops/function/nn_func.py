@@ -5684,7 +5684,7 @@ def channel_shuffle(x, groups):
         TypeError: If data type of `x` is not one of the following:
                    float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64.
         TypeError: If dim of `x` is < 4.
-        ValueError: If `groups` is not a positive number.
+        TypeError: If `groups` is not a positive number.
         ValueError: If channel number of `x` is not divisible by `groups`.
 
     Supported Platforms:

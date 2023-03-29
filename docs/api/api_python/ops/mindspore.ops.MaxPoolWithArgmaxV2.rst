@@ -1,7 +1,7 @@
 mindspore.ops.MaxPoolWithArgmaxV2
 =================================
 
-.. py:class:: mindspore.ops.MaxPoolWithArgmaxV2(kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mindspore.int64)
+.. py:class:: mindspore.ops.MaxPoolWithArgmaxV2(kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mstype.int64)
 
     对输入Tensor执行最大池化运算，并返回最大值和索引。
 
@@ -17,7 +17,7 @@ mindspore.ops.MaxPoolWithArgmaxV2
         - **pads** (Union[int, tuple[int]]) - 池化操作的填充元素个数。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的填充0的个数。默认值：0。
         - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的核内间距。默认值：(1, 1)。
         - **ceil_mode** (bool) - 控制是否使用Ceil计算输出shape。默认值：False。表示使用Floor计算输出。
-        - **argmax_type** (mindspore.dtype) - 指定输出 `argmax` 的数据类型。默认值：mindspore.int64。
+        - **argmax_type** (mindspore.dtype) - 指定输出 `argmax` 的数据类型。默认值：mstype.int64。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。支持的数据类型包括：int8，int16，int32，int64，uint8，uint16，uint32，uint64，float16，float32和float64。
