@@ -220,12 +220,13 @@ class MIND_API AGGatherInfer : public abstract::OpInferBase {
     return GatherInferShape(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GatherInferType(primitive, input_args);
-  }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return GatherInfer(engine, primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return GatherInferType(primitive, input_args);
   }
 };
 

@@ -130,7 +130,7 @@ class MIND_API AGSearchSortedInfer : public abstract::OpInferBase {
     return SearchSortedInfer(engine, primitive, input_args);
   }
 
-  std::set<int64_t> GetValueDependArgIndices() { return {1}; }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SearchSorted, prim::kPrimSearchSorted, AGSearchSortedInfer, false);

@@ -276,12 +276,13 @@ class MIND_API AGConv2DBackpropInputInfer : public abstract::OpInferBase {
     return Conv2DBackpropInputInferShape(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return Conv2DBackpropInputInferType(primitive, input_args);
-  }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return Conv2DBackpropInputInfer(engine, primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return Conv2DBackpropInputInferType(primitive, input_args);
   }
 };
 
