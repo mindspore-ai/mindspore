@@ -43,17 +43,7 @@ class ReplaceApplicator : public AnfVisitor {
       return nullptr;
     }
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stub() ||
-        *(fg->switch_input()) || *(fg->switch_layer_input())) {
-      return nullptr;
-    }
-    // Defer inlining in the case of pipeline.
-    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
-    if (fg->stage() != -1 && stage_num > 1) {
-      return nullptr;
-    }
-    // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
-    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (NoInline(fg)) {
       return nullptr;
     }
 
@@ -79,6 +69,26 @@ class ReplaceApplicator : public AnfVisitor {
     }
 
     return nullptr;
+  }
+
+  bool NoInline(const FuncGraphPtr &fg) {
+    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
+        fg->stub() || *(fg->switch_input()) || *(fg->switch_layer_input())) {
+      return true;
+    }
+    // Defer inlining in the case of pipeline.
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (fg->stage() != -1 && stage_num > 1) {
+      return true;
+    }
+    // Defer inlining for:
+    // 1. The func_graph which is set recomputed.
+    // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
+    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    static bool cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
+    return fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+           (cell_reuse_enable &&
+            (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)));
   }
 };
 
@@ -180,6 +190,29 @@ class InlinerBase : public AnfVisitor {
     }
     // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
     if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool CheckFlag(const FuncGraphPtr &fg) {
+    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
+        fg->stub()) {
+      return false;
+    }
+    // Defer inlining in the case of pipeline.
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (fg->stage() != -1 && stage_num > 1) {
+      return false;
+    }
+    // Defer inlining for:
+    // 1. The func_graph which is set recomputed.
+    // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
+    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    static bool cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
+    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+        (cell_reuse_enable &&
+         (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)))) {
       return false;
     }
     return true;

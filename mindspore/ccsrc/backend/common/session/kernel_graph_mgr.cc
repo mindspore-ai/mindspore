@@ -726,7 +726,7 @@ std::vector<AnfNodePtr> KernelGraphMgr::CreateSwitchOrPartialNode(const CNodePtr
       auto info = kernel_graph_partial_map_[sub_kernel_graph.get()];
       call_node->set_abstract(info.abstract);
       (void)cnode_inputs.emplace_back(info.sub_graph);
-      if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
+      if (common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
         // call_graph and info.sub_graph need inline when cell reuse.
         sub_kernel_graph->set_need_inline(true);
         auto partial_sub_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(info.sub_graph);
