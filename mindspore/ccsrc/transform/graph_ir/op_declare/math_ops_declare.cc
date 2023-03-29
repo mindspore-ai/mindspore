@@ -50,13 +50,6 @@ ATTR_MAP(ActULQClampMinGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ActULQClampMinGrad) = {{0, OUTPUT_DESC(clamp_min_grad)}};
 REG_ADPT_DESC(ActULQClampMinGrad, kNameActULQClampMinGrad, ADPT_DESC(ActULQClampMinGrad))
 
-// HistogramFixedWidthD
-INPUT_MAP(HistogramFixedWidthD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}};
-ATTR_MAP(HistogramFixedWidthD) = {{"nbins", ATTR_DESC(nbins, AnyTraits<int64_t>())},
-                                  {"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
-OUTPUT_MAP(HistogramFixedWidthD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(HistogramFixedWidthD, kNameHistogramFixedWidthD, ADPT_DESC(HistogramFixedWidthD))
-
 // IFMR
 INPUT_MAP(IFMR) = {
   {1, INPUT_DESC(data)}, {2, INPUT_DESC(data_min)}, {3, INPUT_DESC(data_max)}, {4, INPUT_DESC(cumsum)}};
@@ -132,12 +125,9 @@ REG_ADPT_DESC(Trunc, prim::kPrimTrunc->name(), ADPT_DESC(Trunc))
 
 // HistogramFixedWidth
 INPUT_MAP(HistogramFixedWidth) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}, {3, INPUT_DESC(nbins)}};
-ATTR_MAP(HistogramFixedWidth) = {
-  {"dtype", ATTR_DESC(dtype, AnyTraits<int32_t>())},
-};
-ATTR_INPUT_MAP(HistogramFixedWidth) = {{"nbins", "nbins"}};
+ATTR_MAP(HistogramFixedWidth) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int32_t>())}};
 OUTPUT_MAP(HistogramFixedWidth) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(HistogramFixedWidth, kHistogramFixedWidthDOpName, ADPT_DESC(HistogramFixedWidth))
+REG_ADPT_DESC(HistogramFixedWidth, kNameHistogramFixedWidth, ADPT_DESC(HistogramFixedWidth))
 
 // Pdist
 INPUT_MAP(Pdist) = {{1, INPUT_DESC(x)}};

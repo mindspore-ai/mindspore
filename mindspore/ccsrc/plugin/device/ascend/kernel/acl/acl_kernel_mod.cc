@@ -32,7 +32,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 const char kNAttrName[] = "N";
-const mindspore::HashSet<std::string> kAclUnConst = {kScatterNdOpName};
+const mindspore::HashSet<std::string> kAclUnConst = {kScatterNdOpName, kFillOpName};
 
 std::map<uint32_t, tensor::TensorPtr> CheckValueDependEdge(
   const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &value_depend_list) {
@@ -151,9 +151,10 @@ void AclKernelMod::SetInputBasicInfo(const CNodePtr &node, const std::map<uint32
     MS_LOG_DEBUG << "Set format of " << node->fullname_with_scope() << " to origin format";
     input_shape = ori_shape;
     input_format = ori_format;
-  } else {
+  } else if (!AclUtils::NoNeedPadShapeNode(op_type_, input_format, ori_idx, true)) {
     ori_shape = trans::GetRuntimePaddingShape(input, idx);
   }
+  AclUtils::UpdateShape(node, &ori_shape, &input_format);
   if (op_runtime_info != nullptr && op_runtime_info->acl_runtime_info_ != nullptr &&
       op_runtime_info->acl_runtime_info_->use() && !op_runtime_info->acl_runtime_info_->is_dynamic_input_size() &&
       input_desc_list_[index] != nullptr && !host_use) {
@@ -239,6 +240,7 @@ void AclKernelMod::UpdateOutput(const AnfNodePtr &node, const runtime::OpRuntime
     } else {
       ori_shape = trans::GetRuntimePaddingShape(node, i);
     }
+    AclUtils::UpdateShape(node, &ori_shape, &output_format);
     if (node_acl_runtime_info_legal && !node_op_runtime_info->acl_runtime_info_->is_dynamic_output_size() &&
         output_desc_list_[index] != nullptr) {
       output_desc_list_[index]->SetShape(GeShape(output_shape));
