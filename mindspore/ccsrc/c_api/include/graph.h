@@ -22,7 +22,6 @@
 #include "c_api/include/node.h"
 #include "c_api/base/macros.h"
 #include "c_api/base/status.h"
-#include "c_api/base/types.h"
 #include "c_api/include/context.h"
 
 #ifdef __cplusplus
