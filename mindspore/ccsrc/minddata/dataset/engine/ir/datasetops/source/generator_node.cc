@@ -34,8 +34,7 @@ GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<
       column_types_(column_types),
       source_len_(source_len),
       sampler_(std::move(sampler)),
-      num_parallel_workers_(num_parallel_workers),
-      reset_ancestor_(nullptr) {}
+      num_parallel_workers_(num_parallel_workers) {}
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema,
                              int64_t source_len, std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers)
@@ -44,8 +43,7 @@ GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_
       schema_(schema),
       source_len_(source_len),
       sampler_(std::move(sampler)),
-      num_parallel_workers_(num_parallel_workers),
-      reset_ancestor_(nullptr) {}
+      num_parallel_workers_(num_parallel_workers) {}
 
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   std::shared_ptr<GeneratorNode> node;
@@ -97,8 +95,9 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
   // Assumption:
   //   We build the run-time ops from IR nodes from top to bottom. Hence Repeat/EpochCtrl ancestor ops are built
   //   before this leaf Generator op is built.
-  if (reset_ancestor_ != nullptr) {
-    reset_ancestor_->op_->AddToEoeList(op);
+  std::shared_ptr<RepeatNode> tmp_repeat_node = reset_ancestor_.lock();
+  if (tmp_repeat_node != nullptr) {
+    tmp_repeat_node->op_->AddToEoeList(op);
   }
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());

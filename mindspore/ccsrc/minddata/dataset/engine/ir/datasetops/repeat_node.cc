@@ -26,8 +26,7 @@
 namespace mindspore {
 namespace dataset {
 
-RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count)
-    : repeat_count_(count), reset_ancestor_(nullptr), op_(nullptr) {
+RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : repeat_count_(count), op_(nullptr) {
   this->AddChild(child);
 }
 
@@ -51,8 +50,9 @@ Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   // Assumption:
   //   We build the run-time ops from IR nodes from top to bottom. Hence Repeat/EpochCtrl ancestor ops are built
   //   before this leaf Generator op is built.
-  if (reset_ancestor_ != nullptr) {
-    reset_ancestor_->op_->AddToEoeList(new_op);
+  std::shared_ptr<RepeatNode> tmp_repeat_node = reset_ancestor_.lock();
+  if (tmp_repeat_node != nullptr) {
+    tmp_repeat_node->op_->AddToEoeList(new_op);
   }
   return Status::OK();
 }

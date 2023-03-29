@@ -75,10 +75,12 @@ class GeneratorNode : public MappableSourceNode {
   /// \param[in] the ancestor node
   /// \return Status of the function
   Status AddResetAncestor(const std::shared_ptr<RepeatNode> &src) {
-    CHECK_FAIL_RETURN_UNEXPECTED(reset_ancestor_ == nullptr, "Internal error: Overwriting an existing value");
+    std::shared_ptr<RepeatNode> tmp_repeat_node = reset_ancestor_.lock();
+    CHECK_FAIL_RETURN_UNEXPECTED(tmp_repeat_node == nullptr, "Internal error: Overwriting an existing value");
     reset_ancestor_ = src;
     return Status::OK();
   }
+
   /// Returns the dataset size of GeneratorOp. If is mappable (sampler isn not null), the sampler is used.
   /// Otherwise, a dry run is needed.
   /// \param[in] size_getter TreeConsumer to be used for a dryrun
@@ -106,7 +108,7 @@ class GeneratorNode : public MappableSourceNode {
   std::vector<std::string> column_names_;
   std::vector<DataType> column_types_;
   std::shared_ptr<SchemaObj> schema_;
-  std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
+  std::weak_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
   std::shared_ptr<SamplerObj> sampler_;
   uint32_t num_parallel_workers_;
   int64_t source_len_;  // Length of the dataset source provided by the user, -1 means it's unknown
