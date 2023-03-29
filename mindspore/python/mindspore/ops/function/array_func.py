@@ -3998,28 +3998,38 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
 
     Args:
         x (Tensor): The diagonal Tensor.
-        k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offsets. Positive value means superdiagonal,
+        k (Union[int, Tensor], optional): Diagonal offsets. A Tensor of type int32. Positive value means superdiagonal,
             0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
             (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band.
             k[0] must not be larger than k[1]. The value must be in the range of given or derivated `num_rows`
             and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: 0.
-        num_rows (Union[int, Tensor], optional): A Tensor of type int32 with only one value. The number of rows of the
-            output Tensor. If `num_rows` is -1, indicating that the innermost matrix of the output Tensor is a square
+        num_rows (Union[int, Tensor], optional): The number of rows of the output Tensor. A Tensor of type int32 with
+            only one value. If `num_rows` is -1, indicating that the innermost matrix of the output Tensor is a square
             matrix, and the real number of rows will be derivated by other inputs. That is
             :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
             :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
-        num_cols (Union[int, Tensor], optional): A Tensor of type int32 with only one value.
-            The number of columns of
-            the output Tensor. If `num_cols` is -1, indicating that the innermost matrix of the output
+        num_cols (Union[int, Tensor], optional): The number of columns of
+            the output Tensor. A Tensor of type int32 with only one value.
+            If `num_cols` is -1, indicating that the innermost matrix of the output
             Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
             That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
             greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
-        padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
-            The number to fill the area outside the specified diagonal band.  Default: 0.
-        align (str, optional): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT",
-            "RIGHT_RIGHT". Align is a string specifying how superdiagonals and subdiagonals should be aligned,
-            respectively. "RIGHT_LEFT" aligns superdiagonals to the right (left-pads the row) and subdiagonals
-            to the left (right-pads the row).
+        padding_value (Union[int, float, Tensor], optional): The number to fill the area outside the specified
+            diagonal band. A Tensor with only one value. Have the same dtype as x. Default: 0.
+        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
+            Supported values:"RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT".
+            Default: "RIGHT_LEFT".
+
+            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
+              (padding the row on the left), while subdiagonals will be towards the left side
+              (padding the row on the right)
+            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
+              (padding the row on the right), while subdiagonals will be towards the right side
+              (padding the row on the left)
+            - When set to "LEFT_LEFT", the alignment of  both superdiagonals and subdiagonals will be towards
+              the left side(padding the row on the right).
+            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
+              the right side(padding the row on the left).
 
     Returns:
         A Tensor. Has the same type as `x`.

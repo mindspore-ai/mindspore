@@ -2084,10 +2084,10 @@ class MaxUnpool3D(Primitive):
             - If `pads` is a tuple of three integers, the padding of depth, height and width equal to pads[0],
               pads[1] and pads[2] correspondingly.
 
-        output_shape (tuple[int], optional) : The target output size is an optional input. Default: ().
-            If output_shape == (), then the shape of output computed by kszie, strides and pads.
-            If output_shape != (), then output_shape must be :math:`(N, C, D, H, W)` or
-            :math:`(N, D, H, W, C)` and output_shape must belong to
+        output_shape (tuple[int], optional) : The target output size. Default: ().
+            If output_shape == (), then the shape of output computed by kszie, strides and pads shown above.
+            If output_shape != (), then output_shape format must be :math:`(N, C, D, H, W)` or
+            :math:`(N, D, H, W, C)` and output_shape must be in range
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.
         data_format (str, optional) : The optional value for data format. Currently
@@ -2097,7 +2097,7 @@ class MaxUnpool3D(Primitive):
         - **x** (Tensor) - The input Tensor to invert.
           Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
         - **argmax** (Tensor) - Max values' index. Tensor that has the same shape as `x`.
-          Values of `argmax` must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
+          Values of `argmax` must be in range :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be int32 or int64.
 
     Outputs:
@@ -2105,9 +2105,9 @@ class MaxUnpool3D(Primitive):
         Has the same data type with `x`.
 
     Raises:
-        TypeError: If data type of `x` or `argmax` is not supported.
+        TypeError: If data type of `x` or `argmax` is Number.
         TypeError: If `ksize`, `strides` or `pads` is neither int nor tuple.
-        ValueError: If numbers in `strides` (also support 0 and (0, 0, 0)) or `ksize` is not positive.
+        ValueError: If numbers in `strides` or `ksize` is negative.
         ValueError: If numbers in `pads` is negative.
         ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 3.
         ValueError: If `data_format` is not a str or is neither `NCDHW` nor `NDHWC`.
@@ -2121,7 +2121,7 @@ class MaxUnpool3D(Primitive):
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
         >>> argmax = Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
-        >>> maxunpool3d = P.MaxUnpool3D(ksize=1, strides=1, pads=0)
+        >>> maxunpool3d = ops.MaxUnpool3D(ksize=1, strides=1, pads=0)
         >>> output = maxunpool3d(x, argmax)
         >>> print(output.asnumpy())
         [[[[[0. 1.]
@@ -4078,7 +4078,7 @@ class SigmoidCrossEntropyWithLogits(Primitive):
         \end{array}
 
     Inputs:
-        - **logits** (Tensor) - Input logits. Tensor of shape :math:`(N, *)` where :math:`*` means, any number
+        - **logits** (Tensor) - Input logits. Tensor of shape :math:`(N, *)` where :math:`*` means any number
           of additional dimensions.
         - **label** (Tensor) - Ground truth label. With the same shape and type as `logits`.
 
@@ -4213,8 +4213,8 @@ class Pad(Primitive):
             be extended behind the input tensor in the `D` th dimension.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions.
+        - **input_x** (Tensor) - Tensor to be padded. It has shape :math:`(N, *)`, where :math:`*` means
+          any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
@@ -7196,8 +7196,10 @@ class DynamicRNN(Primitive):
         keep_prob (float): A float identifying the keep prob in the operator. Default: 1.0.
         cell_clip (float): A float identifying the cell clip in the operator. Default: -1.0.
         num_proj (int): An integer identifying the number projection in the operator. Default: 0.
-        time_major (bool): A bool identifying the time major in the operator. Default: True.
-            Only `True` is currently supported.
+        time_major (bool): A bool specify the data format of `x`. If it is set to True, the format is
+            :math:`(num\_step, batch\_size, input\_size)`, if it is set to False, the format is
+            :math:`(batch\_size, num\_step, input\_size)`.
+            Default: True. Only supports True at present.
         activation (str): A string identifying the type of activation function in the operator. Default: 'tanh'.
             Only 'tanh' is currently supported.
         forget_bias (float): A float identifying the forget bias in the operator. Default: 0.0.

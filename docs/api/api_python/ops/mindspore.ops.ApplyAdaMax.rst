@@ -21,7 +21,7 @@
     `var` 、 `m` 、 `v` 和 `grad` 的输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
     输入：
-        - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。
+        - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **m** (Parameter) - 一阶矩，shape和数据类型与 `var` 相同。数据类型为float32或float16。
         - **v** (Parameter) - 二阶矩。shape和类型与 `var` 相同。数据类型为float32或float16。
         - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` ，必须是Scalar。数据类型为float32或float16。
