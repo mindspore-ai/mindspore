@@ -81,12 +81,9 @@ bool CheckContinuity(const std::vector<CNodePtr> &nodes, int axis) {
 bool StridedSliceFusion::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "FuncGraph is a nullptr.");
   auto manager = func_graph->manager();
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "The manager of this graph is a nullptr.";
-    return false;
-  }
-  auto node_list = TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "The manager of this graph is a nullptr.");
+  auto nodes_list = TopoSort(func_graph->get_return());
+  for (auto &node : nodes_list) {
     MS_CHECK_TRUE_RET(node != nullptr, false);
     if (!utils::isa<CNode>(node)) {
       continue;
