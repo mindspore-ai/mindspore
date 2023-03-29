@@ -60,7 +60,6 @@ bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  CheckParam(inputs, outputs);
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradDA>(base_operator);
   if (kernel_ptr == nullptr) {
@@ -91,14 +90,7 @@ int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
   std::vector<int64_t> var_shape = inputs.at(kVarIndex)->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
-  CheckShape(inputs, outputs);
 
-  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the shape size of 'lr' must be equal to 'batch_rank', but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
-    return KRET_RESIZE_FAILED;
-  }
   batch_size_ = 1;
   if (!lr_shape.empty()) {
     batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), batch_size_, std::multiplies<int64_t>());
@@ -116,22 +108,6 @@ int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_shape = LongVecToSizeVec(var_shape);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
 
-  if (batch_rank_ > 1) {
-    if (var_shape.size() < lr_shape.size()) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
-      return KRET_RESIZE_FAILED;
-    }
-    std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
-    if (!IsSameShape(lr_shape, var_batch_shape)) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the batch shape of 'var' must be the same as the shape of 'lr', "
-                       "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
-      return KRET_RESIZE_FAILED;
-    }
-  }
   return KRET_OK;
 }
 
@@ -142,96 +118,10 @@ std::vector<KernelAttr> ApplyAdagradDAGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void ApplyAdagradDAGpuKernelMod::CheckShape(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) const {
-  std::vector<std::vector<int64_t>> input_shapes(kApplyAdagradDAInputsNum);
-  for (size_t i = 0; i < kApplyAdagradDAInputsNum; ++i) {
-    input_shapes[i] = inputs[i]->GetShapeVector();
-  }
-
-  if (input_shapes[0].empty()) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the shape of var can not be empty.";
-  }
-
-  std::vector<std::vector<int64_t>> output_shapes(kApplyAdagradDAOutputsNum);
-  for (size_t i = 0; i < kApplyAdagradDAOutputsNum; ++i) {
-    output_shapes[i] = outputs[i]->GetShapeVector();
-  }
-
-  for (size_t i = 1; i < kLRIndex; ++i) {
-    if (input_shapes[i] != input_shapes[0]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of '" << InputNames[i]
-                        << "' and 'var' should be the same, but got shape of '" << InputNames[i]
-                        << "':" << input_shapes[i] << " and shape of 'var': " << input_shapes[0];
-    }
-  }
-
-  for (size_t i = 0; i < kApplyAdagradDAOutputsNum; ++i) {
-    if (output_shapes[i] != input_shapes[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output '" << OutputNames[i] << "' and input"
-                        << InputNames[i] << " should be the same, but got shape of '" << OutputNames[i]
-                        << "':" << output_shapes[i] << " and shape of input: " << InputNames[i] << ": "
-                        << input_shapes[i];
-    }
-  }
-}
-
-void ApplyAdagradDAGpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) const {
-  std::vector<TypeId> input_types(kApplyAdagradDAInputsNum);
-  for (size_t i = 0; i < kApplyAdagradDAInputsNum; ++i) {
-    input_types[i] = inputs[i]->GetDtype();
-  }
-
-  if (input_types[0] != kNumberTypeFloat16 && input_types[0] != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'var' should be float16 or float32, but got "
-                      << input_types[0] << " .";
-  }
-
-  std::vector<TypeId> output_types(kApplyAdagradDAOutputsNum);
-  for (size_t i = 0; i < kApplyAdagradDAOutputsNum; ++i) {
-    output_types[i] = outputs[i]->GetDtype();
-  }
-
-  for (size_t i = 1; i < kLRIndex; ++i) {
-    if (input_types[i] != input_types[0]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the type of '" << InputNames[i]
-                        << "' and 'var' should be the same, but got type of '" << InputNames[i]
-                        << "':" << input_types[i] << " and type of 'var': " << input_types[0];
-    }
-  }
-
-  for (size_t i = kLRIndex; i < kL2Index; ++i) {
-    if (input_types[i] != kNumberTypeFloat16 && input_types[i] != kNumberTypeFloat32) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the type of '" << InputNames[i]
-                        << "' should be float16 or float32, but got " << input_types[0] << " .";
-    }
-  }
-
-  if (input_types[kGlobalStepIndex] != kNumberTypeInt32 && input_types[kGlobalStepIndex] != kNumberTypeInt64) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'gobal_step' should be int32 or int64, but got "
-                      << input_types[kGlobalStepIndex] << " .";
-  }
-
-  for (size_t i = 0; i < kApplyAdagradDAOutputsNum; ++i) {
-    if (output_types[i] != input_types[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the type of output " << OutputNames[i] << " and input"
-                        << InputNames[i] << " should be the same, but got type of " << OutputNames[i] << ":"
-                        << output_types[i] << " and type of input: " << InputNames[i] << ": " << input_types[i];
-    }
-  }
-}
-
-void ApplyAdagradDAGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) const {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
-  CheckDType(inputs, outputs);
-}
-
 bool ApplyAdagradDAGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   stream_ptr_ = stream_ptr;
   if (is_null_input_) {
     return true;
