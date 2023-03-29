@@ -59,6 +59,8 @@ class PdistGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> x_shape_;
   int64_t x_dim_;
   int64_t x_size_;
+  int64_t col_;
+  int64_t temp_;
   float p_;
 };
 }  // namespace kernel
