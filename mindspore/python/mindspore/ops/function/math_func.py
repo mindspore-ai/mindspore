@@ -1453,29 +1453,27 @@ def inplace_add(x, v, indices):
 
 def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-outer-name
     """
-    Adds tensor `updates` to specified axis and indices of tensor `var`. The axis should be in [0,  len(var.dim) - 1],
-    and indices should be in [0, the size of `var` - 1] at the axis dimension.
+    Adds Tensor `updates` to specified axis and indices of Tensor `var`.
 
     Args:
         var (Parameter): The input Parameter to add to, with data type uint8, int8, int16, int32,
             float16, float32, float64.
-        indices (Tensor): Add the value of `var` and `updates` along the dimension of the `axis` according to the
-            specified index value, with data type int32.
-            The `indices` must be 1D with the same size as the size of `updates` in the `axis` dimension. The values
-            of `indices` should be in [0, b), where the b is the size of `var` in the `axis` dimension.
-        updates (Tensor): The input tensor with the value to add. Must have same data type as `var`.
+        indices (Tensor): The indies along `axis` to perform the addition. A 1D Tensor
+            of shape :math:`(updates.shape[axis],)`, every value of it
+            should be in range :math:`[0,  var.shape[axis])` with data type int32.
+        updates (Tensor): The input Tensor with the value to add. Must have same data type as `var`.
             The shape must be the same as `var` except the `axis` th dimension.
-        axis (int): The dimension along which to index.
+        axis (int): The dimension along which to index. It should be in range :math:`[0, len(var.dim))`.
 
     Returns:
-        Tensor, has the same shape and dtype as `var`.
+        Tensor, updated result, has the same shape and dtype as `var`.
 
     Raises:
         TypeError: If `var` is not a Parameter.
         TypeError: If neither `indices` nor `updates` is a Tensor.
-        ValueError: If axis is out of `var` rank's range.
+        ValueError: If `axis` is out of valid range.
         ValueError: If `var` rank is not the same as `updates` rank.
-        ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of updates[axis].
+        ValueError: If shape of `indices` is not :math:`(updates.shape[axis],)`.
         ValueError: If `updates`'s shape is not the same as `var` except the `axis` th dimension.
 
     Supported Platforms:
@@ -4242,7 +4240,7 @@ def is_complex(input):
 def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
     """
     Replace the `NaN`, positive infinity and negative infinity values in 'input' with the
-    specified values, `nan`, `posinf`, and `neginf` respectively.
+    specified values in `nan`, `posinf` and `neginf` respectively.
 
     Args:
         input (Tensor): The shape of tensor is :math:`(input_1, input_2, ..., input_R)`.
@@ -6621,11 +6619,11 @@ def atleast_2d(inputs):
         >>> x3 = np.ones(5)
         >>> out = ops.atleast_2d([x1, x2, x3])
         >>> print(out)
-        [Tensor(shape=[2, 3], dtype=Float32, value=
-        [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
-         [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]), Tensor(shape=[1, 1], dtype=Float32, value=
-        [[1.00000000e+000]]), Tensor(shape=[1, 5], dtype=Float32, value=
-        [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000, 1.00000000e+000, 1.00000000e+000]])]
+        (Tensor(shape=[2, 3], dtype=Float32, value=
+        [[ 1.00000000e+00, 1.00000000e+00, 1.00000000e+00],
+        [ 1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[ 1.00000000e+00]]), Tensor(shape=[1, 5], dtype=Float32, value=
+        [[ 1.00000000e+00, 1.00000000e+00, 1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]))
     """
     if isinstance(inputs, Tensor):
         return _expand(inputs, 2)
@@ -7846,7 +7844,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> LU_data = Tensor(np.array([[[-0.3806, -0.4872,  0.5536],

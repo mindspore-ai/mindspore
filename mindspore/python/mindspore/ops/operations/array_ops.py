@@ -5467,6 +5467,9 @@ class BatchToSpaceNDV2(Primitive):
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
+
+    Supported Platforms:
+        ``Ascend``
     """
 
     @prim_attr_register
