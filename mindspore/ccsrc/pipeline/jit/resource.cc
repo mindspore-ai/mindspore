@@ -380,6 +380,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"argmin_with_value", std::string("argmin_with_value")},            // P.ArgMinWithValue
        {"tile", std::string("tile")},                                      // P.Tile
        {"topk", std::string("topk")},                                      // P.TopK()
+       {"top_k", std::string("top_k")},                                    // P.TopK()
        {"isfinite", std::string("isfinite")},                              // P.isfinite()
        {"cos", std::string("cos")},                                        // cos()
        {"cov", std::string("cov")},                                        // cov()

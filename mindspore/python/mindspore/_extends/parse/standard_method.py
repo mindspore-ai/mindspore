@@ -1786,6 +1786,27 @@ def searchsorted(x, v, side='left', sorter=None):
     return j
 
 
+def fill(x, value):
+    """
+    `Tensor.fill` is deprecated, please use `ops.fill` instead.
+    """
+    if value is None:
+        if x.dtype not in (mstype.float16, mstype.float32, mstype.float64):
+            const_utils.raise_type_error("If None is used as value, the original Tensor's dtype must be float.")
+        value = nan_tensor
+        return F.tile(value, x.shape).astype(x.dtype)
+    if not isinstance(value, (int, float, bool)):
+        const_utils.raise_type_error("input value must be a scalar.")
+    return F.fill(x.dtype, x.shape, value)
+
+
+def fills(x, value):
+    """
+    `Tensor.fills` is deprecated, please use `ops.fill` instead.
+    """
+    return F.fills(x, value)
+
+
 def ptp(x, axis=None, keepdims=False):
     """
     The name of the function comes from the acronym for "peak to peak".
@@ -3263,6 +3284,8 @@ check_type_support = constexpr(validator.check_type_support)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
 check_bool_type = constexpr(validator.check_bool)
+check_is_int = constexpr(validator.check_is_int)
+check_bool = constexpr(validator.check_bool)
 
 
 def tensor_bool(x):
@@ -3427,6 +3450,15 @@ def ceil(x):
     Rounds a tensor up to the closest integer element-wise.
     """
     return F.ceil(x)
+
+
+def top_k(input_x, k, sorted=True):
+    """
+    `Tensor.top_k` is deprecated, please use `Tensor.topk` instead.
+    """
+    check_is_int(k, 'k')
+    check_bool(sorted, 'sorted')
+    return F.top_k(input_x, k, sorted)
 
 
 def topk(input_x, k, dim=None, largest=True, sorted=True):
