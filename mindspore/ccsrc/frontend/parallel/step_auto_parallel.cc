@@ -700,9 +700,9 @@ void ApplyApproximationForGraphs() {
   }
 }
 
-static void CreateEdgeAccrossMakeList(CNodePtr *prev_cnode, ValueNodePtr *prev_prim_anf_node, PrimitivePtr *prev_prim,
-                                      size_t *edge_count, const CNodePtr &cnode, const PrimitivePtr &prim,
-                                      const OperatorInfoPtr &node_op_info) {
+static void CreateEdgeAccrossMakeList(const CNodePtr &cnode, const PrimitivePtr &prim,
+                                      const OperatorInfoPtr &node_op_info, CNodePtr *prev_cnode,
+                                      ValueNodePtr *prev_prim_anf_node, PrimitivePtr *prev_prim, size_t *edge_count) {
   MS_LOG(INFO) << "Creating edges across the 'make_list' operator.";
   const auto &sub_inputs = (*prev_cnode)->inputs();
   for (size_t j = 1; j < sub_inputs.size(); ++j) {
@@ -771,8 +771,8 @@ static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode, const
         is_before_tuple_get_item = true;
       } else if (prev_prim->name() == prim::kMakeTuple) {
         if (!is_before_tuple_get_item) {
-          CreateEdgeAccrossMakeList(&prev_cnode, &prev_prim_anf_node, &prev_prim, &edge_count, cnode, prim,
-                                    node_op_info);
+          CreateEdgeAccrossMakeList(cnode, prim, node_op_info, &prev_cnode, &prev_prim_anf_node, &prev_prim,
+                                    &edge_count);
           break;
         }
         prev_cnode = prev_cnode->input(output_index + 1)->cast<CNodePtr>();
@@ -783,7 +783,7 @@ static void ConstructCNodeCostGraphEdges(const mindspore::CNodePtr &cnode, const
         }
         is_before_tuple_get_item = false;
       } else if (prev_prim->name() == prim::kMakeList) {
-        CreateEdgeAccrossMakeList(&prev_cnode, &prev_prim_anf_node, &prev_prim, &edge_count, cnode, prim, node_op_info);
+        CreateEdgeAccrossMakeList(cnode, prim, node_op_info, &prev_cnode, &prev_prim_anf_node, &prev_prim, &edge_count);
         break;
       } else if (prev_prim->name() == prim::kDepend || prev_prim->name() == prim::kLoad) {
         // In this case, 'prev_anf_node' is 'depend', the actual precursor node is node before
