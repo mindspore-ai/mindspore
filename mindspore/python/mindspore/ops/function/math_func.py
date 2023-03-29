@@ -1584,7 +1584,7 @@ def logical_or(input, other):
 
     .. math::
 
-        out_{i} = input_{i} \\vee other_{i}
+        out_{i} = x_{i} \\vee y_{i}
 
     Note:
         LogicalOr supports broadcasting.
@@ -3089,7 +3089,6 @@ def bessel_i0(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3116,7 +3115,6 @@ def bessel_i0e(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -3169,7 +3167,6 @@ def bessel_k0e(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -5200,7 +5197,7 @@ def rsqrt(input):
 
     .. math::
 
-        out_{i} =  \frac{1}{\sqrt{x_{i}}}
+        out_{i} =  \frac{1}{\sqrt{input_{i}}}
 
     Args:
         input (Tensor): The input of rsqrt. Its rank must be in [0, 7] inclusive and
@@ -5260,7 +5257,7 @@ def square(input):
 
     .. math::
 
-        out_{i} = (input_{i})^2
+        y_i = input_i ^ 2
 
     Args:
         input (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
@@ -5807,7 +5804,7 @@ def bernoulli(input, p=0.5, seed=None):
         out_{i} \sim Bernoulli(p_{i})
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
+        input (Tensor): Input Tensor. Data
                         type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         p (Union[Tensor, float], optional): Success probability, representing the probability of setting 1 for the
                                             corresponding position of the current Tensor. The value of `p`
@@ -5857,7 +5854,6 @@ def bessel_i1(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -5884,7 +5880,6 @@ def bessel_i1e(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -5911,7 +5906,6 @@ def bessel_k1(x):
 
     Args:
         x (Tensor): The input tensor. The data type must be float16, float32 or float64.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -8616,7 +8610,7 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
         batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
         batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
         beta (Union[float, int], optional): multiplier for input. The default is 1.
-        alpha (Union[float, int], optional): multiplier for `batch1 @ batch2`. The default is 1.
+        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. The default is 1.
             Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
             be a real number.
 
@@ -10147,7 +10141,7 @@ def isinf(input):
 
     Args:
         input (Tensor): The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape of input, and the dtype is bool.

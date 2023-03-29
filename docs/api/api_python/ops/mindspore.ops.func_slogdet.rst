@@ -12,8 +12,8 @@ mindspore.ops.slogdet
         - **input** (Tensor) - 输入Tensor，shape为 :math:`[..., M, M]` 。矩阵必须至少有两个维度，最后两个维度尺寸必须相同。支持的数据类型为float32、float64、complex64或complex128。
 
     返回：
-        - Tensor，行列式的绝对值的对数的符号，shape为 `input.shape[:-2]`。
-        - Tensor，行列式的绝对值的对数，shape为 `input.shape[:-2]`。
+        - Tensor，行列式的绝对值的对数的符号，shape为 :math:`input.shape[:-2]` ，数据类型与 `input` 相同。
+        - Tensor，行列式的绝对值的对数，shape为 :math:`input.shape[:-2]` ，数据类型与 `input` 相同。
 
     异常：
         - **TypeError** -  `input` 不为 Tensor。

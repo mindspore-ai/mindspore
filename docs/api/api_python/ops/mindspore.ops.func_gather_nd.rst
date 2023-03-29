@@ -13,11 +13,11 @@ mindspore.ops.gather_nd
     `indices` 的最后一维的长度不能超过 `input_x` 的秩： :math:`indices.shape[-1] <= input\_x.rank` 。
 
     参数：
-        - **input_x** (Tensor) - GatherNd的输入。任意维度的Tensor。
+        - **input_x** (Tensor) - GatherNd的输入。
         - **indices** (Tensor) - 索引Tensor，其数据类型为int32或int64。
 
     返回：
-        Tensor，数据类型与 `input_x` 相同，shape为 `indices_shape[:-1] + input_x_shape[indices_shape[-1]:]` 。
+        Tensor，数据类型与 `input_x` 相同，shape为 :math:`indices_shape[:-1] + input_x_shape[indices_shape[-1]:]` 。
 
     异常：
         - **ValueError** - `input_x` 的shape长度小于 `indices` 的最后一维的长度。

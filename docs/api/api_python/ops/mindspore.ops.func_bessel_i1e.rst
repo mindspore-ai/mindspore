@@ -6,7 +6,7 @@ mindspore.ops.bessel_i1e
     逐元素计算并返回输入Tensor的Bessel i1e函数值。
 
     参数：
-        - **x** (Tensor) - 任意维度的Tensor。数据类型应为float16，float32或float64。
+        - **x** (Tensor) - Tensor的输入。数据类型应为float16，float32或float64。
 
     返回：
         Tensor，shape和数据类型与 `x` 相同。

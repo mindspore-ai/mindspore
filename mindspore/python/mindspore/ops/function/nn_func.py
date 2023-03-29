@@ -481,6 +481,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
 
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
     .. warning::
         `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
 
@@ -1114,8 +1115,8 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
     and the third method is to calculate the sum of all losses.
 
     This operator will multiply the output by the corresponding weight.
-    The tensor weight assigns different weights to each piece of data in the batch,
-    and the tensor pos_weight adds corresponding weights to the positive examples of each category.
+    The tensor :math:`weight` assigns different weights to each piece of data in the batch,
+    and the tensor :math:`pos_weight` adds corresponding weights to the positive examples of each category.
 
     In addition, it can trade off recall and precision by adding weights to positive examples.
     In the case of multi-label classification the loss can be described as:
@@ -1132,7 +1133,6 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 
     Args:
         logits (Tensor): Input logits. Data type must be float16 or float32.
-          Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         label (Tensor): Ground truth label, has the same shape as `logits`.
           Data type must be float16 or float32.
         weight (Tensor): A rescaling weight applied to the loss of each batch element. It can be

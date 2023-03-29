@@ -645,7 +645,8 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
         off_value(Union[Tensor, int, float]): A value to fill in output when `indices[j] != i`.
             Has the same data type as `on_value`.
         axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
-            the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
+            the output shape will be :math:`(N, C, depth)`, If `axis` is 0,
+            the output shape will be :math:`(depth, N, C)`.
             Default: -1.
 
     Returns:
@@ -2497,7 +2498,6 @@ def scatter_min(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or mindspore.int64.
         updates (Tensor): The tensor doing the min operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
@@ -2736,7 +2736,6 @@ def scatter_update(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index of input tensor. With int32 or int64 data type.
             If there are duplicates in indices, the order for updating is undefined.
         updates (Tensor): The tensor to update the input tensor, has the same type as input,
@@ -3406,7 +3405,7 @@ def gather_elements(input, dim, index):
             int32, int64. The value range of each index element is [-input.shape(dim), input.shape(dim)).
 
     Returns:
-        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`,
+        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_0, z_1, ..., y, ..., z_{n-1})`,
         and has the same data type with `input`.
 
     Raises:
@@ -3450,7 +3449,6 @@ def gather_nd(input_x, indices):
 
     Args:
         input_x (Tensor): The target tensor to gather values.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index tensor, with int32 or int64 data type.
 
     Returns:
@@ -4137,13 +4135,13 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
 
     Args:
         x (Tensor): Rank r + 1, where r >= 1.
-        diagonal (Tensor): A Tensor. Have the same dtype as x. Rank r when k is an integer or k[0] == k[1].
+        diagonal (Tensor): A Tensor. Have the same dtype as x. Rank r when k is an integer or :math:`k[0] == k[1]`.
             Otherwise, it has rank r + 1.
         k (Union[int, Tensor], optional): A int32 Scalar or int32 Tensor. Diagonal offset(s). Positive value means
             superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a
             single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
             a matrix band. k[0] must not be larger than k[1].
-            The alue of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
+            The alue of k has restructions, meaning value of k must be in :math:`(-x.shape[-2], x.shape[-1])`.
             Input k must be const Tensor when taking Graph mode.
         align (str, optional): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT",
             "RIGHT_RIGHT". Align is a string specifying how superdiagonals and subdiagonals should be aligned,
@@ -4151,8 +4149,8 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
             to the left (right-pads the row).
 
     Returns:
-        Tensor, The same type as x. Let x has r+1 dimensions [I, J, ..., L, M, N].
-        The output is a tensor of rank r+1 with dimensions [I, J, ..., L, M, N], the same as input x.
+        Tensor, The same type as x. Let x has r+1 dimensions :math:`[I, J, ..., L, M, N]`.
+        The output is a tensor of rank r+1 with dimensions :math:`[I, J, ..., L, M, N]`, the same as input x.
 
     Raises:
         TypeError: If input `x` or `diagonal` is not Tensor.
@@ -4165,10 +4163,11 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
         ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
         ValueError: If the `diagonal` rank size don't match with input `x` rank size.
         ValueError: If the `diagonal` shape value don't match with input `x` shape value.
-        ValueError: If the diagonal.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1.
-        ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
-        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by min(x.shape[-2] + min(k[1],
-            0), x.shape[-1] + min(-k[0], 0)).
+        ValueError: If the diagonal :math:`shape[-2]` is not equal to num_diags calculated by :math:`k[1]-k[0]+1`.
+        ValueError: If the value of `k` is not in :math:`(-x.shape[-2], x.shape[-1])`.
+        ValueError: If the diagonal.shape[-1] is not equal to the max_diag_len calculated by
+            :math:`min(x.shape[-2] + min(k[1],
+            0), x.shape[-1] + min(-k[0], 0))`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -5907,7 +5906,8 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     Computes the sum of a tensor along segments.
 
     Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
-    :math:`j` is a tuple describing the index of element in data.  `segment_ids` selects which elements in data to sum
+    :math:`j,...` is a tuple describing the index of element in data.
+    `segment_ids` selects which elements in data to sum
     up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
     range.
 
@@ -6808,8 +6808,8 @@ def repeat_elements(x, rep, axis=0):
 
     Returns:
         One tensor with values repeated along the specified axis. If x has shape
-        (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
-        si * rep, ..., sn). The output type will be the same as the type of `x`.
+        :math:`(s1, s2, ..., sn)` and axis is i, the output will have shape :math:`(s1, s2, ..., si * rep, ..., sn)`.
+        The output type will be the same as the type of `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
