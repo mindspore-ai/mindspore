@@ -194,7 +194,8 @@ class AllGather(PrimitiveWithInfer):
     Gathers tensors from the specified communication group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        - The tensors must have the same shape and format in all processes of the collection.
+        - Currently only supports GRAPH_MODE and it should be called in Cell.
 
     Args:
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
