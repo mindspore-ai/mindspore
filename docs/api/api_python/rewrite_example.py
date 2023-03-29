@@ -18,6 +18,7 @@ This example mainly illustrates the usage of rewrite.
 from typing import OrderedDict
 import numpy as np
 
+import mindspore
 from mindspore import Tensor, export
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode, \
     TreeNodeHelper
@@ -27,6 +28,7 @@ import mindspore.ops as ops
 
 class SubNet(nn.Cell):
     """子网络定义"""
+
     def __init__(self):
         super().__init__()
         self.dense = nn.Dense(in_channels=32, out_channels=32, weight_init="ones")
@@ -41,6 +43,7 @@ class SubNet(nn.Cell):
 
 class Net(nn.Cell):
     """网络定义"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 1, 1, pad_mode='valid')
@@ -73,7 +76,7 @@ def create_stree(network):
 def insert_node(stree):
     """在网络中插入节点"""
     for node in stree.nodes():
-        if node.get_name() == "conv2": # 在名称为'conv2'的节点前面插入新的节点
+        if node.get_name() == "conv2":  # 在名称为'conv2'的节点前面插入新的节点
             position = stree.before(node)
             new_conv = nn.Conv2d(1, 1, 1)
             new_conv_node = Node.create_call_cell(new_conv, targets=['x_1'], name='new_conv',
@@ -90,6 +93,7 @@ def insert_node(stree):
 
 def insert_node_to_subtree(stree):
     """在子网络中插入节点"""
+
     def _insert_conv(stree: SymbolTree):
         for node in stree.nodes():
             if node.get_instance_type() == nn.Conv2d:
@@ -99,6 +103,7 @@ def insert_node_to_subtree(stree):
                                                       args=[ScopedValue.create_naming_value('x_1')])
                 stree.insert(position, new_conv_node)
                 break
+
     # 在名称为'simnet'的子网络中插入新节点
     for node in stree.nodes():
         if node.get_node_type() == NodeType.Tree and node.get_name() == "simnet":
@@ -128,8 +133,10 @@ def replace_node(stree):
 
 def pattern_replace(stree):
     """通过模式匹配的方式替换节点"""
+
     class ConvReplacement(Replacement):
         """创建新节点类的实现"""
+
         def build(self, pattern: PatternNode, is_chain_pattern: bool, matched: OrderedDict) -> [Node]:
             bn_node: Node = matched.get(pattern.name())
 
@@ -140,6 +147,7 @@ def pattern_replace(stree):
 
     class BnReplace(PatternEngine):
         """替换网络中nn.MaxPool2d类型的节点"""
+
         def __init__(self):
             super().__init__([nn.MaxPool2d], ConvReplacement())
 
@@ -178,7 +186,7 @@ def test_rewrite():
     pattern_replace(stree)
     print(f"after pattern replace node code: {stree.get_code()}")
 
-    inputs = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32)) # pylint: disable=not-callable
+    inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)  # pylint: disable=not-callable
     new_net = get_net(stree)
     source_code = get_code(stree)
     print(source_code)
