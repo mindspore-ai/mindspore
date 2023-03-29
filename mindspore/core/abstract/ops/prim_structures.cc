@@ -86,23 +86,31 @@ AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const Primiti
 
 AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_abs_list) {
-  // Inputs: a string and a keyword.
+  // Inputs: a key and a Keyword or only a Keyword.
   const std::string op_name = primitive->name();
-  constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_abs_list, args_spec_size);
-  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
-  AbstractKeywordArgPtr kwarg = CheckArg<AbstractKeywordArg>(op_name, args_abs_list, 1);
+  constexpr int only_kw_input_size = 1;
+  constexpr int check_key_input_size = 2;
+  AbstractKeywordArgPtr kwarg = nullptr;
+  if (args_abs_list.size() == check_key_input_size) {
+    AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
+    kwarg = CheckArg<AbstractKeywordArg>(op_name, args_abs_list, 1);
 
-  ValuePtr key_value = key->BuildValue();
-  MS_EXCEPTION_IF_NULL(key_value);
-  if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
-  }
-  auto key_input = GetValue<std::string>(key_value);
-  std::string key_actual = kwarg->get_key();
-  if (key_actual != key_input) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator input key should be same as AbstractKeywordArg' key, but input is "
-                      << key_input << ", AbstractKeywordArg' key is " << key_actual;
+    ValuePtr key_value = key->BuildValue();
+    MS_EXCEPTION_IF_NULL(key_value);
+    if (!key_value->isa<StringImm>()) {
+      MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
+    }
+    auto key_input = GetValue<std::string>(key_value);
+    std::string key_actual = kwarg->get_key();
+    if (key_actual != key_input) {
+      MS_LOG(EXCEPTION) << op_name << " evaluator input key should be same as AbstractKeywordArg' key, but input is "
+                        << key_input << ", AbstractKeywordArg' key is " << key_actual;
+    }
+  } else if (args_abs_list.size() == only_kw_input_size) {
+    kwarg = CheckArg<AbstractKeywordArg>(op_name, args_abs_list, 0);
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', the number of inputs should be 1 or 2, but got "
+                      << args_abs_list.size();
   }
   return kwarg->get_arg();
 }

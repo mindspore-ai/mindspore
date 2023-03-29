@@ -418,6 +418,7 @@ TypePtr GetTypeByFullString(const std::string &type_name) {
                                                     {"String", std::make_shared<String>()},
                                                     {"Problem", std::make_shared<Problem>()},
                                                     {"mstype", std::make_shared<TypeType>()},
+                                                    {"Keyword", std::make_shared<Keyword>()},
                                                     {"UMonad", kUMonadType},
                                                     {"IOMonad", kIOMonadType}};
 
