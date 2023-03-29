@@ -1417,7 +1417,19 @@ def _get_data_file(is_encrypt, kwargs, data_file_name):
     return f, parameter_size, offset
 
 
-def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
+def _encrypt_data(is_encrypt, write_data, kwargs):
+    """Encrypt parameter data."""
+    if is_encrypt():
+        if callable(kwargs.get('enc_mode')):
+            enc_func = kwargs.get('enc_mode')
+            write_data = enc_func(write_data, kwargs.get('enc_key'))
+        else:
+            write_data = _encrypt(write_data, len(write_data), kwargs.get('enc_key'),
+                                  len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
+    return write_data
+
+
+def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
     """The function to save parameter data."""
     logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
     # save parameter
@@ -1457,13 +1469,7 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
             param_proto.external_data.offset = offset
             write_data = raw_data + bytes(append_size)
             offset += (data_length + append_size)
-            if is_encrypt():
-                if callable(kwargs.get('enc_mode')):
-                    enc_func = kwargs.get('enc_mode')
-                    write_data = enc_func(write_data, kwargs.get('enc_key'))
-                else:
-                    write_data = _encrypt(write_data, len(write_data), kwargs.get('enc_key'),
-                                          len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
+            write_data = _encrypt_data(is_encrypt, write_data, kwargs)
             f.write(write_data)
 
         graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
@@ -1566,7 +1572,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     if save_together:
         _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs)
     else:
-        _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs)
+        _split_save(net_dict, model, file_name, is_encrypt, **kwargs)
 
 
 def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
