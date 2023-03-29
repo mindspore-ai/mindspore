@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,15 +263,11 @@ bool SvdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
 
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_s = GetDeviceAddress<T>(outputs, kIndex0);
-  T *output_u = nullptr;
-  T *output_v = nullptr;
+  T *output_u = GetDeviceAddress<T>(outputs, kIndex1);
+  T *output_v = GetDeviceAddress<T>(outputs, kIndex2);
   T *d_output_u = nullptr;
   T *d_output_v = nullptr;
   if (compute_uv_ || batched_) {
-    if (compute_uv_) {
-      output_u = GetDeviceAddress<T>(outputs, kIndex1);
-      output_v = GetDeviceAddress<T>(outputs, kIndex2);
-    }
     // Store output u and v before transpose.
     d_output_u = GetDeviceAddress<T>(workspace, kIndex2);
     d_output_v = GetDeviceAddress<T>(workspace, kIndex3);
@@ -294,6 +290,15 @@ bool SvdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
     LaunchSvd(n_, m_, d_input, output_s, output_v, output_u, d_output_v, d_output_u, dev_info);
   }
 
+  // Set 0 for u and v if not compute u and v.
+  if (!compute_uv_) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(output_u, static_cast<T>(0.0), sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "cudaMemset failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemsetAsync(output_v, static_cast<T>(0.0), sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "cudaMemset failed");
+  }
   return true;
 }
 

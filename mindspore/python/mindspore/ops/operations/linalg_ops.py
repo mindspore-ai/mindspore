@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,24 @@ class Svd(Primitive):
     Computes the singular value decompositions of one or more matrices.
 
     Refer to :func:`mindspore.ops.svd` for more details.
+
+    Args:
+        full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
+                                        only the leading P singular vectors, with P is the minimum of M and N.
+                                        Default: False.
+        compute_uv (bool, optional): If true, compute the left and right singular vectors.
+                                     If false, compute only the singular values. Default: True.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of the matrices to be decomposed. The shape should be :math:`(*, M, N)`,
+          the supported dtype are float32 and float64.
+
+    Outputs:
+        - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
+        - **u**  (Tensor) - Left singular vectors. If `compute_uv` is False, u will be zero value.
+          The shape is :math:`(*, M, P)`. If `full_matrices` is True, the shape will be :math:`(*, M, M)`.
+        - **v**  (Tensor) - Right singular vectors. If `compute_uv` is False, v will be zero value.
+          The shape is :math:`(*, N, P)`. If `full_matrices` is True, the shape will be :math:`(*, N, N)`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
