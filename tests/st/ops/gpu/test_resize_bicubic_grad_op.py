@@ -34,7 +34,7 @@ def test_resize_bicubic_grad_graph():
     for type_i in types:
         grad = np.array([1, 2, 3, 4])
         grad = grad.reshape([1, 1, 2, 2])
-        gradients = Tensor(grad.astype(np.float32))
+        gradients = Tensor(grad.astype(type_i))
         ori = np.array([1, 2, 3, 4])
         ori = ori.reshape([1, 1, 1, 4])
         origin = Tensor(ori.astype(type_i))
@@ -42,14 +42,10 @@ def test_resize_bicubic_grad_graph():
         expect_type = output.asnumpy().dtype
         expect = np.array([4, 0, 6, 0])
         expect = expect.reshape([1, 1, 1, 4])
-        if type_i == np.float32:
-            expect = expect.astype(np.float32)
-            assert expect_type == 'float32'
-            assert (output.asnumpy() == expect).all()
-        else:
-            expect = expect.astype(np.float64)
-            assert expect_type == 'float64'
-            assert (output.asnumpy() == expect).all()
+
+        expect = expect.astype(type_i)
+        assert expect_type == type_i
+        assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level1
@@ -66,7 +62,7 @@ def test_resize_bicubic_grad_pynative():
     for type_i in types_2:
         grad = np.array([1, 2, 3, 4])
         grad = grad.reshape([1, 1, 2, 2,])
-        gradients = Tensor(grad.astype(np.float32))
+        gradients = Tensor(grad.astype(type_i))
         ori = np.array([1, 2, 3, 4])
         ori = ori.reshape([1, 1, 1, 4])
         origin = Tensor(ori.astype(type_i))
@@ -74,11 +70,7 @@ def test_resize_bicubic_grad_pynative():
         expect_type_2 = output.asnumpy().dtype
         expect = np.array([4, 0, 6, 0])
         expect = expect.reshape([1, 1, 1, 4])
-        if type_i == np.float32:
-            expect = expect.astype(np.float32)
-            assert expect_type_2 == 'float32'
-            assert (output.asnumpy() == expect).all()
-        else:
-            expect = expect.astype(np.float64)
-            assert expect_type_2 == 'float64'
-            assert (output.asnumpy() == expect).all()
+
+        expect = expect.astype(type_i)
+        assert expect_type_2 == type_i
+        assert (output.asnumpy() == expect).all()

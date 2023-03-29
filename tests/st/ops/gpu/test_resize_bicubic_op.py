@@ -56,8 +56,8 @@ def test_resize_bicubic_graph():
         expect = np.array([1, 1.5, 2, 2.09375])
         expect = expect.reshape([1, 1, 1, 4])
 
-        expect = expect.astype(np.float32)
-        assert expect_type == 'float32'
+        expect = expect.astype(type_i)
+        assert expect_type == type_i
         assert (output.asnumpy() == expect).all()
 
 
@@ -83,6 +83,6 @@ def test_resize_bicubic_pynative():
         expect = np.array([1, 1.5, 2, 2.09375])
         expect = expect.reshape([1, 1, 1, 4])
 
-        expect = expect.astype(np.float32)
-        assert expect_type_2 == 'float32'
+        expect = expect.astype(type_i)
+        assert expect_type_2 == type_i
         assert (output.asnumpy() == expect).all()
