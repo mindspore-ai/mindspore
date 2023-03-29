@@ -128,7 +128,7 @@ inline void ShardTaskList::InsertTask(TaskType task_type, int shard_id, int grou
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
   (void)task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id));
   if (lazy_load_ == false) {
-    sample_meta_list_.emplace_back(offset, label);
+    (void)sample_meta_list_.emplace_back(offset, label);
   }
 }
 
