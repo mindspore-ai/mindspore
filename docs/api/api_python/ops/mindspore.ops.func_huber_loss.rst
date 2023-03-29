@@ -36,7 +36,7 @@ mindspore.ops.huber_loss
         - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须大于零。默认值：1.0。
 
     返回：
-        Tensor，和 `input` 具有相同的dtype和shape。
+        Tensor或Scalar，如果 `reduction` 为 `none` ，则返回与 `input` 具有相同shape和dtype的Tensor。否则，将返回Scalar。
 
     异常：
         - **TypeError** - `input` 或 `target` 不是Tensor。
