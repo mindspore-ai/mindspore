@@ -1602,9 +1602,6 @@ class Zeros(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Zeros"""
-        logger.warning(
-            "WARN_DEPRECATED: Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros`."
-        )
 
 
 
