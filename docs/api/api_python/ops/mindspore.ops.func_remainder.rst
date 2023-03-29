@@ -13,7 +13,7 @@ mindspore.ops.remainder
     .. warning::
         - 当输入元素超过2048时，可能会有精度问题。
         - 在Ascend和CPU上的计算结果可能不一致。
-        - 如果shape表示为(D1,D2…Dn)，那么D1 \ * D2……\ * DN <= 1000000，n <= 8。
+        - 如果shape表示为(D1,D2…Dn)，那么D1 \ * D2……\ * Dn <= 1000000，n <= 8。
 
     参数：
         - **input** (Union[Tensor, numbers.Number, bool]) - 第一个输入可以是Number，bool或者dtype是Number的Tensor。
