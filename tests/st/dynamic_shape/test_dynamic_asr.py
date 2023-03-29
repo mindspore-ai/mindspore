@@ -950,7 +950,7 @@ class TimeMonitor(Callback):
         self.step += 1
 
 
-def asr_run(input_dict=None):
+def asr_run(exec_mode, input_dict=None):
     args_dict = {
         "adim": 256,
         "aheads": 1,
@@ -977,7 +977,7 @@ def asr_run(input_dict=None):
 
     args = argparse.Namespace(**args_dict)
     time.sleep(3)
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=exec_mode)
 
     mindspore.set_seed(0)
     dataset = create_dataset(args.batch_size, args.feats_dim, args.text_dim)
@@ -1030,25 +1030,47 @@ def _compare_result(outputs, expects):
                 "[ERROR] compare as followings:\n ==> outputs: {},\n ==> expects: {}".format(output, expect))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_ascend_train():
+def test_ascend_train_by_mode(mode):
     """
     Feature: Test the simplified dynamic shape ASR network with small data in Ascend.
     Description:  The sequence length of inputs is dynamic.
     Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     start_time = time.time()
-    losses = asr_run()
+    losses = asr_run(mode)
     current_time = time.time()
     logging.info("Run asr with %f s.", current_time - start_time)
     expect_losses = [np.array(106.237755, dtype=np.float32), np.array(90.78951, dtype=np.float32),
                      np.array(89.331894, dtype=np.float32), np.array(102.211105, dtype=np.float32)]
     _compare_result(losses[:1], expect_losses[:1])
     logging.info("Test asr done.")
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_train_graph():
+    """
+    Feature: Test the simplified dynamic shape ASR network with small data in Ascend.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    test_ascend_train_by_mode(context.GRAPH_MODE)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_train_pynative():
+    """
+    Feature: Test the simplified dynamic shape ASR network with small data in Ascend.
+    Description:  The sequence length of inputs is dynamic.
+    Expectation: Assert that the training loss of fixed data is consistent with the expected loss.
+    """
+    test_ascend_train_by_mode(context.PYNATIVE_MODE)
 
 
 @pytest.mark.level0
@@ -1062,7 +1084,7 @@ def test_gpu_train():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     start_time = time.time()
-    losses = asr_run()
+    losses = asr_run(context.GRAPH_MODE)
     current_time = time.time()
     logging.info("Run asr with %f s.", current_time - start_time)
     expect_losses = [np.array(727.7395, dtype=np.float32), np.array(518.216, dtype=np.float32),

@@ -98,6 +98,7 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
   op_run_info->async_status.is_ms_function_compiling = forward_executor()->is_ms_function_compiling();
+  op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
 
 py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {
@@ -162,7 +163,9 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 }
 
 void PyNativeExecutor::ClearRes() const {
+  forward_executor()->ClearForwardTask();
   runtime::OpExecutor::GetInstance().Reset();
+  // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
   pynative::autograd::ClearPyNativeAutoGradStaticRes();
 

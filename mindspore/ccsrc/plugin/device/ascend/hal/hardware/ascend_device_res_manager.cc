@@ -149,19 +149,37 @@ DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_
 }
 
 bool AscendDeviceResManager::CreateStream(size_t *stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
   AscendStreamMng::GetInstance().CreateStream(stream_id);
   return true;
 }
 
 bool AscendDeviceResManager::DestroyStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
   return AscendStreamMng::GetInstance().DestroyStream(stream_id);
 }
 
 bool AscendDeviceResManager::SyncStream(size_t stream_id) const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return false;
+  }
   return AscendStreamMng::GetInstance().SyncStream(stream_id);
 }
 
-bool AscendDeviceResManager::SyncAllStreams() const { return AscendStreamMng::GetInstance().SyncAllStreams(); }
+bool AscendDeviceResManager::SyncAllStreams() const {
+  if (runtime_instance_ == nullptr) {
+    return true;
+  }
+  runtime_instance_->SetContext();
+  return AscendStreamMng::GetInstance().SyncAllStreams();
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

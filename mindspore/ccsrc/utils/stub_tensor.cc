@@ -100,12 +100,14 @@ void StubNode::SetValue(const ValuePtr &val) {
 void StubNode::SetException(const std::exception_ptr &e_ptr) {
   e_ptr_ = e_ptr;
   if (wait_flag_.load()) {
+    // cppcheck-suppress unreadVariable
     std::unique_lock<std::mutex> lock(stub_mutex_);
     stub_cond_var_.notify_all();
   }
 }
 
 AbstractBasePtr StubNode::WaitAbstract() {
+  // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
   if (abstract_.get() == nullptr) {
     wait_flag_.store(true);
@@ -122,6 +124,7 @@ AbstractBasePtr StubNode::WaitAbstract() {
 }
 
 ValuePtr StubNode::WaitValue() {
+  // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
   if (value_.get() == nullptr) {
     wait_flag_.store(true);

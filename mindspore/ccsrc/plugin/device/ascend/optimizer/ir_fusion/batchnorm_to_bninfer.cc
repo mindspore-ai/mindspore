@@ -62,7 +62,7 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   auto origin_prim = common::AnfAlgo::GetCNodePrimitive(batchnorm);
   if (origin_prim->HasAttr(kAttrFormat)) {
     auto format = origin_prim->GetAttr(kAttrFormat);
-    prim->AddAttr(kAttrFormat, MakeValue(format));
+    (void)prim->AddAttr(kAttrFormat, MakeValue(format));
   }
 
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};

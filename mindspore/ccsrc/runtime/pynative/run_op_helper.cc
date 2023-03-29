@@ -306,7 +306,7 @@ void UpdateOutputAddrSize(const AnfNodePtr &node, const std::shared_ptr<OpRuntim
     if (output_addr_size != output_address->GetSize()) {
       output_address->SetSize(output_addr_size);
     }
-    output_address->set_host_shape(trans::GetRuntimePaddingShape(node, 0));
+    output_address->set_host_shape(trans::GetRuntimePaddingShape(node, i));
   }
 }
 

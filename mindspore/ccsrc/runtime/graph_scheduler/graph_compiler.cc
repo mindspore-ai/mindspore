@@ -452,8 +452,9 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   session_->DumpGraphs({graph});
 
   auto &exec_nodes = graph->execution_order();
-  std::for_each(exec_nodes.begin(), exec_nodes.end(),
-                [](const CNodePtr &node) { common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node); });
+  (void)std::for_each(exec_nodes.begin(), exec_nodes.end(), [](const CNodePtr &node) {
+    common::AnfAlgo::SetNodeAttr(kAttrMutableKernel, MakeValue(true), node);
+  });
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;

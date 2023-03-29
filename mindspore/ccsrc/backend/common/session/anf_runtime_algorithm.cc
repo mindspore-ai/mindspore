@@ -1859,9 +1859,9 @@ size_t AnfRuntimeAlgorithm::GetInputElementNum(const AnfNodePtr &node) {
 }
 
 void AnfRuntimeAlgorithm::SetDynamicAttrToPrim(const PrimitivePtr &prim) {
-  prim->AddAttr(kAttrMutableKernel, MakeValue(true));
-  prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
-  prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
+  (void)prim->AddAttr(kAttrMutableKernel, MakeValue(true));
+  (void)prim->AddAttr(kAttrInputIsDynamicShape, MakeValue(true));
+  (void)prim->AddAttr(kAttrOutputIsDynamicShape, MakeValue(true));
 }
 
 bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, const CNodePtr &node) {
