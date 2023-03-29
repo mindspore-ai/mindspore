@@ -111,6 +111,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteError;
   }
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context pointers.";
+    return kLiteNullptr;
+  }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
   std::string weight_path = "./";
   std::string base_path = "";
