@@ -1473,7 +1473,7 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
     Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`,
+        input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`,
             with float16, float32, float64, int32, int64 data type.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents height and width of the kernel, or a tuple
@@ -1491,12 +1491,14 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool2d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 2)`.
+            Supported shape :math:`(N, C, 2)` or :math:`(1, C, 2)`.
             Default: None.
 
     Returns:
         - **y** (Tensor) - Has the same type as the `input`.
-          Has the shape :math:`(N, C, H, W)`.
+          Has the shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})` ,
+          where :math:`(H_{out}, W_{out})` = `output_size`
+          or :math:`(H_{out}, W_{out})` = `output_ratio` * :math:`(H_{in}, W_{in})`.
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int64 data type. It will output only when `return_indices` is True.
@@ -1576,7 +1578,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     Args:
         input (Tensor): The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
             Tensor of data type: float16, float32, double, int32, int64.
-            Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+            Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
@@ -1593,12 +1595,14 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         return_indices (bool, optional): Whether to return the indices of max value. Default: False.
         _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
             Tensor of data type: float16, float32, double, and value is between (0, 1).
-            Supported shape :math:`(N, C, 3)`.
+            Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` .
 
     Returns:
         - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
-          Has the same data type with `imput_x`.
-          Tensor of shape :math:`(N, C, D, H, W)` .
+          Has the same data type with `input`.
+          Has the shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})` ,
+          where :math:`(D_{out}, H_{out}, W_{out})` = `output_size`
+          or :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` .
 
         - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
           `y` and int32 data type. It will output only when `return_indices` is True.
@@ -3348,7 +3352,8 @@ def l1_loss(input, target, reduction='mean'):
             "none". Default: "mean".
 
     Returns:
-        Tensor, the result of l1_loss.
+        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
+        Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -4685,8 +4690,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
-            1, & \text{ if } input > 1 \\
-            -1, & \text{ if } input < -1 \\
+            max_val, & \text{ if } input > max_val \\
+            min_val, & \text{ if } input < min_val \\
             input, & \text{ otherwise. }
         \end{cases}
 
@@ -4763,7 +4768,8 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
             The value must be greater than zero. Default: 1.0.
 
     Returns:
-        Tensor, with the same dtype and shape as `input`.
+        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `input`.
+        Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` or `target` is not a Tensor.

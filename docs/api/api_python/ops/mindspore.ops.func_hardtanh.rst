@@ -7,8 +7,8 @@ mindspore.ops.hardtanh
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
-            1, & \text{ if } input > 1 \\
-            -1, & \text{ if } input < -1 \\
+            max_val, & \text{ if } input > max_val \\
+            min_val, & \text{ if } input < min_val \\
             input, & \text{ otherwise. }
         \end{cases}
 

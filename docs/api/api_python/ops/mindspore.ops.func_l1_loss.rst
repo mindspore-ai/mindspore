@@ -29,7 +29,7 @@ mindspore.ops.l1_loss
         - **reduction** (str, optional) - 应用于loss的reduction类型。取值为"mean"，"sum"或"none"。默认值："mean"。
 
     返回：
-        Tensor，l1_loss的结果。
+        Tensor或Scalar，如果 `reduction` 为 `none` ，则返回与 `input` 具有相同shape和dtype的Tensor。否则，将返回Scalar。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
