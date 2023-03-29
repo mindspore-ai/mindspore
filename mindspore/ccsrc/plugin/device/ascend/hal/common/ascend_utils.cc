@@ -24,6 +24,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
+#include "runtime/config.h"
 #include "acl/error_codes/rt_error_codes.h"
 #ifdef ASCEND_910
 #define EXPECT_ASCEND_VERSION "ascend910"
@@ -286,6 +287,7 @@ std::string GetErrorMsg(uint32_t rt_error_code) {
 
 #if defined(ASCEND_910) || defined(ASCEND_910B)
 constexpr auto kAscnedVersion = "Ascend910";
+constexpr auto k910BAscnedVersion = "ascend910b";
 const std::map<std::string, std::string> kAscendSocVersions = {
   {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
   {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
@@ -293,6 +295,16 @@ const std::map<std::string, std::string> kAscendSocVersions = {
 
 // for unify 1980 and 1980b, when the function throw exception, it means the 910b soc version is not available.
 const bool SelectAscendPlugin = []() -> bool {
+  // for 1951, if is_heterogenous, return true
+  int32_t is_heterogenous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogenous);
+  if (is_heterogenous == 1) {
+    if (std::string(EXPECT_ASCEND_VERSION) == k910BAscnedVersion) {
+      MS_LOG(EXCEPTION) << "1980B does not want to be heterogeneous.";
+    } else {
+      return true;
+    }
+  }
   std::string soc_version = GetSocVersion();
   // if soc_version belongs to 310 or 710, return true
   if (soc_version.find(kAscnedVersion) == std::string::npos) {
