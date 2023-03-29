@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-void BiShengMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr> *kernel_info_list) {
+void BiShengMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr> *const kernel_info_list) {
   MS_LOG(INFO) << "Setting BiShengMetadataInfo.";
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);

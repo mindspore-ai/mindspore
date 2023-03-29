@@ -90,7 +90,7 @@ NodeHandle MSNewOp(ResMgrHandle res_mgr, GraphHandle graph, const char *op_type,
       auto input = GetSrcPtr<AnfNodePtr>(res_mgr, inputs[i]);
       MS_EXCEPTION_IF_NULL(input);
       if (input->isa<ParameterImpl>() && input->func_graph() != res_fg) {
-        res_fg->AddFreeVariable(input);
+        (void)res_fg->AddFreeVariable(input);
       }
       ConvertConstScalarInputToTensor(input);
       cnode_inputs.push_back(input);
@@ -345,7 +345,9 @@ NodeHandle MSNewWhile(ResMgrHandle res_mgr, GraphHandle graph, Handle cond, Grap
       MS_EXCEPTION_IF_NULL(cond_node);
       cond_raw_ptr = GetRawPtr(res_mgr, cond_node);
     } else {
-      cond_graph = MSFuncGraphCreate(res_mgr);
+      auto cond_fg = std::make_shared<FuncGraphImpl>();
+      MS_EXCEPTION_IF_NULL(cond_fg);
+      cond_graph = GetRawPtr(res_mgr, cond_fg);
       MS_EXCEPTION_IF_NULL(cond_graph);
       src_cond_graph = GetSrcPtr<FuncGraphPtr>(res_mgr, cond_graph);
       MS_EXCEPTION_IF_NULL(src_cond_graph);
@@ -466,6 +468,16 @@ BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<Abst
     }
     auto ret = info.shape_infer_func(in_shapes_arr, in_dims_arr, input_num, out_shapes_arr, out_dims_arr, output_num);
     if (ret != RET_OK) {
+      for (size_t i = 0; i < input_num; i++) {
+        delete[] in_shapes_arr[i];
+      }
+      delete[] in_shapes_arr;
+      delete[] in_dims_arr;
+      for (size_t i = 0; i < output_num; i++) {
+        delete[] out_shapes_arr[i];
+      }
+      delete[] out_shapes_arr;
+      delete[] out_dims_arr;
       MS_LOG(ERROR) << "Failed to call the shape infer function of custom op!";
       return nullptr;
     }
@@ -705,7 +717,10 @@ STATUS MSOpGetOutputShape(ResMgrHandle res_mgr, ConstNodeHandle op, int64_t shap
     auto src_cnode = GetSrcPtr<CNodePtr>(res_mgr, op);
     MS_EXCEPTION_IF_NULL(src_cnode);
     std::vector<int64_t> shape = mindspore::common::AnfAlgo::GetOutputInferShape(src_cnode, output_index);
-    std::copy(shape.begin(), shape.end(), shape_ret);
+    MS_EXCEPTION_IF_CHECK_FAIL(
+      dim >= shape.size(),
+      "Input dimension less than the actual Dimension. Please ensure shape_ret have enough space.");
+    (void)std::copy(shape.begin(), shape.end(), shape_ret);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Get Shape from OP/CNode failed. Error info: " << e.what();
     return RET_ERROR;

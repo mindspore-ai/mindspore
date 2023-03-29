@@ -152,22 +152,22 @@ STATUS MSOpSetAttrArray(ResMgrHandle res_mgr, NodeHandle op, const char *attr_na
 
   switch (data_type) {
     case MS_BOOL: {
-      std::vector<bool> vec_value(reinterpret_cast<bool *>(value), reinterpret_cast<bool *>(value) + vec_size);
+      std::vector<bool> vec_value(static_cast<bool *>(value), static_cast<bool *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
     case MS_INT32: {
-      std::vector<int32_t> vec_value(reinterpret_cast<int32_t *>(value), reinterpret_cast<int32_t *>(value) + vec_size);
+      std::vector<int32_t> vec_value(static_cast<int32_t *>(value), static_cast<int32_t *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
     case MS_INT64: {
-      std::vector<int64_t> vec_value(reinterpret_cast<int64_t *>(value), reinterpret_cast<int64_t *>(value) + vec_size);
+      std::vector<int64_t> vec_value(static_cast<int64_t *>(value), static_cast<int64_t *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
     case MS_FLOAT32: {
-      std::vector<float> vec_value(reinterpret_cast<float *>(value), reinterpret_cast<float *>(value) + vec_size);
+      std::vector<float> vec_value(static_cast<float *>(value), static_cast<float *>(value) + vec_size);
       prim->set_attr(attr_name, mindspore::MakeValue(vec_value));
       break;
     }
@@ -318,7 +318,7 @@ AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, Da
     return nullptr;
   }
 
-  // Allow empty attrbute value
+  // Allow empty attribute value
   if (value == nullptr && vec_size != 0) {
     MS_LOG(ERROR) << "Input Handle [value] is nullptr.";
     return nullptr;
@@ -327,22 +327,22 @@ AttrHandle MSNewAttrArray(ResMgrHandle res_mgr, void *value, size_t vec_size, Da
   mindspore::ValuePtr value_ptr;
   switch (data_type) {
     case MS_BOOL: {
-      std::vector<bool> vec_value(reinterpret_cast<bool *>(value), reinterpret_cast<bool *>(value) + vec_size);
+      std::vector<bool> vec_value(static_cast<bool *>(value), static_cast<bool *>(value) + vec_size);
       value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
     case MS_INT32: {
-      std::vector<int32_t> vec_value(reinterpret_cast<int32_t *>(value), reinterpret_cast<int32_t *>(value) + vec_size);
+      std::vector<int32_t> vec_value(static_cast<int32_t *>(value), static_cast<int32_t *>(value) + vec_size);
       value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
     case MS_INT64: {
-      std::vector<int64_t> vec_value(reinterpret_cast<int64_t *>(value), reinterpret_cast<int64_t *>(value) + vec_size);
+      std::vector<int64_t> vec_value(static_cast<int64_t *>(value), static_cast<int64_t *>(value) + vec_size);
       value_ptr = mindspore::MakeValue(vec_value);
       break;
     }
     case MS_FLOAT32: {
-      std::vector<float> vec_value(reinterpret_cast<float *>(value), reinterpret_cast<float *>(value) + vec_size);
+      std::vector<float> vec_value(static_cast<float *>(value), static_cast<float *>(value) + vec_size);
       value_ptr = mindspore::MakeValue(vec_value);
       break;
     }

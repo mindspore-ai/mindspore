@@ -258,7 +258,7 @@ STATUS MSFuncGraphReplace(ResMgrHandle res_mgr, GraphHandle graph, ConstNodeHand
     MS_EXCEPTION_IF_NULL(res_old_anfnode);
     auto res_new_anfnode = GetSrcPtr<AnfNodePtr>(res_mgr, new_node);
     MS_EXCEPTION_IF_NULL(res_new_anfnode);
-    manager_ptr->Replace(res_old_anfnode, res_new_anfnode);
+    (void)manager_ptr->Replace(res_old_anfnode, res_new_anfnode);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "FuncGraph replace failed. Error info: " << e.what();
     return RET_ERROR;
@@ -292,7 +292,6 @@ STATUS MSFuncGraphCompile(ResMgrHandle res_mgr, GraphHandle graph, OptPassID *op
         context_ptr->get_param<int>(mindspore::MS_CTX_EXECUTION_MODE) == mindspore::kPynativeMode) {
       backend->set_is_multi_graph_sink(false);
     }
-    // TODO(XianglongZeng): SetRunMode()
     for (size_t i = 0; i < pass_num; i++) {
       auto iter = kPassEnumToFuncMap.find(opt_pass[i]);
       if (iter == kPassEnumToFuncMap.end()) {

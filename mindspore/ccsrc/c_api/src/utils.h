@@ -24,7 +24,6 @@
 #include <nlohmann/json.hpp>
 #include "base/base.h"
 #include "base/base_ref.h"
-#include "ir/dtype/type_id.h"
 #include "c_api/src/resource_manager.h"
 #include "c_api/include/context.h"
 #include "c_api/include/node.h"
