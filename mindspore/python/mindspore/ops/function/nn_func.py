@@ -2289,7 +2289,7 @@ def softsign(x):
     return softsign_(x)
 
 
-def softmax(x, axis=-1):
+def softmax(x, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
     Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
@@ -2304,6 +2304,10 @@ def softmax(x, axis=-1):
         axis (Union[int, tuple[int]], optional): The axis to perform the Softmax operation. Default: -1.
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
 
     Returns:
         Tensor, with the same type and shape as the logits.
@@ -2327,11 +2331,13 @@ def softmax(x, axis=-1):
     if not isinstance(axis, int):
         type_axis = type(axis).__name__
         raise TypeError(f" the type of 'axis' must be 'int', but got '{axis}' with type '{type_axis}'.")
+    if dtype is not None:
+        x = ops.cast(x, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
     return softmax_(x)
 
 
-def softmin(x, axis=-1):
+def softmin(x, axis=-1, *, dtype=None):
     r"""
     Applies the Softmin operation to the input tensor on the specified axis.
     Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
@@ -2346,6 +2352,10 @@ def softmin(x, axis=-1):
         axis (Union[int, tuple[int]], optional): The axis to perform the Softmin operation. Default: -1.
         x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `x` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: None.
 
     Returns:
         Tensor, with the same type and shape as the logits.
@@ -2366,6 +2376,8 @@ def softmin(x, axis=-1):
         [0.2341  0.636  0.0862  0.01165  0.03168 ]
     """
 
+    if dtype is not None:
+        x = ops.cast(x, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(axis=axis)
     return softmax_(-x)
 

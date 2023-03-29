@@ -1,7 +1,7 @@
 mindspore.ops.softmin
 =====================
 
-.. py:function:: mindspore.ops.softmin(x, axis=-1)
+.. py:function:: mindspore.ops.softmin(x, axis=-1, *, dtype=None)
 
     在指定轴上对输入Tensor执行Softmin函数做归一化操作。假设指定轴 :math:`x` 上有切片，那么每个元素 :math:`x_i` 所对应的Softmin函数如下所示：
 
@@ -13,7 +13,10 @@ mindspore.ops.softmin
     参数：
         - **x** (Tensor) - Softmin的输入，任意维度的Tensor。其数据类型为float16或float32。
         - **axis** (Union[int, tuple[int]], 可选) - 指定Softmin操作的轴。默认值：-1。
-
+    
+    关键字参数：
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。默认值：None。
+    
     返回：
         Tensor，数据类型和shape与 `x` 相同。
 
