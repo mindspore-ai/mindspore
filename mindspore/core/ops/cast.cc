@@ -67,7 +67,7 @@ class CastInfer : public abstract::OpInferBase {
       primitive->AddAttr("DstT", dst_type);
     }
     if (x_type->isa<TensorType>()) {
-      primitive->AddAttr("DstT", x_type->cast_ptr<TensorType>()->element());
+      primitive->AddAttr("SrcT", x_type->cast_ptr<TensorType>()->element());
     } else {
       primitive->AddAttr("SrcT", x_type);
     }
