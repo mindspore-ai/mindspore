@@ -527,6 +527,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (input_args_info->is_grad_topest_cell || input_args_info->grad_order > 1) {
+    forward()->WaitForwardTask();
     if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
       MS_LOG(DEBUG) << "Make new topest graph";
       MakeNewTopGraph(input_args_info);
@@ -557,6 +558,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
 
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
+    forward()->WaitForwardTask();
     auto graph_info_cg = std::make_shared<GraphInfo>();
     top_cell()->SetGraphInfoMap(curr_g(), graph_info_cg);
     HandleInputArgsForTopCell(input_args_info, false);
@@ -760,6 +762,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   DoGradForCustomBprop(input_args_info, out_id);
   // Update bprop grad stack
   if (input_args_info->grad_is_running && !bprop_grad_stack_.empty()) {
+    forward()->WaitForwardTask();
     if (!bprop_grad_stack_.top().second) {
       auto output_node = GetInput(input_args_info->out_value, out_id);
       CheckGraphDynamic(output_node);
