@@ -922,7 +922,7 @@ def rowtensor_deduplicate_indices_slices(grad):
     values = grad.values
 
     unique_indices, index_position = P.Unique()(indices)
-    summed_values = P.UnsortedSegmentSum()(values, index_position, P.TensorShape()(unique_indices)[0])
+    summed_values = P.UnsortedSegmentSum()(values, index_position, P.Shape()(unique_indices)[0])
 
     return RowTensorInner(unique_indices, summed_values, grad.dense_shape)
 

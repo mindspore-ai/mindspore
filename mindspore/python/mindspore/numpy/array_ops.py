@@ -732,7 +732,7 @@ def where(condition, x=None, y=None):
         # Get the broadcast shape through broadcast calculation
         add_x_y = x + y
         add_out = condition + F.cast(add_x_y, condition.dtype)
-        shape_out = P.TensorShape()(add_out)
+        shape_out = P.Shape()(add_out)
         condition = ops.broadcast_to(condition, shape_out)
         x = ops.broadcast_to(x, shape_out)
         y = ops.broadcast_to(y, shape_out)

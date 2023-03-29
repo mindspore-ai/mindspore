@@ -59,14 +59,10 @@ def get_bprop_virtual_pipeline_end(self):
 def get_bprop_dynamic_resize_nearest_neighbor(self):
     """Generate bprop for DynamicResizeNearestNeighbor"""
     op = G.ResizeNearestNeighborGrad(self.align_corners)
-    tensor_shape = P.TensorShape()
     shape_op = P.Shape()
 
     def bprop(inputs, size, out, dout):
-        if F.is_sequence_value_unknown(shape_op(inputs)):
-            shp = tensor_shape(inputs)
-        else:
-            shp = shape_op(inputs)
+        shp = shape_op(inputs)
         # 2 and 3 represent the height and width
         shp = (shp[2:])
         return (op(dout, shp), zeros_like(size))

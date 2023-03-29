@@ -24,7 +24,7 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _sequence_ops as seq_op
 import mindspore as ms
-dyn_shape = P.TensorShape()
+shape_op = P.Shape()
 cast = P.Cast()
 
 
@@ -116,27 +116,6 @@ def convert_to_tensor(data):
     return False, data
 
 
-def dyn_rank(tensor):
-    """get the rank of tensor"""
-    out_rank = dyn_shape(dyn_shape(tensor))
-    return P.Reshape()(out_rank, ())
-
-
-def dyn_rank_1d(tensor):
-    """get the rank of tensor and return a 1D tensor"""
-    tensor_shape = dyn_shape(tensor)
-    return dyn_shape(tensor_shape)
-
-
-def dyn_size(tensor, dtype=mstype.int64):
-    """get the size of tensor"""
-    shape = dyn_shape(tensor)
-    shape = cast(shape, mstype.float32)
-    size = P.ReduceProd()(shape)
-    size = cast(size, dtype)
-    return size
-
-
 def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
     """create tensor by element"""
     if isinstance(ori_tuple, (tuple, list)):
@@ -146,17 +125,6 @@ def create_tensor_by_element(ori_tuple, data_type=mstype.int64):
             new_tuple.append(tuple_i)
         return P.Stack(axis=-1)(new_tuple)
     return ori_tuple
-
-
-def dyn_invert_permutation(perm):
-    """get the invert premutation of tensor"""
-    indices = P.ExpandDims()(perm, -1)
-    end = dyn_size(perm)
-    updates = P.Range()(P.Cast()(0, end.dtype), end, P.Cast()(1, end.dtype))
-    output = P.ZerosLike()(updates)
-    new_perm = P.TensorScatterUpdate()(P.Cast()(output, mstype.float32),
-                                       indices, P.Cast()(updates, mstype.float32))
-    return P.Cast()(new_perm, mstype.int32)
 
 
 def dyn_fill(value_type, shape, value):

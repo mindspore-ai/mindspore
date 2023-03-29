@@ -25,12 +25,10 @@ from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import math_ops as math
 from mindspore.ops.operations import linalg_ops as linalg
 from mindspore.ops.operations import array_ops as arrays
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
-from mindspore.ops._grad_experimental.grad_base import dyn_rank
 
 _shape = arrays.Shape()
-_dyn_shape = arrays.TensorShape()
 
 _dtype = arrays.DType()
 _cast = arrays.Cast()
@@ -51,20 +49,19 @@ def _raise_value_error(*info):
     raise ValueError(info_str)
 
 
+@_primexpr
+def _check_dim(dims):
+    if dims < 2:
+        _raise_value_error(f"To do _matrix_transpose for input a's ndim is not greater or equal to 2, which is invalid:\
+                           {dims}.")
+
+
 def _matrix_transpose(a):
     """Transpose last two axes"""
-    if F.is_sequence_value_unknown(_shape(a)):
-        dims = dyn_rank(a)
-        axes = P.Range()(P.Cast()(0, mindspore.int64), dims, P.Cast()(1, mindspore.int64))
-        axes = P.Concat(axis=-1)((axes[:-2], axes[-1:], axes[-2:-1]))
-    else:
-        dims = a.ndim
-        if dims < 2:
-            _raise_value_error(
-                "To do _matrix_transpose for input a's ndim is not greater or equal to 2, which is invalid: {}."
-                .format(dims))
-        axes = F.make_range(0, dims)
-        axes = axes[:-2] + (axes[-1],) + (axes[-2],)
+    dims = P.Rank()(a)
+    _check_dim(dims)
+    axes = F.make_range(0, dims)
+    axes = axes[:-2] + (axes[-1],) + (axes[-2],)
     return _transpose(a, axes)
 
 
@@ -86,7 +83,6 @@ def _matrix_diag(diagonal):
     """Do matrix diagnoal"""
     diagonal_shape = _shape(diagonal)
     if F.is_sequence_value_unknown(diagonal_shape):
-        diagonal_shape = _dyn_shape(diagonal)
         row = P.Cast()(diagonal_shape[-1], mindspore.int32)
         return arrays.MatrixDiagV3()(diagonal, _k_0, row, row, P.Cast()(0, _dtype(diagonal)))
 
@@ -96,12 +92,7 @@ def _matrix_diag(diagonal):
 
 def _mat_mul(x, y):
     """Do matmul"""
-    shape = _shape(x)
-    if F.is_sequence_value_unknown(shape):
-        shape = _dyn_shape(x)
-        tensor_rank = dyn_rank(x)
-    else:
-        tensor_rank = len(shape)
+    tensor_rank = P.Rank()(x)
     if tensor_rank > 2:
         return math.BatchMatMul()(x, y)
     return math.MatMul()(x, y)
@@ -125,11 +116,7 @@ def get_bprop_svd(self):
             return (da,)
 
         a_shape = _shape(a)
-        if F.is_sequence_value_unknown(a_shape):
-            a_shape = _dyn_shape(a)
-            tensor_rank = dyn_rank(a)
-        else:
-            tensor_rank = len(a_shape)
+        tensor_rank = P.Rank()(a)
         if tensor_rank < 2:
             _raise_value_error(
                 "For input a's ndim is not greater or equal to 2, which is invalid.")

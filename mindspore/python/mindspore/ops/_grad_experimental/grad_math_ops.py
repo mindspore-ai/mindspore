@@ -45,7 +45,7 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import _primexpr
-from mindspore.ops._grad_experimental.grad_base import bprop_getters, dyn_rank
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops._grad_experimental.grad_base import sum_grad_reduce_axis
 from mindspore.ops.operations.array_ops import MatrixBandPart
 from mindspore.ops.operations.array_ops import ConjugateTranspose
@@ -53,7 +53,6 @@ from mindspore.ops.functional import broadcast_gradient_args
 
 
 transpose = P.Transpose()
-dyn_shape_op = P.TensorShape()
 _conj = P.Conj()
 shape_op = P.Shape()
 reduce_sum = P.ReduceSum()
@@ -198,13 +197,8 @@ def get_bprop_matrix_solve(self):
         if grad_b_type == mstype.float64:
             grad_b = cast(grad_b, mstype.float32)
 
-        a_shape = F.shape(input_a)
-        if F.is_sequence_value_unknown(a_shape):
-            matrix_rank = dyn_rank(input_a)
-        else:
-            matrix_rank = rank(input_a)
-
         matrix_rank = rank(input_a)
+
         if adjoint:
             if matrix_rank > 2:
                 grad_a = batchmatmul(out, grad_b)
@@ -628,14 +622,11 @@ def get_bprop_cholesky_solve(self):
     neg_op = P.Neg()
     upper = self.upper
     cholesky_solve = CholeskySolve(upper=self.upper)
+    rank = P.Rank()
 
     def bprop(x1, x2, out, dout):
         flag = 0
-        shape_x1 = shape_op(x1)
-        if F.is_sequence_shape_unknown(shape_x1):
-            len_x1 = dyn_rank(x1)
-        else:
-            len_x1 = len(shape_x1)
+        len_x1 = rank(x1)
         if dout.dtype == mstype.float64:
             flag = 1
             x2 = F.cast(x2, mstype.float32)
@@ -1004,8 +995,8 @@ def dyn_binop_grad_common(x, y, dx, dy):
 
     The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
     """
-    shape_of_x = dyn_shape_op(x)
-    shape_of_y = dyn_shape_op(y)
+    shape_of_x = shape_op(x)
+    shape_of_y = shape_op(y)
     rx, ry = DynamicBroadcastGradientArgs()(shape_of_x, shape_of_y)
     dx_origin_dtype = dx.dtype
     if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
@@ -1032,8 +1023,8 @@ def dyn_binop_grad_common_with_shift(x, y, dx, dy, shift):
 
     The function is usually used in backprop op to reduce additional dimensions created by broadcasting.
     """
-    shape_of_x = dyn_shape_op(x)
-    shape_of_y = dyn_shape_op(y)
+    shape_of_x = shape_op(x)
+    shape_of_y = shape_op(y)
     broadcast_shape_of_x = shape_of_x[:-shift]
     broadcast_shape_of_y = shape_of_y[:-shift]
     rx, ry = DynamicBroadcastGradientArgs()(broadcast_shape_of_x, broadcast_shape_of_y)
