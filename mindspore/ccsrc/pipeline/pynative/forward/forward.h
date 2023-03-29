@@ -91,6 +91,7 @@ class ForwardExecutor {
   std::string device_target() const;
 
   void WorkerJoin() { forward_queue_->WorkerJoin(); }
+  void ClearForwardTask();
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
 

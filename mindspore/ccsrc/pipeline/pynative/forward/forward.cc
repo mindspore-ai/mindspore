@@ -166,9 +166,16 @@ std::string ForwardExecutor::device_target() const {
   return ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
-void ForwardExecutor::WaitForwardTask() {
-  GilReleaseWithCheck gil_release;
+void ForwardExecutor::ClearForwardTask() {
   if (forward_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
+    forward_queue_->Clear();
+  }
+}
+
+void ForwardExecutor::WaitForwardTask() {
+  if (forward_queue_ != nullptr) {
+    GilReleaseWithCheck gil_release;
     forward_queue_->Wait();
   }
 }

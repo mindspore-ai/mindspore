@@ -119,8 +119,8 @@ void AsyncQueue::Clear() {
     if (tasks_.empty()) {
       return;
     }
-    std::queue<std::shared_ptr<AsyncTask>> empty;
-    std::swap(tasks_, empty);
+
+    ClearTaskWithException();
 
     // Avoid to push task after WorkerJoin.
     if (worker_ != nullptr && worker_->joinable()) {
@@ -141,9 +141,17 @@ void AsyncQueue::Reset() {
     if (tasks_.empty()) {
       return;
     }
-    std::queue<std::shared_ptr<AsyncTask>> empty;
-    std::swap(tasks_, empty);
+
+    ClearTaskWithException();
     MS_LOG(DEBUG) << "Reset AsyncQueue";
+  }
+}
+
+void AsyncQueue::ClearTaskWithException() {
+  while (!tasks_.empty()) {
+    auto &t = tasks_.front();
+    t->SetException(std::make_exception_ptr(std::runtime_error("Clean up tasks that are not yet running")));
+    tasks_.pop();
   }
 }
 
