@@ -1452,7 +1452,7 @@ def inplace_add(x, v, indices):
 
 def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-outer-name
     """
-    Adds Tensor `updates` to specified axis and indices of Tensor `var`.
+    Adds Tensor `updates` to specified axis and indices of Tensor `var` element-wise.
 
     Args:
         var (Parameter): The input Parameter to add to, with data type uint8, int8, int16, int32,
@@ -1479,7 +1479,7 @@ def inplace_index_add(var, indices, updates, axis): # pylint: disable=redefined-
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> var = Parameter(Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32))
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> updates = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> var = ops.inplace_index_add(var, indices, updates, axis=0)
@@ -4409,7 +4409,7 @@ def fmin(input, other):
         ValueError: If the shape of  `input` and `other` can not broadcast.
 
     Supported Platforms:
-        ``CPU``
+
 
     Examples:
         >>> input = Tensor(np.array([1.0, 5.0, 3.0]), mstype.float32)
@@ -5770,11 +5770,11 @@ def bernoulli(input, p=0.5, seed=None):
         input (Tensor): Input Tensor. Data
                         type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         p (Union[Tensor, float], optional): Success probability, representing the probability of setting 1 for the
-                                            corresponding position of the current Tensor. The value of `p`
-                                            must be in the range `[0, 1]`. Default: 0.5.
+            corresponding position of the current Tensor. It has the same shape as `input`, the value of `p`
+            must be in the range `[0, 1]`. Default: 0.5.
         seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
-                                           positive integer, and -1 means using the current timestamp. Default: None,
-                                           which will be treated as 0.
+            positive integer, and -1 means using the current timestamp. Default: None,
+            which will be treated as 0.
 
     Returns:
         output (Tensor), with the same shape and type as `input` .
@@ -5785,6 +5785,7 @@ def bernoulli(input, p=0.5, seed=None):
         TypeError: If dtype of `seed` is not int or None.
         ValueError: If `p` is not in range [0, 1].
         ValueError: If `seed` is less than 0 and not -1.
+        ValueError: If `p` is a Tensor but has different shape than `input`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

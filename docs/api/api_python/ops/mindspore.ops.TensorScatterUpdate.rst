@@ -10,7 +10,7 @@
     更新的顺序是不确定的，这意味着如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
 
     输入：
-        - **input_x** (Tensor) - TensorScatterUpdate的输入，任意维度的Tensor。其数据类型为数值型。 `input_x` 的维度必须不小于indices.shape[-1]。
+        - **input_x** (Tensor) - TensorScatterUpdate的输入，任意维度的Tensor。其数据类型为数值型。 `input_x` 的维度必须不小于indices.shape[-1]。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64。其rank必须至少为2。
         - **update** (Tensor) - 指定与 `input_x` 做更新操作的Tensor，其数据类型与输入相同。:math:`update.shape = indices.shape[:-1]+input_x.shape[indices.shape[-1]:]`。
 

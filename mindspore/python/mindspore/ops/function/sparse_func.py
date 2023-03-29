@@ -703,9 +703,11 @@ def coo_add(x1: COOTensor, x2: COOTensor, thresh: Tensor) -> COOTensor:
         >>> thres = Tensor(0, dtype=mstype.int32)
         >>> out = ops.coo_add(input0, input1, thres)
         >>> print(out)
-        COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[4, 2],
-        dtype = Int64, value=[[0 0], [0 1], [1 1], [1 2]]),  values=Tensor(shape[4],
-        dtype=Int32, value=[3 1 4 2]))
+        COOTensor(shape=[3, 4], dtype=Int32, indices=Tensor(shape=[4, 2], dtype=Int64, value=
+        [[0 0]
+         [0 1]
+         [1 1]
+         [1 2]]), values=Tensor(shape=[4], dtype=Int32, value=[3 1 4 2]))
     """
     x1, x2 = promote_coo(x1, x2)
     thresh = thresh.astype(x1.dtype)

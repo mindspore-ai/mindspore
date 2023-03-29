@@ -2004,7 +2004,8 @@ def csr_atanh(x: CSRTensor) -> CSRTensor:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        x (CSRTensor): Input CSRTensor.
+        x (CSRTensor): Input CSRTensor. The shape is :math:`(N, *)` where :math:`*` means,
+            any number of additional dimensions.
             The data type should be one of the following types: float16, float32.
 
     Returns:
