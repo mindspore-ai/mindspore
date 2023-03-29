@@ -61,6 +61,11 @@ struct BufferFusionInfo_t {
   bool all_outputs_from_last_node = true;
 };
 
+struct RemoveUpdateStateInfo_t {
+  std::pair<AnfNodePtr, AnfNodePtr> origin_new_updatestate;
+  bool remove_all_inputs;
+};
+
 class FusionBasePass : public PassWithSwitch {
  public:
   FusionBasePass(const std::string &name, FusionIdAllocatorPtr idAllocator)

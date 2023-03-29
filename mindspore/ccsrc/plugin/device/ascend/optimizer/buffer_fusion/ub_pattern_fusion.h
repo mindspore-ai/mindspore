@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_UB_PATTERN_FUSION_H_
 #include <string>
 #include <map>
+#include <vector>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
@@ -39,7 +40,9 @@ class UbPatternFusion : public PassWithSwitch {
 
  private:
   void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
-                           mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
+                           mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+                           mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> *remove_updatestate_infos,
+                           std::vector<int64_t> *remove_updatestate_ids) const;
   bool ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
                        session::KernelGraph *kernel_graph) const;
   bool FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const;

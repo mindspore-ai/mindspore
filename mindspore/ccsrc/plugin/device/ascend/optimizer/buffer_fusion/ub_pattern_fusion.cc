@@ -322,8 +322,10 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   return output_idx1 < output_idx2;
 }
 
-AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const AnfNodePtr &node,
-                                     const AnfNodePtr &updatestate) {
+AnfNodePtr RemoveNodeFromUpdateState(const int64_t &fusion_id, session::KernelGraph *kernel_graph,
+                                     const AnfNodePtr &node, const AnfNodePtr &updatestate,
+                                     mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> *remove_updatestate_infos,
+                                     std::vector<int64_t> *remove_updatestate_ids) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(updatestate);
@@ -333,6 +335,7 @@ AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const A
   (void)std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
                      [node](const AnfNodePtr &input) { return node != input; });
   AnfNodePtr new_updatestate = nullptr;
+  bool remove_all_inputs = false;
   constexpr size_t updatestate_input_size = 3;
   // If there are only has one CNode in UpdateState's inputs
   // old_updatestate = UpdateState(umonad, cnode1)
@@ -341,23 +344,29 @@ AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const A
   // cnode2 = CNode2(..., umonad)
   if (new_inputs.size() < updatestate_input_size) {
     new_updatestate = updatestate_cnode->input(1);
+    remove_all_inputs = true;
   } else {
     new_updatestate = kernel_graph->NewCNode(new_inputs);
   }
   MS_EXCEPTION_IF_NULL(new_updatestate);
   new_updatestate->set_scope(updatestate->scope());
   new_updatestate->set_abstract(updatestate->abstract());
+  (*remove_updatestate_infos)[fusion_id] = {{updatestate, new_updatestate}, remove_all_inputs};
+  (void)(*remove_updatestate_ids).push_back(fusion_id);
   return new_updatestate;
 }
 
 void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
-                                  mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                  mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+                                  mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> *remove_updatestate_infos,
+                                  std::vector<int64_t> *remove_updatestate_ids) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto manager = kernel_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
+    auto &fusion_id = buffer_fusion_info.first;
     auto &fusion_info = buffer_fusion_info.second;
     fusion_info.all_outputs_from_last_node = true;
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
@@ -369,7 +378,8 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
           // Do not think of updatestate as real output,
           // Ensuring normal fusion requires eliminating the node of the updatestate
           if (common::AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {
-            auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, use_node.first);
+            auto new_updatestate = RemoveNodeFromUpdateState(fusion_id, kernel_graph, node, use_node.first,
+                                                             remove_updatestate_infos, remove_updatestate_ids);
             (void)manager->Replace(use_node.first, new_updatestate);
             continue;
           }
@@ -385,7 +395,8 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
         auto users = manager->node_users()[node];
         for (auto &user : users) {
           if (common::AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
-            auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, user.first);
+            auto new_updatestate = RemoveNodeFromUpdateState(fusion_id, kernel_graph, node, user.first,
+                                                             remove_updatestate_infos, remove_updatestate_ids);
             (void)manager->Replace(user.first, new_updatestate);
             continue;
           }
@@ -503,13 +514,15 @@ bool CheckCircle(const session::KernelGraph &kernel_graph, const BufferFusionInf
 }
 }  // namespace
 
-void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
-                                          mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
+void UbPatternFusion::GetBufferFusionInfo(
+  session::KernelGraph *kernel_graph, mindspore::HashMap<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+  mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> *remove_updatestate_infos,
+  std::vector<int64_t> *remove_updatestate_ids) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
   GetFusionScopeInputNodeList(*kernel_graph, buffer_fusion_infos);
-  GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos);
+  GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos, remove_updatestate_infos, remove_updatestate_ids);
   SetOutputUsedNumAttr(*kernel_graph, *buffer_fusion_infos);
 
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
@@ -525,9 +538,13 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
 
 bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto manager = kernel_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   bool change = false;
   mindspore::HashMap<int64_t, BufferFusionInfo_t> buffer_fusion_infos;
-  GetBufferFusionInfo(kernel_graph, &buffer_fusion_infos);
+  mindspore::HashMap<int64_t, RemoveUpdateStateInfo_t> remove_updatestate_infos;
+  std::vector<int64_t> remove_updatestate_ids;
+  GetBufferFusionInfo(kernel_graph, &buffer_fusion_infos, &remove_updatestate_infos, &remove_updatestate_ids);
 
   std::vector<mindspore::kernel::FusionScopeInfo> fusion_scope_infos;
   (void)std::transform(buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
@@ -546,11 +563,30 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
                   << ", outputs list size: " << buffer_fusion_info.second.outputs_list.size();
     fusion_ids.insert(buffer_fusion_info.first);
   }
+  std::vector<int64_t> fusion_ids_order(remove_updatestate_ids.crbegin(), remove_updatestate_ids.crend());
+  (void)std::for_each(fusion_ids.begin(), fusion_ids.end(), [&remove_updatestate_ids, &fusion_ids_order](int64_t id) {
+    if (std::find(remove_updatestate_ids.begin(), remove_updatestate_ids.end(), id) == remove_updatestate_ids.end()) {
+      (void)fusion_ids_order.push_back(id);
+    }
+  });
   // Replace fusion op from return to head
-  for (auto &fusion_id : fusion_ids) {
+  for (auto &fusion_id : fusion_ids_order) {
     // Get kernel mod when supporting tbe
     if (id_names.find(fusion_id) == id_names.end()) {
       MS_LOG(DEBUG) << "Fusion id: " << fusion_id << ", fusion op compiling failed";
+      if (remove_updatestate_infos.count(fusion_id) != 0) {
+        const auto &origin_updatestate_node = remove_updatestate_infos[fusion_id].origin_new_updatestate.first;
+        const auto &new_updatestate_node = remove_updatestate_infos[fusion_id].origin_new_updatestate.second;
+        bool remove_all_inputs = remove_updatestate_infos[fusion_id].remove_all_inputs;
+        if (remove_all_inputs) {
+          std::vector<AnfNodePtr> origin_updatestate_inputs = {
+            NewValueNode(std::make_shared<Primitive>(prim::kPrimUpdateState->name())), origin_updatestate_node};
+          auto origin_updatestate = kernel_graph->NewCNode(origin_updatestate_inputs);
+          (void)manager->Replace(new_updatestate_node, origin_updatestate);
+        } else {
+          (void)manager->Replace(new_updatestate_node, origin_updatestate_node);
+        }
+      }
       continue;
     }
     if (CheckCircle(*kernel_graph, buffer_fusion_infos[fusion_id])) {
