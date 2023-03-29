@@ -4102,10 +4102,10 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             but with one dimension equal to 1, or same shape as the x but with one fewer dimension
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
-            the constant term will be :math:`const = 0.5*log(2\pi)`. Default: False.
+            the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
         eps (float, optional): Used to improve the stability of log function must be greater than 0. Default: 1e-6.
         reduction (str, optional): Apply specific reduction method to the
-            output: "none", "mean", or "sum". Default: "mean".
+            output: ``"none"``, ``"mean"``, or ``"sum"``. Default: ``"mean"``.
 
     Returns:
         Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
