@@ -61,7 +61,7 @@ inline bool CompareIndices(const int64_t *a, const int64_t *b, const size_t &len
 template <typename T>
 inline void CopyIndicesAndValue(int64_t *dst_indices_addr, T *dst_values_addr, const int64_t *src_indices_addr,
                                 const T *src_values_addr, const size_t &indices_size) {
-  memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  (void)memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
   *dst_values_addr = *src_values_addr;
 }
 
@@ -71,7 +71,7 @@ inline int64_t Partition(int64_t *__restrict indices_addr, T *__restrict values_
   int64_t i = left, j = right;
   T tmp_values = 0;
   const size_t indices_size = indices_len * sizeof(int64_t);
-#define INDICES_OFFSET_ADDR(addr, index, len) addr + index *len
+#define INDICES_OFFSET_ADDR(addr, index, len) (addr) + (index) * (len)
 
   CopyIndicesAndValue(tmp_indices, &tmp_values, INDICES_OFFSET_ADDR(indices_addr, left, indices_len),
                       values_addr + left, indices_size);
@@ -93,7 +93,7 @@ inline int64_t Partition(int64_t *__restrict indices_addr, T *__restrict values_
 }
 
 template <typename T>
-void QuickSortIndicesAndValues(int64_t *__restrict indices_addr, T *__restrict values_addr, const size_t indices_len,
+void QuickSortIndicesAndValues(int64_t *__restrict indices_addr, T *__restrict values_addr, const size_t &indices_len,
                                const int64_t &left, const int64_t &right) {
   std::stack<int64_t> index_stk;
   index_stk.emplace(right);

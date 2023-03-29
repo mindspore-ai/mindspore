@@ -89,6 +89,8 @@ bool LgammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
     return LaunchKernel<Eigen::half, Eigen::half>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float, float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    return LaunchKernel<double, double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32) {
     return LaunchKernel<int32_t, float>(inputs, outputs);
   } else {
@@ -98,6 +100,7 @@ bool LgammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
 std::vector<KernelAttr> LgammaCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
     KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
