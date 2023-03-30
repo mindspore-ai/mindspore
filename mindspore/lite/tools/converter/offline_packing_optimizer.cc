@@ -236,8 +236,12 @@ STATUS MatmulPacking(const mindspore::CNodePtr &cnode_ptr, const FuncGraphPtr &f
   op_parameter->thread_num_ = kSingleThread;
   op_parameter->quant_type_ = GetQuantType(cnode_ptr);
 
-  (void)snprintf(op_parameter->name_, cnode_ptr->fullname_with_scope().length() + 1, "%s",
-                 cnode_ptr->fullname_with_scope().c_str());
+  constexpr size_t max_name_len = 100;
+  if (memcpy_s(op_parameter->name_, max_name_len, cnode_ptr->fullname_with_scope().c_str(),
+               cnode_ptr->fullname_with_scope().length()) != EOK) {
+    MS_LOG(ERROR) << "Set op parameter name failed.";
+    return RET_ERROR;
+  }
 
   std::vector<Tensor *> in_tensors;
   std::vector<Tensor *> out_tensors;
