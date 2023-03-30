@@ -71,6 +71,7 @@ int BiasAddGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   if (format == kOpFormat_NHWC) {
     data_format_ = kOpFormat_NHWC;
+    pos = dy_shape.size() - 1;
   }
   bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
   constexpr size_t four_4D = 4;
