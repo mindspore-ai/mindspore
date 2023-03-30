@@ -143,9 +143,9 @@ void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
     const auto &location = GetLocation(node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
-    MS_LOG(WARNING) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                    << ". FuncGraph: " << func_graph->ToString()
-                    << ". We will add a 'return None' statement automatically.";
+    MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                 << ". FuncGraph: " << func_graph->ToString()
+                 << ". We will add a 'return None' statement automatically.";
     // If the def function has no return statement, mean that return none.
     auto none_node = NewValueNode(kNone);
     auto return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
@@ -665,9 +665,9 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     const auto &location = GetLocation(node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
-    MS_LOG(WARNING) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                    << ". FuncGraph: " << current_fg->ToString()
-                    << ". We will add a 'return None' statement automatically.";
+    MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
+                 << ". FuncGraph: " << current_fg->ToString()
+                 << ". We will add a 'return None' statement automatically.";
     auto none_node = NewValueNode(kNone);
     auto return_node = current_fg->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
     current_fg->set_return(return_node);
