@@ -2982,7 +2982,7 @@ def prelu(x, weight):
     return prelu_(x, weight)
 
 
-def rrelu(x, lower=1 / 8, upper=1 / 3):
+def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
     r"""
 
     Randomized Leaky ReLU activation function.
@@ -2990,8 +2990,8 @@ def rrelu(x, lower=1 / 8, upper=1 / 3):
     The activation function is defined as:
 
     .. math::
-        \text{rrelu}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
-        {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
+        \text{rrelu}(input_{ji}) = \begin{cases}input_{ji}, &\text{if } input_{ji} \geq 0; \cr
+        {\alpha_{ji}} * input_{ji}, &\text{otherwise.}\end{cases}
 
     where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
@@ -2999,18 +2999,18 @@ def rrelu(x, lower=1 / 8, upper=1 / 3):
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     Args:
-        x  (Tensor): The input of rrelu is a Tensor of any dimension.
+        input  (Tensor): The input of rrelu is a Tensor of any dimension.
         lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
         upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
 
     Returns:
-        Tensor, after rrelu, has the same type and shape as the `x`.
+        Tensor, after rrelu, has the same type and shape as the `input`.
 
     Raises:
         TypeError: If `lower` is not a float or an int.
         TypeError: If `upper` is not a float or an int.
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `x` is not a Tensor of mindspore.float16 or mindpore.float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `input` is not a Tensor of mindspore.float16 or mindpore.float32.
         ValueError: If `lower` is greater than upper.
 
     Supported Platforms:
@@ -3030,14 +3030,15 @@ def rrelu(x, lower=1 / 8, upper=1 / 3):
     if lower > upper:
         raise ValueError(f"For 'ops.rrelu', the value of `upper` must be greater than `lower`, "
                          f"but got upper: {upper}, lower: {lower}. ")
-    size = x.shape
-    sign_matrix = _get_cache_prim(P.Sign)()(x)
+    size = input.shape
+    sign_matrix = _get_cache_prim(P.Sign)()(input)
     negative_filter = sign_matrix.clip(None, 0)
     positive_filter = sign_matrix.clip(0, None)
-    mask = _get_cache_prim(P.Cast)()(Tensor(np.random.uniform(lower, upper, size=size)), _get_cache_prim(P.DType)()(x))
+    dtype = _get_cache_prim(P.DType)()(input)
+    mask = _get_cache_prim(P.Cast)()(Tensor(np.random.uniform(lower, upper, size=size)), dtype)
     negative_mask = negative_filter * mask * -1
     total_mask = negative_mask + positive_filter
-    out = total_mask * x
+    out = total_mask * input
     return out
 
 
