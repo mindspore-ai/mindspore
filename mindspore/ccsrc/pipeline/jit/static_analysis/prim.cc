@@ -2834,16 +2834,13 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto prim = prim::kPrimRaise;
     prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
     const auto raise_error_node =
-      cur_graph->NewCNode({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
-    cur_graph->ReplaceInOrder(node, raise_error_node);
+      cur_graph->NewCNodeInOrder({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
 
     // Avoid entering the Evaluator process multiple times.
     raise_error_node->set_user_data("__raise_flag__", std::make_shared<bool>(true));
     raise_error_node->set_debug_info(node->debug_info());
 
     // Set isolated side effect flag for raise node.
-    const auto &manager = cur_graph->manager();
-    manager->Replace(node, raise_error_node);
     raise_error_node->set_has_side_effect_node(true);
     cur_graph->set_has_side_effect_node(true);
     MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
