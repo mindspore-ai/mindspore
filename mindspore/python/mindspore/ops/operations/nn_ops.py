@@ -10413,7 +10413,7 @@ class MaxPoolWithArgmaxV2(Primitive):
         TypeError: If `ceil_mode` is not bool.
 
     Supported Platforms:
-        ``CPU`` ``GPU`` ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
