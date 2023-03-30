@@ -41,7 +41,7 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
     switch (sub_str[i]) {
       case colon_delim:
         if (i != 0 && angle_bracket_left == angle_bracket_right) {
-          id_vec->emplace_back(sub_str.substr(begin, i - begin));
+          (void)id_vec->emplace_back(sub_str.substr(begin, i - begin));
           begin = i + 1;
           angle_bracket_left = 0;
           angle_bracket_right = 0;
@@ -58,7 +58,7 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
     }
   }
   if (angle_bracket_left == angle_bracket_right) {
-    id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
+    (void)id_vec->emplace_back(sub_str.substr(begin, sub_str_size - begin));
   }
 }
 }  // namespace
@@ -170,7 +170,7 @@ void TopCellInfo::Clear() {
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const {
   auto &graph_info = graph_info_map().at(g);
   MS_EXCEPTION_IF_NULL(graph_info);
-  graph_info->input_params.erase(id);
+  (void)graph_info->input_params.erase(id);
   MS_LOG(DEBUG) << "TopCell:graph_info_map erase input_params " << id;
 }
 

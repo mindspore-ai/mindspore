@@ -319,7 +319,7 @@ void Common::ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph) {
     bprop_graph->AddValueNode(v_node);
     MS_LOG(DEBUG) << "Replace " << forward_node->DebugString() << " by value node " << v_node;
     auto converted_node = ConvertValueSequenceToMakeTuple(v_node, bprop_graph);
-    tr.Replace(forward_node, converted_node);
+    (void)tr.Replace(forward_node, converted_node);
   }
   tr.Commit();
   bprop_graph->ClearUsedForwardNodes();

@@ -350,8 +350,8 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool need_renor
 void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
                        VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
-  std::transform(input_vec.begin(), input_vec.end(), std::back_inserter(*arg_list),
-                 [](const ValuePtr &v) { return v; });
+  (void)std::transform(input_vec.begin(), input_vec.end(), std::back_inserter(*arg_list),
+                       [](const ValuePtr &v) { return v; });
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -809,7 +809,7 @@ void GradExecutor::AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   async_executor_->Push(task);
 }
 
-void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) {
+void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const {
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (!input_args_info->has_custom_bprop || input_args_info->custom_bprop_cell_count != 0) {
     return;
@@ -1155,7 +1155,8 @@ void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const 
   }
 }
 
-void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) {
+void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
+                                        const FuncGraphPtr &bprop_graph) const {
   MS_EXCEPTION_IF_NULL(bprop_graph);
   const auto &bprop_params = bprop_graph->parameters();
   // bprop_params include inputs, parameters and sens, should be more than inputs size

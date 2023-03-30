@@ -211,7 +211,7 @@ class AutoGradCellImpl {
   void SetOutput(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr);
   AnfNodePtr GetGradNodeByIndex(const AnfNodePtr &grad_node) const;
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
-  AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple);
+  AnfNodePtr GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights, bool weight_param_is_tuple) const;
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
