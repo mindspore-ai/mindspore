@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/shape_mul_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -52,7 +51,7 @@ int ShapeMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 }
 
 template <typename T>
-bool ShapeMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ShapeMulCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &outputs) {
   int64_t *input_addr = GetDeviceAddress<int64_t>(inputs, 0);
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);

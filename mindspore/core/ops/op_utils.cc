@@ -755,7 +755,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
   }
   int64_t index_positive_value = index_int64_value >= 0 ? index_int64_value : index_int64_value + SizeToLong(nelems);
   if (index_positive_value < 0 || index_positive_value >= SizeToLong(nelems)) {
-    MS_EXCEPTION(ValueError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
+    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << index_int64_value << " to set out of range: [-"
                              << nelems << "," << (nelems - 1) << "].";
   }
   size_t index_unsigned_value = LongToSize(index_positive_value);

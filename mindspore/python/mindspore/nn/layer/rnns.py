@@ -22,6 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as P
 import mindspore.context as context
 import mindspore.common.dtype as mstype
+from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
