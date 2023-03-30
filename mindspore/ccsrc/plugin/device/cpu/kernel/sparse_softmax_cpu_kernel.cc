@@ -51,7 +51,7 @@ inline bool CompareIndices(const I *a, const I *b, const size_t &len) {
 template <typename I, typename T>
 inline void CopyIndicesAndValue(I *dst_indices_addr, T *dst_values_addr, const I *src_indices_addr,
                                 const T *src_values_addr, const size_t &indices_size) {
-  memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  (void)memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
   *dst_values_addr = *src_values_addr;
 }
 
@@ -61,7 +61,7 @@ inline int64_t Partition(I *__restrict indices_addr, T *__restrict values_addr, 
   int64_t i = left, j = right;
   T tmp_values = 0;
   const size_t indices_size = indices_len * sizeof(I);
-#define INDICES_OFFSET_ADDR(addr, index, len) addr + index *len
+#define INDICES_OFFSET_ADDR(addr, index, len) (addr) + (index) * (len)
 
   CopyIndicesAndValue(tmp_indices, &tmp_values, INDICES_OFFSET_ADDR(indices_addr, left, indices_len),
                       values_addr + left, indices_size);
@@ -84,12 +84,11 @@ inline int64_t Partition(I *__restrict indices_addr, T *__restrict values_addr, 
 }  // namespace
 
 template <typename I, typename T>
-void SparseSoftmaxCpuKernelMod::QuickSortIndicesAndValues(I *__restrict indices_addr, T *__restrict values_addr,
-                                                          const int64_t &left, const int64_t &right) {
+void QuickSortIndicesAndValues(I *__restrict indices_addr, T *__restrict values_addr, const size_t &indices_len,
+                               const int64_t &left, const int64_t &right) {
   std::stack<int64_t> index_stk;
   index_stk.emplace(right);
   index_stk.emplace(left);
-  const size_t indices_len = shape_size_;
   I *indices_buff = new I[indices_len];
 
   while (!index_stk.empty()) {
@@ -182,7 +181,7 @@ bool SparseSoftmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   std::vector<size_t> index_values;
   std::vector<size_t> visited;
 
-  QuickSortIndicesAndValues(indices_addr, values_addr, 0, SizeToLong(values_size_) - 1);
+  QuickSortIndicesAndValues(indices_addr, values_addr, shape_size_, 0, SizeToLong(values_size_) - 1);
 
   for (size_t i = 0; i < values_size_; ++i) {
     visited.push_back(0);
