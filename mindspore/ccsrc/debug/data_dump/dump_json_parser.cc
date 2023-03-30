@@ -99,6 +99,23 @@ bool DumpJsonParser::IsDumpEnabled() {
   return true;
 }
 
+void DumpJsonParser::PyNativeModeCheck() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      op_debug_mode_ == static_cast<uint32_t>(DUMP_ALL)) {
+    MS_LOG(EXCEPTION) << "Dump is not supported in PyNative mode, it only support overflow check. Please set "
+                         "op_debug_mode to 1 or 2 or 3 in PyNative mode.";
+  }
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
+    MS_LOG(EXCEPTION) << "Cell dump is only supported in GRAPH mode. Please set dump_mode to 0 or 1 in PyNative mode.";
+  }
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode && iteration_ != "all") {
+    MS_LOG(EXCEPTION) << "Iteration is only supported 'all' in PyNative mode, Please set iteration value to 'all'.";
+  }
+}
+
 /*
  * Feature group: Dump.
  * Target device group: Ascend, GPU and CPU.
@@ -144,6 +161,7 @@ void DumpJsonParser::Parse() {
 
   ParseE2eDumpSetting(j);
   ParseCommonDumpSetting(j);
+  PyNativeModeCheck();
   JudgeDumpEnabled();
 }
 
