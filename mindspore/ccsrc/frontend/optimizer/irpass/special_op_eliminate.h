@@ -620,7 +620,8 @@ class FloatDependGCall : public AnfVisitor {
     // as IsCNodeDup had checked the size of inputs must be greater or equal than 1, so no check here.
     if (IsPrimitiveCNode(inputs[0], prim::kPrimDepend)) {
       auto &depend_inputs = inputs[0]->cast<CNodePtr>()->inputs();
-      if (depend_inputs.size() != 3) {
+      constexpr auto number_three = 3;
+      if (depend_inputs.size() != number_three) {
         return nullptr;
       }
       // put {Y, Xs} to new_inputs;

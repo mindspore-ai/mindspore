@@ -201,8 +201,14 @@ void SetDumpFlag(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
     return;
   }
   auto attr = prim->GetAttr(kAttrDump);
-  if (attr != nullptr && attr->isa<StringImm>() && attr->cast_ptr<StringImm>()->value() == kValueTrue) {
-    bprop_fg->set_flag(FUNC_GRAPH_FLAG_DUMP, true);
+  if (attr != nullptr) {
+    if (attr->isa<StringImm>()) {
+      auto str_attr = attr->cast_ptr<StringImm>();
+      MS_EXCEPTION_IF_NULL(str_attr);
+      if (str_attr->value() == kValueTrue) {
+        bprop_fg->set_flag(FUNC_GRAPH_FLAG_DUMP, true);
+      }
+    }
   }
 }
 
@@ -510,7 +516,9 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
   if (cnode == users.end()) {
     MS_LOG(EXCEPTION) << "Fail to find cnode.";
   }
-  auto inputs_num = cnode->first->cast_ptr<CNode>()->size() - 1;
+  auto cnode_first = cnode->first->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(cnode_first);
+  auto inputs_num = cnode_first->size() - 1;
 
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
@@ -551,7 +559,9 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
   if (cnode == users.end()) {
     MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
-  auto inputs_num = cnode->first->cast_ptr<CNode>()->inputs().size() - 1;
+  auto cnode_first = cnode->first->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(cnode_first);
+  auto inputs_num = cnode_first->size() - 1;
   auto effect_info = GetPrimEffectInfo(prim);
   // Don't add U or IO monad parameters as it will be added later.
   size_t monad_params_size = 0;
