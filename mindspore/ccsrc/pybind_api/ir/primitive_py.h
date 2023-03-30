@@ -125,5 +125,38 @@ class PrimitivePyAdapter {
   std::vector<Signature> signatures_;
   std::map<int, py::function> backward_hook_fn_;
 };
+
+/// \brief OpPrimPyRegister defines the singleton to save primitivepy which has no attrs.
+class OpPrimPyRegister {
+ public:
+  /// \brief Destructor of OpPrimPyRegister.
+  ~OpPrimPyRegister() {}
+
+  /// \brief Get the OpPrimPyRegister singleton.
+  ///
+  /// \return The OpPrimPyRegister singleton.
+  static OpPrimPyRegister &GetInstance() {
+    static OpPrimPyRegister instance;
+    return instance;
+  }
+
+  /// \brief Get PrimPyMap of the OpPrimPyRegister singleton.
+  ///
+  /// \return The PrimPyMap of the OpPrimPyRegister singleton.
+  const HashMap<std::string, ValuePtr> &GetPrimPyMap() { return primpy_map_; }
+
+  /// \brief Add an element into the PrimPyMap of the OpPrimPyRegister singleton.
+  ///
+  /// param[in] name The operator name.
+  /// param[in] primpy The primitivepy of the operator.
+  void SetPrimPyMap(const std::string &name, const ValuePtr &primpy) { primpy_map_[name] = primpy; }
+
+  /// \brief Clear the PrimPyMap before the pyobject destroyed.
+  void Clear() { primpy_map_.clear(); }
+
+ private:
+  OpPrimPyRegister() {}
+  HashMap<std::string, ValuePtr> primpy_map_;  // op_name, primpy
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_

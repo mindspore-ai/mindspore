@@ -1328,7 +1328,16 @@ REG_BPROP_BUILDER("Cast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto t = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto x_dtype = ib->GetDtype(x);
-  auto dx = ib->Cast(dout, x_dtype);
+  NodePtr dx;
+  if (dout->abstract()->isa<abstract::AbstractRowTensor>()) {
+    auto row_tensor_values = ib->Emit("RowTensorGetValues", {dout});
+    auto value = ib->Cast(row_tensor_values, x_dtype);
+    auto indices = ib->Emit("RowTensorGetIndices", {dout});
+    auto dense_shape = ib->Emit("RowTensorGetDenseShape", {dout});
+    dx = ib->Emit("MakeRowTensor", {indices, value, dense_shape});
+  } else {
+    dx = ib->Cast(dout, x_dtype);
+  }
   return {dx, ib->ZerosLike(t)};
 });
 
