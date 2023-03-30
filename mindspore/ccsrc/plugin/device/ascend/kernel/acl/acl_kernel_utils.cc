@@ -99,7 +99,7 @@ AclOpDesc::AclOpDesc(const std::string &op_type, const AnfNodePtr &anf_node_ptr)
 AclOpDesc::~AclOpDesc() {
   aclopDestroyAttr(acl_attr_);
   if (attr_to_input_ != nullptr) {
-    aclrtFreeHost(attr_to_input_);
+    (void)aclrtFreeHost(attr_to_input_);
     attr_to_input_ = nullptr;
   }
   for (auto *input_desc : input_tensor_desc_) {

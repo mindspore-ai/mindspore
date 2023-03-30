@@ -41,11 +41,11 @@ AnfNodePtr BuildCallInline(const PatternMap &m, const AnfNodePtr &) {
 }
 
 void ReselectCallInlineFormat::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddSeqVar(kXs).AddCNode(call_inline, {prim::kPrimCallInline, kXs});
+  (void)(*src_pattern).AddSeqVar(kXs).AddCNode(call_inline, {prim::kPrimCallInline, kXs});
 }
 
 void ReselectCallInlineFormat::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(new_call_inline, {prim::kPrimCallInline, kXs}, BuildCallInline);
+  (void)(*dst_pattern).AddCNode(new_call_inline, {prim::kPrimCallInline, kXs}, BuildCallInline);
 }
 }  // namespace opt
 }  // namespace mindspore

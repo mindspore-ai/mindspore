@@ -48,8 +48,8 @@ const AnfNodePtr QuantDTypeCastAdjust::Process(const FuncGraphPtr &func_graph, c
   MS_LOG(DEBUG) << cnode->fullname_with_scope() << " run QuantDTypeCastAdjust pass.";
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
-  primitive->DelAttr("format");
-  primitive->DelAttr("infer_done");
+  (void)primitive->DelAttr("format");
+  (void)primitive->DelAttr("infer_done");
   std::vector<std::string> cnode_output_format = {AnfAlgo::GetOutputFormat(cnode, 0)};
   if (!cnode_output_format.empty() && cnode_output_format.at(0) == "FRACTAL_NZ") {
     auto param_node = cnode->input(1)->cast<ParameterPtr>();

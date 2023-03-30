@@ -32,7 +32,7 @@ void AsyncEventManager::NotifyWait(void *notify_param, const uint32_t param_len)
   }
 }
 
-bool AsyncEventManager::GenTaskInfoFromCtx(AsyncTaskInfo *task_info) {
+bool AsyncEventManager::GenTaskInfoFromCtx(AsyncTaskInfo *task_info) const {
   if (task_info == nullptr) {
     AICPU_LOGE("AsyncEventManager GenTaskInfoFromCtx failed, task_info is nullptr.");
     return false;

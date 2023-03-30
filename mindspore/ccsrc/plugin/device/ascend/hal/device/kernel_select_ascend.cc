@@ -1335,7 +1335,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
     std::map<size_t, std::string> input_to_attr_info;
     if (kernel::GetAicpuOpInputToAttrInfo(kernel_node, &input_to_attr_info) &&
         !common::AnfAlgo::IsDynamicShape(kernel_node)) {
-      ConvertConstInputToAttr(kernel_node, input_to_attr_info);
+      (void)ConvertConstInputToAttr(kernel_node, input_to_attr_info);
     }
 
     FallbackOps(kernel_node);
