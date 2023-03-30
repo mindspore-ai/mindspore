@@ -3000,8 +3000,8 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
 
     Args:
         input  (Tensor): The input of rrelu is a Tensor of any dimension.
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
-        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0/8.
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1.0/3.
 
     Returns:
         Tensor, after rrelu, has the same type and shape as the `input`.
