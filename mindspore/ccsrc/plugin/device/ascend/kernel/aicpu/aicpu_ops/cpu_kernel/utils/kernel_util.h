@@ -213,8 +213,8 @@ inline bool ShapeVectorIsSame(const std::vector<int64_t> &shape, const std::vect
   if (shape.size() != check_shape.size()) {
     return false;
   } else {
-    for (size_t idx = 0; idx < shape.size(); ++idx) {
-      if (shape[idx] != check_shape[idx]) {
+    for (size_t index = 0; index < shape.size(); ++index) {
+      if (shape[index] != check_shape[index]) {
         return false;
       }
     }

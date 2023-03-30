@@ -51,16 +51,16 @@ int TileSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 template <typename T>
 bool TileSizeCpuKernelMod::LaunchKernel(const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs,
-                                        const std::vector<AddressPtr> &workspace) {
-  const auto shape_addr = reinterpret_cast<T *>(inputs[0]->GetData()->addr);
-  const auto out_shape_addr = reinterpret_cast<T *>(inputs[1]->GetData()->addr);
-  const auto ndim_addr = reinterpret_cast<T *>(inputs[2]->GetData()->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->GetData()->addr);
-  auto output_size = outputs[0]->GetData()->size;
+                                        const std::vector<AddressPtr> &) const {
+  const auto shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->GetData()->addr);
+  const auto out_shape_addr = reinterpret_cast<T *>(inputs[kIndex1]->GetData()->addr);
+  const auto ndim_addr = reinterpret_cast<T *>(inputs[kIndex2]->GetData()->addr);
+  auto output_addr = reinterpret_cast<T *>(outputs[kIndex0]->GetData()->addr);
+  auto output_size = outputs[kIndex0]->GetData()->size;
 
   std::vector<T> out(*ndim_addr, 1);
-  auto shape_size = SizeOf(input_shapes_[0]);
-  auto out_shape_size = SizeOf(input_shapes_[1]);
+  auto shape_size = SizeOf(input_shapes_[kIndex0]);
+  auto out_shape_size = SizeOf(input_shapes_[kIndex1]);
   auto it_num = std::min(shape_size, out_shape_size);
 
   for (size_t i = 0; i < it_num; i++) {
