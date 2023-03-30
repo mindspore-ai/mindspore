@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "mindspore/core/ops/bias_add.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bias_add_nhwc.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -77,6 +78,9 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
                                               "NC4HW4",  "NCDHW", "NWC",  "NCW",   "NDHWC", "NC8HW8"};
 
  private:
+  template <typename T>
+  bool ComputeNHWC(const T *src_addr, const T *bias_addr, T *output_addr, const size_t num_value,
+                   const size_t num_bias);
   BiasAddLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, BiasAddLaunchFunc>> func_list_;
   cudnnHandle_t cudnn_handle_;
@@ -84,7 +88,11 @@ class BiasAddGpuKernelMod : public NativeGpuKernelMod {
   cudnnTensorDescriptor_t x_desc_;
   cudnnTensorDescriptor_t b_desc_;
   cudnnOpTensorDescriptor_t op_desc_;
+  void *cuda_stream_{nullptr};
   bool is_null_input_;
+  std::string format_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> bias_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
