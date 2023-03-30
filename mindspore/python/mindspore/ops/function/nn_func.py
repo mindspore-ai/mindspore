@@ -4388,7 +4388,7 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
         where :math:`group` is the Args parameter.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If `group` is not an int.
@@ -5445,7 +5445,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         ValueError: If rank of `weight` is not 1 or  rank of `target` is not 1 or `input` is not 2.
 
     Supported Platforms:
-        ``Ascend``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> inputs = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
