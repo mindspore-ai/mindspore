@@ -382,8 +382,8 @@ bool ParseAction(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "Object to parse " << std::string(py::str(input)) << " is not function or cell.";
   }
   if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
-    std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
-                  [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
+    (void)std::for_each(top_graph->parameters().begin(), top_graph->parameters().end(),
+                        [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
   }
   parse::Parser::UpdateTopFuncGraph(top_graph);
 
