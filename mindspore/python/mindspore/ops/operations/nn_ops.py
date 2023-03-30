@@ -1909,6 +1909,7 @@ class MaxPool3D(Primitive):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", pad_list=0, ceil_mode=None, data_format="NCDHW"):
+        super(MaxPool3D, self).__init__("MaxPool3D")
         """Initialize MaxPool3D."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
@@ -2682,6 +2683,7 @@ class NLLLoss(Primitive):
 
     @prim_attr_register
     def __init__(self, reduction="mean"):
+        super(NLLLoss, self).__init__("NLLLoss")
         """Initialize NLLLoss"""
         self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss', 'total_weight'])
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
@@ -3632,6 +3634,7 @@ class ResizeBilinear(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, size, align_corners=False, half_pixel_centers=False):
+        super(ResizeBilinear, self).__init__("ResizeBilinear")
         """Initialize ResizeBilinear."""
         validator.check_value_type("size", size, [tuple, list], self.name)
         validator.check_equal_int(len(size), 2, "size len", self.name)
@@ -7698,6 +7701,7 @@ class Conv3D(Primitive):
                  dilation=1,
                  group=1,
                  data_format="NCDHW"):
+        super(Conv3D, self).__init__("Conv3D")
         """Initialize Conv3D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
@@ -7810,6 +7814,7 @@ class Conv3DBackpropInput(Primitive):
                  dilation=1,
                  group=1,
                  data_format="NCDHW"):
+        super(Conv3DBackpropInput, self).__init__("Conv3DBackpropInput")
         """Initialize Conv3DBackpropInput"""
         self.init_prim_io_names(inputs=['filter', 'out_backprop', 'input_size'], outputs=['y'])
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
