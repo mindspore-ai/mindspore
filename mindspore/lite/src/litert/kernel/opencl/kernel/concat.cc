@@ -244,7 +244,7 @@ std::string ConcatOpenCLKernel::GenCode() {
   }
   code << "__write_only image2d_t output\n) {\n";
 
-  if (axis_ == 3 && !Align_) {
+  if (axis_ == kNHWC_C && !Align_) {
     code << "int X = get_global_id(0);\n"
          << "int Y = get_global_id(1);\n"
          << "if (X >= " << out_shape[CLIDX_X] * out_shape[CLIDX_Y] << " || Y >= " << out_shape[CLIDX_Z]
