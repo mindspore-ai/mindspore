@@ -40,19 +40,10 @@ bool Dilation2DBackpropInputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
                                                const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Dilation2DBackpropInput>(base_operator);
   kernel_name_ = kernel_ptr->name();
-
-  i_input_shape_ = inputs[kInputIndexi]->GetShapeVector();
-  i_filter_shape_ = inputs[kFilterIndexi]->GetShapeVector();
-  i_out_backprop_shape_ = inputs[kBackpropIndexi]->GetShapeVector();
-  i_output_shape_ = outputs[kOutputIndexi]->GetShapeVector();
-
   stride_ = kernel_ptr->get_stride();
   dilation_ = kernel_ptr->get_dilation();
   pad_mode_ = kernel_ptr->get_pad_mode();
   format_ = kernel_ptr->get_format();
-
-  (void)CheckKernelParam();
-
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
@@ -73,6 +64,11 @@ int Dilation2DBackpropInputCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (ret != 0) {
     return ret;
   }
+  i_input_shape_ = inputs[kInputIndexi]->GetShapeVector();
+  i_filter_shape_ = inputs[kFilterIndexi]->GetShapeVector();
+  i_out_backprop_shape_ = inputs[kBackpropIndexi]->GetShapeVector();
+  i_output_shape_ = outputs[kOutputIndexi]->GetShapeVector();
+  (void)CheckKernelParam();
   return KRET_OK;
 }
 
