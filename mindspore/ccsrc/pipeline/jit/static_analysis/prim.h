@@ -91,14 +91,14 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
   ValuePtr RunImpl(const ValuePtrList &args) const;
 
   // If eval_value_ is False, return broadened arguments.
-  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override {
+  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const override {
     if (!eval_value_) {
-      AbstractBasePtrList broadened_args_spec_list;
-      (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened_args_spec_list),
+      AbstractBasePtrList broadened_args_abs_list;
+      (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(broadened_args_abs_list),
                            [](const AbstractBasePtr &arg) -> AbstractBasePtr { return arg->Broaden(); });
-      return broadened_args_spec_list;
+      return broadened_args_abs_list;
     }
-    return args_spec_list;
+    return args_abs_list;
   }
 
  private:
@@ -166,7 +166,7 @@ class ConstexprEvaluator : public TransitionPrimEvaluator {
       : TransitionPrimEvaluator("ConstexprEvaluator"), prim_py_(primitive) {}
   ~ConstexprEvaluator() override = default;
   MS_DECLARE_PARENT(ConstexprEvaluator, TransitionPrimEvaluator)
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 
  private:
@@ -178,7 +178,7 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
   MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}
   ~MakeTupleEvaluator() override = default;
   MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 };
 
@@ -187,7 +187,7 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
   MakeListEvaluator() : TransitionPrimEvaluator("MakeListEvaluator") {}
   ~MakeListEvaluator() override = default;
   MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 };
 

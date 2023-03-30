@@ -292,12 +292,12 @@ bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!common::IsEqual(fn_, other_partial.fn_)) {
     return false;
   }
-  if (args_spec_list_.size() != other_partial.args_spec_list_.size()) {
+  if (args_abs_list_.size() != other_partial.args_abs_list_.size()) {
     return false;
   }
-  for (size_t i = 0; i < args_spec_list_.size(); ++i) {
-    const auto &a = args_spec_list_[i];
-    const auto &b = other_partial.args_spec_list_[i];
+  for (size_t i = 0; i < args_abs_list_.size(); ++i) {
+    const auto &a = args_abs_list_[i];
+    const auto &b = other_partial.args_abs_list_[i];
     if (a != nullptr && a->isa<AbstractFunction>()) {
       if (!common::IsEqual(a, b)) {
         return false;
@@ -317,7 +317,7 @@ std::size_t PartialAbstractClosure::hash() const {
   }
   MS_EXCEPTION_IF_NULL(fn_);
   auto hash_value = hash_combine(tid(), fn_->hash());
-  for (const auto &arg : args_spec_list_) {
+  for (const auto &arg : args_abs_list_) {
     if (arg != nullptr && arg->isa<AbstractFunction>()) {
       hash_value = hash_combine(hash_value, arg->hash());
     } else {
@@ -335,7 +335,7 @@ std::string PartialAbstractClosure::ToString() const {
   }
   std::ostringstream buffer;
   buffer << "PartialAbstractClosure(" << fn_->ToString() << "(";
-  for (const auto &arg : args_spec_list_) {
+  for (const auto &arg : args_abs_list_) {
     buffer << (arg == nullptr ? "<null>" : arg->ToString()) << ", ";
   }
   buffer << "))";
@@ -347,7 +347,7 @@ std::string PartialAbstractClosure::ToString(bool verbose) const {
     return ToString();
   }
   std::ostringstream buffer;
-  buffer << type_name() << "(" << fn_->ToString(false) << " (argc=" << args_spec_list_.size() << "))";
+  buffer << type_name() << "(" << fn_->ToString(false) << " (argc=" << args_abs_list_.size() << "))";
   return buffer.str();
 }
 
@@ -411,20 +411,20 @@ bool VirtualAbstractClosure::operator==(const AbstractFunction &other) const {
   if (!common::IsEqual(output_, other_virtual.output_)) {
     return false;
   }
-  return AbstractBasePtrListDeepEqual(args_spec_list_, other_virtual.args_spec_list_);
+  return AbstractBasePtrListDeepEqual(args_abs_list_, other_virtual.args_abs_list_);
 }
 
 std::size_t VirtualAbstractClosure::hash() const {
   MS_EXCEPTION_IF_NULL(output_);
   auto hash_value = hash_combine(tid(), output_->hash());
-  return hash_combine(hash_value, AbstractBasePtrListHash(args_spec_list_));
+  return hash_combine(hash_value, AbstractBasePtrListHash(args_abs_list_));
 }
 
 std::string VirtualAbstractClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "VirtualAbstractClosure(args: {";
   int64_t i = 0;
-  for (const auto &arg : args_spec_list_) {
+  for (const auto &arg : args_abs_list_) {
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<AbstractFuncAtom>()) {
       // If the arg is a subclass of AbstractFuncAtom, a recursive dead loop may occur.
@@ -456,7 +456,7 @@ bool TypedPrimitiveAbstractClosure::operator==(const AbstractFunction &other) co
   if (!common::IsEqual(output_, other_typed.output_)) {
     return false;
   }
-  return AbstractBasePtrListDeepEqual(args_spec_list_, other_typed.args_spec_list_);
+  return AbstractBasePtrListDeepEqual(args_abs_list_, other_typed.args_abs_list_);
 }
 
 std::size_t TypedPrimitiveAbstractClosure::hash() const {
@@ -469,7 +469,7 @@ std::size_t TypedPrimitiveAbstractClosure::hash() const {
   if (output_ != nullptr) {
     hash_value = hash_combine(hash_value, output_->hash());
   }
-  hash_value = hash_combine(hash_value, AbstractBasePtrListHash(args_spec_list_));
+  hash_value = hash_combine(hash_value, AbstractBasePtrListHash(args_abs_list_));
   return hash_value;
 }
 
@@ -481,7 +481,7 @@ std::string TypedPrimitiveAbstractClosure::ToString() const {
   }
   std::ostringstream buffer;
   buffer << "TypedPrimitiveAbstractClosure: primitive: " << prim_->name() << "(args: {";
-  for (const auto &arg : args_spec_list_) {
+  for (const auto &arg : args_abs_list_) {
     buffer << (arg == nullptr ? "<null>" : arg->ToString()) << ", ";
   }
   MS_EXCEPTION_IF_NULL(output_);

@@ -132,41 +132,41 @@ AbstractBasePtr BroadcastGradientArgsDiff(const std::vector<ValuePtr> &x_shape, 
 }
 
 AbstractBasePtr InferImplTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                const AbstractBasePtrList &args_spec_list) {
+                                const AbstractBasePtrList &args_abs_list) {
   // Inputs: a pointer to an AbstractBase object
-  if (args_spec_list.size() != 1) {
+  if (args_abs_list.size() != 1) {
     MS_LOG(EXCEPTION) << "The Typeof operator must requires 1 argument, but the size of arguments is "
-                      << args_spec_list.size() << ".";
+                      << args_abs_list.size() << ".";
   }
-  AbstractBasePtr abs_base = args_spec_list[0];
+  AbstractBasePtr abs_base = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(abs_base);
   TypePtr type = abs_base->BuildType();
   return std::make_shared<AbstractType>(type);
 }
 
 AbstractBasePtr InferImplTopTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inputs: a pointer to an AbstractBase object
-  if (args_spec_list.size() != 1) {
+  if (args_abs_list.size() != 1) {
     MS_LOG(EXCEPTION) << "The Typeof operator must requires 1 argument, but the size of arguments is "
-                      << args_spec_list.size() << ".";
+                      << args_abs_list.size() << ".";
   }
-  AbstractBasePtr abs_base = args_spec_list[0];
+  AbstractBasePtr abs_base = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(abs_base);
   TypeId type_id = abs_base->BuildType()->type_id();
   return std::make_shared<AbstractType>(TypeIdToType(type_id));
 }
 
 AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
+                               const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (args_spec_list.empty()) {
+  if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION) << "The lower must has one input at least.";
   }
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  auto input = args_spec_list[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  auto input = args_abs_list[0]->BuildValue();
   if (input == nullptr || !input->isa<StringImm>()) {
-    auto type = args_spec_list[0]->BuildType();
+    auto type = args_abs_list[0]->BuildType();
     MS_EXCEPTION(TypeError) << "Function lower should be call using a string type but got:" << type->ToString();
   }
   auto str = input->cast<StringImmPtr>()->value();
@@ -176,13 +176,13 @@ AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &pr
 }
 
 AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
+                                 const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Inputs: a pointer to an AbstractBase object and a pointer to a Type
   const std::string op_name = primitive->name();
   const size_t args_num = 2;
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  AbstractTypePtr abs_type = CheckArg<AbstractType>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_num);
+  AbstractTypePtr abs_type = CheckArg<AbstractType>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(abs_type);
   auto mode_v = abs_type->GetValueTrack();
   MS_EXCEPTION_IF_NULL(mode_v);
@@ -191,8 +191,8 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
   }
 
   auto tmpMode = mode_v->cast<TypePtr>();
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  bool v = IsSubtype(args_spec_list[0], tmpMode);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  bool v = IsSubtype(args_abs_list[0], tmpMode);
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
 }
 
@@ -335,14 +335,14 @@ bool CheckCmpValid(const AbstractBasePtr &cmp) {
 }
 
 AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr size_t args_num = 2;
-  CheckArgsSize(primitive->name(), args_spec_list, args_num);
+  CheckArgsSize(primitive->name(), args_abs_list, args_num);
   py::gil_scoped_acquire gil;
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  auto x = args_spec_list[0];
-  auto cmp = args_spec_list[1];
+  auto x = args_abs_list[0];
+  auto cmp = args_abs_list[1];
   bool result = false;
 
   if (!CheckCmpValid(cmp)) {
@@ -474,16 +474,16 @@ AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValueP
 }
 
 AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_spec_list) {
+                                               const AbstractBasePtrList &args_abs_list) {
   // this primitive get the index that need to reduce
   // input: x's shape and y's shape, inputs should be tuple
   // output: tuple of x and y 's reduce index, reduce index should be a tuple
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   const size_t inputs_size = 2;
-  CheckArgsSize(op_name, args_spec_list, inputs_size);
-  auto arg_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  auto arg_y = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, inputs_size);
+  auto arg_x = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
+  auto arg_y = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
 
   auto arg_x_value = arg_x->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(arg_x_value);
@@ -510,17 +510,17 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
 }
 
 AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   // Inputs: a fn, a list and an object of a subclass of a AbstractBase.
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   const size_t inputs_size = 3;
-  CheckArgsSize(op_name, args_spec_list, inputs_size);
-  AbstractFunctionPtr fn = CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
-  AbstractListPtr lst = CheckArg<AbstractList>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, inputs_size);
+  AbstractFunctionPtr fn = CheckArg<AbstractFunction>(op_name, args_abs_list, 0);
+  AbstractListPtr lst = CheckArg<AbstractList>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(lst);
-  AbstractBasePtr dflt = args_spec_list[2];
+  AbstractBasePtr dflt = args_abs_list[2];
 
   AbstractBasePtr list_type = AbstractJoin(lst->elements());
   auto result1 = engine->Execute(fn, lst->elements());
@@ -533,12 +533,12 @@ AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const Primi
 }
 
 AbstractBasePtr InferImplTupleReversed(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tuple
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTuplePtr input = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractTuplePtr input = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(input);
   auto tuple_elements = input->elements();
   AbstractBasePtrList elem_list;
@@ -548,39 +548,39 @@ AbstractBasePtr InferImplTupleReversed(const AnalysisEnginePtr &, const Primitiv
 }
 
 AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: x_shape, axis
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   constexpr size_t arg_size = 2;
-  CheckArgsSize(op_name, args_spec_list, arg_size);
-  AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, arg_size);
+  AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(shape_x);
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
+  MS_EXCEPTION_IF_NULL(args_abs_list[1]);
 
   auto x_shp_value = shape_x->BuildValue();
   if (x_shp_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString()
+    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_abs_list[1]->ToString()
                       << ".";
   }
 
   // Axis can be scalar, tuple or list
   AbstractSequencePtr axis = nullptr;
-  if (args_spec_list[1]->isa<AbstractScalar>()) {
+  if (args_abs_list[1]->isa<AbstractScalar>()) {
     MS_LOG(DEBUG) << op_name << " evaluator second parameter is scalar.";
-    AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_spec_list[1])};
+    AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_abs_list[1])};
     axis = std::make_shared<AbstractTuple>(axis_list);
-  } else if (args_spec_list[1]->isa<AbstractSequence>()) {
+  } else if (args_abs_list[1]->isa<AbstractSequence>()) {
     MS_LOG(DEBUG) << "The type of second argument of ReduceShape operator is sequence.";
-    axis = args_spec_list[1]->cast<AbstractSequencePtr>();
+    axis = args_abs_list[1]->cast<AbstractSequencePtr>();
   } else {
     MS_LOG(EXCEPTION) << "The second argument of ReduceShape operator should be a scalar or tuple or list, "
-                      << "but got " << args_spec_list[1]->ToString() << ".";
+                      << "but got " << args_abs_list[1]->ToString() << ".";
   }
 
   auto axis_value = axis->BuildValue();
   if (axis_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_spec_list[1]->ToString()
+    MS_LOG(EXCEPTION) << "The ReduceShape operator's data field can't be anything: " << args_abs_list[1]->ToString()
                       << ".";
   }
   auto axis_value_ptr = axis_value->cast<ValueSequencePtr>();
@@ -589,14 +589,14 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
+                                  const AbstractBasePtrList &args_abs_list) {
   // Inputs: two tuples.
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   constexpr size_t arg_size = 2;
-  CheckArgsSize(op_name, args_spec_list, arg_size);
-  AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  AbstractTuplePtr div_shp = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, arg_size);
+  AbstractTuplePtr shape_x = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
+  AbstractTuplePtr div_shp = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(shape_x);
   MS_EXCEPTION_IF_NULL(div_shp);
   MS_LOG(INFO) << "The shape of dividend:" << shape_x->ToString() << ", the shape of divisor:" << div_shp->ToString();
@@ -605,14 +605,14 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
   MS_EXCEPTION_IF_NULL(div_shp_value);
   if (div_shp_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
-                      << args_spec_list[0]->ToString() << ".";
+                      << args_abs_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_x_value);
   if (shape_x_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
-                      << args_spec_list[1]->ToString() << ".";
+                      << args_abs_list[1]->ToString() << ".";
   }
 
   if (div_shp->size() != shape_x->size()) {
@@ -659,11 +659,11 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 }
 
 AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tuple
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTuplePtr input = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractTuplePtr input = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(input);
   py::tuple data_tuple = ValueToPyData(input->BuildValue());
   py::array data = py::array(data_tuple);
@@ -675,14 +675,14 @@ AbstractBasePtr InferImplTuple2Array(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   auto op_name = primitive->name();
   constexpr auto slice_getitem_input_size = 2;
-  CheckArgsSize(op_name, args_spec_list, slice_getitem_input_size);
-  AbstractSlicePtr slice_abs = CheckArg<AbstractSlice>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, slice_getitem_input_size);
+  AbstractSlicePtr slice_abs = CheckArg<AbstractSlice>(op_name, args_abs_list, 0);
   const std::map<std::string, AbstractBasePtr> result_map = {
     {kSliceStart, slice_abs->start()}, {kSliceStop, slice_abs->stop()}, {kSliceStep, slice_abs->step()}};
-  auto slice_attr = args_spec_list[1]->BuildValue();
+  auto slice_attr = args_abs_list[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(slice_attr);
   if (!slice_attr->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "The second argument of SliceGetItem operator should be a string, but got "
@@ -697,21 +697,21 @@ AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const Primitive
 }
 
 AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inputs: three scalars whose value is an int32 number.
   constexpr auto make_slice_input_size = 3;
-  CheckArgsSize(primitive->name(), args_spec_list, make_slice_input_size);
-  size_t args_size = args_spec_list.size();
+  CheckArgsSize(primitive->name(), args_abs_list, make_slice_input_size);
+  size_t args_size = args_abs_list.size();
   AbstractBasePtrList slice_args;
   for (size_t index = 0; index < args_size; index++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[index]);
-    if (args_spec_list[index]->isa<AbstractNone>()) {
-      slice_args.push_back(args_spec_list[index]);
-    } else if (args_spec_list[index]->isa<AbstractScalar>()) {
-      ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
+    MS_EXCEPTION_IF_NULL(args_abs_list[index]);
+    if (args_abs_list[index]->isa<AbstractNone>()) {
+      slice_args.push_back(args_abs_list[index]);
+    } else if (args_abs_list[index]->isa<AbstractScalar>()) {
+      ValuePtr scalar_value = args_abs_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
       if (scalar_value->isa<IntegerImm>() || scalar_value == kValueAny) {
-        slice_args.push_back(args_spec_list[index]);
+        slice_args.push_back(args_abs_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
         slice_args.push_back(scalar_index->ToAbstract());
@@ -721,8 +721,8 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
         MS_EXCEPTION(TypeError) << "Slice indices must be integers or bool. But got a " << type->ToString()
                                 << " number.";
       }
-    } else if (args_spec_list[index]->isa<AbstractTensor>()) {
-      auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();
+    } else if (args_abs_list[index]->isa<AbstractTensor>()) {
+      auto arg = args_abs_list[index]->cast<AbstractTensorPtr>();
       TypePtr tensor_dtype = arg->element()->BuildType();
       auto build_value = arg->BuildValue();
       MS_EXCEPTION_IF_NULL(build_value);
@@ -747,11 +747,11 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
                                   << tensor_dtype->ToString();
         }
       } else {
-        slice_args.push_back(args_spec_list[index]);
+        slice_args.push_back(args_abs_list[index]);
       }
     } else {
       MS_EXCEPTION(TypeError) << "The " << index << "th input of MakeSlice operator should be scalar, none or tensor, "
-                              << "but got " << args_spec_list[index]->ToString() << ".";
+                              << "but got " << args_abs_list[index]->ToString() << ".";
     }
   }
   // Slice: start, end, step
@@ -763,26 +763,26 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   // Inputs: any value;
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  return args_spec_list[0]->Clone();
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  return args_abs_list[0]->Clone();
 }
 
 AbstractBasePtr InferImplDictLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListOrDictLen<AbstractDictionary>(primitive->name(), args_spec_list);
+                                 const AbstractBasePtrList &args_abs_list) {
+  return InferTupleOrListOrDictLen<AbstractDictionary>(primitive->name(), args_abs_list);
 }
 
 AbstractBasePtr InferImplJ(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const AbstractBasePtrList &args_spec_list) {
+                           const AbstractBasePtrList &args_abs_list) {
   // args: An object of AbstractFunction.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  MS_LOG(DEBUG) << "evaluate J: " << args_spec_list[0]->ToString();
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  MS_LOG(DEBUG) << "evaluate J: " << args_abs_list[0]->ToString();
 
-  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_abs_list[0]);
   if (x == nullptr) {
-    return std::make_shared<AbstractJTagged>(args_spec_list[0]);
+    return std::make_shared<AbstractJTagged>(args_abs_list[0]);
   }
 
   AbstractFuncAtomPtrList jv;
@@ -796,12 +796,12 @@ AbstractBasePtr InferImplJ(const AnalysisEnginePtr &, const PrimitivePtr &primit
 }
 
 AbstractBasePtr InferImplTaylor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
+                                const AbstractBasePtrList &args_abs_list) {
   // args: An object of AbstractFunction.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  MS_LOG(DEBUG) << "evaluate Taylor: " << args_spec_list[0]->ToString();
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  MS_LOG(DEBUG) << "evaluate Taylor: " << args_abs_list[0]->ToString();
 
-  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_abs_list[0]);
   MS_EXCEPTION_IF_NULL(x);
 
   AbstractFuncAtomPtrList taylor_v;
@@ -815,13 +815,13 @@ AbstractBasePtr InferImplTaylor(const AnalysisEnginePtr &, const PrimitivePtr &p
 }
 
 AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
+                               const AbstractBasePtrList &args_abs_list) {
   // Inputs: func, in_axes, out_axes, device, level.
   constexpr size_t shard_input_size = 5;
-  CheckArgsSize(primitive->name(), args_spec_list, shard_input_size);
-  MS_LOG(DEBUG) << "Evaluate Shard: " << args_spec_list[0]->ToString();
+  CheckArgsSize(primitive->name(), args_abs_list, shard_input_size);
+  MS_LOG(DEBUG) << "Evaluate Shard: " << args_abs_list[0]->ToString();
 
-  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_abs_list[0]);
   MS_EXCEPTION_IF_NULL(x);
 
   AbstractFuncAtomPtrList shard_v;
@@ -835,10 +835,10 @@ AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &pr
 }
 
 AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_spec_list) {
+                              const AbstractBasePtrList &args_abs_list) {
   // args: An object of AbstractFunction.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  auto fn_arg = args_spec_list[0];
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  auto fn_arg = args_abs_list[0];
   MS_LOG(DEBUG) << "Evaluate Vmap: " << fn_arg->ToString() << ".";
 
   AbstractFuncAtomPtrList vmap_v;
@@ -872,18 +872,18 @@ AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &pri
 }
 
 AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  return args_spec_list[0]->Broaden();
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  return args_abs_list[0]->Broaden();
 }
 
-void GetStringAndNumberFromAbstract(const std::string &op_name, const AbstractBasePtrList &args_spec_list,
+void GetStringAndNumberFromAbstract(const std::string &op_name, const AbstractBasePtrList &args_abs_list,
                                     std::string *str, int64_t *num) {
   constexpr size_t args_num = 2;
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
-  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_num);
+  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
+  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_abs_list, 1);
   ValuePtr value_x = scalar_x->BuildValue();
   ValuePtr value_y = scalar_y->BuildValue();
 
@@ -914,12 +914,12 @@ void GetStringAndNumberFromAbstract(const std::string &op_name, const AbstractBa
 }
 
 AbstractBasePtr InferImplStringMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inputs: a string and an integer.
   std::string str;
   int64_t num = 0;
   const std::string op_name = primitive->name();
-  GetStringAndNumberFromAbstract(op_name, args_spec_list, &str, &num);
+  GetStringAndNumberFromAbstract(op_name, args_abs_list, &str, &num);
   std::string res;
   // If num is less than or equal to 0, return an empty string.
   if (num > 0) {
@@ -931,12 +931,12 @@ AbstractBasePtr InferImplStringMul(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 AbstractBasePtr InferImplStringGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a string and an integer.
   std::string str;
   int64_t num = 0;
   const std::string op_name = primitive->name();
-  GetStringAndNumberFromAbstract(op_name, args_spec_list, &str, &num);
+  GetStringAndNumberFromAbstract(op_name, args_abs_list, &str, &num);
   int64_t len = SizeToLong(str.length());
   if (num >= len || num < -len) {
     MS_LOG(EXCEPTION) << "String index out of range, expect:[" << -len << ", " << (len - 1) << "], but got " << num
@@ -1007,23 +1007,23 @@ AbstractBasePtr SetAdapterFlag(const std::string &op_name, const AbstractBasePtr
 }
 
 AbstractBasePtr InferImplConvertToAdapterTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const AbstractBasePtrList &args_spec_list) {
+                                                const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor.
   constexpr size_t args_num = 1;
   constexpr size_t input_index = 0;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  return SetAdapterFlag(op_name, args_spec_list[input_index], true);
+  CheckArgsSize(op_name, args_abs_list, args_num);
+  return SetAdapterFlag(op_name, args_abs_list[input_index], true);
 }
 
 AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
+                                           const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor.
   constexpr size_t args_num = 1;
   constexpr size_t input_index = 0;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, args_num);
-  return SetAdapterFlag(op_name, args_spec_list[input_index], false);
+  CheckArgsSize(op_name, args_abs_list, args_num);
+  return SetAdapterFlag(op_name, args_abs_list[input_index], false);
 }
 
 #ifndef _MSC_VER

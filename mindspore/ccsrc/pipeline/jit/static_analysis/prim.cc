@@ -1924,12 +1924,12 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 }
 }  // namespace
 
-EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   // Consider all primitive implemented python infer() real use the tuple/list arguments.
-  CheckSequenceArgumentForPythonPrimitive(prim_py_, args_spec_list);
+  CheckSequenceArgumentForPythonPrimitive(prim_py_, args_abs_list);
   MS_EXCEPTION_IF_NULL(prim_py_);
-  auto py_args = PreparePyInputs(args_spec_list);
+  auto py_args = PreparePyInputs(args_abs_list);
   prim_py_->BeginRecordAddAttr();
   py::dict output = prim_py_->RunInfer(py_args);
   prim_py_->EndRecordAddAttr();
@@ -1967,7 +1967,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   }
   // If all inputs are constant value, use python prim evaluator.
   // Ensure input arguments are evaluated.
-  auto res_abstract = EvalUndeterminedArgs(args_spec_list);
+  auto res_abstract = EvalUndeterminedArgs(args_abs_list);
   if (res_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
     return res_abstract;
@@ -1975,7 +1975,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   auto forbid_reuse = prim_py_->HasAttr(GRAPH_FLAG_FORBID_REUSE_RESULT);
   if (!forbid_reuse) {
     // Try to get infer result from evaluator cache.
-    EvalResultPtr eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+    EvalResultPtr eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
     if (eval_result != nullptr) {
       return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
     }
@@ -1985,7 +1985,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
   auto res_abs = PyInferRes2Abstract(prim_py_, output);
   MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
   EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
-  evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
+  evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
   return eval_result;
 }
 

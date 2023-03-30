@@ -370,7 +370,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
   }
 }
 
-FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
+FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_abs_list) {
   FuncGraphPtr ptr_graph = std::make_shared<FuncGraph>();
   ptr_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ptr_graph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
@@ -384,24 +384,24 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
     i = 1;
   }
 
-  std::size_t size = args_spec_list.size();
+  std::size_t size = args_abs_list.size();
   for (; i < size; ++i) {
-    argmap.push_back(std::make_pair(ptr_graph->add_parameter(), args_spec_list[i]));
+    argmap.push_back(std::make_pair(ptr_graph->add_parameter(), args_abs_list[i]));
   }
 
   ptr_graph->set_output(Make(ptr_graph, ptrFnArg, argmap));
   return ptr_graph;
 }
 
-abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
+abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {
   if (fn_leaf_ == nullptr) {
-    if (args_spec_list.empty()) {
+    if (args_abs_list.empty()) {
       MS_LOG(EXCEPTION) << "The size of arguments in list should not be empty. But the size of arguments is 0.";
     }
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+    MS_EXCEPTION_IF_NULL(args_abs_list[0]);
     // Assert that hypermap's function param does not contain free variables
-    if (args_spec_list[0]->isa<FuncGraphAbstractClosure>()) {
-      auto graph_func = dyn_cast<FuncGraphAbstractClosure>(args_spec_list[0]);
+    if (args_abs_list[0]->isa<FuncGraphAbstractClosure>()) {
+      auto graph_func = dyn_cast<FuncGraphAbstractClosure>(args_abs_list[0]);
       auto func_graph = graph_func->func_graph();
       if (func_graph->parent() != nullptr) {
         MS_LOG(EXCEPTION) << "HyperMap don't support Closure with free variable yet.";
@@ -410,7 +410,7 @@ abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList 
   }
 
   AbstractBasePtrList broadened;
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(broadened),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          return arg->Broaden();
@@ -418,8 +418,8 @@ abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList 
   return broadened;
 }
 
-FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  int64_t tuple_size = SizeToLong(args_spec_list.size());
+FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  int64_t tuple_size = SizeToLong(args_abs_list.size());
 
   std::ostringstream ss;
   // ▶make_tuple_
@@ -462,8 +462,8 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   return fg;
 }
 
-FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  int64_t list_size = SizeToLong(args_spec_list.size());
+FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  int64_t list_size = SizeToLong(args_abs_list.size());
 
   std::ostringstream ss;
   // ▶make_list_
@@ -506,9 +506,9 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   return fg;
 }
 
-FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   constexpr size_t input_size = 2;
-  CheckArgsSize("MakeDict", args_spec_list, input_size);
+  CheckArgsSize("MakeDict", args_abs_list, input_size);
   std::ostringstream ss;
   // ▶make_dict_
   ss << "\u25B8make_dict_" << input_size;
@@ -536,10 +536,10 @@ FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   std::vector<AnfNodePtr> grads{NewValueNode(prim::kPrimMakeTuple)};
   (void)grads.emplace_back(NewEnviron(bprop));
 
-  auto abs0_tuple = dyn_cast_ptr<AbstractTuple>(args_spec_list[0]);
+  auto abs0_tuple = dyn_cast_ptr<AbstractTuple>(args_abs_list[0]);
   if (abs0_tuple == nullptr) {
     MS_LOG(EXCEPTION) << "The first input of make_dict should be a tuple, but got abstract: "
-                      << args_spec_list[0]->ToString();
+                      << args_abs_list[0]->ToString();
   }
   // Add gradients of keys tuple and values tuple.
   std::vector<AnfNodePtr> keys_grads_inputs{NewValueNode(kPrimMakeTuple)};
@@ -563,8 +563,8 @@ FuncGraphPtr MakeDictGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   return fg;
 }
 
-FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  int64_t args_size = SizeToLong(args_spec_list.size());
+FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  int64_t args_size = SizeToLong(args_abs_list.size());
   constexpr auto py_execute_grad_input_count = 3;
   constexpr auto op_name = "PyExecuteGradient";
   if (args_size < py_execute_grad_input_count) {
@@ -602,7 +602,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   // Propagate for script string.
   (void)grads.emplace_back(params[1]);
   // Propagate for local dict keys.
-  const auto &local_key_args = dyn_cast<abstract::AbstractTuple>(args_spec_list[1]);
+  const auto &local_key_args = dyn_cast<abstract::AbstractTuple>(args_abs_list[1]);
   MS_EXCEPTION_IF_NULL(local_key_args);
   std::vector<AnfNodePtr> keys;
   (void)keys.emplace_back(NewValueNode(prim::kPrimMakeTuple));
@@ -621,7 +621,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   (void)grads.emplace_back(bprop->NewCNodeInOrder(keys));
   // Propagate for local dict values.
   constexpr auto values_arg_num = 2;
-  const auto &local_value_args = dyn_cast<abstract::AbstractTuple>(args_spec_list[values_arg_num]);
+  const auto &local_value_args = dyn_cast<abstract::AbstractTuple>(args_abs_list[values_arg_num]);
   MS_EXCEPTION_IF_NULL(local_value_args);
   std::vector<AnfNodePtr> values;
   (void)values.emplace_back(NewValueNode(prim::kPrimMakeTuple));
@@ -640,14 +640,14 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   (void)grads.emplace_back(bprop->NewCNodeInOrder(values));
 
   // Add gradients for extra monad.
-  for (size_t i = py_execute_grad_input_count; i < args_spec_list.size(); ++i) {
-    if (args_spec_list[i]->isa<abstract::AbstractUMonad>()) {
+  for (size_t i = py_execute_grad_input_count; i < args_abs_list.size(); ++i) {
+    if (args_abs_list[i]->isa<abstract::AbstractUMonad>()) {
       (void)grads.emplace_back(NewValueNode(kUMonad));
-    } else if (args_spec_list[i]->isa<abstract::AbstractIOMonad>()) {
+    } else if (args_abs_list[i]->isa<abstract::AbstractIOMonad>()) {
       (void)grads.emplace_back(NewValueNode(kIOMonad));
     } else {
       MS_LOG(EXCEPTION) << "The extra input of " << op_name << " should be UMonad or IOMonad, but got "
-                        << args_spec_list[i]->ToString();
+                        << args_abs_list[i]->ToString();
     }
   }
 
@@ -660,10 +660,10 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   return fg;
 }
 
-FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr MutableGradient::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   constexpr size_t min_input_size = 1;
   constexpr size_t max_input_size = 2;
-  auto input_size = args_spec_list.size();
+  auto input_size = args_abs_list.size();
   if (input_size != min_input_size && input_size != max_input_size) {
     MS_LOG(EXCEPTION) << "The number of input to mutable must be " << min_input_size << " or " << max_input_size
                       << ", but got: " << input_size;
@@ -881,32 +881,32 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
   MS_LOG(EXCEPTION) << "'tail_type_' is not for GradOperation, but " << tail_type_;
 }
 
-FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   // To handle normal tail.
-  if (args_spec_list.size() < 1) {
-    MS_LOG(EXCEPTION) << "'Tail' requires at least 1 argument, but got " << args_spec_list.size();
+  if (args_abs_list.size() < 1) {
+    MS_LOG(EXCEPTION) << "'Tail' requires at least 1 argument, but got " << args_abs_list.size();
   }
   if (tail_type_ >= kNotGrad) {
-    AbstractSequencePtr sequence_arg = dyn_cast<AbstractSequence>(args_spec_list[0]);
+    AbstractSequencePtr sequence_arg = dyn_cast<AbstractSequence>(args_abs_list[0]);
     if (sequence_arg == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple or list, but got " << args_spec_list[0]->ToString();
+      MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple or list, but got " << args_abs_list[0]->ToString();
     }
     return GenerateTailFuncGraph(sequence_arg);
   }
 
   // To handle for GradOperation tail.
   constexpr size_t args_max_size = 2;
-  if (args_spec_list.size() > args_max_size) {
-    MS_LOG(EXCEPTION) << "'Tail' requires at most 2 arguments for GradOperation, but got " << args_spec_list.size();
+  if (args_abs_list.size() > args_max_size) {
+    MS_LOG(EXCEPTION) << "'Tail' requires at most 2 arguments for GradOperation, but got " << args_abs_list.size();
   }
-  AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_spec_list[0]);
+  AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_abs_list[0]);
   if (tuple_arg == nullptr) {
-    MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple, but got " << args_spec_list[0]->ToString();
+    MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple, but got " << args_abs_list[0]->ToString();
   }
-  if (args_spec_list.size() == args_max_size) {
-    AbstractTuplePtr pos = dyn_cast<AbstractTuple>(args_spec_list[1]);
+  if (args_abs_list.size() == args_max_size) {
+    AbstractTuplePtr pos = dyn_cast<AbstractTuple>(args_abs_list[1]);
     if (pos == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg1 'position' must be tuple, but got " << args_spec_list[1]->ToString();
+      MS_LOG(EXCEPTION) << "'Tail' arg1 'position' must be tuple, but got " << args_abs_list[1]->ToString();
     }
     return GenerateGradFuncGraph(tuple_arg, pos);
   }
@@ -934,11 +934,11 @@ AnfNodePtr CreateGradOutputs(const FuncGraphPtr &k_child, const AnfNodePtr &grad
 }  // namespace
 
 // When set aux True, for out1, out2, out3 = fn(inputs), only first out1 contributes to differentiation of fn.
-FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_spec_list[0]);
+FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_abs_list[0]);
   if (tuple_arg == nullptr) {
     MS_LOG(EXCEPTION) << "When has_aux is True, origin fn requires more than one outputs.\n"
-                      << "'GradAux' arg0 must be tuple, but got " << args_spec_list[0]->ToString();
+                      << "'GradAux' arg0 must be tuple, but got " << args_abs_list[0]->ToString();
   }
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -946,7 +946,7 @@ FuncGraphPtr GradAux::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   // get_value flag
   (void)fg->add_parameter();
 
-  AbstractScalarPtr get_value_ptr = dyn_cast<AbstractScalar>(args_spec_list[1]);
+  AbstractScalarPtr get_value_ptr = dyn_cast<AbstractScalar>(args_abs_list[1]);
   bool get_value_flag = GetValue<bool>(get_value_ptr->BuildValue());
   std::vector<AnfNodePtr> elements = {NewValueNode(prim::kPrimMakeTuple)};
   elements.push_back(
@@ -1162,24 +1162,24 @@ void CheckPrimBpropReturnSparse(const FuncGraphPtr &primal_graph) {
 }  // namespace
 
 // Generate the graph.
-FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
+FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION)
       << "'GradOperation' requires a forward network or function as an input, while the input is empty.";
   }
 
   constexpr size_t fn_index = 0;
-  auto fn_abs = args_spec_list[fn_index];
+  auto fn_abs = args_abs_list[fn_index];
   constexpr size_t len_with_weight = 2;
   constexpr size_t weights_index = 1;
-  if (return_ids_ && args_spec_list.size() >= len_with_weight) {
-    weight_value_ = args_spec_list[weights_index];
+  if (return_ids_ && args_abs_list.size() >= len_with_weight) {
+    weight_value_ = args_abs_list[weights_index];
   }
   MS_EXCEPTION_IF_NULL(fn_abs);
   AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
-                      << args_spec_list[0]->ToString();
+                      << args_abs_list[0]->ToString();
   }
   if (fn->isa<abstract::PartialAbstractClosure>()) {
     auto partial_abs = fn->cast<abstract::PartialAbstractClosurePtr>();
@@ -1237,8 +1237,8 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   bool is_weights_empty_or_none = false;
   AnfNodePtr weights = nullptr;
   AnfNodePtr position = nullptr;
-  if (args_spec_list.size() > weights_index) {
-    auto weights_abs = args_spec_list[weights_index];
+  if (args_abs_list.size() > weights_index) {
+    auto weights_abs = args_abs_list[weights_index];
     MS_EXCEPTION_IF_NULL(weights_abs);
     if (weights_abs->isa<AbstractSequence>()) {
       if (weights_abs->cast<AbstractSequencePtr>()->empty()) {
@@ -1252,8 +1252,8 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   } else if (get_by_list_) {
     weights = grad_fg->add_parameter();
     // Check if weights is None.
-    if (!is_weights_empty_or_none && args_spec_list.size() > weights_index) {
-      auto weights_abs = args_spec_list[weights_index];
+    if (!is_weights_empty_or_none && args_abs_list.size() > weights_index) {
+      auto weights_abs = args_abs_list[weights_index];
       MS_EXCEPTION_IF_NULL(weights_abs);
       if (weights_abs->isa<AbstractNone>()) {
         is_weights_empty_or_none = true;
@@ -1419,18 +1419,18 @@ DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *c
 }
 }  // namespace
 
-FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
+FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION) << "'VmapOperation' requires a network or function as an input, while the input is empty.";
   }
 
   constexpr auto vmap_operation_input_num = 3;
   const std::string op_name = "vmap";
-  CheckArgsSize(op_name, args_spec_list, vmap_operation_input_num);
+  CheckArgsSize(op_name, args_abs_list, vmap_operation_input_num);
 
-  auto fn_arg = args_spec_list[0];
-  auto in_axes_arg = args_spec_list[1];
-  auto out_axes_arg = args_spec_list[2];
+  auto fn_arg = args_abs_list[0];
+  auto in_axes_arg = args_abs_list[1];
+  auto out_axes_arg = args_abs_list[2];
 
   int nparam = -1;
   size_t cell_size = 0;
@@ -1500,17 +1500,17 @@ FuncGraphPtr TaylorOperation::GetTaylorGrad(const AnfNodePtr &k,
 }
 
 // Generate the graph to calculate higher order derivatives.
-FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
+FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION)
       << "'TaylorOperation' requires a forward network or function as an input, while the input is empty.";
   }
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_abs_list[0]);
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "'TaylorOperation' arg0 must be a 'Function' or 'Cell', but got "
-                      << args_spec_list[0]->ToString();
+                      << args_abs_list[0]->ToString();
   }
 
   auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
@@ -1545,17 +1545,17 @@ FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_
   return grad_fg;
 }
 
-FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   // args: tuple1, tuple2
-  abstract::CheckArgsSize("TupleAdd", args_spec_list, 2);
-  AbstractBasePtr abs_a = args_spec_list[0];
-  AbstractBasePtr abs_b = args_spec_list[1];
+  abstract::CheckArgsSize("TupleAdd", args_abs_list, 2);
+  AbstractBasePtr abs_a = args_abs_list[0];
+  AbstractBasePtr abs_b = args_abs_list[1];
 
   AbstractTuplePtr a_tuple = dyn_cast<AbstractTuple>(abs_a);
   AbstractTuplePtr b_tuple = dyn_cast<AbstractTuple>(abs_b);
   if (a_tuple == nullptr || b_tuple == nullptr) {
     TypePtrList types;
-    (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+    (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(types),
                          [](const AbstractBasePtr &arg) -> TypePtr {
                            MS_EXCEPTION_IF_NULL(arg);
                            return arg->BuildType();
@@ -1567,7 +1567,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
       return stub;
     }
     MS_LOG(EXCEPTION) << "The type of argument in TupleAdd operator should be tuple, but the first argument is "
-                      << args_spec_list[0]->ToString() << ", the second argument is " << args_spec_list[1]->ToString();
+                      << args_abs_list[0]->ToString() << ", the second argument is " << args_abs_list[1]->ToString();
   }
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -1677,11 +1677,11 @@ std::tuple<int64_t, int64_t, int64_t> GenerateTupleSliceParameter(const Abstract
   return std::make_tuple(start_index, stop_index, step_value);
 }
 
-void SequenceSliceGetItem::CheckArgs(const AbstractBasePtrList &args_spec_list) {
+void SequenceSliceGetItem::CheckArgs(const AbstractBasePtrList &args_abs_list) {
   constexpr size_t arg_size = 2;
-  abstract::CheckArgsSize(this->name(), args_spec_list, arg_size);
-  sequence_ = abstract::CheckArg<AbstractSequence>(this->name(), args_spec_list, 0);
-  slice_ = abstract::CheckArg<AbstractSlice>(this->name(), args_spec_list, 1);
+  abstract::CheckArgsSize(this->name(), args_abs_list, arg_size);
+  sequence_ = abstract::CheckArg<AbstractSequence>(this->name(), args_abs_list, 0);
+  slice_ = abstract::CheckArg<AbstractSlice>(this->name(), args_abs_list, 1);
 }
 
 FuncGraphPtr SequenceSliceGetItem::BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) {
@@ -1706,12 +1706,12 @@ FuncGraphPtr SequenceSliceGetItem::BuildFuncGraph(int64_t start_index, int64_t s
   return ret;
 }
 
-FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   // select indexed item
   // args: tuple of items, index
   const std::string op_name = std::string("TupleGetItemTensor");
   const size_t inputs_size = 2;
-  abstract::CheckArgsSize(op_name, args_spec_list, inputs_size);
+  abstract::CheckArgsSize(op_name, args_abs_list, inputs_size);
   auto ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   auto functions = ret_graph->add_parameter();
@@ -1739,17 +1739,16 @@ FuncGraphPtr GetShard(const AnfNodePtr &shard, const std::vector<AnfNodePtr> &or
 }
 }  // namespace
 
-FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.size() != kShardInputSize) {
+FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.size() != kShardInputSize) {
     MS_LOG(EXCEPTION) << "'Shard' requires " << kShardInputSize
                       << " inputs. Includes a Cell or function, in_axes, out_axes, parameter_plan, device and level.";
   }
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_abs_list[0]);
   if (fn == nullptr) {
-    MS_LOG(EXCEPTION) << "'Shard' arg0 must be a 'Function' or 'Cell', but got " << args_spec_list[0]->ToString()
-                      << ".";
+    MS_LOG(EXCEPTION) << "'Shard' arg0 must be a 'Function' or 'Cell', but got " << args_abs_list[0]->ToString() << ".";
   }
 
   auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
@@ -1770,9 +1769,9 @@ FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list)
   shard_fg->debug_info()->set_name(ss.str());
   // Make the Shard node.
   std::vector<AnfNodePtr> inputs;
-  inputs.reserve(args_spec_list.size() + 1);
+  inputs.reserve(args_abs_list.size() + 1);
   (void)inputs.emplace_back(NewValueNode(prim::kPrimShard));
-  for (size_t i = 0; i < args_spec_list.size(); ++i) {
+  for (size_t i = 0; i < args_abs_list.size(); ++i) {
     (void)inputs.emplace_back(shard_fg->add_parameter());
   }
   auto shard = shard_fg->NewCNodeInOrder(std::move(inputs));
@@ -1786,15 +1785,15 @@ FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list)
   return shard_fg;
 }
 
-void ListSliceSetItem::CheckArgs(const AbstractBasePtrList &args_spec_list) {
+void ListSliceSetItem::CheckArgs(const AbstractBasePtrList &args_abs_list) {
   constexpr size_t kSliceSetItemArgsSizeargs_size = 3;
   constexpr size_t kSliceSetItemListIndex = 0;
   constexpr size_t kSliceSetItemSliceIndex = 1;
   constexpr size_t kSliceSetItemValueIndex = 2;
-  abstract::CheckArgsSize("list_slice_set_item", args_spec_list, kSliceSetItemArgsSizeargs_size);
-  this->sequence_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_spec_list, kSliceSetItemListIndex);
-  this->slice_ = abstract::CheckArg<AbstractSlice>("list_slice_set_item", args_spec_list, kSliceSetItemSliceIndex);
-  this->value_list_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_spec_list, kSliceSetItemValueIndex);
+  abstract::CheckArgsSize("list_slice_set_item", args_abs_list, kSliceSetItemArgsSizeargs_size);
+  this->sequence_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_abs_list, kSliceSetItemListIndex);
+  this->slice_ = abstract::CheckArg<AbstractSlice>("list_slice_set_item", args_abs_list, kSliceSetItemSliceIndex);
+  this->value_list_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_abs_list, kSliceSetItemValueIndex);
 }
 
 FuncGraphPtr ListSliceSetItem::BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) {
@@ -1879,17 +1878,17 @@ AnfNodePtr ListSliceSetItem::GetAssignNode(const FuncGraphPtr &func_graph, const
   return func_graph->NewCNodeInOrder(elems);
 }
 
-FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  this->CheckArgs(args_spec_list);
+FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  this->CheckArgs(args_abs_list);
   auto [start, stop, step] = GenerateTupleSliceParameter(sequence_, slice_);
   return this->BuildFuncGraph(start, stop, step);
 }
 
-FuncGraphPtr ZerosLike::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr ZerosLike::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   constexpr auto input_size = 1;
-  abstract::CheckArgsSize("ZerosLike", args_spec_list, input_size);
+  abstract::CheckArgsSize("ZerosLike", args_abs_list, input_size);
 
-  auto x = args_spec_list[0];
+  auto x = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(x);
   auto type = x->BuildType();
   MS_EXCEPTION_IF_NULL(type);
@@ -1908,7 +1907,7 @@ FuncGraphPtr ZerosLike::GenerateFuncGraph(const AbstractBasePtrList &args_spec_l
 
   HyperMap hyper_map(false, fn_leaf_);
   TypePtrList types;
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(types),
                        [](const AbstractBasePtr &arg) -> TypePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          return arg->BuildType();

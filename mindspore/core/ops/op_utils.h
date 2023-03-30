@@ -108,13 +108,13 @@ inline void CheckInputShapeEmpty(const std::string &prim_name, const std::vector
 ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape);
 
 template <typename T>
-std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list);
+std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
 AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 
 template <typename T>
-AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
 T GetScalarValue(const std::string &op_name, const ValuePtr &elem);

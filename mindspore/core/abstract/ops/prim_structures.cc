@@ -41,13 +41,13 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
 }  // namespace
 
 AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
+                                  const AbstractBasePtrList &args_abs_list) {
   // Inputs: two tuples.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractTuplePtr keys = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  AbstractTuplePtr values = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractTuplePtr keys = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
+  AbstractTuplePtr values = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
 
   size_t keys_size = keys->size();
   if (values->size() != keys_size) {
@@ -68,12 +68,12 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
 }
 
 AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
+                                        const AbstractBasePtrList &args_abs_list) {
   // Inputs: a string and an object of a subclass of AbstractBase.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
 
   ValuePtr keyPtr = key->BuildValue();
   MS_EXCEPTION_IF_NULL(keyPtr);
@@ -81,17 +81,17 @@ AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const Primiti
     MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << keyPtr->ToString();
   }
   auto key_string = GetValue<std::string>(keyPtr);
-  return std::make_shared<AbstractKeywordArg>(key_string, args_spec_list[1]);
+  return std::make_shared<AbstractKeywordArg>(key_string, args_abs_list[1]);
 }
 
 AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_spec_list) {
+                                           const AbstractBasePtrList &args_abs_list) {
   // Inputs: a string and a keyword.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
-  AbstractKeywordArgPtr kwarg = CheckArg<AbstractKeywordArg>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
+  AbstractKeywordArgPtr kwarg = CheckArg<AbstractKeywordArg>(op_name, args_abs_list, 1);
 
   ValuePtr key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
@@ -122,12 +122,12 @@ void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const Abstrac
 }
 
 template <typename T>
-AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tuple or list, a scalar whose value is an int64 number and an object of a subclass of AbstractBase.
   constexpr int args_spec_size = 3;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  auto queue = CheckArg<T>(op_name, args_spec_list, 0);
-  AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  auto queue = CheckArg<T>(op_name, args_abs_list, 0);
+  AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_abs_list, 1);
 
   auto index_type = index->BuildType();
   MS_EXCEPTION_IF_NULL(index_type);
@@ -137,7 +137,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   }
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
-  auto target = args_spec_list[kIndex2];
+  auto target = args_abs_list[kIndex2];
   MS_EXCEPTION_IF_NULL(target);
   if (queue->dynamic_len()) {
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
@@ -173,33 +173,33 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
                              << nelems << "," << (nelems - 1) << "].";
   }
   size_t index_unsigned_value = LongToSize(index_positive_value);
-  elements[index_unsigned_value] = args_spec_list[kIndex2];
+  elements[index_unsigned_value] = args_abs_list[kIndex2];
   MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   return std::make_shared<T>(elements, queue->sequence_nodes());
 }
 
 AbstractBasePtr InferImplTupleSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListSetItem<AbstractTuple>(primitive->name(), args_spec_list);
+                                      const AbstractBasePtrList &args_abs_list) {
+  return InferTupleOrListSetItem<AbstractTuple>(primitive->name(), args_abs_list);
 }
 
 AbstractBasePtr InferImplListSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
-  return InferTupleOrListSetItem<AbstractList>(primitive->name(), args_spec_list);
+                                     const AbstractBasePtrList &args_abs_list) {
+  return InferTupleOrListSetItem<AbstractList>(primitive->name(), args_abs_list);
 }
 
 AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
-  // dict[key] mean the size of args_spec_list is 2.
-  // dict.get('key', default_value=None) mean the size of args_spec_list is 2 too, the key will check in dict_get.
+  // dict[key] mean the size of args_abs_list is 2.
+  // dict.get('key', default_value=None) mean the size of args_abs_list is 2 too, the key will check in dict_get.
   constexpr int subscript_args_size = 2;
-  if (args_spec_list.size() != subscript_args_size) {
+  if (args_abs_list.size() != subscript_args_size) {
     MS_LOG(EXCEPTION) << "For '" << op_name << "', the number of input should be " << subscript_args_size
-                      << ", but got " << args_spec_list.size();
+                      << ", but got " << args_abs_list.size();
   }
-  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  const auto &key = args_spec_list[1];
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 0);
+  const auto &key = args_abs_list[1];
   CheckDictKey(key, op_name);
 
   ValuePtr key_value = key->BuildValue();
@@ -213,19 +213,19 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
     // For dict.get('key', default=None), if key is not exist, will return the default value during dict_get.
     // Python KeyError will print escape character. So use ValueError instead of KeyError here.
     MS_EXCEPTION(ValueError) << "The key " << key_value->ToString()
-                             << " does not exist in the dict:" << args_spec_list[0]->BuildValue()->ToString();
+                             << " does not exist in the dict:" << args_abs_list[0]->BuildValue()->ToString();
   }
   return it->second;
 }
 
 AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: a dict and a scalar whose value is a string and an object of a subclass of AbstractBase.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 3;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
-  const auto &key = args_spec_list[1];
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 0);
+  const auto &key = args_abs_list[1];
   CheckDictKey(key, op_name);
 
   ValuePtr key_value = key->BuildValue();
@@ -235,8 +235,8 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
     return *key_value == *item.first->BuildValue();
   });
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[2]);
-  auto new_ele = std::make_pair(args_spec_list[1], args_spec_list[2]);
+  MS_EXCEPTION_IF_NULL(args_abs_list[2]);
+  auto new_ele = std::make_pair(args_abs_list[1], args_abs_list[2]);
   if (it != dict_elems.end()) {
     int64_t index = it - dict_elems.begin();
     dict_elems[LongToSize(index)] = new_ele;
@@ -247,12 +247,12 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: a dict.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 0);
   std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList keys;
   std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
@@ -261,12 +261,12 @@ AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a dict.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 0);
   std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList values;
   std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(values),
@@ -275,12 +275,12 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
 }
 
 AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inputs: a dict.
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_abs_list, 0);
   std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList items;
   (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(items),
@@ -291,11 +291,11 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
+                                  const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   constexpr int args_spec_size = 1;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  auto arg_abs = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  auto arg_abs = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto shape = arg_abs->BuildShape()->cast<ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->shape().empty()) {
@@ -337,21 +337,21 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
 }  // namespace
 
 AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
+                                 const AbstractBasePtrList &args_abs_list) {
   const std::string &op_name = primitive->name();
   constexpr int max_args_spec_size = 2;
-  auto arg_size = args_spec_list.size();
+  auto arg_size = args_abs_list.size();
   (void)CheckAndConvertUtils::CheckValue<size_t>("input size", arg_size, kLessEqual, max_args_spec_size, op_name);
   bool variable_len = false;
   if (arg_size == max_args_spec_size) {
-    auto arg_value = args_spec_list[1]->BuildValue();
+    auto arg_value = args_abs_list[1]->BuildValue();
     MS_EXCEPTION_IF_NULL(arg_value);
     if (!arg_value->isa<BoolImm>()) {
       MS_EXCEPTION(TypeError) << "The second argument to mutable should be boolean value.";
     }
     variable_len = arg_value->cast<BoolImmPtr>()->value();
   }
-  auto data = args_spec_list[0];
+  auto data = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(data);
   if (!variable_len) {
     if (data->isa<abstract::AbstractSequence>() && data->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
@@ -415,11 +415,11 @@ void GetGradAbstract(const AbstractBasePtr &grads_abs, const std::string &para_n
 }  // namespace
 
 AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
+                                 const AbstractBasePtrList &args_abs_list) {
   const std::string &op_name = primitive->name();
   constexpr int expected_args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, expected_args_spec_size);
-  auto &hash_id_abs = args_spec_list[1];
+  CheckArgsSize(op_name, args_abs_list, expected_args_spec_size);
+  auto &hash_id_abs = args_abs_list[1];
 
   int64_t position = -1;
   std::string para_name;
@@ -441,9 +441,9 @@ AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &
                             << hash_id_abs->ToString();
   }
   AbstractBasePtr ret = nullptr;
-  GetGradAbstract(args_spec_list[0], para_name, position, &ret);
+  GetGradAbstract(args_abs_list[0], para_name, position, &ret);
   if (ret == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not find the gradient for position or Parameter " << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "Can not find the gradient for position or Parameter " << args_abs_list[1]->ToString();
   }
   return ret;
 }

@@ -34,11 +34,11 @@ int64_t GetAndCheckFormat(const ValuePtr &value) {
 }
 
 AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
+                                 const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractTensorPtr input_tensor = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "Input 0 of Pooling should be %s");
 
   ShapePtr input_shape = dyn_cast<Shape>(input_tensor->GetShapeTrack());  // NCHW
@@ -101,19 +101,19 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
 }
 
 AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: three tensors(y, dy, x).
   constexpr auto kPoolingGradInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kPoolingGradInputNum);
-  auto out_y = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto d_out = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  CheckArgsSize(op_name, args_abs_list, kPoolingGradInputNum);
+  auto out_y = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
+  auto d_out = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 2);
   (void)CheckTensorsDTypeSame({out_y, d_out, input_x}, {kInt, kUInt, kFloat},
                               op_name + "evaluator three inputs should be %s");
 
   AbstractBasePtr ret = d_out->Broaden();
-  auto x_shape = dyn_cast<Shape>(args_spec_list[2]->GetShapeTrack());
+  auto x_shape = dyn_cast<Shape>(args_abs_list[2]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(x_shape);
 
   ret->set_shape(x_shape);
@@ -121,31 +121,31 @@ AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   // Inference inputs: 5 tensors (x, gamma, beta, mean, variance).
   // Training inputs: 6 (x, gamma, beta, mean, variance, Umonad).
   constexpr auto batch_norm_infer_input_num = 5;
   constexpr auto batch_norm_train_input_num = 6;
   const std::string op_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(
-    args_spec_list.size() == batch_norm_infer_input_num || args_spec_list.size() == batch_norm_train_input_num,
+    args_abs_list.size() == batch_norm_infer_input_num || args_abs_list.size() == batch_norm_train_input_num,
     "Check BatchNorm input size fail!");
-  CheckArgsSize(op_name, args_spec_list, args_spec_list.size());
-  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_abs_list.size());
+  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
   ShapeVector x_shape = input_x->shape()->shape();
 
-  auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto input_tensor = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
   AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
   // In GE process, the input of mean and variance is None
   constexpr size_t num_of_valid_input_ge = 3;
   constexpr size_t num_of_valid_input_vm = 5;
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
-  size_t args_spec_list_size = env_ge == "1" ? num_of_valid_input_ge : num_of_valid_input_vm;
-  for (size_t i = 1; i < args_spec_list_size; ++i) {
-    auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+  size_t args_abs_list_size = env_ge == "1" ? num_of_valid_input_ge : num_of_valid_input_vm;
+  for (size_t i = 1; i < args_abs_list_size; ++i) {
+    auto param = CheckArg<AbstractTensor>(op_name, args_abs_list, i);
     tensorPtrList.push_back(param);
   }
   (void)CheckTensorsDTypeSame(tensorPtrList, {kFloat16, kFloat32},
@@ -159,8 +159,8 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   if (data_format == static_cast<int64_t>(Format::NHWC)) {
     c_axis = 3;
   }
-  for (size_t i = 1; i < args_spec_list_size; ++i) {
-    AbstractTensorPtr arg_spec = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+  for (size_t i = 1; i < args_abs_list_size; ++i) {
+    AbstractTensorPtr arg_spec = CheckArg<AbstractTensor>(op_name, args_abs_list, i);
     MS_EXCEPTION_IF_NULL(arg_spec);
     MS_EXCEPTION_IF_NULL(arg_spec->shape());
     ShapeVector arg_shape = arg_spec->shape()->shape();
@@ -172,7 +172,7 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
                                << "]=" << x_shape[c_axis] << ", but got " << arg_shape[0];
     }
   }
-  AbstractTensorPtr input_gamma = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  AbstractTensorPtr input_gamma = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   ShapeVector gamma_shape = input_gamma->shape()->shape();
   ShapePtr output_shape_ptr = std::make_shared<Shape>(x_shape);
   AbstractTensorPtr output = std::make_shared<AbstractTensor>(input_x->element(), output_shape_ptr);
@@ -183,16 +183,16 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // Inputs: at least one tensor(y_backprop)
   // Outputs: dbias
-  if (args_spec_list.empty()) {
+  if (args_abs_list.empty()) {
     MS_LOG(EXCEPTION) << primitive->name() << " evaluator at least has 1 parameters, while the input size is "
-                      << args_spec_list.size() << ".";
+                      << args_abs_list.size() << ".";
   }
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  ShapePtr shape_y = dyn_cast<Shape>(args_spec_list[0]->GetShapeTrack());
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  ShapePtr shape_y = dyn_cast<Shape>(args_abs_list[0]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_y);
   ShapeVector y_dims = shape_y->shape();
   if (y_dims.size() < 2) {
@@ -200,47 +200,47 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   }
   ShapeVector bias_dims = {y_dims[1]};
   ShapePtr ret_shape = std::make_shared<Shape>(bias_dims);
-  AbstractBasePtr ret = args_spec_list[0]->Broaden();
+  AbstractBasePtr ret = args_abs_list[0]->Broaden();
   ret->set_shape(ret_shape);
   return ret;
 }
 
 AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                  const AbstractBasePtrList &args_spec_list) {
+                                  const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor.
   AbstractBasePtrList args_list;
   constexpr size_t out_and_dout_size = 2;
-  for (size_t i = 0; i < args_spec_list.size() - out_and_dout_size; i++) {
-    args_list.push_back(args_spec_list[i]->Broaden());
+  for (size_t i = 0; i < args_abs_list.size() - out_and_dout_size; i++) {
+    args_list.push_back(args_abs_list[i]->Broaden());
   }
   return std::make_shared<AbstractTuple>(args_list);
 }
 
 AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const AbstractBasePtrList &args_spec_list) {
-  CheckRequiredArgsSize(primitive->name(), args_spec_list, 7);
+                                                    const AbstractBasePtrList &args_abs_list) {
+  CheckRequiredArgsSize(primitive->name(), args_abs_list, 7);
   AbstractBasePtrList elements;
   const size_t args_size = 2;
   for (size_t i = 0; i < args_size; ++i) {
-    elements.push_back(args_spec_list[i]->Clone()->Broaden());
+    elements.push_back(args_abs_list[i]->Clone()->Broaden());
   }
   return std::make_shared<AbstractTuple>(elements);
 }
 
 AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
-  CheckRequiredArgsSize(primitive->name(), args_spec_list, 6);
+                             const AbstractBasePtrList &args_abs_list) {
+  CheckRequiredArgsSize(primitive->name(), args_abs_list, 6);
   AbstractBasePtrList elements;
-  elements.push_back(args_spec_list[0]->Clone()->Broaden());
+  elements.push_back(args_abs_list[0]->Clone()->Broaden());
   return std::make_shared<AbstractTuple>(elements);
 }
 
 AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
+                             const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  auto arg = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto input_shp = arg->shape()->shape();
   auto padding_attr = primitive->GetAttr("paddings");
   MS_EXCEPTION_IF_NULL(padding_attr);
@@ -272,11 +272,11 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
 }
 
 AbstractBasePtr InferImplBiasDropoutAdd(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
+                                        const AbstractBasePtrList &args_abs_list) {
   size_t input_size = 3;
   auto op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, input_size);
-  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, input_size);
+  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
 
@@ -288,12 +288,12 @@ AbstractBasePtr InferImplBiasDropoutAdd(const abstract::AnalysisEnginePtr &, con
 }
 
 AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_spec_list) {
+                                               const AbstractBasePtrList &args_abs_list) {
   // inputs: true_classes, sampled_candidates
   const std::string op_name = primitive->name();
   constexpr size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
 
   auto shape = input->shape();
   if (shape->shape().size() != size_expected) {

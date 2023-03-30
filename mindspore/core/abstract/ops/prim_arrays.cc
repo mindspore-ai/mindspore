@@ -46,16 +46,16 @@ namespace mindspore {
 namespace abstract {
 namespace {
 // Get 3rd argument for UnsortedSegmentOps' inferImpl function
-int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name) {
+int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_abs_list, const std::string &op_name) {
   int64_t num_segments_value = 0;
   constexpr size_t scalar_index = 2;
   constexpr size_t min_len = 3;
-  if (args_spec_list.size() < min_len) {
-    MS_LOG(EXCEPTION) << "Index out of range, the len of args_spec_list is: " << args_spec_list.size()
+  if (args_abs_list.size() < min_len) {
+    MS_LOG(EXCEPTION) << "Index out of range, the len of args_abs_list is: " << args_abs_list.size()
                       << " and the index is " << scalar_index;
   }
-  if (args_spec_list[scalar_index]->isa<AbstractTensor>()) {  // num_segments is Tensor
-    auto num_segments = args_spec_list[scalar_index]->cast<AbstractTensorPtr>();
+  if (args_abs_list[scalar_index]->isa<AbstractTensor>()) {  // num_segments is Tensor
+    auto num_segments = args_abs_list[scalar_index]->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_segments);
     auto num_segments_value_ptr = num_segments->BuildValue();
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
@@ -66,8 +66,8 @@ int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list,
     } else {
       num_segments_value = *static_cast<int32_t *>(num_segments_tensor->data_c());
     }
-  } else if (args_spec_list[scalar_index]->isa<AbstractScalar>()) {  // num_segments is Scalar
-    auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, scalar_index);
+  } else if (args_abs_list[scalar_index]->isa<AbstractScalar>()) {  // num_segments is Scalar
+    auto num_segments = CheckArg<AbstractScalar>(op_name, args_abs_list, scalar_index);
     if (num_segments->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
       num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
     } else {
@@ -80,20 +80,20 @@ int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list,
 }
 }  // namespace
 AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a scalar.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractScalarPtr arg = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractScalarPtr arg = CheckArg<AbstractScalar>(op_name, args_abs_list, 0);
   return std::make_shared<AbstractTensor>(arg, std::make_shared<Shape>());
 }
 
 AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor with 0 shape.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  auto arg = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto a_shp = arg->shape();
   MS_EXCEPTION_IF_NULL(a_shp);
   if (!a_shp->shape().empty()) {
@@ -103,13 +103,13 @@ AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const Primitiv
 }
 
 AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
+                                        const AbstractBasePtrList &args_abs_list) {
   // Inputs: two tuples.
   const std::string op_name = primitive->name();
   constexpr size_t args_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_size);
-  auto xs = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  auto ys = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, args_size);
+  auto xs = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
+  auto ys = CheckArg<AbstractTuple>(op_name, args_abs_list, 1);
   auto x_value = xs->BuildValue();
   MS_EXCEPTION_IF_NULL(x_value);
   auto value_tuple_x = x_value->cast<ValueTuplePtr>();
@@ -128,10 +128,9 @@ AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const Primiti
                        [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
 
   ShapeVector res = BroadcastShape(shp_x, shp_y);
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
+  MS_EXCEPTION_IF_NULL(args_abs_list[1]);
   if (res.empty()) {
-    MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
-                      << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_abs_list[0]->ToString() << "," << args_abs_list[1]->ToString();
   }
 
   AbstractBasePtrList elems;
@@ -142,11 +141,11 @@ AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const Primiti
 }
 
 AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
+                                const AbstractBasePtrList &args_abs_list) {
   // inputs: a 1-d Tensor
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
 
   auto shape = input->shape();
   MS_EXCEPTION_IF_NULL(shape);
@@ -177,12 +176,12 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
 }
 
 AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   // inputs: a 1-d Tensor
   const std::string op_name = primitive->name();
   const size_t size_expected = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(input);
   auto shape = input->shape();
   MS_EXCEPTION_IF_NULL(shape);
@@ -199,12 +198,12 @@ AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   // inputs: a 1-d Tensor
   const std::string op_name = primitive->name();
   const size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  AbstractTuplePtr dout = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  AbstractTuplePtr dout = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
   CheckArgsSize(op_name + " dout", dout->elements(), size_expected);
   auto ids = CheckArg<AbstractTensor>(op_name, dout->elements(), 0);
   auto ids_idx = CheckArg<AbstractTensor>(op_name, dout->elements(), 1);
@@ -224,14 +223,14 @@ AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePt
 }
 
 AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_spec_list) {
+                                            const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   constexpr size_t args_size = 3;
-  CheckArgsSize(op_name, args_spec_list, args_size);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, args_size);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
-  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
@@ -243,7 +242,7 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   bool ids_any_shape = IsDynamic(segment_ids_shape);
   bool op_is_dynamic = x_any_shape || ids_any_shape;
   ShapeVector shape;
-  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_spec_list, op_name);
+  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_abs_list, op_name);
   if (num_segments_value <= 0) {
     MS_LOG(EXCEPTION) << "num_segments must be > 0 in UnsortedSegmentSum";
   }
@@ -260,13 +259,13 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
 }
 
 AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_spec_list) {
+                                            const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x->shape());
-  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
@@ -277,7 +276,7 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
   bool ids_any_shape = IsDynamic(segment_ids_shape);
   bool op_is_dynamic = x_any_shape || ids_any_shape;
   ShapeVector shape;
-  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_spec_list, op_name);
+  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_abs_list, op_name);
   if (num_segments_value <= 0) {
     MS_LOG(EXCEPTION) << "num_segments must be > 0 in UnsortedSegmentMax";
   }
@@ -292,14 +291,14 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
 }
 
 AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_spec_list) {
+                                            const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
-  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
@@ -310,7 +309,7 @@ AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const Pri
   bool ids_any_shape = IsDynamic(segment_ids_shape);
   bool op_is_dynamic = x_any_shape || ids_any_shape;
   ShapeVector shape;
-  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_spec_list, op_name);
+  int64_t num_segments_value = GetUnsortedSegmentOpScalarArg(args_abs_list, op_name);
   if (num_segments_value <= 0) {
     MS_LOG(EXCEPTION) << "num_segments must be > 0 in UnsortedSegmentMin";
   }
@@ -325,11 +324,11 @@ AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const Pri
 }
 
 AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   constexpr auto kScatterAddInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, kScatterAddInputNum);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckRequiredArgsSize(op_name, args_abs_list, kScatterAddInputNum);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
@@ -337,11 +336,11 @@ AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePt
 }
 
 AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   constexpr auto kScatterSubInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, kScatterSubInputNum);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckRequiredArgsSize(op_name, args_abs_list, kScatterSubInputNum);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   ShapeVector shape = x->shape()->shape();
@@ -349,14 +348,14 @@ AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePt
 }
 
 AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 5;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto hash_map = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto hash_map = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   MS_EXCEPTION_IF_NULL(hash_map->shape());
 
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   auto indices_shp = indices->shape();
   MS_EXCEPTION_IF_NULL(indices_shp);
 
@@ -372,15 +371,15 @@ AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
+                                        const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto cache_table = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto cache_table = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto cache_table_shp = cache_table->shape();
   MS_EXCEPTION_IF_NULL(cache_table_shp);
 
-  auto swap_cache_idx = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto swap_cache_idx = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   auto swap_cache_idx_shp = swap_cache_idx->shape();
   MS_EXCEPTION_IF_NULL(swap_cache_idx_shp);
 
@@ -395,9 +394,9 @@ AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const Primiti
 }
 
 AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_spec_list) {
+                                     const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
-  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
 
   ShapeVector shape;
   shape.emplace_back(1);
@@ -407,9 +406,9 @@ AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitiveP
 }
 
 AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
-  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto input_x_shp = input_x->shape();
   MS_EXCEPTION_IF_NULL(input_x_shp);
 
@@ -422,12 +421,12 @@ AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const Primitive
 }
 
 AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_spec_list) {
+                             const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
+  auto y = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   MS_EXCEPTION_IF_NULL(y);
@@ -439,12 +438,12 @@ AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &prim
 }
 
 AbstractBasePtr InferImplRealInnerDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   const size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
+  auto y = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   MS_EXCEPTION_IF_NULL(y);
@@ -453,26 +452,25 @@ AbstractBasePtr InferImplRealInnerDiv(const AnalysisEnginePtr &, const Primitive
   ShapeVector y_shape = y->shape()->shape();
   ShapeVector out_shape = BroadcastShape(x_shape, y_shape);
   if (out_shape.empty()) {
-    MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
-                      << args_spec_list[1]->ToString();
+    MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_abs_list[0]->ToString() << "," << args_abs_list[1]->ToString();
   }
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
 }
 
 AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
+                                       const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor
   const size_t size_expected = 2;
-  CheckArgsSize(primitive->name(), args_spec_list, size_expected);
+  CheckArgsSize(primitive->name(), args_abs_list, size_expected);
 
-  MS_LOG(INFO) << "InferImplDynamicAssign " << args_spec_list[0];
-  auto type = args_spec_list[0]->BuildType();
+  MS_LOG(INFO) << "InferImplDynamicAssign " << args_abs_list[0];
+  auto type = args_abs_list[0]->BuildType();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() == kObjectTypeRefKey) {
-    return args_spec_list[1]->Broaden();
+    return args_abs_list[1]->Broaden();
   } else {
-    auto x = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 0);
-    auto y = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 1);
+    auto x = CheckArg<AbstractTensor>(primitive->name(), args_abs_list, 0);
+    auto y = CheckArg<AbstractTensor>(primitive->name(), args_abs_list, 1);
     MS_EXCEPTION_IF_NULL(x);
     MS_EXCEPTION_IF_NULL(y);
     auto y_shape = y->shape();
@@ -480,18 +478,18 @@ AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const Primitiv
     if (!y_shape->max_shape().empty()) {
       x->set_shape(y->shape());
     }
-    return args_spec_list[0];
+    return args_abs_list[0];
   }
 }
 
 AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list) {
+                                         const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
-  auto params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto params = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto params_shp = params->shape();
   MS_EXCEPTION_IF_NULL(params_shp);
   auto params_shape = params_shp->shape();
-  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
   auto indices_shp = indices->shape();
   MS_EXCEPTION_IF_NULL(indices_shp);
   auto indices_shape = indices_shp->shape();
@@ -504,9 +502,9 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
 }
 
 AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+                                   const AbstractBasePtrList &args_abs_list) {
   const std::string &op_name = primitive->name();
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   auto input_shp = input->shape()->shape();
   ValuePtr perm = primitive->GetAttr("perm");
   MS_EXCEPTION_IF_NULL(perm);
@@ -525,19 +523,19 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
 }
 
 AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
+                                    const AbstractBasePtrList &args_abs_list) {
   // Inputs: one tensor.
   const std::string op_name = primitive->name();
   const size_t size_expected = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  return args_spec_list[0]->Broaden();
+  CheckArgsSize(op_name, args_abs_list, size_expected);
+  return args_abs_list[0]->Broaden();
 }
 
 AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
+                               const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   ShapeVector x_shape = input_x->shape()->shape();
   int64_t rank = SizeToLong(x_shape.size());
 
@@ -565,18 +563,18 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
 }
 
 AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   const std::string &op_name = primitive->name();
   const size_t size_expected = 2;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
 
-  AbstractTensorPtr lengths = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTensorPtr lengths = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   (void)CheckTensorDType(lengths, {kInt32, kInt64}, "Input 1 (lengths) for SequenceMask should be one of: %s");
 
   int64_t maxlen_value = 0;
 
-  if (args_spec_list[1]->isa<AbstractScalar>()) {
-    AbstractScalarPtr maxlen = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  if (args_abs_list[1]->isa<AbstractScalar>()) {
+    AbstractScalarPtr maxlen = CheckArg<AbstractScalar>(op_name, args_abs_list, 1);
     (void)CheckScalarType(maxlen, {kInt32, kInt64}, "Input 0 (maxlen) for SequenceMask should be one of: %s");
 
     TypePtr maxlen_type = nullptr;
@@ -588,8 +586,8 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
     } else if (maxlen_type->type_id() == TypeId::kNumberTypeInt64) {
       maxlen_value = GetValue<int64_t>(maxlen->BuildValue());
     }
-  } else if (args_spec_list[1]->isa<AbstractTensor>()) {
-    auto maxlen_tensor_ptr = args_spec_list[1]->cast<AbstractTensorPtr>();
+  } else if (args_abs_list[1]->isa<AbstractTensor>()) {
+    auto maxlen_tensor_ptr = args_abs_list[1]->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(maxlen_tensor_ptr);
     auto maxlen_value_ptr = maxlen_tensor_ptr->BuildValue();
     MS_EXCEPTION_IF_NULL(maxlen_value_ptr);
@@ -609,25 +607,25 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
 }
 
 AbstractBasePtr InferImplConcatOffset(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
+                                      const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
+  if (args_abs_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_abs_list is empty.";
   }
 
   AbstractTuplePtr arg = nullptr;
   AbstractTensorPtr tensor_base = nullptr;
   size_t tuple_len = 0;
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  if (args_spec_list[0]->isa<AbstractTuple>()) {
-    CheckArgsSize(op_name, args_spec_list, 1);
-    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  if (args_abs_list[0]->isa<AbstractTuple>()) {
+    CheckArgsSize(op_name, args_abs_list, 1);
+    arg = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
     tuple_len = arg->elements().size();
     tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
-    tuple_len = args_spec_list.size();
-    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  } else if (args_abs_list[0]->isa<AbstractTensor>()) {
+    tuple_len = args_abs_list.size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   }
 
   MS_EXCEPTION_IF_NULL(tensor_base);
@@ -639,25 +637,25 @@ AbstractBasePtr InferImplConcatOffset(const AnalysisEnginePtr &, const Primitive
 }
 
 AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
+                                const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
+  if (args_abs_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_abs_list is empty.";
   }
 
   AbstractTuplePtr arg = nullptr;
   AbstractTensorPtr tensor_base = nullptr;
   size_t tuple_len = 0;
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  if (args_spec_list[0]->isa<AbstractTuple>()) {
-    CheckArgsSize(op_name, args_spec_list, 1);
-    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
+  if (args_abs_list[0]->isa<AbstractTuple>()) {
+    CheckArgsSize(op_name, args_abs_list, 1);
+    arg = CheckArg<AbstractTuple>(op_name, args_abs_list, 0);
     tuple_len = arg->elements().size();
     tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
-    tuple_len = args_spec_list.size();
-    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  } else if (args_abs_list[0]->isa<AbstractTensor>()) {
+    tuple_len = args_abs_list.size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   }
 
   MS_EXCEPTION_IF_NULL(tensor_base);
@@ -673,10 +671,10 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   int64_t all_shp = shape_base[axis_value];
   for (size_t i = 1; i < tuple_len; ++i) {
     AbstractTensorPtr tensor = nullptr;
-    if (args_spec_list[0]->isa<AbstractTuple>()) {
+    if (args_abs_list[0]->isa<AbstractTuple>()) {
       tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
-    } else if (args_spec_list[0]->isa<AbstractTensor>()) {
-      tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+    } else if (args_abs_list[0]->isa<AbstractTensor>()) {
+      tensor = CheckArg<AbstractTensor>(op_name, args_abs_list, i);
     }
     ShapeVector shape_tensor = tensor->shape()->shape();
     int64_t rank_tensor = SizeToLong(shape_tensor.size());
@@ -761,12 +759,12 @@ static ChunkMap GroupingAbstractTensors(const AbstractBasePtrList &elements, siz
 }
 
 AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  auto seq = dyn_cast<abstract::AbstractSequence>(args_spec_list[0]);
+                                       const AbstractBasePtrList &args_abs_list) {
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  auto seq = dyn_cast<abstract::AbstractSequence>(args_abs_list[0]);
   if (seq == nullptr) {
     MS_LOG(EXCEPTION) << "The input for '" << primitive->name() << "' should be tuple or list, but got "
-                      << args_spec_list[0]->type_name();
+                      << args_abs_list[0]->type_name();
   }
   // Get fusion size from primitive attribute.
   const auto fusion_size_attr = primitive->GetAttr("fusion_size");
@@ -787,16 +785,16 @@ AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const Primitiv
 }
 
 AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
+                                          const AbstractBasePtrList &args_abs_list) {
   auto &op_name = primitive->name();
   constexpr auto kTensorCopySlicesInputNum = 5;
-  CheckArgsSize(op_name, args_spec_list, kTensorCopySlicesInputNum);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, kTensorCopySlicesInputNum);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
   return std::make_shared<AbstractTensor>(input->element(), input->shape());
 }
 
 AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const AbstractBasePtrList &args_spec_list) {
+                                                 const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   constexpr size_t size_expected = 5;
   constexpr int64_t universe_max_batch = 256;
@@ -804,7 +802,7 @@ AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, cons
   constexpr int64_t image_w = 512;
   constexpr int64_t images_max_batch = 256;
   constexpr int64_t images_channels = 3;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
+  CheckArgsSize(op_name, args_abs_list, size_expected);
   ValuePtr format_value = primitive->GetAttr("format");
   std::string format = GetValue<std::string>(format_value);
 

@@ -278,7 +278,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
   }
 }
 
-FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_spec_list) {
+FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
   ptrGraph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ptrGraph->set_flag(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
@@ -291,25 +291,25 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_spec_list) {
     i = 1;
   }
   ArgsPairList arg_pairs;
-  std::size_t size = args_spec_list.size();
+  std::size_t size = args_abs_list.size();
   for (; i < size; ++i) {
-    MS_LOG(DEBUG) << "GenerateFromTypes for elements from " << args_spec_list[i]->ToString() << ".";
-    arg_pairs.push_back(std::make_pair(ptrGraph->add_parameter(), args_spec_list[i]));
+    MS_LOG(DEBUG) << "GenerateFromTypes for elements from " << args_abs_list[i]->ToString() << ".";
+    arg_pairs.push_back(std::make_pair(ptrGraph->add_parameter(), args_abs_list[i]));
   }
 
   ptrGraph->set_output(Make(ptrGraph, ptrFnArg, arg_pairs));
   return ptrGraph;
 }
 
-abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
+abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {
   if (fn_leaf_ == nullptr) {
-    if (args_spec_list.empty()) {
+    if (args_abs_list.empty()) {
       MS_LOG(EXCEPTION) << "The arguments of Map operator should not be empty.";
     }
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+    MS_EXCEPTION_IF_NULL(args_abs_list[0]);
     // Assert that map's function param does not contain free variables
-    if (args_spec_list[0]->isa<FuncGraphAbstractClosure>()) {
-      auto graph_func = dyn_cast<FuncGraphAbstractClosure>(args_spec_list[0]);
+    if (args_abs_list[0]->isa<FuncGraphAbstractClosure>()) {
+      auto graph_func = dyn_cast<FuncGraphAbstractClosure>(args_abs_list[0]);
       auto func_graph = graph_func->func_graph();
       if (func_graph->parent() != nullptr) {
         MS_LOG(EXCEPTION) << "The Map operator don't support Closure with free variable yet.";
@@ -318,7 +318,7 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
   }
 
   AbstractBasePtrList broadened;
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(broadened),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          return arg->Broaden();

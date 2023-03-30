@@ -2098,7 +2098,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
       MS_EXCEPTION_IF_NULL(anf_node);
       auto partial_node = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(partial_node);
-      AbstractBasePtrList args_spec_list;
+      AbstractBasePtrList args_abs_list;
       auto &inputs = partial_node->inputs();
       const size_t kPartial_args_begin_pos = 2;
       const size_t kPartial_fn_pos = 1;
@@ -2106,7 +2106,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
         MS_LOG(ERROR) << "Partial node input size is wrong.";
         return nullptr;
       }
-      (void)std::transform(inputs.begin() + kPartial_args_begin_pos, inputs.end(), std::back_inserter(args_spec_list),
+      (void)std::transform(inputs.begin() + kPartial_args_begin_pos, inputs.end(), std::back_inserter(args_abs_list),
                            [](const AnfNodePtr &arg) -> AbstractBasePtr { return arg->abstract(); });
       auto &op_node = inputs[kPartial_fn_pos];
       abstract::AbstractFuncAtomPtr fn;
@@ -2120,7 +2120,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
         MS_LOG(WARNING) << "Can't get the abstract of partial node: " << op_node->ToString();
         return nullptr;
       }
-      return std::make_shared<abstract::PartialAbstractClosure>(fn, args_spec_list, partial_node);
+      return std::make_shared<abstract::PartialAbstractClosure>(fn, args_abs_list, partial_node);
     }
     case mind_ir::AttributeProto_AttributeType_UNIONFUNCCLOSURE: {
       abstract::AbstractFuncAtomPtrList func_list;

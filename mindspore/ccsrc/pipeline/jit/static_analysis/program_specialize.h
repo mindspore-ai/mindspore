@@ -179,7 +179,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 
   inline AnalysisContextPtr GetAnalysisContext(const AnalysisEnginePtr &engine,
                                                const BaseFuncGraphEvaluatorPtr &evaluator,
-                                               const AbstractBasePtrList &args_spec_list) const;
+                                               const AbstractBasePtrList &args_abs_list) const;
 
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
   inline void AddTodoItem(const std::vector<AnfNodePtr> &nodes) {

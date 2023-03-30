@@ -183,15 +183,15 @@ int64_t CheckAxis(const std::string &op, const std::string &args_name, const Val
   }
   return axis_value;
 }
-void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_spec_list,
+void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_abs_list,
                    size_t size_expect) {
-  if (args_spec_list.size() != size_expect) {
+  if (args_abs_list.size() != size_expect) {
     MS_LOG(EXCEPTION) << "For '" << op << "', the number of input should be " << size_expect << ", but got "
-                      << args_spec_list.size();
+                      << args_abs_list.size();
   }
 
   for (size_t i = 0; i < size_expect; i++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+    MS_EXCEPTION_IF_NULL(args_abs_list[i]);
   }
 }
 
@@ -212,13 +212,13 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   }
 }
 
-void CheckRequiredArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_spec_list,
+void CheckRequiredArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_abs_list,
                            size_t size_expect) {
-  if (args_spec_list.size() < size_expect) {
-    MS_LOG(EXCEPTION) << op << " required input args size " << size_expect << ", but got " << args_spec_list.size();
+  if (args_abs_list.size() < size_expect) {
+    MS_LOG(EXCEPTION) << op << " required input args size " << size_expect << ", but got " << args_abs_list.size();
   }
   for (size_t i = 0; i < size_expect; i++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+    MS_EXCEPTION_IF_NULL(args_abs_list[i]);
   }
 }
 }  // namespace abstract

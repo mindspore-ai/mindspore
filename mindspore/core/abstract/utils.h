@@ -36,7 +36,7 @@ ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2);
 MS_CORE_API TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2);
 ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2);
 
-MS_CORE_API AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_spec_list);
+MS_CORE_API AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list);
 MS_CORE_API AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const AbstractBasePtrList &spec2);
 MS_CORE_API AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs);
 

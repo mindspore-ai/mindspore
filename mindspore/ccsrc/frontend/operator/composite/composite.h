@@ -67,8 +67,8 @@ class HyperMap : public MetaFuncGraph {
   ~HyperMap() override = default;
   MS_DECLARE_PARENT(HyperMap, MetaFuncGraph)
 
-  abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const override;
-  FuncGraphPtr GenerateFromTypes(const TypePtrList &args_spec_list) override;
+  abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_abs_list) const override;
+  FuncGraphPtr GenerateFromTypes(const TypePtrList &args_abs_list) override;
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
 
  private:
@@ -108,7 +108,7 @@ class Tail : public MetaFuncGraph {
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
   void set_enable_tuple_grad_first(bool enable_tuple_grad_first) { enable_tuple_grad_first_ = enable_tuple_grad_first; }
@@ -129,7 +129,7 @@ class MakeTupleGradient : public MetaFuncGraph {
   explicit MakeTupleGradient(const std::string &name) : MetaFuncGraph(name) {}
   ~MakeTupleGradient() override = default;
   MS_DECLARE_PARENT(MakeTupleGradient, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const MakeTupleGradient &lhs, const MakeTupleGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MakeTupleGradientPtr = std::shared_ptr<MakeTupleGradient>;
@@ -139,7 +139,7 @@ class MakeListGradient : public MetaFuncGraph {
   explicit MakeListGradient(const std::string &name) : MetaFuncGraph(name) {}
   ~MakeListGradient() override = default;
   MS_DECLARE_PARENT(MakeListGradient, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const MakeListGradient &lhs, const MakeListGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MakeListGradientPtr = std::shared_ptr<MakeListGradient>;
@@ -149,7 +149,7 @@ class MakeDictGradient : public MetaFuncGraph {
   explicit MakeDictGradient(const std::string &name) : MetaFuncGraph(name) {}
   ~MakeDictGradient() override = default;
   MS_DECLARE_PARENT(MakeDictGradient, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const MakeDictGradient &lhs, const MakeDictGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MakeDictGradientPtr = std::shared_ptr<MakeDictGradient>;
@@ -159,7 +159,7 @@ class PyExecuteGradient : public MetaFuncGraph {
   explicit PyExecuteGradient(const std::string &name) : MetaFuncGraph(name) {}
   ~PyExecuteGradient() override = default;
   MS_DECLARE_PARENT(PyExecuteGradient, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const PyExecuteGradient &lhs, const PyExecuteGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using PyExecuteGradientPtr = std::shared_ptr<PyExecuteGradient>;
@@ -169,7 +169,7 @@ class MutableGradient : public MetaFuncGraph {
   explicit MutableGradient(const std::string &name) : MetaFuncGraph(name) {}
   ~MutableGradient() override = default;
   MS_DECLARE_PARENT(MutableGradient, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const MutableGradient &lhs, const MutableGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MutableGradientPtr = std::shared_ptr<MutableGradient>;
@@ -186,7 +186,7 @@ class GradOperation : public MetaFuncGraph {
                        const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
                        bool is_weights_none) const;
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
   bool sens_param() const { return sens_param_; }
   bool get_all_;
@@ -211,7 +211,7 @@ class GradAux : public MetaFuncGraph {
   explicit GradAux(const std::string &name) : MetaFuncGraph(name) {}
   ~GradAux() override = default;
   MS_DECLARE_PARENT(GradAux, MetaFuncGraph);
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 };
 using GradAuxPtr = std::shared_ptr<GradAux>;
 
@@ -222,7 +222,7 @@ class TaylorOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(TaylorOperation, MetaFuncGraph);
   FuncGraphPtr GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params) const;
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 };
 using TaylorOperationPtr = std::shared_ptr<TaylorOperation>;
 
@@ -231,7 +231,7 @@ class TupleAdd : public MetaFuncGraph {
   explicit TupleAdd(const std::string &name) : MetaFuncGraph(name) {}
   ~TupleAdd() override = default;
   MS_DECLARE_PARENT(TupleAdd, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const TupleAdd &lhs, const TupleAdd &rhs) { return lhs.name_ == rhs.name_; }
 };
 using TupleAddPtr = std::shared_ptr<TupleAdd>;
@@ -241,11 +241,11 @@ class SequenceSlice : public MetaFuncGraph {
   explicit SequenceSlice(const std::string &name) : MetaFuncGraph(name) {}
   ~SequenceSlice() override = default;
   MS_DECLARE_PARENT(SequenceSlice, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) final;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) final;
   friend bool operator==(const SequenceSlice &lhs, const SequenceSlice &rhs) { return lhs.name_ == rhs.name_; }
 
  protected:
-  virtual void CheckArgs(const AbstractBasePtrList &args_spec_list) = 0;
+  virtual void CheckArgs(const AbstractBasePtrList &args_abs_list) = 0;
   virtual FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) = 0;
   abstract::AbstractSequencePtr sequence_ = nullptr;
   AbstractSlicePtr slice_ = nullptr;
@@ -264,7 +264,7 @@ class SequenceSliceGetItem : public SequenceSlice {
   }
 
  protected:
-  void CheckArgs(const AbstractBasePtrList &args_spec_list) override;
+  void CheckArgs(const AbstractBasePtrList &args_abs_list) override;
   FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) override;
 
  private:
@@ -280,7 +280,7 @@ class ListSliceSetItem : public SequenceSlice {
   friend bool operator==(const ListSliceSetItem &lhs, const ListSliceSetItem &rhs) { return lhs.name_ == rhs.name_; }
 
  protected:
-  void CheckArgs(const AbstractBasePtrList &args_spec_list) override;
+  void CheckArgs(const AbstractBasePtrList &args_abs_list) override;
   FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) override;
 
  private:
@@ -294,7 +294,7 @@ class TupleGetItemTensor : public MetaFuncGraph {
   explicit TupleGetItemTensor(const std::string &name) : MetaFuncGraph(name) {}
   ~TupleGetItemTensor() override = default;
   MS_DECLARE_PARENT(TupleGetItemTensor, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const TupleGetItemTensor &lhs, const TupleGetItemTensor &rhs) {
     return lhs.name_ == rhs.name_;
   }
@@ -317,7 +317,7 @@ class Shard : public MetaFuncGraph {
   ~Shard() override = default;
   MS_DECLARE_PARENT(Shard, MetaFuncGraph)
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
  private:
   size_t kShardInputSize = 0;
@@ -331,7 +331,7 @@ class VmapOperation : public MetaFuncGraph {
 
   FuncGraphPtr GetVmap(const AnfNodePtr &vmap, int param_number) const;
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 };
 using VmapOperationPtr = std::shared_ptr<VmapOperation>;
 
@@ -341,7 +341,7 @@ class ZerosLike : public MetaFuncGraph {
       : MetaFuncGraph(name), fn_leaf_(fn_leaf) {}
   ~ZerosLike() override = default;
   MS_DECLARE_PARENT(ZerosLike, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const ZerosLike &lhs, const ZerosLike &rhs) { return lhs.name_ == rhs.name_; }
 
  private:

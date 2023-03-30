@@ -280,11 +280,11 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \brief Constructor of PartialAbstractClosure.
   ///
   /// \param[in] fn The AbstractFuncAtom this PartialAbstractClosure corresponding to.
-  /// \param[in] args_spec_list The first few parameters provided for fn in advance.
+  /// \param[in] args_abs_list The first few parameters provided for fn in advance.
   /// \param[in] node The CNode which this PartialAbstractClosure evaluated from.
-  PartialAbstractClosure(const AbstractFuncAtomPtr &fn, const AbstractBasePtrList &args_spec_list,
+  PartialAbstractClosure(const AbstractFuncAtomPtr &fn, const AbstractBasePtrList &args_abs_list,
                          const AnfNodePtr &node = nullptr)
-      : fn_(fn), args_spec_list_(args_spec_list), node_(AnfNodePtr(node)) {}
+      : fn_(fn), args_abs_list_(args_abs_list), node_(AnfNodePtr(node)) {}
 
   /// \brief Destructor of PartialAbstractClosure.
   ~PartialAbstractClosure() override = default;
@@ -298,7 +298,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the pre-provided arguments.
   ///
   /// \return The pre-provided arguments.
-  const AbstractBasePtrList &args() const { return args_spec_list_; }
+  const AbstractBasePtrList &args() const { return args_abs_list_; }
 
   /// \brief Get the CNode this PartialAbstractClosure evaluated from.
   ///
@@ -311,7 +311,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<PartialAbstractClosure>(fn_, args_spec_list_, node_.lock());
+    return std::make_shared<PartialAbstractClosure>(fn_, args_abs_list_, node_.lock());
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -327,7 +327,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
 
  private:
   AbstractFuncAtomPtr fn_;
-  AbstractBasePtrList args_spec_list_;
+  AbstractBasePtrList args_abs_list_;
   // The CNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
 };
@@ -472,17 +472,17 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
  public:
   /// \brief Constructor of VirtualAbstractClosure.
   ///
-  /// \param[in] args_spec_list The abstract values of the arguments to the function.
+  /// \param[in] args_abs_list The abstract values of the arguments to the function.
   /// \param[in] output_spec The abstract value of output.
-  VirtualAbstractClosure(const AbstractBasePtrList &args_spec_list, const AbstractBasePtr &output_spec)
-      : args_spec_list_(args_spec_list), output_(output_spec) {}
+  VirtualAbstractClosure(const AbstractBasePtrList &args_abs_list, const AbstractBasePtr &output_spec)
+      : args_abs_list_(args_abs_list), output_(output_spec) {}
 
   /// \brief Constructor of VirtualAbstractClosure.
   ///
   /// \param[in] args_abs The abstract value of argument to the function.
   /// \param[in] output_spec The abstract value of output.
   VirtualAbstractClosure(const AbstractBasePtr &args_abs, const AbstractBasePtr &output_spec)
-      : args_spec_list_({args_abs}), output_(output_spec) {}
+      : args_abs_list_({args_abs}), output_(output_spec) {}
 
   /// \brief Destructor of VirtualAbstractClosure.
   ~VirtualAbstractClosure() override = default;
@@ -491,7 +491,7 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
   /// \brief Get the abstract values of arguments.
   ///
   /// \return The abstract values of arguments.
-  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
+  const AbstractBasePtrList &args_abs_list() const { return args_abs_list_; }
 
   /// \brief Get the abstract value of output.
   ///
@@ -499,7 +499,7 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
   const AbstractBasePtr &output() const { return output_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<VirtualAbstractClosure>(args_spec_list_, output_);
+    return std::make_shared<VirtualAbstractClosure>(args_abs_list_, output_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -509,7 +509,7 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
   std::string ToString() const override;
 
  private:
-  AbstractBasePtrList args_spec_list_;
+  AbstractBasePtrList args_abs_list_;
   AbstractBasePtr output_;
 };
 using VirtualAbstractClosurePtr = std::shared_ptr<VirtualAbstractClosure>;
@@ -521,11 +521,11 @@ class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom 
   /// \brief Constructor of TypedPrimitiveAbstractClosure.
   ///
   /// \param[in] prim The Primitive with an explicitly fixed type signature.
-  /// \param[in] args_spec_list The abstract values of arguments to the Primitive.
+  /// \param[in] args_abs_list The abstract values of arguments to the Primitive.
   /// \param[in] output_spec The abstract value of output.
-  TypedPrimitiveAbstractClosure(const PrimitivePtr prim, const AbstractBasePtrList &args_spec_list,
+  TypedPrimitiveAbstractClosure(const PrimitivePtr prim, const AbstractBasePtrList &args_abs_list,
                                 const AbstractBasePtr &output_spec)
-      : prim_(prim), args_spec_list_(args_spec_list), output_(output_spec) {}
+      : prim_(prim), args_abs_list_(args_abs_list), output_(output_spec) {}
 
   /// \brief Destructor of TypedPrimitiveAbstractClosure.
   ~TypedPrimitiveAbstractClosure() override = default;
@@ -539,7 +539,7 @@ class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom 
   /// \brief Get the abstract values of arguments this TypedPrimitiveAbstractClosure corresponding to.
   ///
   /// \return The abstract values of arguments this TypedPrimitiveAbstractClosure corresponding to.
-  const AbstractBasePtrList &args_spec_list() const { return args_spec_list_; }
+  const AbstractBasePtrList &args_abs_list() const { return args_abs_list_; }
 
   /// \brief Get the abstract value of output this TypedPrimitiveAbstractClosure corresponding to.
   ///
@@ -547,7 +547,7 @@ class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom 
   const AbstractBasePtr &output() const { return output_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<TypedPrimitiveAbstractClosure>(prim_, args_spec_list_, output_);
+    return std::make_shared<TypedPrimitiveAbstractClosure>(prim_, args_abs_list_, output_);
   }
 
   bool operator==(const AbstractFunction &other) const override;
@@ -558,7 +558,7 @@ class MS_CORE_API TypedPrimitiveAbstractClosure final : public AbstractFuncAtom 
 
  private:
   PrimitivePtr prim_;
-  AbstractBasePtrList args_spec_list_;
+  AbstractBasePtrList args_abs_list_;
   AbstractBasePtr output_;
 };
 

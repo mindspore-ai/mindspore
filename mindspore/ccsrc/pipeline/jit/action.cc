@@ -1490,8 +1490,8 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
     res_mng->AddFuncGraph(fg);
   }
   abstract::AbstractBasePtrList broaded_args;
-  const auto &args_spec_list = resource->args_abs();
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_args),
+  const auto &args_abs_list = resource->args_abs();
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          if (arg->GetValueTrack() != kValueAny) {
@@ -1523,7 +1523,7 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
   if (!is_equal_input_args) {
     // Use InferMindir which will find c++ infer in eval_map and backend_eval_map;
-    (void)InferMindir(resource->func_graph(), args_spec_list, true);
+    (void)InferMindir(resource->func_graph(), args_abs_list, true);
   }
   return true;
 }

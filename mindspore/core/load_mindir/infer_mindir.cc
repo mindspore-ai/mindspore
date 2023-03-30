@@ -44,7 +44,7 @@ class MindIREngine {
   using AbstractBasePtrListPtr = std::shared_ptr<AbstractBasePtrList>;
 
   void Init(const AbstractBasePtrList &args);
-  AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
+  AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_abs_list);
   void EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalPartialPrimitive(const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalReturnPrimitive(const CNodePtr &node);
@@ -155,7 +155,7 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
 }
 
 // Infer primitive using C++ implement.
-AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(prim);
   try {
     MS_LOG_TRY_CATCH_SCOPE;
@@ -163,7 +163,7 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
     if (found.has_value()) {
       auto infer = found.value();
       if (infer.IsImplInferShapeAndType()) {
-        return infer.InferShapeAndType(nullptr, prim, args_spec_list);
+        return infer.InferShapeAndType(nullptr, prim, args_abs_list);
       }
     }
     if (raise_exception_) {
@@ -197,17 +197,17 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
     }
   }
 
-  AbstractBasePtrList args_spec_list;
+  AbstractBasePtrList args_abs_list;
   // Args has been resolved by partial
   if (args != nullptr) {
-    (void)args_spec_list.insert(args_spec_list.end(), args->begin(), args->end());
+    (void)args_abs_list.insert(args_abs_list.end(), args->begin(), args->end());
   } else {
-    (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(args_spec_list),
+    (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(args_abs_list),
                          [this](const AnfNodePtr &arg) { return infer_result_[arg]; });
   }
 
   // Call C++ infer
-  auto result = InferPrimitiveShape(prim, args_spec_list);
+  auto result = InferPrimitiveShape(prim, args_abs_list);
   if (result == nullptr) {
     MS_LOG(INFO) << node->ToString()
                  << " can't be inferred shape. It will keep the previous value with danger. Prim: " << prim->ToString();

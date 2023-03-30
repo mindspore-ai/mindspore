@@ -50,7 +50,7 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
 MS_CORE_API int64_t CheckAxis(const std::string &op, const std::string &args_name, const ValuePtr &axis, int64_t min,
                               int64_t max, const std::string &rank_name);
 
-MS_CORE_API void CheckArgsSize(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t size_expect);
+MS_CORE_API void CheckArgsSize(const std::string &op, const AbstractBasePtrList &args_abs_list, size_t size_expect);
 
 void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape);
 
@@ -62,7 +62,7 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
 std::string CheckAttrStringSet(const std::string &op, const ValuePtr &attr, const std::string &attr_name,
                                const std::set<std::string> &val_set);
 
-void CheckRequiredArgsSize(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t size_expect);
+void CheckRequiredArgsSize(const std::string &op, const AbstractBasePtrList &args_abs_list, size_t size_expect);
 
 template <typename T>
 struct ReportNameTraits {};
@@ -88,15 +88,15 @@ ABSTRACT_REPORT_NAME_TRAITS(MapTensor)
 ABSTRACT_REPORT_NAME_TRAITS(Sequence)
 
 template <typename T>
-std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {
-  if (index >= args_spec_list.size()) {
-    MS_EXCEPTION(ValueError) << op << " evaluator args list index out of bound, size " << args_spec_list.size()
+std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &args_abs_list, size_t index) {
+  if (index >= args_abs_list.size()) {
+    MS_EXCEPTION(ValueError) << op << " evaluator args list index out of bound, size " << args_abs_list.size()
                              << ", index " << index;
   }
-  auto arg = dyn_cast<T>(args_spec_list[index]);
+  auto arg = dyn_cast<T>(args_abs_list[index]);
   if (arg == nullptr) {
     MS_EXCEPTION(TypeError) << "For \'" << op << "\', input[" << index << "] should be " << ReportNameTraits<T>::name
-                            << ", but got " << args_spec_list[index]->BuildType()->ToString() << ".";
+                            << ", but got " << args_abs_list[index]->BuildType()->ToString() << ".";
   }
   return arg;
 }

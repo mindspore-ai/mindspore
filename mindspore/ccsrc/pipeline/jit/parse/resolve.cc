@@ -79,7 +79,7 @@ abstract::AbstractBasePtr MsClassObject::ToAbstract() {
   py::gil_scoped_acquire acquire;
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<MsClassType>());
-  AbstractBasePtrList args_spec_list = {abs_scalar};
+  AbstractBasePtrList args_abs_list = {abs_scalar};
   abstract::PrimitiveAbstractClosurePtr func_ptr = nullptr;
   bool is_class_type = parse::data_converter::IsClassType(obj());
   if (is_class_type) {
@@ -89,7 +89,7 @@ abstract::AbstractBasePtr MsClassObject::ToAbstract() {
     // Class instance as func, such as net(x, y)
     func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCallInstance);
   }
-  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
+  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
   ret_val->set_value_desc(ToString());
   return ret_val;
 }
@@ -115,10 +115,10 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   if (use_fallback && !IsSupportedCreateInstanceType(obj())) {
     return abs_scalar;
   }
-  AbstractBasePtrList args_spec_list = {abs_scalar};
+  AbstractBasePtrList args_abs_list = {abs_scalar};
 
   auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
-  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
+  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
   ret_val->set_value_desc(ToString());
   return ret_val;
 }

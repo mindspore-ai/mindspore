@@ -92,7 +92,7 @@ std::size_t AnalysisContext::ChildHash::operator()(const ChildKey &key) const no
   return hash_combine(hash_value, AbstractBasePtrListHash(key.second));
 }
 
-AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list) {
+AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list) {
   // Find func graph's parent and its parent context firstly.
   MS_EXCEPTION_IF_NULL(fg);
   FuncGraphPtr parent_graph = fg->parent();
@@ -105,16 +105,15 @@ AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const Abs
                       << trace::GetDebugInfo(fg->debug_info());
   }
   // Create or find child context from the parent context.
-  auto result = parent_context->children_.emplace(std::make_pair(fg, args_spec_list), nullptr);
+  auto result = parent_context->children_.emplace(std::make_pair(fg, args_abs_list), nullptr);
   if (result.second) {
-    // If exist child not found, create a new context for the func graph with its specific arguments.
-    result.first->second = CreateContext(parent_context, fg, args_spec_list);
+    // If exist child not found, create a new context for the func graph with its absific arguments.
+    result.first->second = CreateContext(parent_context, fg, args_abs_list);
   }
   return result.first->second;
 }
 
-AnalysisContextPtr AnalysisContext::GetCachedContext(const FuncGraphPtr &fg,
-                                                     const AbstractBasePtrList &args_spec_list) {
+AnalysisContextPtr AnalysisContext::GetCachedContext(const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list) {
   // Find func graph's parent and its parent context firstly.
   MS_EXCEPTION_IF_NULL(fg);
   FuncGraphPtr parent_graph = fg->parent();
@@ -126,7 +125,7 @@ AnalysisContextPtr AnalysisContext::GetCachedContext(const FuncGraphPtr &fg,
                       << ", parent_graph: " << (parent_graph == nullptr ? "null" : parent_graph->ToString()) << " "
                       << trace::GetDebugInfo(fg->debug_info());
   }
-  auto it = parent_context->children_.find(std::make_pair(fg, args_spec_list));
+  auto it = parent_context->children_.find(std::make_pair(fg, args_abs_list));
   if (it == parent_context->children_.cend()) {
     return nullptr;
   }
@@ -193,7 +192,7 @@ std::string AnalysisContext::ToString() const {
   }
   buffer << " Args: ";
   int64_t i = 0;
-  for (const auto &arg : args_spec_list_) {
+  for (const auto &arg : args_abs_list_) {
     buffer << "[" << i << "]: " << arg->ToString() << ", ";
     i++;
   }
@@ -214,18 +213,18 @@ void AnalysisContext::Clear() {
   children_.clear();
   parent_ = nullptr;
   func_graph_ = nullptr;
-  args_spec_list_.clear();
+  args_abs_list_.clear();
 }
 
 AnalysisContextPtr AnalysisContext::CreateContext(AnalysisContext *parent, const FuncGraphPtr &fg,
-                                                  const AbstractBasePtrList &args_spec_list) {
+                                                  const AbstractBasePtrList &args_abs_list) {
   // This is a hack to solve the problem that std::make_shared can only use public constructor.
   struct MakeSharedEnabler : public AnalysisContext {
-    MakeSharedEnabler(AnalysisContext *parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
-        : AnalysisContext(parent, fg, args_spec_list) {}
+    MakeSharedEnabler(AnalysisContext *parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_abs_list)
+        : AnalysisContext(parent, fg, args_abs_list) {}
     ~MakeSharedEnabler() = default;
   };
-  return std::make_shared<MakeSharedEnabler>(parent, fg, args_spec_list);
+  return std::make_shared<MakeSharedEnabler>(parent, fg, args_abs_list);
 }
 
 void AnalysisContext::ClearContext() {

@@ -184,7 +184,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   int GetPositionalArgsCount() const;
   AnfNodePtr GetParameterByName(const std::string &name);
   bool NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list);
-  FuncGraphPtr GenerateGraph(const AbstractBasePtrList &args_spec_list);
+  FuncGraphPtr GenerateGraph(const AbstractBasePtrList &args_abs_list);
   void set_is_generate(bool generated) { is_generated_ = generated; }
   bool is_generated() const { return is_generated_; }
 

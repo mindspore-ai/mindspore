@@ -45,15 +45,15 @@ bool IsContainUndetermined(const AbstractBasePtr &arg) {
   return arg->isa<abstract::AbstractUndetermined>() && arg->IsBroaden();
 }
 
-py::tuple GetParameters(const AbstractBasePtrList &args_spec_list) {
-  std::size_t params_size = args_spec_list.size();
+py::tuple GetParameters(const AbstractBasePtrList &args_abs_list) {
+  std::size_t params_size = args_abs_list.size();
   auto params = py::tuple(params_size);
   for (size_t i = 0; i < params_size; i++) {
-    const auto &arg = args_spec_list[i];
+    const auto &arg = args_abs_list[i];
     MS_EXCEPTION_IF_NULL(arg);
     if (IsContainUndetermined(arg)) {
       MS_EXCEPTION(TypeError) << "The " << i << "th initializing input to create instance for "
-                              << args_spec_list[0]->BuildValue()->ToString()
+                              << args_abs_list[0]->BuildValue()->ToString()
                               << " should be a constant, but got: " << arg->ToString();
     }
     ValuePtr param_value = arg->BuildValue();
@@ -63,10 +63,10 @@ py::tuple GetParameters(const AbstractBasePtrList &args_spec_list) {
   return params;
 }
 
-PrimitivePtr CreatePrimInstance(const parse::ClassTypePtr &class_type, const AbstractBasePtrList &args_spec_list) {
+PrimitivePtr CreatePrimInstance(const parse::ClassTypePtr &class_type, const AbstractBasePtrList &args_abs_list) {
   MS_LOG(DEBUG) << "Get class type: " << class_type->ToString() << ".";
   // Get the create instance obj's parameters, `params` may contain tuple(args, kwargs).
-  py::tuple params = GetParameters(args_spec_list);
+  py::tuple params = GetParameters(args_abs_list);
   // Create class instance.
   auto obj = parse::data_converter::CreatePythonObject(class_type->obj(), params);
   if (py::isinstance<py::none>(obj)) {

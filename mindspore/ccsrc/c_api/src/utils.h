@@ -220,7 +220,7 @@ std::vector<TensorPtr> ConvertOutputToTensor(const mindspore::BaseRef &output);
 
 AbstractBasePtr GetAbstract(const TypePtr &type, const int64_t shape[], size_t shape_size, bool is_param = false);
 
-AbstractBasePtr OpInferShapeAndType(const PrimitivePtr &prim, const mindspore::AbstractBasePtrList &args_spec_list);
+AbstractBasePtr OpInferShapeAndType(const PrimitivePtr &prim, const mindspore::AbstractBasePtrList &args_abs_list);
 
 STATUS CheckCustomOpInfo(const CustomOpInfo &info);
 

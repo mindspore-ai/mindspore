@@ -710,10 +710,10 @@ bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
   parallel::AddCacheEmbedding(func_graph);
   if (func_graph->has_flag(GRAPH_FLAG_CACHE_ENABLE)) {
     auto params = func_graph->parameters();
-    AbstractBasePtrList args_spec_list;
+    AbstractBasePtrList args_abs_list;
     std::for_each(params.begin(), params.end(),
-                  [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
-    func_graph = pipeline::Renormalize(resource, func_graph, args_spec_list);
+                  [&args_abs_list](const AnfNodePtr &node) { args_abs_list.push_back(node->abstract()); });
+    func_graph = pipeline::Renormalize(resource, func_graph, args_abs_list);
   }
   return true;
 }

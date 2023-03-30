@@ -83,20 +83,20 @@ AbstractBasePtr GetAbstract(const TypePtr &type_ptr, const int64_t shape[], size
   return std::make_shared<AbstractTensorImpl>(type_ptr, shape_vec);
 }
 
-AbstractBasePtr OpInferShapeAndType(const PrimitivePtr &prim, const mindspore::AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr OpInferShapeAndType(const PrimitivePtr &prim, const mindspore::AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(prim);
   auto front_eval_impl = mindspore::abstract::GetFrontendPrimitiveInferImpl(prim);
   if (front_eval_impl.has_value()) {
     auto infer = front_eval_impl.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    auto abs = infer.InferShapeAndType(nullptr, prim, args_spec_list);
+    auto abs = infer.InferShapeAndType(nullptr, prim, args_abs_list);
     return abs;
   }
   auto back_eval_impl = mindspore::abstract::GetBackendPrimitiveInferImpl(prim);
   if (back_eval_impl.has_value()) {
     auto infer = back_eval_impl.value();
     MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-    auto abs = infer.InferShapeAndType(nullptr, prim, args_spec_list);
+    auto abs = infer.InferShapeAndType(nullptr, prim, args_abs_list);
     return abs;
   }
   MS_LOG(EXCEPTION) << "Get infer function failed, the operator has not infer shape of infer type function yet, "
