@@ -71,7 +71,7 @@ int MaxPoolWithArgmaxV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return KRET_OK;
 }
 
-std::vector<int64_t> MaxPoolWithArgmaxV2CpuKernelMod::GetValidAttr(const std::vector<int64_t> &src_attr) {
+std::vector<int64_t> MaxPoolWithArgmaxV2CpuKernelMod::GetValidAttr(const std::vector<int64_t> &src_attr) const {
   if (src_attr.size() == kShape1dDims) {
     return {src_attr[kDim0], src_attr[kDim0]};
   } else if (src_attr.size() == kShape4dDims) {

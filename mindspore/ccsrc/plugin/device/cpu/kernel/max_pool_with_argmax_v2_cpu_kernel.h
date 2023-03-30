@@ -20,13 +20,10 @@
 #include <map>
 #include <algorithm>
 #include <functional>
-#include <numeric>
 #include <memory>
-#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -58,7 +55,7 @@ class MaxPoolWithArgmaxV2CpuKernelMod : public NativeCpuKernelMod {
                                         int64_t dW) const;
 
  private:
-  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr);
+  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr) const;
   template <typename DATA_T, typename INDICES_T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
