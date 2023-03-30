@@ -78,6 +78,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
   bool IsDumpEnabled();
+  void PyNativeModeCheck();
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
