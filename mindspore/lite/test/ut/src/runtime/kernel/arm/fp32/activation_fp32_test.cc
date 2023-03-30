@@ -17,8 +17,8 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "mindspore/lite/src/litert/kernel_registry.h"
 #include "mindspore/lite/src/litert/kernel_exec.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 
@@ -125,12 +125,13 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
   ctx.thread_num_ = 7;
+  op_param.op_parameter_.thread_num_ = ctx.thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+
+  auto kernel =
+    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -141,6 +142,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   std::vector<float> expect_output = {-0, -0.33333334, -0.33333334, 0, 0.6666667, 5, 6, 7};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
+  kernel->set_parameter(nullptr);
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
   delete kernel;
@@ -172,12 +174,13 @@ TEST_F(TestActivationFp32, HardTanh1) {
   output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  op_param.op_parameter_.thread_num_ = ctx.thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+
+  auto kernel =
+    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -188,6 +191,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
   std::vector<float> expect_output = {-1.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.0, 1.0};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
+  kernel->set_parameter(nullptr);
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
   delete kernel;
@@ -219,12 +223,13 @@ TEST_F(TestActivationFp32, HardTanh2) {
   output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  op_param.op_parameter_.thread_num_ = ctx.thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+
+  auto kernel =
+    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -235,6 +240,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
   std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
+  kernel->set_parameter(nullptr);
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
   delete kernel;
@@ -264,12 +270,13 @@ TEST_F(TestActivationFp32, Softplus) {
   output0_tensor.set_data(output.data());
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
   ctx.thread_num_ = 2;
+  op_param.op_parameter_.thread_num_ = ctx.thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+
+  auto kernel =
+    nnacl::NnaclKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
@@ -281,9 +288,9 @@ TEST_F(TestActivationFp32, Softplus) {
                                       20.00000000, 30.00000000, 14.0000000, 0.69314718};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 14, 0.00001));
 
+  kernel->set_parameter(nullptr);
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
   delete kernel;
 }
-
 }  // namespace mindspore

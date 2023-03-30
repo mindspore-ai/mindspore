@@ -19,6 +19,7 @@
 #include "src/common/log_util.h"
 #include "src/litert/inner_context.h"
 #include "thread/threadpool.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 const std::map<int32_t, float> kernel_compute_cost_map_ = {

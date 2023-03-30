@@ -22,14 +22,6 @@
 #include "nnacl/group_norm_parameter.h"
 #include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 KernelBase *CreateGroupNorm(OpParameter *param, int data_type);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_KERNEL_GROUP_NORM_H_

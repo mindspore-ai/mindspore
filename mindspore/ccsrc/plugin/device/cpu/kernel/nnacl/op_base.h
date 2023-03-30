@@ -173,6 +173,11 @@
 #define RELU6_MIN_VAL 0
 #define RELU6_MAX_VAL 6
 
+/* index for primitive_type & activation_type */
+#define TC_PTYPE(primitive_type) (primitive_type << 16)
+#define TC_ATYPE(activation_type) (activation_type)
+#define TC_TYPE(primitive_type, activation_type) (TC_PTYPE(primitive_type) + TC_ATYPE(activation_type))
+
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)
 #define MS_CHECK_TRUE_RET_VOID(value)

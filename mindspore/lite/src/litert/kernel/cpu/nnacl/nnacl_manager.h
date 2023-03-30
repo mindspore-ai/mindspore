@@ -69,6 +69,7 @@ NnaclKernel *NnaclOpt(OpParameter *parameter, const std::vector<lite::Tensor *> 
 #define NNACL_KERNEL(op_type, data_type, creator) \
   static NnaclKernelRegistrar g_kernel##op_type##data_type##kernelReg(op_type, data_type, creator);
 
+bool SupportNnaclKernel(int op_type, TypeId data_type);
 NnaclKernel *NnaclKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const kernel::KernelKey &key);

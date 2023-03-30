@@ -18,6 +18,7 @@
 #include "src/tensor.h"
 #include "common/tensor_util.h"
 #include "include/errorcode.h"
+#include "src/litert/thread_cost_model.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -84,7 +85,6 @@ int NnaclKernel::ReSize() {
   }
 
   UpdateTensorC();
-
   return kernel_->resize(kernel_);
 }
 
@@ -125,12 +125,12 @@ int NnaclKernel::InitKernel(const kernel::KernelKey &key, const lite::InnerConte
   }
 
   UpdateTensorC();
-
   kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type,
                          const_cast<ExecEnv *>(ctx->GetExecEnv()));
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
+  kernel_->update_thread_ = lite::UpdateThreadNum;
   return RET_OK;
 }
 }  // namespace mindspore::nnacl
