@@ -6808,20 +6808,18 @@ class Median(Primitive):
 
     Examples:
         >>> # case 1 : common median compute
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.math_ops import Median
+        >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x = Tensor(np.array([[5, 1, 2],[3, 5, 7], [1, 6, 4]]).astype(np.int64))
-        >>> median = Median(global_median=False, axis=0, keep_dims=False)
+        >>> median = ops.Median(global_median=False, axis=0, keep_dims=False)
         >>> y = median(x)
         >>> print(y)
         (Tensor(shape=[3], dtype=Int64, value= [3, 5, 4]), Tensor(shape=[3], dtype=Int64, value= [1, 1, 2]))
         >>> # case 2 : global median compute
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.operations.math_ops import Median
+        >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x = Tensor(np.array([[1, 7, 6],[5, 1, 3],[9, 17, 1]]).astype(np.int32))
-        >>> median = Median(global_median=True)
+        >>> median = ops.Median(global_median=True)
         >>> y = median(x)
         >>> print(y)
         (Tensor(shape=[], dtype=Int32, value= 5), Tensor(shape=[], dtype=Int64, value= 0))
