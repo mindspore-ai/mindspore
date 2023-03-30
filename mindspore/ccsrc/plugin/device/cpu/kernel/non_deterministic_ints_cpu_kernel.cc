@@ -52,8 +52,7 @@ bool NonDeterministicIntsCPUKernelMod::Init(const BaseOperatorPtr &base_operator
 }
 
 template <typename T1, typename T2>
-bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &,
+bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                                     const std::vector<AddressPtr> &outputs) {
   auto output = reinterpret_cast<T1 *>(outputs[0]->addr);
   size_t output_elem_num = outputs[0]->size / sizeof(T1);

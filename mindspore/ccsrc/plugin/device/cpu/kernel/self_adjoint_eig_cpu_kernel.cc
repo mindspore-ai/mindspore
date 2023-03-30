@@ -62,13 +62,13 @@ bool SelfAdjointEigCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    (void)LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
+    (void)LaunchKernel<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex64) {
-    LaunchKernel<std::complex<float>>(inputs, outputs);
+    (void)LaunchKernel<std::complex<float>>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex128) {
-    LaunchKernel<std::complex<double>>(inputs, outputs);
+    (void)LaunchKernel<std::complex<double>>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of x must be float32 or float64, but got "
                       << TypeIdLabel(dtype_) << ".";
@@ -116,9 +116,9 @@ bool SelfAdjointEigCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     }
   } else {
     for (int64_t batch = 0; batch < num_array; ++batch) {
-      T *A = reinterpret_cast<T *>(new T[m * n]);
-      T *B = reinterpret_cast<T *>(new T[m]);
-      T *C = reinterpret_cast<T *>(new T[m * n]);
+      T *A = static_cast<T *>(new T[m * n]);
+      T *B = static_cast<T *>(new T[m]);
+      T *C = static_cast<T *>(new T[m * n]);
       // Get the address of the input and output matrix for each batch
       for (int64_t i = 0; i < m * n; ++i) {
         A[i] = input[batch * m * n + i];

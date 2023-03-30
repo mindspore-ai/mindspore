@@ -67,7 +67,7 @@ bool RaggedTensorToSparseCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   MS_EXCEPTION_IF_NULL(prim);
   kernel_name_ = base_operator->name();
   auto input_num = inputs.size();
-  n_ = input_num - 1;
+  n_ = static_cast<int64_t>(input_num - 1);
   splits_type_ = inputs[0]->GetDtype();
   values_type_ = inputs[n_]->GetDtype();
   size_t min_input_num = 2;
@@ -120,7 +120,7 @@ int RaggedTensorToSparseCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 
 template <typename T1>
 void RaggedTensorToSparseCpuKernelMod::ValidateInputs(const std::vector<std::vector<T1>> &input1) {
-  int64_t input1_sizes = input1.size();
+  int64_t input1_sizes = static_cast<int64_t>(input1.size());
   for (int64_t i = 0; i < input1_sizes; ++i) {
     if (input1[i].size() == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of ragged splits can not be 0.";
@@ -136,7 +136,7 @@ void RaggedTensorToSparseCpuKernelMod::ValidateInputs(const std::vector<std::vec
       }
     }
     if (i > 0) {
-      int64_t length = input1[i].size();
+      int64_t length = static_cast<int64_t>(input1[i].size());
       int64_t last_split = input1[i - 1][input1[i - 1].size() - 1];
       int64_t input1_s = last_split + 1;
       if (length != input1_s) {
@@ -152,8 +152,8 @@ template <typename T1>
 void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>> &input1, int64_t *output1_ptr,
                                               const std::vector<std::vector<int64_t>> &index_suffixes,
                                               std::vector<int64_t> index_prefix) {
-  int64_t nvals = input1.back()[input1.back().size() - 1] * index_suffixes.size();
-  int64_t indices_len = n_ + input2_shape_.size();
+  int64_t nvals = static_cast<int64_t>(input1.back()[input1.back().size() - 1] * index_suffixes.size());
+  int64_t indices_len = n_ + static_cast<int64_t>(input2_shape_.size());
   output1_shape_[0] = nvals;
   output1_shape_[1] = indices_len;
 
@@ -161,7 +161,7 @@ void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>>
   int64_t &final_pos = pos[n_ - 1];
   int64_t next_index = 0;
   int64_t num = 0;
-  int64_t max_final_pos = input1.back().size() - 1;
+  int64_t max_final_pos = static_cast<int64_t>(input1.back().size() - 1);
 
   for (; final_pos < max_final_pos; ++final_pos) {
     for (int64_t dim = n_ - 2; dim >= 0; --dim) {
@@ -173,7 +173,7 @@ void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>>
         limit_child = input1[dim][pos[dim] + 1];
       }
     }
-    int64_t index_pre_size = index_prefix.size();
+    int64_t index_pre_size = static_cast<int64_t>(index_prefix.size());
     for (int64_t dim = 0; dim < index_pre_size; ++dim) {
       int64_t start = dim > 0 ? input1[dim - 1][pos[dim - 1]] : 0;
       index_prefix[dim] = pos[dim] - start;
@@ -202,13 +202,13 @@ void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>>
 
 template <typename T2>
 void RaggedTensorToSparseCpuKernelMod::OutPutSparseValues(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &workspace,
+                                                          const std::vector<kernel::AddressPtr> &,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
   int64_t input2_value_num = 0;
-  auto output2_ptr = reinterpret_cast<T2 *>(outputs[1]->addr);
-  auto input2_ptr = reinterpret_cast<T2 *>(inputs[n_]->addr);
+  auto output2_ptr = static_cast<T2 *>(outputs[1]->addr);
+  auto input2_ptr = static_cast<T2 *>(inputs[n_]->addr);
 
-  input2_value_num = inputs[n_]->size / sizeof(T2);
+  input2_value_num = static_cast<int64_t>(inputs[n_]->size / sizeof(T2));
   for (int64_t i = 0; i < input2_value_num; i++) {
     output2_ptr[i] = input2_ptr[i];
   }
@@ -217,18 +217,18 @@ void RaggedTensorToSparseCpuKernelMod::OutPutSparseValues(const std::vector<kern
 template <typename T1>
 void RaggedTensorToSparseCpuKernelMod::OutPutSparseDenseShape(const std::vector<std::vector<T1>> &input1,
                                                               int64_t *output3_ptr) {
-  output3_ptr[0] = input1[0].size() - 1;
+  output3_ptr[0] = static_cast<int64_t>(input1[0].size() - 1);
   for (int64_t dim = 0; dim < n_; ++dim) {
     const auto &splits = input1[dim];
     int64_t max_width = 0;
-    int64_t splits_i = splits.size();
+    int64_t splits_i = static_cast<int64_t>(splits.size());
     for (int64_t i = 1; i < splits_i; ++i) {
       int64_t splits_i_1 = splits[i] - splits[i - 1];
       max_width = std::max(max_width, splits_i_1);
     }
     output3_ptr[dim + 1] = max_width;
   }
-  int64_t input2_shape = input2_shape_.size();
+  int64_t input2_shape = static_cast<int64_t>(input2_shape_.size());
   for (int64_t dim = 1; dim < input2_shape; ++dim) {
     output3_ptr[dim + n_] = input2_shape_[dim];
   }
@@ -241,15 +241,15 @@ bool RaggedTensorToSparseCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   auto *output1_ptr = static_cast<int64_t *>(outputs[0]->addr);
   auto *output3_ptr = static_cast<int64_t *>(outputs[2]->addr);
   auto input_num = inputs.size();
-  n_ = input_num - 1;
+  n_ = static_cast<int64_t>(input_num - 1);
   if (n_ <= 0) {
     MS_LOG(EXCEPTION) << "For op " << kernel_name_
                       << ", the length of rt_nested_splits should be bigger than 0, but got " << n_ << ".";
   }
   std::vector<std::vector<T1>> input1(n_);
   for (int64_t i = 0; i < n_; ++i) {
-    auto input1_ptr = reinterpret_cast<T1 *>(inputs[kRttsInputStart + i]->addr);
-    int64_t inputs_1 = inputs[kRttsInputStart + i]->size / sizeof(T1);
+    auto input1_ptr = static_cast<T1 *>(inputs[kRttsInputStart + i]->addr);
+    int64_t inputs_1 = static_cast<int64_t>(inputs[kRttsInputStart + i]->size / sizeof(T1));
     for (int64_t j = 0; j < inputs_1; j++) {
       input1[i].push_back(*(input1_ptr + j));
     }
@@ -268,7 +268,7 @@ bool RaggedTensorToSparseCpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   std::vector<std::vector<int64_t>> index_suffixes;
 
   std::vector<std::vector<int64_t>> suffixes{{}};
-  int64_t input2_sizes = input2_shape_.size();
+  int64_t input2_sizes = static_cast<int64_t>(input2_shape_.size());
   for (int64_t dim = 1; dim < input2_sizes; ++dim) {
     std::vector<std::vector<int64_t>> new_suffixes;
     for (const auto &suffix : suffixes) {

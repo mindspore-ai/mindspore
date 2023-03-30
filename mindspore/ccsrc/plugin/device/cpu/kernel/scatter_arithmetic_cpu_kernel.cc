@@ -89,7 +89,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
   auto *input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *indices = reinterpret_cast<S *>(inputs[1]->addr);
+  auto *indices = static_cast<S *>(inputs[1]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   auto func_iter = scatter_arithmetic_func_map.find(kernel_name_);

@@ -299,7 +299,6 @@ bool AffineGridGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
 bool AffineGridGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<AddressPtr> &outputs) {
   constexpr int INPUTSNUM = 1;
-  // CheckParams();
   TypeId input_type = input_info_[0];
   TypeId x_size_type = input_info_[INPUTSNUM];
   switch (input_type) {

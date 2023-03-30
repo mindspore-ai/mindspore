@@ -58,12 +58,12 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
 
   auto axis = 0;
-  int64_t all_shp = static_cast<int64_t>(element0_shape[axis]);
+  int64_t all_shp = static_cast<int64_t>(element0_shape[IntToSize(axis)]);
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape_i = elements[i]->BuildShape();
     if (shape_i->IsDynamic()) {
       auto ret_shape = element0_shape;
-      ret_shape[axis] = -1;
+      ret_shape[IntToSize(axis)] = -1;
       return std::make_shared<abstract::Shape>(ret_shape);
     }
   }
@@ -85,10 +85,10 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
       }
     }
 
-    all_shp = all_shp + elementi_shape[axis];
+    all_shp = all_shp + elementi_shape[IntToSize(axis)];
   }
   auto ret_shape = element0_shape;
-  ret_shape[axis] = all_shp;
+  ret_shape[IntToSize(axis)] = all_shp;
   (void)primitive->AddAttr("shape", MakeValue(ret_shape));
   return std::make_shared<abstract::Shape>(ret_shape);
 }

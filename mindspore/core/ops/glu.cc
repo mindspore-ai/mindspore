@@ -68,7 +68,7 @@ abstract::ShapePtr GLUInferShape(const PrimitivePtr &primitive, const std::vecto
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x.shape[" << axis << "] must be even, but got "
                              << shape_of_split_dim << " .";
   }
-  shape[axis] = shape_of_split_dim / kEvenNum;
+  shape[LongToSize(axis)] = shape_of_split_dim / kEvenNum;
   return std::make_shared<abstract::Shape>(shape);
 }
 

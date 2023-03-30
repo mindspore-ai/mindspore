@@ -59,7 +59,7 @@ int ConcatOffsetV1CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 template <typename T>
 bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto axis = static_cast<int64_t>(*reinterpret_cast<int32_t *>(inputs[kIndex0]->addr));
+  auto axis = static_cast<int64_t>(*static_cast<int32_t *>(inputs[kIndex0]->addr));
   int64_t input_0_elem_num = input0_[0];
   if (axis >= input_0_elem_num || axis < -input_0_elem_num) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' must be fall in range [-" << input_0_elem_num << ", "
@@ -75,10 +75,10 @@ bool ConcatOffsetV1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   size_t input_tensor_num = inputs.size() - kConcatOffsetV1AxisNum;
   size_t elem_num = LongToSize(output_[kIndex0]);
   int32_t offset = 0;
-  auto input0_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto input0_addr = static_cast<int32_t *>(inputs[1]->addr);
   for (size_t i = 0; i < input_tensor_num; ++i) {
-    auto input_i_addr = reinterpret_cast<int32_t *>(inputs[i + 1]->addr);
-    auto output_i_addr = reinterpret_cast<int32_t *>(outputs[i]->addr);
+    auto input_i_addr = static_cast<int32_t *>(inputs[i + 1]->addr);
+    auto output_i_addr = static_cast<int32_t *>(outputs[i]->addr);
     for (size_t j = 0; j < elem_num; ++j) {
       if (j == axis_) {
         output_i_addr[j] = offset;

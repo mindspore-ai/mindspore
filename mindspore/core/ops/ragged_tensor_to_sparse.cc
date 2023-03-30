@@ -66,23 +66,23 @@ abstract::TupleShapePtr RaggedTensorToSparseInferShape(const PrimitivePtr &primi
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{out_indices, out_values, out_shape});
   }
-  CheckAndConvertUtils::CheckInteger("rank of 'rt_dense_values'", SizeToLong(in_values_shape.size()), kGreaterEqual, 1,
-                                     primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'rt_dense_values'", SizeToLong(in_values_shape.size()),
+                                           kGreaterEqual, 1, primitive->name());
   ShapeVector out_values_shape = {};
   int64_t values_tensor_size = SizeToLong(SizeOf(in_values_shape));
-  (void)out_values_shape.push_back(values_tensor_size);
+  out_values_shape.push_back(values_tensor_size);
   auto ndim = inputs_splits.size() + in_values_shape.size();
   ShapeVector out_indices_shape = {};
-  (void)out_indices_shape.push_back(values_tensor_size);
-  (void)out_indices_shape.push_back(ndim);
+  out_indices_shape.push_back(values_tensor_size);
+  out_indices_shape.push_back(ndim);
   ShapeVector out_shape_shape = {};
-  (void)out_shape_shape.push_back(ndim);
+  out_shape_shape.push_back(ndim);
   abstract::ShapePtr out_indices = std::make_shared<abstract::Shape>(out_indices_shape);
   abstract::ShapePtr out_values = std::make_shared<abstract::Shape>(out_values_shape);
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(out_shape_shape);
   auto splits_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kRttsFirstInput]->BuildShape())[kShape];
-  primitive->AddAttr("RAGGED_RANK", MakeValue(SizeToLong(splits_shape.size())));
+  (void)primitive->AddAttr("RAGGED_RANK", MakeValue(SizeToLong(splits_shape.size())));
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{out_indices, out_values, out_shape});
 }

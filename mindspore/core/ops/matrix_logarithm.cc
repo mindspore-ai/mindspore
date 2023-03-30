@@ -53,9 +53,9 @@ abstract::ShapePtr MatrixLogarithmInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kGreaterEqual, kNumber2, prim_name);
   }
   if (!IsDynamic(x_shape)) {
-    const int64_t x_rank = x_shape.size();
-    auto column_size = x_shape[x_rank - kNumber1];
-    auto row_size = x_shape[x_rank - kNumber2];
+    const int64_t x_rank = SizeToLong(x_shape.size());
+    auto column_size = x_shape[LongToSize(x_rank - kNumber1)];
+    auto row_size = x_shape[LongToSize(x_rank - kNumber2)];
     if (column_size != row_size) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last two dimensions of input 'x' must be equal"
                                << ", but got x.shape = " << build_shape->ToString() << ".";

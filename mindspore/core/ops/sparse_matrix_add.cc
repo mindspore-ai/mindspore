@@ -171,7 +171,7 @@ AbstractBasePtr SparseMatrixAddInfer(const abstract::AnalysisEnginePtr &, const 
     MS_EXCEPTION_IF_NULL(input);
   }
   const int64_t input_num = 12;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto types = SparseMatrixAddInferType(primitive, input_args);
   auto shapes = SparseMatrixAddInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

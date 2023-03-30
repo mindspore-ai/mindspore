@@ -149,7 +149,6 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_o
                   << indices_shape.size() << "-D.";
     return KRET_RESIZE_FAILED;
   }
-  // auto indices_size = indices_shape[0];
   auto indices_size = 1;
   for (size_t i = 0; i < indices_shape.size(); i++) {
     indices_size *= indices_shape[i];

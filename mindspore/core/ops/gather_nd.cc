@@ -59,6 +59,7 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   std::set<TypePtr> int_types = {kInt32, kInt64};
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();

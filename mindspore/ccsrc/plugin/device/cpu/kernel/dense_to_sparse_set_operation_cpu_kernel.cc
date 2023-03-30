@@ -57,7 +57,7 @@ const char UnionStr[] = "union";
 std::vector<int64_t> Strides(ShapeVector shape) {
   std::vector<int64_t> result(shape.size());
   int64_t product = 1;
-  for (int64_t i = shape.size() - 1; i >= 0; --i) {
+  for (int64_t i = SizeToLong(shape.size() - 1); i >= 0; --i) {
     result[i] = product;
     product *= shape[i];
   }
@@ -109,9 +109,9 @@ bool GroupShapeFromInputs(ShapeVector shape1, ShapeVector shape2, ShapeVector *c
 void PopulateGroupIndices(int64_t flat_group_index, ShapeVector group_shape, ShapeVector *group_indices) {
   group_indices->clear();
   int64_t running_flat_group_index = flat_group_index;
-  for (int64_t group_dim_index = group_shape.size() - 1; group_dim_index >= 0; --group_dim_index) {
+  for (int64_t group_dim_index = SizeToLong(group_shape.size() - 1); group_dim_index >= 0; --group_dim_index) {
     const auto group_dim = group_shape[group_dim_index];
-    group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
+    (void)group_indices->insert(group_indices->begin(), running_flat_group_index % group_dim);
     running_flat_group_index /= group_dim;
   }
 }
@@ -127,7 +127,7 @@ bool PopulateFromDenseGroup(kernel::AddressPtr input, int64_t last_dim, std::vec
   }
   // "for DenseToSparseSetOperation, group_indices size must be equal to input_strides.size-1 ");
   result->clear();
-  auto data_ptr = reinterpret_cast<T *>(input->addr);
+  auto data_ptr = static_cast<T *>(input->addr);
   Disze_rank1 dsize(input->size);
   T_flat input_flat(data_ptr, dsize);
   const auto start = std::inner_product(group_indices.begin(), group_indices.end(), input_strides.begin(), 0L);
@@ -141,7 +141,7 @@ bool PopulateFromDenseGroup(kernel::AddressPtr input, int64_t last_dim, std::vec
 template <typename T>
 bool PopulateFromSparse(kernel::AddressPtr input, int64_t start, int64_t last_dim, std::set<T> *result) {
   result->clear();
-  auto data_ptr = reinterpret_cast<T *>(input->addr);
+  auto data_ptr = static_cast<T *>(input->addr);
   Disze_rank1 dsize(input->size);
   T_flat input_flat(data_ptr, dsize);
   auto end = start + last_dim;
@@ -159,7 +159,7 @@ bool pred(const int64_t a, const int64_t b) {
 bool SparseStride(kernel::AddressPtr indices, int64_t num_elements, ShapeVector group_shape,
                   std::vector<int64_t> *result, int64_t set2_nums, int64_t set2_dim) {
   ShapeVector group_indices;
-  auto indices_ptr = reinterpret_cast<int64_t *>(indices->addr);
+  auto indices_ptr = static_cast<int64_t *>(indices->addr);
   Int64_matrix indices_flat(indices_ptr, set2_nums, set2_dim);
   result->clear();
   int64_t i = 0;
@@ -185,7 +185,7 @@ bool SparseStride(kernel::AddressPtr indices, int64_t num_elements, ShapeVector 
 
 void ValidateIndices(kernel::AddressPtr indices, ShapeVector shape2, int64_t set2_nums, int64_t set2_dim,
                      int64_t shape2_size) {
-  auto indices_ptr = reinterpret_cast<int64_t *>(indices->addr);
+  auto indices_ptr = static_cast<int64_t *>(indices->addr);
   Int64_matrix indices_flat(indices_ptr, set2_nums, set2_dim);
   for (int64_t i = 0; i < set2_nums; i++) {
     for (int64_t j = 0; j < shape2_size; j++) {
@@ -269,7 +269,7 @@ bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector
   auto out_values_ptr = reinterpret_cast<T *>(outputs[kOutput2]->addr);
   auto out_shape_ptr = reinterpret_cast<int64_t *>(outputs[kOutput3]->addr);
 
-  int64_t output_shape_size = output_shape->size();
+  int64_t output_shape_size = SizeToLong(output_shape->size());
   infer_shape_ = {{num_values, output_shape_size}, {num_values}, {output_shape_size}};
 
   Disze_rank2 out_indices_dsize(num_values, output_shape_size);
@@ -328,7 +328,7 @@ template <typename T>
 bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                          const std::vector<kernel::AddressPtr> &outputs) {
   ShapeVector group_shape;
-  auto shape2_ptr = reinterpret_cast<int64_t *>(inputs[kInputX2Shape]->addr);
+  auto shape2_ptr = static_cast<int64_t *>(inputs[kInputX2Shape]->addr);
   auto shape2_size = (inputs[kInputX2Shape]->size) / sizeof(int64_t);
   ShapeVector shape2(shape2_ptr, shape2_ptr + shape2_size);
 
@@ -371,7 +371,7 @@ bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kerne
     ApplySetOperation(set1_group_set, set2_group_set, &group_set);
     if (!group_set.empty()) {
       group_sets[group_indices] = group_set;
-      int64_t set_size = group_set.size();
+      int64_t set_size = SizeToLong(group_set.size());
       if (set_size > max_set_size) {
         max_set_size = set_size;
       }
@@ -394,7 +394,7 @@ bool DenseToSparseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_ope
 
   std::string set_operation_str = GetValue<std::string>(prim->GetAttr("set_operation"));
 
-  std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
+  (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   validate_indices_ = GetValue<bool>(prim->GetAttr("validate_indices"));
 
   if (set_operation_str == AMinusBStr) {

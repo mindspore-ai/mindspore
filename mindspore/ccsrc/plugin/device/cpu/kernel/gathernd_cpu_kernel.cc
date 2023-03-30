@@ -65,7 +65,7 @@ int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   indices_shapes_ = inputs[1]->GetShapeVector();
   // make a scalar to tensor whose shape is (1,)
   if (indices_shapes_.size() == 0) {
-    indices_shapes_.emplace_back(1);
+    (void)indices_shapes_.emplace_back(1);
   }
   // Reshape()
   size_t dim_of_indices = 1;

@@ -45,7 +45,7 @@ int SetSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
   auto values_shape = inputs[kIndex1]->GetShapeVector();
   shape_ = inputs[kIndex2]->GetShapeVector();
-  values_size_ = values_shape[0];
+  values_size_ = static_cast<size_t>(values_shape[0]);
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   dims_ = shape_[0];
   return KRET_OK;
@@ -131,7 +131,7 @@ bool SetSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   for (unsigned int n = 0; n < vals_num; ++n) {
     int64_t ix = 0;
     for (int d = 0; d < dims_ - 1; ++d) {
-      const int64_t ix_n_d = indices_t[n * dims_ + d];
+      const int64_t ix_n_d = indices_t[SizeToLong(n) * dims_ + d];
       ix += strides[d] * ix_n_d;
     }
     all_values[ix].insert(*(vals_t + n));

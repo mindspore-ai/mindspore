@@ -55,6 +55,7 @@ void ImpleEye(int64_t num_n_, int64_t num_m_, void *target) {
 }
 
 abstract::ShapePtr EyeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto n_ptr = input_args[0]->BuildValue();
   auto m_ptr = input_args[1]->BuildValue();
   auto n_v = GetValue<int64_t>(n_ptr);

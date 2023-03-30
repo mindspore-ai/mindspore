@@ -89,9 +89,10 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
       }
     } else {
       for (int64_t idx = 0; idx < long_kdim3; ++idx) {
-        (void)y_shape.emplace_back(x_shape[idx + long_kdim2] != abstract::Shape::kShapeDimAny
-                                     ? static_cast<int64_t>(floor(x_shape[idx + long_kdim2] * scales[idx]))
-                                     : abstract::Shape::kShapeDimAny);
+        (void)y_shape.emplace_back(
+          x_shape[LongToSize(idx + long_kdim2)] != abstract::Shape::kShapeDimAny
+            ? static_cast<int64_t>(floor(x_shape[LongToSize(idx + long_kdim2)] * scales[LongToSize(idx)]))
+            : abstract::Shape::kShapeDimAny);
       }
     }
   } else if (output_size.empty() && scales.empty()) {

@@ -117,7 +117,7 @@ abstract::ShapePtr RandpermV2InferShape(const PrimitivePtr &primitive, const std
 TypePtr RandpermV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto input_type = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_type_id = input_type->cast<TensorTypePtr>();

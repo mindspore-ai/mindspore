@@ -55,7 +55,7 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
     ShapeVector shape_out{abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::Shape>(shape_out);
   }
-  CheckAndConvertUtils::CheckInteger("size", size_shape.size(), kEqual, 0, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("size", SizeToLong(size_shape.size()), kEqual, 0, primitive->name());
   auto size_value_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   if (!size_value_ptr->isa<AnyValue>() && !size_value_ptr->isa<None>()) {

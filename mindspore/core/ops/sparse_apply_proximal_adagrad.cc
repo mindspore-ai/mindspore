@@ -33,9 +33,9 @@ void SparseApplyProximalAdagradCheckTensorShapeAndSize(const ShapeVector &var_sh
   auto is_dynamic = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamic);
   auto is_dynamic_rank = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamicRank);
   // Var dimension must be equal or greater than 1.
-  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", SizeToLong(var_shape.size()), kGreaterEqual, 1, prim_name);
   // Indices must be rank 1.
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
 
   if (!is_dynamic_rank) {
     if (var_shape.size() != accum_shape.size()) {
@@ -88,7 +88,7 @@ abstract::TupleShapePtr SparseApplyProximalAdagradInferShape(const PrimitivePtr 
   SparseApplyProximalAdagradCheckTensorShapeAndSize(var_shape, accum_shape, grad_shape, indices_shape, prim_name);
 
   if (!(IsDynamic(lr_shape) || IsDynamic(l1_shape) || IsDynamic(l2_shape))) {
-    const size_t scalar_shape = 0;
+    const int64_t scalar_shape = 0;
     (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, scalar_shape, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, scalar_shape, prim_name);

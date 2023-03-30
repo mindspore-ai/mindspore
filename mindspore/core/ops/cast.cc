@@ -50,7 +50,7 @@ class CastInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     auto x_type = input_args[0]->BuildType();
-    CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
+    (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
 
     ValuePtr dst_type = primitive->GetAttr(kDstType);
     if (dst_type == nullptr) {
@@ -74,7 +74,7 @@ class CastInfer : public abstract::OpInferBase {
     return dst_type->cast<TypePtr>();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     auto type = InferType(primitive, input_args);
     auto shape = InferShape(primitive, input_args);

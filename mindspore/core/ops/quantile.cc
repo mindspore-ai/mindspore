@@ -90,21 +90,21 @@ abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::
   auto keep_dims = GetValue<bool>(keep_dims_ptr);
   int q_size = 1;
   for (uint64_t i = 0; i < q_shape.size(); i++) {
-    q_size *= q_shape[i];
+    q_size *= static_cast<int32_t>(q_shape[i]);
   }
 
   if (dim != kQuantileDefaultDim && input_dim > 0) {
     out_shape = input_shape;
     if (keep_dims) {
-      out_shape[dim] = 1;
+      out_shape[LongToSize(dim)] = 1;
     } else {
-      out_shape.erase(out_shape.begin() + dim);
+      (void)out_shape.erase(out_shape.begin() + dim);
     }
   } else if (keep_dims) {
     out_shape = std::vector<int64_t>(input_dim, 1);
   }
   if (q_dim > 0) {
-    out_shape.insert(out_shape.begin(), q_size);
+    (void)out_shape.insert(out_shape.begin(), q_size);
   }
 
   return std::make_shared<abstract::Shape>(out_shape);
@@ -127,7 +127,7 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   auto q_value = q->BuildValue();
   MS_EXCEPTION_IF_NULL(q_value);
   if (q->isa<abstract::AbstractTensor>()) {
-    CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);
   } else if (q->isa<abstract::AbstractScalar>()) {
     if (q_value != nullptr) {
       if (!q_value->isa<FloatImm>()) {

@@ -282,15 +282,15 @@ bool RMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     LaunchRMSPropUnuseCenter<float>(variable, mean_square, moment, gradients, learning_rate, decay, momentum, epsilon);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
-    T *variable = reinterpret_cast<T *>(inputs[kNumberZero]->addr);
-    T *mean_gradients = reinterpret_cast<T *>(inputs[kNumberOne]->addr);
-    T *mean_square = reinterpret_cast<T *>(inputs[kNumberTwo]->addr);
-    T *moment = reinterpret_cast<T *>(inputs[kNumberThree]->addr);
-    T *gradients = reinterpret_cast<T *>(inputs[kNumberFour]->addr);
-    T *learning_rate = reinterpret_cast<T *>(inputs[kNumberFive]->addr);
-    T *decay = reinterpret_cast<T *>(inputs[kNumberSix]->addr);
-    T *momentum = reinterpret_cast<T *>(inputs[kNumberSeven]->addr);
-    T *epsilon = reinterpret_cast<T *>(inputs[kNumberEight]->addr);
+    T *variable = static_cast<T *>(inputs[kNumberZero]->addr);
+    T *mean_gradients = static_cast<T *>(inputs[kNumberOne]->addr);
+    T *mean_square = static_cast<T *>(inputs[kNumberTwo]->addr);
+    T *moment = static_cast<T *>(inputs[kNumberThree]->addr);
+    T *gradients = static_cast<T *>(inputs[kNumberFour]->addr);
+    T *learning_rate = static_cast<T *>(inputs[kNumberFive]->addr);
+    T *decay = static_cast<T *>(inputs[kNumberSix]->addr);
+    T *momentum = static_cast<T *>(inputs[kNumberSeven]->addr);
+    T *epsilon = static_cast<T *>(inputs[kNumberEight]->addr);
 
     size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
     MS_LOG(INFO) << "RMSPropCpuKernelMod lens:" << lens << " size_:" << size_;

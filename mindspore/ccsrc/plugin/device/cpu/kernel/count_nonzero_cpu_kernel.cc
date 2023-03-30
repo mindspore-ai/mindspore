@@ -108,15 +108,17 @@ struct is_complex_t<std::complex<T>> : std::true_type {};
 
 template <class T>
 int64_t IsNonZero(T val, std::true_type) {
-  return val.real() != 0 || val.imag() != 0 ? static_cast<int64_t>(1) : static_cast<int64_t>(0);
+  return static_cast<T>(val.real()) != static_cast<T>(0) || static_cast<T>(val.imag()) != static_cast<T>(0)
+           ? static_cast<int64_t>(1)
+           : static_cast<int64_t>(0);
 }
 template <class T>
 int64_t IsNonZero(T val, std::false_type) {
-  return val != static_cast<T>(0) ? static_cast<int64_t>(1) : static_cast<int64_t>(0);
+  return static_cast<T>(val) != static_cast<T>(0) ? static_cast<int64_t>(1) : static_cast<int64_t>(0);
 }
 
 void CountNonZeroCpuKernelMod::ComputeCountParameter(void) {
-  int64_t input_rank = x_shape_.size();
+  int64_t input_rank = SizeToLong(x_shape_.size());
   std::vector<int64_t> dims = dims_;
 
   if (dims.size() == 0) {
@@ -125,9 +127,9 @@ void CountNonZeroCpuKernelMod::ComputeCountParameter(void) {
     }
   }
   // Check dims in [-x_rank, x_rank)
-  std::for_each(dims.begin(), dims.end(), [input_rank](auto &dim) { dim = dim < 0 ? dim + input_rank : dim; });
+  (void)std::for_each(dims.begin(), dims.end(), [input_rank](auto &dim) { dim = dim < 0 ? dim + input_rank : dim; });
   std::sort(dims.begin(), dims.end());
-  dims.erase(std::unique(dims.begin(), dims.end()), dims.end());
+  (void)dims.erase(std::unique(dims.begin(), dims.end()), dims.end());
 
   int64_t stride_ = static_cast<int64_t>(1);
   std::vector<int64_t> axes_(input_rank);
@@ -187,8 +189,8 @@ bool CountNonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCountNonZeroInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCountNonZeroOutputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *y = reinterpret_cast<int64_t *>(outputs[0]->addr);
+  auto *x = static_cast<T *>(inputs[0]->addr);
+  auto *y = static_cast<int64_t *>(outputs[0]->addr);
   auto input_shape = x_shape_;
   int64_t input_nums = static_cast<int64_t>(inputs[0]->size / sizeof(T));
   int64_t data_nums = static_cast<int64_t>(outputs[0]->size / sizeof(int64_t));

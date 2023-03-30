@@ -50,8 +50,8 @@ TypePtr RightShiftInferType(const PrimitivePtr &primitive, const std::vector<Abs
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
   std::map<std::string, TypePtr> types;
-  types.insert({"input_x", x_type});
-  types.insert({"input_y", y_type});
+  (void)types.insert({"input_x", x_type});
+  (void)types.insert({"input_y", y_type});
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return x_type;

@@ -50,8 +50,8 @@ uint64_t UniformCpuKernelMod::New64() const {
 
 void UniformCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
   if (seed_ == 0 && offset_ == 0) {
-    seed_ = New64();
-    offset_ = New64();
+    seed_ = SizeToLong(New64());
+    offset_ = SizeToLong(New64());
   }
   generator_ = random::MSPhiloxRandom(seed_, offset_);
 }
@@ -107,7 +107,7 @@ int UniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     return ret;
   }
-  input_elements_ = SizeOf(inputs.at(kIndex0)->GetShapeVector());
+  input_elements_ = SizeToLong(SizeOf(inputs.at(kIndex0)->GetShapeVector()));
   return ret;
 }
 

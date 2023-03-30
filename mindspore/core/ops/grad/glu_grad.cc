@@ -63,13 +63,13 @@ abstract::ShapePtr GluGradInferShape(const PrimitivePtr &primitive, const std::v
       axis += x_rank;
     }
     const int64_t kEvenNum = 2;
-    if (x_shape[axis] % kEvenNum != 0) {
+    if (x_shape[LongToSize(axis)] % kEvenNum != 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', x.shape[" << axis_value << "] must be even, but got "
-                               << x_shape[axis] << ".";
+                               << x_shape[LongToSize(axis)] << ".";
     }
 
     auto expected_grad_shape = x_shape;
-    expected_grad_shape[axis] /= kEvenNum;
+    expected_grad_shape[LongToSize(axis)] /= kEvenNum;
     if (grad_shape != expected_grad_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', x.shape must be euqal to grad.shape except for grad.shape[axis]=x.shape[axis]"
@@ -103,7 +103,7 @@ AbstractBasePtr GluGradInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto shape = GluGradInferShape(primitive, input_args);
   auto type = GluGradInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

@@ -119,7 +119,7 @@ void MatrixExpCpuKernelMod::MexpImpl(const Eigen::MatrixBase<Derived> &A, const 
       return;
     }
   }
-  int64_t s = ceil(log2(norm / thetas.back())) > 0 ? ceil(log2(norm / thetas.back())) : 0;
+  int64_t s = static_cast<int64_t>(ceil(log2(norm / thetas.back())) > 0 ? ceil(log2(norm / thetas.back())) : 0);
   const auto pow2s = pow(2, s);
   const auto A_scaled = A / pow2s;
   MTaylorApproximantHigh(A_scaled, I, matrix_y);

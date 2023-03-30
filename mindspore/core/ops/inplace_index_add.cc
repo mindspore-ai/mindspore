@@ -66,7 +66,7 @@ abstract::ShapePtr InplaceIndexAddInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("indices size", indices_rank, kEqual, 1, prim_name);
   size_t axis_rank = 0;
   if (axis < 0) {
-    axis_rank = axis + var_rank;
+    axis_rank = LongToSize(axis) + LongToSize(var_rank);
   } else {
     axis_rank = LongToSize(axis);
   }
@@ -74,11 +74,11 @@ abstract::ShapePtr InplaceIndexAddInferShape(const PrimitivePtr &primitive,
     return var_shape_ptr;
   }
   if (!indices_is_dynamic) {
-    (void)CheckAndConvertUtils::Check("size of indices", indices_shape[0], kEqual, updates_shape[axis_rank], prim_name);
+    CheckAndConvertUtils::Check("size of indices", indices_shape[0], kEqual, updates_shape[axis_rank], prim_name);
   }
   for (size_t dim = 0; dim < LongToSize(var_rank); dim = dim + 1) {
     if (dim != axis_rank) {
-      (void)CheckAndConvertUtils::Check("var dim", var_shape[dim], kEqual, updates_shape[dim], prim_name);
+      CheckAndConvertUtils::Check("var dim", var_shape[dim], kEqual, updates_shape[dim], prim_name);
     }
   }
 
@@ -102,7 +102,7 @@ AbstractBasePtr InplaceIndexAddInfer(const abstract::AnalysisEnginePtr &, const 
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = InplaceIndexAddInferType(primitive, input_args);
   auto infer_shape = InplaceIndexAddInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

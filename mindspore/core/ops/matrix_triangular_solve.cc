@@ -75,8 +75,8 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("input rhs rank", SizeToLong(rhs_shape.size()), kGreaterEqual, 2L,
                                            prim_name);
-  constexpr size_t kIndex1 = 1;
-  constexpr size_t kIndex2 = 2;
+  constexpr decltype(matrix_shape)::difference_type kIndex1 = 1;
+  constexpr decltype(matrix_shape)::difference_type kIndex2 = 2;
   int64_t matrix_row = matrix_shape[matrix_shape.size() - kIndex2];
   int64_t matrix_col = matrix_shape[matrix_shape.size() - kIndex1];
   int64_t rhs_row = rhs_shape[rhs_shape.size() - kIndex2];
@@ -102,13 +102,13 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
       std::vector<int64_t> matrix_batch_dims(matrix_shape.begin(), matrix_shape.end() - kIndex2);
       std::vector<int64_t> rhs_batch_dims(rhs_shape.begin(), rhs_shape.end() - kIndex2);
       output_shape = CalBroadCastShape(matrix_batch_dims, rhs_batch_dims, prim_name, "matrix", "rhs");
-      output_shape.emplace_back(rhs_row);
-      output_shape.emplace_back(rhs_col);
+      (void)output_shape.emplace_back(rhs_row);
+      (void)output_shape.emplace_back(rhs_col);
     } else if (matrix_shape.size() > kIndex2 && rhs_shape.size() == kIndex2) {
       std::vector<int64_t> matrix_batch_dimensions(matrix_shape.begin(), matrix_shape.end() - kIndex2);
       output_shape = matrix_batch_dimensions;
-      output_shape.emplace_back(rhs_row);
-      output_shape.emplace_back(rhs_col);
+      (void)output_shape.emplace_back(rhs_row);
+      (void)output_shape.emplace_back(rhs_col);
     } else {
       output_shape = rhs_shape;
     }

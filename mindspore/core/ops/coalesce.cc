@@ -122,7 +122,7 @@ MIND_API_OPERATOR_IMPL(Coalesce, BaseOperator);
 AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = CoalesceInferType(primitive, input_args);
   auto infer_shape = CoalesceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

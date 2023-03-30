@@ -51,7 +51,7 @@ bool Dilation2DBackpropInputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   pad_mode_ = kernel_ptr->get_pad_mode();
   format_ = kernel_ptr->get_format();
 
-  CheckKernelParam();
+  (void)CheckKernelParam();
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;

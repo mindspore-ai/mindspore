@@ -39,10 +39,10 @@ abstract::ShapePtr SparseToDenseInferShape(const PrimitivePtr &primitive,
   std::vector<ShapeVector> all_shapes = {indice_shape, values_shape};
   auto is_dynamic = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamic);
 
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'values'", values_shape.size(), kEqual,
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'values'", SizeToLong(values_shape.size()), kEqual,
                                            kSparseToDenseInputMinDim, op_name);
   if (!is_dynamic) {
-    (void)CheckAndConvertUtils::CheckInteger("dimension of 'indices'", indice_shape.size(), kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("dimension of 'indices'", SizeToLong(indice_shape.size()), kEqual,
                                              kSparseToDenseInputMaxDim, op_name);
     (void)CheckAndConvertUtils::CheckInteger("batch of 'indices'", indice_shape[kInputIndex0], kEqual,
                                              values_shape[kInputIndex0], op_name);
@@ -76,8 +76,8 @@ abstract::AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &
   for (auto input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kSparseToDenseInputsNum,
-                                     primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
+                                           kSparseToDenseInputsNum, primitive->name());
   auto infer_type = SparseToDenseInferType(primitive, input_args);
   auto infer_shape = SparseToDenseInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

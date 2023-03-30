@@ -36,7 +36,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kTensorCopySlicesInputnDim = 5;
+constexpr int64_t kTensorCopySlicesInputnDim = 5;
 
 abstract::ShapePtr TensorCopySlicesInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {

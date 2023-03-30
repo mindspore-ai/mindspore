@@ -110,7 +110,8 @@ bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs, c
       for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
-        auto svd = svd_func(matrix, optionMap[full_matrices_].first | optionMap[full_matrices_].second);
+        auto svd = svd_func(matrix, static_cast<int>(optionMap[full_matrices_].first) |
+                                      static_cast<int>(optionMap[full_matrices_].second));
 
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> s = svd.singularValues();
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> u = svd.matrixU();
@@ -129,7 +130,8 @@ bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs, c
       for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
-        auto svd = svd_func(matrix, optionMap[full_matrices_].first | optionMap[full_matrices_].second);
+        auto svd = svd_func(matrix, static_cast<int>(optionMap[full_matrices_].first) |
+                                      static_cast<int>(optionMap[full_matrices_].second));
 
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> s = svd.singularValues();
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>(output_s + start * s.rows() * s.cols(),
@@ -168,7 +170,8 @@ bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
       for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
-        auto svd = svd_func(matrix, optionMap[full_matrices_].first | optionMap[full_matrices_].second);
+        auto svd = svd_func(matrix, static_cast<int>(optionMap[full_matrices_].first) |
+                                      static_cast<int>(optionMap[full_matrices_].second));
 
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> s = svd.singularValues();
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> u = svd.matrixU();
@@ -187,7 +190,8 @@ bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
       for (; start < end; ++start) {
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>> matrix(
           input_a + start * num_of_rows_ * num_of_cols_, num_of_rows_, num_of_cols_);
-        auto svd = svd_func(matrix, optionMap[full_matrices_].first | optionMap[full_matrices_].second);
+        auto svd = svd_func(matrix, static_cast<int>(optionMap[full_matrices_].first) |
+                                      static_cast<int>(optionMap[full_matrices_].second));
 
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor> s = svd.singularValues();
         Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>(output_s + start * s.rows() * s.cols(),

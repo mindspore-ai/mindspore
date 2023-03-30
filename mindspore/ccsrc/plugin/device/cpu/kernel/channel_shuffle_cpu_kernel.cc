@@ -27,7 +27,7 @@ constexpr size_t kChannelShuffleInputsNum = 1;
 constexpr size_t kChannelShuffleOutputsNum = 1;
 #define SHUFFLE_CHANNEL_COMPUTE_CASE(DTYPE, TYPE, INPUTS, OUTPUTS) \
   case (DTYPE): {                                                  \
-    LaunchKernel<TYPE>(INPUTS, OUTPUTS);                           \
+    (void)LaunchKernel<TYPE>(INPUTS, OUTPUTS);                     \
     break;                                                         \
   }
 }  // namespace
@@ -94,7 +94,7 @@ std::vector<KernelAttr> ChannelShuffleCpuKernelMod::GetOpSupport() {
 template <typename T>
 bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &outputs) {
-  int64_t dims = input_shape_.size();
+  int64_t dims = SizeToLong(input_shape_.size());
   int64_t b = input_shape_[0];
   int64_t c = input_shape_[1];
   int64_t oc = c / group_;
@@ -104,8 +104,8 @@ bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   for (int64_t i = 2; i < dims; i++) {
     area = area * input_shape_[i];
   }
-  auto *in = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *in = static_cast<T *>(inputs[0]->addr);
+  auto *out = static_cast<T *>(outputs[0]->addr);
   outputs_[0]->SetShapeVector(input_shape_);
 
   /*

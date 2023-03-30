@@ -153,9 +153,9 @@ void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int
     auto a_shape_ptr = a_shape_tensor->data_c();
     for (size_t i = 0; i < kDimensionTwo; ++i) {
       if (a_shape_tensor->Dtype() == kInt32) {
-        shape_ptr[i] = IntToLong(*(reinterpret_cast<int *>(a_shape_ptr) + i));
+        shape_ptr[i] = IntToLong(*(static_cast<int *>(a_shape_ptr) + i));
       } else {
-        shape_ptr[i] = *(reinterpret_cast<int64_t *>(a_shape_ptr) + i);
+        shape_ptr[i] = *(static_cast<int64_t *>(a_shape_ptr) + i);
       }
     }
   } else if (IsIdentidityOrSubclass(x1_shape->BuildType(), kTuple)) {

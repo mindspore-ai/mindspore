@@ -76,21 +76,21 @@ bool RandpermV2CPUKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   if (output_type_ == kNumberTypeInt32) {
-    LaunchKernel<int32_t>(inputs, outputs);
+    (void)LaunchKernel<int32_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
+    (void)LaunchKernel<int64_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt16) {
-    LaunchKernel<int16_t>(inputs, outputs);
+    (void)LaunchKernel<int16_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeInt8) {
-    LaunchKernel<int8_t>(inputs, outputs);
+    (void)LaunchKernel<int8_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeUInt8) {
-    LaunchKernel<uint8_t>(inputs, outputs);
+    (void)LaunchKernel<uint8_t>(inputs, outputs);
   } else if (output_type_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    (void)LaunchKernel<float>(inputs, outputs);
   } else if (output_type_ == kNumberTypeFloat64) {
-    LaunchKernel<double>(inputs, outputs);
+    (void)LaunchKernel<double>(inputs, outputs);
   } else if (output_type_ == kNumberTypeFloat16) {
-    LaunchKernelFp16(inputs, outputs);
+    (void)LaunchKernelFp16(inputs, outputs);
   } else {
     MS_EXCEPTION(TypeError)
       << "For '" << kernel_name_
@@ -107,10 +107,10 @@ bool RandpermV2CPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   n_data_ = reinterpret_cast<int64_t *>(inputs[0]->addr)[0];
   int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(seed_tensor);
-  seed_ = reinterpret_cast<int64_t *>(seed_tensor)[0];
+  seed_ = static_cast<int64_t *>(seed_tensor)[0];
   int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(offset_tensor);
-  offset_ = reinterpret_cast<int64_t *>(offset_tensor)[0];
+  offset_ = static_cast<int64_t *>(offset_tensor)[0];
   std::random_device rd;
   int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   auto output = reinterpret_cast<T1 *>(outputs[0]->addr);
@@ -138,10 +138,10 @@ bool RandpermV2CPUKernelMod::LaunchKernelFp16(const std::vector<AddressPtr> &inp
   n_data_ = reinterpret_cast<int64_t *>(inputs[0]->addr)[0];
   int64_t *seed_tensor = reinterpret_cast<int64_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(seed_tensor);
-  seed_ = reinterpret_cast<int64_t *>(seed_tensor)[0];
+  seed_ = static_cast<int64_t *>(seed_tensor)[0];
   int64_t *offset_tensor = reinterpret_cast<int64_t *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(offset_tensor);
-  offset_ = reinterpret_cast<int64_t *>(offset_tensor)[0];
+  offset_ = static_cast<int64_t *>(offset_tensor)[0];
   std::random_device rd;
   int64_t final_seed = (offset_ != 0) ? offset_ : (seed_ != -1) ? seed_ : rd();
   ShapeVector out_shape;

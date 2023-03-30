@@ -95,13 +95,13 @@ void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::v
                                                    std::vector<int64_t>{batch_size, hidden_size}, prim_name);
 
   std::vector<int64_t> valid_y_shape;
-  valid_y_shape.emplace_back(num_step);
-  valid_y_shape.emplace_back(batch_size);
+  (void)valid_y_shape.emplace_back(num_step);
+  (void)valid_y_shape.emplace_back(batch_size);
   const int64_t kNumZero = 0;
   if (num_proj > kNumZero) {
     valid_y_shape.emplace_back(std::min(hidden_size, num_proj));
   } else {
-    valid_y_shape.emplace_back(hidden_size);
+    (void)valid_y_shape.emplace_back(hidden_size);
   }
   (void)CheckAndConvertUtils::CheckTensorShapeSame({{"y shape", y_shape_ptr}}, valid_y_shape, prim_name);
 
@@ -141,12 +141,12 @@ abstract::TupleShapePtr DynamicGRUV2GradInferShape(const PrimitivePtr &primitive
   const size_t kNumTwo = 2;
   const size_t kNumThree = 3;
   if (!is_dynamic_rank) {
-    (void)CheckAndConvertUtils::CheckInteger("x shape rank", x_shape.size(), kEqual, kNumThree, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", winput_shape.size(), kEqual, kNumTwo,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("weight hidden shape rank", whidden_shape.size(), kEqual, kNumTwo,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("y shape rank", y_shape.size(), kEqual, kNumThree, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(x_shape.size()), kEqual, kNumThree, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", SizeToLong(winput_shape.size()), kEqual,
+                                             kNumTwo, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("weight hidden shape rank", SizeToLong(whidden_shape.size()), kEqual,
+                                             kNumTwo, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("y shape rank", SizeToLong(y_shape.size()), kEqual, kNumThree, prim_name);
   }
   DynamicGRUV2GradCheckShapeValue(primitive, input_args, num_proj);
 
@@ -222,7 +222,7 @@ AbstractBasePtr DynamicGRUV2GradInfer(const abstract::AnalysisEnginePtr &, const
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t MinInputNum = 12;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, MinInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, MinInputNum, prim_name);
   auto types = DynamicGRUV2GradInferType(primitive, input_args);
   auto shapes = DynamicGRUV2GradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

@@ -45,8 +45,8 @@ abstract::ShapePtr AdaptiveAvgPool2DGradInferShape(const PrimitivePtr &primitive
   auto orig_input_shape = GetShapeValue(primitive, input_args[1]);
   if (!IsDynamicRank(orig_input_shape)) {
     const int64_t orig_input_shape_shape = SizeToLong(orig_input_shape.size());
-    (void)CheckAndConvertUtils::CheckInRange("length of orig_input_shape", orig_input_shape_shape, kIncludeBoth, {3, 4},
-                                             kNameAdaptiveAvgPool2DGrad);
+    CheckAndConvertUtils::CheckInRange("length of orig_input_shape", orig_input_shape_shape, kIncludeBoth, {3, 4},
+                                       kNameAdaptiveAvgPool2DGrad);
   }
   return std::make_shared<abstract::Shape>(orig_input_shape);
 }
@@ -65,7 +65,7 @@ AbstractBasePtr AdaptiveAvgPool2DGradInfer(const abstract::AnalysisEnginePtr &, 
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = AdaptiveAvgPool2DGradInferType(primitive, input_args);
   auto shapes = AdaptiveAvgPool2DGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
