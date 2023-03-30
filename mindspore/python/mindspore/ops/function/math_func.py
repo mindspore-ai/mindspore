@@ -8813,7 +8813,7 @@ def roll(input, shifts, dims=None):
         TypeError: If `dims` is not an int, a tuple or a list.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
 
     Examples:
         >>> import numpy as np
