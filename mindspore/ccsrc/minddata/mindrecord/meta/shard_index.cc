@@ -24,7 +24,7 @@ const char TABLENAME[] = "index_table";
 Index::Index() : database_name_(""), table_name_(TABLENAME) {}
 
 void Index::AddIndexField(const int64_t &schemaId, const std::string &field) {
-  fields_.emplace_back(pair<int64_t, string>(schemaId, field));
+  (void)fields_.emplace_back(pair<int64_t, string>(schemaId, field));
 }
 
 // Get attribute list

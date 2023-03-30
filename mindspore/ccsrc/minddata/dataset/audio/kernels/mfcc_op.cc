@@ -40,7 +40,7 @@ Status MFCCOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<T
   output_shape_vector.push_back(n_mfcc_);
   output_shape_vector.push_back(time);
   TensorShape out = TensorShape(output_shape_vector);
-  outputs.emplace_back(out);
+  (void)outputs.emplace_back(out);
   if (!outputs.empty()) {
     return Status::OK();
   }

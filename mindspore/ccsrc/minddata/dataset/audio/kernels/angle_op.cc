@@ -41,7 +41,7 @@ Status AngleOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<
 
   shape.pop_back();
   TensorShape out = TensorShape{shape};
-  outputs.emplace_back(out);
+  (void)outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kMDUnexpectedError, "Angle: invalid shape of input tensor.");
 }
