@@ -183,7 +183,6 @@ def test_matrix_diag_part_v3_primitive_negative_k():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.skip(reason="bug")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
