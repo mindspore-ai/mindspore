@@ -42,7 +42,7 @@ class MS_CORE_API MsException {
     }
   }
 
-  void CheckException() {
+  const void CheckException() {
     if (exception_ptr_ != nullptr) {
       auto exception_ptr = exception_ptr_;
       exception_ptr_ = nullptr;
