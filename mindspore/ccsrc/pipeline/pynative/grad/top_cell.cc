@@ -143,7 +143,9 @@ void TopCellInfo::ClearDeviceMemory() const {
     if (device_address == nullptr) {
       continue;
     }
-    if (!device_address->from_persistent_mem()) {
+    if (!device_address->from_persistent_mem() && !tensor->is_parameter()) {
+      // Parameters can not be cleaned up. In the case of Parameter(Tensor(xxx).view(xxx), requires_grad=False),
+      // the param will be converted to value node into bprop graph. Tensor will be zero after cleaning.
       tensor->set_device_address(nullptr);
     }
   }
