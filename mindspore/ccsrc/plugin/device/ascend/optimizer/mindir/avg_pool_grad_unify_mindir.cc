@@ -271,11 +271,15 @@ bool AvgPoolGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGraph
 }
 
 void AvgPoolGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kX1).AddVar(kX2).AddVar(kG).AddCNode(kMAvgPoolGrad, {prim::kPrimAvgPoolGrad, kX1, kX2, kG});
+  (void)(*src_pattern)
+    .AddVar(kX1)
+    .AddVar(kX2)
+    .AddVar(kG)
+    .AddCNode(kMAvgPoolGrad, {prim::kPrimAvgPoolGrad, kX1, kX2, kG});
 }
 
 void AvgPoolGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kXShapeVNode, BuildXShapeVNode())
     .AddValueNode(kMeanMatrixVNode, BuildMeanMatrixVNode())
     .AddValueNode(kKernelMatrixVNode, BuildKernelMatrixVNode())

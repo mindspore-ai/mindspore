@@ -108,7 +108,7 @@ class AsyncEventManager {
   AsyncEventManager &operator=(AsyncEventManager &&) = delete;
 
   // generate task info from ctx
-  bool GenTaskInfoFromCtx(AsyncTaskInfo *task_info);
+  bool GenTaskInfoFromCtx(AsyncTaskInfo *task_info) const;
 
   // wait notify function
   NotifyFunc notify_func_;

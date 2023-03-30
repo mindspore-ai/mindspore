@@ -37,8 +37,8 @@ class KernelBase {
   virtual ~KernelBase() = default;
 
   uint32_t Compute(void *param);
-  size_t GetDataTypeSize(::aicpuops::DataType data_type);
-  size_t GetTensorMemSizeByShape(::aicpuops::Tensor tensor);
+  size_t GetDataTypeSize(::aicpuops::DataType data_type) const;
+  size_t GetTensorMemSizeByShape(const ::aicpuops::Tensor &tensor);
 
  protected:
   virtual uint32_t ParseKernelParam() = 0;

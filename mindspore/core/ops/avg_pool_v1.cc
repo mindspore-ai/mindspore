@@ -19,7 +19,6 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <cmath>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/dshape.h"

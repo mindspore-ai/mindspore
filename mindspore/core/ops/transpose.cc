@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInputNum = 2;
+constexpr int64_t kInputNum = 2;
 }  // namespace
 std::vector<int64_t> Transpose::get_perm() {
   PrimitivePtr prim = this->GetPrim();

@@ -145,7 +145,7 @@ void OpTilingCalculateAdapter::ConstructNodeInputAnchor(const ::ge::NodePtr &nod
     auto op_desc_tmp = std::make_shared<::ge::OpDesc>(op_name_tmp, op_name_tmp);
     MS_EXCEPTION_IF_NULL(op_desc_tmp);
     ::ge::GeTensorDesc output_tensor;
-    op_desc_tmp->AddOutputDesc("y", output_tensor);
+    (void)op_desc_tmp->AddOutputDesc("y", output_tensor);
     auto tmp_node = (*ge_graph)->AddNode(op_desc_tmp);
     if (tmp_node->Init() != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "Construct tmp node failed.";
@@ -316,7 +316,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     vector<int64_t> output_indexs;
     auto help = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
     std::transform(help.begin(), help.end(), std::back_inserter(output_indexs), SizeToLong);
-    ::ge::AttrUtils::SetListInt(*(*op_desc), ::ge::ATOMIC_ATTR_OUTPUT_INDEX, output_indexs);
+    (void)::ge::AttrUtils::SetListInt(*(*op_desc), ::ge::ATOMIC_ATTR_OUTPUT_INDEX, output_indexs);
     auto output_mem_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexs) {
       auto output_size = static_cast<int64_t>((output_mem_size.at(index) + kMemAlignSize + kAlignBtyes - 1) /
@@ -373,7 +373,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     ge_tensor_desc, static_cast<uint8_t *>(tensor_data->data_c()), IntToSize(tensor_data->Size()));
   (void)op_desc->AddOutputDesc(name, ge_tensor_desc);
   ::ge::NodePtr constant_op = (*ge_graph)->AddNode(op_desc);
-  ::ge::OpDescUtils::SetWeights(constant_op, {ge_tensor});
+  (void)::ge::OpDescUtils::SetWeights(constant_op, {ge_tensor});
   (void)::ge::AttrUtils::SetTensor(op_desc, ATTR_NAME_WEIGHTS, ge_tensor);
   return constant_op;
 }

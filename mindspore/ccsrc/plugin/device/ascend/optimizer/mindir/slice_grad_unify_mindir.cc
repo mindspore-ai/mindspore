@@ -114,11 +114,14 @@ bool SliceGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGraphPt
 }
 
 void SliceGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kX1).AddSeqVar(kXs).AddCNode(kMSliceGrad, {std::make_shared<Primitive>("SliceGrad"), kX1, kXs});
+  (void)(*src_pattern)
+    .AddVar(kX1)
+    .AddSeqVar(kXs)
+    .AddCNode(kMSliceGrad, {std::make_shared<Primitive>("SliceGrad"), kX1, kXs});
 }
 
 void SliceGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRPad, {std::make_shared<Primitive>(kPadDOpName), kX1}, BuildPad);
+  (void)(*dst_pattern).AddCNode(kRPad, {std::make_shared<Primitive>(kPadDOpName), kX1}, BuildPad);
 }
 }  // namespace opt
 }  // namespace mindspore

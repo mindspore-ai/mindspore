@@ -575,14 +575,14 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
 }
 
 void DropoutGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kX1)
     .AddVar(kX2)
     .AddCNode(kMDropoutGrad, {std::make_shared<Primitive>(kDropoutGradOpName), kX1, kX2});
 }
 
 void DropoutGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kKeepProbValue, BuildKeepProbValue())
     .AddCNode(kRDropoutDoMask, {std::make_shared<Primitive>(kDropoutDoMaskOpName), kX1, kX2, kKeepProbValue},
               BuildDropoutDoMask);

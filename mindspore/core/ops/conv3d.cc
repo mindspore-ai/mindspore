@@ -20,7 +20,6 @@
 #include <map>
 #include <string>
 #include <algorithm>
-#include <cmath>
 #include <iterator>
 #include <memory>
 
