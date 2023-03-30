@@ -130,10 +130,6 @@ bool Int64CastInt32Pass::Run(const FuncGraphPtr &graph) {
         (void)manager->Replace(input_node, cast_cnode);
         manager->AddEdge(cast_cnode, input_node);
         manager->AddEdge(cast_cnode, param_node);
-
-        // auto inputs = cnode->inputs();
-        // inputs[index] = cast_cnode;
-        // cnode->set_inputs(inputs);
         change_flag = true;
       }
     }

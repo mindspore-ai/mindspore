@@ -73,7 +73,7 @@ bool UniqueWithPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 
 template <typename T>
 void UniqueWithPadCpuKernelMod::PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                                          const std::vector<size_t> &start) {
+                                          const std::vector<size_t> &start) const {
   if (inputs.size() < kUniqueWithPadInputsNum || outputs.size() < kUniqueWithPadOutputsNum) {
     return;
   }

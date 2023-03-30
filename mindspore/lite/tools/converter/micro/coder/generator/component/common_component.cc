@@ -170,16 +170,16 @@ void CodeCortexSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderConte
   ofs << "  " << ctx->weight_name() << " = (uint8_t *)&buf[buffer_size];\n";
   ofs << R"RAW(
   buffer_size += WEIGHT_BUF_SIZE;
-  buffer_size = UP_ROUND(buffer_size,4);
+  buffer_size = UP_ROUND(buffer_size, 4);
 
   micro_model->inputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
   buffer_size +=  GRAPH_INPUTS_SIZE * sizeof(MicroTensor *);
-  buffer_size = UP_ROUND(buffer_size,4);
+  buffer_size = UP_ROUND(buffer_size, 4);
   MicroTensor **input_tensors = (MicroTensor **)micro_model->inputs.handle_list;
 
   micro_model->outputs.handle_list = (MSTensorHandle *)&buf[buffer_size];
   buffer_size +=  GRAPH_OUTPUTS_SIZE * sizeof(MicroTensor *);
-  buffer_size = UP_ROUND(buffer_size,4);
+  buffer_size = UP_ROUND(buffer_size, 4);
   MicroTensor **output_tensors = (MicroTensor **)micro_model->outputs.handle_list;
 )RAW";
   ofs << "  int i;\n"
