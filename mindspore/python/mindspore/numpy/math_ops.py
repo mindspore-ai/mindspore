@@ -47,6 +47,7 @@ from mindspore.numpy.utils_const import _infer_out_shape, _check_axis_valid, _ge
     _raise_unimplemented_error, _abs, _in, _tuple_slice, _check_is_inf
 from mindspore.numpy.utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
     _to_tensor, _to_tensor_origin_dtype, _isnan
+from mindspore.ops.composite.multitype_ops._compile_utils import reduce_
 
 
 ZERO_TENSOR = asarray_const(0)
@@ -1438,7 +1439,8 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [-1.  3.]
     """
-    return a.max(axis, keepdims, initial=initial, where=where)
+    return reduce_(a, P.ReduceMax(keepdims), cmp_fn=F.maximum, axis=axis, keepdims=keepdims,
+                   initial=initial, where=where)
 
 
 def amin(a, axis=None, keepdims=False, initial=None, where=True):
@@ -1493,7 +1495,8 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [10.  1.]
     """
-    return a.min(axis, keepdims, initial=initial, where=where)
+    return reduce_(a, P.ReduceMin(keepdims), cmp_fn=F.minimum, axis=axis, keepdims=keepdims,
+                   initial=initial, where=where)
 
 
 def hypot(x1, x2, dtype=None):
