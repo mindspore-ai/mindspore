@@ -76,6 +76,15 @@ void *AkgCpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_na
   return SearchFunc(kernel_name);
 }
 
+void AkgCpuKernelManager::GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name,
+                                                   std::string *fn_so, std::string *fn_kernel) const {
+  KernelMeta *bin_map = KernelMeta::GetInstance();
+  auto dso_path = bin_map->kernel_meta_path();
+  (void)dso_path.append(fn + ".so");
+  *fn_so = dso_path;
+  *fn_kernel = kernel_name;
+}
+
 void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   if (auto func = SearchFuncWithSharedLock(kernel_name); func != nullptr) {
     return func;
@@ -95,9 +104,10 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   } else {
     fn = kernel_name;
   }
-  KernelMeta *bin_map = KernelMeta::GetInstance();
-  auto fn_so = bin_map->kernel_meta_path();
-  (void)fn_so.append(fn + ".so");
+
+  std::string fn_so;
+  std::string fn_kernel;
+  GetFunctionAndKernelName(fn, kernel_name, &fn_so, &fn_kernel);
   auto realfile = FileUtils::GetRealPath(fn_so.c_str());
   if (!realfile.has_value()) {
     MS_LOG(ERROR) << "Invalid file path " << fn_so << ". kernel: " << kernel_name;
@@ -108,9 +118,9 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
     MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;
     return nullptr;
   }
-  auto launch_func = dlsym(handle, kernel_name.c_str());
+  auto launch_func = dlsym(handle, fn_kernel.c_str());
   if (launch_func == nullptr) {
-    MS_LOG(ERROR) << "Undefined symbol " << kernel_name << " in " << fn_so;
+    MS_LOG(ERROR) << "Undefined symbol " << fn_kernel << " in " << fn_so;
     return nullptr;
   }
   cpu_func_map_[kernel_name] = std::make_pair(launch_func, handle);

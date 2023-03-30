@@ -34,6 +34,8 @@ class AkgCpuKernelManager {
   ~AkgCpuKernelManager();
 
   void *GetFunction(const std::string &kernel_name);
+  virtual void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
+                                        std::string *fn_kernel) const;
 
  private:
   void *SearchFunc(const std::string &kernel_name) const;
