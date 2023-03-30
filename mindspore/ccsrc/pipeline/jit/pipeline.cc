@@ -2010,6 +2010,7 @@ void ClearSingleton() {
   device::DataQueueMgr::GetInstance().Clear();
   session::SessionFactory::Get().Clear();
   device::KernelRuntimeManager::Instance().Clear();
+  OpPrimPyRegister::GetInstance().Clear();
 #ifndef ENABLE_SECURITY
   DumpJsonParser::Finalize();
 #endif

@@ -22,46 +22,6 @@
 
 namespace mindspore {
 namespace graph_bprop {
-FuncGraphPtr ReluBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
-  auto fg = NewGraph(input_abs);
-  // x, out, dout
-  constexpr size_t expected_arg_size = 3;
-  const auto &parameters = fg->parameters();
-  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
-  auto out = parameters[kIndex1];
-  auto dout = parameters[kIndex2];
-
-  auto dx = NewNode(fg, {ReluGrad(), dout, out});
-  fg->set_output(NewNode(fg, {MakeTuple(), dx}));
-  return fg;
-}
-
-FuncGraphPtr LayerNormBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
-  auto fg = NewGraph(input_abs);
-  // x, gamma, beta, out, dout
-  constexpr size_t expected_arg_size = 5;
-  const auto &parameters = fg->parameters();
-  CheckArgSize(parameters, input_abs, primal, expected_arg_size);
-  auto x = parameters[kIndex0];
-  auto gamma = parameters[kIndex1];
-  auto out = parameters[kIndex3];
-  auto dout = parameters[kIndex4];
-
-  auto begin_norm_axis = GetAndCheckAttr(primal, "begin_norm_axis");
-  auto begin_params_axis = GetAndCheckAttr(primal, "begin_params_axis");
-  auto layer_norm_grad_ops = LayerNormGrad(fg, begin_norm_axis, begin_params_axis);
-  auto dout0 = TupleGetItem(fg, dout, SizeToLong(kIndex0));
-  auto out2 = TupleGetItem(fg, out, SizeToLong(kIndex2));
-  auto out1 = TupleGetItem(fg, out, SizeToLong(kIndex1));
-  auto layer_norm_grad = NewNode(fg, {layer_norm_grad_ops, x, dout0, out2, out1, gamma});
-
-  auto dx = TupleGetItem(fg, layer_norm_grad, SizeToLong(kIndex0));
-  auto d_gamma = TupleGetItem(fg, layer_norm_grad, SizeToLong(kIndex1));
-  auto d_beta = TupleGetItem(fg, layer_norm_grad, SizeToLong(kIndex2));
-  fg->set_output(NewNode(fg, {MakeTuple(), dx, d_gamma, d_beta}));
-  return fg;
-}
-
 FuncGraphPtr MaxPoolBprop(const PrimitivePtr &primal, const AbstractBasePtrList &input_abs) {
   auto fg = NewGraph(input_abs);
   // x, out, dout
@@ -141,8 +101,6 @@ FuncGraphPtr GeLUBprop(const PrimitivePtr &primal, const AbstractBasePtrList &in
 }
 
 void RegNNOps() {
-  REGISTER_PRIMITIVE_BPROP_IMPL(ReLU, ReluBprop);
-  REGISTER_PRIMITIVE_BPROP_IMPL(LayerNorm, LayerNormBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(MaxPool, MaxPoolBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(BatchNorm, BatchNormBprop);
   REGISTER_PRIMITIVE_BPROP_IMPL(BiasAdd, BiasAddBprop);
