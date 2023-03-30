@@ -129,6 +129,7 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
     case padding: {                                                                 \
       ApplyGridSample2D<T, kTwo, interp, padding, align_corners> grid_sample(XAcc); \
       VARDEF;                                                                       \
+      return;                                                                       \
     }                                                                               \
   } while (0);
 
@@ -140,6 +141,7 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<AddressPtr> &i
         PROCESS_CASE(interp, GridSamplerPadding::Border, align_corners);     \
         PROCESS_CASE(interp, GridSamplerPadding::Reflection, align_corners); \
       }                                                                      \
+      return;                                                                \
     }                                                                        \
   } while (0);
 
