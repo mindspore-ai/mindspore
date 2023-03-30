@@ -67,7 +67,7 @@ void ExpandJPrim::CloneUsedPrimalGraph(const FuncGraphManagerPtr &manager, FuncG
         if (j_node_fg == nullptr || j_node_fg != fg_j) {
           continue;
         }
-        manager->Replace(j_node->input(1), NewValueNode(new_fg));
+        (void)manager->Replace(j_node->input(1), NewValueNode(new_fg));
       }
       (*func_graphs)[j] = new_fg;
     }

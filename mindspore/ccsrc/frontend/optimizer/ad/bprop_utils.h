@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_UTILS_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_BPROP_UTILS_H_
 
+#include "pybind11/pybind11.h"
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/jit/resource.h"
 
