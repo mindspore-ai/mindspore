@@ -169,7 +169,7 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
           begin = pivot + 1;
         }
       }
-      output[i * static_cast<size_t>(num_sample) + n] = begin;
+      output[i * static_cast<size_t>(num_sample) + static_cast<size_t>(n)] = begin;
     }
   }
   return true;
