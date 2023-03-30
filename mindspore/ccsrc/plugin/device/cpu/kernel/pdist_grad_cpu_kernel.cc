@@ -118,10 +118,12 @@ int PdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
+  const int THIRD_ELEMENT_INDEX = 2;
   auto x_shape = inputs[1]->GetShapeVector();
-  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(x_shape_), LongToSize);
-  x_dim_ = static_cast<int64_t>(x_shape_.size());
-  x_size_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
+  x_dim_ = static_cast<int64_t>(x_shape.size());
+  col_ = x_shape[x_dim_ - 1];
+  temp_ = x_shape[x_dim_ - 1] * x_shape[x_dim_ - THIRD_ELEMENT_INDEX];
+  x_size_ = SizeOf(x_shape);
   return 0;
 }
 
@@ -141,13 +143,11 @@ bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   } else if (std::isinf(p_)) {
     dist_func_ = PdistInfNormalcompute<T>;
   }
-  int64_t col = x_shape_[x_dim_ - 1];
-  int64_t temp = x_shape_[x_dim_ - 1] * x_shape_[x_dim_ - 2];
-  auto task = [this, &grad, &x, &dist, &y, col, temp, &dist_func_](int64_t start, int64_t end) {
+  auto task = [this, &grad, &x, &dist, &y, &dist_func_](int64_t start, int64_t end) {
     for (int64_t m = start; m < end; m++) {
       int64_t index = 0;
-      for (int64_t i = m; i < temp; i += col) {
-        for (int64_t j = i + col; j < temp; j += col) {
+      for (int64_t i = m; i < temp_; i += col_) {
+        for (int64_t j = i + col_; j < temp_; j += col_) {
           T diff = x[i] - x[j];
 
           bool is_equal = false;
@@ -171,7 +171,7 @@ bool PdistGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
       }
     }
   };
-  ParallelLaunchAutoSearch(task, col, this, &parallel_search_info_, pool_);
+  ParallelLaunchAutoSearch(task, col_, this, &parallel_search_info_, pool_);
   return true;
 }
 
