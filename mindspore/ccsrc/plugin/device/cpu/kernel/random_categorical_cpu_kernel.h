@@ -24,7 +24,6 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "nnacl/base/tile_base.h"
 
 namespace mindspore {
 namespace kernel {
