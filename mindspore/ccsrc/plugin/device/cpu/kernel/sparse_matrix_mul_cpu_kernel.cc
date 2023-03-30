@@ -91,8 +91,8 @@ const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<AddressPt
   auto c_indptr = reinterpret_cast<T *>(outputs[kOutIndptrIdx]->addr);
   auto c_indices = reinterpret_cast<T *>(outputs[kOutIndicesIdx]->addr);
   auto c_values = reinterpret_cast<S *>(outputs[kOutValuesIdx]->addr);
-  const int64_t a_indices_num = LongToSize(inputs[kAIndicesIdx]->size / (sizeof(T)));
-  const int64_t b_dense_num = LongToSize(inputs[kBDenseIdx]->size / (sizeof(S)));
+  const int64_t a_indices_num = SizeToLong(inputs[kAIndicesIdx]->size / (sizeof(T)));
+  const int64_t b_dense_num = SizeToLong(inputs[kBDenseIdx]->size / (sizeof(S)));
 
   errno_t ret =
     memcpy_s(c_batch_pointers, inputs[kABatchPointersIdx]->size, a_batch_pointers, inputs[kABatchPointersIdx]->size);
@@ -115,7 +115,7 @@ const bool SparseMatrixMulCpuKernelMod::LaunchKernel(const std::vector<AddressPt
         index++;
       }
     }
-    int64_t absIndex = LongToSize(row) * col_ + col;
+    int64_t absIndex = row * SizeToLong(col_) + col;
     if (absIndex < b_dense_num) {
       c_values[i] = a_values[i] * b_dense[absIndex];
     } else {
