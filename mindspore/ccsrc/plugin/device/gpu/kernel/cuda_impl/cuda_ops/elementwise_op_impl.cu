@@ -639,9 +639,8 @@ struct TanhFunctor<half> {
   TanhFunctor() {}
   __device__ __forceinline__ half operator()(half x) const {
     // e^x - e^-x / e^x + e^-x
-    half pos = hexp(x);
-    half neg = hexp(-x);
-    return (pos - neg) / (pos + neg);
+    float float_x = __half2float(x);
+    return __float2half(tanhf(float_x));
   }
 };
 
