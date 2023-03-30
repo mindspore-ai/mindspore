@@ -169,6 +169,9 @@ bool MatMulGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                           << lda << ", got ldb:" << ldb;
       }
     }
+
+    auto math_mode = static_cast<cublasMath_t>(CUBLAS_DEFAULT_MATH | CUBLAS_MATH_DISALLOW_REDUCED_PRECISION_REDUCTION);
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetMathMode(handle_, math_mode), "cublasSetMathMode failed.");
 #else
     cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
     if (dtype_a_ == CUDA_C_32F || dtype_a_ == CUDA_C_64F) {
