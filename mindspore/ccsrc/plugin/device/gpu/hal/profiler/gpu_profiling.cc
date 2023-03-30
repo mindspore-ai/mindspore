@@ -419,6 +419,7 @@ void GPUProfiler::OpsParser() {
 
 void GPUProfiler::EventHandleProcess(CUpti_CallbackId cbid, const CUpti_CallbackData *cbdata,
                                      const std::string &typestring, uint64_t startTimestamp, uint64_t endTimestamp) {
+  std::lock_guard<std::mutex> lock(event_lock_);
   Event event;
   uint32_t device_id = -1;
   CuptiGetDeviceId(cbdata->context, &device_id);
