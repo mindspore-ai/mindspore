@@ -10,12 +10,12 @@ mindspore.ops.multinomial_with_replacement
 
     参数：
         - **x** (Tensor) - 包含概率的累积和的输入张量，必须为1或2维。
-        - **seed** (Tensor) - 如果将随机种子设置为-1，并将 `offset` 设置为0，则随机数生成器将使用随机种子进行种植。否则，将使用给定的随机数种子。支持的dtype：int64。
+        - **seed** (int) - 如果将随机种子设置为-1，并将 `offset` 设置为0，则随机数生成器将使用随机种子进行种植。否则，将使用给定的随机数种子。支持的dtype：int64。
         - **offset** (int) - 为避免种子冲突设置的偏移量。支持的dtype：int64。
         - **numsamples** (int) - 抽取样本量，必须是非负数。
-        - **replacement** (int) - 是否有放回地抽取。默认值：False。
+        - **replacement** (bool，可选) - 是否有放回地抽取。默认值：False。
 
-    输出：
+    返回：
         Tensor，具有与输入 `x` 有相同的行。每行的采样索引数为 `numsamples` 。
 
     异常：

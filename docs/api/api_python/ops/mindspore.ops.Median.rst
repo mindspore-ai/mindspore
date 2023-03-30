@@ -14,7 +14,7 @@ mindspore.ops.Median
         - **keep_dims** (bool, 可选) - 是否保留 `axis` 指定的维度。默认值：False。
 
     输入：
-        - **y** (Tensor) - 要计算中值的Tensor。支持的数据类型：int16、int32、int64、float32或float64。
+        - **x** (Tensor) - 要计算中值的Tensor。支持的数据类型：int16、int32、int64、float32或float64。
 
     输出：
         - **y** (Tensor) - 中值，数据类型与 `x` 相同。
@@ -30,4 +30,4 @@ mindspore.ops.Median
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `global_median` 或 `keep_dims` 被指定了非bool值。
         - **TypeError** - `axis` 不是int。
-        - **TypeError** - `axis` 不在[-x.dim, x.dim-1]范围内。
+        - **ValueError** - `axis` 不在[-x.dim, x.dim-1]范围内。
