@@ -64,6 +64,7 @@ class PipelineTransformer {
  private:
   void CreateForwardGroup();
   void RemoveMonadNode();
+  AnfNodePtr CreateTupleZeroTensor(const AnfNodePtr &node, size_t index);
   std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param);
   AnfNodePtr ActualOp(const AnfNodePtr &node);
   bool IsParameterGraph(const AnfNodePtr &node) const;
