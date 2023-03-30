@@ -333,7 +333,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
     return false;
   }
   CNodePtr cnode = node->cast<CNodePtr>();
-  FindPreNodeCrossFuncGraph(&cnode, out_index);
+  FindPreNodeCrossFuncGraph(&cnode, *out_index);
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return false;
   }
@@ -353,7 +353,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
       MS_LOG(EXCEPTION) << "tuple get item's second input is not a cnode";
     }
     CNodePtr pre_cnode = pre_node->cast<CNodePtr>();
-    FindPreNodeCrossFuncGraph(&pre_cnode, out_index);
+    FindPreNodeCrossFuncGraph(&pre_cnode, *out_index);
     auto pre_op_info = pre_cnode->user_data<OperatorInfo>();
     if (IsParallelCareNode(pre_cnode) && (pre_op_info != nullptr)) {
       *pre_operator_info = pre_op_info;

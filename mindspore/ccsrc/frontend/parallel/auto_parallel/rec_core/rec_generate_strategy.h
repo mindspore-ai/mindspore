@@ -32,7 +32,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
                       const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training,
-                      const std::vector<std::vector<size_t>> &shared_tensors_ops, const FuncGraphPtr &root);
+                      const std::vector<std::vector<size_t>> &shared_tensors_ops);
 Dimensions PrepareMatMulStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_graph, bool transpose_a,
                                  bool transpose_b, size_t iter_op_inputs);
 Strategies PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,

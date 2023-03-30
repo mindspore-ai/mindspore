@@ -49,8 +49,7 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &o
                              const size_t iter_input_tensors, Graph::NodeType NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                  const std::vector<std::vector<std::string>> &input_tensor_names,
-                                  const FuncGraphPtr &root);
+                                  const std::vector<std::vector<std::string>> &input_tensor_names);
 
 void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph);
 
@@ -58,6 +57,8 @@ size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &i
                                   const std::string &input_name);
 
 void Eliminate_Aux_Outgoing(size_t node_index, const std::shared_ptr<Graph> &graph);
+void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i);
+void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i);
 
 void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
                    const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list);

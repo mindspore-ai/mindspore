@@ -34,7 +34,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
                       const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training,
-                      const std::vector<std::vector<size_t>> &shared_tensors_ops, const FuncGraphPtr &root) {
+                      const std::vector<std::vector<size_t>> &shared_tensors_ops) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(eli_list);
   MS_EXCEPTION_IF_NULL(index_list);
@@ -116,7 +116,7 @@ Strategies PrepareDataParallel(const std::vector<std::shared_ptr<OperatorInfo>> 
 
   for (size_t i = 0; i < ops[iter_ops]->outputs_tensor_info().size(); i++) {
     dim.clear();
-    if (ops[iter_ops]->inputs_tensor_info()[i].shape()[0] % numDev == 0) {
+    if (LongToSize(ops[iter_ops]->inputs_tensor_info()[i].shape()[0]) % numDev == 0) {
       dim.push_back(numDev);
     } else {
       dim.push_back(1);
@@ -209,7 +209,7 @@ Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
   size_t s_second = 1;
 
   if (s[0] != 0) {
-    s_second = g_device_manager->stage_device_num() / LongToSize(s[0]);
+    s_second = g_device_manager->stage_device_num() / s[0];
   }
 
   if (s.size() == 1) {
@@ -248,7 +248,7 @@ Strategies PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
-  size_t num_device = g_device_manager->stage_device_num();
+  size_t num_device = LongToSize(g_device_manager->stage_device_num());
   size_t cut = 1;
   for (size_t i = 0; i < index.size(); i++) {
     size_t index_i = LongToSize(index[i]);
@@ -312,7 +312,7 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
   (void)index.insert(index.cbegin(), 0);
 
   Dimensions strategie(output_shape.size(), 1);
-  size_t num_device = g_device_manager->stage_device_num();
+  size_t num_device = LongToSize(g_device_manager->stage_device_num());
   size_t cut = 1;
   for (size_t i = 0; i < index.size(); i++) {
     size_t index_i = LongToSize(index[i]);
@@ -476,7 +476,7 @@ Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
   Strategies strategies;
-  size_t max_device_num = g_device_manager->stage_device_num();
+  size_t max_device_num = LongToSize(g_device_manager->stage_device_num());
   size_t target_tensor_batch = LongToUlong(ops[iter_ops]->inputs_tensor_info()[0].shape()[0]);
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
