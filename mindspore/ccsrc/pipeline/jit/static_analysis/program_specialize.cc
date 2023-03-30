@@ -1236,7 +1236,9 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // CNode(CNode(Partial, f, arg1), arg2, ...) --> CNode(f, arg1, arg2, ...)
   const size_t arg_start_index = 2;
   while (IsPrimitiveCNode(func, prim::kPrimPartial)) {
-    std::vector<AnfNodePtr> inputs = func->cast_ptr<CNode>()->inputs();
+    auto func_cnode = func->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(func_cnode);
+    std::vector<AnfNodePtr> inputs = func_cnode->inputs();
     // First element is partial, second is func so arg is start from 2
     (void)args.insert(args.cbegin(), inputs.cbegin() + SizeToInt(arg_start_index), inputs.cend());
     func = inputs[1];

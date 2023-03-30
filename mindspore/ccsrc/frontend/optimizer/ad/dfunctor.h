@@ -212,7 +212,8 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   cloned_bprop_fg->debug_info()->set_trace_info(std::make_shared<TraceGradBprop>(debug_info));
 
   // Make sure (out, dout) provided.
-  if (cloned_bprop_fg->parameters().size() < 2) {
+  constexpr auto number_two = 2;
+  if (cloned_bprop_fg->parameters().size() < number_two) {
     MS_LOG(EXCEPTION)
       << "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only "
       << cloned_bprop_fg->parameters().size() << ".\n"

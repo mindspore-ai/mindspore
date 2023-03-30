@@ -1427,7 +1427,9 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   MS_EXCEPTION_IF_NULL(data_value);
   MS_EXCEPTION_IF_NULL(item_value);
   if (item_value->isa<StringImm>()) {
-    item_value = std::make_shared<parse::Symbol>(item_value->cast_ptr<StringImm>()->value());
+    auto string_value = item_value->cast_ptr<StringImm>();
+    MS_EXCEPTION_IF_NULL(string_value);
+    item_value = std::make_shared<parse::Symbol>(string_value->value());
   }
   if (!item_value->isa<parse::Symbol>()) {
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
@@ -1541,7 +1543,9 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AbstractBasePtrList 
   if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
   }
-  const auto &item_name = item_value->cast_ptr<StringImm>()->value();
+  auto item_str = item_value->cast_ptr<StringImm>();
+  MS_EXCEPTION_IF_NULL(item_str);
+  const auto &item_name = item_str->value();
   // Get ms_class object.
   if (!data_value->isa<parse::MsClassObject>()) {
     MS_LOG(EXCEPTION) << "Expect a ms_class object, but got " << data_value->ToString();
@@ -1745,7 +1749,9 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
   }
-  std::string item_name = item_value->cast_ptr<StringImm>()->value();
+  auto item_str = item_value->cast_ptr<StringImm>();
+  MS_EXCEPTION_IF_NULL(item_str);
+  std::string item_name = item_str->value();
   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD;
   Any require = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
   if (require.empty()) {
@@ -2834,7 +2840,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     auto prim = prim::kPrimRaise;
     prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
     const auto raise_error_node =
-      cur_graph->NewCNodeInOrder({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+      cur_graph->NewCNode({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
 
     // Avoid entering the Evaluator process multiple times.
     raise_error_node->set_user_data("__raise_flag__", std::make_shared<bool>(true));
