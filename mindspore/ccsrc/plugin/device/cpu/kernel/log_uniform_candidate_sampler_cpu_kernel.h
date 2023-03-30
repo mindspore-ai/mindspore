@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CANDIDATE_SAMPLER_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CANDIDATE_SAMPLER_CPU_KERNEL_H_
 
-#include <functional>
-#include <memory>
-#include <vector>
-#include <iostream>
-#include <string>
 #include <complex>
+#include <functional>
+#include <iostream>
 #include <map>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -55,7 +55,7 @@ class LogUniformCandidateSamplerCpuKernel : public NativeCpuKernelMod {
   }
 
  private:
-  int64_t Sample(random::SinglePhiloxRandom *single);
+  int64_t Sample(random::SinglePhiloxRandom *single) const;
   float Probability(int64_t value) const;
 
  private:

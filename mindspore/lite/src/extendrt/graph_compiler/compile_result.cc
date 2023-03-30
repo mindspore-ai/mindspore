@@ -280,12 +280,12 @@ StatusCode CompileResult::AppendNodeInputTensor(const CompileNode *compile_node,
   return AppendNodeInputTensor(compile_node->GetName(), tensor, is_borrow);
 }
 
-StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, Tensor *input_tensor, bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "Input tensor is nullptr";
+  if (input_tensor == nullptr) {
+    MS_LOG(ERROR) << "`input_tensor` is nullptr";
     return kLiteInputParamInvalid;
   }
 
@@ -294,9 +294,9 @@ StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, Te
     MS_LOG(ERROR) << "CompileNode not belong to this graph, node: " << node_name;
     return kLiteError;
   }
-  iter->second->AppendInputTensor(tensor);
+  iter->second->AppendInputTensor(input_tensor);
   if (!is_borrow) {
-    return AppendTensor(tensor);
+    return AppendTensor(input_tensor);
   }
   return kSuccess;
 }
@@ -309,12 +309,12 @@ StatusCode CompileResult::AppendNodeOutputTensor(const CompileNode *compile_node
   return AppendNodeOutputTensor(compile_node->GetName(), tensor, is_borrow);
 }
 
-StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, Tensor *output_tensor, bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "Input tensor is nullptr";
+  if (output_tensor == nullptr) {
+    MS_LOG(ERROR) << "`output_tensor` is nullptr";
     return kLiteInputParamInvalid;
   }
 
@@ -323,35 +323,35 @@ StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, T
     MS_LOG(ERROR) << "CompileNode not belong to this graph, node: " << node_name;
     return kLiteError;
   }
-  iter->second->AppendOutputTensor(tensor);
+  iter->second->AppendOutputTensor(output_tensor);
   if (!is_borrow) {
-    return AppendTensor(tensor);
+    return AppendTensor(output_tensor);
   }
   return kSuccess;
 }
 
 std::string CompileResult::Dump(int indent) const {
-  constexpr int kNumberTwo = 2;
+  constexpr int kNumTwo = 2;
   std::ostringstream oss;
   oss << GenIndent(indent) << "CompileResult {" << std::endl;
   oss << GenIndent(indent + 1) << "nodes: [" << std::endl;
   for (auto &node : nodes_) {
-    oss << node->Dump(indent + kNumberTwo) << std::endl;
+    oss << node->Dump(indent + kNumTwo) << std::endl;
   }
   oss << GenIndent(indent + 1) << "]" << std::endl;
   oss << GenIndent(indent + 1) << "inputs: [" << std::endl;
   for (auto &input : inputs_) {
-    oss << DumpTensor(input, indent + kNumberTwo) << std::endl;
+    oss << DumpTensor(input, indent + kNumTwo) << std::endl;
   }
   oss << GenIndent(indent + 1) << "]" << std::endl;
   oss << GenIndent(indent + 1) << "outputs: [" << std::endl;
   for (auto &output : outputs_) {
-    oss << DumpTensor(output, indent + kNumberTwo) << std::endl;
+    oss << DumpTensor(output, indent + kNumTwo) << std::endl;
   }
   oss << GenIndent(indent + 1) << "]" << std::endl;
   oss << GenIndent(indent + 1) << "tensors: [" << std::endl;
   for (auto &tensor : tensors_) {
-    oss << DumpTensor(tensor, indent + kNumberTwo) << std::endl;
+    oss << DumpTensor(tensor, indent + kNumTwo) << std::endl;
   }
   oss << GenIndent(indent + 1) << "]" << std::endl;
   oss << GenIndent(indent) << "}" << std::endl;

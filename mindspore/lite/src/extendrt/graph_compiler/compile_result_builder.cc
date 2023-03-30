@@ -311,18 +311,18 @@ StatusCode CompileResultBuilder::AppendInputParameterToInputs(const ParameterPtr
     }
     return kSuccess;
   }
-  auto tensor = TensorAdapter::Convert2Tensor(param_node);
-  if (tensor == nullptr) {
+  auto tensor_from_param = TensorAdapter::Convert2Tensor(param_node);
+  if (tensor_from_param == nullptr) {
     MS_LOG(ERROR) << "Create tensor from Parameter failed.";
     return kLiteError;
   }
   auto format_value = compile_node->GetBaseOperator()->GetAttr(mindspore::ops::kFormat);
   if (format_value != nullptr) {
-    tensor->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
+    tensor_from_param->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
   } else {
-    tensor->set_format(graph_format_);
+    tensor_from_param->set_format(graph_format_);
   }
-  auto ret = graph_->AppendNodeInputTensor(compile_node, tensor);
+  auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_param);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Append input tensor for node failed, node: " << compile_node->GetName();
     return ret;
@@ -340,18 +340,18 @@ StatusCode CompileResultBuilder::AppendInputValueNodeToInputs(const ValueNodePtr
     MS_LOG(ERROR) << "Input compile_node is nullptr.";
     return kLiteInputParamInvalid;
   }
-  auto tensor = TensorAdapter::Convert2Tensor(value_node);
-  if (tensor == nullptr) {
+  auto tensor_from_value = TensorAdapter::Convert2Tensor(value_node);
+  if (tensor_from_value == nullptr) {
     MS_LOG(ERROR) << "Create tensor from ValueNode failed.";
     return kLiteError;
   }
   auto format_value = compile_node->GetBaseOperator()->GetAttr(mindspore::ops::kFormat);
   if (format_value != nullptr) {
-    tensor->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
+    tensor_from_value->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
   } else {
-    tensor->set_format(graph_format_);
+    tensor_from_value->set_format(graph_format_);
   }
-  auto ret = graph_->AppendNodeInputTensor(compile_node, tensor);
+  auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_value);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Append input tensor for node failed, node: " << compile_node->GetName();
     return ret;

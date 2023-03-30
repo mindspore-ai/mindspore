@@ -320,6 +320,13 @@ def type_size_in_bytes(dtype):
 class QuantDtype(enum.Enum):
     """
     An enum for quant datatype, contains `INT1` ~ `INT16`, `UINT1` ~ `UINT16`.
+
+    `QuantDtype` is defined in `mindspore/common/dtype.py`, use command below to import:
+
+    .. code-block::
+
+        from mindspore import QuantDtype
+
     """
     INT1 = 0
     INT2 = 1
