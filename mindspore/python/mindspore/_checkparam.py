@@ -286,7 +286,8 @@ def check(arg_name, arg_value, value_name, value, rel=EQ, prim_name=None, excp_c
         if not _check_binary_rel(arg_value, value, rel):
             rel_str = _format_str_one_value(f'{value_name}: {value}', rel)
             msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
-            raise excp_cls(f'{msg_prefix} \'{arg_name}\' should be {rel_str}, but got {arg_value}.')
+            msg_subject = f"{msg_prefix} \'{arg_name}\'" if " " not in arg_name else f"{msg_prefix} {arg_name}"
+            raise excp_cls(f'{msg_subject} should be {rel_str}, but got {arg_value}.')
         return None
     _check()
     return arg_value

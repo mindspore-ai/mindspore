@@ -3,7 +3,7 @@ mindspore.ops.channel_shuffle
 
 .. py:function:: mindspore.ops.channel_shuffle(x, groups)
 
-    将shape为 :math:`(*, C, H, W)` 的Tensor的通道划分成 :math:`g` 组，并按如下方式重新排列 :math:`(*, C \frac g, g, H*W)` ，
+    将shape为 :math:`(*, C, H, W)` 的Tensor的通道划分成 :math:`g` 组，并按如下方式重新排列 :math:`(*, \frac{C}{g}, g, H*W)` ，
     同时保持原始Tensor的shape不变。
 
     参数：

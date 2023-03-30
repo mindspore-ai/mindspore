@@ -313,6 +313,7 @@ def test_upsample_trilinear_3d_error():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="GPU backend deregistered for now")
 def test_vmap_upsample_trilinear_3d():
     """
     Feature:  UpsampleTrilinear3D GPU op vmap feature.
