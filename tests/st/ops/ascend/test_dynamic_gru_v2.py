@@ -113,6 +113,57 @@ def test_dynamic_gru_v2_export_onnx_default():
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+def test_dynamic_gru_v2_export_onnx_fp32_bias():
+    """
+    Feature: test export DynamicGRUV2 op to onnx.
+    Description: test export DynamicGRUV2 op to onnx when bias and init_h used fp32.
+    Expectation: infer output of exported onnx is the same as the output of P.DynamicGRUV2.
+    """
+    x_ = np.random.random((SEQ_LENGTH, BATCH_SIZE, INPUT_SIZE)).astype(np.float16)
+    weight_i_ = np.random.random((INPUT_SIZE, NUMBER_OF_GATES * HIDDEN_SIZE)).astype(np.float16)
+    weight_h_ = np.random.random((HIDDEN_SIZE, NUMBER_OF_GATES * HIDDEN_SIZE)).astype(np.float16)
+    bias_i_ = np.random.random((NUMBER_OF_GATES * HIDDEN_SIZE)).astype(np.float32)
+    bias_h_ = np.random.random((NUMBER_OF_GATES * HIDDEN_SIZE)).astype(np.float32)
+    init_h_ = np.random.random((BATCH_SIZE, HIDDEN_SIZE)).astype(np.float32)
+
+    x_ms = Tensor(x_)
+    weight_i_ms = Tensor(weight_i_)
+    weight_h_ms = Tensor(weight_h_)
+    bias_i_ms = Tensor(bias_i_)
+    bias_h_ms = Tensor(bias_h_)
+    init_h_ms = Tensor(init_h_)
+    gru_net = DynamicGRUV2()
+    output_ms = gru_net(x_ms, weight_i_ms, weight_h_ms, bias_i_ms, bias_h_ms, init_h_ms)
+    print(output_ms.shape)
+    print(output_ms)
+
+    file_name = "DynamicGRUV2_fp32_bias.onnx"
+    export(gru_net, x_ms, weight_i_ms, weight_h_ms, bias_i_ms, bias_h_ms, init_h_ms, file_name=file_name,
+           file_format="ONNX")
+    assert os.path.exists(file_name)
+
+    import onnxruntime as onnx_rt
+    sess = onnx_rt.InferenceSession(file_name)
+
+    inputs = [x_, weight_i_, weight_h_, bias_i_, bias_h_, init_h_]
+    ort_inputs = {}
+    for i, element in enumerate(sess.get_inputs()):
+        ort_inputs[element.name] = inputs[i]
+
+    output = sess.run([], ort_inputs)
+
+    print("===========output:==================")
+    print(output_ms.asnumpy() - output[0])
+    assert np.allclose(output_ms.asnumpy(), output[0], 1e-4, 1e-4)
+
+    os.chmod(file_name, stat.S_IWRITE)
+    os.remove(file_name)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_dynamic_gru_v2_export_onnx_gate_order():
     """
     Feature: test export DynamicGRUV2 op to onnx.
