@@ -206,15 +206,28 @@ bool IsValuePtrEqual(const ValuePtr &v1, const ValuePtr &v2) {
   return *v1 == *v2;
 }
 
-bool IsParamInfoEqual(const AnfNodePtr &node1, const AnfNodePtr &node2) {
-  MS_EXCEPTION_IF_NULL(node1);
-  MS_EXCEPTION_IF_NULL(node2);
-  if (node1->isa<Parameter>() != node2->isa<Parameter>()) {
-    return false;
+bool IsParamInfoEqual(const AnfNodePtr &new_node, const AnfNodePtr &old_node) {
+  MS_EXCEPTION_IF_NULL(new_node);
+  MS_EXCEPTION_IF_NULL(old_node);
+  if (new_node->isa<Parameter>() != old_node->isa<Parameter>()) {
+    if (!old_node->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << "new_node is parameter, old node is neither parameter nor value node, new node"
+                    << new_node->DebugString() << " old node:" << old_node->DebugString();
+      return false;
+    }
+    auto old_tensor = GetValueNode<tensor::TensorPtr>(old_node);
+    MS_EXCEPTION_IF_NULL(old_tensor);
+    auto new_tensor = PyNativeAlgo::Common::GetTensorFromParam(new_node);
+    MS_EXCEPTION_IF_NULL(new_tensor);
+    if (new_tensor->id() != old_tensor->id()) {
+      MS_LOG(DEBUG) << "Parameter tensor is changed, new tensor id:" << new_tensor->id()
+                    << ", old tensor id:" << old_tensor->id();
+      return false;
+    }
+    return true;
   }
-
-  const auto &p1 = node1->cast<ParameterPtr>();
-  const auto &p2 = node2->cast<ParameterPtr>();
+  const auto &p1 = new_node->cast<ParameterPtr>();
+  const auto &p2 = old_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(p1);
   MS_EXCEPTION_IF_NULL(p2);
   auto param_info1 = p1->param_info();
@@ -222,11 +235,14 @@ bool IsParamInfoEqual(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   if (param_info1 == param_info2) {
     return true;
   }
-  if (param_info1 == nullptr || param_info2 == nullptr) {
+  if (param_info1 == nullptr || param_info2 == nullptr || param_info1->key() != param_info2->key()) {
+    MS_LOG(DEBUG) << "new param_info key is different with old param_info key, new param_info key:"
+                  << (param_info1 == nullptr ? 0 : param_info1->key())
+                  << ", old param_info key:" << (param_info2 == nullptr ? 0 : param_info2->key());
     return false;
   }
 
-  return param_info1->key() == param_info2->key();
+  return true;
 }
 
 bool IsCnodeInputsDynamic(const std::vector<AnfNodePtr> &old_anf_inputs, const std::vector<AnfNodePtr> &new_anf_inputs,
@@ -313,7 +329,9 @@ bool IsDynamicDetectCnodeChange(const DynamicDetectNodeInfoPtr &old_node_info, c
   auto new_prim = GetCNodePrimitive(new_cnode);
   if (!common::IsEqual(old_prim, new_prim)) {
     MS_LOG(DEBUG) << "Graph is dynamic, old prim: " << (old_prim == nullptr ? "nullptr" : old_prim->name())
-                  << " new prim: " << (new_prim == nullptr ? "nullptr" : new_prim->name());
+                  << " new prim: " << (new_prim == nullptr ? "nullptr" : new_prim->name())
+                  << ", old attr:" << (old_prim == nullptr ? "nullptr" : old_prim->GetAttrsText())
+                  << ", new attr:" << (new_prim == nullptr ? "nullptr" : new_prim->GetAttrsText());
     return true;
   }
 
