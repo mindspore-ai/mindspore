@@ -139,12 +139,6 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   }
   new_node->set_scope(scope);
   repl_node_[node] = std::move(new_node);
-  // Transmit the flag of side effect node.
-  if (old_node->has_side_effect_node()) {
-    auto repl_cnode = repl_node_[node]->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(repl_cnode);
-    repl_cnode->set_has_side_effect_node(true);
-  }
 }
 
 void Cloner::CloneValueNode(const AnfNodePtr &node) {
