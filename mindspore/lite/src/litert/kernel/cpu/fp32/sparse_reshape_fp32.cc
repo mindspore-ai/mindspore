@@ -16,7 +16,6 @@
 #include "src/litert/kernel/cpu/fp32/sparse_reshape_fp32.h"
 #include <vector>
 #include "schema/model_generated.h"
-// #include "nnacl/fp32/sparse_reshape_fp32.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
@@ -98,7 +97,6 @@ int SparseReshapeCPUKernel::Run() {
 
   auto input_rank = in_tensors_[kInput_inshape]->ElementsNum();
   auto output_rank = in_tensors_[kInput_outshape]->ElementsNum();
-  //   const int64_t nnz = SizeToLong(indices_shape_[0]);
 
   int64_t dense_size = 1;
   int64_t dividend = 1;
@@ -129,7 +127,6 @@ int SparseReshapeCPUKernel::Run() {
     }
   }
   if (ui != -1) {
-    // (void)CheckAndConvertUtils::CheckInteger("divident", dividend, kGreaterThan, 0, this->name_);
     const int64_t missing = dense_size / dividend;
     if (dividend * missing != dense_size) {
       MS_LOG(ERROR) << "For '" << this->name_ << "', the requested shape should be a multiple of " << dividend
@@ -189,5 +186,4 @@ int SparseReshapeCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SparseReshape, LiteKernelCreator<SparseReshapeCPUKernel>)
-// REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseReshape, LiteKernelCreator<SparseReshapeCPUKernel>)
 }  // namespace mindspore::kernel

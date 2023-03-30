@@ -26,19 +26,13 @@ class SparseSegmentSumCPUKernel : public LiteKernel {
  public:
   SparseSegmentSumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    // sparse_segment_sum_param_ = reinterpret_cast<SparseSegmentSumParameter *>(op_parameter_);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SparseSegmentSumCPUKernel() = default;
 
   int PreProcess() override;
   int Prepare() override;
   int ReSize() override { return RET_OK; }
   int Run() override;
-  // virtual int DoExcute(int task_id);
-
- protected:
-  // SparseSegmentSumParameter *sparse_segment_sum_param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPARSE_SEGMENT_SUM_FP32_H_

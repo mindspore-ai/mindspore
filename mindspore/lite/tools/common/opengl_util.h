@@ -77,7 +77,6 @@ class OpenGLRuntime {
   bool Init();
   GLuint GLCreateTexture(int w, int h, int c, GLenum textrueFormat = GL_RGBA32F, GLenum target = GL_TEXTURE_2D);
 
-  // GLuint CopyHostToDeviceTexture(void *hostData, int width, int height);
   GLuint CopyHostToDeviceTexture(void *hostData, int width, int height, int channel);
   void *CopyDeviceTextureToHost(GLuint textureID);
 

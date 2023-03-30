@@ -26,16 +26,13 @@ class SparseFillEmptyRowsCPUKernel : public LiteKernel {
  public:
   SparseFillEmptyRowsCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
-    // sparse_fill_empty_rows_param_ = reinterpret_cast<SparseFillEmptyRowsParameter *>(op_parameter_);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SparseFillEmptyRowsCPUKernel() = default;
 
   int PreProcess() override;
   int Prepare() override;
   int ReSize() override { return RET_OK; }
   int Run() override;
-  // virtual int DoExcute(int task_id);
 
  private:
   void UpdataTensorShape(lite::Tensor *tensor, std::vector<int> *new_shape);
@@ -44,7 +41,6 @@ class SparseFillEmptyRowsCPUKernel : public LiteKernel {
   int RunOutputData();
 
  protected:
-  // SparseFillEmptyRowsParameter *sparse_fill_empty_rows_param_;
   std::vector<int32_t> scratch_;
   int32_t dense_rows_ = 0;
   int32_t N_ = 0;
