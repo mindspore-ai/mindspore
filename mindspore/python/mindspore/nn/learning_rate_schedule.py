@@ -461,7 +461,7 @@ class WarmUpLR(LearningRateSchedule):
         ValueError: If `learning_rate` is less than or equal to 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

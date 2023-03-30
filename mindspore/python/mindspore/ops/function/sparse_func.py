@@ -136,7 +136,7 @@ def coalesce(x_indices: Tensor, x_values: Tensor, x_shape: Tensor) -> Tuple[Tens
         ValueError: If any of the values of elements of `x_indices` exceed the limit set by `x_shape`.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

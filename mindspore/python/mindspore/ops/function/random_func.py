@@ -251,7 +251,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         TypeError: If 'dtype' is neither int32 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -432,7 +432,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         ValueError: If any element of input `shape` tensor is not positive.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -624,7 +624,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> n = 4

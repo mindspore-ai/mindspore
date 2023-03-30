@@ -408,7 +408,7 @@ def angle(input):
         TypeError: If the dtype of `input` is not one of: complex64, complex128.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
@@ -1836,7 +1836,7 @@ def sinc(input):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
@@ -2245,7 +2245,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
         ValueError: If `abs`'s shape is not the same as `angle`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> abs = Tensor(np.array([1, 2]), mindspore.float64)
@@ -3405,7 +3405,7 @@ def matrix_solve(matrix, rhs, adjoint=False):  # pylint: disable=redefined-outer
         ValueError: If the `matrix` is irreversible.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> matrix = Tensor([[5, 4], [3, 1]], mindspore.float32)
@@ -4256,7 +4256,7 @@ def nan_to_num(input, nan=0.0, posinf=None, neginf=None):
         TypeError: If dtype of `input` is not float16 or float32.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 5.0]), mindspore.float32)
@@ -4318,7 +4318,7 @@ def fmax(input, other):
         ValueError: If the shape of  `input` and `other` can not broadcast.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
@@ -5889,7 +5889,7 @@ def bessel_i1e(x):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
@@ -6566,7 +6566,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
@@ -6611,7 +6611,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
