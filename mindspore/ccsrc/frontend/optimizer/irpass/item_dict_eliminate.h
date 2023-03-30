@@ -250,6 +250,7 @@ class DictSetitemEliminator : public AnfVisitor {
         for (size_t i = 1; i < keys_make_tuple->inputs().size(); ++i) {
           (void)key_tuple_inputs->emplace_back(keys_make_tuple->input(i));
           auto key_input_i_vnode = dyn_cast_ptr<ValueNode>(keys_make_tuple->input(i));
+          MS_EXCEPTION_IF_NULL(key_input_i_vnode);
           if (*(key_input_i_vnode->value()) == *(key_->value())) {
             (void)value_tuple_inputs->emplace_back(z_);
             found = true;

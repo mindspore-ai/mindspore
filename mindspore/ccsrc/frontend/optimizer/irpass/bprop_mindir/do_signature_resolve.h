@@ -51,8 +51,8 @@ class DoSignatureResolve : public AnfVisitor {
       }
       auto module = py::getattr(fn, "__module__");
       auto name = py::getattr(fn, "__name__");
-      prim_py->AddAttr("constexpr_module", MakeValue(py::cast<std::string>(module)));
-      prim_py->AddAttr("constexpr_name", MakeValue(py::cast<std::string>(name)));
+      (void)prim_py->AddAttr("constexpr_module", MakeValue(py::cast<std::string>(module)));
+      (void)prim_py->AddAttr("constexpr_name", MakeValue(py::cast<std::string>(name)));
       return nullptr;
     }
     // Convert the primitive with python infer or check function to class type
