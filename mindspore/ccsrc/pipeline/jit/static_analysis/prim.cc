@@ -2817,15 +2817,12 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     // Pack local parameter values
     const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
     // Build the PyExecute node for raise error.
-    const auto raise_error_node = cur_graph->NewCNode(
+    const auto raise_error_node = cur_graph->NewCNodeInOrder(
       {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
     auto none_type = std::make_shared<TypeNone>();
     raise_error_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
-    cur_graph->ReplaceInOrder(node, raise_error_node);
 
     // Set isolated side effect flag for raise node.
-    const auto &manager = cur_graph->manager();
-    manager->Replace(node, raise_error_node);
     raise_error_node->set_has_side_effect_node(true);
     cur_graph->set_has_side_effect_node(true);
     MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();

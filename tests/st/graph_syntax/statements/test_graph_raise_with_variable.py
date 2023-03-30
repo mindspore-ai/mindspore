@@ -878,3 +878,25 @@ def test_isolated_raise():
     with pytest.raises(ValueError) as err:
         net(data)
     assert "Check failed. Wrong shape, " in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_list_in_control_flow():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, y, z):
+            if z >= 1:
+                raise ValueError(f"The input maybe {y}")
+
+    with pytest.raises(ValueError) as raise_info_list:
+        y = [Tensor(1), Tensor(2), Tensor(3)]
+        net = RaiseNet()
+        z = Tensor(1)
+        net(y, z)
+    assert "The input maybe [" in str(raise_info_list.value)
