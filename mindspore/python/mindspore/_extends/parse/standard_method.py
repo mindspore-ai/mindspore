@@ -2042,7 +2042,7 @@ def sum_to_size(input, *size):
     if len(size) > input.ndim:
         raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
     if len(size) < input.ndim:
-        pre_axis = tuple([axis for axis in range(input.ndim - len(size))])
+        pre_axis = tuple(axis for axis in range(input.ndim - len(size)))
         input = input.sum(pre_axis)
     axes = []
     for i, element in enumerate(size):

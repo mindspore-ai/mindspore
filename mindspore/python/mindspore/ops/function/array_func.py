@@ -5917,7 +5917,7 @@ def narrow(input, axis, start, length):
 
     begins = [0] * input.ndim
     begins[axis] = start
-    sizes = [i for i in input.shape]
+    sizes = list(input.shape)
     sizes[axis] = length
     return P.Slice()(input, begins, sizes)
 
