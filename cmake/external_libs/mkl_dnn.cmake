@@ -42,6 +42,7 @@ else()
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0001-fix-user-threadpool-bug.patch
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0002-fix-pool-nthr-bug.patch
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0003-fix-zero-threads-identified-on-AMD.patch
+        PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0004-fix-dnnl-limits.patch
         CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF
             ${USE_MS_THREADPOOL} -DDNNL_ENABLE_CONCURRENT_EXEC=ON)
 endif()
