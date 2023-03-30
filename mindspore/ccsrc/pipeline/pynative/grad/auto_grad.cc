@@ -1158,7 +1158,10 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
       (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
     }
   }
-  (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
+  // Only custom op need add this attr, hook function not need.
+  if (prim->HasAttr("custom_op_bprop")) {
+    (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
+  }
   (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
   // Create gradient outputs cnode
   std::vector<AnfNodePtr> inputs{NewValueNode(bprop_cut)};
@@ -1202,6 +1205,7 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
     auto prim_py = prim->cast<PrimitivePyPtr>();
     MS_EXCEPTION_IF_NULL(prim_py);
     (void)prim_py->AddBackwardHookFn(0, fn);
+    prim_py->AddAttr("custom_op_bprop", MakeValue(true));
   }
   BuildBPropCutCNode(cnode, prim, outputs);
 }
