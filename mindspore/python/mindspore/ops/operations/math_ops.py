@@ -4511,8 +4511,8 @@ class NPUGetFloatStatusV2(Primitive):
         ...         self.get_status = NPUGetFloatStatusV2()
         ...         self.sub = ops.Sub()
         ...         self.neg = ops.Neg()
-        ...         self.equal = ops.Equal()
-        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
+        ...         self.not_equal = ops.NotEqual()
+        ...         self.reduce_any = ops.ReduceAny(keep_dims=False)
         ...         self.base = Tensor([0], dtype=ms.int32)
         ...
         ...     def construct(self, x):
@@ -4522,9 +4522,8 @@ class NPUGetFloatStatusV2(Primitive):
         ...         res = self.sub(x, self.neg(x))
         ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         flag = self.equal(self.base, get_status)
-        ...         overall_finite = self.reduce_all(flag)
-        ...         overflow = not overall_finite
+        ...         flag = self.not_equal(self.base, get_status)
+        ...         overflow = self.reduce_any(flag)
         ...         return overflow
         ...
         >>> value = 65504
@@ -4594,8 +4593,8 @@ class NPUClearFloatStatusV2(Primitive):
         ...         self.get_status = NPUGetFloatStatusV2()
         ...         self.sub = ops.Sub()
         ...         self.neg = ops.Neg()
-        ...         self.equal = ops.Equal()
-        ...         self.reduce_all = ops.ReduceAll(keep_dims=False)
+        ...         self.not_equal = ops.NotEqual()
+        ...         self.reduce_any = ops.ReduceAny(keep_dims=False)
         ...         self.base = Tensor([0], dtype=ms.int32)
         ...
         ...     def construct(self, x):
@@ -4605,9 +4604,8 @@ class NPUClearFloatStatusV2(Primitive):
         ...         res = self.sub(x, self.neg(x))
         ...         init = ops.depend(init, res)
         ...         get_status = self.get_status(init)
-        ...         flag = self.equal(self.base, get_status)
-        ...         overall_finite = self.reduce_all(flag)
-        ...         overflow = not overall_finite
+        ...         flag = self.not_equal(self.base, get_status)
+        ...         overflow = self.reduce_any(flag)
         ...         return overflow
         ...
         >>> value = 65504

@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -74,7 +74,7 @@ def test_train_one_step_with_loss_scale_cell_overflow(mode):
     assert outputs == expect_results
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -110,5 +110,5 @@ def test_boost_train_one_step_with_loss_scale_cell_overflow(mode):
     outputs = []
     for x, label in datasets:
         _, overflow, _ = train_network(x, label)
-        outputs.append(overflow)
+        outputs.append(overflow.asnumpy().tolist())
     assert outputs == expect_results

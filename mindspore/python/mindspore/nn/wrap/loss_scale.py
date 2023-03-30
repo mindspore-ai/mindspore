@@ -312,9 +312,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.base = Tensor(1, mstype.float32)
         self.base0 = Tensor(0, mstype.int32)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.reduce_all = P.ReduceAll(keep_dims=False)
+        self.reduce_any = P.ReduceAny(keep_dims=False)
         self.less_equal = P.LessEqual()
-        self.equal = P.Equal()
+        self.not_equal = P.NotEqual()
         self.allreduce = P.AllReduce()
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
@@ -428,18 +428,17 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
                 # sum overflow flag over devices
                 flag_reduce = self.allreduce(get_status)
                 # get_status not equal to [0]*8 means overflow
-                flag = self.equal(self.base0, flag_reduce)
+                flag = self.not_equal(self.base0, flag_reduce)
                 status = F.depend(status, flag)
+                # distributed needs to skip allreduce to avoid its overflow affecting the next step
                 clear_status = NPUClearFloatStatusV2()(status)
                 flag = F.depend(flag, clear_status)
-                overall_finite = self.reduce_all(flag)
             else:
                 status = F.depend(status, get_status)
                 clear_status = NPUClearFloatStatusV2()(status)
                 get_status = F.depend(get_status, clear_status)
-                flag = self.equal(self.base0, get_status)
-                overall_finite = self.reduce_all(flag)
-            overflow = not overall_finite
+                flag = self.not_equal(self.base0, get_status)
+            overflow = self.reduce_any(flag)
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), compute_output)
             flag_sum = P.AddN()(flag_sum)
