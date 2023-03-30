@@ -42,8 +42,8 @@ void ResizeBilinearGradFP16(float *float_dloss_addr, float *float_output_addr, f
   size_t in_width = shape[kResizeBilinearGradNumThree];
   int out_height = size[kResizeBilinearGradNumTwo];
   int out_width = size[kResizeBilinearGradNumThree];
-  size_t out_hw_size = out_height * out_width;
-  size_t in_hw_size = in_height * in_width;
+  int out_hw_size = out_height * out_width;
+  int in_hw_size = in_height * in_width;
 
   float *cur_dloss_addr = float_dloss_addr;
   float *cur_output_addr = float_output_addr;
@@ -94,8 +94,8 @@ void ResizeBilinearGradFP16_HPC(float *float_dloss_addr, float *float_output_add
   size_t in_width = shape[kResizeBilinearGradNumThree];
   int out_height = size[kResizeBilinearGradNumTwo];
   int out_width = size[kResizeBilinearGradNumThree];
-  size_t out_hw_size = out_height * out_width;
-  size_t in_hw_size = in_height * in_width;
+  int out_hw_size = out_height * out_width;
+  int in_hw_size = in_height * in_width;
 
   float *cur_dloss_addr = float_dloss_addr;
   float *cur_output_addr = float_output_addr;
@@ -147,8 +147,8 @@ void ResizeBilinearGrad(T *float_dloss_addr, T *float_output_addr, T *output_add
   size_t in_width = shape[kResizeBilinearGradNumThree];
   int out_height = size[kResizeBilinearGradNumTwo];
   int out_width = size[kResizeBilinearGradNumThree];
-  size_t out_hw_size = out_height * out_width;
-  size_t in_hw_size = in_height * in_width;
+  int out_hw_size = out_height * out_width;
+  int in_hw_size = in_height * in_width;
 
   T *cur_dloss_addr = float_dloss_addr;
   T *cur_output_addr = float_output_addr;
@@ -200,8 +200,8 @@ void ResizeBilinearGrad_HPC(T *float_dloss_addr, T *float_output_addr, T *output
   size_t in_width = shape[kResizeBilinearGradNumThree];
   int out_height = size[kResizeBilinearGradNumTwo];
   int out_width = size[kResizeBilinearGradNumThree];
-  size_t out_hw_size = out_height * out_width;
-  size_t in_hw_size = in_height * in_width;
+  int out_hw_size = out_height * out_width;
+  int in_hw_size = in_height * in_width;
 
   T *cur_dloss_addr = float_dloss_addr;
   T *cur_output_addr = float_output_addr;
