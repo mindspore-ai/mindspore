@@ -205,7 +205,7 @@ class Conv3DBackpropInputInfer : public abstract::OpInferBase {
     (void)types.emplace("filter", input_args[kConv3DBackpropInputFilterIndex]->BuildType());
     (void)types.emplace("doutput", doutput_type);
     std::set<TypePtr> valid_x_type = {kFloat16, kFloat32};
-    CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
     return doutput_type;
   }
   std::set<int64_t> GetValueDependArgIndices() const override { return {kConv3DBackpropInputSizeIndex}; }
