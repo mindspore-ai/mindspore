@@ -52,9 +52,9 @@ void FuncGraphLoopBreaker::BreakLoop() {
   std::list<FuncGraphBasePtr> func_list;
 
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+  (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
     if (fun != nullptr && !fun->subclass_destruct_flag_) {
-      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+      (void)func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
     }
   });
   for (auto &item : func_list) {
@@ -82,9 +82,9 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
   std::list<FuncGraphBasePtr> func_list;
 
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+  (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
     if (fun != nullptr && !fun->subclass_destruct_flag_) {
-      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+      (void)func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
     }
   });
   for (auto item : func_list) {
@@ -97,9 +97,9 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
 void FuncGraphLoopBreaker::ClearCellGraphs(const std::string &phase) {
   std::list<FuncGraphBasePtr> func_list;
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+  (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
     if (fun != nullptr && !fun->subclass_destruct_flag_) {
-      func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+      (void)func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
     }
   });
   for (auto item : func_list) {

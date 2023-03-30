@@ -33,7 +33,7 @@ constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
 constexpr char kProcessStatusFileName[] = "/proc/self/status";
 constexpr auto kLineMaxSize = 1024;
 constexpr auto kInvalid = -1;
-static bool kRecordMemoryFlag = common::GetEnv("MS_DEV_RECORD_MEMORY") == "1";
+static const bool kRecordMemoryFlag = common::GetEnv("MS_DEV_RECORD_MEMORY") == "1";
 const auto kVmRSS = "VmRSS";
 
 void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent = 0,
