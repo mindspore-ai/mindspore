@@ -2028,6 +2028,9 @@ AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_
 }
 
 AbstractMapTensor &AbstractMapTensor::operator=(const AbstractMapTensor &other) {
+  if (this == &other) {
+    return *this;
+  }
   this->ref_key_value_ = other.ref_key_value();
   this->default_value_ = other.default_value();
   this->permit_filter_value_ = other.permit_filter_value();
