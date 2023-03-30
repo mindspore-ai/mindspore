@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,10 @@ class OneHotInfer : public abstract::OpInferBase {
     const size_t depth_index = 1;
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
     auto in_shape = shape_map[kShape];
+
+    if (std::any_of(in_shape.begin(), in_shape.end(), [](int64_t s) { return s == 0; })) {
+      MS_LOG(EXCEPTION) << "Shape of input should not contain 0, bug got shape: " << in_shape;
+    }
 
     if (IsDynamicRank(in_shape)) {
       return input_args[0]->BuildShape();
