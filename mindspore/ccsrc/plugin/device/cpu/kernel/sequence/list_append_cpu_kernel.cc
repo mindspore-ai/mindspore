@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/list_append_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -54,8 +53,7 @@ int ListAppendCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T>
-bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
+bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto target_addr = GetDeviceAddress<T>(inputs, 1);
@@ -73,8 +71,8 @@ bool ListAppendCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   size_t element_index_size =
-    std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>());
-  size_t output_addr_offset = element_index_size * (len_list);
+    static_cast<size_t>(std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t output_addr_offset = element_index_size * static_cast<size_t>(len_list);
   if (target_size != 0) {
     auto cp_ret = memcpy_s(output_addr + output_addr_offset, element_index_size * sizeof(T), target_addr, target_size);
     if (cp_ret != EOK) {

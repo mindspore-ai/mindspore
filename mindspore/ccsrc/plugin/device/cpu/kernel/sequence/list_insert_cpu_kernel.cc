@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/list_insert_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -55,8 +54,7 @@ int ListInsertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
+bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
@@ -75,9 +73,9 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   index = index < 0 ? index + len_list : index;
   size_t element_index_size =
-    std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>());
-  size_t output_offset = element_index_size * index;
-  size_t input_tail = element_index_size * (len_list - index);
+    static_cast<size_t>(std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t output_offset = element_index_size * static_cast<size_t>(index);
+  size_t input_tail = element_index_size * static_cast<size_t>(len_list - index);
 
   if (output_size < output_offset * sizeof(T) + target_size + input_tail * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the output_size[" << output_size << "] must greater than input["
