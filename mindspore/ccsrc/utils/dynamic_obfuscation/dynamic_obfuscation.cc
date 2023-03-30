@@ -35,8 +35,8 @@ ParameterPtr AddObfuscatedParam(FuncGraphPtr func_graph) {
   auto add_param = std::make_shared<Parameter>(func_graph);
   std::vector<AnfNodePtr> new_para_list(params.begin(), params.begin() + params.size() - func_graph->fv_param_count());
   (void)new_para_list.emplace_back(add_param);
-  new_para_list.insert(new_para_list.cend(), params.begin() + params.size() - func_graph->fv_param_count(),
-                       params.end());
+  (void)new_para_list.insert(new_para_list.cend(), params.begin() + params.size() - func_graph->fv_param_count(),
+                             params.end());
   func_graph->set_parameters(new_para_list);
   return add_param;
 }

@@ -62,14 +62,14 @@ class CastInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "Invalid dtype";
     }
     if (dst_type->isa<TensorType>()) {
-      primitive->AddAttr("DstT", dst_type->cast_ptr<TensorType>()->element());
+      (void)primitive->AddAttr("DstT", dst_type->cast_ptr<TensorType>()->element());
     } else {
-      primitive->AddAttr("DstT", dst_type);
+      (void)primitive->AddAttr("DstT", dst_type);
     }
     if (x_type->isa<TensorType>()) {
-      primitive->AddAttr("SrcT", x_type->cast_ptr<TensorType>()->element());
+      (void)primitive->AddAttr("SrcT", x_type->cast_ptr<TensorType>()->element());
     } else {
-      primitive->AddAttr("SrcT", x_type);
+      (void)primitive->AddAttr("SrcT", x_type);
     }
     return dst_type->cast<TypePtr>();
   }
