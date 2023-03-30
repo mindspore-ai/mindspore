@@ -508,7 +508,9 @@ static void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(next_node);
   OperatorInfoPtr op_info = next_node->user_data<OperatorInfo>();
-  MS_EXCEPTION_IF_NULL(op_info);
+  if (!op_info) {
+    return;
+  }
 
   // If the shape of tensor is [] or [1], no need to split it.
   Shapes shapes = GetNodeShape(node);
@@ -1890,6 +1892,9 @@ static TensorLayouts GetLossNodeGradOutputLayout(const LossNodeInfo &node_info) 
   }
 
   OperatorInfoPtr operator_info = loss_cnode->user_data<OperatorInfo>();
+  if (!operator_info) {
+    return ret;
+  }
   MS_EXCEPTION_IF_NULL(operator_info);
   TensorInfo loss_grad_tensor_info;
   size_t op_output_size = operator_info->outputs_tensor_info().size();

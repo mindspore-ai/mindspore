@@ -544,17 +544,16 @@ AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t out
 
 AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<TypeId> types;
-  std::vector<ShapeVector> shapes;
   std::vector<AnfNodePtr> make_tuple_inputs_list = {mindspore::NewValueNode(prim::kPrimMakeTuple)};
   size_t output_num = AnfAlgo::GetOutputElementNum(node);
+  std::vector<AbstractBasePtr> abstract_list;
   for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {
-    make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(node, tuple_out_index));
-    types.push_back(common::AnfAlgo::GetOutputInferDataType(node, tuple_out_index));
-    shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(node, tuple_out_index));
+    auto out = CreatTupleGetItemNode(node, tuple_out_index);
+    make_tuple_inputs_list.emplace_back(out);
+    abstract_list.emplace_back(out->abstract()->Clone());
   }
   auto make_tuple = NewCNode(std::move(make_tuple_inputs_list));
-  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
 }
 

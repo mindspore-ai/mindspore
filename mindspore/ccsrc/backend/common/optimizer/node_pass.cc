@@ -59,9 +59,11 @@ void UpdateCallerAbstract(const AnfNodePtr &call_node, const FuncGraphPtr &call_
       continue;
     }
     auto idx = common::AnfAlgo::GetTupleGetItemOutIndex(used_node->cast<CNodePtr>());
-    std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(call_node, idx)};
-    auto shapes = {common::AnfAlgo::GetOutputInferShape(call_node, idx)};
-    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, used_node.get());
+    auto call_abstract = call_node->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(call_abstract);
+    auto cur_abstract = call_abstract->elements().at(idx);
+    MS_EXCEPTION_IF_NULL(cur_abstract);
+    used_node->set_abstract(cur_abstract->Clone());
   }
 }
 

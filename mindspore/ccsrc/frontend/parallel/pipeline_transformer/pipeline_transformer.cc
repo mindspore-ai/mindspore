@@ -949,9 +949,23 @@ void PipelineTransformer::CutGraph() {
     type_ptr_ = send_ops.back()->user_data<Type>(DTYPE);
     shape_ = send_ops.back()->user_data<ValueList>(SHAPE);
   }
+  auto real_out = GetRealKernelNode(main_graph_->output(), -1).first;
+  MS_EXCEPTION_IF_NULL(real_out);
+  std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), send_ops.back()};
+  if (IsPrimitiveCNode(real_out, prim::kPrimMakeTuple)) {
+    auto real_out_cnode = real_out->cast<CNodePtr>();
+    for (size_t i = 1; i < real_out_cnode->inputs().size(); ++i) {
+      out_tuple_inputs.emplace_back(NewValueNode(0));
+    }
+  }
   auto make_tuple = main_graph_->NewCNode(make_tuple_inputs);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
-  out.push_back(send_ops.back());
+  if (out_tuple_inputs.size() > INDEX_TWO) {
+    auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
+    out.emplace_back(out_tuple);
+  } else {
+    out.emplace_back(send_ops.back());
+  }
   out.push_back(make_tuple);
   auto out_node = main_graph_->NewCNode(out);
   (void)manager_->Replace(main_graph_->output(), out_node);
@@ -1016,7 +1030,16 @@ void PipelineTransformer::CoverSensShape() {
   std::vector<AnfNodePtr> fill_input = {NewValueNode(fill_op), NewValueNode(type_ptr_),
                                         NewValueNode(MakeValue(shape_->value())), NewValueNode(0)};
   auto fill = root_->NewCNode(fill_input);
-  manager_->SetEdge(sens_cnode, 1, fill);
+  auto sens_value = sens_cnode->input(1);
+  AnfNodePtr new_sens = fill;
+  if (IsPrimitiveCNode(sens_value, prim::kPrimMakeTuple)) {
+    std::vector<AnfNodePtr> tuple_sens_inputs = {NewValueNode(prim::kPrimMakeTuple), fill};
+    for (size_t i = 1; i < sens_cnode->inputs().size(); ++i) {
+      tuple_sens_inputs.emplace_back(NewValueNode(0));
+    }
+    new_sens = root_->NewCNode(tuple_sens_inputs);
+  }
+  manager_->SetEdge(sens_cnode, 1, new_sens);
 }
 
 void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
