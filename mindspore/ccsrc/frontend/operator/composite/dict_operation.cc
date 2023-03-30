@@ -92,7 +92,7 @@ FuncGraphPtr DictUpdate::GenerateFuncGraph(const abstract::AbstractBasePtrList &
 }
 
 void DictUpdate::AddNodeToLists(const AbstractBasePtr &arg, const FuncGraphPtr &ret, AnfNodePtrList *keys,
-                                AnfNodePtrList *values, std::vector<std::pair<ValuePtr, size_t>> *key_place_map) {
+                                AnfNodePtrList *values, std::vector<std::pair<ValuePtr, size_t>> *key_place_map) const {
   auto dict = dyn_cast<abstract::AbstractDictionary>(arg);
   MS_EXCEPTION_IF_NULL(dict);
   auto &dict_elems = dict->elements();
@@ -140,7 +140,7 @@ FuncGraphPtr DictFromKeys::GenerateFuncGraph(const abstract::AbstractBasePtrList
   return ret;
 }
 
-abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::AbstractBasePtr &arg_key) {
+abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::AbstractBasePtr &arg_key) const {
   auto key_type = arg_key->BuildType();
   if (key_type->IsSameTypeId(List::kTypeId) || key_type->IsSameTypeId(Tuple::kTypeId)) {
     abstract::AbstractSequencePtr dict_keys = dyn_cast<abstract::AbstractSequence>(arg_key);
@@ -152,15 +152,16 @@ abstract::AbstractBasePtrList DictFromKeys::ParseIterableObject(const abstract::
     MS_EXCEPTION_IF_NULL(dict_keys);
     AbstractBasePtrList keys;
     auto &dict_elems = dict_keys->elements();
-    std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
-                   [](const abstract::AbstractElementPair &item) { return item.first; });
+    (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
+                         [](const abstract::AbstractElementPair &item) { return item.first; });
     return keys;
   }
   if (key_type->IsSameTypeId(String::kTypeId)) {
     string dict_keys = arg_key->BuildValue()->ToString();
     AbstractBasePtrList keys;
-    std::transform(dict_keys.cbegin(), dict_keys.cend(), std::back_inserter(keys),
-                   [](const char &item) { return std::make_shared<abstract::AbstractScalar>(std::string(1, item)); });
+    (void)std::transform(dict_keys.cbegin(), dict_keys.cend(), std::back_inserter(keys), [](const char &item) {
+      return std::make_shared<abstract::AbstractScalar>(std::string(1, item));
+    });
     return keys;
   }
 

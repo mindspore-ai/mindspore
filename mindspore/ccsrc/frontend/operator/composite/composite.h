@@ -72,14 +72,14 @@ class HyperMap : public MetaFuncGraph {
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
 
  private:
-  AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
+  AnfNodePtr FullMake(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const;
   AnfNodePtr FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                      const ArgsPairList &arg_map);
+                      const ArgsPairList &arg_map) const;
   AnfNodePtr FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                      const ArgsPairList &arg_map);
+                      const ArgsPairList &arg_map) const;
   AnfNodePtr FullMake(const std::shared_ptr<Dictionary> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                      const ArgsPairList &arg_map);
-  AnfNodePtr Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
+                      const ArgsPairList &arg_map) const;
+  AnfNodePtr Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) const;
   std::pair<std::string, std::string> GetHyperMapInputIndex(size_t num) const;
 
   MultitypeFuncGraphPtr fn_leaf_;

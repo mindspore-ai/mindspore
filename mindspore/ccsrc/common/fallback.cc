@@ -22,8 +22,8 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-static std::queue<py::object> py_execute_output_queue;
-static std::map<ValuePtr, py::object> py_execute_output_map;
+static std::queue<py::object> py_execute_output_queue = std::queue<py::object>();
+static std::map<ValuePtr, py::object> py_execute_output_map = std::map<ValuePtr, py::object>();
 
 bool HasPyExecuteOutput() { return !py_execute_output_queue.empty(); }
 
@@ -62,7 +62,7 @@ py::object PopPyExecuteOutput(const ValuePtr &key) {
   MS_LOG(DEBUG) << "Get " << key << ":" << iter->second << " in PyExecute map.";
   auto output = iter->second;
   MS_LOG(DEBUG) << "output: " << output;
-  py_execute_output_map.erase(iter);
+  (void)py_execute_output_map.erase(iter);
   return output;
 }
 }  // namespace mindspore
