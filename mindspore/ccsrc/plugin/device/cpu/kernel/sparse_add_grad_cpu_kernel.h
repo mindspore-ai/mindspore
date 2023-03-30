@@ -59,7 +59,7 @@ class SparseAddGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelH
   std::vector<size_t> x1_indices_shape_;
   std::vector<size_t> x2_indices_shape_;
   std::vector<size_t> out_indices_shape_;
-  size_t indices_column_ = 0;
+  int64_t indices_column_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore
