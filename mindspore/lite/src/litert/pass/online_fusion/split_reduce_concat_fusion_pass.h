@@ -37,7 +37,7 @@ class SplitReduceConcatOnlineFusionPass : public OnlineFusionPass {
   explicit SplitReduceConcatOnlineFusionPass(SearchSubGraph *search_subgrap) : OnlineFusionPass(search_subgrap) {}
   ~SplitReduceConcatOnlineFusionPass() = default;
 
- private: /* split by output */
+ private:
   void InitSearchTensor();
   void DoOnlineFusion() override;
   void DoSplitReduceConcatFusion(uint32_t node_id);

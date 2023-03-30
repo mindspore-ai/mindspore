@@ -44,10 +44,8 @@ int SparseFillEmptyRowsCPUKernel::PreProcess() { return RET_OK; }
 int SparseFillEmptyRowsCPUKernel::Prepare() { return RET_OK; }
 
 void SparseFillEmptyRowsCPUKernel::UpdataTensorShape(lite::Tensor *tensor, std::vector<int> *new_shape) {
-  // auto origin_shape = tensor->shape();
   tensor->set_shape(*new_shape);
   tensor->FreeData();
-  // tensor->set_shape_changed(*new_shape != origin_shape);
 }
 
 int SparseFillEmptyRowsCPUKernel::RunInferOutputShape() {
