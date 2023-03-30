@@ -662,7 +662,7 @@ def permute(input, axis):
 
     Args:
         input (Tensor): Input Tensor.
-        axis (Union[tuple(int), list(int), int]): Permute will permute the tensor to the input `axis` order.
+        axis (Union[tuple(int), int]): Permute will permute the tensor to the input `axis` order.
 
     Returns:
         Tensor, has the same dimension as input tensor, with `axis` suitably permuted.

@@ -7,7 +7,7 @@ mindspore.ops.permute
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **axis** (Union[tuple(int), list(int), int]) - 维度的顺序，permute根据 `axis` 的顺序重新排列 `input` 。
+        - **axis** (Union[tuple(int), int]) - 维度的顺序，permute根据 `axis` 的顺序重新排列 `input` 。
 
     返回：
         Tensor，具有和输入Tensor相同的维数，按照 `axis` 重新排列。
