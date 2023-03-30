@@ -556,7 +556,7 @@ def get_obj_defined_from_obj_type(obj_type):
     """Get the class defined from object type which is in BuiltInMap."""
     logger.debug("get the object type: %r", obj_type)
 
-    def foo():
+    def func():
         pass
 
     obj_type_defined_map = {
@@ -566,7 +566,7 @@ def get_obj_defined_from_obj_type(obj_type):
         "CSRTensor": CSRTensor,
         "Parameter": Parameter,
         "String": "",
-        "Function": foo,
+        "Function": func,
         "Int": int,
         "Float": float,
         "UInt": int,
