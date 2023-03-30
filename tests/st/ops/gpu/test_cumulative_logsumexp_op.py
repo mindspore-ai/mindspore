@@ -60,19 +60,19 @@ def cumulative_logsumexp(nptype, loss):
     expect0 = np.log(np.cumsum(np.exp(x0.astype(np.float64)), axis=axis0)).astype(nptype)
     diff0 = abs(output[0].asnumpy() - expect0)
     error0 = np.ones(shape=expect0.shape) * loss
-    assert np.all(diff0 < error0)
+    assert np.allclose(diff0, error0, loss, loss)
     assert output[0].shape == expect0.shape
 
     expect1 = np.log(np.cumsum(np.exp(x1.astype(np.float64)), axis=axis1)).astype(nptype)
     diff1 = abs(output[1].asnumpy() - expect1)
     error1 = np.ones(shape=expect1.shape) * loss
-    assert np.all(diff1 < error1)
+    assert np.allclose(diff1, error1, loss, loss)
     assert output[1].shape == expect1.shape
 
     expect2 = np.log(np.cumsum(np.exp(x2.astype(np.float64)), axis=axis2)).astype(nptype)
     diff2 = abs(output[2].asnumpy() - expect2)
     error2 = np.ones(shape=expect2.shape) * loss
-    assert np.all(diff2 < error2)
+    assert np.allclose(diff2, error2, loss, loss)
     assert output[2].shape == expect2.shape
 
 

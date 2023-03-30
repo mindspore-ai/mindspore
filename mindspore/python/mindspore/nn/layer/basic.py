@@ -34,6 +34,7 @@ from mindspore._extends import cell_attr_register
 from mindspore._checkparam import Rel, Validator
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
+from mindspore.common._decorator import deprecated
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
            'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
@@ -688,11 +689,10 @@ class Norm(Cell):
     this function can be replaced by :func:`ops.norm`
     """
 
+    @deprecated("2.0", "ops.norm", False)
     def __init__(self, axis=(), keep_dims=False):
         """Initialize Norm."""
         super(Norm, self).__init__()
-        logger.warning("The Norm class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.norm`")
         Validator.check_value_type(
             "keep_dims", keep_dims, [bool], self.cls_name)
         self.axis = axis
@@ -718,11 +718,10 @@ class OneHot(Cell):
     this function can be replaced by :func:`ops.one_hot`
     """
 
+    @deprecated("2.0", "ops.one_hot", False)
     def __init__(self, axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32):
         """Initialize OneHot."""
         super(OneHot, self).__init__()
-        logger.warning("The OneHot class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.one_hot`")
         self.onehot = P.OneHot(axis)
         self.depth = depth
         self.dtype = dtype
@@ -1054,11 +1053,10 @@ class Tril(Cell):
     this function can be replaced by :func:`ops.tril`
     """
 
+    @deprecated("2.0", "ops.tril", False)
     def __init__(self):
         """Initialize Tril."""
         super(Tril, self).__init__()
-        logger.warning("The Tril class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.tril`")
         self.dtype = P.DType()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -1081,11 +1079,10 @@ class Triu(Cell):
     this function can be replaced by :func:`ops.triu`
     """
 
+    @deprecated("2.0", "ops.triu", False)
     def __init__(self):
         """Initialize Triu."""
         super(Triu, self).__init__()
-        logger.warning("The Triu class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.triu`")
         self.dtype = P.DType()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -1128,11 +1125,10 @@ class MatrixDiag(Cell):
     this function can be replaced by :func:`ops.diag`
     """
 
+    @deprecated("2.0", "ops.diag", False)
     def __init__(self):
         """Initialize MatrixDiag."""
         super(MatrixDiag, self).__init__()
-        logger.warning("The MatrixDiag class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.diag`")
         self.matrix_diag = inner.MatrixDiag()
         self.dtype = P.DType()
 
@@ -1150,11 +1146,10 @@ class MatrixDiagPart(Cell):
     this function can be replaced by :func:`ops.diagonal`
     """
 
+    @deprecated("2.0", "ops.diagonal", False)
     def __init__(self):
         """Initialize MatrixDiagPart."""
         super(MatrixDiagPart, self).__init__()
-        logger.warning("The MatrixDiagPart class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.diagonal`")
         self.matrix_diag_part = inner.MatrixDiagPart()
         self.dtype = P.DType()
 
@@ -1236,11 +1231,10 @@ class Roll(Cell):
     this function can be replaced by :func:`ops.roll`
     """
 
+    @deprecated("2.0", "ops.roll", False)
     def __init__(self, shift, axis):
         """Initialize Roll"""
         super(Roll, self).__init__()
-        logger.warning("The Roll class will be deprecated in the future,"
-                       "this function can be replaced by :func:`ops.roll`")
         Validator.check_value_type(
             "shift", shift, [int, tuple, list], self.cls_name)
         Validator.check_value_type(
