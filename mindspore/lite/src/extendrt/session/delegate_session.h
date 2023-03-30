@@ -28,7 +28,7 @@
 
 namespace mindspore {
 /// \brief Delegate Session implementation, use delegate api for inference.
-// TODO(zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
+// (zhaizhiqiang): use GraphSinkDelegateSession instead of GraphSinkSession in future.
 // class GraphSinkDelegateSession
 class GraphSinkSession : public InferSession {
  public:

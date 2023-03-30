@@ -28,7 +28,7 @@
 
 namespace mindspore {
 using mindspore::device::GraphExecutor;
-// TODO(zhaizhiqiang): Wrap graph executor as delegate.
+// (zhaizhiqiang): Wrap graph executor as delegate.
 // typedef std::shared_ptr<GraphSinkDelegate> (*DelegateCreator)(const std::shared_ptr<Context> &);
 using DelegateCreator =
   std::function<std::shared_ptr<GraphExecutor>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
