@@ -927,10 +927,10 @@ class Custom(ops.PrimitiveWithInfer):
         for item in tensor_inputs:
             if isinstance(item, dict) and item.get("name") is not None:
                 input_names.append(item["name"])
+        has_input_name = bool(input_names)
         for item in attr:
             if isinstance(item, dict) and item.get("name") is not None:
-                imply = self._get_imply_type(reg_info, self._get_target(reg_info))
-                if context.get_context("mode") != ms.PYNATIVE_MODE or imply != "BiSheng":
+                if has_input_name or context.get_context("mode") != ms.PYNATIVE_MODE:
                     input_names.append(item["name"])
                 attr_names.append(item["name"])
         cur_attr = {"input_names": input_names, "attr_names": attr_names}

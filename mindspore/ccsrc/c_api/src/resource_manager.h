@@ -86,7 +86,7 @@ class ResourceManager {
   }
 
  private:
-  std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_;
+  std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_{};
   mindspore::HashMap<std::string, mindspore::Any> results_{};
   std::shared_ptr<mindspore::compile::Backend> backend_ = nullptr;
   std::shared_ptr<mindspore::MsContext> context_ = nullptr;

@@ -539,6 +539,8 @@ TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBa
     }
     STATUS ret = info.dtype_infer_func(in_dtypes_arr, input_num, out_dtypes_arr, output_num);
     if (ret != RET_OK) {
+      delete[] in_dtypes_arr;
+      delete[] out_dtypes_arr;
       MS_LOG(ERROR) << "Failed to call the dtype infer function of custom op!";
       return nullptr;
     }
