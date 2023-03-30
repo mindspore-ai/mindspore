@@ -15,12 +15,17 @@
 import numpy as np
 
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.parallel._transformer import TransformerOpParallelConfig
+from mindspore.nn.wrap.cell_wrapper import PipelineCell
+from mindspore.train import Model
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+from tests.ut.python.parallel.test_parallel_transformer import TransformerEncoderNet
 
 
 def setup_function():
@@ -117,3 +122,35 @@ def test_dmnet_train_step():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_train()
     _cell_graph_executor.compile(net, input_)
+
+
+def test_pipeline_with_micro_interleaved_and_slice_activation():
+    """
+    Feature: pipeline parallel with recursive_programming
+    Description: pipeline + recursive_programming
+    Expectation: success
+    """
+    bs = 32
+    pp = 2
+    encoder_layers = 4
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=pp,
+                                      full_batch=True, parallel_mode="auto_parallel",
+                                      enable_parallel_optimizer=True, search_mode='recursive_programming')
+    cf = TransformerOpParallelConfig(data_parallel=2, model_parallel=2, pipeline_stage=pp,
+                                     vocab_emb_dp=False, optimizer_shard=True)
+    pipeline_net = TransformerEncoderNet(batch_size=bs // pp,
+                                         en_layer=encoder_layers, de_layer=0, parallel_config=cf)
+    pipeline_net.embedding.pipeline_stage = 0
+    for index, block in enumerate(pipeline_net.network.encoder.blocks):
+        block.pipeline_stage = index // (encoder_layers // pp)
+
+    pipeline_cell_net = PipelineCell(pipeline_net, 4)
+    encoder_input_value = Tensor(np.ones((bs, 20)), mstype.int32)
+    encoder_input_mask = Tensor(np.ones((bs, 20, 20)), mstype.float16)
+    label = Tensor(np.ones((bs, 20)), mstype.int32)
+    mask = Tensor(np.ones((bs, 20)), mstype.float32)
+    params = pipeline_cell_net.trainable_params()
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(pipeline_cell_net, optimizer=optimizer)
+    model.train_network.compile(encoder_input_value, encoder_input_mask, label, mask)

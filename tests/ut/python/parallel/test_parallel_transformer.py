@@ -94,7 +94,7 @@ class TransformerEncoderNet(nn.Cell):
                                    num_heads=8,
                                    ffn_hidden_size=64,
                                    parallel_config=parallel_config)
-        self.loss = CrossEntropyLoss(parallel_config=config.dp_mp_config)
+        self.loss = CrossEntropyLoss(parallel_config=parallel_config.dp_mp_config)
 
     def construct(self, x, encoder_mask, label, input_mask):
         embedded, _ = self.embedding(x)
