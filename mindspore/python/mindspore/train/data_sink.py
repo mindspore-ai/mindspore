@@ -90,7 +90,7 @@ def _get_next_op(dataset, ori_next_op, is_info_queue):
     if key in dataset.__sink_aux__.next_ops:
         next_op = dataset.__sink_aux__.next_ops[key]
     else:
-        if _need_to_full():
+        if _need_to_full() and context.get_context('mode') == context.GRAPH_MODE:
             device_num = _get_device_num() // _get_pipeline_stages()
             dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
         next_op = ops.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
