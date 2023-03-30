@@ -93,7 +93,8 @@ class GraphTupleParamTransform {
     for (auto &item : repl) {
       bool ret = tr.Replace(item.first, item.second);
       if (ret == false) {
-        MS_LOG(ERROR) << "replace failed" << item.first->DebugString() << " with__" << item.second->DebugString(2);
+        MS_LOG(ERROR) << "replace failed" << item.first->DebugString() << " with__"
+                      << item.second->DebugString(SizeToInt(kIndex2));
       }
     }
     tr.SetParameters(new_fg, new_params);

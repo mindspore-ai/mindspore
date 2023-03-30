@@ -336,7 +336,7 @@ class InlinerBase : public AnfVisitor {
     for (auto &item : nodes) {
       if (IsPrimitiveCNode(item, prim::kPrimSwitch)) {
         auto sw_inputs = item->cast<CNodePtr>()->inputs();
-        if (sw_inputs.size() != 4) {
+        if (sw_inputs.size() != kIndex4) {
           MS_LOG(EXCEPTION) << "switch inputs should be 4";
         }
         if (CheckSwitchInputs(sw_inputs)) {
@@ -356,7 +356,7 @@ class InlinerBase : public AnfVisitor {
         }
       } else if (IsPrimitiveCNode(item, prim::kPrimPartial)) {
         auto cinputs = item->cast<CNodePtr>()->inputs();
-        if (cinputs.size() < 2) {
+        if (cinputs.size() < kIndex2) {
           MS_LOG(EXCEPTION) << "partial call inputs should be greater than 2";
         }
         FuncGraphPtr call_fg = GetValueNode<FuncGraphPtr>(cinputs[1]);

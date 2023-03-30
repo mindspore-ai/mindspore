@@ -289,7 +289,7 @@ bool ParseCommonCompute(const nlohmann::json &item, const OpInfoPtr &op_info_ptr
   std::string value = item.at(kCost);
   int compute = 0;
   try {
-    compute = atoi(value.c_str());
+    compute = std::stoi(value);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Parse compute failed, value: " << value << ", msg: " << e.what();
   }
