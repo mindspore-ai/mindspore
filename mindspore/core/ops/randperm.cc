@@ -51,7 +51,7 @@ int64_t Randperm::get_pad() const {
 
 TypeId Randperm::get_dtype() const { return GetAttr("dtype")->cast<api::TensorTypePtr>()->element()->type_id(); }
 
-int64_t GetDtypeMaxForCheckOverFlow(TypePtr tid) {
+int64_t GetDtypeMaxForCheckOverFlow(const TypePtr tid) {
   int64_t max = 0;
   int64_t max_float16 = 65504;
   switch (tid->type_id()) {

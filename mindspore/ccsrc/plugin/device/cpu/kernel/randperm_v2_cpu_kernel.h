@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDPERM_V2_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDPERM_V2_CPU_KERNEL_H_
 
-#include <utility>
 #include <vector>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

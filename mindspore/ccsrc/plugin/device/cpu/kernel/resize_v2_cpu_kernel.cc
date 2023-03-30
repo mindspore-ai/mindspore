@@ -46,7 +46,7 @@ struct CachedInterpolationCubic {
   float lerp;
 };
 
-float ResizeV2CpuKernelMod::ComputeScale(size_t in_size, size_t out_size, bool align_corners) {
+float ResizeV2CpuKernelMod::ComputeScale(size_t in_size, size_t out_size, bool align_corners) const {
   if (align_corners) {
     if (out_size > 1) {
       return static_cast<float>(in_size - 1) / (out_size - 1);

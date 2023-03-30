@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POLAR_CPU_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_POLAR_CPU_KERNEL_H
 
-#include <cmath>
 #include <vector>
 #include <tuple>
 #include <map>

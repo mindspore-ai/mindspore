@@ -40,7 +40,7 @@ class MIND_API SparseApplyCenteredRMSProp : public BaseOperator {
 
   void set_use_locking(bool use_locking);
 
-  bool get_use_locking();
+  bool get_use_locking() const;
 };
 
 MIND_API abstract::AbstractBasePtr SparseApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &,

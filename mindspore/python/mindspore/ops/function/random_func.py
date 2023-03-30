@@ -590,6 +590,7 @@ def choice_with_mask(input_x, count=256, seed=None):
 
 @constexpr
 def is_cpu_backend():
+    """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
 
 

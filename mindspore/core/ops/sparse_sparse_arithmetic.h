@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

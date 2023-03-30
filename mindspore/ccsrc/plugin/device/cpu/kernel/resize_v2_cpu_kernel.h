@@ -69,7 +69,7 @@ class ResizeV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
   bool LaunchKernelByNearest(const std::vector<kernel::AddressPtr> &inputs,
                              const std::vector<kernel::AddressPtr> &outputs);
 
-  float ComputeScale(size_t in_size, size_t out_size, bool align_corners);
+  float ComputeScale(size_t in_size, size_t out_size, bool align_corners) const;
 
   std::string kernel_type_{kUnknown};
   std::string kernel_name_;

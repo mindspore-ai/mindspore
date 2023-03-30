@@ -41,7 +41,7 @@ constexpr size_t kIndexPutOutputsNum = 1;
   }
 }  // namespace
 
-std::vector<std::vector<int64_t>> IndexPutCpuKernelMod::Transpose(const std::vector<std::vector<int64_t>> &A) {
+std::vector<std::vector<int64_t>> IndexPutCpuKernelMod::Transpose(const std::vector<std::vector<int64_t>> &A) const {
   std::vector<std::vector<int64_t>> v;
   if (A.empty()) {
     return std::vector<std::vector<int64_t>>();
@@ -56,7 +56,8 @@ std::vector<std::vector<int64_t>> IndexPutCpuKernelMod::Transpose(const std::vec
   return v;
 }
 
-int64_t IndexPutCpuKernelMod::Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start, int64_t end) {
+int64_t IndexPutCpuKernelMod::Multiplicative(const std::vector<int64_t> &tensorshapes, int64_t start,
+                                             int64_t end) const {
   int64_t result = 1;
   for (int64_t i = start; i < end; i++) {
     result *= tensorshapes[i];
