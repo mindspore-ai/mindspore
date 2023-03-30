@@ -18,6 +18,7 @@ from collections import OrderedDict
 import mindspore.nn as nn
 from mindspore.common.initializer import Normal
 from mindspore.rewrite import SymbolTree, PatternEngine, Replacement, PatternNode, Node
+from .conv_bn_act import Conv2dBnAct
 
 
 class LeNet5(nn.Cell):
@@ -55,19 +56,19 @@ class ConvActReplace(Replacement):
         conv_p = pattern.get_inputs()[0]
         conv_node: Node = matched.get(conv_p.name())
         conv: nn.Conv2d = conv_node.get_instance()
-        newconv = nn.Conv2dBnAct(conv.in_channels,
-                                 conv.out_channels,
-                                 conv.kernel_size,
-                                 conv.stride,
-                                 conv.pad_mode,
-                                 conv.padding,
-                                 conv.dilation,
-                                 conv.group,
-                                 conv.has_bias,
-                                 conv.weight_init,
-                                 conv.bias_init,
-                                 False,
-                                 activation="relu")
+        newconv = Conv2dBnAct(conv.in_channels,
+                              conv.out_channels,
+                              conv.kernel_size,
+                              conv.stride,
+                              conv.pad_mode,
+                              conv.padding,
+                              conv.dilation,
+                              conv.group,
+                              conv.has_bias,
+                              conv.weight_init,
+                              conv.bias_init,
+                              False,
+                              activation="relu")
         newconv_node = Node.create_call_cell(newconv, conv_node.get_targets(), conv_node.get_args(),
                                              conv_node.get_kwargs(), "Conv2dBnAct")
         return [newconv_node]
