@@ -38,7 +38,7 @@ Status AddTokenOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   std::vector<dsize_t> output_shape_vector = input_shape.AsVector();
   output_shape_vector[input_shape.Size() == 1 ? 0 : 1] += 1;
   TensorShape out = TensorShape(output_shape_vector);
-  outputs.emplace_back(out);
+  (void)outputs.emplace_back(out);
   return Status::OK();
 }
 }  // namespace dataset

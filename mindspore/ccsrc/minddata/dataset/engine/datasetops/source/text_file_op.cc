@@ -133,7 +133,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
             break;
           }
         }
-        file_index.emplace_back(std::pair<std::string, int64_t>((*filename_index_)[*it], *it));
+        (void)file_index.emplace_back(std::pair<std::string, int64_t>((*filename_index_)[*it], *it));
       }
     } else {
       for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
@@ -142,7 +142,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
             break;
           }
         }
-        file_index.emplace_back(std::pair<std::string, int64_t>(it.value(), it.key()));
+        (void)file_index.emplace_back(std::pair<std::string, int64_t>(it.value(), it.key()));
       }
     }
     for (auto file_info : file_index) {

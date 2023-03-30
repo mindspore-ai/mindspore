@@ -105,7 +105,7 @@ Status BatchOp::operator()() {
         total_step++;
         RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
       }
-      table->emplace_back(new_row);
+      (void)table->emplace_back(new_row);
       // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
         RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
@@ -189,7 +189,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
   for (size_t i = 0; i < num_columns; i++) {
     std::shared_ptr<Tensor> new_tensor;
     RETURN_IF_NOT_OK(ConvertRowsToTensor(src, &new_tensor, batch_size, i, contains_per_batch_map));
-    dest->emplace_back(new_tensor);
+    (void)dest->emplace_back(new_tensor);
   }
 
   return Status::OK();
@@ -295,7 +295,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
     for (dsize_t j = 0; j < batch_size; j++) {
       std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(col);
       for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); ++itr) {
-        strings.emplace_back(*itr);
+        (void)strings.emplace_back(*itr);
       }
     }
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, first_type, &new_tensor));
@@ -670,7 +670,7 @@ Status BatchOp::ComputeColMap() {
   if (batch_map_func_ && in_col_names_.empty()) {
     auto column_name = child_[0]->column_name_id_map();
     std::vector<std::pair<std::string, int32_t>> tmp;
-    std::copy(column_name.begin(), column_name.end(), std::back_inserter(tmp));
+    (void)std::copy(column_name.begin(), column_name.end(), std::back_inserter(tmp));
     std::sort(tmp.begin(), tmp.end(),
               [=](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
                 return a.second < b.second;
@@ -789,7 +789,7 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
       break;
     }
     if (!new_row.empty()) {
-      table_pair.first->emplace_back(new_row);
+      (void)table_pair.first->emplace_back(new_row);
       if (table_pair.first->size() == static_cast<size_t>(cur_batch_size)) {
         break;
       }

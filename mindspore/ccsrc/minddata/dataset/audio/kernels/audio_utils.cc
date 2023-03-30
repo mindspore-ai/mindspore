@@ -1569,7 +1569,7 @@ Status SpectralCentroidImpl(const std::shared_ptr<Tensor> &input, std::shared_pt
       }
     }
     specgram.push_back(tmp);
-    specgram_sum.emplace_back(specgram[k].colwise().sum());
+    (void)specgram_sum.emplace_back(specgram[k].colwise().sum());
   }
   for (int k = 0; k < k_num; k++) {
     for (int i = 0; i < channals; ++i) {
@@ -1577,7 +1577,7 @@ Status SpectralCentroidImpl(const std::shared_ptr<Tensor> &input, std::shared_pt
         tmp(i, j) = freqs_r(i, 0) * specgram[k](i, j);
       }
     }
-    specgram_result.emplace_back((tmp).colwise().sum());
+    (void)specgram_result.emplace_back((tmp).colwise().sum());
   }
   auto itr_output = output_tensor->begin<T>();
   for (int k = 0; k < k_num; k++) {

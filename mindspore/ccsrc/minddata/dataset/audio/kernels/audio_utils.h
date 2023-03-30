@@ -107,7 +107,7 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     itr++;
     y = static_cast<T>(*itr);
     o = std::atan2(y, x);
-    out.emplace_back(o);
+    (void)out.emplace_back(o);
   }
   // Generate multidimensional results corresponding to input
   Tensor::CreateFromVector(out, TensorShape{output_shape}, &output_tensor);

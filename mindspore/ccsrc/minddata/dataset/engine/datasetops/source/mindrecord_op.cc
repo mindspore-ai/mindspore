@@ -242,7 +242,7 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
         std::string ss(sample_bytes_[column_name]);
         n_bytes = ss.size();
         data_ptr = std::make_unique<unsigned char[]>(n_bytes);
-        std::copy(ss.begin(), ss.end(), data_ptr.get());
+        (void)std::copy(ss.begin(), ss.end(), data_ptr.get());
       } else {
         RETURN_STATUS_UNEXPECTED("Invalid datatype, retrieved data type is unknown.");
       }

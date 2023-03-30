@@ -43,13 +43,13 @@ Status TruncateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
     auto shape = inputs[0].AsVector();
     int length = shape[0];
     shape[0] = std::min(length, max_seq_len_);
-    outputs.emplace_back(TensorShape{shape});
+    (void)outputs.emplace_back(TensorShape{shape});
   } else {
     outputs.clear();
     auto shape = inputs[0].AsVector();
     int length = shape[1];
     shape[1] = std::min(length, max_seq_len_);
-    outputs.emplace_back(TensorShape{shape});
+    (void)outputs.emplace_back(TensorShape{shape});
   }
   return Status::OK();
 }
