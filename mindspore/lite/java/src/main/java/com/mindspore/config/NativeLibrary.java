@@ -45,6 +45,12 @@ public class NativeLibrary {
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
     private static final String MINDSPORE_LITE_TRAIN_LIBNAME = "mindspore-lite-train";
     private static final String MINDSPORE_LITE_TRAIN_JNI_LIBNAME = "mindspore-lite-train-jni";
+    private static final String ASCEND_KERNEL_PLUGIN_LIBNAME = "ascend_kernel_plugin";
+    private static final String ASCEND_GE_PLUGIN_LIBNAME = "ascend_ge_plugin";
+    private static final String ASCEND_PASS_PLUGIN_LIBNAME = "ascend_pass_plugin";
+    private static final String TENSORRT_PLUGIN_LIBNAME = "tensorrt_plugin";
+    private static final String MSLITE_SHARED_LIB_LIBNAME = "mslite_shared_lib";
+    private static final String TRANSFORMER_SHARED_LIB_LIBNAME = "transformer-shared";
 
     /**
      * Load function.
@@ -142,6 +148,13 @@ public class NativeLibrary {
             if (("lib" + MINDSPORE_LITE_LIBNAME + ".so").equals(libName)) {
                 extractLib(makeResourceName("lib" + MSPLUGIN_GE_LITERT_LIBNAME + ".so"), tmpDir);
                 extractLib(makeResourceName("lib" + RUNTIME_CONVERT_PLUGIN_LIBNAME + ".so"), tmpDir);
+                extractLib(makeResourceName("lib" + ASCEND_KERNEL_PLUGIN_LIBNAME + ".so"), tmpDir);
+                extractLib(makeResourceName("lib" + ASCEND_GE_PLUGIN_LIBNAME + ".so"), tmpDir);
+                extractLib(makeResourceName("lib" + TRANSFORMER_SHARED_LIB_LIBNAME + ".so"), tmpDir);
+                extractLib(makeResourceName("lib" + TENSORRT_PLUGIN_LIBNAME + ".so"), tmpDir);
+            } else if (("lib" + MINDSPORE_CONVERTER_LIBNAME + ".so").equals(libName)) {
+                extractLib(makeResourceName("lib" + MSLITE_SHARED_LIB_LIBNAME + ".so"), tmpDir);
+                extractLib(makeResourceName("lib" + ASCEND_PASS_PLUGIN_LIBNAME + ".so"), tmpDir);
             }
             System.load(tmpFile.toString());
         } catch (IOException e) {
