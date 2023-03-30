@@ -265,7 +265,7 @@ void KernelPack::ParseMagic(const std::string &key, const nlohmann::json &js, Ke
 
 void KernelPack::ParseBlockDim(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info) {
   MS_EXCEPTION_IF_NULL(kernel_json_info);
-  uint32_t block_dim;
+  uint32_t block_dim = 0;
   if (!ParseJsonValue(key, js, &block_dim)) {
     MS_LOG(DEBUG) << "Get value failed for key: " << key << ". Src json: " << js.dump(indent);
   }
