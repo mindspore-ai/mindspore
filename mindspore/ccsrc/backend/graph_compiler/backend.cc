@@ -896,7 +896,7 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext>
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
-void MindRTBackend::BatchBuildCallback() {
+void MindRTBackend::BatchBuildCallback() const {
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (op_executor.BuildQueueEmpty()) {
     return;

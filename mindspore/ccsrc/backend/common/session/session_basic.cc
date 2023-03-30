@@ -845,8 +845,8 @@ void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t
     return;
   }
   auto input_to_attr_map = op_adaptation_info->input_attr_map();
-  std::transform(input_to_attr_map.begin(), input_to_attr_map.end(), std::back_inserter(*const_input_attr_index),
-                 [](auto iter) { return iter.first; });
+  (void)std::transform(input_to_attr_map.begin(), input_to_attr_map.end(), std::back_inserter(*const_input_attr_index),
+                       [](auto iter) { return iter.first; });
 }
 
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
@@ -887,10 +887,10 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       }
 
       if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
-        input_tensor_info->input_tensors_mask.emplace_back(
+        (void)input_tensor_info->input_tensors_mask.emplace_back(
           (is_value_node && !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
       } else {
-        input_tensor_info->input_tensors_mask.emplace_back(
+        (void)input_tensor_info->input_tensors_mask.emplace_back(
           (is_value_node || !is_forward_output) ? kValueNodeTensorMask : kParameterDataTensorMask);
       }
     } else if (real_input->isa<Parameter>()) {

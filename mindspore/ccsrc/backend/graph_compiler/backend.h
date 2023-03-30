@@ -97,7 +97,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void EraseSingleOpCache(const GraphInfo &graph_info) const;
 
   // Execute OpBuildTask and OpRunTask when the OpExecutor queue is full in PyNative mode.
-  void BatchBuildCallback();
+  void BatchBuildCallback() const;
 
   // Run op or dispatch  build task and run task.
   void RunOpImplCheckInput(const OpCompilerInfoPtr &op_compiler_info, const session::BackendOpRunInfoPtr &op_run_info,
