@@ -96,11 +96,11 @@ bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 template <typename T>
 void ApplyMomentumCpuKernelMod::LaunchApplyMomentum(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &) {
-  T *weight = reinterpret_cast<T *>(inputs[0]->addr);
-  T *accumulate = reinterpret_cast<T *>(inputs[1]->addr);
-  T learning_rate = reinterpret_cast<T *>(inputs[2]->addr)[0];
-  const T *gradient = reinterpret_cast<T *>(inputs[3]->addr);
-  T moment = reinterpret_cast<T *>(inputs[4]->addr)[0];
+  T *weight = static_cast<T *>(inputs[0]->addr);
+  T *accumulate = static_cast<T *>(inputs[1]->addr);
+  T learning_rate = static_cast<T *>(inputs[2]->addr)[0];
+  const T *gradient = static_cast<T *>(inputs[3]->addr);
+  T moment = static_cast<T *>(inputs[4]->addr)[0];
   size_t elem_num = inputs[0]->size / sizeof(T);
 
   auto task = [&](size_t start, size_t end) {

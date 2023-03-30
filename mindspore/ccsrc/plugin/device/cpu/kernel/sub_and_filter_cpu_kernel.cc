@@ -50,11 +50,11 @@ int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto input_x_shape = inputs.at(kIndex0)->GetShapeVector();
   batch_size_ = SizeOf(input_x_shape);
   MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
-  input_size_list_.emplace_back(batch_size_ * x_dtype_size_);
-  input_size_list_.emplace_back(x_dtype_size_);
-  input_size_list_.emplace_back(x_dtype_size_);
-  output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
-  output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  (void)input_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  (void)input_size_list_.emplace_back(x_dtype_size_);
+  (void)input_size_list_.emplace_back(x_dtype_size_);
+  (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
+  (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
   return KRET_OK;
 }
 

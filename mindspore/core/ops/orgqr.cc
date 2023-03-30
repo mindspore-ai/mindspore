@@ -59,11 +59,11 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
     MS_EXCEPTION(ValueError) << "For Orgqr, the rank of x must be greater than or equal to 2"
                              << ", while got x rank " << x_shape.size() << ".";
   }
-  int64_t rank = x_shape.size();
-  if (*(x_shape.end() - 1) > *(x_shape.end() - kTwo)) {
+  int64_t rank = SizeToLong(x_shape.size());
+  if (x_shape.end()[-1] > x_shape.end()[-kTwo]) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-2] must be greater than or equal to x.shape[-1]"
-                             << ", while x.shape[-2] is " << x_shape[rank - kRowIndex] << " and x.shape[-1] is "
-                             << x_shape[rank - kColIndex] << ".";
+                             << ", while x.shape[-2] is " << x_shape[LongToSize(rank) - kRowIndex]
+                             << " and x.shape[-1] is " << x_shape[LongToSize(rank) - kColIndex] << ".";
   }
   if (tau_shape.size() < 1) {
     MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
@@ -71,8 +71,8 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
   }
   if (*(x_shape.end() - 1) < *(tau_shape.end() - 1)) {
     MS_EXCEPTION(ValueError) << "For Orgqr, x.shape[-1] must be greater than or equal to tau.shape[-1]"
-                             << ", while x.shape[-1] is " << x_shape[rank - kColIndex] << " and "
-                             << "tau.shape[-1] is " << tau_shape[rank - kColIndex] << ".";
+                             << ", while x.shape[-1] is " << x_shape[LongToSize(rank) - kColIndex] << " and "
+                             << "tau.shape[-1] is " << tau_shape[LongToSize(rank) - kColIndex] << ".";
   }
   if ((x_shape.size() - 1) != tau_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Orgqr,  tau should have one dimension less than x"
@@ -80,7 +80,7 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
                              << "rank of tau is " << tau_shape.size() << ".";
   }
   if (rank >= kInputWithBatch) {
-    for (size_t i = 0; i < rank - kRowIndex; i++) {
+    for (size_t i = 0; i < LongToSize(rank) - kRowIndex; i++) {
       if (x_shape[i] != tau_shape[i]) {
         MS_EXCEPTION(ValueError) << "For Orgqr, x and tau should share the same batch size, but x.shape[" << i
                                  << "] is " << x_shape[i] << ",and tau.shape[" << i << "] is " << tau_shape[i] << ".";

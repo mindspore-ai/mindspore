@@ -117,9 +117,9 @@ TypePtr MultinomialWithReplacementInferType(const PrimitivePtr &primitive,
   TypePtr y_type = {kInt64};
   const std::set<TypePtr> valid_types_x = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types_seed = {kInt64};
-  CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, valid_types_x, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("seed_dtype", seed_dtype, valid_types_seed, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("offset_dtype", offset_dtype, valid_types_seed, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, valid_types_x, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seed_dtype", seed_dtype, valid_types_seed, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offset_dtype", offset_dtype, valid_types_seed, op_name);
   return y_type;
 }
 

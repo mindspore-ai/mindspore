@@ -78,8 +78,6 @@ class MultinomialWithReplacementCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector x_shape_;
   int64_t numsamples_;
   bool replacement_;
-  int64_t num_row_;
-  int64_t num_col_;
   BaseOperatorPtr kernel_ptr_{nullptr};
 };
 }  // namespace kernel

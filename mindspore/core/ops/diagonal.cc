@@ -82,7 +82,7 @@ AbstractBasePtr DiagonalInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = DiagonalInferType(primitive, input_args);
   auto infer_shape = DiagonalInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

@@ -75,13 +75,13 @@ std::vector<KernelAttr> PReluCpuKernelMod::GetOpSupport() {
 }
 
 template <typename T>
-bool PReluCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool PReluCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
-  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *input = static_cast<T *>(inputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *weight = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *weight = static_cast<T *>(inputs[1]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(weight, false);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *output = static_cast<T *>(outputs[0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;

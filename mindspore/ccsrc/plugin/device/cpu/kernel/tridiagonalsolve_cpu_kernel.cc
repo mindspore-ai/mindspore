@@ -82,9 +82,9 @@ bool TridiagonalSolveCPUKernelMod::DoComputeWithPartPivoting_(const std::vector<
   MS_EXCEPTION_IF_NULL(value);
 
   if (i == -1) {
-    a += nth_batch * diags_size_;
-    b += nth_batch * rhs_size_;
-    value += nth_batch * rhs_size_;
+    a += nth_batch * IntToSize(diags_size_);
+    b += nth_batch * IntToSize(rhs_size_);
+    value += nth_batch * IntToSize(rhs_size_);
   } else {
     a += i * diags_size_;
     b += i * rhs_size_;
@@ -173,9 +173,9 @@ bool TridiagonalSolveCPUKernelMod::DoComputeWithoutPartPivoting_(const std::vect
   T *value = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(value);
   if (i == -1) {
-    a += nth_batch * diags_size_;
-    b += nth_batch * rhs_size_;
-    value += nth_batch * rhs_size_;
+    a += nth_batch * IntToSize(diags_size_);
+    b += nth_batch * IntToSize(rhs_size_);
+    value += nth_batch * IntToSize(rhs_size_);
   } else {
     a += i * diags_size_;
     b += i * rhs_size_;
@@ -278,7 +278,7 @@ bool TridiagonalSolveCPUKernelMod::CheckInputValue_(const std::vector<kernel::Ad
     MS_EXCEPTION(ValueError) << "For TridiagonalSolve, expected the rank of diagonals and rhs to be the same, but got "
                              << input0_shape.size() << " and " << input1_shape.size() << ".";
   }
-  int numberforlastseconddim = 2;
+  size_t numberforlastseconddim = 2;
   if (input0_shape[input0_shape.size() - numberforlastseconddim] != AxisNumber) {
     MS_EXCEPTION(ValueError) << "For TridiagonalSolve, expected 3 diagonals got "
                              << input0_shape[input0_shape.size() - numberforlastseconddim] << ".";
@@ -317,11 +317,10 @@ bool TridiagonalSolveCPUKernelMod::LaunchKernel(const std::vector<kernel::Addres
   if (size_m3 > 0) {
     size_t input_num = 1;
     for (size_t i = 0; i < input0_shape.size(); i++) {
-      input_num *= input0_shape[i];
+      input_num *= static_cast<size_t>(input0_shape[i]);
     }
-    size_t matrix_num = input_num / size_m3;
-    int64_t data_size = input_num;
-
+    size_t matrix_num = input_num / LongToSize(size_m3);
+    int64_t data_size = SizeToLong(input_num);
     if (data_size >= ParallelDataNumSameShape) {
       auto shared_tridiagonalsolve = [&](size_t start, size_t end) {
         for (size_t nth_batch = start; nth_batch < end; nth_batch++)

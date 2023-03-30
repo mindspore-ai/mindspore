@@ -90,7 +90,7 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("size", SizeToLong(size_value.size()), kEqual, size_num, prim_name);
   const int64_t kNumZero = 0;
   for (size_t i = 0; i < size_value.size(); ++i) {
-    CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("size", size_value[i], kGreaterThan, kNumZero, prim_name);
   }
 
   output_shape[kInputIndex2] = size_value[kInputIndex0];

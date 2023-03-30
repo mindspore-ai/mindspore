@@ -52,8 +52,8 @@ uint64_t BernoulliCpuKernelMod::New64() {
 
 void BernoulliCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
   if (seed_ == kBernoulliDefaultSeed && offset_ == kBernoulliDefaultOffset) {
-    seed_ = New64();
-    offset_ = New64();
+    seed_ = SizeToLong(New64());
+    offset_ = SizeToLong(New64());
   }
   generator_ = random::MSPhiloxRandom(seed_, offset_);
 }
@@ -65,7 +65,7 @@ float BernoulliCpuKernelMod::RandFloat() {
   const uint32_t val = (exp << 23) | man;
 
   float result;
-  memcpy_s(&result, sizeof(result), &val, sizeof(val));
+  (void)memcpy_s(&result, sizeof(result), &val, sizeof(val));
   return result - 1.0f;
 }
 
@@ -104,7 +104,7 @@ int BernoulliCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();
   p_shape_ = inputs.at(kIndex1)->GetShapeVector();
   std::vector<int64_t> x_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(input_shape_), LongToSize);
   return ret;
 }
 
@@ -116,7 +116,7 @@ bool BernoulliCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 
   InitMSPhiloxRandom(seed_, offset_);
 
-  int64_t input_elements_nums =
+  input_elements_nums =
     std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   auto p = reinterpret_cast<S *>(inputs[kIndex1]->addr);
   auto y = reinterpret_cast<T *>(outputs[kIndex0]->addr);

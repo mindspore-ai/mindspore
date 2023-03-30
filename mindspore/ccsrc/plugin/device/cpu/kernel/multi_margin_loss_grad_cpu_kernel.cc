@@ -126,9 +126,9 @@ const std::vector<std::pair<KernelAttr, MultiMarginLossGradCPUKernelMod::KernelR
 template <typename T>
 void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<kernel::AddressPtr> &inputs,
                                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto y_grad_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
-  auto target_addr = reinterpret_cast<int64_t *>(inputs[kTwo]->addr);
+  auto y_grad_addr = static_cast<T *>(inputs[kZero]->addr);
+  auto x_addr = static_cast<T *>(inputs[kOne]->addr);
+  auto target_addr = static_cast<int64_t *>(inputs[kTwo]->addr);
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -137,9 +137,9 @@ void MultiMarginLossGradCPUKernelMod::LaunchKernelFP32AndFP64(const std::vector<
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 4);
   if (weight_defined_) {
-    weight_addr = reinterpret_cast<T *>(inputs[kThree]->addr);
+    weight_addr = static_cast<T *>(inputs[kThree]->addr);
   }
-  auto x_grad_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+  auto x_grad_addr = static_cast<T *>(outputs[kZero]->addr);
   auto task = [&](size_t start, size_t end) {
     start *= dims;
     end *= dims;

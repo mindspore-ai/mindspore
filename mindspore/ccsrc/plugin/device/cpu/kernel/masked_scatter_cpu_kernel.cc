@@ -52,8 +52,9 @@ int MaskedScatterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   mask_shape_ = inputs.at(kIndex1)->GetShapeVector();
   updates_shape_ = inputs.at(kIndex2)->GetShapeVector();
   output_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  x_numElements_ = std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>());
-  updates_numElements_ = std::accumulate(updates_shape_.begin(), updates_shape_.end(), 1, std::multiplies<size_t>());
+  x_numElements_ = static_cast<size_t>(std::accumulate(x_shape_.begin(), x_shape_.end(), 1, std::multiplies<size_t>()));
+  updates_numElements_ =
+    static_cast<size_t>(std::accumulate(updates_shape_.begin(), updates_shape_.end(), 1, std::multiplies<size_t>()));
   need_broadcast_ = (x_shape_ == mask_shape_) ? false : true;
   size_t mask_dims = mask_shape_.size();
   std::vector<int64_t> x_shape_reverse = x_shape_;
@@ -75,10 +76,10 @@ bool MaskedScatterCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedScatterOutputsNum, kernel_name_);
 
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
-  auto updates = reinterpret_cast<T *>(inputs[2]->addr);
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto x = static_cast<T *>(inputs[0]->addr);
+  auto mask = static_cast<bool *>(inputs[1]->addr);
+  auto updates = static_cast<T *>(inputs[2]->addr);
+  auto y = static_cast<T *>(outputs[0]->addr);
   uint64_t j = 0;
   if (!need_broadcast_) {
     for (uint64_t i = 0; i < x_numElements_; i++) {

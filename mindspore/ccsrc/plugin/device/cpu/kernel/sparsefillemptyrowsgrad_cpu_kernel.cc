@@ -112,7 +112,7 @@ bool SparseFillEmptyRowsGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   size_t output_size = outputs[0]->size / sizeof(T);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      size_t reverse_index = reverse_index_map_ptr[i];
+      size_t reverse_index = LongToSize(reverse_index_map_ptr[i]);
       if (static_cast<int64_t>(reverse_index) < 0 && reverse_index >= end) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName << "', Elements in reverse index must be in [0, [" << end
                           << "]) but got [" << reverse_index << "] ";

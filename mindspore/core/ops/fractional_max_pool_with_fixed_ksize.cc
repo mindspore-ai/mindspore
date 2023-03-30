@@ -167,8 +167,8 @@ TuplePtr FractionalMaxPoolWithFixedKsizeInferType(const PrimitivePtr &primitive,
 
   const std::set<TypePtr> random_samples_valid_types = {kFloat16, kFloat32, kFloat64};
   auto random_samples_dtype = input_args[1]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("random_samples dtype", random_samples_dtype, random_samples_valid_types,
-                                             prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("random_samples dtype", random_samples_dtype,
+                                                   random_samples_valid_types, prim_name);
 
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
   auto x_dtype = input_args[0]->BuildType();

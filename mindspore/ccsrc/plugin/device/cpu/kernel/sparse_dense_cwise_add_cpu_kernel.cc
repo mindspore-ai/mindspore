@@ -63,7 +63,7 @@ void SparseDenseCwiseAddCpuKernelMod::ComputeAdd(const std::vector<AddressPtr> &
   for (int64_t i = 0; i < index_num; i++) {
     for (int64_t j = 0; j < dimension; j++) {
       if (indices_data[static_cast<size_t>(i * dimension + j)] >= sparse_shape_data[static_cast<size_t>(j)] ||
-          indices_data[i * static_cast<size_t>(dimension) + j] < 0) {
+          indices_data[i * dimension + j] < static_cast<int64_t>(0)) {
         MS_EXCEPTION(ValueError) << "For SparseDenseCwiseAdd, the indices cannot go out of bounds.";
       }
     }

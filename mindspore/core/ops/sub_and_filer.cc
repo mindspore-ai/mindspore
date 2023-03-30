@@ -44,6 +44,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::TupleShapePtr SubAndFilterInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   ShapeVector out_shape = {abstract::Shape::kShapeDimAny};
   abstract::ShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});

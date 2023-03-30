@@ -70,8 +70,8 @@ int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   num_batch_ =
     std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, size_t(1), std::multiplies<size_t>());
   x_size_ = std::accumulate(input_shape.begin() + batch_rank_, input_shape.end(), size_t(1), std::multiplies<size_t>());
-  workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
-  workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(num_batch_ * sizeof(float));
   return KRET_OK;
 }
 

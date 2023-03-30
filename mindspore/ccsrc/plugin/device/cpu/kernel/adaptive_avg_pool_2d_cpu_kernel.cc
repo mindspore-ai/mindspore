@@ -124,7 +124,7 @@ bool AdaptiveAvgPool2DCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
                                                  const std::vector<kernel::AddressPtr> &outputs) {
   auto input_size_iter = input_dim_sizes_.rbegin();
   auto output_size_iter = output_size_data_.rbegin();
-  for (; output_size_iter != output_size_data_.rend(); output_size_iter++, input_size_iter++) {
+  for (; output_size_iter != output_size_data_.rend(); (void)output_size_iter++, (void)input_size_iter++) {
     // If output size is none, the input shape should be used.
     if (*output_size_iter == kPyValueNone) {
       *output_size_iter = *input_size_iter;

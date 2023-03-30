@@ -186,7 +186,7 @@ bool DiagonalCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     vy_stride.pop_back();
     // diagonal
     std::vector<int64_t> v_start(vx_shape.size(), 0);
-    for (PositionIterator<int64_t> myiter(v_start, vx_shape); !myiter.is_end(); ++myiter) {
+    for (PositionIterator<int64_t> myiter(v_start, vx_shape); !myiter.is_end(); (void)++myiter) {
       auto p = myiter.get_pos();
       int64_t base_pos1 = mul_sum<int64_t>(p, vx_stride);
       int64_t outbase_pos = mul_sum<int64_t>(p, vy_stride);

@@ -45,8 +45,8 @@ const int64_t kTraceInputsNum = 2;
 abstract::ShapePtr TraceGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kTraceInputsNum,
-                                     prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kTraceInputsNum,
+                                           prim_name);
   auto shape_arg = input_args[1];
   MS_EXCEPTION_IF_NULL(shape_arg);
   auto output_shape = GetShapeValue(primitive, shape_arg);

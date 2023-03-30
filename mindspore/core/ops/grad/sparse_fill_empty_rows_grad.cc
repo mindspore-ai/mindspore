@@ -62,9 +62,9 @@ abstract::TupleShapePtr SparseFillEmptyRowsGradInferShape(const PrimitivePtr &pr
       std::vector<abstract::BaseShapePtr>{map_shape_dyn, grad_values_shape_dyn});
   }
   (void)CheckAndConvertUtils::CheckInteger("dim of 'reverse_index_map'", SizeToLong(map_shape_vec.size()), kEqual,
-                                           number_one, prim_name);
+                                           SizeToLong(number_one), prim_name);
   (void)CheckAndConvertUtils::CheckInteger("dim of 'grad_values'", SizeToLong(grad_values_shape_vec.size()), kEqual,
-                                           number_one, prim_name);
+                                           SizeToLong(number_one), prim_name);
 
   std::vector<abstract::BaseShapePtr> out_shape;
   ShapeVector d_values = {map_shape_vec[0]};

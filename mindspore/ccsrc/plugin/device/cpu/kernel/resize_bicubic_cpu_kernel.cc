@@ -243,7 +243,7 @@ static float Compute_1D(const float values_[4], const float xw_0, const float xw
 }
 
 template <typename T1>
-std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> cached_value, const ResizerState &RS,
+std::vector<float> CalSwitch(const WeightsAndIndices &x_wai, std::vector<float> cached_value, const ResizerState &,
                              const WeightsAndIndices &y_wai, const T1 *y_ptr_0, const T1 *y_ptr_1, const T1 *y_ptr_2,
                              const T1 *y_ptr_3) {
   switch (x_wai.advance) {
@@ -283,7 +283,8 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
   std::vector<float> cached_value(calnum4, 0);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {  // nch
-      const int64_t b = i / out_ch, c = i % out_ch / RS.out_height, y = i % RS.out_height;
+      const int64_t b = SizeToLong(i) / out_ch, c = SizeToLong(i) % out_ch / RS.out_height,
+                    y = SizeToLong(i) % RS.out_height;
       WeightsAndIndices y_wai;
       if (half_pixel_centers_) {
         GetWeightsAndIndices<HalfPixelScaler, true>(RS.height_scale, y, RS.in_height, &y_wai);

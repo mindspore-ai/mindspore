@@ -34,8 +34,8 @@ abstract::ShapePtr ResizeV2GradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  int64_t grads_shape_0 = SizeToLong(grad_shape[0]);
-  int64_t grads_shape_1 = SizeToLong(grad_shape[1]);
+  int64_t grads_shape_0 = SizeToLong(grad_shape[LongToSize(0)]);
+  int64_t grads_shape_1 = SizeToLong(grad_shape[LongToSize(1)]);
   const int64_t kDimSize = 4;
   (void)CheckAndConvertUtils::CheckInteger("dim of grads", SizeToLong(grad_shape.size()), kEqual, kDimSize, prim_name);
 

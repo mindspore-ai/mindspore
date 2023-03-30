@@ -66,17 +66,17 @@ abstract::ShapePtr TridiagonalSolveInferShape(const PrimitivePtr &primitive,
   const size_t rank_rhs = rhs_shp.size();
 
   if (!is_dynamic_rank) {
-    CheckAndConvertUtils::CheckInteger("the rank of the input diagonals", SizeToLong(rank_diagonals), kGreaterThan,
-                                       kNumOne, prim_name);
-    CheckAndConvertUtils::CheckInteger("the rank of the input diagonals and rhs", SizeToLong(rank_diagonals), kEqual,
-                                       SizeToLong(rank_rhs), prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("the rank of the input diagonals", SizeToLong(rank_diagonals),
+                                             kGreaterThan, kNumOne, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("the rank of the input diagonals and rhs", SizeToLong(rank_diagonals),
+                                             kEqual, SizeToLong(rank_rhs), prim_name);
   }
 
   if (!is_dynamic) {
-    CheckAndConvertUtils::CheckInteger("the last second dimension of the input diagonals",
-                                       diagonals_shp[rank_diagonals - numberforthelastsecend], kEqual,
-                                       numberofdiagonals, prim_name);
-    CheckAndConvertUtils::CheckInteger(
+    (void)CheckAndConvertUtils::CheckInteger("the last second dimension of the input diagonals",
+                                             diagonals_shp[rank_diagonals - numberforthelastsecend], kEqual,
+                                             numberofdiagonals, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger(
       "the last dimension of the input diagonals and the last second dimension of the input rhs",
       diagonals_shp[rank_diagonals - 1], kEqual, rhs_shp[rank_rhs - numberforthelastsecend], prim_name);
   }
@@ -88,8 +88,8 @@ TypePtr TridiagonalSolveInferType(const PrimitivePtr &prim, const std::vector<Ab
   MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  types.insert({"diagonals", input_args[0]->BuildType()});
-  types.insert({"rhs", input_args[1]->BuildType()});
+  (void)types.insert({"diagonals", input_args[0]->BuildType()});
+  (void)types.insert({"rhs", input_args[1]->BuildType()});
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, valid_types, prim->name());
 
   return input_args[1]->BuildType();

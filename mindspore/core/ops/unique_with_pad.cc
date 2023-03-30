@@ -47,8 +47,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kUniqueWithPadInputsNum = 2;
-constexpr size_t kUniqueWithPadOutputsNum = 2;
+constexpr int64_t kUniqueWithPadInputsNum = 2;
 constexpr int64_t kUniqueWithPadEmptyDim = 0;
 
 void UniqueWithPadCheckEmptyTensor(const std::string &prim_name, const std::vector<ShapeVector> &shapes) {
@@ -79,17 +78,19 @@ abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
   size_t batch_rank = 0;
   if (primitive->HasAttr(ops::kBatchRank)) {
     auto value_ptr = primitive->GetAttr(ops::kBatchRank);
-    batch_rank = GetValue<int64_t>(value_ptr);
+    batch_rank = LongToSize(GetValue<int64_t>(value_ptr));
   }
 
   if (!IsDynamicRank(x_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("input_shape_size", x_shape.size(), kEqual, batch_rank + 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_shape_size", SizeToLong(x_shape.size()), kEqual,
+                                             SizeToLong(batch_rank + static_cast<size_t>(1)), prim_name);
   }
 
   constexpr int64_t kNumZero = 0;
   if (!is_dynamic && batch_rank != kNumZero) {
     auto pad_num = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int64_t>());
-    auto input_batch = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank, 1, std::multiplies<int64_t>());
+    auto input_batch =
+      std::accumulate(x_shape.begin(), x_shape.begin() + SizeToLong(batch_rank), 1, std::multiplies<int64_t>());
     (void)CheckAndConvertUtils::CheckInteger("elements num of input 'pad'", pad_num, kEqual, input_batch, prim_name);
   }
   auto x_shape_ptr = std::make_shared<abstract::Shape>(x_shape);

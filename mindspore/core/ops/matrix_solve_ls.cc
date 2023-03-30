@@ -57,7 +57,7 @@ abstract::ShapePtr MatrixSolveLsInferShape(const PrimitivePtr &primitive,
                                            prim_name);
   (void)CheckAndConvertUtils::CheckInteger("input l2 rank", SizeToLong(l2_shape.size()), kEqual, 0L, prim_name);
 
-  constexpr size_t offset = 2;
+  constexpr decltype(matrix_shape)::difference_type offset = 2;
   std::vector<int64_t> matrix_last(matrix_shape.end() - offset, matrix_shape.end());
   std::vector<int64_t> rhs_last(rhs_shape.end() - offset, rhs_shape.end());
   std::vector<int64_t> y_shape(rhs_shape.begin(), rhs_shape.end() - offset);
@@ -110,7 +110,7 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   (void)CheckAndConvertUtils::CheckTypeValid("matrix", matrix_type, valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("rhs", rhs_type, valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("l2_regularizer", l2_type, l2_valid_types, primitive->name());
-  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 
   return matrix_type;
 }

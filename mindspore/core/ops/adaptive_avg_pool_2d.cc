@@ -50,7 +50,7 @@ abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     const int64_t input_num_dims = SizeToLong(x_shape.size());
-    (void)CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
+    CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {3, 4}, op_name);
   } else {
     return std::make_shared<abstract::Shape>(x_shape);
   }
@@ -71,7 +71,7 @@ abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
   // Update the output shape by output size and input shape.
   auto input_size_iter = x_shape.rbegin();
   auto output_size_iter = output_size.rbegin();
-  for (; output_size_iter != output_size.rend(); output_size_iter++, input_size_iter++) {
+  for (; output_size_iter != output_size.rend(); (void)output_size_iter++, (void)input_size_iter++) {
     // If output size is none, the input shape should be used.
     if (*output_size_iter != kValueNone) {
       *input_size_iter = *output_size_iter;
@@ -94,7 +94,7 @@ AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &, cons
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = AdaptiveAvgPool2DInferType(primitive, input_args);
   auto shapes = AdaptiveAvgPool2DInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

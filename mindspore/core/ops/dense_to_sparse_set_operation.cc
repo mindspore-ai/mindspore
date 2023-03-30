@@ -63,12 +63,12 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
   // Args x2_indice must be 2D tensor, x2_values and x2_shape must be 1D tensor
   const int64_t tensor2d_num = 2;
   const int64_t tensor1d_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_indices'", x2_indice_shape.size(), kEqual, tensor2d_num,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_values'", x2_values_shape.size(), kEqual, tensor1d_num,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_shape'", x2_shape_shape.size(), kEqual, tensor1d_num,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_indices'", SizeToLong(x2_indice_shape.size()), kEqual,
+                                           tensor2d_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_values'", SizeToLong(x2_values_shape.size()), kEqual,
+                                           tensor1d_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x2_shape'", SizeToLong(x2_shape_shape.size()), kEqual,
+                                           tensor1d_num, prim_name);
 
   // Dimension of x1 must be equal or greater than 2
   (void)CheckAndConvertUtils::CheckInteger("dimension of 'x1'", SizeToLong(x1_shape.size()), kGreaterEqual,
@@ -77,9 +77,9 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
   CheckAndConvertUtils::Check("'x2_values' shape", x2_values_shape[0], kEqual, x2_indice_shape[0], prim_name);
 
   std::string set_operation_str = GetValue<std::string>(primitive->GetAttr("set_operation"));
-  std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
+  (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   int64_t x1_size = std::accumulate(x1_shape.begin(), x1_shape.end(), 1, std::multiplies<int64_t>());
-  int64_t x2_size = SizeToLong(x2_values_shape[0]);
+  int64_t x2_size = SizeToLong(x2_values_shape[LongToSize(0)]);
 
   int64_t y_size_max = 0;
 

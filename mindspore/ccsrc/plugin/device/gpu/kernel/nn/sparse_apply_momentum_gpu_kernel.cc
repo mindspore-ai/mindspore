@@ -57,8 +57,6 @@ bool SparseApplyMomentumGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  // unit_var_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  // unit_indices_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndicesIndex).first);
   unit_var_size_ = abstract::TypeIdSize(inputs[kIndex0]->GetDtype());
   unit_indices_size_ = abstract::TypeIdSize(inputs[kIndicesIndex]->GetDtype());
   if (inputs.empty() || outputs.empty()) {

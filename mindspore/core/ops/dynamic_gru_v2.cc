@@ -73,12 +73,12 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
   const size_t kNumTwo = 2;
   const size_t kNumThree = 3;
   if (!is_dynamic_rank) {
-    (void)CheckAndConvertUtils::CheckInteger("x shape rank", x_shape.size(), kEqual, kNumThree, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", winput_shape.size(), kEqual, kNumTwo,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("weight hidden shape rank", whidden_shape.size(), kEqual, kNumTwo,
-                                             prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("h shape rank", h_shape.size(), kEqual, kNumTwo, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(x_shape.size()), kEqual, kNumThree, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", SizeToLong(winput_shape.size()), kEqual,
+                                             kNumTwo, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("weight hidden shape rank", SizeToLong(whidden_shape.size()), kEqual,
+                                             kNumTwo, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("h shape rank", SizeToLong(h_shape.size()), kEqual, kNumTwo, prim_name);
   }
 
   std::map<size_t, bool> placeholder_map = {{3, true}, {4, true}, {5, true}};
@@ -124,9 +124,9 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
   }
 
   std::vector<int64_t> placeholder{};
-  for (auto iter = placeholder_map.begin(); iter != placeholder_map.end(); iter++) {
+  for (auto iter = placeholder_map.begin(); iter != placeholder_map.end(); (void)iter++) {
     if (iter->second) {
-      placeholder.emplace_back(static_cast<int64_t>(iter->first));
+      (void)placeholder.emplace_back(static_cast<int64_t>(iter->first));
     }
   }
   (void)primitive->AddAttr("placeholder_index", MakeValue<std::vector<int64_t>>(placeholder));
@@ -163,14 +163,14 @@ TuplePtr DynamicGRUV2InferType(const PrimitivePtr &primitive, const std::vector<
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> check_types_h;
-  check_types_h.insert({"init_h", h_dtype});
+  (void)check_types_h.insert({"init_h", h_dtype});
   if (input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
     auto binput_dtype = input_args[kInputIndex3]->BuildType();
-    check_types_h.insert({"bias_input", binput_dtype});
+    (void)check_types_h.insert({"bias_input", binput_dtype});
   }
   if (input_args[kInputIndex4]->BuildType()->type_id() != kMetaTypeNone) {
     auto bhidden_dtype = input_args[kInputIndex4]->BuildType();
-    check_types_h.insert({"bias_hidden", bhidden_dtype});
+    (void)check_types_h.insert({"bias_hidden", bhidden_dtype});
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types_h, valid_types, prim_name);
 
@@ -186,7 +186,7 @@ AbstractBasePtr DynamicGRUV2Infer(const abstract::AnalysisEnginePtr &, const Pri
     MS_EXCEPTION_IF_NULL(input);
   }
   const size_t kInputNum = 7;
-  (void)CheckAndConvertUtils::CheckInteger("Input Num", input_args.size(), kEqual, kInputNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("Input Num", SizeToLong(input_args.size()), kEqual, kInputNum, prim_name);
   auto types = DynamicGRUV2InferType(primitive, input_args);
   auto shapes = DynamicGRUV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
