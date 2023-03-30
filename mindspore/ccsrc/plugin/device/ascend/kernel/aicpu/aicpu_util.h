@@ -219,6 +219,7 @@ constexpr auto kRealDiv = "RealDiv";
 constexpr auto kMaskedFill = "MaskedFill";
 constexpr auto kDeformableOffsets = "DeformableOffsets";
 constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
+constexpr auto kAffineGrid = "AffineGrid";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
@@ -287,7 +288,8 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kTopK,
                                           kSign,
                                           kRealDiv,
-                                          kGreaterEqual};
+                                          kGreaterEqual,
+                                          kAffineGrid};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
