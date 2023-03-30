@@ -48,7 +48,7 @@ class SingleGraphScheduler {
 
  private:
   lite::InnerContext *context_;
-  ExecutionFlowPtr execution_plan_{nullptr};
+  ExecutionFlowPtr execution_flow_{nullptr};
   kernel::KERNEL_ARCH graph_arch_;
   TypeId graph_data_type_ = kTypeUnknown;
 

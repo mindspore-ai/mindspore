@@ -34,10 +34,10 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
     return nullptr;
   }
 
-  execution_plan_ = std::make_shared<ExecutionFlow>();
-  MSLITE_CHECK_PTR_RETURN(execution_plan_, nullptr);
-  execution_plan_->SetInputs(node_list->GetInputs());
-  execution_plan_->SetOutputs(node_list->GetOutputs());
+  execution_flow_ = std::make_shared<ExecutionFlow>();
+  MSLITE_CHECK_PTR_RETURN(execution_flow_, nullptr);
+  execution_flow_->SetInputs(node_list->GetInputs());
+  execution_flow_->SetOutputs(node_list->GetOutputs());
   graph_arch_ = kernel::kCPU;
   graph_data_type_ = kNumberTypeFloat32;
   // select kernel
@@ -56,8 +56,8 @@ ExecutionFlowPtr SingleGraphScheduler::Schedule(const CompileResultPtr &node_lis
 
   // append kernel with transpose
   // optimize transpose
-  std::cout << execution_plan_->Dump() << std::endl;
-  return execution_plan_;
+  std::cout << execution_flow_->Dump() << std::endl;
+  return execution_flow_;
 }
 
 int SingleGraphScheduler::ScheduleToKernels(const CompileResultPtr &node_list) {
@@ -72,7 +72,7 @@ int SingleGraphScheduler::ScheduleToKernels(const CompileResultPtr &node_list) {
     }
     kernels.push_back(kernel);
   }
-  execution_plan_->SetKernels(kernels);
+  execution_flow_->SetKernels(kernels);
   return lite::RET_OK;
 }
 
@@ -117,7 +117,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
   if (graph_data_type_ != kNumberTypeFloat32 && graph_data_type_ != kNumberTypeFloat16) {
     return true;
   }
-  auto kernels = execution_plan_->GetKernels();
+  auto kernels = execution_flow_->GetKernels();
   for (const auto &kernel : kernels) {
     for (const auto &input : kernel->in_tensors()) {
       // only cast const tensor
