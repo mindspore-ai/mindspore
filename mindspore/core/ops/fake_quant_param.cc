@@ -77,7 +77,7 @@ bool FakeQuantParam::get_is_perchannel() const {
   return GetValue<bool>(value_ptr);
 }
 
-void FakeQuantParam::set_quant_param(const std::string &key, api::ValuePtr param) { (void)AddAttr(key, param); }
+void FakeQuantParam::set_quant_param(const std::string &key, const api::ValuePtr &param) { (void)AddAttr(key, param); }
 
 api::ValuePtr FakeQuantParam::get_quant_param(const std::string &key) const {
   auto value_ptr = this->GetAttr(key);
@@ -87,7 +87,7 @@ api::ValuePtr FakeQuantParam::get_quant_param(const std::string &key) const {
   return value_ptr;
 }
 
-void FakeQuantParam::set_scales(std::vector<float> scales) {
+void FakeQuantParam::set_scales(const std::vector<float> &scales) {
   (void)this->AddAttr(kAttrKeyLinearQuantParamScale, api::MakeValue(scales));
 }
 
@@ -97,7 +97,7 @@ std::vector<float> FakeQuantParam::get_scales() const {
   return GetValue<std::vector<float>>(value_ptr);
 }
 
-void FakeQuantParam::set_zero_points(std::vector<int64_t> zero_points) {
+void FakeQuantParam::set_zero_points(const std::vector<int64_t> &zero_points) {
   (void)this->AddAttr(kAttrKeyLinearQuantParamZeroPoint, api::MakeValue(zero_points));
 }
 

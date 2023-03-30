@@ -88,7 +88,7 @@ class MIND_API FakeQuantParam : public BaseOperator {
   ///
   /// \param[in] key Define the name of quant parameter.
   /// \param[in] param Define the value of quant parameter.
-  void set_quant_param(const std::string &key, api::ValuePtr param);
+  void set_quant_param(const std::string &key, const api::ValuePtr &param);
 
   /// \brief Method to get quant parameter named `key`.
   ///
@@ -100,7 +100,7 @@ class MIND_API FakeQuantParam : public BaseOperator {
   /// \brief Method to set quant parameter named `scale` for linear algorithm.
   ///
   /// \param[in] scale Define the value of quant parameter.
-  void set_scales(std::vector<float> scales);
+  void set_scales(const std::vector<float> &scales);
 
   /// \brief Method to get quant parameters named `scale` for linear algorithm.
   ///
@@ -110,7 +110,7 @@ class MIND_API FakeQuantParam : public BaseOperator {
   /// \brief Method to set quant parameter named `zero_point` for linear algorithm.
   ///
   /// \param[in] zero_points Define the value of quant parameter.
-  void set_zero_points(std::vector<int64_t> zero_points);
+  void set_zero_points(const std::vector<int64_t> &zero_points);
 
   /// \brief Method to get quant parameters named `zero_point` for linear algorithm.
   ///
