@@ -200,7 +200,7 @@ bool CheckAndGetAxisValueFromSequence(const abstract::AbstractBasePtr &abs, cons
     is_dynamic = true;
     auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(seq_abs);
-    *axis_shape_v = seq_abs->dynamic_len() ? -1 : seq_abs->size();
+    *axis_shape_v = seq_abs->dynamic_len() ? -1 : SizeToLong(seq_abs->size());
   }
 
   return is_dynamic;

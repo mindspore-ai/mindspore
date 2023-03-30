@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_SIZE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_SIZE_CPU_KERNEL_H_
 #include <vector>
-#include <memory>
 #include <utility>
 #include <map>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "mindspore/core/ops/tile_size.h"
 #include "plugin/factory/ms_factory.h"
@@ -44,7 +42,7 @@ class TileSizeCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::KernelTensorPtr> &inputs,
                     const std::vector<kernel::KernelTensorPtr> &outputs,
-                    const std::vector<kernel::AddressPtr> &workspace);
+                    const std::vector<kernel::AddressPtr> &workspace) const;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

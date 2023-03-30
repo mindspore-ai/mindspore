@@ -53,7 +53,7 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
   abstract::ShapePtr minval_shape = minval->shape();
   MS_EXCEPTION_IF_NULL(minval_shape);
   if (minval_shape->IsDimUnknown() || minval_shape->shape().size() != 0) {
-    MS_EXCEPTION(ValueError) << "The min value should be a scalar tensor, while the shape is: "
+    MS_EXCEPTION(ValueError) << "For UniformInt, the min value should be a scalar tensor, while the shape is: "
                              << minval_shape->ToString();
   }
   abstract::AbstractTensorPtr maxval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex2);

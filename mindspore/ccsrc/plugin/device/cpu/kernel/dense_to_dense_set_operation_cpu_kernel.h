@@ -73,8 +73,6 @@ class DenseToDenseSetOperationCpuKernelMod : public NativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
   DenseSetFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, DenseSetFunc>> func_list_;
-
-  // cudaStream_t cuda_stream_;
 };
 }  // namespace kernel
 }  // namespace mindspore
