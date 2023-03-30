@@ -403,3 +403,4 @@ from .glu_grad import _glu_grad_aicpu
 from .sspaddmm import _sspaddmm_aicpu
 from .sequence_addn import _sequence_addn_aicpu
 from .sequence_concat import _sequence_concat_aicpu
+from .affine_grid import _affine_grid_aicpu
