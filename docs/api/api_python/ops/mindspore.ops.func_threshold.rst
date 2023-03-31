@@ -3,7 +3,7 @@ mindspore.ops.threshold
 
 .. py:function:: mindspore.ops.threshold(input, thr, value)
 
-    将使用 `thr` 参数对 `input` 逐元素阈值化后的结果作为Tensor返回。
+    使用阈值 `thr` 参数对 `input` 逐元素阈值化，并将其结果作为Tensor返回。
 
     threshold定义为：
 
