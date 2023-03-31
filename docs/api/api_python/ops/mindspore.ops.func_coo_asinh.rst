@@ -10,7 +10,7 @@ mindspore.ops.coo_asinh
         out_i = \sinh^{-1}(input_i)
 
     参数：
-        - **x** (COOTensor) - 需要计算反双曲正弦函数的输入，其秩的范围必须在[0, 7]。
+        - **x** (COOTensor) - 需要计算反双曲正弦函数的输入。
 
     返回：
         COOTensor，数据类型和shape与 `x` 相同。

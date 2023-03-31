@@ -3,7 +3,8 @@ mindspore.ops.max_unpool2d
 
 .. py:function:: mindspore.ops.max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=None)
 
-    `max_pool2d` 的逆过程。
+    :func:`mindspore.ops.max_pool2d` 的逆过程。
+
     `max_unpool2d` 在计算过程中，保留最大值位置的元素，并将非最大值位置元素设置为0。
     支持的输入数据格式为 :math:`(N, C, H_{in}, W_{in})` 或 :math:`(C, H_{in}, W_{in})` ，
     输出数据的格式为 :math:`(N, C, H_{out}, W_{out})` 或 :math:`(C, H_{out}, W_{out})` ，计算公式如下：

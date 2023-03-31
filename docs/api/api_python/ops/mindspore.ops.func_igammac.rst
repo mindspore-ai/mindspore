@@ -12,7 +12,7 @@ mindspore.ops.igammac
     其中，
 
     .. math::
-        Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt
+        Gamma(a, x) = \int_{x}^{\infty} t^{a-1} exp(-t) dt
 
     为上层不完全伽马函数。
 

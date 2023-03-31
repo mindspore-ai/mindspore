@@ -9,7 +9,7 @@ mindspore.ops.coo_sinh
         out_i = \sinh(x_i)
 
     参数：
-        - **x** (COOTensor) - coo_sinh的输入COOTensor，其秩范围必须在[0, 7]。
+        - **x** (COOTensor) - coo_sinh的输入COOTensor。
 
     返回：
         COOTensor，shape与 `x` 相同。

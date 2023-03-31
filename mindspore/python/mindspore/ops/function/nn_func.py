@@ -776,10 +776,9 @@ def check_shape(x_shape, indices_shape, func_name):
 
 def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    max_unpool1d is a partial inverse of maxpool1d, since the non-maximal values are lost.
+    Computes the inverse of :func:`mindspore.ops.max_pool1d`.
 
-    max_unpool1d takes the output of maxpool1d and indices of the maximal values as input.
-    It computes a partial inverse of maxpool1d with all non-maximal values will be set to zero.
+    `max_unpool1d` keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
@@ -888,9 +887,9 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
 def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=None):
     r"""
-    Computes the inverse of max_pool2d.
+    Computes the inverse of :func:`mindspore.ops.max_pool2d`.
 
-    max_unpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    `max_unpool2d` keeps the maximal value and set all position of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
 
@@ -992,7 +991,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     r"""
     Computes the inverse of :func:`mindspore.ops.max_pool3d`.
 
-    max_unpool3d keeps the maximal value and set all position of non-maximal values to zero.
+    `max_unpool3d` keeps the maximal value and set all position of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`,
     and the output is of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`.
     The operation is as follows.
@@ -1943,7 +1942,7 @@ def fliplr(input):
 
 def is_floating_point(input):
     """
-    Judge whether the data type of `input` is a floating point data type i.e., one of mindspore.flot64,
+    Judge whether the data type of `input` is a floating point data type i.e., one of mindspore.float64,
     mindspore.float32, mindspore.float16.
 
     Args:
@@ -3361,7 +3360,7 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
 
 def l1_loss(input, target, reduction='mean'):
     r"""
-    l1_loss is used to calculate the mean absolute error between the `input` value and the `target` value.
+    Calculate the mean absolute error between the `input` value and the `target` value.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to "none" ,
     then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
@@ -4798,8 +4797,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
 def huber_loss(input, target, reduction='mean', delta=1.0):
     r"""
-    huber_loss calculates the error between the predicted value and the target value.
-    It has the best of both the loss of l1 and the loss of mse.
+    Calculates the error between the predicted value and the target value,
+    which has the best of both the loss of l1 and the loss of mse.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the reduction parameter is set to "none"
     then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction. The formula is as follows:
@@ -5287,9 +5286,6 @@ def pixel_shuffle(input, upscale_factor):
 
     Typically, the `input` is of shape :math:`(*, C \times r^2, H, W)` , and the output is of shape
     :math:`(*, C, H \times r, W \times r)`, where `r` is an upscale factor and `*` is zero or more batch dimensions.
-
-    Note:
-        The dimension of input Tensor on Ascend should be less than 7.
 
     Args:
         input (Tensor): Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `input` is larger than 2,

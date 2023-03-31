@@ -9,7 +9,7 @@ mindspore.ops.coo_expm1
         out_i = e^{x_i} - 1
 
     参数：
-        - **x** (COOTensor) - 数据类型为float16或float32的COOTensor，其秩必须在[0, 7]中。
+        - **x** (COOTensor) - 数据类型为float16或float32的COOTensor。
 
     返回：
         COOTensor，shape与 `x` 相同。

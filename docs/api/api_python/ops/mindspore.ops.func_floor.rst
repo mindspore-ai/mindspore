@@ -9,7 +9,7 @@ mindspore.ops.floor
         out_i = \lfloor x_i \rfloor
 
     参数：
-        - **input** (Tensor) - floor的输入，任意维度的Tensor，秩应小于8。其数据类型必须为float16、float32、float64。
+        - **input** (Tensor) - floor的输入，任意维度的Tensor。其数据类型必须为float16、float32、float64。
 
     返回：
         Tensor，shape与 `input` 相同。

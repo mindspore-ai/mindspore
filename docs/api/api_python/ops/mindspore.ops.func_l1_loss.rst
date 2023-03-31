@@ -3,7 +3,7 @@ mindspore.ops.l1_loss
 
 .. py:function:: mindspore.ops.l1_loss(input, target, reduction='mean')
 
-    l1_loss用于计算预测值和目标值之间的平均绝对误差。
+    用于计算预测值和目标值之间的平均绝对误差。
 
     假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，`reduction` 设置为"none",则计算 :math:`x` 和 :math:`y` 的loss不进行降维操作。
 

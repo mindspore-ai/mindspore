@@ -9,7 +9,7 @@ mindspore.ops.csr_sinh
         out_i = \sinh(x_i)
 
     参数：
-        - **x** (CSRTensor) - csr_sinh的输入CSRTensor，其秩范围必须在[0, 7]。
+        - **x** (CSRTensor) - csr_sinh的输入CSRTensor。
 
     返回：
         CSRTensor，shape与 `x` 相同。

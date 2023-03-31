@@ -6145,7 +6145,7 @@ class Igamma(Primitive):
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
-        >>> igamma = P.Igamma()
+        >>> igamma = ops.Igamma()
         >>> output = igamma(a, x)
         >>> print (output)
         [0.593994  0.35276785  0.21486944  0.13337152]
@@ -6169,7 +6169,7 @@ class Igammac(Primitive):
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
-        >>> igammac = P.Igammac()
+        >>> igammac = ops.Igammac()
         >>> output = igammac(a, x)
         >>> print (output)
         [0.40600586 0.6472318  0.7851304  0.8666283 ]
