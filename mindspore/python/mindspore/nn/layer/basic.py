@@ -441,6 +441,12 @@ class Flatten(Cell):
         self.end_dim = end_dim
 
     def construct(self, x):
+        x_rank = F.rank(x)
+        ndim = x_rank if x_rank != 0 else 1
+        if self.start_dim < -ndim or self.start_dim >= ndim:
+            const_utils.raise_value_error("'start_dim' out of range.")
+        if self.end_dim < -ndim or self.end_dim >= ndim:
+            const_utils.raise_value_error("'end_dim' out of range.")
         return F.flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
 
 
