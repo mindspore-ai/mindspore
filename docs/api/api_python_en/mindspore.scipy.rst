@@ -1,6 +1,9 @@
 mindspore.scipy
 ===============
 
+.. warning::
+    These are experimental APIs that are subject to change or deletion.
+
 .. automodule:: mindspore.scipy
 
 mindspore.scipy.linalg
@@ -21,7 +24,6 @@ mindspore.scipy.linalg
     mindspore.scipy.linalg.inv
     mindspore.scipy.linalg.lu
     mindspore.scipy.linalg.lu_factor
-    mindspore.scipy.linalg.solve_triangular
 
 mindspore.scipy.optimize
 ------------------------
@@ -47,4 +49,3 @@ mindspore.scipy.sparse.linalg
     :template: classtemplate_inherited.rst
 
     mindspore.scipy.sparse.linalg.cg
-    mindspore.scipy.sparse.linalg.gmres
