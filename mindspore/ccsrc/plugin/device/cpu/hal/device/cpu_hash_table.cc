@@ -27,12 +27,12 @@ namespace device {
 namespace cpu {
 template <typename Key, typename Value>
 CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim) : value_dim_(value_dim), value_size_(0) {
-  Initialize();
+  (void)Initialize();
 }
 
 template <typename Key, typename Value>
 CPUHashTable<Key, Value>::~CPUHashTable() {
-  Finalize();
+  (void)Finalize();
 }
 
 template <typename Key, typename Value>
