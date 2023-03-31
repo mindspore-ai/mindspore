@@ -38,13 +38,10 @@ bool SpecifyGraphInputFormat::Run(const FuncGraphPtr &graph) {
     MS_LOG(ERROR) << "this pass only support to transfer graph input format between nhwc with nchw.";
     return false;
   }
-  auto manager = Manage(graph, true);
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "manager is nullptr.";
-    return false;
-  }
+  auto manager = Manage(graph);
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
   if (HandleGraphInput(graph) != lite::RET_OK) {
-    MS_LOG(ERROR) << "transfer graph input format from nhwc to nchw failed.";
+    MS_LOG(ERROR) << "Specify graph-input format failed.";
     return false;
   }
   return true;
