@@ -108,7 +108,7 @@ class ScalarCastInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t input_len = 1;
+    const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              op_name);
     auto elem_x = input_args[0];
@@ -135,7 +135,7 @@ class ScalarCastInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 2;
+    const int64_t input_num = 2;
     bool is_tensor = false;
     auto op_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
@@ -154,7 +154,6 @@ class ScalarCastInfer : public abstract::OpInferBase {
       return nullptr;
     }
     auto res_type = InferType(primitive, input_args);
-    ValuePtr res;
     switch (res_type->type_id()) {
       case kNumberTypeInt8:
         return MakeValue(GetRealValue<int8_t>(x_value, op_name, is_tensor));

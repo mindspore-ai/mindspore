@@ -39,7 +39,7 @@ AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_len = 2;
+  const int64_t input_len = 2;
   constexpr size_t data_index = 0;
   constexpr size_t index_index = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
@@ -80,7 +80,7 @@ AbstractBasePtr ListAppendAndInsertGradInnerInfer(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "The prim '" << prim_name << "', pop index[" << index << "] out of range.";
   }
   index = index < 0 ? index + SizeToLong(elements.size()) : index;
-  abs.erase(abs.begin() + index);
+  (void)abs.erase(abs.begin() + index);
   return std::make_shared<abstract::AbstractList>(abs);
 }
 

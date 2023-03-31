@@ -79,7 +79,7 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   if (output_size < output_offset * sizeof(T) + target_size + input_tail * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the output_size[" << output_size << "] must greater than input["
-                      << len_list * element_index_size << "] + target[" << target_size << "]";
+                      << len_list * static_cast<int64_t>(element_index_size) << "] + target[" << target_size << "]";
   }
 
   if (output_offset != 0) {
