@@ -1497,6 +1497,7 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     MS_EXCEPTION_IF_NULL(item_value);
     if (data_value->isa<parse::ClassType>()) {
       auto class_val = dyn_cast_ptr<parse::ClassType>(data_value);
+      MS_EXCEPTION_IF_NULL(class_val);
       const auto &class_name = class_val->name();
       MS_EXCEPTION(TypeError)
         << "Can not get attribute '" << item_value->ToString() << "' from " << class_name
