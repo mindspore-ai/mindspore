@@ -14,7 +14,7 @@ mindspore.ops.geqrf
 
     返回：
         - **y** (Tensor) - shape为 :math:`(*, m, n)` ，与 `input` 具有相同的dtype。
-        - **tau** (Tensor) - shape为 :math:`(*, p,)` ，并且 :math:`p = min(m, n)` ，与 `input` 具有相同的dtype。
+        - **tau** (Tensor) - shape为 :math:`(*, p)` ，并且 :math:`p = min(m, n)` ，与 `input` 具有相同的dtype。
 
     异常：
         - **TypeError** - 如果 `input` 不是一个Tensor。

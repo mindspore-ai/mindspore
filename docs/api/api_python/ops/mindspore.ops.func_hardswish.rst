@@ -8,7 +8,7 @@ mindspore.ops.hardswish
     Hard Swish定义如下：
 
     .. math::
-        \text{hardswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6}
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6}
 
     其中， :math:`x_i` 是输入的元素。
 

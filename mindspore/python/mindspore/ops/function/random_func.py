@@ -756,7 +756,7 @@ def laplace(shape, mean, lambda_param, seed=None):
 
 @_function_forbid_reuse
 def gamma(shape, alpha, beta, seed=None):
-    """
+    r"""
     Generates random numbers according to the Gamma random number distribution.
 
     Args:
