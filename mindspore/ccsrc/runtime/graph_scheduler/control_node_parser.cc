@@ -260,43 +260,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   if (output_type_id == kTypeUnknown) {
     output_type_id = common::AnfAlgo::GetOutputInferDataType(backend_node, 0);
   }
-
-  if (front_node->kernel_info() == nullptr) {
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    MS_EXCEPTION_IF_NULL(kernel_info);
-    front_node->set_kernel_info(kernel_info);
-    std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-    MS_EXCEPTION_IF_NULL(builder);
-    kernel_info->set_select_kernel_build_info(builder->Build());
-    kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsKernelObjectType(
-      {kernel::KernelObjectType::TUPLE_UNFOLD});
-  }
-
-  // Set build info to front node.
-  auto backend_kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(backend_kernel_info);
-  auto backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
-  MS_EXCEPTION_IF_NULL(backend_build_info);
-
-  auto front_kernel_info = static_cast<device::KernelInfo *>(front_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(front_kernel_info);
-  auto front_build_info = front_kernel_info->GetMutableSelectKernelBuildInfo();
-  MS_EXCEPTION_IF_NULL(front_build_info);
-  // Set output format and device data type.
-  if (front_build_info->GetAllOutputFormats().size() > front_node_with_index.second) {
-    front_build_info->SetOutputFormat(backend_build_info->GetOutputFormat(0), front_node_with_index.second);
-    front_build_info->SetOutputDeviceType(backend_build_info->GetOutputDeviceType(0), front_node_with_index.second);
-  } else {
-    auto formats = front_build_info->GetAllOutputFormats();
-    auto types = front_build_info->GetAllOutputDeviceTypes();
-    for (size_t i = 0; i <= front_node_with_index.second - front_build_info->GetAllOutputFormats().size(); ++i) {
-      (void)formats.emplace_back(backend_build_info->GetOutputFormat(0));
-      (void)types.emplace_back(backend_build_info->GetOutputDeviceType(0));
-    }
-    front_build_info->SetOutputsFormat(formats);
-    front_build_info->SetOutputsDeviceType(types);
-  }
-
+  CreateBuildInfoForFrontNode(front_node_with_index, backend_node);
   device::DeviceAddressPtr address = nullptr;
   if (node_value->isa<tensor::Tensor>() && node_value->cast<TensorPtr>()->is_forward_output()) {
     // If is_forward_output, get address from tensor
@@ -522,6 +486,15 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
 
   // 4 Other.
   if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimTupleGetItem)) {
+    if (real_node->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend) && real_node->abstract() != nullptr) {
+      size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(real_node->abstract());
+      MS_LOG(INFO) << "Fetch an tuple get item with repalce flag:" << real_node->DebugString()
+                   << " output num:" << output_num;
+      for (size_t i = 0; i < output_num; ++i) {
+        (void)results.emplace_back(real_node, i);
+      }
+      return results;
+    }
     std::vector<size_t> index_stack;
     auto get_item_src_node = common::AnfAlgo::GetTupleIndexes(real_node, &index_stack);
     MS_EXCEPTION_IF_NULL(get_item_src_node);
@@ -623,6 +596,46 @@ bool IsTopoDependNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node, st
   return false;
 }
 }  // namespace
+void CreateBuildInfoForFrontNode(const KernelWithIndex &front_node_with_index, const AnfNodePtr &backend_node) {
+  MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+  MS_EXCEPTION_IF_NULL(backend_node);
+  const auto &front_node = front_node_with_index.first;
+  if (front_node->kernel_info() == nullptr) {
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    front_node->set_kernel_info(kernel_info);
+    std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
+    kernel_info->set_select_kernel_build_info(builder->Build());
+    kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsKernelObjectType(
+      {kernel::KernelObjectType::TUPLE_UNFOLD});
+  }
+
+  // Set build info to front node.
+  auto backend_kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(backend_kernel_info);
+  auto backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(backend_build_info);
+
+  auto front_kernel_info = static_cast<device::KernelInfo *>(front_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(front_kernel_info);
+  auto front_build_info = front_kernel_info->GetMutableSelectKernelBuildInfo();
+  MS_EXCEPTION_IF_NULL(front_build_info);
+  // Set output format and device data type.
+  if (front_build_info->GetAllOutputFormats().size() > front_node_with_index.second) {
+    front_build_info->SetOutputFormat(backend_build_info->GetOutputFormat(0), front_node_with_index.second);
+    front_build_info->SetOutputDeviceType(backend_build_info->GetOutputDeviceType(0), front_node_with_index.second);
+  } else {
+    auto formats = front_build_info->GetAllOutputFormats();
+    auto types = front_build_info->GetAllOutputDeviceTypes();
+    for (size_t i = 0; i <= front_node_with_index.second - front_build_info->GetAllOutputFormats().size(); ++i) {
+      (void)formats.emplace_back(backend_build_info->GetOutputFormat(0));
+      (void)types.emplace_back(backend_build_info->GetOutputDeviceType(0));
+    }
+    front_build_info->SetOutputsFormat(formats);
+    front_build_info->SetOutputsDeviceType(types);
+  }
+}
 
 bool IsInvalidPartial(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);

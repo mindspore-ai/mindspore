@@ -67,10 +67,16 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
       MS_LOG(ERROR) << "For 'InplaceOpV2', the size of inputs must be 3, but got " << inputs.size() << ".";
       return KRET_RESIZE_FAILED;
     }
+    MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
     MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
     MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
+    auto x_shape = inputs[kIndex0]->GetShapeVector();
     auto indice_shape = inputs[kIndex1]->GetShapeVector();
     auto v_shape = inputs[kIndex2]->GetShapeVector();
+    if (x_shape.empty()) {
+      MS_LOG(ERROR) << "For 'InplaceOpV2', the shape size of x must not be 0.";
+      return KRET_RESIZE_FAILED;
+    }
     if (v_shape.empty()) {
       MS_LOG(ERROR) << "For 'InplaceOpV2', the shape size of value:" << v_shape.size() << " must not be 0.";
       return KRET_RESIZE_FAILED;
@@ -81,6 +87,7 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
       return KRET_RESIZE_FAILED;
     }
 
+    row_size_ = x_shape[0];
     band_size_ = std::accumulate(v_shape.begin() + 1, v_shape.end(), int64_t(1), std::multiplies{});
     v_size_ = band_size_ * v_shape[0];
 
@@ -125,7 +132,14 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
     const auto *indice_ptr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
     MS_EXCEPTION_IF_NULL(indice_ptr);
     for (size_t i = 0; i < inputs[kIndex1]->size / sizeof(S); ++i) {
-      indices.emplace_back(IntToLong(indice_ptr[i]));
+      int64_t indice = IntToLong(indice_ptr[i]);
+      if (indice >= row_size_ || indice + row_size_ < 0) {
+        MS_LOG(EXCEPTION) << "For 'InplaceUpdate', the value of 'indices' must be between " << -row_size_ << " and "
+                          << (row_size_ - 1) << ", but got indice: " << indice;
+      } else if (indice < 0) {
+        indice += row_size_;
+      }
+      indices.emplace_back(indice);
     }
 
     compute_func_(this, output, indices, v);
@@ -136,6 +150,7 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
   std::string kernel_name_;
   int64_t band_size_{1};
   int64_t v_size_{1};
+  int64_t row_size_{1};
 
   using TypeComputeFuncV2 =
     std::function<void(InplaceOpV2CpuTypeFunc *, T *x, const std::vector<int64_t> &indices, const T *v)>;

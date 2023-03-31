@@ -47,27 +47,32 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    const int64_t kInputNum = 3;
+    const int64_t kInputNum = 2;
+    const int64_t kInputNumWithWeight = 3;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
     auto x_shape_BaseShapePtr = input_args[kInputIndex0]->BuildShape();
     auto y_shape_BaseShapePtr = input_args[kInputIndex1]->BuildShape();
-    auto weight_shape_BaseShapePtr = input_args[kInputIndex2]->BuildShape();
     auto x_shape_ptr = x_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     auto y_shape_ptr = y_shape_BaseShapePtr->cast<abstract::ShapePtr>();
-    auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
     MS_EXCEPTION_IF_NULL(y_shape_ptr);
     if (!x_shape_ptr->IsDynamic() && !y_shape_ptr->IsDynamic()) {
       CheckAndConvertUtils::Check("logits shape", x_shape, kEqual, y_shape, prim_name, ValueError);
     }
-    if (weight_shape.size() > 0) {
-      MS_EXCEPTION_IF_NULL(weight_shape_ptr);
-      if (!y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic()) {
-        CheckAndConvertUtils::Check("labels shape", y_shape, kEqual, weight_shape, prim_name, ValueError);
+
+    if (input_args.size() == kInputNumWithWeight) {
+      auto weight_shape =
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      auto weight_shape_BaseShapePtr = input_args[kInputIndex2]->BuildShape();
+      auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
+      if (weight_shape.size() > 0) {
+        MS_EXCEPTION_IF_NULL(weight_shape_ptr);
+        if (!y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic()) {
+          CheckAndConvertUtils::Check("labels shape", y_shape, kEqual, weight_shape, prim_name, ValueError);
+        }
       }
     }
 
@@ -92,7 +97,8 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
-    const int64_t kInputNum = 3;
+    const int64_t kInputNum = 2;
+    const int64_t kInputNumWithWeight = 3;
     auto prim_name = prim->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     std::set<TypePtr> valid_types = {kFloat16, kFloat32};
@@ -100,11 +106,14 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     (void)types1.emplace("logits", input_args[kInputIndex0]->BuildType());
     (void)types1.emplace("labels", input_args[kInputIndex1]->BuildType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types1, valid_types, prim_name);
-    auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-    if (weight_shape.size() > 0) {
-      (void)types2.emplace("logits", input_args[kInputIndex0]->BuildType());
-      (void)types2.emplace("weight", input_args[kInputIndex2]->BuildType());
-      (void)CheckAndConvertUtils::CheckTensorTypeSame(types2, valid_types, prim_name);
+    if (input_args.size() == kInputNumWithWeight) {
+      auto weight_shape =
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      if (weight_shape.size() > 0) {
+        (void)types2.emplace("logits", input_args[kInputIndex0]->BuildType());
+        (void)types2.emplace("weight", input_args[kInputIndex2]->BuildType());
+        (void)CheckAndConvertUtils::CheckTensorTypeSame(types2, valid_types, prim_name);
+      }
     }
     return input_args[kInputIndex0]->BuildType();
   }
