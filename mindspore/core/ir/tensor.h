@@ -335,7 +335,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
          TensorCompressionType compression_type);
 
-  Tensor &operator=(const Tensor &tensor) {
+  virtual Tensor &operator=(const Tensor &tensor) {
     if (this == &tensor) {
       return *this;
     }
@@ -358,6 +358,11 @@ class MS_CORE_API Tensor : public MetaTensor {
     user_data_ = tensor.user_data_;
     compression_type_ = tensor.compression_type_;
     tensor_name_ = tensor.tensor_name_;
+    adapter_flag_ = tensor.adapter_flag_;
+    cast_dtype_ = tensor.cast_dtype_;
+    graph_output_ = tensor.graph_output_;
+    quant_params_ = tensor.quant_params_;
+    updated_by_device_ = tensor.updated_by_device_;
     return *this;
   }
 

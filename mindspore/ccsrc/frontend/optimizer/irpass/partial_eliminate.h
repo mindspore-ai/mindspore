@@ -224,18 +224,18 @@ class ChoicePartialEliminater : public AnfVisitor {
     for (const auto &args : args_list) {
       for (const auto &arg : args) {
         if (HasAbstractMonad(arg)) {
-          if (!count(monad_args.begin(), monad_args.end(), arg)) {
+          if (count(monad_args.begin(), monad_args.end(), arg) == 0) {
             monad_args.push_back(arg);
           }
           continue;
         }
-        if (!count(no_monad_args.begin(), no_monad_args.end(), arg)) {
+        if (count(no_monad_args.begin(), no_monad_args.end(), arg) == 0) {
           no_monad_args.push_back(arg);
         }
       }
     }
     // Keep monad args after no monad args.
-    no_monad_args.insert(no_monad_args.end(), monad_args.begin(), monad_args.end());
+    (void)no_monad_args.insert(no_monad_args.end(), monad_args.begin(), monad_args.end());
     return no_monad_args;
   }
 
