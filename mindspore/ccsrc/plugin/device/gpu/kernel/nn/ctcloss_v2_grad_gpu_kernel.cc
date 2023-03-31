@@ -85,7 +85,7 @@ bool CTCLossV2GradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto grad = reinterpret_cast<scalar_t *>(outputs[kIndex0]->addr);
 
   CalCTCLossGradV2<scalar_t, target_t>(grad_out, log_probs, targets, input_lengths, target_lengths, neg_log_likelihood,
-                                       log_alpha, log_beta, batch_size_, time_series_, max_target_length_,
+                                       log_alpha, log_beta, batch_size_, time_series_, num_labels_, max_target_length_,
                                        zero_infinity_, blank_, log_probs_shape_, log_alpha_shape_, grad, device_id_,
                                        stream_ptr_);
 
