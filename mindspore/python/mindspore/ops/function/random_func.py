@@ -1248,8 +1248,8 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> print(output)
         [1 1 2 2]
     """
-    shape = P.Shape()
-    reshape = P.Reshape()
+    shape = _get_cache_prim(P.Shape)()
+    reshape = _get_cache_prim(P.Reshape)()
     const_utils.check_valid_dim(len(shape(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
@@ -1261,13 +1261,18 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         n_dist = 1
         if len(shape(input)) > 1:
             n_dist = shape(input)[-2]
-        random_uniform = P.UniformReal(seed1, seed2)((n_dist * shape(input)[-1],))
+        random_uniform = _get_cache_prim(P.UniformReal)(seed1, seed2)((n_dist * shape(input)[-1],))
         if n_dist != 1:
             random_uniform = reshape(random_uniform, (n_dist, shape(input)[-1]))
-        vals = P.RealDiv()(P.Log()(random_uniform), input + 1e-6)
-        _, indices = P.TopK()(vals, num_samples)
+        real_div = _get_cache_prim(P.RealDiv)()
+        log = _get_cache_prim(P.Log)()
+        top_k = _get_cache_prim(P.TopK)()
+
+        vals = real_div(log(random_uniform), input + 1e-6)
+        _, indices = top_k(vals, num_samples)
         return indices
-    return P.Multinomial(seed1, seed2)(input, num_samples)
+    random_nomial = _get_cache_prim(P.Multinomial)(seed1, seed2)
+    return random_nomial(input, num_samples)
 
 
 def _check_shape(input_shape):
