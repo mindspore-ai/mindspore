@@ -74,7 +74,7 @@ AbstractBasePtr SequenceLessInferInner(const PrimitivePtr &primitive, const std:
                                        const bool is_less_equal = true) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_num = 2;
+  constexpr int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -111,7 +111,7 @@ class SequenceLessThanInfer : public abstract::OpInferBase {
     return SequenceLessInferInner(prim, input_args, false)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SequenceLessInferInner(primitive, input_args, false);
   }

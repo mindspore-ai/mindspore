@@ -194,7 +194,8 @@ int ROIAlignGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   roi_rows_ = LongToInt(rois_shape[kIndex0]);
   roi_cols_ = LongToInt(rois_shape[kIndex1]);
 
-  output_size_ = std::accumulate(xdiff_shape.begin(), xdiff_shape.end(), 1, std::multiplies{}) * dy_type_size;
+  output_size_ =
+    LongToSize(std::accumulate(xdiff_shape.begin(), xdiff_shape.end(), 1, std::multiplies{})) * dy_type_size;
   batch_ = LongToInt(xdiff_shape[kIndex0]);
   channels_ = LongToInt(xdiff_shape[kIndex1]);
   height_ = LongToInt(xdiff_shape[kIndex2]);

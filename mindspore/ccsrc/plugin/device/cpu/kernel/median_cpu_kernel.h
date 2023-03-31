@@ -48,8 +48,8 @@ class MedianCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<M
 
  protected:
   template <typename T>
-  const bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 

@@ -37,8 +37,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kMapUniformInputsNum = 3;
-constexpr size_t kHashMapDim = 2;
 abstract::ShapePtr MapUniformInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
@@ -65,7 +63,8 @@ TypePtr MapUniformInferType(const PrimitivePtr &prim, const std::vector<Abstract
 AbstractBasePtr MapUniformInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMapUniformInputsNum, primitive->name());
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MapUniformInferType(primitive, input_args);
   auto infer_shape = MapUniformInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

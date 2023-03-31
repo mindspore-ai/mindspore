@@ -91,15 +91,14 @@ int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (input_0_shape.empty() || input_1_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x and y shape can't be 0, but got " << input_shapes_;
   }
-  x_size_ = input_0_shape[0];
-  y_size_ = input_1_shape[0];
+  x_size_ = LongToSize(input_0_shape[0]);
+  y_size_ = LongToSize(input_1_shape[0]);
   return KRET_OK;
 }
 
 template <typename T, typename S>
-const bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs) {
+bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                            const std::vector<AddressPtr> &outputs) {
   using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const bool, const bool)>;
   std::unordered_map<std::string, InequalityImplFunc> func_map = {
     {kTupleLt, LtImpl<T, S>}, {kTupleLe, LeImpl<T, S>}, {kListLt, LtImpl<T, S>}, {kListLe, LeImpl<T, S>}};

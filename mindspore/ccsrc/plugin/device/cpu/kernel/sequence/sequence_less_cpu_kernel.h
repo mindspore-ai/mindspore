@@ -51,8 +51,8 @@ class SequenceLessCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
   template <typename T, typename S>
-  const bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                          const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs);
 
  private:
   size_t x_size_ = 0;
