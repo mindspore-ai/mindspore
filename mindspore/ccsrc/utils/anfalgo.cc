@@ -1730,6 +1730,7 @@ void AnfAlgo::GetRealInputs(const AnfNodePtr &node, std::vector<KernelWithIndex>
 }
 
 bool AnfAlgo::IsControlOpExecInBackend(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -1740,10 +1741,29 @@ bool AnfAlgo::IsControlOpExecInBackend(const AnfNodePtr &node) {
 }
 
 bool AnfAlgo::IsNodeInputContainMonad(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto input_size = GetInputTensorNum(node);
   for (size_t i = 0; i < input_size; ++i) {
     auto input_with_index = GetPrevNodeOutput(node, i);
     if (HasAbstractMonad(input_with_index.first)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AnfAlgo::HasMonadInput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (HasAbstractMonad(input)) {
       return true;
     }
   }

@@ -199,6 +199,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool IsRefOutputMapValue(const AnfWithOutIndex &pair) const;
   // get ref correspond pairs
   AnfWithOutIndex GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const;
+  // Support the cascade ref node and get the first ref output recursive.
+  AnfWithOutIndex GetRefNodeRecursive(const AnfWithOutIndex &out_pair) const;
   // add ref correspond pairs
   void AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair);
   // Replace ref pair
@@ -506,7 +508,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   DeviceType device_target_;
   uint32_t root_graph_id_{0};
 
-  // record map bettween front anf and backend anf,use two map implement bidirectional map
+  // record map between front anf and backend anf,use two map implement bidirectional map
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> backend_front_anf_map_;
   mindspore::HashMap<AnfNodePtr, AnfWithOutIndex> tuple_backend_front_anf_index_map_;

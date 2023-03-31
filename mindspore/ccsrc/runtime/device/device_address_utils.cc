@@ -368,6 +368,15 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
                                              const session::AnfWithOutIndex &origin_pair) {
   MS_EXCEPTION_IF_NULL(cur_pair.first);
   MS_EXCEPTION_IF_NULL(origin_pair.first);
+  MS_LOG(INFO) << "Ref node pair: origin kernel is " << origin_pair.first->fullname_with_scope() << ", index is "
+               << origin_pair.second << "; cur kernel is " << cur_pair.first->fullname_with_scope() << ", index is "
+               << cur_pair.second;
+  // If the output of ref node is parameter, need add the monad attr(for example Transdata/Cast node to ref parameter).
+  if (!common::AnfAlgo::HasMonadInput(cur_pair.first) && origin_pair.first->isa<Parameter>()) {
+    MS_LOG(INFO) << cur_pair.first->fullname_with_scope() << "with index " << cur_pair.second
+                 << " ref node to parameter " << origin_pair.first->fullname_with_scope() << " and add the monad attr.";
+    common::AnfAlgo::SetNodeAttr(kAttrRefNodeMonadOutputIdx, MakeValue(cur_pair.second), cur_pair.first);
+  }
 
   auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second, false);
   MS_EXCEPTION_IF_NULL(origin_node_output_addr);
@@ -414,18 +423,6 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
   }
 }
 
-namespace {
-// Support the cascade ref node and get the first ref output recursive.
-session::AnfWithOutIndex GetRefNodeRecursive(const KernelGraphPtr &graph, const session::AnfWithOutIndex &out_pair) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (graph->IsInRefOutputMap(out_pair)) {
-    const auto &origin_pair = graph->GetRefCorrespondOutput(out_pair);
-    return GetRefNodeRecursive(graph, origin_pair);
-  }
-  return out_pair;
-}
-}  // namespace
-
 void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &kernels = graph->execution_order();
@@ -439,7 +436,7 @@ void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &gra
     for (size_t i = 0; i < output_num; ++i) {
       session::AnfWithOutIndex out_pair(kernel, i);
       if (graph->IsInRefOutputMap(out_pair)) {
-        const auto &origin_pair = GetRefNodeRecursive(graph, out_pair);
+        const auto &origin_pair = graph->GetRefNodeRecursive(out_pair);
         UpdateDeviceAddress(out_pair, origin_pair);
       }
     }

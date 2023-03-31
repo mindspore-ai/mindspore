@@ -55,6 +55,12 @@ class DeviceTensorStore {
     for (size_t i = 0; i < iter->second.size(); ++i) {
       MS_EXCEPTION_IF_NULL(iter->second[i]);
       if (iter->second[i]->GetDeviceType() == value->GetDeviceType()) {
+        if (iter->second[i]->GetSize() != value->GetSize()) {
+          MS_LOG(WARNING) << "The update size:" << value->GetSize()
+                          << " is not equal of the old size:" << iter->second[i]->GetSize()
+                          << " for node:" << key->fullname_with_scope()
+                          << ". Please check whether it causes accuracy problem.";
+        }
         iter->second[i] = value;
         return;
       }

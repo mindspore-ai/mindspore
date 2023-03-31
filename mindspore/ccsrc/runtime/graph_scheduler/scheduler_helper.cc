@@ -135,6 +135,53 @@ void SchedulerHelper::AddDeviceTensorStore(const AnfNode *anf_node, const Device
   UpdateRefCount(device_tensor.get(), true);
 }
 
+void SchedulerHelper::AddMonadDeviceTensorStore(AbstractActor *const to_actor, const CNodePtr &kernel,
+                                                const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(graph);
+  // Ref node monad device tensor store.
+  if (common::AnfAlgo::HasNodeAttr(kAttrRefNodeMonadOutputIdx, kernel)) {
+    auto output_idx = common::AnfAlgo::GetNodeAttr<size_t>(kernel, kAttrRefNodeMonadOutputIdx);
+    const auto &origin_pair = graph->GetRefNodeRecursive({kernel, output_idx});
+    auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(origin_pair.first, *graph);
+    MS_EXCEPTION_IF_NULL(front_node);
+    if (IsPersistentDeviceTensor(front_node)) {
+      MS_LOG(INFO) << to_actor->GetAID().Name() << ", kernel:" << kernel->fullname_with_scope()
+                   << " add ref node monad device tensor store:" << front_node->fullname_with_scope();
+      (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
+    }
+  }
+
+  // Input node monad device tensor store.
+  if (!common::AnfAlgo::HasMonadInput(kernel)) {
+    return;
+  }
+
+  // Super kernel actor need fetch by the input device tensor store.
+  if (to_actor->type_ == KernelTransformType::kSuperKernelActor) {
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); ++i) {
+      KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(kernel, i, false);
+      auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, *graph);
+      MS_EXCEPTION_IF_NULL(front_node);
+      if (IsPersistentDeviceTensor(front_node)) {
+        MS_LOG(INFO) << to_actor->GetAID().Name() << ", kernel:" << kernel->fullname_with_scope()
+                     << " add input node monad device tensor store:" << front_node->fullname_with_scope();
+        (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
+      }
+    }
+  } else {
+    // Kernel/Rpc actor can fetch by the device tensor store key directly.
+    const auto &device_tensor_store_keys = to_actor->device_tensor_store_keys_;
+    (void)std::for_each(device_tensor_store_keys.begin(), device_tensor_store_keys.end(), [&](const auto &store_key) {
+      MS_EXCEPTION_IF_NULL(store_key.second);
+      MS_LOG(INFO) << to_actor->GetAID().Name() << ", kernel:" << kernel->fullname_with_scope()
+                   << " add input node monad device tensor store:" << store_key.second->fullname_with_scope();
+      (void)to_actor->auto_monad_device_tensor_stores_.insert(store_key.second);
+    });
+  }
+}
+
 void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                    size_t from_output_index, size_t to_input_index, const AnfNodePtr &from_kernel) {
   MS_EXCEPTION_IF_NULL(from_actor);

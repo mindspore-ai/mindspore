@@ -146,19 +146,6 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
   node->set_inputs(new_inputs);
 }
 
-// Check whether a cnode has a monad input.
-bool HasMonadInput(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  for (const auto &input : inputs) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (HasAbstractMonad(input)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 // Collect all nopnodes which are input of kernel that not support multi-thread execute.
 std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -225,7 +212,8 @@ void OptimizeNopNode(KernelGraph *graph) {
     }
     // The nopnode which satisfies the following conditions cannot be eliminated and set to ref node:
     // 1.dynamic shape 2.side effect 3. must not be eliminated.
-    if (graph->is_dynamic_shape() || HasMonadInput(cnode) || (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
+    if (graph->is_dynamic_shape() || common::AnfAlgo::HasMonadInput(cnode) ||
+        (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
       (void)new_execution_order.emplace_back(cnode);
       (void)nop_nodes_need_set_ref.emplace_back(cnode);
     } else {
