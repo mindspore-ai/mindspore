@@ -122,9 +122,7 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     cudaMemcpyAsync(h_shape.data(), shape_ptr, sizeof(IndexType) * h_shape.size(), cudaMemcpyDeviceToHost, cuda_stream),
     "For SparseSplit, cudaMemcpyAsync failed.");
 
-  // std::vector<IndexType> h_block(num_split + 1);
   h_block.resize(num_split + 1);
-  // IndexType h_split_dim;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&h_split_dim, split_dim_ptr, sizeof(IndexType), cudaMemcpyDeviceToHost, cuda_stream),
     "For SparseSplit, cudaMemcpyAsync failed.");
