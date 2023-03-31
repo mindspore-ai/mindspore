@@ -60,6 +60,23 @@ class MS_CORE_API AbstractBase : public Base {
                         const BaseShapePtr &shape = kNoShape)
       : value_(value), type_(type), shape_(shape) {}
 
+  /// \brief Copy constructor
+  /// \param[in] abstract_base an abstract
+  AbstractBase(const AbstractBase &other) : value_(other.value_), type_(other.type_), shape_(other.shape_) {}
+
+  /// \brief Overloads operator '=' for Named.
+  ///
+  /// \param[in] other An an abstract.
+  /// \return An abstract set with the same type, value and shape as abstract_base.
+  virtual AbstractBase &operator=(const AbstractBase &other) {
+    if (&other != this) {
+      this->value_ = other.value_;
+      this->type_ = other.type_;
+      this->shape_ = other.shape_;
+    }
+    return *this;
+  }
+
   /// \brief Destructor of AbstractBase.
   ~AbstractBase() override = default;
   MS_DECLARE_PARENT(AbstractBase, Base)

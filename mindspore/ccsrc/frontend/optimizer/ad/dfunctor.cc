@@ -231,7 +231,9 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
       auto v_node = dyn_cast_ptr<ValueNode>(tuple_get_item->input(idx));
       MS_EXCEPTION_IF_NULL(v_node);
       auto out_idx = GetValue<int64_t>(v_node->value());
-      return inp->cast_ptr<CNode>()->input(LongToSize(out_idx) + 1);
+      auto cnode = inp->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      return cnode->input(LongToSize(out_idx) + 1);
     }
   }
   return node;
@@ -827,8 +829,14 @@ bool DFunctor::AllReferencesStopped(const CNodePtr &node) {
   }
   for (auto &kv : users) {
     auto &user = kv.first;
-    if (!user->isa<CNode>() || !user->cast_ptr<CNode>()->stop_gradient()) {
+    if (!user->isa<CNode>()) {
       return false;
+    } else {
+      auto cnode = user->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (!cnode->stop_gradient()) {
+        return false;
+      }
     }
   }
   return true;

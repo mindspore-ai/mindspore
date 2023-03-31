@@ -267,7 +267,6 @@ TypePtr CSRTensorStrToType(const std::string &type_name) {
 }
 
 TypePtr MapTensorStrToType(const std::string &type_name) {
-  TypePtr type = nullptr;
   if (type_name == "MapTensor") {
     return std::make_shared<MapTensorType>();
   }
