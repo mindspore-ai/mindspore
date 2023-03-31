@@ -160,6 +160,8 @@ void RegMathBpropExpanderOps2() {
 }
 
 void RegMathBpropExpanderOps3() {
+  REGISTER_EXPANDER_BPROP_IMPL(AssignAdd);
+  REGISTER_EXPANDER_BPROP_IMPL(Neg);
   REGISTER_EXPANDER_BPROP_IMPL(Pow);
   REGISTER_EXPANDER_BPROP_IMPL(Cdist);
   REGISTER_EXPANDER_BPROP_IMPL(Trace);
@@ -252,6 +254,8 @@ void RegNNBpropExpanderOps1() {
 }
 
 void RegNNBpropExpanderOps2() {
+  REGISTER_EXPANDER_BPROP_IMPL(ReLU);
+  REGISTER_EXPANDER_BPROP_IMPL(LayerNorm);
   REGISTER_EXPANDER_BPROP_IMPL(ReLU6);
   REGISTER_EXPANDER_BPROP_IMPL(ResizeBilinear);
   REGISTER_EXPANDER_BPROP_IMPL(ResizeLinear1D);
@@ -389,6 +393,7 @@ void RegArrayBpropExpanderOps2() {
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentProd);
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMin);
   REGISTER_EXPANDER_BPROP_IMPL(UnsortedSegmentMax);
+  REGISTER_EXPANDER_BPROP_IMPL(Cast);
 }
 
 void RegClipBpropExpanderOps() { REGISTER_EXPANDER_BPROP_IMPL(ClipByNorm); }
