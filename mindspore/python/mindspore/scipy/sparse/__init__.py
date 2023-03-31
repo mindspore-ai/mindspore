@@ -14,6 +14,6 @@
 # ============================================================================
 """Sparse submodule"""
 from . import linalg
-from .linalg import cg, gmres, bicgstab
+from .linalg import cg
 
-__all__ = ["cg", "gmres", "bicgstab"]
+__all__ = ["cg"]
