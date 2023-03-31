@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/sequence/sequence_setitem_cpu_kernel.h"
 #include <algorithm>
 #include <complex>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
@@ -53,6 +54,18 @@ int SequenceSetItemCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != 0) {
     return ret;
   }
+  seq_shape_ = inputs[kDataIndex]->GetShapeVector();
+  ele_shape_ = inputs[kValueIndex]->GetShapeVector();
+  if (seq_shape_.empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
+  }
+  std::vector<int64_t> shape_vec_item;
+  std::copy(seq_shape_.begin() + 1, seq_shape_.end(), std::back_inserter(shape_vec_item));
+  if (!IsSameShape(ele_shape_, shape_vec_item)) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << " the input and target shape must be equal, but input_shape = " << shape_vec_item
+                      << " target shape = " << ele_shape_;
+  }
   return KRET_OK;
 }
 
@@ -63,11 +76,10 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   const auto idx_addr = GetDeviceAddress<int64_t>(inputs, kIdxIndex);
   const auto value_addr = GetDeviceAddress<T>(inputs, kValueIndex);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  T value = value_addr[0];
   int64_t idx = idx_addr[0];
   auto input_size = inputs[kDataIndex]->size;
   auto output_size = outputs[0]->size;
-  auto len = static_cast<int64_t>(input_size / sizeof(T));
+  auto len = seq_shape_[0];
 
   if (input_size != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'input_x': {" << input_size
@@ -86,7 +98,15 @@ bool SequenceSetItemCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   if (idx < 0) {
     idx += len;
   }
-  output_addr[idx] = value;
+  size_t element_size =
+    static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t out_offset = static_cast<size_t>(idx * element_size);
+  if (element_size != 0) {
+    auto cp_ret = memcpy_s(output_addr + out_offset, element_size * sizeof(T), value_addr, element_size * sizeof(T));
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    }
+  }
   return true;
 }
 
@@ -100,6 +120,30 @@ bool SequenceSetItemCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 
 std::vector<std::pair<KernelAttr, SequenceSetItemCpuKernelMod::SequenceSetItemFunc>>
   SequenceSetItemCpuKernelMod::func_list_ = {{KernelAttr()
+                                                .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                .AddInputAttr(kNumberTypeFloat32)
+                                                .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
+                                              &SequenceSetItemCpuKernelMod::LaunchKernel<float>},
+                                             {KernelAttr()
+                                                .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat64)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                .AddInputAttr(kNumberTypeFloat64)
+                                                .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat64),
+                                              &SequenceSetItemCpuKernelMod::LaunchKernel<double>},
+                                             {KernelAttr()
+                                                .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                .AddInputAttr(kNumberTypeInt32)
+                                                .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
+                                              &SequenceSetItemCpuKernelMod::LaunchKernel<int>},
+                                             {KernelAttr()
+                                                .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                .AddInputAttr(kNumberTypeInt64)
+                                                .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
+                                              &SequenceSetItemCpuKernelMod::LaunchKernel<int64_t>},
+                                             {KernelAttr()
                                                 .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
                                                 .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
                                                 .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)

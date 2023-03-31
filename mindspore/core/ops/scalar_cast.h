@@ -26,7 +26,7 @@ class MIND_API ScalarCast : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarCast);
   /// \brief Constructor.
-  ScalarCast() : BaseOperator(prim::kScalarCast) {}
+  ScalarCast() : BaseOperator(prim::kScalarCast) { InitIOName({"input_scalar", "dtype"}, {"output_data"}); }
   /// \brief Init.
   void Init() const {}
 };
