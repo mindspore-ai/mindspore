@@ -87,7 +87,7 @@ BasePtr AbsOf(const AnfNodePtr &node, bool ignore_fg_abs_tracking_id) {
   return node_abs;
 }
 
-bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
+bool CSE::BuildOrderGroupForOneGraph(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   std::vector<std::size_t> order_group;
   mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>> groups;
@@ -167,7 +167,7 @@ void CSE::DoReplace(const FuncGraphManagerPtr &manager) {
 bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) {
   bool changed = false;
   for (const auto &fg : manager->func_graphs()) {
-    changed = BuildOrderGroupForOneGraph(fg, manager) || changed;
+    changed = BuildOrderGroupForOneGraph(fg) || changed;
   }
   DoReplace(manager);
   return changed;
@@ -203,7 +203,6 @@ bool CSE::HasHiddenSideEffect(const AnfNodePtr &node) {
 
 AnfNodePtr CSE::GetReplicatedNode(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
-  HashSet<AnfNodePtr> visited_nodes;
   auto it = replicated_nodes_.find(node);
   if (it != replicated_nodes_.cend()) {
     return it->second;
