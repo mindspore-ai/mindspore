@@ -22,8 +22,6 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
 
 class LogProb(nn.Cell):
     """
@@ -58,6 +56,8 @@ def test_log_likelihood():
     Description: test cases for log_prob() of HalfNormal distribution
     Expectation: the result match to stats
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
     x = np.array([0.3, 4.0, np.pi, np.e, -2.0], dtype=np.float32)
     loc = np.array([0.0, 0.0, 0.5, 0.7, 1.0], dtype=np.float32)
     scale = np.array([1.5, 1.0, 2.0, 3.0, 2.0], dtype=np.float32)
@@ -81,3 +81,29 @@ def test_log_likelihood():
     output2 = output2.asnumpy()
     assert (output2[np.isinf(output2)] == expected[np.isinf(expected)]).all()
     assert (np.abs(output2[~np.isinf(output2)] - expected[~np.isinf(expected)]) < tol).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_log_likelyhood_pynative():
+    """
+    Feature: HalfNormal distribution
+    Description: pynative mode test cases for log_prob() of HalfNormal distribution
+    Expectation: the result is as expected
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+
+    n1 = msd.HalfNormal(3.0, 4.0, dtype=mstype.float32)
+    hn = msd.HalfNormal(dtype=mstype.float32)
+    value = Tensor([1.0, 2.0, 3.0], dtype=mstype.float32)
+    mean_a = Tensor([2.0], dtype=mstype.float32)
+    sd_a = Tensor([2.0, 2.0, 2.0], dtype=mstype.float32)
+    mean_b = Tensor([1.0], dtype=mstype.float32)
+    sd_b = Tensor([1.0, 1.5, 2.5], dtype=mstype.float32)
+    ans = n1.log_prob(value)
+    assert ans.shape == (3,)
+    ans = n1.log_prob(value, mean_b, sd_b)
+    assert ans.shape == (3,)
+    ans = hn.log_prob(value, mean_a, sd_a)
+    assert ans.shape == (3,)

@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
+from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
@@ -107,7 +108,7 @@ class HalfNormal(Distribution):
 
         self.exp = P.Exp()
         self.cast = P.Cast()
-        self.const = np.sqrt(2. / np.pi)
+        self.const = ops.scalar_to_tensor(np.sqrt(2. / np.pi))
         self.sq = P.Square()
         self.type = dtype
 
