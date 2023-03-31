@@ -1245,8 +1245,8 @@ KernelObjectType TypeIdToKernelObjectType(const TypeId &type_id) {
 
 std::vector<KernelObjectType> TypeIdToKernelObjectType(const std::vector<TypeId> &type_ids) {
   std::vector<KernelObjectType> ret;
-  std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
-                 [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectType(type_id); });
+  (void)std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
+                       [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectType(type_id); });
   return ret;
 }
 
@@ -1264,8 +1264,8 @@ KernelObjectType TypeIdToKernelObjectTypeForTupleUnfold(const TypeId &type_id) {
 
 std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnfold(const std::vector<TypeId> &type_ids) {
   std::vector<KernelObjectType> ret;
-  std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
-                 [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectTypeForTupleUnfold(type_id); });
+  (void)std::transform(type_ids.begin(), type_ids.end(), std::back_inserter(ret),
+                       [](const TypeId &type_id) { return kernel::TypeIdToKernelObjectTypeForTupleUnfold(type_id); });
   return ret;
 }
 
@@ -1354,17 +1354,17 @@ std::vector<KernelObjectType> CalOutputElementObjectTypes(const AnfNodePtr &kern
 
 std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr) {
   std::string attr_info = "input[";
-  std::for_each(std::begin(selected_kernel_attr.input_type()), std::end(selected_kernel_attr.input_type()),
-                [&attr_info](auto &input_type) {
-                  attr_info += TypeIdToString(input_type.object_type) + " " + TypeIdToString(input_type.dtype) + " " +
-                               input_type.format + ",";
-                });
+  (void)std::for_each(std::begin(selected_kernel_attr.input_type()), std::end(selected_kernel_attr.input_type()),
+                      [&attr_info](auto &input_type) {
+                        attr_info += TypeIdToString(input_type.object_type) + " " + TypeIdToString(input_type.dtype) +
+                                     " " + input_type.format + ",";
+                      });
   attr_info += "] output[";
-  std::for_each(std::begin(selected_kernel_attr.output_type()), std::end(selected_kernel_attr.output_type()),
-                [&attr_info](auto &output_type) {
-                  attr_info += TypeIdToString(output_type.object_type) + " " + TypeIdToString(output_type.dtype) + " " +
-                               output_type.format + ",";
-                });
+  (void)std::for_each(std::begin(selected_kernel_attr.output_type()), std::end(selected_kernel_attr.output_type()),
+                      [&attr_info](auto &output_type) {
+                        attr_info += TypeIdToString(output_type.object_type) + " " + TypeIdToString(output_type.dtype) +
+                                     " " + output_type.format + ",";
+                      });
   attr_info += "]";
   return attr_info;
 }
