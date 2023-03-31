@@ -53,27 +53,28 @@ def strided_slice(data, begin_strides, end_strides, step_strides, begin_mask=0, 
 
 class ValueTransferType(IntEnum):
     """Transfer op types of handling tensor getitem/setitem"""
-    kTensorScatterUpdate = 0
-    kNumberToTensor = 1
-    kHandleSequenceValue = 2
-    kExpandDims = 3
-    kBroadCast = 4
-    kCast = 5
-    kSelect = 6
-    kByPass = 7
-    kReSetItemByIndex = 8
-    kGather = 9
-    kStrideSlice = 10
-    kStrideSliceWithMask = 11
-    kGatherND = 12
-    kCopySlice = 13
-    kSetItemByBool = 14
-    kEmptyTensor = 15
-    kSetItemByEllipsis = 16
-    kScatterNdUpdate = 17
-    kReshape = 18
-    kScatterND = 19
-    kRaiseIndexError = 20
+    kUnknown = 0
+    kTensorScatterUpdate = 1
+    kExpandDims = 2
+    kBroadCast = 3
+    kCast = 4
+    kSelect = 5
+    kGather = 6
+    kStrideSlice = 7
+    kStrideSliceWithMask = 8
+    kGatherND = 9
+    kScatterNdUpdate = 10
+    kReshape = 11
+    kScatterND = 12
+    kNumberToTensor = 13
+    kHandleSequenceValue = 14
+    kByPass = 15
+    kReSetItemByIndex = 16
+    kCopySlice = 17
+    kSetItemByBool = 18
+    kEmptyTensor = 19
+    kSetItemByEllipsis = 20
+    kRaiseIndexError = 21
 
 
 def data_update(transfer_types, args, data, new_index, value=None):
@@ -82,45 +83,54 @@ def data_update(transfer_types, args, data, new_index, value=None):
     by transfer data and value with index.
     """
     for transfer_type, arg in zip(transfer_types, args):
-        if transfer_type == ValueTransferType.kByPass:
-            return data
-        if transfer_type == ValueTransferType.kStrideSliceWithMask:
-            stride_info, mask_index = arg[0], arg[1]
-            return strided_slice(data, stride_info[0], stride_info[1], stride_info[2],
-                                 mask_index[0], mask_index[1], 0, 0, mask_index[2])
-        if transfer_type == ValueTransferType.kGatherND:
-            return F.gather_nd(data, Tensor(new_index))
-        if transfer_type == ValueTransferType.kTensorScatterUpdate:
-            return F.tensor_scatter_update(data, new_index, value)
-        if transfer_type == ValueTransferType.kScatterNdUpdate:
-            F.scatter_nd_update(data, new_index, value)
-            return data
-        if transfer_type == ValueTransferType.kSelect:
-            return F.select(Tensor(new_index), value, data)
+        if transfer_type == ValueTransferType.kUnknown:
+            raise IndexError(f"Inlvaid transfer type {transfer_type}.")
+        if transfer_type <= ValueTransferType.kScatterND:
+            data = data_update_by_ops(transfer_type, arg, data, new_index, value)
         if transfer_type == ValueTransferType.kSetItemByBool:
             return tensor_setitem_by_bool(data, new_index, value)
-        if transfer_type == ValueTransferType.kReshape:
-            data = F.reshape(data, arg)
-        elif transfer_type == ValueTransferType.kGather:
-            data = F.gather(data, new_index, 0)
-        elif transfer_type == ValueTransferType.kExpandDims:
-            data = F.expand_dims(data, 0)
-        elif transfer_type == ValueTransferType.kCopySlice:
+        if transfer_type == ValueTransferType.kCopySlice:
             return copy_slice(data, value.astype(data.dtype), arg[0], arg[1], arg[2])
-        elif transfer_type == ValueTransferType.kSetItemByEllipsis:
+        if transfer_type == ValueTransferType.kSetItemByEllipsis:
             return tensor_setitem_by_ellipsis(data, new_index, value)
-        elif transfer_type == ValueTransferType.kReSetItemByIndex:
+        if transfer_type == ValueTransferType.kReSetItemByIndex:
             data[new_index] = value
             return data
-        elif transfer_type == ValueTransferType.kEmptyTensor:
+        if transfer_type == ValueTransferType.kEmptyTensor:
             return handle_empty_tensor(arg, data)
-        elif transfer_type == ValueTransferType.kStrideSlice:
-            return F.strided_slice(data, arg[0], arg[1], arg[2])
-        elif transfer_type == ValueTransferType.kRaiseIndexError:
+        if transfer_type == ValueTransferType.kRaiseIndexError:
             raise IndexError(
                 f'index {arg[0]} is out of bounds for dimension with size {arg[1]}')
-        else:
-            raise IndexError(f"Inlvaid transfer type {transfer_type}.")
+    return data
+
+
+def data_update_by_ops(transfer_type, arg, data, new_index, value=None):
+    """
+    Generate a new tensor when handling tensor getitem/setitem
+    by ops.
+    """
+    if transfer_type == ValueTransferType.kStrideSliceWithMask:
+        stride_info, mask_index = arg[0], arg[1]
+        data = strided_slice(data, stride_info[0], stride_info[1], stride_info[2],
+                             mask_index[0], mask_index[1], 0, 0, mask_index[2])
+    elif transfer_type == ValueTransferType.kGatherND:
+        data = F.gather_nd(data, Tensor(new_index))
+    elif transfer_type == ValueTransferType.kTensorScatterUpdate:
+        data = F.tensor_scatter_update(data, new_index, value)
+    elif transfer_type == ValueTransferType.kScatterNdUpdate:
+        F.scatter_nd_update(data, new_index, value)
+    elif transfer_type == ValueTransferType.kSelect:
+        data = F.select(Tensor(new_index), value, data)
+    elif transfer_type == ValueTransferType.kReshape:
+        data = F.reshape(data, arg)
+    elif transfer_type == ValueTransferType.kGather:
+        data = F.gather(data, new_index, 0)
+    elif transfer_type == ValueTransferType.kExpandDims:
+        data = F.expand_dims(data, 0)
+    elif transfer_type == ValueTransferType.kStrideSlice:
+        data = F.strided_slice(data, arg[0], arg[1], arg[2])
+    else:
+        raise IndexError(f"Inlvaid transfer type {transfer_type}.")
     return data
 
 
@@ -129,7 +139,7 @@ def value_update(transfer_types, args, data, value):
     for transfer_type, arg in zip(transfer_types, args):
         if transfer_type == ValueTransferType.kByPass:
             continue
-        elif transfer_type == ValueTransferType.kNumberToTensor:
+        if transfer_type == ValueTransferType.kNumberToTensor:
             value = F.fill(F.dtype(data), (), value)
         elif transfer_type == ValueTransferType.kHandleSequenceValue:
             op_type, index = arg
