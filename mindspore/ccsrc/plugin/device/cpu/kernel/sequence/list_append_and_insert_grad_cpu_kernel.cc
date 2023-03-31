@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/list_append_and_insert_grad_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -56,7 +55,7 @@ int ListAppendAndInsertGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
 
 template <typename T, typename S>
 bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                       const std::vector<AddressPtr> &workspace,
+                                                       const std::vector<AddressPtr> &,
                                                        const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   const auto index_addr = GetDeviceAddress<S>(inputs, 1);
@@ -80,10 +79,11 @@ bool ListAppendAndInsertGradCpuKernelMod::LaunchKernel(const std::vector<Address
 
   size_t element_index_size = 1;
   if (list_shape_.size() > 1) {
-    element_index_size = std::accumulate(list_shape_.begin() + 1, list_shape_.end(), 1, std::multiplies<int64_t>());
+    element_index_size =
+      static_cast<size_t>(std::accumulate(list_shape_.begin() + 1, list_shape_.end(), 1, std::multiplies<int64_t>()));
   }
-  size_t output_offset = element_index_size * index;
-  size_t input_tail = element_index_size * (len_list - index - 1);
+  size_t output_offset = element_index_size * static_cast<size_t>(index);
+  size_t input_tail = element_index_size * static_cast<size_t>(len_list - index - 1);
 
   if (index != 0) {
     auto cp_ret = memcpy_s(output_addr, output_size, input_addr, output_offset * sizeof(T));

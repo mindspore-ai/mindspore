@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/scalar_cast_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -53,8 +52,7 @@ int ScalarCastCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool ScalarCastCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
+bool ScalarCastCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto ele_addr = GetDeviceAddress<T>(inputs, 0);
   S *output_addr = GetDeviceAddress<S>(outputs, 0);

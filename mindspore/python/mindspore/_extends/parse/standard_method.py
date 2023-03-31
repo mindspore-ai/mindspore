@@ -1383,7 +1383,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
             e_upper = F.fill(dtype, (-offset, m), 0)
             e_lower = e[0:n + offset:1, ...]
             e = P.Concat(0)((e_upper, e_lower)).astype(dtype)
-    e = P.BroadcastTo(shape)(e)
+    e = F.broadcast_to(e, shape)
 
     prod_val = F.tensor_mul(x, e)
     res = F.reduce_sum(prod_val.astype(mstype.float32), -1)
@@ -1632,7 +1632,7 @@ def take(x, indices, axis=None, mode='clip'):
     shape_indices = expanded_shape(ndim, size_indices, axis)
     indices = indices.reshape(shape_indices)
     shape_indices = shape_ni + (indices.size,) + shape_nk
-    indices = P.BroadcastTo(shape_indices)(indices)
+    indices = F.broadcast_to(indices, shape_indices)
 
     res = F.gather_d(a, axis, indices)
     return res.reshape(shape_out)
@@ -1690,7 +1690,7 @@ def choose(x, choices, mode='clip'):
     """
     if check_is_tensor(F.typeof(choices)):
         shape_choice = _infer_out_shape(x.shape, choices.shape[1:])
-        choices = P.BroadcastTo((choices.shape[0],) + shape_choice)(choices)
+        choices = F.broadcast_to(choices, (choices.shape[0],) + shape_choice)
     else:
         # broadcasts choices to the same shape if choices is a sequence
         choicelist = []
@@ -1703,12 +1703,12 @@ def choose(x, choices, mode='clip'):
         shape_choice = _infer_out_shape(x.shape, *shapes)
         tmp = []
         for choice in choicelist:
-            tmp.append(P.BroadcastTo(shape_choice)(choice))
+            tmp.append(F.broadcast_to(choice, shape_choice))
         choices = F.stack(tmp)
 
     if x.ndim == 0 or choices.ndim == 0:
         const_utils.raise_value_error('input cannot be scalars')
-    a = P.BroadcastTo(shape_choice)(x)
+    a = F.broadcast_to(x, shape_choice)
     dtype = choices.dtype
     # adjusts dtype for F.tensor_mul and F.gather_nd
     a = a.astype(mstype.int32)
@@ -1722,7 +1722,7 @@ def choose(x, choices, mode='clip'):
         dim_grid = const_utils.make_tensor(
             F.make_range(a.shape[i]), mstype.int32)
         dim_shape = expanded_shape(ndim, a.shape[i], i)
-        dim_grid = P.BroadcastTo(a.shape)(dim_grid.reshape(dim_shape))
+        dim_grid = F.broadcast_to(dim_grid.reshape(dim_shape), a.shape)
         grids.append(dim_grid)
     grid = P.Stack(-1)(grids)
     indices = P.Concat(-1)((a.reshape(a.shape + (1,)), grid))
@@ -2794,12 +2794,12 @@ def enumerate_(x, start=0):
 
 def expand_tensor_as(x, y):
     """Expand tensor"""
-    return P.BroadcastTo(shape_(y))(x)
+    return F.broadcast_to(x, shape_(y))
 
 
 def broadcast_to(x, shape):
     """Broadcasts tensor to a given shape."""
-    return P.BroadcastTo(shape)(x)
+    return F.broadcast_to(x, shape)
 
 
 def expand_dims(x, axis):

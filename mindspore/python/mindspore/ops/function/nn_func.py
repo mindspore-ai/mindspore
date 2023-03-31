@@ -15,14 +15,16 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-from math import pi, log, floor
+from math import pi, log
 import numpy as np
 
 from mindspore import log as logger
 import mindspore.ops as ops
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.operations import nn_ops as NN_OPS
+from mindspore.ops.operations import _sequence_ops as seq
 import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
 from mindspore.ops.function.random_func import _get_seed
@@ -2004,7 +2006,7 @@ def hardswish(x):
 
 @_primexpr
 def _scale_factor_convert_size(shape, scale_factor, dim):
-    return [int(floor(float(shape[i + 2]) * scale_factor[i])) for i in range(dim)]
+    return [int(float(shape[i + 2]) * scale_factor[i] // 1) for i in range(dim)]
 
 
 def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
@@ -2105,12 +2107,17 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
     def run_nearest(x, size, align_corners=None, scale_factor=None):
         # 3D 4D use ResizeNearestNeighborV2, 5D use UpsampleNearest3D
         if x.ndim == 3:
-            size = Tensor((size[0], 1), dtype=mstype.int32)
+            size = seq.TupleToTensor()((size[0], 1), mstype.int32)
             x = x.unsqueeze(-1)
             x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
-            x = x.squeeze(-1)
+            x = P.Squeeze(-1)(x)
         elif x.ndim == 4:
-            size = Tensor(size, dtype=mstype.int32)
+            if isinstance(size, int):
+                size = F.scalar_to_tensor(size, mstype.int32)
+            elif isinstance(size, tuple):
+                size = seq.TupleToTensor()(size, mstype.int32)
+            else:
+                size = seq.ListToTensor()(size, mstype.int32)
             x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(x, size)
         else:
             x = _get_cache_prim(P.UpsampleNearest3D)(size, scales=scale_factor)(x)
@@ -2137,7 +2144,13 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
         resize = _get_cache_prim(P.image_ops.ResizeBicubic)(
             align_corners=align_corners, half_pixel_centers=not align_corners
         )
-        x = resize(x, Tensor(size, dtype=mstype.int32))
+        if isinstance(size, int):
+            size = F.scalar_to_tensor(size, mstype.int32)
+        elif isinstance(size, tuple):
+            size = seq.TupleToTensor()(size, mstype.int32)
+        else:
+            size = seq.ListToTensor()(size, mstype.int32)
+        x = resize(x, size)
         return x
 
     def run_area(x, size, align_corners=None, scale_factor=None):
@@ -2151,16 +2164,21 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
 
     def run_nearest_exact(x, size, align_corners=None, scale_factor=None):
         if x.ndim == 3:
-            size = Tensor((size[0], 1), dtype=mstype.int32)
+            size = seq.TupleToTensor()((size[0], 1), mstype.int32)
             # For impl of nearest 3D use 4D.
             x = x.unsqueeze(-1)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
                 data_format="NCHW", align_corners=False, half_pixel_centers=True
             )
             x = resize(x, size)
-            x = x.squeeze(-1)
+            x = P.Squeeze(-1)(x)
         if x.ndim == 4:
-            size = Tensor(size, dtype=mstype.int32)
+            if isinstance(size, int):
+                size = F.scalar_to_tensor(size, mstype.int32)
+            elif isinstance(size, tuple):
+                size = seq.TupleToTensor()(size, mstype.int32)
+            else:
+                size = seq.ListToTensor()(size, mstype.int32)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
                 data_format="NCHW", align_corners=False, half_pixel_centers=True
             )
@@ -2252,6 +2270,8 @@ def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corne
             )
     else:
         align_corners = False
+    if isinstance(size, list):
+        size = tuple(size)
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
 
 

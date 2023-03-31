@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/sequence/in_sequence_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -56,8 +55,7 @@ int InSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 }
 
 template <typename T, typename S>
-bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
+bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                           const std::vector<AddressPtr> &outputs) {
   const auto ele_addr = GetDeviceAddress<T>(inputs, 0);
   const auto input_addr = GetDeviceAddress<S>(inputs, 1);
@@ -69,7 +67,8 @@ bool InSequenceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     return true;
   }
 
-  size_t element_index_size = std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>());
+  size_t element_index_size =
+    static_cast<size_t>(std::accumulate(ele_shape_.begin(), ele_shape_.end(), 1, std::multiplies<int64_t>()));
   for (size_t i = 0; i < static_cast<size_t>(len_seq); ++i) {
     bool res = true;
     for (size_t j = 0; j < element_index_size; ++j) {

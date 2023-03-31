@@ -395,7 +395,7 @@ REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
   auto x = ib->GetInput(kIndex0);
   auto t = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Cast(dout, ib->GetDtype(x));
+  auto dx = ib->Emit("ScalarCast", {dout, ib->Value(ib->GetDtype(x))});
   return {dx, ib->ZerosLike(t)};
 });
 

@@ -149,7 +149,7 @@ def _get_type(x):
     """get the dtype of input"""
     if isinstance(x, Tensor):
         return x.dtype
-    return type(x)
+    return F.typeof(x)
 
 
 def _get_max_type(start, end, step):

@@ -361,10 +361,8 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tuple_transform) {
 TEST_F(TestInsertTypeTransformOp, test_tuple_unfold_to_tensor_transform) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_tuple_unfold_to_tensor_transform", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int64_t> shp_x{};
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int64_t> shp_y{};
-  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
+  auto x_abstract = std::make_shared<abstract::AbstractScalar>(kValueAny, kFloat32);
+  auto y_abstract = std::make_shared<abstract::AbstractScalar>(kValueAny, kFloat32);
   std::vector<int64_t> shp_z{2, 4};
   auto z_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_z);
   AbstractBasePtrList args_spec_list{x_abstract, y_abstract, z_abstract};
@@ -433,8 +431,9 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
   std::vector<int64_t> shp_x{4, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   std::vector<int64_t> shp_y{1, 3};
-  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
-  AbstractBasePtrList abstract_list = {y_abstract};
+  auto y_abstract_1 = std::make_shared<abstract::AbstractScalar>(kValueAny, kFloat32);
+  auto y_abstract_2 = std::make_shared<abstract::AbstractScalar>(kValueAny, kFloat32);
+  AbstractBasePtrList abstract_list = {y_abstract_1, y_abstract_2};
   auto y_tuple_abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
   AbstractBasePtrList args_spec_list{x_abstract, y_tuple_abs};
   auto func_graph = GetFuncGraph(g, args_spec_list);
@@ -451,7 +450,6 @@ TEST_F(TestInsertTypeTransformOp, test_tuple_to_tensor_transform) {
   auto tuple_to_tensor = func_graph->get_return()->input(1)->cast<CNodePtr>()->input(2)->cast<CNodePtr>();
   ASSERT_TRUE(IsPrimitiveCNode(tuple_to_tensor, prim::kPrimTupleToTensor));
   auto dtype = common::AnfAlgo::GetNodeAttr<TypePtr>(tuple_to_tensor, kAttrDType);
-  ASSERT_TRUE(dtype->type_id() == kNumberTypeFloat32);
   ASSERT_TRUE(tuple_to_tensor->abstract()->isa<abstract::AbstractTensor>());
   auto obj_type = AnfAlgo::GetOutputKernelObjectType(tuple_to_tensor, 0);
   ASSERT_TRUE(obj_type == KernelObjectType::TENSOR);

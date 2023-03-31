@@ -42,7 +42,7 @@ namespace {
 AbstractBasePtr InSequenceInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_len = 2;
+  const int64_t input_len = 2;
   constexpr size_t seq_index = 1;
   constexpr size_t element_index = 0;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
@@ -82,7 +82,7 @@ class InSequenceInfer : public abstract::OpInferBase {
     return InSequenceInferInner(prim, input_args)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return InSequenceInferInner(primitive, input_args);
   }
