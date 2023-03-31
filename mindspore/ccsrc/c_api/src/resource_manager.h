@@ -79,12 +79,12 @@ class ResourceManager {
   }
 
  private:
-  std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_;
+  std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_{};
   mindspore::HashMap<std::string, mindspore::Any> results_{};
   std::shared_ptr<mindspore::compile::Backend> backend_ = nullptr;
   std::shared_ptr<mindspore::MsContext> context_ = nullptr;
   std::string org_policy_;
-  bool auto_infer_;
+  bool auto_infer_ = true;
 };
 
 #endif  // MINDSPORE_CCSRC_C_API_SRC_RESOURCE_MANAGER_H_
