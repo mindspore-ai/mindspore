@@ -488,11 +488,11 @@ void MetaServerNode::AssignPortRange() {
     PortRange range;
     range.set_min_port(min_port);
     range.set_max_port(max_port);
-    node_ranges.mutable_data()->insert({node_id, range});
+    (void)node_ranges.mutable_data()->insert({node_id, range});
     MS_LOG(INFO) << "The port range for node " << node_id << ", rank id: " << node_info->rank_id
                  << ", min port: " << min_port << ", max port: " << max_port;
   }
-  metadata_.insert({kNodePortRange, node_ranges.SerializeAsString()});
+  (void)metadata_.insert({kNodePortRange, node_ranges.SerializeAsString()});
 }
 
 bool MetaServerNode::Recovery() {
