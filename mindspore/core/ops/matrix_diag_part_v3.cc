@@ -40,10 +40,11 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
-  if (!IsDynamicRank(x_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
+  if (IsDynamicRank(x_shape)) {
+    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
+    return std::make_shared<abstract::Shape>(out_shape);
   }
-
+  (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
   auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
@@ -57,7 +58,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
   MS_EXCEPTION_IF_NULL(k_val_ptr);
   if (IsDynamic(x_shape) || IsDynamic(k_shape) || !IsValueKnown(k_val_ptr)) {
-    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
+    ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 

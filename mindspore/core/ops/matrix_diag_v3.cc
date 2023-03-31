@@ -151,7 +151,7 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   if (IsDynamic(x_shape) || IsDynamic(k_shape) || is_value_un_known) {
     // Since the real output shape relies on the value of 'k', 'num_cols' and 'num_rows',
     // the out_shape is set to {-2} meaning that even the dimension can not be determined.
-    ShapeVector out_shape = {abstract::Shape::kShapeRankAny};
+    ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
     auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
