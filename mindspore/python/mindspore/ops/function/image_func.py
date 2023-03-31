@@ -105,7 +105,7 @@ def check_valid(bboxes, img_metas):
     `bboxes` contain several sets of bounding boxes, each represented by two abscissa points :math:`(x0, x1)` and
     two ordinate points :math:`(y0, y1)` .
     `img_metas` provides information about the original image, including three parameters
-    :math:`(height, width, rate)` , which specify the valid boundary of the image.
+    :math:`(height, width, ratio)` , which specify the valid boundary of the image.
 
     when the following conditions are met:
 
@@ -113,16 +113,16 @@ def check_valid(bboxes, img_metas):
 
     :math:`y0 >= 0`
 
-    :math:`x1 <= width * rate - 1`
+    :math:`x1 <= width * ratio - 1`
 
-    :math:`y1 <= height * rate - 1`
+    :math:`y1 <= height * ratio - 1`
 
     the bounding box is considered to be within the image.
 
     .. warning::
         The bounding box specified by `bboxes` and the image information specified by `img_metas` need to be valid,
         i.e.:
-        :math:`x0 <= x1` , :math:`y0 <= y1` , and :math:`(height, width, rate)` are all positive.
+        :math:`x0 <= x1` , :math:`y0 <= y1` , and :math:`(height, width, ratio)` are all positive.
 
     Args:
         bboxes (Tensor): Bounding boxes tensor with shape :math:`(N, 4)` . :math:`N` indicates the number of
@@ -163,15 +163,15 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
 
     Args:
         image (Tensor): A 4-D Tensor representing a batch of images. It has shape
-            :math:`(batch, image_height, image_width, depth)`.
-        boxes (Tensor):  A 2-D Tensor with shape :math:`(num_boxes, 4)` representing the normalized
+            :math:`(batch, image\_height, image\_width, depth)`.
+        boxes (Tensor):  A 2-D Tensor with shape :math:`(num\_boxes, 4)` representing the normalized
             coordinates of the boxes to be cropped. The coordinates are specified in the
             form :math:`[y1, x1, y2, x2]`, where :math:`(y1, x1)` is the first corner
             and :math:`(y2, x2)` is the second corner of the box.
             If :math:`y1 > y2`, the sampled crop is inverted upside down, the width dimensionis treated
             similarly when :math:`x1 > x2`. If normalized coordinates are not in range :math:`[0, 1]`,
             extrapolated input image values are used instead. Supported data type: float32.
-        box_indices (Tensor): A 1-D Tensor of shape :math:`(num_boxes)` representing the batch
+        box_indices (Tensor): A 1-D Tensor of shape :math:`\text{num\_boxes}` representing the batch
             index for each box. Supported type: int32.
         crop_size (Tuple[int]): A tuple of two elements: (crop_height, crop_width), representing
             the output size of the cropped and resized images.

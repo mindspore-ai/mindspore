@@ -3,7 +3,11 @@ mindspore.ops.csr_add
 
 .. py:function:: mindspore.ops.csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor)
 
-    返回 :math:`alpha * a + beta * b` 的结果，其中 :math:`a` 和 :math:`b` 是CSRTensor，:math:`alpha` 和 :math:`beta` 是Tensor。
+    :math:`a` 和 :math:`b` 是CSRTensor，:math:`alpha` 和 :math:`beta` 是Tensor。
+
+    .. math::
+
+        out = alpha * a + beta * b
 
     .. note::
         用户需要确保输入的稀疏算子的合法性。否则，算子将返回错误结果。

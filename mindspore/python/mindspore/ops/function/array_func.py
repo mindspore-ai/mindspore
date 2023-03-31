@@ -3044,7 +3044,6 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
-            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
         indices (Tensor): The index to do div operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the div operation with `input_x`.
@@ -6380,9 +6379,9 @@ def lstsq(input, A):
     where `y` is the returned tensor.
 
     Args:
-        input (Tensor): The m by n matrix equivalent to `x` in above.
+        input (Tensor): The :math:`(m \times n)` matrix equivalent to :math:`x` in above.
             The input tensor whose data type is float16, float32 or float64.
-        A (Tensor): The m by k matrix equivalent to `a` in above.
+        A (Tensor): The :math:`(m \times k)` matrix equivalent to :math:`a` in above.
             The input tensor whose data type is float16, float32 or float64.
 
     Returns:

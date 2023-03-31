@@ -8,7 +8,7 @@ mindspore.ops.prelu
     `Delving Deep into Rectifiers:Surpassing Human-Level Performance on ImageNet Classification <https://arxiv.org/abs/1502.01852>`_ 描述了PReLU激活函数。定义如下：
 
     .. math::
-        prelu(x_i)= \max(0, x_i) + \min(0, w * x_i)，
+        prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
 
     其中 :math:`x_i` 是输入的一个通道的一个元素，`w` 是通道权重。
 
