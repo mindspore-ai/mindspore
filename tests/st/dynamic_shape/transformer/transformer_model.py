@@ -39,7 +39,6 @@ ATTENTION_PROBS_DROPOUT_PROB = 0.2
 HIDDEN_ACT = "relu"
 COMPUTE_TYPE = ms.float16
 DTYPE = ms.float32
-BEAM_WIDTH = 4
 SEQ_LENGTH = 128
 LENGTH_PENALTY_WEIGHT = 1.0
 
@@ -905,7 +904,6 @@ class TransformerModel(nn.Cell):
         self.embedding_size = HIDDEN_SIZE
 
         self.last_idx = self.num_hidden_layers - 1
-        self.beam_width = BEAM_WIDTH
         self.max_decode_length = MAX_DECODE_LENGTH
 
         self.tfm_embedding_lookup = EmbeddingLookup(
