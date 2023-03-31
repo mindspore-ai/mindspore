@@ -998,7 +998,6 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
                      const TypeId dst_type, const AbstractBasePtr &abstract) {
   MS_CHECK_TRUE_RET(graph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
-  // auto new_cast = std::make_shared<mindspore::ops::Cast>();
   ops::Cast cast_node;
   auto new_cast_c = cast_node.GetPrim();
   if (new_cast_c == nullptr) {

@@ -66,7 +66,7 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
  private:
   template <typename T>
   void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                 const std::vector<size_t> &start);
+                 const std::vector<size_t> &start) const;
 };
 }  // namespace kernel
 }  // namespace mindspore
