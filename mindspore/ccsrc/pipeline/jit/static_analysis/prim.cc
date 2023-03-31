@@ -2832,7 +2832,7 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
 
     // Build the PyExecute node for raise error.
     auto prim = prim::kPrimRaise;
-    prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
+    (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
     const auto raise_error_node =
       cur_graph->NewCNodeInOrder({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
 

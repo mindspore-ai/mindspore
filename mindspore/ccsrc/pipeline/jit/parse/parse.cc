@@ -139,8 +139,8 @@ void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
     if (func_graph->get_return() != nullptr) {
       continue;
     }
-    py::object node = ast_->GetAstNode();
-    const auto &location = GetLocation(node);
+    py::object location_node = ast_->GetAstNode();
+    const auto &location = GetLocation(location_node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
     MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()

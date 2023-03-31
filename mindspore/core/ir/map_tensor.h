@@ -155,7 +155,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   ///
   /// \param[in] incremental [bool] False for incremental export, true for full export.
   /// \return The exported data.
-  ExportData Export(bool incremental = false);
+  ExportData Export(bool incremental = false) const;
 
   /// \brief Exported MapTensor data from device.
   ///
