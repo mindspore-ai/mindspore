@@ -114,7 +114,7 @@ void BpropExpander::PostProcess() {
 
     if (IsPrimitiveCNode(node, prim::kPrimShapeCalc)) {
       // Manually throw an exception to terminate without critical log.
-      throw std::runtime_error("ShapeCalc donot support in pynative mode.");
+      throw std::runtime_error("ShapeCalc do not support in pynative mode.");
     }
 
     for (size_t i = 1; i < node->size(); ++i) {
@@ -276,8 +276,8 @@ class GraphModeBuilder : public BpropIRBuilder {
     return outputs;
   }
 
- private:
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs, const DAttr &attrs) const {
+ protected:
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const {
     if (prim->name() == "Switch") {
       has_ctrl_flow_ = true;
     }

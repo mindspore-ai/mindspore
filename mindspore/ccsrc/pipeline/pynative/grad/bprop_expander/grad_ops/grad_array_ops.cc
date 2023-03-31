@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -682,10 +682,10 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
     if (LongToSize(recorrect_axis + 1) == x_rank) {
       // A (0, 1, 2, ...) will change Transpose as a copy-like operator.
       // This can delete two control flow block.
-      transposition = Range(x_rank);
-      invert_perm = Range(x_rank);
+      transposition = Range(SizeToLong(x_rank));
+      invert_perm = Range(SizeToLong(x_rank));
     } else {
-      transposition = GetTransposition(recorrect_axis, x_rank);
+      transposition = GetTransposition(recorrect_axis, SizeToLong(x_rank));
       invert_perm = InvertPermutation(transposition);
     }
 
