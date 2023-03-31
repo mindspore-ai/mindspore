@@ -218,6 +218,73 @@ static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &paramet
   return true;
 }
 
+static RankList GetDevListByTensorMapValue(DeviceMatrix dev_matrix, int64_t tensor_map_value, size_t dev_matrix_size) {
+  RankList rank_list;
+  if (tensor_map_value >= SizeToLong(dev_matrix_size) || tensor_map_value < MAP_NONE) {
+    MS_LOG(ERROR) << "The size of dev_matrix is " << dev_matrix_size << ", but the tensor map value is "
+                  << tensor_map_value;
+    return rank_list;
+  }
+
+  if (tensor_map_value == MAP_NONE) {
+    rank_list.push_back(g_device_manager->global_rank());
+    return rank_list;
+  }
+
+  uint64_t dim = dev_matrix_size - LongToSize(tensor_map_value) - 1;
+  if (dev_matrix.GetDevicesAlongDim(dim, &rank_list) != SUCCESS) {
+    MS_LOG(ERROR) << "Get devices along dim failed";
+  }
+
+  return rank_list;
+}
+
+static bool IsSameTensorLayout(const TensorLayout &a, const TensorLayout &b) {
+  if (!a.IsSameTensorShape(b)) {
+    return false;
+  }
+  if (a.IsSameDeviceArrangement(b) && a.IsSameTensorMap(b)) {
+    return true;
+  }
+
+  Shape a_tensor_map = a.tensor_map().array();
+  Shape b_tensor_map = b.tensor_map().array();
+  if (a_tensor_map.size() != b_tensor_map.size()) {
+    return false;
+  }
+
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix a_dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), a.device_arrangement().array());
+  DeviceMatrix b_dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), b.device_arrangement().array());
+  size_t a_dev_mat_size = a.device_arrangement().array().size();
+  size_t b_dev_mat_size = b.device_arrangement().array().size();
+
+  for (size_t i = 0; i < a_tensor_map.size(); ++i) {
+    if (a_tensor_map[i] == MAP_NONE && b_tensor_map[i] == MAP_NONE) {
+      continue;
+    }
+
+    RankList a_dev_list_by_dim = GetDevListByTensorMapValue(a_dev_matrix, a_tensor_map[i], a_dev_mat_size);
+    RankList b_dev_list_by_dim = GetDevListByTensorMapValue(b_dev_matrix, b_tensor_map[i], b_dev_mat_size);
+    if (a_dev_list_by_dim.empty() || b_dev_list_by_dim.empty()) {
+      MS_LOG(EXCEPTION) << "Can not get device list by tensor map value, these layouts are " << a.ToString()
+                        << std::endl
+                        << " and " << b.ToString();
+    }
+
+    if (a_dev_list_by_dim != b_dev_list_by_dim) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool IsSameTensorInfo(const TensorInfo &a, const TensorInfo &b) {
+  return IsSameTensorLayout(a.tensor_layout(), b.tensor_layout());
+}
+
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode, all_nodes);
@@ -234,11 +301,13 @@ void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
     for (auto iter = users_set.begin() + 1; iter != users_set.end(); ++iter) {
       auto &user = *iter;
       auto user_tensor_info = GetInputsTensorInfo(user);
-      if (parameter_tensor_info == user_tensor_info) {
+      if (IsSameTensorInfo(parameter_tensor_info, user_tensor_info)) {
         continue;
       } else {
         MS_LOG(EXCEPTION) << "The parameter: " << parameter_name
-                          << " has multiple users, but the TensorInfo are different";
+                          << " has multiple users, but the TensorInfo are different, they are "
+                          << parameter_tensor_info.tensor_layout().ToString() << std::endl
+                          << " and " << user_tensor_info.tensor_layout().ToString();
       }
     }
   }
