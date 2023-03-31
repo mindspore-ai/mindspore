@@ -179,7 +179,7 @@ bool MapTensor::CheckData() const {
   return true;
 }
 
-MapTensor::ExportData MapTensor::Export(bool incremental) {
+MapTensor::ExportData MapTensor::Export(bool incremental) const {
   MS_LOG(DEBUG) << (incremental ? "Incremental" : "Full") << " export MapTensor";
 
   // Check device

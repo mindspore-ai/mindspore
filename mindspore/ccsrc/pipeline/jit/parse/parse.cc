@@ -661,8 +661,8 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   (void)ParseStatements(func_block, func_obj);
   if (current_fg->get_return() == nullptr) {
     // If the def function has no return statement, mean that return none.
-    py::object node = ast_->GetAstNode();
-    const auto &location = GetLocation(node);
+    py::object location_node = ast_->GetAstNode();
+    const auto &location = GetLocation(location_node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
     MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
