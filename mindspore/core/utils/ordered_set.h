@@ -302,14 +302,13 @@ class OrderedSet<std::shared_ptr<T>> {
  public:
   using element_type = std::shared_ptr<T>;
   using key_type = const T *;
-  using hash_t = PointerHash<T>;
   using sequential_type = std::list<element_type>;
   using vector_type = std::vector<element_type>;
   using iterator = typename sequential_type::iterator;
   using const_iterator = typename sequential_type::const_iterator;
   using reverse_iterator = typename sequential_type::reverse_iterator;
   using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
-  using map_type = mindspore::HashMap<key_type, iterator, hash_t>;
+  using map_type = mindspore::HashMap<key_type, iterator>;
   using ordered_set_type = OrderedSet<std::shared_ptr<T>>;
 
   OrderedSet() = default;
