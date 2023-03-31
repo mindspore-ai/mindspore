@@ -1568,7 +1568,6 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   mask = ib->Cast(mask, kFloat32);
-  auto dout_type = ib->GetDtype(dout);
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
   auto dvalue = ib->Mul(dout, mask);
   auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
