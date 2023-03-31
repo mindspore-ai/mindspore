@@ -7,9 +7,6 @@
 "mindspore/tests/"                                                                                      "missing-docstring"
 "mindspore/tests/"                                                                                      "import-self"
 "mindspore/"                                                                                            "consider-using-in"
-"mindspore/"                                                                                            "invalid-unary-operand-type"
-"mindspore/"                                                                                            "chained-comparison"
-"mindspore/"                                                                                            "useless-return"
 
 # Mindspore
 "mindspore/mindspore/python/mindspore/_check_deps_version.py"                                                            "broad-except"

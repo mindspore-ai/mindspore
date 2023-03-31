@@ -527,7 +527,6 @@ def check_two_shapes_need_broadcast(shape_x, shape_y):
     def _check():
         if any(j != i and j != 1 for i, j in zip(reversed(shape_x), reversed(shape_y))):
             raise ValueError(f"{shape_y} could not broadcast with {shape_x}.")
-        return None
     _check()
     return shape_y != shape_x
 
@@ -830,7 +829,6 @@ def filter_expanded_dims(shape, not_expanded_dim):
     def _check(diff, shape):
         if diff < 0:
             raise ValueError(f'unable to broadcast {shape}')
-        return None
 
     diff = len(not_expanded_dim) - len(shape)
     _check(diff, shape)
@@ -864,7 +862,6 @@ def int_to_index(i, shape):
     def _check(i, dim_size):
         if i < -dim_size or i >= dim_size:
             raise IndexError(f'index {i} is out of bounds for axis 0 with size {dim_size}')
-        return None
 
     dim_size = shape[0]
     _check(i, dim_size)

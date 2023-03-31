@@ -79,7 +79,6 @@ def _shape_check(in_shape, prim_name=None):
     def _check():
         if len(in_shape) != 3:
             raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
-        return None
     _check()
 
 
@@ -1187,7 +1186,6 @@ def _adaptive_shape_check(in_shape, output_size, prim_name):
     if in_shape[2] % output_size != 0:
         raise ValueError("{} input's last dimension must be divisible by "
                          "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
-    return None
 
 
 @constexpr
@@ -1256,6 +1254,7 @@ class AdaptiveAvgPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, input):
+        _adaptive_shape_check(self.shape(input), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(input), self.cls_name)
 
         _, _, width = self.shape(input)
@@ -1470,6 +1469,7 @@ class AdaptiveMaxPool1d(Cell):
         self.dtype = P.DType()
 
     def construct(self, x):
+        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
         _adaptive_dtype_check(self.dtype(x), self.cls_name)
 
         _, _, width = self.shape(x)
