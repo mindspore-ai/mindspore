@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_EXPERIMENTAL_SRC_EXEC_ENV_UTILS_H_
-#define MINDSPORE_LITE_EXPERIMENTAL_SRC_EXEC_ENV_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_NNACL_CXX_UTILS_H_
+#define MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_NNACL_CXX_UTILS_H_
 
-#include "thread/threadpool.h"
-#include "src/litert/inner_allocator.h"
-#include "src/common/log_adapter.h"
-#include "src/common/log_util.h"
+#include <stddef.h>
 
-namespace mindspore::lite::experimental {
+namespace mindspore::nnacl {
 #ifdef __cplusplus
 extern "C" {
 #endif
 void *DefaultAllocatorMalloc(void *allocator, size_t sz);
 void DefaultAllocatorFree(void *allocator, void *ptr);
 int DefaultThreadPoolParallelLunch(void *threadPool, void *task, void *param, int taskNr);
+void *DefaultGetSharingPackData(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
+void DefaultFreeSharingPackData(void *manager, void *tensor_data);
 #ifdef __cplusplus
 }
 #endif
-}  // namespace mindspore::lite::experimental
-
-#endif  // MINDSPORE_LITE_EXPERIMENTAL_SRC_EXEC_ENV_UTILS_H_
+}  // namespace mindspore::nnacl
+#endif  // MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_NNACL_CXX_UTILS_H_

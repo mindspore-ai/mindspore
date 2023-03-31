@@ -32,7 +32,7 @@
 #include "src/litert/kernel/gpu/opencl/opencl_runtime.h"
 #endif
 #include "src/litert/inner_allocator.h"
-#include "experimental/src/exec_env_utils.h"
+#include "nnacl/cxx_utils.h"
 #include "src/litert/thread_pool_reuse_manager.h"
 
 namespace mindspore::lite {
@@ -49,14 +49,12 @@ InnerContext::InnerContext() {
 #endif
 }
 
-void InnerContext::InitExperimentalExecEnv() {
-#ifdef MSLITE_ENABLE_EXPERIMENTAL_KERNEL
+void InnerContext::InitExecEnv() {
   exec_env_.allocator_ = this->allocator.get();
   exec_env_.thread_pool_ = this->thread_pool_;
-  exec_env_.alloc = experimental::DefaultAllocatorMalloc;
-  exec_env_.free = experimental::DefaultAllocatorFree;
-  exec_env_.parallel_launch = experimental::DefaultThreadPoolParallelLunch;
-#endif
+  exec_env_.alloc = nnacl::DefaultAllocatorMalloc;
+  exec_env_.free = nnacl::DefaultAllocatorFree;
+  exec_env_.parallel_launch = nnacl::DefaultThreadPoolParallelLunch;
 }
 
 int InnerContext::CreateThreadPool() {
@@ -123,7 +121,7 @@ int InnerContext::Init() {
     }
 #endif
   }
-  InitExperimentalExecEnv();
+  InitExecEnv();
   return RET_OK;
 }
 
