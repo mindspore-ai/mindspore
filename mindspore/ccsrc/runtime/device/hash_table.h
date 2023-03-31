@@ -20,10 +20,10 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 using DataLenPair = std::pair<void *, size_t>;
-using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
 
 enum class HashTableElementStatus {
   kUnchanged = 0,
@@ -40,7 +40,7 @@ class HashTable {
   virtual ~HashTable() = default;
 
   // Find elements with specific keys, if a key does not exist, initialize the value for the key based on the
-  // initialzer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
+  // initializer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
   // could be a specific Value type scalar.
   virtual bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *stream) = 0;
 

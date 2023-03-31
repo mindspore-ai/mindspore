@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace runtime {
 bool DeviceSparseEmbeddingOperation::Initialize() {
-  DeviceEmbeddingOperation::Initialize();
+  RETURN_IF_FALSE_WITH_LOG(DeviceEmbeddingOperation::Initialize(), "Initialize device embedding operation failed.");
   BuildEmbeddingCacheEraseKernel();
   return true;
 }
