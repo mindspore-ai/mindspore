@@ -102,6 +102,8 @@ int LSTMGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "Layers must be lower than 100!";
     return KRET_RESIZE_FAILED;
   }
+  weight_size_ = 0;
+  weight_h_size_ = 0;
   for (int64_t i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
     weight_h_size_ += gate_size * hidden_size_;
