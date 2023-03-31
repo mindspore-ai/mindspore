@@ -1377,7 +1377,7 @@ REG_BPROP_BUILDER("Transpose").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     auto perm = inputs[0];
     std::vector<int64_t> new_perm;
     (void)std::transform(perm.begin(), perm.end(), std::back_inserter(new_perm),
-                         [&perm](const int64_t v) { return v >= 0 ? v : v + perm.size(); });
+                         [&perm](const int64_t v) { return v >= 0 ? v : v + SizeToLong(perm.size()); });
     auto res_perm = InvertPermutation(new_perm);
     return {res_perm};
   };
