@@ -30,8 +30,8 @@ class OverflowCheckNet(nn.Cell):
         self.base2 = Tensor(0, mstype.int32)
         self.reduce_sum = ops.ReduceSum(keep_dims=False)
         self.less_equal = ops.LessEqual()
-        self.reduce_all = ops.ReduceAll(keep_dims=False)
-        self.equal = ops.Equal()
+        self.reduce_any = ops.ReduceAny(keep_dims=False)
+        self.not_equal = ops.NotEqual()
 
     def start_overflow_check_v1(self, pre_cond, compute_input):
         status = False
@@ -66,9 +66,9 @@ class OverflowCheckNet(nn.Cell):
         status = ops.depend(status, get_status)
         clear_status = _get_cache_prim(NPUClearFloatStatusV2)()(status)
         get_status = ops.depend(get_status, clear_status)
-        flag = self.equal(self.base2, get_status)
-        overall_finite = self.reduce_all(flag)
-        return not overall_finite
+        flag = self.not_equal(self.base2, get_status)
+        overflow = self.reduce_any(flag)
+        return overflow
 
 
 class OverFlowNetV2GetStatusAfterClear(OverflowCheckNet):
