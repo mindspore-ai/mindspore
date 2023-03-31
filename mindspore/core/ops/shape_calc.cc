@@ -59,7 +59,7 @@ abstract::AbstractBasePtr ShapeCalcInfer(const abstract::AnalysisEnginePtr &, co
       if (IsValueKnown(value_ptr)) {
         args[i] = CheckAndConvertUtils::CheckIntOrTupleInt(std::to_string(i), value_ptr, prim_name);
       } else {
-        invalid_indices.insert(i);
+        (void)invalid_indices.insert(i);
       }
     } else if (input_args[i]->isa<abstract::AbstractTensor>()) {
       if (indices.find(static_cast<int64_t>(i)) != indices.end()) {
@@ -67,7 +67,7 @@ abstract::AbstractBasePtr ShapeCalcInfer(const abstract::AnalysisEnginePtr &, co
         if (value_ptr->isa<tensor::Tensor>()) {
           args[i] = CheckAndConvertUtils::CheckTensorIntValue(std::to_string(i), value_ptr, prim_name);
         } else {
-          invalid_indices.insert(i);
+          (void)invalid_indices.insert(i);
         }
         continue;
       }

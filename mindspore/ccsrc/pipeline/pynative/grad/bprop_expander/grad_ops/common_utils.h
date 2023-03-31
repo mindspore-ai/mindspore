@@ -62,11 +62,11 @@ std::vector<int64_t> Range(int64_t stop);
 
 template <typename T>
 std::vector<T> operator+(std::vector<T> const &m, std::vector<T> const &n) {
-  std::vector<T> v;                       // initialized vector v
-  v.reserve(m.size() + n.size());         // reverse function used in v
-  v.insert(v.end(), m.begin(), m.end());  // insert func used in vec m.
-  v.insert(v.end(), n.begin(), n.end());  // insert func used in vec n.
-  return v;                               // return the vector v
+  std::vector<T> v;                             // initialized vector v
+  v.reserve(m.size() + n.size());               // reverse function used in v
+  (void)v.insert(v.end(), m.begin(), m.end());  // insert func used in vec m.
+  (void)v.insert(v.end(), n.begin(), n.end());  // insert func used in vec n.
+  return v;                                     // return the vector v
 }
 
 int64_t GetIntValue(const NodePtr &node);

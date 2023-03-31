@@ -1771,7 +1771,6 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
   auto softmax_grad = ib->TupleGetItem(out, 1);
   grad_loss = ib->ExpandDims(grad_loss, -1);
   auto grad = ib->Mul(grad_loss, softmax_grad);
-  auto btmp = ib->TupleGetItem(dout, 1);
   if (ib->TupleGetItem(dout, 1) != nullptr) {
     auto softmax = ib->Emit("Softmax", {logits}, {{"axis", MakeValue(ShapeVector{1})}});
     auto x = ib->ExpandDims(ib->TupleGetItem(dout, 1), 1);

@@ -86,10 +86,10 @@ bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   for (size_t i = 0; i < inputs.size(); ++i) {
     if (inputs_type_.at(i) == kNumberTypeInt32) {
       auto input_addr = reinterpret_cast<int32_t *>(inputs[i]->addr);
-      args.emplace_back(input_addr, input_addr + inputs_size_[i]);
+      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
     } else {
       auto input_addr = reinterpret_cast<int64_t *>(inputs[i]->addr);
-      args.emplace_back(input_addr, input_addr + inputs_size_[i]);
+      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
     }
   }
   outs_shape_ = func_(args);

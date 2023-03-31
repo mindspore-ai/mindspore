@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
   // 2. copy dy_addr to out_addr
   // case: 1D
   if (dy_shape_.size() == 1) {
-    size_t block_byte = dy_shape_[0] * sizeof(S);
+    size_t block_byte = LongToSize(dy_shape_[0]) * sizeof(S);
     S *out_start_addr = out_addr + begin_value_[0];
     if (memcpy_s(out_start_addr, block_byte, dy_addr, block_byte) != EOK) {
       AICPU_LOGE("For 'SliceGrad', memcpy_s failed!");
@@ -171,7 +171,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
       auto a = i;
       for (size_t j = 0; j < dy_block_shape.size(); ++j) {
         size_t m = dy_block_shape.size() - 1 - j;
-        auto idx = a % dy_block_shape[m] + begin_value_[m];
+        auto idx = a % dy_block_shape[m] + LongToSize(begin_value_[m]);
         a /= dy_block_shape[m];
         k += idx * out_block_shape_acc[m];
       }
@@ -190,7 +190,7 @@ uint32_t SliceGradKernel::SliceGradTask() {
   for (size_t i = 0; i < dy_shape_.size() - 1; ++i) {
     block_num *= dy_shape_[i];
   }
-  const int64_t per_unit_size = block_num / std::thread::hardware_concurrency();
+  const int64_t per_unit_size = block_num / static_cast<int64_t>(std::thread::hardware_concurrency());
   ParallelFor(block_num, per_unit_size, block_task);
 
   return kAicpuKernelStateSucess;

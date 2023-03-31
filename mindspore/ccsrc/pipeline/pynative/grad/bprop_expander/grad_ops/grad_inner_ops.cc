@@ -20,7 +20,7 @@
 #include "pipeline/pynative/grad/bprop_expander/grad_ops/common_utils.h"
 
 namespace mindspore::expander::bprop {
-static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(MakeValue(x_shape.back())),
                               ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
@@ -31,11 +31,12 @@ static NodePtr GetMatrixDiagAssist(const BpropIRBuilder *ib, const ShapeVector &
   return ib->Reshape(tile, shape3);
 }
 
-static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+static NodePtr GetMatrixDiagPartAssist(const BpropIRBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto eye = ib->Emit("Eye", {ib->EmitValue(MakeValue(x_shape[x_shape.size() - kDim2])),
                               ib->EmitValue(MakeValue(x_shape.back())), ib->EmitValue(x_dtype)});
   auto base_eye = ib->Reshape(eye, {-1});
-  ShapeVector shape2(x_shape.begin(), x_shape.end() - kDim2);
+  constexpr int c2 = 2;
+  ShapeVector shape2(x_shape.begin(), x_shape.end() - c2);
   auto tile = ib->Tile(base_eye, shape2);
   return ib->Reshape(tile, x_shape);
 }
@@ -57,9 +58,8 @@ REG_BPROP_BUILDER("MatrixDiagPart").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(i
   auto dout = ib->GetInput(kIndex3);
   auto shape = ib->GetShape(x);
   if (shape[shape.size() - kDim2] == shape.back()) {
-    auto shape = ib->GetShape(dout);
     auto dtype = ib->GetDtype(dout);
-    auto assist = GetMatrixDiagAssist(ib, shape, dtype);
+    auto assist = GetMatrixDiagAssist(ib, ib->GetShape(dout), dtype);
     return {ib->Emit("MatrixDiag", {dout, assist}), ib->ZerosLike(y)};
   }
   auto assist1 = GetMatrixDiagPartAssist(ib, ib->GetShape(x), ib->GetDtype(x));
@@ -71,8 +71,13 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BOD
   auto z = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto input_shape = ib->GetShape(x);
-  auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - kDim2);
-  diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - 1]));
+  if (input_shape.size() < kDim2) {
+    MS_LOG(EXCEPTION) << "For 'MatrixSetDiag', rank of input 'x' must >= " << kDim2 << ", but got "
+                      << input_shape.size();
+  }
+  constexpr int c2 = 2;
+  auto diag_shape = ShapeVector(input_shape.begin(), input_shape.end() - c2);
+  diag_shape.push_back(std::min(input_shape[input_shape.size() - kDim2], input_shape[input_shape.size() - kDim1]));
   auto grad_shape = ib->GetShape(dout);
   auto grad_dtype = ib->GetDtype(dout);
   auto assist = GetMatrixDiagPartAssist(ib, grad_shape, grad_dtype);
@@ -206,7 +211,7 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
 REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   std::vector<int64_t> shift = GetIntList(ib->GetAttr("shift"));
-  std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
+  (void)std::transform(shift.begin(), shift.end(), shift.begin(), [](const int64_t &e) { return -e; });
   return {ib->Emit("Roll", {dout}, {{"axis", ib->GetAttr("axis")}, {"shift", MakeValue(shift)}})};
 });
 

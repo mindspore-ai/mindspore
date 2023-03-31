@@ -331,7 +331,8 @@ REG_BPROP_BUILDER("CSRMul").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
     dense_grad =
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape, ib->Value(static_cast<int64_t>(1))});
   } else {
-    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(ib->GetShape(indices).at(0))});
+    auto indices_shape = ib->GetShape(indices);
+    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(indices_shape.at(0))});
     auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
     dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
   }
@@ -380,7 +381,8 @@ REG_BPROP_BUILDER("CSRDiv").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     dense_grad =
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape_node, ib->Value(static_cast<int64_t>(1))});
   } else {
-    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(ib->GetShape(indices).at(0))});
+    auto indices_shape = ib->GetShape(indices);
+    auto row = ib->Emit("CSR2COO", {indptr, ib->Value(indices_shape.at(0))});
     auto coo_idx = ib->Emit("Stack", {ib->MakeTuple({row, indices})}, {{"axis", MakeValue(static_cast<int64_t>(-1))}});
     dense_grad = ib->Emit("TensorScatterUpdate", {ib->ZerosLike(dense), coo_idx, dense_grad_value});
   }
