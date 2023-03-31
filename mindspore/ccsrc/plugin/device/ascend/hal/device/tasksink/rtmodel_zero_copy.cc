@@ -67,8 +67,8 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
   std::move(workspace_addrs.begin(), workspace_addrs.end(), std::back_inserter(node_addresses));
 
   if (node_addresses.size() != args_datas.size()) {
-    MS_LOG(ERROR) << "Check failed, Node " << node->UniqueName() << " total addr size " << node_addresses.size()
-                  << " is not equal to " << args_datas.size();
+    MS_LOG(WARNING) << "Check failed, Node " << node->UniqueName() << " total addr size " << node_addresses.size()
+                    << " is not equal to " << args_datas.size();
     return false;
   }
 
@@ -76,8 +76,8 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
     auto node_address = node_addresses[i];
     MS_EXCEPTION_IF_NULL(node_address);
     if (node_address->addr != args_datas[i]) {
-      MS_LOG(ERROR) << "Node " << node->UniqueName() << " addr " << node_address->addr << " not equal to addr of task "
-                    << args_datas[i] << " index:" << i;
+      MS_LOG(WARNING) << "Node " << node->UniqueName() << " addr " << node_address->addr
+                      << " not equal to addr of task " << args_datas[i] << " index:" << i;
       task_valid = false;
     }
   }
