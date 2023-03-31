@@ -195,7 +195,7 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
-        >>> output = multinomial_with_replacement(x, 2, 5, 2, True)
+        >>> output = ops.multinomial_with_replacement(x, 2, 5, 2, True)
         >>> print(output)
         [[1 1]]
     """
