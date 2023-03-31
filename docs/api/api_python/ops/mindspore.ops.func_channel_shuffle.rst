@@ -7,8 +7,8 @@ mindspore.ops.channel_shuffle
     同时保持原始Tensor的shape不变。
 
     参数：
-        - **x** (int) - 通道划分数目。
-        - **groups** (Tensor) - 被划分输入Tensor。shape为 :math:`(*, C, H, W)` ，数据类型为float16, float32、int8、int16、int32、int64、uint8、uint16、uint32或uint64。
+        - **x** (Tensor) - 被划分输入Tensor。shape为 :math:`(*, C, H, W)` ，数据类型为float16, float32、int8、int16、int32、int64、uint8、uint16、uint32或uint64。
+        - **groups** (int) - 通道划分数目。
 
     返回：
         Tensor，数据类型与 `x` 相同，shape为 :math:`(*, C, H, W)` 。

@@ -16,7 +16,7 @@
         \end{array}
 
     输入：
-        - **logits** (Tensor) - 预测值，任意维度的Tensor。
+        - **logits** (Tensor) - 预测值，任意维度的Tensor，其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。据类型必须为float16或float32。
         - **label** (Tensor) - 真实值。shape和数据类型与 `logits` 的相同。
 
     输出：

@@ -1606,7 +1606,6 @@ class Zeros(Primitive):
         """Initialize Zeros"""
 
 
-
 class OnesLike(Primitive):
     """
     Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
@@ -4315,7 +4314,7 @@ class ScatterSub(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
@@ -6354,7 +6353,7 @@ class TensorScatterUpdate(_TensorScatterOp):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
           The data type is Number.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.

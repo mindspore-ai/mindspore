@@ -1929,7 +1929,7 @@ class InplaceAdd(Primitive):
 
 class InplaceIndexAdd(Primitive):
     """
-    Adds Tensor `updates` to specified axis and indices of Tensor `var`.
+    Adds Tensor `updates` to specified axis and indices of Tensor `var` element-wise.
 
     Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
@@ -1937,7 +1937,7 @@ class InplaceIndexAdd(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> var = Parameter(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> var = Parameter(Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32))
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> updates = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplaceIndexAdd = ops.InplaceIndexAdd(axis=0)
@@ -2222,7 +2222,8 @@ class Sqrt(Primitive):
         out_{i} =  \sqrt{x_{i}}
 
     Inputs:
-        - **x** (Tensor) - The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        - **x** (Tensor) - The input tensor with a dtype of Number, the shape is :math:`(N, *)`
+          where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
@@ -6769,8 +6770,8 @@ class Trace(Primitive):
 
 class Median(Primitive):
     """
-    Computes the median of elements of input tensor in the `axis` dimension. If `global_median` is True, computes the
-    median of all elements of tensor.
+    Computes the median and its corresponding indices of input tensor in the `axis` dimension.
+    If `global_median` is True, computes the  median of all elements of tensor.
 
     .. warning::
         When attr `global_median` is True, the value of the second output tensor `indices` is meaningless.
@@ -6778,7 +6779,7 @@ class Median(Primitive):
     Args:
         global_median (bool, optional): Whether the output tensor is the median of all
             input tensor elements or not. Default: Fasle.
-        axis (int, optional): The dimension need to reduce. Default: 0.
+        axis (int, optional): The specified dimension to compute median. Default: 0.
         keep_dims (bool, optional): Whether the output tensor need to retain `axis` dimension or not. Default: False.
 
     Inputs:
@@ -6798,7 +6799,7 @@ class Median(Primitive):
         TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `x` is not a Tensor.
         TypeError: If `global_median` or `keep_dims` is assigned a nonboolean value.
-        TypeError: If `axis` is not a int.
+        TypeError: If `axis` is not int.
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 
     Supported Platforms:
@@ -7471,7 +7472,7 @@ class CompareAndBitpack(Primitive):
 
 class NanToNum(Primitive):
     """
-    Replaces `NaN`, positive infinity and negative infinity values in the `x` with the values
+    Replaces `NaN`, positive infinity and negative infinity values in the input Tensor with the values
     specified by `nan`, `posinf` and `neginf` respectively.
 
     Refer to :func:`mindspore.ops.nan_to_num` for more details.

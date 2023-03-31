@@ -3,7 +3,7 @@ mindspore.ops.RandomShuffle
 
 .. py:class:: mindspore.ops.RandomShuffle(seed=0, seed2=0)
 
-    随机沿着Tensor的第一维度进行随机打乱操作。
+    沿着Tensor的第一个维度进行随机打乱操作。
 
     参数：
         - **seed** (int，可选) - 随机数种子。如果 `seed` 或者 `seed2` 被设置为非零，则使用这个非零值。否则使用一个随机生成的种子。 `seed` 必须为非负数。默认值：0。
