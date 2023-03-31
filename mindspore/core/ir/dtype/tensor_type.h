@@ -109,7 +109,7 @@ class MS_CORE_API TensorType : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
 
  private:
   TypePtr element_type_;
@@ -148,7 +148,7 @@ class MS_CORE_API SparseTensorType : public Object {
 
   const TypePtr operator[](std::size_t dim) const;
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
   TypePtrList elements() const { return elements_; }
 
   std::size_t size() const { return elements_.size(); }
@@ -196,7 +196,7 @@ class MS_CORE_API RowTensorType final : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
 
  private:
   TypePtr element_type_;
@@ -282,7 +282,7 @@ class MS_CORE_API MapTensorType final : public Object {
   std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
-  size_t hash() const override;
+  std::size_t hash() const override;
 
  private:
   TypePtr key_dtype_;
