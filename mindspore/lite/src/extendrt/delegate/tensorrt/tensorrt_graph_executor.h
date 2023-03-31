@@ -64,15 +64,14 @@ class TensorRTExecutor : public LiteGraphExecutor {
 
   int ParseTransformerProfile();
 
-  Status BuildSubGraph(const KernelGraphPtr &graph);
+  Status BuildSubGraph(const FuncGraphPtr &graph);
 
   TensorRTOp *FindTensorRTOp(const CNodePtr &cnode, const BaseOperatorPtr &base_operator,
                              const std::vector<TensorInfo> &input_tensors,
                              const std::vector<TensorInfo> &output_tensors);
 
-  std::shared_ptr<TensorRTSubGraph> CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops,
-                                                        const KernelGraphPtr &graph, int index,
-                                                        const std::vector<TensorInfo> &inputs,
+  std::shared_ptr<TensorRTSubGraph> CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, const FuncGraphPtr &graph,
+                                                        int index, const std::vector<TensorInfo> &inputs,
                                                         const std::vector<TensorInfo> &outputs);
   int ParseDumpOptions(const std::map<std::string, std::string> &gpu_context);
 

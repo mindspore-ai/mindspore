@@ -288,16 +288,10 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     MS_LOG(ERROR) << "Input param graph is nullptr.";
     return false;
   }
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  if (kg == nullptr) {
-    MS_LOG(ERROR) << "Dynamic cast kernel graph failed.";
-    return false;
-  }
   // opt::GeOptimization(origin_graph);
-  (void)BuildDFGraph(kg, context_, GetParams(kg), false, config_infos_);
-  kg->set_run_mode(device::RunMode::kGraphMode);
+  (void)BuildDFGraph(graph, context_, GetParams(graph), false, config_infos_);
   // copy init weight to device
-  RunGeInitGraph(kg);
+  RunGeInitGraph(graph);
   return true;
 }
 

@@ -58,17 +58,15 @@ class GraphSinkSession : public InferSession {
 
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
-  bool is_use_kernel_graph_ = true;
   bool is_use_ascend_ge_ = false;
-  KernelGraphUtilsPtr kernel_graph_utils_;
   std::shared_ptr<Context> context_;
-  KernelGraphPtr kernel_graph_;
-  FuncGraphPtr func_graph_;
+  FuncGraphPtr func_graph_ = nullptr;
   std::vector<MutableTensorImplPtr> inputs_;
   std::vector<std::string> input_names_;
   std::vector<MutableTensorImplPtr> outputs_;
   std::vector<std::string> output_names_;
   Status InitGraphInputsOutputs();
+  Status UpdateGraphInputsOutputs();
   ConfigInfos config_infos_;
 };
 }  // namespace mindspore

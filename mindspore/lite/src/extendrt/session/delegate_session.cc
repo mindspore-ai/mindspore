@@ -24,9 +24,9 @@
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"
 #include "extendrt/utils/tensor_default_impl.h"
-#include "extendrt/session/optimizer/tensorrt_optimizer.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
+#include "extendrt/utils/func_graph_utils.h"
 
 namespace mindspore {
 namespace {
@@ -64,7 +64,6 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context) {
       break;
     }
   }
-  kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
   context_ = context;
   return kSuccess;
 }
@@ -76,48 +75,28 @@ Status GraphSinkSession::CompileGraph(FuncGraphPtr graph, const void *data, size
   // kernel graph will be removed from GraphSinkSession, and this code will be moved to TensorRT plugin
   if (context_ && !context_->MutableDeviceInfo().empty()) {
     auto device_info = context_->MutableDeviceInfo()[0];
-    if (device_info && device_info->GetDeviceType() == DeviceType::kGPU && device_info->GetProvider() == "tensorrt") {
-      TensorRtOptimizer optimizer;
-      optimizer.RunOptimizer(graph);
-    }
     if (device_info && device_info->GetDeviceType() == DeviceType::kAscend &&
         device_info->GetProvider() == kAscendProviderGe) {
       lite::AscendGeExecutorPlugin::GetInstance().AdaptGraph(graph);
     }
   }
   func_graph_ = graph;
-  std::vector<KernelGraphPtr> all_out_graph;
-  {
-    std::unique_lock<std::mutex> l(kernel_graph_mutex);
-    kernel_graph_ = FuncGraphReuseManager::GetInstance()->GetKernelGraph(config_infos_);
-    if (kernel_graph_ == nullptr) {
-      kernel_graph_ =
-        kernel_graph_utils_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
-      MS_EXCEPTION_IF_NULL(kernel_graph_);
-      auto &kernel_nodes = kernel_graph_->execution_order();
-      for (const auto &kernel_node : kernel_nodes) {
-        mindspore::infer::SetKernelInfo(kernel_node);
-      }
-      FuncGraphReuseManager::GetInstance()->StoreKernelGraph(config_infos_, kernel_graph_);
-    } else {
-      MS_LOG(INFO) << "the kernel graph is the same as the last time. We do not need to construct, and we can directly "
-                      "use the cached kernel graph.";
-    }
+  auto status = InitGraphInputsOutputs();
+  if (!status.IsOk()) {
+    MS_LOG(ERROR) << "Failed to get inputs and outputs info from graph";
+    return status;
   }
-  bool ret = true;
-  if (is_use_kernel_graph_) {
-    if (!graph_executor_->CompileGraph(kernel_graph_, options_)) {
-      is_use_kernel_graph_ = false;
-      ret = graph_executor_->CompileGraph(func_graph_, options_);
-    }
-  } else {
-    ret = graph_executor_->CompileGraph(func_graph_, options_);
-  }
+  auto ret = graph_executor_->CompileGraph(func_graph_, options_);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::CompileGraph compile graph failed";
     return kCoreFailed;
   }
-  return InitGraphInputsOutputs();
+  status = UpdateGraphInputsOutputs();
+  if (!status.IsOk()) {
+    MS_LOG(ERROR) << "Failed to update inputs and outputs info from graph executor";
+    return status;
+  }
+  return kSuccess;
 }
 
 Status GraphSinkSession::InitGraphInputsOutputs() {
@@ -127,8 +106,8 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
     FuncGraphReuseManager::GetInstance()->GetInOut(config_infos_, &graph_inputs, &graph_outputs, &input_names_,
                                                    &output_names_);
     if (graph_inputs.empty() || graph_outputs.empty() || input_names_.empty() || output_names_.empty()) {
-      kernel_graph_utils_->GetModelInputsInfo(kernel_graph_->graph_id(), &graph_inputs, &input_names_);
-      kernel_graph_utils_->GetModelOutputsInfo(kernel_graph_->graph_id(), &graph_outputs, &output_names_);
+      FuncGraphUtils::GetFuncGraphInputsInfo(func_graph_, &graph_inputs, &input_names_);
+      FuncGraphUtils::GetFuncGraphOutputsInfo(func_graph_, &graph_outputs, &output_names_);
       FuncGraphReuseManager::GetInstance()->StoreInOut(config_infos_, graph_inputs, graph_outputs, input_names_,
                                                        output_names_);
     } else {
@@ -145,20 +124,31 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
     return kCoreFailed;
   }
   inputs_.clear();
-  auto new_inputs = graph_executor_->GetInputInfos(kernel_graph_);
-  if (new_inputs.empty()) {
-    for (size_t i = 0; i < input_names_.size(); i++) {
-      auto &input = graph_inputs[i];
-      auto data_type = static_cast<enum DataType>(input->data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
-      inputs_.push_back(impl);
-    }
-  } else {
+  for (size_t i = 0; i < input_names_.size(); i++) {
+    auto &input = graph_inputs[i];
+    auto data_type = static_cast<enum DataType>(input->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(input_names_[i], data_type, input->shape_c());
+    inputs_.push_back(impl);
+  }
+  outputs_.clear();
+  for (size_t i = 0; i < output_names_.size(); i++) {
+    auto &output = graph_outputs[i];
+    auto data_type = static_cast<enum DataType>(output->data_type());
+    auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
+    outputs_.push_back(impl);
+  }
+  return kSuccess;
+}
+
+Status GraphSinkSession::UpdateGraphInputsOutputs() {
+  auto new_inputs = graph_executor_->GetInputInfos(func_graph_);
+  if (!new_inputs.empty()) {
     if (new_inputs.size() != input_names_.size()) {
       MS_LOG(ERROR) << "Input count " << new_inputs.size() << " get from executor != input names count "
                     << input_names_.size();
       return kCoreFailed;
     }
+    inputs_.clear();
     for (size_t i = 0; i < input_names_.size(); i++) {
       auto &input = new_inputs[i];
       auto data_type = static_cast<enum DataType>(input.data_type());
@@ -166,21 +156,14 @@ Status GraphSinkSession::InitGraphInputsOutputs() {
       inputs_.push_back(impl);
     }
   }
-  outputs_.clear();
-  auto new_outputs = graph_executor_->GetOutputInfos(kernel_graph_);
-  if (new_outputs.empty()) {
-    for (size_t i = 0; i < output_names_.size(); i++) {
-      auto &output = graph_outputs[i];
-      auto data_type = static_cast<enum DataType>(output->data_type());
-      auto impl = std::make_shared<TensorDefaultImpl>(output_names_[i], data_type, output->shape_c());
-      outputs_.push_back(impl);
-    }
-  } else {
+  auto new_outputs = graph_executor_->GetOutputInfos(func_graph_);
+  if (!new_outputs.empty()) {
     if (new_outputs.size() != output_names_.size()) {
       MS_LOG(ERROR) << "Output count " << new_outputs.size() << " get from executor != output names count "
                     << output_names_.size();
       return kCoreFailed;
     }
+    outputs_.clear();
     for (size_t i = 0; i < output_names_.size(); i++) {
       auto &output = new_outputs[i];
       auto data_type = static_cast<enum DataType>(output.data_type());
@@ -197,12 +180,7 @@ Status GraphSinkSession::RunGraph(const std::vector<tensor::Tensor> &inputs, std
   MS_EXCEPTION_IF_NULL(outputs);
   graph_executor_->SetBefore(before);
   graph_executor_->SetAfter(after);
-  bool ret = true;
-  if (is_use_kernel_graph_) {
-    ret = graph_executor_->RunGraph(kernel_graph_, inputs, outputs, options_);
-  } else {
-    ret = graph_executor_->RunGraph(func_graph_, inputs, outputs, options_);
-  }
+  bool ret = graph_executor_->RunGraph(func_graph_, inputs, outputs, options_);
   if (!ret) {
     MS_LOG(ERROR) << "GraphSinkSession::RunGraph run graph failed";
     return kCoreFailed;
@@ -218,11 +196,11 @@ Status GraphSinkSession::Resize(const std::vector<tensor::Tensor> &inputs,
                                 const std::vector<std::vector<int64_t>> &new_shapes) {
   MS_LOG(INFO) << "GraphSinkSession::Resize";
   MS_EXCEPTION_IF_NULL(graph_executor_);
-  auto ret = graph_executor_->Resize(kernel_graph_, inputs, new_shapes);
+  auto ret = graph_executor_->Resize(func_graph_, inputs, new_shapes);
   if (!ret) {
     return kCoreFailed;
   }
-  auto new_outputs = graph_executor_->GetOutputInfos(kernel_graph_);
+  auto new_outputs = graph_executor_->GetOutputInfos(func_graph_);
   if (new_outputs.empty()) {
     return kSuccess;
   }

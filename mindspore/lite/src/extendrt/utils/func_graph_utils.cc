@@ -129,7 +129,7 @@ bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_ty
   return false;
 }
 
-std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node) {
+std::vector<common::KernelWithIndex> FuncGraphUtils::GetNodeInputs(const AnfNodePtr &anf_node) {
   if (!anf_node) {
     return {};
   }
@@ -259,5 +259,51 @@ std::string FuncGraphUtils::GetTensorName(const AnfWithOutIndex &tensor) {
     output_name = node->fullname_with_scope();
   }
   return output_name;
+}
+
+void FuncGraphUtils::GetFuncGraphInputsInfo(const FuncGraphPtr &func_graph, std::vector<tensor::TensorPtr> *inputs,
+                                            std::vector<std::string> *inputs_name) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(inputs_name);
+  std::vector<AnfWithOutIndex> input_idxs;
+  if (!GetFuncGraphInputs(func_graph, &input_idxs)) {
+    MS_LOG(WARNING) << "Failed to get input infos from graph";
+    return;
+  }
+  inputs->clear();
+  inputs_name->clear();
+  for (auto &tensor : input_idxs) {
+    auto name = FuncGraphUtils::GetTensorName(tensor);
+    auto data_type = FuncGraphUtils::GetTensorDataType(tensor);
+    auto shape = FuncGraphUtils::GetTensorShape(tensor);
+    auto ms_tensor = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_type), shape);
+    ms_tensor->set_name(name);
+    inputs->push_back(ms_tensor);
+    inputs_name->push_back(name);
+  }
+}
+
+void FuncGraphUtils::GetFuncGraphOutputsInfo(const FuncGraphPtr &func_graph, std::vector<tensor::TensorPtr> *outputs,
+                                             std::vector<std::string> *output_names) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(output_names);
+  std::vector<AnfWithOutIndex> output_idxs;
+  if (!GetFuncGraphOutputs(func_graph, &output_idxs)) {
+    MS_LOG(WARNING) << "Failed to get input infos from graph";
+    return;
+  }
+  outputs->clear();
+  output_names->clear();
+  for (auto &tensor : output_idxs) {
+    auto name = FuncGraphUtils::GetTensorName(tensor);
+    auto data_type = FuncGraphUtils::GetTensorDataType(tensor);
+    auto shape = FuncGraphUtils::GetTensorShape(tensor);
+    auto ms_tensor = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_type), shape);
+    ms_tensor->set_name(name);
+    outputs->push_back(ms_tensor);
+    output_names->push_back(name);
+  }
 }
 }  // namespace mindspore

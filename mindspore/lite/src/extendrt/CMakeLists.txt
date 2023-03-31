@@ -49,7 +49,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/ascend_ge_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate_graph_executor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/session/optimizer/tensorrt_optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/litert/func_graph_reuse_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/default_graph_compiler.cc
