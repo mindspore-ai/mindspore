@@ -26,6 +26,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <memory>
 #include <algorithm>
 
 #include "utils/log_adapter.h"
@@ -1350,6 +1351,8 @@ COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
 using OutputInputRefMap = std::map<size_t, size_t>;
+
+using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
 
 static inline uint64_t GetCurrentUSec() {
   auto time_now = std::chrono::system_clock::now();
