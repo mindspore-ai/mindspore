@@ -20,13 +20,6 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 KernelBase *CreateGatherD(OpParameter *param, int data_type);
 
-#ifdef __cplusplus
-}
-#endif
 #endif  // MINDSPORE_NNACL_KERNEL_GATHER_D_H_

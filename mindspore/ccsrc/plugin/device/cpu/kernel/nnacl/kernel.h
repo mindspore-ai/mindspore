@@ -43,6 +43,7 @@ typedef struct KernelBase {
   bool train_session_;
   void *workspace_; /* only used in train */
   int work_size_;   /* only used in train */
+  int (*update_thread_)(int32_t type, int64_t load, int64_t store, int64_t unit, int thread);
 } KernelBase;
 
 #ifdef _MSC_VER

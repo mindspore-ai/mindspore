@@ -33,7 +33,6 @@
 #endif
 #include "src/common/tensor_util.h"
 #include "src/litert/kernel/cpu/nnacl/nnacl_manager.h"
-#include "nnacl/kernel.h"
 
 using mindspore::kernel::kBuiltin;
 using mindspore::kernel::kCPU;
@@ -164,7 +163,7 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   if (kernel_creator != nullptr) {
     return true;
   }
-  return SupportKernelC(key.type, key.data_type);
+  return nnacl::SupportNnaclKernel(key.type, key.data_type);
 }
 
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,

@@ -21,14 +21,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 KernelBase *CreateMatmulFp32Avx512();
 
-#ifdef __cplusplus
-}
-#endif
 #endif
 #endif  // MINDSPORE_NNACL_KERNEL_MATMUL_FP32_AVX512_H_

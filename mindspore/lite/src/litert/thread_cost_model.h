@@ -30,10 +30,6 @@ typedef struct ThreadCostContext {
   float per_unit_compute_cost_;
 } ThreadCostContext;
 
-#define TC_PTYPE(primitive_type) (primitive_type << 16)
-#define TC_ATYPE(activation_type) (activation_type)
-#define TC_TYPE(primitive_type, activation_type) (TC_PTYPE(primitive_type) + TC_ATYPE(activation_type))
-
 struct ThreadCostModel {
   static float UnitCost(const ThreadCostContext *thread_cost_context) {
     return per_unit_load_cost_ * thread_cost_context->per_unit_load_num_ +
