@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t k3DSize = 3;
 constexpr size_t k4DSize = 4;
 
 constexpr size_t kIdx2 = 2;
@@ -119,7 +120,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
     kernel_name_ = kernel_ptr->name();
     size_t input_num = inputs.size();
-    if (input_num != 3) {
+    if (input_num != k3DSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
     }
     size_t output_num = outputs.size();

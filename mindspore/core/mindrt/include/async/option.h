@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_OPTION_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_OPTION_H
 
-#include <type_traits>
 #include <utility>
 
 #include "actor/log.h"

@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_BASE_H
 
 #include <future>
-#include <iostream>
 #include <utility>
 #include <memory>
 #include <list>
