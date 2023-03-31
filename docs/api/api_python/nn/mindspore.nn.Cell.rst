@@ -8,7 +8,7 @@
     `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d` 、 :class:`mindspore.nn.ReLU` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
 
     参数：
-        - **auto_prefix** (bool，可选) - 是否自动为Cell及其子Cell生成NameSpace。`auto_prefix` 的设置影响网络参数的命名，如果设置为True，则自动给网络参数的名称添加前缀，否则不添加前缀。默认值：True。
+        - **auto_prefix** (bool，可选) - 是否自动为Cell及其子Cell生成NameSpace。该参数同时会影响 `Cell` 中权重参数的名称。如果设置为True，则自动给权重参数的名称添加前缀，否则不添加前缀。通常情况下，骨干网络应设置为True，否则会产生重名问题。用于训练骨干网络的优化器、 :class:`mindspore.nn.TrainOneStepCell` 等，应设置为False，否则骨干网络的权重参数名会被误改。默认值：True。
         - **flags** (dict，可选) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
     .. py:method:: add_flags(**flags)
@@ -33,7 +33,7 @@
 
         参数：
             - **fn** (function) - 被执行于每个Cell的function。
-        
+
         返回：
             Cell类型，Cell本身。
 
@@ -304,7 +304,7 @@
             OrderedDict类型，返回参数字典。
 
     .. py:method:: place(role, rank_id)
-        
+
         为该Cell中所有算子设置标签。此标签告诉MindSpore编译器此Cell在哪个进程上启动。
         每个标签都由进程角色 `role` 和 `rank_id` 组成，因此，通过对不同Cell设置不同标签，这些Cell将在不同进程启动，使用户可以进行分布式训练/推理等任务。
 
@@ -479,7 +479,7 @@
 
         参数：
             - **jit_config** (JitConfig) - Cell的Jit配置信息。目前支持下面两个配置项。
-  
+
               - **jit_level** (str) - 用于设置优化图的'level'参数。取值范围['O0'、'O1'、'O2']。默认值：'O1'。
 
                 - O0：基本优化。
