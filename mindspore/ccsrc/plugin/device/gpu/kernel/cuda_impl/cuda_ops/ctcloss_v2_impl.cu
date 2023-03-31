@@ -22,9 +22,6 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-constexpr unsigned int kMaxThreads = 1024;
-constexpr uint64_t kNumberWarps = 32;
-
 template <typename T>
 __device__ __forceinline__ T LogSumExp(T a, T b, T max_val) {
   return std::log(std::exp(a - max_val) + std::exp(b - max_val)) + max_val;
@@ -33,29 +30,6 @@ __device__ __forceinline__ T LogSumExp(T a, T b, T max_val) {
 template <typename T>
 __device__ __forceinline__ T LogSumExp(T a, T b, T c, T max_val) {
   return std::log(std::exp(a - max_val) + std::exp(b - max_val) + std::exp(c - max_val)) + max_val;
-}
-
-template <typename T>
-__device__ __forceinline__ T DoLogSumExp(T a, T b) {
-  constexpr T neg_inf = -std::numeric_limits<T>::infinity();
-  if (a == neg_inf) {
-    return b;
-  } else {
-    T max_val = max(a, b);
-    return LogSumExp(a, b, max_val);
-  }
-}
-
-struct LogSumExpFunc {
-  template <typename T>
-  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return DoLogSumExp(lhs, rhs);
-  }
-};
-
-template <typename T>
-__device__ __forceinline__ T AtomicLogSumExp(T *address, T val) {
-  return atomic::MsAtomicBinaryOpImpl<LogSumExpFunc, T>()(address, val);
 }
 
 template <typename T>
@@ -80,15 +54,6 @@ __device__ __forceinline__ int64_t GetBlankPaddedTarget(const T *target, int64_t
 
 __device__ __forceinline__ size_t GetOffset3D(dim3 dims, size_t x, size_t y, size_t z) {
   return x * dims.y * dims.z + y * dims.z + z;
-}
-
-__device__ __forceinline__ void Revert3DIndex(dim3 dims, size_t index, size_t *x, size_t *y, size_t *z) {
-  const size_t yz_offset = dims.y * dims.z;
-  const size_t z_offset = dims.z;
-  const size_t yz_index = index % yz_offset;
-  *x = index / yz_offset;
-  *y = yz_index / z_offset;
-  *z = yz_index % z_offset;
 }
 
 template <typename T>
@@ -327,12 +292,14 @@ __global__ void AlphaBetaInitKernel(const T *targets, const T *input_lengths, co
 template <typename S, typename T>
 __global__ void AlphaBetaComputeKernel(const T *targets, const T *input_lengths, const T *target_lengths,
                                        const S *neg_log_likelihood, const S *log_alpha, S *log_beta,
-                                       int64_t alpha_beta_size, int64_t max_target_length, bool zero_infinity, T blank,
-                                       dim3 alpha_beta_shape, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad) {
-  size_t t, b, s;
+                                       int64_t alpha_beta_size, int64_t stride, int64_t max_target_length,
+                                       bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape,
+                                       S *grad) {
+  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
   for (int64_t index = blockIdx.x * blockDim.x + threadIdx.x; index < alpha_beta_size;
        index += blockDim.x * gridDim.x) {
-    Revert3DIndex(alpha_beta_shape, index, &t, &b, &s);
+    int64_t b = index / stride;
+    int64_t t = index % stride;
     int64_t input_length = input_lengths[b];
     if (t >= input_length - 1) {
       continue;
@@ -341,74 +308,20 @@ __global__ void AlphaBetaComputeKernel(const T *targets, const T *input_lengths,
     if (zero_infinity && nll == std::numeric_limits<S>::infinity()) {
       continue;
     }
-    const int64_t target_length = target_lengths[b];
-    if (s >= target_length) {
-      continue;
+    int64_t target_length = target_lengths[b];
+    int64_t offset = max_target_length * b;
+    for (int64_t s = 0; s < 2 * target_length + 1; s++) {
+      const auto current_target_prime = GetBlankPaddedTarget<T>(targets, offset, s, blank);
+      const auto alpha_beta_index = GetOffset3D(log_alpha_shape, b, t, s);
+      S log_alpha_beta = log_alpha[alpha_beta_index] + log_beta[alpha_beta_index];
+      S &lcab = grad[GetOffset3D(log_probs_shape, t, b, current_target_prime)];
+      if (lcab == neg_inf) {
+        lcab = log_alpha_beta;
+      } else {
+        S max_val = max(lcab, log_alpha_beta);
+        lcab = LogSumExp(lcab, log_alpha_beta, max_val);
+      }
     }
-
-    const size_t padded_s = s * 2 + 1;
-    const size_t offset = max_target_length * b;
-    const auto current_target_prime = GetBlankPaddedTarget<T>(targets, offset, padded_s, blank);
-    const auto alpha_beta_index = GetOffset3D(log_alpha_shape, b, t, padded_s);
-    S log_alpha_beta = log_alpha[alpha_beta_index] + log_beta[alpha_beta_index];
-    AtomicLogSumExp(&grad[GetOffset3D(log_probs_shape, t, b, current_target_prime)], log_alpha_beta);
-  }
-}
-
-template <typename S, typename T>
-__global__ void AlphaBetaBlankKernel(const T *input_lengths, const T *target_lengths, const S *neg_log_likelihood,
-                                     const S *log_alpha, S *log_beta, int64_t alpha_beta_size, int64_t stride,
-                                     bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad) {
-  __shared__ S workspace[kMaxThreads];
-  // Calculate current workspace
-  const unsigned int tid = threadIdx.x;
-
-  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
-  int64_t index = blockIdx.x;
-  int64_t b = index / stride;
-  int64_t t = index % stride;
-  int64_t input_length = input_lengths[b];
-  S nll = neg_log_likelihood[b];
-  int64_t target_length = target_lengths[b];
-  // check
-  if ((index >= alpha_beta_size) || (t >= input_length - 1) ||
-      (zero_infinity && nll == std::numeric_limits<S>::infinity()) || (tid >= (target_length + 1))) {
-    workspace[tid] = neg_inf;
-    return;
-  }
-
-  // Init workspace
-  auto alpha_beta_index = GetOffset3D(log_alpha_shape, b, t, tid * 2);
-  workspace[tid] = log_alpha[alpha_beta_index] + log_beta[alpha_beta_index];
-
-  for (int64_t s = (tid + blockDim.x) * 2; s < 2 * target_length + 1; s += blockDim.x * 2) {
-    alpha_beta_index = GetOffset3D(log_alpha_shape, b, t, s);
-    S log_alpha_beta = log_alpha[alpha_beta_index] + log_beta[alpha_beta_index];
-    workspace[tid] = DoLogSumExp(workspace[tid], log_alpha_beta);
-  }
-
-  // Reduce inside shared memory
-  for (unsigned int reduce_size = kMaxThreads; reduce_size >= 128; reduce_size /= 2) {
-    __syncthreads();
-    unsigned int half_reduce = reduce_size / 2;
-    if (blockDim.x >= reduce_size && tid < half_reduce) {
-      workspace[tid] = DoLogSumExp(workspace[tid], workspace[tid + half_reduce]);
-    }
-  }
-
-  __syncthreads();
-  if (tid < 32) {
-    volatile S *warp_workspace = workspace;
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 32]);
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 16]);
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 8]);
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 4]);
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 2]);
-    warp_workspace[tid] = DoLogSumExp(warp_workspace[tid], warp_workspace[tid + 1]);
-  }
-
-  if (tid == 0) {
-    grad[GetOffset3D(log_probs_shape, t, b, blank)] = workspace[0];
   }
 }
 
@@ -416,11 +329,17 @@ template <typename S, typename T>
 __global__ void GradOutKernel(const S *grad_out, const S *log_probs, const T *input_lengths,
                               const S *neg_log_likelihood, bool zero_infinity, dim3 log_probs_shape, S *grad) {
   const auto grad_size = log_probs_shape.x * log_probs_shape.y * log_probs_shape.z;
-  size_t t, b, c;
+  const auto time_offset = log_probs_shape.y * log_probs_shape.z;
+  const auto num_labels = log_probs_shape.z;
   // 3D index with shape time * batch * targets
-  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < grad_size; index += blockDim.x * gridDim.x) {
-    Revert3DIndex(log_probs_shape, index, &t, &b, &c);
+  for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < grad_size; index += blockDim.x * gridDim.x) {
+    const int batch_target = index % time_offset;
+    const int t = index / time_offset;
+    const int b = batch_target / num_labels;
+    const int c = batch_target % num_labels;
+
     int64_t input_length = input_lengths[b];
+
     S nll = neg_log_likelihood[b];
     if (zero_infinity && nll == std::numeric_limits<S>::infinity()) {
       grad[GetOffset3D(log_probs_shape, t, b, c)] = 0;
@@ -440,9 +359,9 @@ __global__ void GradOutKernel(const S *grad_out, const S *log_probs, const T *in
 template <typename S, typename T>
 void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, const T *input_lengths,
                       const T *target_lengths, const S *neg_log_likelihood, const S *log_alpha, S *log_beta,
-                      int64_t batch_size, int64_t time_series, int64_t max_target_length, bool zero_infinity, T blank,
-                      dim3 log_probs_shape, dim3 log_alpha_shape, S *grad, uint32_t device_id,
-                      cudaStream_t cuda_stream) {
+                      int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length,
+                      bool zero_infinity, T blank, dim3 log_probs_shape, dim3 log_alpha_shape, S *grad,
+                      uint32_t device_id, cudaStream_t cuda_stream) {
   constexpr S neg_inf = -std::numeric_limits<S>::infinity();
 
   const size_t grad_size = log_probs_shape.x * log_probs_shape.y * log_probs_shape.z;
@@ -453,9 +372,9 @@ void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, c
   thrust::device_ptr<S> beta_dev_ptr(log_beta);
   thrust::fill(thrust::cuda::par.on(cuda_stream), beta_dev_ptr, beta_dev_ptr + beta_size, neg_inf);
 
-  const uint64_t max_threads = CUDA_THREADS(device_id);
   const int64_t padded_target_length = 2 * max_target_length + 1;
   const uint64_t padded_target_length_power2 = 1ull << Log2Ceil64(padded_target_length);
+  const uint64_t max_threads = CUDA_THREADS(device_id);
   const uint64_t threads_per_batch = std::min(max_threads, padded_target_length_power2);
   const unsigned int batches_per_block = std::min(max_threads / threads_per_batch, static_cast<uint64_t>(batch_size));
 
@@ -470,21 +389,12 @@ void CalCTCLossGradV2(const S *grad_out, const S *log_probs, const T *targets, c
     targets, input_lengths, target_lengths, neg_log_likelihood, log_alpha, log_beta, batch_size, max_target_length,
     zero_infinity, blank, log_probs_shape, log_alpha_shape, grad);
 
-  dim3 alpha_beta_shape(time_series - 1, batch_size, max_target_length);
-  const size_t alpha_beta_size = batch_size * (time_series - 1) * max_target_length;
+  const auto stride = time_series - 1;
+  const size_t alpha_beta_size = batch_size * stride;
 
   AlphaBetaComputeKernel<<<CUDA_BLOCKS(device_id, alpha_beta_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    targets, input_lengths, target_lengths, neg_log_likelihood, log_alpha, log_beta, alpha_beta_size, max_target_length,
-    zero_infinity, blank, alpha_beta_shape, log_probs_shape, log_alpha_shape, grad);
-
-  const size_t time_batch_size = batch_size * (time_series - 1);
-  const int64_t blank_target_length = max_target_length + 1;
-  const uint64_t target_length_power2 = 1ull << Log2Ceil64(blank_target_length);
-  const uint64_t threads_per_block = std::max(std::min(max_threads, target_length_power2), kNumberWarps * 2);
-
-  AlphaBetaBlankKernel<S, T><<<time_batch_size, threads_per_block, 0, cuda_stream>>>(
-    input_lengths, target_lengths, neg_log_likelihood, log_alpha, log_beta, time_batch_size, (time_series - 1),
-    zero_infinity, blank, log_probs_shape, log_alpha_shape, grad);
+    targets, input_lengths, target_lengths, neg_log_likelihood, log_alpha, log_beta, alpha_beta_size, stride,
+    max_target_length, zero_infinity, blank, log_probs_shape, log_alpha_shape, grad);
 
   GradOutKernel<<<CUDA_BLOCKS(device_id, grad_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     grad_out, log_probs, input_lengths, neg_log_likelihood, zero_infinity, log_probs_shape, grad);
@@ -518,23 +428,24 @@ template CUDA_LIB_EXPORT void CalCTCLossV2<double, int64_t>(
 template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int>(
   const float *grad_out, const float *log_probs, const int *targets, const int *input_lengths,
   const int *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
-  int64_t batch_size, int64_t time_series, int64_t max_target_length, bool zero_infinity, int blank,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
   dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int>(
   const double *grad_out, const double *log_probs, const int *targets, const int *input_lengths,
   const int *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
-  int64_t batch_size, int64_t time_series, int64_t max_target_length, bool zero_infinity, int blank,
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity, int blank,
   dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalCTCLossGradV2<float, int64_t>(
   const float *grad_out, const float *log_probs, const int64_t *targets, const int64_t *input_lengths,
   const int64_t *target_lengths, const float *neg_log_likelihood, const float *log_alpha, float *log_beta,
-  int64_t batch_size, int64_t time_series, int64_t max_target_length, bool zero_infinity, int64_t blank,
-  dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,
+  int64_t blank, dim3 log_probs_shape, dim3 log_alpha_shape, float *grad, uint32_t device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalCTCLossGradV2<double, int64_t>(
   const double *grad_out, const double *log_probs, const int64_t *targets, const int64_t *input_lengths,
   const int64_t *target_lengths, const double *neg_log_likelihood, const double *log_alpha, double *log_beta,
-  int64_t batch_size, int64_t time_series, int64_t max_target_length, bool zero_infinity, int64_t blank,
-  dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id, cudaStream_t cuda_stream);
+  int64_t batch_size, int64_t time_series, int64_t num_labels, int64_t max_target_length, bool zero_infinity,
+  int64_t blank, dim3 log_probs_shape, dim3 log_alpha_shape, double *grad, uint32_t device_id,
+  cudaStream_t cuda_stream);
