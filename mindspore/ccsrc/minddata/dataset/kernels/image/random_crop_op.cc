@@ -229,7 +229,7 @@ Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   } else if (inputs[0].Rank() > kDefaultImageRank) {
     std::shared_ptr<TensorShape> output_shape_new;
     RETURN_IF_NOT_OK(ConstructShape(inputs[0], &output_shape_new));
-    outputs.emplace_back(*output_shape_new);
+    (void)outputs.emplace_back(*output_shape_new);
   }
   if (!outputs.empty()) {
     return Status::OK();

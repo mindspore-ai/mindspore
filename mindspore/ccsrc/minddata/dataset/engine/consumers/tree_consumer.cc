@@ -739,7 +739,7 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
   *data_ptr = std::make_unique<std::vector<uint8_t>>(num_of_elements * sizeof(T));
   if (need_convert) {
     auto tmp_ptr = std::make_unique<std::vector<uint8_t>>(num_of_elements * sizeof(S));
-    std::copy(src, src + sizeof(S) * num_of_elements, tmp_ptr->begin());
+    (void)std::copy(src, src + sizeof(S) * num_of_elements, tmp_ptr->begin());
     auto s_ptr = reinterpret_cast<S *>(&(*(tmp_ptr->begin())));
     auto el = std::make_unique<T>();
     for (uint32_t i = 0; i < num_of_elements; ++i) {
@@ -750,7 +750,7 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
       }
     }
   } else {
-    std::copy(src, src + sizeof(T) * num_of_elements, (*data_ptr)->begin());
+    (void)std::copy(src, src + sizeof(T) * num_of_elements, (*data_ptr)->begin());
   }
   if (shape.empty()) {
     *data = std::make_unique<T>();

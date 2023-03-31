@@ -45,7 +45,7 @@ void ShardColumn::Init(const json &schema_json, bool compress_integer) {
     column_data_type_.push_back(ColumnDataTypeMap.at(str_type));
     if (it_value.find("shape") != it_value.end()) {
       std::vector<int64_t> vec(it_value["shape"].size());
-      std::copy(it_value["shape"].begin(), it_value["shape"].end(), vec.begin());
+      (void)std::copy(it_value["shape"].begin(), it_value["shape"].end(), vec.begin());
       column_shape_.push_back(vec);
       if (str_type == "int32" || str_type == "int64") {
         has_integer_array = true;

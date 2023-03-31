@@ -31,7 +31,7 @@ Status PadEndOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   for (auto s : inputs) {
-    outputs.emplace_back(TensorShape(output_shape_.AsVector()));
+    (void)outputs.emplace_back(TensorShape(output_shape_.AsVector()));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(), "PadEnd: invalid input shape.");
   return Status::OK();

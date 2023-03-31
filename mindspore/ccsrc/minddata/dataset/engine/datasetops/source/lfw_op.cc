@@ -149,9 +149,9 @@ Status LFWOp::ParsePeopleImageIds(const std::vector<std::vector<std::string>> &a
         }
         std::string file_name = name + "_" + (format_id + id);
         std::vector<std::string> image_name;
-        image_name.emplace_back(file_name);
-        image_name.emplace_back(name);
-        image_label_people_.emplace_back(image_name);
+        (void)image_name.emplace_back(file_name);
+        (void)image_name.emplace_back(name);
+        (void)image_label_people_.emplace_back(image_name);
       }
     }
     begin += n_lines + 1;
@@ -192,12 +192,12 @@ Status LFWOp::ParsePairsImageIds(const std::vector<std::vector<std::string>> &an
       std::string first_name = name + "_" + (first_format_id + first_extension);
       std::string second_name = name + "_" + (second_format_id + second_extension);
       std::vector<std::string> image_pair;
-      image_pair.emplace_back(first_name);
-      image_pair.emplace_back(name);
-      image_pair.emplace_back(second_name);
-      image_pair.emplace_back(name);
-      image_pair.emplace_back("1");
-      image_label_pair_.push_back(image_pair);
+      (void)image_pair.emplace_back(first_name);
+      (void)image_pair.emplace_back(name);
+      (void)image_pair.emplace_back(second_name);
+      (void)image_pair.emplace_back(name);
+      (void)image_pair.emplace_back("1");
+      (void)image_label_pair_.push_back(image_pair);
     }
     int multiple = 2;
     for (uint32_t k = begin + pairs_nums; k < begin + (multiple * pairs_nums); k++) {
@@ -217,12 +217,12 @@ Status LFWOp::ParsePairsImageIds(const std::vector<std::vector<std::string>> &an
       std::string first_name = first + "_" + (first_format_id + first_extension);
       std::string second_name = second + "_" + (second_format_id + second_extension);
       std::vector<std::string> image_pair;
-      image_pair.emplace_back(first_name);
-      image_pair.emplace_back(first);
-      image_pair.emplace_back(second_name);
-      image_pair.emplace_back(second);
-      image_pair.emplace_back("0");
-      image_label_pair_.push_back(image_pair);
+      (void)image_pair.emplace_back(first_name);
+      (void)image_pair.emplace_back(first);
+      (void)image_pair.emplace_back(second_name);
+      (void)image_pair.emplace_back(second);
+      (void)image_pair.emplace_back("0");
+      (void)image_label_pair_.push_back(image_pair);
     }
     begin += (multiple * pairs_nums);
   }
@@ -245,7 +245,7 @@ std::vector<std::vector<std::string>> LFWOp::ReadFile(const std::string &annotat
     while (line_string >> line_result) {
       vector_string.push_back(line_result);
     }
-    annotation_vector_string.emplace_back(vector_string);
+    (void)annotation_vector_string.emplace_back(vector_string);
   }
   in_file.close();
   return annotation_vector_string;

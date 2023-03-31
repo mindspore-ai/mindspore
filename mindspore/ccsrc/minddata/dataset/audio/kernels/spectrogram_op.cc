@@ -46,7 +46,7 @@ Status SpectrogramOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   if (power_ == 0) {
     vec.push_back(two);
   }
-  outputs.emplace_back(TensorShape(vec));
+  (void)outputs.emplace_back(TensorShape(vec));
 
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kMDUnexpectedError, "Spectrogram: input tensor is not in shape of <..., time>.");

@@ -124,15 +124,15 @@ Status CenterCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   outputs.clear();
   TensorShape out = TensorShape{crop_het_, crop_wid_};
   if (inputs[0].Rank() == kMinImageRank) {
-    outputs.emplace_back(out);
+    (void)outputs.emplace_back(out);
   }
   if (inputs[0].Rank() == kDefaultImageRank) {
-    outputs.emplace_back(out.AppendDim(inputs[0][kChannelIndexHWC]));
+    (void)outputs.emplace_back(out.AppendDim(inputs[0][kChannelIndexHWC]));
   }
   if (inputs[0].Rank() > kDefaultImageRank) {
     std::shared_ptr<TensorShape> output_shape_new = nullptr;
     RETURN_IF_NOT_OK(ConstructShape(inputs[0], &output_shape_new));
-    outputs.emplace_back(*output_shape_new);
+    (void)outputs.emplace_back(*output_shape_new);
   }
   if (!outputs.empty()) {
     return Status::OK();

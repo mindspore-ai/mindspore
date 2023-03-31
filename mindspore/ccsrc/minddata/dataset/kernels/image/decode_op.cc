@@ -54,7 +54,7 @@ Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   outputs.clear();
   TensorShape out({-1, -1, 3});  // we don't know what is output image size, but we know it should be 3 channels
   if (inputs[0].Rank() == 1) {
-    outputs.emplace_back(out);
+    (void)outputs.emplace_back(out);
   }
   if (!outputs.empty()) {
     return Status::OK();

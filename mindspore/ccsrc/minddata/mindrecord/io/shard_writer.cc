@@ -596,7 +596,7 @@ Status ShardWriter::MergeBlobData(const std::vector<string> &blob_fields,
     auto &blob = row_bin_data.at(blob_fields[0]);
     auto blob_size = blob->size();
     *output = std::make_shared<std::vector<uint8_t>>(blob_size);
-    std::copy(blob->begin(), blob->end(), (*output)->begin());
+    (void)std::copy(blob->begin(), blob->end(), (*output)->begin());
   } else {
     size_t output_size = 0;
     for (auto &field : blob_fields) {
@@ -614,9 +614,9 @@ Status ShardWriter::MergeBlobData(const std::vector<string> &blob_fields,
         buf[buf.size() - 1 - i] = (std::numeric_limits<uint8_t>::max()) & blob_size;
         blob_size >>= 8u;
       }
-      std::copy(buf.begin(), buf.end(), (*output)->begin() + idx);
+      (void)std::copy(buf.begin(), buf.end(), (*output)->begin() + idx);
       idx += buf.size();
-      std::copy(b->begin(), b->end(), (*output)->begin() + idx);
+      (void)std::copy(b->begin(), b->end(), (*output)->begin() + idx);
       idx += b->size();
     }
   }

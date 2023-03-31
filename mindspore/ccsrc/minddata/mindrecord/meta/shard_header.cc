@@ -306,7 +306,7 @@ Status ShardHeader::ParseSchema(const json &schemas) {
 }
 
 void ShardHeader::ParseShardAddress(const json &address) {
-  std::copy(address.begin(), address.end(), std::back_inserter(shard_addresses_));
+  (void)std::copy(address.begin(), address.end(), std::back_inserter(shard_addresses_));
 }
 
 std::vector<std::string> ShardHeader::SerializeHeader() {
