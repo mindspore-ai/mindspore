@@ -67,6 +67,7 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   ResetResource();
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  indices_column_ = inputs.at(1)->GetShapeVector()[1];
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
@@ -99,10 +100,6 @@ int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     input_size_list_.push_back(out_indices_size_);
     output_size_list_.push_back(x1_indices_size_);
     output_size_list_.push_back(x2_indices_size_);
-  }
-  auto dims = inputs.at(0)->GetShapeVector()[1];
-  if (dims >= 0) {
-    indices_column_ = LongToSize(dims);
   }
   return ret;
 }
@@ -139,6 +136,7 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the number of inputs should be " << kOutputNum << ", but got "
                       << outputs.size() << " output(s).";
   }
+  size_t size_t_indices_column = LongToSize(indices_column_);
   // Inputs
   const auto dout = reinterpret_cast<T *>(inputs[kDoutIdx]->addr);
   const auto x1_indices = reinterpret_cast<S *>(inputs[kX1IndicesIdx]->addr);
@@ -148,9 +146,9 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   auto dx1 = reinterpret_cast<T *>(outputs[kDx1Idx]->addr);
   auto dx2 = reinterpret_cast<T *>(outputs[kDx2Idx]->addr);
 
-  const int64_t x1_indices_num = inputs[kX1IndicesIdx]->size / (sizeof(S) * indices_column_);
-  const int64_t x2_indices_num = inputs[kX2IndicesIdx]->size / (sizeof(S) * indices_column_);
-  const int64_t out_indices_num = inputs[kOutIndicesIdx]->size / (sizeof(S) * indices_column_);
+  const int64_t x1_indices_num = SizeToLong(inputs[kX1IndicesIdx]->size / (sizeof(S) * size_t_indices_column));
+  const int64_t x2_indices_num = SizeToLong(inputs[kX2IndicesIdx]->size / (sizeof(S) * size_t_indices_column));
+  const int64_t out_indices_num = SizeToLong(inputs[kOutIndicesIdx]->size / (sizeof(S) * size_t_indices_column));
 
   memset_s(dx1, sizeof(T) * x1_indices_num, 0, sizeof(T) * x1_indices_num);
   memset_s(dx2, sizeof(T) * x2_indices_num, 0, sizeof(T) * x2_indices_num);
@@ -163,15 +161,15 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
 
   while (i < x1_indices_num && j < x2_indices_num && k < out_indices_num) {
     a_idx_geq = b_idx_geq = true;
-    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, indices_column_, dx1, &a_idx_geq);
-    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, indices_column_, dx2, &b_idx_geq);
+    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, size_t_indices_column, dx1, &a_idx_geq);
+    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, size_t_indices_column, dx2, &b_idx_geq);
     if (a_idx_geq && b_idx_geq) {
       k += 1;
     }
   }
   while (i < x1_indices_num && k < out_indices_num) {
     a_idx_geq = true;
-    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, indices_column_, dx1, &a_idx_geq);
+    CompareTwoIndices(x1_indices, out_indices, dout, &i, k, size_t_indices_column, dx1, &a_idx_geq);
     if (a_idx_geq) {
       k += 1;
     }
@@ -179,7 +177,7 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
 
   while (j < x2_indices_num && k < out_indices_num) {
     b_idx_geq = true;
-    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, indices_column_, dx2, &b_idx_geq);
+    CompareTwoIndices(x2_indices, out_indices, dout, &j, k, size_t_indices_column, dx2, &b_idx_geq);
     if (b_idx_geq) {
       k += 1;
     }
