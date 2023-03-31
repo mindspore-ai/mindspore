@@ -154,7 +154,7 @@ Status GraphDataImpl::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, 
     src_node->GetEdgeByAdjNodeId(node_id.second, &edge_id);
 
     std::vector<EdgeIdType> connection_edge = {edge_id};
-    edge_list.emplace_back(std::move(connection_edge));
+    (void)edge_list.emplace_back(std::move(connection_edge));
   }
 
   RETURN_IF_NOT_OK(CreateTensorByVector<EdgeIdType>(edge_list, DataType(DataType::DE_INT32), out));
@@ -266,7 +266,7 @@ Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_li
   for (size_t node_idx = 0; node_idx < node_list.size(); ++node_idx) {
     std::shared_ptr<Node> input_node;
     RETURN_IF_NOT_OK(GetNodeByNodeId(node_list[node_idx], &input_node));
-    neighbors_vec[node_idx].emplace_back(node_list[node_idx]);
+    (void)neighbors_vec[node_idx].emplace_back(node_list[node_idx]);
     std::vector<NodeIdType> input_list = {node_list[node_idx]};
     for (size_t i = 0; i < neighbor_nums.size(); ++i) {
       std::vector<NodeIdType> neighbors;
@@ -274,7 +274,7 @@ Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_li
       for (const auto &node_id : input_list) {
         if (node_id == kDefaultNodeId) {
           for (int32_t j = 0; j < neighbor_nums[i]; ++j) {
-            neighbors.emplace_back(kDefaultNodeId);
+            (void)neighbors.emplace_back(kDefaultNodeId);
           }
         } else {
           std::shared_ptr<Node> node;
@@ -304,7 +304,7 @@ Status GraphDataImpl::NegativeSample(const std::vector<NodeIdType> &data, const 
     if (exclude_data.find(data[shuffled_ids[i]]) != exclude_data.end()) {
       continue;
     }
-    out_samples->emplace_back(data[shuffled_ids[i]]);
+    (void)out_samples->emplace_back(data[shuffled_ids[i]]);
     if (out_samples->size() >= samples_num) {
       break;
     }
@@ -338,7 +338,7 @@ Status GraphDataImpl::GetNegSampledNeighbors(const std::vector<NodeIdType> &node
     (void)std::transform(neighbors.begin(), neighbors.end(),
                          std::insert_iterator<std::unordered_set<NodeIdType>>(exclude_nodes, exclude_nodes.begin()),
                          [](const NodeIdType node) { return node; });
-    neg_neighbors_vec[node_idx].emplace_back(node->id());
+    (void)neg_neighbors_vec[node_idx].emplace_back(node->id());
     if (all_nodes.size() > exclude_nodes.size()) {
       while (neg_neighbors_vec[node_idx].size() < samples_num + 1) {
         RETURN_IF_NOT_OK(NegativeSample(all_nodes, shuffled_id, &start_index, exclude_nodes, samples_num + 1,
@@ -353,7 +353,7 @@ Status GraphDataImpl::GetNegSampledNeighbors(const std::vector<NodeIdType> &node
                     << " neg_neighbor_type:" << neg_neighbor_type;
       // If there are no negative neighbors, they are filled with kDefaultNodeId
       for (int32_t i = 0; i < samples_num; ++i) {
-        neg_neighbors_vec[node_idx].emplace_back(kDefaultNodeId);
+        (void)neg_neighbors_vec[node_idx].emplace_back(kDefaultNodeId);
       }
     }
     if (need_shuffle) {
@@ -635,7 +635,7 @@ Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
 
   for (const auto &node_feature : node_feature_map_) {
     for (auto type : node_feature.second) {
-      meta_info->node_feature_type.emplace_back(type);
+      (void)meta_info->node_feature_type.emplace_back(type);
     }
   }
   std::sort(meta_info->node_feature_type.begin(), meta_info->node_feature_type.end());
@@ -644,7 +644,7 @@ Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
 
   for (const auto &edge_feature : edge_feature_map_) {
     for (const auto &type : edge_feature.second) {
-      meta_info->edge_feature_type.emplace_back(type);
+      (void)meta_info->edge_feature_type.emplace_back(type);
     }
   }
   std::sort(meta_info->edge_feature_type.begin(), meta_info->edge_feature_type.end());
@@ -652,7 +652,7 @@ Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
   meta_info->edge_feature_type.erase(unique_edge, meta_info->edge_feature_type.end());
 
   for (const auto &graph_feature : graph_feature_map_) {
-    meta_info->graph_feature_type.emplace_back(graph_feature.first);
+    (void)meta_info->graph_feature_type.emplace_back(graph_feature.first);
   }
   return Status::OK();
 }

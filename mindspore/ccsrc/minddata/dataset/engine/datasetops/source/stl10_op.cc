@@ -280,7 +280,7 @@ Status STL10Op::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
       pix += kSTLImageRows;
     }
 
-    stl10_image_label_pairs_.emplace_back(std::make_pair(image_tensor, label));
+    (void)stl10_image_label_pairs_.emplace_back(std::make_pair(image_tensor, label));
     image_path_.push_back(image_names_[index]);
     label_path_.push_back(has_label_file ? label_names_[index] : "no label");
   }

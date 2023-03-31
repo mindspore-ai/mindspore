@@ -39,7 +39,7 @@ Status MelSpectrogramOp::OutputShape(const std::vector<TensorShape> &inputs, std
   output_shape_vector.push_back(n_mels_);
   output_shape_vector.push_back(time);
   TensorShape out = TensorShape(output_shape_vector);
-  outputs.emplace_back(out);
+  (void)outputs.emplace_back(out);
   if (!outputs.empty()) {
     return Status::OK();
   }

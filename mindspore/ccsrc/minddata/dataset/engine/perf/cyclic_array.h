@@ -131,7 +131,7 @@ class CyclicArray {
         tail_(rhs.tail_),
         size_(rhs.size_),
         capacity_(rhs.capacity_) {
-    std::copy(rhs.begin(), rhs.end(), begin());
+    (void)std::copy(rhs.begin(), rhs.end(), begin());
   }
 
   CyclicArray(CyclicArray &&rhs) = default;

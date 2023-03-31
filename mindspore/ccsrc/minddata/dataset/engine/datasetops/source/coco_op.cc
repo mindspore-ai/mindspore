@@ -191,7 +191,7 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
     if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid image, 'image_id': " + image_id + " should be with suffix like \".jpg\"");
     }
-    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    (void)std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
@@ -226,7 +226,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
     if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid image, 'image_id': " + image_id + " should be with suffix like \".jpg\"");
     }
-    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    (void)std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
@@ -249,7 +249,7 @@ Status CocoOp::LoadCaptioningTensorRow(row_id_type row_id, const std::string &im
     if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid image, 'image_id': " + image_id + " should be with suffix like \".jpg\".");
     }
-    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    (void)std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
@@ -302,7 +302,7 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
     if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid image, " + image_id + " should be with suffix like \".jpg\"");
     }
-    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    (void)std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));

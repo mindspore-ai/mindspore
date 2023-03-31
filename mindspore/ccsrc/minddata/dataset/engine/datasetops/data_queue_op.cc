@@ -104,7 +104,7 @@ DataQueueOp::~DataQueueOp() {
     }
     auto child_child_node = node->Children();
     if (!child_child_node.empty()) {
-      std::copy(child_child_node.begin(), child_child_node.end(), std::back_inserter(child_node));
+      (void)std::copy(child_child_node.begin(), child_child_node.end(), std::back_inserter(child_node));
     }
     ++node_index;
   }

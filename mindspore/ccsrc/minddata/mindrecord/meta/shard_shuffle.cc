@@ -105,8 +105,9 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
       start_index = shard_sample_cout[shuffle_files[i] - 1];
       current_size = shard_sample_cout[shuffle_files[i]] - start_index;
     }
-    std::copy(original_permutation.begin() + start_index, original_permutation.begin() + start_index + current_size,
-              tasks.permutation_.begin() + whole_index);
+    (void)std::copy(original_permutation.begin() + start_index,
+                    original_permutation.begin() + start_index + current_size,
+                    tasks.permutation_.begin() + whole_index);
     whole_index += current_size;
   }
 

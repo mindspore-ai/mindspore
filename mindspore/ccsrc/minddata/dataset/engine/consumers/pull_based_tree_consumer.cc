@@ -48,7 +48,7 @@ Status PullBasedIteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const 
   // Return empty vector if there's no data
   RETURN_OK_IF_TRUE(res.empty());
 
-  std::copy(res.begin(), res.end(), std::back_inserter(*out));
+  (void)std::copy(res.begin(), res.end(), std::back_inserter(*out));
   return Status::OK();
 }
 

@@ -123,7 +123,7 @@ Status DvppDecodeResizeJpegOp::OutputShape(const std::vector<TensorShape> &input
     RETURN_STATUS_UNEXPECTED("DvppDecodeResizeJpegOp::OutputShape inputs is null");
   }
   if (inputs[0].Rank() == 1) {
-    outputs.emplace_back(out);
+    (void)outputs.emplace_back(out);
   }
   if (!outputs.empty()) {
     return Status::OK();
