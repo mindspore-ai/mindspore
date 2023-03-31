@@ -258,7 +258,6 @@ void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::Addre
   total_size =
     std::accumulate(data_list.begin(), data_list.end(), total_size,
                     [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
-
   if (workspace_addr->size != total_size) {
     MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->size << " and "
                       << total_size;
