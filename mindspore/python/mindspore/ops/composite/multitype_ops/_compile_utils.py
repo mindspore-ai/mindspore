@@ -114,8 +114,12 @@ def data_update_by_ops(transfer_type, arg, data, new_index, value=None):
         data = strided_slice(data, stride_info[0], stride_info[1], stride_info[2],
                              mask_index[0], mask_index[1], 0, 0, mask_index[2])
     elif transfer_type == ValueTransferType.kGatherND:
+        if isinstance(new_index, list):
+            new_index = handle_multi_dim_index_tensor(new_index, arg)
         data = F.gather_nd(data, Tensor(new_index))
     elif transfer_type == ValueTransferType.kTensorScatterUpdate:
+        if isinstance(new_index, list):
+            new_index = handle_multi_dim_index_tensor(new_index, arg)
         data = F.tensor_scatter_update(data, new_index, value)
     elif transfer_type == ValueTransferType.kScatterNdUpdate:
         F.scatter_nd_update(data, new_index, value)
@@ -394,6 +398,37 @@ def handle_empty_tensor(arg, data):
         init_func.__enable_zero_dim__ = True
         return Tensor(shape=(0), dtype=data.dtype, init=init_func)
     return const_utils.make_tensor([], data.dtype, arg)
+
+
+def handle_multi_dim_index_tensor(new_index, arg):
+    """handle data update with multi dim index tensor"""
+    slice_cnt = 0
+    new_indies_tensor = []
+    if len(arg) == 1:
+        broadcast_shape = arg[0]
+        new_index = hyper_map(F.partial(Tensor), new_index)
+        broadcast_tensors = hyper_map(
+            F.partial(_broadcast, broadcast_shape), new_index)
+        new_broadcast_tensors = ()
+        for tensor in broadcast_tensors:
+            new_broadcast_tensors += (F.cast(tensor, mstype.int64),)
+        new_index = stack(new_broadcast_tensors)
+        return new_index
+    broadcast_shape, final_shape, index_tensor_new_shape, slice_shapes, tensor_positions, fancy_position = arg
+    for i, index in enumerate(new_index):
+        if i in tensor_positions:
+            transform_tensor = _transform_indexing_tensor(broadcast_shape, final_shape, index_tensor_new_shape,
+                                                          Tensor(index))
+            new_indies_tensor.append(F.cast(transform_tensor, mstype.int64))
+        else:
+            shape = const_utils.compute_slice_shape(
+                slice_shapes, len(broadcast_shape), slice_cnt, fancy_position)
+            array = Tensor(index).reshape(shape)
+            slice_index_tensor = _broadcast(final_shape, array)
+            new_indies_tensor.append(F.cast(slice_index_tensor, mstype.int64))
+            slice_cnt += 1
+    new_index = stack(new_indies_tensor)
+    return new_index
 
 
 def _expand_data_dims(data, tuple_index):
