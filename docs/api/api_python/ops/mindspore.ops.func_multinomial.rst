@@ -20,4 +20,4 @@ mindspore.ops.multinomial
     异常：
         - **TypeError** - 如果 `input` 不是数据类型不是float32的Tensor。
         - **TypeError** - 如果 `num_samples` 不是int。
-        - **TypeError** - 如果 `seed` 既不是int也不是optional。
+        - **TypeError** - 如果 `seed` 既不是int也不是None。

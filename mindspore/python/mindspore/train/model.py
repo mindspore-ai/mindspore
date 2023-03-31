@@ -1004,7 +1004,7 @@ class Model:
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> loss_scale_manager = ms.FixedLossScaleManager()
+            >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None,
             ...                  loss_scale_manager=loss_scale_manager)
