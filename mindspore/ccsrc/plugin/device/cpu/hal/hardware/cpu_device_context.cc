@@ -557,7 +557,7 @@ MS_REGISTER_DEVICE(kCPUDevice, CPUDeviceContext);
 MSCONTEXT_REGISTER_INIT_FUNC(kCPUDevice, [](MsContext *ctx) -> void {
   MS_EXCEPTION_IF_NULL(ctx);
   if (ctx->backend_policy() != "ms") {
-    ctx->set_backend_policy("ms");
+    (void)ctx->set_backend_policy("ms");
   }
 });
 #endif

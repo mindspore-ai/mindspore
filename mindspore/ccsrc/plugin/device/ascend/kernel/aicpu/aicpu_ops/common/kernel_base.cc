@@ -100,7 +100,7 @@ uint32_t KernelBase::Compute(void *param) {
   return DoCompute();
 }
 
-size_t KernelBase::GetDataTypeSize(::aicpuops::DataType data_type) {
+size_t KernelBase::GetDataTypeSize(::aicpuops::DataType data_type) const {
   auto it = kKernelBaseDataTypeSize.find(data_type);
   if (it == kKernelBaseDataTypeSize.end()) {
     AICPU_LOGE("don't support input tensor types");
@@ -109,7 +109,7 @@ size_t KernelBase::GetDataTypeSize(::aicpuops::DataType data_type) {
   return it->second;
 }
 
-size_t KernelBase::GetTensorMemSizeByShape(::aicpuops::Tensor tensor) {
+size_t KernelBase::GetTensorMemSizeByShape(const ::aicpuops::Tensor &tensor) {
   std::vector<int64_t> shape;
   auto tensor_shape = tensor.tensor_shape();
   for (int i = 0; i < tensor_shape.dim_size(); ++i) {

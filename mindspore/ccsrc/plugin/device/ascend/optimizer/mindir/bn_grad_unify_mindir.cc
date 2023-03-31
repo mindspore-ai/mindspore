@@ -73,7 +73,7 @@ bool BatchNormGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGra
 }
 
 void BatchNormGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kX1)
     .AddVar(kX2)
     .AddVar(kX3)
@@ -84,7 +84,7 @@ void BatchNormGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void BatchNormGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddCNode(kRBatchnormGrad, {std::make_shared<Primitive>(kBatchNormGradOpName), kX1, kX2, kX3, kX4, kX5},
               BuildBatchNormGrad);
 }
