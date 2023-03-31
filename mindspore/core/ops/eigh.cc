@@ -101,7 +101,7 @@ AbstractBasePtr EighInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto infer_type = EighInferType(primitive, input_args);
   auto infer_shape = EighInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
