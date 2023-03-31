@@ -78,9 +78,12 @@ class Cell(Cell_):
     PYNATIVE_MODE (dynamic graph mode).
 
     Args:
-        auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its subcells. It will
-                      affect the name of the parameter in the network. If set to True, the network parameter
-                      name will be prefixed, otherwise it will not. Default: True.
+        auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its child cells. It also
+                      affects the names of parameters in the `Cell`. If set to True, the parameter name will be
+                      automatically prefixed, otherwise not. In general, the backbone network should be set to True,
+                      otherwise the duplicate name problem will appear. The cell to train the backbone network, such as
+                      optimizer and :class:`mindspore.nn.TrainOneStepCell`, should be set to False, otherwise the
+                      parameter name in backbone will be changed by mistake. Default: True.
         flags (dict, optional): Network configuration information, currently it is used for the binding of network
                       and dataset. Users can also customize network attributes by this parameter. Default: None.
 
