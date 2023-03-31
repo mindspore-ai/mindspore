@@ -518,6 +518,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
 void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto after_inline_pm = std::make_shared<PassManager>("after_inline_pm");
+  after_inline_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   optimizer->AddPassManager(after_inline_pm);
