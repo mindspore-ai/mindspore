@@ -168,7 +168,7 @@ class InlinerBase : public AnfVisitor {
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
   }
 
-  bool CheckFlag(const FuncGraphPtr &fg) {
+  bool CheckFlag(const FuncGraphPtr &fg) const {
     if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
         fg->stub()) {
       return false;
@@ -249,9 +249,10 @@ class InlinerBase : public AnfVisitor {
                      const FuncGraphPtr &fg) const {
     auto params = fg->parameters();
     auto old_size = params.size();
+    constexpr auto print_deep = 10;
     if (old_size != new_params.size()) {
       MS_LOG(EXCEPTION) << "Parameter size not match." << old_size << " new " << new_params.size()
-                        << fg->output()->DebugString(10);
+                        << fg->output()->DebugString(print_deep);
     }
     for (size_t i = 0; i < old_size; i++) {
       (void)mng->Replace(params[i], new_params[i]);

@@ -142,7 +142,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
         if (IntToSize(pos_args_input_count) + i + 1 > specialized_graph->parameters().size()) {
           MS_LOG(EXCEPTION) << "Got unexpected keyword argument: " << kw_param_name;
         }
-        specialized_parameter_list->push_back(specialized_graph->parameters()[pos_args_input_count + i]);
+        specialized_parameter_list->push_back(specialized_graph->parameters()[IntToSize(pos_args_input_count) + i]);
       } else {
         ParameterPtr para = std::make_shared<Parameter>(specialized_graph);
         std::string param_name = specialized_graph->GetVariableKwargName() + "[" + kw_param_name + "]";

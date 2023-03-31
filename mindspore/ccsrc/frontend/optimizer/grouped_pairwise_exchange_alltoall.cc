@@ -360,11 +360,11 @@ void CreateNeighborExchangeNodes(const AnfNodePtr &input_node, size_t split_dim,
   if (split != nullptr) {
     neighbor_exchange_nodes->push_back(split);
   }
-  neighbor_exchange_nodes->insert(neighbor_exchange_nodes->end(), getitem_nodes.begin(), getitem_nodes.end());
+  (void)neighbor_exchange_nodes->insert(neighbor_exchange_nodes->end(), getitem_nodes.begin(), getitem_nodes.end());
   neighbor_exchange_nodes->push_back(maketuple);
   neighbor_exchange_nodes->push_back(neighbor_exchange);
-  neighbor_exchange_nodes->insert(neighbor_exchange_nodes->end(), getitem_nodes_after.begin(),
-                                  getitem_nodes_after.end());
+  (void)neighbor_exchange_nodes->insert(neighbor_exchange_nodes->end(), getitem_nodes_after.begin(),
+                                        getitem_nodes_after.end());
   neighbor_exchange_nodes->push_back(maketuple_after);
   neighbor_exchange_nodes->push_back(concat);
 }
@@ -568,7 +568,7 @@ CNodePtr CreateReplaceGraph(const FuncGraphManagerPtr &manager, const std::vecto
 void CreateAndReplaceAlltoall(const FuncGraphManagerPtr &manager, const std::vector<CNodePtr> &origin_nodes_topological,
                               const CNodePtrPair &alltoall_pair, GpeaInfo *gpea_info) {
   auto cnode = CreateReplaceGraph(manager, origin_nodes_topological, alltoall_pair, gpea_info);
-  manager->Replace(alltoall_pair.second, cnode);
+  (void)manager->Replace(alltoall_pair.second, cnode);
 }
 
 void CreateAndReplaceGraph(const FuncGraphManagerPtr &manager, const std::vector<CNodePtr> &origin_nodes_topological,
