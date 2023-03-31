@@ -59,10 +59,6 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F32_Default, DataType.F32_FracNZ) \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_Default) \
-    .dtype_format(DataType.BOOL_NHWC, DataType.BOOL_5HD) \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_5HD) \
-    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_NHWC) \
-    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_Default) \
     .dtype_format(DataType.F16_Default, DataType.F16_NHWC) \
     .dtype_format(DataType.F16_Default, DataType.F16_HWCN) \
     .dtype_format(DataType.F16_NHWC, DataType.F16_Default) \
