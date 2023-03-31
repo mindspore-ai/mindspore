@@ -56,7 +56,7 @@ class HcclAdapter {
   bool InitHccl(uint32_t device_id, std::string_view rank_id);
   bool FinalizeHccl();
   const bool Inited() const { return init_flag_; }
-  HcclComm get_hccl_comm() const { return hccl_comm_; }
+  const HcclComm get_hccl_comm() const { return hccl_comm_; }
   HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
   HcclResult HcclDestroyGroup(const std::string &group) const;
   HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;

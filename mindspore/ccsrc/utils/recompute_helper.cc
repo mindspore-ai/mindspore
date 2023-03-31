@@ -117,7 +117,7 @@ void GetMaxSubGraph(const FuncGraphManagerPtr &mng, mindspore::HashSet<CNodePtr>
   while (!nodes_to_visit.empty()) {
     auto current_node = nodes_to_visit.front();
     nodes_to_visit.pop();
-    recomputed_nodes->insert(current_node);
+    (void)recomputed_nodes->insert(current_node);
     // No need to find nodes through side-effect dependency.
     if (IsPrimitiveCNode(current_node, prim::kPrimUpdateState)) {
       continue;
@@ -177,9 +177,9 @@ void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
       if (!IsBpropNode(output_node) || IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem)) {
         continue;
       }
-      target_nodes->insert(output_node->cast<CNodePtr>());
+      (void)target_nodes->insert(output_node->cast<CNodePtr>());
       if (!inserted) {
-        recompute_nodes->insert(node);
+        (void)recompute_nodes->insert(node);
         inserted = true;
       }
     }
@@ -407,7 +407,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
   // Add the execution dependency.
   if (!has_recomputed_inputs && new_inputs.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
-    std::copy(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(make_tuple_inputs));
+    (void)std::copy(first_target_inputs.begin(), first_target_inputs.end(), std::back_inserter(make_tuple_inputs));
     auto first_input = new_inputs[1];
     MS_EXCEPTION_IF_NULL(first_input);
     std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), first_input,
@@ -454,7 +454,7 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
     new_target_node->CloneCNodeInfo(target_node);
     new_target_node->AddAttr("target_grad", MakeValue(true));
     new_target_node->set_scope(target_node->scope());
-    mng->Replace(target_node, new_target_node);
+    (void)mng->Replace(target_node, new_target_node);
   }
 }
 }  // namespace mindspore
