@@ -18,7 +18,7 @@ from typing import TypeVar, Type, Union
 
 import mindspore
 import mindspore.nn as nn
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor

@@ -30,7 +30,7 @@ from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.common._utils import get_slice_num, get_slice_shape
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.parallel._tensor import _get_slice_index

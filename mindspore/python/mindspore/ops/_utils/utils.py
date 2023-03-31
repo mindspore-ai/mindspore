@@ -17,8 +17,7 @@
 from __future__ import absolute_import
 
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import _primexpr
 from mindspore.common._utils import is_dim_unknown
@@ -87,10 +86,11 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)
     rank_base = len(x_shp[0])
     for i in range(1, len(x_shp)):
-        validator.check('len of x_shp[%d]' % i, len(x_shp[i]), 'len of x_shp[0]', len(x_shp[0]), Rel.EQ, prim_name)
-        validator.check('x_type[%d]' % i, x_type[i], 'x_type[0]', x_type[0], Rel.EQ, prim_name)
+        validator.check('len of x_shp[%d]' % i, len(x_shp[i]), 'len of x_shp[0]',
+                        len(x_shp[0]), validator.EQ, prim_name)
+        validator.check('x_type[%d]' % i, x_type[i], 'x_type[0]', x_type[0], validator.EQ, prim_name)
 
-    validator.check_int_range(axis, -rank_base, rank_base - 1, Rel.INC_BOTH, 'axis', prim_name)
+    validator.check_int_range(axis, -rank_base, rank_base - 1, validator.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base
     all_shp = x_shp[0][axis]

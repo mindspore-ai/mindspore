@@ -19,10 +19,9 @@ from __future__ import absolute_import
 import functools
 from mindspore.common.dtype import type_size_in_bytes
 import mindspore.context as context
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
-from mindspore._checkparam import Rel
 from mindspore.communication.management import GlobalComm
 
 
@@ -186,7 +185,7 @@ class DiscountedReturn(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, gamma):
         self.init_prim_io_names(inputs=['reward', 'done', 'last_state_value'], outputs=['output'])
-        validator.check_float_range(gamma, 0, 1, Rel.INC_RIGHT, "gamma", self.name)
+        validator.check_float_range(gamma, 0, 1, validator.INC_RIGHT, "gamma", self.name)
 
     def infer_shape(self, reward_shape, done_shape, last_state_value_shape):
         if len(reward_shape) != len(done_shape):
@@ -285,7 +284,7 @@ class GRUV2(PrimitiveWithInfer):
         self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
         self.is_train = validator.check_value_type("is_train", is_train, (bool,), self.name)
 
         if bidirectional:
@@ -298,9 +297,9 @@ class GRUV2(PrimitiveWithInfer):
         validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
 
         validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
-        validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
+        validator.check_int(h_shape[0], self.num_layers * self.num_directions, validator.EQ, "h[0]", self.name)
         validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
-        validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
+        validator.check_int(h_shape[2], self.hidden_size, validator.EQ, "h[2]", self.name)
 
         validator.check_equal_int(len(seq_lengths_shape), 1, "seq_lengths rank", self.name)
         validator.check_equal_int(seq_lengths_shape[0], x_shape[1], "seq_lengths_shape[0]", self.name)
@@ -399,7 +398,7 @@ class LSTMV2(Primitive):
         validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
         validator.check_value_type("dropout", dropout, [float], self.name)
-        validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
         validator.check_value_type("is_train", is_train, (bool,), self.name)
 
 
@@ -479,7 +478,7 @@ class CudnnGRU(Primitive):
         self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -516,8 +515,8 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, capacity, alpha, shapes, dtypes, seed0, seed1):
         """Initialize PriorityReplaBufferCreate."""
-        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
-        validator.check_float_range(alpha, 0.0, 1.0, Rel.INC_BOTH)
+        validator.check_int(capacity, 1, validator.GE, "capacity", self.name)
+        validator.check_float_range(alpha, 0.0, 1.0, validator.INC_BOTH)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
         validator.check_non_negative_int(seed0, "seed0", self.name)
@@ -556,7 +555,7 @@ class PriorityReplayBufferPush(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, handle):
         """Initialize PriorityReplaBufferPush."""
-        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+        validator.check_int(handle, 0, validator.GE, "handle", self.name)
 
     def infer_shape(self, *inputs):
         return (1,)
@@ -591,8 +590,8 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, handle, batch_size, shapes, dtypes):
         """Initialize PriorityReplaBufferSample."""
-        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
-        validator.check_int(batch_size, 1, Rel.GE, "batch_size", self.name)
+        validator.check_int(handle, 0, validator.GE, "capacity", self.name)
+        validator.check_int(batch_size, 1, validator.GE, "batch_size", self.name)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
 
@@ -637,7 +636,7 @@ class PriorityReplayBufferUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, handle):
         """Initialize PriorityReplaBufferUpdate."""
-        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
+        validator.check_int(handle, 0, validator.GE, "capacity", self.name)
 
     def infer_shape(self, indices, priorities):
         return (1,)
@@ -666,7 +665,7 @@ class PriorityReplayBufferDestroy(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, handle):
         """Initialize PriorityReplayBufferDestroy."""
-        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+        validator.check_int(handle, 0, validator.GE, "handle", self.name)
 
     def infer_shape(self):
         return (1,)
@@ -703,7 +702,7 @@ class ReservoirReplayBufferCreate(Primitive):
     @prim_attr_register
     def __init__(self, capacity, shapes, dtypes, seed0, seed1):
         """Initialize ReservoirReplayBufferCreate."""
-        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_int(capacity, 1, validator.GE, "capacity", self.name)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
         validator.check_non_negative_int(seed0, "seed0", self.name)
@@ -736,7 +735,7 @@ class ReservoirReplayBufferPush(Primitive):
     @prim_attr_register
     def __init__(self, handle):
         """Initialize ReservoirReplayBufferPush."""
-        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+        validator.check_int(handle, 0, validator.GE, "handle", self.name)
 
 
 class ReservoirReplayBufferSample(Primitive):
@@ -765,8 +764,8 @@ class ReservoirReplayBufferSample(Primitive):
     @prim_attr_register
     def __init__(self, handle, batch_size, shapes, dtypes):
         """Initialize PriorityReplaBufferSample."""
-        validator.check_int(handle, 0, Rel.GE, "capacity", self.name)
-        validator.check_int(batch_size, 1, Rel.GE, "batch_size", self.name)
+        validator.check_int(handle, 0, validator.GE, "capacity", self.name)
+        validator.check_int(batch_size, 1, validator.GE, "batch_size", self.name)
         validator.check_value_type("shape of init data", shapes, [tuple, list], self.name)
         validator.check_value_type("dtypes of init data", dtypes, [tuple, list], self.name)
 
@@ -797,7 +796,7 @@ class ReservoirReplayBufferDestroy(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, handle):
         """Initialize ReservoirReplayBufferDestroy."""
-        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+        validator.check_int(handle, 0, validator.GE, "handle", self.name)
 
 
 class BatchAssign(PrimitiveWithInfer):
@@ -880,9 +879,9 @@ class TensorsQueueCreate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, dtype, shapes, size=0, name="Q"):
         validator.check_type_name("dtype", dtype, mstype.number_type + (mstype.bool_,), self.name)
-        validator.check_int(size, 0, Rel.GE, "size", self.name)
+        validator.check_int(size, 0, validator.GE, "size", self.name)
         elements_num = len(shapes)
-        validator.check_int(elements_num, 1, Rel.GE, "elements_num", self.name)
+        validator.check_int(elements_num, 1, validator.GE, "elements_num", self.name)
         self.add_prim_attr('shapes', shapes)
         self.add_prim_attr('dtype', dtype)
         self.add_prim_attr('elements_num', elements_num)

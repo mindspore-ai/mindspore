@@ -15,7 +15,7 @@
 """Rewrite module api: ValueType and ScopedValue."""
 from enum import Enum
 from typing import Optional, Union
-from ..._checkparam import Validator
+from mindspore import _checkparam as Validator
 
 
 class ValueType(Enum):

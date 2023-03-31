@@ -18,7 +18,8 @@ from typing import Type, TypeVar, Tuple, Union
 from abc import abstractmethod
 
 import numpy as np
-from mindspore._checkparam import Validator, Rel, twice, _check_3d_int_or_tuple
+from mindspore import _checkparam as Validator
+from mindspore._checkparam import twice, _check_3d_int_or_tuple
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.initializer import initializer, Initializer
@@ -274,6 +275,7 @@ class _ConvNd(Cell):
     def _check_input_5dims(self, input_shape: tuple) -> None:
         if len(input_shape) != 5:
             raise ValueError(f"For {self.cls_name}, input should be 5 dims, but got shape {input_shape}.")
+        return None
 
 
 class Conv2d(_ConvNd):
@@ -588,10 +590,10 @@ class Conv1d(_ConvNd):
         Validator.check_value_type("stride", stride, [int], self.cls_name)
         Validator.check_value_type("padding", padding, [int], self.cls_name)
         Validator.check_value_type("dilation", dilation, [int], self.cls_name)
-        Validator.check_int(kernel_size, 1, Rel.GE, 'kernel_size', self.cls_name)
-        Validator.check_int(stride, 1, Rel.GE, 'stride', self.cls_name)
+        Validator.check_int(kernel_size, 1, Validator.GE, 'kernel_size', self.cls_name)
+        Validator.check_int(stride, 1, Validator.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-        Validator.check_int(dilation, 1, Rel.GE, 'dilation', self.cls_name)
+        Validator.check_int(dilation, 1, Validator.GE, 'dilation', self.cls_name)
         kernel_size = (1, kernel_size)
         stride = (1, stride)
         dilation = (1, dilation)

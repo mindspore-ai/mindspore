@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Invert Bijector"""
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from .bijector import Bijector
 
 

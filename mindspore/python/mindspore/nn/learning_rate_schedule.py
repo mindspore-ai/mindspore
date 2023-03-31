@@ -21,7 +21,7 @@ import math
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 
 
 class LearningRateSchedule(Cell):

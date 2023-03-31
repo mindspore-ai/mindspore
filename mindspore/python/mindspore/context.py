@@ -27,7 +27,8 @@ from types import FunctionType
 
 from mindspore import log as logger
 from mindspore._c_expression import MSContext, ms_ctx_param
-from mindspore._checkparam import args_type_check, Validator
+from mindspore import _checkparam as Validator
+from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \

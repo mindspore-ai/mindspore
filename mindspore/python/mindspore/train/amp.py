@@ -17,8 +17,7 @@ from __future__ import absolute_import
 
 import mindspore as ms
 from mindspore import nn
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.cell_wrapper import _TrainPipelineAccuStepCell
 from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
@@ -322,8 +321,8 @@ def _check_level(level, boost_level):
     if not isinstance(level, str):
         raise TypeError("The argument `level` must be a string in ['O0', 'O1', 'O2', 'O3', 'auto'], \
                          but got type {}.".format(type(level)))
-    validator.check('level', level, "", ['O0', 'O1', 'O2', 'O3', 'auto'], Rel.IN)
-    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
+    validator.check('level', level, "", ['O0', 'O1', 'O2', 'O3', 'auto'], validator.IN)
+    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], validator.IN)
 
     if level == "auto":
         device_target = context.get_context('device_target')

@@ -17,7 +17,7 @@ import math
 
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from mindspore.common import dtype as mstype
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 
 __all__ = ["CusBatchMatMul",

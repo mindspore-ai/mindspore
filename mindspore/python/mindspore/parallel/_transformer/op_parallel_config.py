@@ -18,7 +18,7 @@ These are experimental APIs that are subject to change or deletion.
 """
 from __future__ import absolute_import
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore import context
 import mindspore.communication.management as D
 from mindspore.context import ParallelMode

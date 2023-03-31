@@ -17,8 +17,7 @@
 
 from functools import reduce
 import mindspore.context as context
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
+from mindspore import _checkparam as validator
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer
 
@@ -105,12 +104,12 @@ class BufferSample(PrimitiveWithInfer):
         """Initialize BufferSample."""
         self.init_prim_io_names(inputs=["buffer"], outputs=["sample"])
         validator.check_value_type("shape of init data", buffer_shape, [tuple, list], self.name)
-        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_int(capacity, 1, validator.GE, "capacity", self.name)
         self._batch_size = batch_size
         self._buffer_shape = buffer_shape
         self._buffer_dtype = buffer_dtype
         self._n = len(buffer_shape)
-        validator.check_int(self._batch_size, capacity, Rel.LE, "batchsize", self.name)
+        validator.check_int(self._batch_size, capacity, validator.LE, "batchsize", self.name)
         self.add_prim_attr('capacity', capacity)
         self.add_prim_attr('seed', seed)
         self.add_prim_attr('unique', unique)
@@ -195,7 +194,7 @@ class BufferAppend(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, capacity, buffer_shape, buffer_dtype):
         """Initialize BufferAppend."""
-        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_int(capacity, 1, validator.GE, "capacity", self.name)
         self.add_prim_attr('capacity', capacity)
         buffer_elements = []
         for shape in buffer_shape:
@@ -296,7 +295,7 @@ class BufferGetItem(PrimitiveWithInfer):
     def __init__(self, capacity, buffer_shape, buffer_dtype):
         """Initialize BufferGetItem."""
         self.init_prim_io_names(inputs=["buffer"], outputs=["item"])
-        validator.check_int(capacity, 1, Rel.GE, "capacity", self.name)
+        validator.check_int(capacity, 1, validator.GE, "capacity", self.name)
         self._buffer_shape = buffer_shape
         self._buffer_dtype = buffer_dtype
         self._n = len(buffer_shape)

@@ -16,7 +16,7 @@
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from .distribution import Distribution
 from ._utils.utils import check_prob, check_distribution_name, clamp_probs
 from ._utils.custom_ops import exp_generic, log_generic

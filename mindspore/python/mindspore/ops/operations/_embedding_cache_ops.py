@@ -15,7 +15,7 @@
 """cache_ops"""
 
 from __future__ import absolute_import
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
 from mindspore.ops import signature as sig

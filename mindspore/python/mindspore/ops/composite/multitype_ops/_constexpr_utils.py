@@ -19,7 +19,7 @@ from functools import partial
 from itertools import compress
 
 import numpy as np
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.tensor import Tensor
@@ -524,6 +524,11 @@ def generate_broadcast_shape(shapes, op_name):
 @_primexpr
 def check_two_shapes_need_broadcast(shape_x, shape_y):
     """Check shape_y needs to be broadcast to shape_x."""
+    def _check():
+        if any(j != i and j != 1 for i, j in zip(reversed(shape_x), reversed(shape_y))):
+            raise ValueError(f"{shape_y} could not broadcast with {shape_x}.")
+        return None
+    _check()
     return shape_y != shape_x
 
 
@@ -819,8 +824,16 @@ def is_slice(x):
     return isinstance(x, slice)
 
 
+@_primexpr
 def filter_expanded_dims(shape, not_expanded_dim):
+    """filter_expanded_dims"""
+    def _check(diff, shape):
+        if diff < 0:
+            raise ValueError(f'unable to broadcast {shape}')
+        return None
+
     diff = len(not_expanded_dim) - len(shape)
+    _check(diff, shape)
     res = list()
     for i, flag in zip(shape, not_expanded_dim[diff:]):
         if flag:
@@ -848,7 +861,13 @@ def sequence_to_index(sequence, dim_size):
 @_primexpr
 def int_to_index(i, shape):
     """Converts integer to tensor indices."""
+    def _check(i, dim_size):
+        if i < -dim_size or i >= dim_size:
+            raise IndexError(f'index {i} is out of bounds for axis 0 with size {dim_size}')
+        return None
+
     dim_size = shape[0]
+    _check(i, dim_size)
     i = (i + dim_size) % dim_size
     if len(shape) == 1:
         return P.Fill()(mstype.int64, (1, 1), i)

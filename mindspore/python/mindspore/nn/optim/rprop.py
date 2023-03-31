@@ -19,8 +19,7 @@ from mindspore import ops
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 from mindspore.common.api import jit
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 
@@ -175,7 +174,7 @@ class Rprop(Optimizer):
             raise ValueError("For Rprop, maximal step size should not be less than minimal step size, "
                              "but got {} > {}.".format(step_sizes[0], step_sizes[1]))
 
-        validator.check_float_range(etas[0], 0.0, 1.0, Rel.INC_NEITHER, "etaminus", self.cls_name)
+        validator.check_float_range(etas[0], 0.0, 1.0, validator.INC_NEITHER, "etaminus", self.cls_name)
         validator.check_value_type("etaplus", etas[1], [float], self.cls_name)
         if etas[1] <= 1.0:
             raise ValueError("For Rprop, etaplus must be greater than 1.0, but got etaplus {}.".format(etas[1]))

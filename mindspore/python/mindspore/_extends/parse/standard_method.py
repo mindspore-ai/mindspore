@@ -26,7 +26,7 @@ from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_clear, _haskey, _update, _fromkeys
 
-from ..._checkparam import Validator as validator
+from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, prepare_shape_for_squeeze, \
     check_axis_in_range, check_axis_valid, check_and_canonicalize_axes
 from ...ops import functional as F
@@ -1722,14 +1722,6 @@ def choose(x, choices, mode='clip'):
     return F.gather_nd(choices, indices).astype(dtype)
 
 
-def _get_log2_size(size):
-    """Get log2 size"""
-    log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
-    ceil_res = F.ceil(log2_res)
-    cast_res = F.cast(ceil_res, mstype.int64)
-    return cast_res
-
-
 def searchsorted(x, v, side='left', sorter=None):
     """
     Finds indices where elements should be inserted to maintain order.
@@ -1758,6 +1750,12 @@ def searchsorted(x, v, side='left', sorter=None):
         >>> print(x.searchsorted(3))
         2
     """
+    def get_log2_size(size):
+        """Get log2 size"""
+        log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
+        ceil_res = F.ceil(log2_res)
+        cast_res = F.cast(ceil_res, mstype.int64)
+        return cast_res
     if side not in ('left', 'right'):
         const_utils.raise_value_error('invalid value for keyword "side"')
     a = x.astype(mstype.float32)
@@ -1775,7 +1773,7 @@ def searchsorted(x, v, side='left', sorter=None):
     i = F.fill(mstype.int32, shape, 0)
     j = F.fill(mstype.int32, shape, a.size)
 
-    loop_num = _get_log2_size(F.shape_mul(a.shape) + 1)
+    loop_num = get_log2_size(F.shape_mul(a.shape) + 1)
     index = Tensor([0])
     while index < loop_num:
         mid = (i - F.neg_tensor(j)) // 2
@@ -1842,6 +1840,7 @@ def ptp(x, axis=None, keepdims=False):
     if axis is None:
         axis = ()
     else:
+        validator.check_axis_type(axis, True, True, False)
         axis = check_axis_valid(axis, x.ndim)
 
     return x.max(axis, keepdims) - x.min(axis, keepdims)
@@ -2242,6 +2241,8 @@ def hasnext(it):
 @constexpr
 def constant_abs(x):
     """Returns the absolute value of the constant."""
+    if x is None:
+        raise ValueError("For abs(), the input should be a constant or Tensor type.")
     return abs(x)
 
 
@@ -2798,6 +2799,7 @@ def expand_dims(x, axis):
     """
     Insert a dimension of shape 1 at the specified axis of Tensor.
     """
+    validator.check_is_int(axis, 'axis')
     return P.ExpandDims()(x, axis)
 
 
@@ -3186,6 +3188,8 @@ def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
     Generates random samples from a given categorical distribution tensor.
     Refer to :func:`mindspore.ops.random_categorical` for more detail.
     """
+    validator.check_is_int(num_sample, 'num_sample')
+    validator.check_is_int(seed, 'seed')
     return F.random_categorical(x, num_sample, seed, dtype)
 
 
@@ -3279,13 +3283,19 @@ max_ = constexpr(validator.max_)
 min_ = constexpr(validator.min_)
 expanded_shape = validator.expanded_shape
 tuple_slice = validator.tuple_slice
-empty_compile = validator.empty_compile
 check_type_support = constexpr(validator.check_type_support)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
+check_is_int = constexpr(validator.check_is_int)
 check_bool_type = constexpr(validator.check_bool)
 check_is_int = constexpr(validator.check_is_int)
 check_bool = constexpr(validator.check_bool)
+
+
+@constexpr
+def empty_compile(dtype, shape):
+    """Returns an empty Tensor."""
+    return Tensor_(dtype, shape)
 
 
 def tensor_bool(x):
@@ -3465,6 +3475,8 @@ def topk(input_x, k, dim=None, largest=True, sorted=True):
     r"""
     For details, please refer to :func:`mindspore.ops.topk`.
     """
+    check_is_int(k, 'k')
+    check_bool_type(sorted, 'sorted')
     return F.topk(input_x, k, dim, largest=largest, sorted=sorted)
 
 
@@ -3713,6 +3725,7 @@ def bernoulli(input, p=0.5, seed=None):
     """
     Randomly draws binary numbers from a Bernoulli distribution.
     """
+    check_is_int(seed, 'bernoulli', 'seed')
     return F.bernoulli(input, p, seed)
 
 

@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.layer.basic import ClipByNorm
 from mindspore.experimental import MapParameter

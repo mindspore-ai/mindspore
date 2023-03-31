@@ -29,8 +29,7 @@ from mindspore.ops.function.random_func import _get_seed
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore._checkparam import Rel
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.ops.composite.multitype_ops._constexpr_utils import raise_value_error
 from mindspore.ops.operations.nn_ops import MaxUnpool2D, MaxUnpool3D
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, FractionalMaxPool3DWithFixedKsize
@@ -217,8 +216,8 @@ def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include
     validator.check_value_type('stride', stride, [int], 'avg_pool1d')
     validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
     validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
-    validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool1d')
-    validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool1d')
+    validator.check_int(kernel_size, 1, validator.GE, "kernel_size", 'avg_pool1d')
+    validator.check_int(stride, 1, validator.GE, "stride", 'avg_pool1d')
 
 
 @constexpr
@@ -313,13 +312,13 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 def _check_avgpool_2d_kernel_size(kernel_size):
     """check and calculate the avgpool2d kernel_size"""
     if isinstance(kernel_size, int):
-        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+        validator.check_int(kernel_size, 1, validator.GE, "kernel_size", 'avg_pool2d')
         kernel_size = (1, kernel_size, kernel_size)
     elif isinstance(kernel_size, tuple):
         if len(kernel_size) != 2:
             raise ValueError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
         for item in kernel_size:
-            validator.check_int(item, 1, Rel.GE, "kernel_size", 'avg_pool2d')
+            validator.check_int(item, 1, validator.GE, "kernel_size", 'avg_pool2d')
         kernel_size = (1, kernel_size[0], kernel_size[1])
     else:
         raise TypeError("For avg_pool2d, kernel_size should be int or tuple of length 2.")
@@ -330,13 +329,13 @@ def _check_avgpool_2d_kernel_size(kernel_size):
 def _check_avgpool_2d_stride(stride):
     """check and calculate the avgpool2d stride"""
     if isinstance(stride, int):
-        validator.check_int(stride, 1, Rel.GE, "stride", 'avg_pool2d')
+        validator.check_int(stride, 1, validator.GE, "stride", 'avg_pool2d')
         stride = (1, stride, stride)
     elif isinstance(stride, tuple):
         if len(stride) != 2:
             raise ValueError("For avg_pool2d, stride should be int or tuple of length 2.")
         for item in stride:
-            validator.check_int(item, 1, Rel.GE, "stride", 'avg_pool2d')
+            validator.check_int(item, 1, validator.GE, "stride", 'avg_pool2d')
         stride = (1, stride[0], stride[1])
     else:
         raise TypeError("For avg_pool2d, stride should be int or tuple of length 2.")
@@ -548,7 +547,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 @constexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
-    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_max_pool1d')
+    validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_max_pool1d')
     validator.check_value_type('output_size', output_size, [int], 'adaptive_max_pool1d')
 
 
@@ -1466,7 +1465,7 @@ def _check_float_range_inc_right(arg_value, lower_limit, upper_limit, arg_name=N
     """
     Method for checking whether input value is in float range inc right.
     """
-    return validator.check_float_range(arg_value, lower_limit, upper_limit, Rel.INC_RIGHT, arg_name, prim_name)
+    return validator.check_float_range(arg_value, lower_limit, upper_limit, validator.INC_RIGHT, arg_name, prim_name)
 
 
 def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
@@ -3717,7 +3716,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
 @constexpr
 def _check_number_gt_value(arg_name, arg_value, value, cls_name):
     """Internal function, used to judge whether arg_value is greater than or equal to value."""
-    return validator.check_number(arg_name, arg_value, value, Rel.GT, cls_name)
+    return validator.check_number(arg_name, arg_value, value, validator.GT, cls_name)
 
 
 def _get_axis(x):
@@ -4198,6 +4197,13 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     return loss
 
 
+@_primexpr
+def _check_hinge_embedding_loss(shape, shape2, prim_name):
+    if shape2 != shape:
+        raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
+    return None
+
+
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     r"""
     Measures Hinge Embedding Loss given an input Tensor `intputs` and a labels Tensor `targets` (containing 1 or -1).
@@ -4255,16 +4261,32 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         >>> print(loss)
         0.16666666
     """
-    if not isinstance(margin, (float, int)):
-        raise TypeError(f"For 'HingeEmbeddingLoss', 'margin' must be a float or int, but got {type(margin)}.")
-    if reduction not in ['none', 'mean', 'sum']:
-        raise ValueError(f"For 'HingeEmbeddingLoss', 'reduction' must be one of 'none', 'mean', 'sum',"
-                         f"but got {reduction}.")
-    if not isinstance(inputs, Tensor):
-        raise TypeError(f"For 'HingeEmbeddingLoss', the first input must be a Tensor, but got {type(inputs)}.")
-    if not isinstance(targets, Tensor):
-        raise TypeError(f"For 'HingeEmbeddingLoss', the second input must be a Tensor, but got {type(targets)}.")
+    def _check(inputs_dtype):
+        targets_dtype = targets.dtype
+        if not isinstance(margin, (float, int)):
+            raise TypeError(f"For 'HingeEmbeddingLoss', 'margin' must be a float or int, but got {type(margin)}.")
+        if reduction not in ['none', 'mean', 'sum']:
+            raise ValueError(f"For 'HingeEmbeddingLoss', 'reduction' must be one of 'none', 'mean', 'sum',"
+                             f"but got {reduction}.")
+        if not isinstance(inputs, Tensor):
+            raise TypeError(f"For 'HingeEmbeddingLoss', the first input must be a Tensor, but got {type(inputs)}.")
+        if not isinstance(targets, Tensor):
+            raise TypeError(f"For 'HingeEmbeddingLoss', the second input must be a Tensor, but got {type(targets)}.")
+
+        if inputs_dtype not in mstype.float_type:
+            raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the first input must be float, but got "
+                            f"{inputs_dtype}.")
+        if targets_dtype not in mstype.float_type:
+            raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the second input must be float, but got "
+                            f"{targets_dtype}.")
+        return None
+
     inputs_dtype = inputs.dtype
+    _check(inputs_dtype)
+    _shape = inputs.shape
+    _t_shape = targets.shape
+    _check_hinge_embedding_loss(_shape, _t_shape, 'HingeEmbeddingLoss')
+
     min_val = Tensor(0, inputs_dtype)
     pos_index = targets > 0
     neg_index = targets < 0
@@ -4832,10 +4854,10 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     return _get_loss(loss, reduction, "huber_loss")
 
 
-@constexpr
+@_primexpr
 def _check_adaptive_avg_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_avg_pool1d op."""
-    validator.check_int(output_size, 1, Rel.GE, "output_size", 'adaptive_avg_pool1d')
+    validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_avg_pool1d')
     validator.check_value_type('output_size', output_size, [int], 'adaptive_avg_pool1d')
 
 
@@ -4875,26 +4897,29 @@ def adaptive_avg_pool1d(input, output_size):
         >>> print(output.shape)
         (1, 3, 2)
     """
-    if not isinstance(input, (Tensor, Tensor_)):
-        raise TypeError("For adaptive_avg_pool1d, the input input must be tensor")
+    def _check(input, output_size):
+        x_in_shape = input.shape
+        x_dtype = _get_cache_prim(P.DType)()(input)
+        if not isinstance(input, (Tensor, Tensor_)):
+            raise TypeError("For adaptive_avg_pool1d, the input input must be tensor")
 
+        _check_adaptive_avg_pool1d_output_size(output_size)
+
+        if len(x_in_shape) != 3:
+            raise ValueError(f"For adaptive_avg_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
+        if x_in_shape[2] < output_size:
+            raise ValueError(f"For adaptive_avg_pool1d input's last dimension must be greater or equal to " \
+                             f"output size {output_size}, but got {x_in_shape[2]}.")
+        if x_in_shape[2] % output_size != 0:
+            raise ValueError(f"For adaptive_avg_pool1d input's last dimension must be divisible by "
+                             f"output size {output_size}, but got {x_in_shape[2]}.")
+        if x_dtype not in [mstype.float16, mstype.float32]:
+            raise TypeError(f"For adaptive_avg_pool1d, the input dtype must be float16 or float32, " \
+                            f"but got {x_dtype}.")
+        return None
+
+    _check(input, output_size)
     x_in_shape = input.shape
-    x_dtype = _get_cache_prim(P.DType)()(input)
-
-    _check_adaptive_avg_pool1d_output_size(output_size)
-
-    if len(x_in_shape) != 3:
-        raise ValueError("For adaptive_avg_pool1d input must have 3 dim, but got {}.".format(len(x_in_shape)))
-    if x_in_shape[2] < output_size:
-        raise ValueError("For adaptive_avg_pool1d input's last dimension must be greater or equal to "
-                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
-    if x_in_shape[2] % output_size != 0:
-        raise ValueError("For adaptive_avg_pool1d input's last dimension must be divisible by "
-                         "output size {}, but got {}.".format(output_size, x_in_shape[2]))
-    if x_dtype not in [mstype.float16, mstype.float32]:
-        raise TypeError("For adaptive_avg_pool1d, the input dtype must be float16 or float32, "
-                        "but got {}.".format(x_dtype))
-
     expand_ = _get_cache_prim(P.ExpandDims)()
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
 
@@ -5234,6 +5259,7 @@ def _check_pxiel_shuffle_valid(num, factor):
     if num % factor ** 2 != 0:
         raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
                          "by `upscale_factor` squared.")
+    return None
 
 
 def pixel_shuffle(input, upscale_factor):
@@ -5299,6 +5325,7 @@ def _check_pxiel_unshuffle_valid(num1, num2, factor):
     if num1 % factor != 0 or num2 % factor != 0:
         raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
                          "by downscale_factor.")
+    return None
 
 
 def pixel_unshuffle(input, downscale_factor):
@@ -5746,6 +5773,14 @@ def channel_shuffle(x, groups):
     return y
 
 
+@_primexpr
+def _shape_check(in_shape, dim_list, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if len(in_shape) not in dim_list:
+        raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
+    return None
+
+
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
@@ -5807,6 +5842,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
           [51. 54.]
           [63. 66.]]]
     """
+    _shape_check(x.shape, [2, 3], "lp_pool1d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:
@@ -5899,6 +5935,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
            [ 999. 1008. 1017.]]]]
 
     """
+    _shape_check(x.shape, [4], "lp_pool2d")
     if isinstance(norm_type, (float, int)):
         norm_type = float(norm_type)
     else:

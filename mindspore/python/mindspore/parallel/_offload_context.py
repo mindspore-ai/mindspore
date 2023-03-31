@@ -19,7 +19,8 @@ from __future__ import division
 import threading
 
 from mindspore._c_expression import OffloadContext
-from mindspore._checkparam import args_type_check, Validator
+from mindspore._checkparam import args_type_check
+from mindspore import _checkparam as Validator
 
 
 class _OffloadConfig:

@@ -18,8 +18,7 @@ from types import FunctionType, MethodType
 from mindspore import log as logger
 from mindspore._c_expression import security
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -553,7 +552,7 @@ class Assert(PrimitiveWithInfer):
 
     def infer_shape(self, condition, inputs):
         condition_len = len(condition)
-        validator.check_int(condition_len, 1, Rel.LE, "condition's rank", self.name)
+        validator.check_int(condition_len, 1, validator.LE, "condition's rank", self.name)
         if condition_len == 1:
             validator.check_equal_int(condition[0], 1, "condition[0]", self.name)
         return [1]

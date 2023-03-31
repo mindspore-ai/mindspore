@@ -25,8 +25,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import opt_init_args_register
 from mindspore.nn.optim.optimizer import Optimizer
 
@@ -316,8 +315,8 @@ class AdaFactor(Optimizer):
         validator.check_value_type("clip_threshold", clip_threshold, [float], self.cls_name)
         validator.check_non_negative_float(clip_threshold, "clip_threshold", self.cls_name)
         validator.check_value_type("decay_rate", decay_rate, [float], self.cls_name)
-        validator.check_float_range(decay_rate, 0, 1, Rel.INC_NEITHER, "decay_rate", self.cls_name)
-        validator.check_float_range(weight_decay, 0, 1, Rel.INC_LEFT, "weight_decay", self.cls_name)
+        validator.check_float_range(decay_rate, 0, 1, validator.INC_NEITHER, "decay_rate", self.cls_name)
+        validator.check_float_range(weight_decay, 0, 1, validator.INC_LEFT, "weight_decay", self.cls_name)
         validator.check_value_type("scale_parameter", scale_parameter, [bool], self.cls_name)
         validator.check_value_type("relative_step", relative_step, [bool], self.cls_name)
         validator.check_value_type("compression", compression, [bool], self.cls_name)

@@ -27,7 +27,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import RowTensor as RowTensor_
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore._checkparam import is_stub_tensor
 
 

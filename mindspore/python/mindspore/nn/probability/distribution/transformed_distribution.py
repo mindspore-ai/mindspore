@@ -14,7 +14,7 @@
 # ============================================================================
 """Transformed Distribution"""
 import numpy as np
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn

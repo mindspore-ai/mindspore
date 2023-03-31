@@ -18,9 +18,9 @@ from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 import mindspore.ops as ops
-from mindspore._checkparam import Rel, Validator as validator
 from mindspore._checkparam import _check_3d_int_or_tuple
-from mindspore.ops.primitive import constexpr
+from mindspore import _checkparam as validator
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.common.tensor import Tensor
 import mindspore.context as context
 from mindspore.common import dtype as mstype
@@ -71,6 +71,16 @@ class _PoolNd(Cell):
 
     def extend_repr(self):
         return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
+
+
+@_primexpr
+def _shape_check(in_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    def _check():
+        if len(in_shape) != 3:
+            raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
+        return None
+    _check()
 
 
 class LPPool1d(Cell):
@@ -666,8 +676,8 @@ class MaxPool1d(_PoolNd):
                  ceil_mode=False):
         """Initialize MaxPool1d."""
         super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
-        validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
-        validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
+        validator.check_int(kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
+        validator.check_int(stride, 1, validator.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.return_indices = return_indices
@@ -707,6 +717,7 @@ class MaxPool1d(_PoolNd):
             else:
                 output = output.squeeze(3).squeeze(2)
         else:
+            _shape_check(self.shape(x), self.cls_name)
             x = self.expand(x, 2)
             output = self.max_pool(x)
             output = self.squeeze(output)
@@ -1115,8 +1126,8 @@ class AvgPool1d(_PoolNd):
                  count_include_pad=True):
         """Initialize AvgPool1d."""
         super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
-        validator.check_int(self.kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
-        validator.check_int(self.stride, 1, Rel.GE, "stride", self.cls_name)
+        validator.check_int(self.kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
+        validator.check_int(self.stride, 1, validator.GE, "stride", self.cls_name)
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad:
             padding = _cal_padding(padding, self.cls_name, 1)
             self.is_expand_3d = True
@@ -1148,6 +1159,7 @@ class AvgPool1d(_PoolNd):
             x = self.avg_pool(x)
             x = x.squeeze(3).squeeze(2)
         else:
+            _shape_check(self.shape(x), self.cls_name)
             batch, channel, width = self.shape(x)
             if width == self.kernel_size[1]:
                 x = self.reduce_mean(x, 2)
@@ -1161,6 +1173,21 @@ class AvgPool1d(_PoolNd):
         if expand_batch:
             x = x.squeeze(0)
         return x
+
+
+@_primexpr
+def _adaptive_shape_check(in_shape, output_size, prim_name):
+    """Check shape."""
+    msg_prefix = "For {}, the".format(prim_name)
+    if len(in_shape) != 3:
+        raise ValueError("{} input must has 3 dim, but got {}.".format(msg_prefix, len(in_shape)))
+    if in_shape[2] < output_size:
+        raise ValueError("{} input's last dimension must be greater or equal to "
+                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+    if in_shape[2] % output_size != 0:
+        raise ValueError("{} input's last dimension must be divisible by "
+                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+    return None
 
 
 @constexpr
@@ -1221,7 +1248,7 @@ class AdaptiveAvgPool1d(Cell):
         """Initialize AdaptiveAvgPool1d."""
         super(AdaptiveAvgPool1d, self).__init__()
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
-        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
         self.shape = F.shape
         self.expand = P.ExpandDims()
         self.squeeze = P.Squeeze(2)
@@ -1434,7 +1461,7 @@ class AdaptiveMaxPool1d(Cell):
     def __init__(self, output_size):
         """Initialize AdaptiveMaxPool1d."""
         super(AdaptiveMaxPool1d, self).__init__()
-        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         self.expand = P.ExpandDims()
         self.squeeze = P.Squeeze(2)

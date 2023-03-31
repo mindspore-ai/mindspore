@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.train.callback._callback import Callback, _handle_loss
 
 

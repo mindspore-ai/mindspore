@@ -22,7 +22,7 @@ from mindspore import log as logger
 from mindspore.train.serialization import load_checkpoint, save_checkpoint
 from mindspore.train.callback._callback import Callback
 from mindspore.train._utils import _make_directory
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 
 
 class BackupAndRestore(Callback):

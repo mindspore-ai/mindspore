@@ -44,6 +44,9 @@ def test_ge_resnet50_boost_imagenet2012_ascend():
                 "\\\"total_steps\\\""]
     list_new = ["1", "=1", "=True", r"\\\"param_groups\\\"\: 2, \\\"total_steps\\\""]
     utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
+    old_list = ["from mindspore._checkparam import Validator"]
+    new_list = ["from mindspore import _checkparam as Validator"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))
     dataset = os.path.join(utils.data_root, "imagenet/imagenet_original/train")
     # Do not execute ckpt graph
     config = os.path.join(cur_model_path, "config", "resnet50_imagenet2012_Boost_config.yaml")

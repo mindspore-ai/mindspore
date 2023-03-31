@@ -15,7 +15,7 @@
 """Gumbel Distribution"""
 import numpy as np
 from mindspore.ops import operations as P
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb

@@ -18,7 +18,7 @@ from typing import Union, Optional
 
 from mindspore.nn import Cell
 from mindspore.ops.primitive import Primitive
-from ..._checkparam import Validator
+from mindspore import _checkparam as Validator
 from ..node import Node as NodeImpl
 from ..symbol_tree import SymbolTree as SymbolTreeImpl
 from .node_type import NodeType

@@ -28,7 +28,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.nn.cell import Cell
 from mindspore import log as logger
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.ops.operations._rl_inner_ops import CudnnGRU
 from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_cell, _lstm_cell
 
@@ -77,6 +77,15 @@ def _check_tuple_length(param_name, input_data, length, cls_name):
     if input_data is not None and len(input_data) != length:
         raise TypeError(f"For '{cls_name}', the length of '{param_name}' must be '{length}', "
                         f"but got '{len(input_data)}'")
+    return None
+
+
+@_primexpr
+def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
+    if batch_size_x != seq_length_size:
+        raise ValueError(f"For '{cls_name}' batch size of x and seq_length must be equal, "
+                         f"but got {batch_size_x} of x and {seq_length_size} of seq_length.")
+    return None
 
 
 def sequence_mask(lengths, maxlen):
@@ -556,6 +565,7 @@ class _RNNBase(Cell):
                              x_dtype, self.is_lstm)
         if seq_length is not None:
             _check_input_dtype(seq_length.dtype, "seq_length", [mstype.int32, mstype.int64], self.cls_name)
+            _check_seq_length_size(max_batch_size, seq_length.shape[0], self.cls_name)
         if self.batch_first:
             x = P.Transpose()(x, (1, 0, 2))
         if self.bidirectional:
