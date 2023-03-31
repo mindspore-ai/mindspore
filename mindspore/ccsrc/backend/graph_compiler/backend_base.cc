@@ -942,7 +942,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
   // Split the tensor of tuple to tensors.
-  tuple_tensors->emplace_back(output_tensor);
+  (void)tuple_tensors->emplace_back(output_tensor);
   size_t copy_offset_size = 0;
   for (size_t i = 0; i < tensor_shape->size(); ++i) {
     // Create split tensor.

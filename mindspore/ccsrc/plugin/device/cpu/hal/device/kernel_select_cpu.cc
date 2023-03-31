@@ -362,11 +362,11 @@ std::pair<std::string, ExceptionType> KernelNotSupportWarning(const CNodePtr &ke
 
   // Show the user info.
   std::string build_type = "input[";
-  std::for_each(std::begin(input_types), std::end(input_types),
-                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
+  (void)std::for_each(std::begin(input_types), std::end(input_types),
+                      [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "] and output[";
-  std::for_each(std::begin(infer_output_types), std::end(infer_output_types),
-                [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
+  (void)std::for_each(std::begin(infer_output_types), std::end(infer_output_types),
+                      [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
   build_type += "]";
   auto supported_type_lists = GetSupportedTypesStr(kernel_node);
   std::stringstream ss;
