@@ -55,15 +55,13 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
     if (!IsDynamic(uint_crd_f_shape)) {
       (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape", SizeToLong(uint_crd_f_shape.size()), kEqual, kTwo,
                                                prim_name);
-      (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape[1]", SizeToLong(uint_crd_f_shape[1]), kEqual, kThree,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape[1]", uint_crd_f_shape[1], kEqual, kThree, prim_name);
     }
     auto scaler_f_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto scaler_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scaler_f_shape_ptr)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("scaler_f_shape", SizeToLong(scaler_f_shape.size()), kEqual, 1, prim_name);
     if (!IsDynamic(scaler_f_shape)) {
-      (void)CheckAndConvertUtils::CheckInteger("scaler_f_shape", SizeToLong(scaler_f_shape[0]), kEqual, kThree,
-                                               prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("scaler_f_shape", scaler_f_shape[0], kEqual, kThree, prim_name);
     }
     auto angle_numbers = GetValue<int64_t>(primitive->GetAttr("angle_numbers"));
     for (size_t input_index = 2; input_index < kInputNum; ++input_index) {
@@ -71,8 +69,7 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
       auto cur_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(cur_input_shape_ptr)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("input_dim", SizeToLong(cur_input_shape.size()), kEqual, 1, prim_name);
       if (!IsDynamic(cur_input_shape)) {
-        (void)CheckAndConvertUtils::CheckInteger("input_shape", SizeToLong(cur_input_shape[0]), kEqual, angle_numbers,
-                                                 prim_name);
+        (void)CheckAndConvertUtils::CheckInteger("input_shape", cur_input_shape[0], kEqual, angle_numbers, prim_name);
       }
     }
     ShapeVector out_shape{uint_crd_f_shape[0]};

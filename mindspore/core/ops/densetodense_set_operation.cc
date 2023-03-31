@@ -100,7 +100,6 @@ abstract::TupleShapePtr DenseToDenseSetOperationInferShape(const PrimitivePtr &p
   }
   ShapeVector output_values_vec = {-1};
   ShapeVector max_output_values_vec;
-  ShapeVector min_output_values_vec;
   if (!is_input_dynamic) {
     max_output_values_vec = {max_num};
   }
