@@ -40,7 +40,7 @@ class UnpackCall : public MetaFuncGraph {
   explicit UnpackCall(const std::string &name) : MetaFuncGraph(name) {}
   ~UnpackCall() override = default;
   MS_DECLARE_PARENT(UnpackCall, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const UnpackCall &lhs, const UnpackCall &rhs) { return lhs.name_ == rhs.name_; }
 };
 using UnpackCallPtr = std::shared_ptr<UnpackCall>;

@@ -38,7 +38,7 @@ class VmapMatchOutAxis : public MetaFuncGraph {
   ~VmapMatchOutAxis() override = default;
   MS_DECLARE_PARENT(VmapMatchOutAxis, MetaFuncGraph)
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
  private:
   CNodePtr GenerateFuncGraphInnerBroadcastAxis(const AnfNodePtr &inputs, const AnfNodePtr &out_axis,
@@ -60,7 +60,7 @@ class VmapGeneralPreprocess : public MetaFuncGraph {
   ~VmapGeneralPreprocess() override = default;
   MS_DECLARE_PARENT(VmapGeneralPreprocess, MetaFuncGraph);
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 };
 
 class VmapGeneralRule : public MetaFuncGraph {
@@ -70,7 +70,7 @@ class VmapGeneralRule : public MetaFuncGraph {
   ~VmapGeneralRule() override = default;
   MS_DECLARE_PARENT(VmapGeneralRule, MetaFuncGraph);
 
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
   std::string prim_name() const {
     if (!prim_) {

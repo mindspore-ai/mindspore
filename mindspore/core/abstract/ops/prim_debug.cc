@@ -29,12 +29,12 @@
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
+                               const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tensor(value)
   const std::string op_name = primitive->name();
 
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto tensor_value = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckArgsSize(op_name, args_abs_list, 1);
+  auto tensor_value = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
 
   int64_t tensor_rank = SizeToLong(tensor_value->shape()->shape().size());
   if (tensor_rank == 0) {

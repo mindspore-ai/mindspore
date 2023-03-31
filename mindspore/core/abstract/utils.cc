@@ -103,14 +103,14 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   return std::make_shared<Shape>(dims);
 }
 
-AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_spec_list) {
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is " << args_spec_list.size()
+AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.empty()) {
+    MS_LOG(EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is " << args_abs_list.size()
                       << ".";
   }
-  AbstractBasePtr arg_spec_tmp = args_spec_list[0];
+  AbstractBasePtr arg_spec_tmp = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(arg_spec_tmp);
-  for (const auto &arg_spec : args_spec_list) {
+  for (const auto &arg_spec : args_abs_list) {
     MS_EXCEPTION_IF_NULL(arg_spec);
     arg_spec_tmp = arg_spec_tmp->Join(arg_spec);
     MS_EXCEPTION_IF_NULL(arg_spec_tmp);

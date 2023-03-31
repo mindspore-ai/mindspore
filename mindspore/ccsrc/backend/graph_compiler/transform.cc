@@ -475,7 +475,7 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
       TypedPrimitiveAbstractClosurePtr tp = dyn_cast<abstract::TypedPrimitiveAbstractClosure>(type->GetUnique());
       MS_EXCEPTION_IF_NULL(tp);
       MS_EXCEPTION_IF_NULL(g);
-      for (auto t : tp->args_spec_list()) {
+      for (auto t : tp->args_abs_list()) {
         ParameterPtr p = g->add_parameter();
         p->set_abstract(t);
         args.push_back(p);

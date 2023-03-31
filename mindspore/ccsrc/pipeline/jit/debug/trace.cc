@@ -62,18 +62,18 @@ std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   return oss.str();
 }
 
-std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::AbstractBasePtrList &args_spec_list) {
+std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(graph);
   std::ostringstream oss;
   oss << "graph:" << graph->ToString() << " with args[";
   auto params = graph->parameters();
-  if (params.size() < args_spec_list.size()) {
-    MS_EXCEPTION(TypeError) << "The size of parameters less than args_spec_list's size.";
+  if (params.size() < args_abs_list.size()) {
+    MS_EXCEPTION(TypeError) << "The size of parameters less than args_abs_list's size.";
   }
-  for (size_t i = 0; i < args_spec_list.size(); i++) {
+  for (size_t i = 0; i < args_abs_list.size(); i++) {
     auto parameter = params[i];
     MS_EXCEPTION_IF_NULL(parameter);
-    oss << parameter->ToString() << ":<" << GetAbstractStr(args_spec_list[i]) << ">,";
+    oss << parameter->ToString() << ":<" << GetAbstractStr(args_abs_list[i]) << ">,";
   }
   oss << "]";
   oss << GetDebugInfo(graph->debug_info(), kSourceLineTipDiscard);
@@ -102,11 +102,11 @@ void DumpInferStack(std::ostringstream &oss) {
     if (graph == nullptr) {  // Top context.
       continue;
     }
-    const auto &args_spec_list = context->args_spec_list();
-    if (graph->parameters().size() < args_spec_list.size()) {
+    const auto &args_abs_list = context->args_abs_list();
+    if (graph->parameters().size() < args_abs_list.size()) {
       continue;
     }
-    oss << "    #" << index++ << " " << GetGraphParamString(graph, args_spec_list) << "\n";
+    oss << "    #" << index++ << " " << GetGraphParamString(graph, args_abs_list) << "\n";
   }
 }
 
@@ -268,7 +268,7 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
         std::ostringstream oss;
         oss << "(";
         bool first_flag = false;
-        for (const auto &arg : func->args_spec_list()) {
+        for (const auto &arg : func->args_abs_list()) {
           if (!first_flag) {
             first_flag = true;
           } else {

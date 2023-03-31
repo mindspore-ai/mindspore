@@ -624,15 +624,15 @@ ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape) {
 }
 
 template <typename T>
-std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr size_t kSizeExpect = 1;
-  if (args_spec_list.size() != kSizeExpect) {
+  if (args_abs_list.size() != kSizeExpect) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the number of input should be " << kSizeExpect
-                      << ", but got " << args_spec_list.size() << ".";
+                      << ", but got " << args_abs_list.size() << ".";
   }
   constexpr size_t kIndex = 0;
-  auto abs = args_spec_list[kIndex];
+  auto abs = args_abs_list[kIndex];
   MS_EXCEPTION_IF_NULL(abs);
   // To avoid AbstractSparseTensors being generalized to AbstractTuple.
   if (dyn_cast<T>(abs) == nullptr) {
@@ -648,9 +648,9 @@ std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const Abstract
                           << abs->BuildType()->ToString() << ".";
 }
 template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const PrimitivePtr &primitive,
-                                                                      const AbstractBasePtrList &args_spec_list);
+                                                                      const AbstractBasePtrList &args_abs_list);
 template std::shared_ptr<abstract::AbstractCOOTensor> InferSparseAttr(const PrimitivePtr &primitive,
-                                                                      const AbstractBasePtrList &args_spec_list);
+                                                                      const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
 AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -705,15 +705,15 @@ void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const abstrac
 }
 
 template <typename T>
-AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const AbstractBasePtrList &args_abs_list) {
   // Inputs: a tuple or list, a scalar whose value is an int64 number and an object of a subclass of AbstractBase.
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   constexpr int args_spec_size = 3;
   constexpr size_t kIndex2 = 2;
-  abstract::CheckArgsSize(op_name, args_spec_list, args_spec_size);
-  auto queue = abstract::CheckArg<T>(op_name, args_spec_list, 0);
-  auto index = abstract::CheckArg<abstract::AbstractScalar>(op_name, args_spec_list, 1);
+  abstract::CheckArgsSize(op_name, args_abs_list, args_spec_size);
+  auto queue = abstract::CheckArg<T>(op_name, args_abs_list, 0);
+  auto index = abstract::CheckArg<abstract::AbstractScalar>(op_name, args_abs_list, 1);
 
   auto index_type = index->BuildType();
   MS_EXCEPTION_IF_NULL(index_type);
@@ -723,7 +723,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
   }
   ValuePtr index_value = index->BuildValue();
   MS_EXCEPTION_IF_NULL(index_value);
-  auto target = args_spec_list[kIndex2];
+  auto target = args_abs_list[kIndex2];
   MS_EXCEPTION_IF_NULL(target);
   if (queue->dynamic_len()) {
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
@@ -759,15 +759,15 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
                              << nelems << "," << (nelems - 1) << "].";
   }
   size_t index_unsigned_value = LongToSize(index_positive_value);
-  elements[index_unsigned_value] = args_spec_list[kIndex2];
+  elements[index_unsigned_value] = args_abs_list[kIndex2];
   MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   return std::make_shared<T>(elements, queue->sequence_nodes());
 }
 
 template AbstractBasePtr InferSequenceSetItem<abstract::AbstractList>(const PrimitivePtr &primitive,
-                                                                      const AbstractBasePtrList &args_spec_list);
+                                                                      const AbstractBasePtrList &args_abs_list);
 template AbstractBasePtr InferSequenceSetItem<abstract::AbstractTuple>(const PrimitivePtr &primitive,
-                                                                       const AbstractBasePtrList &args_spec_list);
+                                                                       const AbstractBasePtrList &args_abs_list);
 
 template AbstractBasePtr TensorToSequenceInfer<abstract::AbstractList>(const PrimitivePtr &primitive,
                                                                        const std::vector<AbstractBasePtr> &input_args);

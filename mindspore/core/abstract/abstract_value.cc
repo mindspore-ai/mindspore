@@ -1700,9 +1700,9 @@ ValuePtr AbstractKeywordArg::RealBuildValue() const {
   return std::make_shared<KeywordArg>(arg_name_, value);
 }
 
-std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
+std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_abs_list) {
   // Hash for empty list is zero.
-  if (args_spec_list.empty()) {
+  if (args_abs_list.empty()) {
     return 0;
   }
   // Hashing all elements is costly, we only calculate hash from
@@ -1711,13 +1711,13 @@ std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
   // we should use this hash function in hash tables that can tolerate
   // high hash conflicts, such as std::unordered_map.
   constexpr size_t kMaxLastElements = 4;
-  const size_t n_args = args_spec_list.size();
+  const size_t n_args = args_abs_list.size();
   // Hash from list size and the first element.
-  std::size_t hash_value = hash_combine(n_args, args_spec_list[0]->hash());
+  std::size_t hash_value = hash_combine(n_args, args_abs_list[0]->hash());
   // Hash from last few elements.
   const size_t start = ((n_args > kMaxLastElements) ? (n_args - kMaxLastElements) : 1);
   for (size_t i = start; i < n_args; ++i) {
-    hash_value = hash_combine(hash_value, args_spec_list[i]->hash());
+    hash_value = hash_combine(hash_value, args_abs_list[i]->hash());
   }
   return hash_value;
 }

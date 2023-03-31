@@ -34,16 +34,16 @@
 namespace mindspore {
 namespace abstract {
 namespace {
-string EvalEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &arg_spec_list,
+string EvalEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &arg_abs_list,
                         const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(evaluator);
   std::stringstream ss;
   if (out_conf != nullptr) {
     ss << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
   }
-  for (size_t i = 0; i < arg_spec_list.size(); i++) {
+  for (size_t i = 0; i < arg_abs_list.size(); i++) {
     ss << evaluator->ToString() << " input[" << i
-       << "] abstract value: " << (arg_spec_list[i] ? arg_spec_list[i]->ToString() : "null abstract.");
+       << "] abstract value: " << (arg_abs_list[i] ? arg_abs_list[i]->ToString() : "null abstract.");
   }
   return ss.str();
 }
@@ -413,9 +413,9 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
     MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag in recursive eval.";
   }
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
-    auto normalized_args_spec_list = NormalizeArgs(args_abs_list);
-    MS_LOG(DEBUG) << "Normalized args " << mindspore::ToString(normalized_args_spec_list);
-    return normalized_args_spec_list;
+    auto normalized_args_abs_list = NormalizeArgs(args_abs_list);
+    MS_LOG(DEBUG) << "Normalized args " << mindspore::ToString(normalized_args_abs_list);
+    return normalized_args_abs_list;
   }
   return args_abs_list;
 }
@@ -603,7 +603,7 @@ EvalResultPtr PartialAppEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtr
 
   ConfigPtrList partial_args_conf_list;
   // Join arguments in partial and the rest arguments from args_conf_list.
-  (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(partial_args_conf_list),
+  (void)std::transform(args_abs_list_.begin(), args_abs_list_.end(), std::back_inserter(partial_args_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
 
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(partial_args_conf_list),
@@ -827,20 +827,20 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
     int index = 0;
     (void)std::transform(
       logical_view_abs_list.begin(), logical_view_abs_list.end(), std::back_inserter(physical_view_abs_list),
-      [&axis_size, &index, out_axes_seq, out_axes](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
+      [&axis_size, &index, out_axes_seq, out_axes](const AbstractBasePtr &arg_abs) -> AbstractBasePtr {
         ValuePtr sub_out_axes = out_axes;
         if (out_axes->isa<ValueSequeue>()) {
           sub_out_axes = (*out_axes_seq)[index];
           index++;
         }
-        if (arg_spec->isa<AbstractSequence>()) {
-          return GetPhysicalViewAbs(arg_spec, sub_out_axes, axis_size);
+        if (arg_abs->isa<AbstractSequence>()) {
+          return GetPhysicalViewAbs(arg_abs, sub_out_axes, axis_size);
         }
         if (sub_out_axes->isa<Int64Imm>()) {
           int axis = static_cast<int>(dyn_cast_ptr<Int64Imm>(sub_out_axes)->value());
-          return ExtendDim(&axis, arg_spec, axis_size);
+          return ExtendDim(&axis, arg_abs, axis_size);
         } else if (sub_out_axes->isa<None>()) {
-          return arg_spec;
+          return arg_abs;
         }
         MS_LOG(EXCEPTION) << "The axis in vmap's 'out_axes' should be a None or a scalar of type Int64Imm, but got a "
                           << sub_out_axes->ToString() << ".";
@@ -940,8 +940,8 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
 
 EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_abs_list,
                                      const AnfNodeConfigPtr &out_conf) {
-  if (args_abs_list.size() != args_spec_list_.size()) {
-    MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
+  if (args_abs_list.size() != args_abs_list_.size()) {
+    MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_abs_list_.size()
                       << ", arguments no: " << args_abs_list.size();
   }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
@@ -954,7 +954,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
                    << "]: " << args_abs_list[i]->ToString();
       SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
     }
-    (void)args_abs_list[i]->Join(args_spec_list_[i]);
+    (void)args_abs_list[i]->Join(args_abs_list_[i]);
   }
   return std::make_shared<EvalResult>(output_, std::make_shared<AttrValueMap>());
 }

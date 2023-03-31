@@ -247,21 +247,21 @@ void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, c
 }
 
 void CheckSigSize(const ValuePtr &function, const size_t &sig_size, const bool &has_var,
-                  const AbstractBasePtrList &args_spec_list, const std::string &func_name) {
+                  const AbstractBasePtrList &args_abs_list, const std::string &func_name) {
   if (sig_size > 0) {
     if (has_var) {
-      if (sig_size - 1 > args_spec_list.size()) {
+      if (sig_size - 1 > args_abs_list.size()) {
         MS_LOG(EXCEPTION) << "Function " << func_name
                           << "'s input length less than PositionalKeyword Signature length.";
       }
       return;
     }
-    // Consider the case where there are monads in primitive's args_spec_list.
-    size_t args_size = args_spec_list.size();
+    // Consider the case where there are monads in primitive's args_abs_list.
+    size_t args_size = args_abs_list.size();
     if (function->isa<Primitive>()) {
       auto prim = function->cast<PrimitivePyPtr>();
       if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
-        args_size -= GetAbstractMonadNum(args_spec_list);
+        args_size -= GetAbstractMonadNum(args_abs_list);
       }
     }
     if (args_size > sig_size) {
@@ -296,12 +296,12 @@ TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph) {
 }  // namespace
 
 AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
-                         const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
+                         const AbstractBasePtrList &args_abs_list, const std::vector<AnfNodePtr> &params_list) {
   // args: original inputs
   auto &signature = GetSignature(function);
   std::size_t sig_size = signature.size();
   auto has_var = (sig_size > 0 && signature[sig_size - 1].kind == SignatureEnumKind::kKindVarPositional);
-  CheckSigSize(function, sig_size, has_var, args_spec_list, func_name);
+  CheckSigSize(function, sig_size, has_var, args_abs_list, func_name);
   std::vector<AnfNodePtr> op_inputs;
   std::set<size_t> write_indices;
   std::vector<TypePtr> input_types;
@@ -309,15 +309,15 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   auto cast_type = GetMixedPrecisionTargetType(func_graph);
   // Assume, the write input of op is always the first input. We check if any write op,
   // and add cast op on other inputs to keep the same type with assigned parameter.
-  for (size_t i = 0; i < args_spec_list.size(); ++i) {
+  for (size_t i = 0; i < args_abs_list.size(); ++i) {
     AnfNodePtr param = params_list[i];
-    if (args_spec_list[i] == nullptr) {
+    if (args_abs_list[i] == nullptr) {
       op_inputs.push_back(param);
       continue;
     }
 
     SignatureEnumRW sig = GetSignatureEnumRW(i, signature, has_var);
-    TypePtr type = args_spec_list[i]->BuildType();
+    TypePtr type = args_abs_list[i]->BuildType();
     if (type && type->isa<RefType>()) {
       if (sig == SignatureEnumRW::kRWRead) {
         auto source_tensor_type = type->cast<TensorTypePtr>();
@@ -338,30 +338,30 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       RaiseExceptionForCheckParameter(func_name, i, type->ToString());
     }
     MS_LOG(DEBUG) << "Function " << func_name << "'s input " << i << " " << param->DebugString(2) << " abs "
-                  << args_spec_list[i]->ToString() << " type " << type->ToString() << ".";
+                  << args_abs_list[i]->ToString() << " type " << type->ToString() << ".";
     input_types.push_back(type);
     op_inputs.push_back(param);
   }
   // process default
-  ProcessDefault(func_name, args_spec_list.size(), signature, has_var, &op_inputs);
+  ProcessDefault(func_name, args_abs_list.size(), signature, has_var, &op_inputs);
   DoAutoCast(function, signature, input_types, func_graph, write_indices, &op_inputs);
   return func_graph->NewCNodeInOrder(op_inputs);
 }
 }  // namespace
 
 AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
-                         const AbstractBasePtrList &args_spec_list, const AnfNodePtrList &old_node_inputs) {
-  auto new_cnode = BuildNewCNode(func_graph, func_name, function, args_spec_list, old_node_inputs);
+                         const AbstractBasePtrList &args_abs_list, const AnfNodePtrList &old_node_inputs) {
+  auto new_cnode = BuildNewCNode(func_graph, func_name, function, args_abs_list, old_node_inputs);
   return new_cnode;
 }
 
-FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
 
-  for (size_t i = 0; i < args_spec_list.size(); ++i) {
+  for (size_t i = 0; i < args_abs_list.size(); ++i) {
     (void)func_graph->add_parameter();
   }
-  auto new_cnode = BuildNewCNode(func_graph, name_, function_, args_spec_list, func_graph->parameters());
+  auto new_cnode = BuildNewCNode(func_graph, name_, function_, args_abs_list, func_graph->parameters());
   func_graph->set_output(new_cnode);
   func_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   return func_graph;

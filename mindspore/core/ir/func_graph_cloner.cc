@@ -529,12 +529,12 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   cnode->set_inputs(inputs);
   OrderParameters(func_graph, inputs, caller_first_arg_index);
 
-  AbstractBasePtrList args_spec_list;
+  AbstractBasePtrList args_abs_list;
   (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(),
-                      [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
+                      [&args_abs_list](const AnfNodePtr &node) { args_abs_list.push_back(node->abstract()); });
   MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
   auto abs = std::make_shared<abstract::PartialAbstractClosure>(
-    func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_spec_list, cnode);
+    func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
   cnode->set_abstract(abs);
 }
 

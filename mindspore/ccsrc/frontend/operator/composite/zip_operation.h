@@ -43,7 +43,7 @@ class ZipOperation : public MetaFuncGraph {
   explicit ZipOperation(const std::string &name) : MetaFuncGraph(name) {}
   ~ZipOperation() override = default;
   MS_DECLARE_PARENT(ZipOperation, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend std::ostream &operator<<(std::ostream &os, const ZipOperation &op) {
     os << op.name_;
     return os;

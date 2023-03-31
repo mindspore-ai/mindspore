@@ -64,8 +64,8 @@ class Map : public MetaFuncGraph {
   }
   ~Map() override = default;
   MS_DECLARE_PARENT(Map, MetaFuncGraph)
-  abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const override;
-  FuncGraphPtr GenerateFromTypes(const TypePtrList &args_spec_list) override;
+  abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_abs_list) const override;
+  FuncGraphPtr GenerateFromTypes(const TypePtrList &args_abs_list) override;
   MetaFuncGraphPtr GetFnLeaf() { return fn_leaf_; }
 
  private:

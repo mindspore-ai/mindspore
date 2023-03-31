@@ -821,7 +821,18 @@ class MS_CORE_API AbstractAny : public AbstractTensor {
   ~AbstractAny() override = default;
   MS_DECLARE_PARENT(AbstractAny, AbstractTensor)
 
+  AbstractBasePtr Join(const AbstractBasePtr &other) override {
+    MS_EXCEPTION_IF_NULL(other);
+    return Clone();
+  }
+
+  AbstractBasePtr Broaden() const override { return Clone(); }
+
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractAny>(); }
+
   TypePtr BuildType() const override;
+
+  std::string ToString() const override { return type_name(); };
 };
 using AbstractAnyPtr = std::shared_ptr<AbstractAny>;
 using AbstractAnyPtrList = std::vector<AbstractAnyPtr>;
@@ -1408,9 +1419,9 @@ using AbstractRefPtr = std::shared_ptr<AbstractRefTensor>;
 
 /// \brief Compute the hash of a list of abstracts.
 ///
-/// \param[in] args_spec_list A list of abstracts.
+/// \param[in] args_abs_list A list of abstracts.
 /// \return A hash number.
-MS_CORE_API std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list);
+MS_CORE_API std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_abs_list);
 
 /// \brief Determine whether a list of abstracts is equal to another.
 ///
@@ -1421,8 +1432,8 @@ MS_CORE_API bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, co
 
 /// \brief Struct AbstractBasePtrListHasher provides a function to compute the hash of a list of abstracts.
 struct AbstractBasePtrListHasher {
-  std::size_t operator()(const AbstractBasePtrList &args_spec_list) const {
-    return AbstractBasePtrListHash(args_spec_list);
+  std::size_t operator()(const AbstractBasePtrList &args_abs_list) const {
+    return AbstractBasePtrListHash(args_abs_list);
   }
 };
 

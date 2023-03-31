@@ -298,8 +298,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   virtual ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
-  // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
-  AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
+  // args_abs_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
+  AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_abs_list);
   void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) const;
   EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
   // Evaluate a CNode without look up cache.
@@ -314,7 +314,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const;
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
-  EvalResultPtr Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_spec_list);
+  EvalResultPtr Execute(const AbstractFunctionPtr &func, const AbstractBasePtrList &args_abs_list);
   void Clear();
   void ClearEvaluatorCache();
   AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context,
@@ -338,7 +338,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   mindspore::HashMap<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
-  static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
+  static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_abs_list, const AnfNodePtr &node);
 
   bool check_side_effect() const { return check_side_effect_; }
   void set_check_side_effect(bool check_side_effect) { check_side_effect_ = check_side_effect; }
@@ -358,7 +358,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvaluatorPtr _GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func);
 
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
-                                     const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
+                                     const AbstractBasePtrList &args_abs_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
 
   const PrimEvaluatorMap &prim_constructors_;

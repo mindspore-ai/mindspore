@@ -300,7 +300,7 @@ class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
 class PartialAppEvaluator : public Evaluator {
  public:
   PartialAppEvaluator(const EvaluatorPtr &evaluator, const AbstractBasePtrList &args)
-      : Evaluator("PartialAppEvaluator"), evaluator_(evaluator), args_spec_list_(args) {}
+      : Evaluator("PartialAppEvaluator"), evaluator_(evaluator), args_abs_list_(args) {}
   ~PartialAppEvaluator() override = default;
   MS_DECLARE_PARENT(PartialAppEvaluator, Evaluator);
   AnfNodePtr bound_node() const override {
@@ -327,13 +327,13 @@ class PartialAppEvaluator : public Evaluator {
 
  private:
   EvaluatorPtr evaluator_;
-  AbstractBasePtrList args_spec_list_;
+  AbstractBasePtrList args_abs_list_;
 };
 
 class VirtualEvaluator : public Evaluator {
  public:
   VirtualEvaluator(const AbstractBasePtrList &args_abs_list, const AbstractBasePtr &output)
-      : Evaluator("virtual"), args_spec_list_(args_abs_list), output_(output) {}
+      : Evaluator("virtual"), args_abs_list_(args_abs_list), output_(output) {}
   ~VirtualEvaluator() override = default;
   MS_DECLARE_PARENT(VirtualEvaluator, Evaluator);
 
@@ -342,7 +342,7 @@ class VirtualEvaluator : public Evaluator {
   std::string ToString() const override { return identifier_; }
 
  private:
-  AbstractBasePtrList args_spec_list_;
+  AbstractBasePtrList args_abs_list_;
   AbstractBasePtr output_;
 };
 

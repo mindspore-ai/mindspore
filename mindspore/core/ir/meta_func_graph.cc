@@ -56,9 +56,9 @@ FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) const {
   return nullptr;
 }
 
-FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_abs_list) {
   TypePtrList types;
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(types),
                        [](const AbstractBasePtr &arg) -> TypePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          if (arg->isa<abstract::AbstractAny>()) {
@@ -71,13 +71,13 @@ FuncGraphPtr MetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBasePtrLis
   if (iter == cache_.end()) {
     FuncGraphPtr fg = GenerateFromTypes(types);
     MS_EXCEPTION_IF_NULL(fg);
-    MS_LOG(INFO) << "MetaFuncgraph: cache miss for types: " << mindspore::ToString(args_spec_list)
+    MS_LOG(INFO) << "MetaFuncgraph: cache miss for types: " << mindspore::ToString(args_abs_list)
                  << ", g: " << fg->ToString();
     cache_[types] = fg;
     return fg;
   } else {
     MS_EXCEPTION_IF_NULL(iter->second);
-    MS_LOG(DEBUG) << "MetaFuncgraph: cache hit for types: " << mindspore::ToString(args_spec_list)
+    MS_LOG(DEBUG) << "MetaFuncgraph: cache hit for types: " << mindspore::ToString(args_abs_list)
                   << ", g: " << iter->second->ToString();
     return iter->second;
   }

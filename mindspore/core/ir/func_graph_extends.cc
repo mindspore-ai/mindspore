@@ -33,7 +33,7 @@ using mindspore::abstract::PrimitiveAbstractClosure;
 using mindspore::abstract::VirtualAbstractClosure;
 
 AbstractFunctionPtr FuncGraph::abstract() {
-  AbstractBasePtrList args_spec_list;
+  AbstractBasePtrList args_abs_list;
 
   for (auto &para : parameters_) {
     MS_EXCEPTION_IF_NULL(para);
@@ -41,7 +41,7 @@ AbstractFunctionPtr FuncGraph::abstract() {
       MS_LOG(ERROR) << "Error!!";
       return nullptr;
     }
-    args_spec_list.push_back(para->abstract());
+    args_abs_list.push_back(para->abstract());
   }
 
   if (output() == nullptr) {
@@ -49,7 +49,7 @@ AbstractFunctionPtr FuncGraph::abstract() {
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(output());
-  return std::make_shared<VirtualAbstractClosure>(args_spec_list, output()->abstract());
+  return std::make_shared<VirtualAbstractClosure>(args_abs_list, output()->abstract());
 }
 
 void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
@@ -236,17 +236,17 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
   }
 }
 
-FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_abs_list) {
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   std::vector<size_t> pos_arg_indexes;
-  size_t arguments_count = args_spec_list.size();
+  size_t arguments_count = args_abs_list.size();
   if (fv_param_count_ > arguments_count) {
     MS_LOG(EXCEPTION) << "The number of parameters in funcgraph cannot exceed the number of arguments.";
   }
   for (size_t i = 0; i < arguments_count - fv_param_count_; i++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
-    if (args_spec_list[i]->isa<abstract::AbstractKeywordArg>()) {
-      kwarg_list.push_back(args_spec_list[i]->cast<abstract::AbstractKeywordArgPtr>());
+    MS_EXCEPTION_IF_NULL(args_abs_list[i]);
+    if (args_abs_list[i]->isa<abstract::AbstractKeywordArg>()) {
+      kwarg_list.push_back(args_abs_list[i]->cast<abstract::AbstractKeywordArgPtr>());
     } else {
       pos_arg_indexes.push_back(i);
     }
@@ -255,7 +255,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   if (!NeedGenerate(kwarg_list)) {
     return shared_from_base<FuncGraph>();
   }
-  auto iter = func_graph_cache_.find(args_spec_list);
+  auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
     return iter->second;
   }
@@ -300,7 +300,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   specialized_graph->set_kwonlyargs_count(0);
   specialized_graph->ClearDefaultValues();
   specialized_graph->set_is_generate(true);
-  func_graph_cache_[args_spec_list] = specialized_graph;
+  func_graph_cache_[args_abs_list] = specialized_graph;
   return specialized_graph;
 }
 

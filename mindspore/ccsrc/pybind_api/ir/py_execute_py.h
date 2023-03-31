@@ -193,7 +193,7 @@ class PyExecuteInitializer {
   }
 
   static abstract::AbstractBasePtr CppInferShapeAndTypePy(const CNodePtr &cnode, const PrimitivePtr &primitive,
-                                                          const AbstractBasePtrList &args_spec_list) {
+                                                          const AbstractBasePtrList &args_abs_list) {
     // We can't catch the pybind11 exception by py::builtin_exception or its base class,
     // so we have to list all pybind11 exceptions and catch one by one here.
     AbstractBasePtr res;
@@ -201,8 +201,8 @@ class PyExecuteInitializer {
     std::function<void(void)> other_error_handler;
     std::function<void(void)> default_error_handler;
     HandleExceptionRethrow(
-      [&res, &cnode, &primitive, &args_spec_list]() {
-        res = opt::CppInferShapeAndType(primitive, args_spec_list);
+      [&res, &cnode, &primitive, &args_abs_list]() {
+        res = opt::CppInferShapeAndType(primitive, args_abs_list);
         MS_LOG(DEBUG) << "The abstract of " << cnode->fullname_with_scope() << " changes from " << cnode->abstract()
                       << " to " << res;
         return res;

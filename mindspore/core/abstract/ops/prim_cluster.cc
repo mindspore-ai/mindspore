@@ -24,15 +24,15 @@
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplKMeansCentroids(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_spec_list) {
+                                         const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
   std::string error_mess_prefix = std::string("For ") + op_name + ", ";
   constexpr size_t size_args_expected = 4;
-  CheckArgsSize(op_name, args_spec_list, size_args_expected);
-  AbstractTensorPtr x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  AbstractTensorPtr y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  AbstractTensorPtr sum_square_y = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
-  AbstractTensorPtr sum_square_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 3);
+  CheckArgsSize(op_name, args_abs_list, size_args_expected);
+  AbstractTensorPtr x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
+  AbstractTensorPtr y = CheckArg<AbstractTensor>(op_name, args_abs_list, 1);
+  AbstractTensorPtr sum_square_y = CheckArg<AbstractTensor>(op_name, args_abs_list, 2);
+  AbstractTensorPtr sum_square_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 3);
   (void)CheckTensorDType(x, {kFloat32}, error_mess_prefix + "input x");
   (void)CheckTensorDType(y, {kFloat32}, error_mess_prefix + "input y");
   (void)CheckTensorDType(sum_square_y, {kFloat32}, error_mess_prefix + "input sum_square_y");
