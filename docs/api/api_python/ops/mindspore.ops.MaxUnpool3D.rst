@@ -42,7 +42,7 @@ mindspore.ops.MaxUnpool3D
     输入：
         - **x** (Tensor) - 求逆的输入Tensor。其shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(N, D_{in}, H_{in}, W_{in}, C)` 。
         - **argmax** (Tensor) - `argmax` 表示最大值的索引。其shape必须与输入 `x` 相同。
-          `argmax` 的值必须属于:math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` ，数据类型必须为int32或int64。
+          `argmax` 的值必须属于 :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` ，数据类型必须为int32或int64。
 
     输出：
         Tensor，其shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或 :math:`(N, D_{out}, H_{out}, W_{out}, C)` ，
