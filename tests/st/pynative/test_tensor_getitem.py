@@ -956,17 +956,6 @@ def test_tensor_assign_exception():
     # with pytest.raises(ValueError):
     #     net_e2(t, 2)
 
-    # Error for A[Slice] = U, U is a Tensor
-    # 1. A[Slice] = U,  u.size is error
-    with pytest.raises(ValueError):
-        net2(t, Tb, tck)
-    # 2. A[Slice] = U, U is empty
-    with pytest.raises(ValueError):
-        net2(t, Tc, tck)
-    # 3. A[Slice] = U, U.size error
-    with pytest.raises(ValueError):
-        net2(t, Tb, tck)
-
     # Error for A[Tuple(Slice...)] = Tensor
     # 1. A[Tuple(Slice...)] = U, U is empty
     with pytest.raises(ValueError):
@@ -977,6 +966,17 @@ def test_tensor_assign_exception():
     # 3. A[Tuple(Slice...)] = U,  Slice error
     # with pytest.raises(IndexError):
     #     net_e1(Ta, b)
+
+    # Error for A[Slice] = U, U is a Tensor
+    # 1. A[Slice] = U,  u.size is error
+    with pytest.raises(ValueError):
+        net2(t, Tb, tck)
+    # 2. A[Slice] = U, U is empty
+    with pytest.raises(ValueError):
+        net2(t, Tc, tck)
+    # 3. A[Slice] = U, U.size error
+    with pytest.raises(ValueError):
+        net2(t, Tb, tck)
 
     # Error for A[Tuple(Slice...)] = Number
     # 1. A[Tuple(Slice...)] = Number,  Slice error
@@ -1004,6 +1004,25 @@ def test_tensor_assign_exception():
     # 2. A[(n,m)] = U, the number index error
     with pytest.raises(IndexError):
         net(Ta4d, b, Ta4d_ck)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_assign_exception_2():
+    """
+    Feature: Test TensorAssignWithEllipsis and TensorAssignWithTupleEllipsis
+    Description: Test error cases for TensorAssignWithEllipsis and TensorAssignWithTupleEllipsis
+    Expectation: ValueError is as expected
+    """
+    a = np.arange(60).reshape(3, 4, 5)
+    b = Tensor([1], dtype=mstype.float32)
+    Ta = Tensor(a, dtype=mstype.float32)
+    Ta4d = Tensor(a.reshape(1, 3, 4, 5), dtype=mstype.float32)
+    Tb = Tensor([1, 3], dtype=mstype.float32)
+    Tc = Tensor([], dtype=mstype.float32)
 
     # Error for  A[...] = U or A[1:, ...] = u
     # 1. A[...] = scalar/tensor
