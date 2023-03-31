@@ -467,7 +467,9 @@ void DeviceContextManager::BindDeviceCtx() const {
   for (auto &iter : device_contexts_) {
     MS_EXCEPTION_IF_NULL(iter.second);
     MS_EXCEPTION_IF_NULL(iter.second->device_res_manager_);
-    iter.second->device_res_manager_->BindDeviceToCurrentThread(true);
+    if (!iter.second->device_res_manager_->BindDeviceToCurrentThread(true)) {
+      MS_LOG(EXCEPTION) << "Bind device failed";
+    }
   }
 }
 

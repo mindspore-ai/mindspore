@@ -249,7 +249,7 @@ void KernelRuntime::GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *t
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
     *total_size += align_size;
-    align_size_list->emplace_back(align_size);
+    (void)align_size_list->emplace_back(align_size);
     (void)address_list->emplace_back(address);
   }
 }

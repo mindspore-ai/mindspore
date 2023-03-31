@@ -111,7 +111,7 @@ class PyObjectWrapper : public Named {
   ~PyObjectWrapper() override;
 
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
-  py::object obj() { return *obj_; }
+  py::object obj() const { return *obj_; }
 
  private:
   // the object that needs to be resolved

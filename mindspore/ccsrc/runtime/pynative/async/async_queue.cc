@@ -29,6 +29,7 @@ AsyncQueue::~AsyncQueue() { WorkerJoin(); }
 
 void AsyncQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  // cppcheck-suppress unreadVariable
   SignalGuard sig([](int, siginfo_t *, void *) {
     int this_pid = getpid();
     MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
@@ -65,6 +66,7 @@ void AsyncQueue::WorkerLoop() {
     } catch (const std::exception &e) {
       MS_LOG(WARNING) << "Run task failed, error msg:" << e.what();
       {
+        // cppcheck-suppress unreadVariable
         std::unique_lock<std::mutex> lock(task_mutex_);
 
         MsException::Instance().SetException();
@@ -90,6 +92,7 @@ void AsyncQueue::Push(const std::shared_ptr<AsyncTask> &task) {
   if (worker_ == nullptr) {
     worker_ = std::make_shared<std::thread>(&AsyncQueue::WorkerLoop, this);
   }
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   tasks_.push(task);
   task_cond_var_.notify_all();
@@ -109,12 +112,14 @@ void AsyncQueue::Wait() {
 }
 
 bool AsyncQueue::Empty() {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   return tasks_.empty();
 }
 
 void AsyncQueue::Clear() {
   {
+    // cppcheck-suppress unreadVariable
     std::lock_guard<std::mutex> lock(task_mutex_);
     if (tasks_.empty()) {
       return;
@@ -163,6 +168,7 @@ void AsyncQueue::WorkerJoin() {
     // Avoid worker thread join itself which will cause deadlock
     if (worker_->joinable() && worker_->get_id() != std::this_thread::get_id()) {
       {
+        // cppcheck-suppress unreadVariable
         std::lock_guard<std::mutex> lock(task_mutex_);
         auto task = std::make_shared<ExitTask>();
         tasks_.push(task);

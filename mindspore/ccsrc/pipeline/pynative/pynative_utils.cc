@@ -335,8 +335,8 @@ ValuePtr StubNodeToValueInner(const ValuePtr &v) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
     ValuePtrList value_list;
-    std::transform(values.begin(), values.end(), std::back_inserter(value_list),
-                   [](const ValuePtr &value) { return StubNodeToValueInner(value); });
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(value_list),
+                         [](const ValuePtr &value) { return StubNodeToValueInner(value); });
     if (utils::isa<ValueTuple>(v)) {
       return std::make_shared<ValueTuple>(value_list);
     } else if (utils::isa<ValueList>(v)) {
@@ -762,9 +762,9 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info, cons
   auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
     const auto &tensor_masks = op_run_info->base_op_run_info.input_mask;
     std::vector<int64_t> new_masks;
-    std::transform(tensor_masks.begin(), tensor_masks.end(), std::back_inserter(new_masks), [](int64_t tensor_mask) {
-      return tensor_mask == kValueNodeTensorMask ? kParameterDataTensorMask : tensor_mask;
-    });
+    (void)std::transform(
+      tensor_masks.begin(), tensor_masks.end(), std::back_inserter(new_masks),
+      [](int64_t tensor_mask) { return tensor_mask == kValueNodeTensorMask ? kParameterDataTensorMask : tensor_mask; });
     op_run_info->base_op_run_info.input_mask = new_masks;
   };
 
