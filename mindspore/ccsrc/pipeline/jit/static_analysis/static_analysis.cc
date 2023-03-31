@@ -227,8 +227,12 @@ void CheckInterpretedObject(const AbstractBasePtr &abs) {
 }
 
 EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(abs);
   auto val = abs->BuildValue();
+  MS_EXCEPTION_IF_NULL(val);
   auto class_val = dyn_cast_ptr<parse::ClassType>(val);
+  MS_EXCEPTION_IF_NULL(class_val);
   const auto &class_name = class_val->name();
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   auto py_fn = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name));
@@ -239,7 +243,9 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
                              << "Try using 'jit_class' to decorate the class?";
   }
   auto list_func_fg = parse::ParsePythonCode(py_fn);
+  MS_EXCEPTION_IF_NULL(list_func_fg);
   auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
   list_func_fg->set_manager(fg->manager());
 
   auto &inputs = cnode->inputs();

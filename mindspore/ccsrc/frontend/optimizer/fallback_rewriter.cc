@@ -991,7 +991,7 @@ class AfterOptARewriter : public BaseRewriter {
       if (IsValueNode<ValueSequence>(input)) {
         auto seq_node = ConvertNoneInSequence(input, cur_func);
         if (seq_node != nullptr) {
-          manager_->Replace(input, seq_node);
+          (void)manager_->Replace(input, seq_node);
           set_need_renormalized(true);
           continue;
         }
@@ -1000,7 +1000,7 @@ class AfterOptARewriter : public BaseRewriter {
         continue;
       }
       auto none_py_execute = NoneConvertPyExecute(cur_func);
-      manager_->Replace(input, none_py_execute);
+      (void)manager_->Replace(input, none_py_execute);
     }
   }
 
@@ -1037,7 +1037,7 @@ class AfterOptARewriter : public BaseRewriter {
         continue;
       }
       auto type_py_execute = ClassTypeConvertPyExecute(cur_func);
-      manager_->Replace(input, type_py_execute);
+      (void)manager_->Replace(input, type_py_execute);
       set_need_renormalized(true);
     }
   }
