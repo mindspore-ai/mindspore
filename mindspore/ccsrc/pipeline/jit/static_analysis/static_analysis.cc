@@ -45,7 +45,7 @@ std::atomic<size_t> stack_frame_depth;
 
 void ResetFunctionCallDepth() { function_call_depth = 0; }
 
-void IncreaseFunctionCallDepth() { ++function_call_depth; }
+void IncreaseFunctionCallDepth() { (void)(++function_call_depth); }
 
 void DecreaseFunctionCallDepth() {
   if (function_call_depth == 0) {
@@ -58,7 +58,7 @@ size_t FunctionCallDepth() { return function_call_depth; }
 
 void ResetStackFrameDepth() { stack_frame_depth = 0; }
 
-void IncreaseStackFrameDepth() { ++stack_frame_depth; }
+void IncreaseStackFrameDepth() { (void)(++stack_frame_depth); }
 
 void DecreaseStackFrameDepth() {
   if (stack_frame_depth == 0) {

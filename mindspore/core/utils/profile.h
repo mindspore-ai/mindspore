@@ -129,7 +129,7 @@ class NoProfTransaction {
   ~NoProfTransaction() = default;
 
   template <class Function>
-  void Execute(const Function &func) {
+  void Execute(const Function &func) const {
     func();
   }
 };

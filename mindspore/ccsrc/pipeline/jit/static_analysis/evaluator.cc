@@ -459,7 +459,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (iter != func_graph_cache_.end()) {
     return iter->second;
   }
-  meta_func_graph_->GetChecker("check_infer_inputs").Execute(args_abs_list);
+  (void)meta_func_graph_->GetChecker("check_infer_inputs").Execute(args_abs_list);
 
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
   FuncGraphPtr generated_func_graph;

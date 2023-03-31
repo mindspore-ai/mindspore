@@ -44,7 +44,7 @@ class COMMON_EXPORT CSE {
 
  protected:
   void Init();
-  bool BuildOrderGroupForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager);
+  bool BuildOrderGroupForOneGraph(const FuncGraphPtr &fg);
   void DoReplace(const FuncGraphManagerPtr &manager);
   AnfNodePtr GetReplicatedNode(const AnfNodePtr &node) const;
 

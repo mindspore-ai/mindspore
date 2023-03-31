@@ -334,7 +334,6 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     if (fg_list_.size() != kSwitchBranchesNum && args_list_.size() != kSwitchBranchesNum) {
       return nullptr;
     }
-    // Should not continue;
     if (!CheckFuncGraphAndArgs()) {
       return nullptr;
     }

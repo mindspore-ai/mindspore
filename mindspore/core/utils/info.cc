@@ -121,7 +121,7 @@ int64_t DebugInfo::unique_id_through_copy() const {
   return final_unique_id;
 }
 
-DebugInfoPtr DebugInfo::Copy() {
+DebugInfoPtr DebugInfo::Copy() const {
   auto new_debug_info = std::make_shared<NodeDebugInfo>();
   new_debug_info->location_ = location_;
   new_debug_info->trace_info_ = trace_info_;
@@ -227,7 +227,7 @@ DebugInfoPtr GetFirstHasLocationDebugInfo(const DebugInfoPtr &debug_info) {
 
 DebugInfoPtr DebugInfo::UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info,
                                                    const DebugInfoPtr &debug_info) {
-  static auto enable_fix_code_line = (common::GetEnv("MS_DEV_ENABLE_FIX_CODE_LINE") != "0");
+  static const auto enable_fix_code_line = (common::GetEnv("MS_DEV_ENABLE_FIX_CODE_LINE") != "0");
   if (!enable_fix_code_line) {
     return debug_info;
   }
@@ -253,8 +253,9 @@ DebugInfoPtr DebugInfo::UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debu
     return debug_info;
   }
   auto copy_debug_infos = CopyDebugInfoLink(debug_info, concat_pre);
-  std::for_each(copy_debug_infos.cbegin(), copy_debug_infos.cend(),
-                [](const DebugInfoPtr &info) { info->inlined_ = true; });
+  for (const auto &info : copy_debug_infos) {
+    info->inlined_ = true;
+  }
   auto debug_info_copy = copy_debug_infos.front();
   auto concat_pre_copy = copy_debug_infos.back();
   MS_LOG(DEBUG) << "debug_info_copy source lines:\n" << mindspore::ToString(trace::GetSourceLineList(debug_info_copy));
@@ -278,7 +279,7 @@ std::string NodeDebugInfo::debug_name() {
   return name_;
 }
 
-DebugInfoPtr NodeDebugInfo::Copy() {
+DebugInfoPtr NodeDebugInfo::Copy() const {
   auto new_debug_info = std::make_shared<NodeDebugInfo>();
   new_debug_info->node_ = node_;
   new_debug_info->location_ = location_;

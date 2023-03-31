@@ -36,7 +36,7 @@ FuncGraphLoopBreaker &FuncGraphLoopBreaker::Inst() {
 MS_CORE_API const FuncGraphChecker &FuncGraphBase::GetChecker(const std::string &checker_name) {
   auto it = checkers_.find(checker_name);
   if (it == checkers_.cend()) {
-    static FuncGraphChecker empty_checker;
+    static const auto empty_checker = FuncGraphChecker();
     return empty_checker;
   }
   return *(it->second);
