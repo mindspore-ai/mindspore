@@ -1762,7 +1762,7 @@ void ControlNodeScheduler::SetTimeSummaryForControlActor(const GraphCompilerInfo
       if (entrance_base_actor != nullptr) {
         const auto &entrance_actor = dynamic_cast<ControlActor *>(entrance_base_actor);
         MS_EXCEPTION_IF_NULL(entrance_actor);
-        entrance_actor->end_actors_.emplace(exit_actor);
+        (void)entrance_actor->end_actors_.emplace(exit_actor);
         MS_LOG(DEBUG) << "Add time summart for exit actor:" << exit_actor->GetAID()
                       << " to actor:" << entrance_actor->GetAID();
       }
@@ -1773,7 +1773,7 @@ void ControlNodeScheduler::SetTimeSummaryForControlActor(const GraphCompilerInfo
     if (stack_base_actor != nullptr) {
       const auto &stack_actor = dynamic_cast<ControlActor *>(stack_base_actor);
       MS_EXCEPTION_IF_NULL(stack_actor);
-      stack_actor->end_actors_.emplace(exit_actor);
+      (void)stack_actor->end_actors_.emplace(exit_actor);
       MS_LOG(DEBUG) << "Add time summart for exit actor:" << exit_actor->GetAID()
                     << " to actor:" << stack_actor->GetAID();
     }

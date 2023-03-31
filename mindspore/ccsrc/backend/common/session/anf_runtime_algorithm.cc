@@ -1874,4 +1874,28 @@ bool AnfRuntimeAlgorithm::IsScalarConvertToTensor(const AnfNodePtr &input_node, 
   }
   return true;
 }
+
+tensor::TensorPtr AnfRuntimeAlgorithm::CreateMapTensor(const AnfNodePtr &output_node, size_t output_index) {
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &user_data = device_tensor->user_data();
+  MS_EXCEPTION_IF_NULL(user_data);
+  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
+  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (*user_data_type == UserDataType::kUserTypeHashTable) {
+    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
+    auto value_type = user_data->get<TypeId>(kHashTableValueType);
+    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
+    MS_EXCEPTION_IF_NULL(shape_vector);
+    MS_EXCEPTION_IF_NULL(key_type);
+    MS_EXCEPTION_IF_NULL(value_type);
+    MS_EXCEPTION_IF_NULL(default_value);
+    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
+    map_tensor->set_device_address(device_tensor);
+    return map_tensor;
+  }
+  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
+  return nullptr;
+}
 }  // namespace mindspore::session

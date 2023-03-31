@@ -139,7 +139,7 @@ class InplaceOpV2CpuTypeFunc : public CpuKernelFunc {
       } else if (indice < 0) {
         indice += row_size_;
       }
-      indices.emplace_back(indice);
+      (void)indices.emplace_back(indice);
     }
 
     compute_func_(this, output, indices, v);

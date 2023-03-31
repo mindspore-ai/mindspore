@@ -666,7 +666,7 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       const auto &element_shape = element_abs->BuildShape();
       MS_EXCEPTION_IF_NULL(element_shape);
       const auto &element_shape_vector = GetOutputInferShape(node, element_shape, 0);
-      shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
+      (void)shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
       return shape_vector;
     }
     if (output_idx >= tuple_shape->size()) {
@@ -910,7 +910,7 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
   MS_LOG(DEBUG) << "Check abs for scalar";
   for (size_t i = 0; i < types.size(); ++i) {
     abstract::AbstractScalarPtr abstract = std::make_shared<abstract::AbstractScalar>(TypeIdToType(types[i]));
-    abstract_list.emplace_back(abstract);
+    (void)abstract_list.emplace_back(abstract);
   }
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   node->set_abstract(abstract_tuple);

@@ -120,7 +120,7 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
       }
       input_device_tensors_[index] = input_data->data_;
       if (input_data->data_->dynamic_ref_count() != INT32_MAX) {
-        memory_free_list.emplace_back(input_data->data_);
+        (void)memory_free_list.emplace_back(input_data->data_);
       }
     }
     memory_free_lists_.push(memory_free_list);
