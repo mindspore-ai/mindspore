@@ -164,7 +164,7 @@ TensorPtr SequenceToTensor(const ValuePtr &value) {
     const auto &type_id = tensor->data_type();
     auto single_shape_vector = tensor->shape();
     const auto &single_shape = std::make_shared<abstract::Shape>(single_shape_vector);
-    shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
+    (void)shape_vector.insert(shape_vector.end(), single_shape_vector.begin(), single_shape_vector.end());
     const auto &shape = std::make_shared<abstract::Shape>(shape_vector);
     auto new_tensor = std::make_shared<tensor::Tensor>(type_id, shape_vector);
     MS_EXCEPTION_IF_NULL(new_tensor);

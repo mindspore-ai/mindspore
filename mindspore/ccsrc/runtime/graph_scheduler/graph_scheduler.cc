@@ -1369,7 +1369,7 @@ void GetAllUInputByCNode(const CNodePtr &cnode,
     const auto &cinput = input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cinput);
     if (common::AnfAlgo::GetCNodeName(cinput) == kUpdateStateOpName) {
-      (*cnode_to_monad_inputs)[cnode].emplace(cinput);
+      (void)(*cnode_to_monad_inputs)[cnode].emplace(cinput);
     }
     GetAllUInputByCNode(cinput, cnode_to_monad_inputs);
     (*cnode_to_monad_inputs)[cnode].insert((*cnode_to_monad_inputs)[cinput].begin(),
@@ -1772,6 +1772,37 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   }
 }
 
+namespace {
+std::vector<AnfNodePtr> FetchRealDependInput(
+  const AnfNodePtr &node, const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs) {
+  std::vector<AnfNodePtr> real_depend_inputs;
+  const auto &cnode = node->cast<CNodePtr>();
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad)) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    // In particular, in the depend->updatestate scene, in order to prevent the loss of the topo relationship,
+    // the first input of depend must be linked. In the othe side, real input may be this scene:  depend/load -->
+    // load/depend, so need add the control arrow for real input node in this scene.
+    real_depend_inputs.push_back(cnode->input(kRealInputIndexInDepend));
+    real_depend_inputs.push_back(cnode->input(kDependAttachNodeIndex));
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (IsNeedLinkForFirstInput(cnode, cnode_to_monad_inputs) && cnode->inputs().size() > kUpdateStateStateInput) {
+      // If all other inputs of the update state do not depend on the first input, we need to link control arrow
+      // for the first input.
+      real_depend_inputs.push_back(cnode->input(kUpdateStateStateInput));
+    }
+    for (size_t i = kUpdateStateRealInput; i < cnode->inputs().size(); ++i) {
+      MS_EXCEPTION_IF_NULL(cnode);
+      real_depend_inputs.push_back(cnode->input(i));
+    }
+  } else {
+    real_depend_inputs.push_back(node);
+  }
+  return real_depend_inputs;
+}
+}  // namespace
+
 void GraphScheduler::LinkControlArrowByAutoMonad(
   AbstractActor *to_actor, const AnfNodePtr &from_node, const KernelGraphPtr &graph, const ControlNodeParserPtr &parser,
   const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs,
@@ -1795,7 +1826,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
     if (checked_nodes->find(input_cnode) != checked_nodes->end()) {
       return;
     } else {
-      checked_nodes->emplace(input_cnode);
+      (void)checked_nodes->emplace(input_cnode);
     }
   }
 
@@ -1813,29 +1844,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   // Get the real depend input by monad node which needs to link the control arrow.
-  std::vector<AnfNodePtr> real_depend_inputs;
-  if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimDepend) ||
-      common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimLoad)) {
-    MS_EXCEPTION_IF_NULL(input_cnode);
-    // In particular, in the depend->updatestate scene, in order to prevent the loss of the topo relationship,
-    // the first input of depend must be linked. In the othe side, real input may be this scene:  depend/load -->
-    // load/depend, so need add the control arrow for real input node in this scene.
-    real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
-    real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
-  } else if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
-    if (IsNeedLinkForFirstInput(input_cnode, cnode_to_monad_inputs) &&
-        input_cnode->inputs().size() > kUpdateStateStateInput) {
-      // If all other inputs of the update state do not depend on the first input, we need to link control arrow
-      // for the first input.
-      real_depend_inputs.push_back(input_cnode->input(kUpdateStateStateInput));
-    }
-    for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
-      real_depend_inputs.push_back(input_cnode->input(i));
-    }
-  } else {
-    real_depend_inputs.push_back(input_anfnode);
-  }
-
+  std::vector<AnfNodePtr> real_depend_inputs = FetchRealDependInput(input_anfnode, cnode_to_monad_inputs);
   for (const auto &real_depend_input : real_depend_inputs) {
     auto real_depend_input_with_idx =
       common::AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);

@@ -175,7 +175,7 @@ class ControlActor : public MemoryAwareActor {
   // start_time_ and its current time, for example, set exit actor of kernel graph to its entrance actor to count the
   // execution time of the kernel graph.
   std::set<ControlActor *> end_actors_;
-  double start_time_;
+  double start_time_{0};
 
   // local node for control actor, such as return node for exit actor, switch node for switch actor.
   AnfNodePtr node_;
