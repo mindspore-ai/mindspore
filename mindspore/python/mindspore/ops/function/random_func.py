@@ -1215,7 +1215,7 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     Raises:
         TypeError: If `input` is not a Tensor whose dtype is not float32.
         TypeError: If `num_samples` is not an int.
-        TypeError: If `seed` is neither an int nor an optional.
+        TypeError: If `seed` is neither an int nor None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

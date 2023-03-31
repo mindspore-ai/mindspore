@@ -1328,22 +1328,23 @@ class MultiMarginLoss(LossBase):
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
     and :math:`i \neq y`.
 
-    Optionally, you can give non-equal weighting on the classes by passing
-    a 1D input `weight` tensor w into the constructor.
-
     Args:
-        p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
-        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        margin (float, optional): A parameter to change pairwise distance. Default: 1.0.
+        reduction (str, optional): Apply specific reduction method to the output: 'none', 'mean', 'sum'.
+            Default: 'mean'.
+
+            - 'none': no reduction will be applied.
+            - 'mean': the sum of the output will be divided by the number of elements in the output.
+            - 'sum': the output will be summed.
+
         weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
-            support float32, float16 or float64. Default: None.
+            support float32, float16 or float64. Default: None, all classes are weighted equally.
 
     Inputs:
         - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
           value of target should be non-negative, less than C.
-        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
-          support float32, float16 or float64. Default: None.
 
     Outputs:
         Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
