@@ -72,7 +72,7 @@ int activation_fp32_run(ActivationStruct *activation, int task_id, int count, in
     case ActType_Elu:
       return Elu(input + task_id * stride, count, output + task_id * stride, param->alpha_);
     default:
-      return NNACL_ERR;
+      return NNACL_ACTIVATION_TYPE_INVALID;
   }
 }
 
@@ -86,7 +86,7 @@ int activation_int32_run(ActivationStruct *activation, int task_id, int count, i
     case ActType_Relu:
       return Int32Relu(input + task_id * stride, count, output + task_id * stride);
     default:
-      return NNACL_ERR;
+      return NNACL_ACTIVATION_TYPE_INVALID;
   }
 }
 
@@ -124,16 +124,17 @@ int activation_fp16_run(ActivationStruct *activation, int task_id, int count, in
     case ActType_Elu:
       return EluFp16(input + stride * task_id, count, output + stride * task_id, param->alpha_);
     default:
-      return NNACL_ERR;
+      return NNACL_ACTIVATION_TYPE_INVALID;
   }
 #endif
-  return NNACL_ERR;
+  return NNACL_DISABLE_FP16;
 }
 
 int activation_do_compute(void *cdata, int task_id, float l, float r) {
   ActivationStruct *activation = (ActivationStruct *)cdata;
 
   int ele_num = GetElementNum(&activation->base.in_[0]);
+  NNACL_CHECK_ZERO_RETURN_ERR(activation->base.thread_nr_);
   int stride = UP_DIV(ele_num, activation->base.thread_nr_);
   MS_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, NNACL_ERR);
   int count = MSMIN(stride, ele_num - stride * task_id);
@@ -148,7 +149,7 @@ int activation_do_compute(void *cdata, int task_id, float l, float r) {
     case kNumberTypeInt32:
       return activation_int32_run(activation, task_id, count, stride);
     default:
-      return NNACL_ERR;
+      return NNACL_ACTIVATION_TYPE_INVALID;
   }
 }
 

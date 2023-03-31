@@ -48,7 +48,9 @@ int reshape_resize(struct KernelBase *self) {
   if (self->thread_nr_ < 1) {
     self->thread_nr_ = 1;
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(self->thread_nr_);
   reshape->block_size_ = UP_DIV(reshape->total_size_, self->thread_nr_);
+  NNACL_CHECK_ZERO_RETURN_ERR(reshape->block_size_);
   self->thread_nr_ = UP_DIV(reshape->total_size_, reshape->block_size_);
 
   return NNACL_OK;
