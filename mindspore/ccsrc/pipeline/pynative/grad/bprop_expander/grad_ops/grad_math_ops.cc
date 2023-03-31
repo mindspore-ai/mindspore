@@ -1273,8 +1273,8 @@ REG_BPROP_BUILDER("MatrixPower").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   x = ib->Cast(x, kFloat32);
   auto power = n;
   auto dx = ib->ZerosLike(x);
-  auto EmitBmmPowerGrad = [&ib, &dx, &dout](int repeat, const NodePtr &a, const NodePtr &b) {
-    for (int i = 0; i < repeat; ++i) {
+  auto EmitBmmPowerGrad = [&ib, &dx, &dout](int64_t repeat, const NodePtr &a, const NodePtr &b) {
+    for (int64_t i = 0; i < repeat; ++i) {
       dx = ib->Add(dx, (ib->BatchMatMul(b, ib->Emit("MatrixPower", {a}, {{"n", MakeValue<int64_t>(repeat - 1 - i)}}),
                                         false, true)));
       dout = ib->BatchMatMul(a, b, true, false);
@@ -1545,15 +1545,15 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
     for (size_t i = 0; i < rank - 2; i++) {
-      paddings.emplace_back(ShapeVector{0LL, 0LL});
+      (void)paddings.emplace_back(ShapeVector{0LL, 0LL});
     }
-    paddings.emplace_back(ShapeVector{0LL, 1LL});
-    paddings.emplace_back(ShapeVector{0LL, 0LL});
+    (void)paddings.emplace_back(ShapeVector{0LL, 1LL});
+    (void)paddings.emplace_back(ShapeVector{0LL, 0LL});
     ShapeVector begin, end, strides;
     for (size_t i = 0; i < rank; i++) {
-      begin.emplace_back(0LL);
-      end.emplace_back(x_shape[i]);
-      strides.emplace_back(1LL);
+      (void)begin.emplace_back(0LL);
+      (void)end.emplace_back(x_shape[i]);
+      (void)strides.emplace_back(1LL);
     }
     begin[rank - 2] = 1LL;
     return ib->Emit(
@@ -1572,15 +1572,15 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
     for (size_t i = 0; i < rank - 2; i++) {
-      paddings.emplace_back(ShapeVector{0LL, 0LL});
+      (void)paddings.emplace_back(ShapeVector{0LL, 0LL});
     }
-    paddings.emplace_back(ShapeVector{1LL, 0LL});
-    paddings.emplace_back(ShapeVector{0LL, 0LL});
+    (void)paddings.emplace_back(ShapeVector{1LL, 0LL});
+    (void)paddings.emplace_back(ShapeVector{0LL, 0LL});
     ShapeVector begin, end, strides;
     for (size_t i = 0; i < rank; i++) {
-      begin.emplace_back(0LL);
-      end.emplace_back(x_shape[i]);
-      strides.emplace_back(1LL);
+      (void)begin.emplace_back(0LL);
+      (void)end.emplace_back(x_shape[i]);
+      (void)strides.emplace_back(1LL);
     }
     end[rank - 2] = -1;
     return ib->Emit(
@@ -1594,17 +1594,17 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                  {"shrink_axis_mask", MakeValue<int64_t>(0)}})},
       {{"paddings", MakeValue(paddings)}});
   };
-  auto MatrixTranspose = [](const BpropIRBuilder *ib, NodePtr x) {
+  auto MatrixTranspose = [](const BpropIRBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
     auto rank = x_shape.size();
     ShapeVector perm;
     if (rank > IntToSize(2)) {
       for (size_t i = 0; i < rank - 2; i++) {
-        perm.emplace_back(SizeToLong(i));
+        (void)perm.emplace_back(SizeToLong(i));
       }
     }
-    perm.emplace_back(rank - 1);
-    perm.emplace_back(rank - 2);
+    (void)perm.emplace_back(rank - 1);
+    (void)perm.emplace_back(rank - 2);
     return ib->Transpose(x, perm);
   };
   auto superdiag = ib->GetInput(kIndex0);

@@ -344,14 +344,14 @@ NodePtrList Emitter::ShapeCalc(const NodePtrList &inputs, const ops::ShapeFunc &
       // input[i]'s shape is used
       auto input_shape = inputs[i]->shape();
       if (!IsDynamic(input_shape)) {
-        const_args_indices.insert(i);
+        (void)const_args_indices.insert(i);
         const_args[i] = input_shape;
       }
     } else {
       // input[i]'s value is used
       auto [success, vec] = GetIntList(inputs[i]);
       if (success) {
-        const_args_indices.insert(i);
+        (void)const_args_indices.insert(i);
         const_args[i] = vec;
       }
     }
