@@ -921,7 +921,7 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
 class ResizeBilinear(Cell):
     r"""
     'nn.ResizeBilinear' is deprecated from version 2.0 and will be removed in a future version,
-    use 'ops.ResizeBilinearV2' or 'ops.interpolate' instead.
+    use :class:`mindspore.ops.ResizeBilinearV2` or :func:`mindspore.ops.interpolate` instead.
 
     Supported Platforms:
         Deprecated

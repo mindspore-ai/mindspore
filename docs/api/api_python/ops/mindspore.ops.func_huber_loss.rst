@@ -3,7 +3,7 @@ mindspore.ops.huber_loss
 
 .. py:function:: mindspore.ops.huber_loss(input, target, reduction='mean', delta=1.0)
 
-    huber_loss计算预测值和目标值之间的误差。它兼有l1_loss和mse_loss的优点。
+    计算预测值和目标值之间的误差，兼具 :func:`mindspore.ops.l1_loss` 和 :func:`mindspore.ops.mse_loss` 的优点。
 
     假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，reduction参数设置为"none"，计算 :math:`x` 和 :math:`y` 的loss而不进行降维操作。公式如下：
 

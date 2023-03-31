@@ -4003,8 +4003,7 @@ def ne(x, y):
 
 def not_equal(input, other):
     r"""
-    Alias for ops.ne.
-    For details, please refer to :func:`mindspore.ops.ne`.
+    Alias for :func:`mindspore.ops.ne` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9995,7 +9994,7 @@ def igammac(input, other):
     where
 
     .. math::
-        Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt
+        Gamma(a, x) = \int_{x}^{\infty} t^{a-1} exp(-t) dt
 
     is the upper incomplete Gama function.
 
