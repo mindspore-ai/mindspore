@@ -90,6 +90,7 @@ def get_arg_type(annotation):
 
 
 def get_tuple(x):
+    """get tuple"""
     if not isinstance(x, (tuple, list)):
         return (x,)
     return tuple(x)

@@ -80,6 +80,7 @@ def is_scalar(tensor):
 
 
 def promote_tensor(tensor_1, tensor_2):
+    """promote Tensor"""
     dtype = promote_binary_dtype(tensor_1.dtype, tensor_2.dtype)
     return tensor_1.astype(dtype), tensor_2.astype(dtype)
 
@@ -95,6 +96,7 @@ def promote_csr(csr_tensor_1, csr_tensor_2):
 
 
 def promote_coo(coo_tensor_1, coo_tensor_2):
+    """promote COO-Tensor"""
     indices_1, indices_2 = promote_tensor(coo_tensor_1.indices, coo_tensor_2.indices)
     values_1, values_2 = promote_tensor(coo_tensor_1.values, coo_tensor_2.values)
     coo_tensor_1 = COOTensor(indices_1, values_1, coo_tensor_1.shape)

@@ -135,6 +135,7 @@ class AugmentLagrangeMethod(Cell):
 
 
 class Loss(Cell):
+    """compute loss from data and label"""
     def __init__(self):
         """Initialize the loss."""
         super(Loss, self).__init__()
