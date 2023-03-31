@@ -43,6 +43,14 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
 }
 void AbstractNode::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {}
 
+void AbstractNode::InitNodeNum() {}
+
+void AbstractNode::InitServerHandler() {}
+
+void AbstractNode::CreateTcpServer() {}
+
+void AbstractNode::InitNodeInfo(const NodeRole &role) {}
+
 void PSSchedulerNode::RunRecovery() {}
 void PSSchedulerNode::RegisterInitCollectCommServiceHandler() {}
 void PSSchedulerNode::RegisterRecoveryServiceHandler() {}

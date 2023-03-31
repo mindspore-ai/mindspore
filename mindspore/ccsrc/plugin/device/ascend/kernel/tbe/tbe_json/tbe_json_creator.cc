@@ -336,6 +336,11 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) const {
       DeleteDescName(&op.at(kJInputDesc));
     }
   }
+  std::string kKernelMetaTmpDir = "kernel_meta_temp_dir";
+  std::string kOpDebugDir = "op_debug_dir";
+  MS_EXCEPTION_IF_CHECK_FAIL(tbe_json.contains(kJSocInfo), "Cannot find " + std::string(kJSocInfo) + " in tbe_json.");
+  (void)tbe_json.at(kJSocInfo).erase(kKernelMetaTmpDir);
+  (void)tbe_json.at(kJSocInfo).erase(kOpDebugDir);
   return std::hash<std::string>()(op_lists.dump() + tbe_json.at(kJSocInfo).dump());
 }
 
