@@ -29,9 +29,9 @@
 #include "ir/scalar.h"
 #include "mindapi/base/macros.h"
 #include "utils/shape_utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
-using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
 namespace tensor {
 class MapTensor;
 // Smart pointer for MapTensor.

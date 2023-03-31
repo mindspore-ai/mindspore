@@ -270,7 +270,7 @@ void LocalFile<KeyType, ValueType>::Write(const ConstDataWithLen &keys, const Co
       auto block_file_ptr = fs_->CreateWriteFile(block_file_name, "wb+");
       MS_EXCEPTION_IF_NULL(block_file_ptr);
       MS_EXCEPTION_IF_CHECK_FAIL(block_file_ptr->Trunc(block_size_ * element_len), "Truncate file failed.");
-      block_files_.emplace_back(block_file_ptr);
+      (void)block_files_.emplace_back(block_file_ptr);
 
       // Reset offset cursor in block.
       current_offset_in_block_ = 0;

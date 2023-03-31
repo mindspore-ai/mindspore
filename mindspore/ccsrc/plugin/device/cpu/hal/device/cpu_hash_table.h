@@ -25,8 +25,6 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-using mindspore::HashTableExportData;
-
 // A hash table base on the host side cpu.
 template <typename Key, typename Value>
 class CPUHashTable : public HashTable<Key, Value> {

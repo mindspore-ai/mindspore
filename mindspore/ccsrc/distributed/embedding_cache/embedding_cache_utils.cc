@@ -150,7 +150,8 @@ void EmbeddingCacheTableManager::AllocMemForEmbedding(const device::DeviceContex
     auto *device_address = item.second.device_address;
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr) {
-      device_context->device_res_manager_->AllocateMemory(device_address);
+      MS_EXCEPTION_IF_CHECK_FAIL(device_context->device_res_manager_->AllocateMemory(device_address),
+                                 "Allocate device memory for embedding table failed.");
     }
     item.second.address = Address(device_address->GetMutablePtr(), device_address->GetSize());
 
