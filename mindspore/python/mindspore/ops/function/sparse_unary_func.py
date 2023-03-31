@@ -1558,7 +1558,7 @@ def coo_log1p(x: COOTensor) -> COOTensor:
 
 
 def csr_round(x: CSRTensor) -> CSRTensor:
-    r"""
+    """
     Returns half to even of a CSRTensor element-wise.
 
     .. math::

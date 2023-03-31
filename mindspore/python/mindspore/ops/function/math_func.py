@@ -7873,8 +7873,9 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
         ValueError: If the size of the last dimension of LU_pivots is not equal to the minimum of the sizes of the last
                     two dimensions of LU_data.
         ValueError: If the batch dimensions of LU_data's does not match LU_pivots's batch dimensions.
-        ValueError: On the CPU platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
-        RuntimeError: On the Ascend platform, if the value of `LU_pivots` are out of range[1, LU_data.shape[-2]).
+        ValueError: On the CPU platform, if the value of `LU_pivots` are out of range :math:`[1, LU_data.shape[-2])`.
+        RuntimeError: On the Ascend platform, if the value of `LU_pivots` are
+                    out of range :math:`[1, LU_data.shape[-2])`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
