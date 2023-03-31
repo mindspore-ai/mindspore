@@ -1225,7 +1225,9 @@ def test_tuple_flatten(tag):
     fns = FnDict()
     w = Tensor(np.random.randn(64, 3, 7, 7).astype(np.float32))
     x = Tensor(np.random.randn(32, 3, 224, 224).astype(np.float32))
-    y = Tensor(np.random.randn(32, 3, 224, 224).astype(np.float32))
+
+    x1 = Tensor(np.random.randn(1).astype(np.float32))
+    y1 = Tensor(np.random.randn(1).astype(np.float32))
 
     p = Tensor(3, mstype.float32)
 
@@ -1250,7 +1252,7 @@ def test_tuple_flatten(tag):
         # Add tuple args in partial args.
         func1 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
         func2 = F.partial(called_graph_with_tuple, (pow_ops(x, p), pow_ops(w, p)))
-        cond = x < y
+        cond = x1 < y1
 
         switch_node = F.switch(cond, func1, func2)
         # Add tuple args in call args.
