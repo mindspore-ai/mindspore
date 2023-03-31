@@ -116,7 +116,6 @@ REG_BPROP_BUILDER("CorrectionMul").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto batch_std = ib->GetInput(kIndex1);
   auto running_std = ib->GetInput(kIndex2);
-  auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
   auto channel_axis = ib->GetAttr("channel_axis");
   auto tmp = ib->Emit("CorrectionMulGrad", {dout, x, batch_std, running_std}, {{"channel_axis", channel_axis}});

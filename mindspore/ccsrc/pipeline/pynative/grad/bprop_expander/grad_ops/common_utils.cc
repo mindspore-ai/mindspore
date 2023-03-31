@@ -178,14 +178,14 @@ std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_sha
     if (i < 0) {
       i += rank;
     }
-    reduction_indices_set.insert(i);
+    (void)reduction_indices_set.insert(i);
     reduced_num *= input_shape[LongToSize(i)];
-    perm.emplace_back(i);
+    (void)perm.emplace_back(i);
   }
   for (int64_t i = 0; i < rank; i++) {
     if (reduction_indices_set.find(i) == reduction_indices_set.end()) {
       other_num *= input_shape[LongToSize(i)];
-      perm.emplace_back(i);
+      (void)perm.emplace_back(i);
     }
   }
   ShapeVector pack_shape{reduced_num, other_num};
@@ -409,7 +409,7 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
   }
   reverse_axis.reserve(x_shape.size());
   for (int64_t i = 0; i < rk; ++i) {
-    reverse_axis.emplace_back(i);
+    (void)reverse_axis.emplace_back(i);
   }
   reverse_axis[LongToSize(axis)] = rk - 1;
   reverse_axis[LongToSize(rk - 1)] = axis;
@@ -499,19 +499,21 @@ std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std:
   auto res_sz = static_cast<size_t>(2 * max_len);
   res.reserve(res_sz);
   while (i < max_len && j < max_len) {
+    auto idx_i = LongToSize(i);
+    auto idx_j = LongToSize(j);
     if (len_cmp == 0) {
-      res.push_back(multiples[i]);
-      res.push_back(shapex[j]);
+      res.push_back(multiples[idx_i]);
+      res.push_back(shapex[idx_j]);
       i++;
       j++;
     } else if (len_cmp > 0) {
-      res.push_back(multiples[i]);
+      res.push_back(multiples[idx_i]);
       res.push_back(1);
       i++;
       len_cmp--;
     } else {
       res.push_back(1);
-      res.push_back(shapex[j]);
+      res.push_back(shapex[idx_j]);
       j++;
       len_cmp++;
     }
@@ -528,11 +530,12 @@ std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
   std::sort(check_perm.begin(), check_perm.end());
   int64_t perm_size = static_cast<int64_t>(check_perm.size());
   for (int64_t i = 0; i < perm_size; i++) {
-    if (check_perm[i] != i) {
+    auto idx = LongToSize(i);
+    if (check_perm[idx] != i) {
       MS_LOG(EXCEPTION) << "For InvertPermutation, the input_x should be '[0-" << (perm_size - 1) << "]', but got "
                         << check_perm;
     }
-    res[perm[i]] = i;
+    res[perm[idx]] = i;
   }
   return res;
 }
@@ -544,7 +547,7 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   auto trans = Range(axis);
   auto after_axis = Range(axis + 1, rank - 1);
   trans.push_back(rank - 1);
-  trans.insert(trans.end(), after_axis.begin(), after_axis.end());
+  (void)trans.insert(trans.end(), after_axis.begin(), after_axis.end());
   trans.push_back(axis);
   return trans;
 }
