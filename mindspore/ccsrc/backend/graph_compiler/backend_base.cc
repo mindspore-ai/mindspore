@@ -494,6 +494,7 @@ bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
 }  // namespace
 
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
+  WaitTaskFinish();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Status record: start compile function graph: " << func_graph->ToString();

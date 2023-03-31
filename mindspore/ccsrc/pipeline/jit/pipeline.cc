@@ -1977,11 +1977,6 @@ void ClearResPart2() {
   MS_LOG(INFO) << "Start clear AnalysisSchedule...";
   abstract::AnalysisSchedule::GetInstance().Stop();
   MS_LOG(INFO) << "End clear AnalysisSchedule...";
-
-  // Python object needs to be freed after AnalysisResultCacheMgr and AnalysisContext.
-  MS_LOG(INFO) << "Start clear python_adapter...";
-  python_adapter::ResetPythonScope();
-  MS_LOG(INFO) << "End clear python_adapter.";
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
@@ -2015,6 +2010,10 @@ void ClearResPart3() {
   MS_LOG(INFO) << "Start clear ProtobufLibrary...";
   google::protobuf::ShutdownProtobufLibrary();
   MS_LOG(INFO) << "End clear ProtobufLibrary...";
+  // ResetPythonScope after all py::object is freed.
+  MS_LOG(INFO) << "Start clear python_adapter...";
+  python_adapter::ResetPythonScope();
+  MS_LOG(INFO) << "End clear python_adapter.";
 }
 
 void ClearSingleton() {

@@ -32,6 +32,7 @@ namespace pynative {
 namespace PyNativeAlgo {
 namespace {
 void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
+  py::gil_scoped_acquire acquire_gil;
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
   auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));

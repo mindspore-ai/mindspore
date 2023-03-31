@@ -71,7 +71,9 @@ void OpExecutor::Wait() {
 
 void OpExecutor::WaitAll() {
   GilReleaseWithCheck gil_release;
-  forward_callback_();
+  if (forward_callback_ != nullptr) {
+    forward_callback_();
+  }
   WaitForBuild();
   WaitForRun();
 }
@@ -120,8 +122,8 @@ bool OpExecutor::ActorInQueue(GraphId graph_id) {
 }
 
 void OpExecutor::WorkerJoin() {
+  GilReleaseWithCheck release_gil;
   try {
-    GilReleaseWithCheck release_gil;
     WaitForBuild();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Build tasks run failed, exception:" << e.what();

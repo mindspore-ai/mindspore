@@ -16,9 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_TENSOR_MOVE_FOR_COMMUNICATION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_TENSOR_MOVE_FOR_COMMUNICATION_H_
 
-#include <memory>
-#include <string>
-#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
