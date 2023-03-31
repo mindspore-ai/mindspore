@@ -2682,8 +2682,8 @@ class NLLLoss(Primitive):
 
     @prim_attr_register
     def __init__(self, reduction="mean"):
-        super(NLLLoss, self).__init__("NLLLoss")
         """Initialize NLLLoss"""
+        super(NLLLoss, self).__init__("NLLLoss")
         self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss', 'total_weight'])
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
@@ -7705,8 +7705,8 @@ class Conv3D(Primitive):
                  dilation=1,
                  group=1,
                  data_format="NCDHW"):
-        super(Conv3D, self).__init__("Conv3D")
         """Initialize Conv3D"""
+        super(Conv3D, self).__init__("Conv3D")
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False, ret_five=True)
@@ -7818,8 +7818,8 @@ class Conv3DBackpropInput(Primitive):
                  dilation=1,
                  group=1,
                  data_format="NCDHW"):
-        super(Conv3DBackpropInput, self).__init__("Conv3DBackpropInput")
         """Initialize Conv3DBackpropInput"""
+        super(Conv3DBackpropInput, self).__init__("Conv3DBackpropInput")
         self.init_prim_io_names(inputs=['filter', 'out_backprop', 'input_size'], outputs=['y'])
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
