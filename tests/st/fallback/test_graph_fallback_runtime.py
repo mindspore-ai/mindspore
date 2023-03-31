@@ -333,6 +333,28 @@ def test_multiple_return_contains_dict_2_grad():
     assert out == 2
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multiple_return_contains_dict_3():
+    """
+    Feature: Return multiple outputs including dict.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def dict_net_3():
+        return None, {"a": 1}
+
+    out = dict_net_3()
+    print("out: ", out)
+    assert len(out) == 2
+    assert out[0] is None
+    assert out[1] == {'a': 1}
+
+
 def weight_variable():
     """weight initial"""
     return TruncatedNormal(0.02)
