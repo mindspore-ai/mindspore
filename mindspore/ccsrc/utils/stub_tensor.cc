@@ -61,7 +61,7 @@ StubNodePtr MakeStubNode(const TypePtr &type) {
   return nullptr;
 }
 
-py::object MakeOutput(StubNodePtr node) {
+py::object MakeOutput(const StubNodePtr &node) {
   if (node->isa<TensorNode>()) {
     auto tensor = node->cast<std::shared_ptr<TensorNode>>();
     return py::cast(tensor);
