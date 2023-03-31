@@ -29,9 +29,8 @@ int gather_d_prepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  if (self->in_size_ < kInputSize2 || self->out_size_ < 1) {
-    return NNACL_ERR;
-  }
+  MS_CHECK_FALSE(self->in_size_ < kInputSize2 || self->out_size_ < 1, NNACL_TENSOR_SIZE_INVALID);
+
   param->axis_ = ((int *)(gather_d->base.in_[1].data_))[0];
   return NNACL_OK;
 }
@@ -42,9 +41,8 @@ int gather_d_resize(struct KernelBase *self) {
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
   int input_rank = gather_d->base.in_[0].shape_size_;
-  if (param->axis_ >= input_rank || param->axis_ < -input_rank) {
-    return NNACL_PARAM_INVALID;
-  }
+  MS_CHECK_FALSE(param->axis_ >= input_rank || param->axis_ < -input_rank, NNACL_GATHER_D_AXIS_INVALID);
+
   if (param->axis_ < 0) {
     param->axis_ = param->axis_ + input_rank;
   }

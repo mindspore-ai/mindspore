@@ -104,6 +104,7 @@
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
 
+#define OUTPUT_INDEX 0
 #define FIRST_INPUT 0
 #define SECOND_INPUT 1
 #define THIRD_INPUT 2
