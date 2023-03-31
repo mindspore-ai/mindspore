@@ -8916,25 +8916,25 @@ def log10(input):
     return output
 
 
-def log1p(x):
+def log1p(input):
     r"""
     Returns the natural logarithm of one plus the input tensor element-wise.
 
     .. math::
-        out_i = {log_e}(x_i + 1)
+        out_i = {log_e}(input_i + 1)
 
     Args:
-        x (Tensor): The input tensor. With float16 or float32 data type.
+        input (Tensor): The input tensor. With float16 or float32 data type.
             The value must be greater than -1.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions,
             its rank should be less than 8.
 
     Returns:
-        Tensor, has the same shape as the `x`.
+        Tensor, has the same shape as the `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8946,7 +8946,7 @@ def log1p(x):
         [0.6931472 1.0986123 1.609438 ]
     """
     _log1p = _get_cache_prim(P.Log1p)()
-    return _log1p(x)
+    return _log1p(input)
 
 
 def kron(x, y):
