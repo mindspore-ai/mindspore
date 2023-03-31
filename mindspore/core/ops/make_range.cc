@@ -68,9 +68,9 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
 abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, const std::string &prim_name,
                                          const TypePtr &type) {
   auto values_size = values.size();
-  int64_t start = values_size == 1 ? 0LL : values[kIndex0];
-  int64_t stop = values_size == 1 ? values[kIndex0] : values[kIndex1];
-  int64_t step = values_size <= kDim2 ? 1LL : values[kIndex2];
+  int64_t start = values_size == kIndex1 ? 0LL : values[kIndex0];
+  int64_t stop = values_size == kIndex1 ? values[kIndex0] : values[kIndex1];
+  int64_t step = values_size <= kIndex2 ? 1LL : values[kIndex2];
 
   if (step == 0) {
     MS_LOG(EXCEPTION) << "For 'range', the argument 'step' could not be 0.";

@@ -25,7 +25,7 @@
 namespace mindspore::graphkernel {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 
-// TODO(dayschan): add this function to callback class.
+// to do: add this function to callback class.
 // Get default format for format flexible nodes.
 std::string GetDefaultFormat();
 

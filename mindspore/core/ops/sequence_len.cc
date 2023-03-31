@@ -40,7 +40,7 @@ namespace ops {
 AbstractBasePtr SequenceLenInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::string op_name = primitive->name();
   constexpr size_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(input_num), op_name);
   auto arg = input_args[0];
   auto seq_abs = arg->cast<abstract::AbstractSequencePtr>();
   if (seq_abs->dynamic_len()) {

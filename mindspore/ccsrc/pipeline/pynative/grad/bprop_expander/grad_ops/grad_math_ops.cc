@@ -1776,7 +1776,7 @@ REG_BPROP_BUILDER("ReduceStd").SetBody(BODYFUNC(ib) {
     // reduce: [3,5]      reshape:[1,3,1,5]
     auto reshape = x_shape;
     for (auto &i : new_axis) {
-      reshape[i] = 1;
+      reshape[LongToSize(i)] = 1;
     }
     int64_t num = 1;
     for (const auto &i : new_axis) {

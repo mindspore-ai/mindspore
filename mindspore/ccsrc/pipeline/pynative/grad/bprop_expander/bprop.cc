@@ -152,7 +152,7 @@ void BpropExpander::PostProcess() {
 }
 
 void BpropExpander::DumpResult(const std::string &name) const {
-  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
+  static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_BPROP") == "on");
   if (!dump_result) {
     return;
   }
