@@ -5,7 +5,7 @@
 
     在指定轴上拼接输入Tensor。
 
-    输入的是一个tuple或list。其元素秩相同，即 :math:`R` 。将给定的轴设为 `m` ，并且 :math:`0 \le m < R` 。输入元素的数量设为 :math:`N` 。对于第 :math:`i` 个数据， :math:`t_i` 的shape为 :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)` 。 :math:`x_{mi}` 是第 :math:`i` 个元素的第 :math:`m` 个维度。则，输出Tensor的shape为：
+    输入的是一个tuple或list。其元素秩相同，即 :math:`R` 。将给定的轴设为 :math:`m` ，并且 :math:`0 \le m < R` 。输入元素的数量设为 :math:`N` 。对于第 :math:`i` 个数据， :math:`t_i` 的shape为 :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)` 。 :math:`x_{mi}` 是第 :math:`t_i` 个元素的第 :math:`m` 个维度。则，输出Tensor的shape为：
 
     .. math::
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
