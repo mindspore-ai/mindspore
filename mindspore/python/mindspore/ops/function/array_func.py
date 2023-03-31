@@ -1685,7 +1685,6 @@ def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
 def _check_select_shape_match(input_shape, cond_shape, tensor_name):
     if input_shape != cond_shape:
         raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
-    return None
 
 
 @constexpr
@@ -6895,6 +6894,17 @@ def repeat_elements(x, rep, axis=0):
     return x_rep
 
 
+@_primexpr
+def _check_sequence_mask_input_len(input_shape, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if not input_shape:
+        raise ValueError(f"{msg_prefix} input_shape must be greater than 0, but got {input_shape}.")
+    # broadcast only supports 7d shape
+    shape_size = len(input_shape)
+    if shape_size >= 7:
+        raise ValueError(f"{msg_prefix} dimension of input_shape must be less than 7, but got {shape_size}d.")
+
+
 def sequence_mask(lengths, maxlen=None):
     """
     Returns a mask tensor representing the first N positions of each cell.
@@ -6952,8 +6962,10 @@ def sequence_mask(lengths, maxlen=None):
     expand_op = P.ExpandDims()
     cast_op = P.Cast()
     to_tensor_op = P.ScalarToTensor()
+    shape_op = P.Shape()
 
     const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
+    _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
 
     if maxlen is None:
         flatten_data = reshape_op(lengths, (-1,))
