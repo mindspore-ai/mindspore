@@ -57,6 +57,11 @@ abstract::TupleShapePtr SortInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{unknown_shape_ptr, unknown_shape_ptr});
   }
+  if (IsDynamicShape(x_shape)) {
+    auto unknown_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknown_shape_ptr, unknown_shape_ptr});
+  }
   auto x_rank = SizeToLong(x_shape.size());
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
