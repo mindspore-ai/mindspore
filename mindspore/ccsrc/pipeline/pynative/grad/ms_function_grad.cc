@@ -112,12 +112,12 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   // Create a new make tuple node to hold all forward used nodes.
   abstract::AbstractBasePtrList added_abs_list;
   std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
-  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
-                [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
-                  MS_EXCEPTION_IF_NULL(node);
-                  added_node_list.push_back(node);
-                  added_abs_list.push_back(node->abstract());
-                });
+  (void)std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(),
+                      [&added_abs_list, &added_node_list](const AnfNodePtr &node) {
+                        MS_EXCEPTION_IF_NULL(node);
+                        added_node_list.push_back(node);
+                        added_abs_list.push_back(node->abstract());
+                      });
   AnfNodePtr added_output_node;
   AbstractBasePtr added_output_abs;
   if (added_abs_list.empty()) {
@@ -411,7 +411,7 @@ void MsFunction::Reset() {
   graph_phase_.clear();
 }
 
-FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) {
+FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};
@@ -438,7 +438,7 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
       auto v_node = NewValueNode(out);
       v_node->set_abstract(cnode->abstract());
       cnode->set_forward(v_node, "");
-      node_list.emplace_back(cnode);
+      (void)node_list.emplace_back(cnode);
     }
   }
   auto clone_graph = BasicClone(ms_func_graph);

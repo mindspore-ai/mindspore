@@ -197,7 +197,7 @@ class GradExecutor {
   void AsyncEndGraphImpl(const InputArgsInfoPtr &input_args_info);
   void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info);
-  void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id);
+  void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const;
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
   void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<AnfNodePtr> &w_args,
                     const std::vector<size_t> &p_args);
@@ -206,7 +206,7 @@ class GradExecutor {
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &ir_abs) const;
-  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
+  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) const;
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   // Manage resource for construct forward graph.

@@ -103,7 +103,6 @@ struct InputArgsInfo {
   std::string cell_id;
   std::string already_run_cell_id;
   std::string input_args_id;
-  // Cell unique id, cell_id + cell_order;
   std::string obj_order_id;
   size_t input_size = 0;
   size_t custom_bprop_cell_count = 0;

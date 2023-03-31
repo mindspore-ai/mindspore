@@ -30,22 +30,22 @@ using mindspore::tensor::Tensor;
 namespace mindspore {
 namespace parallel {
 const char *GetOpPythonPath(const char *op_name) {
-  static py::module inner_mod = py::module::import(INNER_OP_PATH);
+  static const py::module inner_mod = py::module::import(INNER_OP_PATH);
   if (py::hasattr(inner_mod, op_name)) {
     return INNER_OP_PATH;
   }
 
-  static py::module mod = py::module::import(OP_PATH);
+  static const py::module mod = py::module::import(OP_PATH);
   if (py::hasattr(mod, op_name)) {
     return OP_PATH;
   }
 
-  static py::module grad_mod = py::module::import(GRAD_OP_PATH);
+  static py::module const grad_mod = py::module::import(GRAD_OP_PATH);
   if (py::hasattr(grad_mod, op_name)) {
     return GRAD_OP_PATH;
   }
 
-  static py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
+  static const py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
   if (!py::hasattr(functional_mod, op_name)) {
     MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << FUNCTIONAL_OP_PATH
                       << " don't have op:" << op_name;

@@ -170,8 +170,8 @@ AnfNodePtr BuildSpecialLikeValue(const FuncGraphPtr &tape, const ValuePtr &value
   } else if (value->isa<ValueDictionary>()) {
     const auto &dic_v = value->cast<ValueDictionaryPtr>()->value();
     std::vector<ValuePtr> v_list;
-    std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
-                   [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
+    (void)std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
+                         [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
     return BuildSpecialLikeValue(tape, std::make_shared<ValueTuple>(v_list), type);
   } else if (value->isa<None>() || value->isa<Type>()) {
     return BuildSpecialLikeValue(tape, MakeValue(0), type);
@@ -756,7 +756,7 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, std::vector<A
       auto new_v_node = NewValueNode(v_node->value());
       new_v_node->set_abstract(v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
-      op_args.emplace_back(v_node->value());
+      (void)op_args.emplace_back(v_node->value());
     } else {
       MS_LOG(EXCEPTION) << "Get input node " << input_node->DebugString();
     }
@@ -1181,7 +1181,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
         {NewValueNode(prim::kPrimTupleGetItem), bprop_cut_cnode, NewValueNode(static_cast<int64_t>(i - 1))});
       MS_EXCEPTION_IF_NULL(cnode->input(i)->abstract());
       din->set_abstract(cnode->input(i)->abstract());
-      abs_list.emplace_back(cnode->input(i)->abstract());
+      (void)abs_list.emplace_back(cnode->input(i)->abstract());
       (void)outputs->emplace_back(din);
     }
   }
@@ -1381,7 +1381,7 @@ AnfNodePtr AutoGradCellImpl::GetInputGrad(bool grad_all_inputs, bool get_by_posi
 }
 
 AnfNodePtr AutoGradCellImpl::GetWeightGrad(bool grad_weights, const AnfNodePtrList &weights,
-                                           bool weight_param_is_tuple) {
+                                           bool weight_param_is_tuple) const {
   // No need to return gradient of weights.
   if (!grad_weights) {
     return nullptr;
