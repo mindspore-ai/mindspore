@@ -50,7 +50,9 @@ abstract::ShapePtr HSigmoidGradInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, input_x_shape, primitive->name(), ValueError);
   return std::make_shared<abstract::Shape>(input_x_shape);
 }
 
