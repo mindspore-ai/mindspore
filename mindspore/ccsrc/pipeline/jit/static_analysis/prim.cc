@@ -2753,9 +2753,13 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     if (node->has_user_data("__raise_flag__")) {
-      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-      res->set_user_data("has_side_effect", MakeValue(true));
-      auto infer_result = std::make_shared<EvalResult>(res, nullptr);
+      TypePtr type = kFloat64;
+      ShapeVector shp;
+      (void)shp.emplace_back(Shape::kShapeRankAny);
+      BaseShapePtr shape = std::make_shared<Shape>(shp);
+      AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
+      res->set_user_data("__raise_flag__", MakeValue(true));
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
       return infer_result;
     }
@@ -2825,10 +2829,10 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     const auto script_str = std::make_shared<StringImm>(error_msg);
 
     // Pack local parameter keys
-    const auto key_value_name_tuple = cur_graph->NewCNode(keys_);
+    const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);
 
     // Pack local parameter values
-    const auto key_value_tuple = cur_graph->NewCNode(values_);
+    const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
 
     // Build the PyExecute node for raise error.
     auto prim = prim::kPrimRaise;
