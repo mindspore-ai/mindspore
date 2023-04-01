@@ -851,7 +851,7 @@ REG_BPROP_BUILDER("RealDiv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto x_dtype_id = ib->GetDtypeId(x);
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'ReadDiv', gradient not support for complex type currently.";
+    MS_EXCEPTION(TypeError) << "For 'RealDiv', gradient not support for complex type currently.";
   }
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);

@@ -1363,6 +1363,11 @@ class MatrixSetDiagV3(Primitive):
         >>> print(output.shape)
         (3, 4)
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T1),
+        sig.make_sig('diagonal', dtype=sig.sig_dtype.T1),
+        sig.make_sig('k', dtype=sig.sig_dtype.T2)
+    )
 
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
@@ -1479,7 +1484,6 @@ class Fills(Primitive):
          [1. 1.]]
     """
 
-    @deprecated("2.0", "ops.fill", False)
     @prim_attr_register
     def __init__(self):
         """Initialize Fills."""

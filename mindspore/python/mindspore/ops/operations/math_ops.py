@@ -7895,7 +7895,7 @@ class Roll(Primitive):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
