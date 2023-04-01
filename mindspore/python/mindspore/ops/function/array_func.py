@@ -1130,7 +1130,7 @@ def range(start, end, step):
         ValueError: If `start` <= `end` when `step` < 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)

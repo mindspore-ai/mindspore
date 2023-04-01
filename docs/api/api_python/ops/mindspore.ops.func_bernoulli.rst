@@ -23,5 +23,5 @@ mindspore.ops.bernoulli
         - **TypeError** - `seed` 不是int或None。
         - **ValueError** - `seed` 是负数且不为-1。
         - **ValueError** - `p` 数值范围不在0到1之间。
-        - **ValueError** - 如果 `p` 是Tensor，但是其shape 与 `input` 不同。
+        - **ValueError** - 如果 `p` 是Tensor，但是其shape与 `input` 不同。
 

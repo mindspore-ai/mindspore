@@ -257,7 +257,6 @@ from .complex import _complex_aicpu
 from .complex_abs import _complex_abs_aicpu
 from .concat import _concat_aicpu
 from .cos import _cos_aicpu
-from .count_nonzero import _count_nonzero_aicpu
 from .csr_sparse_matrix_to_dense import _csr_sparse_matrix_to_dense_aicpu
 from .cumprod import _cumprod_aicpu
 from .exp import _exp_aicpu
@@ -329,7 +328,6 @@ from .logit import _logit_aicpu
 from .logit_grad import _logit_grad_aicpu
 from .log_normal_reverse import _log_normal_reverse_aicpu
 from .lower_bound import _lower_bound_aicpu
-from .lstsq import _lstsq_aicpu
 from .lu_unpack_grad import _lu_unpack_grad_aicpu
 from .pad_v3_grad import _pad_v3_grad_aicpu
 from .pad_v3 import _pad_v3_aicpu
