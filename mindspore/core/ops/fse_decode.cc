@@ -48,10 +48,9 @@ abstract::ShapePtr FSEDecodeInferShape(const PrimitivePtr &primitive, const std:
   } else {
     MS_EXCEPTION(TypeError) << "input_y must be AbstractTensor" << input_y;
   }
-  return std::make_shared<abstract::Shape>(output_shape);
 }
 
-TypePtr FSEDecodeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr FSEDecodeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &) {
   auto dst_t = prim->GetAttr(kDstT);
   return TypeIdToType(static_cast<TypeId>(GetValue<int64_t>(dst_t)));
 }
