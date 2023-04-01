@@ -43,7 +43,7 @@ const size_t kMultinomialWithReplacementInputsNum = 3;
 const size_t kMultinomialWithReplacementOutputsNum = 1;
 }  // namespace
 
-uint64_t MultinomialWithReplacementCpuKernelMod::New64() {
+uint64_t MultinomialWithReplacementCpuKernelMod::New64() const {
   std::random_device device("/dev/urandom");
   static std::mt19937_64 rng = std::mt19937_64(device());
   return (rng)();
@@ -166,7 +166,7 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
 
 template <typename T>
 int64_t *MultinomialWithReplacementCpuKernelMod::TrueCompute(T *in, int64_t *out, T *RandomData, int64_t i,
-                                                             int64_t num_col_) {
+                                                             int64_t num_col_) const {
   double *cumulative_distribution_function = new double[num_col_];
   double running_total = 0;
   auto random = RandomData + i * numsamples_;
@@ -201,7 +201,7 @@ int64_t *MultinomialWithReplacementCpuKernelMod::TrueCompute(T *in, int64_t *out
 
 template <typename T>
 int64_t *MultinomialWithReplacementCpuKernelMod::FalseCompute(T *in, int64_t *out, T *RandomData, int64_t i,
-                                                              int64_t num_col_) {
+                                                              int64_t num_col_) const {
   double *cumulative_distribution_function = new double[num_col_];
   T *weight = new T[num_col_];
   int64_t zero_num = 0;

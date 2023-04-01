@@ -38,7 +38,7 @@ constexpr float k_5 = 0.5;
 constexpr int multiplier = 4;
 }  // namespace
 
-void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std::vector<float>> *boxes_buffer,
+void CombinedNonMaxSuppressionCpuKernelMod::regular_input2buffer(std::vector<std::vector<float>> *const boxes_buffer,
                                                                  const float *box_src, const int class_idx) const {
   /**
    * shape of box_src
@@ -95,8 +95,8 @@ float CombinedNonMaxSuppressionCpuKernelMod::IOU(std::vector<std::vector<float>>
  * if soft_nms_sigma_ <= 0.0, nms is used, means delete it when iou > iou_threshold_
  * run non max suppression per bath per class
  */
-void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std::vector<float>> *boxes_buffer,
-                                                                std::vector<float> *scores_buffer,
+void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std::vector<float>> *const boxes_buffer,
+                                                                std::vector<float> *const scores_buffer,
                                                                 std::vector<int> &selected) const {
   std::priority_queue<non_max_suppression_local::score_index> pq;
   for (size_t i = 0; i < IntToSize(num_boxes_); i++) {
@@ -146,7 +146,8 @@ void CombinedNonMaxSuppressionCpuKernelMod::non_max_suppression(std::vector<std:
 }
 
 void CombinedNonMaxSuppressionCpuKernelMod::nms_perclass(
-  float *boxes, float *scores, std::vector<non_max_suppression_local::result_para> &sub_result_vec, int &result_size) {
+  float *boxes, float *scores, std::vector<non_max_suppression_local::result_para> &sub_result_vec,
+  int &result_size) const {
   size_t k = 0;
   int box_idx;
   size_t boxe_len1;

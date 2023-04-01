@@ -48,8 +48,6 @@ class BernoulliCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  // bool CheckBernoulliShape();
-
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using BernoulliFunc = std::function<bool(BernoulliCpuKernelMod *, const std::vector<kernel::AddressPtr> &,

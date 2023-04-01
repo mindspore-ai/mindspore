@@ -201,7 +201,6 @@ class MaxUnpool3DGradHelperGpuKernel : public GpuKernelHelperBase {
     T *grad = nullptr;
     S *indices = nullptr;
     T *output_ptr = nullptr;
-    // int64_t *gpuflag = nullptr;
     int flag = GetDeviceAddress<T>(input_ptrs, kIndex0, kernel_name_, &input_ptr);
     if (flag != 0) {
       return flag;

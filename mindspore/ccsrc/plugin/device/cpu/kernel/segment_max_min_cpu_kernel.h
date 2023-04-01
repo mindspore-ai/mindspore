@@ -56,7 +56,7 @@ class SegmentMaxMinCPUKernelMod : public NativeCpuKernelMod {
   bool GetComputeFunc();
 
   template <typename T>
-  T GetInitValue();
+  T GetInitValue() const;
 
   using SegmentMaxMinFunc =
     std::function<bool(SegmentMaxMinCPUKernelMod *, const std::vector<kernel::AddressPtr> &,

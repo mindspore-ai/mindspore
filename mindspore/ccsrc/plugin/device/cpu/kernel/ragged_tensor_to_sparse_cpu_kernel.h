@@ -48,7 +48,7 @@ class RaggedTensorToSparseCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T1>
-  void ValidateInputs(const std::vector<std::vector<T1>> &input1);
+  void ValidateInputs(const std::vector<std::vector<T1>> &input1) const;
 
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
@@ -61,7 +61,7 @@ class RaggedTensorToSparseCpuKernelMod : public NativeCpuKernelMod {
   template <typename T2>
   void OutPutSparseValues(const std::vector<kernel::AddressPtr> &inputs,
                           const std::vector<kernel::AddressPtr> &workspace,
-                          const std::vector<kernel::AddressPtr> &outputs);
+                          const std::vector<kernel::AddressPtr> &outputs) const;
 
   template <typename T1>
   void OutPutSparseDenseShape(const std::vector<std::vector<T1>> &input1, int64_t *output3_ptr);

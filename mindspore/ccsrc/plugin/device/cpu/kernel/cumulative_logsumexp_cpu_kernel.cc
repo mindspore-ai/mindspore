@@ -85,7 +85,7 @@ bool CumulativeLogsumexpCpuKernelMod::Launch(const std::vector<kernel::AddressPt
 
 template <typename t>
 void CumulativeLogsumexpCpuKernelMod::CumulativeProcess(const t *input_data, t *output_data, const uint32_t outer,
-                                                        const uint32_t inner, const uint32_t depth) {
+                                                        const uint32_t inner, const uint32_t depth) const {
   for (size_t outer_index = 0; outer_index < outer; ++outer_index) {
     size_t outer_index_adj;
     if (reverse_) {

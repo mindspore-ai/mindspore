@@ -55,17 +55,18 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(output_shape);
   }
 
-  CheckAndConvertUtils::CheckInteger("dimension of 'shape'", SizeToLong(shape_shape.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckInteger("dimension of 'default_value'", SizeToLong(default_value_shape.size()), kLessThan,
-                                     SizeToLong(values_shape.size()), prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'shape'", SizeToLong(shape_shape.size()), kEqual, 1,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'default_value'", SizeToLong(default_value_shape.size()),
+                                           kLessThan, SizeToLong(values_shape.size()), prim_name);
 
   if (tensors_size != types_size) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the number of row_partition_tensors must be equal to the "
                              << "number of row_partition_types: " << types_size << ", but got " << tensors_size << ".";
   }
   if (row_partition_types[0] == "FIRST_DIM_SIZE") {
-    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'FIRST_DIM_SIZE')",
-                                       SizeToLong(tensor0_dim), kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'FIRST_DIM_SIZE')",
+                                             SizeToLong(tensor0_dim), kEqual, 0, prim_name);
     if (types_size - 1 + values_rank != output_shape_rank) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
@@ -73,8 +74,8 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                                << ", 'values' rank: " << values_rank << ".";
     }
   } else if (row_partition_types[0] == "ROW_SPLITS") {
-    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'ROW_SPLITS')",
-                                       SizeToLong(tensor0_dim), kEqual, 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[0](for 'ROW_SPLITS')",
+                                             SizeToLong(tensor0_dim), kEqual, 1, prim_name);
     if (types_size + values_rank != output_shape_rank) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
                                << "', row partition size plus 'values' rank should be equal to 'shape' rank: "
@@ -91,8 +92,8 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
   for (size_t i = 1; i < types_size; i++) {
     auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->BuildShape())[kShape];
     auto tensori_dim = tensori_shape.size();
-    CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
-                                       SizeToLong(tensori_dim), kEqual, 1, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
+                                             SizeToLong(tensori_dim), kEqual, 1, prim_name);
   }
   (void)primitive->AddAttr("num_row_partition_tensors", MakeValue(SizeToLong(tensors_size)));
   return std::make_shared<abstract::Shape>(output_shape);

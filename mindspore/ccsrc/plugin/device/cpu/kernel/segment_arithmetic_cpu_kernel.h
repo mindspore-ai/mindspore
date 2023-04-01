@@ -53,7 +53,7 @@ class SegmentArithmeticCPUKernelMod : public NativeCpuKernelMod {
                     const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
-  T GetInitValue();
+  T GetInitValue() const;
 
   template <typename T>
   bool GetComputeFunc();
