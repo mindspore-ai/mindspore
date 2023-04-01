@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
-ShapeVector GetOffsetVec(ShapeVector shape) {
+ShapeVector GetOffsetVec(const ShapeVector &shape) {
   ShapeVector offsets;
   for (size_t i = 0; i < shape.size(); i++) {
-    size_t offset = 1;
+    int64_t offset = 1;
     for (size_t j = i + 1; j < shape.size(); j++) {
       offset *= shape[j];
     }
@@ -41,20 +41,20 @@ ShapeVector GetOffsetVec(ShapeVector shape) {
   return offsets;
 }
 
-ShapeVector GetIndexVec(ShapeVector offsets, size_t index) {
+ShapeVector GetIndexVec(const ShapeVector &offsets, size_t index) {
   ShapeVector res;
   for (size_t i = 0; i < offsets.size(); i++) {
     if (offsets[i] == 0) {
       return {};
     }
-    res.push_back(index / offsets[i]);
-    index %= offsets[i];
+    res.push_back(static_cast<int64_t>(index) / offsets[i]);
+    index %= static_cast<size_t>(offsets[i]);
   }
   return res;
 }
 
-size_t GetIndex(ShapeVector shape, ShapeVector offsets, ShapeVector index_vec) {
-  size_t res = 0;
+int64_t GetIndex(const ShapeVector &shape, const ShapeVector &offsets, const ShapeVector &index_vec) {
+  int64_t res = 0;
   for (size_t i = 0; i < index_vec.size(); i++) {
     if (index_vec[i] < shape[i]) {
       res += offsets[i] * index_vec[i];
@@ -64,8 +64,8 @@ size_t GetIndex(ShapeVector shape, ShapeVector offsets, ShapeVector index_vec) {
 }
 
 template <typename T>
-void EqualImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector y_shape,
-               bool need_broad_cast) {
+void EqualImpl(void *x1, void *x2, void *result, const ShapeVector &x1_shape, const ShapeVector &x2_shape,
+               const ShapeVector &y_shape, bool need_broad_cast) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
@@ -93,8 +93,8 @@ void EqualImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, ShapeVect
 }
 
 template <typename T>
-void EqualFloatImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector y_shape,
-                    bool need_broad_cast) {
+void EqualFloatImpl(void *x1, void *x2, void *result, const ShapeVector &x1_shape, const ShapeVector &x2_shape,
+                    const ShapeVector &y_shape, bool need_broad_cast) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
@@ -121,7 +121,7 @@ void EqualFloatImpl(void *x1, void *x2, void *result, ShapeVector x1_shape, Shap
   }
 }
 
-bool IsBroadCast(ShapeVector x1_shape, ShapeVector x2_shape, ShapeVector *broad_cast_x1_shape,
+bool IsBroadCast(const ShapeVector &x1_shape, const ShapeVector &x2_shape, ShapeVector *broad_cast_x1_shape,
                  ShapeVector *broad_cast_x2_shape) {
   MS_EXCEPTION_IF_NULL(broad_cast_x1_shape);
   MS_EXCEPTION_IF_NULL(broad_cast_x2_shape);
@@ -178,6 +178,7 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto x1 = input_args[kX1Index]->BuildValue();
   auto x2 = input_args[kX2Index]->BuildValue();
   if (x1 == nullptr || x2 == nullptr) {
+    MS_LOG(ERROR) << "input tensor is nullptr.";
     return nullptr;
   }
   auto x1_tensor = x1->cast<tensor::TensorPtr>();
