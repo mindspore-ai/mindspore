@@ -29,11 +29,11 @@ class FSEDecodeKernel : public KernelBase {
  protected:
   uint32_t ParseKernelParam() override;
   uint32_t DoCompute() override;
-  bool CheckParams();
+  bool CheckParams() const;
   uint32_t FSEDecodeTask();
-  void FixedBitHalfDequantTask();
-  void FixedBitFloatDequantTask();
-  uint64_t Pop(const uint64_t *chunks, uint8_t bit_count);
+  uint32_t FixedBitHalfDequantTask();
+  uint32_t FixedBitFloatDequantTask();
+  uint64_t Pop(const uint64_t *chunks, uint64_t bit_count);
   std::vector<int> output_shape_;
   int64_t input_shape_size_;
 
