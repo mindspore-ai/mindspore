@@ -133,7 +133,7 @@ AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kSplitVInputsNum = 1;
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSplitVInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSplitVInputsNum, primitive->name());
   auto infertype = SplitVInferType(primitive, input_args);
   auto infershape = SplitVInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
