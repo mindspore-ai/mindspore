@@ -568,7 +568,7 @@ class IGamma(Cell):
                    or if x has different dtype with a.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
