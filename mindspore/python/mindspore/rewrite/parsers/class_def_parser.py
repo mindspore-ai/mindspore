@@ -185,6 +185,53 @@ class ClassDefParser(Parser):
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
 
+    def _handle_bodies_for_replace_ori_field(self, body_index, body, super_index, scope_checker, stree,
+                                             body_index_to_be_deleted, new_node_to_be_inserted):
+        """ handle_bodies_for_replace_ori_field. """
+
+        def _handle_tuple(t: ast.Tuple):
+            for e in t.elts:
+                if isinstance(e, ast.Attribute):
+                    field_name = e.attr
+                    value = ast.Call(ast.Name('getattr', ast.Load()),
+                                     [ast.Name('obj', ast.Load()),
+                                      ast.Constant(value=field_name, kind=None)], [])
+                    new_assign = ast_creator_registry.get("Assign")(targets=[e], value=value)
+                    new_node_to_be_inserted.append(new_assign)
+
+        if body_index == super_index:
+            return  # ignoring super.__init__()
+        if isinstance(body, ast.If):
+            if scope_checker.check(body.test):
+                self._replace_ori_field_of_init_func(stree, body.body, -1)
+                self._replace_ori_field_of_init_func(stree, body.orelse, -1)
+                return
+            logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
+        if not isinstance(body, ast.Assign):  # if not assign node, delete
+            body_index_to_be_deleted.append(body_index)
+            return
+        if len(body.targets) != 1:
+            raise RuntimeError("not support multi-targets in assign now!", father_node=body)
+        target = body.targets[0]
+        if isinstance(target, ast.Tuple):
+            _handle_tuple(target)
+            body_index_to_be_deleted.append(body_index)
+        if not isinstance(target, ast.Attribute):  # only keep class member
+            body_index_to_be_deleted.append(body_index)
+            return
+        if not isinstance(target.value, ast.Name):
+            logger.info(f"Ignoring {astunparse.unparse(target)} in __init__ function.")
+            body_index_to_be_deleted.append(body_index)
+            return
+        target_value: ast.Name = target.value
+        if target_value.id != "self":
+            body_index_to_be_deleted.append(body_index)
+            return
+        field_name = target.attr
+        body.value = ast.Call(ast.Name('getattr', ast.Load()),
+                              [ast.Name('obj', ast.Load()),
+                               ast.Constant(value=field_name, kind=None)], [], lineno=0, col_offset=0)
+
     def _replace_ori_field_of_init_func(self, stree: SymbolTree, bodies: [], super_index: int):
         """
         Replace original field in init func to self.XX = getattr(self._handler, "XX").
@@ -200,51 +247,12 @@ class ClassDefParser(Parser):
             RuntimeError: Not support multi-targets in assign.
             RuntimeError: Only support target.value in [ast.Name] in assign node.
         """
-        def _handle_tuple(t: ast.Tuple):
-            for e in t.elts:
-                if isinstance(e, ast.Attribute):
-                    field_name = e.attr
-                    value = ast.Call(ast.Name('getattr', ast.Load()),
-                                     [ast.Name('obj', ast.Load()),
-                                      ast.Constant(value=field_name, kind=None)], [])
-                    new_assign = ast_creator_registry.get("Assign")(targets=[e], value=value)
-                    new_node_to_be_inserted.append(new_assign)
         body_index_to_be_deleted = []
         new_node_to_be_inserted = []
         scope_checker = AstScopeChecker("self")
         for body_index, body in enumerate(bodies):
-            if body_index == super_index:
-                continue  # ignoring super.__init__()
-            if isinstance(body, ast.If):
-                if scope_checker.check(body.test):
-                    self._replace_ori_field_of_init_func(stree, body.body, -1)
-                    self._replace_ori_field_of_init_func(stree, body.orelse, -1)
-                    continue
-                logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
-            if not isinstance(body, ast.Assign):  # if not assign node, delete
-                body_index_to_be_deleted.append(body_index)
-                continue
-            if len(body.targets) != 1:
-                raise RuntimeError("not support multi-targets in assign now!", father_node=body)
-            target = body.targets[0]
-            if isinstance(target, ast.Tuple):
-                _handle_tuple(target)
-                body_index_to_be_deleted.append(body_index)
-            if not isinstance(target, ast.Attribute):  # only keep class member
-                body_index_to_be_deleted.append(body_index)
-                continue
-            if not isinstance(target.value, ast.Name):
-                logger.info(f"Ignoring {astunparse.unparse(target)} in __init__ function.")
-                body_index_to_be_deleted.append(body_index)
-                continue
-            target_value: ast.Name = target.value
-            if target_value.id != "self":
-                body_index_to_be_deleted.append(body_index)
-                continue
-            field_name = target.attr
-            body.value = ast.Call(ast.Name('getattr', ast.Load()),
-                                  [ast.Name('obj', ast.Load()),
-                                   ast.Constant(value=field_name, kind=None)], [], lineno=0, col_offset=0)
+            self._handle_bodies_for_replace_ori_field(body_index, body, super_index, scope_checker, stree,
+                                                      body_index_to_be_deleted, new_node_to_be_inserted)
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
         for n in new_node_to_be_inserted:

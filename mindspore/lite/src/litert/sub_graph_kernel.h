@@ -221,7 +221,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
       if (node->type() == schema::PrimitiveType_Cast) {
         auto inputs = node->in_tensors();
 #define kCaseInputNum 2
-        MS_ASSERT(inputs.size() >= 2);
+        MS_ASSERT(inputs.size() >= kCaseInputNum);
 #undef kCaseInputNum
         auto dst_tensor = inputs[1];
         MS_ASSERT(dst_tensor != nullptr);
