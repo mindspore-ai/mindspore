@@ -24,6 +24,16 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+bool CheckNotBoolCast(const CNodePtr &cnode) {
+  if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCast) &&
+      AnfAlgo::GetOutputDeviceDataType(cnode, 0) == kNumberTypeBool) {
+    return false;
+  }
+  return true;
+}
+}  // namespace
+
 void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -66,7 +76,7 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         (AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise ||
          AnfAlgo::GetFusionType(cnode) == kernel::kPatternBroadcast) &&
-        cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
+        cnode->inputs().size() == ELTWISE_INPUT_SIZE && CheckNotBoolCast(cnode)) {
       MatchEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }
