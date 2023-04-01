@@ -298,7 +298,6 @@ from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
 from .scale_and_translate import _scale_and_translate_aicpu
 from .quant_dtype_cast import _quant_dtype_cast_aicpu
 from .fse_decode import _fse_decode_aicpu
-from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .dense_to_sparse_set_operation import _dense_to_sparse_set_operation_aicpu
 from .diag import _diag_aicpu
