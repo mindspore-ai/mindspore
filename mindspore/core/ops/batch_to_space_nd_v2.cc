@@ -119,7 +119,7 @@ class MIND_API AGBatchToSpaceNDV2Infer : public abstract::OpInferBase {
     return BatchToSpaceNDV2InferShape(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     return BatchToSpaceNDV2InferType(input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

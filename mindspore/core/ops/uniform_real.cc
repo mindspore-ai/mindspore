@@ -50,11 +50,10 @@ BaseShapePtr UniformRealInferShape(const PrimitivePtr &primitive,
   ShapeVector shape;
   abstract::ShapePtr output_shape;
   auto shape_value = input_args[kInputIndex0]->BuildValue();
-  auto op_name = primitive->name();
   if (IsValueKnown(shape_value)) {
     shape = shape_value->isa<tensor::Tensor>()
-              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
-              : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
+              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, primitive->name())
+              : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, primitive->name());
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {
     // ToSupport Dynamic

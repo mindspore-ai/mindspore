@@ -52,8 +52,7 @@ MIND_API_OPERATOR_IMPL(Conj, BaseOperator);
 // AG means auto generated
 class MIND_API AGConjInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     return ConjInferShape(input_args);
   }
 
