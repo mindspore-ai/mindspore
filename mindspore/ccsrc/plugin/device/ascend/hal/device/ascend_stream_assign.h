@@ -116,7 +116,7 @@ class AscendStreamAssign {
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
-  void InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr) const;

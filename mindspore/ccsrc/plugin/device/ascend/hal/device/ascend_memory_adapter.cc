@@ -22,7 +22,6 @@
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
-#include "external/runtime/rt_error_codes.h"
 
 namespace mindspore {
 namespace device {

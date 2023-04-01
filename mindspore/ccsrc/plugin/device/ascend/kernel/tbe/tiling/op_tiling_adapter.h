@@ -50,7 +50,7 @@ class OpTilingCalculateAdapter {
   void UpdateWorkspace(const ::ge::NodePtr &ge_node, const std::vector<int64_t> &workspace_size_list) const;
 
  private:
-  void ConstructNodeInputAnchor(const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph);
+  void ConstructNodeInputAnchor(const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph) const;
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc);

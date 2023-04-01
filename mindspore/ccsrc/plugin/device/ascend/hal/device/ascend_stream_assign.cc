@@ -1654,7 +1654,7 @@ void AscendStreamAssign::GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr,
 // stream, causing the next loop to start without waiting for the end of the communication stream.
 // Solution: In the above scenario, insert 'send' after the last communication operator, and insert 'recv' before the
 //  `active` operator in the calculation stream to ensure loop synchronization.
-void AscendStreamAssign::InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr) const {
   std::vector<uint32_t> graphs_id;
   GetAllGraphID(graph_ptr, &graphs_id);
   for (auto graph_id : graphs_id) {
@@ -3058,7 +3058,7 @@ void AscendStreamAssign::InsertEventForOverflowInGraph(const NotNull<KernelGraph
   for (auto iter = execution_order.begin(); iter < result; iter++) {
     if (IsHcom(*iter) && AnfAlgo::GetGraphId((*iter).get()) == graph_id) {
       auto group_name = GetHcomGroup(*iter);
-      group_last_index[group_name] = iter - execution_order.begin();
+      group_last_index[group_name] = LongToSize(iter - execution_order.begin());
     }
   }
   if (group_last_index.empty()) {
