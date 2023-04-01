@@ -363,7 +363,7 @@ bool EliminateMaketupleGetitem(const FuncGraphPtr &fg) {
       continue;
     }
     auto idx = AnfUtils::GetIntValue(gt->input(kInputNodeOutputIndexInTupleGetItem));
-    (void)mng->Replace(node, mt->input(idx + 1));
+    (void)mng->Replace(node, mt->input(LongToSize(idx + 1)));
     changed = true;
   }
   return changed;
