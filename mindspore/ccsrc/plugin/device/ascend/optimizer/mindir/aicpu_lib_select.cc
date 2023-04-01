@@ -68,7 +68,6 @@ static const std::set<std::string> kMigrateAicpuKernelOps = {mindspore::kAdaptiv
                                                              mindspore::kComplexAbsOpName,
                                                              mindspore::kConcatOpName,
                                                              mindspore::kCosOpName,
-                                                             mindspore::kCountNonZeroOpName,
                                                              mindspore::kCumulativeLogsumexpOpName,
                                                              mindspore::kCumProdOpName,
                                                              mindspore::kCSRSparseMatrixToDenseOpName,

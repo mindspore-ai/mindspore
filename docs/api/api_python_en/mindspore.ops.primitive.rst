@@ -180,7 +180,6 @@ Distance Function
     mindspore.ops.Cdist
     mindspore.ops.EditDistance
     mindspore.ops.LpNorm
-    mindspore.ops.Pdist
     
 Sampling Operator
 ^^^^^^^^^^^^^^^^^
