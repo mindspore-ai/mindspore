@@ -31,6 +31,10 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kOpListJsonSize = 2;
+}  // namespace
+
 using mindspore::kernel::tbe::TbeAdapter;
 bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -58,9 +62,9 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
   return true;
 }
 
-void NpuClearV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
-  if (op_list_json->size() != 2) {
-    MS_LOG(ERROR) << "Op list json's size is not equal to 2, abort post processing.";
+void NpuClearV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
+  if (op_list_json->size() != kOpListJsonSize) {
+    MS_LOG(ERROR) << "Op list json's size is not equal to " << kOpListJsonSize << ", abort post processing.";
   }
 
   auto compute_json = (*op_list_json)[1];
@@ -73,9 +77,9 @@ void NpuClearV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::
   MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
 }
 
-void NpuGetV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
-  if (op_list_json->size() != 2) {
-    MS_LOG(ERROR) << "Op list json's size is not equal to 2, abort post processing.";
+void NpuGetV2PostProcessing(std::vector<nlohmann::json> *op_list_json) {
+  if (op_list_json->size() != kOpListJsonSize) {
+    MS_LOG(ERROR) << "Op list json's size is not equal to " << kOpListJsonSize << ", abort post processing.";
   }
 
   auto compute_json = (*op_list_json)[1];
@@ -86,12 +90,13 @@ void NpuGetV2PostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::js
   MS_LOG(DEBUG) << "Op list json after post processing:" << compute_json.dump();
 }
 
-void SingleTbeJsonCreator::OpListPostProcessing(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
+void SingleTbeJsonCreator::OpListPostProcessing(const AnfNodePtr &anf_node,
+                                                std::vector<nlohmann::json> *op_list_json) const {
   auto kernel_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (kernel_name == kNPUClearFloatStatusV2OpName) {
-    NpuClearV2PostProcessing(anf_node, op_list_json);
+    NpuClearV2PostProcessing(op_list_json);
   } else if (kernel_name == kNPUGetFloatStatusV2OpName) {
-    NpuGetV2PostProcessing(anf_node, op_list_json);
+    NpuGetV2PostProcessing(op_list_json);
   }
 }
 

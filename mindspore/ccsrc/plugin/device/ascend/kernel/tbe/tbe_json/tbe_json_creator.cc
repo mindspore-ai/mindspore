@@ -576,7 +576,7 @@ size_t RealInputIdxToOpInfoIdx(const AnfNodePtr &anf_node, size_t real_input_ind
   size_t index = 0;
   size_t ret = UINT_MAX;
   for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
-    index += dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i];
+    index += LongToSize(dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i]);
     if (index > real_input_index) {
       ret = i;
       break;

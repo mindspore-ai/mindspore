@@ -149,8 +149,7 @@ std::vector<std::string> TbeUtils::SplitAndRemoveSpace(const std::string &s, cha
   std::istringstream is(s);
   std::vector<std::string> ret;
   while (std::getline(is, item, delim)) {
-    auto end_pos = std::remove(item.begin(), item.end(), ' ');
-    item.erase(end_pos, item.end());
+    item.erase(std::remove(item.begin(), item.end(), ' '), item.end());
     ret.push_back(item);
   }
   return ret;

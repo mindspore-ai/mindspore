@@ -136,7 +136,8 @@ ShapeVector OpTilingCalculateAdapter::UpdateShape(const ShapeVector &shape, cons
   return shape;
 }
 
-void OpTilingCalculateAdapter::ConstructNodeInputAnchor(const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph) {
+void OpTilingCalculateAdapter::ConstructNodeInputAnchor(const ::ge::NodePtr &node,
+                                                        ::ge::ComputeGraphPtr *ge_graph) const {
   MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(node);
   for (int i = 0; i < SizeToInt(node->GetOpDesc()->GetAllInputsSize()); ++i) {

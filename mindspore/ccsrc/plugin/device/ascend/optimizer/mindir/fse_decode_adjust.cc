@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 std::vector<std::string> FSEDecodeAdjust::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
-  ret.emplace_back(std::make_shared<Primitive>(kFSEDecodeOpName)->name());
+  (void)ret.emplace_back(std::make_shared<Primitive>(kFSEDecodeOpName)->name());
   return ret;
 }
 
@@ -47,8 +47,8 @@ const AnfNodePtr FSEDecodeAdjust::Process(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
-  primitive->DelAttr("format");
-  primitive->DelAttr("infer_done");
+  (void)primitive->DelAttr("format");
+  (void)primitive->DelAttr("infer_done");
   MS_LOG(INFO) << cnode->fullname_with_scope() << " run FSEDecodeAdjust pass.";
   return node;
 }
