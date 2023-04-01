@@ -275,7 +275,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
     MS_LOG(ERROR) << "Empty task_info_ptrs.";
     return false;
   }
-  MS_LOG(INFO) << "Node " << anf_node_ptr->fullname_with_scope() << " get task " << task_info_ptrs.front()->op_name();
+  MS_LOG(DEBUG) << "Node " << anf_node_ptr->fullname_with_scope() << " get task " << task_info_ptrs.front()->op_name();
   debug_info->op_name_ = anf_node_ptr->fullname_with_scope();
   debug_info->task_num_ = task_info_ptrs.size();
   debug_info->stream_id_ = task_info_ptrs[0]->stream_id();

@@ -54,7 +54,7 @@ TbeTask::~TbeTask() {
 }
 
 void TbeTask::Distribute() {
-  MS_LOG(INFO) << "InitTbeTask start.";
+  MS_LOG(INFO) << "InitTbeTask and DistributeTbeTask start.";
   MS_EXCEPTION_IF_NULL(task_info_);
   MS_EXCEPTION_IF_NULL(stream_);
   // Get stub_func
@@ -66,7 +66,6 @@ void TbeTask::Distribute() {
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtGetFunctionByName failed, ret: " << rt_ret;
   }
-  MS_LOG(INFO) << "TbeTask: stub_func = " << task_info_->stub_func();
 
   // Get args
   std::vector<void *> tensor_device_addrs;
@@ -89,7 +88,6 @@ void TbeTask::Distribute() {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 
-  MS_LOG(INFO) << "DistributeTbeTask start.";
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
   rtArgsEx_t args_info = {};
   args_info.args = args_;
@@ -98,7 +96,8 @@ void TbeTask::Distribute() {
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtKernelLaunch failed, ret: " << rt_ret << " mem size " << args_size_;
   }
-  MS_LOG(INFO) << "[DataDump] task name: " << task_info_->op_name() << " dump_flag: " << dump_flag;
+  MS_LOG(INFO) << "TbeTask: stub_func = " << task_info_->stub_func()
+               << ", [DataDump] task name: " << task_info_->op_name() << " dump_flag: " << dump_flag;
 }
 
 REGISTER_TASK(TaskInfoType::TBE, TbeTask, TbeTaskInfo);
