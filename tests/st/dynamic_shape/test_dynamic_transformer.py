@@ -156,7 +156,7 @@ def get_train_loss(is_graph_mode, device_target, device_id=0):
 
     # Set mempool block size in PYNATIVE_MODE for improving memory utilization, which will not take effect in GRAPH_MODE
     if ms.get_context("mode") == ms.PYNATIVE_MODE:
-        ms.set_context(mempool_block_size="31GB")
+        ms.set_context(mempool_block_size="11GB")
 
     device_num = 1
     rank_id = 0
@@ -211,7 +211,7 @@ def test_train_graph_mode_gpu():
     assert np.allclose(graph_loss, expect_loss, 5e-3, 5e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_pynative_mode_gpu():
