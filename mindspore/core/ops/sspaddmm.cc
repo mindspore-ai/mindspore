@@ -142,14 +142,14 @@ void CheckAlphaBeta(const std::vector<AbstractBasePtr> &input_args) {
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
   if (!IsDynamic(alpha_shape) &&
-      !((alpha_shape.size() == static_cast<size_t>(dim1Num) && alpha_shape[0] == SizeToLong(dim1Num)) ||
+      !((alpha_shape.size() == static_cast<size_t>(dim1Num) && alpha_shape[0] == static_cast<size_t>(dim1Num)) ||
         (alpha_shape.size() == static_cast<size_t>(dim0Num)))) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, alpha shape should be (1,) or ()"
                              << ", but get dim num is " << alpha_shape.size() << ", dim0 size is " << alpha_shape[0]
                              << ".";
   }
   if (!IsDynamic(beta_shape) &&
-      !((beta_shape.size() == static_cast<size_t>(dim1Num) && beta_shape[0] == SizeToLong(dim1Num)) ||
+      !((beta_shape.size() == static_cast<size_t>(dim1Num) && beta_shape[0] == static_cast<size_t>(dim1Num)) ||
         (beta_shape.size() == static_cast<size_t>(dim0Num)))) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, beta shape should be (1,) or ()"
                              << ", but get dim num is " << beta_shape.size() << ", dim0 size is " << beta_shape[0]
