@@ -267,7 +267,7 @@ void AnyTypeNode::SetValue(const ValuePtr &val) {
 }
 
 py::object AnyTypeNode::GetRealNode() {
-  WaitAbstract();
+  (void)WaitAbstract();
   return py::cast(real_node_);
 }
 

@@ -60,7 +60,7 @@ uint32_t RangeKernel::RangeTask() {
     } else {
       output_size = static_cast<size_t>(std::ceil((limit - start) / delta));
     }
-    for (size_t index = 0; index < output_size; index++) {
+    for (int index = 0; index < SizeToInt(output_size); index++) {
       output[index] = delta * index + start;
     }
   } else {

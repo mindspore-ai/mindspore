@@ -389,10 +389,9 @@ std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step) {
     size = size / step + 1;
   }
   std::vector<int64_t> range(LongToSize(size));
-  std::generate(range.begin(), range.end(), [n = start - step, step]() mutable {
-    n = n + step;
-    return n;
-  });
+  for (size_t i = 0; i < range.size(); i++, start += step) {
+    range[i] = start;
+  }
   return range;
 }
 

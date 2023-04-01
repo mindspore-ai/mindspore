@@ -67,7 +67,8 @@ AbstractBasePtr SequenceZerosLikeInferInner(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   constexpr size_t input_len = 1;
   constexpr size_t seq_index = 0;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, SizeToLong(input_len),
+                                           prim_name);
   auto first_abs = input_args[seq_index];
   if (!first_abs->isa<abstract::AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
