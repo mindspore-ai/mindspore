@@ -828,6 +828,11 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
+bool DumpJsonParser::HCCLOutputNeedDump(const std::string &kernel_name) const {
+  return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly ||
+         DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel_name);
+}
+
 /*
  * Feature group: Dump.
  * Target device group: Ascend.
@@ -863,6 +868,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel)) &&
         DumpJsonParser::GetInstance().InputNeedDump()) {
+      hccl_input_kernels_.push_back(GetKernelNodeName(kernel));
       auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
@@ -873,10 +879,22 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
                        << " Input:" << GetKernelNodeName(input);
           update_kernels.try_emplace(GetKernelNodeName(input), 0);
           cell_dump_kernels_.push_back(GetKernelNodeName(input));
+          hccl_input_kernels_.push_back(GetKernelNodeName(input));
         }
       }
     }
   }
   kernels_.insert(update_kernels.begin(), update_kernels.end());
+}
+
+bool DumpJsonParser::IsHCCLKernelInput(std::string kernel_name) const {
+  if (hccl_input_kernels_.empty()) {
+    return false;
+  }
+  auto iter = std::find(hccl_input_kernels_.begin(), hccl_input_kernels_.end(), kernel_name);
+  if (iter != hccl_input_kernels_.end()) {
+    return true;
+  }
+  return false;
 }
 }  // namespace mindspore
