@@ -289,11 +289,18 @@ void DataDumper::OpDebugUnregister() {
 
 #ifndef ENABLE_SECURITY
 void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
-  if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
-    MS_LOG(INFO) << "Skip dump output";
-    return;
-  }
   MS_EXCEPTION_IF_NULL(kernel);
+  if (DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope())) {
+    if (!DumpJsonParser::GetInstance().HCCLOutputNeedDump(kernel->fullname_with_scope())) {
+      MS_LOG(INFO) << "The output of node = " << kernel->fullname_with_scope() << " is not hccl node output.";
+      return;
+    }
+  } else {
+    if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
+      MS_LOG(INFO) << "Skip dump output";
+      return;
+    }
+  }
   if (HasAbstractMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node output:" << kernel->fullname_with_scope();
     return;
@@ -334,6 +341,10 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel);
+  if (DumpJsonParser::GetInstance().IsHCCLKernelInput(kernel->fullname_with_scope())) {
+    MS_LOG(INFO) << "The input of node = " << kernel->fullname_with_scope() << " is hccl prev node input.";
+    return;
+  }
   if (common::AnfAlgo::IsNodeInputContainMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;
