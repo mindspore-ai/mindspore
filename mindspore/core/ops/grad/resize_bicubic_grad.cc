@@ -41,7 +41,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t num4 = 4;
+constexpr int64_t num4 = 4;
 abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

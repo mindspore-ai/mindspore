@@ -58,7 +58,7 @@ abstract::ShapePtr PdistGradInferShape(const PrimitivePtr &primitive, const std:
   }
   const size_t x_dim = 2;
   if (!IsDynamicRank(x_shape)) {
-    (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, x_dim, "PdistGrad");
+    (void)CheckAndConvertUtils::CheckInteger("x dim", SizeToLong(x_size), kEqual, SizeToLong(x_dim), "PdistGrad");
   }
 
   return std::make_shared<abstract::Shape>(x_shape);

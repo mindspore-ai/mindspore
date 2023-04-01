@@ -107,10 +107,10 @@ static void ComputeInterpolationWeightsByCubic(const size_t out_size, const size
     const float in = ComputeSourceIndex(i, scale, align_corners);
     const float in_f = std::floor(in);
     const float in_c = std::ceil(in);
-    interpolation[i].lowest = static_cast<float>((in_f - 1 > 0) ? (in_f - 1) : 0);
-    interpolation[i].lower = static_cast<float>((in_f > 0) ? in_f : 0);
-    interpolation[i].upper = static_cast<float>((in_c < in_size - 1) ? in_c : in_size - 1);
-    interpolation[i].uppest = static_cast<float>((in_c + 1 < in_size - 1) ? (in_c + 1) : in_size - 1);
+    interpolation[i].lowest = static_cast<int64_t>((in_f - 1 > 0) ? (in_f - 1) : 0);
+    interpolation[i].lower = static_cast<int64_t>((in_f > 0) ? in_f : 0);
+    interpolation[i].upper = static_cast<int64_t>((in_c < in_size - 1) ? in_c : in_size - 1);
+    interpolation[i].uppest = static_cast<int64_t>((in_c + 1 < in_size - 1) ? (in_c + 1) : in_size - 1);
     interpolation[i].lerp = in - in_f;
   }
 }

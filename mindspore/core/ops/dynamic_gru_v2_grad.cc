@@ -138,8 +138,8 @@ abstract::TupleShapePtr DynamicGRUV2GradInferShape(const PrimitivePtr &primitive
   std::vector<ShapeVector> check_shapes = {x_shape, winput_shape, whidden_shape, y_shape};
   auto is_dynamic_rank = std::any_of(check_shapes.begin(), check_shapes.end(), IsDynamicRank);
 
-  const size_t kNumTwo = 2;
-  const size_t kNumThree = 3;
+  const int64_t kNumTwo = 2;
+  const int64_t kNumThree = 3;
   if (!is_dynamic_rank) {
     (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(x_shape.size()), kEqual, kNumThree, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", SizeToLong(winput_shape.size()), kEqual,
