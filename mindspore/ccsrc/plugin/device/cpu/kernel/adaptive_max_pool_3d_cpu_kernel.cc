@@ -182,7 +182,7 @@ bool AdaptiveMaxPool3DCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-int64_t AdaptiveMaxPool3DCpuKernelMod::ComputeStride(const std::vector<int64_t> &shape, size_t index) {
+int64_t AdaptiveMaxPool3DCpuKernelMod::ComputeStride(const std::vector<int64_t> &shape, size_t index) const {
   if (index >= shape.size()) {
     MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, input index must be less than shape dims.";
   }
@@ -194,7 +194,7 @@ int64_t AdaptiveMaxPool3DCpuKernelMod::ComputeStride(const std::vector<int64_t> 
 }
 template <typename T>
 void AdaptiveMaxPool3DCpuKernelMod::ComputeKernel(T *input_data, T *output_data, int32_t *indices_data, int64_t start_T,
-                                                  int64_t end_T) {
+                                                  int64_t end_T) const {
   auto start_index = [=](int64_t dim, int64_t output_range, int64_t input_range) {
     if (output_range == 0) {
       MS_LOG(EXCEPTION) << "For AdaptiveMaxPool3D, output range should not be zero.";

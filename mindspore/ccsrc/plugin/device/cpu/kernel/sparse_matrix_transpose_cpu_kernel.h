@@ -54,10 +54,10 @@ class SparseMatrixTransposeCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename indiceT, typename valueT>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   template <typename indiceT, typename valueT>
-  void LaunchcomplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchcomplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   size_t x_batch_pointers_size_;
   size_t x_value_size_;

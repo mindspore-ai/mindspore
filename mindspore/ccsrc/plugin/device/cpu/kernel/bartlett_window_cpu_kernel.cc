@@ -51,7 +51,7 @@ bool BartlettWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 template <typename T1, typename T2>
 bool BartlettWindowCpuKernelMod::BartlettWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                                          const std::vector<kernel::AddressPtr> &outputs) const {
   auto input = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto output = reinterpret_cast<T2 *>(outputs[0]->addr);
 

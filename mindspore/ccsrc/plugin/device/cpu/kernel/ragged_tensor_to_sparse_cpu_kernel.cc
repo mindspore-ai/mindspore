@@ -119,7 +119,7 @@ int RaggedTensorToSparseCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 }
 
 template <typename T1>
-void RaggedTensorToSparseCpuKernelMod::ValidateInputs(const std::vector<std::vector<T1>> &input1) {
+void RaggedTensorToSparseCpuKernelMod::ValidateInputs(const std::vector<std::vector<T1>> &input1) const {
   int64_t input1_sizes = static_cast<int64_t>(input1.size());
   for (int64_t i = 0; i < input1_sizes; ++i) {
     if (input1[i].size() == 0) {
@@ -203,7 +203,7 @@ void RaggedTensorToSparseCpuKernelMod::Update(const std::vector<std::vector<T1>>
 template <typename T2>
 void RaggedTensorToSparseCpuKernelMod::OutPutSparseValues(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+                                                          const std::vector<kernel::AddressPtr> &outputs) const {
   int64_t input2_value_num = 0;
   auto output2_ptr = static_cast<T2 *>(outputs[1]->addr);
   auto input2_ptr = static_cast<T2 *>(inputs[n_]->addr);

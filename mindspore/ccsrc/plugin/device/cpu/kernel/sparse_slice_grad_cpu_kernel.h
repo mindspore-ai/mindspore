@@ -54,7 +54,7 @@ class SparseSliceGradCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
                     const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T>
-  void SliceGradCompute(T *backprop_val_grad, int64_t *indices, int64_t *start, int64_t *new_indices, T *y_grad);
+  void SliceGradCompute(T *backprop_val_grad, int64_t *indices, int64_t *start, int64_t *new_indices, T *y_grad) const;
   int64_t nnz_{0};
   int64_t slice_nnz_{0};
   int64_t rank_{0};

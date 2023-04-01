@@ -33,7 +33,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/adagrad_v2_impl.cuh"
-// #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/adagrad_v2_helper.h"
 
 namespace mindspore {
 namespace kernel {

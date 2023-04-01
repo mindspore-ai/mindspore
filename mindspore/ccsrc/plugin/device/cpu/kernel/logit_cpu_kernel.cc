@@ -77,7 +77,7 @@ bool LogitCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 bool LogitCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
+                                         const std::vector<AddressPtr> &outputs) const {
   float16 *input = static_cast<float16 *>(inputs[0]->addr);
   float16 *output = static_cast<float16 *>(outputs[0]->addr);
   float16 one = float16(1);
@@ -103,7 +103,8 @@ bool LogitCpuKernelMod::LaunchKernelHalf(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T>
-bool LogitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool LogitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                     const std::vector<AddressPtr> &outputs) const {
   T *input = static_cast<T *>(inputs[0]->addr);
   T *output = static_cast<T *>(outputs[0]->addr);
   T one = T(1);

@@ -113,7 +113,7 @@ bool SparseSliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 
 template <typename T>
 void SparseSliceGradCpuKernelMod::SliceGradCompute(T *backprop_val_grad, int64_t *indices, int64_t *start,
-                                                   int64_t *new_indices, T *y_grad) {
+                                                   int64_t *new_indices, T *y_grad) const {
   (void)memset_s(y_grad, LongToSize(nnz_) * sizeof(T), 0, LongToSize(nnz_) * sizeof(T));
 
   ShapeVector indices_shape = ShapeVector({nnz_, rank_});
