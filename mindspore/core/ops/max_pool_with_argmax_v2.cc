@@ -53,7 +53,7 @@ void MaxPoolWithArgmaxV2::set_dilation(const std::vector<int64_t> &dilation) {
   (void)CheckAndConvertUtils::CheckInteger("dilation_shape", size, kGreaterThan, kMinDilationSize, name());
   std::vector<int64_t> d;
   for (int64_t i = size - kMinDilationSize; i < size; i++) {
-    d.push_back(dilation[i]);
+    d.push_back(dilation[static_cast<size_t>(i)]);
   }
   (void)AddAttr(kDilation, api::MakeValue(d));
 }
@@ -61,7 +61,7 @@ void MaxPoolWithArgmaxV2::set_dilation(const std::vector<int64_t> &dilation) {
 void MaxPoolWithArgmaxV2::set_ceil_mode(bool ceil_mode) { (void)AddAttr(kCeilMode, api::MakeValue(ceil_mode)); }
 
 void MaxPoolWithArgmaxV2::set_argmax_type(const TypeId &argmax_type) {
-  int f = api::Type::GetType(argmax_type)->number_type() - kNumberTypeBool - 1;
+  int f = static_cast<int>(api::Type::GetType(argmax_type)->number_type() - kNumberTypeBool) - 1;
   (void)AddAttr(kArgmaxType, api::MakeValue(f));
 }
 
@@ -118,8 +118,8 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   const size_t kAttrH = 2;
   const size_t kAttrW = 3;
-  const size_t kInputShapeSize = 4;
-  const size_t kAttrsSize = 4;
+  const int64_t kInputShapeSize = 4;
+  const int64_t kAttrsSize = 4;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     std::vector<abstract::BaseShapePtr> shape_list = {std::make_shared<abstract::Shape>(std::vector<int64_t>{
@@ -160,11 +160,13 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
   auto W_in = x_shape[kIndex3];
   auto H_out = 0;
   auto W_out = 0;
-  auto factor = 2.0;
-  auto H_out_d =
-    ((H_in + factor * pads[kAttrH] - dilation[kAttrH] * (kernel_size[kAttrH] - 1) - 1) / strides[kAttrH]) + 1;
-  auto W_out_d =
-    ((W_in + factor * pads[kAttrW] - dilation[kAttrW] * (kernel_size[kAttrW] - 1) - 1) / strides[kAttrW]) + 1;
+  int64_t factor = 2;
+  auto H_out_d = (static_cast<double>(H_in + factor * pads[kAttrH] - dilation[kAttrH] * (kernel_size[kAttrH] - 1) - 1) /
+                  static_cast<double>(strides[kAttrH])) +
+                 1;
+  auto W_out_d = (static_cast<double>(W_in + factor * pads[kAttrW] - dilation[kAttrW] * (kernel_size[kAttrW] - 1) - 1) /
+                  static_cast<double>(strides[kAttrW])) +
+                 1;
   if (GetValue<bool>(prim->GetAttr(kCeilMode))) {
     // math: out = ceil(((in + 2 * pad - dilation * (kernel_size - 1) - 1) / stride) + 1)
     H_out = static_cast<int>(ceil(H_out_d));
