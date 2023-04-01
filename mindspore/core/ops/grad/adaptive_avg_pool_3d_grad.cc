@@ -62,7 +62,7 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
                                            kEqual, 1, prim_name);
   if (!IsDynamic(orig_input_shape_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("length of orig_input_shape", SizeToLong(orig_input_shape_shape[0]),
-                                             kEqual, input_grad_dims, prim_name);
+                                             kEqual, SizeToLong(input_grad_dims), prim_name);
   }
 
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
@@ -71,7 +71,7 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
     auto value_ptr = input_args[kInputIndex1]->BuildValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto value = CheckAndConvertUtils::CheckTensorIntValue("origin input shape", value_ptr, prim_name);
-    for (size_t i = 0; i < LongToSize(orig_input_shape_shape[0]); ++i) {
+    for (int64_t i = 0; i < orig_input_shape_shape[0]; ++i) {
       output_shape[i] = value[i] > 0 ? value[i] : static_cast<size_t>(1);
     }
     return std::make_shared<abstract::Shape>(output_shape);

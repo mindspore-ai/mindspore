@@ -63,7 +63,7 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (LongToSize(num_segments_shape.size()) > kInputIndex1) {
+  if (num_segments_shape.size() > kInputIndex1) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", num_segments should be at most 1-D, but got ["
                              << num_segments_shape.size() << "].";
   }
@@ -126,8 +126,7 @@ AbstractBasePtr SparseSegmentSumWithNumSegmentsInfer(const abstract::AnalysisEng
                                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  constexpr int64_t kInputsNum = kInputIndex4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(kInputIndex4), prim_name);
   auto types = SparseSegmentSumWithNumSegmentsInferType(prim, input_args);
   auto shapes = SparseSegmentSumWithNumSegmentsInferShape(prim, input_args);
   return abstract::MakeAbstract(shapes, types);

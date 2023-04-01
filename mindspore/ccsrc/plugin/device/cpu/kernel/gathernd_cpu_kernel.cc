@@ -85,7 +85,7 @@ int GatherNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   batch_indices_.resize(dim_indices_last, 0);
 
   if (dim_indices_last > 0) {
-    batch_indices_[dim_indices_last - 1] = dims_[1];
+    batch_indices_[SizeToInt(dim_indices_last) - 1] = SizeToInt(dims_[1]);
   }
 
   for (int i = static_cast<int>(dim_indices_last) - 1; i > 0; --i) {

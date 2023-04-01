@@ -76,7 +76,7 @@ static inline double calc_digamma(double x) {
     return std::copysign(INFINITY, -x);
   }
 
-  bool x_is_integer = static_cast<double>(x) == static_cast<double>(trunc(x));
+  bool x_is_integer = x == trunc(x);
   if (x < 0) {
     if (x_is_integer) {
       return std::numeric_limits<double>::quiet_NaN();

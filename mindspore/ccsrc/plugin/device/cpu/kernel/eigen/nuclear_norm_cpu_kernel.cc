@@ -490,7 +490,7 @@ bool NuclearNormCpuKernelMod::ComputeTensorNuclearNorm(const std::vector<kernel:
   int32_t j = 0;
   for (size_t i = 0; i < input_dimnum; i++) {
     if (i != static_cast<size_t>(dim_[0]) && i != static_cast<size_t>(dim_[1])) {
-      dim_array.at(j) = i;
+      dim_array.at(j) = SizeToLong(i);
       j++;
     }
   }

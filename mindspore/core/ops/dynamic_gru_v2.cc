@@ -70,8 +70,8 @@ abstract::TupleShapePtr DynamicGRUV2InferShape(const PrimitivePtr &primitive,
     num_proj = GetValue<int64_t>(primitive->GetAttr(kNumProj));
   }
 
-  const size_t kNumTwo = 2;
-  const size_t kNumThree = 3;
+  const int64_t kNumTwo = 2;
+  const int64_t kNumThree = 3;
   if (!is_dynamic_rank) {
     (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(x_shape.size()), kEqual, kNumThree, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("weight input shape rank", SizeToLong(winput_shape.size()), kEqual,
@@ -185,7 +185,7 @@ AbstractBasePtr DynamicGRUV2Infer(const abstract::AnalysisEnginePtr &, const Pri
   for (auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  const size_t kInputNum = 7;
+  const int64_t kInputNum = 7;
   (void)CheckAndConvertUtils::CheckInteger("Input Num", SizeToLong(input_args.size()), kEqual, kInputNum, prim_name);
   auto types = DynamicGRUV2InferType(primitive, input_args);
   auto shapes = DynamicGRUV2InferShape(primitive, input_args);
