@@ -276,10 +276,10 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
       MS_EXCEPTION_IF_NULL(kernel_mod);
       is_host_reshape_op = kernel_mod->GetKernelModType() == kernel::KernelModType::HostKernelMod;
     }
-    bool nop_op_is_not_dynamic_shape = !graph->is_dynamic_shape() && nop_nodes.find(op_name) != nop_nodes.end();
+    bool is_nop_op = nop_nodes.find(op_name) != nop_nodes.end();
     bool is_transpose_nop = (op_name == prim::kPrimTranspose->name() || op_name == prim::kPrimTransposeD->name()) &&
                             common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
-    if (is_transpose_nop || (nop_op_is_not_dynamic_shape && !is_host_reshape_op)) {
+    if (is_transpose_nop || (is_nop_op && !is_host_reshape_op)) {
       nop_op_to_memcpy_.insert(node);
     }
   }
