@@ -6561,7 +6561,7 @@ class Digamma(Primitive):
 
 class Polygamma(Primitive):
     r"""
-    Computes the :math:`a^{th}` derivative of the polygamma function on `x`.
+    Computes the :math:`a`th derivative of the polygamma function on `x`.
 
     Refer to :func:`mindspore.ops.polygamma` for more details.
 
