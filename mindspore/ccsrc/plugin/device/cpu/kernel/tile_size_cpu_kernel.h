@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_SIZE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TILE_SIZE_CPU_KERNEL_H_
 #include <vector>
-#include <utility>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "mindspore/core/ops/tile_size.h"
 #include "plugin/factory/ms_factory.h"

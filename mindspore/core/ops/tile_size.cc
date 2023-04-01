@@ -32,7 +32,7 @@ namespace {
 AbstractBasePtr MakeTuple(int64_t num) {
   abstract::AbstractBasePtrList elems;
   for (int64_t i = 0; i < num; i++) {
-    elems.emplace_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
+    (void)elems.emplace_back(std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64));
   }
 
   return std::make_shared<abstract::AbstractTuple>(elems);
@@ -41,9 +41,8 @@ AbstractBasePtr MakeTuple(int64_t num) {
 MIND_API_OPERATOR_IMPL(TileSize, BaseOperator);
 class TileSizeInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    auto ndim_abs = input_args[2]->cast<abstract::AbstractScalarPtr>();
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
     auto ndim_value = ndim_abs->BuildValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
@@ -54,8 +53,8 @@ class TileSizeInfer : public abstract::OpInferBase {
     return nullptr;
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto ndim_abs = input_args[2]->cast<abstract::AbstractScalarPtr>();
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
     auto ndim_value = ndim_abs->BuildValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
@@ -66,9 +65,9 @@ class TileSizeInfer : public abstract::OpInferBase {
     return nullptr;
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    auto ndim_abs = input_args[2]->cast<abstract::AbstractScalarPtr>();
+    auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
     auto ndim_value = ndim_abs->BuildValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
@@ -79,14 +78,14 @@ class TileSizeInfer : public abstract::OpInferBase {
     return nullptr;
   }
 
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     if (input_args.empty()) {
       return nullptr;
     }
 
     auto shape_value = input_args[0]->BuildValue();
     auto out_shape_value = input_args[1]->BuildValue();
-    auto ndim_value = input_args[2]->BuildValue();
+    auto ndim_value = input_args[kIndex2]->BuildValue();
     if (!IsValueKnown(shape_value) || !IsValueKnown(out_shape_value) || !IsValueKnown(ndim_value)) {
       return nullptr;
     }
