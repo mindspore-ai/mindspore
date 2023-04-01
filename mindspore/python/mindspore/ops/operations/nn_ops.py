@@ -9765,7 +9765,7 @@ class Pdist(Primitive):
     Refer to :func:`mindspore.ops.pdist` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
