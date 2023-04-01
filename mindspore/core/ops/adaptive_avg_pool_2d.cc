@@ -71,7 +71,7 @@ abstract::ShapePtr AdaptiveAvgPool2DInferShape(const PrimitivePtr &primitive,
   // Update the output shape by output size and input shape.
   auto input_size_iter = x_shape.rbegin();
   auto output_size_iter = output_size.rbegin();
-  for (; output_size_iter != output_size.rend(); (void)output_size_iter++, input_size_iter++) {
+  for (; output_size_iter != output_size.rend(); (void)output_size_iter++, (void)input_size_iter++) {
     // If output size is none, the input shape should be used.
     if (*output_size_iter != kValueNone) {
       *input_size_iter = *output_size_iter;

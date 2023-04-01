@@ -43,7 +43,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const size_t kTwo = 2;
+  const int64_t kTwo = 2;
   const std::vector<int64_t> UNKNOWN_RANK = {-2};
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {

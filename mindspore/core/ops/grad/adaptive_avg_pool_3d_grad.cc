@@ -62,7 +62,7 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
                                            kEqual, 1, prim_name);
   if (!IsDynamic(orig_input_shape_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("length of orig_input_shape", SizeToLong(orig_input_shape_shape[0]),
-                                             kEqual, input_grad_dims, prim_name);
+                                             kEqual, SizeToLong(input_grad_dims), prim_name);
   }
 
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&

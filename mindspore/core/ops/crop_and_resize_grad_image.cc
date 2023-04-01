@@ -107,7 +107,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
                                        << ", but got " << value[i]
                                        << "! The value in output_size should be reduced or max_len should be increased";
             }
-            output_size_value_vec[i] = static_cast<int64_t>(value[LongToSize(i)]);
+            output_size_value_vec[LongToSize(i)] = static_cast<int64_t>(value[LongToSize(i)]);
           } else {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
                                         "positive data, but got "

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_UTILS_CPU_UTILS_H_
 
 #include <cmath>
-#include <cstdint>
 
 #include "mindspore/core/base/float16.h"
 
