@@ -40,8 +40,8 @@ def test_maxpool_with_argmax_v2_ceil_mode_false():
     Expectation: success.
     """
     attributes = {'kernel_size': (3, 2), 'strides': (2, 1), 'pads': 0, 'dilation': 1,
-                  'ceil_mode': False, 'argmax_type': mstype.int32}
-    x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mstype.float32)
+                  'ceil_mode': False, 'argmax_type': mstype.int64}
+    x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mstype.float16)
     net = MaxPoolWithArgmaxV2Net(**attributes)
     output, _ = net(x)
     print("***********output output*********")
@@ -55,8 +55,8 @@ def test_maxpool_with_argmax_v2_ceil_mode_true():
     Expectation: success.
     """
     attributes = {'kernel_size': (3, 2), 'strides': (2, 1), 'pads': 0, 'dilation': 1,
-                  'ceil_mode': True, 'argmax_type': mstype.int32}
-    x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mstype.float32)
+                  'ceil_mode': True, 'argmax_type': mstype.int64}
+    x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mstype.float16)
     net = MaxPoolWithArgmaxV2Net(**attributes)
     output, _ = net(x)
     print("***********output output*********")

@@ -10390,18 +10390,29 @@ class MaxPoolWithArgmaxV2(Primitive):
             strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
         dilation (Union[int, tuple[int]]): Default: '(1, 1)'.
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64.
+        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64. [Disabled in Ascend.]
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,
-          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 in CPU and GPU,
+          with that of float16 in Ascend.
 
     Outputs:
         Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
 
         - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
           It has the same data type as `x`.
-        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int32 or int64.
+
+          .. math::
+              H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{pads[0]} - \text{dilation[0]}
+               \times (\text{kernel\_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
+
+          .. math::
+              W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{pads[1]} - \text{dilation[1]}
+               \times (\text{kernel\_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
+
+        - **argmax** (Tensor) - Index corresponding to the maximum value.
+          Data type is int32 or int64 in GPU and CPU, is uint16 in Ascend.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -10409,6 +10420,7 @@ class MaxPoolWithArgmaxV2(Primitive):
         TypeError: If `kernel_size` , `strides` , `pads` or `dilation` is not int or tuple.
         ValueError: If `kernel_size`, `strides` or `dilation` is less than 1.
         ValueError: If `pads` is less than 0.
+        ValueError: If `pads` is more than half of `kernel_size`.
         ValueError: If `argmax_type` is not mindspore.int64 or mindspore.int32.
         TypeError: If `ceil_mode` is not bool.
 
@@ -10426,7 +10438,7 @@ class MaxPoolWithArgmaxV2(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, kernel_size, strides=None, pads=0, dilation=(1, 1,), ceil_mode=False, argmax_type=mstype.int64):
+    def __init__(self, kernel_size, strides=None, pads=0, dilation=(1, 1), ceil_mode=False, argmax_type=mstype.int64):
         """Initialize MaxPoolWithArgmaxV2."""
         self.init_prim_io_names(inputs=["x"], outputs=["output", "argmax"])
         validator.check_value_type("ceil_mode", ceil_mode, bool, self.name)
@@ -10441,14 +10453,12 @@ class MaxPoolWithArgmaxV2(Primitive):
         else:
             raise ValueError(
                 f"For '{self.name}', the 'argmax_type' must be mstype.int32 or mstype.int64, but got {argmax_type}.")
-        self.kernel_size = _check_positive_int_or_tuple("kernel_size", kernel_size, self.name, ret_four=True,
-                                                        allow_four=True)
+        self.kernel_size = _check_positive_int_or_tuple("kernel_size", kernel_size, self.name, ret_four=True)
         if strides is None:
             strides = kernel_size
-        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, ret_four=True, allow_four=True)
-        self.pads = _check_positive_int_or_tuple("pads", pads, self.name, ret_four=True, allow_four=True,
-                                                 strict_positive=False)
-        self.dilation = _check_positive_int_or_tuple("dilation", dilation, self.name, ret_four=True, allow_four=True)
+        self.strides = _check_positive_int_or_tuple("strides", strides, self.name, ret_four=True)
+        self.pads = _check_positive_int_or_tuple("pads", pads, self.name, ret_four=True, strict_positive=False)
+        self.dilation = _check_positive_int_or_tuple("dilation", dilation, self.name, ret_four=True)
         self.add_prim_attr("kernel_size", self.kernel_size)
         self.add_prim_attr("strides", self.strides)
         self.add_prim_attr("pads", self.pads)

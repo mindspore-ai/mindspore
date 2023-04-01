@@ -61,8 +61,8 @@ void MaxPoolWithArgmaxV2::set_dilation(const std::vector<int64_t> &dilation) {
 void MaxPoolWithArgmaxV2::set_ceil_mode(bool ceil_mode) { (void)AddAttr(kCeilMode, api::MakeValue(ceil_mode)); }
 
 void MaxPoolWithArgmaxV2::set_argmax_type(const TypeId &argmax_type) {
-  int f = static_cast<int>(api::Type::GetType(argmax_type)->number_type() - kNumberTypeBool) - 1;
-  (void)AddAttr(kArgmaxType, api::MakeValue(f));
+  int64_t ms_type_value = static_cast<int64_t>(api::Type::GetType(argmax_type)->number_type() - kNumberTypeBool - 1);
+  (void)AddAttr(kArgmaxType, api::MakeValue(ms_type_value));
 }
 
 std::vector<int64_t> MaxPoolWithArgmaxV2::get_kernel_size() const {
@@ -82,7 +82,7 @@ std::vector<int64_t> MaxPoolWithArgmaxV2::get_dilation() const {
 bool MaxPoolWithArgmaxV2::get_ceil_mode() const { return GetValue<bool>(GetAttr(kCeilMode)); }
 
 TypeId MaxPoolWithArgmaxV2::get_argmax_type() const {
-  auto number_type = GetValue<int>(GetAttr(kArgmaxType));
+  auto number_type = GetValue<int64_t>(GetAttr(kArgmaxType));
   if (number_type == kAiCoreNumTypeInt32) {
     return kNumberTypeInt32;
   } else {
@@ -99,6 +99,13 @@ TuplePtr MaxPoolWithArgmaxV2InferType(const PrimitivePtr &prim, const std::vecto
   MS_EXCEPTION_IF_NULL(context);
   TypePtr argmax_dtype;
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), {kFloat16}, prim->name());
+    auto number_type = GetValue<int64_t>(prim->GetAttr(kArgmaxType));
+    if (number_type != kAiCoreNumTypeInt64) {
+      MS_LOG(WARNING) << "While running in Ascend, the attribute `argmax_type` of " << prim->name()
+                      << " is disabled, DO NOT set it.";
+    }
+    prim->set_attr(kArgmaxType, MakeValue(kAiCoreNumTypeInt32));
     argmax_dtype = std::make_shared<TensorType>(kUInt16);
   } else {
     auto target_max = GetValue<int64_t>(prim->GetAttr(kArgmaxType));
@@ -156,6 +163,13 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
   (void)CheckAndConvertUtils::CheckPositiveVector(kPads, pads, prim->name());
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero(kDilation, dilation, prim->name());
 
+  double half_factor = 0.5;
+  if ((pads[kAttrH] > static_cast<int64_t>(static_cast<double>(kernel_size[kAttrH]) * half_factor)) ||
+      (pads[kAttrW] > static_cast<int64_t>(static_cast<double>(kernel_size[kAttrW]) * half_factor))) {
+    MS_EXCEPTION(ValueError)
+      << "It is required that the `pads` is no more than half of the `kernel_size`, but gets pads(" << pads[kAttrH]
+      << ", " << pads[kAttrW] << ") and kernel_size(" << kernel_size[kAttrH] << ", " << kernel_size[kAttrW] << ").";
+  }
   auto H_in = x_shape[kIndex2];
   auto W_in = x_shape[kIndex3];
   auto H_out = 0;
