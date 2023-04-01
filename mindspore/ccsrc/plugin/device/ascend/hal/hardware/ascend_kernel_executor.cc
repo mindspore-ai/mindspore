@@ -419,17 +419,17 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
       return false;
     }
   }
-#ifdef ENABLE_DEBUGGER
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
-    kernel_dumper->OpLoadDumpInfo(kernel);
-  }
-#endif
 #ifndef ENABLE_SECURITY
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
   if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type, kernel_mod->task_id());
+  }
+#endif
+#ifdef ENABLE_DEBUGGER
+  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+    auto kernel_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
+    kernel_dumper->OpLoadDumpInfo(kernel);
   }
 #endif
   return PySyncRuning();

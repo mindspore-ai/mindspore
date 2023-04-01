@@ -80,7 +80,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
   bool IsDumpEnabled();
   void PyNativeModeCheck();
-  bool IsHCCLKernelInput(std::string kernel_name) const;
+  bool IsHCCLKernelInput(const std::string &kernel_name) const;
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
@@ -107,7 +107,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::map<std::string, uint32_t> kernels_;
   std::map<std::string, uint32_t> kernel_types_;
   std::vector<std::string> cell_dump_kernels_;
-  std::vector<std::string> hccl_input_kernels_;
+  std::set<std::string> hccl_input_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
   JsonFileFormat file_format_{FORMAT_BIN};

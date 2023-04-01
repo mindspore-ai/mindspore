@@ -868,7 +868,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel)) &&
         DumpJsonParser::GetInstance().InputNeedDump()) {
-      hccl_input_kernels_.push_back(GetKernelNodeName(kernel));
+      hccl_input_kernels_.insert(GetKernelNodeName(kernel));
       auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
@@ -879,7 +879,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
                        << " Input:" << GetKernelNodeName(input);
           update_kernels.try_emplace(GetKernelNodeName(input), 0);
           cell_dump_kernels_.push_back(GetKernelNodeName(input));
-          hccl_input_kernels_.push_back(GetKernelNodeName(input));
+          hccl_input_kernels_.insert(GetKernelNodeName(input));
         }
       }
     }
@@ -887,7 +887,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
   kernels_.insert(update_kernels.begin(), update_kernels.end());
 }
 
-bool DumpJsonParser::IsHCCLKernelInput(std::string kernel_name) const {
+bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
   if (hccl_input_kernels_.empty()) {
     return false;
   }

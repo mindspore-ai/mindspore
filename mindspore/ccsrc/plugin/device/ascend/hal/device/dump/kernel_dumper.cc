@@ -101,6 +101,7 @@ void KernelDumper::OpLoadDumpInfo(const CNodePtr &kernel) {
     MS_LOG(WARNING) << "[KernelDumper] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
     return;
   }
+  std::lock_guard<std::mutex> lock(dump_mutex_);
   aicpu::dump::OpMappingInfo dump_info;
   SetOpMappingInfo(NOT_NULL(&dump_info), kernel);
 

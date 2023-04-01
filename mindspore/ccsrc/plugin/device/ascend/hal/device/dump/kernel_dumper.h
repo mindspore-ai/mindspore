@@ -89,6 +89,7 @@ class KernelDumper : public debug::OverflowDumper {
   bool initialed_{false};
   bool is_op_debug_;
   uint32_t op_debug_mode_;
+  std::mutex dump_mutex_;
 
   void *dev_load_mem_ = nullptr;
   void *proto_dev_mem_ = nullptr;
