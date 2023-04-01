@@ -221,7 +221,7 @@ kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &i
 
   auto *lite_kernel = NnaclKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
   if (lite_kernel == nullptr) {
-    MS_LOG(ERROR) << "Registry cpu kernel failed:  " << parameter->name_;
+    MS_LOG(WARNING) << "Registry cpu kernel failed:  " << parameter->name_;
     return nullptr;
   }
   lite_kernel->set_registry_data_type(key.data_type);
@@ -256,7 +256,7 @@ int KernelRegistry::GetKernelExec(const std::vector<Tensor *> &in_tensors, const
       return RET_OK;
     }
   }
-  MS_LOG(ERROR) << "common cpu kernel registry failed";
+  MS_LOG(WARNING) << "common cpu kernel registry failed";
   return RET_ERROR;
 }
 
