@@ -44,24 +44,26 @@ def is_const(x):
 
 def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     r"""
-    Count number of nonzero elements across axis of input tensor
+    Count number of nonzero elements across axis of input tensor.
 
     Args:
-        x (Tensor): Input data is used to count non-zero numbers.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
-                                                  Default: (), reduce all dimensions.
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
-        dtype (Union[Number, mindspore.bool\_]): The data type of the output tensor. Only constant value is allowed.
-                                             Default: mindspore.int32
+        x (Tensor): Input data is used to count non-zero numbers. With shape
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
+            Default: (), reduce all dimensions.
+        keep_dims (bool, optional): Whether to maintain dimensions specified by `axis`.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: False.
+        dtype (Union[Number, mindspore.bool\_], optinoal): The data type of the output tensor.
+            Default: mindspore.int32.
 
     Returns:
-          Tensor, number of nonzero element. The data type is `dtype`.
+          Tensor, number of nonzero element across axis specified by `axis`.
+          The data type is specified by `dtype`.
 
     Raises:
-        TypeError: If axis is not int or tuple.
-        ValueError: If axis is not in range [-x.ndim, x.ndim).
+        TypeError: If `axis` is not int, tuple or list.
+        ValueError: If any value in `axis` is not in range [-x.ndim, x.ndim).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

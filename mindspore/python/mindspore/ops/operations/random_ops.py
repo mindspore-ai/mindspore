@@ -878,7 +878,7 @@ class MultinomialWithReplacement(Primitive):
 
     Args:
         - **numsamples** (int) - number of samples to draw, must be a nonnegative number.
-        - **replacement** (bool, optional) - Whether to draw with replacement or not. Defaults to false.
+        - **replacement** (bool, optional) - Whether to draw with replacement or not. Default: False.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2

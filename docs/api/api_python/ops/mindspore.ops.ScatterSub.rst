@@ -16,7 +16,7 @@
         - **use_locking** (bool) - 表示是否使用锁来保护。默认值：False。
 
     输入：
-        - **input_x** (Parameter) - ScatterSub的输入，任意维度的Parameter。
+        - **input_x** (Parameter) - ScatterSub的输入，数据类型为Parameter。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **indices** (Tensor) - 指定相减操作的索引，其数据类型必须为mindspore.int32。
         - **updates** (Tensor) - 指定与 `input_x` 相减的Tensor，其数据类型与 `input_x` 的相同，shape为 `indices_shape + x_shape[1:]` 。
 

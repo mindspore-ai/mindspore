@@ -27,7 +27,7 @@ mindspore.ops.BinaryCrossEntropy
         - **reduction** (str) - 指定输出的计算方式。取值为'none'、'mean'或'sum'。默认值：'mean'。
 
     输入：
-        - **logits** (Tensor) - 输入预测值。任意维度的Tensor，其数据类型必须为float16或float32。
+        - **logits** (Tensor) - 输入预测值。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **labels** (Tensor) - 输入目标值，其shape和数据类型与 `logits` 相同。
         - **weight** (Tensor, 可选) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值：None。
 

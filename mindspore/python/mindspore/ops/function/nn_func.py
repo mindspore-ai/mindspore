@@ -5707,9 +5707,9 @@ def channel_shuffle(x, groups):
     rearrange them as (*, C/g, g, H*W), while keeping the original tensor shapes.
 
     Args:
-        groups (int): Number of groups to divide channels in.
         x (Tensor): Tensor to be divided, it has shape :math:`(*, C, H, W)`,
           with float16, float32, int8, int16, int32, int64, uint8, uint16, uint32, uint64 data type.
+        groups (int): Number of groups to divide channels in.
 
     Returns:
         A Tensor, has the same type as the `x`, and has the shape :math:`(*, C, H, W)`.
