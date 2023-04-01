@@ -22,8 +22,7 @@ import numpy as np
 from mindspore import context
 from mindspore import log as logger
 from mindspore.ops import signature as sig
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common._decorator import deprecated
@@ -37,7 +36,7 @@ def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
 
     def reduce_one_axis(one_axis):
-        validator.check_int_range(one_axis, -dim, dim, Rel.INC_LEFT, 'axis', prim_name)
+        validator.check_int_range(one_axis, -dim, dim, validator.INC_LEFT, 'axis', prim_name)
         if one_axis < 0:
             one_axis += dim
         axis_reduce.add(one_axis)
@@ -2690,7 +2689,7 @@ class Histogram(Primitive):
         validator.check_value_type("min", min, [float], self.name)
         validator.check_value_type("max", max, [float], self.name)
         validator.check_positive_int(bins, 'bins', self.name)
-        validator.check('min', min, 'max', max, Rel.LE, self.name)
+        validator.check('min', min, 'max', max, validator.LE, self.name)
 
 
 class HistogramFixedWidth(PrimitiveWithInfer):
@@ -2731,7 +2730,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     def __init__(self, nbins, dtype='int32'):
         """Initialize HistogramFixedWidth."""
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
-        validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
+        validator.check_int(nbins, 1, validator.GE, "nbins", self.name)
         valid_values = ['int32']
         self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
@@ -7369,8 +7368,8 @@ class TrilIndices(Primitive):
     def __init__(self, row, col, offset=0, dtype=mstype.int32):
         """Initialize TrilIndices"""
         self.init_prim_io_names(inputs=[], outputs=['y'])
-        validator.check_int(row, 0, Rel.GE, "row", self.name)
-        validator.check_int(col, 0, Rel.GE, "col", self.name)
+        validator.check_int(row, 0, validator.GE, "row", self.name)
+        validator.check_int(col, 0, validator.GE, "col", self.name)
         validator.check_value_type("offset", offset, [int], self.name)
         valid_values = (mstype.int32, mstype.int64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)
@@ -7570,8 +7569,8 @@ class TriuIndices(Primitive):
     def __init__(self, row, col, offset=0, dtype=mstype.int32):
         """Initialize TriuIndices"""
         self.init_prim_io_names(inputs=[], outputs=['y'])
-        validator.check_int(row, 0, Rel.GE, "row", self.name)
-        validator.check_int(col, 0, Rel.GE, "col", self.name)
+        validator.check_int(row, 0, validator.GE, "row", self.name)
+        validator.check_int(col, 0, validator.GE, "col", self.name)
         validator.check_value_type("offset", offset, [int], self.name)
         valid_values = (mstype.int32, mstype.int64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)

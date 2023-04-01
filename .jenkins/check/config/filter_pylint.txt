@@ -6,6 +6,10 @@
 "mindspore/model_zoo/"                                                                                  "import-self"
 "mindspore/tests/"                                                                                      "missing-docstring"
 "mindspore/tests/"                                                                                      "import-self"
+"mindspore/"                                                                                            "consider-using-in"
+"mindspore/"                                                                                            "invalid-unary-operand-type"
+"mindspore/"                                                                                            "chained-comparison"
+"mindspore/"                                                                                            "useless-return"
 
 # Mindspore
 "mindspore/mindspore/python/mindspore/_check_deps_version.py"                                                            "broad-except"
@@ -191,6 +195,8 @@
 "mindspore/tests/st/ms_adapter/test_ms_adapter_base.py"                                                 "unidiomatic-typecheck"
 "mindspore/tests/st/ms_adapter/test_operator.py"                                                        "unidiomatic-typecheck"
 "mindspore/tests/st/ms_adapter/test_python_builtins.py"                                                 "unidiomatic-typecheck"
+"mindspore/tests/"                                                                                      "wrong-import-position"
+"mindspore/tests/"                                                                                      "wrong-import-order"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

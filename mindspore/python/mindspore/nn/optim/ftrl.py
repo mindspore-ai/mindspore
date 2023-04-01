@@ -18,8 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.common.api import jit
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 from mindspore.nn.optim._dist_optimizer_registry import _register_dist_optimizer
@@ -169,19 +168,19 @@ def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate,
 def _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, prim_name=None):
     """Check param."""
     validator.check_value_type("initial_accum", initial_accum, [float], prim_name)
-    validator.check_number("initial_accum", initial_accum, 0.0, Rel.GE, prim_name)
+    validator.check_number("initial_accum", initial_accum, 0.0, validator.GE, prim_name)
 
     validator.check_value_type("learning_rate", learning_rate, [float], prim_name)
     validator.check_positive_float(learning_rate, "learning_rate", prim_name)
 
     validator.check_value_type("lr_power", lr_power, [float], prim_name)
-    validator.check_number("lr_power", lr_power, 0.0, Rel.LE, prim_name)
+    validator.check_number("lr_power", lr_power, 0.0, validator.LE, prim_name)
 
     validator.check_value_type("l1", l1, [float], prim_name)
-    validator.check_number("l1", l1, 0.0, Rel.GE, prim_name)
+    validator.check_number("l1", l1, 0.0, validator.GE, prim_name)
 
     validator.check_value_type("l2", l2, [float], prim_name)
-    validator.check_number("l2", l2, 0.0, Rel.GE, prim_name)
+    validator.check_number("l2", l2, 0.0, validator.GE, prim_name)
 
     validator.check_value_type("use_locking", use_locking, [bool], prim_name)
 

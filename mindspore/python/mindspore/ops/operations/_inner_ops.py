@@ -26,10 +26,9 @@ from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
 from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, _run_op
 from mindspore import context
-from mindspore._checkparam import Rel
-from mindspore._checkparam import Validator as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm
@@ -115,6 +114,7 @@ class ExtractImagePatches(Primitive):
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
                                  f"{arg_name}_col is {arg_val[3]}")
+            return None
 
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)
@@ -220,9 +220,9 @@ class Lamb(PrimitiveWithInfer):
 
     def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
                     epsilon_shape, decay_shape, global_step_shape, gradient_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "gradient_shape", gradient_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "m_shape", m_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, validator.EQ, self.name)
+        validator.check("var_shape", var_shape, "gradient_shape", gradient_shape, validator.EQ, self.name)
         return var_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
@@ -326,18 +326,18 @@ class MatrixDiag(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
-        validator.check_int(len(assist_shape), 2, Rel.GE, "assist rank", self.name)
+        validator.check_int(len(assist_shape), 2, validator.GE, "assist rank", self.name)
         validator.check('rank of x', len(x_shape) + 1,
-                        'rank of assist', len(assist_shape), Rel.LE, self.name)
+                        'rank of assist', len(assist_shape), validator.LE, self.name)
         validator.check('assist\'s penultimate dimension', assist_shape[-2], 'assist\'s last dimension',
-                        assist_shape[-1], Rel.EQ, self.name)
+                        assist_shape[-1], validator.EQ, self.name)
 
         r_end_dim = -len(x_shape)
         r_idx = -1
         while r_idx >= r_end_dim:
             if x_shape[r_idx] != 1:
                 validator.check("reverse x dim %d" % r_idx, x_shape[r_idx], "reverse assist dim %d" %
-                                assist_shape[r_idx - 1], assist_shape[r_idx - 1], Rel.EQ, self.name)
+                                assist_shape[r_idx - 1], assist_shape[r_idx - 1], validator.EQ, self.name)
             r_idx = r_idx - 1
 
         return assist_shape
@@ -375,8 +375,8 @@ class MatrixDiagPart(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
-        validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
-        validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 2, validator.GE, "x rank", self.name)
+        validator.check("x shape", x_shape, "assist shape", assist_shape, validator.EQ, self.name)
 
         if assist_shape[-2] < assist_shape[-1]:
             out_shape = assist_shape[:-1]
@@ -537,15 +537,15 @@ class MatrixSetDiag(PrimitiveWithInfer):
         return x_dtype
 
     def infer_shape(self, x_shape, diagonal_shape, assist_shape):
-        validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
-        validator.check("x shape", x_shape, "assist shape", assist_shape, Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 2, validator.GE, "x rank", self.name)
+        validator.check("x shape", x_shape, "assist shape", assist_shape, validator.EQ, self.name)
 
         if x_shape[-2] < x_shape[-1]:
             validator.check("diagonal shape", diagonal_shape, "x shape excluding the last dimension",
-                            x_shape[:-1], Rel.EQ, self.name)
+                            x_shape[:-1], validator.EQ, self.name)
         else:
             validator.check("diagonal shape", diagonal_shape, "x shape excluding the second last dimension",
-                            x_shape[:-2] + x_shape[-1:], Rel.EQ, self.name)
+                            x_shape[:-2] + x_shape[-1:], validator.EQ, self.name)
 
         return assist_shape
 
@@ -662,7 +662,7 @@ class ConvertToDynamic(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=["input"], outputs=["output"])
 
     def check_shape(self, input_shape):
-        validator.check("input_shape rank", len(input_shape), "", 0, Rel.GT, self.name)
+        validator.check("input_shape rank", len(input_shape), "", 0, validator.GT, self.name)
 
     def check_dtype(self, input_dtype):
         validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
@@ -712,7 +712,7 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=["input"], outputs=["output"])
 
     def check_shape(self, input_shape):
-        validator.check("input_shape rank", len(input_shape), "", 0, Rel.GT, self.name)
+        validator.check("input_shape rank", len(input_shape), "", 0, validator.GT, self.name)
 
     def check_dtype(self, input_dtype):
         validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
@@ -813,8 +813,8 @@ class SequenceMask(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=["lengths", "maxlen"], outputs=["mask"])
 
     def check_shape(self, lengths_shape, maxlen_shape):
-        validator.check("lengths_shape", len(lengths_shape), "", 0, Rel.GT, self.name)
-        validator.check("maxlen_shape", len(maxlen_shape), "", 0, Rel.EQ, self.name)
+        validator.check("lengths_shape", len(lengths_shape), "", 0, validator.GT, self.name)
+        validator.check("maxlen_shape", len(maxlen_shape), "", 0, validator.EQ, self.name)
 
     def check_dtype(self, lengths_dtype, maxlen_dtype):
         validator.check_subclass("lengths_dtype", lengths_dtype, mstype.tensor, self.name)
@@ -886,10 +886,10 @@ class SyncBatchNorm(Primitive):
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, momentum=0.1, group="sync_bn_group0", device_num=2):
-        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, validator.INC_BOTH, 'momentum', self.name)
         validator.check_isinstance("group", group, str)
-        validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
+        validator.check_int(device_num, 2, validator.GE, "device_num", self.name)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
         self.add_prim_attr('side_effect_mem', True)
@@ -952,7 +952,7 @@ class Centralization(PrimitiveWithInfer):
         validator.check_value_type('axis', axis_v, [int, list, tuple], self.name)
 
         if isinstance(axis_v, int):
-            validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, 'axis', self.name)
+            validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, 'axis', self.name)
         elif axis:
             for index, one_axis in enumerate(axis_v):
                 validator.check_value_type('axis[%d]' % index, one_axis, [int], self.name)
@@ -1053,9 +1053,9 @@ class StackPop(PrimitiveWithInfer):
         validator.check_value_type("index", index, [int], self.name)
 
         validator.check_value_type('shape type', shape, [list, tuple], self.name)
-        validator.check_int(len(np.array(shape).shape), 1, Rel.EQ, "dim of shape", self.name)
+        validator.check_int(len(np.array(shape).shape), 1, validator.EQ, "dim of shape", self.name)
         for elem in shape:
-            validator.check_int(elem, 1, Rel.GE, 'shape element', self.name)
+            validator.check_int(elem, 1, validator.GE, 'shape element', self.name)
             validator.check_value_type('type of shape element', elem, [int], self.name)
 
         validator.check_type_name("dtype", dtype, (mstype.bool_,) + mstype.number_type, self.name)
@@ -1136,22 +1136,22 @@ class DynamicStitch(PrimitiveWithCheck):
 
     def check_shape(self, indices_shape, data_shape):
         validator.check_value_type("shape of indices", indices_shape, [tuple, list], self.name)
-        validator.check_int(len(indices_shape), 1, Rel.GE, "len of indices_shape", self.name)
+        validator.check_int(len(indices_shape), 1, validator.GE, "len of indices_shape", self.name)
         indices_dim0 = len(indices_shape[0])
         indices_num = len(indices_shape)
 
         validator.check_value_type("shape of data", data_shape, [tuple, list], self.name)
-        validator.check_int(len(data_shape), 1, Rel.GE, "len of data_shape", self.name)
+        validator.check_int(len(data_shape), 1, validator.GE, "len of data_shape", self.name)
         data_dim0 = len(data_shape[0])
         data_num = len(indices_shape)
 
-        validator.check("size of indices", indices_num, 'size of data', data_num, Rel.EQ, self.name)
+        validator.check("size of indices", indices_num, 'size of data', data_num, validator.EQ, self.name)
 
         # shape of `data` must start with shape of `indices`
         for i in range(0, indices_num):
             indices_dim = len(indices_shape[i])
             data_dim = len(data_shape[i])
-            validator.check(f"dim of indices[{i}]", indices_dim, f"dim of data[{i}]", data_dim, Rel.LE, self.name)
+            validator.check(f"dim of indices[{i}]", indices_dim, f"dim of data[{i}]", data_dim, validator.LE, self.name)
             if data_shape[i][:indices_dim] != data_shape[i][:indices_dim]:
                 raise ValueError(f"data[{i}].shape: {data_shape} does not start with indices[{i}].shape: {data_shape}")
 
@@ -1162,10 +1162,10 @@ class DynamicStitch(PrimitiveWithCheck):
             data_dim = len(data_shape[i])
             extra = data_dim - indices_dim
             validator.check(f"extra dim of data[{i}]", extra,
-                            f"extra dim of data[0]", base_extra, Rel.EQ, self.name)
+                            f"extra dim of data[0]", base_extra, validator.EQ, self.name)
             validator.check(f"data[0].shape[{indices_dim0}:]", data_shape[0][indices_dim0:],
                             f"data[{i}].shape[{len(indices_shape[i])}:]",
-                            data_shape[i][indices_dim:], Rel.EQ, self.name)
+                            data_shape[i][indices_dim:], validator.EQ, self.name)
 
         out_shape = [-1] + data_shape[0][indices_dim0:]
         return out_shape
@@ -1178,7 +1178,8 @@ class DynamicStitch(PrimitiveWithCheck):
             validator.check_tensor_dtype_valid(f'indices[{i}]', indices_type[i], mstype.int32, self.name)
             validator.check_tensor_dtype_valid(f'data[{i}]', data_type[i],
                                                mstype.number_type + (mstype.bool_,), self.name)
-            validator.check(f"type of data[{i}]", data_type[i], f"type of data[0]", data_type[0], Rel.EQ, self.name)
+            validator.check(f"type of data[{i}]", data_type[i], f"type of data[0]",
+                            data_type[0], validator.EQ, self.name)
         return data_type[0]
 
 
@@ -1622,7 +1623,7 @@ class ParallelResizeBilinear(PrimitiveWithInfer):
         """Initialize ParallelResizeBilinear."""
         validator.check_value_type("ori_image_size", ori_image_size, [list, tuple], self.name)
         validator.check_value_type("split_size", split_size, [list, tuple], self.name)
-        validator.check_int(len(split_size), 2, Rel.EQ, "len of split_size", self.name)
+        validator.check_int(len(split_size), 2, validator.EQ, "len of split_size", self.name)
         validator.check_value_type("src_start_w", src_start_w, [int], self.name)
         validator.check_value_type("dst_start_w", dst_start_w, [int], self.name)
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
@@ -1940,21 +1941,23 @@ class KMeansCentroids(PrimitiveWithInfer):
     def infer_shape(self, x_shape, y_shape, sum_square_y_shape, sum_square_x_shape):
         """infer shape of primitive"""
         expected_shape_size = 2
-        validator.check_int(len(x_shape), expected_shape_size, Rel.EQ, "dims of x", self.name)
-        validator.check_int(len(y_shape), expected_shape_size, Rel.EQ, "dims of y", self.name)
-        validator.check_int(len(sum_square_y_shape), expected_shape_size, Rel.EQ, "dims of sum_square_y", self.name)
-        validator.check_int(len(sum_square_x_shape), expected_shape_size, Rel.EQ, "dims of sum_square_x", self.name)
+        validator.check_int(len(x_shape), expected_shape_size, validator.EQ, "dims of x", self.name)
+        validator.check_int(len(y_shape), expected_shape_size, validator.EQ, "dims of y", self.name)
+        validator.check_int(len(sum_square_y_shape), expected_shape_size, validator.EQ,
+                            "dims of sum_square_y", self.name)
+        validator.check_int(len(sum_square_x_shape), expected_shape_size, validator.EQ,
+                            "dims of sum_square_x", self.name)
 
-        validator.check_int(x_shape[1], y_shape[1], Rel.EQ,
+        validator.check_int(x_shape[1], y_shape[1], validator.EQ,
                             "the second dim of x and the second dim of y", self.name)
-        validator.check_int(y_shape[0], sum_square_y_shape[1], Rel.EQ,
+        validator.check_int(y_shape[0], sum_square_y_shape[1], validator.EQ,
                             "the first dim of y and the second dim of sum_square_y", self.name)
-        validator.check_int(x_shape[0], sum_square_x_shape[0], Rel.EQ,
+        validator.check_int(x_shape[0], sum_square_x_shape[0], validator.EQ,
                             "the first dim of x and the first dim of sum_square_x", self.name)
-        validator.check_int(sum_square_y_shape[0], sum_square_x_shape[1], Rel.EQ,
+        validator.check_int(sum_square_y_shape[0], sum_square_x_shape[1], validator.EQ,
                             "the first dim of sum_square_y and the first dim of sum_square_x",
                             self.name)
-        validator.check_int(sum_square_y_shape[0], 1, Rel.EQ,
+        validator.check_int(sum_square_y_shape[0], 1, validator.EQ,
                             "the first dim of sum_square_y", self.name)
 
         k = y_shape[0]
@@ -2025,7 +2028,7 @@ class ClipByNorm(PrimitiveWithInfer):
         x_dim = len(x_shape)
         axis = self.axis if isinstance(self.axis, Iterable) else (self.axis,)
         for _, value in enumerate(axis):
-            validator.check_int_range(value, -x_dim, x_dim, Rel.INC_LEFT, 'axis', self.name)
+            validator.check_int_range(value, -x_dim, x_dim, validator.INC_LEFT, 'axis', self.name)
         return x_shape
 
     def infer_dtype(self, x_type, clip_norm_type):
@@ -2236,15 +2239,15 @@ class SameTypeShape(PrimitiveWithInfer):
         """run in PyNative mode"""
         validator.check_value_type('x', x, Tensor, self.name)
         validator.check_value_type('y', y, Tensor, self.name)
-        validator.check('x dtype', x.dtype, 'y dtype', y.dtype, Rel.EQ, self.name, TypeError)
-        validator.check('x shape', x.shape, 'y shape', y.shape, Rel.EQ, self.name)
+        validator.check('x dtype', x.dtype, 'y dtype', y.dtype, validator.EQ, self.name, TypeError)
+        validator.check('x shape', x.shape, 'y shape', y.shape, validator.EQ, self.name)
         return x
 
     def __infer__(self, x, y):
         validator.check_subclass('x', x['dtype'], mstype.tensor, self.name)
         validator.check_subclass('y', y['dtype'], mstype.tensor, self.name)
-        validator.check('x dtype', x['dtype'], 'y dtype', y['dtype'], Rel.EQ, self.name, TypeError)
-        validator.check('x shape', x['shape'], 'y shape', y['shape'], Rel.EQ, self.name)
+        validator.check('x dtype', x['dtype'], 'y dtype', y['dtype'], validator.EQ, self.name, TypeError)
+        validator.check('x shape', x['shape'], 'y shape', y['shape'], validator.EQ, self.name)
         return x
 
 

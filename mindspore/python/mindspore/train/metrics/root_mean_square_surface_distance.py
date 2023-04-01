@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from scipy.ndimage import morphology
 import numpy as np
 
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.train.metrics.metric import Metric, rearrange_inputs
 
 

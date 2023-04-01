@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.common import Tensor, Parameter, dtype as mstype
 from mindspore.common.api import jit
 from mindspore.nn.optim.optimizer import _grad_scale, Optimizer

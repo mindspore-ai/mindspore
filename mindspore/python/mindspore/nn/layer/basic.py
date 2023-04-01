@@ -28,10 +28,10 @@ from mindspore.common.initializer import initializer
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.primitive import constexpr, Primitive, _primexpr
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
-from mindspore._checkparam import Rel, Validator
+from mindspore import _checkparam as Validator
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
@@ -450,6 +450,14 @@ class Flatten(Cell):
         return F.flatten(x, start_dim=self.start_dim, end_dim=self.end_dim)
 
 
+@_primexpr
+def check_dense_input_shape(x, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if len(x) < 2:
+        raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
+    return None
+
+
 class Identity(Cell):
     """
     Returns a Tensor with the same shape and contents as input.
@@ -587,6 +595,7 @@ class Dense(Cell):
 
     def construct(self, x):
         x_shape = self.shape_op(x)
+        check_dense_input_shape(x_shape, self.cls_name)
         if len(x_shape) != 2:
             x = self.reshape(x, (-1, x_shape[-1]))
         x = self.matmul(x, self.weight)
@@ -919,7 +928,11 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
         if not isinstance(size, (tuple, list)):
             raise ValueError(
                 f"{msg_prefix} 'size' must be tuple or list or None, but got {type(size).__name__}.")
+        Validator.check_int(len(size), 2, Validator.EQ, "size", "bilinear")
+        Validator.check_int(size[0], 1, Validator.GE, "size[0]", "bilinear")
+        Validator.check_int(size[1], 1, Validator.GE, "size[1]", "bilinear")
         return size
+    Validator.check_int(scale, 1, Validator.GE, "scale factor", "bilinear")
     ret = (scale * shape[2], scale * shape[3])
     return ret
 
@@ -1033,6 +1046,7 @@ class Unfold(Cell):
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[1]}, "
                                  f"{arg_name}_col is {arg_val[2]}")
+            return None
 
         _check_tuple_or_list("ksize", ksizes, self.cls_name)
         _check_tuple_or_list("stride", strides, self.cls_name)
@@ -1048,7 +1062,10 @@ class Unfold(Cell):
         return result
 
 
+@_primexpr
 def tril(x_shape, x_dtype, k):
+    Validator.check_int(len(x_shape), 1, Validator.GE, "x rank", "tril")
+    Validator.check_is_int(k, "k value", "tril")
     value = F.cast(P.Tril(diagonal=k)(F.ones(x_shape, x_dtype)), x_dtype)
     return value
 
@@ -1074,7 +1091,10 @@ class Tril(Cell):
         return self.cast(result, self.dtype(x))
 
 
+@_primexpr
 def triu(x_shape, x_dtype, k):
+    Validator.check_int(len(x_shape), 1, Validator.GE, "x rank", "triu")
+    Validator.check_is_int(k, "k value", "triu")
     value = F.cast(P.Triu(k)(F.ones(x_shape, x_dtype)), x_dtype)
     return value
 
@@ -1100,8 +1120,10 @@ class Triu(Cell):
         return self.cast(result, self.dtype(x))
 
 
+@_primexpr
 def _get_matrix_diag_assist(x_shape, x_dtype):
     """Get matrix diag assist"""
+    Validator.check_int(len(x_shape), 1, Validator.GE, "x rank", "_get_matrix_diag_assist")
     base_eye = F.reshape(
         F.eye(x_shape[-1], x_shape[-1], x_dtype), (x_shape[-1] * x_shape[-1],))
     if len(x_shape) == 1:
@@ -1113,8 +1135,10 @@ def _get_matrix_diag_assist(x_shape, x_dtype):
     return value
 
 
+@constexpr
 def _get_matrix_diag_part_assist(x_shape, x_dtype):
     """Get matrix diag part assist"""
+    Validator.check_int(len(x_shape), 2, Validator.GE, "x rank", "_get_matrix_diag_part_assist")
     base_eye = F.reshape(
         F.eye(x_shape[-2], x_shape[-1], x_dtype), (x_shape[-2] * x_shape[-1],))
     if len(x_shape) <= 2:
@@ -1228,7 +1252,7 @@ class MatrixSetDiag(Cell):
 
 @constexpr
 def _check_input_dim(axis, dim, cls_name):
-    Validator.check_int_range(axis, -dim, dim, Rel.INC_LEFT, 'axis', cls_name)
+    Validator.check_int_range(axis, -dim, dim, Validator.INC_LEFT, 'axis', cls_name)
 
 
 class Roll(Cell):
@@ -1256,8 +1280,8 @@ class Roll(Cell):
         if not isinstance(self.shift, (list, tuple)):
             self.shift = [self.shift]
         if context.get_context("device_target") == "GPU":
-            Validator.check_int(len(self.shift), 1, Rel.GE, "shift", "Roll")
-            Validator.check_int(len(self.axis), 1, Rel.GE, "axis", "Roll")
+            Validator.check_int(len(self.shift), 1, Validator.GE, "shift", "Roll")
+            Validator.check_int(len(self.axis), 1, Validator.GE, "axis", "Roll")
             for s_axis in self.axis:
                 Validator.check_is_int(s_axis, "axis", "Roll")
             for s_shift in self.shift:

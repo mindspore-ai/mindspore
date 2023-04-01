@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from mindspore import context, Tensor, Parameter, ParameterTuple, nn
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 

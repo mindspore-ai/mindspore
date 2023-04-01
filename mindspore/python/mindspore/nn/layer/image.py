@@ -26,7 +26,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
-from mindspore._checkparam import Rel, Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.container import CellList
 from mindspore.nn.layer.pooling import AvgPool2d
@@ -78,6 +78,7 @@ class ImageGradients(Cell):
         super(ImageGradients, self).__init__()
 
     def construct(self, images):
+        _check_input_4d(F.shape(images), "images", self.cls_name)
         batch_size, depth, height, width = P.Shape()(images)
         if height == 1:
             dy = P.Fill()(P.DType()(images), (batch_size, depth, 1, width), 0)
@@ -116,6 +117,21 @@ def _get_dtype_max(dtype):
     else:
         dtype_max = 1.0
     return dtype_max
+
+
+@_primexpr
+def _check_input_4d(input_shape, param_name, func_name):
+    if len(input_shape) != 4:
+        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 4d, "
+                         f"but got {len(input_shape)}.")
+    return None
+
+
+@_primexpr
+def _check_input_filter_size(input_shape, param_name, filter_size, func_name):
+    _check_input_4d(input_shape, param_name, func_name)
+    validator.check(param_name + " shape[2]", input_shape[2], "filter_size", filter_size, validator.GE, func_name)
+    validator.check(param_name + " shape[3]", input_shape[3], "filter_size", filter_size, validator.GE, func_name)
 
 
 @constexpr
@@ -250,9 +266,9 @@ class SSIM(Cell):
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
         super(SSIM, self).__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
-        validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
+        validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
-        self.filter_size = validator.check_int(filter_size, 1, Rel.GE, 'filter_size', self.cls_name)
+        self.filter_size = validator.check_int(filter_size, 1, validator.GE, 'filter_size', self.cls_name)
         self.filter_sigma = validator.check_positive_float(filter_sigma, 'filter_sigma', self.cls_name)
         self.k1 = validator.check_value_type('k1', k1, [float], self.cls_name)
         self.k2 = validator.check_value_type('k2', k2, [float], self.cls_name)
@@ -264,6 +280,7 @@ class SSIM(Cell):
 
     def construct(self, img1, img2):
         _check_input_dtype(F.dtype(img1), "img1", [mstype.float32, mstype.float16], self.cls_name)
+        _check_input_filter_size(F.shape(img1), "img1", self.filter_size, self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
@@ -345,10 +362,10 @@ class MSSSIM(Cell):
                  filter_sigma=1.5, k1=0.01, k2=0.03):
         super(MSSSIM, self).__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
-        validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
+        validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
         validator.check_value_type('power_factors', power_factors, [tuple, list], self.cls_name)
-        self.filter_size = validator.check_int(filter_size, 1, Rel.GE, 'filter_size', self.cls_name)
+        self.filter_size = validator.check_int(filter_size, 1, validator.GE, 'filter_size', self.cls_name)
         self.filter_sigma = validator.check_positive_float(filter_sigma, 'filter_sigma', self.cls_name)
         self.k1 = validator.check_value_type('k1', k1, [float], self.cls_name)
         self.k2 = validator.check_value_type('k2', k2, [float], self.cls_name)
@@ -369,6 +386,8 @@ class MSSSIM(Cell):
         self.concat = P.Concat(axis=1)
 
     def construct(self, img1, img2):
+        _check_input_4d(F.shape(img1), "img1", self.cls_name)
+        _check_input_4d(F.shape(img2), "img2", self.cls_name)
         valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.uint8]
         _check_input_dtype(F.dtype(img1), 'img1', valid_type, self.cls_name)
         inner.SameTypeShape()(img1, img2)
@@ -442,10 +461,12 @@ class PSNR(Cell):
     def __init__(self, max_val=1.0):
         super(PSNR, self).__init__()
         validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
-        validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
+        validator.check_number('max_val', max_val, 0.0, validator.GT, self.cls_name)
         self.max_val = max_val
 
     def construct(self, img1, img2):
+        _check_input_4d(F.shape(img1), "img1", self.cls_name)
+        _check_input_4d(F.shape(img2), "img2", self.cls_name)
         inner.SameTypeShape()(img1, img2)
         dtype_max_val = _get_dtype_max(F.dtype(img1))
         max_val = F.scalar_cast(self.max_val, F.dtype(img1))
@@ -457,6 +478,16 @@ class PSNR(Cell):
         psnr = 10 * P.Log()(F.square(max_val) / mse) / F.scalar_log(10.0)
 
         return psnr
+
+
+@_primexpr
+def _check_rank(rank, input_shape, param_name, func_name):
+    """raise error if input is not 3d or 4d"""
+    def _check():
+        if not (rank == 3 or rank == 4):
+            raise ValueError(f"{func_name} {param_name} must be 3d or 4d, but got shape {input_shape}")
+        return None
+    _check()
 
 
 @_primexpr
@@ -514,13 +545,14 @@ class CentralCrop(Cell):
     def __init__(self, central_fraction):
         super(CentralCrop, self).__init__()
         validator.check_value_type("central_fraction", central_fraction, [float], self.cls_name)
-        validator.check_float_range(central_fraction, 0.0, 1.0, Rel.INC_RIGHT, 'central_fraction', self.cls_name)
+        validator.check_float_range(central_fraction, 0.0, 1.0, validator.INC_RIGHT, 'central_fraction', self.cls_name)
         self.central_fraction = central_fraction
         self.slice = P.Slice()
 
     def construct(self, image):
         image_shape = F.shape(image)
         rank = len(image_shape)
+        _check_rank(rank, image_shape, "image", self.cls_name)
         if self.central_fraction == 1.0:
             return image
 

@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 import time
 
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.train.callback._callback import Callback
 
 

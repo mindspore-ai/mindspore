@@ -17,8 +17,7 @@
 
 from __future__ import absolute_import
 from mindspore import context
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.ops.primitive import prim_attr_register, Primitive
 from mindspore.common import dtype as mstype
 
@@ -843,12 +842,12 @@ class ResizeBicubic(Primitive):
                                             mstype.float32, mstype.uint8, mstype.uint16, mstype.double], self.name)
         validator.check_tensor_dtype_valid("size", size_dtype, [mstype.int32], self.name)
         # check input shape rank
-        validator.check("images rank", len(images_shape), "expected", 4, Rel.EQ, self.name)
-        validator.check("size rank", len(size_shape), "expected", 1, Rel.EQ, self.name)
-        validator.check("size dim_0", size_shape[0], "expected", 2, Rel.EQ, self.name)
+        validator.check("images rank", len(images_shape), "expected", 4, validator.EQ, self.name)
+        validator.check("size rank", len(size_shape), "expected", 1, validator.EQ, self.name)
+        validator.check("size dim_0", size_shape[0], "expected", 2, validator.EQ, self.name)
         # check size_value
-        validator.check("size[0]", size_value[0], "minimum", 0, Rel.GT, self.name)
-        validator.check("size[1]", size_value[1], "minimum", 0, Rel.GT, self.name)
+        validator.check("size[0]", size_value[0], "minimum", 0, validator.GT, self.name)
+        validator.check("size[1]", size_value[1], "minimum", 0, validator.GT, self.name)
 
         batch_size = images_shape[0]
         channel = images_shape[1]
@@ -1004,13 +1003,14 @@ class CropAndResizeGradImage(Primitive):
         validator.check_value_type("method", method, [str], self.name)
         is_ascend_cpu = context.get_context('device_target') in ("Ascend", "CPU")
         if is_ascend_cpu:
-            validator.check("method", method, "expected", ("bilinear", "nearest"), Rel.IN, self.name)
+            validator.check("method", method, "expected", ("bilinear", "nearest"), validator.IN, self.name)
         else:
-            validator.check("method", method, "expected", ("bilinear", "nearest", "bilinear_v2"), Rel.IN, self.name)
+            validator.check("method", method, "expected", ("bilinear", "nearest", "bilinear_v2"),
+                            validator.IN, self.name)
         self.method = method
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         if T in mstype.number_type:
-            validator.check("T", T, "expected", valid_values, Rel.IN, self.name)
+            validator.check("T", T, "expected", valid_values, validator.IN, self.name)
         else:
             validator.check_type_name("T", T, valid_values, self.name)
         self.add_prim_attr("max_Byte", int(2e9))  # Maximum bytes of image gradient

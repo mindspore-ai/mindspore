@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 from mindspore.common import mutable
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
-from ._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from .common import dtype as mstype
 from . import context
 from . import ops

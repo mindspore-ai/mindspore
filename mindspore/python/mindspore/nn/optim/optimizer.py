@@ -29,7 +29,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common import Tensor
 from mindspore.common.sparse_tensor import RowTensorInner
 import mindspore.common.dtype as mstype
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_parallel_mode
 from mindspore.parallel._ps_context import _is_ps_mode

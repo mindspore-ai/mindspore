@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype

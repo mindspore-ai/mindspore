@@ -34,8 +34,7 @@ from mindspore import Tensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.nn import Optimizer
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
@@ -120,7 +119,7 @@ class MySparseGatherV2(PrimitiveWithInfer):
         axis_v = axis['value']
         params_shp = params['shape']
         rank = len(params_shp)
-        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
+        validator.check_int_range(axis_v, -rank, rank, validator.INC_LEFT, "axis", self.name)
         if axis_v < 0:
             axis_v += rank
         out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
@@ -211,8 +210,8 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
     validator.check_value_type("beta2", beta2, [float], prim_name)
     validator.check_value_type("eps", eps, [float], prim_name)
     validator.check_value_type("weight_dacay", weight_decay, [float], prim_name)
-    validator.check_float_range(beta1, 0.0, 1.0, Rel.INC_NEITHER, "beta1", prim_name)
-    validator.check_float_range(beta2, 0.0, 1.0, Rel.INC_NEITHER, "beta2", prim_name)
+    validator.check_float_range(beta1, 0.0, 1.0, validator.INC_NEITHER, "beta1", prim_name)
+    validator.check_float_range(beta2, 0.0, 1.0, validator.INC_NEITHER, "beta2", prim_name)
     validator.check_positive_float(eps, "eps", prim_name)
     validator.check_non_negative_float(weight_decay, "weight_decay", prim_name)
 

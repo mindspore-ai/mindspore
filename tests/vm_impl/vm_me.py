@@ -15,7 +15,7 @@
 """VM implementations based on numpy."""
 
 import numpy as np
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 
 
 def avg_pooling(x, pool_h, pool_w, stride):

@@ -34,7 +34,7 @@ from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.ops.operations.math_ops import (
     Bernoulli,
     BesselI0,
@@ -72,7 +72,6 @@ from mindspore.ops.operations.math_ops import (
     Angle,
 )
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator as validator
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore._c_expression import Tensor as Tensor_
 import mindspore.ops.function as F
@@ -5529,6 +5528,7 @@ def addmv(x, mat, vec, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtypeop(mat) != dtypeop(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
+    _check_input_1d(x.shape, "x", "Addmv")
     _check_input_1d(vec.shape, "vec", "Addmv")
     _check_input_2d(mat.shape, "mat", "Addmv")
     _check_input_dtype("x", input_dtype,
@@ -5622,6 +5622,7 @@ def addr(x, vec1, vec2, beta=1, alpha=1):
         raise TypeError("For Addr, the vec1 and vec2 should be the same dtype.")
     _check_input_1d(vec1.shape, "vec1", "Addr")
     _check_input_1d(vec2.shape, "vec2", "Addr")
+    _check_input_2d(x.shape, "x", "Addr")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addr")
@@ -5957,20 +5958,6 @@ def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-@constexpr
-def _check_input_1d(input_shape, param_name, func_name):
-    if len(input_shape) != 1:
-        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
-    return True
-
-
-@constexpr
-def _check_input_2d(input_shape, param_name, func_name):
-    if len(input_shape) != 2:
-        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
-    return True
-
-
 def deg2rad(x):
     """
     Converts angles in degrees to angles in radians element-wise.
@@ -6088,7 +6075,14 @@ def frac(x):
 @_primexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
+    def _check(axis, len_axis):
+        if not isinstance(axis, int):
+            raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
+        if axis < -len_axis or axis > len_axis:
+            raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
+        return None
     len_axis = len(x_shape)
+    _check(axis, len_axis)
     prem = [i for i in range(len_axis)]
     if axis < 0:
         axis = axis + len_axis
@@ -7604,6 +7598,7 @@ def _check_dtype(d1, d2):
 def _check_last_dim_shape_eq(a, b):
     if a.shape[-1] != b.shape[-1]:
         raise ValueError('shapes are not aligned')
+    return None
 
 
 def dot(a, b):
@@ -7972,7 +7967,7 @@ def _check_positive_float(arg_value, arg_name, cls_name):
 @constexpr
 def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     validator.check_int_range(arg_value, lower_limit,
-                              upper_limit, Rel.INC_LEFT, arg_name, prim_name)
+                              upper_limit, validator.INC_LEFT, arg_name, prim_name)
 
 
 def _check_logits_tensor(logits):
@@ -8247,9 +8242,29 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     return tuple(shape_rem)
 
 
+def _check_value(items, max_size, msg_prefix, shape1, shape2):
+    for item in items:
+        if item != 1 and item != max_size:
+            raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
+                             f"shape2 {shape2}.")
+    return None
+
+
 @_primexpr
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    def _check(shape1, shape2):
+        ndim1, ndim2 = len(shape1), len(shape2)
+        if ndim1 < 1 or ndim2 < 1:
+            raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
+                             f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
+        if ndim2 >= 2 and shape1[-1] != shape2[-2]:
+            raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
+                             f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
+                             f"shape2[-2]: {shape2[-2]}.")
+        return None
+    _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
     r_shape2 = shape2[:-2]
@@ -8257,8 +8272,29 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
     for i in range(max_len):
         items = [it[i - max_len + len(it)] if i - max_len + len(it) >= 0 else 1 for it in (r_shape1, r_shape2)]
         max_size = max(items)
+        _check_value(items, max_size, msg_prefix, shape1, shape2)
         shape_out.append(max_size)
     return tuple(shape_out)
+
+
+@_primexpr
+def _check_need_broadcast(shape1, shape2):
+    """Returns True if broadcast is necessary for batchmatmul."""
+    return shape1[:-2] != shape2[:-2]
+
+
+@_primexpr
+def _check_input_1d(input_shape, param_name, func_name):
+    if len(input_shape) != 1:
+        raise ValueError(f"{func_name} {param_name} should be 1d, but got shape {input_shape}")
+    return None
+
+
+@_primexpr
+def _check_input_2d(input_shape, param_name, func_name):
+    if len(input_shape) != 2:
+        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+    return None
 
 
 @_primexpr
@@ -9303,10 +9339,13 @@ def _tuple_setitem(tup, idx, value):
 
 @_primexpr
 def _check_dim_in_range(dim, ndim):
-    if not isinstance(dim, int):
-        raise TypeError(f'axes should be integers, not {type(dim)}')
-    if -ndim > dim or dim >= ndim:
-        raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
+    def _check(dim, ndim):
+        if not isinstance(dim, int):
+            raise TypeError(f'axes should be integers, not {type(dim)}')
+        if -ndim > dim or dim >= ndim:
+            raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
+        return None
+    _check(dim, ndim)
     return dim % ndim
 
 

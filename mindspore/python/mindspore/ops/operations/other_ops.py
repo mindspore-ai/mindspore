@@ -17,7 +17,7 @@
 import functools
 from mindspore import log as logger
 from mindspore.ops import signature as sig
-from mindspore._checkparam import Validator as validator, Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
@@ -620,10 +620,10 @@ class ConfusionMatrix(PrimitiveWithInfer):
         validator.check_value_type("dtype", dtype, [str], self.name)
 
     def infer_shape(self, labels, predictions, weights=None):
-        validator.check('labels dimension', len(labels), '', 1, Rel.EQ, self.name)
-        validator.check('labels shape', labels, 'predictions shape', predictions, Rel.EQ, self.name)
+        validator.check('labels dimension', len(labels), '', 1, validator.EQ, self.name)
+        validator.check('labels shape', labels, 'predictions shape', predictions, validator.EQ, self.name)
         if weights is not None:
-            validator.check('labels shape', labels, 'weights shape', weights, Rel.EQ, self.name)
+            validator.check('labels shape', labels, 'weights shape', weights, validator.EQ, self.name)
         ret = (self.num_classes, self.num_classes)
         return ret
 
@@ -808,10 +808,11 @@ class PyFunc(PrimitiveWithInfer):
         self.add_prim_attr('out_shapes', out_shapes)
         validator.check_value_type("in_types", in_types, [list, tuple], self.name)
         validator.check_value_type("in_shapes", in_shapes, [list, tuple], self.name)
-        validator.check("in_types length", len(in_types), "in_shapes length", len(in_shapes), Rel.EQ, self.name)
+        validator.check("in_types length", len(in_types), "in_shapes length", len(in_shapes), validator.EQ, self.name)
         validator.check_value_type("out_types", out_types, [list, tuple], self.name)
         validator.check_value_type("out_shapes", out_shapes, [list, tuple], self.name)
-        validator.check("out_types length", len(out_types), "out_shapes length", len(out_shapes), Rel.EQ, self.name)
+        validator.check("out_types length", len(out_types), "out_shapes length",
+                        len(out_shapes), validator.EQ, self.name)
         self.add_prim_attr("side_effect_io", stateful)
         self.add_prim_attr("primitive_target", "CPU")
         fake_output = False

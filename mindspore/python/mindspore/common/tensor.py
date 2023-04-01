@@ -31,8 +31,8 @@ from mindspore.common import dtype as mstype
 from mindspore.common._utils import get_slice_num
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._checkparam import Rel, check_is_number, is_stub_tensor
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
+from mindspore._checkparam import check_is_number, is_stub_tensor
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -1731,7 +1731,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         validator.check_is_int(dim, 'dim')
-        validator.check_int_range(dim, -self.ndim - 1, self.ndim + 1, Rel.INC_LEFT, 'dim')
+        validator.check_int_range(dim, -self.ndim - 1, self.ndim + 1, validator.INC_LEFT, 'dim')
         return tensor_operator_registry.get('unsqueeze')(self, dim)
 
     def expand_dims(self, axis):
@@ -1740,7 +1740,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         validator.check_is_int(axis, 'axis')
-        validator.check_int_range(axis, -self.ndim - 1, self.ndim + 1, Rel.INC_LEFT, 'axis')
+        validator.check_int_range(axis, -self.ndim - 1, self.ndim + 1, validator.INC_LEFT, 'axis')
         return tensor_operator_registry.get('expand_dims')(self, axis)
 
     def astype(self, dtype, copy=True):
@@ -2810,7 +2810,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         i = tensor_operator_registry.get('fill')(mstype.int32, shape, 0)
         j = tensor_operator_registry.get('fill')(mstype.int32, shape, a.size)
 
-        sort_range = tuple(range(validator.get_log2_size(tensor_operator_registry.get('shape_mul')(a.shape) + 1)))
+        sort_range = tuple(range(math.ceil(math.log2(tensor_operator_registry.get('shape_mul')(a.shape) + 1))))
         for _ in sort_range:
             mid = (i - -j) // 2
             mask = less_op(v, tensor_operator_registry.get('gather_nd')(a, mid.reshape(mid.shape + (1,))))

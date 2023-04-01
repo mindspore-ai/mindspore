@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 
 from mindspore.common._decorator import deprecated
-from mindspore._checkparam import Validator, Rel
+from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 from mindspore.ops._utils import get_broadcast_shape
@@ -947,16 +947,16 @@ class UniformCandidateSampler(Primitive):
         Validator.check_value_type(
             "remove_accidental_hits", remove_accidental_hits, [bool], self.name)
         Validator.check("value of num_true", num_true,
-                        '', 0, Rel.GT, self.name)
+                        '', 0, Validator.GT, self.name)
         Validator.check("value of num_sampled", num_sampled,
-                        '', 0, Rel.GT, self.name)
+                        '', 0, Validator.GT, self.name)
         Validator.check("value of range_max", range_max,
-                        '', 0, Rel.GT, self.name)
+                        '', 0, Validator.GT, self.name)
         self.num_true = num_true
         if unique:
             Validator.check('value of num_sampled', num_sampled,
-                            "value of range_max", range_max, Rel.LE, self.name)
-        Validator.check("value of seed", seed, '', 0, Rel.GE, self.name)
+                            "value of range_max", range_max, Validator.LE, self.name)
+        Validator.check("value of seed", seed, '', 0, Validator.GE, self.name)
         self.num_sampled = num_sampled
         self.add_prim_attr("side_effect_hidden", True)
 
@@ -997,16 +997,16 @@ class LogUniformCandidateSampler(Primitive):
         Validator.check_value_type("range_max", range_max, [int], self.name)
         Validator.check_value_type("seed", seed, [int], self.name)
         self.num_true = Validator.check_number(
-            "num_true", num_true, 1, Rel.GE, self.name)
+            "num_true", num_true, 1, Validator.GE, self.name)
         self.num_sampled = Validator.check_number(
-            "num_sampled", num_sampled, 1, Rel.GE, self.name)
-        Validator.check_number("range_max", range_max, 1, Rel.GE, self.name)
+            "num_sampled", num_sampled, 1, Validator.GE, self.name)
+        Validator.check_number("range_max", range_max, 1, Validator.GE, self.name)
         if unique:
             Validator.check("range_max", range_max, "num_sampled",
-                            num_sampled, Rel.GE, self.name)
+                            num_sampled, Validator.GE, self.name)
         self.range_max = range_max
         self.unique = unique
-        self.seed = Validator.check_number("seed", seed, 0, Rel.GE, self.name)
+        self.seed = Validator.check_number("seed", seed, 0, Validator.GE, self.name)
         self.add_prim_attr("side_effect_hidden", True)
 
 
@@ -1088,7 +1088,7 @@ class Uniform(Primitive):
         self.add_prim_attr("to", maxval)
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('offset', offset, [int], self.name)
-        Validator.check('minval', minval, 'maxval', maxval, Rel.LE, self.name)
+        Validator.check('minval', minval, 'maxval', maxval, Validator.LE, self.name)
         Validator.check_non_negative_float(minval, "minval", self.name)
         Validator.check_non_negative_float(maxval, "maxval", self.name)
         self.add_prim_attr("side_effect_hidden", True)

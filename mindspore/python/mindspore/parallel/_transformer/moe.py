@@ -25,7 +25,7 @@ import numpy as np
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import _primexpr

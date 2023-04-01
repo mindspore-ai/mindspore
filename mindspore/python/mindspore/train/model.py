@@ -29,7 +29,8 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
 from mindspore.common.tensor import Tensor
 from mindspore.train.metrics import get_metrics, get_metric_fn
-from mindspore._checkparam import check_input_data, check_output_data, Validator
+from mindspore._checkparam import check_input_data, check_output_data
+from mindspore import _checkparam as Validator
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
 from mindspore.train.callback import __all__ as internal_cb_names
 from mindspore import context

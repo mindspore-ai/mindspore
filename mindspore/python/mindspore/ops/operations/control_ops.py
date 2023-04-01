@@ -17,7 +17,7 @@
 
 from __future__ import absolute_import
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register
-from mindspore._checkparam import Validator as validator, Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 
 
@@ -76,7 +76,7 @@ class GeSwitch(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, data, pred):
-        validator.check_int_range(len(pred), 0, 1, Rel.INC_BOTH, "pred rank", self.name)
+        validator.check_int_range(len(pred), 0, 1, validator.INC_BOTH, "pred rank", self.name)
         return data, data
 
     def infer_dtype(self, data_type, pred_type):

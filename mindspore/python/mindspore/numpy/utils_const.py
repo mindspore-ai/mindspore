@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import typing
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 
 from mindspore.numpy.dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
 
@@ -38,6 +38,16 @@ _check_axis_type = constexpr(validator.check_axis_type)
 def _check_shape(shape):
     """check the shape param to match the numpy style"""
     # convert tensor to int/list, use followed if statements to do further conversions
+    def _check(shape):
+        for s in shape:
+            if not isinstance(s, int):
+                raise TypeError("each entry in shape should be int.")
+            if s < 0:
+                raise ValueError("each entry in shape should no less than 0.")
+        return None
+
+    if not isinstance(shape, (int, tuple, list, Tensor, typing.Tuple, typing.List)):
+        raise TypeError(f"only int, tuple, list and tensor are allowed for shape, but got {type(shape)}")
     if isinstance(shape, Tensor):
         shape = shape.asnumpy().tolist()
         # this may return an int, don't change the next if to elif
@@ -45,6 +55,7 @@ def _check_shape(shape):
         shape = (shape,)
     elif isinstance(shape, (list, typing.List)):
         shape = tuple(shape)
+    _check(shape)
     return shape
 
 
@@ -82,6 +93,12 @@ def _is_shape_empty(shp):
 @_primexpr
 def _check_start_normalize(start, ndim):
     """check and normalize start argument for rollaxis."""
+    def _check():
+        if start < -ndim or start > ndim:
+            raise ValueError(f"For rollaxis, start {start} is out of bounds."
+                             f"Ranging from {-ndim} to {ndim} is allowed.")
+        return None
+    _check()
     if start < 0:
         start = start + ndim
     return start
@@ -103,6 +120,9 @@ def _check_axes_range(axes, ndim):
         TypeError: If the axes are not integer, tuple(int) or list(int).
         ValueError: If duplicate axes exists or some axis is out of bounds.
     """
+    _check_axis_type(axes, True, True, True)
+    if isinstance(axes, (list, tuple)):
+        _check_element_int(axes)
     axes = _canonicalize_axis(axes, ndim)
     return axes
 
@@ -118,12 +138,18 @@ def _infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
+    def _check():
+        if any(not (item == 1 or item == max_size) for item in items):
+            raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+        return None
+
     shape_out = list()
     max_len = max([len(it) for it in shapes])
     for i in range(max_len):
         items = [it[i-max_len+len(it)] if i-max_len +
                  len(it) >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else max(items)
+        _check()
         shape_out.append(max_size)
     return tuple(shape_out)
 
@@ -138,7 +164,7 @@ def _can_broadcast(*shapes):
         items = [it[i-max_len+len(it)] if i-max_len +
                  len(it) >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else max(items)
-        if any(item not in (1, max_size) for item in items):
+        if any(not (item == 1 or item == max_size) for item in items):
             return False
     return True
 
@@ -146,6 +172,13 @@ def _can_broadcast(*shapes):
 @_primexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
+    def _check():
+        if not isinstance(axis, int):
+            raise TypeError(f'axes should be integers, not {type(axis)}')
+        if not -ndim <= axis < ndim:
+            raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
+        return None
+    _check()
     return axis - axis // ndim * ndim
 
 
@@ -155,13 +188,27 @@ def _check_axis_valid(axes, ndim):
     Checks axes are valid given ndim, and returns axes that can be passed
     to the built-in operator (non-negative, int or tuple)
     """
+    def _check(axes):
+        if any(axes.count(el) > 1 for el in axes):
+            raise ValueError('duplicate value in "axis"')
+        return None
+
     if axes is None:
         axes = F.make_range(ndim)
         return axes
     if isinstance(axes, (tuple, list)):
         axes = tuple(map(lambda x: _check_axis_in_range(x, ndim), axes))
+        _check(axes)
         return axes
     return (_check_axis_in_range(axes, ndim),)
+
+
+@_primexpr
+def _check_shape_aligned(shape1, shape2):
+    """Checks shape1 and shape2 are valid shapes to perform inner product"""
+    if shape1[-1] != shape2[-1]:
+        raise ValueError(f'shapes {shape1} {shape2} not aligned: {shape1[-1]} (dim 0) != {shape2[-1]} (dim 0)')
+    return None
 
 
 @_primexpr
@@ -308,6 +355,11 @@ def _canonicalize_axis(axis, ndim):
     Return:
         Axis (Union[int, tuple(int)]). If input is integer, return integer, else tuple.
     """
+    def _check():
+        if not all(axis.count(el) <= 1 for el in axis):
+            raise ValueError(f"duplicate axes in {axis}.")
+        return None
+
     if isinstance(axis, int):
         axis = [axis]
     for ax in axis:
@@ -318,14 +370,14 @@ def _canonicalize_axis(axis, ndim):
 
     def _sort_axis(ax):
         def merge(left, right):
-            result = []
+            result = ()
             i = j = 0
             while i < len(left) and j < len(right):
                 if left[i] <= right[j]:
-                    result.append(left[i])
+                    result += (left[i],)
                     i += 1
                 else:
-                    result.append(right[j])
+                    result += (right[j],)
                     j += 1
 
             return result + left[i:] + right[j:]
@@ -340,6 +392,7 @@ def _canonicalize_axis(axis, ndim):
         return merge(left, right)
 
     axis = tuple([canonicalizer(axis) for axis in axis])
+    _check()
     return tuple(_sort_axis(axis)) if len(axis) > 1 else axis[0]
 
 
@@ -349,18 +402,22 @@ def _broadcast_tuples(tup1, tup2):
     Broadcast two 1D tuples to the same length, if inputs are ints, convert to
     tuples first.
     """
+    def _check():
+        if not isinstance(tup1, (tuple, list)) or not isinstance(tup2, (tuple, list)):
+            raise TypeError("input shift and axis must be tuple or list or int.")
+        if len(tup1) == len(tup2) or len(tup1) == 1 or len(tup2) == 1:
+            return None
+        raise ValueError("shape mismatch: objects cannot be broadcast to a single shape")
+
     tup1 = (tup1,) if isinstance(tup1, int) else tup1
     tup2 = (tup2,) if isinstance(tup2, int) else tup2
-    if not isinstance(tup1, (tuple, list)) or not isinstance(tup2, (tuple, list)):
-        raise TypeError("input shift and axis must be tuple or list or int.")
+    _check()
     if len(tup1) == len(tup2):
         return tup1, tup2
     if len(tup1) == 1:
         tup1 *= len(tup2)
-    elif len(tup2) == 1:
+    else: # case: len(tup2) == 1
         tup2 *= len(tup1)
-    else:
-        raise ValueError("shape mismatch: objects cannot be broadcast to a single shape")
     return tup1, tup2
 
 

@@ -26,10 +26,14 @@ from mindspore.ops import operations as P
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.nn import learning_rate_schedule as lr_schedules
-from tests.models.official.nlp.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph
+from tests.st.model_zoo_tests import utils
 
+head_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../"
+utils.replace_check_param(head_path)
+
+from tests.models.official.nlp.bert.src import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 
 _current_dir = os.path.dirname(os.path.realpath(__file__)) + "/../python/test_data"
 context.set_context(mode=context.GRAPH_MODE)

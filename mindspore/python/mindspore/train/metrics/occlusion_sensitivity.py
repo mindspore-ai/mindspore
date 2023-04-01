@@ -19,7 +19,7 @@ import numpy as np
 
 from mindspore import nn
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.train.metrics.metric import Metric, rearrange_inputs
 
 try:

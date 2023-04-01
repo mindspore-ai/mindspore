@@ -23,8 +23,7 @@ from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import context
 from mindspore.ops import signature as sig
-from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
+from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive
@@ -117,7 +116,7 @@ class CeLU(Primitive):
     def __init__(self, alpha=1.0):
         """Initialize CeLU"""
         validator.check_value_type("alpha", alpha, [float], self.name)
-        validator.check_float(alpha, 0.0, Rel.NE, "alpha", self.name)
+        validator.check_float(alpha, 0.0, validator.NE, "alpha", self.name)
         self.alpha = alpha
         self.add_prim_attr('alpha', self.alpha)
 
@@ -183,7 +182,7 @@ class AdaptiveAvgPool3D(Primitive):
         for i, size in enumerate(self.output_size):
             validator.check_value_type(f"output_size[{i}]", size, [int, type(None)], self.name)
             if size is not None:
-                validator.check_number(f"output_size[{i}]", size, 0, Rel.GE, self.name)
+                validator.check_number(f"output_size[{i}]", size, 0, validator.GE, self.name)
 
         self.output_size = tuple(-1 if val is None else val for val in self.output_size)
 
@@ -242,12 +241,12 @@ class AdaptiveAvgPool2D(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("output_size", output_size, [int, tuple], self.name)
         if isinstance(output_size, tuple):
-            validator.check_int(len(output_size), 2, Rel.EQ, 'length of output_size', self.name)
+            validator.check_int(len(output_size), 2, validator.EQ, 'length of output_size', self.name)
         self.output_size = (output_size, output_size) if isinstance(self.output_size, int) else output_size
         for i, size in enumerate(self.output_size):
             validator.check_value_type(f"output_size[{i}]", size, [int, type(None)], self.name)
             if size is not None:
-                validator.check_number(f"output_size[{i}]", size, 0, Rel.GE, self.name)
+                validator.check_number(f"output_size[{i}]", size, 0, validator.GE, self.name)
 
         self.output_size = tuple(-1 if val is None else val for val in self.output_size)
         self.add_prim_attr('output_size', self.output_size)
@@ -315,13 +314,13 @@ class AdaptiveMaxPool2D(Primitive):
         """Initialize AdaptiveMaxPool2D."""
         validator.check_value_type("output_size", output_size, [int, tuple], self.name)
         if isinstance(output_size, tuple):
-            validator.check_int(len(output_size), 2, Rel.EQ,
+            validator.check_int(len(output_size), 2, validator.EQ,
                                 'length of output_size', self.name)
         self.output_size = (output_size, output_size) if isinstance(self.output_size, int) else output_size
         self.output_size = (-1 if self.output_size[0] is None else self.output_size[0],
                             -1 if self.output_size[1] is None else self.output_size[1])
         for size in self.output_size:
-            validator.check_number("output_size", size, -1, Rel.GE, None)
+            validator.check_number("output_size", size, -1, validator.GE, None)
         self.add_prim_attr('output_size', self.output_size)
 
 
@@ -756,7 +755,7 @@ class Elu(Primitive):
     def __init__(self, alpha=1.0):
         """Initialize Elu"""
         validator.check_value_type("alpha", alpha, [float], self.name)
-        validator.check_number("alpha", alpha, 1.0, Rel.EQ, self.name)
+        validator.check_number("alpha", alpha, 1.0, validator.EQ, self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
 
 
@@ -952,8 +951,8 @@ class InstanceNorm(PrimitiveWithInfer):
         """Initialize InstanceNorm."""
         self.init_prim_io_names(inputs=['x', 'gamma', 'beta', 'mean', 'variance'],
                                 outputs=['y', 'save_mean', 'save_variance'])
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
+        self.momentum = validator.check_float_range(momentum, 0, 1, validator.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
         self.add_prim_attr('side_effect_mem', True)
 
@@ -1057,8 +1056,8 @@ class InstanceNormV2(Primitive):
                                 outputs=['y', 'batch_mean', 'batch_variance'])
         validator.check_is_float(epsilon, 'epsilon', self.name)
         validator.check_is_float(momentum, 'momentum', self.name)
-        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, validator.INC_BOTH, 'momentum', self.name)
         validator.check_bool(is_training, "is_training", self.name)
 
 
@@ -1100,8 +1099,8 @@ class BNTrainingUpdate(Primitive):
         validator.check_value_type("isRef", isRef, [bool], self.name)
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("factor", factor, [float], self.name)
-        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', 'BNTrainingUpdate')
-        self.factor = validator.check_float_range(factor, 0, 1, Rel.INC_BOTH, 'factor', 'BNTrainingUpdate')
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', 'BNTrainingUpdate')
+        self.factor = validator.check_float_range(factor, 0, 1, validator.INC_BOTH, 'factor', 'BNTrainingUpdate')
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
@@ -1209,8 +1208,8 @@ class BatchNorm(PrimitiveWithInfer):
         else:
             self.add_prim_attr('side_effect_mem', True)
         validator.check_value_type('is_training', is_training, (bool,), self.name)
-        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
-        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        validator.check_float_range(epsilon, 0, 1, validator.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, validator.INC_BOTH, 'momentum', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
@@ -1223,12 +1222,12 @@ class BatchNorm(PrimitiveWithInfer):
     def infer_shape(self, input_x, scale, bias, mean, variance):
         input_x_channel = input_x[-1] if self.format == "NHWC" else input_x[1]
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
-        validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input_x channel", input_x_channel, Rel.EQ, self.name)
+        validator.check("scale shape", scale, "bias shape", bias, validator.EQ, self.name)
+        validator.check("scale shape[0]", scale[0], "input_x channel", input_x_channel, validator.EQ, self.name)
         if not self.is_training:
             validator.check_equal_int(len(mean), 1, "mean rank", self.name)
-            validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
-            validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
+            validator.check("mean shape", mean, "variance shape", variance, validator.EQ, self.name)
+            validator.check("mean shape", mean, "scale shape", scale, validator.EQ, self.name)
         return input_x, scale, scale, scale, scale
 
     def infer_dtype(self, input_x, scale, bias, mean, variance):
@@ -1494,8 +1493,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     def infer_shape(self, x_shape, w_shape, b_shape=None):
         validator.check_equal_int(len(w_shape), 4, "weight rank", self.name)
         validator.check_equal_int(len(x_shape), 4, "x rank", self.name)
-        validator.check("x_shape[1]", x_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
-        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
+        validator.check("x_shape[1]", x_shape[1], "w_shape[1]", w_shape[1], validator.EQ, self.name)
+        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), validator.EQ, self.name)
 
         kernel_size_n, _, kernel_size_h, kernel_size_w = w_shape
         _, _, stride_h, stride_w = self.stride
@@ -2921,7 +2920,7 @@ class SmoothL1Loss(Primitive):
     def __init__(self, beta=1.0, reduction='none'):
         """Initialize SmoothL1Loss."""
         validator.check_value_type('beta', beta, [float], self.name)
-        validator.check('beta', beta, '', 0, Rel.GT, self.name)
+        validator.check('beta', beta, '', 0, validator.GT, self.name)
         validator.check_string(
             reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.add_prim_attr('sigma', self.beta)
@@ -2975,7 +2974,7 @@ class MultiMarginLoss(Primitive):
     def __init__(self, p=1, margin=1.0, reduction="mean"):
         """Initialize MultiMarginLoss"""
         self.p = validator.check_value_type('p', p, [int], self.name)
-        validator.check_int(p, {1, 2}, Rel.IN, 'p', self.name)
+        validator.check_int(p, {1, 2}, validator.IN, 'p', self.name)
         self.margin = validator.check_value_type('margin', margin, [float], self.name)
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['x', 'target', 'weight'], outputs=['y'])
@@ -3159,10 +3158,13 @@ class RNNTLoss(PrimitiveWithInfer):
         validator.check_equal_int(len(labels_shape), 2, 'labels_rank', self.name)
         validator.check_equal_int(len(input_length_shape), 1, 'input_length_rank', self.name)
         validator.check_equal_int(len(label_length_shape), 1, 'label_length_rank', self.name)
-        validator.check('labels shape[0]', labels_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
-        validator.check('labels shape[1]', labels_shape[1], 'acts shape[2]-1', acts_shape[2] - 1, Rel.EQ, self.name)
-        validator.check('input_length size', input_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
-        validator.check('label_length size', label_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
+        validator.check('labels shape[0]', labels_shape[0], 'acts shape[0]', acts_shape[0], validator.EQ, self.name)
+        validator.check('labels shape[1]', labels_shape[1], 'acts shape[2]-1',
+                        acts_shape[2] - 1, validator.EQ, self.name)
+        validator.check('input_length size', input_length_shape[0], 'acts shape[0]',
+                        acts_shape[0], validator.EQ, self.name)
+        validator.check('label_length size', label_length_shape[0], 'acts shape[0]',
+                        acts_shape[0], validator.EQ, self.name)
         costs_shape = (acts_shape[0],)
         return costs_shape, acts_shape
 
@@ -3243,10 +3245,10 @@ class SGD(PrimitiveWithCheck):
 
     def check_shape(self, parameters_shape, gradient_shape, learning_rate_shape,
                     accum_shape, momentum_shape, stat_shape):
-        validator.check_int(len(gradient_shape), 0, Rel.GE, f'gradient rank', self.name)
-        validator.check_int(len(learning_rate_shape), 0, Rel.GE, f'learning rate rank', self.name)
-        validator.check_int(len(momentum_shape), 0, Rel.GE, f'momentum rank', self.name)
-        validator.check_int(len(stat_shape), 0, Rel.GE, f'stat rank', self.name)
+        validator.check_int(len(gradient_shape), 0, validator.GE, f'gradient rank', self.name)
+        validator.check_int(len(learning_rate_shape), 0, validator.GE, f'learning rate rank', self.name)
+        validator.check_int(len(momentum_shape), 0, validator.GE, f'momentum rank', self.name)
+        validator.check_int(len(stat_shape), 0, validator.GE, f'stat rank', self.name)
 
     def check_dtype(self, parameters_dtype, gradient_dtype, learning_rate_dtype,
                     accum_dtype, momentum_dtype, stat_dtype):
@@ -3623,7 +3625,7 @@ class ResizeBilinear(PrimitiveWithInfer):
             validator.check_positive_int(value, f'{i}th value of size', self.name)
 
     def infer_shape(self, input_shape):
-        validator.check("dimension of input", len(input_shape), "", 4, Rel.EQ, self.name)
+        validator.check("dimension of input", len(input_shape), "", 4, validator.EQ, self.name)
         input_shape = list(input_shape)
         batch, channel, _, _ = input_shape
         out_shape = [batch, channel]
@@ -3938,7 +3940,7 @@ class GetNext(Primitive):
         """Initialize GetNext."""
         validator.check_value_type("types", types, [list, tuple], self.name)
         validator.check_value_type("shapes", shapes, [list, tuple], self.name)
-        validator.check("types length", len(types), "shapes length", len(shapes), Rel.EQ, self.name)
+        validator.check("types length", len(types), "shapes length", len(shapes), validator.EQ, self.name)
         validator.check_value_type("output_num", output_num, [int], self.name)
 
 
@@ -4053,7 +4055,7 @@ class LSTM(Primitive):
         self.has_bias = validator.check_value_type("has_bias", has_bias, (bool,), self.name)
         self.bidirectional = validator.check_value_type("bidirectional", bidirectional, (bool,), self.name)
         self.dropout = validator.check_value_type("dropout", dropout, [float], self.name)
-        self.dropout = validator.check_float_range(dropout, 0, 1, Rel.INC_BOTH, 'dropout', self.name)
+        self.dropout = validator.check_float_range(dropout, 0, 1, validator.INC_BOTH, 'dropout', self.name)
 
         if bidirectional:
             self.num_directions = 2
@@ -4478,13 +4480,14 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['true_classes', 'sampled_candidates'],
                                 outputs=['indices', 'ids', 'weights'])
         validator.check_value_type("num_true", num_true, [int], self.name)
-        validator.check_number("num_true", num_true, 1, Rel.GE, self.name)
+        validator.check_number("num_true", num_true, 1, validator.GE, self.name)
         self.num_true = num_true
 
     def check_shape(self, true_classes_shape, sampled_candidates_shape):
-        validator.check_int(len(true_classes_shape), 2, Rel.EQ, 'dim of true_classes', self.name)
-        validator.check_int(len(sampled_candidates_shape), 1, Rel.EQ, 'dim of sampled_candidates', self.name)
-        validator.check("true_classes shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
+        validator.check_int(len(true_classes_shape), 2, validator.EQ, 'dim of true_classes', self.name)
+        validator.check_int(len(sampled_candidates_shape), 1, validator.EQ, 'dim of sampled_candidates', self.name)
+        validator.check("true_classes shape[1]", true_classes_shape[1], "num_true",
+                        self.num_true, validator.EQ, self.name)
 
         indices_len = -1
         return (indices_len,), (indices_len,), (indices_len,)
@@ -4556,7 +4559,7 @@ class ROIAlign(Primitive):
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
         validator.check_value_type("sample_num", sample_num, [int], self.name)
         validator.check_value_type("roi_end_mode", roi_end_mode, [int], self.name)
-        validator.check_int_range(roi_end_mode, 0, 1, Rel.INC_BOTH, "roi_end_mode", self.name)
+        validator.check_int_range(roi_end_mode, 0, 1, validator.INC_BOTH, "roi_end_mode", self.name)
         self.pooled_height = pooled_height
         self.pooled_width = pooled_width
         self.spatial_scale = spatial_scale
@@ -5223,7 +5226,7 @@ class FusedSparseFtrl(Primitive):
         self.lr = validator.check_positive_float(lr, "lr", self.name)
         self.l1 = validator.check_non_negative_float(l1, "l1", self.name)
         self.l2 = validator.check_non_negative_float(l2, "l2", self.name)
-        self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
+        self.lr_power = validator.check_number("lr_power", lr_power, 0, validator.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
@@ -6741,7 +6744,7 @@ class SparseApplyFtrl(Primitive):
         self.lr = validator.check_positive_float(lr, "lr", self.name)
         self.l1 = validator.check_non_negative_float(l1, "l1", self.name)
         self.l2 = validator.check_non_negative_float(l2, "l2", self.name)
-        self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
+        self.lr_power = validator.check_number("lr_power", lr_power, 0, validator.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
                                 outputs=['var', 'accum', 'linear'])
@@ -6838,18 +6841,18 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         self.lr = validator.check_positive_float(lr, "lr", self.name)
         self.l1 = validator.check_non_negative_float(l1, "l1", self.name)
         self.l2 = validator.check_non_negative_float(l2, "l2", self.name)
-        self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
+        self.lr_power = validator.check_number("lr_power", lr_power, 0, validator.LE, self.name)
         self.l2_shrinkage = validator.check_value_type("l2_shrinkage", l2_shrinkage, [float], self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
+        validator.check('var shape', var_shape, 'accum shape', accum_shape, validator.EQ, self.name)
+        validator.check('var shape', var_shape, 'linear shape', linear_shape, validator.EQ, self.name)
         if len(var_shape) > 1:
-            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
+            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], validator.EQ, self.name)
+        validator.check_int(len(indices_shape), 1, validator.EQ, "indices rank", self.name)
+        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], validator.EQ, self.name)
         return var_shape, accum_shape, linear_shape
 
     def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
@@ -6884,10 +6887,10 @@ class Dropout(PrimitiveWithCheck):
         """Initialize Dropout."""
         self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
         self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
 
     def check_shape(self, x_shape):
-        validator.check_int(len(x_shape), 1, Rel.GE, "x_shape", self.name)
+        validator.check_int(len(x_shape), 1, validator.GE, "x_shape", self.name)
 
     def check_dtype(self, x_dtype):
         valid_dtypes = (mstype.float16, mstype.float32, mstype.float64)
@@ -6942,7 +6945,7 @@ class Dropout2D(PrimitiveWithInfer):
         """Initialize Dropout2D."""
         super().__init__("Dropout2D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, "keep_prob", self.name)
 
 
 class Dropout3D(PrimitiveWithInfer):
@@ -6991,7 +6994,7 @@ class Dropout3D(PrimitiveWithInfer):
         """Initialize Dropout3D."""
         super().__init__("Dropout3D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, "keep_prob", self.name)
 
 
 class CTCLoss(Primitive):
@@ -7127,23 +7130,24 @@ class BasicLSTMCell(PrimitiveWithInfer):
     def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'):
         """Initialize BasicLSTMCell."""
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
-        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, validator.INC_BOTH, "keep_prob", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.state_is_tuple = validator.check_value_type("state_is_tuple", state_is_tuple, [bool], self.name)
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape, b_shape):
-        validator.check_int(len(x_shape), 2, Rel.EQ, "x rank", self.name)
-        validator.check_int(len(h_shape), 2, Rel.EQ, "h rank", self.name)
-        validator.check_int(len(c_shape), 2, Rel.EQ, "c rank", self.name)
-        validator.check_int(len(w_shape), 2, Rel.EQ, "w rank", self.name)
-        validator.check_int(len(b_shape), 1, Rel.EQ, "b rank", self.name)
-        validator.check("x_shape[0]", x_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
-        validator.check("c_shape[0]", c_shape[0], "h_shape[0]", h_shape[0], Rel.EQ, self.name)
-        validator.check("c_shape[1]", c_shape[1], "h_shape[1]", h_shape[1], Rel.EQ, self.name)
-        validator.check("w_shape[1]", w_shape[1], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
-        validator.check("w_shape[0]", w_shape[0], "x_shape[1]+h_shape[1]", x_shape[1] + h_shape[1], Rel.EQ, self.name)
-        validator.check("b_shape[0]", b_shape[0], "4*h_shape[1]", 4 * h_shape[1], Rel.EQ, self.name)
+        validator.check_int(len(x_shape), 2, validator.EQ, "x rank", self.name)
+        validator.check_int(len(h_shape), 2, validator.EQ, "h rank", self.name)
+        validator.check_int(len(c_shape), 2, validator.EQ, "c rank", self.name)
+        validator.check_int(len(w_shape), 2, validator.EQ, "w rank", self.name)
+        validator.check_int(len(b_shape), 1, validator.EQ, "b rank", self.name)
+        validator.check("x_shape[0]", x_shape[0], "h_shape[0]", h_shape[0], validator.EQ, self.name)
+        validator.check("c_shape[0]", c_shape[0], "h_shape[0]", h_shape[0], validator.EQ, self.name)
+        validator.check("c_shape[1]", c_shape[1], "h_shape[1]", h_shape[1], validator.EQ, self.name)
+        validator.check("w_shape[1]", w_shape[1], "4*h_shape[1]", 4 * h_shape[1], validator.EQ, self.name)
+        validator.check("w_shape[0]", w_shape[0], "x_shape[1]+h_shape[1]", x_shape[1] + h_shape[1],
+                        validator.EQ, self.name)
+        validator.check("b_shape[0]", b_shape[0], "4*h_shape[1]", 4 * h_shape[1], validator.EQ, self.name)
         ct_shape = c_shape
         ht_shape = c_shape
         it_shape = c_shape
@@ -7818,7 +7822,7 @@ class Conv3D(Primitive):
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         validator.check_value_type("group", group, (int,), self.name)
-        validator.check_int_range(group, 1, out_channel, Rel.INC_BOTH, "group", self.name)
+        validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
         self.group = group
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_x', 0)
@@ -8041,7 +8045,7 @@ class SparseApplyAdadelta(Primitive):
     def __init__(self, epsilon, use_locking=False):
         """Initialize SparseApplyAdadelta"""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
-        validator.check_number("epsilon", epsilon, 0.0, Rel.GE, self.name)
+        validator.check_number("epsilon", epsilon, 0.0, validator.GE, self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
@@ -8337,17 +8341,19 @@ class Conv3DTranspose(Primitive):
                              f"when 'pad_mode' is not \"pad\", but got 'output_padding' is "
                              f"{output_padding} and 'pad_mode' is {pad_mode}.")
         self.add_prim_attr('output_padding', self.output_padding)
-        validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2], 1, 343, Rel.INC_BOTH,
-                                  'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
-        validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, Rel.INC_BOTH,
+        validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2],
+                                  1, 343, validator.INC_BOTH,
+                                  'The product of height, width and depth of kernel_size belonging [1, 343]',
+                                  self.name)
+        validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, validator.INC_BOTH,
                                   'The product of height, width and depth of stride belonging [1, 343]', self.name)
-        validator.check_int_range(self.stride[1] * self.stride[2], 1, 256, Rel.INC_BOTH,
+        validator.check_int_range(self.stride[1] * self.stride[2], 1, 256, validator.INC_BOTH,
                                   'The product of height, width and depth of stride belonging [1, 256]', self.name)
-        validator.check_int_range(self.output_padding[2], 0, max(self.dilation[2], self.stride[2]), Rel.INC_LEFT,
+        validator.check_int_range(self.output_padding[2], 0, max(self.dilation[2], self.stride[2]), validator.INC_LEFT,
                                   'output_padding_d belonging [0, max(stride_d, dilation_d))', self.name)
-        validator.check_int_range(self.output_padding[3], 0, max(self.dilation[3], self.stride[3]), Rel.INC_LEFT,
+        validator.check_int_range(self.output_padding[3], 0, max(self.dilation[3], self.stride[3]), validator.INC_LEFT,
                                   'output_padding_h belonging [0, max(stride_h,dilation_h))', self.name)
-        validator.check_int_range(self.output_padding[4], 0, max(self.dilation[4], self.stride[4]), Rel.INC_LEFT,
+        validator.check_int_range(self.output_padding[4], 0, max(self.dilation[4], self.stride[4]), validator.INC_LEFT,
                                   'output_padding_w belonging [0, max(stride_w,dilation_w))', self.name)
 
 
@@ -8500,7 +8506,7 @@ class SoftShrink(Primitive):
     def __init__(self, lambd=0.5):
         """Initialize SoftShrink"""
         validator.check_value_type("lambd", lambd, [float], self.name)
-        validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
+        validator.check_number("lambd", lambd, 0, validator.GE, self.name)
 
 
 class HShrink(Primitive):
@@ -8763,9 +8769,9 @@ class SparseApplyRMSProp(Primitive):
         validator.check_value_type("momentum", momentum, [float], self.name)
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
-        self.epsilon = validator.check_number("epsilon", epsilon, 0.0, Rel.GT, self.name)
-        self.momentum = validator.check_number("momentum", momentum, 0.0, Rel.GE, self.name)
-        self.rho = validator.check_float_range(rho, 0.0, 1.0, Rel.INC_BOTH, "rho", self.name)
+        self.epsilon = validator.check_number("epsilon", epsilon, 0.0, validator.GT, self.name)
+        self.momentum = validator.check_number("momentum", momentum, 0.0, validator.GE, self.name)
+        self.rho = validator.check_float_range(rho, 0.0, 1.0, validator.INC_BOTH, "rho", self.name)
 
 
 class SparseApplyCenteredRMSProp(Primitive):
@@ -9851,10 +9857,10 @@ class UpsampleNearest3D(Primitive):
             scales = []
         validator.check_value_type('output_size', output_size, [tuple, list], self.name)
         for item in output_size:
-            validator.check_int(item, 0, Rel.GT, 'output_size_item', self.name)
+            validator.check_int(item, 0, validator.GT, 'output_size_item', self.name)
         validator.check_value_type('scales', scales, [tuple, list], self.name)
         for item in scales:
-            validator.check_float(item, 0, Rel.GT, 'scales_item', self.name)
+            validator.check_float(item, 0, validator.GT, 'scales_item', self.name)
         self.add_prim_attr('output_size', output_size)
         self.add_prim_attr('scales', scales)
 
@@ -10210,7 +10216,7 @@ class NuclearNorm(Primitive):
         """Initialize NuclearNorm."""
         validator.check_value_type("dim", dim, [list, tuple, type(None)], self.name)
         if dim is not None:
-            validator.check_int(len(dim), 2, Rel.EQ, 'length of dim_size', self.name)
+            validator.check_int(len(dim), 2, validator.EQ, 'length of dim_size', self.name)
             validator.check_is_int(dim[0], "dim[0]", self.name)
             validator.check_is_int(dim[1], "dim[1]", self.name)
         else:

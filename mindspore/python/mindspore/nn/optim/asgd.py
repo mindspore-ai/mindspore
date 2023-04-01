@@ -21,7 +21,7 @@ from mindspore.common.api import jit
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore
-from mindspore._checkparam import Validator as validator
+from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 

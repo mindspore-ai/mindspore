@@ -1,6 +1,6 @@
 from mindspore import nn
 from mindspore.ops.primitive import Primitive
-from mindspore._checkparam import Validator
+from mindspore import _checkparam as Validator
 from mindspore.nn.layer.activation import get_activation, LeakyReLU
 
 
