@@ -291,6 +291,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         that communication inside each stage slow down the training.
         """
         is_pipeline_parallel = False
+        time_info = {"receive_op_not_overlapped_timeline": [], "collective_comm_not_overlapped_timeline": [],
+                     "comm_not_overlapped_timeline": []}
         comm_timeline = self._get_merged_time_list(
             comm_info, display_name="communication"
         )
@@ -298,7 +300,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             aicore_info, get_interval_time=True
         )
         # Consider if the overlap will be 0 or not.
-        comm_not_overlapped_timeline = self._get_intersection_time(
+        time_info["comm_not_overlapped_timeline"] = self._get_intersection_time(
             aicore_timeline[0], comm_timeline[0]
         )
 
@@ -314,7 +316,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         timeline_exclude_receive_op_interval = self._get_merged_time_list(
             receive_timeline[1], get_interval_time=True
         )[0]
-        receive_op_not_overlapped_timeline = self._get_intersection_time(
+
+        time_info["receive_op_not_overlapped_timeline"] = self._get_intersection_time(
             timeline_exclude_receive_op_interval, receive_op_merged_timeline
         )
 
@@ -323,7 +326,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             comm_info, "Receive-op"
         )[-1]
 
-        collective_comm_not_overlapped_timeline = self._get_intersection_time(
+        time_info["collective_comm_not_overlapped_timeline"] = self._get_intersection_time(
             aicore_timeline[0], self._get_merged_time_list(collective_comm_timeline)[0]
         )
 
@@ -332,11 +335,12 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             all_timeline, get_interval_time=True, display_name="free_time"
         )[1]
 
-        self._parse_cluster_metrices(step_info, receive_op_not_overlapped_timeline, comm_not_overlapped_timeline,
-                                     collective_comm_not_overlapped_timeline, is_pipeline_parallel)
+        self._parse_cluster_metrices(step_info, time_info.get("receive_op_not_overlapped_timeline"),
+                                     time_info.get("comm_not_overlapped_timeline"),
+                                     time_info.get("collective_comm_not_overlapped_timeline"), is_pipeline_parallel)
 
         res_timeline = []
-        res_timeline.extend(comm_not_overlapped_timeline)
+        res_timeline.extend(time_info.get("comm_not_overlapped_timeline"))
         res_timeline.extend(aicore_timeline[2])
         res_timeline.extend(comm_timeline[2])
         res_timeline.extend(free_timeline)

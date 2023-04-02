@@ -345,53 +345,55 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         that communication inside each stage slow down the training.
         """
         time_info = {"stage_time": [], "computation_time": [], "recieve_alone_time": [], "comm_alone_time": [],
-                     "collective_comm_alone_time": []}
-        is_pipeline_parallel = False
-        comm_timeline = self._get_merged_time_list(
+                     "collective_comm_alone_time": [], "comm_not_overlapped_timeline": [], "free_timeline": [],
+                     "collective_comm_not_overlapped_timeline": [], "comm_timeline": [], "compute_timeline": [],
+                     "receive_op_not_overlapped_timeline": [], "receive_op_timeline": [],
+                     "collective_comm_timeline": [], "receive_op_merged_timeline": [], "is_pipeline_parallel": False}
+        time_info["comm_timeline"] = self._get_merged_time_list(
             comm_info,
             display_name="communication",
             factor=1e-3
         )
         compute_op_timeline = timeline + activity_info
         compute_op_timeline.sort(key=lambda x: float(x[self._start_time_idx]))
-        compute_timeline = self._get_merged_time_list(
+        time_info["compute_timeline"] = self._get_merged_time_list(
             compute_op_timeline,
             get_interval_time=True,
             factor=1e-3
         )
         # Consider if the overlap will be 0 or not.
-        comm_not_overlapped_timeline = self._get_intersection_time(
-            compute_timeline[0],
-            comm_timeline[0]
+        time_info["comm_not_overlapped_timeline"] = self._get_intersection_time(
+            time_info.get("compute_timeline")[0],
+            time_info.get("comm_timeline")[0]
         )
 
         # Process receive part.
         all_timeline = timeline + comm_info
         all_timeline.sort(key=lambda x: float(x[self._start_time_idx]))
-        receive_op_timeline = self._produce_two_separated_timeline(
+        time_info["receive_op_timeline"] = self._produce_two_separated_timeline(
             all_timeline,
             "Receive-op"
         )[0]
-        if receive_op_timeline:
-            is_pipeline_parallel = True
-        receive_op_merged_timeline = self._get_merged_time_list(receive_op_timeline,
-                                                                factor=1e-3)[0]
+        if time_info.get("receive_op_timeline"):
+            time_info["is_pipeline_parallel"] = True
+        time_info["receive_op_merged_timeline"] = self._get_merged_time_list(time_info.get("receive_op_timeline"),
+                                                                             factor=1e-3)[0]
 
-        receive_op_not_overlapped_timeline = self._get_intersection_time(
-            compute_timeline[0],
-            receive_op_merged_timeline,
+        time_info["receive_op_not_overlapped_timeline"] = self._get_intersection_time(
+            time_info.get("compute_timeline")[0],
+            time_info.get("receive_op_merged_timeline"),
             display_name="receive_op_not_overlapped"
         )
 
         # Process collective communication part.
-        collective_comm_timeline = self._produce_two_separated_timeline(
+        time_info["collective_comm_timeline"] = self._produce_two_separated_timeline(
             comm_info,
             "Receive-op"
         )[-1]
-        collective_comm_merged_timeline = self._get_merged_time_list(collective_comm_timeline,
+        collective_comm_merged_timeline = self._get_merged_time_list(time_info.get("collective_comm_timeline"),
                                                                      factor=1e-3)[0]
-        collective_comm_not_overlapped_timeline = self._get_intersection_time(
-            compute_timeline[0],
+        time_info["collective_comm_not_overlapped_timeline"] = self._get_intersection_time(
+            time_info.get("compute_timeline")[0],
             collective_comm_merged_timeline,
             display_name="exclude_receive_op"
         )
@@ -399,7 +401,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         # Generate free time that exclude computation and communication time.
         all_timeline = compute_op_timeline + comm_info
         all_timeline.sort(key=lambda x: float(x[self._start_time_idx]))
-        free_timeline = self._get_merged_time_list(
+        time_info["free_timeline"] = self._get_merged_time_list(
             all_timeline,
             get_interval_time=True,
             display_name="free_time",
@@ -407,16 +409,18 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         )[1]
 
         # Compute these five metrics mentioned above per step.
-        time_info["recieve_alone_time"] = self._compute_time_inside_step(receive_op_not_overlapped_timeline, step_info)
-        time_info["comm_alone_time"] = self._compute_time_inside_step(comm_not_overlapped_timeline, step_info)
+        time_info["recieve_alone_time"] = self._compute_time_inside_step(
+            time_info.get("receive_op_not_overlapped_timeline"), step_info)
+        time_info["comm_alone_time"] = self._compute_time_inside_step(time_info.get("comm_not_overlapped_timeline"),
+                                                                      step_info)
         time_info["collective_comm_alone_time"] = self._compute_time_inside_step(
-            collective_comm_not_overlapped_timeline,
+            time_info.get("collective_comm_not_overlapped_timeline"),
             step_info
         )
         step_num = len(step_info)
         for step in range(step_num):
             try:
-                if is_pipeline_parallel:
+                if time_info.get("is_pipeline_parallel"):
                     time_info.get("stage_time").append(
                         step_info[step][self._duration_idx] - time_info.get("recieve_alone_time")[step]
                     )
@@ -436,16 +440,17 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             for metric in metrices_per_step_list:
                 metric.append(sum(metric[1:]) / (step_num - 1))
         try:
-            self._write_cluster_metrices(metrices_per_step_list, is_pipeline_parallel, "Gpu", self._device_id)
-        except (IOError, OSError) as err:
-            logger.warning(err)
+            self._write_cluster_metrices(metrices_per_step_list, time_info.get("is_pipeline_parallel"), "Gpu",
+                                         self._device_id)
+        except (IOError, OSError) as e:
+            logger.warning(e)
             raise ProfilerIOException
 
         res_timeline = []
-        res_timeline.extend(comm_not_overlapped_timeline)
-        res_timeline.extend(compute_timeline[2])
-        res_timeline.extend(comm_timeline[2])
-        res_timeline.extend(free_timeline)
+        res_timeline.extend(time_info.get("comm_not_overlapped_timeline"))
+        res_timeline.extend(time_info.get("compute_timeline")[2])
+        res_timeline.extend(time_info.get("comm_timeline")[2])
+        res_timeline.extend(time_info.get("free_timeline"))
         return res_timeline
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
