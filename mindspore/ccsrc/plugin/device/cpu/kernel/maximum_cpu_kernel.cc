@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   input_x_shape_ = inputs[0]->GetShapeVector();
   input_y_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
-  TypeId input_x_dtype = inputs[0]->GetDtype();
-  TypeId input_y_dtype = inputs[1]->GetDtype();
   output_num_ = 1;
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
@@ -77,7 +75,7 @@ int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
       (input_x_shape_.size() != 0 && input_y_shape_.size() == 0)) {
     InitInputTensorAndScalar(max_input_shape_size);
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
-    InitInputTensors(input_x_dtype, input_y_dtype);
+    InitInputTensors();
   }
   return 0;
 }
@@ -92,7 +90,7 @@ void MaximumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) 
   need_broadcast_ = false;
 }
 
-void MaximumCpuKernelMod::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
+void MaximumCpuKernelMod::InitInputTensors() {
   // Check if the shape needs to be broadcast
   need_broadcast_ = IsBroadcast();
   if (need_broadcast_) {

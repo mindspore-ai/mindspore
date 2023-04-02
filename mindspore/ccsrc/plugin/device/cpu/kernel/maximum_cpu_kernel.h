@@ -54,7 +54,7 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   size_t Index(const size_t &index, const size_t &dim) const;
   void InitTensorBroadcastShape();
   void InitInputTensorAndScalar(size_t max_input_shape_size);
-  void InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype);
+  void InitInputTensors();
 
   // Broadcast Arithmetic
   template <typename T>
