@@ -1755,7 +1755,7 @@ def sgn(input):
         TypeError: If input is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -2744,7 +2744,7 @@ def bitwise_left_shift(input, other):
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([1024, 2]), mindspore.int16)
@@ -2800,7 +2800,7 @@ def bitwise_right_shift(input, other):
         TypeError: If either `input` or `other` is not an int or a tensor of dtype: int or uint.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([1024, 2]), mindspore.int16)
@@ -3684,7 +3684,7 @@ def logit(input, eps=None):
         TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
@@ -4733,8 +4733,9 @@ def logaddexp(input, other):
         out_i = log(exp(input_i) + exp(other_i))
 
     Args:
-        input (Tensor): Input Tensor.
-        other (Tensor): Input Tensor. If the shape of `input` is not equal to the shape of `other`,
+        input (Tensor): Input Tensor. The dtype of `input` must be float.
+        other (Tensor): Input Tensor.  The dtype of `input` must be float.
+            If the shape of `input` is not equal to the shape of `other`,
             they must be broadcastable to a common shape (which becomes the shape of the output).
 
     Returns:
@@ -4758,7 +4759,9 @@ def logaddexp(input, other):
         raise TypeError(f"For logaddexp, the input must be a Tensor, but got {type(input)}.")
     if not isinstance(other, (Tensor, Tensor_)):
         raise TypeError(f"For logaddexp, the other must be a Tensor, but got {type(other)}.")
-
+    if not ops.is_floating_point(input) or not ops.is_floating_point(other):
+        raise TypeError(f"For logaddexp2, the dtype of 'input' and 'other' must be float,"
+                        f"but got {input.dtype} and {other.dtype}.")
     m = maximum(input, other)
     abs_val = abs(input - other)
     exp_val = tensor_exp(neg_tensor(abs_val))
@@ -4775,8 +4778,9 @@ def logaddexp2(input, other):
         out_i = log_2(2^{input_i} + 2^{other_i})
 
     Args:
-        input (Tensor): Input tensor.
-        other (Tensor): Input tensor. If ``input.shape != other.shape``, they must be broadcastable to
+        input (Tensor): Input tensor. The dtype of `input` must be float.
+        other (Tensor): Input tensor. The dtype of `other` must be float.
+            If ``input.shape != other.shape``, they must be broadcastable to
             a common shape (which becomes the shape of the output).
 
     Returns:
@@ -4784,6 +4788,7 @@ def logaddexp2(input, other):
 
     Raises:
         TypeError: If `input`, `other` is not a Tensor.
+        TypeError: If the dtype of `input`, `other` is not a float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4800,6 +4805,9 @@ def logaddexp2(input, other):
         raise TypeError(f"For logaddexp2, the input must be a Tensor, but got {type(input)}.")
     if not isinstance(other, (Tensor, Tensor_)):
         raise TypeError(f"For logaddexp2, the other must be a Tensor, but got {type(other)}.")
+    if not ops.is_floating_point(input) or not ops.is_floating_point(other):
+        raise TypeError(f"For logaddexp2, the dtype of 'input' and 'other' must be float,"
+                        f"but got {input.dtype} and {other.dtype}.")
 
     m = maximum(input, other)
     abs_val = abs(input - other)
@@ -6462,6 +6470,8 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
         raise TypeError(f"For 'diff', 'x' must be a tensor, but got {type(x)}")
     if x.ndim < 1:
         raise TypeError(f"For 'diff', the dimension 'x' must be at least 1, but got {x.ndim}")
+    if x.shape[0] == 0:
+        raise ValueError(f"For 'diff', 'x' can not be an empty Tensor.")
     _check_is_int(n, 'n', 'diff')
     if n != 1:
         raise RuntimeError(f"For 'diff', 'n' must be 1, but got {n}")
@@ -6510,7 +6520,7 @@ def tril_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.tril_indices(4, 3, -1, mindspore.int64)
@@ -6555,7 +6565,7 @@ def triu_indices(row, col, offset=0, dtype=mstype.int64):
         ValueError: If `row` or `col` < 0.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
@@ -8694,8 +8704,8 @@ def rot90(input, k, dims):
 
     Args:
         input (Tensor): Input tensor.
-        k (int): Number of times to rotate. Default: 1.
-        dims (Union[list(int), tuple(int)]): Axis to rotate. Default: [0,1].
+        k (int): Number of times to rotate.
+        dims (Union[list(int), tuple(int)]): Axis to rotate.
 
     Returns:
         Tensor.
@@ -9129,7 +9139,7 @@ def remainder(input, other):
 
     .. math::
 
-        remainder(input, other) == input - input.div(other, rounding_mode="floor") * other
+        remainder(input, other) = input - input.div(other, rounding\_mode="floor") * other
 
     .. warning::
         - When the elements of input exceed 2048, there might be accuracy problems.
@@ -9464,7 +9474,7 @@ def cholesky(input_x, upper=False):
         ValueError: If `input_x` is not symmetric positive definite.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
@@ -10219,7 +10229,7 @@ def logical_xor(input, other):
         ValueError: If the shape of two inputs cannot be broadcast.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -10358,8 +10368,8 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
         TypeError: If `offset` is not an int.
         TypeError: If `dim1` or `dim2` is not an int.
         ValueError: If the dimension of `input` is not 1D-6D.
-        ValueError: If `dim1` is not in range of [-len(input.shape), len(input.shape)).
-        ValueError: If `dim2` is not in range of [-len(input.shape), len(input.shape)).
+        ValueError: If `dim1` is not in range of [-len(input.shape) - 1, len(input.shape)].
+        ValueError: If `dim2` is not in range of [-len(input.shape) - 1, len(input.shape)].
         ValueError: If `dim1` and `dim2` are identical.
 
     Supported Platforms:
@@ -10393,10 +10403,10 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
     x_shape = input.shape
     output_dim = len(x_shape) + 1
     if dim1 < -output_dim or dim1 > (output_dim - 1):
-        raise ValueError(f"For 'diag_embed', 'dim1' must be in range of [{-output_dim}, {output_dim - 1}), "
+        raise ValueError(f"For 'diag_embed', 'dim1' must be in range of [{-output_dim}, {output_dim - 1}], "
                          f"but got {dim1}.")
     if dim2 < -output_dim or dim2 > (output_dim - 1):
-        raise ValueError(f"For 'diag_embed', 'dim2' must be in range of [{-output_dim}, {output_dim - 1}), "
+        raise ValueError(f"For 'diag_embed', 'dim2' must be in range of [{-output_dim}, {output_dim - 1}], "
                          f"but got {dim2}.")
     if dim1 < 0:
         dim1_ = dim1 + output_dim

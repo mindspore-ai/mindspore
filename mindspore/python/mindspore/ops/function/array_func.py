@@ -4220,7 +4220,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"): # pylint: disable=red
             0), x.shape[-1] + min(-k[0], 0))`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[7, 7, 7, 7],

@@ -27,6 +27,6 @@ mindspore.ops.diag_embed
         - **TypeError** - `offset` 不是int类型。
         - **TypeError** - `dim1` 或 `dim2` 不是int类型。
         - **ValueError** - `input` 的维度不是1D-6D。
-        - **ValueError** - `dim1` 不在[-len(input.shape), len(input.shape))范围内。
-        - **ValueError** - `dim2` 不在[-len(input.shape), len(input.shape))范围内。
+        - **ValueError** - `dim1` 不在[-len(input.shape) - 1, len(input.shape)]范围内。
+        - **ValueError** - `dim2` 不在[-len(input.shape) - 1 , len(input.shape)]范围内。
         - **ValueError** - `dim1` 和 `dim2` 相等。

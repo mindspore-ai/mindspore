@@ -1340,7 +1340,7 @@ class MatrixSetDiagV3(Primitive):
             :math:`min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[7, 7, 7, 7],
