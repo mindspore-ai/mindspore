@@ -71,7 +71,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
           if (kernel_info->GetInputKernelObjectType(i) == kernel::KernelObjectType::TUPLE || dyn_input_sizes[i] == -1) {
             ++real_input_num;
           } else {
-            real_input_num += dyn_input_sizes[i];
+            real_input_num += LongToSize(dyn_input_sizes[i]);
           }
         }
         if (kernel_info->GetInputNum() != real_input_num) {

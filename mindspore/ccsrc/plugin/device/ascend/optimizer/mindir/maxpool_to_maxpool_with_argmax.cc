@@ -123,8 +123,8 @@ void MaxPool2MaxPoolWithArgmax::SetNodeAttrs(const CNodePtr &maxpool, const CNod
 
 std::vector<std::string> MaxPool2MaxPoolWithArgmax::MustExistPrimitiveName() const {
   std::vector<std::string> ret;
-  ret.emplace_back(prim::kPrimMaxPool->name());
-  ret.emplace_back(prim::kPrimMaxPoolGrad->name());
+  (void)ret.emplace_back(prim::kPrimMaxPool->name());
+  (void)ret.emplace_back(prim::kPrimMaxPoolGrad->name());
   return ret;
 }
 

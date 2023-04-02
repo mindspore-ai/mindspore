@@ -77,8 +77,8 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   auto prim = common::AnfAlgo::GetCNodePrimitive(reduce_node);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<std::string> input_names = {"x", "axis"};
-  prim->AddAttr("input_names", MakeValue(input_names));
-  prim->AddAttr("output_names", MakeValue("y"));
+  (void)prim->AddAttr("input_names", MakeValue(input_names));
+  (void)prim->AddAttr("output_names", MakeValue("y"));
 
   if (type == kNumberTypeFloat16) {
     std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),

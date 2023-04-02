@@ -28,7 +28,7 @@ namespace kernel {
  *   ...
  * }
  */
-std::map<string, std::map<size_t, std::string>> AicpuOpInputToAttrMap = {
+std::map<std::string, std::map<size_t, std::string>> AicpuOpInputToAttrMap = {
   {kStridedSliceOpName, {{1, "listInt"}, {2, "listInt"}, {3, "listInt"}}}, {kExpandDimsOpName, {{1, "int"}}}};
 
 bool GetAicpuOpInputToAttrInfo(const CNodePtr &kernel_node, std::map<size_t, std::string> *input_to_attr_info) {
