@@ -6,8 +6,7 @@ mindspore.ops.lu_unpack
     将 `LU_data` 和 `LU_pivots` 还原为P, L, U矩阵，其中P为置换矩阵，L为下三角矩阵，U为上三角矩阵。通常情况下， `LU_data` 和 `LU_pivots` 是矩阵通过LU分解生成的。
 
     参数：
-        - **LU_data** (Tensor) - 打包的LU分解数据，shape为 :math:`(*, M, N)` ，其中 :math:`*` 为batch维度，其中 `*` 是batch
-          维度。 `LU_data` 的维度必须等于或大于2。
+        - **LU_data** (Tensor) - 打包的LU分解数据，shape为 :math:`(*, M, N)` ，其中 :math:`*` 为batch维度， `LU_data` 的维度必须等于或大于2。
         - **LU_pivots** (Tensor) - 打包的LU分枢轴，shape为 :math:`(*, min(M, N))` ，其中 :math:`*` 为batch维度，其中 `*` 是batch
           维度，数据类型为int8、uint8、int16、int32或int64。
         - **unpack_data** (bool，可选) - 是否解压缩 `LU_data` 。如果为False，则返回的L和U为None。默认值：True。

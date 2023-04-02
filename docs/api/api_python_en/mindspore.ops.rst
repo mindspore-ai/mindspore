@@ -119,6 +119,7 @@ Distance Functions
 
     mindspore.ops.cdist
     mindspore.ops.dist
+    mindspore.ops.pdist
 
 Sampling Functions
 ^^^^^^^^^^^^^^^^^^^^

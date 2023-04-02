@@ -937,7 +937,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
@@ -1040,7 +1040,7 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
@@ -2711,7 +2711,7 @@ def pdist(input, p=2.0):
         ValueError: If dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
@@ -5405,7 +5405,7 @@ def glu(x, axis=-1):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
@@ -5749,7 +5749,7 @@ def channel_shuffle(x, groups):
         ValueError: If channel number of `x` is not divisible by `groups`.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> group = 2

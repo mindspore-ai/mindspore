@@ -10,11 +10,12 @@ mindspore.ops.logaddexp
         out_i = log(exp(input_i) + exp(other_i))
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
-        - **other** (Tensor) - 输入Tensor。如果 `input` 的shape不等于 `other` 的shape，它们必须被广播成相同shape(输出的形状)。
+        - **input** (Tensor) - 输入Tensor，其数据类型必须是float。
+        - **other** (Tensor) - 输入Tensor，其数据类型必须是float。如果 `input` 的shape不等于 `other` 的shape，它们必须被广播成相同shape(输出的形状)。
 
     返回：
         Tensor。
 
     异常：
         - **TypeError** - `input` 或 `other` 不是Tensor。
+        - **TypeError** - `input` 或 `other` 的数据类型不是float。

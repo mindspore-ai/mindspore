@@ -2379,7 +2379,7 @@ class Logit(Primitive):
         Tensor, with the same shape and dtype as the `x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
@@ -3276,7 +3276,7 @@ class TruncateDiv(Primitive):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -3329,7 +3329,7 @@ class TruncateMod(Primitive):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -4186,7 +4186,7 @@ class LogicalXor(Primitive):
     Refer to :func:`mindspore.ops.logical_xor` for more details.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -5595,7 +5595,7 @@ class MatrixInverse(Primitive):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[-0.710504  , -1.1207525],
@@ -7026,7 +7026,7 @@ class Cholesky(Primitive):
     Refer to :func:`mindspore.ops.cholesky` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
@@ -7352,7 +7352,7 @@ class TrilIndices(Primitive):
           lower triangular matrix.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = ops.TrilIndices(4, 3, -1, mstype.int64)
@@ -7553,7 +7553,7 @@ class TriuIndices(Primitive):
           lower triangular matrix.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = ops.TriuIndices(5, 4, 2, mstype.int64)
@@ -7749,7 +7749,7 @@ class Qr(Primitive):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> qr_op = ops.Qr(full_matrices=False)
