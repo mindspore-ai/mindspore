@@ -28,7 +28,7 @@ namespace kernel {
 
 class CustomAOTCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CustomAOTCpuKernelMod() : handle_(nullptr), aot_func_(nullptr) {}
+  CustomAOTCpuKernelMod() : handle_(nullptr), init_func_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTCpuKernelMod();
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

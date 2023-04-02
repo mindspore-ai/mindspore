@@ -100,9 +100,7 @@ class AGCustomInfer : public abstract::OpInferBase {
                         << "! Error message is " << e.what();
     }
 
-    if (handle != nullptr) {
-      dlclose(handle);
-    }
+    (void)dlclose(handle);
     attrs.DestructKernelData();
     return std::make_shared<abstract::Shape>(ret);
 #else
@@ -111,7 +109,8 @@ class AGCustomInfer : public abstract::OpInferBase {
 #endif
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &primitive,
+                    const std::vector<AbstractBasePtr> & /* input_args */) const override {
     MS_LOG(WARNING) << "This function is the fake infer dtype function and should not be entered. "
                     << "Check the dtype of the output of the operator: "
                     << GetValue<std::string>(primitive->GetAttr("func_name"));
@@ -119,7 +118,7 @@ class AGCustomInfer : public abstract::OpInferBase {
     return TypePtr();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr & /* engine */, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
     constexpr auto kCppInferShapeAttr = "cpp_infer_shape";
     constexpr auto kDTypeAttr = "dtype";
