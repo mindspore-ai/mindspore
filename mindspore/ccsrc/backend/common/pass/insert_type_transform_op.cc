@@ -159,7 +159,7 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
                    [](const auto &obj_type) { return obj_type == KernelObjectType::SCALAR; })) {
     auto new_obj_types = inputs_obj_types;
     std::transform(new_obj_types.begin(), new_obj_types.end(), new_obj_types.begin(),
-                   [](const auto &obj_type) { return KernelObjectType::TENSOR; });
+                   [](const auto &) { return KernelObjectType::TENSOR; });
     real_make_tuple_build_info->SetInputsKernelObjectType(new_obj_types);
     MS_LOG(DEBUG) << "Override RealMakeTuple input kernel object types from " << inputs_obj_types << " "
                   << new_obj_types;
@@ -248,9 +248,9 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
       MS_EXCEPTION_IF_NULL(real_input_node);
       auto output_index = real_input.second;
       if (real_input_node->kernel_info() == nullptr) {
-        inputs_format.emplace_back(kOpFormat_DEFAULT);
+        (void)inputs_format.emplace_back(kOpFormat_DEFAULT);
       } else {
-        inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input_node, output_index));
+        (void)inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input_node, output_index));
       }
       inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
@@ -264,7 +264,7 @@ void SetKernelInfoForNewCNode(const CNodePtr &cnode, bool set_format_type) {
       output_num = kSizeOne;
     }
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
+      (void)outputs_format.emplace_back(GenerateOutputFormatForNewCNode(cnode));
       outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
     }
 
@@ -315,8 +315,8 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
   }
 
   std::vector<AbstractBasePtr> input_args;
-  std::for_each(input_list.begin(), input_list.end(),
-                [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
+  (void)std::for_each(input_list.begin(), input_list.end(),
+                      [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
   auto infer_impl = found.value();
   auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
   MS_EXCEPTION_IF_NULL(abs);
@@ -495,10 +495,10 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
         // If new primitive is created, replace the old one, which is the first element of the input list.
         new_input_list[kIndex0] = processed_input_list[kIndex0];
         // Jump the primitive node the first one, and the rest is the new inputs.
-        new_input_list.insert(new_input_list.end(), std::begin(processed_input_list) + kIndex1,
-                              processed_input_list.end());
+        (void)new_input_list.insert(new_input_list.end(), std::begin(processed_input_list) + kIndex1,
+                                    processed_input_list.end());
       } else {
-        new_input_list.insert(new_input_list.end(), processed_input_list.begin(), processed_input_list.end());
+        (void)new_input_list.insert(new_input_list.end(), processed_input_list.begin(), processed_input_list.end());
       }
     } else {
       // If this input type is valid, just push back the origin input.
@@ -711,7 +711,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
 }
 
 AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                                            const CNodePtr &node, bool *new_prim) {
+                                                            const CNodePtr &node, bool *) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);
@@ -760,7 +760,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTensorToTuple(const FuncGraphPtr &f
 }
 
 AnfNodePtrList InsertTypeTransformOp::ProcessTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                                            const CNodePtr &node, bool *new_prim) {
+                                                            const CNodePtr &node, bool *) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(node);

@@ -28,7 +28,6 @@
 #include "actor/msg.h"
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {

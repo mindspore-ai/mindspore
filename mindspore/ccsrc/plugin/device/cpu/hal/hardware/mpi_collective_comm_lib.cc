@@ -71,7 +71,7 @@ bool MPICollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size
   CHECK_IF_NULL(mpi_group);
 
   const auto &group_comm = mpi_group->mpi_communicator();
-  CHECK_RET(MPI_Bcast(root_info, root_info_size, MPI_BYTE, 0, group_comm), MPI_SUCCESS,
+  CHECK_RET(MPI_Bcast(root_info, static_cast<int>(root_info_size), MPI_BYTE, 0, group_comm), MPI_SUCCESS,
             "Failed to broadcast nccl unique id.");
   return true;
 }
