@@ -81,10 +81,10 @@ ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const 
   return constand_op;
 }
 
-std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::ConvertDepends(
-  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ge::OpDescPtr *op_desc,
-  ge::ComputeGraphPtr *ge_graph) {
-  std::vector<std::tuple<std::size_t, ge::NodePtr>> constant_ops;
+std::map<std::size_t, ::ge::NodePtr> ConvertDepends(const CNodePtr &node,
+                                                    const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                                    const ::ge::OpDescPtr &op_desc, ::ge::ComputeGraphPtr *ge_graph) {
+  std::map<std::size_t, ::ge::NodePtr> constant_ops;
   return constant_ops;
 }
 
