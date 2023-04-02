@@ -47,11 +47,11 @@ class AclRuntimeInfo {
   }
 
   bool use() const { return use_; }
-  bool is_dynamic_input_size() {
+  bool is_dynamic_input_size() const {
     CheckInUse();
     return is_dynamic_input_size_;
   }
-  bool is_dynamic_output_size() {
+  bool is_dynamic_output_size() const {
     CheckInUse();
     return is_dynamic_output_size_;
   }
