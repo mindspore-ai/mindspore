@@ -43,7 +43,7 @@ class BartlettWindowCpuKernelMod : public NativeCpuKernelMod {
   template <typename T, typename T2>
   bool BartlettWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs);
+                                const std::vector<kernel::AddressPtr> &outputs) const;
   bool periodic_{true};
   using BartlettWindowFunc =
     std::function<bool(BartlettWindowCpuKernelMod *, const std::vector<kernel::AddressPtr> &,

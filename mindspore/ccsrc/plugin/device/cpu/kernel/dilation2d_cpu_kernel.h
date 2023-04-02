@@ -19,7 +19,6 @@
 #include <vector>
 #include <map>
 #include <utility>
-#include <limits>
 #include <string>
 #include "mindspore/core/ops/dilation2d.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

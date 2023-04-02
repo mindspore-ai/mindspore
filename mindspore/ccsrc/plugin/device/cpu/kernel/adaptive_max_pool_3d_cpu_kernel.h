@@ -48,11 +48,11 @@ class AdaptiveMaxPool3DCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
-  int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index);
+  int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index) const;
   template <typename T>
   void AdaptiveMaxPool3DCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  void ComputeKernel(T *input_data, T *output_data, int32_t *indices_data, int64_t start_T, int64_t end_T);
+  void ComputeKernel(T *input_data, T *output_data, int32_t *indices_data, int64_t start_T, int64_t end_T) const;
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
   const size_t dimB = 0;

@@ -65,7 +65,6 @@ class MIND_API FractionalMaxPoolWithFixedKsize : public BaseOperator {
 MIND_API abstract::AbstractBasePtr FractionalMaxPoolWithFixedKsizeInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
-// using PrimFractionalMaxPoolWithFixedKsizePtr = std::shared_ptr<FractionalMaxPoolWithFixedKsize>;
 }  // namespace ops
 }  // namespace mindspore
 

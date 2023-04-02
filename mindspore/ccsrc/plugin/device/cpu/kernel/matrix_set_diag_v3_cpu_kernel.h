@@ -33,7 +33,6 @@ class MatrixSetDiagV3CpuKernelMod : public NativeCpuKernelMod {
   MatrixSetDiagV3CpuKernelMod() = default;
   ~MatrixSetDiagV3CpuKernelMod() override = default;
 
-  // void InitKernel(const CNodePtr &kernel_node) override;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 

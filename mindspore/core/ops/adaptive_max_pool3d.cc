@@ -83,7 +83,7 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
 
     ShapeVector out_shape = x_shape;
     for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
-      if (output_size[kOutputSizeNumElem - i] <= 0) {
+      if (output_size[LongToSize(kOutputSizeNumElem - i)] <= 0) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', 'output_size' should be a vector with all positive item, but got "
                                  << ShapeVectorToStr(output_size) << ".";

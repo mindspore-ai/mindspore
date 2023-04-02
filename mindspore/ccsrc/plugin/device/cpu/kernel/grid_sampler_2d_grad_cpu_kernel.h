@@ -483,7 +483,6 @@ TensorAcc<T, N> accessor(T *data_ptr, std::vector<int64_t> sizess) {
   return TensorAcc<T, N>(data_ptr, sizes, strid);
 }
 
-// using namespace vec256;
 bool GeometryIsContiguous(std::array<int64_t, hFour> sizes, std::array<int64_t, hFour> strides) {
   int64_t dim = sizes.size();
   int64_t expected_stride = 1;

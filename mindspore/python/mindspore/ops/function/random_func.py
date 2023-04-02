@@ -209,8 +209,8 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
             raise TypeError("For multinomial_with_replacement,",
                             "the input[offset] must be int, but got {}.".format(type(offset)))
         offset = Tensor(offset, dtype=mstype.int64)
-    multinomial_with_replacement_ = _get_cache_prim(P.MultinomialWithReplacement) \
-        (numsamples=numsamples, replacement=replacement)
+    multinomial_with_replacement_ = _get_cache_prim(P.MultinomialWithReplacement)(numsamples=numsamples,
+                                                                                  replacement=replacement)
     return multinomial_with_replacement_(x, seed, offset)
 
 

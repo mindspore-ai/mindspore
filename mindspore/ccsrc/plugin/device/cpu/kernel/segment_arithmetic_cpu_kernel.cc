@@ -66,7 +66,7 @@ void ComputeFuncProd(void *output_addr, void *input_addr) {
 }
 
 template <typename T>
-T SegmentArithmeticCPUKernelMod::GetInitValue() {
+T SegmentArithmeticCPUKernelMod::GetInitValue() const {
   static const std::map<std::string, T> SegmentArithmeticInitValueMap{
     {prim::kPrimSegmentProd->name(), static_cast<T>(1.0)},
     {prim::kPrimSegmentSum->name(), static_cast<T>(0.0)},

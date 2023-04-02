@@ -81,11 +81,11 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
 
   void NearestHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr, int64_t y_c,
                    std::vector<int64_t> x_dims, int64_t *y_stride, const int64_t *x_stride, int64_t x_ptr_NC,
-                   int64_t y_ptr_NCHW);
+                   int64_t y_ptr_NCHW) const;
 
   void BilinearHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr, int64_t y_c,
                     std::vector<int64_t> x_dims, int64_t *y_stride, int64_t *x_stride, int64_t x_ptr_NC,
-                    int64_t y_ptr_NCHW);
+                    int64_t y_ptr_NCHW) const;
 };
 }  // namespace kernel
 }  // namespace mindspore

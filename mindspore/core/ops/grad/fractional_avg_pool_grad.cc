@@ -70,7 +70,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(kInputSizes, abstract::Shape::kShapeDimAny));
   }
   (void)CheckAndConvertUtils::CheckInteger("orig_input_tensor_shape", SizeToLong(output_shape.size()), kEqual,
-                                           kInputSizes, op_name);
+                                           SizeToLong(kInputSizes), op_name);
   int64_t shape_m = SizeToLong(SizeOf(output_shape));
   if (shape_m > max_length) {
     MS_EXCEPTION(ValueError) << "For '" << op_name

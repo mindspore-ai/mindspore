@@ -161,7 +161,6 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists() {
     size_t work_size = 0;
     size_t shape_size = 0;
-    // if (T == float16) { reduce_sum_work_size = size * 2; } else { reduce_sum_work_size = size; }
     size_t mul_val = (type_id_ == kNumberTypeFloat16) ? 2 : 1;
     size_t reduce_sum_wrok_size = 0;
     for (auto &op_vec : single_op_) {

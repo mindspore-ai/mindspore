@@ -49,7 +49,7 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 2;
     auto prim_name = primitive->name();
-    const int64_t input_num = input_args.size();
+    const int64_t input_num = SizeToLong(input_args.size());
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
 
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];

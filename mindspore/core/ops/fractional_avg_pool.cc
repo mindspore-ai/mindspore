@@ -91,7 +91,7 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(x_shape.size()), kEqual, x_rank, op_name);
   std::vector<int64_t> out_shape(x_rank);
   for (int i = 0; i < x_rank; ++i) {
-    out_shape[IntToSize(i)] = x_shape[i] == abstract::Shape::kShapeDimAny
+    out_shape[IntToSize(i)] = x_shape[IntToSize(i)] == abstract::Shape::kShapeDimAny
                                 ? abstract::Shape::kShapeDimAny
                                 : static_cast<int64_t>(std::floor(x_shape[IntToSize(i)] / pooling_ratio[IntToSize(i)]));
   }

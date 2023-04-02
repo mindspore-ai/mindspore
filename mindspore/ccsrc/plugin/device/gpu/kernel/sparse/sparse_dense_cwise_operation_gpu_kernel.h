@@ -38,7 +38,6 @@ class SparseDenseCwiseOperationGpuKernelMod : public NativeGpuKernelMod,
   SparseDenseCwiseOperationGpuKernelMod() {
     dimension_ = 0;
     value_num_ = 0;
-    // dense_dims_ = 0;
     dense_num_ = 1;
     is_null_input_ = false;
     data_unit_size_ = 0;

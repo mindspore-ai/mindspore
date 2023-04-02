@@ -99,7 +99,7 @@ void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::v
   (void)valid_y_shape.emplace_back(batch_size);
   const int64_t kNumZero = 0;
   if (num_proj > kNumZero) {
-    valid_y_shape.emplace_back(std::min(hidden_size, num_proj));
+    (void)valid_y_shape.emplace_back(std::min(hidden_size, num_proj));
   } else {
     (void)valid_y_shape.emplace_back(hidden_size);
   }
