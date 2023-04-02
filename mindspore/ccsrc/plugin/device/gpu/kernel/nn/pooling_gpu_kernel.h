@@ -121,6 +121,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     if (kernel_name_ == kAvgPool3D) {
       divisor_override_ = GetValue<int64_t>(prim->GetAttr("divisor_override"));
       ceil_mode_ = GetValue<bool>(prim->GetAttr("ceil_mode"));
+      AvgPool3DPadListCheck(base_operator);
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
     data_format_ = mindspore::FormatEnumToString(inputs[0]->GetFormat());
@@ -397,6 +398,24 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       }
     }
     return edge_kernel;
+  }
+
+  void AvgPool3DPadListCheck(const BaseOperatorPtr &base_operator) {
+    auto prim = base_operator->GetPrim();
+    auto pad_mode = GetValue<std::string>(prim->GetAttr("pad_mode"));
+    if (pad_mode == kSamePadModeUpperCase || pad_mode == kSamePadModeLowerCase || pad_mode == kValidPadModeUpperCase ||
+        pad_mode == kValidPadModeLowerCase) {
+      return;
+    }
+
+    const size_t kPadScale = 2;
+    const std::vector<int64_t> &pad_list = GetValue<std::vector<int64_t>>(prim->GetAttr("pad_list"));
+    for (size_t idx = 0; idx < pad_list.size(); idx += kPadScale) {
+      if (pad_list[idx] != pad_list[idx + 1]) {
+        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad[" << idx << "] and pad[" << (idx + 1)
+                          << "] must be equal, but got " << pad_list[idx] << " and " << pad_list[idx + 1];
+      }
+    }
   }
 
   cudnnHandle_t cudnn_handle_;
