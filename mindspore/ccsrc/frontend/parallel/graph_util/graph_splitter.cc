@@ -142,7 +142,7 @@ AnfNodePtr CreateReplacedOutputNode(const FuncGraphPtr &func_graph, const AnfNod
       const auto tuple_input = real_output->cast<CNodePtr>()->input(i + kSizeOne);
       if (tuple_input->isa<Parameter>() || tuple_input->isa<ValueNode>()) {
         MS_LOG(INFO) << "Use " << tuple_input->DebugString() << " as replaced output.";
-        tuple_inputs.emplace_back(tuple_input);
+        (void)tuple_inputs.emplace_back(tuple_input);
         continue;
       }
 
@@ -451,7 +451,7 @@ CNodePtrList GetSideEffectNodeList(const AnfNodePtrList &nodes) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(prim);
     if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM)) {
-      side_effect_nodes.emplace_back(cnode);
+      (void)side_effect_nodes.emplace_back(cnode);
       MS_LOG(DEBUG) << "CNode with side effect mem: " << cnode->fullname_with_scope();
     }
   }
@@ -501,7 +501,7 @@ CNodePtr CreateUpdateStateNode(const FuncGraphPtr &func_graph, const AnfNodePtrL
   ValueNodePtr umonad_input = CreateUMonadNode();
   MS_EXCEPTION_IF_NULL(umonad_input);
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimUpdateState), umonad_input};
-  inputs.insert(inputs.end(), update_state_inputs.begin(), update_state_inputs.end());
+  (void)inputs.insert(inputs.end(), update_state_inputs.begin(), update_state_inputs.end());
 
   auto update_state_node = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(update_state_node);
@@ -531,11 +531,11 @@ std::map<AnfNodePtr, AnfNodePtrSet> FilterDependencyToTargetNode(const FuncGraph
       // If the input is stored already, this means it depends on some of target nodes, so we expand its inputs and
       // insert them.
       if (depend_matrix.count(input) != 0) {
-        depend_matrix[node].insert(depend_matrix[input].begin(), depend_matrix[input].end());
+        (void)depend_matrix[node].insert(depend_matrix[input].begin(), depend_matrix[input].end());
       }
       // If input itself is in target nodes set, insert it as well.
       if (target_nodes.count(input) != 0) {
-        depend_matrix[node].insert(input);
+        (void)depend_matrix[node].insert(input);
       }
     }
   }
@@ -559,12 +559,12 @@ AnfNodePtrSet UpdateDependedSet(const AnfNodePtr &new_node, const AnfNodePtrSet 
       MS_LOG(DEBUG) << "Replace old node " << stored_node->fullname_with_scope() << " with new node "
                     << new_node->fullname_with_scope();
       updated.erase(stored_node);
-      updated.insert(new_node);
+      (void)updated.insert(new_node);
     }
   }
   if (is_independent) {
     MS_LOG(DEBUG) << "Add new node to depended set " << new_node->fullname_with_scope();
-    updated.insert(new_node);
+    (void)updated.insert(new_node);
   }
   return updated;
 }
@@ -615,7 +615,7 @@ FusedInterProcessOpPairMap ParameterServerMode::DoRpcNodeFusion(InterProcessOpEd
   // The rest of the edges are not fused like edges for EmbeddingLookup, but the FusedInterProcessOpPairMap object
   // should be created.
   FusedInterProcessOpPairMap rest_edges = FilterNotServerOptimizerEdges(*comm_edges_ptr);
-  optimizer_fused_edges.insert(rest_edges.cbegin(), rest_edges.cend());
+  (void)optimizer_fused_edges.insert(rest_edges.cbegin(), rest_edges.cend());
   return optimizer_fused_edges;
 }
 
@@ -1462,7 +1462,7 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOperators() {
 
     // Generating send/recv nodes for each nodes' inputs will be enough.
     auto node_inputs_comm_edges = GenerateInterProcessOpsForNodeInputs(node);
-    comm_edges.insert(node_inputs_comm_edges.cbegin(), node_inputs_comm_edges.cend());
+    (void)comm_edges.insert(node_inputs_comm_edges.cbegin(), node_inputs_comm_edges.cend());
   }
   MS_LOG(INFO) << "The communication edge number is " << comm_edges.size();
   return comm_edges;
@@ -1522,7 +1522,7 @@ void GraphSplitter::AddDataSyncNode(const CNodePtr &side_effect_node, const CNod
                     << ", side-effect node label: " << side_effect_node_label.to_string()
                     << ", user node label: " << node_labels_[user_node].to_string();
       if (node_labels_[user_node] != side_effect_node_label) {
-        diff_labels.insert(node_labels_[user_node]);
+        (void)diff_labels.insert(node_labels_[user_node]);
       } else {
         // If the user node is Load, we need to find one next user of it so the node could be correctly split.
         if (IsPrimitiveCNode(user_node, prim::kPrimLoad)) {
@@ -1531,7 +1531,7 @@ void GraphSplitter::AddDataSyncNode(const CNodePtr &side_effect_node, const CNod
             MS_LOG(DEBUG) << "Load user is " << load_user_node
                           << ", label: " << node_labels_[load_user_node].to_string();
             if (node_labels_[load_user_node] != side_effect_node_label) {
-              diff_labels.insert(node_labels_[load_user_node]);
+              (void)diff_labels.insert(node_labels_[load_user_node]);
             }
           }
         }
@@ -1564,8 +1564,8 @@ DataSyncNodePairList GraphSplitter::CreateDataSyncNodes(const CNodePtr &side_eff
     // Data sync src node.
     std::vector<AnfNodePtr> sync_src_node_inputs = {
       NewValueNode(std::make_shared<Primitive>(distributed::kDataSyncSrcOpName))};
-    sync_src_node_inputs.emplace_back(ref);
-    sync_src_node_inputs.emplace_back(side_effect_node);
+    (void)sync_src_node_inputs.emplace_back(ref);
+    (void)sync_src_node_inputs.emplace_back(side_effect_node);
     CNodePtr sync_src_node = func_graph_->NewCNode(sync_src_node_inputs);
     MS_EXCEPTION_IF_NULL(sync_src_node);
     sync_src_node->set_abstract(ref->abstract());
@@ -1574,7 +1574,7 @@ DataSyncNodePairList GraphSplitter::CreateDataSyncNodes(const CNodePtr &side_eff
     // Data sync dst node.
     std::vector<AnfNodePtr> sync_dst_node_inputs = {
       NewValueNode(std::make_shared<Primitive>(distributed::kDataSyncDstOpName))};
-    sync_dst_node_inputs.emplace_back(sync_src_node);
+    (void)sync_dst_node_inputs.emplace_back(sync_src_node);
     CNodePtr sync_dst_node = func_graph_->NewCNode(sync_dst_node_inputs);
     MS_EXCEPTION_IF_NULL(sync_dst_node);
     auto fake_value = CreateFakeValueNode(false);
@@ -1591,8 +1591,8 @@ DataSyncNodePairList GraphSplitter::CreateDataSyncNodes(const CNodePtr &side_eff
 }
 
 void GraphSplitter::AddControlEdgeForProcessWithoutIndegree() {
-  std::for_each(node_labels_.begin(), node_labels_.end(),
-                [this](const auto &node_label_pair) { all_labels_.insert(node_label_pair.second); });
+  (void)std::for_each(node_labels_.begin(), node_labels_.end(),
+                      [this](const auto &node_label_pair) { (void)all_labels_.insert(node_label_pair.second); });
 
   std::set<OperatorLabel> labels_has_indegree;
   AnfNodePtrList all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
@@ -1608,7 +1608,7 @@ void GraphSplitter::AddControlEdgeForProcessWithoutIndegree() {
         MS_LOG(DEBUG) << "Label " << node_labels_[cnode].to_string() << " has indegree from label "
                       << node_labels_[input].to_string() << ", edge: " << input->fullname_with_scope() << " to "
                       << cnode->fullname_with_scope();
-        labels_has_indegree.insert(node_labels_[cnode]);
+        (void)labels_has_indegree.insert(node_labels_[cnode]);
       }
     }
   }
@@ -1618,18 +1618,18 @@ void GraphSplitter::AddControlEdgeForProcessWithoutIndegree() {
     // If this label has no indegree, add extra control edge nodes.
     if (labels_has_indegree.count(label) == 0) {
       ControlEdgeNodePair control_edge_nodes = CreateControlEdgeNode(default_label_, label);
-      control_edge_node_pair_list.emplace_back(control_edge_nodes);
+      (void)control_edge_node_pair_list.emplace_back(control_edge_nodes);
     }
   }
 
   if (!control_edge_node_pair_list.empty()) {
     // Connect the dangling control dst nodes to the output.
     AnfNodePtrList make_tuple_inputs;
-    std::for_each(control_edge_node_pair_list.begin(), control_edge_node_pair_list.end(),
-                  [&make_tuple_inputs](const auto &node_pair) {
-                    CNodePtr control_dst_node = node_pair.second;
-                    make_tuple_inputs.emplace_back(control_dst_node);
-                  });
+    (void)std::for_each(control_edge_node_pair_list.begin(), control_edge_node_pair_list.end(),
+                        [&make_tuple_inputs](const auto &node_pair) {
+                          CNodePtr control_dst_node = node_pair.second;
+                          (void)make_tuple_inputs.emplace_back(control_dst_node);
+                        });
 
     // Make tuple for all control-edge dst nodes.
     MS_EXCEPTION_IF_NULL(func_graph_);
@@ -1972,8 +1972,8 @@ void GraphSplitter::AddDependencyBetweenEdges(const InterProcessOpEdgesInfo &com
     if (edge_info.src_label == this_process_label_) {
       const AnfNodePtr &send_src_node = edge_info.src_node;
       const AnfNodePtr &rpc_send_node = std::get<0>(op_pair);
-      send_src_nodes.insert(send_src_node);
-      src_nodes_to_send_nodes[send_src_node].insert(rpc_send_node);
+      (void)send_src_nodes.insert(send_src_node);
+      (void)src_nodes_to_send_nodes[send_src_node].insert(rpc_send_node);
       is_send_node_hung[rpc_send_node] = true;
 
       MS_LOG(DEBUG) << "Out degree edge: " << edge_info.to_string() << ". Send src node "
@@ -2002,7 +2002,7 @@ void GraphSplitter::AddDependencyBetweenEdges(const InterProcessOpEdgesInfo &com
   for (const auto &is_hung : is_send_node_hung) {
     if (is_hung.second) {
       MS_LOG(INFO) << "RpcSend node: " << is_hung.first->fullname_with_scope() << " is hung.";
-      hung_nodes_list.emplace_back(is_hung.first);
+      (void)hung_nodes_list.emplace_back(is_hung.first);
     }
   }
   if (!hung_nodes_list.empty()) {
@@ -2156,7 +2156,7 @@ void GraphSplitter::AddSendRecvDependency(const InterProcessOpEdgesInfo &in_degr
       const AnfNodePtrSet &rpc_send_nodes = src_nodes_to_send_nodes.at(send_src_node);
       for (const auto &rpc_send : rpc_send_nodes) {
         (*is_send_node_hung)[rpc_send] = false;
-        rpc_send_list.emplace_back(rpc_send);
+        (void)rpc_send_list.emplace_back(rpc_send);
       }
     }
     if (!rpc_send_list.empty()) {

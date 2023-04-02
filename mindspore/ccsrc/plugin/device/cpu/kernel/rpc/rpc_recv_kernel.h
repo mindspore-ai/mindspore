@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_RECV_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_RECV_KERNEL_H_
 
-#include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/rpc/rpc_kernel.h"
 
