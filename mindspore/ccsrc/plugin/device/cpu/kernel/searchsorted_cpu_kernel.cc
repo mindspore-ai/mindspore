@@ -108,20 +108,6 @@ void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                       << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
                       << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
   }
-
-  auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
-  int list_count = accumulate(sequence_shape_.begin(), sequence_shape_.end() - 1, 1, std::multiplies<int>());
-  auto task = [this, &sequence](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      for (size_t j = 0; j < search_len_ - 1; j++) {
-        if (sequence[i * search_len_ + j] > sequence[i * search_len_ + j + 1]) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input sequence must be forward sequence. But got "
-                            << sequence[i * search_len_ + j] << '>' << sequence[i * search_len_ + j + 1];
-        }
-      }
-    }
-  };
-  ParallelLaunchAutoSearch(task, IntToSize(list_count), this, &parallel_search_info_);
 }
 
 std::vector<std::pair<KernelAttr, SearchSortedCpuKernelMod::SearchSortedFunc>> SearchSortedCpuKernelMod::func_list_ = {
