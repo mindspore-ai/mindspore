@@ -45,7 +45,7 @@ class AotExtra {
   const std::vector<size_t> &WorkSpace() const { return workspace_; }
 
   void SetKernelData(AotKernelData *kernel_data) { kernel_data_ = kernel_data; }
-  AotKernelData *KernelData() const { return kernel_data_; }
+  const AotKernelData *KernelData() const { return kernel_data_; }
 
   void DestructKernelData() {
     delete kernel_data_;
