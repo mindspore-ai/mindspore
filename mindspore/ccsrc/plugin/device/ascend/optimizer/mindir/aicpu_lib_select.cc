@@ -70,7 +70,6 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kComplexAbsOpName,
   mindspore::kConcatOpName,
   mindspore::kCosOpName,
-  mindspore::kCountNonZeroOpName,
   mindspore::kCumulativeLogsumexpOpName,
   mindspore::kCumProdOpName,
   mindspore::kCSRSparseMatrixToDenseOpName,

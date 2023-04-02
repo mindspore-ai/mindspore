@@ -180,7 +180,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.Cdist
     mindspore.ops.EditDistance
     mindspore.ops.LpNorm
-    mindspore.ops.Pdist
 
 采样算子
 ^^^^^^^^^^
