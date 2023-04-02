@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
   const std::set<TypePtr> valid_indices_types = {kInt16, kInt32, kInt64};
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kScatterNdInputsNum, name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, SizeToLong(kScatterNdInputsNum), name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), valid_indices_types, name);
   auto shape_type = input_args[kInputIndex2]->BuildType();
   if (!shape_type->isa<TensorType>()) {
