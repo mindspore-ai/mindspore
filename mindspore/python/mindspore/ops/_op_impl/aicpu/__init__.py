@@ -21,7 +21,6 @@ from .tile import _tile_aicpu
 from .tanh import _tanh_aicpu
 from .less import _less_aicpu
 from .add import _add_aicpu
-from .abs import _abs_aicpu
 from .sparse_matrix_transpose import _sparse_matrix_transpose_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
 from .sparse_dense_cwise_mul import _sparse_dense_cwise_mul_aicpu
