@@ -50,6 +50,7 @@ from mindspore.profiler.parser.hccl_parser import HcclParser
 from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
+from mindspore.common.api import _pynative_executor
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -337,6 +338,10 @@ class Profiler:
         """
         if self._msprof_enable:
             return
+
+        # Stop data collection after all operators are executed.
+        _pynative_executor.sync()
+
         Profiler._has_initialized = False
         self._dynamic_status = self._profiler_manager.dynamic_status()
         _environment_check()
@@ -461,6 +466,7 @@ class Profiler:
         """
         if self._msprof_enable:
             return
+
         if self._has_started:
             self._has_started = False
         else:
@@ -470,6 +476,10 @@ class Profiler:
         # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():
             return
+
+        # Stop data collection after all operators are executed.
+        _pynative_executor.sync()
+
         if self._data_process:
             self._md_profiler.stop()
             self._md_profiler.save(self._output_path)
