@@ -31,7 +31,7 @@ namespace kernel {
 class AkgCpuKernelManager {
  public:
   AkgCpuKernelManager() = default;
-  ~AkgCpuKernelManager();
+  virtual ~AkgCpuKernelManager();
 
   void *GetFunction(const std::string &kernel_name);
   virtual void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,

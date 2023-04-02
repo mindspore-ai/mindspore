@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BISHENG_CPU_BISHENG_CPU_KERNEL_BUILD_H_
 #include <string>
-#include <utility>
 #include <vector>
 #include "kernel/akg/akg_kernel_build.h"
 #include "kernel/akg/akg_kernel_build_manager.h"
@@ -38,7 +37,7 @@ class BishengCpuKernelBuilder : public AkgKernelBuilder {
     return;
   };
   void BishengSetKernelMod(const string &kernel_name, const AkgKernelJsonGenerator &json_generator,
-                           const AnfNodePtr &anf_node);
+                           const AnfNodePtr &anf_node) const;
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
   bool ParallelBuild(const std::vector<JsonNodePair> &json_and_node) override;
 };

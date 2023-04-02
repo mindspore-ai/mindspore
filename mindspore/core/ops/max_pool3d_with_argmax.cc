@@ -211,25 +211,31 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   int64_t factor = 2;
   // math: out = ((input + 2 * pad - dilation * (ksize - 1) - 1) / stride) + 1;
   if (GetValue<bool>(prim->GetAttr("ceil_mode")) == false) {
-    D_out = std::floor(static_cast<float>(D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - 1) /
-                         static_cast<float>(strides[kAttrD]) +
-                       1);
-    H_out = std::floor(static_cast<float>(H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1) /
-                         static_cast<float>(strides[kAttrH]) +
-                       1);
-    W_out = std::floor(static_cast<float>(W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1) /
-                         static_cast<float>(strides[kAttrW]) +
-                       1);
+    D_out = static_cast<int>(
+      std::floor(static_cast<float>(D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - 1) /
+                   static_cast<float>(strides[kAttrD]) +
+                 1));
+    H_out = static_cast<int>(
+      std::floor(static_cast<float>(H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1) /
+                   static_cast<float>(strides[kAttrH]) +
+                 1));
+    W_out = static_cast<int>(
+      std::floor(static_cast<float>(W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1) /
+                   static_cast<float>(strides[kAttrW]) +
+                 1));
   } else {
-    D_out = std::ceil(static_cast<float>(D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - 1) /
-                        static_cast<float>(strides[kAttrD]) +
-                      1);
-    H_out = std::ceil(static_cast<float>(H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1) /
-                        static_cast<float>(strides[kAttrH]) +
-                      1);
-    W_out = std::ceil(static_cast<float>(W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1) /
-                        static_cast<float>(strides[kAttrW]) +
-                      1);
+    D_out = static_cast<int>(
+      std::ceil(static_cast<float>(D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - 1) /
+                  static_cast<float>(strides[kAttrD]) +
+                1));
+    H_out = static_cast<int>(
+      std::ceil(static_cast<float>(H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1) /
+                  static_cast<float>(strides[kAttrH]) +
+                1));
+    W_out = static_cast<int>(
+      std::ceil(static_cast<float>(W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1) /
+                  static_cast<float>(strides[kAttrW]) +
+                1));
     // The last pooling starts inside the image.
     if ((D_out - 1) * strides[kAttrD] >= D_in + pads[kAttrD]) {
       --D_out;

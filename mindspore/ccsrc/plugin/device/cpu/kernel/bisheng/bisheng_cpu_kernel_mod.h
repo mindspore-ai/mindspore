@@ -45,7 +45,7 @@ class BishengCpuKernelMod : public CpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *) override;
 
-  std::vector<KernelAttr> GetOpSupport() { return {}; }
+  std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
   static BishengCpuKernelManagerPtr kernel_manager_;
 
