@@ -38,6 +38,7 @@
 
 #ifdef _MSC_VER
 namespace {
+static constexpr size_t kGPUProfMaxMallocSize = 2 * 1024 * 1024;
 static int check_align(size_t align) {
   constexpr int step = 2;
   for (size_t i = sizeof(void *); i != 0; i *= step) {
@@ -49,6 +50,10 @@ static int check_align(size_t align) {
 }
 
 int posix_memalign(void **ptr, size_t align, size_t size) {
+  if (size > kGPUProfMaxMallocSize || size == 0) {
+    MS_LOG(ERROR) << "Malloc size is failed.";
+    return EINVAL;
+  }
   if (check_align(align)) {
     return EINVAL;
   }
