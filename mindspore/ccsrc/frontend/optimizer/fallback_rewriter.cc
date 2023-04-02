@@ -984,6 +984,10 @@ class AfterOptARewriter : public BaseRewriter {
     if (AnfUtils::IsRealKernel(cnode)) {
       return;
     }
+    constexpr auto vmap_prefix = "VmapRule";
+    if (cnode->scope() != nullptr && cnode->scope()->name().rfind(vmap_prefix) == 0) {
+      return;
+    }
     const auto &inputs = cnode->inputs();
     const auto &cur_func = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(cur_func);
