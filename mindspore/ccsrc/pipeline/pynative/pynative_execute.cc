@@ -98,6 +98,7 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
   op_run_info->async_status.is_ms_function_compiling = forward_executor()->is_ms_function_compiling();
+  op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
 
 py::object PyNativeExecutor::RunOpAsync(const py::args &args) const {

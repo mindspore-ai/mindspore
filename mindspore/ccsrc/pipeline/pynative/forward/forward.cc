@@ -234,7 +234,7 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
   }
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
-  if (!op_run_info->async_status.is_ms_function_compiling && grad()->custom_bprop_cell_count() <= 0) {
+  if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
 }

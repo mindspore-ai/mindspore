@@ -57,6 +57,7 @@ struct BaseOpRunInfo {
 struct AsyncStatus {
   bool disable_mix_precision{false};
   bool is_ms_function_compiling{false};
+  size_t custom_bprop_cell_count{0};
 };
 
 struct FrontendOpRunInfo {
