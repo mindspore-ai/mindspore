@@ -54,6 +54,7 @@ add_dependencies(gpu_distribution_collective fbs_src)
 file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/optimizer/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../extendrt/delegate/delegate_utils.cc
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.cc

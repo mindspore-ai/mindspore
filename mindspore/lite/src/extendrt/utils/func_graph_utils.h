@@ -34,11 +34,10 @@ namespace mindspore {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
 using kernel::BaseOperatorPtr;
 
-std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
-
 class FuncGraphUtils {
  public:
   static tensor::TensorPtr GetConstNodeValue(AnfNodePtr input_node);
+  static std::vector<common::KernelWithIndex> GetNodeInputs(const AnfNodePtr &anf_node);
 
   static bool GetCNodeOperator(const CNodePtr &cnode, BaseOperatorPtr *base_operator);
 
@@ -50,6 +49,11 @@ class FuncGraphUtils {
   static DataType GetTensorDataType(const AnfWithOutIndex &tensor);
   static ShapeVector GetTensorShape(const AnfWithOutIndex &tensor);
   static std::string GetTensorName(const AnfWithOutIndex &tensor);
+
+  static void GetFuncGraphInputsInfo(const FuncGraphPtr &graph, std::vector<tensor::TensorPtr> *inputs,
+                                     std::vector<std::string> *inputs_name);
+  static void GetFuncGraphOutputsInfo(const FuncGraphPtr &graph, std::vector<tensor::TensorPtr> *outputs,
+                                      std::vector<std::string> *output_names);
 
  private:
   static ValuePtr GetNodeValuePtr(AnfNodePtr input_node);

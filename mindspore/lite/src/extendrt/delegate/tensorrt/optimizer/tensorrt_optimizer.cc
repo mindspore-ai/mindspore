@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "extendrt/session/optimizer/tensorrt_optimizer.h"
+#include "extendrt/delegate/tensorrt/optimizer/tensorrt_optimizer.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "include/common/utils/anfalgo.h"
 
