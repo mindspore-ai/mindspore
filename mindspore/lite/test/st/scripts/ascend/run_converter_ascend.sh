@@ -10,8 +10,6 @@ function Run_Converter() {
     export LITE_HOME=$(pwd)
     echo "LITE_HOME:${LITE_HOME}"
 
-    # Prepare the config file list
-    local ascend_cfg_file_list=("$models_ascend_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:faile_not_return;
     Convert "${ascend_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $ascend_fail_not_return $compile_type
@@ -46,14 +44,19 @@ mkdir -p ${ms_models_path}
 model_data_path=/home/workspace/mindspore_dataset/mslite
 models_path=${model_data_path}/models/hiai
 
+ascend_cfg_file_list=()
 if [[ ${backend} =~ "lite" ]]; then
     compile_type="lite"
     models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
+    ascend_cfg_file_list=("$models_ascend_config")
 elif [[ ${backend} =~ "cloud" ]]; then
     compile_type="cloud"
     models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+    models_ascend_with_config=${benchmark_test}/models_with_config_cloud_ascend.cfg
+    ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_with_config")
     if [[ ${backend} =~ "_ge" ]]; then
         models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
+        ascend_cfg_file_list=("$models_ascend_config")
     fi
 fi
 
