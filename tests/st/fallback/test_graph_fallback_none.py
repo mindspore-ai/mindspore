@@ -154,7 +154,6 @@ def test_inner_function_has_not_return():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="No support assert.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -397,13 +396,12 @@ def test_none_is_inner_function_output():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_none_is_output_of_function_with_side_effect():
+def test_none_is_output_of_function_with_side_effect_is():
     """
     Feature: Support None.
     Description: Support None is the output of_function with side effect.
@@ -423,7 +421,42 @@ def test_none_is_output_of_function_with_side_effect():
             if self.func(x) is None:
                 self.param = self.param + 2 * x
             else:
-                self.param = self.param + 3 * x
+                self.param = self.param + 10 * x
+            return self.param
+
+    net = Net()
+    input_x = Tensor([1], dtype=mstype.int32)
+    res = net(input_x)
+    print("res:", res)
+    assert res == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_none_is_output_of_function_with_side_effect_equal():
+    """
+    Feature: Support None.
+    Description: Support None is the output of_function with side effect.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.param = Parameter(Tensor([1], dtype=mstype.int64), name="param")
+
+        def func(self, y):  # pylint: disable=R1711
+            if y == self.param:
+                self.param = y * 2
+            return None
+
+        def construct(self, x):
+            if self.func(x) == None:  # pylint: disable=C0121
+                self.param = self.param + 2 * x
+            else:
+                self.param = self.param + 10 * x
             return self.param
 
     net = Net()
@@ -714,3 +747,38 @@ def test_none_in_nest_tuple():
 
     out = foo()
     assert out == (None, ("a", None))
+
+
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parser_fallback_none_control_flow():
+    """
+    Feature: Support None.
+    Description: Support None is the return of sub_graph in control flow.
+    Expectation: No exception.
+    """
+    class NoneNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = ops.Add()
+
+        @jit
+        def func(self, z):
+            if z == 0:
+                out = None
+            else:
+                out = None
+            return out, z
+
+        def construct(self, x, y, z):
+            if self.func(z)[0] is None:
+                out = self.add(x, y)
+            else:
+                out = self.add(2 * x, y)
+            return out
+
+    net_ms = NoneNet()
+    res = net_ms(Tensor(1), Tensor(10), Tensor(100))
+    assert res == 11
