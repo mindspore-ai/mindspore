@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/core_ops.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore {

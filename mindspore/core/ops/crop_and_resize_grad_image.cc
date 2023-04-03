@@ -101,18 +101,17 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
         auto value = static_cast<int *>(output_size_tensor->data_c());
         MS_EXCEPTION_IF_NULL(value);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
-          if (value[i] > 0) {
-            if (value[i] > max_len) {
-              MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << max_len
-                                       << ", but got " << value[i]
-                                       << "! The value in output_size should be reduced or max_len should be increased";
-            }
-            output_size_value_vec[LongToSize(i)] = static_cast<int64_t>(value[LongToSize(i)]);
-          } else {
+          if (value[i] <= 0) {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
                                         "positive data, but got "
                                      << value[i];
           }
+          if (value[i] > max_len) {
+            MS_EXCEPTION(ValueError) << "The value in output_size must be no more than max length: " << max_len
+                                     << ", but got " << value[i]
+                                     << "! The value in output_size should be reduced or max_len should be increased";
+          }
+          output_size_value_vec[LongToSize(i)] = static_cast<int64_t>(value[LongToSize(i)]);
         }
         return std::make_shared<abstract::Shape>(output_size_value_vec);
       }

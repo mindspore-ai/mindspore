@@ -309,7 +309,7 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
       MS_LOG(DEBUG) << "For ReduceSum, it may wrong with a empty axis for dynamic rank case.";
     } else {
       for (int64_t i = 0; i < SizeToLong(shape.size()); i++) {
-        (void)real_axis.push_back(i);
+        real_axis.push_back(i);
       }
     }
   }
