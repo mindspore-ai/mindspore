@@ -56,7 +56,6 @@ int ArgMinMaxCPUKernel::ReSize() {
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto out_shape = out_tensors_.at(0)->shape();
   MS_CHECK_TRUE_MSG(out_shape.size() >= 0, RET_ERROR, "The out shape is invalid.");
-  CHECK_NULL_RETURN(out_shape.data());
   MS_CHECK_TRUE_MSG(static_cast<int>(out_shape.size()) <= COMM_SHAPE_SIZE, RET_ERROR, "The out_shape size invalid.");
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
   return RET_OK;
