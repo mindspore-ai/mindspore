@@ -882,15 +882,29 @@ def _primexpr(fn=None, get_instance=True, name=None, reuse_result=True):
     return deco
 
 
-_RUN_OP_ASYNC = True
+class _RunOpHook:
+    """Hook for run op"""
+
+    current = None
+
+    def __init__(self, hook):
+        self.hook = hook
+        self.old = _RunOpHook.current
+
+    def __enter__(self):
+        _RunOpHook.current = self
+        return self
+
+    def __exit__(self, *err):
+        _RunOpHook.current = self.old
 
 
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
-    if _RUN_OP_ASYNC:
+    if not _RunOpHook.current:
         stub = _pynative_executor.run_op_async(obj, args)
         return _convert_stub(stub)
-    return _run_op_sync(obj, op_name, args)
+    return _RunOpHook.current.hook(obj, args)
 
 
 @_wrap_func

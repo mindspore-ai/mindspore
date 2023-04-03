@@ -329,6 +329,7 @@ set(SUB_COMP
         frontend/optimizer
         frontend/parallel
         frontend/operator
+        frontend/expander
         pipeline/jit
         pipeline/pynative
         pybind_api

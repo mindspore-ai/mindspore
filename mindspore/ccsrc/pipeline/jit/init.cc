@@ -52,6 +52,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #endif
+#include "frontend/expander/packfunc/pack_expander.h"
 
 namespace py = pybind11;
 
@@ -127,6 +128,7 @@ void RegModule(py::module *m) {
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
 #endif
+  mindspore::expander::RegPackExpanderPy(m);
 }
 
 void RegModuleHelper(py::module *m) {
