@@ -22,6 +22,8 @@ int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (real_dst_count <= 0) {
     return NNACL_OK;
   }
-  Int8Concat(args->inputs_, args->output_, args->para_, args->axis_, real_dst_count, task_id);
+  Int8Concat(args->inputs_, args->output_, args->para_, args->axis_, real_dst_count, task_id, args->para_->input_num_,
+             args->para_->count_unit_, args->para_->after_axis_size, args->para_->input_shapes_,
+             args->para_->output_shapes_);
   return NNACL_OK;
 }

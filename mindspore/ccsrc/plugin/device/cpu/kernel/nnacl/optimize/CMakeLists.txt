@@ -4,7 +4,7 @@ set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(NNACL_DIR)
 
 ########################### optimized files ###########################
-file(GLOB FP16_C_SRC ${NNACL_DIR}/fp16/*.c)
+file(GLOB FP16_C_SRC ${NNACL_DIR}/fp16/*.c ${NNACL_DIR}/kernel/f16/*.c)
 if(PLATFORM_ARM32)
     file(GLOB FP16_NEON_SRC ${NNACL_DIR}/assembly/arm82_aarch32_fp16/*.S)
 else()
