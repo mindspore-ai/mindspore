@@ -4260,10 +4260,10 @@ def meshgrid(*inputs, indexing='xy'):
     Keyword Args:
         indexing (str, optional): Cartesian ('xy', default) or
             matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
-            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
-            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
+            inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
+            for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.  Default: 'xy'.
+            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing. Default: 'xy'.
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
