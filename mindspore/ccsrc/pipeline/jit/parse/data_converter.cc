@@ -723,7 +723,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
 
   data_converter::MakeProperNameToFuncGraph(func_graph, obj_id);
   data_converter::CacheObjectValue(obj_id, func_graph);
-  if (!obj_key.empty()) {
+  if (!obj_key.empty() && python_mod_get_parse_method == PYTHON_MOD_GET_PARSE_METHOD) {
     MS_LOG(DEBUG) << "Add graph: " << obj_key << ", func_graph: " << func_graph->ToString();
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
