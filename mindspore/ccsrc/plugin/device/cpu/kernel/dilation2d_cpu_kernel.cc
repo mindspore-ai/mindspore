@@ -98,14 +98,10 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
     pad_left = 0;
   }
   if (pad_mode_.compare("SAME") == 0 || pad_mode_.compare("same") == 0) {
-    int64_t pad_height =
-      SizeToLong((output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height) > 0
-        ? SizeToLong((output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height)
-        : 0;
-    int64_t pad_width =
-      SizeToLong((output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width) > 0
-        ? SizeToLong((output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width)
-        : 0;
+    int64_t pad_height = (output_height - 1) * stride_height + rate_height * (filter_height - 1) + 1 - input_height;
+    pad_height = pad_height >= 0 ? pad_height : 0;
+    int64_t pad_width = (output_width - 1) * stride_width + rate_width * (filter_width - 1) + 1 - input_width;
+    pad_width = pad_width >= 0 ? pad_width : 0;
     pad_top = pad_height / kValue2;
     pad_left = pad_width / kValue2;
   }
@@ -117,16 +113,16 @@ bool Dilation2DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
       for (size_t pos = 0; pos < output_plane_size; ++pos) {
         size_t pos_h = pos / output_width % output_height;
         size_t pos_w = pos % output_width;
-        size_t h_start = LongToSize(SizeToLong(pos_h * stride_height) - pad_top);
-        size_t w_start = LongToSize(SizeToLong(pos_w * stride_width) - pad_left);
+        int64_t h_start = SizeToLong(pos_h * stride_height) - pad_top;
+        int64_t w_start = SizeToLong(pos_w * stride_width) - pad_left;
 
         T max_val = std::numeric_limits<T>::lowest();
 
         for (size_t h = 0; h < filter_height; ++h) {
-          int64_t h_in = SizeToLong(h_start + h * rate_height);
+          int64_t h_in = h_start + SizeToLong(h * rate_height);
           if (h_in >= 0 && h_in < SizeToLong(input_height)) {
             for (size_t w = 0; w < filter_width; ++w) {
-              int w_in = SizeToInt(w_start + w * rate_width);
+              int64_t w_in = w_start + SizeToLong(w * rate_width);
               if (w_in >= 0 && w_in < SizeToLong(input_width)) {
                 T val = input[LongToSize(w_in) + input_width * (LongToSize(h_in) + input_height * (c + channel * n))] +
                         filter[w + filter_width * (h + filter_height * c)];
