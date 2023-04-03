@@ -45,6 +45,9 @@ bool IsMonadNode(const AnfNodePtr &node);
 bool IsSpecialType(const CNodePtr &cnode);
 int DetermineCertainOutputFormat(const CNodePtr &cnode, int index, Format *format);
 int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *format);
+int SetAbstractTensorInfo(const AbstractBasePtr &abstract);
+STATUS GetFormatSensitiveOpInsertIndex(const CNodePtr &cnode, std::vector<size_t> *insert_index);
+int ConvertAbstractFormatShape(const AbstractBasePtr &abstract, FormatTransNodeType perm);
 }  // namespace opt
 }  // namespace mindspore
 

@@ -46,11 +46,15 @@ class ToFormatBase : public Pass {
            opt::CheckPrimitiveType(node, prim::kPrimAdam);
   }
   static bool IsWeightNodeSensitive(const AnfNodePtr &node) { return IsConvFamilyNode(node) || IsOptimizerNode(node); }
+  STATUS RunPassOneNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+  STATUS HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+
+  virtual STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
 
  private:
   bool BasicProcess(const FuncGraphPtr &func_graph, bool main_graph);
   STATUS HandleGraphInput(const FuncGraphPtr &func_graph);
-  STATUS HandleGraphNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS InsertPostTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm);
   STATUS GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &perm, bool before,
@@ -61,13 +65,13 @@ class ToFormatBase : public Pass {
                                        const std::vector<int> &perm);
 
  protected:
-  virtual STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
   virtual void SetSensitiveOps() { sensitive_ops_ = GetToNCHWOpMap(); }
   virtual bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
                                              const ShapeVector &shape);
   virtual bool DecideWhetherInferShapeForNewNode() { return true; }
   virtual STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                                  schema::Format *dst_format) = 0;
+  STATUS NodeConvWeightFormatTrans(const FuncGraphPtr &graph, const CNodePtr &cnode);
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   ModelType save_type_ = kMindIR_Lite;

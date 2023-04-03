@@ -70,6 +70,7 @@
 #include "ops/strided_slice.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
+#include "tools/common/graph_util.h"
 
 namespace mindspore {
 namespace opt {
@@ -299,6 +300,89 @@ int DetermineCertainVarInputFormat(const CNodePtr &cnode, size_t index, Format *
   auto real_input_cnode = var_input_info.first;
   auto item_index = var_input_info.second;
   return DetermineCertainOutputFormat(real_input_cnode, item_index, format);
+}
+
+int SetAbstractTensorInfo(const AbstractBasePtr &abstract) {
+  if (!utils::isa<abstract::AbstractTensor>(abstract)) {
+    MS_LOG(ERROR) << "abstract is not a AbstractTensor";
+    return RET_ERROR;
+  }
+  if (abstract->isa<tensor::Tensor>()) {
+    MS_LOG(DEBUG) << "abstract have a tensor value.";
+    return RET_OK;
+  }
+  ShapeVector shape;
+  if (opt::FetchShapeFromAbstract(abstract, &shape) != RET_OK) {
+    MS_LOG(ERROR) << "FetchShapeFromAbstract failed.";
+    return RET_ERROR;
+  }
+  TypeId type = lite::GetAbstractTensorDtype(abstract->cast<abstract::AbstractTensorPtr>());
+
+  auto tensor_info = std::make_shared<tensor::Tensor>(type, shape);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "new tensor::Tensor failed";
+    return RET_ERROR;
+  }
+  abstract->set_value(tensor_info);
+  return RET_OK;
+}
+
+STATUS GetFormatSensitiveOpInsertIndex(const CNodePtr &cnode, std::vector<size_t> *insert_index) {
+  auto prim_node = cnode->input(0);
+  auto prim = GetValueNode<PrimitivePtr>(prim_node);
+  MS_ERROR_IF_NULL_W_RET_VAL(prim, lite::RET_ERROR);
+  MS_ERROR_IF_NULL_W_RET_VAL(insert_index, lite::RET_ERROR);
+  insert_index->clear();
+  if (ToNCHWOpMap.find(prim->name()) == ToNCHWOpMap.end()) {
+    return lite::RET_OK;
+  }
+
+  *insert_index = ToNCHWOpMap.at(prim->name());
+  if (insert_index->empty()) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimResizeGrad) && prim->GetAttr(ops::kMethod) != nullptr &&
+        GetValue<int64_t>(prim->GetAttr(ops::kMethod)) == static_cast<int64_t>(mindspore::ResizeMethod::NEAREST)) {
+      insert_index->push_back(1);
+    } else {
+      for (size_t i = 1; i < cnode->size(); ++i) {
+        insert_index->push_back(i);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int ConvertAbstractFormatShape(const AbstractBasePtr &abstract, FormatTransNodeType perm) {
+  ShapeVector shape;
+  if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch shape failed.";
+    return lite::RET_ERROR;
+  }
+  if (shape.size() != kInputSizeFour) {
+    MS_LOG(DEBUG) << "shape don't need to modify.";
+    return lite::RET_OK;
+  }
+  auto shape_value = abstract->BuildValue();
+  if (!shape_value->isa<tensor::Tensor>()) {
+    MS_LOG(ERROR) << "abstract must be a tensor, but got: " << shape_value->ToString() << ".";
+    return RET_ERROR;
+  }
+  auto input_tensor = shape_value->cast<tensor::TensorPtr>();
+  MS_CHECK_FALSE(input_tensor == nullptr, RET_ERROR);
+  if (perm == kNHWC2NCHW) {
+    if (input_tensor->data().const_data() != nullptr) {
+      (void)TransFilterFormat(input_tensor, schema::Format_KHWC, schema::Format_KCHW);
+    }
+    ShapeVector transfer_shape = {shape[0], shape[kInputIndexThree], shape[1], shape[kInputIndexTwo]};
+    abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
+  } else if (perm == kNCHW2NHWC) {
+    if (input_tensor->data().const_data() != nullptr) {
+      (void)TransFilterFormat(input_tensor, schema::Format_KCHW, schema::Format_KHWC);
+    }
+    ShapeVector transfer_shape = {shape[0], shape[kInputIndexTwo], shape[kInputIndexThree], shape[1]};
+    abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
+  }
+
+  return RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore

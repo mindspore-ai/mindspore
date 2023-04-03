@@ -428,6 +428,14 @@ constexpr size_t kFormatNC1HWC0IndexC1 = 1;
 constexpr size_t kFormatNC1HWC0IndexH = 2;
 constexpr size_t kFormatNC1HWC0IndexW = 3;
 constexpr size_t kFormatNC1HWC0IndexC0 = 4;
+constexpr int kSize0 = 0;
+constexpr int kSize1 = 1;
+constexpr int kSize2 = 2;
+constexpr int kSize3 = 3;
+constexpr int kSize4 = 4;
+constexpr int kSize5 = 5;
+constexpr int kSize6 = 6;
+constexpr int kSize7 = 7;
 enum Dims : size_t { kDim0 = 0, kDim1, kDim2, kDim3, kDim4, kDim5, kDim6, kDim7, kDim8 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_NAME_H_
