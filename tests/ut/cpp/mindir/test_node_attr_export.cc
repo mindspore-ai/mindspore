@@ -52,11 +52,9 @@ TEST_F(TestLoadExport, test_export_func) {
   // Renormalize func_graph to infer and set shape and type information.
   pipeline::ResourcePtr resource_ = std::make_shared<pipeline::Resource>();
   auto graph = pipeline::Renormalize(resource_, func_graph, {t->ToAbstract()});
-  auto str = GetBinaryProtoString(graph);
-  mind_ir::ModelProto model_;
-  model_.ParseFromString(str);
-  MSANFModelParser model_parser;
-  FuncGraphPtr dstgraph_ptr = model_parser.Parse(model_);
+  auto model_str = GetBinaryProtoString(graph);
+  MindIRLoader mindir_loader;
+  FuncGraphPtr dstgraph_ptr = mindir_loader.LoadMindIR(model_str.c_str(), model_str.size());
   auto return_node = dstgraph_ptr->output();
   auto load_relu = return_node->cast<CNodePtr>();
   auto test_primal_attr = load_relu->GetPrimalAttr("TestPrimalAttr");
