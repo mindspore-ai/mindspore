@@ -139,3 +139,25 @@ def test_tensor_isinstance():
     x = Tensor(1)
     out = func(x)
     assert out[0] and not out[1] and out[2]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_parameter_isinstance():
+    """
+    Feature: MSAdapter
+    Description: Test isinstance syntax
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x, y):
+        a = isinstance(x, Parameter)
+        b = isinstance(y, Tensor)
+        c = isinstance(y, Parameter)
+        return a, b, c
+
+    x = Tensor([1])
+    y = Parameter(Tensor([2]), name="val")
+    out = func(x, y)
+    assert not out[0] and out[1] and out[2]

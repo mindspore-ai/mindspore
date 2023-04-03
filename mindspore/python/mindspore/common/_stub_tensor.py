@@ -122,10 +122,6 @@ class StubTensor:
         return len(self.shape)
 
     @property
-    def adapter_flag(self):
-        return False
-
-    @property
     def strides(self):
         """strides stub."""
         return self.stub_sync().strides

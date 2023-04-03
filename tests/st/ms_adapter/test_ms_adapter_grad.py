@@ -39,13 +39,13 @@ def test_ms_adapter_grad():
         def construct(self, x, y, z):
             return x * y * z
 
-    x = Tensor([1, 2], mstype.int32)
-    y = Tensor([-2, 3], mstype.int32)
-    z = Tensor([0, 3], mstype.int32)
+    x = Tensor([1, 2], dtype=mstype.int32)
+    y = Tensor([-2, 3], dtype=mstype.int32)
+    z = Tensor([0, 3], dtype=mstype.int32)
     net = Net()
     output = grad(net, grad_position=(1, 2))(x, y, z)
 
-    grad_y = Tensor([0, 6], mstype.int32)
-    grad_z = Tensor([-2, 6], mstype.int32)
+    grad_y = Tensor([0, 6], dtype=mstype.int32)
+    grad_z = Tensor([-2, 6], dtype=mstype.int32)
     assert np.all(output[0].asnumpy() == grad_y.asnumpy())
     assert np.all(output[1].asnumpy() == grad_z.asnumpy())
