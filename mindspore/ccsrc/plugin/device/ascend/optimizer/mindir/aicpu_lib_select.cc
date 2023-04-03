@@ -52,6 +52,7 @@ static const std::unordered_set<std::string> kAICpuOpNames = {kDropoutGenMaskOpN
                                                               kReshapeOpName,
                                                               kFlattenOpName,
                                                               kSqueezeOpName,
+                                                              kUniformCandidateSamplerOpName,
                                                               kExpandDimsOpName};
 static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kAdaptiveAvgPool2DOpName,
