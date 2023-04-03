@@ -70,8 +70,8 @@ py::function CustomizedOpaquePredicate::get_function() {
   std::string func_name = func_names_[0];
   MS_LOG(DEBUG) << "Get function name: " << func_name;
   func_name_code_.clear();
-  std::transform(func_name.begin(), func_name.end(), std::back_inserter(func_name_code_),
-                 [](const char &item) { return static_cast<int>(item); });
+  (void)std::transform(func_name.begin(), func_name.end(), std::back_inserter(func_name_code_),
+                       [](const char &item) { return static_cast<int>(item); });
   if (func_name_code_.size() == 0) {
     MS_EXCEPTION(ValueError) << "Set func_name_code_ failed.";
   }
