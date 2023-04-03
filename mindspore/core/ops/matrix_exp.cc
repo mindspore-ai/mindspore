@@ -41,6 +41,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t kNumber1 = 1;
+constexpr int64_t kNumber2 = 2;
+}  // namespace
+
+namespace {
 abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
@@ -48,18 +53,16 @@ abstract::ShapePtr MatrixExpInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(x);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto x_rank = SizeToLong(x_shape.size());
-  constexpr int64_t number1 = 1;
-  constexpr int64_t number2 = 2;
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   if (!IsDynamicShape(x_shape)) {
-    if (x_shape[x_rank - number1] != x_shape[x_rank - number2]) {
+    if (x_shape[x_rank - kNumber1] != x_shape[x_rank - kNumber2]) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input expects a tensor of squared matrices"
                                << ", but got shape " << x_shape << ".";
     }
-    if (x_shape[x_rank - number1] < number1) {
+    if (x_shape[x_rank - kNumber1] < kNumber1) {
       MS_EXCEPTION(ValueError) << "For MatrixExp, the input x's last dimension must be at least 1.";
     }
   }
@@ -80,8 +83,7 @@ MIND_API_OPERATOR_IMPL(MatrixExp, BaseOperator);
 AbstractBasePtr MatrixExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kNumber1, primitive->name());
   auto infer_type = MatrixExpInferType(primitive, input_args);
   auto infer_shape = MatrixExpInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

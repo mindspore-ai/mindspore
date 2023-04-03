@@ -118,20 +118,20 @@ void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vec
   auto output_y = reinterpret_cast<T *>(outputs[1]->addr);
 
   size_t shape_size = shape_x_.size();
-  size_t m = shape_x_[shape_size - 1];
-  size_t size_mm = m * m;
+  int64_t m = shape_x_[shape_size - 1];
+  int64_t size_mm = m * m;
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
   using RealT = typename Eigen::NumTraits<T>::Real;
   if (size_mm > 0) {
-    size_t input_num = 1;
+    int64_t input_num = 1;
     for (size_t i = 0; i < shape_x_.size(); i++) {
       input_num *= shape_x_[i];
     }
-    size_t matrix_num = input_num / size_mm;
-    size_t data_size = input_num * sizeof(T);
+    int64_t matrix_num = input_num / size_mm;
+    int64_t data_size = input_num * sizeof(T);
 
     if (data_size <= kParallelDataNums) {
-      for (size_t i = 0; i < matrix_num; i++) {
+      for (int64_t i = 0; i < matrix_num; i++) {
         RealT log_abs_det = 0;
         T sign = 1;
         Eigen::Map<MartixXd> martix_x(input_x + i * m * m, m, m);
