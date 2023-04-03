@@ -11,7 +11,7 @@ mindspore.ops.MultinomialWithReplacement
         输入的行不需要求和为1（在这种情况下，使用值作为权重），但必须是非负的、有限的，并且具有非零和。
 
     参数：
-        - **num_samples** (int) - 抽取样本量，必须大于零。
+        - **numsamples** (int) - 抽取样本量，必须大于零。
         - **replacement** (bool，可选) - 是否有放回地抽取。默认值：False。
 
     输入：
@@ -20,4 +20,4 @@ mindspore.ops.MultinomialWithReplacement
         - **offset** (int) - 为避免种子冲突设置的偏移量。支持的dtype：int64。
 
     输出：
-        Tensor，具有与输入相同的行。每行的采样索引数为 `num_samples` 。
+        Tensor，具有与输入相同的行。每行的采样索引数为 `numsamples` 。

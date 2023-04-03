@@ -6915,7 +6915,7 @@ class Bernoulli(Primitive):
 
     Examples:
         >>> input_x = Tensor([0.1, 0.2, 0.3], mindspore.float32)
-        >>> bernoulli = Bernoulli()
+        >>> bernoulli = ops.Bernoulli()
         >>> output = bernoulli(input_x, Tensor([1.0]))
         >>> print(output)
         [1. 1. 1.]

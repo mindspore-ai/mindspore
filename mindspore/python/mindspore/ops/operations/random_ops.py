@@ -877,8 +877,8 @@ class MultinomialWithReplacement(Primitive):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        - **numsamples** (int) - number of samples to draw, must be a nonnegative number.
-        - **replacement** (bool, optional) - Whether to draw with replacement or not. Default: False.
+        numsamples (int): number of samples to draw, must be a nonnegative number.
+        replacement (bool, optional): Whether to draw with replacement or not. Default: False.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
@@ -1015,9 +1015,10 @@ class RandomShuffle(Primitive):
     Randomly shuffles a Tensor along its first dimension.
 
     Args:
-        seed (int): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator will be seeded
-            by the given seed. Otherwise, it will be seeded randomly. The `seed` must be non-negative. Default: 0.
-        seed2 (int): A second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
+        seed (int, optional): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator
+            will be seeded by the given seed. Otherwise, it will be seeded randomly.
+            The `seed` must be non-negative. Default: 0.
+        seed2 (int, optional): A second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
             the seed of the random generator. It must be non-negative. Default: 0.
 
     Inputs:
