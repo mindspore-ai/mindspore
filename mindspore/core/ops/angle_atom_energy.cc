@@ -100,8 +100,8 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
 
  private:
   static constexpr size_t kInputNum = 7;
-  static constexpr size_t kTwo = 2;
-  static constexpr size_t kThree = 3;
+  static constexpr int64_t kTwo = 2;
+  static constexpr int64_t kThree = 3;
 };
 
 void AngleAtomEnergy::Init(const int64_t angle_numbers) { this->set_angle_numbers(angle_numbers); }
