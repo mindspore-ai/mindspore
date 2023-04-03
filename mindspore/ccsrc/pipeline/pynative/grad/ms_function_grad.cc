@@ -47,24 +47,27 @@ const mindspore::HashSet<std::string> kNotRealOP{
 };
 
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
-                                  ValuePtr *added_out_v) {
-  // Get actual output value and added output value.
-  if (!py::isinstance<py::tuple>(out)) {
-    MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
-  }
-  auto tuple_out = py::cast<py::tuple>(out);
-  constexpr size_t tuple_out_size = 2;
-  if (tuple_out.size() != tuple_out_size) {
-    MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
-  }
-  MS_EXCEPTION_IF_NULL(added_out_v);
-  // Forward output of op in ms_function graph
-  *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
+                                  bool modify_output, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   op_run_info->base_op_run_info.op_name = graph_phase;
-  // Output of ms_function
-  op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
+  if (modify_output) {
+    if (!py::isinstance<py::tuple>(out)) {
+      MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
+    }
+    auto tuple_out = py::cast<py::tuple>(out);
+    constexpr size_t tuple_out_size = 2;
+    if (tuple_out.size() != tuple_out_size) {
+      MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
+    }
+    MS_EXCEPTION_IF_NULL(added_out_v);
+    // Forward output of op in ms_function graph
+    *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
+    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
+  } else {
+    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out);
+  }
+
   op_run_info->base_op_run_info.abstract =
     PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract());
   op_run_info->grad_flag = true;
@@ -380,7 +383,9 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   // Step 1: Replace added cnode forward with actual output
-  ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph);
+  if (added_out_v != nullptr) {
+    ReplaceAddedCnodeActualOutput(grad_executor, added_out_v, ms_func_graph, grad_graph);
+  }
 
   // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
@@ -388,7 +393,9 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
-  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
+  if (added_out_v != nullptr) {
+    grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, added_out_v);
+  }
 
   // Change ms function graph to real output
   auto clone_ms_func_graph = BasicClone(ms_func_graph);
@@ -413,6 +420,10 @@ void MsFunction::Reset() {
 
 FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  if (PyNativeAlgo::Common::IsControlFlowGraph(ms_func_graph)) {
+    MS_LOG(DEBUG) << "Get control flow";
+    return nullptr;
+  }
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};
   const auto &order = TopoSort(ms_func_graph->output());
@@ -432,6 +443,10 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
 
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
     const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
+    if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX) {
+      MS_LOG(DEBUG) << "Prim " << prim->name() << " is not support by expander";
+      return nullptr;
+    }
     // Check output used in bprop graph
     if (std::find(unused_inputs.begin(), unused_inputs.end(), cnode->size()) == unused_inputs.end()) {
       auto out = pynative::PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cnode->abstract());
@@ -473,8 +488,8 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
     graph_phase_.clear();
     return ret;
   }
-  ValuePtr added_out_v;
-  const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, &added_out_v);
+  ValuePtr added_out_v = nullptr;
+  const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, ms_func_graph->modify_output(), &added_out_v);
   FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
   is_not_support_by_expander_ = !grad_graph->has_flag(kFlagGraphGradByExpander);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);

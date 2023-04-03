@@ -1194,7 +1194,12 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
   MS_LOG(DEBUG) << "Try build custom bprop: " << prim->name();
   {
     py::gil_scoped_acquire gil;
-    py::function fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
+    auto prim_py = prim->cast<PrimitivePyPtr>();
+    if (prim_py == nullptr) {
+      MS_LOG(DEBUG) << "Prim is not PrimitivePy, can not find python bprop";
+      return;
+    }
+    py::function fn = prim_py->GetBpropFunction();
     if (py::isinstance<py::none>(fn)) {
       fn = GetBpropFunction(prim->name());
     }
@@ -1202,8 +1207,7 @@ void AutoGradCellImpl::BuildCustomBpropCNode(const CNodePtr &cnode, const Primit
       MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
       return;
     }
-    auto prim_py = prim->cast<PrimitivePyPtr>();
-    MS_EXCEPTION_IF_NULL(prim_py);
+
     (void)prim_py->AddBackwardHookFn(0, fn);
     prim_py->AddAttr("custom_op_bprop", MakeValue(true));
   }
