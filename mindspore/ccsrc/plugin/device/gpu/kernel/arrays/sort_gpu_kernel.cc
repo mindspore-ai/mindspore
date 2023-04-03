@@ -68,15 +68,15 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
 
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt<half>(intermediate_input_device, intermediate_output_device, input_size_,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  CalTranspose(input_size_, intermediate_input_device, input_shape_device, perm_device, input_rank_,
-               intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalTranspose<half>(input_size_, intermediate_input_device, input_shape_device, perm_device, input_rank_,
+                     intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
@@ -89,11 +89,11 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(transposed_shape_device, &transposed_shape_[0], workspace_size_list_[kIndex4],
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemcpyAsync for transposed_shape_ failed");
+    "cudaMemcpyAsync for transposed_shape_ while launching float16 kernel failed");
 
   // transpose the sorted output back to the original input shape
-  CalTranspose(input_size_, intermediate_input_device, transposed_shape_device, perm_device, input_rank_,
-               intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalTranspose<half>(input_size_, intermediate_input_device, transposed_shape_device, perm_device, input_rank_,
+                     intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   // transpose the indices back to the original input shape
   CalTranspose(input_size_, temp_indices_device, transposed_shape_device, perm_device, input_rank_, indices_device,
@@ -102,8 +102,8 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt<half>(intermediate_input_device, intermediate_output_device, input_size_,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   return true;
@@ -148,15 +148,15 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
 
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt<float>(intermediate_input_device, intermediate_output_device, input_size_,
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  CalTranspose(input_size_, intermediate_input_device, input_shape_device, perm_device, input_rank_,
-               intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalTranspose<float>(input_size_, intermediate_input_device, input_shape_device, perm_device, input_rank_,
+                      intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
@@ -169,11 +169,11 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(transposed_shape_device, &transposed_shape_[0], workspace_size_list_[kIndex4],
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemcpyAsync for transposed_shape_ failed");
+    "cudaMemcpyAsync for transposed_shape_ while launching float32 kernel failed");
 
   // transpose the sorted output back to the original input shape
-  CalTranspose(input_size_, intermediate_input_device, transposed_shape_device, perm_device, input_rank_,
-               intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalTranspose<float>(input_size_, intermediate_input_device, transposed_shape_device, perm_device, input_rank_,
+                      intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   // transpose the indices back to the original input shape
   CalTranspose(input_size_, temp_indices_device, transposed_shape_device, perm_device, input_rank_, indices_device,
@@ -182,8 +182,8 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    NegOpt(intermediate_input_device, intermediate_output_device, input_size_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    NegOpt<float>(intermediate_input_device, intermediate_output_device, input_size_,
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   return true;
