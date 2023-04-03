@@ -236,7 +236,7 @@ void GridSampler2DCpuKernelMod::Call2Half(const float16 *x_data_addr, float16 *y
 
 void GridSampler2DCpuKernelMod::NearestHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr,
                                             int64_t y_c, std::vector<int64_t> x_dims, int64_t *y_stride,
-                                            const int64_t *x_stride, int64_t x_ptr_NC, int64_t y_ptr_NCHW) {
+                                            const int64_t *x_stride, int64_t x_ptr_NC, int64_t y_ptr_NCHW) const {
   int64_t x_nearest = static_cast<int64_t>(std::nearbyint(x));
   int64_t y_nearest = static_cast<int64_t>(std::nearbyint(y));
   for (int64_t c = 0; c < y_c; ++c, x_ptr_NC += x_stride[1], y_ptr_NCHW += y_stride[1]) {
@@ -251,7 +251,7 @@ void GridSampler2DCpuKernelMod::NearestHalf(float x, float y, const float16 *x_d
 
 void GridSampler2DCpuKernelMod::BilinearHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr,
                                              int64_t y_c, std::vector<int64_t> x_dims, int64_t *y_stride,
-                                             int64_t *x_stride, int64_t x_ptr_NC, int64_t y_ptr_NCHW) {
+                                             int64_t *x_stride, int64_t x_ptr_NC, int64_t y_ptr_NCHW) const {
   int64_t x_tnw = static_cast<int64_t>(std::floor(x));
   int64_t y_tnw = static_cast<int64_t>(std::floor(y));
 

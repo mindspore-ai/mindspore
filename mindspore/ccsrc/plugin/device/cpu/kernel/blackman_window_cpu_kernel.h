@@ -43,7 +43,7 @@ class BlackmanWindowCpuKernelMod : public NativeCpuKernelMod {
   template <typename T, typename S>
   bool BlackmanWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
-                                const std::vector<kernel::AddressPtr> &outputs);
+                                const std::vector<kernel::AddressPtr> &outputs) const;
   bool periodic_{true};
   TypeId input_dtype{kTypeUnknown};
   using BlackmanWindowFunc =

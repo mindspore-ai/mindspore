@@ -222,7 +222,6 @@ class FractionalMaxPool3DWithFixedKsizeHelperGpuKernel : public GpuKernelHelperB
   int CheckKernelParam() override {
     ksize_ = attr_ptr_->ksize;
     output_shape_attr_ = attr_ptr_->output_shape;
-    // data_format_ = attr_ptr_->data_format;
     kernelsizeD_ = ksize_[kkernelsizeIndexD];
     kernelsizeH_ = ksize_[kkernelsizeIndexH];
     kernelsizeW_ = ksize_[kkernelsizeIndexW];

@@ -102,12 +102,12 @@ void UnionSparseIndicesAndValues(
   }
   // Handles leftovers; at most one loop runs.
   while (i < a_nnz) {
-    entries_to_copy->emplace_back(true, i);
+    (void)entries_to_copy->emplace_back(true, i);
     a_augmented_values->push_back(a_values(i++));
     b_augmented_values->push_back(kZero);
   }
   while (j < b_nnz) {
-    entries_to_copy->emplace_back(false, j);
+    (void)entries_to_copy->emplace_back(false, j);
     a_augmented_values->push_back(kZero);
     b_augmented_values->push_back(b_values(j++));
   }

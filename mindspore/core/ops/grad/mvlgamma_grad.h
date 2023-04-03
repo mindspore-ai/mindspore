@@ -35,11 +35,8 @@ class MIND_API MvlgammaGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(MvlgammaGrad);
   MvlgammaGrad() : BaseOperator(kNameMvlgammaGrad) { InitIOName({"y_grad", "x"}, {"x_grad"}); }
   void Init(const int64_t p = 0);
-  /// \brief Set p.
   void set_p(const int64_t p);
   int64_t get_p() const;
-  // ~MvlgammaGrad() = default;
-  // MS_DECLARE_PARENT(MvlgammaGrad, PrimitiveC);
 };
 
 MIND_API abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

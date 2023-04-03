@@ -51,7 +51,10 @@ inline bool CompareIndices(const I *a, const I *b, const size_t &len) {
 template <typename I, typename T>
 inline void CopyIndicesAndValue(I *dst_indices_addr, T *dst_values_addr, const I *src_indices_addr,
                                 const T *src_values_addr, const size_t &indices_size) {
-  (void)memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  auto ret = memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Execute memcpy_s failed.";
+  }
   *dst_values_addr = *src_values_addr;
 }
 
@@ -87,8 +90,8 @@ template <typename I, typename T>
 void QuickSortIndicesAndValues(I *__restrict indices_addr, T *__restrict values_addr, const size_t &indices_len,
                                const int64_t &left, const int64_t &right) {
   std::stack<int64_t> index_stk;
-  index_stk.emplace(right);
-  index_stk.emplace(left);
+  (void)index_stk.emplace(right);
+  (void)index_stk.emplace(left);
   I *indices_buff = new I[indices_len];
 
   while (!index_stk.empty()) {
@@ -99,12 +102,12 @@ void QuickSortIndicesAndValues(I *__restrict indices_addr, T *__restrict values_
     if (i < j) {
       int64_t k = Partition(indices_addr, values_addr, indices_buff, indices_len, i, j);
       if (k > i) {
-        index_stk.emplace(k - 1);
-        index_stk.emplace(i);
+        (void)index_stk.emplace(k - 1);
+        (void)index_stk.emplace(i);
       }
       if (j > k) {
-        index_stk.emplace(j);
-        index_stk.emplace(k + 1);
+        (void)index_stk.emplace(j);
+        (void)index_stk.emplace(k + 1);
       }
     }
   }

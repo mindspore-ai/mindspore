@@ -40,7 +40,6 @@ class NonMaxSuppressionV3HelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit NonMaxSuppressionV3HelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
       : GpuKernelHelperBase(kernel_name, device_id) {
-    // bound_ = 0;
     is_null_input_ = false;
     num_input = 0;
     u_num = 0;

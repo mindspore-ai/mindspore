@@ -44,7 +44,7 @@ void ComputeFuncMin(void *output_addr, void *input_addr) {
 }
 
 template <typename T>
-T SegmentMaxMinCPUKernelMod::GetInitValue() {
+T SegmentMaxMinCPUKernelMod::GetInitValue() const {
   static const std::map<std::string, T> SegmentMaxMinInitValueMap{{prim::kPrimSegmentMax->name(), static_cast<T>(0.0)},
                                                                   {prim::kPrimSegmentMin->name(), static_cast<T>(0.0)}};
   if (SegmentMaxMinInitValueMap.find(kernel_name_) == SegmentMaxMinInitValueMap.end()) {

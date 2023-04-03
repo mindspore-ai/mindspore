@@ -57,10 +57,10 @@ class MultinomialWithReplacementCpuKernelMod : public NativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
 
   template <typename T>
-  int64_t *TrueCompute(T *in, int64_t *out, T *RandomData, int64_t i, int64_t num_col_);
+  int64_t *TrueCompute(T *in, int64_t *out, T *RandomData, int64_t i, int64_t num_col_) const;
 
   template <typename T>
-  int64_t *FalseCompute(T *in, int64_t *out, T *RandomData, int64_t i, int64_t num_col_);
+  int64_t *FalseCompute(T *in, int64_t *out, T *RandomData, int64_t i, int64_t num_col_) const;
 
  private:
   random::MSPhiloxRandom generator_;
@@ -69,7 +69,7 @@ class MultinomialWithReplacementCpuKernelMod : public NativeCpuKernelMod {
   size_t used_result_index_ = random::MSPhiloxRandom::kResultElementCount;
 
   float RandFloat();
-  uint64_t New64();
+  uint64_t New64() const;
   void InitMSPhiloxRandom(int64_t seed, int64_t offset);
   uint32_t GenerateSingle();
 

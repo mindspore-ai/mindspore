@@ -158,11 +158,11 @@ bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     for (int64_t n = 0; n < IntToLong(num_sample); ++n) {
       auto rand_prob = static_cast<T_in>(dist(rng_));
       int64_t begin = 0;
-      int64_t end = num_col - 1;
+      int64_t end = SizeToLong(num_col - 1);
 
       while (end - begin > 0) {
         int64_t pivot = begin + (end - begin) / 2;
-        auto pivot_prob = cumulative_value[i * num_col + pivot];
+        auto pivot_prob = cumulative_value[i * num_col + LongToSize(pivot)];
         if (pivot_prob > rand_prob) {
           end = pivot;
         } else {

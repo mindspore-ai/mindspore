@@ -41,7 +41,7 @@ class CumulativeLogsumexpCpuKernelMod : public NativeCpuKernelMod {
 
   template <typename t>
   void CumulativeProcess(const t *input_data, t *output_data, const uint32_t outer, const uint32_t inner,
-                         const uint32_t depth);
+                         const uint32_t depth) const;
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

@@ -104,9 +104,12 @@ abstract::TupleShapePtr SparseApplyProximalAdagradInferShape(const PrimitivePtr 
 
   if (!(IsDynamic(lr_shape) || IsDynamic(l1_shape) || IsDynamic(l2_shape))) {
     const int64_t scalar_shape = 0;
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, scalar_shape, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, scalar_shape, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, scalar_shape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, scalar_shape,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kEqual, scalar_shape,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kEqual, scalar_shape,
+                                             prim_name);
   }
 
   abstract::ShapePtr var_shape_ptr = std::make_shared<abstract::Shape>(var_shape);

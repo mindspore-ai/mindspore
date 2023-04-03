@@ -69,10 +69,10 @@ class CombinedNonMaxSuppressionCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   size_t nms_perbath(float *, float *, float *, float *, float *, int *);
-  void regular_input2buffer(std::vector<std::vector<float>> *, const float *, const int) const;
+  void regular_input2buffer(std::vector<std::vector<float>> *const, const float *, const int) const;
   float IOU(std::vector<std::vector<float>> *const, const int, const int) const;
-  void non_max_suppression(std::vector<std::vector<float>> *, std::vector<float> *, std::vector<int> &) const;
-  void nms_perclass(float *, float *, std::vector<non_max_suppression_local::result_para> &, int &);
+  void non_max_suppression(std::vector<std::vector<float>> *const, std::vector<float> *const, std::vector<int> &) const;
+  void nms_perclass(float *, float *, std::vector<non_max_suppression_local::result_para> &, int &) const;
   void CheckInput();
   void CheckOutput();
 
@@ -80,7 +80,6 @@ class CombinedNonMaxSuppressionCpuKernelMod : public NativeCpuKernelMod {
   int num_boxes_ = 0;
   int q_ = 0;
   int num_class_ = 0;
-  // per batch size;
   int num_detection_ = 0;
   int max_total_size_ = 0;
   // The length of each type of selection defined by the user
