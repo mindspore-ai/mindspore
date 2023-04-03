@@ -320,7 +320,6 @@ class Conv2d(_Conv):
 def _check_input_3d(input_shape, op_name):
     if len(input_shape) != 3:
         raise ValueError(f"For '{op_name}', the dimension of input must be 3d, but got {len(input_shape)}.")
-    return None
 
 
 class Conv1d(_Conv):
@@ -502,7 +501,6 @@ class Conv1d(_Conv):
 def _check_input_5dims(input_shape, op_name):
     if len(input_shape) != 5:
         raise ValueError(f"For '{op_name}', the dimension of input must be 5d, but got {len(input_shape)}.")
-    return None
 
 
 class Conv3d(_Conv):

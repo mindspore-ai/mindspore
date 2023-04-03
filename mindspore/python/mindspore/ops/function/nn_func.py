@@ -4221,7 +4221,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 def _check_hinge_embedding_loss(shape, shape2, prim_name):
     if shape2 != shape:
         raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
-    return None
 
 
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
@@ -4299,7 +4298,6 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         if targets_dtype not in mstype.float_type:
             raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the second input must be float, but got "
                             f"{targets_dtype}.")
-        return None
 
     inputs_dtype = inputs.dtype
     _check(inputs_dtype)
@@ -4936,7 +4934,6 @@ def adaptive_avg_pool1d(input, output_size):
         if x_dtype not in [mstype.float16, mstype.float32]:
             raise TypeError(f"For adaptive_avg_pool1d, the input dtype must be float16 or float32, " \
                             f"but got {x_dtype}.")
-        return None
 
     _check(input, output_size)
     x_in_shape = input.shape
@@ -5279,7 +5276,6 @@ def _check_pxiel_shuffle_valid(num, factor):
     if num % factor ** 2 != 0:
         raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
                          "by `upscale_factor` squared.")
-    return None
 
 
 def pixel_shuffle(input, upscale_factor):
@@ -5345,7 +5341,6 @@ def _check_pxiel_unshuffle_valid(num1, num2, factor):
     if num1 % factor != 0 or num2 % factor != 0:
         raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
                          "by downscale_factor.")
-    return None
 
 
 def pixel_unshuffle(input, downscale_factor):
@@ -5798,7 +5793,6 @@ def _shape_check(in_shape, dim_list, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(in_shape) not in dim_list:
         raise ValueError(f"{msg_prefix} input must has dim in {dim_list}, but got {len(in_shape)}")
-    return None
 
 
 def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):

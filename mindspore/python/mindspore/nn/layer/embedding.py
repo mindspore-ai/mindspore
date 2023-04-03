@@ -41,8 +41,7 @@ __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 @_primexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
-        raise TypeError(f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
-    return None
+        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
 
 
 @constexpr

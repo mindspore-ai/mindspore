@@ -124,7 +124,6 @@ def _check_input_4d(input_shape, param_name, func_name):
     if len(input_shape) != 4:
         raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 4d, "
                          f"but got {len(input_shape)}.")
-    return None
 
 
 @_primexpr
@@ -486,7 +485,6 @@ def _check_rank(rank, input_shape, param_name, func_name):
     def _check():
         if not (rank == 3 or rank == 4):
             raise ValueError(f"{func_name} {param_name} must be 3d or 4d, but got shape {input_shape}")
-        return None
     _check()
 
 

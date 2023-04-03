@@ -44,7 +44,6 @@ def _check_shape(shape):
                 raise TypeError("each entry in shape should be int.")
             if s < 0:
                 raise ValueError("each entry in shape should no less than 0.")
-        return None
 
     if not isinstance(shape, (int, tuple, list, Tensor, typing.Tuple, typing.List)):
         raise TypeError(f"only int, tuple, list and tensor are allowed for shape, but got {type(shape)}")
@@ -97,7 +96,6 @@ def _check_start_normalize(start, ndim):
         if start < -ndim or start > ndim:
             raise ValueError(f"For rollaxis, start {start} is out of bounds."
                              f"Ranging from {-ndim} to {ndim} is allowed.")
-        return None
     _check()
     if start < 0:
         start = start + ndim
@@ -141,7 +139,6 @@ def _infer_out_shape(*shapes):
     def _check():
         if any(not (item == 1 or item == max_size) for item in items):
             raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
-        return None
 
     shape_out = list()
     max_len = max([len(it) for it in shapes])
@@ -177,7 +174,6 @@ def _check_axis_in_range(axis, ndim):
             raise TypeError(f'axes should be integers, not {type(axis)}')
         if not -ndim <= axis < ndim:
             raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
-        return None
     _check()
     return axis - axis // ndim * ndim
 
@@ -191,7 +187,6 @@ def _check_axis_valid(axes, ndim):
     def _check(axes):
         if any(axes.count(el) > 1 for el in axes):
             raise ValueError('duplicate value in "axis"')
-        return None
 
     if axes is None:
         axes = F.make_range(ndim)
@@ -208,7 +203,6 @@ def _check_shape_aligned(shape1, shape2):
     """Checks shape1 and shape2 are valid shapes to perform inner product"""
     if shape1[-1] != shape2[-1]:
         raise ValueError(f'shapes {shape1} {shape2} not aligned: {shape1[-1]} (dim 0) != {shape2[-1]} (dim 0)')
-    return None
 
 
 @_primexpr
@@ -358,7 +352,6 @@ def _canonicalize_axis(axis, ndim):
     def _check():
         if not all(axis.count(el) <= 1 for el in axis):
             raise ValueError(f"duplicate axes in {axis}.")
-        return None
 
     if isinstance(axis, int):
         axis = [axis]

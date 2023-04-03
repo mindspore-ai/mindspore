@@ -449,7 +449,6 @@ def check_dense_input_shape(x, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x) < 2:
         raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
-    return None
 
 
 class Identity(Cell):
@@ -1040,7 +1039,6 @@ class Unfold(Cell):
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[1]}, "
                                  f"{arg_name}_col is {arg_val[2]}")
-            return None
 
         _check_tuple_or_list("ksize", ksizes, self.cls_name)
         _check_tuple_or_list("stride", strides, self.cls_name)

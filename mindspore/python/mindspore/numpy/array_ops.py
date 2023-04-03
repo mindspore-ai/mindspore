@@ -1289,7 +1289,6 @@ def broadcast_to(array, shape):
     def _check(shape_a, shape):
         if not _check_can_broadcast_to(shape_a, shape):
             _raise_value_error('cannot broadcast with ', shape)
-        return None
     shape_a = F.shape(array)
     _check(shape_a, shape)
     return _broadcast_to_shape(array, shape)

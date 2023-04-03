@@ -53,7 +53,6 @@ class _ScatterOp(PrimitiveWithInfer):
             raise ValueError(f"For '{prim_name}', "
                              f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
-        return None
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -134,7 +133,6 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
             raise ValueError(f"For '{prim_name}', "
                              f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
-        return None
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -164,7 +162,6 @@ class _ScatterNdOp(_ScatterOp):
             raise ValueError(f"For '{prim_name}', updates_shape = "
                              f"indices_shape[:-1] + x_shape[indices_shape[-1]:], but got x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
-        return None
 
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):

@@ -114,7 +114,6 @@ class ExtractImagePatches(Primitive):
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
                                  f"{arg_name}_col is {arg_val[3]}")
-            return None
 
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)

@@ -275,7 +275,6 @@ class _ConvNd(Cell):
     def _check_input_5dims(self, input_shape: tuple) -> None:
         if len(input_shape) != 5:
             raise ValueError(f"For {self.cls_name}, input should be 5 dims, but got shape {input_shape}.")
-        return None
 
 
 class Conv2d(_ConvNd):

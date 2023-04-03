@@ -137,7 +137,6 @@ def _get_broadcast_shape(x_shape, dst, axis_size):
         if dst < -broadcast_ndim or dst >= broadcast_ndim:
             _raise_value_error("Destination axis {} is out of bounds for array of dimension"
                                " [{}, {}).".format(dst, -broadcast_ndim, broadcast_ndim))
-        return None
 
     x_ndim = len(x_shape)
     broadcast_ndim = x_ndim + 1
