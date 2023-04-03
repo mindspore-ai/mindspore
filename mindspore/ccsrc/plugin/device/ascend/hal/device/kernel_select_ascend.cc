@@ -436,7 +436,18 @@ bool ProcessInputObjectType(const CNodePtr &cnode, const std::shared_ptr<kernel:
         }
         ++(*kernel_input_index);
       }
-
+      // For one element tuple, set the objecttype according to prevnode's output object type
+      if (index_inputs.size() == 1) {
+        auto prevnode_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
+        auto prevnode_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(prevnode_with_index.first);
+        if (prevnode_kernel_build_info != nullptr) {
+          auto prevnode_object_type = prevnode_kernel_build_info->GetOutputKernelObjectType(prevnode_with_index.second);
+          if (prevnode_object_type != kernel::KernelObjectType::UNKNOWN_TYPE) {
+            (*new_input_object_types).push_back(prevnode_object_type);
+            continue;
+          }
+        }
+      }
       (*new_input_object_types).push_back(kernel::KernelObjectType::TUPLE_UNFOLD);
     } else {
       auto node_object = node_inputs_object_type[input_index];
