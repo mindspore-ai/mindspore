@@ -213,7 +213,8 @@ TuplePtr DynamicGRUV2GradInferType(const PrimitivePtr &primitive, const std::vec
     (void)CheckAndConvertUtils::CheckTensorTypeValid("mask_dtype", mask_dtype, valid_types, prim_name);
   }
 
-  return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype});
+  return std::make_shared<Tuple>(
+    std::vector<TypePtr>{winput_dtype, whidden_dtype, init_h_dtype, init_h_dtype, x_dtype, init_h_dtype});
 }
 }  // namespace
 
