@@ -82,7 +82,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n"
                                 << " must be a int, but got " << n_value_ptr->ToString() << ".";
       }
-      n_val = GetValue<int64_t>(n_value_ptr);
+      n_val = GetValue<int32_t>(n_value_ptr);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n must be "

@@ -90,7 +90,7 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
     return Infer(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
     auto types = std::vector<TypePtr>{kInt64, kInt64};
     auto output_type = std::make_shared<Tuple>(types);
     return output_type;

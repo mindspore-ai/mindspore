@@ -89,7 +89,7 @@ class MIND_API CauchyInfer : public abstract::OpInferBase {
     return CauchyInferShape(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
     return std::make_shared<TensorType>(kFloat32);
   }
 };

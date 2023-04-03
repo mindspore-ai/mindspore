@@ -84,8 +84,7 @@ AbstractBasePtr LayerNormBetaGammaBackpropInfer(const abstract::AnalysisEnginePt
 // AG means auto generated
 class MIND_API AGLayerNormBetaGammaBackpropInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) const override {
     return LayerNormBetaGammaBackpropInferShape(primitive);
   }
 

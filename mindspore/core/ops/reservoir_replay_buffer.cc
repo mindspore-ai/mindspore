@@ -288,7 +288,7 @@ class MIND_API CommonInfer : public abstract::OpInferBase {
     return CommonInferShape(primitive, input_args);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     return kInt64;
   }
