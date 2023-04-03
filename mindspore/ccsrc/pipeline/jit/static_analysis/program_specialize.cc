@@ -542,7 +542,7 @@ void FuncGraphSpecializer::FirstPass() {
       if (new_node->isa<CNode>()) {
         MS_LOG(DEBUG) << "ProcessCNode in FirstPass for " << func_graph_->ToString()
                       << ", node: " << node->DebugString() << ", new_node: " << new_node->DebugString();
-        parent->ProcessCNode(new_node->cast<CNodePtr>());
+        (void)parent->ProcessCNode(new_node->cast<CNodePtr>());
       }
       continue;
     }

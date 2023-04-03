@@ -48,7 +48,7 @@ BaseShapePtr PyExecuteInfer::InferShape(const PrimitivePtr &primitive,
   return abs->BuildShape();
 }
 
-TypePtr PyExecuteInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr PyExecuteInfer::InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const {
   MS_LOG(EXCEPTION) << "Should not invoke InferType().";
 }
 
