@@ -534,7 +534,7 @@ std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm) {
       MS_LOG(EXCEPTION) << "For InvertPermutation, the input_x should be '[0-" << (perm_size - 1) << "]', but got "
                         << check_perm;
     }
-    res[perm[idx]] = i;
+    res[LongToSize(perm[idx])] = i;
   }
   return res;
 }
@@ -627,7 +627,7 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
   auto type_x = ib->GetDtype(x);
   auto on_value = ib->Tensor(1, type_x);
   auto off_value = ib->Tensor(0, type_x);
-  int64_t depth = x_shape[x_axis];
+  auto depth = x_shape[LongToSize(x_axis)];
   auto dx =
     dout_expand * ib->Emit("OneHot", {ib->TupleGetItem(new_out, 0), ib->Value<int64_t>(depth), on_value, off_value},
                            {{"axis", MakeValue(onehot_axis)}});

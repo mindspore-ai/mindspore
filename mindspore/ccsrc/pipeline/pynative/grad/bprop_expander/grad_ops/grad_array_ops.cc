@@ -1733,7 +1733,6 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
 
 REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
-  auto theta = ib->GetInput(kIndex0);
   auto output_size = GetIntList(ib->GetInput(kIndex1));
   auto dout = ib->GetInput(kIndex3);
   auto start = ib->Tensor(-1, kFloat32);
