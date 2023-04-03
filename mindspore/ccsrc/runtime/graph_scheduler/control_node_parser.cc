@@ -1813,11 +1813,12 @@ void ControlNodeParser::ParseAllRealParameterByFormalParameter(const KernelWithI
     if (func_graph == root_func_graph_) {
       return;
     }
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
-                      << ", maybe there is no call node for funcgraph:"
-                      << (formal_parameter.first->func_graph() == nullptr
-                            ? "null"
-                            : formal_parameter.first->func_graph()->ToString());
+    MS_LOG(WARNING) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                    << ", maybe there is no call node for funcgraph:"
+                    << (formal_parameter.first->func_graph() == nullptr
+                          ? "null"
+                          : formal_parameter.first->func_graph()->ToString());
+    return;
   }
   const auto &real_parameters = src_iter->second;
   for (const auto &real_parameter : real_parameters) {
