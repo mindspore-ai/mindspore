@@ -57,7 +57,8 @@ find_required_package(Threads)
 # add openmp if the onednn use ms threadpool
 if(USE_MS_THREADPOOL_FOR_DNNL)
     find_package(OpenMP)
-    if(OPENMP_FOUND)
+    # compiler `clang` on Darwin does not support option `-fopenmp`
+    if(OPENMP_FOUND AND (NOT CMAKE_SYSTEM_NAME MATCHES "Darwin"))
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
     else()
         message(WARNING "OpenMP not found")
