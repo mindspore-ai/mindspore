@@ -8194,7 +8194,7 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
 
 def _check_value(items, max_size, msg_prefix, shape1, shape2):
     for item in items:
-        if item != 1 and item != max_size:
+        if item not in (1, max_size):
             raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
                              f"shape2 {shape2}.")
 
@@ -8203,6 +8203,7 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
     def _check(shape1, shape2):
         ndim1, ndim2 = len(shape1), len(shape2)
         if ndim1 < 1 or ndim2 < 1:

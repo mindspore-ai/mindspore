@@ -446,6 +446,7 @@ class Flatten(Cell):
 
 @_primexpr
 def check_dense_input_shape(x, prim_name=None):
+    """ check the shape of inputs"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(x) < 2:
         raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")

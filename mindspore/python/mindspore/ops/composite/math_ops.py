@@ -168,6 +168,7 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     Convert from single int axes to 2d tuple if required
     """
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
     def _check_lt_zero(axes):
         if axes < 0:
             raise ValueError(f"{msg_prefix} 'axes' must be at least 0, but got {axes}.")
@@ -234,6 +235,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
             invalid_a = True
         if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0]) - 1 - i]]:
             invalid_b = True
+
     def _check(invalid_a, invalid_b, x1_shape, x2_shape, axes):
         if invalid_a and invalid_b:
             raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
