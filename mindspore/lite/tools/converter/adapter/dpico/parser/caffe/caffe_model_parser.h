@@ -28,6 +28,8 @@
 
 using STATUS = int;
 namespace mindspore::lite {
+constexpr auto kTopName = "top_name";
+constexpr size_t kTopNameMaxSize = 31;
 class CaffeModelParser : public converter::ModelParser {
  public:
   CaffeModelParser();

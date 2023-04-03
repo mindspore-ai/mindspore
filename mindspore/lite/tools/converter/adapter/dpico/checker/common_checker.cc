@@ -64,7 +64,8 @@ OpCheckerRegistrar g_XorChecker("Xor", new CommonChecker());
 OpCheckerRegistrar g_HardSigmoidChecker("HardSigmoid", new CommonChecker());
 OpCheckerRegistrar g_PadChecker("PadFusion", new CommonChecker());
 OpCheckerRegistrar g_MishChecker("Mish", new CommonChecker());
-OpCheckerRegistrar g_MaxUnPoolChecker("MaxUnPool", new CommonChecker());
+OpCheckerRegistrar g_MaxUnPoolChecker("MaxUnpool", new CommonChecker());
 OpCheckerRegistrar g_CustomChecker("Custom", new CommonChecker());
+OpCheckerRegistrar g_LSTMChecker("LSTM", new CommonChecker());
 }  // namespace dpico
 }  // namespace mindspore

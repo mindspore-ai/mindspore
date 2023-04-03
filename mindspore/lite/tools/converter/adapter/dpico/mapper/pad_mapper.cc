@@ -39,13 +39,14 @@ STATUS SetPadDataInfo(const api::CNodePtr &cnode, mapper::PadOperator *pad_opera
       continue;
     }
     auto tensor_info = param_node->default_param()->cast<api::TensorPtr>();
-    const int size = tensor_info->DataSize();
     std::vector<int32_t> pad_vec;
-    if (tensor_info != nullptr && size != 0) {
+    if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
       if (i == kInputIndex2) {
         auto data = reinterpret_cast<int *>(tensor_info->data());
         MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
-        pad_vec = std::vector<int32_t>(data, data + size);
+        pad_vec = std::vector<int32_t>(data, data + tensor_info->DataSize());
+        std::swap(pad_vec[kInputIndex2], pad_vec[kInputIndex4]);
+        std::swap(pad_vec[kInputIndex3], pad_vec[kInputIndex5]);
         pad_operator->SetPadsLocVec(pad_vec);
       } else if (i == kInputIndex3) {
         auto pad_value = reinterpret_cast<int64_t *>(tensor_info->data());

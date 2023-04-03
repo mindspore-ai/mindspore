@@ -32,8 +32,12 @@ namespace dpico {
 using ModelCoreInfoPtr = std::shared_ptr<mapper::ModelCoreInfo>;
 class CustomOpCreator {
  public:
-  explicit CustomOpCreator(int custom_id = 0, bool has_unsupported = false)
-      : custom_id_(custom_id), has_unsupported_(has_unsupported) {}
+  explicit CustomOpCreator(int custom_id = 0, int custom_num = 1, int head_tail_op_is_custom = 0,
+                           bool has_unsupported = false)
+      : custom_id_(custom_id),
+        custom_num_(custom_num),
+        head_tail_op_is_custom_(head_tail_op_is_custom),
+        has_unsupported_(has_unsupported) {}
   int GetCustomId() const { return custom_id_; }
   ~CustomOpCreator() = default;
   api::CNodePtr CreateCustomOp(const api::FuncGraphPtr &func_graph, Subgraph *subgraph,
@@ -54,6 +58,8 @@ class CustomOpCreator {
                               const api::CNodePtr &custom_cnode, const ModelCoreInfoPtr &om_model_info,
                               std::vector<std::string> *output_names);
   int custom_id_;
+  int custom_num_;
+  int head_tail_op_is_custom_;
   bool has_unsupported_;
 };
 }  // namespace dpico

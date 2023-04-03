@@ -34,18 +34,22 @@
 
 namespace mindspore {
 namespace dpico {
+constexpr auto kNchw2Nhwc = "nchw2nhwc";
+constexpr auto kNhwc2Nchw = "nhwc2nchw";
 enum DumpMode : int { kDumpInputOutput = 0, kDumpInput = 1, kDumpOutput = 2 };
 struct OpAttr {
   std::string data_type;
   size_t input_output_idx;
   std::vector<int32_t> shape;
   std::string format;
+  int input_format;
 };
 struct DumpOpInfo {
   std::string origin_op_name;
   std::string dump_op_name;
   int input_index;
   int output_index;
+  int input_format;
 };
 class CalibDataGenerator {
  public:
@@ -53,7 +57,8 @@ class CalibDataGenerator {
                               const std::map<api::AnfNodePtr, std::pair<api::CNodePtr, int>> &control_flow_inputs = {})
       : dump_level_(dump_level), control_flow_inputs_(control_flow_inputs) {}
   ~CalibDataGenerator() = default;
-  int Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes);
+  int Run(const api::AnfNodePtrList &graph_inputs, const api::AnfNodePtrList &nodes,
+          const std::map<std::string, int> &input_format_infos);
 
  private:
   int GenerateDumpConfig(const std::string &dump_cfg_path, const std::vector<DumpOpInfo> &dump_infos);
@@ -64,6 +69,23 @@ class CalibDataGenerator {
                       const std::vector<std::vector<int64_t>> &input_shapes);
   STATUS ParseAttrFromFilename(struct OpAttr *op_attr, const std::string &file_name, bool is_input);
   int TransBinsToTxt(const std::vector<DumpOpInfo> &dump_infos);
+
+  template <typename T>
+  int CalibDataTranspose(const std::unique_ptr<T[]> &raw_datas, const std::unique_ptr<T[]> &dst_datas,
+                         const std::vector<int32_t> &shape, const std::string &transpose) {
+    if (transpose == kNhwc2Nchw) {
+      if (NHWC2NCHW<T>(raw_datas.get(), dst_datas.get(), shape) != RET_OK) {
+        MS_LOG(ERROR) << "NHWC to NCHW failed.";
+        return RET_ERROR;
+      }
+    } else if (transpose == kNchw2Nhwc) {
+      if (NCHW2NHWC<T>(raw_datas.get(), dst_datas.get(), shape) != RET_OK) {
+        MS_LOG(ERROR) << "NCHW to NHWC failed.";
+        return RET_ERROR;
+      }
+    }
+    return RET_OK;
+  }
 
   template <typename T>
   int ReadBinToOfstream(const std::string &file_path, const struct OpAttr &op_attr, std::ofstream &ofs) {
@@ -99,29 +121,31 @@ class CalibDataGenerator {
     (void)ifs.seekg(0, std::ios::beg);
     (void)ifs.read(reinterpret_cast<char *>(raw_datas.get()), shape_size * sizeof(T));
     ifs.close();
-    if (op_attr.format == "NHWC" && op_attr.shape.size() == kDims4) {
-      auto dst_datas = std::make_unique<T[]>(shape_size);
-      if (dst_datas == nullptr) {
-        MS_LOG(ERROR) << "new T failed.";
-        return RET_ERROR;
-      }
-      if (memcpy_s(dst_datas.get(), shape_size * sizeof(T), raw_datas.get(), shape_size * sizeof(T)) != EOK) {
-        MS_LOG(ERROR) << "memcpy_s failed.";
-        return RET_ERROR;
-      }
-      if (NHWC2NCHW<T>(raw_datas.get(), dst_datas.get(), op_attr.shape) != RET_OK) {
-        MS_LOG(ERROR) << "NHWC to NCHW failed.";
-        return RET_ERROR;
-      }
-      for (size_t i = 0; i < shape_size; i++) {
-        ofs << dst_datas.get()[i] << ' ';
-      }
-    } else {
-      for (size_t i = 0; i < shape_size; i++) {
-        ofs << raw_datas.get()[i] << ' ';
+    std::string transpose = "";
+    if (op_attr.shape.size() == kDims4) {
+      if ((op_attr.format == "NHWC") && (op_attr.input_format == 0)) {
+        transpose = kNhwc2Nchw;
+      } else if ((op_attr.format == "NCHW") && (op_attr.input_format == 1)) {
+        transpose = kNchw2Nhwc;
       }
     }
+    auto dst_datas = std::make_unique<T[]>(shape_size);
+    if (dst_datas == nullptr) {
+      MS_LOG(ERROR) << "new T failed.";
+      return RET_ERROR;
+    }
+    if (memcpy_s(dst_datas.get(), shape_size * sizeof(T), raw_datas.get(), shape_size * sizeof(T)) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
+    if (CalibDataTranspose(raw_datas, dst_datas, op_attr.shape, transpose) != RET_OK) {
+      MS_LOG(ERROR) << "calib data transpose failed.";
+      return RET_ERROR;
+    }
 
+    for (size_t i = 0; i < shape_size; i++) {
+      ofs << dst_datas.get()[i] << ' ';
+    }
     return RET_OK;
   }
   int dump_level_;

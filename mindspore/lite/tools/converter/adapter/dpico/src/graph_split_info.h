@@ -41,6 +41,8 @@ struct Subgraph {
 
 struct GraphSplitInfo {
   size_t num_of_segments{0};
+  size_t num_of_custom_op{0};
+  int32_t head_tail_op_is_custom{0};
   std::map<api::FuncGraphPtr, std::vector<Subgraph>> subgraphs_map;
 };
 }  // namespace dpico

@@ -118,7 +118,8 @@ STATUS GetSubgraphNetType(const api::CNodePtrList &cnodes, OmNetType *om_net_typ
   return RET_OK;
 }
 
-STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::vector<SegmentInfo> *segment_infos) {
+STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::vector<SegmentInfo> *segment_infos,
+                            bool *last_op_is_custom) {
   MS_CHECK_TRUE_MSG(segment_infos != nullptr, RET_ERROR, "segment_infos are nullptr");
   size_t start = 0;
   for (size_t pos = 0; pos < graph_total_cnodes.size(); pos++) {
@@ -128,6 +129,12 @@ STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::ve
         return RET_ERROR;
       }
       (void)segment_infos->emplace_back(SegmentInfo{start, pos, false});
+      auto is_supported = GetBoolAttr(graph_total_cnodes[pos - 1], kIsMapperSupported);
+      if (is_supported) {
+        *last_op_is_custom = true;
+      } else {
+        *last_op_is_custom = false;
+      }
     } else {
       auto is_supported = GetBoolAttr(graph_total_cnodes[pos], kIsMapperSupported);
       if (is_supported != GetBoolAttr(graph_total_cnodes[pos + 1], kIsMapperSupported)) {
@@ -139,15 +146,24 @@ STATUS GenerateSegmentInfos(const api::CNodePtrList &graph_total_cnodes, std::ve
   return RET_OK;
 }
 
-STATUS ComputeNetworkSegments(const std::vector<SegmentInfo> &segment_infos, GraphSplitInfo *graph_split_info) {
+STATUS ComputeNetworkSegments(const std::vector<SegmentInfo> &segment_infos, const bool &last_op_is_custom,
+                              GraphSplitInfo *graph_split_info) {
   MS_CHECK_TRUE_MSG(graph_split_info != nullptr, RET_ERROR, "graph split info is nullptr.");
-  MS_CHECK_TRUE_MSG(!segment_infos.empty(), RET_ERROR, "segment_infos shouldn't be empty.");
+  MS_CHECK_TRUE_MSG(segment_infos.size() > 0, RET_ERROR, "segment_infos shouldn't be smaller than 1.");
   for (auto segment_info : segment_infos) {
-    graph_split_info->num_of_segments += segment_info.is_supported ? 0 : 1;
+    if (!segment_info.is_supported) {
+      graph_split_info->num_of_segments++;
+    } else {
+      graph_split_info->num_of_custom_op++;
+    }
   }
   if (!segment_infos.back().is_supported) {  // remove last unsupported subgraph which contains Return cnode
     graph_split_info->num_of_segments--;
   }
+  if (segment_infos.front().is_supported && last_op_is_custom) {
+    graph_split_info->head_tail_op_is_custom = 1;
+  }
+  MS_LOG(DEBUG) << "graph_split_info->head_tail_op_is_custom = " << graph_split_info->head_tail_op_is_custom;
   if (graph_split_info->num_of_segments > kMaximumNumbOfSegments) {
     MS_LOG(ERROR) << "There are over " << kMaximumNumbOfSegments
                   << " segments in this network, so this process will stop. It's recommended that you don't set "
@@ -266,14 +282,15 @@ int GraphSplit(const std::vector<api::FuncGraphPtr> &func_graphs, GraphSplitInfo
   for (const auto &func_graph : func_graphs) {
     MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr.");
     auto graph_total_cnodes = GetFuncGraphTotalCNodes(func_graph);
-    MS_CHECK_TRUE_MSG(!graph_total_cnodes.empty(), {}, "func graph should have 1 cnode at least.");
+    MS_CHECK_TRUE_MSG(graph_total_cnodes.size() > 1, {}, "func graph should have 2 cnode at least.");
     std::vector<SegmentInfo> segment_infos;
-    if (GenerateSegmentInfos(graph_total_cnodes, &segment_infos) != RET_OK) {
+    bool last_op_is_custom = false;
+    if (GenerateSegmentInfos(graph_total_cnodes, &segment_infos, &last_op_is_custom) != RET_OK) {
       MS_LOG(ERROR) << "generate segment infos failed.";
       return RET_ERROR;
     }
 
-    if (ComputeNetworkSegments(segment_infos, graph_split_info) != RET_OK) {
+    if (ComputeNetworkSegments(segment_infos, last_op_is_custom, graph_split_info) != RET_OK) {
       MS_LOG(ERROR) << "compute network segments failed.";
       return RET_ERROR;
     }
