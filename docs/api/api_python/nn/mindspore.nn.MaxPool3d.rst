@@ -13,8 +13,8 @@ mindspore.nn.MaxPool3d
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为int，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。默认值：1。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为int，则代表池化核的深度，高和宽方向的移动步长。如果为tuple，其值必须包含三个正整数值分别表示池化核的深度，高和宽的移动步长。取值必须为正整数。如果值为None，则使用默认值 `kernel_size`。默认值：1。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为整数或单元素tuple，则代表池化核的深度，高和宽。如果为tuple且长度不为1，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。默认值：1。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数或单元素tuple，则代表池化核的深度，高和宽方向的移动步长。如果为tuple且长度不为1，其值必须包含三个正整数值分别表示池化核的深度，高和宽的移动步长。取值必须为正整数。如果值为None，则使用默认值 `kernel_size`。默认值：1。
         - **pad_mode** (str) - 指定池化填充模式，取值为"same"、"valid"或者"pad"，不区分大小写。默认值："valid"。
 
           - **same** - 输出的shape与输入的shape整除 `stride` 后的值相同。
@@ -22,7 +22,7 @@ mindspore.nn.MaxPool3d
           - **pad** - 对输入进行填充。在输入的前后上下左右分别填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
         - **padding** (Union(int, tuple[int], list[int])) - 池化填充值。默认值：0。 `padding` 只能是一个整数或者包含一个或三个整数的tuple/list，若 `padding` 为一个整数或包含一个整数的tuple/list，则会分别在输入的前后上下左右六个方向进行 `padding` 次的填充，若 `padding` 为一个包含三个整数的tuple/list，则会在输入的前后进行 `padding[0]` 次的填充，上下进行 `padding[1]` 次的填充，在输入的左右进行 `padding[2]` 次的填充。
-        - **dilation** (Union(int, tuple[int])) - 卷积核中各个元素之间的间隔大小，用于提升池化操作的感受野。如果为tuple，其值必须包含三个整数。默认值：1。
+        - **dilation** (Union(int, tuple[int])) - 卷积核中各个元素之间的间隔大小，用于提升池化操作的感受野。如果为tuple，其值必须包含一个或三个整数。默认值：1。
         - **return_indices** (bool) - 若为True，则返回一个包含两个Tensor的Tuple，表示池化的计算结果以及生成max值的位置，否则，仅返回池化计算结果。默认值：False。
         - **ceil_mode** (bool) - 若为True，使用ceil模式来计算输出shape。若为False，使用floor模式来计算输出shape。默认值：False。
 

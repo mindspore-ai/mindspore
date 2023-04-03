@@ -292,11 +292,11 @@ class MaxPool3d(_PoolNd):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
-            is an int number that represents depth, height and width of the kernel, or a tuple
+            is an int number or a single element tuple that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer. Default: 1.
-        stride (Union[int, tuple[int]]): The moving stride of pooling operation, an int number that represents
-            the moving stride of pooling kernel in the directions of depth, height and the width,
+        stride (Union[int, tuple[int]]): The moving stride of pooling operation, an int number or a single element tuple
+            that represents the moving stride of pooling kernel in the directions of depth, height and the width,
             or a tuple of three int numbers that represent depth, height and width of movement respectively.
             The value must be a positive integer. If the value is None, the default value `kernel_size` is used.
             Default: 1.
@@ -318,8 +318,8 @@ class MaxPool3d(_PoolNd):
             integers, it will be padded in front and back of the input `padding[0]` times, up and down `padding[1]`
             times, and left and right of the input `padding[2]` times.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
-            used to increase the receptive field of the pooling operation. If it is a tuple, it must contain three
-            integers. Default: 1.
+            used to increase the receptive field of the pooling operation. If it is a tuple, it must contain one or
+            three integers. Default: 1.
         return_indices (bool): If True, output is a Tuple of 2 Tensors, representing the maxpool result and where
             the max values are generated. Otherwise, only the maxpool result is returned. Default: False.
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: False.
@@ -434,11 +434,11 @@ class MaxPool2d(_PoolNd):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
-            is an int number that represents height and width are both kernel_size,
+            is an int number or a single element tuple that represents height and width are both kernel_size,
             or a tuple of two int numbers that represent height and width respectively.
             Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both stride, or a tuple of two int numbers that
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
+            represents the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same", "valid" or "pad", not case sensitive.
             Default: "valid".
@@ -457,7 +457,7 @@ class MaxPool2d(_PoolNd):
             input. If `padding` is a tuple/list containing two integers, it will be padded `padding[0]` times in the
             up-down direction of the input and `padding[1]` times in the left-right direction of the input.
         dilation (Union(int, tuple[int])): The spacing between the elements of the kernel in convolution,
-            used to increase the receptive field of the pooling operation. If it is a tuple, it must contain two
+            used to increase the receptive field of the pooling operation. If it is a tuple, it must contain one or two
             integers. Default: 1.
         return_indices (bool): If True, the function will return both the result of max pooling and the indices of the
             max elements. Default: False.
@@ -778,11 +778,11 @@ class AvgPool3d(_PoolNd):
 
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
-            can be an int number that represents depth, height and width, or a tuple of three positive integers that
-            represent depth, height and width respectively. Default: 1.
-        stride (Union[int, tuple[int]], optional): The distance of kernel moving, can be a positive int that represents
-            the depth, height and width of movement, or a tuple of three positive integers that
-            represents depth, height and width of movement respectively. If the value is None, the default value
+            can be an int number or a single element tuple that represents depth, height and width, or a tuple of three
+            positive integers that represent depth, height and width respectively. Default: 1.
+        stride (Union[int, tuple[int]], optional): The distance of kernel moving, can be a positive int or a single
+            element tuple that represents the depth, height and width of movement, or a tuple of three positive integers
+            that represents depth, height and width of movement respectively. If the value is None, the default value
             `kernel_size` is used. Default: 1.
         pad_mode (str, optional): Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
@@ -902,11 +902,11 @@ class AvgPool2d(_PoolNd):
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
-            The data type of kernel_size must be int and the value represents the height and width,
-            or a tuple of two int numbers that represent height and width respectively.
+            The data type of kernel_size must be int or a single element tuple and the value represents the height
+            and width, or a tuple of two int numbers that represent height and width respectively.
             Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number or a single element tuple that
+            represents the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
         pad_mode (str) - Specifies the padding method of pooling, optional values are "same", "valid" or "pad",
             case insensitive. Default: "valid".
