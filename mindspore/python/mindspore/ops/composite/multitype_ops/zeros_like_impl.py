@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _sequence_ops as seq
+from mindspore.ops.primitive import Primitive
 
 zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
 """
@@ -139,6 +140,23 @@ def _zeros_like_dict(x):
     for ele in values:
         new_values += (zeros_like_leaf(ele),)
     return F.make_dict(keys, new_values)
+
+
+_extract_keyword_arg = Primitive("extract_keyword_arg")
+
+
+@zeros_like_leaf.register("Keyword")
+def _zeros_like_keyword(x):
+    """
+    Handle Keyword input.
+
+    Args:
+        x (Keyword): the input
+
+    Returns:
+        zeros_like_leaf.
+    """
+    return zeros_like_leaf(_extract_keyword_arg(x))
 
 
 @zeros_like_leaf.register("UMonad")
