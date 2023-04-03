@@ -61,12 +61,6 @@ class FixedLossScaleManager(LossScaleManager):
         >>> from mindspore import amp, nn
         >>>
         >>> net = Net()
-        >>> #1) Drop the parameter update if there is an overflow
-        >>> loss_scale_manager = amp.FixedLossScaleManager()
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = ms.Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
-        >>>
-        >>> #2) Execute parameter update even if overflow occurs
         >>> loss_scale = 1024.0
         >>> loss_scale_manager = amp.FixedLossScaleManager(loss_scale, False)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
@@ -130,6 +124,9 @@ class DynamicLossScaleManager(LossScaleManager):
         init_loss_scale (float): Initialize loss scale. Default: 2**24.
         scale_factor (int): Coefficient of increase and decrease. Default: 2.
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore as ms
