@@ -35,7 +35,7 @@ class RepeatNode : public DatasetNode {
 
  public:
   /// \brief Constructor
-  RepeatNode() : op_(nullptr), reset_ancestor_(nullptr), repeat_count_(-1) {}
+  RepeatNode() : op_(nullptr), repeat_count_(-1) {}
 
   /// \brief Constructor
   RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count);
@@ -108,7 +108,8 @@ class RepeatNode : public DatasetNode {
      * We will record the ancestor relationship of (Repeat, EpochCtrl) twice, one at Visit(GenData1), the other at
      * Vist(GenData2).
      */
-    CHECK_FAIL_RETURN_UNEXPECTED(reset_ancestor_ == nullptr || reset_ancestor_ == src,
+    std::shared_ptr<RepeatNode> tmp_repeat_node = reset_ancestor_.lock();
+    CHECK_FAIL_RETURN_UNEXPECTED(tmp_repeat_node == nullptr || tmp_repeat_node == src,
                                  "Internal error: Overwriting an existing value");
     reset_ancestor_ = src;
     return Status::OK();
@@ -131,8 +132,8 @@ class RepeatNode : public DatasetNode {
                           std::shared_ptr<DatasetNode> *result);
 
  protected:
-  std::shared_ptr<RepeatOp> op_;                // keep its corresponding run-time op of EpochCtrlNode and RepeatNode
-  std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
+  std::shared_ptr<RepeatOp> op_;              // keep its corresponding run-time op of EpochCtrlNode and RepeatNode
+  std::weak_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
   int32_t repeat_count_;
 };
 }  // namespace dataset
