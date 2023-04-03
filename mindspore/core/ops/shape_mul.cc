@@ -42,7 +42,7 @@ class ShapeMulInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 1;
+    const int64_t input_num = 1;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto shape_x = input_args[0];
@@ -54,13 +54,11 @@ class ShapeMulInfer : public abstract::OpInferBase {
     return abstract::kNoShape;
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return kInt64;
-  }
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override { return kInt64; }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 1;
+    const int64_t input_num = 1;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
@@ -73,7 +71,7 @@ class ShapeMulInfer : public abstract::OpInferBase {
     int64_t result = 1;
     for (size_t i = 0; i < shpx_data.size(); i++) {
       int64_t value = GetValue<int64_t>(shpx_data[i]);
-      result = IntMulWithOverflowCheck(result, value);
+      result = IntToLong(IntMulWithOverflowCheck(result, value));
     }
 
     return MakeValue(result);

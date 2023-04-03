@@ -149,7 +149,7 @@ ShapeVector GetSequenceFlattenShape(const abstract::AbstractBasePtr &abs) {
   }
   // for tuple of tensor, the tensors shape must be same
   ShapeVector flatten_shp;
-  flatten_shp.emplace_back(seq_abs->elements().size());
+  (void)flatten_shp.emplace_back(seq_abs->elements().size());
   if (seq_abs->elements().empty()) {
     return flatten_shp;
   }

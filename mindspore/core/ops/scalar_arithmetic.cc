@@ -243,7 +243,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t input_len = 2;
+    const int64_t input_len = 2;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem_x = input_args[0];
     auto elem_y = input_args[kIndex1];
@@ -276,7 +276,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 2;
+    const int64_t input_num = 2;
     auto op_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
     for (const auto &item : input_args) {
@@ -334,9 +334,6 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     }
     return result;
   }
-
- private:
-  std::function<ValuePtr(const ValuePtr &, const ValuePtr &, const std::string &)> infer_value_func_;
 };
 MIND_API_OPERATOR_IMPL(ScalarAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScalarSub, BaseOperator);

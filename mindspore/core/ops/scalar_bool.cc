@@ -55,7 +55,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t input_len = 1;
+    const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem = input_args[0];
     if (!elem->isa<abstract::AbstractScalar>()) {
@@ -66,7 +66,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
     MS_EXCEPTION_IF_NULL(primitive);
-    constexpr size_t input_num = 1;
+    const int64_t input_num = 1;
     auto op_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);

@@ -38,7 +38,7 @@ namespace ops {
 AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr size_t input_len = 3;
+  const int64_t input_len = 3;
   constexpr size_t data_index = 0;
   constexpr size_t index_index = 1;
   constexpr size_t target_index = 2;
@@ -104,7 +104,7 @@ AbstractBasePtr ListInsertInnerInfer(const PrimitivePtr &primitive, const std::v
     index = static_cast<int64_t>(elements.size());
   }
   index = index < 0 ? index + static_cast<int64_t>(elements.size()) : index;
-  abs.insert(abs.begin() + index, target_abs);
+  (void)abs.insert(abs.begin() + index, target_abs);
   return std::make_shared<abstract::AbstractList>(abs);
 }
 

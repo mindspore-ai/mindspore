@@ -80,8 +80,7 @@ tensor::TensorPtr ScalarToTensorByType(const ScalarPtr &scalar, const TypePtr &s
 
 class ScalarToTensorInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
     ShapeVector out_shape;
     return std::make_shared<abstract::Shape>(out_shape);
   }
@@ -89,7 +88,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    constexpr size_t input_len = 1;
+    const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              prim_name);
     auto elem = input_args[0];
@@ -118,7 +117,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
-    constexpr size_t input_len = 1;
+    const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              op_name);
     auto elem = input_args[0];
