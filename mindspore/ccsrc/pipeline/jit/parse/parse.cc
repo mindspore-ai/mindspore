@@ -3013,7 +3013,6 @@ FunctionBlockPtr Parser::ParseRaise(const FunctionBlockPtr &block, const py::obj
   // raise
   if (py::isinstance<py::none>(exc_ast_node)) {
     CNodePtr raise_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimRaise)});
-    block->AddIsolatedNode(raise_node);
     func_graph->set_return(raise_node);
     return block;
   }
@@ -3022,7 +3021,6 @@ FunctionBlockPtr Parser::ParseRaise(const FunctionBlockPtr &block, const py::obj
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRaise)};
   (void)inputs.insert(inputs.end(), exc_node_inputs.begin(), exc_node_inputs.end());
   CNodePtr raise_node = func_graph->NewCNodeInOrder(inputs);
-  block->AddIsolatedNode(raise_node);
   CNodePtr return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), raise_node});
   func_graph->set_return(return_node);
   return block;
