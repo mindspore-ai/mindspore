@@ -596,7 +596,7 @@ class AddmvFunc(nn.Cell):
         self.addmv = ops.addmv
 
     def construct(self, x, mat, vec, beta=1, alpha=1):
-        y = self.addmv(x, mat, vec, beta, alpha)
+        y = self.addmv(x, mat, vec, beta=beta, alpha=alpha)
         return y
 
 
@@ -606,7 +606,7 @@ class AddrFunc(nn.Cell):
         self.addr = ops.addr
 
     def construct(self, x, vec1, vec2, beta=1, alpha=1):
-        y = self.addr(x, vec1, vec2, beta, alpha)
+        y = self.addr(x, vec1, vec2, beta=beta, alpha=alpha)
         return y
 
 
@@ -785,7 +785,7 @@ class TrapzFunc(nn.Cell):
         self.trapz = ops.trapz
 
     def construct(self, y, x=None, dx=1.0, dim=-1):
-        out = self.trapz(y, x, dx, dim)
+        out = self.trapz(y, x, dx=dx, dim=dim)
         return out
 
 

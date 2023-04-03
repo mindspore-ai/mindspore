@@ -3,7 +3,7 @@ mindspore.ops.polygamma
 
 .. py:function:: mindspore.ops.polygamma(n, input)
 
-    计算关于 `x` 的多伽马函数的 :math:`a` 阶导数。
+    计算关于 `input` 的多伽马函数的 `n` 阶导数。
 
     .. math::
         \psi^{(a)}(x) = \frac{d^{(a)}}{dx^{(a)}} \psi(x)

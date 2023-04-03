@@ -3604,7 +3604,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         Dynamic shape feature is not supported for now.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
     """
 
     @prim_attr_register

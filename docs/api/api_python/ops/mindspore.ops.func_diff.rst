@@ -8,7 +8,7 @@ mindspore.ops.diff
     第一阶差分沿着给定 `axis` 由如下公式计算：:math:`out[i] = x[i+1] - x[i]` ，更高阶差分通过将上一阶计算结果作为输入迭代调用 `diff` 计算实现。
 
     .. note::
-        不支持空Tensor, 如果传入了空Tensor，会出现ValueError。
+        不支持空Tensor, 如果传入了空Tensor，会出现ValueError。空Tensor指的是，Tensor的任意一维为零。比如shape为 :math:`(0,)`  ， :math:`(1, 2, 0, 4)` 的Tensor都为空Tensor。
 
     参数：
         - **x** (Tensor) - 输入Tensor。x元素的数据类型不支持uint16、uint32 或 uint64。

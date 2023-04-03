@@ -1,7 +1,7 @@
 mindspore.ops.trapz
 ====================
 
-.. py:function:: mindspore.ops.trapz(y, x=None, dx=1.0, dim=-1)
+.. py:function:: mindspore.ops.trapz(y, x=None, *, dx=1.0, dim=-1)
 
     使用梯形法则沿给定轴 `dim` 对 `y(x)` 进行积分。
     默认情况下，元素之间的 `x` 轴距离将被设定为1，或者它们可以由数组 `x` 或者标量 `dx` 提供。
@@ -12,7 +12,9 @@ mindspore.ops.trapz
     参数：
         - **y** (Tensor) - 要积分的Tensor。
         - **x** (Tensor，可选) - 对应于 `y` 值的样本点。如果 `x` 为None，则采样点均匀间隔 `dx` ，默认值：None。如果x不为None，则由 `dim` 指定的轴减去1后，x的形状应与 `y` 相同或者可以广播到 `y` 。
-        - **dx** (float，可选) - 当 `x` 为None时，采样点之间的间距。默认值：1.0。
+
+    关键字参数：
+        - **dx** (float，可选) - 当 `x` 为None时，采样点之间的间距。如果 `x` 被指定，则 `dx` 不生效。默认值：1.0。
         - **dim** (int，可选) - 进行积分的维度。默认值：-1。
 
     返回：

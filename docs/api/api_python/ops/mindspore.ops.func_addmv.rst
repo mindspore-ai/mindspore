@@ -1,7 +1,7 @@
 mindspore.ops.addmv
 ======================
 
-.. py:function:: mindspore.ops.addmv(x, mat, vec, beta=1, alpha=1)
+.. py:function:: mindspore.ops.addmv(x, mat, vec, *, beta=1, alpha=1)
 
     `mat` 和 `vec` 相乘，且将输入向量 `x` 加到最终结果中。
 
@@ -17,6 +17,8 @@ mindspore.ops.addmv
         - **x** (Tensor) - 被加的向量，Tensor的shape大小为 :math:`(N,)`。
         - **mat** (Tensor) - 第一个需要相乘的Tensor，shape大小为 :math:`(N, M)` 。
         - **vec** (Tensor) - 第二个需要相乘的Tensor，shape大小为 :math:`(M,)` 。
+
+    关键字参数：
         - **beta** (scalar[int, float, bool], 可选) - `x` (β)的乘数。 `beta` 必须是int或float或bool类型，默认值：1。
         - **alpha** (scalar[int, float, bool], 可选) - `mat` @ `vec` (α)的乘数。 `alpha` 必须是int或float或bool类型，默认值：1。
 
