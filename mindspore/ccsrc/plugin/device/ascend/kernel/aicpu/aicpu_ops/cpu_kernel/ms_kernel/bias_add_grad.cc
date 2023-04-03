@@ -28,6 +28,7 @@ namespace {
 const char *kBiasAddGrad = "BiasAddGrad";
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
+const int kDim2 = 2;
 }  // namespace
 namespace aicpu {
 uint32_t BiasAddGradCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -94,12 +95,12 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(CpuKernelContext &ctx) {
   std::string str_format = (attr_data_format == nullptr) ? "NHWC" : (attr_data_format->GetString());
 
   // check input's dim
-  if (input_shape->GetDims() != 4) {
-    KERNEL_LOG_ERROR("Input's dim should be 4, but got [%d]", input_shape->GetDims());
+  if (input_shape->GetDims() < kDim2) {
+    KERNEL_LOG_ERROR("Input's dim should be at least 2, but got [%d]", input_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // check input's format
-  if (str_format != "NHWC" && str_format != "NCHW") {
+  if (input_shape->GetDims() != kDim2 && str_format != "NHWC" && str_format != "NCHW") {
     KERNEL_LOG_ERROR("Input's data format is invalid.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
@@ -110,13 +111,29 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(CpuKernelContext &ctx) {
     // init
     for (size_t i = 0; i < (size_t)output->NumElements(); i++) output_y[i] = (T).0f;
 
-    uint32_t min_core_num = 1;
+    constexpr uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
     KERNEL_LOG_DEBUG("[DEBUG] Cores Num: [%lld].", max_core_num);
     const size_t data_num = (size_t)input->NumElements();
 
     size_t step = 0;
     size_t length = 1;
+    if (input_shape->GetDims() == kDim2) {
+      auto task = [this, input_x, output_y, &dims](size_t start, size_t end) {
+        for (size_t k = 0; k < end - start; k++) {
+          const T *inner_src = input_x + start + k;
+          T *inner_dst = output_y + start + k;
+          T tmp = static_cast<T>(0);
+          for (int i = 0; i < dims[kFirstInputIndex]; i++) {
+            tmp += inner_src[i * dims[kSecondInputIndex]];
+          }
+          *inner_dst = tmp;
+        }
+      };
+      CpuKernelUtils::ParallelFor(ctx, dims[kSecondInputIndex], dims[kSecondInputIndex] / max_core_num, task);
+      return KERNEL_STATUS_OK;
+    }
+
     if (str_format == "NHWC") {
       step = dims[3];
       KERNEL_LOG_DEBUG("[DEBUG] data's format: NHWC");
