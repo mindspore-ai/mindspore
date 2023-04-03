@@ -348,7 +348,7 @@ class SetSize(Primitive):
         >>> set_indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int64))
         >>> set_values = Tensor(np.array([1, 2]).astype(np.int64))
         >>> set_shape = Tensor(np.array([3, 4]).astype(np.int64))
-        >>> setsize = op.SetSize()
+        >>> setsize = ops.SetSize()
         >>> out = setsize(set_indices, set_values, set_shape)
         >>> print(out)
         [1 1 0]
