@@ -803,6 +803,44 @@ def get_square_sum_all_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(math_ops.FFTWithSize)
+def get_fft_with_size_vmap_rule(prim, axis_size):
+    """VmapRule for `FFTWithSize` operation"""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+        signal_ndim = 1
+        inverse = False
+        real = False
+        norm = "backward"
+        oneside = True
+        signal_sizes = ()
+    else:
+        prim_name = prim.name
+        signal_ndim = prim.signal_ndim
+        inverse = prim.inverse
+        real = prim.real
+        norm = prim.norm
+        oneside = prim.oneside
+        signal_sizes = prim.signal_sizes
+
+    fft = math_ops.FFTWithSize(signal_ndim, inverse, real, norm, oneside, signal_sizes)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x)
+        if x_dim < 0 or x_dim >= x_ndim - signal_ndim:
+            _raise_value_error("The source axi of `x` in `{} must be`in range of ({} {}), "
+                               "but got {}.".format(prim_name, 0, x_ndim - signal_ndim, x_dim))
+        out = fft(x)
+        return (out, x_dim)
+
+    return vmap_rule
+
+
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
 
