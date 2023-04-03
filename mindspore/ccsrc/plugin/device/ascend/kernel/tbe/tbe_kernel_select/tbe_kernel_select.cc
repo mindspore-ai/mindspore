@@ -65,7 +65,7 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   kernel_info_list->clear();
   common::AnfAlgo::SetNodeAttr(kAttrIsKernelDynamicImpl, MakeValue(false), kernel_node);
-  tbe_selector.CheckOpSupported();
+  (void)tbe_selector.CheckOpSupported();
 }
 
 bool TbeCheckIsSupportedSpec(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {

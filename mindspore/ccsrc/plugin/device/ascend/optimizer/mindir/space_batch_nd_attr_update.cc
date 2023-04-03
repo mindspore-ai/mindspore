@@ -73,11 +73,11 @@ bool SpaceToBatchNDAttrUpdate::CheckMatchedDAG(const PatternMap &, const FuncGra
 }
 
 void SpaceToBatchNDAttrUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kV).AddCNode(kMSpace, {prim::kPrimSpaceToBatchND, kV});
+  (void)(*src_pattern).AddVar(kV).AddCNode(kMSpace, {prim::kPrimSpaceToBatchND, kV});
 }
 
 void SpaceToBatchNDAttrUpdate::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRSpace, {prim::kPrimSpaceToBatchND, kV}, BuildSpace);
+  (void)(*dst_pattern).AddCNode(kRSpace, {prim::kPrimSpaceToBatchND, kV}, BuildSpace);
 }
 
 bool BatchToSpaceNDAttrUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, const AnfNodePtr &) const {
@@ -85,11 +85,11 @@ bool BatchToSpaceNDAttrUpdate::CheckMatchedDAG(const PatternMap &, const FuncGra
 }
 
 void BatchToSpaceNDAttrUpdate::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddVar(kV).AddCNode(kMBatch, {prim::kPrimBatchToSpaceND, kV});
+  (void)(*src_pattern).AddVar(kV).AddCNode(kMBatch, {prim::kPrimBatchToSpaceND, kV});
 }
 
 void BatchToSpaceNDAttrUpdate::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(kRBatch, {prim::kPrimBatchToSpaceND, kV}, BuildBatch);
+  (void)(*dst_pattern).AddCNode(kRBatch, {prim::kPrimBatchToSpaceND, kV}, BuildBatch);
 }
 }  // namespace opt
 }  // namespace mindspore

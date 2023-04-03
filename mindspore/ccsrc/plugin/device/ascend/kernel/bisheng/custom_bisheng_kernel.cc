@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 CustomBiShengKernel::~CustomBiShengKernel() {
   if (handle_ != nullptr) {
-    dlclose(handle_);
+    (void)dlclose(handle_);
   }
 
   attrs_.DestructKernelData();

@@ -145,11 +145,11 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
   auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
   if (enable_ge == "1") {
     if (ctx->backend_policy() != "ge") {
-      ctx->set_backend_policy("ge");
+      (void)ctx->set_backend_policy("ge");
     }
   } else {
     if (ctx->backend_policy() != "ms") {
-      ctx->set_backend_policy("ms");
+      (void)ctx->set_backend_policy("ms");
     }
   }
 });

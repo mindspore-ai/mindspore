@@ -93,7 +93,7 @@ bool FtrlUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &, 
 }
 
 void FtrlUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kOptVar)
     .AddVar(kOptAccum)
     .AddVar(kOptLinear)
@@ -108,7 +108,7 @@ void FtrlUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void FtrlUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kOptIndex, BuildZero)
     .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kFtrlOutputNum));
 }
@@ -118,7 +118,7 @@ bool MomentumUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr
 }
 
 void MomentumUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kOptVar)
     .AddVar(kOptAccum)
     .AddVar(kOptLr)
@@ -129,7 +129,7 @@ void MomentumUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void MomentumUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kOptIndex, BuildZero)
     .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kMomentumOutputNum));
 }
@@ -139,11 +139,11 @@ bool RMSPropUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr 
 }
 
 void RMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern).AddSeqVar(kInputs).AddCNode(kMOptimizer, {prim::kPrimApplyRMSProp, kInputs});
+  (void)(*src_pattern).AddSeqVar(kInputs).AddCNode(kMOptimizer, {prim::kPrimApplyRMSProp, kInputs});
 }
 
 void RMSPropUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kOptIndex, BuildZero)
     .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex}, BuildTupleGetFunc(kRMSPropOutputNum));
 }
@@ -154,7 +154,7 @@ bool CenteredRMSPropUnifyOutput::CheckMatchedDAG(const PatternMap &, const FuncG
 }
 
 void CenteredRMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kOptVar)
     .AddVar(kMg)
     .AddVar(kMs)
@@ -170,7 +170,7 @@ void CenteredRMSPropUnifyOutput::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void CenteredRMSPropUnifyOutput::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern)
+  (void)(*dst_pattern)
     .AddValueNode(kOptIndex, BuildZero)
     .AddCNode(kRTupleGet, {prim::kPrimTupleGetItem, kMOptimizer, kOptIndex},
               BuildTupleGetFunc(kCenteredRMSPropOutputNum));

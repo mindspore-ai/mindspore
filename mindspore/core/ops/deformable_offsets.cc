@@ -20,7 +20,6 @@
 #include <set>
 #include <algorithm>
 #include <memory>
-#include <cmath>
 #include <iterator>
 
 #include "utils/check_convert_utils.h"
