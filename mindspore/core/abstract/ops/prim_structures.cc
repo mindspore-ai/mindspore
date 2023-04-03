@@ -263,8 +263,8 @@ AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitiveP
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList keys;
-  std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
-                 [](const AbstractElementPair &item) { return item.first; });
+  (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(keys),
+                       [](const AbstractElementPair &item) { return item.first; });
   return std::make_shared<AbstractTuple>(keys);
 }
 
@@ -277,8 +277,8 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractElementPair> dict_elems = dict->elements();
   AbstractBasePtrList values;
-  std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(values),
-                 [](const AbstractElementPair &item) { return item.second; });
+  (void)std::transform(dict_elems.cbegin(), dict_elems.cend(), std::back_inserter(values),
+                       [](const AbstractElementPair &item) { return item.second; });
   return std::make_shared<AbstractTuple>(values);
 }
 

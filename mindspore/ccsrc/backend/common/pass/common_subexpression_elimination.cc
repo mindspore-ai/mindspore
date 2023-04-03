@@ -185,7 +185,7 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) {
 bool BackendCSE::Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) {
   MS_EXCEPTION_IF_NULL(manager);
   Init();
-  auto ret = BuildOrderGroupForOneGraph(graph, manager);
+  auto ret = BuildOrderGroupForOneGraph(graph);
   if (ret) {
     DoReplace(manager);
     EliminateDuplicatedTupleGetItem(graph, manager);
