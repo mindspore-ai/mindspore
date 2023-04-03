@@ -232,6 +232,9 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsControlOpExecInBackend(const AnfNodePtr &node);
 
   static bool IsNodeInputContainMonad(const AnfNodePtr &node);
+  // Check whether a cnode has a monad input.
+  static bool HasMonadInput(const AnfNodePtr &node);
+
   // Check if node is non-task op.
   static bool IsNonTaskOp(const CNodePtr &node);
   // Check if node has none input after IR fusion.

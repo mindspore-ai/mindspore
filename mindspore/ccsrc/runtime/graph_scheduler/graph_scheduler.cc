@@ -1441,27 +1441,10 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
     LinkDataArrow(to_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
   }
 
-  std::vector<CNodePtr> auto_monad_kernels;
-  // Foreach the execution order to get the auto monad kernels.
+  // Foreach the execution order to add the auto monad device tensor stores.
   auto &execution_order = graph->execution_order();
   (void)std::for_each(execution_order.begin(), execution_order.end(), [&](const CNodePtr &kernel) {
-    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
-      auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
-      if (HasAbstractMonad(input_node)) {
-        (void)auto_monad_kernels.emplace_back(kernel);
-        continue;
-      }
-    }
-  });
-  // Foreach auto monad kernels to get the auto monad device tensor stores.
-  (void)std::for_each(auto_monad_kernels.begin(), auto_monad_kernels.end(), [&](const CNodePtr &kernel) {
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); ++i) {
-      KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(kernel, i, false);
-      auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, *graph);
-      if (IsPersistentDeviceTensor(front_node)) {
-        (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
-      }
-    }
+    SchedulerHelper::AddMonadDeviceTensorStore(to_actor, kernel, graph);
   });
   if (to_actor->auto_monad_device_tensor_stores_.size() > 0) {
     (void)auto_monad_actors->emplace_back(to_actor);
@@ -1506,9 +1489,9 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_,
                                     cnode_to_monad_inputs, &checked_nodes);
       }
+      // No data arrow for monad input.
       if (HasAbstractMonad(input_node)) {
-        (void)auto_monad_actors->emplace_back(kernel_actor);
-        continue;  // No data arrow for monad input.
+        continue;
       }
 
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
@@ -1520,6 +1503,12 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
       }
       // The gather of linking data arrows of kernel by the different from kernel type.
       LinkDataArrow(kernel_actor, graph_compiler_info, graph, from_kernel_with_output_idx, to_kernel_with_input_idx);
+    }
+
+    // Add the auto monad device tensor stores.
+    SchedulerHelper::AddMonadDeviceTensorStore(kernel_actor, kernel, graph);
+    if (kernel_actor->auto_monad_device_tensor_stores_.size() > 0) {
+      (void)auto_monad_actors->emplace_back(kernel_actor);
     }
   }
 
@@ -2414,21 +2403,15 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
   const size_t kNeedUpdateDeviceTensorStoreNum = 2;
   for (auto &auto_monad_actor : auto_monad_actors) {
     MS_EXCEPTION_IF_NULL(auto_monad_actor);
-    for (auto &device_tensor_store_key : auto_monad_actor->device_tensor_store_keys_) {
-      auto device_tensors = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get());
+    for (auto &auto_monad_device_tensor_store : auto_monad_actor->auto_monad_device_tensor_stores_) {
+      auto device_tensors = DeviceTensorStore::GetInstance().Fetch(auto_monad_device_tensor_store.get());
       if (device_tensors.size() < kNeedUpdateDeviceTensorStoreNum) {
-        continue;
-      }
-      // Find the device tensor store that needs to be processed accurately.
-      if ((auto_monad_actor->type_ == KernelTransformType::kSuperKernelActor) &&
-          (auto_monad_actor->auto_monad_device_tensor_stores_.find(device_tensor_store_key.second) ==
-           auto_monad_actor->auto_monad_device_tensor_stores_.end())) {
         continue;
       }
 
       // Create the copy actor.
       std::string name = "copy_from:" + auto_monad_actor->GetAID().Name() + kCopyActorNameSignFromStore +
-                         device_tensor_store_key.second->fullname_with_scope();
+                         auto_monad_device_tensor_store->fullname_with_scope();
       if (FetchActor(name) != nullptr) {
         continue;
       }
@@ -2444,7 +2427,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
       InsertActor(copy_actor.get());
 
       // Set the member of the copy actor.
-      (void)copy_actor->device_tensor_store_keys_.emplace_back(0, device_tensor_store_key.second);
+      (void)copy_actor->device_tensor_store_keys_.emplace_back(0, auto_monad_device_tensor_store);
       auto input_device_context = auto_monad_actor->device_contexts_[0];
       (void)copy_actor->device_contexts_.emplace_back(input_device_context);
       auto another_device_tensor = (device_tensors[0]->GetDeviceType() == input_device_context->GetDeviceType())
@@ -2457,8 +2440,9 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
       MS_EXCEPTION_IF_NULL(another_device_context);
       (void)copy_actor->device_contexts_.emplace_back(another_device_context);
 
-      MS_LOG(INFO) << "The auto monad actor: " << auto_monad_actor->GetAID().Name()
-                   << "has control arrows number:" << auto_monad_actor->output_control_arrows_.size();
+      MS_LOG(INFO) << "The auto monad actor:" << auto_monad_actor->GetAID().Name()
+                   << " has control arrows number:" << auto_monad_actor->output_control_arrows_.size()
+                   << ", add the copy actor for store:" << auto_monad_device_tensor_store->fullname_with_scope();
       std::vector<AbstractActor *> output_contorl_actors;
       for (auto &output_contorl : auto_monad_actor->output_control_arrows_) {
         MS_EXCEPTION_IF_NULL(output_contorl);

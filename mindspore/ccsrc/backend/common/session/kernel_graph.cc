@@ -695,6 +695,14 @@ AnfWithOutIndex KernelGraph::GetRefCorrespondOutput(const AnfWithOutIndex &out_p
   return ref_out_in_map_.at(out_pair);
 }
 
+AnfWithOutIndex KernelGraph::GetRefNodeRecursive(const AnfWithOutIndex &out_pair) const {
+  if (IsInRefOutputMap(out_pair)) {
+    const auto &origin_pair = GetRefCorrespondOutput(out_pair);
+    return GetRefNodeRecursive(origin_pair);
+  }
+  return out_pair;
+}
+
 void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair) {
   if (IsInRefOutputMap(final_pair)) {
     MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap, node is " << final_pair.first->DebugString()
