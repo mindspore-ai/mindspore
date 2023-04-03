@@ -74,7 +74,6 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   auto input_x_shape = input_x_shape_map[kShape];
   auto input_begin_value_ptr = input_args[kInputIndex1]->BuildValue();
   auto input_size_value_ptr = input_args[kInputIndex2]->BuildValue();
-  auto input_begin_shape = input_begin_shape_map[kShape];
   (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(input_x_shape.size()), kGreaterThan, 0,
                                            prim_name);
 
