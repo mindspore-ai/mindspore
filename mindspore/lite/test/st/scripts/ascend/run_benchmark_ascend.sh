@@ -48,11 +48,13 @@ function Run_Benchmark() {
             mode model_file input_files output_file data_path acc_limit enableFp16 \
             run_result
 
+  for cfg_file in ${ascend_cfg_file_list[*]}; do
     while read line; do
         line_info=${line}
         if [[ $line_info == \#* || $line_info == "" ]]; then
             continue
         fi
+        cfg_file_name=${cfg_file##*/}
 
         # model_info     accuracy_limit      run_mode
         model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
@@ -61,7 +63,11 @@ function Run_Benchmark() {
         # model_info detail
         model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
         input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
-        #input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_shapes=""
+        # Without a configuration file, there is no need to set the inputshape
+        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+          input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        fi
         mode=`echo ${model_info} | awk -F ';' '{print $3}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
         if [[ ${model_name##*.} == "caffemodel" ]]; then
@@ -99,6 +105,18 @@ function Run_Benchmark() {
           fi
           output_file=${data_path}'output/'${model_name}'.out'
         fi
+        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+          echo "cfg file name: ${cfg_file_name}"
+          if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+            input_files=${data_path}'input/'${model_name}'.bin'
+          else
+            for i in $(seq 1 $input_num)
+            do
+            input_files=${input_files}${data_path}'input/'${model_name}'.bin_'$i','
+            done
+          fi
+          output_file=${data_path}'output/'${model_name}'.out'
+        fi
 
         # set accuracy limitation
         acc_limit="0.5"
@@ -126,18 +144,24 @@ function Run_Benchmark() {
             fi
         fi
 
-    done < ${models_ascend_config}
+    done < ${cfg_file}
+  done
 }
 
 user_name=${USER}
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
 ms_models_path=${benchmark_test}/ms_models
+ascend_cfg_file_list=()
 if [[ ${backend} =~ "lite" ]]; then
     models_ascend_config=${benchmark_test}/models_ascend_lite.cfg
+    ascend_cfg_file_list=("$models_ascend_config")
 elif [[ ${backend} =~ "cloud" ]]; then
     models_ascend_config=${benchmark_test}/models_ascend_cloud.cfg
+    models_ascend_with_config=${benchmark_test}/models_with_config_cloud_ascend.cfg
+    ascend_cfg_file_list=("$models_ascend_config" "$models_ascend_with_config")
     if [[ ${backend} =~ "_ge" ]]; then
         models_ascend_config=${benchmark_test}/models_ascend_ge_cloud.cfg
+        ascend_cfg_file_list=("$models_ascend_config")
     fi
 fi
 model_data_path=/home/workspace/mindspore_dataset/mslite

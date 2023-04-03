@@ -20,6 +20,8 @@ function PrePareLocal() {
       cp ${models_ascend_config} ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/models_python_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/cloud_infer/models_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/ascend/*.config ${benchmark_test_path} || exit 1
   else
       cp ./../${config_folder}/models_ascend_lite.cfg ${benchmark_test_path} || exit 1
   fi
@@ -57,6 +59,8 @@ function PrePareRemote() {
       scp ${models_ascend_config} ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/models_python_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/cloud_infer/models_with_config_cloud_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/ascend/*.config ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else
       scp ./../${config_folder}/models_ascend_lite.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   fi

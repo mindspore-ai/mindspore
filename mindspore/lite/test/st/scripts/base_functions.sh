@@ -34,6 +34,7 @@ function Convert() {
         model_type=${model_name##*.}
         cfg_file_name=${cfg_file##*/}
         quant_config_path="${cfg_file%/*}/quant"
+        ascend_config_path="${cfg_file%/*}/"
         case $model_type in
           pb)
             model_fmk="TF"
@@ -128,6 +129,10 @@ function Convert() {
           do
             spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
           done
+        fi
+        if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+            spec_shapes=""
+            config_file="${ascend_config_path}/${model_name}.config"
         fi
         if [[ ${extra_info} =~ "fp16_weight" ]]; then
           fp16_weight="on"
