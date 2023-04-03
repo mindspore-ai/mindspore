@@ -39,72 +39,73 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
   DataType indice_data_type = ctx.Input(0)->GetDataType();
   DataType dense_data_type = ctx.Input(3)->GetDataType();
   DataType y_data_type = ctx.Output(0)->GetDataType();
+  uint32_t ret = KERNEL_STATUS_INNER_ERROR;
   if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
       y_data_type == DT_FLOAT)
-    regular_calculate<float, int64_t, float, float>(ctx);
+    ret = regular_calculate<float, int64_t, float, float>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<float, int64_t, complex<float>, complex<float>>(ctx);
+    ret = regular_calculate<float, int64_t, complex<float>, complex<float>>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_FLOAT)
-    regular_calculate<float, int32_t, float, float>(ctx);
+    ret = regular_calculate<float, int32_t, float, float>(ctx);
   else if (sparse_data_type == DT_FLOAT && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<float, int32_t, complex<float>, complex<float>>(ctx);
+    ret = regular_calculate<float, int32_t, complex<float>, complex<float>>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_DOUBLE)
-    regular_calculate<double, int64_t, double, double>(ctx);
+    ret = regular_calculate<double, int64_t, double, double>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<double, int64_t, complex<double>, complex<double>>(ctx);
+    ret = regular_calculate<double, int64_t, complex<double>, complex<double>>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_DOUBLE)
-    regular_calculate<double, int32_t, double, double>(ctx);
+    ret = regular_calculate<double, int32_t, double, double>(ctx);
   else if (sparse_data_type == DT_DOUBLE && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<double, int32_t, complex<double>, complex<double>>(ctx);
+    ret = regular_calculate<double, int32_t, complex<double>, complex<double>>(ctx);
   else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT64 && dense_data_type == DT_INT64 &&
            y_data_type == DT_INT64)
-    regular_calculate<int64_t, int64_t, int64_t, int64_t>(ctx);
+    ret = regular_calculate<int64_t, int64_t, int64_t, int64_t>(ctx);
   else if (sparse_data_type == DT_INT64 && indice_data_type == DT_INT32 && dense_data_type == DT_INT64 &&
            y_data_type == DT_INT64)
-    regular_calculate<int64_t, int32_t, int64_t, int64_t>(ctx);
+    ret = regular_calculate<int64_t, int32_t, int64_t, int64_t>(ctx);
   else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT64 && dense_data_type == DT_INT32 &&
            y_data_type == DT_INT32)
-    regular_calculate<int32_t, int64_t, int32_t, int32_t>(ctx);
+    ret = regular_calculate<int32_t, int64_t, int32_t, int32_t>(ctx);
   else if (sparse_data_type == DT_INT32 && indice_data_type == DT_INT32 && dense_data_type == DT_INT32 &&
            y_data_type == DT_INT32)
-    regular_calculate<int32_t, int32_t, int32_t, int32_t>(ctx);
+    ret = regular_calculate<int32_t, int32_t, int32_t, int32_t>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<complex<float>, int64_t, float, complex<float>>(ctx);
+    ret = regular_calculate<complex<float>, int64_t, float, complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<complex<float>, int64_t, complex<float>, complex<float>>(ctx);
+    ret = regular_calculate<complex<float>, int64_t, complex<float>, complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<complex<float>, int32_t, float, complex<float>>(ctx);
+    ret = regular_calculate<complex<float>, int32_t, float, complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX64 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX64 &&
            y_data_type == DT_COMPLEX64)
-    regular_calculate<complex<float>, int32_t, complex<float>, complex<float>>(ctx);
+    ret = regular_calculate<complex<float>, int32_t, complex<float>, complex<float>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<complex<double>, int64_t, double, complex<double>>(ctx);
+    ret = regular_calculate<complex<double>, int64_t, double, complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT64 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<complex<double>, int64_t, complex<double>, complex<double>>(ctx);
+    ret = regular_calculate<complex<double>, int64_t, complex<double>, complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_DOUBLE &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<complex<double>, int32_t, double, complex<double>>(ctx);
+    ret = regular_calculate<complex<double>, int32_t, double, complex<double>>(ctx);
   else if (sparse_data_type == DT_COMPLEX128 && indice_data_type == DT_INT32 && dense_data_type == DT_COMPLEX128 &&
            y_data_type == DT_COMPLEX128)
-    regular_calculate<complex<double>, int32_t, complex<double>, complex<double>>(ctx);
+    ret = regular_calculate<complex<double>, int32_t, complex<double>, complex<double>>(ctx);
   else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT64 && dense_data_type == DT_FLOAT16 &&
            y_data_type == DT_FLOAT16)
-    regular_calculate<Eigen::half, int64_t, Eigen::half, Eigen::half>(ctx);
+    ret = regular_calculate<Eigen::half, int64_t, Eigen::half, Eigen::half>(ctx);
   else if (sparse_data_type == DT_FLOAT16 && indice_data_type == DT_INT32 && dense_data_type == DT_FLOAT16 &&
            y_data_type == DT_FLOAT16)
-    regular_calculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
+    ret = regular_calculate<Eigen::half, int32_t, Eigen::half, Eigen::half>(ctx);
 
   else {
     KERNEL_LOG_ERROR(
@@ -117,7 +118,7 @@ uint32_t SparseTensorDenseMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
       DTypeStr(y_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  return KERNEL_STATUS_OK;
+  return ret;
 }
 template <class SparseType, class IndicesType, class DenseType, class OutputType>
 uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &ctx) {
@@ -150,6 +151,8 @@ uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &c
   if (adjoint_b->GetBool()) {
     swap(x2_row, x2_col);
   }
+  auto same_dim = (adjoint_b->GetBool()) ? x2_row : x2_col;
+  auto y_dims = y_shape->GetDimSize(0);
   uint64_t pairs = x1_indices_shape->GetDimSize(0);
   IndicesType *x1_indices_data = (IndicesType *)x1_indices->GetData();
   for (uint64_t i = 0; i < pairs; i++) {
@@ -158,8 +161,9 @@ uint32_t SparseTensorDenseMatMulCpuKernel::regular_calculate(CpuKernelContext &c
     if (adjoint_a->GetBool()) {
       swap(row, col);
     }
-    KERNEL_CHECK_FALSE(row >= 0 && row < x1_row && col >= 0 && col < x1_col, KERNEL_STATUS_PARAM_INVALID,
-                       "sparse size invalid.")
+    KERNEL_CHECK_FALSE(
+      row < static_cast<uint64_t>(y_dims) && row >= 0 && col < static_cast<uint64_t>(same_dim) && col >= 0,
+      KERNEL_STATUS_PARAM_INVALID, "For 'SparseTensorDenseMatmul', the indices including out of bounds index '");
     if (x2_col < COL_SHED) {
       for (uint64_t j = 0; j < x2_col; j++) {
         uint64_t idx = adjoint_b->GetBool() ? (j * x2_row + col) : (col * x2_col + j);
