@@ -158,7 +158,7 @@ ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node)
   for (auto input : node->inputs()) {
     std::string op_name = get_node_name(input);
     MS_LOG(INFO) << "op_name is: " << op_name;
-    int op_name_len = op_name.size();
+    int op_name_len = SizeToInt(op_name.size());
     int load_len = 4;
     if ((op_name_len >= load_len) && (op_name.substr(0, load_len) == "Load")) {
       for (auto param : input->cast<mindspore::CNodePtr>()->inputs()) {
@@ -182,7 +182,7 @@ ParameterPtr get_node_param(const FuncGraphPtr func_graph, const CNodePtr &node)
   return nullptr;
 }
 
-ValueNodePtr build_tuple_value_node(std::vector<int64_t> values) {
+ValueNodePtr build_tuple_value_node(const std::vector<int64_t> &values) {
   mindspore::ValueNodePtr v_node = std::make_shared<mindspore::ValueNode>(MakeValue(values));
   AbstractBasePtrList abs_list;
   std::transform(values.cbegin(), values.cend(), std::back_inserter(abs_list), [](const int64 &item) {
@@ -554,8 +554,8 @@ bool DynamicObfuscator::IsTarget(const std::string &cnode_name) {
   target_op_list.insert(target_op_list.end(), single_input_with_weight_target_op_.begin(),
                         single_input_with_weight_target_op_.end());
   for (std::string target_op_name : target_op_list) {
-    int op_name_len = cnode_name.size();
-    int target_name_len = target_op_name.size();
+    int op_name_len = SizeToInt(cnode_name.size());
+    int target_name_len = SizeToInt(target_op_name.size());
     if ((op_name_len >= target_name_len) && (cnode_name.substr(0, target_name_len) == target_op_name)) {
       MS_LOG(INFO) << "find target node.";
       return true;
