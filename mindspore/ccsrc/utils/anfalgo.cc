@@ -633,6 +633,14 @@ inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
   return shape_ptr->shape();
 }
 
+namespace {
+bool IsStaticNoEmptyTuple(const abstract::AbstractSequencePtr &sequence_abs) {
+  MS_EXCEPTION_IF_NULL(sequence_abs);
+  auto element_abs = sequence_abs->dynamic_len_element_abs();
+  return (!sequence_abs->dynamic_len()) && element_abs == nullptr && (!sequence_abs->elements().empty());
+}
+}  // namespace
+
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
                                          size_t output_idx, bool is_real_squence_output) {
   MS_EXCEPTION_IF_NULL(node);
@@ -655,7 +663,7 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       MS_EXCEPTION_IF_NULL(sequence_abs);
       auto element_abs = sequence_abs->dynamic_len_element_abs();
       ShapeVector shape_vector = {SizeToLong(tuple_shape->size())};
-      if ((!sequence_abs->dynamic_len()) && element_abs == nullptr && (!sequence_abs->elements().empty())) {
+      if (IsStaticNoEmptyTuple(sequence_abs)) {
         element_abs = sequence_abs->elements()[0];
         MS_EXCEPTION_IF_NULL(element_abs);
       } else if (element_abs == nullptr || (!element_abs->isa<abstract::AbstractTensor>())) {
