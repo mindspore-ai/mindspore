@@ -18,6 +18,7 @@
 #include <vector>
 #include <numeric>
 #include <functional>
+#include <algorithm>
 #include "ops/unsqueeze.h"
 #include "ops/squeeze.h"
 #include "ops/reshape.h"
@@ -27,6 +28,34 @@
 #include "ops/broadcast_to.h"
 
 namespace mindspore::lite {
+int ShuffleTensorRT::IsSqueezeSupport() {
+  constexpr size_t input_count_without_constant = 1;
+  constexpr size_t input_count_with_constant = 2;
+  if (in_tensors_.size() == input_count_without_constant) {
+    auto squeeze_op = AsOps<ops::Squeeze>();
+    if (squeeze_op == nullptr) {
+      MS_LOG(ERROR) << "SqueezeOp convert failed";
+      return RET_ERROR;
+    }
+    param_axis_ = squeeze_op->get_axis();
+  } else if (in_tensors_.size() == input_count_with_constant) {
+    if (!in_tensors_[1].IsConst()) {
+      MS_LOG(ERROR) << "Expect input 1 to be const when input size is 2, type: " << type_ << ", op: " << op_name_;
+      return RET_ERROR;
+    }
+    auto axis = ConvertTensorAsIntVector(in_tensors_[1]);
+    std::copy(axis.begin(), axis.end(), std::back_inserter(param_axis_));
+  } else {
+    MS_LOG(ERROR) << "Unsupported in_tensors size " << in_tensors_.size() << " of " << type_;
+    return RET_ERROR;
+  }
+  if (param_axis_.empty()) {
+    MS_LOG(WARNING) << op_name_ << " is a full dim squeeze, don't support dynamic input shape.";
+    dynamic_shape_params_.support_dynamic_ = false;
+    dynamic_shape_params_.support_hw_dynamic_ = false;
+  }
+  return RET_OK;
+}
 int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
                                const std::vector<TensorInfo> &out_tensors) {
   if (type_ == ops::kNameFlatten || type_ == ops::kNameUnsqueeze) {
@@ -35,31 +64,7 @@ int ShuffleTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::
       return RET_ERROR;
     }
   } else if (type_ == ops::kNameSqueeze) {
-    constexpr size_t input_count_without_constant = 1;
-    constexpr size_t input_count_with_constant = 2;
-    if (in_tensors_.size() == input_count_without_constant) {
-      auto squeeze_op = AsOps<ops::Squeeze>();
-      if (squeeze_op == nullptr) {
-        MS_LOG(ERROR) << "SqueezeOp convert failed";
-        return RET_ERROR;
-      }
-      param_axis_ = squeeze_op->get_axis();
-    } else if (in_tensors_.size() == input_count_with_constant) {
-      if (!in_tensors_[1].IsConst()) {
-        MS_LOG(ERROR) << "Expect input 1 to be const when input size is 2, type: " << type_ << ", op: " << op_name_;
-        return RET_ERROR;
-      }
-      auto axis = ConvertTensorAsIntVector(in_tensors_[1]);
-      std::copy(axis.begin(), axis.end(), std::back_inserter(param_axis_));
-    } else {
-      MS_LOG(ERROR) << "Unsupported in_tensors size " << in_tensors.size() << " of " << type_;
-      return RET_ERROR;
-    }
-    if (param_axis_.empty()) {
-      MS_LOG(WARNING) << op_name_ << " is a full dim squeeze, don't support dynamic input shape.";
-      dynamic_shape_params_.support_dynamic_ = false;
-      dynamic_shape_params_.support_hw_dynamic_ = false;
-    }
+    return IsSqueezeSupport();
   } else if (type_ == ops::kNameReshape) {
     if (in_tensors.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();

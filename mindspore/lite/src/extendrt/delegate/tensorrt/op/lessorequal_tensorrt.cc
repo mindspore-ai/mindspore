@@ -107,7 +107,7 @@ bool LessorequalPlugin::supportsFormatCombination(int pos, const nvinfer1::Plugi
     return false;
   }
   if (pos == 0) {
-    return tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT || tensorsDesc[pos].type == nvinfer1::DataType::kINT32;
+    return tensorsDesc[pos].type == nvinfer1::DataType::kINT32 || tensorsDesc[pos].type == nvinfer1::DataType::kFLOAT;
   }
   if (pos < nbInputs) {
     return tensorsDesc[pos].type == tensorsDesc[pos - 1].type;

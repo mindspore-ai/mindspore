@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/op/topk_tensorrt.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "ops/fusion/arg_min_fusion.h"
@@ -132,27 +133,18 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
 int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
   int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
-  if (type_ == ops::kNameArgMaxFusion) {
-    topk_op_ = nvinfer1::TopKOperation::kMAX;
-    auto max_prim = AsOps<ops::ArgMaxFusion>();
-    CHECK_NULL_RETURN(max_prim);
-    axis_value_ = max_prim->get_axis();
+  if (type_ == ops::kNameArgMinFusion || type_ == ops::kNameArgMaxFusion) {
+    std::unordered_map<std::string, nvinfer1::TopKOperation> type2op = {
+      {ops::kNameArgMaxFusion, nvinfer1::TopKOperation::kMAX}, {ops::kNameArgMinFusion, nvinfer1::TopKOperation::kMIN}};
+    topk_op_ = type2op[type_];
+    auto prim = AsOps<ops::ArgMaxFusion>();
+    CHECK_NULL_RETURN(prim);
+    axis_value_ = prim->get_axis();
     axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
-    if (max_prim->HasAttr(ops::kKeepDims)) {
-      keep_dims_ = max_prim->get_keep_dims();
+    if (prim->HasAttr(ops::kKeepDims)) {
+      keep_dims_ = prim->get_keep_dims();
     }
-    top_k_ = max_prim->HasAttr(ops::kTopK) ? max_prim->get_top_k() : 1;
-  }
-  if (type_ == ops::kNameArgMinFusion) {
-    topk_op_ = nvinfer1::TopKOperation::kMIN;
-    auto mim_prim = AsOps<ops::ArgMaxFusion>();
-    CHECK_NULL_RETURN(mim_prim);
-    axis_value_ = mim_prim->get_axis();
-    axis_value_ = axis_value_ >= 0 ? axis_value_ : input_nbDims + axis_value_;
-    if (mim_prim->HasAttr(ops::kKeepDims)) {
-      keep_dims_ = mim_prim->get_keep_dims();
-    }
-    top_k_ = mim_prim->HasAttr(ops::kTopK) ? mim_prim->get_top_k() : 1;
+    top_k_ = prim->HasAttr(ops::kTopK) ? prim->get_top_k() : 1;
   }
   if (type_ == ops::kNameTopKFusion) {
     auto topk_prim = AsOps<ops::TopKFusion>();
