@@ -431,6 +431,10 @@ BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<Abst
     }
     return infer_shape;
   };
+  auto dyn_arr_deleter = [](int64_t **x, size_t dims) {
+    std::for_each(x, x + dims, std::default_delete<int64_t[]>());
+    delete[] x;
+  };
   if (info.output_shapes != nullptr) {
     if (info.output_dims == nullptr) {
       MS_LOG(ERROR) << "Output dims must be given if output shapes are specified!";
@@ -445,13 +449,15 @@ BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<Abst
                                  "The input_num is too large for memory allocation.");
     MS_ERROR_IF_TRUE_W_RET_N_LOG(output_num * sizeof(size_t) > maxMallocSize, nullptr,
                                  "The output_num is too large for memory allocation.");
-    auto *out_dims_arr = new size_t[output_num];
-    auto **out_shapes_arr = new int64_t *[output_num];
+    auto out_dims_arr = std::make_unique<size_t[]>(output_num);
+    std::unique_ptr<int64_t *, std::function<void(int64_t **)>> out_shapes_arr(
+      new (std::nothrow) int64_t *[output_num](), std::bind(dyn_arr_deleter, std::placeholders::_1, output_num));
     for (size_t i = 0; i < output_num; i++) {
-      out_shapes_arr[i] = new int64_t[MAX_DIMS];
+      (out_shapes_arr.get())[i] = new int64_t[MAX_DIMS];
     }
-    auto *in_dims_arr = new size_t[input_num];
-    auto **in_shapes_arr = new int64_t *[input_num];
+    auto in_dims_arr = std::make_unique<size_t[]>(input_num);
+    std::unique_ptr<int64_t *, std::function<void(int64_t **)>> in_shapes_arr(
+      new (std::nothrow) int64_t *[input_num](), std::bind(dyn_arr_deleter, std::placeholders::_1, input_num));
     for (size_t i = 0; i < input_num; i++) {
       auto in_shape = input_args[i]->BuildShape();
       MS_EXCEPTION_IF_NULL(in_shape);
@@ -460,37 +466,20 @@ BaseShapePtr CustomOpInferShape(const CustomOpInfo &info, const std::vector<Abst
       auto in_shape_vec = in_shape_ptr->shape();
       auto in_shape_dim = in_shape_vec.size();
       in_dims_arr[i] = in_shape_dim;
-      in_shapes_arr[i] = new int64_t[in_shape_dim];
+      MS_ERROR_IF_TRUE_W_RET_N_LOG(in_shape_dim * sizeof(size_t) > maxMallocSize, nullptr,
+                                   "The in_shape_dim is too large for memory allocation.");
+      (in_shapes_arr.get())[i] = new int64_t[in_shape_dim];
       for (size_t j = 0; j < in_shape_dim; j++) {
-        in_shapes_arr[i][j] = in_shape_vec[j];
+        (in_shapes_arr.get())[i][j] = in_shape_vec[j];
       }
     }
-    auto ret = info.shape_infer_func(in_shapes_arr, in_dims_arr, input_num, out_shapes_arr, out_dims_arr, output_num);
+    auto ret = info.shape_infer_func(in_shapes_arr.get(), in_dims_arr.get(), input_num, out_shapes_arr.get(),
+                                     out_dims_arr.get(), output_num);
     if (ret != RET_OK) {
-      for (size_t i = 0; i < input_num; i++) {
-        delete[] in_shapes_arr[i];
-      }
-      delete[] in_shapes_arr;
-      delete[] in_dims_arr;
-      for (size_t i = 0; i < output_num; i++) {
-        delete[] out_shapes_arr[i];
-      }
-      delete[] out_shapes_arr;
-      delete[] out_dims_arr;
       MS_LOG(ERROR) << "Failed to call the shape infer function of custom op!";
       return nullptr;
     }
-    BaseShapePtr infer_shape = build_shape_func(out_shapes_arr, out_dims_arr, output_num);
-    for (size_t i = 0; i < input_num; i++) {
-      delete[] in_shapes_arr[i];
-    }
-    delete[] in_shapes_arr;
-    delete[] in_dims_arr;
-    for (size_t i = 0; i < output_num; i++) {
-      delete[] out_shapes_arr[i];
-    }
-    delete[] out_shapes_arr;
-    delete[] out_dims_arr;
+    BaseShapePtr infer_shape = build_shape_func(out_shapes_arr.get(), out_dims_arr.get(), output_num);
     return infer_shape;
   } else {
     MS_LOG(ERROR) << "Either output shape or output shape infer function must be specified!";
@@ -523,8 +512,8 @@ TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBa
   } else if (info.shape_infer_func != nullptr) {
     size_t input_num = info.input_num;
     size_t output_num = info.output_num;
-    auto *in_dtypes_arr = new DataTypeC[input_num];
-    auto *out_dtypes_arr = new DataTypeC[output_num];
+    auto in_dtypes_arr = std::make_unique<DataTypeC[]>(input_num);
+    auto out_dtypes_arr = std::make_unique<DataTypeC[]>(output_num);
     for (size_t i = 0; i < input_num; i++) {
       auto in_type = input_args[i]->BuildType();
       MS_EXCEPTION_IF_NULL(in_type);
@@ -536,14 +525,12 @@ TypePtr CustomOpInferType(const CustomOpInfo &info, const std::vector<AbstractBa
       auto in_type_id = (enum DataTypeC)(real_type->type_id());
       in_dtypes_arr[i] = in_type_id;
     }
-    STATUS ret = info.dtype_infer_func(in_dtypes_arr, input_num, out_dtypes_arr, output_num);
+    STATUS ret = info.dtype_infer_func(in_dtypes_arr.get(), input_num, out_dtypes_arr.get(), output_num);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Failed to call the dtype infer function of custom op!";
       return nullptr;
     }
-    TypePtr infer_dtype = build_type_func(out_dtypes_arr, output_num);
-    delete[] in_dtypes_arr;
-    delete[] out_dtypes_arr;
+    TypePtr infer_dtype = build_type_func(out_dtypes_arr.get(), output_num);
     return infer_dtype;
   } else {
     MS_LOG(ERROR) << "Either output dtype or output dtype infer function must be specified!";
