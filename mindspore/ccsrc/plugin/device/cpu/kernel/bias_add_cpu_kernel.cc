@@ -107,7 +107,7 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddOutputsNum, kernel_name_);
-  kernel_func_(this, inputs, workspace, outputs);
+  (void)kernel_func_(this, inputs, workspace, outputs);
   return true;
 }
 

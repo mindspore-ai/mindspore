@@ -98,7 +98,7 @@ class MS_CORE_API List final : public Object {
   /// \brief Set the element type when the list is dynamic length.
   ///
   /// \param[in] dynamic_element_type type of element for dynamic length list.
-  void set_dynamic_element_type(TypePtr dynamic_element_type);
+  void set_dynamic_element_type(const TypePtr &dynamic_element_type);
 
  private:
   /// \brief Show each element.
@@ -177,7 +177,7 @@ class MS_CORE_API Tuple final : public Object {
   /// \brief Set the element type when the tuple is dynamic length.
   ///
   /// \param[in] dynamic_element_type type of element for dynamic length tuple.
-  void set_dynamic_element_type(TypePtr dynamic_element_type);
+  void set_dynamic_element_type(const TypePtr &dynamic_element_type);
 
  private:
   /// \brief Show each element.
