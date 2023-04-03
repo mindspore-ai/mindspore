@@ -79,7 +79,7 @@ class MS_CORE_API Keyword final : public Object {
   /// \brief The constructor of Keyword.
   ///
   /// \return The instance of Keyword.
-  Keyword() : Object(kObjectTypeKeyword, false), key_(""), value_(nullptr) {}
+  Keyword() : Object(kObjectTypeKeyword), key_(""), value_(nullptr) {}
 
   /// \brief The constructor of Keyword with some parameters.
   ///
