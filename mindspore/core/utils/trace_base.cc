@@ -46,7 +46,7 @@ std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, boo
     auto loc = debug_info->location();
     MS_LOG(DEBUG) << "Visited Insert debug info: " << debug_info.get()
                   << ", loc:" << (loc == nullptr ? "null" : loc->ToString());
-    visited.insert(debug_info);
+    (void)visited.insert(debug_info);
     if (is_debug || debug_info->location() != nullptr) {
       debug_with_loc_vec.push_back(debug_info);
     }

@@ -248,9 +248,9 @@ class MS_CORE_API DebugInfo {
   /// \return The python function name that this DebugInfo belongs to.
   virtual std::string get_python_func_belonged() { return ""; }
 
-  virtual DebugInfoPtr Copy();
+  virtual DebugInfoPtr Copy() const;
 
-  bool inlined() { return inlined_; }
+  bool inlined() const { return inlined_; }
 
   static DebugInfoPtr UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info, const DebugInfoPtr &debug_info);
 
@@ -317,7 +317,7 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
 
   std::string get_python_func_belonged() override { return py_func_belonged_; }
 
-  DebugInfoPtr Copy() override;
+  DebugInfoPtr Copy() const override;
 
  private:
   AnfNodeWeakPtr node_;

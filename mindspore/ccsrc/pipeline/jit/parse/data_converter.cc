@@ -275,7 +275,7 @@ ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
     if (!success) {
       return nullptr;
     }
-    key_values.emplace_back(key, value);
+    (void)key_values.emplace_back(key, value);
   }
   return std::make_shared<ValueDictionary>(key_values);
 }

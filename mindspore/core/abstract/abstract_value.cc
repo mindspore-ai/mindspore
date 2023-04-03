@@ -1393,7 +1393,7 @@ TypePtr AbstractDictionary::BuildType() const {
     MS_EXCEPTION_IF_NULL(item.second);
     ValuePtr key_type = item.first->BuildValue();
     TypePtr value_type = item.second->BuildType();
-    key_values.emplace_back(key_type, value_type);
+    (void)key_values.emplace_back(key_type, value_type);
   }
   return std::make_shared<Dictionary>(key_values);
 }
@@ -1476,7 +1476,7 @@ ValuePtr AbstractDictionary::RealBuildValue() const {
     if (value_element_value->isa<ValueAny>()) {
       return kValueAny;
     }
-    key_values.emplace_back(key_element_value, value_element_value);
+    (void)key_values.emplace_back(key_element_value, value_element_value);
   }
   return std::make_shared<ValueDictionary>(key_values);
 }

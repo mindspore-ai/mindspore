@@ -173,8 +173,8 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_a
       MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
       if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
         auto arg_tuple = specialize_args_before_unpack[index]->cast_ptr<AbstractTuple>();
-        std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
-                       std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
+        (void)std::transform(arg_tuple->elements().cbegin(), arg_tuple->elements().cend(),
+                             std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
       } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
         auto arg_dict = specialize_args_before_unpack[index]->cast_ptr<AbstractDictionary>();
         MS_EXCEPTION_IF_NULL(arg_dict);
