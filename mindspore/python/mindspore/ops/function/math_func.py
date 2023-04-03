@@ -10166,7 +10166,7 @@ def polygamma(n, input):
         >>> a = Tensor(np.array(1), mindspore.int64)
         >>> output = ops.polygamma(a, x)
         >>> print(output)
-        [ 0.37446456, 15.49884837]
+        [ 0.37446456 15.49884838]
     """
     polygamma_op = _get_cache_prim(P.Polygamma)()
     return polygamma_op(n, input)
