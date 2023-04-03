@@ -24,7 +24,7 @@ import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
-from mindspore.scipy.linalg import det, solve_triangular
+from mindspore.scipy.linalg import det
 from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix, \
     create_random_rank_matrix
 
@@ -49,180 +49,6 @@ def test_block_diag(args):
 
     scipy_res = osp.linalg.block_diag(*args)
     match_array(ms_res.asnumpy(), scipy_res)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [10, 20, 52])
-@pytest.mark.parametrize('trans', ["N", "T", "C"])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
-@pytest.mark.parametrize('lower', [False, True])
-@pytest.mark.parametrize('unit_diagonal', [False, True])
-def test_solve_triangular(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: the result match scipy solve_triangular result
-    """
-    rtol, atol = 1.e-5, 1.e-8
-    if dtype == onp.float32:
-        rtol, atol = 1.e-3, 1.e-3
-
-    onp.random.seed(0)
-    a = create_random_rank_matrix((n, n), dtype)
-    b = create_random_rank_matrix((n,), dtype)
-
-    output = solve_triangular(Tensor(a), Tensor(b), trans, lower, unit_diagonal).asnumpy()
-    expect = osp.linalg.solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal,
-                                         trans=trans)
-
-    assert onp.allclose(expect, output, rtol=rtol, atol=atol)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [3, 4, 6])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
-def test_solve_triangular_error_dims(n: int, dtype):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = create_random_rank_matrix((10,) * n, dtype)
-    b = create_random_rank_matrix(10, dtype)
-    with pytest.raises(ValueError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-    a = create_random_rank_matrix((n, n + 1), dtype)
-    b = create_random_rank_matrix((10,), dtype)
-    with pytest.raises(ValueError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-    a = create_random_rank_matrix((10, 10), dtype)
-    b = create_random_rank_matrix((11,) * n, dtype)
-    with pytest.raises(ValueError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-    a = create_random_rank_matrix((10, 10), dtype)
-    b = create_random_rank_matrix((n,), dtype)
-    with pytest.raises(ValueError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_solve_triangular_error_tensor_dtype():
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = create_random_rank_matrix((10, 10), onp.float16)
-    b = create_random_rank_matrix((10,), onp.float16)
-    with pytest.raises(TypeError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-    a = create_random_rank_matrix((10, 10), onp.float32)
-    b = create_random_rank_matrix((10,), onp.float16)
-    with pytest.raises(TypeError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-    a = create_random_rank_matrix((10, 10), onp.float32)
-    b = create_random_rank_matrix((10,), onp.float64)
-    with pytest.raises(TypeError):
-        solve_triangular(Tensor(a), Tensor(b))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
-@pytest.mark.parametrize('argname', ['lower', 'overwrite_b', 'check_finite'])
-@pytest.mark.parametrize('wrong_argvalue', [5.0, None, 'test'])
-def test_solve_triangular_error_type(dtype, argname, wrong_argvalue):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = create_random_rank_matrix((10, 10), dtype)
-    b = create_random_rank_matrix((10,), dtype)
-
-    kwargs = {argname: wrong_argvalue}
-    with pytest.raises(TypeError):
-        solve_triangular(Tensor(a), Tensor(b), **kwargs)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
-@pytest.mark.parametrize('wrong_argvalue', [5.0, None])
-def test_solve_triangular_error_type_trans(dtype, wrong_argvalue):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = create_random_rank_matrix((10, 10), dtype)
-    b = create_random_rank_matrix((10,), dtype)
-
-    with pytest.raises(TypeError):
-        solve_triangular(Tensor(a), Tensor(b), trans=wrong_argvalue)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
-@pytest.mark.parametrize('wrong_argvalue', ['D', 6])
-def test_solve_triangular_error_value_trans(dtype, wrong_argvalue):
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = create_random_rank_matrix((10, 10), dtype)
-    b = create_random_rank_matrix((10,), dtype)
-
-    with pytest.raises(ValueError):
-        solve_triangular(Tensor(a), Tensor(b), trans=wrong_argvalue)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_solve_triangular_error_tensor_type():
-    """
-    Feature: ALL TO ALL
-    Description:  test cases for solve_triangular for batched triangular matrix solver [..., N, N]
-    Expectation: solve_triangular raises expectated Exception
-    """
-    a = 'test'
-    b = create_random_rank_matrix((10,), onp.float32)
-    with pytest.raises(TypeError):
-        solve_triangular(a, Tensor(b))
-
-    a = [1, 2, 3]
-    b = create_random_rank_matrix((10,), onp.float32)
-    with pytest.raises(TypeError):
-        solve_triangular(a, Tensor(b))
-
-    a = (1, 2, 3)
-    b = create_random_rank_matrix((10,), onp.float32)
-    with pytest.raises(TypeError):
-        solve_triangular(a, Tensor(b))
 
 
 @pytest.mark.level0
@@ -376,8 +202,10 @@ def test_eigh_complex(n: int, data_type):
     """
     # test case for complex
     tol = {"f": (1e-3, 1e-4), "d": (1e-5, 1e-8)}
-    rtol = tol[data_type[1]][0]
-    atol = tol[data_type[1]][1]
+    value = tol.get(data_type[1])
+    assert value is not None
+    rtol = value[0]
+    atol = value[1]
     A = onp.array(onp.random.rand(n, n), dtype=data_type[0])
     for i in range(0, n):
         for j in range(0, n):

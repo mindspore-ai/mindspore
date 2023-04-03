@@ -665,6 +665,9 @@ Debugging Functions
 Sparse Functions
 ----------------
 
+.. warning::
+    These are experimental APIs that are subject to change or deletion.
+
 .. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
@@ -676,6 +679,9 @@ Sparse Functions
 
 COO Functions
 ^^^^^^^^^^^^^
+
+.. warning::
+    These are experimental APIs that are subject to change or deletion.
 
 .. msplatwarnautosummary::
     :toctree: ops
@@ -718,6 +724,9 @@ COO Functions
 
 CSR Functions
 ^^^^^^^^^^^^^
+
+.. warning::
+    These are experimental APIs that are subject to change or deletion.
 
 .. msplatwarnautosummary::
     :toctree: ops

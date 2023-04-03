@@ -157,7 +157,7 @@ def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b', sparse=Fal
 
 
 def _sparse_check(func_name, a, m, b, x0):
-    """Used for cg, bicgstab and gmres method."""
+    """Used for cg method."""
 
     def _check_right(arg, arg_name):
         if arg is None:

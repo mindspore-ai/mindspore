@@ -26,7 +26,7 @@ from ..ops.operations.math_ops import Cholesky
 from ..ops import functional as F
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
+__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
 
 
 def block_diag(*arrs):
@@ -94,110 +94,6 @@ def block_diag(*arrs):
         accum = ops.Pad(((0, 0), (0, c)))(accum)
         accum = mnp.concatenate([accum, arr], axis=0)
     return accum
-
-
-def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
-                     overwrite_b=False, debug=None, check_finite=True):
-    """
-    Assuming a is a batched triangular matrix, solve the equation
-
-    .. math::
-        a x = b
-
-    Note:
-        - `solve_triangular` is not supported on Windows platform yet.
-        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
-          `int64` is passed, it will be cast to :class:`mstype.float64`.
-        - The floating point error will accumulate when the size of input matrix gets larger. Substituting
-          result `x` back into :math:`a x = b` would be a way to evaluate the result. If the input shape is large
-          enough, using `float64` instead of `float32` is also a way to mitigate the error.
-
-    Args:
-        a (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
-        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`a x = b`.
-        lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
-        trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
-
-            ========  =========
-            trans     system
-            ========  =========
-            0 or 'N'  a x  = b
-            1 or 'T'  a^T x = b
-            2 or 'C'  a^H x = b
-            ========  =========
-        unit_diagonal (bool, optional): If True, diagonal elements of :math:`a` are assumed to be 1 and
-            will not be referenced. Default: False.
-        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
-        debug (None): Not implemented now. Default: None.
-        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
-            Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
-
-    Returns:
-        Tensor of shape :math:`(M,)` or :math:`(M, N)`,
-        which is the solution to the system :math:`a x = b`.
-        Shape of :math:`x` matches :math:`b`.
-
-    Raises:
-        TypeError: If `a` is not Tensor.
-        ValueError: If `a` is not 2 dimension.
-        TypeError: If `b` is not Tensor.
-        ValueError: If `b` is not 1 or 2 dimension.
-        TypeError: If dtype of `a` and `b` are not the same.
-        ValueError: If the shape of `a` and `b` are not matched.
-        TypeError: If `trans` is not int or str.
-        ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
-        TypeError: If `lower` is not bool.
-        TypeError: If `unit_diagonal` is not bool.
-        TypeError: If `overwrite_b` is not bool.
-        TypeError: If `check_finite` is not bool.
-        ValueError: If `debug` is not None.
-        ValueError: If `a` is singular matrix.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        Solve the lower triangular system :math:`a x = b`, where::
-
-                 [3  0  0  0]       [4]
-            a =  [2  1  0  0]   b = [2]
-                 [1  0  1  0]       [4]
-                 [1  1  1  1]       [2]
-
-        >>> import numpy as onp
-        >>> from mindspore.common import Tensor
-        >>> import mindspore.numpy as mnp
-        >>> from mindspore.scipy.linalg import solve_triangular
-        >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
-        >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
-        >>> x = solve_triangular(a, b, lower=True, unit_diagonal=False, trans='N')
-        >>> print(x)
-        [ 1.33333333 -0.66666667  2.66666667 -1.33333333]
-        >>> print(mnp.dot(a, x))  # Check the result
-        [4. 2. 4. 2.]
-    """
-    func_name = 'solve_triangular'
-    _mstype_check(func_name, a, mstype.tensor_type, 'a')
-    _mstype_check(func_name, b, mstype.tensor_type, 'b')
-    _type_check(func_name, trans, (int, str), 'trans')
-    _type_check(func_name, lower, bool, 'lower')
-    _type_check(func_name, overwrite_b, bool, 'overwrite_b')
-    _type_check(func_name, check_finite, bool, 'check_finite')
-    _dtype_check(func_name, a, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a')
-    _dtype_check(func_name, b, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b')
-    _solve_check(func_name, a, b)
-    _value_check(func_name, debug, None, 'debug', op='is', fmt='todo')
-    _value_check(func_name, trans, (0, 1, 2, 'N', 'T', 'C'), "trans", "value")
-
-    if F.dtype(a) in (mstype.int32, mstype.int64):
-        a = F.cast(a, mstype.float64)
-        b = F.cast(b, mstype.float64)
-    if isinstance(trans, int):
-        trans_table = ['N', 'T', 'C']
-        trans = trans_table[trans]
-    solve = SolveTriangular(lower, unit_diagonal, trans)
-    return solve(a, b)
 
 
 def inv(a, overwrite_a=False, check_finite=True):
