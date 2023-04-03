@@ -130,7 +130,7 @@ class TestSharedParameterCast:
         """
         auto_parallel_compile_net("semi_auto_parallel", 8, Net, ((8, 1), (1, 1)), ((8, 1), (1, 1)),
                                   interleaved_batch=2)
-        self.cat_fp16_from_ir(target_count=39)
+        self.cat_fp16_from_ir(target_count=38)
 
     def test_optimizer_fp16_pipeline(self):
         """
@@ -152,4 +152,4 @@ class TestSharedParameterCast:
         auto_parallel_compile_net("semi_auto_parallel", 8, Net, ((8, 1), (1, 1)), ((8, 1), (1, 1)),
                                   interleaved_batch=2,
                                   stages=1, micro_size=1)
-        self.cat_fp16_from_ir(target_count=39)
+        self.cat_fp16_from_ir(target_count=38)

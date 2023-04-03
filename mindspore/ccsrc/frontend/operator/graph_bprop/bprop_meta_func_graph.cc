@@ -27,7 +27,6 @@ PrimitiveBpropImplMap *GetPrimitiveBpropImplMapPtr() {
 const PrimitiveBpropImplMap &GetPrimitiveBpropImplMap() { return *GetPrimitiveBpropImplMapPtr(); }
 
 void RegBpropMetaFuncGraph() {
-  RegArrayOps();
   RegMathOps();
   RegNNOps();
   RegBpropExpanderOps();

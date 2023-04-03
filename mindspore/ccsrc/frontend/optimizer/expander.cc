@@ -67,6 +67,10 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
   if (primc->isa<prim::DoSignaturePrimitive>()) {
     return nullptr;
   }
+  const auto &op_primc_fns = OpPrimPyRegister::GetInstance().GetPrimPyMap();
+  if (auto it = op_primc_fns.find(primc->name()); it != op_primc_fns.end()) {
+    return it->second;
+  }
   parallel::OperatorAttrs attrs;
   const auto iter = op2attrs.find(primc->name());
   if (iter != op2attrs.end()) {
@@ -82,6 +86,12 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
   auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
   MS_EXCEPTION_IF_NULL(new_prim);
   (void)new_prim->cast_ptr<Primitive>()->SetAttrs(primc->attrs());
+  // prim can be cached when prim has no attrs
+  constexpr size_t kOnlyIONames = 2;
+  if (primc->attrs().size() == kOnlyIONames && primc->attrs().count("input_names") &&
+      primc->attrs().count("output_names")) {
+    OpPrimPyRegister::GetInstance().SetPrimPyMap(primc->name(), new_prim);
+  }
   return new_prim;
 }
 
