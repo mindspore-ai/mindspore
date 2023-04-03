@@ -143,7 +143,7 @@ struct MS_API InnerContext {
   bool IsAllDeviceTypeValid() const;
   bool IsCpuBindModeInvalid() const;
   int CreateThreadPool();
-  void InitExperimentalExecEnv();
+  void InitExecEnv();
 
   std::string runner_id_;
   BindMode bind_mode_{Power_NoBind};
