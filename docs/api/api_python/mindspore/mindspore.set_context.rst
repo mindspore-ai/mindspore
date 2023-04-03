@@ -88,7 +88,7 @@ mindspore.set_context
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值：1024GB。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
         - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值：1GB。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
-        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着无限等待。默认值：600。
+        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着无限等待。默认值：1900。
         - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认值：0。可用的选项为：
 
           - False或0：不保存中间编译图。

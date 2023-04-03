@@ -56,7 +56,7 @@ const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const char kTraining[] = "training";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
-const unsigned int kOpTimeout = 600;
+const unsigned int kOpTimeout = 1900;
 const int kOptimizeO0 = 0;
 const int kOptimizeO1 = 1;
 
