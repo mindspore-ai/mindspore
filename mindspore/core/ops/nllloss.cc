@@ -111,7 +111,8 @@ class NLLLossInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     const int64_t input_num = 3;
-    CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
     auto logits_data_type = input_args[kIndex0]->BuildType();
     auto target_type = input_args[kIndex1]->BuildType();
     auto weight_data_type = input_args[kIndex2]->BuildType();
