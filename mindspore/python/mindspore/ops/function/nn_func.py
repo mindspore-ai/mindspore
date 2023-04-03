@@ -4894,10 +4894,10 @@ def adaptive_avg_pool1d(input, output_size):
         >>> print(output.shape)
         (1, 3, 2)
     """
-    def _check(input, output_size):
-        x_in_shape = input.shape
-        x_dtype = _get_cache_prim(P.DType)()(input)
-        if not isinstance(input, (Tensor, Tensor_)):
+    def _check(x, output_size):
+        x_in_shape = x.shape
+        x_dtype = _get_cache_prim(P.DType)()(x)
+        if not isinstance(x, (Tensor, Tensor_)):
             raise TypeError("For adaptive_avg_pool1d, the input input must be tensor")
 
         _check_adaptive_avg_pool1d_output_size(output_size)

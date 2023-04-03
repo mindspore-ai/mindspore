@@ -137,7 +137,7 @@ def _infer_out_shape(*shapes):
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
     def _check():
-        if any(not (item == 1 or item == max_size) for item in items):
+        if any(item not in (1, max_size) for item in items):
             raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
 
     shape_out = list()
@@ -161,7 +161,7 @@ def _can_broadcast(*shapes):
         items = [it[i-max_len+len(it)] if i-max_len +
                  len(it) >= 0 else 1 for it in shapes]
         max_size = 0 if 0 in items else max(items)
-        if any(not (item == 1 or item == max_size) for item in items):
+        if any(item not in (1, max_size) for item in items):
             return False
     return True
 

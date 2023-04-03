@@ -76,9 +76,11 @@ class _PoolNd(Cell):
 @_primexpr
 def _shape_check(in_shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
     def _check():
         if len(in_shape) != 3:
             raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}")
+
     _check()
 
 
