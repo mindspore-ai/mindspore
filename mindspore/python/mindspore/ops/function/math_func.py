@@ -802,7 +802,7 @@ def subtract(input, other, *, alpha=1):
         other (Union[Tensor, number.Number]): Tensor or Number involved in subtraction.
 
     Keyword Args:
-        alpha (Number): The multiplier for `other`. Default: 1.
+        alpha (Number): The multiplier for :math:`other`. Default: 1.
 
     Returns:
         Tensor, has the same shape and dtype as input tensors.

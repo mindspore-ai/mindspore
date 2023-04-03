@@ -87,7 +87,7 @@ def standard_laplace(shape, seed=None):
     It is defined as:
 
     .. math::
-        \text{f}(x) = \frac{1}{2}\exp(-|x|),
+        \text{f}(x) = \frac{1}{2}\exp(-|x|)
 
     Args:
         shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
