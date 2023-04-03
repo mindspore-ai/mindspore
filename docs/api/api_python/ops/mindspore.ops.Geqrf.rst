@@ -9,6 +9,9 @@ mindspore.ops.Geqrf
 
     此函数返回两个Tensor（ `y`, `tau` ）。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x** (Tensor) - shape为 :math:`(*, m, n)` ，输入矩阵维度必须为大于等于两维，支持dtype为float32、float64、complex64、complex128。
 

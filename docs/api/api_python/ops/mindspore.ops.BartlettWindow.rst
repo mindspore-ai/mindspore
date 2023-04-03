@@ -5,6 +5,9 @@
 
     巴特利特窗口函数。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     更多参考详见 :func:`mindspore.ops.bartlett_window`。
 
     参数：

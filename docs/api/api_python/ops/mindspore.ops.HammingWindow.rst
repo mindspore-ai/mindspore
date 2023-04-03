@@ -10,6 +10,9 @@ mindspore.ops.HammingWindow
 
     其中， :math:`N` 是全窗口尺寸。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **periodic** (bool，可选) - 一个标志，表示返回的窗口是否修剪掉来自对称窗口的最后一个重复值。默认值：True。
   

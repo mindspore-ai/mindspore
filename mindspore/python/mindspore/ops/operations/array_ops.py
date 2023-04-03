@@ -179,6 +179,9 @@ class Expand(Primitive):
     """
     Expands the Tensor along singleton dimensions(dim with size 1) to match given desired shape.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.expand` for more details.
 
     Supported Platforms:
@@ -497,6 +500,9 @@ class Col2Im(Primitive):
 
     where :math:`d` is over all spatial dimensions. The :attr:`padding`, :attr:`stride`
     and :attr:`dilation` arguments specify how the sliding blocks are retrieved.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
@@ -880,6 +886,9 @@ class UniqueConsecutive(Primitive):
     """
     Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.unique_consecutive` for more details.
 
     Supported Platforms:
@@ -1207,6 +1216,9 @@ class MatrixDiagV3(Primitive):
     """
     Constructs a diagonal matrix or a batch of diagonal matrices from a given input Tensor.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.matrix_diag` for more details.
 
     Supported Platforms:
@@ -1241,6 +1253,9 @@ class MatrixDiagV3(Primitive):
 class MatrixDiagPartV3(Primitive):
     r"""
     Returns the diagonal part of a tensor.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
 
@@ -1291,6 +1306,9 @@ class MatrixSetDiagV3(Primitive):
     shape :math:`(d_1, d_2, ..., d_{n-2}, max\_diag\_len)`
     Otherwise, it has the same rank as `x`
     with shape :math:`(d_1, d_2, ..., d_{n-2}, num\_diags, max\_diag\_len)`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
@@ -3544,6 +3562,9 @@ class Diag(PrimitiveWithCheck):
 
     Constructs a diagonal tensor with a given diagonal values.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.diag` for more details.
 
     Supported Platforms:
@@ -3625,6 +3646,9 @@ class DiagPart(PrimitiveWithCheck):
 class Mvlgamma(Primitive):
     r"""
     Calculates the multivariate log-gamma function element-wise for a given dimension `p`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.mvlgamma` for more details.
 
@@ -4807,6 +4831,9 @@ class ScatterNdMul(_ScatterNdOp):
     Using given values to update parameter value through the multiplication operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.scatter_nd_mul` for more details.
 
     Supported Platforms:
@@ -4852,6 +4879,9 @@ class ScatterNdDiv(_ScatterNdOp):
 
     Using given values to update tensor value through the division operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.scatter_nd_div` for more details.
 
@@ -6234,6 +6264,9 @@ class SearchSorted(Primitive):
     Returns the indices correspond to the positions where the given numbers in `values` should be inserted
     into `sorted_sequence` so that the order of the sequence is maintained.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.searchsorted` for more details.
 
     Args:
@@ -7166,6 +7199,9 @@ class RightShift(Primitive):
         &out_{i} =x_{i} >> y_{i}
         \end{aligned}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **input_x** (Tensor) - The target tensor, will be shifted to the right
           by `input_y` bits element-wise.
@@ -7208,6 +7244,9 @@ class LogSpace(Primitive):
         &step = (end - start)/(steps - 1)\\
         &output = [base^{start}, base^{start + 1 * step}, ... , base^{start + (steps-2) * step}, base^{end}]
         \end{aligned}
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         steps (int, optional): The steps must be a non-negative integer. Default: 10.
@@ -7299,6 +7338,9 @@ class Tril(Primitive):
     The lower triangular section of the matrix comprises of the
     elements present on and below the main diagonal.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: 0,
             indicating the main didiagonal.
@@ -7366,6 +7408,9 @@ class IndexFill(Primitive):
     """
     Fills the elements under the `dim` dimension of the input Tensor `x` with the input `value`
     by selecting the indices in the order given in `index`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.index_fill` for more details.
 
@@ -7619,6 +7664,9 @@ class LeftShift(Primitive):
         &out_{i} =x_{i} << y_{i}
         \end{aligned}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x1** (Tensor) - The target tensor whose dtype supports int8, int16, int32, int64,
           uint8, uint16, uint32, uint64, will be shifted to the left by x2 in element-wise.
@@ -7736,6 +7784,9 @@ class HammingWindow(Primitive):
 
     where :math:`N` is the full window size.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         periodic (bool, optional): a flag determines whether the returned window trims off
             the last duplicate value from the symmetric window. Default: True.
@@ -7804,6 +7855,9 @@ class HammingWindow(Primitive):
 class AffineGrid(Primitive):
     r"""
     Creates a 2D or 3D flow field (sampling grid) based on a batch of affine matrices `theta`.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.affine_grid` for more details.
 
@@ -8037,6 +8091,9 @@ class TopK(Primitive):
 class Bincount(Primitive):
     """
     Counts the number of occurrences of each value in an integer array.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **array** (Tensor) - A Tensor of type int32, whose value can not be less than zero.

@@ -5,6 +5,9 @@ mindspore.ops.Gcd
 
     逐元素计算输入Tensor的最大公约数。两个输入的shape需要能进行广播操作，并且数据类型必须为：int32、int64。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x1** (Tensor) - 第一个输入Tensor。
         - **x2** (Tensor) - 第二个输入Tensor。

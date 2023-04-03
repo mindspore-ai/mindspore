@@ -10,6 +10,9 @@
     .. math::
         y = \sqrt{a^2+b^2}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x** (Tensor) - 复数Tensor，格式须为complex64或complex128。
 

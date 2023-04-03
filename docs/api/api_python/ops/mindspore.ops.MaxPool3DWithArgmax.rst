@@ -13,6 +13,9 @@ mindspore.ops.MaxPool3DWithArgmax
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **ksize** (Union[int, tuple[int]]) - 池化核尺寸大小。可以是一个整数表示池化核的深度，高度和宽度，或者包含三个整数的tuple，分别表示池化核的深度，高度和宽度。
         - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在深度，高度和宽度方向的移动步长，或者包含三个整数的tuple，分别表示在深度，高度和宽度方向的移动步长。

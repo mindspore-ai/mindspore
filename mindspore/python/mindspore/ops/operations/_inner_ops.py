@@ -1491,6 +1491,9 @@ class Cummin(Primitive):
     r"""
     Returns the cumulative minimum of elements and the index.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.cummin` for more detail.
 
     Supported Platforms:

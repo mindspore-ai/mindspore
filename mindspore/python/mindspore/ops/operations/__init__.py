@@ -116,7 +116,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      Dilation2D, DataFormatVecPermute, DeformableOffsets, FractionalAvgPool,
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3, ChannelShuffle,
-                     GLU, MaxUnpool3D)
+                     GLU, MaxUnpool3D, Pdist)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, identity, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
@@ -674,7 +674,8 @@ __all__ = [
     "RandomShuffle",
     "InplaceIndexAdd",
     "Igammac",
-    "MaxUnpool3D"
+    "MaxUnpool3D",
+    "Pdist"
 ]
 
 __custom__ = [

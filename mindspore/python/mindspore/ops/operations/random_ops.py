@@ -870,6 +870,9 @@ class MultinomialWithReplacement(Primitive):
     Returns a tensor where each row contains `numsamples` indices sampled from the multinomial distribution
     with replacement. It diffs from `Multinomial` in that it allows the same outcome to be chosen multiple times.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
 
     Note:

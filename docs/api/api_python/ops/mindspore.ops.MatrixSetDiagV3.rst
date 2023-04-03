@@ -15,6 +15,9 @@ mindspore.ops.MatrixSetDiagV3
     当 `k` 是一个整数或 :math:`k[0] == k[1]` 时， `diagonal` 为n-1维Tensor，shape为 :math:`(d_1, d_2, ..., d_{n-2}, max\_diag\_len)` 。
     否则， `diagonal` 与 `x` 维度一致，其shape为 :math:`(d_1, d_2, ..., d_{n-2}, num\_diags, max\_diag\_len)` 。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **align** (str，可选) - 可选字符串，指定超对角线和次对角线的对齐方式。
           可选值："RIGHT_LEFT"、"LEFT_RIGHT"、"LEFT_LEFT"、"RIGHT_RIGHT"。

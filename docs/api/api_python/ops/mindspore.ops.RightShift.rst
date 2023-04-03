@@ -11,6 +11,9 @@ mindspore.ops.RightShift
         &out_{i} =x_{i} >> y_{i}
         \end{aligned}
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **input_x** (Tensor) - 被操作Tensor，将被逐元素位右移 `input_y` 位。
         - **input_y** (Tensor) - 右移位数。数据类型必须和 `input_x` 一致。
