@@ -16,6 +16,7 @@
 #include "common/common_test.h"
 #include "nnacl/infer/tile_infer.h"
 #include "nnacl/base/tile_base.h"
+#include "nnacl/tile_parameter.h"
 
 namespace mindspore {
 
@@ -25,18 +26,21 @@ class TileInferTest : public mindspore::CommonTest {
 };
 
 TEST_F(TileInferTest, TileInferTest0) {
-  size_t inputs_size = 1;
+  size_t inputs_size = 2;
   std::vector<TensorC *> inputs(inputs_size, NULL);
   inputs[0] = new TensorC;
   inputs[0]->shape_size_ = 2;
   inputs[0]->shape_[0] = 2;
   inputs[0]->shape_[1] = 3;
+  inputs[1] = new TensorC;
+  std::vector<int> input1_data = {4, 5};
+  inputs[1]->data_ = input1_data.data();
+  inputs[1]->data_type_ = kNumberTypeInt32;
+  inputs[1]->shape_size_ = 1;
+  inputs[1]->shape_[0] = 2;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   TileParameter *parameter = new TileParameter;
-  parameter->multiples_size_ = 2;
-  parameter->multiples_[0] = 4;
-  parameter->multiples_[1] = 5;
   parameter->dims_size_ = 2;
   parameter->dims_[0] = 0;
   parameter->dims_[1] = 1;
@@ -56,7 +60,7 @@ TEST_F(TileInferTest, TileInferTest0) {
 }
 
 TEST_F(TileInferTest, TileInferTest1) {
-  size_t inputs_size = 1;
+  size_t inputs_size = 2;
   std::vector<TensorC *> inputs(inputs_size, NULL);
   inputs[0] = new TensorC;
   inputs[0]->shape_size_ = 4;
@@ -64,12 +68,16 @@ TEST_F(TileInferTest, TileInferTest1) {
   inputs[0]->shape_[1] = 3;
   inputs[0]->shape_[2] = 6;
   inputs[0]->shape_[3] = 7;
+  inputs[1] = new TensorC;
+  std::vector<int> input1_data = {4, 5};
+  inputs[1]->data_ = input1_data.data();
+  inputs[1]->data_type_ = kNumberTypeInt32;
+  inputs[1]->shape_size_ = 2;
+  inputs[1]->shape_[0] = 1;
+  inputs[1]->shape_[1] = 2;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   TileParameter *parameter = new TileParameter;
-  parameter->multiples_size_ = 2;
-  parameter->multiples_[0] = 4;
-  parameter->multiples_[1] = 5;
   parameter->dims_size_ = 2;
   parameter->dims_[0] = 1;
   parameter->dims_[1] = 2;

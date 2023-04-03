@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/tile_base.h"
+#include "nnacl/kernel/tile.h"
 
 namespace mindspore {
 namespace kernel {
@@ -122,7 +123,7 @@ class TileCpuKernelMod : public NativeCpuKernelMod {
                                         const std::vector<AddressPtr> &outputs)>;
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
-  TileParameter tile_parameter_;
+  TileStruct tile_struct_;
   bool one_dim_tile_{false};
   size_t input_size_{0};
 };

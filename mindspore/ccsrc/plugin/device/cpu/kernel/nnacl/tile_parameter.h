@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_TILE_PARAMETER_H_
+#define MINDSPORE_NNACL_TILE_PARAMETER_H_
 
-#ifndef MINDSPORE_NNACL_BASE_TILE_H_
-#define MINDSPORE_NNACL_BASE_TILE_H_
+#include "nnacl/op_base.h"
 
-#include "nnacl/kernel/tile.h"
-#include "nnacl/tile_parameter.h"
+typedef struct TileParameter {
+  OpParameter op_parameter_;
+  size_t dims_size_;
+  int dims_[MAX_SHAPE_SIZE];
+  int multiples_[MAX_SHAPE_SIZE];
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Tile(void *input_data, void *output_data, const TileStruct *tile);
-void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, const TileStruct *tile);
-#ifdef __cplusplus
-}
-#endif
+  /* used in micro */
+  int in_dim_;
+  int in_shape_[MAX_SHAPE_SIZE];
+  int out_shape_[MAX_SHAPE_SIZE];
+  int in_strides_[MAX_SHAPE_SIZE];
+  int out_strides_[MAX_SHAPE_SIZE];
+} TileParameter;
 
-#endif  // MINDSPORE_NNACL_BASE_TILE_H_
+#endif  // MINDSPORE_NNACL_TILE_PARAMETER_H_

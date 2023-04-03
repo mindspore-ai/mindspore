@@ -50,6 +50,7 @@ int ReshapeKernel::Run() {
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
       op_parameter_->is_train_session_ || out_tensor->IsGraphOutput()) {
+    UpdateTensorC();
     auto ret = kernel_->compute(kernel_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Reshape compute failed.";
@@ -91,4 +92,5 @@ NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeFloat32, NnaclOpt<ReshapeKernel
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeInt32, NnaclOpt<ReshapeKernel>)
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeInt64, NnaclOpt<ReshapeKernel>)
 NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeBool, NnaclOpt<ReshapeKernel>)
+NNACL_KERNEL(PrimitiveType_Unsqueeze, kNumberTypeUInt8, NnaclOpt<ReshapeKernel>)
 }  // namespace mindspore::nnacl
