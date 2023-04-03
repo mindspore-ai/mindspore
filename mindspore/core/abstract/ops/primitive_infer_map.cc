@@ -258,17 +258,17 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
     auto dyn_size = GetValue<int64_t>((*dyn_input_list)[i]);
     MS_LOG(DEBUG) << "The input " << i << " dynamic input size is " << dyn_size;
     if (dyn_size == -1) {
-      rec_depend_list.emplace(i);
+      (void)rec_depend_list.emplace(i);
       continue;
     }
     while (dyn_size >= 0) {
       auto depend_index = start_index + dyn_size;
       // skip primitive input
-      const auto &input = inputs.at(depend_index + 1);
+      const auto &input = inputs.at(LongToSize(depend_index + 1));
       MS_EXCEPTION_IF_NULL(input);
       const auto &input_abs = input->abstract();
       if (input_abs != nullptr && input_abs->isa<abstract::AbstractTensor>()) {
-        rec_depend_list.emplace(depend_index);
+        (void)rec_depend_list.emplace(depend_index);
         MS_LOG(DEBUG) << "Rectify dynamic input " << start_index + dyn_size;
       }
       --dyn_size;
@@ -292,7 +292,7 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // Special dynamic shape depends for Ascend.
   if (device == kAscendDevice && prim_name == prim::kPrimTranspose->name()) {
-    ori.emplace(1);
+    (void)ori.emplace(1);
   }
 
   auto iter = GetInferDependsMap().find(prim_name);
