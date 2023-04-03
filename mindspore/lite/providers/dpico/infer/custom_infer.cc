@@ -37,45 +37,6 @@ namespace mindspore {
 namespace dpico {
 namespace {
 constexpr int kOmParameterNum = 1;
-Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std::string> *attrs) {
-  if (attrs == nullptr) {
-    MS_LOG(ERROR) << "function input parameter is nullptr.";
-    return kLiteError;
-  }
-  auto param = primitive.value_as_Custom();
-  if (lite::CheckCustomParam(param, "DPICO") != RET_OK) {
-    MS_LOG(ERROR) << "custom param is invalid.";
-    return kLiteError;
-  }
-  if (param->attr() == nullptr) {
-    MS_LOG(ERROR) << "param attr is nullptr.";
-    return kLiteError;
-  }
-  if (param->attr()->size() < 1) {
-    MS_LOG(ERROR) << "There are at least 1 attribute of Custom";
-    return kLiteError;
-  }
-  for (size_t i = 0; i < param->attr()->size(); i++) {
-    if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
-      MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
-      return kLiteError;
-    }
-    auto output_info = param->attr()->Get(i)->data();
-    if (output_info == nullptr) {
-      MS_LOG(ERROR) << "output_info is nullptr";
-      return kLiteError;
-    }
-    int buf_size = static_cast<int>(output_info->size());
-    std::string attr;
-    for (int j = 0; j < buf_size; j++) {
-      attr.push_back(static_cast<char>(output_info->Get(j)));
-    }
-    auto attr_name = param->attr()->Get(i)->name()->str();
-    attrs->emplace(attr_name, attr);
-  }
-  return kSuccess;
-}
-
 Status GetCustomShape(const std::map<std::string, std::string> &attrs, const std::string &attr_name, size_t tensor_num,
                       std::vector<std::vector<int64_t>> *shapes) {
   if (shapes == nullptr) {
@@ -171,7 +132,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
     output.SetFormat(inputs->front().format());
   }
   std::map<std::string, std::string> attrs;
-  if (FetchAttrs(*primitive, &attrs) != kSuccess) {
+  if (lite::FetchAttrs(*primitive, &attrs) != kSuccess) {
     MS_LOG(ERROR) << "fetch attrs from primitive failed.";
     return kLiteError;
   }
@@ -225,7 +186,7 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
 
   if (resize_flag) {
     for (auto &output_shape : outputs_shape) {
-      output_shape[0] = resize_num;
+      output_shape[0] = resize_num * output_shape[0];
       if (acl_model_type == lite::AclModelType::kRecurrent) {
         MS_LOG(INFO) << "only output_0 has the information about time steps.";
         break;

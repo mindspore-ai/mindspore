@@ -22,6 +22,7 @@
 #include "common/op_enum.h"
 #include "common/anf_util.h"
 #include "common/string_util.h"
+#include "common/graph_output_name_keeper.h"
 #include "third_party/securec/include/securec.h"
 
 namespace mindspore {
@@ -54,6 +55,8 @@ STATUS SetOpInputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_operat
           node_name = output_names.at(0);
         }
       }
+      auto ret = dpico::GraphOutputNameKeeper::GetInstance()->DetermineOmOpInputName(input_cnode, &node_name);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "determine om op's input name failed.");
       (void)input_names.emplace_back(node_name);
     }
   }
@@ -101,7 +104,10 @@ STATUS FillMultiOutOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *b
     auto index = stoi(num_str);
     MS_CHECK_TRUE_MSG(index >= 0 && static_cast<size_t>(index) < output_num, RET_ERROR,
                       "tuple_get_item index is invalid.");
-    output_names[index] = output_cnode->fullname_with_scope();
+    std::string om_output_name = output_cnode->fullname_with_scope();
+    auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(cnode, &om_output_name);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "cannot determine the om op's output name.");
+    output_names[index] = om_output_name;
   }
   base_operator->SetOutputNamesVec(output_names);
   return RET_OK;
@@ -120,7 +126,10 @@ STATUS SetOpOutputs(const api::CNodePtr &cnode, mapper::BaseOperator *base_opera
       })) {
     // single output op
     std::vector<std::string> output_names;
-    (void)output_names.emplace_back(cnode->fullname_with_scope());
+    std::string om_output_name = cnode->fullname_with_scope();
+    auto ret = GraphOutputNameKeeper::GetInstance()->DetermineOmOpOutputName(cnode, &om_output_name);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "cannot determine the om op's output name.");
+    (void)output_names.emplace_back(om_output_name);
     base_operator->SetOutputNamesVec(output_names);
     return RET_OK;
   }
@@ -226,6 +235,103 @@ STATUS SetRecurrentDataInfo(const api::CNodePtr &cnode, mapper::RecurrentOperato
         return RET_ERROR;
       }
     }
+  }
+  return RET_OK;
+}
+STATUS SetRecurrentOnnxInfo(const api::CNodePtr &cnode, mapper::RecurrentOperator *recurrent_operator) {
+  if (recurrent_operator == nullptr) {
+    MS_LOG(ERROR) << "recurrent_operator is nullptr.";
+    return RET_ERROR;
+  }
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    auto input_node = cnode->input(i);
+    if (api::utils::isa<api::CNode>(input_node)) {
+      MS_LOG(INFO) << "cnode don't have blobs";
+      continue;
+    }
+    if (api::utils::isa<api::ParameterPtr>(input_node)) {
+      auto input_param_node = input_node->cast<api::ParameterPtr>();
+      if (!input_param_node->has_default()) {
+        MS_LOG(INFO) << "graph input don't have blobs";
+        continue;
+      }
+      auto tensor_info = input_param_node->default_param()->cast<api::TensorPtr>();
+      if (tensor_info != nullptr && tensor_info->DataSize() != 0) {
+        auto raw_datas = static_cast<float *>(tensor_info->data());
+        auto shape = tensor_info->shape();
+        vector<int32_t> shape_vec(shape.begin(), shape.end());
+        auto weight_data = new (std::nothrow) float[tensor_info->DataSize()];
+        if (weight_data == nullptr) {
+          MS_LOG(ERROR) << "new float[] failed.";
+          return RET_ERROR;
+        }
+        if (memcpy_s(weight_data, static_cast<size_t>(tensor_info->DataSize()) * sizeof(float), raw_datas,
+                     static_cast<size_t>(tensor_info->DataSize()) * sizeof(float)) != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed.";
+          delete[] weight_data;
+          return RET_ERROR;
+        }
+        if (SetOnnxLstmOffLineArgs(recurrent_operator, i, shape_vec, weight_data) != RET_OK) {
+          MS_LOG(ERROR) << "set offline args failed.";
+          return RET_ERROR;
+        }
+        if (i == kDims5) {
+          std::vector<std::pair<std::vector<float>, std::vector<int32_t>>> offline_args;
+          std::vector<float> offline_data;
+          recurrent_operator->PushOfflineArgs({});
+          if (CheckTensorInfoType(tensor_info, &offline_data) != RET_OK) {
+            MS_LOG(ERROR) << "check tensor_info type failed.";
+            return RET_ERROR;
+          }
+          std::vector<int32_t> offline_shape;
+          ShapeVector shape_vector;
+          if (GetShapeVectorFromParameter(input_param_node, &shape_vector) != RET_OK) {
+            MS_LOG(ERROR) << "get shape vector from parameter failed. " << input_param_node->fullname_with_scope();
+            return RET_ERROR;
+          }
+          (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(offline_shape),
+                               [](const int64_t dim) { return static_cast<int32_t>(dim); });
+          (void)offline_args.emplace_back(std::make_pair(offline_data, offline_shape));
+          for (auto &offline_arg : offline_args) {
+            recurrent_operator->PushOfflineArgs(std::move(offline_arg));
+          }
+        }
+      } else {
+        MS_LOG(ERROR) << "tensor_info is nullptr, or DataSize equals zero. " << cnode->fullname_with_scope();
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+STATUS CheckTensorInfoType(const api::TensorPtr &tensor_info, std::vector<float> *offline_data) {
+  auto elem_count = tensor_info->DataSize();
+  if (tensor_info->data_type() == kNumberTypeInt32 || tensor_info->data_type() == kNumberTypeInt) {
+    auto raw_data = static_cast<int32_t *>(tensor_info->data());
+    *offline_data = std::vector<float>(raw_data, raw_data + elem_count);
+  } else if (tensor_info->data_type() == kNumberTypeFloat32 || tensor_info->data_type() == kNumberTypeFloat) {
+    auto raw_data = static_cast<float *>(tensor_info->data());
+    *offline_data = std::vector<float>(raw_data, raw_data + elem_count);
+  } else {
+    MS_LOG(ERROR) << "unsupported param type. " << tensor_info->data_type();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+STATUS SetOnnxLstmOffLineArgs(mapper::RecurrentOperator *recurrent_operator, size_t index,
+                              const vector<int32_t> &shape_vec, const float *data) {
+  if (index == kDims2) {
+    recurrent_operator->SetXtShapeVec(shape_vec);
+    recurrent_operator->SetXtWeightDataPtr(data);
+  } else if (index == kDims3) {
+    recurrent_operator->SetHtShapeVec(shape_vec);
+    recurrent_operator->SetHtWeightDataPtr(data);
+  } else if (index == kDims4) {
+    recurrent_operator->SetRecurrentBiasShapeVec(shape_vec);
+    recurrent_operator->SetRecurrentBiasDataPtr(data);
+  } else if (index == kDims8) {
+    recurrent_operator->SetPeepholesShapeVec(shape_vec);
+    recurrent_operator->SetPeepholesWeightDataPtr(data);
   }
   return RET_OK;
 }

@@ -1,3 +1,7 @@
 approvers:
-- jpc_chenjianping #
-- jianghui58
+- jianghui58 #
+- jpc_chenjianping
+- fangzhou0329
+
+options:
+  no_parent_owners: true

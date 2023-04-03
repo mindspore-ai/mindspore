@@ -47,7 +47,7 @@ void CaffeInspector::ParseInput() {
 
 void CaffeInspector::FindGraphInputsAndOutputs() {
   for (const auto &iter : layerBottoms) {
-    if (layerTops.find(iter) == layerTops.end()) {
+    if (std::find(layerTops.begin(), layerTops.end(), iter) == layerTops.end()) {
       graphInput.insert(iter);
     }
   }
@@ -62,7 +62,7 @@ void CaffeInspector::FindGraphInputsAndOutputs() {
           continue;
         }
       }
-      graphOutput.insert(iter);
+      graphOutput.push_back(iter);
     }
   }
 }
@@ -77,7 +77,9 @@ void CaffeInspector::SetLayerTopsAndBottoms() {
       graphInput.insert(layer.top(0));
     }
     for (int j = 0; j < layer.top_size(); j++) {
-      layerTops.insert(layer.top(j));
+      if (std::find(layerTops.begin(), layerTops.end(), layer.top(j)) == layerTops.end()) {
+        layerTops.push_back(layer.top(j));
+      }
     }
     for (int j = 0; j < layer.bottom_size(); j++) {
       layerBottoms.insert(layer.bottom(j));

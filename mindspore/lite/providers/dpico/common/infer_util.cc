@@ -29,6 +29,45 @@ namespace mindspore {
 namespace lite {
 static bool kThreadRunning = true;
 
+Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std::string> *attrs) {
+  if (attrs == nullptr) {
+    MS_LOG(ERROR) << "function input parameter is nullptr.";
+    return kLiteError;
+  }
+  auto param = primitive.value_as_Custom();
+  if (lite::CheckCustomParam(param, "DPICO") != RET_OK) {
+    MS_LOG(ERROR) << "custom param is invalid.";
+    return kLiteError;
+  }
+  if (param->attr() == nullptr) {
+    MS_LOG(ERROR) << "param attr is nullptr.";
+    return kLiteError;
+  }
+  if (param->attr()->size() < 1) {
+    MS_LOG(ERROR) << "There are at least 1 attribute of Custom";
+    return kLiteError;
+  }
+  for (size_t i = 0; i < param->attr()->size(); i++) {
+    if (param->attr()->Get(i) == nullptr || param->attr()->Get(i)->name() == nullptr) {
+      MS_LOG(ERROR) << "param->attr()->Get(i) is nullptr or param->attr()->Get(i)->name() is nullptr";
+      return kLiteError;
+    }
+    auto output_info = param->attr()->Get(i)->data();
+    if (output_info == nullptr) {
+      MS_LOG(ERROR) << "output_info is nullptr";
+      return kLiteError;
+    }
+    int buf_size = static_cast<int>(output_info->size());
+    std::string attr;
+    for (int j = 0; j < buf_size; j++) {
+      attr.push_back(static_cast<char>(output_info->Get(j)));
+    }
+    auto attr_name = param->attr()->Get(i)->name()->str();
+    attrs->emplace(attr_name, attr);
+  }
+  return kSuccess;
+}
+
 int CheckCustomInputOutput(const std::vector<mindspore::MSTensor> *inputs,
                            const std::vector<mindspore::MSTensor> *outputs, const schema::Primitive *primitive) {
   if (inputs == nullptr) {

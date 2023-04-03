@@ -44,12 +44,20 @@ STATUS InputAdjust::AddAttrToInput(const api::FuncGraphPtr &func_graph, const ap
     return lite::RET_INPUT_TENSOR_ERROR;
   }
   auto primitive = api::GetValueNode<api::PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr.";
+    return lite::RET_ERROR;
+  }
   auto value_ptr = primitive->GetAttr(attr_name);
   if (value_ptr == nullptr) {
     MS_LOG(DEBUG) << "there is no attr :" << attr_name;
     return lite::RET_NO_CHANGE;
   }
   auto inputs = cnode->inputs();
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "inputs is empty.";
+    return lite::RET_ERROR;
+  }
   if (static_cast<int>(inputs.size()) > input_num) {
     primitive->EraseAttr(attr_name);
     MS_LOG(DEBUG) << "input num has been meet, which is " << inputs.size();

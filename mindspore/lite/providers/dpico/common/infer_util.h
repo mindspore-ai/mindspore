@@ -17,14 +17,17 @@
 #ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_INFER_UTIL_H_
 #define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_INFER_UTIL_H_
 
+#include <map>
 #include <string>
 #include <vector>
 #include <thread>
+#include "include/api/status.h"
 #include "include/api/types.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
 namespace lite {
+Status FetchAttrs(const schema::Primitive &primitive, std::map<std::string, std::string> *attrs);
 int CheckCustomInputOutput(const std::vector<mindspore::MSTensor> *inputs,
                            const std::vector<mindspore::MSTensor> *outputs, const schema::Primitive *primitive);
 int CheckCustomParam(const schema::Custom *param, const std::string &param_name);
