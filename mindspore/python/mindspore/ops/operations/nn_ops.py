@@ -10158,13 +10158,13 @@ class GLU(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops.operations import nn_ops
+        >>> from mindspore import ops, Tensor
         >>> axis = 0
         >>> x = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
         ...                            0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
         ...                            0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([2, 2, 5]), mstype.float32)
-        >>> glu = nn_ops.GLU(axis=axis)
+        >>> glu = ops.GLU(axis=axis)
         >>> y = glu(x)
         >>> print(y)
         [[[0.20028052 0.6916126  0.57412136 0.06512236 0.26307625]
@@ -10270,7 +10270,7 @@ class ChannelShuffle(Primitive):
     Examples:
         >>> group = 2
         >>> x = Tensor(np.arange(1 * 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16))
-        >>> channel_shuffle_func = mindspore.ops.operations.ChannelShuffle(group)
+        >>> channel_shuffle_func = ops.ChannelShuffle(group)
         >>> y = channel_shuffle_func(x)
         >>> print(y)
         [[[[ 0  1]
