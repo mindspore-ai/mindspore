@@ -61,9 +61,9 @@ class StubTensor:
     slice_num_of_persistent_data_ = _stub_member("slice_num_of_persistent_data_", None)
     slice_shape_of_persistent_data_ = _stub_member("slice_shape_of_persistent_data_", None)
 
-    def __init__(self, stub):
+    def __init__(self, stub=None, tensor=None):
         self.stub = stub
-        self.tensor = None
+        self.tensor = tensor
 
     __str__ = _stub_method(Tensor.__str__)
     __setitem__ = _stub_method(Tensor.__setitem__)
@@ -120,11 +120,6 @@ class StubTensor:
     def ndim(self):
         """ndim stub."""
         return len(self.shape)
-
-    @property
-    def adapter_flag(self):
-        """adapter flag."""
-        return False
 
     @property
     def strides(self):

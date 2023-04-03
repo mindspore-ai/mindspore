@@ -203,13 +203,31 @@ bool IsAdapterTensor(const AbstractBasePtr &x) {
   return x->cast<abstract::AbstractTensorPtr>()->is_adapter();
 }
 
-bool IsAdapterTensorClassType(const AbstractBasePtr &cmp) {
-  auto cmp_value = cmp->BuildValue();
-  if (!cmp_value->isa<parse::ClassType>()) {
-    return false;
+bool HasAdapterTensorClassType(const AbstractBasePtr &cmp, bool is_parameter) {
+  if (cmp->isa<abstract::AbstractTuple>()) {
+    const auto &elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::any_of(elements.begin(), elements.end(), [=](const AbstractBasePtr &element) {
+      return HasAdapterTensorClassType(element, is_parameter);
+    });
   }
-  auto class_obj = cmp_value->cast<parse::ClassTypePtr>()->obj();
-  return py::hasattr(class_obj, PYTHON_ADAPTER_TENSOR);
+  auto cmp_value = cmp->BuildValue();
+  MS_EXCEPTION_IF_NULL(cmp_value);
+  if (cmp_value->isa<parse::ClassType>()) {
+    auto class_obj = cmp_value->cast<parse::ClassTypePtr>()->obj();
+    // isinstance(tensor_x, Tensor) -> true, isinstance(tensor_x, Parameter) -> false.
+    // isinstance(parameter_x, Tensor) -> true, isinstance(parameter_x, Parameter) -> true.
+    if (py::hasattr(class_obj, PYTHON_ADAPTER_TENSOR) || py::hasattr(class_obj, "adapter_flag")) {
+      return is_parameter || !py::hasattr(class_obj, "__parameter__");
+    }
+  }
+  return false;
+}
+
+bool CheckIsInstanceForAdapter(const AbstractBasePtr &x, const AbstractBasePtr &cmp) {
+  if (x->isa<abstract::AbstractRefTensor>()) {
+    return HasAdapterTensorClassType(cmp, true);
+  }
+  return HasAdapterTensorClassType(cmp, false);
 }
 
 bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, const py::module &mod, bool is_const) {
@@ -400,8 +418,9 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   }
 
   // x is adapter tensor.
-  if (IsAdapterTensor(x) && IsAdapterTensorClassType(cmp)) {
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);
+  if (IsAdapterTensor(x)) {
+    result = CheckIsInstanceForAdapter(x, cmp);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
   }
 
   auto x_value = x->BuildValue();

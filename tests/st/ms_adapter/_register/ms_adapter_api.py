@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,71 @@
 """ MSAdapter api. """
 
 import sys
+import numpy as np
 import mindspore as ms
+from mindspore import Tensor as ms_Tensor
+from mindspore.common import dtype as mstype
+from mindspore.common._stub_tensor import StubTensor
+from mindspore.common.initializer import Zero
+from mindspore._c_expression import Tensor as Tensor_
 
 
-class Tensor(ms.Tensor):
-    def __init__(self, input_data=None, dtype=None, shape=None, init=None, inner=False):
-        super(Tensor, self).__init__(input_data=input_data, dtype=dtype, shape=shape, init=init)
+_dtypeDict = {
+    'float16': mstype.float16,
+    'float32': mstype.float32,
+    'float64': mstype.float64,
+    'int8': mstype.int8,
+    'int16': mstype.int16,
+    'int32': mstype.int32,
+    'int64': mstype.int64,
+    'uint8': mstype.uint8,
+    'bool': mstype.bool_,
+    'complex64': mstype.complex64,
+    'complex128': mstype.complex128,
+    'long': mstype.int64,
+    'half': mstype.float16,
+    'int': mstype.int32,
+    'double': mstype.float64,
+    'float': mstype.float32,
+    'char': mstype.int8,
+    'byte': mstype.uint8,
+    'short': mstype.int16
+}
+
+
+class Tensor(StubTensor):
+    def __init__(self, *data, dtype=None, inner=False, cast_tensor=False):
+        if cast_tensor:
+            if len(data) != 1:
+                raise RuntimeError("Tensor init data length is not 1 when cast_tensor=True")
+            input_data = data[0]
+            if isinstance(input_data, StubTensor):
+                super(Tensor, self).__init__(stub=input_data.stub, tensor=input_data.tensor)
+            elif isinstance(input_data, ms.Tensor):
+                super(Tensor, self).__init__(tensor=input_data)
+            else:
+                raise ValueError(f"Tensor init data type is invalid: {type(input_data)}")
+            return
+
+        if dtype is not None:
+            key = str(dtype).split('.')[-1].lower()
+            dtype = _dtypeDict.get(key)
+
+        if inner is True:
+            init_tensor = ms_Tensor(*data, dtype=dtype)
+        else:
+            _input_data, _shape = self._process_data(data)
+            if _shape:
+                if dtype is None:
+                    dtype = mstype.float32
+                init_tensor = ms_Tensor(shape=_shape, dtype=dtype, init=Zero())
+                init_tensor.init_data()
+            else:
+                if dtype is None:
+                    if not isinstance(_input_data, (ms.Tensor, Tensor_)):
+                        dtype = mstype.float32
+                init_tensor = ms_Tensor(input_data=_input_data, dtype=dtype)
+        super(Tensor, self).__init__(tensor=init_tensor)
 
     @property
     def attr(self):
@@ -34,19 +93,44 @@ class Tensor(ms.Tensor):
             return self.shape
         return self.shape[dim]
 
+    def _process_data(self, data):
+        _shape = None
+        _input_data = None
+        if len(data) == 1:
+            if isinstance(data[0], int):
+                _shape = data
+            elif isinstance(data[0], (np.ndarray, ms.Tensor, list, Tensor_)):
+                _input_data = data[0]
+            elif isinstance(data[0], tuple):
+                if len(data[0]) == 1:
+                    _shape = data[0]
+                else:
+                    _input_data = data[0]
+            else:
+                raise TypeError(f"For Tensor, data must be a sequence, got {type(data[0])}")
+        elif len(data) > 1:
+            if not isinstance(data[0], int):
+                raise TypeError("For Tensor, elements of shape must be int.")
+            _shape = data
+        else:
+            _input_data = ()
+        return _input_data, _shape
+
 
 class Parameter(ms.Parameter):
-    def __new__(cls, default_input, *args, **kwargs):
-        init_data_flag = bool(isinstance(default_input, ms.Tensor) and default_input.has_init)
-        rc = sys.getrefcount(default_input)
-        _, *class_init_args = Parameter._get_parameter_new_args(default_input, rc)
-        new_type = Parameter._get_base_class(Tensor)
-        obj = Tensor.__new__(new_type)
-        Tensor.__init__(obj, *class_init_args)
+    _base_type = {}
+
+    def __new__(cls, data, *args, **kwargs):
+        init_data_flag = bool(isinstance(data, ms.Tensor) and data.has_init)
+        rc = sys.getrefcount(data)
+        input_class, *class_init_args = Parameter._get_parameter_new_args(data, rc)
+        new_type = Parameter._get_base_class(input_class)
+        obj = input_class.__new__(new_type)
+        input_class.__init__(obj, *class_init_args)
         obj.init_mode = None
         obj.is_default_input_init = init_data_flag
         if obj.has_init:
-            obj.init_mode = default_input
+            obj.init_mode = data
         return obj
 
     @staticmethod
