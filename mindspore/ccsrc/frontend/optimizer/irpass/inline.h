@@ -409,7 +409,8 @@ bool IsUniqueUse(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
 bool IsTrivial(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
   auto n_cnode = fg->nodes().size() - fg->parameters().size();
   // There is at least one CNode(return, other_node).
-  return n_cnode <= 2;
+  constexpr size_t least_size = 2;
+  return n_cnode <= least_size;
 }
 
 bool IsInside(InlinerBase *, const FuncGraphPtr &, const AnfNodePtr &node) {

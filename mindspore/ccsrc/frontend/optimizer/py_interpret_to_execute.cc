@@ -80,7 +80,7 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
     const auto &global_dict = GetValueNode<ValueDictionaryPtr>(cnode->input(input_index_two));
     py::object py_global_dict = ValueToPyData(global_dict);
     MS_LOG(DEBUG) << "py_global_dict: " << py::str(py_global_dict);
-    CallPythonPushGlobalParams(py_global_dict);
+    (void)CallPythonPushGlobalParams(py_global_dict);
 
     if (!IsPrimitiveCNode(cnode->input(input_index_three), prim::kPrimMakeDict)) {
       MS_LOG(EXCEPTION) << "The 3rd input should be a dictionary, but got "
