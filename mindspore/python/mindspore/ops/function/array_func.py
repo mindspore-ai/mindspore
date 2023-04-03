@@ -407,7 +407,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     n = arange(0, window_length)
     w = alpha - beta * ops.cos((2 * np.pi / (window_length - 1)) * n)
 
-    if dtype:
+    if dtype is not None:
         w = P.Cast()(w, dtype)
     return w[:-1] if periodic else w
 
