@@ -30,7 +30,7 @@ void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, int row8,
 void MatmulInt8DpOpt(const int8_t *a, const int8_t *b, int8_t *dst, size_t row8, size_t col8, size_t deep4,
                      const int *a_sums, const int *bias, int act_min, int act_max, int out_zp, const int *multiplier,
                      const int *left_shift, const int *right_shift, size_t stride, size_t peroc, const int *filter_zp);
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) && !defined(USE_AOS_GCC_TOOLCHAIN)
 void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                                        size_t ksize, size_t ic4, size_t output_channel, size_t offset,
                                        const int32_t *input_sum, size_t act_min, size_t act_max, size_t out_zp,

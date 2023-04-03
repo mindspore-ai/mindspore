@@ -13,28 +13,45 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
   -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
   -D_FORTIFY_SOURCE=2 -Wno-cpp")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror -Wno-return-std-move -Wno-unused-private-field \
-  -Wno-unused-lambda-capture -Wno-sign-compare -Wno-overloaded-virtual -Wno-unneeded-internal-declaration \
-  -Wno-unused-variable -Wno-pessimizing-move -Wno-inconsistent-missing-override")
-
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -I/usr/local/include -std=c++17 -Wall -fPIC")
+if(TARGET_AOS_ARM)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wno-sign-compare -Wno-overloaded-virtual \
+        -Wno-unused-variable")
+    set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -std=c++17 -Wall -fPIC -march=armv8.2-a -funsafe-math-optimizations \
+        -ftree-vectorize -flax-vector-conversions")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror -Wno-return-std-move -Wno-unused-private-field \
+      -Wno-unused-lambda-capture -Wno-sign-compare -Wno-overloaded-virtual -Wno-unneeded-internal-declaration \
+      -Wno-unused-variable -Wno-pessimizing-move -Wno-inconsistent-missing-override")
+    set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -I/usr/local/include -std=c++17 -Wall -fPIC")
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTION_CXX_FLAGS}")
 
 if(PLATFORM_ARM)
-    set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Werror -Wno-return-std-move -Wno-unused-private-field \
-      -Wno-unused-lambda-capture -Wno-sign-compare -Wno-overloaded-virtual -Wno-unneeded-internal-declaration \
-      -Wno-unused-variable -Wno-pessimizing-move -Wno-inconsistent-missing-override \
-      -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
+    if(TARGET_AOS_ARM)
+        set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Wno-sign-compare -Wno-overloaded-virtual \
+          -Wno-unused-variable -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2 -O2")
+    else()
+        set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Werror -Wno-return-std-move -Wno-unused-private-field \
+          -Wno-unused-lambda-capture -Wno-sign-compare -Wno-overloaded-virtual -Wno-unneeded-internal-declaration \
+          -Wno-unused-variable -Wno-pessimizing-move -Wno-inconsistent-missing-override \
+          -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
+    endif()
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Wl,--allow-shlib-undefined -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
       -D_FORTIFY_SOURCE=2")
 endif()
-
-set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-  -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
-  -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+if(TARGET_AOS_ARM)
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
+      -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -fstack-protector-strong -Wno-attributes \
+      -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+else()
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+      -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -fstack-protector-strong -Wno-attributes \
+      -Wno-deprecated-declarations -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-non-virtual-dtor")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
@@ -357,21 +374,39 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     add_library(minddata-lite_static STATIC ${minddata_lite_submodules})
     set_target_properties(minddata-lite_static PROPERTIES OUTPUT_NAME "minddata-lite")
 
-    find_package(Threads REQUIRED)
-    target_link_libraries(minddata-lite
-        securec
-        mindspore::jpeg_turbo
-        mindspore::turbojpeg
-        mindspore::json
-        Threads::Threads
-        )
-    target_link_libraries(minddata-lite_static
-        securec
-        mindspore::jpeg_turbo
-        mindspore::turbojpeg
-        mindspore::json
-        Threads::Threads
-        )
+    if(TARGET_AOS_ARM)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+        target_link_libraries(minddata-lite
+                securec
+                mindspore::jpeg_turbo
+                mindspore::turbojpeg
+                mindspore::json
+                pthread
+                )
+        target_link_libraries(minddata-lite_static
+                securec
+                mindspore::jpeg_turbo
+                mindspore::turbojpeg
+                mindspore::json
+                pthread
+                )
+    else()
+        find_package(Threads REQUIRED)
+        target_link_libraries(minddata-lite
+            securec
+            mindspore::jpeg_turbo
+            mindspore::turbojpeg
+            mindspore::json
+            Threads::Threads
+            )
+        target_link_libraries(minddata-lite_static
+            securec
+            mindspore::jpeg_turbo
+            mindspore::turbojpeg
+            mindspore::json
+            Threads::Threads
+            )
+    endif()
 
     if((MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE) AND MSLITE_ENABLE_ACL)
         target_link_libraries(minddata-lite
