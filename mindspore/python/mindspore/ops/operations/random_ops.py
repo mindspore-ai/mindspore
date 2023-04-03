@@ -892,7 +892,7 @@ class MultinomialWithReplacement(Primitive):
         Tensor with the same rows as `x`, each row has `numsamples` sampled indices.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)

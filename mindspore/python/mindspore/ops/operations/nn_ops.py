@@ -2016,7 +2016,7 @@ class MaxUnpool2D(Primitive):
                     computed by attr `ksize`, `strides` and `pads`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
@@ -2115,7 +2115,7 @@ class MaxUnpool3D(Primitive):
                     computed by attr `ksize, strides, pads`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
@@ -3604,7 +3604,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         Dynamic shape feature is not supported for now.
 
     Supported Platforms:
-        Deprecated
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -9765,7 +9765,7 @@ class Pdist(Primitive):
     Refer to :func:`mindspore.ops.pdist` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -10341,7 +10341,7 @@ class ChannelShuffle(Primitive):
     Refer to :func:`mindspore.ops.channel_shuffle` for more detail.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> group = 2

@@ -8,8 +8,8 @@ mindspore.ops.rot90
 
     参数：
         - **input** (Tensor) - 所输入的Tensor。
-        - **k** (int) - 旋转的次数。默认值：1。
-        - **dims** (Union[list(int), tuple(int)]) - 要旋转的轴。默认值：[0,1]。
+        - **k** (int) - 旋转的次数。
+        - **dims** (Union[list(int), tuple(int)]) - 要旋转的轴。
 
     返回：
         Tensor。

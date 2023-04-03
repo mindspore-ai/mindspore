@@ -119,6 +119,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
 
     mindspore.ops.cdist
     mindspore.ops.dist
+    mindspore.ops.pdist
 
 采样函数
 ^^^^^^^^^^
