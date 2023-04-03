@@ -29,7 +29,6 @@
 
 namespace mindspore {
 class ThreadPool;
-// class Worker;
 class ParallelThreadPool;
 struct ParallelTask;
 class ParallelWorker;

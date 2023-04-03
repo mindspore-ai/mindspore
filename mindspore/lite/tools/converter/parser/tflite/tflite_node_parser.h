@@ -171,7 +171,7 @@ class TfliteNodeParser {
     }
 
     constexpr size_t k2DMultipler = 2;
-    (*vec).resize(count / 2, std::vector<T>(2));
+    (*vec).resize(count / k2DMultipler, std::vector<T>(k2DMultipler));
     switch (tensor->type) {
       case tflite::TensorType_UINT8: {
         for (size_t i = 0; i < count / k2DMultipler; i++) {
@@ -179,7 +179,7 @@ class TfliteNodeParser {
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + (k2DMultipler * i + 1) * sizeof(uint8_t))));
           (*vec)[i][1] = static_cast<T>(data);
-          i += 2;
+          i += k2DMultipler;
         }
         break;
       }

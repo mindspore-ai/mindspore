@@ -19,8 +19,6 @@
 #include <complex>
 #include <vector>
 #include <utility>
-#include <map>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
