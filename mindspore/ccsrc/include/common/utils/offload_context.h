@@ -29,9 +29,6 @@ class COMMON_EXPORT OffloadContext {
   OffloadContext(const OffloadContext &) = delete;
   OffloadContext &operator=(const OffloadContext &) = delete;
 
-  void set_enable_offload(bool enable_offload);
-  bool enable_offload() const { return enable_offload_; }
-
   void set_offload_param(const std::string &offload_param);
   std::string offload_param() const { return offload_param_; }
 
@@ -48,7 +45,7 @@ class COMMON_EXPORT OffloadContext {
   size_t offload_disk_size() const { return offload_disk_size_; }
 
   void set_enable_aio(bool enable_aio);
-  bool enable_aio() const { return enable_aio_; }
+  bool enable_aio();
 
   void set_aio_block_size(size_t aio_block_size);
   size_t aio_block_size() const { return aio_block_size_; }
@@ -60,18 +57,7 @@ class COMMON_EXPORT OffloadContext {
   bool enable_pinned_mem() const { return enable_pinned_mem_; }
 
  private:
-  OffloadContext()
-      : enable_offload_(false),
-        offload_param_(""),
-        offload_path_("./offload"),
-        offload_checkpoint_(""),
-        offload_ddr_size_(0),
-        offload_disk_size_(0),
-        enable_aio_(true),
-        aio_block_size_(0),
-        aio_queue_depth_(0),
-        enable_pinned_mem_(false) {}
-  bool enable_offload_;
+  OffloadContext();
   std::string offload_param_;
   std::string offload_path_;
   std::string offload_checkpoint_;

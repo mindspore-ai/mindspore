@@ -22,12 +22,14 @@ from mindspore._c_expression import OffloadContext
 from mindspore._checkparam import args_type_check
 from mindspore import _checkparam as Validator
 
+K_RE_PATTERN = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
+K_GBTOBYTE = 1 << 30
+
 
 class _OffloadConfig:
     """
     The key of the Offload Config.
     """
-    ENABLE_OFFLOAD = "enable_offload"
     OFFLOAD_PARAM = "offload_param"
     OFFLOAD_PATH = "offload_path"
     OFFLOAD_CHECKPOINT = "offload_checkpoint"
@@ -73,7 +75,6 @@ class _OffloadContext:
     def set_offload_config(self, offload_config):
         """Set offfload context"""
         self.check_context_handle()
-        enable_offload = _OffloadConfig.ENABLE_OFFLOAD
         offload_param = _OffloadConfig.OFFLOAD_PARAM
         offload_path = _OffloadConfig.OFFLOAD_PATH
         offload_checkpoint = _OffloadConfig.OFFLOAD_CHECKPOINT
@@ -86,19 +87,13 @@ class _OffloadContext:
 
         for config_name in offload_config:
             unknown_config = []
-            if config_name not in [enable_offload, offload_param, offload_path, offload_checkpoint,
+            if config_name not in [offload_param, offload_path, offload_checkpoint,
                                    offload_ddr_size, offload_disk_size, enable_aio, aio_block_size,
                                    aio_queue_depth, enable_pinned_mem]:
                 unknown_config.append(config_name)
 
             if unknown_config:
                 raise ValueError("Unknown config: {}".format(unknown_config))
-
-        if enable_offload in offload_config:
-            Validator.check_bool(
-                offload_config[enable_offload], enable_offload, enable_offload)
-            self._context_handle.set_enable_offload(
-                offload_config[enable_offload])
 
         if offload_param in offload_config:
             Validator.check_string(
@@ -120,23 +115,40 @@ class _OffloadContext:
                 offload_config[offload_checkpoint].lower())
 
         if offload_ddr_size in offload_config:
-            Validator.check_positive_int(offload_config[offload_ddr_size])
-            self._context_handle.set_offload_ddr_size(
-                offload_config[offload_ddr_size])
+            ddr_size = offload_config[offload_ddr_size]
+            if not Validator.check_str_by_regular(ddr_size, K_RE_PATTERN):
+                raise ValueError("The argument 'offload_ddr_size' should be in correct "
+                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                                 .format(ddr_size))
+            ddr_size = float(ddr_size[:-2])
+            self._context_handle.set_offload_ddr_size(int(ddr_size * K_GBTOBYTE))
 
         if offload_disk_size in offload_config:
-            Validator.check_positive_int(offload_config[offload_disk_size])
+            disk_size = offload_config[offload_disk_size]
+            if not Validator.check_str_by_regular(disk_size, K_RE_PATTERN):
+                raise ValueError("The argument 'offload_disk_size' should be in correct "
+                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                                 .format(disk_size))
+            disk_size = float(disk_size[:-2])
             self._context_handle.set_offload_disk_size(
-                offload_config[offload_disk_size])
+                int(disk_size * K_GBTOBYTE))
+
         if enable_aio in offload_config:
             Validator.check_bool(
                 offload_config[enable_aio], enable_aio, enable_aio)
             self._context_handle.set_enable_aio(
                 offload_config[enable_aio])
         if aio_block_size in offload_config:
-            Validator.check_positive_int(offload_config[aio_block_size])
-            self._context_handle.set_aio_block_size(
-                offload_config[aio_block_size])
+            aio_size = offload_config[aio_block_size]
+            if not Validator.check_str_by_regular(aio_size, K_RE_PATTERN):
+                raise ValueError("The argument 'aio_block_size' should be in correct "
+                                 " format! It must be a string ending with 'GB', in addition to that, it must contain "
+                                 "only numbers or decimal points, such as \"5GB\" or \"3.5GB\", but got {}."
+                                 .format(aio_size))
+            aio_size = float(aio_size[:-2])
+            self._context_handle.set_aio_block_size(int(aio_size * K_GBTOBYTE))
         if aio_queue_depth in offload_config:
             Validator.check_positive_int(offload_config[aio_queue_depth])
             self._context_handle.set_aio_queue_depth(
@@ -151,7 +163,6 @@ class _OffloadContext:
         """Get config of offload"""
         self.check_context_handle()
         offload_config = {
-            _OffloadConfig.ENABLE_OFFLOAD: self._context_handle.enable_offload(),
             _OffloadConfig.OFFLOAD_PARAM: self._context_handle.offload_param(),
             _OffloadConfig.OFFLOAD_PATH: self._context_handle.offload_path(),
             _OffloadConfig.OFFLOAD_CHECKPOINT: self._context_handle.offload_checkpoint(),

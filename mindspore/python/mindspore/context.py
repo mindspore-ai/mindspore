@@ -762,14 +762,13 @@ def set_offload_context(offload_config):
     Args:
         offload_config (dict): A dict contains the keys and values for setting the offload context
                         configure.It supports the following keys.
-            enable_offload (bool):  The flag of whether enabling offload. Default: False.
             offload_param (str):  The param for offload destination, cpu or disk.
             offload_path (str):  The path of offload.
             offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk.
-            offload_ddr_size (int):  The ddr size for offload.
-            offload_disk_size (int): The disk size for offload.
+            offload_ddr_size (str):  The ddr size for offload. The format is "xxGB".
+            offload_disk_size (str): The disk size for offload. The format is "xxGB"
             enable_aio (bool): The flag of whether enabling aio. Default: True.
-            aio_block_size (int): The size of aio block.
+            aio_block_size (str): The size of aio block. The format is "xxGB"
             aio_queue_depth (int): The depth of aio queue.
             enable_pinned_mem (bool): The flag of whether enabling pinned memory.
 

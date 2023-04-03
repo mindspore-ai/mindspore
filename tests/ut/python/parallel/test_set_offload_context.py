@@ -23,12 +23,12 @@ def test_set_offload_context():
     Description: offloadContext configuration test case.
     Expectation: assert ok.
     """
-    offload_config = {"enable_offload": True, "offload_param": "CPU", "offload_path": "/tmp",
-                      "offload_checkpoint": "CPU", "offload_ddr_size": 1024, "offload_disk_size": 4096,
-                      "enable_aio": False, "aio_block_size": 1000, "aio_queue_depth": 9999, "enable_pinned_mem": True}
+    offload_config = {"offload_param": "CPU", "offload_path": "/tmp",
+                      "offload_checkpoint": "CPU", "offload_ddr_size": "1.0GB", "offload_disk_size": "1GB",
+                      "enable_aio": False, "aio_block_size": "0.5GB", "aio_queue_depth": 9999,
+                      "enable_pinned_mem": True}
     context.set_offload_context(offload_config=offload_config)
     offload_config_ = context.get_offload_context()
-    enable_offload = offload_config_.get("enable_offload", None)
     offload_param = offload_config_.get("offload_param", None)
     offload_path = offload_config_.get("offload_path", None)
     offload_checkpoint = offload_config_.get("offload_checkpoint", None)
@@ -38,15 +38,16 @@ def test_set_offload_context():
     aio_block_size = offload_config_.get("aio_block_size", None)
     aio_queue_depth = offload_config_.get("aio_queue_depth", None)
     enable_pinned_mem = offload_config_.get("enable_pinned_mem", None)
-    assert enable_offload
     assert offload_param == "cpu"
     assert offload_path == "/tmp"
     assert offload_checkpoint == "cpu"
-    assert offload_ddr_size == 1024
-    assert offload_disk_size == 4096
+    assert offload_ddr_size == 1 << 30
+    assert offload_disk_size == 1 << 30
     assert not enable_aio
-    assert aio_block_size == 1000
+    assert aio_block_size == 1 << 29
     assert aio_queue_depth == 9999
     assert enable_pinned_mem
     with pytest.raises(ValueError):
         context.set_offload_context(offload_config={"offload_param": "gpu"})
+    with pytest.raises(ValueError):
+        context.set_offload_context(offload_config={"offload_disk_size": "1"})
