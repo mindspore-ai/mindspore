@@ -54,11 +54,11 @@ std::map<std::string, std::string> KernelDumper::stream_task_graphs;
 
 OpDebugTask::~OpDebugTask() {
   if (op_debug_addr != nullptr) {
-    rtFree(op_debug_addr);
+    (void)rtFree(op_debug_addr);
     op_debug_addr = nullptr;
   }
   if (new_op_debug_addr != nullptr) {
-    rtFree(new_op_debug_addr);
+    (void)rtFree(new_op_debug_addr);
     new_op_debug_addr = nullptr;
   }
 }
