@@ -125,26 +125,32 @@ class SparseTransformer(ast.NodeTransformer):
         return stmt
 
     def has_changed(self):
+        """Whether the SparseTransformer has changed"""
         return self._changed
 
     def add_frame(self):
+        """Add a frame into deque."""
         self._frames.append([])
 
     def pop_frame(self):
+        """Pop a frame in deque."""
         return tuple(self._frames.pop())
 
     def push_onto_frame(self, t):
+        """Push an arg_type into frame deque."""
         if not self._frames:
             raise ValueError("Current frame not initialized!")
         self._frames[-1].append(t)
 
     def push_all_onto_frame(self, t):
+        """Push all arg_types into frame deque."""
         if not self._frames:
             raise ValueError("Current frame not initialized!")
         for i in t:
             self._frames[-1].append(i)
 
     def clear_stack(self):
+        """Clear frame deque"""
         self._frames.clear()
 
     def make_sparse_func(self, func, node_type, inputs):
@@ -284,16 +290,19 @@ class SparseTransformer(ast.NodeTransformer):
         return self.visit_method(node)
 
     def visit_generic_stmt(self, node):
+        """Visitor for generic statement."""
         self.add_frame()
         node = self.generic_visit(node)
         self.pop_frame()
         return node
 
     def visit_scalar_expr(self, node):
+        """Visitor for scalar expression."""
         self.push_onto_frame(ArgType.NONSPARSE)
         return node
 
     def visit_generic_expr(self, node):
+        """Visitor for generic expression."""
         self.add_frame()
         node = self.generic_visit(node)
         self.pop_frame()
@@ -301,9 +310,11 @@ class SparseTransformer(ast.NodeTransformer):
         return node
 
     def visit_composite_generic_expr(self, node):
+        """Visitor for composite generic expression."""
         return self.generic_visit(node)
 
     def visit_partial_expr(self, node):
+        """Visitor for a part of an expression."""
         return node
 
     def visit_Assign(self, node):     # pylint: disable=invalid-name
@@ -368,7 +379,6 @@ class SparseTransformer(ast.NodeTransformer):
             func = getattr(namespace, func_name, None)
             if func is None:
                 raise ValueError(f"{func_name} not defined in {namespace}!")
-            sparse_func = self.make_sparse_func(func, type(node), arg_types)
             return self.get_sparse_node(node, args, func, arg_types)
 
         if func_scope == "self":
@@ -396,8 +406,7 @@ class SparseTransformer(ast.NodeTransformer):
             logger.warning(f"Global variable {node.id} treaded as nonsparse value by default.")
             tensor_type = ArgType.NONSPARSE
         elif node.id in self._dead_vars:
-            # pylint: disable=get-dict-value-exception
-            raise ValueError(f"Divergent arg_types {self._dead_vars[node.id]} for {node.id} are currently not "
+            raise ValueError(f"Divergent arg_types {self._dead_vars.get(node.id)} for {node.id} are currently not "
                              f"supported in control flow and the variable is considered dead upon leaving "
                              f"the block")
         else:
