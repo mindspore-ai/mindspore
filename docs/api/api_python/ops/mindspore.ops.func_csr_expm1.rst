@@ -9,7 +9,7 @@ mindspore.ops.csr_expm1
         out_i = e^{x_i} - 1
 
     参数：
-        - **x** (CSRTensor) - 数据类型为float16或float32的CSRTensor，其秩必须在[0, 7]中。
+        - **x** (CSRTensor) - 数据类型为float16或float32的CSRTensor。
 
     返回：
         CSRTensor，shape与 `x` 相同。

@@ -695,7 +695,7 @@ def ceil(input):
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Args:
-        input (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of float16 or float32.
 
     Returns:
         Tensor, has the same shape as the `input`.
@@ -1201,7 +1201,7 @@ def exp(input):
         out_i = e^{x_i}
 
     Args:
-        input (Tensor): The input tensor, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -1230,7 +1230,7 @@ def expm1(input):
         out_i = e^{x_i} - 1
 
     Args:
-        input (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of float16 or float32.
 
     Returns:
         Tensor, has the same shape as the `input`.
@@ -1257,10 +1257,6 @@ def log(input):
 
     .. math::
         y_i = log_e(x_i)
-
-    .. note::
-        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
-        input Tensor on the CPU should be less than 8.
 
     .. warning::
         If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
@@ -1325,8 +1321,8 @@ def floor(input):
         out_i = \lfloor x_i \rfloor
 
     Args:
-        input (Tensor): The input tensor, its rank must be in [0, 7] inclusive
-            and data type must be float16, float32 or float64.
+        input (Tensor): The input tensor, its data type must be float16,
+            float32 or float64.
 
     Returns:
         Tensor, has the same shape as `input`.
@@ -1414,7 +1410,6 @@ def inplace_add(x, v, indices):
 
     Args:
         x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-            Its rank should be less than 8.
         v (Tensor): The second input is a tensor that has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
@@ -1501,12 +1496,12 @@ def inplace_sub(x, v, indices):
         `indices` refers to the left-most dimension.
 
     Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
         x (Tensor): The first input is a tensor whose data type is float16, float32, float64 or int32.
-            Tensors of arbitrary dimensions are supported, its rank should be less than 8.
+            Tensors of arbitrary dimensions are supported.
         v (Tensor): The second input is a tensor who has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
 
     Returns:
         Tensor, has the same shape and dtype as `x`.
@@ -2369,7 +2364,7 @@ def sinh(input):
         out_i = \sinh(input_i)
 
     Args:
-        input (Tensor): The input tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor of hyperbolic sine function.
 
     Returns:
         Tensor, has the same shape as `input`.
@@ -2398,8 +2393,8 @@ def cosh(input):
         out_i = cosh(input_i)
 
     Args:
-        input (Tensor): The input tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
-            and data type must be float16, float32, float64, complex64 or complex128.
+        input (Tensor): The input tensor of hyperbolic cosine function, its data type
+            must be float16, float32, float64, complex64 or complex128.
 
     Returns:
         Tensor, has the same shape as `input`.
@@ -2462,7 +2457,7 @@ def asinh(x):
         out_i = \sinh^{-1}(x_i)
 
     Args:
-        x (Tensor): The input tensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
+        x (Tensor): The input tensor of inverse hyperbolic sine function.
 
     Returns:
         Tensor, has the same shape and type as `x`.
@@ -2515,7 +2510,7 @@ def acosh(input):
         Input range is [1, inf].
 
     Args:
-        input (Tensor): The input tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor of inverse hyperbolic cosine function.
 
     Returns:
         Tensor, has the same shape and type as `input`.
@@ -2977,8 +2972,8 @@ def erf(input):
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor of Gaussian error function. Its rank must be in [0, 7] inclusive
-            and data type must be float16 float32 or float64.
+        input (Tensor): The input tensor of Gaussian error function. Its data type
+            must be float16 float32 or float64.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -3008,8 +3003,7 @@ def erfc(input):
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor with a dtype of float16, float32 or float64,
-            its rank should be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of float16, float32 or float64.
 
     Returns:
         Tensor, has the same shape and dtype as `input`.
@@ -4029,7 +4023,7 @@ def approximate_equal(x, y, tolerance=1e-5):
 
     Args:
         x (Tensor): A tensor. Must be one of the following types: float32, float16.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         y (Tensor): A tensor of the same type and shape as `x`.
         tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
 
@@ -4890,7 +4884,7 @@ def var(input, axis=None, ddof=0, keepdims=False):
 
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
-            where :math:`*` means any number of additional dims, its rank should be less than 8.
+            where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
@@ -4948,7 +4942,7 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
 
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
-            where :math:`*` means any number of additional dims, its rank should be less than 8.
+            where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
@@ -5021,7 +5015,7 @@ def std(input, axis=None, ddof=0, keepdims=False):
 
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
-            where :math:`*` means any number of additional dims, its rank should be less than 8.
+            where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): The dimensions to reduce. Only constant value is allowed.
             Must be in the range [-rank(`input`), rank(`input`)). Default: None, reduce all dimensions.
         ddof (Union[int, bool], optional): Means Delta Degrees of Freedom.
@@ -5079,7 +5073,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
 
     Args:
         input (Tensor[Number]): Input Tensor with a dtype of number.Number, its shape should be :math:`(N, *)`
-            where :math:`*` means any number of additional dims, its rank should be less than 8.
+            where :math:`*` means any number of additional dims.
         axis (Union[int, tuple(int)], optional): Specifies the dimensions from which to calculate the standard
             deviation and mean. Only constant value is allowed. Must be in the range [-rank(`input`), rank(`input`)).
             Default: None, reduce all dimensions.
@@ -5206,8 +5200,8 @@ def rsqrt(input):
         out_{i} =  \frac{1}{\sqrt{input_{i}}}
 
     Args:
-        input (Tensor): The input of rsqrt. Its rank must be in [0, 7] inclusive and
-            each element must be a non-negative number, if an element is negative, the calculation result is nan.
+        input (Tensor): The input of rsqrt. Its each element must be a non-negative
+            number, if an element is negative, the calculation result is nan.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -5238,7 +5232,7 @@ def sqrt(x):
         out_{i} = \\sqrt{x_{i}}
 
     Args:
-        x (Tensor): The input tensor with a dtype of number.Number, its rank must be in [0, 7] inclusive.
+        x (Tensor): The input tensor with a dtype of number.Number.
     Returns:
         Tensor, has the same shape and dtype as the `x`.
 
@@ -5266,7 +5260,7 @@ def square(input):
         y_i = input_i ^ 2
 
     Args:
-        input (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        input (Tensor): The input tensor with a dtype of Number.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -7146,10 +7140,6 @@ def logsumexp(input, axis, keep_dims=False):
 
         logsumexp(input) = \log(\sum(e^{input-input_{max}})) + input_{max}
 
-    Note:
-        The dimension of input Tensor on Ascend should be less than or equal to 8,
-        and the dimension of input Tensor on CPU should be less than 8.
-
     Args:
         input (Tensor): The input tensor. With float16 or float32 data type.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
@@ -7198,7 +7188,7 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r)..
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
@@ -7299,7 +7289,7 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
             Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
@@ -7384,7 +7374,7 @@ def mean(x, axis=None, keep_dims=False):
 
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
@@ -7463,7 +7453,7 @@ def prod(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: None, reduce all dimensions.
           Only constant value is allowed. Assume the rank of `input` is r, and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
@@ -8725,10 +8715,6 @@ def log2(input):
         If the input value of operator log2 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
         be affected.
 
-    .. note::
-        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
-        input Tensor on the CPU or GPU should be less than 8.
-
     Args:
         input (Tensor): Input Tensor of any dimension. The value must be greater than 0.
 
@@ -8941,10 +8927,6 @@ def log10(input):
         If the input value of operator log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
         be affected.
 
-    .. note::
-        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
-        input Tensor on the CPU or GPU should be less than 8.
-
     Args:
         input (Tensor): Input Tensor of any dimension. The each element in Tensor must be greater than 0.
 
@@ -8985,8 +8967,7 @@ def log1p(x):
     Args:
         x (Tensor): The input tensor. With float16 or float32 data type.
             The value must be greater than -1.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions,
-            its rank should be less than 8.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape as the `x`.
@@ -9103,7 +9084,7 @@ def all(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
             r, axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
@@ -9157,7 +9138,7 @@ def any(input, axis=None, keep_dims=False):
 
     Args:
         input (Tensor[bool]): The input Tensor. The dtype of the Tensor is bool.
-            :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
             axis must be in the range [-rank(input), rank(input)). Default: None, all dimensions are reduced.
         keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
@@ -9895,7 +9876,7 @@ def cumprod(input, dim, dtype=None):
 
     Args:
         input (Tensor[Number]): The input tensor.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
         dim (int): The dimensions to compute the cumulative product. Only constant value is allowed.
         dtype (:class:`mindspore.dtype`, optional): The desired data type of output.
             If not specified, remains the same as the original Tensor. Default: None.

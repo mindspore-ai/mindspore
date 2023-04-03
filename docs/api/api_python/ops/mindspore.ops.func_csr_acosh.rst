@@ -9,7 +9,7 @@ mindspore.ops.csr_acosh
         out_i = \cosh^{-1}(input_i)
 
     参数：
-        - **x** (CSRTensor) - 需要计算反双曲余弦函数的输入CSRTensor，其每个元素的取值范围必须在[1, inf]，其秩的范围必须在[0, 7]。
+        - **x** (CSRTensor) - 需要计算反双曲余弦函数的输入CSRTensor，其每个元素的取值范围必须在[1, inf]。
 
     返回：
         CSRTensor，数据类型与 `x` 相同。

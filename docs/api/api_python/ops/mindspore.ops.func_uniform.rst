@@ -9,7 +9,7 @@
         广播后，任意位置上Tensor的最小值都必须小于最大值。
 
     参数：
-        - **shape** (Union[tuple, Tensor]) - 指定输出shape，任意维度的Tensor。其 :math:`(N,*)` 的长度应小于8。
+        - **shape** (Union[tuple, Tensor]) - 指定输出shape，任意维度的Tensor。
         - **minval** (Tensor) - 指定生成随机值的最小值，其数据类型为int32或float32。如果数据类型为int32，则只允许输入一个数字。
         - **maxval** (Tensor) - 指定生成随机值的最大值，其数据类型为int32或float32。如果数据类型为int32，则只允许输入一个数字。
         - **seed** (int) - 指定随机种子，用于随机数生成器生成伪随机数。随机数为非负数。默认值：None（将被视为0）。
