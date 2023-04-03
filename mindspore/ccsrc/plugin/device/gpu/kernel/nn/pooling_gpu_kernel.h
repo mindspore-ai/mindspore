@@ -408,8 +408,16 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
       return;
     }
 
-    const size_t kPadScale = 2;
     const std::vector<int64_t> &pad_list = GetValue<std::vector<int64_t>>(prim->GetAttr("pad_list"));
+    if (prim->HasAttr("count_include_pad") && !GetValue<bool>(prim->GetAttr("count_include_pad")) &&
+        base_operator->HasAttr("divisor_override") &&
+        GetValue<int64_t>(base_operator->GetAttr("divisor_override")) != 0 &&
+        std::any_of(pad_list.begin(), pad_list.end(), [](int64_t pad) { return pad > 0; })) {
+      MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode
+                        << " && padding > 0 && count_include_pad == False && divisor_override != None";
+    }
+
+    const size_t kPadScale = 2;
     for (size_t idx = 0; idx < pad_list.size(); idx += kPadScale) {
       if (pad_list[idx] != pad_list[idx + 1]) {
         MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad[" << idx << "] and pad[" << (idx + 1)
