@@ -16,6 +16,10 @@
 
 import os
 import ctypes
+
+import sys
+from sys import excepthook
+
 from mindspore import context
 from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode,\
                                            _get_ps_context
@@ -145,8 +149,6 @@ def _check_bypass_rank_id_and_size():
 
 def _set_elegant_exit_handle():
     if _is_role_worker() or _is_role_pserver() or _is_role_sched():
-        import sys
-        from sys import excepthook
         sys.excepthook = lambda *args: (set_cluster_exit_with_exception(), excepthook(*args))
 
 
