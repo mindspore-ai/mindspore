@@ -144,7 +144,7 @@ void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dyna
 
   op_info.duration = cost_time;
   constexpr int64_t milli_second_ratio = 1000;
-  int64_t end_timestamp = GetRealTimeStamp();
+  uint64_t end_timestamp = GetRealTimeStamp();
   int64_t start_timestamp = end_timestamp - static_cast<int64_t>(cost_time * milli_second_ratio);
   double_t start_t = static_cast<double_t>(start_timestamp) / milli_second_ratio;
   op_info.start_timestamp = start_t;

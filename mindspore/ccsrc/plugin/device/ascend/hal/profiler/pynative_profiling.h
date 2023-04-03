@@ -34,9 +34,9 @@ struct PynativeOpInfo {
   std::string op_name;
   int thread_index;
   // the unit is ms
-  double_t start_timestamp = 0l;
+  double_t start_timestamp = 0L;
   // the unit is ms
-  double_t duration = 0l;
+  double_t duration = 0L;
   void *stream{nullptr};
   std::shared_ptr<DeviceEvent> start;
   std::shared_ptr<DeviceEvent> end;
