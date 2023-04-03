@@ -29,38 +29,38 @@ def get_profiling_options():
     try:
         options = json.loads(os.environ.get("MS_PROFILER_OPTIONS", "{}"))
     except json.JSONDecodeError:
-        return None
+        return {"error": True}
     return options
 
 
-def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e7):
+def parse_device_support_param(origin_options, final_options, factor_s_to_us=1e6):
     """Parse platform support parameters."""
     device_target = context.get_context("device_target").upper()
     op_time = final_options.get("op_time")
     support_list = DeviceSupportParam.__getattr__(f'{device_target}').value
-    support_dict = final_options.copy()
-    for param in list(set(origin_options) | set(final_options)):
+    all_param = list(set(origin_options) | set(final_options))
+    for param in all_param:
         if param not in support_list and param in list(origin_options.keys()):
             logger.warning(f"[Profiler]'{param}' is an invalid param which doesn't work.")
         if param in support_list:
-            if not op_time and origin_options.get(param) and param not in ALWAYS_VALID_PARAM:
+            if not op_time and param in origin_options.keys() and param not in ALWAYS_VALID_PARAM:
                 logger.warning(f"When op_time is set to False, the parameter '{param}' setting is invalid.")
         if param not in support_list and final_options.get(param):
-            support_dict.pop(param)
+            final_options.pop(param)
 
     simple_options = {
         "start_time": int(time.time() * factor_s_to_us),
         "file_output_path": "",
         "pid": os.getpid(),
     }
-    support_dict.update(simple_options)
-    return support_dict
+    final_options.update(simple_options)
+    return final_options
 
 
 def construct_profiling_options():
     """Construct profiling options to determine which profiling data should be collected."""
     profiling_options = get_profiling_options()
-    if profiling_options is None:
+    if profiling_options.get('error'):
         error_config = {"start": False}
         if os.getenv("MS_PROFILER_RUN_CONFIG"):
             return error_config
@@ -206,17 +206,22 @@ class EnvProfiler:
     def __init__(self):
         self._profiling_options = {}
 
-    def analyse(self):
-        """Determine whether to stop collecting and parsing performance data based on environment variables."""
+    def need_analyse(self):
+        """Determine whether the data needs to be parsed."""
         if not os.getenv("MS_PROFILER_OPTIONS"):
-            return
+            return False
         self._profiling_options = json.loads(os.getenv("MS_PROFILER_RUN_CONFIG", "{}"))
         if not self._profiling_options.get("pid", 0) == os.getpid():
-            return
+            return False
         if not self._profiling_options.get("start"):
-            return
-        profiler = Profiler(env_enable=self._profiling_options)
-        profiler.analyse()
+            return False
+        return True
+
+    def analyse(self):
+        """Determine whether to stop collecting and parsing performance data based on environment variables."""
+        if self.need_analyse():
+            profiler = Profiler(env_enable=self._profiling_options)
+            profiler.analyse()
 
 
 def profiler_check_env():

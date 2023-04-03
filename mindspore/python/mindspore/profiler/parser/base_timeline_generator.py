@@ -107,8 +107,8 @@ class BaseTimelineGenerator:
     def get_parallel_context():
         """Get parallel context."""
         try:
-            parallel_mode = get_auto_parallel_context("parallel_mode")
-            stage_num = get_auto_parallel_context("pipeline_stages")
+            parallel_mode, stage_num = get_auto_parallel_context("parallel_mode"), get_auto_parallel_context(
+                "pipeline_stages")
         except RuntimeError:
             logger.warning("[profiler] the feature of cluster bottleneck analyse "
                            "is not supported in offline parse mode.")
@@ -231,10 +231,11 @@ class BaseTimelineGenerator:
             with os.fdopen(os.open(timeline_summary_file_path,
                                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
                 json.dump(self._timeline_summary, json_file)
-            os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.critical('Error occurred when write timeline summary file: %s', err)
             raise ProfilerIOException()
+        if os.path.exists(timeline_summary_file_path):
+            os.chmod(timeline_summary_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _get_device_process_label(self):
         """Get device process label."""
@@ -274,27 +275,27 @@ class BaseTimelineGenerator:
                 )
 
         # merged_display_list data used for ui page.
-        merged_display_list = [
-            [display_name, tid, time_merged_segment_list[i * 2],
-             (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]) * factor, pid] for i in \
-            range(len(time_merged_segment_list) // 2)
-        ]
+        merged_display_list = []
+        for i in range(len(time_merged_segment_list) // 2):
+            merged_display_list.append([display_name, tid, time_merged_segment_list[i * 2],
+                                        (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[
+                                            i * 2]) * factor, pid])
 
         if get_interval_time:
             time_merged_segment_list = time_merged_segment_list[1:-1]
 
         # merged_res_list data used to compute overlap with other time_list.
-        merged_res_list = [
-            [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid] for i in \
-            range(len(time_merged_segment_list) // 2)
-        ]
+        merged_res_list = []
+        for i in range(len(time_merged_segment_list) // 2):
+            merged_res_list.append(
+                [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid])
 
         # interval_display_list is interval time used for ui page.
-        interval_display_list = [
-            [display_name, tid, time_merged_segment_list[i * 2],
-             (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]) * factor, pid]
-            for i in range(len(time_merged_segment_list) // 2)
-        ]
+        interval_display_list = []
+        for i in range(len(time_merged_segment_list) // 2):
+            interval_display_list.append([display_name, tid, time_merged_segment_list[i * 2],
+                                          (time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[
+                                              i * 2]) * factor, pid])
 
         return merged_res_list, interval_display_list, merged_display_list
 
@@ -327,17 +328,16 @@ class BaseTimelineGenerator:
 
         thread_name_meta_data["tid"] = tid
         thread_name_meta_data.get("args")["name"] = tid_name
-        thread_sort_meta_data = thread_name_meta_data.copy()
-        thread_sort_meta_data['name'] = "thread_sort_index"
-        thread_sort_meta_data["args"] = {"sort_index": sort_index}
+        self._format_meta_data_list.append(thread_name_meta_data)
+
+        thread_name_meta_data['name'] = "thread_sort_index"
+        thread_name_meta_data["args"] = {"sort_index": sort_index}
+        self._format_meta_data_list.append(thread_name_meta_data)
         timeline_dict["tid"] = tid
 
         if tid_name in self._thread_processed_list:
             return
-
         self._thread_processed_list.append(tid_name)
-        self._format_meta_data_list.append(thread_name_meta_data)
-        self._format_meta_data_list.append(thread_sort_meta_data)
 
     def _get_max_scope_name_num(self, timeline_list):
         """Get the max number of scope level from all operator."""
@@ -354,12 +354,11 @@ class BaseTimelineGenerator:
         # start and end index of time_item in timeline_list.
         scope_name_start_duration_dict = {}
         scope_name_time_list = []
-        op_full_name_idx, scope_name_idx, invalid_idx = 0, 0, -1
-        tid = "Scope Name"
+        sort_idx = {"op_full_name_idx": 0, "scope_name_idx": 0, "invalid_idx": -1}
         for idx, time_item in enumerate(timeline_list):
-            scope_name_list = time_item[op_full_name_idx].split('/')[:-1]
+            scope_name_list = time_item[sort_idx.get("op_full_name_idx")].split('/')[:-1]
             # skip Default/InitDataSetQueue operator.
-            if time_item[op_full_name_idx].startswith("Default/InitDataSetQueue"):
+            if time_item[sort_idx.get("op_full_name_idx")].startswith("Default/InitDataSetQueue"):
                 scope_name_list = []
             # process scope name of subgraph(Default/Gradients/recompute_Default) only.
             if scope_name_list and scope_name_list[0] != subgraph:
@@ -370,34 +369,32 @@ class BaseTimelineGenerator:
 
             # update the start and end index of time_item according to current scope_name
             for scope_name in scope_name_list:
-                init_start_end_idx_dict = {'start_item_idx': idx, 'end_item_idx': idx}
                 if scope_name not in scope_name_start_duration_dict:
-                    scope_name_start_duration_dict[scope_name] = init_start_end_idx_dict
-                if scope_name_start_duration_dict.get(scope_name)['start_item_idx'] == invalid_idx:
-                    scope_name_start_duration_dict[scope_name] = init_start_end_idx_dict
+                    scope_name_start_duration_dict[scope_name] = {'start_item_idx': idx, 'end_item_idx': idx}
+                if scope_name_start_duration_dict.get(scope_name)['start_item_idx'] == sort_idx.get("invalid_idx"):
+                    scope_name_start_duration_dict[scope_name] = {'start_item_idx': idx, 'end_item_idx': idx}
                 else:
                     scope_name_start_duration_dict.get(scope_name)['end_item_idx'] = idx
             # if the key(scope name) in scope_name_start_duration_dict does not appear in scope_name_list,
             # it means this key(scope name) is end and it is append to scope_name_time_list.
             for key, val in scope_name_start_duration_dict.items():
-                if val['start_item_idx'] == invalid_idx:
+                if val['start_item_idx'] == sort_idx.get("invalid_idx"):
                     continue
                 if (key not in scope_name_list) \
                         or idx == (len(timeline_list) - 1) \
-                        or time_item[op_full_name_idx] == self._step_end_op_name:
+                        or time_item[sort_idx.get("op_full_name_idx")] == self._step_end_op_name:
                     start_time = timeline_list[val['start_item_idx']][self._start_time_idx]
                     duration = (float(timeline_list[val['end_item_idx']][self._start_time_idx]) - float(start_time)) * \
                                factor_start_time_to_duration + \
                                float(timeline_list[val['end_item_idx']][self._duration_idx])
-                    scope_name_time_item = [key, tid, start_time, duration]
-                    scope_name_time_list.append(scope_name_time_item)
-                    scope_name_start_duration_dict.get(key)['start_item_idx'] = invalid_idx
+                    scope_name_time_list.append([key, "Scope Name", start_time, duration])
+                    scope_name_start_duration_dict.get(key)['start_item_idx'] = sort_idx.get("invalid_idx")
 
         # x[scope_name_idx] is a scope name like "0-Default".
         # if two element in scope_name_time_list have the same start time,
         # the previous element in list will displayed at the higher line in UI page.
         scope_name_time_list.sort(
-            key=lambda x: (float(x[self._start_time_idx]), int(x[scope_name_idx].split('-')[0]))
+            key=lambda x: (float(x[self._start_time_idx]), int(x[sort_idx.get("scope_name_idx")].split('-')[0]))
         )
 
         return scope_name_time_list
@@ -451,25 +448,21 @@ class BaseTimelineGenerator:
         )
         cluster_analyse_file_path = validate_and_normalize_path(cluster_analyse_file_path)
 
-        try:
-            with os.fdopen(os.open(cluster_analyse_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660),
-                           'w') as file_handle:
-                csv_writer = csv.writer(file_handle)
-                if is_pipeline_parallel:
-                    header = ['computation_time', 'communication_alone_time', 'stage_time',
-                              'receive_alone_time', 'collective_communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
-                else:
-                    header = ['computation_time', 'communication_alone_time']
-                    zip_metrices = zip(metrices[0], metrices[1])
-                csv_writer.writerow(header)
-                for row_data in zip_metrices:
-                    row_data = [round(val / unit, time_decimal_digits) for val in row_data]
-                    csv_writer.writerow(row_data)
-            os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
-        except (IOError, OSError) as err:
-            logger.warning(f'Failed to save {cluster_analyse_file_path}. {err}')
-            raise ProfilerIOException
+        with os.fdopen(os.open(cluster_analyse_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660),
+                       'w') as file_handle:
+            csv_writer = csv.writer(file_handle)
+            if is_pipeline_parallel:
+                header = ['computation_time', 'communication_alone_time', 'stage_time',
+                          'receive_alone_time', 'collective_communication_alone_time']
+                zip_metrices = zip(metrices[0], metrices[1], metrices[2], metrices[3], metrices[4])
+            else:
+                header = ['computation_time', 'communication_alone_time']
+                zip_metrices = zip(metrices[0], metrices[1])
+            csv_writer.writerow(header)
+            for row_data in zip_metrices:
+                row_data = [round(val / unit, time_decimal_digits) for val in row_data]
+                csv_writer.writerow(row_data)
+        os.chmod(cluster_analyse_file_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _register_op_name(self, timeline_list):
         """Register op name to op name list."""
