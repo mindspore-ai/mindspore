@@ -7,12 +7,12 @@ mindspore.ops.hardtanh
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}
-            max_val, & \text{ if } input > max_val \\
-            min_val, & \text{ if } input < min_val \\
+            max\_val, & \text{ if } input > max\_val \\
+            min\_val, & \text{ if } input < min\_val \\
             input, & \text{ otherwise. }
         \end{cases}
 
-    线性区域范围 :math:`[min_val, max_val]` 可以使用 `min_val` 和 `max_val` 进行调整。
+    线性区域范围 :math:`[min\_val, max\_val]` 可以使用 `min_val` 和 `max_val` 进行调整。
 
     参数：
         - **input** (Tensor) - 输入Tensor。
