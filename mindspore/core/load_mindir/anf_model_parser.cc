@@ -639,7 +639,7 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
   auto default_value = ObtainCNodeAttrInSingleScalarForm(default_value_proto);
   MS_EXCEPTION_IF_NULL(default_value);
 
-  constexpr size_t kAbstractMapTensorAttrProtoTensorsSize = 2;
+  constexpr int kAbstractMapTensorAttrProtoTensorsSize = 2;
   if (attr_proto.tensors_size() != kAbstractMapTensorAttrProtoTensorsSize) {
     MS_LOG(EXCEPTION) << "AttrProto for AbstractMapTensor should has 2 tensors, but got " << attr_proto.tensors_size();
   }
