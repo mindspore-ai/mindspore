@@ -168,6 +168,58 @@ class _ConvNd(Cell):
         """Initialize _ConvNd."""
         super(_ConvNd, self).__init__()
 
+        # Check and set parameters
+        self._check_set_param(in_channels,
+                              out_channels,
+                              kernel_size,
+                              stride,
+                              pad_mode,
+                              padding,
+                              dilation,
+                              group,
+                              has_bias,
+                              weight_init,
+                              bias_init,
+                              data_format,
+                              transposed)
+
+        # Weight initialization
+        self.conv_impl = conv_impl(self.weight_init, self.shape, data_format=data_format)
+
+        # Bias initialization
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
+            if isinstance(bias_init, Tensor):
+                if self.dtype is None:
+                    self.dtype = bias_init.dtype
+                elif self.dtype != bias_init.dtype:
+                    raise TypeError("Data type of the weight_init tensor and the bias init tensor must be equal, "
+                                    f"but got weight_init.dtype={self.dtype} and bias_init.dtype={bias_init.dtype}")
+                bias_init_x, bias_init_y = get_x_and_y(bias_init)
+            else:
+                bias_init_x = bias_init_y = bias_init
+            self.bias_x = Parameter(initializer(bias_init_x, [out_channels]), name='bias_x')
+            self.bias_y = Parameter(initializer(bias_init_y, [out_channels]), name='bias_y')
+        else:
+            if self.bias_init != 'zeros':
+                logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
+            self.bias_x = None
+            self.bias_y = None
+
+    def _check_set_param(self,
+                         in_channels: int,
+                         out_channels: int,
+                         kernel_size: Tuple[int, ...],
+                         stride: Tuple[int, ...],
+                         pad_mode: str,
+                         padding: Tuple[int, ...],
+                         dilation: Tuple[int, ...],
+                         group: int,
+                         has_bias: bool,
+                         weight_init: Union[Tensor, str, Initializer, numbers.Number],
+                         bias_init: Union[Tensor, str, Initializer, numbers.Number],
+                         data_format: str = 'NCHW',
+                         transposed: bool = False):
+        """Checn and set parameters for Conv"""
         self.in_channels = Validator.check_positive_int(in_channels, 'in_channels', self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, 'out_channels', self.cls_name)
         self.kernel_size = kernel_size
@@ -207,33 +259,11 @@ class _ConvNd(Cell):
             raise ValueError(f"Attr 'out_channels' {self.cls_name} Op must be divisible by "
                              f"attr 'group' of {self.cls_name} Op.")
         if transposed:
-            shape = [in_channels, out_channels // group, *kernel_size]
+            self.shape = [in_channels, out_channels // group, *kernel_size]
         else:
-            shape = [out_channels, *kernel_size, in_channels // group] if self.data_format == "NHWC" else \
+            self.shape = [out_channels, *kernel_size, in_channels // group] if self.data_format == "NHWC" else \
                 [out_channels, in_channels // group, *kernel_size]
         self.dtype = self.weight_init.dtype if isinstance(self.weight_init, Tensor) else None
-
-        # Weight initialization
-        self.conv_impl = conv_impl(self.weight_init, shape, data_format=data_format)
-
-        # Bias initialization
-        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
-            if isinstance(bias_init, Tensor):
-                if self.dtype is None:
-                    self.dtype = bias_init.dtype
-                elif self.dtype != bias_init.dtype:
-                    raise TypeError("Data type of the weight_init tensor and the bias init tensor must be equal, "
-                                    f"but got weight_init.dtype={self.dtype} and bias_init.dtype={bias_init.dtype}")
-                bias_init_x, bias_init_y = get_x_and_y(bias_init)
-            else:
-                bias_init_x = bias_init_y = bias_init
-            self.bias_x = Parameter(initializer(bias_init_x, [out_channels]), name='bias_x')
-            self.bias_y = Parameter(initializer(bias_init_y, [out_channels]), name='bias_y')
-        else:
-            if self.bias_init != 'zeros':
-                logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
-            self.bias_x = None
-            self.bias_y = None
 
     def construct(self, u: Tensor) -> Tensor:
         if self.dtype is not None and self.dtype != u.dtype:

@@ -183,8 +183,6 @@ class _BatchNorm(nn.Cell):
 
         if self.training or not self.use_batch_statistics:
             ndim = u.ndim
-            hc_axis = hc_axis
-            feature_axis = feature_axis
             sh = np.arange(ndim)
             sh = sh[sh != hc_axis]
             sh = sh[sh != feature_axis]
@@ -601,7 +599,7 @@ class BatchNorm3d(nn.Cell):
         out = P.reshape(out, u_shape)
         return out
 
-    def _check_3d_shape(self, input_shape, dtype: Any) -> None:
+    def _check_3d_shape(self, input_shape, dtype: Any):
         """check 3d shapes"""
         dim = len(input_shape)
         if dtype in [mindspore.float16, mindspore.float32]:
