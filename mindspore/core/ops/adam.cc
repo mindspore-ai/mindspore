@@ -83,11 +83,12 @@ class AdamInfer : public abstract::OpInferBase {
       batch_rank = GetValue<int64_t>(value_ptr);
     }
     if (batch_rank != 0) {
-      (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape size", beta1_power_shape.size(), kEqual, batch_rank,
+      (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape size", SizeToLong(beta1_power_shape.size()), kEqual,
+                                               batch_rank, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("beta2_power_shape size", SizeToLong(beta2_power_shape.size()), kEqual,
+                                               batch_rank, prim_name);
+      (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, batch_rank,
                                                prim_name);
-      (void)CheckAndConvertUtils::CheckInteger("beta2_power_shape size", beta2_power_shape.size(), kEqual, batch_rank,
-                                               prim_name);
-      (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, prim_name);
     } else {
       if (beta1_power_shape.size() == 1 || beta1_power_shape.size() == 0) {
         (void)CheckAndConvertUtils::CheckInteger(
