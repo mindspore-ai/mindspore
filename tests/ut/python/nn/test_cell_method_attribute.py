@@ -91,3 +91,23 @@ def test_construct_exist():
     net2 = ConstructNotExist2()
     with pytest.raises(AttributeError):
         net2()
+
+
+def test_cell_private_attr():
+    """
+    Feature: Support use Cell private attribute.
+    Description: Test private attribute startswith "__".
+    Expectation: No exception.
+    """
+    class AttrNet(nn.Cell):
+        def __init__(self):
+            super(AttrNet, self).__init__()
+            self.__x = 1
+
+        def construct(self):
+            return self.__x, ms.Tensor(self.__x)
+
+    net = AttrNet()
+    out = net()
+    assert isinstance(out[0], int) and out[0] == 1
+    assert isinstance(out[1], ms.Tensor) and out[1] == 1

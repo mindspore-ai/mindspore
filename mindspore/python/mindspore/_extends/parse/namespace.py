@@ -123,6 +123,13 @@ class ClassMemberNamespace(Namespace):
             cls = d.__class__
             if hasattr(cls, '__ms_class__'):
                 raise NotImplementedError(f"'{cls.__name__ }' object has no attribute or method: '{name}'.")
+            # Class private attribute.
+            if name.startswith("__"):
+                private_member = "_" + cls.__name__ + name
+                if hasattr(d, private_member):
+                    logger.warning(f"The private attribute or method '{name}' is used in '{cls.__name__}'. " + \
+                                   f"In graph mode, '{name}' will be adjusted to '{private_member}' for parsing.")
+                    return getattr(d, private_member)
             logger.info(f"'{cls.__name__ }' object has no attribute or method: '{name}', so will return None.")
             raise AttributeError(name)
 
@@ -147,4 +154,12 @@ class ClassAttrNamespace(Namespace):
         except ValueError:
             raise UnboundLocalError(name)
         except KeyError:
-            raise AttributeError(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}'.")
+            # Class private attribute.
+            cls = d.__class__
+            if name.startswith("__"):
+                private_attr = "_" + cls.__name__ + name
+                if hasattr(d, private_attr):
+                    logger.warning(f"The private attribute or method '{name}' is used in '{cls.__name__}'. " + \
+                                   f"In graph mode, '{name}' will be adjusted to '{private_attr}' for parsing.")
+                    return getattr(d, private_attr)
+            raise AttributeError(f"'{cls.__name__ }' object has no attribute or method: '{name}'.")
