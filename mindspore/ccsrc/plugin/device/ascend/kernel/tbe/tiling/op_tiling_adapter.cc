@@ -136,23 +136,37 @@ ShapeVector OpTilingCalculateAdapter::UpdateShape(const ShapeVector &shape, cons
   return shape;
 }
 
-void OpTilingCalculateAdapter::ConstructNodeInputAnchor(const ::ge::NodePtr &node,
-                                                        ::ge::ComputeGraphPtr *ge_graph) const {
+void OpTilingCalculateAdapter::ConstructNodeInputAnchor(
+  const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+  const std::map<std::size_t, ::ge::NodePtr> &constant_ops) const {
   MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(node);
-  for (int i = 0; i < SizeToInt(node->GetOpDesc()->GetAllInputsSize()); ++i) {
-    auto node_type = node->GetType();
-    auto op_name_tmp = node_type + "_input_" + std::to_string(i);
-    auto op_desc_tmp = std::make_shared<::ge::OpDesc>(op_name_tmp, op_name_tmp);
-    MS_EXCEPTION_IF_NULL(op_desc_tmp);
-    ::ge::GeTensorDesc output_tensor;
-    (void)op_desc_tmp->AddOutputDesc("y", output_tensor);
-    auto tmp_node = (*ge_graph)->AddNode(op_desc_tmp);
-    if (tmp_node->Init() != ::ge::GRAPH_SUCCESS) {
+  auto input_data_anchors = node->GetAllInDataAnchors();
+  for (size_t i = 0; i < input_data_anchors.size(); ++i) {
+    ::ge::NodePtr input_node = nullptr;
+    auto iter = constant_ops.find(i);
+    if (iter != constant_ops.end()) {
+      input_node = iter->second;
+    } else {
+      auto node_type = node->GetType();
+      auto op_name_tmp = node_type + "_input_" + std::to_string(i);
+      auto op_desc_tmp = std::make_shared<::ge::OpDesc>(op_name_tmp, op_name_tmp);
+      MS_EXCEPTION_IF_NULL(op_desc_tmp);
+      ::ge::GeTensorDesc output_tensor;
+      op_desc_tmp->AddOutputDesc("y", output_tensor);
+      input_node = (*ge_graph)->AddNode(op_desc_tmp);
+    }
+    if (input_node->Init() != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "Construct tmp node failed.";
     }
-    if (node->AddLinkFromForParse(tmp_node) != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Construct node " << node_type << "'s input failed, input idx:" << i;
+    auto output_data_anchor = input_node->GetOutDataAnchor(0);
+    auto input_data_anchor = input_data_anchors.at(i);
+    if (!output_data_anchor || !input_data_anchor) {
+      MS_LOG(EXCEPTION) << "Output_data_anchor or input_data_anchor is null, idx: " << i
+                        << ", node name: " << node->GetType();
+    }
+    if (input_data_anchor->LinkFrom(output_data_anchor) != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Link from output anchor failed, input idx:" << i << ", node name: " << node->GetType();
     }
   }
 }
@@ -379,12 +393,10 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
   return constant_op;
 }
 
-std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::ConvertDepends(
-  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
+std::map<std::size_t, ::ge::NodePtr> OpTilingCalculateAdapter::ConvertDepends(
+  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const ::ge::OpDescPtr &op_desc,
   ::ge::ComputeGraphPtr *ge_graph) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(op_desc);
-  MS_EXCEPTION_IF_NULL(*op_desc);
   auto depends_list_me = abstract::GetValueDependArgIndices(node);
   if (depends_list_me.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
     MS_LOG(DEBUG) << "The node " << op_name_ << " has no infer depend.";
@@ -397,7 +409,7 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
 
   auto input_names_attr = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(node, "input_names");
   std::vector<std::string> op_infer_depends;
-  std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops;
+  std::map<std::size_t, ::ge::NodePtr> constant_ops;
   for (auto index : depends_list_me) {
     if (LongToSize(index) > input_names_attr.size()) {
       MS_LOG(EXCEPTION) << "Input index " << index << " should not be greater than input_names' size "
@@ -416,10 +428,10 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
     }
     ::ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
     auto original_index = AnfAlgo::GetInputKernelIdxByGraphIdx(node, index);
-    constant_ops.emplace_back(std::tuple<std::size_t, ::ge::NodePtr>(original_index, ge_constant_op));
+    constant_ops[original_index] = ge_constant_op;
     op_infer_depends.emplace_back(depend_name);
   }
-  (void)(*op_desc)->SetOpInferDepends(op_infer_depends);
+  (void)op_desc->SetOpInferDepends(op_infer_depends);
   return constant_ops;
 }
 
@@ -494,12 +506,9 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   ConvertAttrs(node, &op_desc);
   ConvertCompileInfo(node, &op_desc);
   ConvertAtomicCompileInfo(node, &op_desc);
-  std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops =
-    ConvertDepends(node, depend_tensor_map, &op_desc, ge_graph);
   MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   auto ge_node = (*ge_graph)->AddNode(op_desc);
-  AddEdge(ge_node, constant_ops);
   return ge_node;
 }
 
@@ -515,7 +524,8 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
-  ConstructNodeInputAnchor(ge_node, ge_graph);
+  auto constant_ops = ConvertDepends(node, depend_tensor_map, ge_node->GetOpDesc(), ge_graph);
+  ConstructNodeInputAnchor(ge_node, ge_graph, constant_ops);
   return ge_node;
 }
 
