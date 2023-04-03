@@ -109,7 +109,8 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
   }
 
   if (linear_quant_) {
-    auto ret = LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, compression);
+    bool is_compression = compression && !is_mixed_bit_ && enable_encode_;
+    auto ret = LinearQuant(func_graph, cnode, per_layer_types, symmetric_types, weight_indices, is_compression);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute linear weight quantize error.";
       return RET_ERROR;
@@ -121,6 +122,25 @@ int WeightQuantizer::WeightQuantPerCNode(const FuncGraphPtr &func_graph, const C
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " execute k-means weight quantize error.";
       return RET_ERROR;
     }
+  }
+  return RET_OK;
+}
+
+int WeightQuantizer::PreLinearQuant(const CNodePtr &cnode, int idx, const AnfNodePtr &input,
+                                    const ParameterPtr &parameter, tensor::TensorPtr tensor_info) {
+  if (parameter == nullptr || tensor_info == nullptr || tensor_info->compression_type() != mindspore::kNoCompression) {
+    MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+    return RET_NO_CHANGE;
+  }
+  tensor_info = ConvertParameterFp16TensorToFp32(parameter);
+  if (tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
+    MS_LOG(INFO) << "This op " << input->fullname_with_scope() << " is null or dtype is not fp32.";
+    return RET_NO_CHANGE;
+  }
+  auto preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+  if (quant_strategy_ != nullptr && !quant_strategy_->CanTensorQuantized(cnode, input, preferred_dim)) {
+    MS_LOG(INFO) << input->fullname_with_scope() << " will not quantify";
+    return RET_NO_CHANGE;
   }
   return RET_OK;
 }
@@ -153,20 +173,12 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     ParameterPtr parameter;
     tensor::TensorPtr tensor_info;
     GetParameterAndTensor(input, &parameter, &tensor_info);
-    if (parameter == nullptr || tensor_info == nullptr ||
-        tensor_info->compression_type() != mindspore::kNoCompression) {
-      MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " dont need quant weight";
+    auto status = PreLinearQuant(cnode, idx, input, parameter, tensor_info);
+    if (status == RET_NO_CHANGE) {
       continue;
-    }
-    tensor_info = ConvertParameterFp16TensorToFp32(parameter);
-    if (tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
-      MS_LOG(INFO) << "This op " << input->fullname_with_scope() << " is null or dtype is not fp32.";
-      continue;
-    }
-    int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
-    if (quant_strategy_ != nullptr && !quant_strategy_->CanTensorQuantized(cnode, input, preferred_dim)) {
-      MS_LOG(INFO) << input->fullname_with_scope() << " will not quantify";
-      continue;
+    } else if (status != RET_OK) {
+      MS_LOG(ERROR) << input->fullname_with_scope() << " pre linear quant failed : " << status;
+      return status;
     }
     // support for matmul shared weight
     auto node_map = manager->node_users();
@@ -175,7 +187,8 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
       tmp_weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
-    auto status = RET_ERROR;
+    // linear quant
+    auto preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     if (is_mixed_bit_) {
       status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
     } else {
@@ -189,15 +202,14 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    bool is_compression = (compression && !is_mixed_bit_ && enable_encode_);
-    if (is_compression) {
+    // Post linear quant
+    if (compression) {
       status = DoCompression(cnode, parameter, idx);
       if (status != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " compression failed.";
         return status;
       }
     }
-    weight_quantized_tensors_.insert(tensor_info);
     if (dequant_strategy_ == ON_THE_FLY) {
       status = InsertDequantNode(func_graph, cnode, parameter, idx, tensor_info);
       if (status == RET_NO_CHANGE) {
@@ -207,6 +219,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
         return status;
       }
     }
+    weight_quantized_tensors_.insert(tensor_info);
   }
   return RET_OK;
 }
