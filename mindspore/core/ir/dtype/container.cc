@@ -153,7 +153,7 @@ TypePtr List::dynamic_element_type() const {
   return dynamic_element_type_;
 }
 
-void List::set_dynamic_element_type(TypePtr dynamic_element_type) {
+void List::set_dynamic_element_type(const TypePtr &dynamic_element_type) {
   if (!dynamic_len_) {
     MS_LOG(EXCEPTION) << "Constant list " << ToString() << " can not set the dynamic element type.";
   }
@@ -240,7 +240,7 @@ TypePtr Tuple::dynamic_element_type() const {
   return dynamic_element_type_;
 }
 
-void Tuple::set_dynamic_element_type(TypePtr dynamic_element_type) {
+void Tuple::set_dynamic_element_type(const TypePtr &dynamic_element_type) {
   if (!dynamic_len_) {
     MS_LOG(EXCEPTION) << "Constant tuple " << ToString() << " can not set the dynamic element type.";
   }
