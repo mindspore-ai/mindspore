@@ -181,9 +181,9 @@ def train(batch_size, lr, momentum, epochs, dataset_sink_mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_dummy_train_no_sink():
+def test_dummy_train_without_sink():
     """
-    Feature: Training when the inputs is dynamic shape on GE backend
+    Feature: Training when the inputs is dynamic shape on GE backend without dataset sinked
     Description: Train a small conv network on a dummy dataset and check the loss
     Expectation: the loss is convergent
     """

@@ -231,6 +231,27 @@ bool HasSubgraph(const std::shared_ptr<AnfGraph> &func_graph) {
   }
   return false;
 }
+
+#ifdef ENABLE_D
+std::string GetShapesRange(const ShapeArray &shapes) {
+  std::stringstream buffer;
+  for (auto shape_it = shapes.begin(); shape_it != shapes.end(); ++shape_it) {
+    if (shape_it != shapes.begin()) {
+      buffer << ",";
+    }
+    buffer << "[";
+    const auto &dims = *shape_it;
+    for (auto dim_it = dims.begin(); dim_it != dims.end(); ++dim_it) {
+      if (dim_it != dims.begin()) {
+        buffer << ",";
+      }
+      buffer << *dim_it;
+    }
+    buffer << "]";
+  }
+  return buffer.str();
+}
+#endif
 }  // namespace
 
 // ---------------implement of DfGraphConvertor-------------
@@ -732,14 +753,36 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
       get_next_from_queue_ = get_next_from_queue;
       get_next_from_queue_->SetInput("x", *queue_data_);
     } else {
-      // GetNext
-      auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
-      (void)iter_getnext_op->set_attr_output_types(getnext_types);
-      (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
-      (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
-
-      // save iter_getnext_op for later use
-      dataset_iter_getnext_ = iter_getnext_op;
+      if (dynamic_shape_inputs_) {
+        // DynamicGetNextV2
+        MS_LOG(INFO) << "Make DynamicGetNextV2 op which shapes is " << input_shapes_;
+        auto iter_getnext_op = make_shared<::ge::op::DynamicGetNextV2>("dynamic_get_next_tmp");
+        (void)iter_getnext_op->set_attr_output_types(getnext_types);
+        (void)iter_getnext_op->set_attr_output_shapes(input_shapes_);
+        (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
+        (void)iter_getnext_op->set_attr__dynamic_graph_execute_mode("dynamic_execute");
+        (void)iter_getnext_op->set_attr__getnext_inputs_shape_range(GetShapesRange(input_shapes_));
+        const auto output_num = input_shapes_.size();
+        if (output_num != getnext_types.size()) {
+          MS_LOG(EXCEPTION) << "Number of inputs of GetNext is different from dataset, " << output_num << " vs "
+                            << getnext_types.size();
+        }
+        (void)iter_getnext_op->create_dynamic_output_y(static_cast<unsigned int>(output_num));
+        for (uint32_t i = 0; i < output_num; i++) {
+          ::ge::TensorDesc desc(GeShape(input_shapes_[i]), ::ge::FORMAT_NCHW, getnext_types[i]);
+          (void)iter_getnext_op->update_dynamic_output_desc_y(i, desc);
+        }
+        // save iter_getnext_op for later use
+        dataset_iter_getnext_ = iter_getnext_op;
+      } else {
+        // GetNext
+        auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
+        (void)iter_getnext_op->set_attr_output_types(getnext_types);
+        (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
+        (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
+        // save iter_getnext_op for later use
+        dataset_iter_getnext_ = iter_getnext_op;
+      }
     }
   }
 #endif
@@ -771,7 +814,10 @@ void DfGraphConvertor::SetupDatasetIterGetNextNode() {
     } else {
       MS_EXCEPTION_IF_NULL(dataset_iter_getnext_);
       // set iterator_getnext op's output num
-      shared_ptr<::ge::op::GetNext> iter_getnext = std::static_pointer_cast<::ge::op::GetNext>(dataset_iter_getnext_);
+      shared_ptr<::ge::op::GetNext> iter_getnext = std::dynamic_pointer_cast<::ge::op::GetNext>(dataset_iter_getnext_);
+      if (iter_getnext == nullptr) {
+        return;
+      }
       (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
       for (uint32_t i = 0; i < output_num; i++) {
         ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
