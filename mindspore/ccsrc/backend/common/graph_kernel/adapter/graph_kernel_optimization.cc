@@ -257,6 +257,12 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
 
+  auto parent_graph = kernel_graph->parent_graph().lock();
+  FuncGraphManagerPtr parent_manager = nullptr;
+  if (parent_graph != nullptr && parent_graph->manager() != nullptr) {
+    parent_manager = parent_graph->manager();
+  }
+
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(PreProcess());
   optimizer->AddPassManager(Cluster());
@@ -270,6 +276,10 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   auto mng = GkUtils::GetFuncGraphManager(kernel_graph);
   GkUtils::UpdateFuncGraphManager(mng, kernel_graph);
   (void)optimizer->Optimize(kernel_graph);
+
+  if (parent_graph != nullptr) {
+    parent_graph->set_manager(parent_manager);
+  }
 }
 
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph) {
