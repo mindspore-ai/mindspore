@@ -31,7 +31,6 @@ namespace mindspore::infer {
 class AbstractBaseModel : public Model {
  public:
   virtual bool ModelVerify() const = 0;
-  // virtual SchemaTensorWrapper *GetSchemaTensor(const size_t &tensor_index) const = 0;
   virtual int ConvertTensors(std::vector<mindspore::lite::Tensor *> *lite_tensors) = 0;
   virtual std::string GetModelPath() const = 0;
   virtual mindspore::kernel::KernelExec *FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,

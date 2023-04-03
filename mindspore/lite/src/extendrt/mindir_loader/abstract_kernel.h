@@ -27,8 +27,6 @@ using mindspore::kernel::Kernel;
 namespace mindspore::infer {
 class Abstractkernel : public Kernel {
  public:
-  //   virtual OpParameter *op_parameter() const = 0;
-
   virtual int Train() = 0;
 
   virtual bool IsTrain() const = 0;
