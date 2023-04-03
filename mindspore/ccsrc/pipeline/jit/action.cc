@@ -203,6 +203,9 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
 void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &used_forward_nodes = func_graph->used_forward_nodes();
+  if (used_forward_nodes.empty()) {
+    return;
+  }
 
   // Get original output node and abstract
   auto original_output_node = func_graph->output();
@@ -909,11 +912,9 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto ms_func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
-  // Not exist control flow
-  if (!ExistControlFlow(ms_func_graph)) {
-    graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
-    auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
-    MS_EXCEPTION_IF_NULL(clone_graph);
+  graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
+  auto clone_graph = pynative_exec->grad_executor()->ms_function()->ProcessMsFunctionFuncGraph(ms_func_graph);
+  if (clone_graph != nullptr) {
     clone_graph->set_flag(kFlagGraphGradByExpander, true);
     graph_executor->SetGradGraph(clone_graph, phase);
     return true;
@@ -924,9 +925,10 @@ bool EliminateForwardCNode(const ResourcePtr &resource) {
   auto grad_exec = pynative_exec->grad_executor();
   bool eliminate_forward = grad_exec->eliminate_forward();
   grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
-  auto grad_graph = ad::Grad(ms_func_graph, opt::Optimizer::MakeEmptyOptimizer(resource));
+  // After Grad, graph may be changed; If ms func graph execute secondly, the graph is not same to first execute.
+  // So, do clone here.
+  auto grad_graph = ad::Grad(BasicClone(ms_func_graph), opt::Optimizer::MakeEmptyOptimizer(resource));
   MS_EXCEPTION_IF_NULL(grad_graph);
-  graph_executor->SetPrimalFuncGraph(BasicClone(ms_func_graph), phase);
   graph_executor->SetGradGraph(grad_graph, phase);
   ModifyOutputNode(ms_func_graph);
 

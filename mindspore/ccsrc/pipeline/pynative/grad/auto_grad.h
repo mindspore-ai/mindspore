@@ -184,6 +184,8 @@ class AutoGradCellImpl {
   void GradGraphByExpander(const GradParamPtr &grad_param);
   ValuePtrList GetInputArgs(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void CreateParameterAdjoint(const GradParamPtr &grad_param) const;
+  void ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, const PrimitivePtr &prim, const CNodePtr &cnode,
+                              const ValuePtrList &op_args, const ValuePtr &out);
 
   // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
