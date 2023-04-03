@@ -43,7 +43,6 @@ class CdistCpuKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
-  bool DoLaunch(int task_id);
 
  private:
   bool LaunchKernel(int64_t start, int64_t end);
@@ -58,7 +57,6 @@ class CdistCpuKernelMod : public NativeCpuKernelMod {
   int64_t m_;
   int64_t r1_;
   float p_ = 2;
-  size_t thread_num_;
   void *in_data0_;
   void *in_data1_;
   void *out_data_;
