@@ -900,7 +900,7 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
       for (size_t i = 0; i < types.size(); ++i) {
         ShapeVector shape = shapes[0];
         auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(types[i]), shape);
-        abstract_list.emplace_back(abstract);
+        (void)abstract_list.emplace_back(abstract);
       }
       auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
       node->set_abstract(abstract_tuple);
