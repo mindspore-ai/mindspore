@@ -129,7 +129,7 @@ class TrainSession : virtual public lite::LiteSession {
   virtual void CompileEvalOutputs();
   virtual int InitCallBack();
   std::shared_ptr<Model> model_ = nullptr;
-  // TrainCfg train_cfg_;
+
   std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::lite::Tensor *> orig_output_tensor_map_;
   std::vector<std::string> orig_output_tensor_names_;
