@@ -35,7 +35,7 @@
 namespace mindspore {
 class Cloner;
 using ClonerPtr = std::shared_ptr<Cloner>;
-using NodeToNodeMap = mindspore::HashMap<AnfNodePtr, AnfNodePtr, PointerHash<AnfNodePtr>>;
+using NodeToNodeMap = mindspore::HashMap<AnfNodePtr, AnfNodePtr>;
 
 enum CloneType { kBasic = 0, kInline = 1, kLifting = 2, kDropping = 3 };
 
