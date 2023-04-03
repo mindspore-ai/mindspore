@@ -392,6 +392,7 @@ class ListToTensor(PrimitiveWithCheck):
         return self.infer_value(x, dtype)
 
     def infer_value(self, x, dtype):
+        """Infer_value ListToTensor"""
         if x is not None and None not in x and isinstance(x, list):
             return Tensor(x, dtype)
         return None
@@ -427,6 +428,7 @@ class TensorToTuple(PrimitiveWithCheck):
         return self.infer_value(x)
 
     def infer_value(self, x):
+        """Infer_value TensorToTuple"""
         value = None
         if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
             value = tuple(x.asnumpy().tolist())
@@ -463,6 +465,7 @@ class TensorToList(PrimitiveWithCheck):
         return self.infer_value(x)
 
     def infer_value(self, x):
+        """infer_value TensorToList"""
         value = None
         if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
             value = x.asnumpy().tolist()
@@ -499,6 +502,7 @@ class TensorToScalar(PrimitiveWithCheck):
         return self.infer_value(x)
 
     def infer_value(self, x):
+        """infer_value TensorToScalar"""
         value = None
         if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
             value = x.asnumpy().tolist()
