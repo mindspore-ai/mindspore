@@ -35,9 +35,14 @@ class ABNInfer : public abstract::OpInferBase {
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    if (!(IsDynamic(x_shape) || IsDynamic(scale_shape)) && scale_shape[kInputIndex0] != x_shape[kInputIndex1]) {
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'scale_dim0' and input channel should be equal, but got "
-                               << scale_shape[kInputIndex0] << " and " << x_shape[kInputIndex1] << ".";
+    if (!(IsDynamic(x_shape) || IsDynamic(scale_shape))) {
+      int64_t scale_channel = scale_shape.size() == 1 ? scale_shape[kInputIndex0] : scale_shape[kInputIndex1];
+      int64_t x_channel = x_shape[kInputIndex1];
+      if (x_channel != scale_channel) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                 << "', 'scale_dim0' and input channel should be equal, but got " << scale_channel
+                                 << " and " << x_channel << ".";
+      }
     }
     return x_shape_ptr;
   }
