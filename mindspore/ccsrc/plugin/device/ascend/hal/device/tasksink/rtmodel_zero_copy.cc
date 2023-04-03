@@ -59,16 +59,16 @@ bool CheckTaskValid(const CNodePtr &node, const std::vector<void *> &args_datas)
   // Check input/output/workspace
   auto input_addrs = TaskGenerator::GetTaskInput(node);
   auto output_addrs = TaskGenerator::GetTaskOutput(node);
-  auto workspace_addrs = TaskGenerator::GetTaskWorkspace(node);
 
   std::vector<AddressPtr> node_addresses;
-  (void)std::move(input_addrs.begin(), input_addrs.end(), std::back_inserter(node_addresses));
-  (void)std::move(output_addrs.begin(), output_addrs.end(), std::back_inserter(node_addresses));
-  (void)std::move(workspace_addrs.begin(), workspace_addrs.end(), std::back_inserter(node_addresses));
+  // Only need to check input and output.
+  // The overflow addr was additionally added to workspace.
+  std::move(input_addrs.begin(), input_addrs.end(), std::back_inserter(node_addresses));
+  std::move(output_addrs.begin(), output_addrs.end(), std::back_inserter(node_addresses));
 
-  if (node_addresses.size() != args_datas.size()) {
-    MS_LOG(WARNING) << "Check failed, Node " << node->UniqueName() << " total addr size " << node_addresses.size()
-                    << " is not equal to " << args_datas.size();
+  if (node_addresses.size() > args_datas.size()) {
+    MS_LOG(ERROR) << "Node " << node->UniqueName() << " total addr size " << node_addresses.size()
+                  << " is not equal to " << args_datas.size();
     return false;
   }
 
