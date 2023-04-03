@@ -934,14 +934,14 @@ class AfterOptARewriter : public BaseRewriter {
     return none_execute_node;
   }
 
-  AnfNodePtr ConvertNoneInSequence(const AnfNodePtr &input, const FuncGraphPtr &func) {
+  AnfNodePtr ConvertNoneAndDictInSequence(const AnfNodePtr &input, const FuncGraphPtr &func) {
     MS_EXCEPTION_IF_NULL(func);
     auto sequence_value = GetValuePtr<ValueSequence>(input);
     auto abs_seq = input->abstract()->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
     std::vector<AnfNodePtr> new_inputs;
     MS_EXCEPTION_IF_NULL(input->abstract());
-    bool has_none = false;
+    bool changed = false;
     if (input->abstract()->isa<abstract::AbstractTuple>()) {
       new_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     } else if (input->abstract()->isa<abstract::AbstractList>()) {
@@ -950,14 +950,20 @@ class AfterOptARewriter : public BaseRewriter {
     for (size_t pos = 0; pos < sequence_value->value().size(); ++pos) {
       ValuePtr element_value = sequence_value->value()[pos];
       if (element_value->isa<None>()) {
-        has_none = true;
+        changed = true;
         auto inner_none_py_execute = NoneConvertPyExecute(func);
         new_inputs.push_back(inner_none_py_execute);
+      } else if (element_value->isa<ValueDictionary>()) {
+        changed = true;
+        auto value_dict_node = NewValueNode(element_value);
+        value_dict_node->set_debug_info(input->debug_info());
+        auto dict_py_execute = RebuildValueDict(value_dict_node, element_value->cast<ValueDictionaryPtr>());
+        new_inputs.push_back(dict_py_execute);
       } else if (element_value->isa<ValueSequence>()) {
         auto new_ele_node = NewValueNode(element_value);
         MS_EXCEPTION_IF_NULL(elements[pos]);
         new_ele_node->set_abstract(elements[pos]);
-        auto seq_node = ConvertNoneInSequence(new_ele_node, func);
+        auto seq_node = ConvertNoneAndDictInSequence(new_ele_node, func);
         if (seq_node != nullptr) {
           new_inputs.push_back(seq_node);
         } else {
@@ -967,7 +973,7 @@ class AfterOptARewriter : public BaseRewriter {
         new_inputs.push_back(NewValueNode(element_value));
       }
     }
-    if (has_none) {
+    if (changed) {
       auto new_seq = func->NewCNode(new_inputs);
       (void)manager_->Replace(input, new_seq);
       return new_seq;
@@ -975,7 +981,7 @@ class AfterOptARewriter : public BaseRewriter {
     return nullptr;
   }
 
-  void CheckCNodeInputsHasNone(const CNodePtr &cnode) {
+  void CheckCNodeInputsHasNoneOrDict(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
     const auto support_fallback_runtime = (common::GetEnv("MS_DEV_ENABLE_FALLBACK_RUNTIME") != "0");
     if (!support_fallback_runtime) {
@@ -989,7 +995,7 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(cur_func);
     for (auto &input : inputs) {
       if (IsValueNode<ValueSequence>(input)) {
-        auto seq_node = ConvertNoneInSequence(input, cur_func);
+        auto seq_node = ConvertNoneAndDictInSequence(input, cur_func);
         if (seq_node != nullptr) {
           (void)manager_->Replace(input, seq_node);
           set_need_renormalized(true);
@@ -1044,7 +1050,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {
     // Process None in CNode with JIT Fallback: convert ValueNode<None> to PyExecute("None", (), ()).
-    CheckCNodeInputsHasNone(cnode);
+    CheckCNodeInputsHasNoneOrDict(cnode);
     CheckCNodeInputsHasClassType(cnode);
     // Find cnode converter by primitive.
     auto iter = converters_.find(prim);

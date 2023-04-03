@@ -183,7 +183,9 @@ def test_combine_calculation():
     assert isinstance(out[2], float) and abs(out[0] - 6.5) < 1e-6
 
 
-@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scalar_in_list():
     """
     Feature: Return scalar.
@@ -199,6 +201,9 @@ def test_scalar_in_list():
     assert out == [1, 2, 3, 4]
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scalar_in_dict():
     """
     Feature: Return scalar.
@@ -215,6 +220,9 @@ def test_scalar_in_dict():
     assert isinstance(out.get('y'), int)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scalar_in_dict_with_int_value():
     """
     Feature: Return scalar.
@@ -230,6 +238,9 @@ def test_scalar_in_dict_with_int_value():
     assert out == {'x': 1, 'y': 2}
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scalar_in_dict_with_tuple_value():
     """
     Feature: Return scalar.
@@ -245,6 +256,9 @@ def test_scalar_in_dict_with_tuple_value():
     assert out == {'x': (1, 2), 'y': (3, 4)}
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scalar_in_dict_with_empty_tuple():
     """
     Feature: Return scalar.
