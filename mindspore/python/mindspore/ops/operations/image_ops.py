@@ -707,6 +707,9 @@ class ResizeBilinearV2(Primitive):
 
     The resizing only affects the lower two dimensions which represent the height and width.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         align_corners (bool, optional): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
                        which exactly aligns the 4 corners of images and resized images. If false,

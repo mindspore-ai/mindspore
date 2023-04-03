@@ -15,6 +15,9 @@
 
     式中d代表高度与宽度上两个维度， :math:`dilation` 、 :math:`padding` 和 :math:`stride` 决定了滑窗如何滑动与检索元素。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小，由两个正整数组成，分别代表滑窗的高度与宽度。如果数据类型为int，代表不同方向上的填充大小相等。取值必须由用户指定。
         - **dilation** (Union[int, tuple[int], list[int]], 可选) - 滑窗之间的间距，由两个正整数组成，分别代表横向与纵向上滑窗移动时与上一个滑窗间的距离。如果数据类型为int，代表不同方向上的填充大小相等。默认值：1。

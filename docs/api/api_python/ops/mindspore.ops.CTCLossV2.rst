@@ -7,6 +7,9 @@ mindspore.ops.CTCLossV2
 
     CTC算法是在 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 中提出的。 
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **blank** (int，可选) - 空白标签。默认值：0。
         - **reduction** (str，可选) - 对输出应用特定的缩减方法。目前仅支持“none”，不区分大小写。默认值：“none”。

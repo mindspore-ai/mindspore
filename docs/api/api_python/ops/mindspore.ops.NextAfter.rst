@@ -13,7 +13,8 @@ mindspore.ops.NextAfter
     .. math::
         out_{i} =  nextafter({x1_{i}, x2_{i}})
 
-    更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
 
     输入：
         - **x1** (Tensor) - 支持数据类型为float32和float64。其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。

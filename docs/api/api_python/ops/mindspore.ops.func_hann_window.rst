@@ -1,7 +1,7 @@
 mindspore.ops.hann_window
 ==========================
 
-.. py:function:: mindspore.ops.hann_window(window_length, periodic=True)
+.. py:function:: mindspore.ops.hann_window(window_length, periodic=True, *, dtype=None)
 
     生成一个Hann window。
 
@@ -13,6 +13,9 @@ mindspore.ops.hann_window
     参数：
         - **window_length** (int) - 输出window的大小。
         - **periodic** (bool, 可选) - 如果为True，则返回周期性window用于进行谱线分析。如果为False，则返回对称的window用于设计滤波器。默认值：True。
+
+    关键字参数：
+        - **dtype** (mindspore.dtype, 可选) - 输出window的数据类型，必须为float。默认值：None。
     
     返回：
         Tensor，一个Hann window。

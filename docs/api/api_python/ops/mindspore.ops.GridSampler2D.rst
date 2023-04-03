@@ -5,6 +5,9 @@ mindspore.ops.GridSampler2D
 
     此操作使用基于流场网格的插值对2D `input_x` 进行采样，该插值通常由 :func:`mindspore.ops.affine_grid` 生成。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **interpolation_mode** (str，可选) - 指定插值方法的可选字符串。可选值为："bilinear"、"nearest"，默认值："bilinear"。
         - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为："zeros"、"border"或者"reflection"，默认值："zeros"。

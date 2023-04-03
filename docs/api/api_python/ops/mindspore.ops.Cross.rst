@@ -5,6 +5,9 @@
 
     返回 `x1` 和 `x2` 沿着维度 `dim` 上的向量积（叉积）。
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     更多参考详见 :func:`mindspore.ops.cross` 。
 
     参数：

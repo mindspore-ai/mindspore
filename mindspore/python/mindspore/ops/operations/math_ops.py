@@ -1324,7 +1324,10 @@ class Lcm(Primitive):
     """
     Computes least common multiplier of input tensors element-wise.
     The shape of two inputs should be broadcastable, and data type of them should be
-    one of: int32, int64
+    one of: int32, int64.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x1** (Tensor) - The first input tensor.
@@ -1839,6 +1842,9 @@ class InplaceUpdateV2(Primitive):
     r"""
     Updates specified values in `x` to `v` according to `indices`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.inplace_update` for more details.
 
     Supported Platforms:
@@ -1930,6 +1936,9 @@ class InplaceAdd(Primitive):
 class InplaceIndexAdd(Primitive):
     """
     Adds Tensor `updates` to specified axis and indices of Tensor `var` element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
@@ -2367,6 +2376,9 @@ class Logit(Primitive):
     r"""
     Calculate the logit of a tensor element-wise. Element in `x` is clamped to [eps, 1-eps].
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.logit` for more details.
 
     Args:
@@ -2791,7 +2803,10 @@ class Hypot(Primitive):
     """
     Computes hypotenuse of input tensors element-wise as legs of a right triangle.
     The shape of two inputs should be broadcastable, and data type of them should be
-    one of: float32, float64
+    one of: float32, float64.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x1** (Tensor) - The first input tensor.
@@ -2834,6 +2849,9 @@ class Heaviside(Primitive):
             \text { values, } & \text { if x }==0 \\
             1, & \text { if x }>0
             \end{array}\right.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - The input tensor. With real number data type.
@@ -3669,6 +3687,9 @@ class Sinc(Primitive):
     r"""
     Computes the normalized sinc of input.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.sinc` for more details.
 
     Supported Platforms:
@@ -4021,7 +4042,10 @@ class Gcd(Primitive):
     """
     Computes greatest common divisor of input tensors element-wise.
     The shape of two inputs should be broadcastable, and data type of them should be
-    one of: int32, int64
+    one of: int32, int64.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x1** (Tensor) - The first input tensor.
@@ -4182,6 +4206,9 @@ class LogicalOr(_LogicBinaryOp):
 class LogicalXor(Primitive):
     r"""
     Computes the "logical XOR" of two tensors element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.logical_xor` for more details.
 
@@ -5086,6 +5113,9 @@ class BesselI0(Primitive):
     """
     Computes BesselI0 of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.bessel_i0` for more details.
 
     Supported Platforms:
@@ -5107,6 +5137,9 @@ class BesselI0(Primitive):
 class BesselI1(Primitive):
     """
     Computes BesselI1 of input element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.bessel_i1` for more details.
 
@@ -5208,6 +5241,9 @@ class BesselK0(Primitive):
     r"""
     Computes BesselK0 of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
@@ -5237,6 +5273,9 @@ class BesselK0(Primitive):
 class BesselK1(Primitive):
     r"""
     Computes BesselK1 of input element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -5268,6 +5307,9 @@ class BesselK0e(Primitive):
     """
     Computes BesselK0e of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
@@ -5298,6 +5340,9 @@ class BesselK1e(Primitive):
     """
     Computes BesselK1e of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - The input tensor.
           Data type must be float16, float32, float64.
@@ -5327,6 +5372,9 @@ class BesselK1e(Primitive):
 class BesselJ0(Primitive):
     """
     Computes BesselJ0 of input element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -5359,6 +5407,9 @@ class BesselJ1(Primitive):
     """
     Computes BesselJ1 of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
@@ -5390,6 +5441,9 @@ class BesselY0(Primitive):
     """
     Computes BesselY0 of input element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - The input tensor.
           Data type must be float16, float32 or float64.
@@ -5420,6 +5474,9 @@ class BesselY0(Primitive):
 class BesselY1(Primitive):
     """
     Computes BesselY1 of input element-wise.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -5899,6 +5956,9 @@ class ComplexAbs(Primitive):
 
         y = \sqrt{a^2+b^2}
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x** (Tensor) - A Tensor, types: complex64, complex128.
 
@@ -5961,6 +6021,9 @@ class Real(Primitive):
 class Complex(Primitive):
     """
     Returns a complex Tensor from the real part and the imag part.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **real** (Tensor) - The real input tensor. types: float32, float64.
@@ -6025,6 +6088,9 @@ class Imag(Primitive):
 class Angle(Primitive):
     """
     Returns the element-wise argument of a complex tensor.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.angle` for more details.
 
@@ -6135,7 +6201,9 @@ class TridiagonalMatMul(Primitive):
 class Igamma(Primitive):
     r"""
     Calculates lower regularized incomplete Gamma function.
-    The lower regularized incomplete Gamma function is defined as:
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.igamma` for more details.
 
@@ -6451,6 +6519,9 @@ class LuUnpack(Primitive):
     upper triangular matrix. Typically, `LU_data` and `LU_pivots` are generated
     from the LU decomposition of a matrix.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.lu_unpack` for more details.
 
     Supported Platforms:
@@ -6564,6 +6635,9 @@ class Polygamma(Primitive):
     r"""
     Computes the :math:`a`th derivative of the polygamma function on `x`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.polygamma` for more details.
 
     Supported Platforms:
@@ -6625,6 +6699,9 @@ class CholeskyInverse(Primitive):
 class Cross(Primitive):
     """
     Returns the cross product of vectors in dimension `dim` of x1 and x2.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.cross` for more details.
 
@@ -6731,6 +6808,9 @@ class Trace(Primitive):
 
     Note:
         Input must be matrix, and complex number is not supported at present.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be two dimensional.
@@ -6907,6 +6987,9 @@ class Bernoulli(Primitive):
     """
     Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.bernoulli` for more details.
 
     Supported Platforms:
@@ -7021,6 +7104,9 @@ class Cholesky(Primitive):
     """
     Performs the Cholesky decomposition on a single or a batch of
     symmetric positive-definite matrices.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.cholesky` for more details.
 
@@ -7295,6 +7381,9 @@ class NextAfter(Primitive):
 
         out_{i} =  nextafter({x1_{i}, x2_{i}})
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Inputs:
         - **x1** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -7335,6 +7424,9 @@ class TrilIndices(Primitive):
     r"""
     Calculates the indices of the lower triangular elements in a `row` * `col` matrix
     and returns them as a 2-by-N Tensor.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.tril_indices` for more details.
 
@@ -7475,6 +7567,9 @@ class NanToNum(Primitive):
     Replaces `NaN`, positive infinity and negative infinity values in the input Tensor with the values
     specified by `nan`, `posinf` and `neginf` respectively.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.nan_to_num` for more details.
 
     Supported Platforms:
@@ -7510,6 +7605,9 @@ class Orgqr(Primitive):
     Calculates the explicit representation of the orthogonal matrix :math:`Q`
     returned by :class:`mindspore.ops.Geqrf`.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.orgqr` for more details.
 
     Supported Platforms:
@@ -7536,6 +7634,9 @@ class TriuIndices(Primitive):
     r"""
     Calculates the indices of the upper triangular elements in a `row` * `col` matrix
     and returns them as a 2-by-N Tensor.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.triu_indices` for more details.
 
@@ -7606,6 +7707,9 @@ class Fmax(Primitive):
     """
     Computes the maximum of input tensors element-wise.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Refer to :func:`mindspore.ops.fmax` for more detail.
 
     Supported Platforms:
@@ -7632,6 +7736,9 @@ class Fmax(Primitive):
 class Eig(Primitive):
     """
     Computes the eigenvalues and eigenvectors of a square matrix(batch square matrices).
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         compute_v (bool, optional): If `True`, compute both eigenvalues and eigenvectors;
@@ -7725,6 +7832,9 @@ class Qr(Primitive):
     """
     Returns the QR decomposition of one or more matrices. If `full_matrices` is true, compute full-sized q and r,
     If False (the default), compute the P columns of q where P is minimum of the 2 innermost dimensions of x.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         full_matrices (bool, optional): Whether compute full-sized QR decomposition. Default: False.

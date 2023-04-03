@@ -6,6 +6,9 @@ mindspore.ops.Lcm
     逐个元素计算输入Tensor的最小公倍数。
     两个输入的shape应该是可广播的，它们的数据类型应该是其中之一：int32、int64。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     输入：
         - **x1** (Tensor) - 第一个输入Tensor。
         - **x2** (Tensor) - 第二个输入Tensor。

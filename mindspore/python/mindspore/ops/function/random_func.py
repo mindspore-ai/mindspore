@@ -631,6 +631,8 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         >>> print(output)
         [1 0 2 3]
     """
+    if not isinstance(n, Tensor):
+        n = Tensor(n)
     randperm_ = _get_cache_prim(RandpermV2)(dtype=dtype)
     return randperm_(n, seed, offset)
 

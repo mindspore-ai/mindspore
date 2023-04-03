@@ -5,7 +5,10 @@ mindspore.ops.MultiMarginLoss
 
     创建一个损失函数，用于优化输入和输出之间的多分类合页损失。
 
-    更多参考详见 :func:`multi_margin_loss`。
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
+    更多参考详见 :func:`mindspore.ops.multi_margin_loss`。
 
     参数：
         - **p** (int, 可选) - 对偶距离的范数度。必须为1或2。默认值：1。
