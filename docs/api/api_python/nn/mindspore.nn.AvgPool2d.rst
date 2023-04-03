@@ -12,8 +12,8 @@ mindspore.nn.AvgPool2d
         \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
     参数：
-        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为整数，则代表池化核的高和宽。如果为tuple，其值必须包含两个整数值分别表示池化核的高和宽。默认值：1。
-        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数，则代表池化核的高和宽方向的移动步长。如果为tuple，其值必须包含两个整数值分别表示池化核的高和宽的移动步长。默认值：1。
+        - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。如果为整数或单元素tuple，则代表池化核的高和宽。如果为tuple且长度不为1，其值必须包含两个整数值分别表示池化核的高和宽。默认值：1。
+        - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，如果为整数或单元素tuple，则代表池化核的高和宽方向的移动步长。如果为tuple且长度不为1，其值必须包含两个整数值分别表示池化核的高和宽的移动步长。默认值：1。
         - **pad_mode** (str) - 指定池化的填充方式，可选值为"same"，"valid"或"pad"，不区分大小写。默认值："valid"。
 
           - same: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。
