@@ -523,8 +523,7 @@ def argmin(input, axis=None, keepdims=False):
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
-        input (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means,
-            any number of additional dimensions.
+        input (Tensor): Input tensor.
         axis (Union[int, None], optional): Axis where the Argmin operation applies to. Default: None.
         keepdims (bool, optional): Whether the output tensor retains the specified
             dimension. Ignored if `axis` is None. Default: False.
@@ -4068,7 +4067,6 @@ def isfinite(x):
 
     Args:
         x (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -4722,7 +4720,8 @@ def histc(input, bins=100, min=0., max=0.):
 
 def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
     r"""
-    Returns a Tensor whose value is evenly spaced on a logarithmic scale.
+    Returns a 1-D Tensor with size `steps` whose value is from :math:`base^{start}` to :math:`base^{end}`,
+    and use `base` as the base number.
 
     .. math::
         \begin{aligned}

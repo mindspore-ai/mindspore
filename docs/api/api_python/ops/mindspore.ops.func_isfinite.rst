@@ -13,7 +13,7 @@ mindspore.ops.isfinite
         \end{cases}
 
     参数：
-        - **x** (Tensor) - IsFinite的输入，任意维度的Tensor。
+        - **x** (Tensor) - IsFinite的输入。
 
     返回：
         Tensor，输出的shape与输入相同，数据类型为bool。
