@@ -2075,18 +2075,6 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   // Call python script string.
   MS_LOG(DEBUG) << "Call script: " << script << ", args: " << args_abs_list;
 
-  // when return value should be none
-  constexpr auto data_type = "__py_execute_no_return_type__";
-  if (current_interpret_node->has_user_data(data_type)) {
-    auto type = current_interpret_node->user_data<Type>(data_type);
-    if (type->isa<TypeNone>()) {
-      AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
-      res->set_value(kValueAny);
-      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-      return infer_result;
-    }
-  }
   AbstractBasePtr res = nullptr;
   if (current_interpret_node->has_user_data("__py_execute_tensor_type__") &&
       current_interpret_node->has_user_data("__py_execute_tensor_shape__")) {
@@ -2750,11 +2738,33 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(RaiseEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
+    // Handle for DDE.
+    for (size_t i = 0; i < args_abs_list.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(args_abs_list[i]);
+      if (args_abs_list[i]->isa<abstract::AbstractSequence>()) {
+        MS_LOG(DEBUG) << "Primitive \'Raise\' is consuming tuple/list arguments[" << i
+                      << "]: " << args_abs_list[i]->ToString();
+        SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
+      }
+    }
     // initialize member variable to avoid problems caused by reusing instance.
     num_str_ = 0;
     keys_ = {NewValueNode(prim::kPrimMakeTuple)};
     values_ = {NewValueNode(prim::kPrimMakeTuple)};
     auto node = out_conf->node();
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    if (node->has_user_data("__raise_flag__")) {
+      TypePtr type = kFloat64;
+      ShapeVector shp;
+      (void)shp.emplace_back(Shape::kShapeRankAny);
+      BaseShapePtr shape = std::make_shared<Shape>(shp);
+      AbstractBasePtr res = std::make_shared<AbstractTensor>(type, shape);
+      res->set_user_data("__raise_flag__", MakeValue(true));
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
+    }
     MS_EXCEPTION_IF_NULL(node);
     auto cur_graph = node->func_graph();
     MS_EXCEPTION_IF_NULL(cur_graph);
@@ -2821,21 +2831,24 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     const auto script_str = std::make_shared<StringImm>(error_msg);
     // Pack local parameter keys
     const auto key_value_name_tuple = cur_graph->NewCNodeInOrder(keys_);
+
     // Pack local parameter values
     const auto key_value_tuple = cur_graph->NewCNodeInOrder(values_);
+
     // Build the PyExecute node for raise error.
-    const auto raise_error_node = cur_graph->NewCNode(
-      {NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
-    auto none_type = std::make_shared<TypeNone>();
-    raise_error_node->set_user_data<Type>("__py_execute_no_return_type__", none_type);
+    auto prim = prim::kPrimRaise;
+    (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
+    const auto raise_error_node =
+      cur_graph->NewCNodeInOrder({NewValueNode(prim), NewValueNode(script_str), key_value_name_tuple, key_value_tuple});
+
+    // Avoid entering the Evaluator process multiple times.
+    raise_error_node->set_user_data("__raise_flag__", std::make_shared<bool>(true));
+    raise_error_node->set_debug_info(node->debug_info());
 
     // Set isolated side effect flag for raise node.
     raise_error_node->set_has_side_effect_node(true);
     cur_graph->set_has_side_effect_node(true);
     MS_LOG(DEBUG) << "Found Side Effect Primitive CNode: " << raise_error_node->DebugString();
-
-    AnalysisEnginePtr eng = out_conf->engine();
-    MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(raise_error_node, out_conf->context(), out_conf->func_graph());
     return eng->ForwardConfig(out_conf, fn_conf, false);
   }
