@@ -56,6 +56,8 @@ class MultiMarginLossGradCPUKernelMod : public NativeCpuKernelMod,
 
  private:
   template <typename T>
+  void LaunchKernelFromYGrad(T *x_grad_addr, T *y_grad_addr);
+  template <typename T>
   void LaunchKernelFP32AndFP64(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void LaunchKernelFP16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

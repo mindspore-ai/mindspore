@@ -128,7 +128,7 @@ class SequenceLessEqualInfer : public abstract::OpInferBase {
     return SequenceLessInferInner(prim, input_args)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SequenceLessInferInner(primitive, input_args);
   }

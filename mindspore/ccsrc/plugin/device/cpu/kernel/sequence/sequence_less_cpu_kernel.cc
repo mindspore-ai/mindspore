@@ -99,7 +99,7 @@ int SequenceLessCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 template <typename T, typename S>
 bool SequenceLessCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs) {
-  using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const bool, const bool)>;
+  using InequalityImplFunc = std::function<void(const T *, const S *, bool *, const size_t, const size_t)>;
   std::unordered_map<std::string, InequalityImplFunc> func_map = {
     {kTupleLt, LtImpl<T, S>}, {kTupleLe, LeImpl<T, S>}, {kListLt, LtImpl<T, S>}, {kListLe, LeImpl<T, S>}};
   auto iter = func_map.find(kernel_name_);
