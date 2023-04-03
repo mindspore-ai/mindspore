@@ -32,8 +32,8 @@ std::vector<int64_t> GetShape(const ::aicpuops::TensorShape &shape) {
   return res;
 }
 }  // namespace
-constexpr size_t kSequenceAddNInputNum = 1;
-constexpr size_t kSequenceAddNOutputNum = 1;
+constexpr auto kSequenceAddNInputNum = 1;
+constexpr auto kSequenceAddNOutputNum = 1;
 constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 
@@ -62,7 +62,7 @@ uint32_t SequenceAddNKernel::SequenceAddNTask() {
   auto output_addr = reinterpret_cast<T *>(io_addrs_[kDim1]);
   auto element_num = LongToSize(input_shapes_[0][0]);
   auto element_size = output_data_size_ / sizeof(T);
-  auto cp_ret = memset_s(output_addr, output_data_size_, 0x0, output_data_size_);
+  auto cp_ret = memset_s(reinterpret_cast<void *>(output_addr), output_data_size_, 0x0, output_data_size_);
   if (cp_ret != EOK) {
     AICPU_LOGE("For 'SequenceAddN',  memset for output error, errorno: %d, size: %d.", cp_ret, output_data_size_);
     return kAicpuKernelStateInvalid;
@@ -73,10 +73,10 @@ uint32_t SequenceAddNKernel::SequenceAddNTask() {
       AtomicAdd<T>(output_addr + id, input_x_addr[id]);
     }
   };
-  const int64_t per_unit_size = element_size / std::thread::hardware_concurrency();
+  const int64_t per_unit_size = static_cast<int64_t>(element_size) / std::thread::hardware_concurrency();
   for (size_t i = 0; i < element_num; i++) {
     input_x_addr = inputs_addr + i * element_size;
-    ParallelFor(element_size, per_unit_size, sequence_add_n);
+    ParallelFor(static_cast<int64_t>(element_size), per_unit_size, sequence_add_n);
   }
 
   return kAicpuKernelStateSucess;
@@ -103,7 +103,7 @@ uint32_t SequenceAddNKernel::DoCompute() {
     case aicpuops::DataType::MS_COMPLEX128:
       return SequenceAddNTask<std::complex<std::double_t>>();
     default:
-      AICPU_LOGE("SequenceAddN kernel data type [%s] not support.", input_data_type_);
+      AICPU_LOGE("SequenceAddN kernel data type [%s] not support.", static_cast<int>(input_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }
