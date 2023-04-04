@@ -45,7 +45,6 @@ def _check_dim(val, target, cls_name):
     def _check(val, target, cls_name):
         if val != target:
             raise ValueError(f"For '{cls_name}', the in_shape must have {target} dims, but got {val}.")
-        return None
     _check(val, target, cls_name)
 
 
@@ -240,8 +239,11 @@ class BatchNorm1d(_BatchNorm):
     @staticmethod
     @_primexpr
     def _check_input_dim(shape, cls_name):
+        def _check(dim):
+            if not (dim == 2 or dim == 3):
+                raise ValueError(f"For '{cls_name}', the must have 2 dims or 3 dims, but got {dim}.")
         dim = len(shape)
-        _check_dim(dim, 2, cls_name)
+        _check(dim)
 
 
 class BatchNorm2d(_BatchNorm):
@@ -618,7 +620,6 @@ class SyncBatchNorm(_BatchNorm):
         def _check(dim):
             if not (dim == 2 or dim == 4):
                 raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
-            return None
         dim = len(shape)
         _check(dim)
 
@@ -1121,7 +1122,6 @@ class GroupNorm(Cell):
             if channel != num_channel:
                 raise ValueError(f"{msg_prefix} channel(the second dim of the input 'x') must be equal to "
                                  f"num_channels, but got channel: {channel}, num_channels: {num_channel}.")
-            return None
         _check()
 
     @staticmethod
