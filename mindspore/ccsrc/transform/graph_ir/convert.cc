@@ -1122,7 +1122,7 @@ void DfGraphConvertor::GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &gra
         continue;
       }
       auto idx_body = std::find(body_params.begin(), body_params.end(), i) - body_params.begin();
-      auto p = body_graph_node_in_cond->input(idx_body + kInputOffset);
+      auto p = body_graph_node_in_cond->input(static_cast<size_t>(idx_body + kInputOffset));
       auto idx_cond = std::find(cond_params.begin(), cond_params.end(), p) - cond_params.begin();
       (void)used_params_index.insert(idx_cond);
     }

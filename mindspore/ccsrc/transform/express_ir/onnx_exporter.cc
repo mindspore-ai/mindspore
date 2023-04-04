@@ -3035,7 +3035,7 @@ void OnnxExporter::ExportPrimArgMinWithValue(const FuncGraphPtr &, const CNodePt
   onnx::AttributeProto *argmax_keepdims_attr_proto = argmax_proto->add_attribute();
   argmax_keepdims_attr_proto->set_name("keepdims");
   argmax_keepdims_attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
-  argmax_keepdims_attr_proto->set_i(keep_dims);
+  argmax_keepdims_attr_proto->set_i(static_cast<int64_t>(keep_dims));
 
   AddCastOp(indices_cast_name, indices_output_name, onnx::TensorProto_DataType_INT32, graph_proto);
 
@@ -3228,7 +3228,7 @@ void MakeLSTMWeight2(const std::string &input, const std::string &output, const 
   AddConcatOp({split_i_name, split_o_name, split_f_name, split_c_name}, output, 1, graph_proto);
 }
 
-void OnnxExporter::ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
+void OnnxExporter::ExportPrimDynamicRNN(const FuncGraphPtr &, const CNodePtr &node,
                                         std::map<AnfNodePtr, std::string> *node_map_ptr,
                                         onnx::GraphProto *const graph_proto) {
   auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);

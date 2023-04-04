@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_PACK_H_
 
 #include <map>
-#include <vector>
 #include <string>
 #include <memory>
 #include <algorithm>

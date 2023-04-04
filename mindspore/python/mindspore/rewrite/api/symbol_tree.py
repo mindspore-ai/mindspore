@@ -83,7 +83,7 @@ class SymbolTree:
         for key, value in kwargs.items():
             if isinstance(value, Node):
                 kwargs[key] = value.get_handler()
-        return Node(self._symbol_tree.create_call_function(func, targets, args_, kwargs))
+        return Node(self._symbol_tree._create_call_function(func, targets, args_, kwargs)) # pylint: disable=W0212
 
     def get_handler(self) -> SymbolTreeImpl:
         return self._symbol_tree
