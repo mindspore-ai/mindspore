@@ -41,12 +41,12 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
     if (!IsDynamicRank(feature_shape)) {
-      constexpr size_t kROIGradFeatureShapeSize = 4;
+      constexpr int64_t kROIGradFeatureShapeSize = 4;
       (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
                                                kROIGradFeatureShapeSize, op_name);
     }
     if (!IsDynamicRank(rois_shape)) {
-      constexpr size_t kROIGradRoisShapeSize = 2;
+      constexpr int64_t kROIGradRoisShapeSize = 2;
       (void)CheckAndConvertUtils::CheckInteger("rank of rois shape", SizeToLong(rois_shape.size()), kEqual,
                                                kROIGradRoisShapeSize, op_name);
     }
