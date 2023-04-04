@@ -1629,7 +1629,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode, bool 
       *next_is_reshape = true;
       continue;
     }
-    if (IsPrimitiveCNode(use_apply, prim::kPrimDepend) && node_pair.second != 1) {
+    if (IsOneOfPrimitiveCNode(use_apply, {prim::kPrimDepend, prim::kPrimUpdateState}) && node_pair.second != 1) {
       continue;
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
