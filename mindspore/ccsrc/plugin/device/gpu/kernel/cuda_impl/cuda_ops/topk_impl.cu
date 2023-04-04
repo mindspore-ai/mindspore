@@ -28,20 +28,16 @@ const int kMaxQueue = 128;
       <<<block_num_limit, BLOCK, 0, stream>>>(outer_size, inner_size, input, output, output_index, k_cut, init_K); \
   } while (0)
 
+// LEFT_INSERT THREAD_QUEUE: add values between ceil and warp_top add to the local thread array
+// values in thread array are not sorted so add at end
 #define LEFT_INSERT_THREAD_QUEUE(_k, _v)                                                                            \
   do {                                                                                                              \
     if (is_descend ? CmpKV<T, S>::gt(_k, _v, (*ceil_K), (*ceil_V)) : CmpKV<T, S>::lt(_k, _v, (*ceil_K), (*ceil_V))) \
       break;                                                                                                        \
     if (is_descend ? CmpKV<T, S>::gt(_k, _v, warp_K_top, warp_V_top)                                                \
                    : CmpKV<T, S>::lt(_k, _v, warp_K_top, warp_V_top)) {                                             \
-      {                                                                                                             \
-        _Pragma("unroll") for (int i = thread_queue - 1; i > 0; --i) {                                              \
-          threadK[i] = threadK[i - 1];                                                                              \
-          threadV[i] = threadV[i - 1];                                                                              \
-        }                                                                                                           \
-      }                                                                                                             \
-      threadK[0] = _k;                                                                                              \
-      threadV[0] = _v;                                                                                              \
+      threadK[num_vals] = _k;                                                                                       \
+      threadV[num_vals] = _v;                                                                                       \
       ++num_vals;                                                                                                   \
     }                                                                                                               \
   } while (0)
@@ -110,7 +106,6 @@ template <typename T, typename S, int warp_queue, int thread_queue, int threads_
 inline __device__ void TopKStep(const int &outer_size, const int &inner_size, const T *input, T *output,
                                 S *output_index, S k_cut, const T &init_K, const int &outer_id, T *shared_K,
                                 S *shared_V, int *watermark, T *threadK, S *threadV, T *ceil_K, S *ceil_V, S *k_prime) {
-  constexpr int kNumWarps = threads_per_block / kWarpSize;
   constexpr S init_V = static_cast<S>(-1);
 
   T *warp_K;
@@ -118,7 +113,7 @@ inline __device__ void TopKStep(const int &outer_size, const int &inner_size, co
 
   T warp_K_top = init_K;
   S warp_V_top = init_V;
-  int k_minus_1 = (k_cut <= kMaxQueue ? k_cut - 1 : kMaxQueue - 1);
+  int k_minus_1 = (k_cut <= warp_queue ? k_cut - 1 : warp_queue - 1);
   int num_vals = 0;
   int limit = (inner_size / kWarpSize) * kWarpSize;
 
@@ -230,7 +225,7 @@ void FastTopK(const int outer_size, const int inner_size, const T *input, S k_cu
     TOPK_HELPER(256, 128, 3, true);
   } else {
     // cuda 11.6 has lower # threads.  Set lower number for all platforms for consistency
-    TOPK_HELPER(256, 128, 3, true);
+    TOPK_HELPER(256, 512, 3, true);
   }
 }
 
