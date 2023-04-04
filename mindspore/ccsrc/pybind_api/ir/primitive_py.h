@@ -42,7 +42,7 @@ class PrimitivePy : public Primitive {
  public:
   explicit PrimitivePy(const std::string &name);
   PrimitivePy(const PrimitivePy &prim_py);
-  virtual PrimitivePy &operator=(const PrimitivePy &other);
+  PrimitivePy &operator=(const PrimitivePy &other);
   PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter);
   ~PrimitivePy() override;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);

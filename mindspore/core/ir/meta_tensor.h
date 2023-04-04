@@ -85,7 +85,7 @@ class MS_CORE_API MetaTensor : public Value {
   ///
   /// \param[in] meta_tensor An existing MetaTensor object.
   /// \return A MetaTensor object.
-  virtual MetaTensor &operator=(const MetaTensor &meta_tensor);
+  MetaTensor &operator=(const MetaTensor &meta_tensor);
 
   /// \brief Compares two MetaTensor objects.
   /// The constructed MetaTensor object has the same type and shape with meta_tensor.

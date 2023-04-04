@@ -150,7 +150,7 @@ class MS_CORE_API BaseRef : public Base {
   /// \param[in] other Define another instance of BaseRef.
   ///
   /// \return The instance of BaseRef.
-  virtual BaseRef &operator=(const BaseRef &other);
+  BaseRef &operator=(const BaseRef &other);
 
   /// \brief The move assignment operator of BaseRef.
   ///
@@ -282,7 +282,7 @@ class MS_CORE_API VectorRef : public BaseRef {
 
   // left reference
   VectorRef(const VectorRef &other);
-  virtual VectorRef &operator=(const VectorRef &other);
+  VectorRef &operator=(const VectorRef &other);
 
   ~VectorRef() override = default;
 
@@ -376,7 +376,7 @@ class MS_CORE_API SetRef : public BaseRef {
 
   // left reference
   SetRef(const SetRef &other);
-  virtual SetRef &operator=(const SetRef &other);
+  SetRef &operator=(const SetRef &other);
 
   bool operator==(const BaseRef &other) const override;
   bool operator==(const SetRef &other) const;
