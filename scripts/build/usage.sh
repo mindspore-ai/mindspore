@@ -20,7 +20,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t ut|st] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 10.1|11.1|310|910|910b] [-I arm64|arm32|x86_64] [-K on|off] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-H on|off] \\"
   echo "              [-A on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|avx512|off] \\"
@@ -42,7 +42,7 @@ usage()
   echo "    -R Enable pipeline profile, record to json, default off"
   echo "    -i Enable increment building, default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
-  echo "    -e Use cpu, gpu or ascend"
+  echo "    -e Use cpu, gpu or ascend[ascend|d]"
   echo "    -s Enable security, default off"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
